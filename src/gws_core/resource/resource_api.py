@@ -10,10 +10,11 @@ from fastapi.responses import FileResponse
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_types import CallViewParams
+from gws_core.tag.tag import Tag
+from gws_core.tag.tag_service import TagService
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.transformer.transformer_service import TransformerService
 from gws_core.task.transformer.transformer_type import TransformerDict
-from typing_extensions import TypedDict
 
 from ..core.classes.jsonable import DictJsonable, ListJsonable
 from ..core.classes.paginator import PaginatorDict
@@ -121,6 +122,14 @@ def update_file_type(id: str,
                      resource_typing_name: str,
                      _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     return ResourceService.update_resource_type(id, resource_typing_name).to_json()
+
+
+@core_app.put("/resource/{id}/tags", tags=["Resource"], summary="Update resource tags")
+def save_tags(id: str,
+              tags: List[Tag],
+              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return TagService.save_tags_to_model(ResourceModel, id, tags)
+
 
 ############################# IMPORTER ###########################
 

@@ -166,10 +166,10 @@ def stop_an_experiment(id: str,
 
 
 @core_app.put("/experiment/{id}/tags", tags=["Experiment"], summary="Update experiment tags")
-def stop_an_experiment(id: str,
-                       tags: List[Tag],
-                       _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    return TagService.save_tags_to_model(Experiment._typing_name, id, tags)
+def save_tags(id: str,
+              tags: List[Tag],
+              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return TagService.save_tags_to_model(Experiment, id, tags)
 
 
 ################################### COPY ##############################

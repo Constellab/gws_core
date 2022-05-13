@@ -11,7 +11,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, GTest, ProcessSpec,
                       TaskTyping, protocol_decorator, transformer_decorator)
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.impl.robot.robot_protocol import RobotWorldTravelProto
+from gws_core.impl.robot.robot_protocol import RobotTravelProto
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.table.table import Table
 from gws_core.model.typing import Typing
@@ -61,21 +61,19 @@ class TestTyping(BaseTestCase):
 
         eat_json: Dict = eat_type.to_json(deep=True)
 
-        self.assertEqual(eat_json['typing_name'], 'TASK.gws_core.RobotEat')
-        self.assertIsNotNone(eat_json['type']['input_specs'])
-        self.assertIsNotNone(eat_json['type']['input_specs']['robot'])
-        self.assertIsNotNone(eat_json['type']['input_specs']['food'])
+        self.assertIsNotNone(eat_json['input_specs'])
+        self.assertIsNotNone(eat_json['input_specs']['robot'])
+        self.assertIsNotNone(eat_json['input_specs']['food'])
 
     async def test_protocol_type(self):
-        world_travel: ProtocolTyping = ProtocolTyping.get_by_model_type(RobotWorldTravelProto)
+        world_travel: ProtocolTyping = ProtocolTyping.get_by_model_type(RobotTravelProto)
 
-        self.assertEqual(world_travel.get_type(), RobotWorldTravelProto)
+        self.assertEqual(world_travel.get_type(), RobotTravelProto)
 
         world_travel_json: Dict = world_travel.to_json(deep=True)
 
-        self.assertEqual(world_travel_json['typing_name'], 'PROTOCOL.gws_core.RobotWorldTravelProto')
-        self.assertTrue(len(world_travel_json['type']['graph']['nodes']) > 0)
-        self.assertTrue(len(world_travel_json['type']['graph']['links']) > 0)
+        self.assertIsNotNone(world_travel_json['input_specs']['robot'])
+        self.assertIsNotNone(world_travel_json['output_specs']['robot'])
 
     async def test_resource_type(self):
         robot: ResourceTyping = ResourceTyping.get_by_model_type(Robot)

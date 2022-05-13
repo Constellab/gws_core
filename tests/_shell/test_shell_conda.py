@@ -6,8 +6,8 @@
 import os
 
 from gws_core import (BaseTestCase, CondaEnvShell, ConfigParams, Experiment,
-                      ExperimentService, File, GTest, JSONDict, Resource,
-                      Settings, TaskInputs, TaskModel, TaskOutputs,
+                      ExperimentService, File, GTest, JSONDict, OutputSpec,
+                      Resource, Settings, TaskInputs, TaskModel, TaskOutputs,
                       TaskService, task_decorator)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 
@@ -20,7 +20,7 @@ __cdir__ = os.path.dirname(os.path.realpath(__file__))
 @task_decorator("CondaEnvTester")
 class CondaEnvTester(CondaEnvShell):
     input_specs = {}
-    output_specs = {'file': (File, )}
+    output_specs = {'file': OutputSpec(File)}
     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_conda.yml")
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:

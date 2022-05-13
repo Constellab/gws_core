@@ -3,11 +3,11 @@
 from typing import Dict
 
 from gws_core import (BaseTestCase, ConfigParams, File, IExperiment, ITask,
-                      Resource, ResourceModel, RField, Tag, TagHelper, Task,
-                      TaskInputs, TaskModel, TaskOutputs, resource_decorator,
-                      task_decorator)
-from gws_core.core.classes.search_builder import (SearchParams,
-                                                  SearchFilterCriteria)
+                      OutputSpec, Resource, ResourceModel, RField, Tag,
+                      TagHelper, Task, TaskInputs, TaskModel, TaskOutputs,
+                      resource_decorator, task_decorator)
+from gws_core.core.classes.search_builder import (SearchFilterCriteria,
+                                                  SearchParams)
 from gws_core.data_provider.data_provider import DataProvider
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
@@ -30,7 +30,7 @@ class ForSearch(Resource):
 @task_decorator("ForSearchCreate")
 class ForSearchCreate(Task):
     input_specs = {}  # no required input
-    output_specs = {'search': ForSearch}
+    output_specs = {'search': OutputSpec(ForSearch)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

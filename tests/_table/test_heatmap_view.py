@@ -1,6 +1,11 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
-from gws_core import BaseTestCase, ViewTester
+from gws_core import BaseTestCase, ViewTester, ViewType
 from gws_core.extra import DataProvider, TableHeatmapView
+from gws_core.impl.table.view.base_table_view import Serie1d
 
 
 class TestTableHeatmapView(BaseTestCase):
@@ -10,14 +15,14 @@ class TestTableHeatmapView(BaseTestCase):
         tester = ViewTester(
             view=TableHeatmapView(table)
         )
-        view_dict = tester.to_dict({
-            "from_row": 1,
-            "number_of_rows_per_page": 50,
-            "from_column": 1,
-            "number_of_columns_per_page": 4,
-        })
-        self.assertEqual(view_dict["type"], "heatmap-view")
+
+        # 1 series with all columns
+        serie: Serie1d = {"name": "first", "y": {"type": "columns", "selection": [
+            "sepal.length",  "sepal.width", "petal.length", "petal.width"]}}
+
+        view_dict = tester.to_dict({"serie": serie})
+        self.assertEqual(view_dict["type"], ViewType.HEATMAP.value)
         self.assertEqual(
-            view_dict["data"],
-            table.to_dataframe().iloc[0:50, 0:4].to_dict('split')["data"]
+            view_dict["data"]["table"],
+            table.to_dataframe().iloc[0:, 0:4].to_dict('split')["data"]
         )

@@ -89,8 +89,9 @@ class BaseTableView(View):
         return self._table.get_data()[column_names]
 
     def get_values_from_coords(self, ranges: List[CellRange]) -> List[Any]:
+        """ Get flattened values from a list of ranges"""
 
-        values: List[float] = []
+        values: List[Any] = []
 
         for coord in ranges:
             sub_df = self.get_dataframe_from_coords(coord)
@@ -99,11 +100,12 @@ class BaseTableView(View):
 
         return values
 
-    def get_dataframe_from_coords(self, ranges: List[CellRange]) -> DataFrame:
+    def get_dataframe_from_coords(self, range: CellRange) -> DataFrame:
+        """ Get a dataframe from a single range"""
         df = self._table.get_data()
 
-        return df.iloc[ranges['from']['row']: ranges['to']['row'] + 1,
-                       ranges['from']['column']: ranges['to']['column'] + 1]
+        return df.iloc[range['from']['row']: range['to']['row'] + 1,
+                       range['from']['column']: range['to']['column'] + 1]
 
     def get_values_from_selection_range(self, selection_range: TableSelection) -> List[Any]:
         """Get table flattened value form a SelectionRange

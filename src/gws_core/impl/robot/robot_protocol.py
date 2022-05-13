@@ -2,6 +2,7 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+
 from ...protocol.protocol import ProcessSpec, Protocol
 from ...protocol.protocol_decorator import protocol_decorator
 from ...task.plug import Sink, Source
@@ -93,7 +94,7 @@ class RobotWorldTravelProto(Protocol):
 
     def configure_protocol(self) -> None:
 
-        super_travel: ProcessSpec = self.add_process(RobotSuperTravelProto, "super_travel").set_param('third_eat', 10)
+        super_travel: ProcessSpec = self.add_process(RobotSuperTravelProto, "super_travel")
 
         facto: ProcessSpec = self.add_process(RobotCreate, "facto")
         fly_1: ProcessSpec = self.add_process(

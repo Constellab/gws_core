@@ -3,7 +3,8 @@ import os
 
 from gws_core import (BaseTestCase, ConfigParams, FileHelper, Folder,
                       FSNodeModel, IExperiment, IProcess, LocalFileStore,
-                      Settings, Task, TaskInputs, TaskOutputs, task_decorator)
+                      OutputSpec, Settings, Task, TaskInputs, TaskOutputs,
+                      task_decorator)
 from gws_core.resource.resource_model import ResourceModel
 
 
@@ -12,7 +13,7 @@ class CreateFolderTest(Task):
     """ Simple process that create a file anywhere on the server
     """
     input_specs = {}
-    output_specs = {'folder': Folder}
+    output_specs = {'folder': OutputSpec(Folder)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

@@ -6,15 +6,15 @@
 import os
 
 from gws_core import (BaseTestCase, BoolParam, ConfigParams, Experiment,
-                      ExperimentService, File, GTest, Resource, Shell,
-                      StrParam, TaskInputs, TaskModel, TaskOutputs,
-                      TaskService, TaskRunner, task_decorator)
+                      ExperimentService, File, GTest, OutputSpec, Resource,
+                      Shell, StrParam, TaskInputs, TaskModel, TaskOutputs,
+                      TaskRunner, TaskService, task_decorator)
 
 
 @task_decorator("Echo")
 class Echo(Shell):
     input_specs = {}
-    output_specs = {'file': File}
+    output_specs = {'file': OutputSpec(File)}
     config_specs = {
         'name': StrParam(optional=True, short_description="The name to echo"),
     }

@@ -1,17 +1,13 @@
 
 
-from gws_core import ConfigParams, MultiViews, TextView
-from gws_core.extra import DataProvider
-from gws_core.impl.table.view.table_scatterplot_2d_view import \
-    TableScatterPlot2DView
+from gws_core import ConfigParams, MultiViews, TextView, ViewType
 from gws_core.test.base_test_case import BaseTestCase
 
 
 class TestMultiViews(BaseTestCase):
 
     def test_multi_view(self):
-        table = DataProvider.get_iris_table()
-        view = TableScatterPlot2DView(table=table)
+        view = TextView(data='Hello')
 
         text_view = TextView('Hello test super view')
 
@@ -21,5 +17,5 @@ class TestMultiViews(BaseTestCase):
         multi_view.add_empty_block(2, 2)
 
         dict = multi_view.to_dict(ConfigParams())
-        self.assertEqual(dict['type'], 'multi-view')
+        self.assertEqual(dict['type'], ViewType.MULTI_VIEWS.value)
         self.assertEqual(len(dict['data']["views"]), 3)

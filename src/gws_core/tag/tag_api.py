@@ -1,3 +1,7 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from typing import List, Optional
 
@@ -28,28 +32,3 @@ async def search_by_key(key: str,
     tags = TagService.search_by_key(key)
     return ListJsonable(tags).to_json()
 
-
-@core_app.get("/tag", tags=["Tag"], summary='Get all tags')
-async def get_tag(key: str,
-                  page: Optional[int] = 1,
-                  number_of_items_per_page: Optional[int] = 20,
-                  _: UserData = Depends(AuthService.check_user_access_token)):
-    """
-    Get all tags.
-    """
-
-    return TagService.search_by_key(key, page, number_of_items_per_page).to_json()
-
-
-@core_app.post("/tag/add/{typing_name}/{id}", tags=["Tag"], summary='Add a tag to a model')
-def add_tag(typing_name: str, id: str, tag: NewTagDTO,
-            _: UserData = Depends(AuthService.check_user_access_token)) -> List[Tag]:
-
-    return TagService.add_tag_to_model(typing_name, id, tag.key, tag.value)
-
-
-@core_app.put("/tag/save/{typing_name}/{id}", tags=["Tag"], summary='Save all tag for a model')
-def save_tag(typing_name: str, id: str, tags: List[Tag],
-             _: UserData = Depends(AuthService.check_user_access_token)) -> List[Tag]:
-
-    return TagService.save_tags_to_model(typing_name, id, tags)

@@ -1,5 +1,9 @@
 
-from typing import List
+from typing import List, Type
+
+from gws_core.core.exception.exceptions.not_found_exception import \
+    NotFoundException
+from gws_core.core.utils.utils import Utils
 
 from ..core.classes.paginator import Paginator
 from ..core.decorator.transaction import transaction
@@ -60,14 +64,17 @@ class TagService():
 
     @classmethod
     @transaction()
-    def add_tag_to_model(cls, model_typing_name: str, id: str,
+    def add_tag_to_model(cls, model_type: Type[TaggableModel], id: str,
                          tag_key: str, tag_value: str) -> List[Tag]:
 
-        # Add tag to resource model
-        model: Model = TypingManager.get_object_with_typing_name_and_id(model_typing_name, id)
-
-        if not isinstance(model, TaggableModel):
+        if not Utils.issubclass(model_type, TaggableModel):
             raise BadRequestException("Can't add tags to this object type")
+
+         # Add tag to resource model
+        model: TaggableModel = model_type.get_by_id(id)
+
+        if model is None:
+            raise NotFoundException(f"Can't find model with id {id}")
 
         model.add_or_replace_tag(tag_key, tag_value)
         model.save()
@@ -79,14 +86,17 @@ class TagService():
 
     @classmethod
     @transaction()
-    def save_tags_to_model(cls, model_typing_name: str, id: str,
+    def save_tags_to_model(cls, model_type: Type[TaggableModel], id: str,
                            tags: List[Tag]) -> List[Tag]:
 
-        # Add tag to resource model
-        model: Model = TypingManager.get_object_with_typing_name_and_id(model_typing_name, id)
-
-        if not isinstance(model, TaggableModel):
+        if not Utils.issubclass(model_type, TaggableModel):
             raise BadRequestException("Can't add tags to this object type")
+
+        # Add tag to resource model
+        model: TaggableModel = model_type.get_by_id(id)
+
+        if model is None:
+            raise NotFoundException(f"Can't find model with id {id}")
 
         for tag in tags:
             if model.has_tag(tag):

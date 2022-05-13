@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ....resource.view_types import ViewSpecs
+from ....resource.view_types import ViewSpecs, ViewType
 from ...view.lineplot_3d_view import LinePlot3DView
 from .table_scatterplot_3d_view import TableScatterPlot3DView
 
@@ -49,3 +49,4 @@ class TableLinePlot3DView(TableScatterPlot3DView):
 
     _specs: ViewSpecs = {**TableScatterPlot3DView._specs}
     _view_helper = LinePlot3DView
+    _type: ViewType = ViewType.LINE_PLOT_3D

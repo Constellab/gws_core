@@ -5,11 +5,11 @@
 
 
 from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
-                      Experiment, ExperimentService, GTest, ProcessFactory,
-                      ProcessModel, ProcessSpec, Protocol, ProtocolModel,
-                      ProtocolService, Resource, RobotMove, Task, TaskInputs,
-                      TaskOutputs, protocol_decorator, resource_decorator,
-                      task_decorator)
+                      Experiment, ExperimentService, GTest, InputSpec,
+                      OutputSpec, ProcessFactory, ProcessModel, ProcessSpec,
+                      Protocol, ProtocolModel, ProtocolService, Resource,
+                      RobotMove, Task, TaskInputs, TaskOutputs,
+                      protocol_decorator, resource_decorator, task_decorator)
 from gws_core.experiment.experiment_exception import ExperimentRunException
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.impl.robot.robot_resource import Robot
@@ -21,7 +21,7 @@ from gws_core.protocol.protocol_exception import ProtocolBuildException
 #################### Error during the task ################
 @task_decorator("ErrorTask")
 class ErrorTask(Task):
-    input_specs: InputSpecs = {'robot': Robot}
+    input_specs: InputSpecs = {'robot': InputSpec(Robot)}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         raise Exception("This is the error task")
@@ -69,7 +69,7 @@ class NotRobot(Resource):
 @task_decorator("NotRobotCreate")
 class NotRobotCreate(Task):
     input_specs = {}
-    output_specs = {'not_robot': NotRobot}
+    output_specs = {'not_robot': OutputSpec(NotRobot)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

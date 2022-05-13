@@ -4,8 +4,8 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (ConfigParams, OutputSpecs, Task, TaskInputs, TaskOutputs,
-                      task_decorator)
+from gws_core import (ConfigParams, InputSpec, OutputSpec, OutputSpecs, Task,
+                      TaskInputs, TaskOutputs, task_decorator)
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
@@ -19,8 +19,8 @@ from gws_core.test.base_test_case import BaseTestCase
 @task_decorator(unique_name="RobotsGenerator")
 class RobotsGenerator(Task):
 
-    input_specs: InputSpecs = {"robot_i": Robot}
-    output_specs: OutputSpecs = {'set': ResourceSet}
+    input_specs: InputSpecs = {"robot_i": InputSpec(Robot)}
+    output_specs: OutputSpecs = {'set': OutputSpec(ResourceSet)}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         robot_1 = inputs.get('robot_i')

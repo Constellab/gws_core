@@ -1,7 +1,13 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+from typing import List
 
 import numpy
-from gws_core import BaseTestCase, ViewTester
+from gws_core import BaseTestCase, ViewTester, ViewType
 from gws_core.extra import DataProvider, TableHistogramView
+from gws_core.impl.table.view.base_table_view import Serie1d
 
 
 class TestTableHistogramView(BaseTestCase):
@@ -11,14 +17,16 @@ class TestTableHistogramView(BaseTestCase):
         tester = ViewTester(
             view=TableHistogramView(table)
         )
-        dic = tester.to_dict({
-            "series": [
-                {"y_data_column": "petal.length"},
-                {"y_data_column": "petal.width"},
-            ]
-        })
 
-        self.assertEqual(dic["type"], "histogram-view")
+        # 2 series :
+        # first : y = petal.length
+        # second :  y = petal.width
+        series: List[Serie1d] = [{"name": "first", "y": {"type": "columns", "selection": ["petal.length"]}},
+                                 {"name": "second", "y": {"type": "columns", "selection": ["petal.width"]}}
+                                 ]
+        dic = tester.to_dict({"series": series})
+
+        self.assertEqual(dic["type"], ViewType.HISTOGRAM.value)
 
         self.assertTrue(numpy.all(numpy.isclose(
             dic["data"]["series"][0]["data"]["y"],

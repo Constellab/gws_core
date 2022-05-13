@@ -104,13 +104,6 @@ class TestExperiment(BaseTestCase):
         self.assertIsInstance(spec, IOSpec)
         self.assertEqual(spec.resource_types, [Robot])
 
-        # Test the protocol (super_travel) config (weight of 10)
-        super_travel: ProtocolModel = e2_bis.protocol_model.get_process('super_travel')
-        eat_3: ProtocolModel = super_travel.get_process('eat_3')
-        robot1: Robot = eat_3.inputs.get_resource_model('robot').get_resource()
-        robot2: Robot = eat_3.outputs.get_resource_model('robot').get_resource()
-        self.assertEqual(robot1.weight, robot2.weight - 10)
-
     async def test_run_through_cli(self):
 
         # experiment 3

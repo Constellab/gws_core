@@ -1,6 +1,13 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
-from gws_core import BaseTestCase, ViewTester
+from typing import List
+
+from gws_core import BaseTestCase, ViewTester, ViewType
 from gws_core.extra import DataProvider, TableStackedBarPlotView
+from gws_core.impl.table.view.base_table_view import Serie1d
 
 
 class TestTableStackedBarPlotView(BaseTestCase):
@@ -12,17 +19,18 @@ class TestTableStackedBarPlotView(BaseTestCase):
             view=TableStackedBarPlotView(table)
         )
 
-        dic = tester.to_dict({
-            "series": [
-                {"y_data_column": "sepal.length"},
-                {"y_data_column": "petal.length"},
-                {"y_data_column": "petal.width"},
-            ]
-        })
+        # 3 series :
+        # first : y = sepal.length
+        # second :  y = petal.length
+        # third :  y = petal.width
+        series: List[Serie1d] = [{"name": "first", "y": {"type": "columns", "selection": ["sepal.length"]}},
+                                 {"name": "second", "y": {"type": "columns", "selection": ["petal.length"]}},
+                                 {"name": "third", "y": {"type": "columns", "selection": ["petal.width"]}}
+                                 ]
+        dic = tester.to_dict({"series": series})
 
         x = list(range(0, table.get_data().shape[0]))
-        self.assertEqual(dic["type"], "stacked-bar-plot-view")
-        self.assertEqual(dic["data"]["x_tick_labels"], table.get_data().index.values.tolist())
+        self.assertEqual(dic["type"], ViewType.STACKED_BAR_PLOT.value)
         self.assertEqual(dic["data"]["series"][0]["data"]["x"], x)
         self.assertEqual(dic["data"]["series"][1]["data"]["x"], x)
         self.assertEqual(dic["data"]["series"][2]["data"]["x"], x)

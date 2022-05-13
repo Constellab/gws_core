@@ -1,5 +1,13 @@
-from gws_core import BaseTestCase, ViewTester
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
+from typing import List
+
+from gws_core import BaseTestCase, ViewTester, ViewType
 from gws_core.extra import DataProvider, TableBoxPlotView
+from gws_core.impl.table.view.base_table_view import Serie2d
 
 
 class TestTableBoxPlotView(BaseTestCase):
@@ -10,36 +18,18 @@ class TestTableBoxPlotView(BaseTestCase):
             view=TableBoxPlotView(table)
         )
 
-        dic = tester.to_dict({
-            "series": [
-                {
-                    "y_data_columns": ["petal.length", "petal.width"]
-                }
-            ]
-        })
-        self.assertEqual(dic["type"], "box-plot-view")
-        self.assertEqual(dic["data"]["x_tick_labels"], ['petal.length', 'petal.width'])
-        self.assertEqual(dic["data"]["series"][0]["data"]["x"], [0, 1])
-        self.assertEqual(dic["data"]["series"][0]["data"]["min"], [1.0, 0.1])
-        self.assertEqual(dic["data"]["series"][0]["data"]["q1"], [1.6, 0.3])
-        self.assertEqual(dic["data"]["series"][0]["data"]["median"], [4.35, 1.3])
-        self.assertEqual(dic["data"]["series"][0]["data"]["q3"], [5.1, 1.8])
-        self.assertEqual(dic["data"]["series"][0]["data"]["max"], [6.9, 2.5])
+        # 1 series :
+        # first : y = petal.length
+        series: List[Serie2d] = [{"name": "first", "y": {"type": "columns", "selection": ["petal.length"]}}]
+        dic = tester.to_dict({"series": series})
+        self.assertEqual(dic["type"], ViewType.BOX_PLOT.value)
 
-    def test_boxplot_view_without_params(self,):
-        table = DataProvider.get_iris_table()
-        tester = ViewTester(
-            view=TableBoxPlotView(table)
-        )
-
-        dic = tester.to_dict({
-            "series": []
-        })
-        self.assertEqual(dic["type"], "box-plot-view")
-        self.assertEqual(dic["data"]["x_tick_labels"], ['sepal.length', 'sepal.width', 'petal.length'])
-        self.assertEqual(dic["data"]["series"][0]["data"]["x"], [0, 1, 2])
-        self.assertEqual(dic["data"]["series"][0]["data"]["min"], [4.3, 2.0, 1.0])
-        self.assertEqual(dic["data"]["series"][0]["data"]["q1"], [5.1, 2.8, 1.6])
-        self.assertEqual(dic["data"]["series"][0]["data"]["median"], [5.8, 3.0, 4.35])
-        self.assertEqual(dic["data"]["series"][0]["data"]["q3"], [6.4, 3.3, 5.1])
-        self.assertEqual(dic["data"]["series"][0]["data"]["max"], [7.9, 4.4, 6.9])
+        first_data = dic["data"]["series"][0]["data"]
+        self.assertEqual(first_data['x'][0], 0)
+        self.assertEqual(first_data['min'][0], 1.0)
+        self.assertEqual(first_data['q1'][0], 1.6)
+        self.assertEqual(first_data['median'][0], 4.35)
+        self.assertEqual(first_data['q3'][0], 5.1)
+        self.assertEqual(first_data['max'][0], 6.9)
+        self.assertEqual(round(first_data['lower_whisker'][0], 2), -3.65)
+        self.assertEqual(round(first_data['upper_whisker'][0], 2), 10.35)

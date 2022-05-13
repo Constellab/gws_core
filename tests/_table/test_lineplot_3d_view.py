@@ -1,5 +1,5 @@
 
-from gws_core import BaseTestCase, ViewTester
+from gws_core import BaseTestCase, ViewTester, ViewType
 from gws_core.extra import DataProvider, TableLinePlot3DView
 
 
@@ -26,7 +26,7 @@ class TestTableLinePlot3DView(BaseTestCase):
             ]
         ))
 
-        self.assertEqual(dic["type"], "line-plot-3d-view")
+        self.assertEqual(dic["type"], ViewType.LINE_PLOT_3D.value)
         self.assertEqual(dic["data"]["series"][0]["data"]["x"], table.get_data()["sepal.length"].values.tolist())
         self.assertEqual(dic["data"]["series"][0]["data"]["y"], table.get_data()["sepal.width"].values.tolist())
         self.assertEqual(dic["data"]["series"][0]["data"]["z"], table.get_data()["petal.length"].values.tolist())

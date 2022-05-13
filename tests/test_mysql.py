@@ -19,11 +19,6 @@ class TestMySQLDumpLoad(BaseTestCase):
         file: File = LocalFileStore.get_default_instance().create_empty_file("./oui")
         file_model: FSNodeModel = FsNodeService.create_fs_node_model(fs_node=file)
 
-        comment = CommentService.add_comment_to_model(file_model, "The sky is blue")
-        CommentService.add_comment_to_model(
-            file_model, "The sky is blue and the ocean is also blue", reply_to_id=comment.id)
-        file_model.save()
-
         # dump db
         output_file = MySQLService.dump_db(
             "gws_core", force=True, wait=True)

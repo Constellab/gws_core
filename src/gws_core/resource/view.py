@@ -76,7 +76,7 @@ class View:
     def to_dict(self, params: ConfigParams) -> dict:
         """ Convert to dictionary """
         return {
-            "type": self._type,
+            "type": self._type.value,
             "title": self._title,
             "technical_info": self._technical_info.to_json(),
             "data": self.data_to_dict(params),

@@ -4,7 +4,8 @@
 # About us: https://gencovery.com
 
 from gws_core import BaseTestCase
-from gws_core.core.db.brick_migrator import BrickMigration, BrickMigrator
+from gws_core.core.db.brick_migrator import (BrickMigration, BrickMigrator,
+                                             MigrationObject)
 from gws_core.core.db.version import Version, VersionInvalidException
 
 
@@ -61,10 +62,10 @@ class TestMigration(BaseTestCase):
     def test_brick_migrator(self):
 
         brick_migrator: BrickMigrator = BrickMigrator('gws_core_test', Version('1.0.0'))
-        brick_migrator.append_migration(MigrationTest, Version('1.2.0'))
-        brick_migrator.append_migration(MigrationTest, Version('1.0.0'))
-        brick_migrator.append_migration(MigrationTest, Version('1.0.1'))
-        brick_migrator.append_migration(MigrationTest, Version('2.0.1'))
+        brick_migrator.append_migration(MigrationObject(MigrationTest, Version('1.2.0'), ''))
+        brick_migrator.append_migration(MigrationObject(MigrationTest, Version('1.0.0'), ''))
+        brick_migrator.append_migration(MigrationObject(MigrationTest, Version('1.0.1'), ''))
+        brick_migrator.append_migration(MigrationObject(MigrationTest, Version('2.0.1'), ''))
 
         # check that the migration list is in order and without the 1.0.0
         to_migrate = brick_migrator._get_to_migrate_list()

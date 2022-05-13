@@ -1,4 +1,4 @@
-from gws_core import BaseTestCase, ViewTester
+from gws_core import BaseTestCase, ViewTester, ViewType
 from gws_core.extra import DataProvider, DatasetView
 
 
@@ -16,10 +16,10 @@ class TestDatasetView(BaseTestCase):
             number_of_columns_per_page=50
         ))
 
-        self.assertEqual(dic["type"], "dataset-view")
+        self.assertEqual(dic["type"], ViewType.DATASET.value)
         self.assertEqual(
-            dic["data"],
+            dic["data"]["table"],
             ds.get_data().iloc[0:50, :].to_dict('split')["data"]
         )
 
-        self.assertEqual(dic["target_names"], ['variety'])
+        self.assertEqual(dic["data"]["target_names"], ['variety'])

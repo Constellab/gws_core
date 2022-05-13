@@ -7,9 +7,9 @@ import json
 import os
 
 from gws_core import (BaseTestCase, ConfigParams, File, FSNodeModel,
-                      FsNodeService, GTest, LocalFileStore, Robot, RobotCreate,
-                      Task, TaskInputs, TaskOutputs, WriteToJsonFile,
-                      task_decorator)
+                      FsNodeService, GTest, LocalFileStore, OutputSpec, Robot,
+                      RobotCreate, Task, TaskInputs, TaskOutputs,
+                      WriteToJsonFile, task_decorator)
 from gws_core.core.utils.settings import Settings
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.file.file_store import FileStore
@@ -24,7 +24,7 @@ class CreateFileTest(Task):
     """ Simple process that create a file anywhere on the server
     """
     input_specs = {}
-    output_specs = {'file': File}
+    output_specs = {'file': OutputSpec(File)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -118,7 +118,7 @@ class TestFile(BaseTestCase):
         # Check file content
         content: str = file.read()
         params = ConfigParams()
-        self.assertEqual(content, json.dumps(robot.view_as_json(params).to_dict()))
+        self.assertEqual(content, json.dumps(robot.view_as_json(params).to_dict(params)))
 
         # Check file size
         self.assertTrue(file_model.fs_node_model.size > 0)
