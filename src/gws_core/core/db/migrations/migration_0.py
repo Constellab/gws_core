@@ -98,8 +98,8 @@ class Migration038(BrickMigration):
         )
 
 
-@brick_migration('0.3.9-beta.2', short_description='Refactor io specs, add brick_version to process')
-class Migration0392(BrickMigration):
+@brick_migration('0.3.9', short_description='Refactor io specs, add brick_version to process')
+class Migration039(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
