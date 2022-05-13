@@ -4,23 +4,26 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Dict, List
+from typing import Dict, List, Optional, Union
 
 from .r_field import JsonableObject
 
 
 class TechnicalInfo:
     key: str
-    value: str
+    value: Union[str, float, int, bool]
+    short_description: Optional[str]
 
-    def __init__(self, key: str, value: str) -> None:
+    def __init__(self, key: str, value: Union[str, float, int, bool], short_description: str = None) -> None:
         self.key = key
         self.value = value
+        self.short_description = short_description
 
     def to_json(self) -> Dict[str, str]:
         return {
             "key": self.key,
-            "value": self.value
+            "value": self.value,
+            "short_description": self.short_description
         }
 
     @classmethod
