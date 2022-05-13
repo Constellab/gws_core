@@ -98,8 +98,8 @@ class Migration038(BrickMigration):
         )
 
 
-@brick_migration('0.3.9-beta.1', short_description='Refactor io specs, add brick_version to process')
-class Migration039(BrickMigration):
+@brick_migration('0.3.9-beta.2', short_description='Refactor io specs, add brick_version to process')
+class Migration0392(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
@@ -130,3 +130,5 @@ class Migration039(BrickMigration):
             typing = TypingManager.get_typing_from_name(process_model.process_typing_name)
             process_model.brick_version = BrickHelper.get_brick_version(typing.brick)
             process_model.save()
+
+        CurrentUserService.set_current_user(None)
