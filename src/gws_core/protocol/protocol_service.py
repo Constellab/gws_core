@@ -5,6 +5,9 @@
 
 from typing import List, Tuple, Type
 
+from gws_core.resource.resource_model import ResourceModel
+from gws_core.task.plug import Source
+
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -281,9 +284,19 @@ class ProtocolService(BaseService):
         protocol_model.check_is_updatable()
         process_model: ProcessModel = protocol_model.get_process(process_instance_name)
 
-        # delete the process form the DB
+        # set config value and save
         process_model.config.set_values(config_values)
         process_model.config.save()
+
+        # For task of type Source, we store the resource id in task table
+        if isinstance(process_model, TaskModel) and process_model.is_source_task():
+            resource_model_id = Source.get_resource_id_from_config(config_values)
+
+            if resource_model_id is not None:
+                process_model.source_config = ResourceModel.get_by_id_and_check(resource_model_id)
+            else:
+                process_model.source_config = None
+            process_model.save()
 
     ########################## SPECIFIC PROCESS #####################
     @classmethod

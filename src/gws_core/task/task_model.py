@@ -7,6 +7,7 @@ import zlib
 from typing import Any, Dict, List, Type
 
 from gws_core.resource.resource_list_base import ResourceListBase
+from peewee import ForeignKeyField
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
@@ -41,6 +42,10 @@ class TaskModel(ProcessModel):
     :property config_specs: The specs of the config
     :type config_specs: dict
     """
+
+    # Only for task of type Source, this is to store the resource used in config
+    # with lazy load = false, the Resource is not Loaded
+    source_config: str = ForeignKeyField(ResourceModel, null=True, index=True, lazy_load=False, on_delete='CASCADE')
 
     _table_name = 'gws_task'
 

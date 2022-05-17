@@ -12,6 +12,7 @@ from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.view import View
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.task.converter.converter_service import ConverterService
+from gws_core.task.task_model import TaskModel
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
@@ -72,12 +73,21 @@ class ResourceService(BaseService):
             raise BadRequestException(GWSException.DELETE_GENERATED_RESOURCE_ERROR.value,
                                       GWSException.DELETE_GENERATED_RESOURCE_ERROR.value)
 
+        # Check if resource is used as input of a task
         task_input: TaskInputModel = TaskInputModel.get_by_resource_model(resource_model.id).first()
 
         if task_input:
             raise BadRequestException(GWSException.RESOURCE_USED_ERROR.value,
                                       unique_code=GWSException.RESOURCE_USED_ERROR.value,
                                       detail_args={"experiment": task_input.experiment.get_short_name()})
+
+        # Check if resource is used as Config of a Source Task
+        task_model: TaskModel = TaskModel.select().where(TaskModel.source_config == resource_model.id).first()
+
+        if task_model:
+            raise BadRequestException(GWSException.RESOURCE_USED_ERROR.value,
+                                      unique_code=GWSException.RESOURCE_USED_ERROR.value,
+                                      detail_args={"experiment": task_model.experiment.get_short_name()})
 
     @classmethod
     def update_name(cls, resource_model_id: str, name: str) -> ResourceModel:

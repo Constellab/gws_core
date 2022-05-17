@@ -17,6 +17,8 @@ from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.report.report import Report
+from gws_core.resource.resource_model import ResourceModel
+from gws_core.task.plug import Source
 from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
@@ -130,5 +132,34 @@ class Migration039(BrickMigration):
             except Exception as err:
                 Logger.error(f'Error while migrating process {process_model.id} : {err}')
                 Logger.log_exception_stack_trace(err)
+
+        CurrentUserService.set_current_user(None)
+
+
+@brick_migration('0.3.10', short_description='Add source config in TaskModel')
+class Migration0310(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator = MySQLMigrator(FSNodeModel.get_db_manager().db)
+
+        migrate(
+            migrator.add_column(
+                TaskModel.get_table_name(),
+                TaskModel.source_config.column_name, TaskModel.source_config),
+        )
+
+        task_models: List[TaskModel] = list(TaskModel.select().where(
+            TaskModel.process_typing_name == Source._typing_name))
+
+        # Authenticate the system user
+        CurrentUserService.set_current_user(User.get_sysuser())
+        for task_model in task_models:
+            resource_id = Source.get_resource_id_from_config(task_model.config.get_values())
+
+            if resource_id is not None:
+                task_model.source_config = ResourceModel.get_by_id(resource_id)
+                task_model.save()
 
         CurrentUserService.set_current_user(None)

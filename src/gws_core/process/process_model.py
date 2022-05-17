@@ -12,6 +12,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Dict, Type, TypedDict, final
 
 from gws_core.model.typing import Typing
+from gws_core.task.plug import Source
 from peewee import CharField, ForeignKeyField
 from starlette_context import context
 
@@ -400,6 +401,11 @@ class ProcessModel(ModelWithUser):
 
     def get_process_type(self) -> Type[Process]:
         return TypingManager.get_type_from_name(self.process_typing_name)
+
+    def is_source_task(self) -> bool:
+        """return true if the process is of type Source
+        """
+        return self.process_typing_name == Source._typing_name
 
     ########################### JSON #################################
 

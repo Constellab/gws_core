@@ -4,8 +4,9 @@
 # About us: https://gencovery.com
 
 import time
+from typing import Optional
 
-from ..config.config_types import ConfigParams, ConfigSpecs
+from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
 from ..config.param_spec import FloatParam, IntParam, StrParam
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -42,6 +43,10 @@ class Source(Task):
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(r_id)
 
         return {"resource": resource_model.get_resource()}
+
+    @staticmethod
+    def get_resource_id_from_config(config: ConfigParamsDict) -> Optional[str]:
+        return config.get("resource_id", None)
 
 
 @task_decorator(unique_name="Sink")
