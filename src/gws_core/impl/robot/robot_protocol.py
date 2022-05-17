@@ -130,8 +130,6 @@ class CreateSimpleRobot(Protocol):
 @protocol_decorator("MoveSimpleRobot", hide=True)
 class MoveSimpleRobot(Protocol):
 
-    config_specs = Source.config_specs
-
     def configure_protocol(self) -> None:
         source: ProcessSpec = self.add_process(Source, 'source')
         move: ProcessSpec = self.add_process(RobotMove, 'move')

@@ -33,9 +33,6 @@ class ProtocolCreateConfig(TypedDict):
 @typing_registrator(unique_name="Protocol", object_type="PROTOCOL", hide=True)
 class Protocol(Process):
 
-    # Config spec of the process at the class level
-    config_specs: ConfigSpecs = {}
-
     _process_specs: Dict[str, ProcessSpec]
     _connectors: List[ConnectorSpec]
     _interfaces: Dict[str, InterfaceSpec]

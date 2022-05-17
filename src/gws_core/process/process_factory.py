@@ -88,10 +88,6 @@ class ProcessFactory():
             protocol_model.set_process_type(protocol_type._typing_name)
 
             config: Config = Config()
-            config.set_specs(protocol_type.config_specs)
-            if config_params:
-                config.set_values(config_params)
-
             cls._init_process_model(process_model=protocol_model, config=config, instance_name=instance_name)
 
             protocol: Protocol = protocol_type.instantiate_protocol()
