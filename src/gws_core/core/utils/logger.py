@@ -8,7 +8,7 @@ from datetime import datetime
 from logging import Logger as PythonLogger
 from logging.handlers import TimedRotatingFileHandler
 from os import makedirs, path
-from typing import Literal
+from typing import Any, Literal
 
 from ..exception.exceptions.bad_request_exception import BadRequestException
 from .settings import Settings
@@ -16,6 +16,8 @@ from .settings import Settings
 LOGGER_NAME = "gws"
 LOGGER_FILE_NAME = "log"
 RESET_COLOR = "\x1b[0m"
+
+MessageType = Literal['ERROR', 'WARNING', 'INFO', 'DEBUG', 'PROGRESS', 'EXCEPTION']
 
 
 class Logger:
@@ -28,6 +30,8 @@ class Logger:
     _logger: PythonLogger = None
     _file_path: str = None
     _is_experiment_process: bool = None
+
+    _waiting_messages: list = []
 
     def __init__(self, level: Literal["ERROR", "INFO", "DEBUG"] = "INFO", _is_experiment_process: bool = False):
         """Create the Gencovery logger, it logs into the console and into a file
@@ -83,45 +87,31 @@ class Logger:
             Logger.info(
                 f"START APPLICATION : {settings.name} version {settings.version}, log level: {level}")
 
-    # -- E --
+        self._log_waiting_message()
 
     @classmethod
-    def error(cls, message: str, truncate=False) -> None:
-        if truncate and len(message) > 90:
-            message = message[0:60] + " ... " + message[-20:-1] + " [truncated]"
-        cls._logger.error(cls._get_message("ERROR", message))
+    def error(cls, message: str) -> None:
+        cls._log_message("ERROR", message)
 
     @classmethod
     def log_exception_stack_trace(cls, exception: Exception) -> None:
-        cls._logger.exception(exception, exc_info=True)
+        cls._log_message('EXCEPTION', exception)
 
     @classmethod
-    def warning(cls, message: str, truncate=False) -> None:
-        if truncate and len(message) > 90:
-            message = message[0:60] + " ... " + message[-20:-1] + " [truncated]"
-        cls._logger.warning(cls._get_message("WARNING", message))
+    def warning(cls, message: str) -> None:
+        cls._log_message("WARNING", message)
 
     @classmethod
-    def info(cls, message: str, truncate=False) -> None:
-        if truncate and len(message) > 90:
-            message = message[0:60] + " ... " + message[-20:-1] + " [truncated]"
-        cls._logger.info(cls._get_message("INFO", message))
+    def info(cls, message: str) -> None:
+        cls._log_message("INFO", message)
 
     @classmethod
-    def debug(cls, message: str, truncate=False) -> None:
-        if truncate and len(message) > 90:
-            message = message[0:60] + " ... " + message[-20:-1] + " [truncated]"
-        cls._logger.debug(cls._get_message("DEBUG", message))
-
-    # -- P --
+    def debug(cls, message: str) -> None:
+        cls._log_message("DEBUG", message)
 
     @classmethod
-    def progress(cls, message: str, truncate=False) -> None:
-        if truncate and len(message) > 90:
-            message = message[0:60] + " ... " + message[-20:-1] + " [truncated]"
-        cls._logger.info(cls._get_message("PROGRESS", message))
-
-    # -- F --
+    def progress(cls, message: str) -> None:
+        cls._log_message("PROGRESS", message)
 
     @classmethod
     def get_file_path(cls) -> str:
@@ -133,9 +123,42 @@ class Logger:
         """
         return "[EXPERIMENT]"
 
-    # -- I --
+    @classmethod
+    def _log_message(cls, level_name: MessageType, obj: Any) -> None:
+        """Log a message
 
-    # -- S --
+        :param level_name: level of the message
+        :type level_name: str
+        :param message: message to log
+        :type message: str
+        """
+        if cls._logger:
+
+            if level_name == "EXCEPTION":
+                cls._logger.exception(obj, exc_info=True)
+                return
+
+            complete_message = cls._get_message(level_name, obj)
+            if level_name == "ERROR":
+                cls._logger.error(complete_message)
+            elif level_name == "WARNING":
+                cls._logger.warning(complete_message)
+            elif level_name == "INFO" or level_name == "PROGRESS":
+                cls._logger.info(complete_message)
+            elif level_name == "DEBUG":
+                cls._logger.debug(complete_message)
+
+        else:
+            # add the message in the waiting list to be logged later
+            cls._waiting_messages.append({"level_name": level_name, "obj": obj})
+
+    @classmethod
+    def _log_waiting_message(cls) -> None:
+        """Log all the waiting messages
+        """
+        for message in cls._waiting_messages:
+            cls._log_message(message['level_name'], message['obj'])
+        cls._waiting_messages = []
 
     @classmethod
     def _get_message(cls, level_name: str, message: str) -> str:
