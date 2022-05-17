@@ -36,6 +36,9 @@ class ParamSpec(Generic[ParamSpecType]):
     # Description of the param, showed in the interface
     short_description: Optional[str]
 
+    #  If present, the value must be in the array
+    allowed_values: Optional[List[ParamSpecType]]
+
     # Measure unit of the value (ex kg)
     unit: Optional[str]
 
@@ -51,6 +54,7 @@ class ParamSpec(Generic[ParamSpecType]):
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
         short_description: Optional[str] = None,
+        allowed_values: Optional[List[ParamSpecType]] = None,
         unit: Optional[str] = None,
     ) -> None:
         """
@@ -77,6 +81,7 @@ class ParamSpec(Generic[ParamSpecType]):
         # the param is optional if the default value is set or optional is set to True
         self.optional = default_value is not None or optional
         self._check_visibility(visibility)
+        self._check_allowed_values(allowed_values)
 
         self.default_value = self.validate(default_value)
 
@@ -102,6 +107,8 @@ class ParamSpec(Generic[ParamSpecType]):
             _json["short_description"] = self.short_description
         if self.unit is not None:
             _json["unit"] = self.unit
+        if self.allowed_values:
+            _json["allowed_values"] = self.allowed_values
         return _json
 
     def validate(self, value: Any) -> ParamSpecType:
@@ -126,6 +133,20 @@ class ParamSpec(Generic[ParamSpecType]):
             raise BadRequestException(
                 f"The '{self.get_str_type()}' param visibility is set to {self.visibility} but the param is mandatory. It must have a default value of be optional if the visiblity is not public"
             )
+
+    def _check_allowed_values(self, allowed_values: Optional[List[ParamSpecType]]) -> None:
+        if allowed_values is not None:
+
+            if isinstance(allowed_values, (list, tuple)):
+                if len(allowed_values) > self.MAX_ALLOWED_VALUES_COUNT:
+                    Logger.warning(
+                        f'[ParamSpecs] Max number of allowed value reached, values will be truncated. Max {self.MAX_ALLOWED_VALUES_COUNT}')
+                self.allowed_values = list(allowed_values[:self.MAX_ALLOWED_VALUES_COUNT])
+            else:
+                raise BadRequestException(
+                    f"Invalid allowed values '{allowed_values}' in '{self.get_str_type()}' param, it must be an list or a tuple")
+        else:
+            self.allowed_values = None
 
     ################################# CLASS METHODS ###############################
 
@@ -152,6 +173,7 @@ class ParamSpec(Generic[ParamSpecType]):
         param_spec.short_description = json_.get("short_description")
         param_spec.unit = json_.get("unit")
         param_spec.visibility = json_.get("visibility")
+        param_spec.allowed_values = json_.get("allowed_values")
         return param_spec
 
     @classmethod
@@ -180,8 +202,6 @@ class ParamSpec(Generic[ParamSpecType]):
 class StrParam(ParamSpec[str]):
     """String param"""
 
-    #  If present, the value must be in the array
-    allowed_values: Optional[List[str]]
     min_length: Optional[int]
     max_length: Optional[int]
 
@@ -214,13 +234,6 @@ class StrParam(ParamSpec[str]):
         :param unit: Measure unit of the value (ex kg)
         :type unit: Optional[str]
         """
-        if allowed_values is not None and isinstance(allowed_values, list):
-            if len(allowed_values) > self.MAX_ALLOWED_VALUES_COUNT:
-                Logger.warning(
-                    f'[ParamSpecs] Max number of allowed value reached, values will be truncated. Max {self.MAX_ALLOWED_VALUES_COUNT}')
-            self.allowed_values = allowed_values[:self.MAX_ALLOWED_VALUES_COUNT]
-        else:
-            self.allowed_values = None
 
         self.min_length = min_length
         self.max_length = max_length
@@ -230,6 +243,7 @@ class StrParam(ParamSpec[str]):
             visibility=visibility,
             human_name=human_name,
             short_description=short_description,
+            allowed_values=allowed_values,
             unit=unit,
         )
 
@@ -240,21 +254,9 @@ class StrParam(ParamSpec[str]):
             max_length=self.max_length
         )
 
-    def to_json(self) -> ParamSpecDict:
-        json_: ParamSpecDict = super().to_json()
-        if self.allowed_values:
-            json_["allowed_values"] = self.allowed_values
-        return json_
-
     @classmethod
     def get_str_type(cls) -> str:
         return 'str'
-
-    @classmethod
-    def load_from_json(cls, json_: Dict[str, Any]) -> "StrParam":
-        param_spec: StrParam = super().load_from_json(json_)
-        param_spec.allowed_values = json_.get("allowed_values")
-        return param_spec
 
 
 class BoolParam(ParamSpec[bool]):
@@ -292,9 +294,6 @@ class ListParam(ParamSpec[list]):
 
 class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
     """Abstract numerci param class (int or float)"""
-
-    # If present, the value must be in the array
-    allowed_values: Optional[List[ParamSpecType]]
 
     # The minimum value allowed (including)
     min_value: Optional[ParamSpecType]
@@ -335,13 +334,6 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
         :param unit: Measure unit of the value (ex kg)
         :type unit: Optional[str]
         """
-        if allowed_values is not None and isinstance(allowed_values, list):
-            if len(allowed_values) > self.MAX_ALLOWED_VALUES_COUNT:
-                Logger.warning(
-                    f'[ParamSpecs] Max number of allowed value reached, values will be truncated. Max {self.MAX_ALLOWED_VALUES_COUNT}')
-            self.allowed_values = allowed_values[:self.MAX_ALLOWED_VALUES_COUNT]
-        else:
-            self.allowed_values = None
 
         self.min_value = min_value
         self.max_value = max_value
@@ -351,6 +343,7 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
             visibility=visibility,
             human_name=human_name,
             short_description=short_description,
+            allowed_values=allowed_values,
             unit=unit,
         )
 
@@ -361,8 +354,6 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
     def to_json(self) -> ParamSpecDict:
         json_: ParamSpecDict = super().to_json()
 
-        if self.allowed_values:
-            json_["allowed_values"] = self.allowed_values
         if self.min_value:
             json_["min_value"] = self.min_value
         if self.max_value:
@@ -377,7 +368,6 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
     @classmethod
     def load_from_json(cls, json_: Dict[str, Any]) -> "NumericParam":
         param_spec: NumericParam = super().load_from_json(json_)
-        param_spec.allowed_values = json_.get("allowed_values")
         param_spec.min_value = json_.get("min_value")
         param_spec.max_value = json_.get("max_value")
         return param_spec
