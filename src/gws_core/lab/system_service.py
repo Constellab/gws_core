@@ -140,3 +140,10 @@ class SystemService:
             Logger.info('Lab start successfully registered on central')
         else:
             Logger.error('Error during lab start registration with central')
+
+    @classmethod
+    def get_lab_info(cls) -> dict:
+        return {
+            "lab_name": Settings.get_lab_name(),
+            "front_version": Settings.get_front_version(),
+        }

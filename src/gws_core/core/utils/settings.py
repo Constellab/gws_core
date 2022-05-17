@@ -147,6 +147,15 @@ class Settings():
         return os.environ["LAB_NAME"]
 
     @classmethod
+    def get_front_version(cls) -> str:
+        """Returns the front version of the lab
+        """
+
+        if "FRONT_VERSION" not in os.environ:
+            return ''
+        return os.environ["FRONT_VERSION"]
+
+    @classmethod
     def get_central_api_key(cls) -> str:
         """Return the central api key
 

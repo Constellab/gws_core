@@ -11,14 +11,12 @@ from .system_service import SystemService
 
 
 @core_app.get("/system/info", tags=["System"], summary="Get system info")
-async def system_info(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+async def system_info(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Reset dev environment
     """
 
-    return {
-        "lab_name": Settings.get_lab_name(),
-    }
+    return SystemService.get_lab_info()
 
 
 @core_app.post("/system/dev-reset", tags=["System"], summary="Reset dev environment")
