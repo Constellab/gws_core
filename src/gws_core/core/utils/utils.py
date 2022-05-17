@@ -142,7 +142,7 @@ class Utils:
     def get_literal_values(literal_type: Type) -> Tuple[Any]:
         """Return the list of literal values
         """
-        return get_args(literal_type)
+        return list(get_args(literal_type))
 
     @staticmethod
     def get_all_subclasses(class_: Type) -> Set[Type]:

@@ -1,12 +1,13 @@
 
 from typing import Literal, Set, Type
+from unittest import IsolatedAsyncioTestCase
 
-from gws_core import BaseTestCase, Model, Utils
+from gws_core import Model, Utils
 
-literalType = Literal['one', 'two']
+LiteralType = Literal['one', 'two']
 
 
-class TestUtils(BaseTestCase):
+class TestUtils(IsolatedAsyncioTestCase):
 
     def test_get_model_type(self):
         model_type: Type[Model] = Utils.get_model_type(Model.full_classname())
@@ -14,8 +15,8 @@ class TestUtils(BaseTestCase):
         self.assertEqual(model_type, Model)
 
     def test_value_is_in_literal(self):
-        self.assertTrue(Utils.value_is_in_literal('one', literalType))
-        self.assertFalse(Utils.value_is_in_literal('three', literalType))
+        self.assertTrue(Utils.value_is_in_literal('one', LiteralType))
+        self.assertFalse(Utils.value_is_in_literal('three', LiteralType))
 
     def test_get_subclasses(self):
         types: Set[Type[Model]] = Utils.get_all_subclasses(Model)
