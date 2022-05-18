@@ -59,8 +59,13 @@ class TransformerService():
         # add sink and sink connector
         protocol.add_sink('sink', last_process >> 'target')
 
-        # add the experiment to queue to run it
-        await experiment.run()
+        #  run the experiment
+        try:
+            await experiment.run()
+        except Exception as exception:
+            # delete experiment if there was an error
+            experiment.delete()
+            raise exception
 
         # return the resource model of the sink process
         return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model('resource')

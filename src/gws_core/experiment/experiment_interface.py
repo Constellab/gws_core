@@ -74,5 +74,8 @@ class IExperiment:
     def stop(self) -> None:
         ExperimentRunService.stop_experiment(self._experiment.id)
 
+    def delete(self) -> None:
+        ExperimentService.delete_experiment(self._experiment.id)
+
     def get_experiment_model(self) -> Experiment:
         return self._experiment
