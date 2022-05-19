@@ -8,6 +8,7 @@ import os
 from typing import Type
 
 from gws_core.impl.file.file import File
+from gws_core.impl.file.file_helper import FileHelper
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import BoolParam, StrParam
@@ -30,8 +31,8 @@ class TableExporter(ResourceExporter):
 
     async def export_to_path(self, source: Table, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_name = params.get_value('file_name', source.name) or 'table'
-        file_format = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
-        file_path = os.path.join(dest_dir, file_name+file_format)
+        file_format = FileHelper.clean_extension(params.get_value('file_format', Table.DEFAULT_FILE_FORMAT))
+        file_path = os.path.join(dest_dir, file_name + '.' + file_format)
         sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)
         if sep == "tab":
             sep = "\t"

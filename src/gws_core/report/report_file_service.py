@@ -45,7 +45,7 @@ class ReportFileService():
 
         # generate a file name
         extension = FileHelper.get_extension(file.filename)
-        filename = Utils.generate_uuid() + '_' + str(DateHelper.now_utc_as_milliseconds()) + extension
+        filename = Utils.generate_uuid() + '_' + str(DateHelper.now_utc_as_milliseconds()) + '.' + extension
 
         file_path = os.path.join(dir, filename)
 

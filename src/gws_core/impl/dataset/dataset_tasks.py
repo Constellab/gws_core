@@ -8,6 +8,8 @@ import copy
 import os
 from typing import Type
 
+from gws_core.impl.file.file_helper import FileHelper
+
 from ...config.config_types import ConfigParams, ConfigSpecs
 from ...config.param_set import ParamSet
 from ...config.param_spec import BoolParam, IntParam, StrParam
@@ -66,8 +68,8 @@ class DatasetExporter(TableExporter):
 
     async def export_to_path(self, resource: Table, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_name = params.get_value('file_name', type(self)._human_name)
-        file_format = params.get_value('file_format', Dataset.DEFAULT_FILE_FORMAT)
-        file_path = os.path.join(dest_dir, file_name+file_format)
+        file_format = FileHelper.clean_extension(params.get_value('file_format', Dataset.DEFAULT_FILE_FORMAT))
+        file_path = os.path.join(dest_dir, file_name + '.' + file_format)
         sep = params.get_value('delimiter', Dataset.DEFAULT_DELIMITER)
         if sep == "tab":
             sep = "\t"
@@ -89,6 +91,6 @@ class DatasetExporter(TableExporter):
             )
         else:
             raise BadRequestException(
-                "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
+                "Cannot detect the file type using file extension. Valid file extensions are [xls, xlsx, csv, tsv, txt, tab].")
 
         return target_type(path=file_path)

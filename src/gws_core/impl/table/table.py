@@ -34,8 +34,8 @@ from .view.table_stacked_barplot_view import TableStackedBarPlotView
 from .view.table_venn_diagram_view import TableVennDiagramView
 from .view.table_view import TableView
 
-ALLOWED_XLS_FILE_FORMATS = ['.xlsx', '.xls']
-ALLOWED_TXT_FILE_FORMATS = ['.csv', '.tsv', '.tab', '.txt']
+ALLOWED_XLS_FILE_FORMATS = ['xlsx', 'xls']
+ALLOWED_TXT_FILE_FORMATS = ['csv', 'tsv', 'tab', 'txt']
 ALLOWED_FILE_FORMATS = [*ALLOWED_XLS_FILE_FORMATS, *ALLOWED_TXT_FILE_FORMATS]
 
 
@@ -44,7 +44,7 @@ class Table(Resource):
 
     ALLOWED_DELIMITER = ["auto", "tab", "space", ",", ";"]
     DEFAULT_DELIMITER = "auto"
-    DEFAULT_FILE_FORMAT = ".csv"
+    DEFAULT_FILE_FORMAT = "csv"
 
     ALLOWED_XLS_FILE_FORMATS = ALLOWED_XLS_FILE_FORMATS
     ALLOWED_TXT_FILE_FORMATS = ALLOWED_TXT_FILE_FORMATS

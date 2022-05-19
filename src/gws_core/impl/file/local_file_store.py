@@ -144,9 +144,9 @@ class LocalFileStore(FileStore):
 
         # If the file exists, find a unique name with a number
         unique: int = 1
-        while self.node_name_exists(f"{file_name}_{unique}{extension}"):
+        while self.node_name_exists(f"{file_name}_{unique}.{extension}"):
             unique += 1
-        return os.path.join(self.path, f"{file_name}_{unique}{extension}")
+        return os.path.join(self.path, f"{file_name}_{unique}.{extension}")
 
     def node_path_exists(self, node_path: str) -> bool:
         # clean the file path

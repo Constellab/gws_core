@@ -3,13 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, Generic, List, TypedDict, TypeVar
+from typing import Any, Callable, Dict, Generic, List, TypedDict, TypeVar
 
+from gws_core.core.classes.jsonable import ListJsonable
 from numpy.core.numeric import Infinity
 from peewee import ModelSelect
 
 from ..model.model import Model
-from .query import Query
 
 
 class PaginatorDict(TypedDict):
@@ -44,6 +44,9 @@ class PageInfo():
     from_index: int
     to_index: int
 
+    # Only set to true when the page is filter manually after the request so the total count can be inexact
+    total_is_approximate: bool = False
+
     def __init__(self, page: int, number_of_items_per_page: int, total_number_of_items: int,
                  nb_max_of_items_per_page: int = Infinity, first_page: int = 0) -> None:
         self.page = page
@@ -70,7 +73,8 @@ class PageInfo():
             'total_number_of_pages': self.total_number_of_pages,
             'number_of_items_per_page': self.number_of_items_per_page,
             'is_first_page': self.page <= self.first_page,
-            'is_last_page': self.page >= self.last_page
+            'is_last_page': self.page >= self.last_page,
+            'total_is_approximate': self.total_is_approximate
         }
 
 
@@ -83,8 +87,9 @@ class Paginator(Generic[PaginatorType]):
     """
 
     page_info: PageInfo
-    query: Query
     paginated_query: ModelSelect
+
+    results: List[PaginatorType]
 
     def __init__(self, query: ModelSelect,
                  page: int = 0,
@@ -96,9 +101,9 @@ class Paginator(Generic[PaginatorType]):
         else:
             self.view_params = view_params
 
-        self.query = query
         # add 1 to page because peewee starts with 1
         self.paginated_query = query.paginate(page + 1, number_of_items_per_page)
+        self.results = list(self.paginated_query)
         self.page_info = PageInfo(
             int(page),
             number_of_items_per_page, query.count(),
@@ -110,13 +115,27 @@ class Paginator(Generic[PaginatorType]):
             **self.page_info.to_json(),
         }
 
+    def filter(self, filter_: Callable[[PaginatorType], Any]) -> None:
+        """
+        Filter the current items in the paginators, the total count become approximate
+
+        :param filter: The filter to apply
+        :type filter: `function`
+        """
+
+        new_result = list(filter(filter_, self.results))
+        diff = len(self.results) - len(new_result)
+        self.results = new_result
+        self.page_info.total_number_of_items -= diff
+
+        # if there are more than one page of result, mark the total count as approximate
+        if self.page_info.total_number_of_pages > 1:
+            self.page_info.total_is_approximate = True
+
     def to_json(self, deep: bool = False) -> PaginatorDict:
         paginator_dict: PaginatorDict = self._get_paginated_info()
-        paginator_dict['objects'] = Query.format(
-            self.paginated_query,
-            deep=deep,
-            as_json=True
-        )
+
+        paginator_dict['objects'] = ListJsonable(self.results).to_json(deep=deep)
         return paginator_dict
 
     def current_items(self) -> ModelSelect:

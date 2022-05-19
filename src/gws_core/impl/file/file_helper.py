@@ -44,8 +44,18 @@ class FileHelper():
     # -- E --
 
     @classmethod
-    def get_extension(cls, path: PathType):
-        return cls.get_path(path).suffix
+    def get_extension(cls, path: PathType) -> str:
+        """Return the extension of a file without the '.'
+        """
+        return cls.clean_extension(cls.get_path(path).suffix)
+
+    @classmethod
+    def clean_extension(cls, extension: str) -> str:
+        """Return the extension of a file without the '.' if it is present on first caracter"""
+        if extension is None:
+            return None
+
+        return sub(r'^\.', '', extension)
 
     @classmethod
     def get_name(cls, path: PathType):
@@ -92,23 +102,23 @@ class FileHelper():
 
     @classmethod
     def is_json(cls, path: PathType):
-        return cls.get_extension(path) in [".json"]
+        return cls.get_extension(path) in ["json"]
 
     @classmethod
     def is_csv(cls, path: PathType):
-        return cls.get_extension(path) in [".csv", ".tsv"]
+        return cls.get_extension(path) in ["csv", "tsv"]
 
     @classmethod
     def is_txt(cls, path: PathType):
-        return cls.get_extension(path) in [".txt"]
+        return cls.get_extension(path) in ["txt"]
 
     @classmethod
     def is_jpg(cls, path: PathType):
-        return cls.get_extension(path) in [".jpg", ".jpeg"]
+        return cls.get_extension(path) in ["jpg", "jpeg"]
 
     @classmethod
     def is_png(cls, path: PathType):
-        return cls.get_extension(path) in [".png"]
+        return cls.get_extension(path) in ["png"]
 
     @classmethod
     def is_file(cls, path: PathType):

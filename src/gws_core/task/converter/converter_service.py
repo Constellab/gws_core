@@ -26,7 +26,6 @@ from ...protocol.protocol_interface import IProtocol
 from ...resource.resource_model import ResourceModel
 from ...task.converter.importer import ResourceImporter
 from ...task.task_typing import TaskTyping
-from .converter_dto import ResourceImportersDTO
 
 
 class ConverterService:
@@ -34,51 +33,6 @@ class ConverterService:
     ################################################ IMPORTER ################################################
 
     @classmethod
-    def get_importers(cls, resource_typing_name: str, extension: str) -> List[ResourceImportersDTO]:
-        """ return the list of importer typing of a resource
-
-        :param resource_typing_name: [description]
-        :type resource_typing_name: str
-        :return: [description]
-        :rtype: List[TaskTyping]
-        """
-        resource_type: Type[File] = TypingManager.get_type_from_name(resource_typing_name)
-
-        if not Utils.issubclass(resource_type, FSNode):
-            raise BadRequestException("The resource must be a FsNode")
-
-        task_typings: List[TaskTyping] = TaskTyping.get_by_related_resource(resource_type, "IMPORTER")
-
-        # Group the importers by resource type
-        grouped_tasks: Dict[str, ResourceImportersDTO] = {}
-        for task_typing in task_typings:
-
-            # retrieve the task python type
-            model_t: Type[Base] = task_typing.get_type()
-
-            # check if the type exist and is a ResourceImporter
-            if model_t is None or not issubclass(model_t, ResourceImporter):
-                continue
-
-            # Check that the extensions is supported by the importer
-            if extension and model_t._supported_extensions and extension not in model_t._supported_extensions:
-                continue
-
-            resource_typing: str = task_typing.related_model_typing_name
-
-            # if the resource typing was not added
-            if not resource_typing in grouped_tasks:
-                grouped_tasks[resource_typing] = ResourceImportersDTO(
-                    TypingManager.get_typing_from_name(resource_typing))
-
-            grouped_tasks[resource_typing].add_importer(task_typing)
-
-        # covnert to list and sort it to have the most specific importer first and generic last
-        tasks: List[ResourceImportersDTO] = list(grouped_tasks.values())
-        tasks.sort(key=lambda x: len(x.resource.get_ancestors()), reverse=True)
-        return tasks
-
-    @ classmethod
     async def call_importer(cls, resource_model_id: str, importer_typing_name: str, config: ConfigParamsDict) -> Coroutine[Any, Any, ResourceModel]:
         # Get and check the resource id
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)

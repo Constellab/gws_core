@@ -2,6 +2,8 @@
 import os
 from typing import Type
 
+from gws_core.impl.file.file_helper import FileHelper
+
 from ...config.config_types import ConfigParams, ConfigSpecs
 from ...config.param_spec import StrParam
 from ...core.exception.exceptions.bad_request_exception import \
@@ -18,7 +20,7 @@ from .text import Text
 # ####################################################################
 
 
-@importer_decorator(unique_name="TextImporter", target_type=Text, supported_extensions=['.txt'])
+@importer_decorator(unique_name="TextImporter", target_type=Text, supported_extensions=['txt'])
 class TextImporter(ResourceImporter):
 
     config_specs: ConfigSpecs = {'encoding': StrParam(default_value='utf-8', short_description="Text encoding")}
@@ -51,8 +53,8 @@ class TextExporter(ResourceExporter):
 
     async def export_to_path(self, resource: Text, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_name = params.get_value('file_name', type(self)._human_name)
-        file_format = params.get_value('file_format', Text.DEFAULT_FILE_FORMAT)
-        file_path = os.path.join(dest_dir, file_name+file_format)
+        file_format = FileHelper.clean_extension(params.get_value('file_format', Text.DEFAULT_FILE_FORMAT))
+        file_path = os.path.join(dest_dir, file_name + '.' + file_format)
 
         try:
             with open(file_path, 'w+t', encoding=params.get_value('encoding', 'utf-8')) as fp:

@@ -24,19 +24,33 @@ async def advanced_search(search_dict: SearchParams,
     """
     Advanced search for typing
     """
-
     return TypingService.search(search_dict, page, number_of_items_per_page).to_json()
 
 
-@core_app.get(
-    "/typing/transformers/{related_resource_typing_name}", tags=["Task"],
-    summary="Get trasnformers related to a resource")
-async def get_task_transformers_by_related_resource(related_resource_typing_name: str,
-                                                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+@core_app.post("/typing/importers/search/{resource_typing_name}/{extension}",
+               tags=["Typing"], summary="Search typings")
+async def importers_advanced_search(search_dict: SearchParams,
+                                    resource_typing_name: str,
+                                    extension: str,
+                                    page: Optional[int] = 1,
+                                    number_of_items_per_page: Optional[int] = 20,
+                                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
-    Get tasks types related to a resource
+    Advanced search for importers typing
     """
+    return TypingService.search_importers(resource_typing_name, extension,
+                                          search_dict, page, number_of_items_per_page).to_json()
 
-    return ListJsonable(
-        TypingService.get_task_transformers_by_related_resource(related_resource_typing_name)).to_json(
-        deep=True)  # TODO check deep=True
+
+@core_app.post("/typing/transformers/search/{resource_typing_name}",
+               tags=["Typing"], summary="Search typings")
+async def transformers_advanced_search(search_dict: SearchParams,
+                                       resource_typing_name: str,
+                                       page: Optional[int] = 1,
+                                       number_of_items_per_page: Optional[int] = 20,
+                                       _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Advanced search for transformers typing
+    """
+    return TypingService.search_transformers(
+        resource_typing_name, search_dict, page, number_of_items_per_page).to_json()

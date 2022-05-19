@@ -11,6 +11,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.impl.file.file import File
+from gws_core.impl.file.file_helper import FileHelper
 
 from ...config.config_types import ConfigParams, ConfigSpecs
 from ...config.param_spec import BoolParam, StrParam
@@ -25,9 +26,9 @@ from .json_dict import JSONDict
 # ####################################################################
 
 
-@importer_decorator(unique_name="JSONImporter", target_type=JSONDict, supported_extensions=['.json'])
+@importer_decorator(unique_name="JSONImporter", target_type=JSONDict, supported_extensions=['json'])
 class JSONImporter(ResourceImporter):
-    config_specs: ConfigSpecs = {'file_format': StrParam(default_value=".json", short_description="File format")}
+    config_specs: ConfigSpecs = {'file_format': StrParam(default_value="json", short_description="File format")}
 
     async def import_from_path(self, source: File, params: ConfigParams, target_type: Type[JSONDict]) -> JSONDict:
         if source.is_empty():
@@ -52,7 +53,7 @@ class JSONExporter(ResourceExporter):
         'file_name': StrParam(optional=True, short_description="Destination file name in the store"),
         'file_format':
         StrParam(
-            optional=True, default_value=".json", visibility=StrParam.PROTECTED_VISIBILITY,
+            optional=True, default_value="json", visibility=StrParam.PROTECTED_VISIBILITY,
             short_description="File format"),
         'prettify':
         BoolParam(
@@ -61,8 +62,8 @@ class JSONExporter(ResourceExporter):
 
     async def export_to_path(self, resource: JSONDict, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_name = params.get_value('file_name', type(self)._human_name)
-        file_format = params.get_value('file_format', '.json')
-        file_path = os.path.join(dest_dir, file_name+file_format)
+        file_format = FileHelper.clean_extension(params.get_value('file_format', 'json'))
+        file_path = os.path.join(dest_dir, file_name + '.' + file_format)
 
         with open(file_path, "w", encoding="utf-8") as f:
             if params.get_value('prettify', False):

@@ -52,6 +52,22 @@ class SearchParams(BaseModel):
         self.remove_filter_criteria(key)
         self.filtersCriteria.append({'key': key, 'operator': operator, 'value': value})
 
+    def get_filter_criteria(self, key: str) -> SearchFilterCriteria:
+        criterias = [x for x in self.filtersCriteria if x["key"] == key]
+
+        if len(criterias) == 0:
+            return None
+
+        return criterias[0]
+
+    def get_filter_criteria_value(self, key: str) -> None:
+        criteria: SearchFilterCriteria = self.get_filter_criteria(key)
+
+        if criteria is None:
+            return None
+
+        return criteria["value"]
+
 
 class SearchBuilder:
     """Builder to make dynamic search query with And operator

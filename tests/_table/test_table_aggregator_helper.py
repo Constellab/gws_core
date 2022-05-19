@@ -4,7 +4,8 @@
 # About us: https://gencovery.com
 
 
-from gws_core import BaseTestCase, Table, DataframeAggregatorHelper, TableImporter
+from gws_core import (BaseTestCase, DataframeAggregatorHelper, Table,
+                      TableImporter)
 from gws_core.data_provider.data_provider import DataProvider
 from pandas import DataFrame
 

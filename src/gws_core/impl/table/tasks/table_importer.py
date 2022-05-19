@@ -48,7 +48,7 @@ class TableImporter(ResourceImporter):
             encoding = FileHelper.detect_file_encoding(source.path)
             self.log_info_message(f"Detected encoding: {encoding}")
 
-        file_format: str = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
+        file_format: str = FileHelper.clean_extension(params.get_value('file_format', Table.DEFAULT_FILE_FORMAT))
         sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)
         header = params.get_value('header', 0)
         index_column = params.get_value('index_column', -1)

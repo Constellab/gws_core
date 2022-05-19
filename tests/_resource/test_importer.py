@@ -4,28 +4,43 @@
 # About us: https://gencovery.com
 
 
-from typing import List
-
-from gws_core import Table, TableImporter
+from gws_core import (File, Paginator, Resource, ResourceImporter, Table,
+                      TableImporter, importer_decorator)
+from gws_core.core.classes.paginator import Paginator
+from gws_core.core.classes.search_builder import SearchParams
 from gws_core.data_provider.data_provider import DataProvider
-from gws_core.impl.file.file import File
+from gws_core.model.typing_service import TypingService
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
-from gws_core.task.converter.converter_service import (ConverterService,
-                                                       ResourceImportersDTO)
+from gws_core.task.converter.converter_service import ConverterService
+from gws_core.task.task_typing import TaskTyping
 from gws_core.test.base_test_case import BaseTestCase
+
+
+@importer_decorator(unique_name="TestImporterUnsued", target_type=Resource,
+                    supported_extensions=['weirdformatfile'])
+class TestImporterResource(ResourceImporter):
+    pass
 
 
 class TestImporter(BaseTestCase):
 
     def test_get_import_specs(self):
-        importers: List[ResourceImportersDTO] = ConverterService.get_importers(File._typing_name, '.csv')
+        importers: Paginator[TaskTyping] = TypingService.search_importers(File._typing_name, 'weirdformatfile',
+                                                                          SearchParams(), 0, 1000)
 
-        self.assertTrue(len(importers) > 0)
-        self.assertTrue(len([x for x in importers[0].importers if x.get_type() == TableImporter]) == 1)
-        # self.assertTrue(len([x for x in importers if x.get_type() == TextImporter]) == 0)
+        self.assertEqual(len(importers.results), 1)
+        self.assertTrue(len([x for x in importers.results if x.get_type() == TestImporterResource]) == 1)
 
-        importers = ConverterService.get_importers(File._typing_name, '.json')
-        self.assertTrue(len([x for x in importers[0].importers if x.get_type() == TableImporter]) == 0)
+        importers = TypingService.search_importers(File._typing_name, 'anotherweirdformatfile',
+                                                   SearchParams(), 0, 1000)
+        self.assertEqual(len(importers.results), 0)
+
+        # test with ignore extension activated
+        search_params = SearchParams(
+            filtersCriteria=[{'key': 'importer_ignore_extension', 'value': True, 'operator': 'EQ'}])
+        importers = TypingService.search_importers(File._typing_name, 'anotherweirdformatfile',
+                                                   search_params, 0, 1000)
+        self.assertTrue(len(importers.results) > 0)
 
     async def test_importer(self):
         file = File(path=DataProvider.get_iris_file().path)
