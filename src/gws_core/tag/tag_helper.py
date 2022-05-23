@@ -6,9 +6,7 @@
 from typing import Dict, List
 
 from numpy import array, meshgrid
-from peewee import CharField, Expression
 
-from ..core.classes.expression_builder import ExpressionBuilder
 from .tag import TAGS_SEPARATOR, Tag
 
 
@@ -22,7 +20,7 @@ class TagHelper():
         tags: List[Tag] = cls.tags_to_list(tags_str)
 
         if not tags:
-            return str(Tag(tag_key, tag_value))
+            tags = []
 
         same_key: List[Tag] = [x for x in tags if x.key == tag_key]
 
@@ -34,10 +32,25 @@ class TagHelper():
         return cls.tags_to_str(tags)
 
     @classmethod
+    def remove_tag(cls, tags_str: str, tag_key: str, tag_value: str) -> str:
+        """Remove a tag from a string
+        """
+
+        tags: List[Tag] = cls.tags_to_list(tags_str)
+
+        if not tags:
+            tags = []
+
+        tags.remove(Tag(tag_key, tag_value))
+
+        return cls.tags_to_str(tags)
+
+    @classmethod
     def tags_to_str(cls, tags: List[Tag]) -> str:
         if not tags:
             return ''
-        return TAGS_SEPARATOR.join([str(tag) for tag in tags])
+        # tags seperated with ',' with ',' around
+        return TAGS_SEPARATOR + TAGS_SEPARATOR.join([str(tag) for tag in tags]) + TAGS_SEPARATOR
 
     @classmethod
     def tags_to_list(cls, tags: str) -> List[Tag]:
@@ -47,7 +60,9 @@ class TagHelper():
         tags_list: List[Tag] = []
 
         for tag_str in tags.split(TAGS_SEPARATOR):
-            tags_list.append(Tag.from_string(tag_str))
+            # skip the empty tag (like first and la separator)
+            if len(tag_str) > 0:
+                tags_list.append(Tag.from_string(tag_str))
         return tags_list
 
     @classmethod
@@ -60,21 +75,6 @@ class TagHelper():
         for tag_key, tag_value in tags.items():
             tags_list.append(Tag(tag_key, tag_value))
         return tags_list
-
-    @classmethod
-    def get_search_tag_expression(cls, tag_str: str, tag_field: CharField) -> Expression:
-        """ Get the filter expresion for a search in tags column
-
-        :param filter_: [description]
-        :type filter_: SearchFilterCriteria
-        :return: [description]
-        :rtype: Expression
-        """
-        tags: List[Tag] = cls.tags_to_list(tag_str)
-        query_builder: ExpressionBuilder = ExpressionBuilder()
-        for tag in tags:
-            query_builder.add_expression(tag_field.contains(str(tag)))
-        return query_builder.build()
 
     @classmethod
     def get_distinct_values(cls, tags: List[Dict[str, str]]) -> Dict[str, List[str]]:

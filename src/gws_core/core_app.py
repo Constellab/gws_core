@@ -5,7 +5,7 @@
 
 
 from fastapi import FastAPI
-from fastapi.param_functions import Depends
+from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 
 from .core.exception.exception_handler import ExceptionHandler
@@ -17,6 +17,12 @@ core_app = FastAPI(docs_url="/docs")
 @core_app.exception_handler(HTTPException)
 async def allg_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(request, exc)
+
+
+# Catch RequestValidationError (422 Unprocessable Entity)
+@core_app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    return ExceptionHandler.handle_request_validation_error(exc)
 
 
 # Catch all other exceptions

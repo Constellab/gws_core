@@ -123,12 +123,14 @@ def update_file_type(id: str,
                      _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     return ResourceService.update_resource_type(id, resource_typing_name).to_json()
 
+############################# TAGS ###########################
+
 
 @core_app.put("/resource/{id}/tags", tags=["Resource"], summary="Update resource tags")
 def save_tags(id: str,
               tags: List[Tag],
               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    return TagService.save_tags_to_model(ResourceModel, id, tags)
+    return TagService.save_tags_to_entity(ResourceModel, id, tags)
 
 
 ############################# TRANSFORMER ###########################

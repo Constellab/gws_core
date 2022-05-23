@@ -66,7 +66,7 @@ class TestResourceModel(BaseTestCase):
         # Search on both tag
         search_dict.filtersCriteria = [self._get_tag_filter(TagHelper.tags_to_str([nameTag, otherTag]))]
         self.search(search_dict, 1)
-        # Search on name tag
+        # Search all resources that have the tag name whatever the value
         search_dict.filtersCriteria = [self._get_tag_filter('name')]
         self.search(search_dict, 2)
 

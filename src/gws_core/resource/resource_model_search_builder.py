@@ -25,6 +25,7 @@ class ResourceModelSearchBuilder(SearchBuilder):
     def convert_filter_to_expression(self, filter: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags
         if filter['key'] == 'tags':
-            return TagHelper.get_search_tag_expression(filter['value'], ResourceModel.tags)
+            tags = TagHelper.tags_to_list(filter['value'])
+            return ResourceModel.get_search_tag_expression(tags)
 
         return super().convert_filter_to_expression(filter)

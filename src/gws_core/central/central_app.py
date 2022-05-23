@@ -7,6 +7,7 @@
 from typing import Any, Dict, List
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.report.report_service import ReportService
@@ -34,6 +35,13 @@ central_app = FastAPI(docs_url="/docs")
 @central_app.exception_handler(HTTPException)
 async def allg_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(request, exc)
+
+# Catch RequestValidationError (422 Unprocessable Entity)
+
+
+@central_app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    return ExceptionHandler.handle_request_validation_error(exc)
 
 
 # Catch all other exceptions

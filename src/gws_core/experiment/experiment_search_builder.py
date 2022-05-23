@@ -19,7 +19,8 @@ class ExperimentSearchBuilder(SearchBuilder):
     def convert_filter_to_expression(self, filter: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags
         if filter['key'] == 'tags':
-            return TagHelper.get_search_tag_expression(filter['value'], Experiment.tags)
+            tags = TagHelper.tags_to_list(filter['value'])
+            return Experiment.get_search_tag_expression(tags)
         elif filter['key'] == 'text':
             # on text key, full text search on title and description
             return Match((Experiment.title, Experiment.description), filter['value'], modifier='IN BOOLEAN MODE')

@@ -9,6 +9,7 @@ import uuid
 from typing import List
 
 from fastapi import status
+from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 
@@ -24,6 +25,31 @@ CODE_SEPARATOR = '.'
 class ExceptionHandler():
     """Class to handle exceptions and return a formatted object to the front
     """
+
+    @classmethod
+    def handle_request_validation_error(cls, exc: RequestValidationError):
+        """
+        Handle a RequestValidationError exception (error 422 Unprocessable Entity)
+        It returns only the first message
+        :param request:
+        :param exc:
+        :return:
+        """
+
+        # retrieve the error
+        errors = exc.errors()
+
+        # get only the first error message
+        str_error = None
+        if len(errors) > 0:
+            str_error = errors[0].get('msg')
+
+        if not str_error:
+            str_error = 'Invalid data'
+
+        return ExceptionResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, code='unprocessable_entity_error',
+                                 detail=str_error,
+                                 instance_id=cls.generate_instance_id())
 
     @classmethod
     def handle_exception(cls, request: Request, exception: Exception) -> ExceptionResponse:

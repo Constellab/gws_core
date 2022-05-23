@@ -169,7 +169,7 @@ def stop_an_experiment(id: str,
 def save_tags(id: str,
               tags: List[Tag],
               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    return TagService.save_tags_to_model(Experiment, id, tags)
+    return TagService.save_tags_to_entity(Experiment, id, tags)
 
 
 ################################### COPY ##############################

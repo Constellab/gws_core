@@ -1,11 +1,16 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 
 from typing import Dict, List, Optional
 
-from peewee import CharField
+from gws_core.core.classes.expression_builder import ExpressionBuilder
+from peewee import CharField, Expression
 from peewee import Model as PeeweeModel
 
-from .tag import Tag
+from .tag import KEY_VALUE_SEPARATOR, TAGS_SEPARATOR, Tag
 from .tag_helper import TagHelper
 
 
@@ -17,6 +22,11 @@ class TaggableModel(PeeweeModel):
 
     def add_or_replace_tag(self, tag_key: str, tag_value: str) -> None:
         self.tags = TagHelper.add_or_replace_tag(self.tags, tag_key, tag_value)
+
+    def remove_tag(self, tag_key: str, tag_value: str) -> None:
+        """remove the tag from the model
+        """
+        self.tags = TagHelper.remove_tag(self.tags, tag_key, tag_value)
 
     def get_tags(self) -> List[Tag]:
         return TagHelper.tags_to_list(self.tags)
@@ -47,10 +57,26 @@ class TaggableModel(PeeweeModel):
         """
         return tag in self.get_tags()
 
-    ################################### SPECIAL TAGS ############################
+    @classmethod
+    def find_by_tags(cls, tags: List[Tag]) -> List["TaggableModel"]:
+        """return a list of model that have the tag
+        """
+        return list(cls.select().where(cls.get_search_tag_expression(tags)))
 
-    def set_name_tag(self, name: str) -> None:
-        self.add_or_replace_tag("name", name)
+    @classmethod
+    def get_search_tag_expression(cls, tags: List[Tag]) -> Expression:
+        """Get the filter expresion for a search in tags column
+        """
+        query_builder: ExpressionBuilder = ExpressionBuilder()
+        for tag in tags:
 
-    def get_name_tag(self) -> Optional[str]:
-        return self.get_tag_value("name")
+            str_search = None
+            if tag.value:
+                str_search = TAGS_SEPARATOR + str(tag) + TAGS_SEPARATOR
+            else:
+                # if there is no value we return all the models that have the tag with the key
+                str_search = TAGS_SEPARATOR + tag.key + KEY_VALUE_SEPARATOR
+
+            # use a contains with ',' around to match exacty the tag key/value
+            query_builder.add_expression(cls.tags.contains(str_search))
+        return query_builder.build()

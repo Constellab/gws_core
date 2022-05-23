@@ -3,12 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from re import match
 from typing import Dict, List
 
-from peewee import CharField, Expression
 from pydantic.main import BaseModel
 
-from ..core.classes.expression_builder import ExpressionBuilder
 
 KEY_VALUE_SEPARATOR: str = ':'
 TAGS_SEPARATOR = ','
@@ -38,18 +37,25 @@ class Tag(BaseModel):
     def _check_parse_key(self, key: str) -> str:
         if key is None:
             raise ValueError('The tag key must be defined')
-        if len(key) > MAX_TAG_LENGTH:
-            key = key[0: MAX_TAG_LENGTH]
 
-        return key.lower()
+        return self._check_parse_tag_str(key)
 
     def _check_parse_value(self, value: str) -> str:
         if value:
-            value = value.lower()
-            if len(value) > MAX_TAG_LENGTH:
-                value = value[0: MAX_TAG_LENGTH]
-
+            value = self._check_parse_tag_str(value)
         return value
+
+    def _check_parse_tag_str(self, tag_str: str) -> str:
+        """Method that check the length of the tag str (key or value) and that the tag str is valid
+        """
+        if len(tag_str) > MAX_TAG_LENGTH:
+            tag_str = tag_str[0: MAX_TAG_LENGTH]
+
+        # check if string is only alphanumeric, with '-', '_' or ' ' allowed with regex
+        if not match(r"^[\w\-_ ]+$", tag_str):
+            raise ValueError('The tag only support alphanumeric characters, with "-", "_" and space allowed')
+
+        return tag_str.lower()
 
     def __str__(self) -> str:
         return self.key + ':' + self.value

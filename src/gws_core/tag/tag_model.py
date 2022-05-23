@@ -1,8 +1,12 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 
 from typing import List, Optional
 
-from peewee import CharField
+from peewee import CharField, IntegerField
 
 from ..core.model.model import Model
 
@@ -11,6 +15,7 @@ class TagModel(Model):
     TAG_VALUES_SEPARATOR = ','
 
     key = CharField(null=False, unique=True)
+    order = IntegerField(default=0)
 
     _table_name = "gws_tag"
 
@@ -19,12 +24,13 @@ class TagModel(Model):
         if 'values' not in self.data:
             return []
 
-        tag_values: str = self.data['values']
+        tag_values: List[List] = self.data['values']
 
         if not tag_values:
             return []
 
-        return tag_values.split(self.TAG_VALUES_SEPARATOR)
+        tag_values.sort()
+        return tag_values
 
     def has_value(self, value: str) -> bool:
         return value in self.values
@@ -43,7 +49,29 @@ class TagModel(Model):
 
         values = self.values
         values.append(value)
-        self.data['values'] = self.TAG_VALUES_SEPARATOR.join(values)
+        self.data['values'] = values
+
+    def remove_value(self, value: str) -> None:
+        """Remove the value if present
+
+        :return: [description]
+        :rtype: [type]
+        """
+        if not value or not self.has_value(value):
+            return
+
+        values = self.values
+        if value in values:
+            values.remove(value)
+            self.data['values'] = values
+
+    def update_value(self, old_value: str, new_value: str) -> None:
+        """Update the value if present """
+        self.remove_value(old_value)
+        self.add_value(new_value)
+
+    def count_values(self) -> int:
+        return len(self.values)
 
     @classmethod
     def create(cls, key: str, values: List[str] = []) -> 'TagModel':
