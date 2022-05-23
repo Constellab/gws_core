@@ -87,4 +87,10 @@ class TaskTyping(Typing):
                 json_["output_specs"] = IOSpecsHelper.io_specs_to_json(model_t.output_specs)
                 json_["config_specs"] = ConfigSpecsHelper.config_specs_to_json(model_t.config_specs)
 
+                json_["additional_info"] = {}
+
+                from ..task.converter.importer import ResourceImporter
+                if Utils.issubclass(model_t, ResourceImporter):
+                    json_["additional_info"]["supported_extensions"] = model_t._supported_extensions
+
         return json_
