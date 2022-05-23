@@ -118,6 +118,44 @@ class TagService():
         else:
             tag_model.save()
 
+    @classmethod
+    @transaction()
+    def reorder_tags(cls, tag_keys: List[str]) -> TagModel:
+        """Update the order of the tags"""
+
+        tag_models: List[TagModel] = cls.get_all_tags()
+
+        result: List[TagModel] = []
+        for i, key in enumerate(tag_keys):
+
+            key = Tag.check_parse_tag_str(key)
+            tag_model_filtererd: List[TagModel] = [x for x in tag_models if x.key == key]
+
+            if len(tag_model_filtererd) == 0:
+                continue
+
+            tag_model = tag_model_filtererd[0]
+            tag_model.order = i
+            tag_model.save()
+            result.append(tag_model)
+
+        return result
+
+    @classmethod
+    @transaction()
+    def reorder_tag_values(cls, tag_key: str, values: List[str]) -> TagModel:
+        """Update the order of the tags"""
+
+        tag_model: TagModel = cls.get_by_key(tag_key)
+
+        if tag_model is None:
+            raise NotFoundException(f"The tag with key '{tag_key}' does not exists")
+
+        values = [Tag.check_parse_tag_str(x) for x in values]
+
+        tag_model.set_values(values)
+        return tag_model.save()
+
     ################################# TAGGABLE MODEL #################################
 
     @classmethod

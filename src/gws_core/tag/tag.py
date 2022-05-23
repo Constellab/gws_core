@@ -8,7 +8,6 @@ from typing import Dict, List
 
 from pydantic.main import BaseModel
 
-
 KEY_VALUE_SEPARATOR: str = ':'
 TAGS_SEPARATOR = ','
 
@@ -38,24 +37,12 @@ class Tag(BaseModel):
         if key is None:
             raise ValueError('The tag key must be defined')
 
-        return self._check_parse_tag_str(key)
+        return Tag.check_parse_tag_str(key)
 
     def _check_parse_value(self, value: str) -> str:
         if value:
-            value = self._check_parse_tag_str(value)
+            value = Tag.check_parse_tag_str(value)
         return value
-
-    def _check_parse_tag_str(self, tag_str: str) -> str:
-        """Method that check the length of the tag str (key or value) and that the tag str is valid
-        """
-        if len(tag_str) > MAX_TAG_LENGTH:
-            tag_str = tag_str[0: MAX_TAG_LENGTH]
-
-        # check if string is only alphanumeric, with '-', '_' or ' ' allowed with regex
-        if not match(r"^[\w\-_ ]+$", tag_str):
-            raise ValueError('The tag only support alphanumeric characters, with "-", "_" and space allowed')
-
-        return tag_str.lower()
 
     def __str__(self) -> str:
         return self.key + ':' + self.value
@@ -77,6 +64,19 @@ class Tag(BaseModel):
             return Tag(tag_info[0], '')
         else:
             return Tag(tag_info[0], tag_info[1])
+
+    @staticmethod
+    def check_parse_tag_str(tag_str: str) -> str:
+        """Method that check the length of the tag str (key or value) and that the tag str is valid
+        """
+        if len(tag_str) > MAX_TAG_LENGTH:
+            tag_str = tag_str[0: MAX_TAG_LENGTH]
+
+        # check if string is only alphanumeric, with '-', '_' or ' ' allowed with regex
+        if not match(r"^[\w\-_ ]+$", tag_str):
+            raise ValueError('The tag only support alphanumeric characters, with "-", "_" and space allowed')
+
+        return tag_str.lower()
 
     def to_json(self) -> Dict:
         return {"key": self.key, "value": self.value}

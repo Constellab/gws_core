@@ -4,6 +4,8 @@
 # About us: https://gencovery.com
 
 
+from typing import List
+
 from fastapi.param_functions import Depends
 from pydantic.main import BaseModel
 
@@ -43,6 +45,19 @@ async def register_tag(key: str,
                        value: str,
                        _: UserData = Depends(AuthService.check_user_access_token)):
     return TagService.register_tag(key, value).to_json()
+
+
+@core_app.put("/tag/{tag_key}/reorder", tags=["Tag"], summary='Reoarder tags')
+async def reorder_tag_values(tag_key: str,
+                             tags_values: List[str],
+                             _: UserData = Depends(AuthService.check_user_access_token)):
+    return TagService.reorder_tag_values(tag_key, tags_values).to_json()
+
+
+@core_app.put("/tag/reorder", tags=["Tag"], summary='Reoarder tags')
+async def reorder_tags(tags_keys: List[str],
+                       _: UserData = Depends(AuthService.check_user_access_token)):
+    return ListJsonable(TagService.reorder_tags(tags_keys)).to_json()
 
 
 @core_app.put("/tag/{key}/{old_value}/{new_value}", tags=["Tag"], summary='Update registered tag value')

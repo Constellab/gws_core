@@ -29,7 +29,6 @@ class TagModel(Model):
         if not tag_values:
             return []
 
-        tag_values.sort()
         return tag_values
 
     def has_value(self, value: str) -> bool:
@@ -69,6 +68,9 @@ class TagModel(Model):
         """Update the value if present """
         self.remove_value(old_value)
         self.add_value(new_value)
+
+    def set_values(self, values: List[str]) -> None:
+        self.data['values'] = values
 
     def count_values(self) -> int:
         return len(self.values)
