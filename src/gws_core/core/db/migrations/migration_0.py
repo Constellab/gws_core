@@ -138,7 +138,7 @@ class Migration039(BrickMigration):
         CurrentUserService.set_current_user(None)
 
 
-@brick_migration('0.3.10', short_description='Add source config in TaskModel - Add order to TagModel')
+@brick_migration('0.3.10', short_description='Add source config in TaskModel - Add order to TagModel - Update tags columns content')
 class Migration0310(BrickMigration):
 
     @classmethod
@@ -146,14 +146,14 @@ class Migration0310(BrickMigration):
 
         migrator = MySQLMigrator(FSNodeModel.get_db_manager().db)
 
-        # migrate(
-        #     migrator.add_column(
-        #         TaskModel.get_table_name(),
-        #         TaskModel.source_config.column_name, TaskModel.source_config),
-        #     migrator.add_column(
-        #         TagModel.get_table_name(),
-        #         TagModel.order.column_name, TagModel.order),
-        # )
+        migrate(
+            migrator.add_column(
+                TaskModel.get_table_name(),
+                TaskModel.source_config.column_name, TaskModel.source_config),
+            migrator.add_column(
+                TagModel.get_table_name(),
+                TagModel.order.column_name, TagModel.order),
+        )
 
         task_models: List[TaskModel] = list(TaskModel.select().where(
             TaskModel.process_typing_name == Source._typing_name))
