@@ -86,7 +86,7 @@ class TagModel(Model):
         """
         tag = TagModel()
         tag.key = key.lower()
-        tag.data = {'values': cls.TAG_VALUES_SEPARATOR.join(values)}
+        tag.data = {'values': values}
         return tag
 
     @classmethod
@@ -95,6 +95,14 @@ class TagModel(Model):
             return cls.get(cls.key == key)
         except:
             return None
+
+    @classmethod
+    def get_highest_order(cls) -> int:
+        tag_model: TagModel = cls.select().order_by(cls.order.desc()).first()
+
+        if tag_model:
+            return tag_model.order
+        return -1
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         json_ = super().to_json(deep=deep, **kwargs)

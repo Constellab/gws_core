@@ -14,22 +14,12 @@ from gws_core.resource.resource_model import ResourceModel
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from .tag import Tag, default_tags
+from .tag import Tag
 from .tag_model import TagModel
 from .taggable_model import TaggableModel
 
 
 class TagService():
-
-    @classmethod
-    def init_default_tags(cls) -> None:
-        """Create the default tags of the database if not prevent
-        """
-        if TagModel.select().count() > 0:
-            return
-
-        for key, value in default_tags.items():
-            TagModel.create(key, value).save()
 
     @classmethod
     def register_tags(cls, tags: List[Tag]) -> List[TagModel]:
@@ -44,6 +34,7 @@ class TagService():
 
         if tag is None:
             tag = TagModel.create(tag_key)
+            tag.order = TagModel.get_highest_order() + 1
 
         tag.add_value(tag_value)
         return tag.save()

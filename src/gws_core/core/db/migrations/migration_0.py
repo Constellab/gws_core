@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import List, Set
+from typing import List
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.db.sql_migrator import SqlMigrator

@@ -19,7 +19,6 @@ from ..core.utils.settings import Settings
 from ..experiment.queue_service import QueueService
 from ..impl.file.file_helper import FileHelper
 from ..model.model_service import ModelService
-from ..tag.tag_service import TagService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from ..user.user_service import UserService
@@ -47,7 +46,6 @@ class SystemService:
         SystemStatus.app_is_initialized = True
 
         BrickService.init()
-        TagService.init_default_tags()
         LabConfigModel.save_current_config()
 
     @classmethod
