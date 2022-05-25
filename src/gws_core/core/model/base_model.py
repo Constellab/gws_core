@@ -4,7 +4,8 @@ from typing import List, Type
 
 from gws_core.core.db.db_manager import AbstractDbManager
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
-from peewee import ForeignKeyField, ForeignKeyMetadata
+from peewee import (ColumnMetadata, DatabaseProxy, ForeignKeyField,
+                    ForeignKeyMetadata)
 from peewee import Model as PeeweeModel
 from peewee import ModelSelect
 
@@ -98,6 +99,23 @@ class BaseModel(Base, PeeweeModel):
         """
 
         return format_table_name(cls)
+
+    @classmethod
+    def column_exists(cls, column_name: str) -> bool:
+        """
+        Returns True if the column exists in the table
+
+        :param column_name: The column name
+        :type column_name: `str`
+        :return: True if the column exists
+        :rtype: `bool`
+        """
+        columns: List[ColumnMetadata] = cls.get_db().get_columns(cls.get_table_name())
+        return len([x for x in columns if x.name == column_name]) > 0
+
+    @classmethod
+    def get_db(cls) -> DatabaseProxy:
+        return cls.get_db_manager().db
 
     @classmethod
     def get_db_manager(cls) -> Type[AbstractDbManager]:
