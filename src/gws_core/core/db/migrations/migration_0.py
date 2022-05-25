@@ -117,12 +117,18 @@ class Migration039(BrickMigration):
 
         process_model_list: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
         for process_model in process_model_list:
-            # update io specs
-            process_model.set_process_type(process_model.process_typing_name)
 
-            # set brick version
-            typing = TypingManager.get_typing_from_name(process_model.process_typing_name)
-            process_model.brick_version = BrickHelper.get_brick_version(typing.brick)
-            process_model.save()
+            try:
+
+                # update io specs
+                process_model.set_process_type(process_model.process_typing_name)
+
+                # set brick version
+                typing = TypingManager.get_typing_from_name(process_model.process_typing_name)
+                process_model.brick_version = BrickHelper.get_brick_version(typing.brick)
+                process_model.save()
+            except Exception as err:
+                Logger.error(f'Error while migrating process {process_model.id} : {err}')
+                Logger.log_exception_stack_trace(err)
 
         CurrentUserService.set_current_user(None)
