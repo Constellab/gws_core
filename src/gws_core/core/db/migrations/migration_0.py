@@ -8,7 +8,6 @@ from typing import List, Set
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.db.sql_migrator import SqlMigrator
-from gws_core.core.model.model import Model
 from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.lab.lab_config_model import LabConfigModel
@@ -24,8 +23,6 @@ from gws_core.task.plug import Source
 from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
-from peewee import BigIntegerField
-from playhouse.migrate import MySQLMigrator, migrate
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -39,16 +36,11 @@ class Migration022(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        migrator = MySQLMigrator(Typing.get_db_manager().db)
+        migrator: SqlMigrator = SqlMigrator(Typing.get_db())
 
-        migrate(
-            migrator.add_column(
-                Typing.get_table_name(),
-                Typing.deprecated_since.column_name, Typing.deprecated_since),
-            migrator.add_column(
-                Typing.get_table_name(),
-                Typing.deprecated_message.column_name, Typing.deprecated_message),
-        )
+        migrator.add_column_if_not_exists(Typing, Typing.deprecated_since)
+        migrator.add_column_if_not_exists(Typing, Typing.deprecated_message)
+        migrator.migrate()
 
 
 @brick_migration('0.2.3', short_description='Create LabConfigModel table and add lab_config_id to experiment')
@@ -56,16 +48,12 @@ class Migration023(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
-
-        Logger.info('Create LabConfigModel table and add lab_config_id to experiment')
-        migrator = MySQLMigrator(Typing.get_db_manager().db)
-
         LabConfigModel.create_table()
-        migrate(
-            migrator.add_column(
-                Experiment.get_table_name(),
-                Experiment.lab_config.column_name, Experiment.lab_config)
-        )
+
+        migrator: SqlMigrator = SqlMigrator(Experiment.get_db())
+
+        migrator.add_column_if_not_exists(Experiment, Experiment.lab_config)
+        migrator.migrate()
 
 
 @brick_migration('0.3.3', short_description='Create symbolic link in FsNodeModel and convert size to BigInt')
@@ -73,18 +61,11 @@ class Migration033(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
+        migrator: SqlMigrator = SqlMigrator(Typing.get_db())
 
-        Logger.info('Create symbolic link in FsNodeModel and convert size to BigInt')
-        migrator = MySQLMigrator(FSNodeModel.get_db_manager().db)
-
-        migrate(
-            migrator.add_column(
-                FSNodeModel.get_table_name(),
-                FSNodeModel.is_symbolic_link.column_name, FSNodeModel.is_symbolic_link),
-
-            migrator.alter_column_type(FSNodeModel.get_table_name(), FSNodeModel.size.column_name,
-                                       BigIntegerField(null=True))
-        )
+        migrator.add_column_if_not_exists(FSNodeModel, FSNodeModel.is_symbolic_link)
+        migrator.alter_column_type(FSNodeModel, FSNodeModel.size)
+        migrator.migrate()
 
 
 @brick_migration('0.3.8', short_description='Create lab config column in report table')
@@ -93,14 +74,10 @@ class Migration038(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        Logger.info('Create lab config column in report table')
-        migrator = MySQLMigrator(FSNodeModel.get_db_manager().db)
+        migrator: SqlMigrator = SqlMigrator(Report.get_db())
 
-        migrate(
-            migrator.add_column(
-                Report.get_table_name(),
-                Report.lab_config.column_name, Report.lab_config),
-        )
+        migrator.add_column_if_not_exists(Report, Report.lab_config)
+        migrator.migrate()
 
 
 @brick_migration('0.3.9', short_description='Refactor io specs, add brick_version to process')
@@ -109,7 +86,7 @@ class Migration039(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        migrator: SqlMigrator = SqlMigrator(FSNodeModel.get_db_manager().db)
+        migrator: SqlMigrator = SqlMigrator(Typing.get_db())
 
         migrator.add_column_if_not_exists(Typing, Typing.brick_version)
         migrator.add_column_if_not_exists(TaskModel, TaskModel.brick_version)
@@ -144,16 +121,11 @@ class Migration0310(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        migrator = MySQLMigrator(FSNodeModel.get_db_manager().db)
+        migrator: SqlMigrator = SqlMigrator(Typing.get_db())
 
-        migrate(
-            migrator.add_column(
-                TaskModel.get_table_name(),
-                TaskModel.source_config.column_name, TaskModel.source_config),
-            migrator.add_column(
-                TagModel.get_table_name(),
-                TagModel.order.column_name, TagModel.order),
-        )
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.source_config)
+        migrator.add_column_if_not_exists(TagModel, TagModel.order)
+        migrator.migrate()
 
         task_models: List[TaskModel] = list(TaskModel.select().where(
             TaskModel.process_typing_name == Source._typing_name))
