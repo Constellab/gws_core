@@ -60,17 +60,24 @@ class IOSpec:
 
         self.check_resource_types()
 
+        # TODO Remove support for None
+        default_type = self.get_default_resource_type()
+
         # set the human name with a default value
         if human_name is not None:
             self.human_name = Utils.snake_case_to_sentence(human_name)
         else:
-            self.human_name = self.get_default_resource_type()._human_name
+            # TODO Remove support for None
+            if default_type:
+                self.human_name = default_type._human_name
 
         # set the short description with a default value
         if short_description is not None:
             self.short_description = short_description
         else:
-            self.short_description = self.get_default_resource_type()._short_description
+            # TODO Remove support for None
+            if default_type:
+                self.short_description = default_type._short_description
 
     def check_resource_types(self):
         for resource_type in self.resource_types:
