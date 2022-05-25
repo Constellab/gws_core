@@ -5,15 +5,14 @@
 
 from typing import Dict, List
 
-from gws_core import (BaseTestCase, ConfigParams, File, GTest, ProcessSpec,
-                      Protocol, ProtocolService, ProtocolTyping,
-                      ResourceTyping, RobotCreate, RobotEat, Sink, TaskService,
-                      TaskTyping, protocol_decorator, transformer_decorator)
+from gws_core import (BaseTestCase, File, ProcessSpec, Protocol,
+                      ProtocolTyping, ResourceTyping, RobotCreate, RobotEat,
+                      Sink, TaskTyping, protocol_decorator,
+                      transformer_decorator)
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.impl.robot.robot_protocol import RobotTravelProto
 from gws_core.impl.robot.robot_resource import Robot
-from gws_core.impl.table.table import Table
 from gws_core.model.typing import Typing
 from gws_core.model.typing_service import TypingService
 from gws_core.resource.resource_decorator import resource_decorator
@@ -148,9 +147,7 @@ class TestTyping(BaseTestCase):
         # Test that it found the FileTransformer
         self.assertTrue(len([x for x in paginator.current_items() if x.unique_name == 'FileTransformer']) > 0)
 
-        # Test search on related model
-        search_dict.filtersCriteria = [{'key': 'related_model_typing_name',
-                                        "operator": "EQ", "value": SubFile._typing_name}]
-        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        # # Test search on related model
+        paginator: Paginator[Typing] = TypingService.search_transformers(SubFile._typing_name, SearchParams())
         # Test that it found the FileTransformer
         self.assertTrue(len([x for x in paginator.current_items() if x.unique_name == 'FileTransformer']) > 0)

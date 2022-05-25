@@ -39,7 +39,7 @@ class TestFile(BaseTestCase):
     def test_file_attr(self):
         file: File = LocalFileStore.get_default_instance().create_empty_file("test_attr.txt")
         self.assertEqual(file.get_default_name(), "test_attr.txt")
-        self.assertEqual(file.extension, ".txt")
+        self.assertEqual(file.extension, "txt")
         self.assertEqual(file.is_txt(), True)
 
     def test_file(self):
