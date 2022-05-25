@@ -7,6 +7,7 @@
 from typing import List
 
 from gws_core.brick.brick_helper import BrickHelper
+from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.model.model import Model
 from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.fs_node_model import FSNodeModel
@@ -104,19 +105,12 @@ class Migration039(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        migrator = MySQLMigrator(FSNodeModel.get_db_manager().db)
+        migrator: SqlMigrator = SqlMigrator(FSNodeModel.get_db_manager().db)
 
-        migrate(
-            migrator.add_column(
-                Typing.get_table_name(),
-                Typing.brick_version.column_name, Typing.brick_version),
-            migrator.add_column(
-                TaskModel.get_table_name(),
-                TaskModel.brick_version.column_name, TaskModel.brick_version),
-            migrator.add_column(
-                ProtocolModel.get_table_name(),
-                ProtocolModel.brick_version.column_name, ProtocolModel.brick_version),
-        )
+        migrator.add_column_if_not_exists(Typing, Typing.brick_version)
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.brick_version)
+        migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.brick_version)
+        migrator.migrate()
 
         # Authenticate the system user
         CurrentUserService.set_current_user(User.get_sysuser())
