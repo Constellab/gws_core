@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import List
+from typing import Dict, List
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.db.sql_migrator import SqlMigrator
@@ -100,9 +100,29 @@ class Migration039(BrickMigration):
         for process_model in process_model_list:
 
             try:
+                output_resources: Dict[str, ResourceModel] = {}
+                for port_name, port in process_model.outputs.ports.items():
+                    output_resources[port_name] = port.resource_model
+
+                input_resources: Dict[str, ResourceModel] = {}
+                for port_name, port in process_model.inputs.ports.items():
+                    input_resources[port_name] = port.resource_model
 
                 # update io specs
                 process_model.set_process_type(process_model.process_typing_name)
+
+                # set port output from output_resources
+                for port_name, port in process_model.outputs.ports.items():
+                    if port_name in output_resources:
+                        port.resource_model = output_resources[port_name]
+                process_model.data["outputs"] = process_model.outputs.to_json()
+
+                # set port input from input_resources
+                for port_name, port in process_model.inputs.ports.items():
+                    if port_name in input_resources:
+                        port.resource_model = input_resources[port_name]
+
+                process_model.data["inputs"] = process_model.inputs.to_json()
 
                 # set brick version
                 typing = TypingManager.get_typing_from_name(process_model.process_typing_name)

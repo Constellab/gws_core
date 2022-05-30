@@ -25,7 +25,7 @@ class SqlMigrator:
         self._operations.append(operation)
 
     def add_column_if_not_exists(self, model: BaseModel, field: Field) -> bool:
-        if model.column_exists(field.name):
+        if model.column_exists(field.column_name):
             return False
         self.add_column(model, field)
         return True

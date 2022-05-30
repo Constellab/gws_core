@@ -5,7 +5,7 @@
 
 import asyncio
 import json
-from typing import Dict, List, Type, Union
+from typing import Dict, List, Optional, Type, Union
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -425,7 +425,7 @@ class ProtocolModel(ProcessModel):
                 check_compatiblity=check_compatiblity)
             self._add_connector(connector)
 
-    def _get_connectors_liked_to_process(self, process_model: ProcessModel) -> List[Connector]:
+    def _get_connectors_linked_to_process(self, process_model: ProcessModel) -> List[Connector]:
         """return the list of connectors connected to a process (input or output)
         """
         connectors: List[Connector] = []
@@ -452,6 +452,20 @@ class ProtocolModel(ProcessModel):
         """remove all the connectors connected to a process (input or output)
         """
         self._connectors = [item for item in self.connectors if not item.is_connected_to(process_model)]
+
+    def get_connector_by_destination(self, dest_process_name, dest_process_port_name: str) -> Optional[Connector]:
+        """
+        Returns a connector by the destination process and port
+
+        :return: The connector
+        :rtype": Connector
+        """
+
+        for connector in self.connectors:
+            if connector.is_right_connected_to(dest_process_name, dest_process_port_name):
+                return connector
+
+        return None
 
     ############################### INPUTS #################################
 
