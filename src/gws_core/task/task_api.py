@@ -47,9 +47,16 @@ async def fix_a_task(id: str,
 
 @core_app.post("/task/fix", tags=["Task"], summary="Run a task")
 async def fix_all_protocol(_: UserData = Depends(AuthService.check_user_access_token)):
+    Logger.info('Start fixing all protocols')
     protocol_models = list(ProtocolModel.select())
     for protocol in protocol_models:
-        fix_protocol(protocol)
+        try:
+            fix_protocol(protocol)
+        except Exception as e:
+            Logger.error(f"Error while fixing protocol {protocol.id} : {e}")
+            Logger.log_exception_stack_trace(e)
+            continue
+    Logger.info('End fixing all protocols')
 
 
 def fix_protocol(protocol: ProtocolModel):
