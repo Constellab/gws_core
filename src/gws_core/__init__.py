@@ -167,6 +167,8 @@ from .impl.table.helper.table_ratio_helper import \
     TableRatioHelper as TableRatioHelper
 from .impl.table.helper.table_tag_grouper_helper import \
     TableTagGrouperHelper as TableTagGrouperHelper
+from .impl.table.helper.table_unfolder_helper import \
+    TableUnfolderHelper as TableUnfolderHelper
 from .impl.table.metadata_table.helper.table_annotator_helper import \
     TableColumnAnnotatorHelper as TableColumnAnnotatorHelper
 from .impl.table.metadata_table.helper.table_annotator_helper import \

@@ -86,7 +86,7 @@ class Table(Resource):
 
             if column_names:
                 data.columns = column_names
-            data.columns = data.columns.map(str)
+            data.columns = data.columns
 
             if row_names:
                 data.index = row_names

@@ -30,7 +30,7 @@ class TestTableAnnotator(BaseTestCase):
             }
         )
         outputs = await tester.run()
-        annotated_table = outputs["sample_table"]
+        annotated_table: Table = outputs["sample_table"]
         expected_row_tags = [{'Gender': 'M', 'Group': '15', 'Age': '15'},
                              {'Gender': 'F', 'Group': '15', 'Age': '15'},
                              {'Gender': 'M', 'Group': '1', 'Age': '18'},
@@ -64,7 +64,7 @@ class TestTableAnnotator(BaseTestCase):
             }
         )
         outputs = await tester.run()
-        annotated_table = outputs["sample_table"]
+        annotated_table: Table = outputs["sample_table"]
         expected_row_tags = [{'Gender': 'M', 'Group': '15', 'Age': '15'},
                              {'Gender': 'F', 'Group': '15', 'Age': '15'},
                              {'Gender': 'M', 'Group': '1', 'Age': '18'},

@@ -69,13 +69,15 @@ class BaseTestCase(IsolatedAsyncioTestCase):
     def print(cls, text):
         GTest.print(text)
 
-    def assert_json(self, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None) -> None:
+    @classmethod
+    def assert_json(cls, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None) -> None:
         """Assert a json with possibility to ignore key
         """
-        self._assert_json_recur(json_1, json_2, ignore_keys, "")
+        cls._assert_json_recur(json_1, json_2, ignore_keys, "")
 
+    @classmethod
     def _assert_json_recur(
-            self, json_1: Union[dict, list],
+            cls, json_1: Union[dict, list],
             json_2: Union[dict, list],
             ignore_keys: List[str] = None,
             cumulated_key: str = "") -> bool:
@@ -91,7 +93,7 @@ class BaseTestCase(IsolatedAsyncioTestCase):
                     f"Length of array different for key '{cumulated_key}'.")
 
             for index, value in enumerate(json_1):
-                self._assert_json_recur(value, json_2[index], ignore_keys, f"{cumulated_key}[{index}]")
+                cls._assert_json_recur(value, json_2[index], ignore_keys, f"{cumulated_key}[{index}]")
 
             return None
 
@@ -109,7 +111,7 @@ class BaseTestCase(IsolatedAsyncioTestCase):
                 if ignore_keys and key in ignore_keys:
                     continue
 
-                self._assert_json_recur(value, json_2[key], ignore_keys, f"{cumulated_key}.{key}")
+                cls._assert_json_recur(value, json_2[key], ignore_keys, f"{cumulated_key}.{key}")
 
             return None
 

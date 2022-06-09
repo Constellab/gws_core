@@ -4,58 +4,33 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (BaseTestCase, Table, TableRowAnnotator, TableTransposer,
-                      TaskRunner)
-from gws_core_test_helper import GWSCoreTestHelper
+from unittest import IsolatedAsyncioTestCase
+
+from gws_core import Table
+from pandas import DataFrame
 
 
-class TestTableTransposer(BaseTestCase):
+class TestTableTransposer(IsolatedAsyncioTestCase):
 
-    async def test_table_column_annotator(self):
-        # importer
-        table = GWSCoreTestHelper.get_sample_table()
-        metatable = GWSCoreTestHelper.get_sample_metadata_table()
-        # annotation
-        tester = TaskRunner(
-            task_type=TableRowAnnotator,
-            inputs={
-                "sample_table": table,
-                "metadata_table": metatable,
-            }
-        )
-        outputs = await tester.run()
-        annotated_table: Table = outputs["sample_table"]
-        expected_row_tags = [{'Gender': 'M', 'Group': '15', 'Age': '15'},
-                             {'Gender': 'F', 'Group': '15', 'Age': '15'},
-                             {'Gender': 'M', 'Group': '1', 'Age': '18'},
-                             {'Gender': 'F', 'Group': '3', 'Age': '15'},
-                             {}]
-        self.assertEqual(
-            annotated_table.get_meta()['row_tags'], expected_row_tags
-        )
-        self.assertEqual(
-            annotated_table.get_row_tags(), expected_row_tags
-        )
-        print(annotated_table)
+    async def test(self):
+        initial_df = DataFrame({'A': range(1, 5), 'B': [10, 8, 6, 4]})
 
-        # transpose
-        tester = TaskRunner(
-            task_type=TableTransposer,
-            inputs={
-                "source": table,
-            }
-        )
-        outputs = await tester.run()
-        transposed_table: Table = outputs["target"]
-        self.assertTrue(
-            transposed_table.get_data().equals(annotated_table.get_data().T)
-        )
-        self.assertEqual(
-            transposed_table.get_row_tags(),
-            annotated_table.get_column_tags()
-        )
-        self.assertEqual(
-            transposed_table.get_column_tags(),
-            annotated_table.get_row_tags()
-        )
-        print(transposed_table)
+        table = Table(data=initial_df)
+        row_tags = [{'gender': 'M', 'age': '10'},
+                    {'gender': 'F', 'age': '10'},
+                    {'gender': 'F', 'age': '10'},
+                    {'gender': 'M', 'age': '20'}]
+        column_tags = [{'test': 'ok'}, {'test': 'nok'}]
+        table.set_row_tags(row_tags)
+        table.set_column_tags(column_tags)
+
+        transposed = table.transpose()
+        self.assertTrue(transposed.get_data().equals(initial_df.T))
+        self.assertEqual(transposed.get_row_tags(), column_tags)
+        self.assertEqual(transposed.get_column_tags(), row_tags)
+
+        re_transposed = transposed.transpose()
+
+        self.assertTrue(re_transposed.get_data().equals(initial_df))
+        self.assertEqual(re_transposed.get_row_tags(), row_tags)
+        self.assertEqual(re_transposed.get_column_tags(), column_tags)

@@ -3,10 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, List, Literal
+from typing import List, Literal
 
-from gws_core.tag.tag_helper import TagHelper
-from numpy import nan
 from pandas import DataFrame, concat
 
 from ....core.exception.exceptions import BadRequestException
@@ -68,57 +66,6 @@ class TableTagGrouperHelper:
         sorted_table.set_column_tags(table.get_column_tags())
         return sorted_table
 
-    @classmethod
-    def unfold_rows_by_tags(cls, table: Table, keys: List[str]) -> Table:
-        """Create new column for each column and tags combinaison
-
-        """
-        tags: Dict[str, List[str]] = table.get_available_row_tags()
-
-        # filter the tags with the provided keys
-        selected_tags: Dict[str, List[str]] = {}
-        for key in keys:
-            if key in tags:
-                selected_tags[key] = tags[key]
-
-        all_tag_combinations = TagHelper.get_all_tags_combinasons(selected_tags)
-
-        dataframe = DataFrame()
-        column_tags = []
-
-        for tags in all_tag_combinations:
-            sub_table = table.select_by_row_tags([tags])
-            df = sub_table.get_data()
-
-            if df.empty:
-                continue
-
-            tag_values = '_'.join(tags.values())
-
-            # if the new dataframe has more rows that the previous one
-            # we create empty rows to fill the gap
-            index_dif = len(df.index) - len(dataframe.index)
-            if index_dif > 0 and len(dataframe.index) > 0:
-                nan_df = DataFrame([[nan] * len(dataframe.columns)] * index_dif, columns=dataframe.columns)
-                dataframe = concat([dataframe, nan_df], ignore_index=True, sort=True)
-
-            for column in df:
-                name = f"{column}_{tag_values}"
-
-                # if the new column have fewer rows than dataframe index, append NaN
-                values: List[Any] = df[column].values.tolist()
-                row_diff = len(dataframe.index) - len(values)
-                if row_diff > 0:
-                    values.extend([nan] * row_diff)
-
-                dataframe[name] = values
-
-            column_tags.extend(sub_table.get_column_tags())
-
-        table = Table(dataframe)
-        table.set_column_tags(column_tags)
-        return table
-
     ############################################## COLUMNS ######################################################
 
     @classmethod
@@ -170,50 +117,6 @@ class TableTagGrouperHelper:
         sorted_table.set_column_tags(new_column_tags)
         sorted_table.set_row_tags(table.get_row_tags())
         return sorted_table
-
-    @classmethod
-    def unfold_columns_by_tags(cls, table: Table, keys: List[str]) -> Table:
-
-        tags: Dict[str, List[str]] = table.get_available_column_tags()
-
-        # filter the tags with the provided keys
-        selected_tags: Dict[str, List[str]] = {}
-        for key in keys:
-            if key in tags:
-                selected_tags[key] = tags[key]
-
-        all_tag_combinations = TagHelper.get_all_tags_combinasons(selected_tags)
-
-        dataframe = DataFrame()
-        row_tags = []
-
-        for tags in all_tag_combinations:
-            sub_table = table.select_by_column_tags([tags])
-            df = sub_table.get_data()
-
-            if df.empty:
-                continue
-
-            tag_values = '_'.join(tags.values())
-
-            for index, row in df.iterrows():
-                name = f"{row.name}_{tag_values}"
-
-                # if the new row have fewer column than dataframe, append NaN
-                values: List[Any] = row.values.tolist()
-                column_diff = len(dataframe.columns) - len(values)
-                if column_diff > 0:
-                    values.extend([nan] * column_diff)
-
-                row_df = DataFrame([values], index=[name])
-
-                dataframe = concat([dataframe, row_df], sort=True)
-
-            row_tags.extend(sub_table.get_row_tags())
-
-        table = Table(dataframe)
-        table.set_row_tags(row_tags)
-        return table
 
     ############################################## BOTH ######################################################
 

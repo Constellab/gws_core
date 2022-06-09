@@ -3,13 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from .....config.config_types import ConfigParams, ConfigSpecs
-from .....config.param_spec import StrParam
 from .....core.exception.exceptions import BadRequestException
-from .....io.io_spec_helper import InputSpecs, OutputSpecs
 from .....task.task import Task
-from .....task.task_decorator import task_decorator
-from .....task.task_io import TaskInputs, TaskOutputs
 from ....table.table import Table
 from ..metadata_table import MetadataTable
 
@@ -73,7 +68,6 @@ class TableColumnAnnotatorHelper(Task):
         metadata = metadata_table.get_data().set_index(metadata_table.sample_id_column)
         unsorted_tags: dict = metadata.to_dict('index')
 
-        reference_row = params.get_value("reference_row")
         if reference_row:
             if reference_row not in table.get_data().index:
                 raise BadRequestException(f"No row name '{reference_row}' found in the sample table")
@@ -90,4 +84,4 @@ class TableColumnAnnotatorHelper(Task):
                 tags = [unsorted_tags.get(id_, {}) for id_ in table_ids]
 
         table.set_column_tags(tags)
-        return {"sample_table": table}
+        return table
