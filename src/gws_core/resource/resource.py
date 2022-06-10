@@ -4,11 +4,10 @@
 # About us: https://gencovery.com
 
 from copy import deepcopy
-from typing import Dict, List, Union, final
+from typing import Dict, Union, final
 
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
-from gws_core.tag.tag import Tag
 
 from ..config.config_types import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \

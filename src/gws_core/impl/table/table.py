@@ -422,7 +422,7 @@ class Table(Resource):
         # get the row names of the row positions
         return list(self._data.iloc[:, positions].columns)
 
-    def get_column_position_from_name(self, column_name: str) -> List[TableHeaderInfo]:
+    def get_column_position_from_name(self, column_name: str) -> int:
         return self._data.columns.get_loc(column_name)
 
     def get_columns_info(self) -> List[TableHeaderInfo]:

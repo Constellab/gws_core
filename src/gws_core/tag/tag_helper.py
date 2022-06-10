@@ -91,6 +91,13 @@ class TagHelper():
         return all_tags
 
     @classmethod
+    def get_distince_values_for_key(cls, tags: List[Dict[str, str]], key: str) -> List[str]:
+        """Return a list of distinct values for a key from a list of tags
+        """
+        distinct_tags = cls.get_distinct_values(tags)
+        return distinct_tags.get(key, [])
+
+    @classmethod
     def get_all_tags_combinasons(cls, distinct_tags: Dict[str, List[str]]) -> List[Dict[str, str]]:
         """Return a list of all possible combinations of tags
         """

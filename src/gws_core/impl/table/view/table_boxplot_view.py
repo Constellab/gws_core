@@ -14,7 +14,8 @@ from ....config.config_types import ConfigParams
 from ....config.param_spec import ListParam
 from ....resource.view_types import ViewSpecs, ViewType
 from ...view.boxplot_view import BoxPlotView
-from .base_table_view import BaseTableView, Serie1d
+from .base_table_view import BaseTableView
+from .table_selection import Serie1d
 
 if TYPE_CHECKING:
     from ..table import Table
@@ -71,7 +72,7 @@ class TableBoxPlotView(BaseTableView):
 
     def data_to_dict(self, params: ConfigParams) -> dict:
 
-        series: List[Serie1d] = params.get_value("series")
+        series: List[Serie1d] = Serie1d.from_list(params.get_value("series"))
 
         if len(series) == 0:
             raise BadRequestException('There must be at least one serie')
@@ -79,11 +80,12 @@ class TableBoxPlotView(BaseTableView):
         box_view = BoxPlotView()
 
         for serie in series:
-            data = self.get_values_from_selection_range(serie["y"])
+            data = self.get_values_from_selection_range(serie.y)
+            tags = self.get_single_column_tags_from_selection_range(serie.y)
             box_view.add_data(
                 data=data,
-                name=serie["name"],
-                # tags=self.get_row_tags_from_selection_range(serie["y"])
+                name=serie.name,
+                tags=tags
             )
 
         return box_view.data_to_dict(params)

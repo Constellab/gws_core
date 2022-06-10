@@ -7,7 +7,7 @@ from typing import List
 
 from gws_core import BaseTestCase, ViewTester, ViewType
 from gws_core.extra import DataProvider, TableBarPlotView
-from gws_core.impl.table.view.base_table_view import Serie1d
+from gws_core.impl.table.view.table_selection import Serie1d
 
 
 class TestTableBarPlotView(BaseTestCase):

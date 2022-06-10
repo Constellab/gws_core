@@ -7,7 +7,7 @@ from typing import List
 
 from gws_core import BaseTestCase, ViewTester
 from gws_core.extra import TableVennDiagramView
-from gws_core.impl.table.view.base_table_view import Serie1d
+from gws_core.impl.table.view.table_selection import Serie1d
 from gws_core_test_helper import GWSCoreTestHelper
 
 
@@ -27,7 +27,6 @@ class TestVennDiagrammView(BaseTestCase):
         dic = tester.to_dict({"series": series})
         self.assertEqual(dic["data"]["total_number_of_groups"], 2)
         self.assertEqual(len(dic["data"]["sections"]), 3)
-
 
         # 4 series :
         series: List[Serie1d] = [{"name": "first", "y": {"type": "columns", "selection": ["A"]}},

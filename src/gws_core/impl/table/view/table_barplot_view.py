@@ -12,7 +12,8 @@ from ....config.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
 from ....resource.view_types import ViewSpecs, ViewType
 from ...view.barplot_view import BarPlotView
-from .base_table_view import BaseTableView, Serie1d
+from .base_table_view import BaseTableView
+from .table_selection import Serie1d
 
 if TYPE_CHECKING:
     from ..table import Table
@@ -65,7 +66,7 @@ class TableBarPlotView(BaseTableView):
         return BarPlotView()
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        series: List[Serie1d] = params.get_value("series")
+        series: List[Serie1d] = Serie1d.from_list(params.get_value("series"))
 
         if len(series) == 0:
             raise BadRequestException('There must be at least one serie')

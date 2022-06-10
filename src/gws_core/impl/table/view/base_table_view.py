@@ -5,8 +5,7 @@
 
 from __future__ import annotations
 
-from typing import (TYPE_CHECKING, Any, Dict, List, Literal, Optional,
-                    TypedDict, Union)
+from typing import TYPE_CHECKING, Any, Dict, List, TypedDict
 
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.resource.view_types import ViewType
@@ -15,38 +14,10 @@ from pandas import DataFrame
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....resource.view import View
+from .table_selection import CellRange, TableSelection
 
 if TYPE_CHECKING:
     from ..table import Table
-
-
-class CellCoord(TypedDict):
-    row: int
-    column: int
-
-
-class CellRange(TypedDict):
-    from_: CellCoord  # the real name is from but this is not supported by python
-    to: CellCoord
-
-
-class TableSelection(TypedDict):
-    """object that represent a TableSelection that can be a range or columns selection
-
-    :param TypedDict: _description_
-    :type TypedDict: _type_
-    """
-    type: Literal['range', 'columns']
-    selection: Union[List[CellRange], List[str]]
-
-
-class Serie1d(TypedDict):
-    name: str
-    y: TableSelection
-
-
-class Serie2d(Serie1d):
-    x: Optional[TableSelection]
 
 
 class DataWithTags(TypedDict):
@@ -104,23 +75,23 @@ class BaseTableView(View):
         """ Get a dataframe from a single range"""
         df = self._table.get_data()
 
-        return df.iloc[range['from']['row']: range['to']['row'] + 1,
-                       range['from']['column']: range['to']['column'] + 1]
+        return df.iloc[range.get_from().row: range.get_to().row + 1,
+                       range.get_from().column: range.get_to().column + 1]
 
     def get_values_from_selection_range(self, selection_range: TableSelection) -> List[Any]:
         """Get table flattened value form a SelectionRange
         """
 
-        if selection_range['type'] == 'range':
-            return self.get_values_from_coords(selection_range['selection'])
+        if selection_range.is_range_selection():
+            return self.get_values_from_coords(selection_range.selection)
         else:
             # columns selection
-            return self.get_values_from_columns(selection_range['selection'])
+            return self.get_values_from_columns(selection_range.selection)
 
     def get_row_tags_from_selection_range(self, selection_range: TableSelection) -> List[Dict[str, str]]:
 
-        if selection_range['type'] == 'range':
-            return self.get_row_tags_from_coords(selection_range['selection'])
+        if selection_range.is_range_selection():
+            return self.get_row_tags_from_coords(selection_range.selection)
         else:
             # columns selection
             return self.get_row_tags()
@@ -129,7 +100,7 @@ class BaseTableView(View):
         tags: List[Dict[str, str]] = []
 
         for coord in ranges:
-            tags += self._table.get_row_tags(from_index=coord['from']['row'], to_index=coord['to']['row'])
+            tags += self._table.get_row_tags(from_index=coord.get_from().row, to_index=coord.get_to().row)
 
         # if all dict are empty, return None to lighten the json
         if all(len(t) == 0 for t in tags):
@@ -170,3 +141,18 @@ class BaseTableView(View):
     # def get_column_tags(self, column_names: List[str]) -> List[Dict[str, str]]:
     #     table = self._table.select_by_column_names(column_names)
     #     return table.get_column_tags(none_if_empty=False)
+
+    def get_single_column_tags_from_selection_range(self, selection_range: TableSelection) -> List[Dict[str, str]]:
+        if selection_range.is_single_column():
+            column_index: int
+            if selection_range.is_column_selection():
+                column_name = selection_range.selection[0]
+                column_index = self._table.get_column_position_from_name([column_name])
+            else:
+                range: CellRange = selection_range.selection[0]
+                column_index = range.get_from().column
+
+            return self._table.get_column_tags(from_index=column_index, to_index=column_index)
+
+        else:
+            return None

@@ -12,7 +12,8 @@ from ....config.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
 from ....resource.view_types import ViewSpecs, ViewType
 from ...view.scatterplot_2d_view import ScatterPlot2DView
-from .base_table_view import BaseTableView, Serie2d
+from .base_table_view import BaseTableView
+from .table_selection import Serie2d
 
 if TYPE_CHECKING:
     from ..table import Table
@@ -67,7 +68,7 @@ class TableScatterPlot2DView(BaseTableView):
         if not issubclass(self._view_helper, ScatterPlot2DView):
             raise BadRequestException("Invalid view helper. An subclass of ScatterPlot2DView is expected")
 
-        series: List[Serie2d] = params.get_value("series")
+        series: List[Serie2d] = Serie2d.from_list(params.get_value("series"))
 
         if len(series) == 0:
             raise BadRequestException('There must be at least one serie')
@@ -76,17 +77,17 @@ class TableScatterPlot2DView(BaseTableView):
         view = self._view_helper()
 
         for serie in series:
-            y_data = self.get_values_from_selection_range(serie["y"])
+            y_data = self.get_values_from_selection_range(serie.y)
 
             x_data: List[float] = None
-            if serie.get('x') is not None:
-                x_data = self.get_values_from_selection_range(serie["x"])
+            if serie.x is not None:
+                x_data = self.get_values_from_selection_range(serie.x)
 
             view.add_series(
                 x=x_data,
                 y=y_data,
-                name=serie["name"],
-                tags=self.get_row_tags_from_selection_range(serie["y"])
+                name=serie.name,
+                tags=self.get_row_tags_from_selection_range(serie.y)
             )
 
         return view.data_to_dict(params)

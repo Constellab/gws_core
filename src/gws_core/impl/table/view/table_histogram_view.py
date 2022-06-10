@@ -14,7 +14,8 @@ from ....config.config_types import ConfigParams
 from ....config.param_spec import BoolParam, IntParam, ListParam
 from ....resource.view_types import ViewSpecs, ViewType
 from ...view.histogram_view import HistogramView
-from .base_table_view import BaseTableView, Serie1d
+from .base_table_view import BaseTableView
+from .table_selection import Serie1d
 
 if TYPE_CHECKING:
     from ..table import Table
@@ -68,7 +69,7 @@ class TableHistogramView(BaseTableView):
         nbins = params.get_value("nbins")
         density = params.get_value("density")
 
-        series: List[Serie1d] = params.get_value("series")
+        series: List[Serie1d] = Serie1d.from_list(params.get_value("series"))
 
         if len(series) == 0:
             raise BadRequestException('There must be at least one serie')

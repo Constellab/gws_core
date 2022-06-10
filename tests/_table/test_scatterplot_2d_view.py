@@ -7,7 +7,7 @@ from typing import List
 
 from gws_core import BaseTestCase, ViewTester, ViewType
 from gws_core.extra import DataProvider, TableScatterPlot2DView
-from gws_core.impl.table.view.base_table_view import Serie2d
+from gws_core.impl.table.view.table_selection import Serie2d
 
 
 class TestTableScatterPlot2DView(BaseTestCase):

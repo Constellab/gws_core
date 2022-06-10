@@ -12,7 +12,8 @@ from ....config.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
 from ....resource.view_types import ViewSpecs, ViewType
 from ...view.venn_diagram_view import VennDiagramView
-from .base_table_view import BaseTableView, Serie1d
+from .base_table_view import BaseTableView
+from .table_selection import Serie1d
 
 if TYPE_CHECKING:
     from ..table import Table
@@ -59,7 +60,7 @@ class TableVennDiagramView(BaseTableView):
 
     def data_to_dict(self, params: ConfigParams) -> dict:
 
-        series: List[Serie1d] = params.get_value("series")
+        series: List[Serie1d] = Serie1d.from_list(params.get_value("series"))
 
         if len(series) < 2 or len(series) > 4:
             raise BadRequestException("The venn diagram only supports from 2 to 4 series (including)")

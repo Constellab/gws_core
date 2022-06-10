@@ -11,7 +11,8 @@ from ....config.config_types import ConfigParams
 from ....config.param_spec import DictParam
 from ....resource.view_types import ViewSpecs, ViewType
 from ...view.heatmap_view import HeatmapView
-from .base_table_view import BaseTableView, CellRange, TableSelection
+from .base_table_view import BaseTableView
+from .table_selection import CellRange, TableSelection
 
 if TYPE_CHECKING:
     from gws_core.impl.table.table import Table
