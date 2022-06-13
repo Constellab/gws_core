@@ -121,7 +121,10 @@ class Serie2d(Serie1d):
 
     @staticmethod
     def from_dict(d: Dict[str, Any]) -> 'Serie2d':
-        return Serie2d(d['name'], TableSelection.from_dict(d['y']), TableSelection.from_dict(d['x']))
+        x: TableSelection = None
+        if 'x' in d:
+            x = TableSelection.from_dict(d['x'])
+        return Serie2d(d['name'], TableSelection.from_dict(d['y']), x)
 
     @staticmethod
     def from_list(l: List[Dict[str, Any]]) -> List['Serie2d']:
