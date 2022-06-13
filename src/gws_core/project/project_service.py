@@ -24,7 +24,7 @@ class ProjectService(BaseService):
             central_project = [p for p in central_projects if p.id == lab_project.id]
 
             # if the project exist in central, refresh the project info if necessary
-            if len(central_project) >= 0:
+            if len(central_project) > 0:
                 cls._refresh_lab_project(lab_project, central_project[0])
             # if the project is in the lab but not in central (should not happen=, add it to the list to return
             else:
