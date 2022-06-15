@@ -4,17 +4,14 @@
 # About us: https://gencovery.com
 
 import os
-import shutil
-import subprocess
 from abc import abstractmethod
 
+from gws_core.impl.shell.pipenv_helper import PipEnvHelper
+
 from ...config.config_types import ConfigParams
-from ...core.exception.exceptions import BadRequestException
-from ...progress_bar.progress_bar import ProgressBar, ProgressBarMessageType
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 from .base_env import BaseEnvShell
-from ...task.task import Task
 
 
 @task_decorator("PipEnvShell", hide=True)
@@ -78,89 +75,28 @@ class PipEnvShell(BaseEnvShell):
 
     # -- I --
 
-    @classmethod
-    def install(cls, current_task: Task=None):
+    def install(self):
         """
         Install the virtual env
         """
-
-        if (current_task is not None) and not isinstance(current_task, Task):
-            raise BadRequestException(f"The current task must be an instance of Task")
-
-        if cls.is_installed():
+        if self.is_installed():
             return
-        if isinstance(cls.env_file_path, str):
-            if not os.path.exists(cls.env_file_path):
-                raise BadRequestException(
-                    f"The dependency file '{cls.env_file_path}' does not exist")
-        else:
-            raise BadRequestException("Invalid env file path")
-        pipfile_path = os.path.join(cls.get_env_dir(), "Pipfile")
-        cmd = [
-            f"cp {cls.env_file_path} {pipfile_path}", "&&",
-            "pipenv install", "&&",
-            "touch READY"
-        ]
 
-        try:
-            if current_task:
-                current_task.log_info_message("Installing the virtual environment ...")
-            env = os.environ.copy()
-            env["PIPENV_VENV_IN_PROJECT"] = "enabled"
-            res = subprocess.run(
-                " ".join(cmd),
-                cwd=cls.get_env_dir(),
-                stderr=subprocess.PIPE,
-                env=env,
-                shell=True
-            )
-        except Exception as err:
-            raise BadRequestException(
-                "Cannot install the virtual environment.") from err
+        self.log_info_message("Installing the virtual environment, this might take few minutes.")
 
-        if res.returncode != 0:
-            raise BadRequestException(f"Cannot install the virtual environment. Error: {res.stderr}")
+        PipEnvHelper.install_env(self.env_file_path, self.get_env_dir())
 
-        if current_task:
-            current_task.log_success_message("Virtual environment installed!")
+        self.log_info_message("Virtual environment installed!")
 
-    @classmethod
-    def uninstall(cls, current_task: Task=None):
-        if (current_task is not None) and not isinstance(current_task, Task):
-            raise BadRequestException(f"The current task must be an instance of Task")
-
-        if not cls.is_installed():
+    def uninstall(self):
+        if not self.is_installed():
             return
-        cmd = [
-            "pipenv uninstall --all", "&&",
-            "cd ..", "&&",
-            f"rm -rf {cls.get_env_dir()}"
-        ]
 
-        try:
-            if current_task:
-                current_task.log_info_message("Removing the virtual environment ...")
-            env = os.environ.copy()
-            env["PIPENV_VENV_IN_PROJECT"] = "enabled"
-            res = subprocess.run(
-                " ".join(cmd),
-                cwd=cls.get_env_dir(),
-                stderr=subprocess.DEVNULL,
-                env=env,
-                shell=True
-            )
-        except:
-            try:
-                if os.path.exists(cls.get_env_dir()):
-                    shutil.rmtree(cls.get_env_dir())
-            except:
-                raise BadRequestException("Cannot remove the virtual environment.")
+        self.log_info_message("Uninstalling the virtual environment ...")
 
-        if res.returncode != 0:
-            raise BadRequestException(f"Cannot remove the virtual environment. Error: {res.stderr}")
+        PipEnvHelper.uninstall_env(self.get_env_dir())
 
-        if current_task:
-            current_task.log_info_message("Virtual environment removed!")
+        self.log_info_message("Virtual environment uninstalled!")
 
     @abstractmethod
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -174,4 +110,6 @@ class PipEnvShell(BaseEnvShell):
         :type stdout: `str`
         """
 
-        pass
+    async def run_after_task(self) -> None:
+        await super().run_after_task()
+        self.uninstall()

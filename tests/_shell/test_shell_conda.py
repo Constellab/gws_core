@@ -5,14 +5,9 @@
 
 import os
 
-from gws_core import (BaseTestCase, CondaEnvShell, ConfigParams, Experiment,
-                      ExperimentService, File, GTest, JSONDict, OutputSpec,
-                      Resource, Settings, TaskInputs, TaskModel, TaskOutputs,
-                      TaskService, task_decorator)
-from gws_core.experiment.experiment_run_service import ExperimentRunService
-
-settings = Settings.retrieve()
-test_datadir = settings.get_variable("gws_core:testdata_dir")
+from gws_core import (BaseTestCase, CondaEnvShell, ConfigParams, File,
+                      OutputSpec, TaskInputs, TaskOutputs, task_decorator)
+from gws_core.task.task_runner import TaskRunner
 
 __cdir__ = os.path.dirname(os.path.realpath(__file__))
 
@@ -35,29 +30,52 @@ class CondaEnvTester(CondaEnvShell):
 
 class TestProcess(BaseTestCase):
 
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        CondaEnvTester.uninstall()
+    # @classmethod
+    # def tearDownClass(cls):
+    #     super().tearDownClass()
+    #     CondaEnvTester.uninstall()
 
     async def test_conda(self):
-        proc_mdl: TaskModel = TaskService.create_task_model_from_type(
-            task_type=CondaEnvTester)
-        self.assertFalse(CondaEnvTester.is_installed())
 
-        experiment: Experiment = ExperimentService.create_experiment_from_task_model(
-            task_model=proc_mdl)
-        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
+        task_runner = TaskRunner(CondaEnvTester)
 
-        proc = experiment.task_models[0]
+        try:
+            output = await task_runner.run()
 
-        file: Resource = proc.outputs.get_resource_model("file").get_resource()
-        self.assertEqual(
-            file.read().strip(),
-            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
+            file: File = output["file"]
 
-        self.assertTrue(CondaEnvTester.is_installed())
-        self.assertTrue(proc.is_finished)
+            self.assertEqual(
+                file.read().strip(),
+                "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
 
-        CondaEnvTester.uninstall()
-        self.assertFalse(CondaEnvTester.is_installed())
+            task: CondaEnvTester = task_runner.get_task()
+
+            self.assertTrue(task.is_installed())
+            task.uninstall()
+            self.assertFalse(task.is_installed())
+        except Exception as exception:
+            task: CondaEnvTester = task_runner.get_task()
+            if task:
+                task.uninstall()
+            raise exception
+
+        # proc_mdl: TaskModel = TaskService.create_task_model_from_type(
+        #     task_type=CondaEnvTester)
+        # self.assertFalse(CondaEnvTester.is_installed())
+
+        # experiment: Experiment = ExperimentService.create_experiment_from_task_model(
+        #     task_model=proc_mdl)
+        # experiment = await ExperimentRunService.run_experiment(experiment=experiment)
+
+        # proc = experiment.task_models[0]
+
+        # file: Resource = proc.outputs.get_resource_model("file").get_resource()
+        # self.assertEqual(
+        #     file.read().strip(),
+        #     "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
+
+        # self.assertTrue(CondaEnvTester.is_installed())
+        # self.assertTrue(proc.is_finished)
+
+        # CondaEnvTester.uninstall()
+        # self.assertFalse(CondaEnvTester.is_installed())

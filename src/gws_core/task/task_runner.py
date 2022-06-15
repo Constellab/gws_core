@@ -243,3 +243,6 @@ class TaskRunner():
 
     def set_progress_bar(self, progress_bar: ProgressBar) -> None:
         self._progress_bar = progress_bar
+
+    def get_task(self) -> Task:
+        return self._task

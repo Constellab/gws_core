@@ -5,67 +5,58 @@
 
 import subprocess
 import time
-from typing import Any, List, Type
+from typing import Any, List
 
-from ...core.exception.exceptions import BadRequestException
-from ...task.task_helper import TaskHelper
-from .base_env import BaseEnvShell
-from .shell import Shell
+from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
+from gws_core.core.classes.observer.message_observer import MessageObserver
+from gws_core.core.utils.logger import Logger
+from gws_core.impl.file.file_helper import FileHelper
+from gws_core.task.task import Task
 
 
-class ShellProxy(TaskHelper):
+class ShellProxy():
     """
     Shell task proxy.
 
-    This class is a proxy to Shell task. It allows using any shell task to run commands
+    This class is a proxy to Shell commandes. It allow running commands in a shell and get the output and stdout.
     """
 
-    _shell_task_type: Type[Shell]
+    working_dir: str = None
 
-    def __init__(self, shell_task_type: Type[Shell]):
+    _message_dispatcher: MessageDispatcher = None
+
+    def __init__(self, working_dir: str):
         super().__init__()
-        if not issubclass(shell_task_type, Shell):
-            BadRequestException("The shell_task_type must be a subclass of Shell")
-        self._shell_task_type = shell_task_type
+        self.working_dir = working_dir
+        self._message_dispatcher = MessageDispatcher()
 
-    def check_output(self, cmd: List[str], text: bool = True, cwd: str = None, shell_mode: bool = False) -> Any:
-        shell_task = self._shell_task_type()
-        env_cmd = shell_task._format_command(cmd)
-        env_dir = shell_task.build_os_env()
-        if isinstance(shell_task, BaseEnvShell):
-            self._shell_task_type.install()
-            shell_mode = shell_task._shell_mode
-        if not cwd:
-            cwd = shell_task.working_dir
+    def check_output(self, cmd: List[str], env: dict = None, text: bool = True,
+                     shell_mode: bool = False) -> Any:
 
         try:
             output = subprocess.check_output(
-                env_cmd,
-                cwd=cwd,
+                cmd,
+                cwd=self.working_dir,
                 text=text,
-                env=env_dir,
+                env=env,
                 shell=shell_mode
             )
             return output
         except Exception as err:
-            shell_task._clean_working_dir()
-            raise BadRequestException(f"The shell process has failed. Error {err}.")
+            Logger.log_exception_stack_trace(err)
+            raise Exception(f"The shell process has failed. Error {err}.")
 
-    def run(self, cmd: List[str], text: bool = True, cwd: str = None, shell_mode: bool = False) -> Any:
-        shell_task = self._shell_task_type()
-        env_cmd = shell_task._format_command(cmd)
-        env_dir = shell_task.build_os_env()
-        if isinstance(shell_task, BaseEnvShell):
-            self._shell_task_type.install()
-            shell_mode = shell_task._shell_mode
-        if not cwd:
-            cwd = shell_task.working_dir
+    def run(self, cmd: List[str], env: dict = None,
+            shell_mode: bool = False) -> None:
+
+        FileHelper.create_dir_if_not_exist(self.working_dir)
 
         try:
+            Logger.info(f"[ShellProxy] Running command: {cmd}")
             proc = subprocess.Popen(
                 cmd,
-                cwd=cwd,
-                env=env_dir,
+                cwd=self.working_dir,
+                env=env,
                 shell=shell_mode,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -76,11 +67,26 @@ class ShellProxy(TaskHelper):
                 stdout.append(line.decode().strip())
                 tic_b = time.perf_counter()
                 if tic_b - tic_a >= 0.1:      # save outputs every 0.1 sec in taskbar
-                    self.notify_info_message("\n".join(stdout))
+                    self._message_dispatcher.notify_info_message("\n".join(stdout))
                     tic_a = time.perf_counter()
                     stdout = []
             if stdout:
-                self.notify_info_message("\n".join(stdout))
+                self._message_dispatcher.notify_info_message("\n".join(stdout))
         except Exception as err:
-            shell_task._clean_working_dir()
-            raise BadRequestException(f"The shell process has failed. Error {err}.")
+            Logger.log_exception_stack_trace(err)
+            raise Exception(f"The shell process has failed. Error {err}.")
+
+    def clean_working_dir(self):
+        FileHelper.delete_dir(self.working_dir)
+
+    def attach_task(self, task: Task) -> None:
+        """Attach a task to the shell proxy. The logs of the proxy will be dispatch to the task logs
+
+        :param task: _description_
+        :type task: Task
+        """
+        self._message_dispatcher.attach_task(task)
+
+    def attach_observer(self, observer: MessageObserver) -> None:
+        """ Attach a custom observer to the shell proxy. The logs of the proxy will be dispatch to the observer"""
+        self._message_dispatcher.attach(observer)

@@ -665,12 +665,7 @@ class Table(Resource):
             self._data.__str__()
 
     def transpose(self) -> 'Table':
-        return Table(
-            data=self._data.T,
-            row_names=self.column_names,
-            column_names=self.row_names,
-            meta=self._transpose_meta()
-        )
+        return self._create_sub_table(self._data.T, self._transpose_meta())
 
     def _transpose_meta(self) -> TableMeta:
         return {

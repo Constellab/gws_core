@@ -3,17 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
 import shlex
 import shutil
 import subprocess
-import time
 from abc import abstractmethod
 from typing import Union
 
+from gws_core.impl.shell.shell_proxy import ShellProxy
+
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-#from ...core.model.sys_proc import SysProc
 from ...core.utils.settings import Settings
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
@@ -81,8 +80,6 @@ class Shell(Task):
         :type stdout: `str`
         """
 
-        pass
-
     @property
     def working_dir(self) -> str:
         """
@@ -113,6 +110,9 @@ class Shell(Task):
         """
 
         outputs: TaskOutputs
+
+        shell_proxy = ShellProxy(self.working_dir)
+
         try:
             user_cmd = self.build_command(params, inputs)
             user_env = self.build_os_env()
@@ -131,38 +131,19 @@ class Shell(Task):
             cmd = [str(c) for c in user_cmd]
             cmd = self._format_command(cmd)
 
-            if not os.path.exists(self.working_dir):
-                os.makedirs(self.working_dir)
+            # attach this task to the proxy log the output into the progress bar
+            shell_proxy.attach_task(self)
 
-            # proc = SysProc.popen(
-            proc = subprocess.Popen(
-                cmd,
-                cwd=self.working_dir,
-                env=user_env,
-                shell=self._shell_mode,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-            )
-
-            tic_a = time.perf_counter()
-            stdout: list = []
-            for line in iter(proc.stdout.readline, b''):
-                stdout.append(line.decode().strip())
-                tic_b = time.perf_counter()
-                if tic_b - tic_a >= 0.1:      # save outputs every 0.1 sec in taskbar
-                    self.log_info_message("\n".join(stdout))
-                    tic_a = time.perf_counter()
-                    stdout = []
-            if stdout:
-                self.log_info_message("\n".join(stdout))
+            # run the command
+            shell_proxy.run(cmd, user_env, self._shell_mode)
 
             outputs = self.gather_outputs(params, inputs)
         except subprocess.CalledProcessError as err:
-            self._clean_working_dir()
+            shell_proxy.clean_working_dir()
             raise BadRequestException(
                 f"An error occured while running the binary in shell task. Error: {err}") from err
         except Exception as err:
-            self._clean_working_dir()
+            shell_proxy.clean_working_dir()
             raise BadRequestException(
                 f"An error occured while running shell task. Error: {err}") from err
 

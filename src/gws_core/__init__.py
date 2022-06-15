@@ -28,10 +28,19 @@ from .config.param_spec import StrParam as StrParam
 from .config.param_types import ParamValue as ParamValue
 from .config.tags_param_spec import TagsParam as TagsParam
 # Core
-# Core > Classes
+# Core > Classes > Observer
 from .core.classes.expose import Expose as Expose
 from .core.classes.expression_builder import \
     ExpressionBuilder as ExpressionBuilder
+from .core.classes.observer.dispatched_message import \
+    DispatchedMessage as DispatchedMessage
+from .core.classes.observer.message_dispatcher import \
+    MessageDispatcher as MessageDispatcher
+from .core.classes.observer.message_observer import \
+    MessageObserver as MessageObserver
+from .core.classes.observer.message_observer import \
+    TaskProgressMessageObserver as TaskProgressMessageObserver
+# Core > Classes
 from .core.classes.paginator import Paginator as Paginator
 from .core.classes.paginator import PaginatorDict as PaginatorDict
 from .core.classes.path import URL as URL
@@ -146,8 +155,11 @@ from .impl.robot.robot_tasks import RobotWait as RobotWait
 from .impl.s3.base import BaseS3 as BaseS3
 from .impl.s3.ovh import OVHS3 as OVHS3
 from .impl.s3.swift import Swift as Swift
+from .impl.shell.base_env_helper import BaseEnvHelper as BaseEnvHelper
 from .impl.shell.conda import CondaEnvShell as CondaEnvShell
+from .impl.shell.conda_helper import CondaHelper as CondaHelper
 from .impl.shell.pipenv import PipEnvShell as PipEnvShell
+from .impl.shell.pipenv_helper import PipEnvHelper as PipEnvHelper
 from .impl.shell.shell import Shell as Shell
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 # Impl > Table
@@ -333,7 +345,6 @@ from .task.plug import Wait as Wait
 from .task.task import CheckBeforeTaskResult as CheckBeforeTaskResult
 from .task.task import Task as Task
 from .task.task_decorator import task_decorator as task_decorator
-from .task.task_helper import TaskHelper as TaskHelper
 from .task.task_interface import ITask as ITask
 from .task.task_io import TaskInputs as TaskInputs
 from .task.task_io import TaskOutputs as TaskOutputs

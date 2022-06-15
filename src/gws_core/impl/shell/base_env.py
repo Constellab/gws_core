@@ -9,6 +9,7 @@ from abc import abstractmethod
 from ...config.config_types import ConfigParams
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
+from .base_env_helper import BaseEnvHelper
 from .shell import Shell
 
 
@@ -29,7 +30,6 @@ class BaseEnvShell(Shell):
 
     unique_env_name = None
     _shell_mode = False
-    _GLOBAL_ENV_DIR = "/lab/.sys/.venv/"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,23 +45,7 @@ class BaseEnvShell(Shell):
         if not cls.unique_env_name:
             cls.unique_env_name = cls.full_classname()
 
-        env_dir = os.path.join(cls._GLOBAL_ENV_DIR, cls.unique_env_name)
-        if not os.path.exists(env_dir):
-            os.makedirs(env_dir)
-
-        return env_dir
-
-    # -- I --
-
-    @classmethod
-    def _get_ready_file_path(cls) -> str:
-        """
-        Returns the path of the READY file.
-
-        The READY file is automatically created in the env dir after it is installed.
-        """
-
-        return os.path.join(cls.get_env_dir(), "READY")
+        return BaseEnvHelper.get_env_full_dir(cls.unique_env_name, True)
 
     @classmethod
     def is_installed(cls) -> bool:
@@ -69,15 +53,7 @@ class BaseEnvShell(Shell):
         Returns True if the virtual env is installed. False otherwise
         """
 
-        return os.path.exists(cls._get_ready_file_path())
-
-    @classmethod
-    def install(cls) -> None:
-        """
-        Installs the virtual env
-        """
-
-        pass
+        return BaseEnvHelper.is_installed(cls.get_env_dir())
 
     # -- T --
 
@@ -87,18 +63,18 @@ class BaseEnvShell(Shell):
         """
 
         if not self.is_installed():
-            self.install(current_task=self)
+            self.install()
         return await super().run(params, inputs)
 
-    # -- U --
+    def install(self) -> None:
+        """
+        Installs the virtual env
+        """
 
-    @classmethod
-    def uninstall(cls) -> None:
+    def uninstall(self) -> None:
         """
         Uninstalls the virtual env
         """
-
-        pass
 
     @abstractmethod
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -111,5 +87,3 @@ class BaseEnvShell(Shell):
         :param stdout: The standard output of the shell task
         :type stdout: `str`
         """
-
-        pass

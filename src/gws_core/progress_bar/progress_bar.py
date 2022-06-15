@@ -6,7 +6,7 @@
 import time
 from datetime import datetime
 from enum import Enum
-from typing import List, final
+from typing import List, Optional, TypedDict, final
 
 from fastapi.encoders import jsonable_encoder
 from peewee import CharField
@@ -25,6 +25,12 @@ class ProgressBarMessageType(str, Enum):
     WARNING = "WARNING"
     ERROR = "ERROR"
     PROGRESS = "PROGRESS"
+
+
+class ProgressBarMessage(TypedDict):
+    type: ProgressBarMessageType
+    text: str
+    datetime: str
 
 
 @final
@@ -104,11 +110,13 @@ class ProgressBar(Model):
 
     def add_message(self, message: str, type_: ProgressBarMessageType = ProgressBarMessageType.INFO):
         dtime = jsonable_encoder(datetime.now())
-        self.data["messages"].append({
+
+        message: ProgressBarMessage = {
             "type": type_,
             "text": message,
             "datetime": dtime
-        })
+        }
+        self.data["messages"].append(message)
         if len(self.data["messages"]) > self._max_message_stack_length:
             self.data["messages"].pop(0)
         self._log_message(message, type_)
@@ -160,7 +168,7 @@ class ProgressBar(Model):
         self.save()
 
     @property
-    def messages(self) -> List[dict]:
+    def messages(self) -> List[ProgressBarMessage]:
         return self.data["messages"]
 
     ################################################## VALUE #################################################

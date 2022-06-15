@@ -206,6 +206,10 @@ class Settings():
 
         return os.environ["FRONT_URL"]
 
+    @classmethod
+    def get_global_env_dir(cls) -> str:
+        return "/lab/.sys/.venv"
+
     def get_gws_core_prod_db_config(self) -> DbConfig:
         return {
             "host":  "gws_core_prod_db",

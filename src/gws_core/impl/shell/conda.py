@@ -4,18 +4,14 @@
 # About us: https://gencovery.com
 
 import os
-import shlex
-import shutil
-import subprocess
 from abc import abstractmethod
 
+from gws_core.impl.shell.conda_helper import CondaHelper
+
 from ...config.config_types import ConfigParams
-from ...core.exception.exceptions import BadRequestException
-from ...progress_bar.progress_bar import ProgressBar, ProgressBarMessageType
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 from .base_env import BaseEnvShell
-from ...task.task import Task
 
 
 @task_decorator("CondaEnvShell", hide=True)
@@ -66,87 +62,33 @@ class CondaEnvShell(BaseEnvShell):
 
     # -- I --
 
-    @ classmethod
-    def install(cls, current_task:Task=None):
+    def install(self):
         """
         Install the virtual env
         """
-        if (current_task is not None) and not isinstance(current_task, Task):
-            raise BadRequestException(f"The current task must be an instance of Task")
 
-        if cls.is_installed():
+        if self.is_installed():
             return
-        if isinstance(cls.env_file_path, str):
-            if not os.path.exists(cls.env_file_path):
-                raise BadRequestException(
-                    f"The dependency file '{cls.env_file_path}' does not exist")
-        else:
-            raise BadRequestException("Invalid env file path")
-        cmd = [
-            'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
-            f"conda env create -f {cls.env_file_path} --force --prefix ./.venv", "&&",
-            "touch READY",
-        ]
 
-        res: subprocess.CompletedProcess
-        try:
-            if current_task:
-                current_task.log_info_message("Installing the virtual environment ...")
-            res = subprocess.run(
-                " ".join(cmd),
-                cwd=cls.get_env_dir(),
-                stderr=subprocess.PIPE,
-                shell=True
-            )
-        except Exception as err:
-            raise BadRequestException("Cannot install the virtual environment.") from err
+        self.log_info_message("Installing the virtual environment, this might take few minutes.")
 
-        if res.returncode != 0:
-            raise BadRequestException(f"Cannot install the virtual environment. Error: {res.stderr}")
+        CondaHelper.install_env(self.env_file_path, self.get_env_dir())
 
-        if current_task:
-            current_task.log_success_message("Virtual environment installed!")
+        self.log_info_message("Virtual environment installed!")
 
     # -- U --
 
-    @ classmethod
-    def uninstall(cls, current_task:Task=None):
-        if (current_task is not None) and not isinstance(current_task, Task):
-            raise BadRequestException(f"The current task must be an instance of Task")
-
-        if not cls.is_installed():
+    def uninstall(self):
+        if self.is_installed():
             return
-        cmd = [
-            'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
-            "conda remove -y --prefix .venv --all", "&&",
-            "cd ..", "&&",
-            f"rm -rf {cls.get_env_dir()}"
-        ]
 
-        res: subprocess.CompletedProcess
-        try:
-            if current_task:
-                current_task.log_info_message("Removing the virtual environment ...")
-            res = subprocess.run(
-                " ".join(cmd),
-                cwd=cls.get_env_dir(),
-                stderr=subprocess.PIPE,
-                shell=True
-            )
-        except Exception as err:
-            try:
-                if os.path.exists(cls.get_env_dir()):
-                    shutil.rmtree(cls.get_env_dir())
-            except Exception as err:
-                raise BadRequestException("Cannot remove the virtual environment.") from err
+        self.log_info_message("Removing the virtual environment ...")
 
-        if res.returncode != 0:
-            raise BadRequestException(f"Cannot remove the virtual environment. Error: {res.stderr}")
+        CondaHelper.uninstall_env(self.get_env_dir())
 
-        if current_task:
-            current_task.log_info_message("Virtual environment removed!")
+        self.log_info_message("Virtual environment removed!")
 
-    @ abstractmethod
+    @abstractmethod
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         This methods gathers the results of the shell task. It must be overloaded by subclasses.
@@ -157,5 +99,3 @@ class CondaEnvShell(BaseEnvShell):
         :param stdout: The standard output of the shell task
         :type stdout: `str`
         """
-
-        pass
