@@ -91,5 +91,5 @@ class TransformerService():
 
         # run task, clear after task and get resource
         resource: Resource = await converter_runner.run()
-        converter_runner.run_after_task()
+        await converter_runner.run_after_task()
         return resource

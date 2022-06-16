@@ -5,10 +5,8 @@ from typing import List
 from gws_core import ConfigParams, transformer_decorator
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param_spec import IntParam
-from gws_core.experiment.experiment import Experiment
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
-from gws_core.task.task_model import TaskModel
 from gws_core.task.transformer.transformer import Transformer
 from gws_core.task.transformer.transformer_service import TransformerService
 from gws_core.task.transformer.transformer_type import TransformerDict

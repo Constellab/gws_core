@@ -146,7 +146,7 @@ class CentralService(BaseService):
         central_api_url = Settings.get_central_api_url()
         if central_api_url is None:
             if Settings.is_dev:
-                raise BadRequestException("The central routes are desactivated in dev environment")
+                raise BadRequestException("The central routes are desactivated in dev and test environment")
             else:
                 raise BadRequestException('The CENTRAL_API_URL environment variable is not set')
         return central_api_url + '/' + route

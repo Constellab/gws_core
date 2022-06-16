@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import BaseTestCase, Table, ViewTester
+from gws_core import BaseTestCase, Table
 from gws_core.impl.table.view.base_table_view import (BaseTableView, CellRange,
                                                       TableSelection)
 from pandas import DataFrame
@@ -28,20 +28,20 @@ class TestTableView(BaseTestCase):
 
         # get_values_from_coords
         # Expected value : [2, 3, 8, 6]
-        cell_range: CellRange = {"from": {"row": 1, "column": 0}, "to": {"row": 2, "column": 1}}
+        cell_range: CellRange = CellRange.from_dict({"from": {"row": 1, "column": 0}, "to": {"row": 2, "column": 1}})
 
         # Selection of a single cell column= 0 row=3 --> value = 4
-        cell_range_2: CellRange = {"from": {"row": 3, "column": 0}, "to": {"row": 3, "column": 0}}
+        cell_range_2: CellRange = CellRange.from_dict({"from": {"row": 3, "column": 0}, "to": {"row": 3, "column": 0}})
         self.assertEqual(base_view.get_values_from_coords([cell_range, cell_range_2]), [2, 3, 8, 6, 4])
 
         # get_dataframe_from_coords
         self.assertTrue(base_view.get_dataframe_from_coords(cell_range).equals(dataframe.iloc[1:3, 0:2]))
 
-        selection_range: TableSelection = {"type": "range", "selection": [cell_range, cell_range_2]}
+        selection_range: TableSelection = TableSelection(type_="range", selection=[cell_range, cell_range_2])
         self.assertEqual(base_view.get_values_from_selection_range(selection_range), [2, 3, 8, 6, 4])
         self.assertEqual(base_view.get_row_tags_from_selection_range(
             selection_range), [row_tags[1], row_tags[2], row_tags[3]])
 
-        column_selection: TableSelection = {"type": "column", "selection": ['A', 'B']}
+        column_selection: TableSelection = TableSelection.from_dict({"type": "column", "selection": ['A', 'B']})
         self.assertEqual(base_view.get_values_from_selection_range(column_selection), a_values + b_values)
         self.assertEqual(base_view.get_row_tags_from_selection_range(column_selection), row_tags)

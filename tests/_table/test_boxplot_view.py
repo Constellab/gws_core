@@ -7,7 +7,7 @@ from typing import List
 
 from gws_core import BaseTestCase, ViewTester, ViewType
 from gws_core.extra import DataProvider, TableBoxPlotView
-from gws_core.impl.table.view.table_selection import Serie2d
+from gws_core.impl.table.view.table_selection import Serie1d
 
 
 class TestTableBoxPlotView(BaseTestCase):
@@ -20,7 +20,7 @@ class TestTableBoxPlotView(BaseTestCase):
 
         # 1 series :
         # first : y = petal.length
-        series: List[Serie2d] = [{"name": "first", "y": {"type": "columns", "selection": ["petal.length"]}}]
+        series: List[Serie1d] = [{"name": "first", "y": {"type": "columns", "selection": ["petal.length"]}}]
         dic = tester.to_dict({"series": series})
         self.assertEqual(dic["type"], ViewType.BOX_PLOT.value)
 
