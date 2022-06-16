@@ -155,11 +155,11 @@ from .impl.robot.robot_tasks import RobotWait as RobotWait
 from .impl.s3.base import BaseS3 as BaseS3
 from .impl.s3.ovh import OVHS3 as OVHS3
 from .impl.s3.swift import Swift as Swift
-from .impl.shell.base_env_helper import BaseEnvHelper as BaseEnvHelper
-from .impl.shell.conda import CondaEnvShell as CondaEnvShell
-from .impl.shell.conda_helper import CondaHelper as CondaHelper
-from .impl.shell.pipenv import PipEnvShell as PipEnvShell
-from .impl.shell.pipenv_helper import PipEnvHelper as PipEnvHelper
+from .impl.shell.base_env import BaseEnv as BaseEnv
+from .impl.shell.conda_env_task import CondaEnvShell as CondaEnvShell
+from .impl.shell.conda_env import CondaEnv as CondaEnv
+from .impl.shell.pip_env_task import PipEnvShell as PipEnvShell
+from .impl.shell.pip_env import PipEnv as PipEnv
 from .impl.shell.shell import Shell as Shell
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 # Impl > Table

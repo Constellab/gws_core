@@ -6,12 +6,12 @@
 import os
 from abc import abstractmethod
 
-from gws_core.impl.shell.conda_helper import CondaHelper
+from gws_core.impl.shell.conda_env import CondaEnv
 
 from ...config.config_types import ConfigParams
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
-from .base_env import BaseEnvShell
+from .base_env_task import BaseEnvShell
 
 
 @task_decorator("CondaEnvShell", hide=True)
@@ -48,45 +48,9 @@ class CondaEnvShell(BaseEnvShell):
     env_file_path: str = None
     _shell_mode = True
 
-    # -- F --
-
-    def _format_command(self, user_cmd: list) -> str:
-        if isinstance(user_cmd, list):
-            user_cmd = [str(c) for c in user_cmd]
-            user_cmd = " ".join(user_cmd)
-        venv_dir = os.path.join(self.get_env_dir(), "./.venv")
-        cmd = f'bash -c "source /opt/conda/etc/profile.d/conda.sh && conda activate {venv_dir} && {user_cmd}"'
-        return cmd
-
-    # -- G --
-
-    # -- I --
-
-    def install(self):
-        """
-        Install the virtual env
-        """
-
-        if self.is_installed():
-            return
-
-        self.log_info_message("Installing the virtual environment, this might take few minutes.")
-
-        CondaHelper.install_env(self.env_file_path, self.get_env_dir())
-
-        self.log_info_message("Virtual environment installed!")
-
-    # -- U --
-
-    def uninstall(self):
-        if self.is_installed():
-            return
-
-        self.log_info_message("Removing the virtual environment ...")
-
-        CondaHelper.uninstall_env(self.get_env_dir())
-
-        self.log_info_message("Virtual environment removed!")
+    def __init__(self):
+        super().__init__()
+        self.base_env = CondaEnv(self.get_env_dir_name(), self.env_file_path)
 
     @abstractmethod
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

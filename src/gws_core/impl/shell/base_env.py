@@ -6,84 +6,87 @@
 import os
 from abc import abstractmethod
 
-from ...config.config_types import ConfigParams
-from ...task.task_decorator import task_decorator
-from ...task.task_io import TaskInputs, TaskOutputs
-from .base_env_helper import BaseEnvHelper
-from .shell import Shell
+from gws_core.core.utils.settings import Settings
+from gws_core.impl.file.file_helper import FileHelper
 
 
-@task_decorator("BaseEnvShell", hide=True)
-class BaseEnvShell(Shell):
-    """
-    EnvShell task.
+class BaseEnv():
 
-    This class is a proxy to run user shell commands in virtual environments
+    env_dir_name: str = None
+    env_file_path: str = None
 
-    :property unique_env_name: The unique name of the virtual environment.
-        If `None`, a unique name is automtically defined for the Task.
-        The share virtual environments across diffrent task,
-        it is recommended to set (freeze) the ```unique_env_name``` in a base class and let other
-        compatible tasks inherit this base class.
-    :type unique_env_name: `str`
-    """
+    def __init__(self, env_dir_name: str, env_file_path: str):
+        self.env_dir_name = env_dir_name
+        self.env_file_path = env_file_path
 
-    unique_env_name = None
-    _shell_mode = False
+        # check env file path
+        if isinstance(env_file_path, str):
+            if not FileHelper.exists_on_os(env_file_path):
+                raise Exception(
+                    f"The environment file '{env_file_path}' does not exist")
+        else:
+            raise Exception("Invalid env file path")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not os.path.exists(self.get_env_dir()):
-            os.makedirs(self.get_env_dir())
-
-    @classmethod
-    def get_env_dir(cls) -> str:
+    @abstractmethod
+    def install(self) -> bool:
         """
-        Returns the directory of the virtual env of the task class
+        Install the virtual env.
         """
 
-        if not cls.unique_env_name:
-            cls.unique_env_name = cls.full_classname()
+    @abstractmethod
+    def uninstall(self) -> bool:
+        """
+        Uninstall the virtual env.
+        """
 
-        return BaseEnvHelper.get_env_full_dir(cls.unique_env_name, True)
+    def build_os_env(self) -> dict:
+        """
+        Creates the OS environment variables that are passed to the shell command
 
-    @classmethod
-    def is_installed(cls) -> bool:
+        :return: The OS environment variables
+        :rtype: `dict`
+        """
+
+        return {}
+
+    @abstractmethod
+    def format_command(self, user_cmd: list) -> str:
+        """
+        Format the user command
+
+        :param stdout: The final command
+        :param type: `list`
+        """
+
+    def is_installed(self) -> bool:
         """
         Returns True if the virtual env is installed. False otherwise
         """
 
-        return BaseEnvHelper.is_installed(cls.get_env_dir())
+        return FileHelper.exists_on_os(self._get_ready_file_path())
 
-    # -- T --
-
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def _get_ready_file_path(self) -> str:
         """
-        Task entrypoint
-        """
+        Returns the path of the READY file.
 
-        if not self.is_installed():
-            self.install()
-        return await super().run(params, inputs)
-
-    def install(self) -> None:
-        """
-        Installs the virtual env
+        The READY file is automatically created in the env dir after it is installed.
         """
 
-    def uninstall(self) -> None:
+        return os.path.join(self.get_env_dir_path(), "READY")
+
+    def get_env_dir_path(self) -> str:
         """
-        Uninstalls the virtual env
+        Returns the absolute path for the env dir base on a dir name.
+        All env are in the global env dir.
         """
 
-    @abstractmethod
-    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        """
-        This methods gathers the results of the shell task. It must be overloaded by subclasses.
+        env_dir = os.path.join(Settings.get_global_env_dir(), self.env_dir_name)
 
-        It must be overloaded to capture the standard output (stdout) and the
-        output files generated in the current working directory (see `gws.Shell.cwd`)
+        return env_dir
 
-        :param stdout: The standard output of the shell task
-        :type stdout: `str`
+    def create_env_dir(self) -> bool:
         """
+        Create the env dir.
+        """
+
+        return FileHelper.create_dir_if_not_exist(self.get_env_dir_path())

@@ -6,12 +6,12 @@
 import os
 from abc import abstractmethod
 
-from gws_core.impl.shell.pipenv_helper import PipEnvHelper
+from gws_core.impl.shell.pip_env import PipEnv
 
 from ...config.config_types import ConfigParams
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
-from .base_env import BaseEnvShell
+from .base_env_task import BaseEnvShell
 
 
 @task_decorator("PipEnvShell", hide=True)
@@ -44,59 +44,12 @@ class PipEnvShell(BaseEnvShell):
     """
 
     env_file_path: str
+    base_env: PipEnv = None
     _shell_mode = True
 
-    # -- B --
-
-    def _format_command(self, user_cmd) -> list:
-        """
-        This method builds the command to execute.
-
-        :return: The list of arguments used to build the final command in the Python method `subprocess.run`
-        :rtype: `list`
-        """
-
-        if isinstance(user_cmd, list):
-            user_cmd = [str(c) for c in user_cmd]
-        if user_cmd[0] in ["python", "python2", "python3"]:
-            del user_cmd[0]
-        user_cmd = ["pipenv", "run", "python", *user_cmd]
-        cmd = " ".join(user_cmd)
-        return cmd
-
-    def build_os_env(self) -> dict:
-        env = os.environ.copy()
-        pipfile_path = os.path.join(self.get_env_dir(), "Pipfile")
-        env["PIPENV_PIPFILE"] = pipfile_path
-        env["PIPENV_VENV_IN_PROJECT"] = "enabled"
-        return env
-
-    # -- E --
-
-    # -- I --
-
-    def install(self):
-        """
-        Install the virtual env
-        """
-        if self.is_installed():
-            return
-
-        self.log_info_message("Installing the virtual environment, this might take few minutes.")
-
-        PipEnvHelper.install_env(self.env_file_path, self.get_env_dir())
-
-        self.log_info_message("Virtual environment installed!")
-
-    def uninstall(self):
-        if not self.is_installed():
-            return
-
-        self.log_info_message("Uninstalling the virtual environment ...")
-
-        PipEnvHelper.uninstall_env(self.get_env_dir())
-
-        self.log_info_message("Virtual environment uninstalled!")
+    def __init__(self):
+        super().__init__()
+        self.base_env = PipEnv(self.get_env_dir_name(), self.env_file_path)
 
     @abstractmethod
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

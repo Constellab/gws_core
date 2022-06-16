@@ -111,12 +111,12 @@ class ProgressBar(Model):
     def add_message(self, message: str, type_: ProgressBarMessageType = ProgressBarMessageType.INFO):
         dtime = jsonable_encoder(datetime.now())
 
-        message: ProgressBarMessage = {
+        progress_bar_message: ProgressBarMessage = {
             "type": type_,
             "text": message,
             "datetime": dtime
         }
-        self.data["messages"].append(message)
+        self.data["messages"].append(progress_bar_message)
         if len(self.data["messages"]) > self._max_message_stack_length:
             self.data["messages"].pop(0)
         self._log_message(message, type_)
