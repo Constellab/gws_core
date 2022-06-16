@@ -75,12 +75,12 @@ class TableBarPlotView(BaseTableView):
         view = self._get_view(params)
 
         for serie in series:
-            y_data = self.get_values_from_selection_range(serie["y"])
+            y_data = self.get_values_from_selection_range(serie.y)
 
             view.add_series(
                 y=y_data,
-                name=serie["name"],
-                tags=self.get_row_tags_from_selection_range(serie["y"])
+                name=serie.name,
+                tags=self.get_row_tags_from_selection_range(serie.y)
             )
 
         return view.data_to_dict(params)

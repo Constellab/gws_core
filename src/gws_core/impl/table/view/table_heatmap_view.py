@@ -12,7 +12,7 @@ from ....config.param_spec import DictParam
 from ....resource.view_types import ViewSpecs, ViewType
 from ...view.heatmap_view import HeatmapView
 from .base_table_view import BaseTableView
-from .table_selection import CellRange, TableSelection
+from .table_selection import CellRange, Serie1d, TableSelection
 
 if TYPE_CHECKING:
     from gws_core.impl.table.table import Table
@@ -57,22 +57,22 @@ class TableHeatmapView(BaseTableView):
     _type: ViewType = ViewType.HEATMAP
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        serie: HeatMapSerie = params.get('serie')
+        serie: Serie1d = Serie1d.from_dict(params.get('serie'))
 
         table: Table
 
-        if serie["y"]["type"] == 'range':
+        if serie.y.type == 'range':
 
-            cell_range: CellRange = serie["y"]["selection"][0]
+            cell_range: CellRange = serie.y.selection[0]
             # extract a dataframe from the first selection of the range, ignore the rest
             table = self._table.select_by_coords(
-                from_row_id=cell_range["from"]["row"],
-                from_column_id=cell_range["from"]["column"],
-                to_row_id=cell_range["to"]["row"],
-                to_column_id=cell_range["to"]["column"],
+                from_row_id=cell_range.get_from().row,
+                from_column_id=cell_range.get_from().column,
+                to_row_id=cell_range.get_to().row,
+                to_column_id=cell_range.get_to().column,
             )
         else:
-            column_names = serie["y"]["selection"]
+            column_names = serie.y.selection
             table = self._table.select_by_column_names([{"name": column_names}])
 
         table.get_columns_info()
