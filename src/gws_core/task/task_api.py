@@ -80,7 +80,7 @@ def fix_protocol(protocol: ProtocolModel):
             process.data["inputs"] = process.inputs.to_json()
 
             # set the output of the previous process
-            connector = protocol.get_connector_by_destination(process.instance_name, task_input.port_name)
+            connector = protocol.get_connector_from_right(process.instance_name, task_input.port_name)
 
             if connector is None:
                 Logger.error(

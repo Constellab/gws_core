@@ -397,6 +397,12 @@ class ProcessModel(ModelWithUser):
         if self.parent_protocol_id is None:
             return "Main protocol"
 
+        process_type: Type[Process] = TypingManager.get_type_from_name(
+            self.process_typing_name)
+
+        if process_type:
+            return process_type._human_name
+
         return self.instance_name
 
     def get_process_type(self) -> Type[Process]:

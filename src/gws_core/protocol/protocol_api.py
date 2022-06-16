@@ -92,6 +92,26 @@ async def configure_process(id: str,
     return ProtocolService.configure_process(
         protocol_id=id, process_instance_name=process_instance_name, config_values=config_values)
 
+########################## INTERFACE / OUTERFACE #####################
+
+
+@core_app.delete("/protocol/{id}/interface/{interface_name}", tags=["Protocol"],
+                 summary="Delete an interface")
+async def delete_interface(id: str,
+                           interface_name: str,
+                           _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+
+    ProtocolService.delete_interface_of_protocol_id(id, interface_name)
+
+
+@core_app.delete("/protocol/{id}/outerface/{outerface_name}", tags=["Protocol"],
+                 summary="Delete an outerface")
+async def delete_outerface(id: str,
+                           outerface_name: str,
+                           _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+
+    ProtocolService.delete_outerface_of_protocol_id(id, outerface_name)
+
 
 ########################## SPECIFIC PROCESS #####################
 

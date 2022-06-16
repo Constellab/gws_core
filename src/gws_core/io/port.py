@@ -312,6 +312,12 @@ class Port(Base):
         _json["specs"] = self.resource_spec.to_json()
         return _json
 
+    def __eq__(self, __o: object) -> bool:
+        if not isinstance(__o, Port):
+            return False
+
+        return self.name == __o.name and self.process.instance_name == __o.process.instance_name
+
     @classmethod
     def load_from_json(cls, json_: PortDict, parent: IO, name: str) -> 'Port':
         spec_type: Type[IOSpec] = cls._get_io_spec_type()

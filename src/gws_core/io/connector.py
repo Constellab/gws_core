@@ -125,3 +125,13 @@ class Connector:
         """ return true if the right side is the specified process connected to the specified port
         """
         return self.in_port.process.instance_name == process_model_name and self.in_port.name == port_name
+
+    def is_left_connected_to(self, process_model_name: str, port_name: str) -> bool:
+        """ return true if the left side is the specified process connected to the specified port
+        """
+        return self.out_port.process.instance_name == process_model_name and self.out_port.name == port_name
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Connector):
+            return False
+        return self.out_port == other.out_port and self.in_port == other.in_port

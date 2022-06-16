@@ -150,12 +150,12 @@ class IProtocol(IProcess):
     def delete_interface(self, name: str) -> None:
         """Delete an interface of the protocol
         """
-        ProtocolService.delete_interface_on_protocol(self._protocol_model, name)
+        ProtocolService.delete_interface_of_protocol(self._protocol_model, name)
 
     def delete_outerface(self, name: str) -> None:
         """Delete an outerface of the protocol
         """
-        ProtocolService.delete_outerface_on_protocol(self._protocol_model, name)
+        ProtocolService.delete_outerface_of_protocol(self._protocol_model, name)
 
     ############################################### Config ####################################
     # Block config of the protocol because it does not transfer the config to the task

@@ -5,7 +5,7 @@
 
 import asyncio
 import json
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Optional, Set, Union
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -209,7 +209,7 @@ class ProtocolModel(ProcessModel):
 
         sources: List[ProcessModel] = []
         for process in self.processes.values():
-            if process.is_ready or self.is_interfaced_with(process):
+            if process.is_ready or self.is_interfaced_with(process.instance_name):
                 sources.append(process)
         aws = []
         # TODO est-ce qu'il faut mettre à jour la progress bar ?
@@ -329,6 +329,8 @@ class ProtocolModel(ProcessModel):
     def remove_process(self, name: str) -> None:
         self._check_instance_name(name)
         self._delete_connectors_by_process(self.processes[name])
+        self.remove_interfaces_by_process_name(name)
+        self.remove_outerfaces_by_process_name(name)
         del self._processes[name]
 
     def _check_instance_name(self, instance_name: str) -> None:
@@ -397,10 +399,10 @@ class ProtocolModel(ProcessModel):
         self._connectors.append(connector)
 
     def _check_port(self, port: Port) -> None:
-        if port.parent is None or port.parent.parent is None:
+        if port.parent is None or port.process is None:
             raise Exception('The port is not linked to a process')
 
-        process_port: ProcessModel = port.parent.parent
+        process_port: ProcessModel = port.process
 
         if process_port.parent_protocol is None:
             raise Exception('The process is not in a protocol')
@@ -441,31 +443,56 @@ class ProtocolModel(ProcessModel):
             connector.disconnect()
         self._connectors = []
 
-    def delete_connector(self, dest_process_name: str, dest_process_port_name: str) -> None:
+    def delete_connector_from_right(self, right_process_name: str, right_process_port_name: str) -> None:
         """ remove the connector which right side is connected to the specified port of the specified process
+        return the list of deleted connectors
         """
-        self._connectors = [
-            item for item in self.connectors
-            if not item.is_right_connected_to(dest_process_name, dest_process_port_name)]
+        connector_to_delete: Optional[Connector] = self.get_connector_from_right(right_process_name,
+                                                                                 right_process_port_name)
 
-    def _delete_connectors_by_process(self, process_model: ProcessModel) -> None:
-        """remove all the connectors connected to a process (input or output)
+        if connector_to_delete:
+            self._delete_connector_from_list([connector_to_delete])
+
+    def delete_connectors_from_left(self, left_process_name: str, left_process_port_name: str) -> None:
+        """ remove the connector which left side is connected to the specified port of the specified process
+        It can remove multiple connectors if there are multiple connectors connected to the same port
+        Return the list of deleted connectors
         """
-        self._connectors = [item for item in self.connectors if not item.is_connected_to(process_model)]
+        connectors_to_delete: List[Connector] = self.get_connectors_from_left(left_process_name, left_process_port_name)
 
-    def get_connector_by_destination(self, dest_process_name, dest_process_port_name: str) -> Optional[Connector]:
+        self._delete_connector_from_list(connectors_to_delete)
+
+    def _delete_connectors_by_process(self, process_model: ProcessModel) -> List[Connector]:
+        """remove all the connectors connected to a process (input or output), return the list of deleted connectors
+        """
+        connectors_to_delete: List[Connector] = [
+            item for item in self.connectors if item.is_connected_to(process_model)]
+        self._delete_connector_from_list(connectors_to_delete)
+        return connectors_to_delete
+
+    def _delete_connector_from_list(self, connectors_to_delete: List[Connector]) -> None:
+        """remove all the connectors in the list
+        """
+        self._connectors = [item for item in self.connectors if item not in connectors_to_delete]
+
+    def get_connector_from_right(self, right_process_name: str, right_process_port_name: str) -> Optional[Connector]:
         """
         Returns a connector by the destination process and port
-
-        :return: The connector
-        :rtype": Connector
         """
 
         for connector in self.connectors:
-            if connector.is_right_connected_to(dest_process_name, dest_process_port_name):
+            if connector.is_right_connected_to(right_process_name, right_process_port_name):
                 return connector
 
         return None
+
+    def get_connectors_from_left(self, left_process_name: str, left_process_port_name: str) -> List[Connector]:
+        """
+        Returns a connector by the destination process and port
+        """
+        return [
+            item for item in self.connectors
+            if item.is_left_connected_to(left_process_name, left_process_port_name)]
 
     ############################### INPUTS #################################
 
@@ -533,16 +560,25 @@ class ProtocolModel(ProcessModel):
             port = interface.target_port
             port.resource_model = self.inputs.get_resource_model(key)
 
-    def is_interfaced_with(self, process: ProcessModel) -> bool:
+    def is_interfaced_with(self, process_instance_name: str) -> bool:
         """
         Returns True if the input poort the process is an interface of the protocol
         """
 
+        interfaces = self.get_interfaces_linked_to_process(process_instance_name)
+        return len(interfaces) > 0
+
+    def get_interfaces_linked_to_process(self, process_instance_name: str) -> List[Interface]:
+        """
+        Returns the interfaces linked to a process
+        """
+        interfaces: List[Interface] = []
+
         for interface in self.interfaces.values():
-            port = interface.target_port
-            if process is port.parent.parent:
-                return True
-        return False
+            if interface.target_port.process.instance_name == process_instance_name:
+                interfaces.append(interface)
+
+        return interfaces
 
     def _init_interfaces_from_graph(self, interfaces_dict: Dict) -> None:
         # clear current interfaces
@@ -566,15 +602,49 @@ class ProtocolModel(ProcessModel):
         for outerface in self.outerfaces.values():
             outerface.reset()
 
+    def remove_interfaces_by_process_name(self, process_name: str) -> None:
+        """
+        Remove the interface linked the process with the given name
+        """
+        to_delete: List[Interface] = self.get_interfaces_linked_to_process(process_name)
+
+        for interface in to_delete:
+            self.remove_interface(interface.name)
+
     def remove_interface(self, name: str) -> None:
+        """Remove an interface
+
+        :param name: _description_
+        :type name: str
+        :raises BadRequestException: _description_
+        """
+
         if not name in self.interfaces:
             raise BadRequestException(
                 f"The protocol '{self.get_instance_name_context()}' does not have an interface named '{name}'")
 
+        interface: Interface = self.interfaces[name]
         del self._interfaces[name]
 
         # delete the corresponding input's port
         self.inputs.remove_port(name)
+
+        # check if the interface is connected in the parent protocol
+        if self.parent_protocol:
+            # in parent check if a connector is linked to this interface
+            connector = self.parent_protocol.get_connector_from_right(
+                interface.source_port.process.instance_name, interface.source_port.name)
+
+            if connector:
+                raise BadRequestException(
+                    f"The interface '{name}' is connected in the parent protocol '{self.parent_protocol.get_instance_name_context()}', please remove the link connected to this interface in the parent protocol")
+
+            # in parent check if an interface is linked to this interface
+            interfaces: List[Interface] = self.parent_protocol.get_interfaces_linked_to_process(self.instance_name)
+
+            if len(interfaces) > 0:
+                raise BadRequestException(
+                    f"The interface '{name}' is connected in the parent protocol '{self.parent_protocol.get_instance_name_context()}', please remove the link connected to this interface in the parent protocol")
 
     def port_is_interface(self, name: str, port: Port) -> bool:
         if not name in self.interfaces:
@@ -616,16 +686,23 @@ class ProtocolModel(ProcessModel):
         self._outerfaces[name] = Outerface(
             name=name, source_port=source_port, target_port=target_port)
 
-    def is_outerfaced_with(self, process: ProcessModel) -> bool:
+    def is_outerfaced_with(self, process_instance_name: str) -> bool:
         """
         Returns True if the input poort the process is an outerface of the protocol
         """
 
+        outerfaces = self.get_outerface_linked_to_process(process_instance_name)
+        return len(outerfaces) > 0
+
+    def get_outerface_linked_to_process(self, process_instance_name: str) -> List[Outerface]:
+        """
+        Returns the outerface linked to the process with the given name
+        """
+        outerfaces: List[Outerface] = []
         for outerface in self.outerfaces.values():
-            port = outerface.source_port
-            if process is port.parent.parent:
-                return True
-        return False
+            if outerface.source_port.process.instance_name == process_instance_name:
+                outerfaces.append(outerface)
+        return outerfaces
 
     def _init_outerfaces_from_graph(self, outerfaces_dict: Dict) -> None:
         # clear current interfaces
@@ -643,15 +720,41 @@ class ProtocolModel(ProcessModel):
             outerfaces[key] = port
         self.add_outerfaces(outerfaces)
 
-    def remove_outerface(self, name: str) -> None:
-        if not name in self._outerfaces:
+    def remove_outerfaces_by_process_name(self, process_instance_name: str) -> None:
+        """
+        Remove the outerfaces linked to the process with the given name
+        """
+        to_delete: List[Outerface] = self.get_outerface_linked_to_process(process_instance_name)
+        for outerface in to_delete:
+            self.remove_outerface(outerface.name)
+
+    def remove_outerface(self, name: str) -> Set['ProtocolModel']:
+        if not name in self.outerfaces:
             raise BadRequestException(
                 f"The protocol '{self.get_instance_name_context()}' does not have an outerface named '{name}'")
 
+        outerface: Outerface = self._outerfaces[name]
         del self._outerfaces[name]
 
         # delete the corresponding output
         self.outputs.remove_port(name)
+
+        # check if the outerface is connected in the parent protocol
+        if self.parent_protocol:
+            # in parent check if a connector is linked to this interface
+            connectors = self.parent_protocol.get_connectors_from_left(
+                outerface.target_port.process.instance_name, outerface.target_port.name)
+
+            if len(connectors) > 0:
+                raise BadRequestException(
+                    f"The outerface '{name}' is connected in the parent protocol '{self.parent_protocol.get_instance_name_context()}', please remove the link connected to this outerface in the parent protocol")
+
+            # in parent check if an outerface is linked to this outerface
+            outerfaces: List[Outerface] = self.parent_protocol.get_outerface_linked_to_process(self.instance_name)
+
+            if len(outerfaces) > 0:
+                raise BadRequestException(
+                    f"The outerface '{name}' is connected in the parent protocol '{self.parent_protocol.get_instance_name_context()}', please remove the link connected to this outerface in the parent protocol")
 
     ############################### JSON #################################
 

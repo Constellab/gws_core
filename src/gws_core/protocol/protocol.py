@@ -7,12 +7,10 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Dict, List, Type, TypedDict, final
 
-from gws_core.config.config import Config
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from peewee import Tuple
 
-from ..config.config_types import ConfigParamsDict, ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_register_decorator import typing_registrator

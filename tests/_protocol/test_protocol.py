@@ -62,9 +62,9 @@ class TestProtocol(BaseTestCase):
 
         mini_proto: ProtocolModel = super_proto.get_process('mini_proto')
         p1 = mini_proto.get_process("p1")
-        self.assertTrue(mini_proto.is_interfaced_with(p1))
+        self.assertTrue(mini_proto.is_interfaced_with(p1.instance_name))
         p2 = mini_proto.get_process("p2")
-        self.assertTrue(mini_proto.is_outerfaced_with(p2))
+        self.assertTrue(mini_proto.is_outerfaced_with(p2.instance_name))
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=super_proto)
@@ -92,10 +92,10 @@ class TestProtocol(BaseTestCase):
         mini_travel: ProtocolModel = super_proto.processes["mini_travel"]
         # check mini travel
         sub_p1 = mini_travel.get_process("p1")
-        self.assertTrue(mini_travel.is_interfaced_with(sub_p1))
+        self.assertTrue(mini_travel.is_interfaced_with(sub_p1.instance_name))
 
         sub_p2 = mini_travel.get_process("p2")
-        self.assertTrue(mini_travel.is_outerfaced_with(sub_p2))
+        self.assertTrue(mini_travel.is_outerfaced_with(sub_p2.instance_name))
 
     async def test_protocol_update(self):
 

@@ -86,7 +86,7 @@ class RobotSuperTravelProto(Protocol):
         ])
 
         self.add_interface('robot', move_4, 'robot')
-        self.add_outerface('robot', eat_3, 'robot')
+        self.add_outerface('robot', sub_travel, 'robot')
 
 
 @protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro", hide=True)

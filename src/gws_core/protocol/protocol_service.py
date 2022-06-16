@@ -192,12 +192,12 @@ class ProtocolService(BaseService):
         protocol_model.check_is_updatable()
         process_model: ProcessModel = protocol_model.get_process(process_instance_name)
 
-        # delete the process form the DB
-        process_model.delete_instance()
-
         # delete the process from the parent protocol
         protocol_model.remove_process(process_instance_name)
         protocol_model.save(update_graph=True)
+
+        # delete the process form the DB
+        process_model.delete_instance()
 
     ########################## CONNECTORS #####################
 
@@ -236,7 +236,7 @@ class ProtocolService(BaseService):
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
         protocol_model.check_is_updatable()
-        protocol_model.delete_connector(dest_process_name, dest_process_port_name)
+        protocol_model.delete_connector_from_right(dest_process_name, dest_process_port_name)
         protocol_model.save(update_graph=True)
 
     ########################## INTERFACE & OUTERFACE #####################
@@ -255,13 +255,23 @@ class ProtocolService(BaseService):
         return protocol_model.save(update_graph=True)
 
     @classmethod
-    def delete_interface_on_protocol(cls, protocol_model: ProtocolModel, interface_name: str) -> None:
+    def delete_interface_of_protocol_id(cls, protocol_id: str, interface_name: str) -> None:
+        protocol_model = cls.get_protocol_by_id(protocol_id)
+        cls.delete_interface_of_protocol(protocol_model, interface_name)
+
+    @classmethod
+    def delete_interface_of_protocol(cls, protocol_model: ProtocolModel, interface_name: str) -> None:
         protocol_model.check_is_updatable()
         protocol_model.remove_interface(interface_name)
         protocol_model.save(update_graph=True)
 
     @classmethod
-    def delete_outerface_on_protocol(cls, protocol_model: ProtocolModel, outerface_name: str) -> None:
+    def delete_outerface_of_protocol_id(cls, protocol_id: str, outerface_name: str) -> None:
+        protocol_model = cls.get_protocol_by_id(protocol_id)
+        cls.delete_outerface_of_protocol(protocol_model, outerface_name)
+
+    @classmethod
+    def delete_outerface_of_protocol(cls, protocol_model: ProtocolModel, outerface_name: str) -> None:
         protocol_model.check_is_updatable()
         protocol_model.remove_outerface(outerface_name)
         protocol_model.save(update_graph=True)
