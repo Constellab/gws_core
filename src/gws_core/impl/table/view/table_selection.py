@@ -122,7 +122,7 @@ class Serie2d(Serie1d):
     @staticmethod
     def from_dict(d: Dict[str, Any]) -> 'Serie2d':
         x: TableSelection = None
-        if 'x' in d:
+        if 'x' in d and d['x'] is not None:
             x = TableSelection.from_dict(d['x'])
         return Serie2d(d['name'], TableSelection.from_dict(d['y']), x)
 

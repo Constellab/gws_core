@@ -10,6 +10,9 @@
     "variables":{
         "gws_core:testdata_dir" : "${CURRENT_DIR}/tests/testdata"
     },
+    "technical_info": {
+      "FRONT_VERSION": "0.3.6"
+    },
     "environment":{
         "pip":[
             {
