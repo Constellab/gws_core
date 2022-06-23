@@ -32,6 +32,12 @@ class CreateSimpleRobot2(Protocol):
         ])
 
 
+@protocol_decorator("CreateSimpleRobot2Deprecated", deprecated_since="0.3.10",
+                    deprecated_message="Use CreateSimpleRobot2")
+class CreateSimpleRobot2Deprecated(Protocol):
+    pass
+
+
 @resource_decorator('SubFile')
 class SubFile(File):
     pass
@@ -151,3 +157,21 @@ class TestTyping(BaseTestCase):
         paginator: Paginator[Typing] = TypingService.search_transformers(SubFile._typing_name, SearchParams())
         # Test that it found the FileTransformer
         self.assertTrue(len([x for x in paginator.current_items() if x.unique_name == 'FileTransformer']) > 0)
+
+    async def test_typing_search_with_deprecated(self):
+        search_dict: SearchParams = SearchParams()
+
+        # Test with deprecated typing, it should not be found
+        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "CreateSimpleRobot2Deprecated"},
+                                       {'key': 'include_deprecated', "operator": "EQ", "value": False}]
+        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        # Test that it found the FileTransformer
+        self.assertEqual(paginator.page_info.total_number_of_items, 0)
+
+        # Test with deprecated typing and found option, it should be found
+        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "CreateSimpleRobot2Deprecated"},
+                                       {'key': 'include_deprecated', "operator": "EQ", "value": True}]
+        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        # Test that it found the FileTransformer
+        self.assertTrue(len([x for x in paginator.current_items()
+                        if x.unique_name == 'CreateSimpleRobot2Deprecated']) > 0)
