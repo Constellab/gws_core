@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List
 
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.resource.view_types import ViewType

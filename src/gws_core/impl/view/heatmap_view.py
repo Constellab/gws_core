@@ -40,6 +40,9 @@ class HeatmapView(View):
     _rows_info: TableHeaderInfo = None
     _columns_info: TableHeaderInfo = None
 
+    x_label: str = None
+    y_label: str = None
+
     def set_data(
             self, data: DataFrame = None, rows_info: TableHeaderInfo = None, columns_info: TableHeaderInfo = None):
         if not isinstance(data, DataFrame):
@@ -55,5 +58,7 @@ class HeatmapView(View):
         return {
             "table": self._data.replace({nan: None}).values.tolist(),
             "rows": self._rows_info,
-            "columns": self._columns_info
+            "columns": self._columns_info,
+            "x_label": self.x_label,
+            "y_label": self.y_label,
         }

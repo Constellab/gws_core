@@ -53,6 +53,7 @@ class TableHeatmapView(BaseTableView):
     _specs: ViewSpecs = {
         **BaseTableView._specs,
         "serie": DictParam(default_value={}),
+        **BaseTableView._2d_axis_labels_specs
     }
     _type: ViewType = ViewType.HEATMAP
 
@@ -76,9 +77,13 @@ class TableHeatmapView(BaseTableView):
             table = self._table.select_by_column_names([{"name": column_names}])
 
         table.get_columns_info()
-        helper_view = HeatmapView()
-        helper_view.set_data(
+
+        view = HeatmapView()
+        view.x_label = params.get_value("x_axis_label")
+        view.y_label = params.get_value("y_axis_label")
+
+        view.set_data(
             data=table.get_data(),
             rows_info=table.get_rows_info(),
             columns_info=table.get_columns_info())
-        return helper_view.data_to_dict(params)
+        return view.data_to_dict(params)

@@ -62,6 +62,7 @@ class TableHistogramView(BaseTableView):
         "series": ListParam(default_value=[]),
         "nbins": IntParam(default_value=10, min_value=0, optional=True, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
         "density": BoolParam(default_value=False, optional=True, human_name="Density", short_description="True to plot density"),
+        **BaseTableView._2d_axis_labels_specs
     }
     _type: ViewType = ViewType.HISTOGRAM
 
@@ -81,6 +82,9 @@ class TableHistogramView(BaseTableView):
         view = HistogramView()
         view.nbins = nbins
         view.density = density
+        view.x_label = params.get_value("x_axis_label")
+        view.y_label = params.get_value("y_axis_label")
+
         for serie in series:
             view.add_data(
                 data=self.get_values_from_selection_range(serie.y),

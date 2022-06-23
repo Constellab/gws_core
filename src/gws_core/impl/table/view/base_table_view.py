@@ -7,8 +7,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, TypedDict
 
+from gws_core.config.param_spec import StrParam
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view_types import ViewSpecs, ViewType
 from pandas import DataFrame
 
 from ....core.exception.exceptions.bad_request_exception import \
@@ -28,6 +29,12 @@ class DataWithTags(TypedDict):
 class BaseTableView(View):
     _type: ViewType
     _table: Table
+
+    # Spec to define the name of the x and y axis
+    _2d_axis_labels_specs: ViewSpecs = {
+        "x_axis_label": StrParam(optional=True),
+        "y_axis_label": StrParam(optional=True),
+    }
 
     def __init__(self, table: Table):
         super().__init__()

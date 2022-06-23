@@ -5,7 +5,6 @@
 
 from gws_core.config.config_types import ConfigParams
 from gws_core.config.param_spec import BoolParam
-from gws_core.impl.table.view.base_table_view import BaseTableView
 from gws_core.impl.view.barplot_view import BarPlotView
 from gws_core.resource.view_types import ViewSpecs, ViewType
 

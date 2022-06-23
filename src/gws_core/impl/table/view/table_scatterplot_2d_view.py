@@ -60,6 +60,7 @@ class TableScatterPlot2DView(BaseTableView):
     _specs: ViewSpecs = {
         **BaseTableView._specs,
         "series": ListParam(default_value=[]),
+        **BaseTableView._2d_axis_labels_specs
     }
     _view_helper: Type = ScatterPlot2DView
     _type: ViewType = ViewType.SCATTER_PLOT_2D
@@ -75,6 +76,8 @@ class TableScatterPlot2DView(BaseTableView):
 
         # create view
         view = self._view_helper()
+        view.x_label = params.get_value("x_axis_label")
+        view.y_label = params.get_value("y_axis_label")
 
         for serie in series:
             y_data = self.get_values_from_selection_range(serie.y)

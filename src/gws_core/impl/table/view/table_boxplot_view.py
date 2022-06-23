@@ -68,6 +68,7 @@ class TableBoxPlotView(BaseTableView):
     _specs: ViewSpecs = {
         **BaseTableView._specs,
         "series": ListParam(default_value=[]),
+        **BaseTableView._2d_axis_labels_specs
     }
 
     def data_to_dict(self, params: ConfigParams) -> dict:
@@ -78,6 +79,8 @@ class TableBoxPlotView(BaseTableView):
             raise BadRequestException('There must be at least one serie')
 
         box_view = BoxPlotView()
+        box_view.x_label = params.get_value("x_axis_label")
+        box_view.y_label = params.get_value("y_axis_label")
 
         for serie in series:
             data = self.get_values_from_selection_range(serie.y)
