@@ -1,11 +1,11 @@
-from typing import Optional
+from typing import List, Optional
 
 from fastapi.param_functions import Depends
-from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.model.typing_service import TypingService
 from gws_core.user.auth_service import AuthService
 from gws_core.user.user_dto import UserData
+from pydantic import BaseModel
 
 from ..core_app import core_app
 
@@ -42,10 +42,14 @@ async def importers_advanced_search(search_dict: SearchParams,
                                           search_dict, page, number_of_items_per_page).to_json()
 
 
-@core_app.post("/typing/transformers/search/{resource_typing_name}",
+class TransformerSearch(BaseModel):
+    resource_typing_names: List[str]
+    search_params: SearchParams
+
+
+@core_app.post("/typing/transformers/search",
                tags=["Typing"], summary="Search typings")
-async def transformers_advanced_search(search_dict: SearchParams,
-                                       resource_typing_name: str,
+async def transformers_advanced_search(search: TransformerSearch,
                                        page: Optional[int] = 1,
                                        number_of_items_per_page: Optional[int] = 20,
                                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
@@ -53,4 +57,4 @@ async def transformers_advanced_search(search_dict: SearchParams,
     Advanced search for transformers typing
     """
     return TypingService.search_transformers(
-        resource_typing_name, search_dict, page, number_of_items_per_page).to_json()
+        search.resource_typing_names, search.search_params, page, number_of_items_per_page).to_json()

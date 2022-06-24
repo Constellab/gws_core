@@ -4,15 +4,14 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Coroutine, Dict, List, Type
+from typing import Any, Coroutine, List, Type
 
-from gws_core.core.model.base import Base
-from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_tasks import FsNodeExtractor
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.resource import Resource
 from gws_core.task.converter.exporter import ResourceExporter
+from gws_core.task.plug import Sink
 
 from ...config.config_types import ConfigParamsDict
 from ...core.exception.exceptions.bad_request_exception import \
@@ -49,10 +48,10 @@ class ConverterService:
         importer: IProcess = protocol.add_process(importer_type, 'importer', config)
 
         # Add source and connect it
-        protocol.add_source('source', resource_model_id, importer << 'source')
+        protocol.add_source('source', resource_model_id, importer << ResourceImporter.input_name)
 
         # Add sink and connect it
-        protocol.add_sink('sink', importer >> 'target')
+        protocol.add_sink('sink', importer >> ResourceImporter.output_name)
 
         # run the experiment
         try:
@@ -63,7 +62,7 @@ class ConverterService:
             raise exception
 
         # return the resource model of the sink process
-        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model('resource')
+        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
 
     ################################################ EXPORTER ################################################
 
@@ -140,4 +139,4 @@ class ConverterService:
             raise exception
 
         # return the resource model of the sink process
-        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model('resource')
+        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)

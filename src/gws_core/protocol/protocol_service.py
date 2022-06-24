@@ -5,8 +5,10 @@
 
 from typing import List, Tuple, Type
 
+from gws_core.core.utils.utils import Utils
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.task.plug import Source
+from gws_core.task.plug import Sink, Source
+from gws_core.task.transformer.transformer import Transformer
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
@@ -182,6 +184,33 @@ class ProtocolService(BaseService):
         return process_model
 
     @classmethod
+    @transaction()
+    def add_process_connected_to_output(
+            cls, protocol_id: str, process_typing_name: str,
+            output_process_name: str, output_port_name: str) -> AddProcessWithLink:
+        """Add a process to the protocol and connect it to an output port of a previous process.
+        It can only create transformer process
+        """
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        process_typing: Typing = TypingManager.get_typing_from_name(process_typing_name)
+
+        if not Utils.issubclass(process_typing.get_type(), Transformer):
+            raise BadRequestException("Only transformer process can be added to a process output")
+
+        # create the process
+        new_process: ProcessModel = ProtocolService.add_process_to_protocol(protocol_model, process_typing.get_type())
+
+        previous_process: ProcessModel = protocol_model.get_process(output_process_name)
+
+        # Create the connector between the provided output port and the transformer default input port
+        connector = cls.add_connector_to_protocol(
+            protocol_model, previous_process.out_port(output_port_name),
+            new_process.in_port(Transformer.input_name))
+
+        return AddProcessWithLink(process_model=new_process, connector=connector)
+
+    @classmethod
     def delete_process_of_protocol_id(cls, protocol_id: str, process_instance_name: str) -> None:
         protocol_model = cls.get_protocol_by_id(protocol_id)
         cls.delete_process_of_protocol(protocol_model=protocol_model, process_instance_name=process_instance_name)
@@ -310,25 +339,44 @@ class ProtocolService(BaseService):
 
     ########################## SPECIFIC PROCESS #####################
     @classmethod
-    @transaction()
-    def add_source_to_process_input(
-            cls, protocol_id: str, process_name: str, input_port_name: str, resource_id: str) -> AddProcessWithLink:
-        """ Add a source task to the protocol. Configure it with the resource. And add connector
-            from source to process
-
+    def add_source_to_protocol_id(
+            cls, protocol_id: str, resource_id: str) -> ProcessModel:
+        """ Add a source task to the protocol. Configure it with the resource.
         """
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
+        return cls.add_source_to_protocol(protocol_model, resource_id)
+
+    @classmethod
+    def add_source_to_protocol(
+            cls, protocol_model: ProtocolModel, resource_id: str) -> ProcessModel:
+        """ Add a source task to the protocol. Configure it with the resource.
+        """
         # Create source task model
         source: TaskModel = ProcessFactory.create_source(resource_id)
 
         # Add the source to the protocol
         source_model: ProcessModel = cls.add_process_model_to_protocol(protocol_model, source)
 
+        return source_model
+
+    @classmethod
+    @transaction()
+    def add_source_to_process_input(
+            cls, protocol_id: str, resource_id: str, process_name: str, input_port_name: str, ) -> AddProcessWithLink:
+        """ Add a source task to the protocol. Configure it with the resource. And add connector
+            from source to process
+
+        """
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        # add the source task to the protocol
+        source_model: ProcessModel = cls.add_source_to_protocol(protocol_model, resource_id)
+
         process_model: ProcessModel = protocol_model.get_process(process_name)
         # Create the connector
         connector = cls.add_connector_to_protocol(
-            protocol_model, source_model.out_port('resource'),
+            protocol_model, source_model.out_port(Source.output_name),
             process_model.in_port(input_port_name))
 
         return AddProcessWithLink(process_model=source_model, connector=connector)
@@ -351,6 +399,6 @@ class ProtocolService(BaseService):
         # Create the connector
         connector = cls.add_connector_to_protocol(
             protocol_model, process_model.out_port(output_port_name),
-            sink_model.in_port('resource'))
+            sink_model.in_port(Sink.input_name))
 
         return AddProcessWithLink(process_model=sink_model, connector=connector)

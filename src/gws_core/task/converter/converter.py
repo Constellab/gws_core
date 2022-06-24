@@ -10,7 +10,6 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Tuple, Type, final
 
 from gws_core.io.io_spec import InputSpec, OutputSpec
-from numpy import source
 
 from ...brick.brick_service import BrickService
 from ...config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
@@ -37,8 +36,8 @@ def decorate_converter(task_class: Type['Converter'], unique_name: str, task_typ
         return
 
     # force the input and output specs
-    task_class.input_specs = {'source': InputSpec(source_type)}
-    task_class.output_specs = {'target': OutputSpec(target_type)}
+    task_class.input_specs = {Converter.input_name: InputSpec(source_type)}
+    task_class.output_specs = {Converter.output_name: OutputSpec(target_type)}
 
     # register the task and set the human_name and short_description dynamically based on resource
     decorate_task(task_class, unique_name, human_name=human_name, related_resource=related_resource,
@@ -48,6 +47,10 @@ def decorate_converter(task_class: Type['Converter'], unique_name: str, task_typ
 
 @task_decorator("Converter", hide=True)
 class Converter(Task):
+    # name of the input and output for converter
+    input_name: str = 'source'
+    output_name: str = 'target'
+
     input_specs = {"source": InputSpec(Resource)}
     output_specs = {"target": OutputSpec(Resource)}
 
@@ -57,7 +60,7 @@ class Converter(Task):
     @final
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # retrieve resource
-        resource: Resource = inputs.get('source')
+        resource: Resource = inputs.get(Converter.input_name)
 
         # call convert method
         target: Resource = await self.convert(resource, params, self.get_target_type())
@@ -69,7 +72,7 @@ class Converter(Task):
             # set the target name source name
             target.name = resource.name
 
-        return {'target': target}
+        return {Converter.output_name: target}
 
     @abstractmethod
     async def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> Resource:
@@ -115,7 +118,7 @@ class Converter(Task):
         :return: [description]
         :rtype: Type[Resource]
         """
-        return cls.input_specs['source'].get_resource_type_tuples()
+        return cls.input_specs[Converter.input_name].get_resource_type_tuples()
 
     @final
     @classmethod
@@ -125,7 +128,7 @@ class Converter(Task):
         :return: [description]
         :rtype: Type[Resource]
         """
-        return cls.output_specs['target'].get_default_resource_type()
+        return cls.output_specs[Converter.output_name].get_default_resource_type()
 
 
 class ConverterRunner():
@@ -159,7 +162,7 @@ class ConverterRunner():
         await self._task_runner.run_after_task()
 
     def set_input(self, resource: Resource) -> None:
-        self._task_runner.set_input('source', resource)
+        self._task_runner.set_input(Converter.input_name, resource)
 
     def get_output(self) -> Resource:
-        return self._task_runner.get_output('target')
+        return self._task_runner.get_output(Converter.output_name)

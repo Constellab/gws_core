@@ -27,6 +27,9 @@ class Source(Task):
     A source task is used to load and transfer a resource. No more action is done.
     """
 
+    output_name: str = 'resource'
+    config_name: str = 'resource_id'
+
     input_specs: InputSpecs = {}
     output_specs: OutputSpecs = {'resource': OutputSpec(Resource, sub_class=True, is_constant=True,
                                                         human_name="Resource", short_description="Loaded resource")}
@@ -35,7 +38,7 @@ class Source(Task):
     }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        r_id: str = params.get_value("resource_id")
+        r_id: str = params.get_value(Source.config_name)
         if not r_id:
             raise BadRequestException('Source error, the resource was not provided')
 
@@ -46,7 +49,7 @@ class Source(Task):
 
     @staticmethod
     def get_resource_id_from_config(config: ConfigParamsDict) -> Optional[str]:
-        return config.get("resource_id", None)
+        return config.get(Source.config_name, None)
 
 
 @task_decorator(unique_name="Sink")
@@ -56,6 +59,8 @@ class Sink(Task):
 
     A sink task is used to recieve a resource. No action is done.
     """
+
+    input_name: str = 'resource'
 
     input_specs: InputSpecs = {'resource': InputSpec(Resource)}
     output_specs: OutputSpecs = {}

@@ -185,8 +185,8 @@ class IProtocol(IProcess):
         :return: [description]
         :rtype: ITask
         """
-        source: IProcess = self.add_process(Source, instance_name, {'resource_id': resource_model_id})
-        self.add_connector(source >> 'resource', in_port)
+        source: IProcess = self.add_process(Source, instance_name, {Source.config_name: resource_model_id})
+        self.add_connector(source >> Source.output_name, in_port)
         return source
 
     def add_sink(self, instance_name: str, out_port: OutPort) -> ITask:
@@ -200,12 +200,12 @@ class IProtocol(IProcess):
         :rtype: ITask
         """
         sink = self.add_process(Sink, instance_name)
-        self.add_connector(out_port, sink << 'resource')
+        self.add_connector(out_port, sink << Sink.input_name)
         return sink
 
     ############################################### CLASS METHODS ####################################
 
-    @classmethod
+    @ classmethod
     def get_by_id(cls, id: str) -> 'IProtocol':
         protocol_model: ProtocolModel = ProtocolService.get_protocol_by_id(id)
         return IProtocol(protocol_model)

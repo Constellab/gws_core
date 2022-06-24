@@ -1,7 +1,7 @@
 
 
 from importlib.resources import Resource
-from typing import Callable, Type
+from typing import Callable, List, Type
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
@@ -76,15 +76,15 @@ class TypingService():
         return pagination
 
     @classmethod
-    def search_transformers(cls, resource_typing_name: str,
+    def search_transformers(cls, resource_typing_names: List[str],
                             search: SearchParams,
                             page: int = 0, number_of_items_per_page: int = 20) -> Paginator[Typing]:
 
         search_builder = TypingSearchBuilder(TaskTyping)
 
         # force to add a filter on related typing name
-        related_model_type: Type[Resource] = TypingManager.get_type_from_name(resource_typing_name)
-        search_builder.add_expression(TaskTyping.get_related_model_expression(related_model_type))
+        related_model_types: List[Type[Resource]] = [TypingManager.get_type_from_name(x) for x in resource_typing_names]
+        search_builder.add_expression(TaskTyping.get_related_model_expression(related_model_types))
 
         # force to add a filter on sub type
         sub_type: TaskSubType = 'TRANSFORMER'

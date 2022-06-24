@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Literal, Type, final
+from typing import List, Literal, Set, Type, Union, final
 
 from gws_core.core.utils.utils import Utils
 from gws_core.process.process_types import ProcessSpecDict
@@ -46,15 +46,28 @@ class TaskTyping(Typing):
         )
 
     @classmethod
-    def get_related_model_expression(cls, related_model_type: Type[Resource]) -> Expression:
+    def get_related_model_expression(
+            cls, related_model_types: Union[Type[Resource],
+                                            List[Type[Resource]]]) -> Expression:
         """Return an expression for a model select that will return all the task types
-        related to a resource type or its parent classes"""
-        # get all the class types between base_type and Model
-        parent_classes: List[Type[Resource]] = Utils.get_parent_classes(related_model_type, Resource)
+        related to a resource type or its parent classes
 
-        typings_names = [parent._typing_name for parent in parent_classes]
+        It can take a single or a list of resource types
 
-        return cls.related_model_typing_name.in_(typings_names)
+        """
+
+        if not isinstance(related_model_types, list):
+            related_model_types = [related_model_types]
+
+        parent_typing_names: Set[str] = set()
+
+        for related_model_type in related_model_types:
+            # get all the class types between base_type and Resource
+            parent_classes: List[Type[Resource]] = Utils.get_parent_classes(related_model_type, Resource)
+            # add typing name to the set
+            parent_typing_names = parent_typing_names.union([parent._typing_name for parent in parent_classes])
+
+        return cls.related_model_typing_name.in_(parent_typing_names)
 
     @classmethod
     def get_by_brick(cls, brick_name: str) -> List['TaskTyping']:

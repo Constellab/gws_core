@@ -41,6 +41,26 @@ async def add_process(id: str,
     ).to_json(deep=True)
 
 
+@core_app.post("/protocol/{id}/add-process/{process_typing_name}/connected-to-output/{process_name}/{port_name}",
+               tags=["Protocol"],
+               summary="Add a process to a protocol")
+async def add_process_connected_to_output(id: str,
+                                          process_typing_name: str,
+                                          process_name: str,
+                                          port_name: str,
+                                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Add a process to a protocol
+    """
+
+    return ProtocolService.add_process_connected_to_output(
+        protocol_id=id,
+        process_typing_name=process_typing_name,
+        output_process_name=process_name,
+        output_port_name=port_name
+    ).to_json()
+
+
 @core_app.delete("/protocol/{id}/process/{process_instance_name}", tags=["Protocol"],
                  summary="Delete a process of a protocol")
 async def delete_process(id: str,
@@ -115,16 +135,24 @@ async def delete_outerface(id: str,
 
 ########################## SPECIFIC PROCESS #####################
 
-@core_app.post("/protocol/{id}/add-source/{process_name}/{input_port_name}/{resource_id}", tags=["Protocol"],
+@core_app.post("/protocol/{id}/add-source/{resource_id}/{process_name}/{input_port_name}", tags=["Protocol"],
                summary="Add a configured source link to a process' input")
 async def add_source_to_process_input(id: str,
+                                      resource_id: str,
                                       process_name: str,
                                       input_port_name: str,
-                                      resource_id: str,
                                       _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return ProtocolService.add_source_to_process_input(
-        protocol_id=id, process_name=process_name, input_port_name=input_port_name, resource_id=resource_id
-    ).to_json()
+        protocol_id=id, resource_id=resource_id, process_name=process_name, input_port_name=input_port_name).to_json()
+
+
+@core_app.post("/protocol/{id}/add-source/{resource_id}", tags=["Protocol"],
+               summary="Add a configured source link to a process' input")
+async def add_source_to_protocol(id: str,
+                                 resource_id: str,
+                                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.add_source_to_protocol_id(
+        protocol_id=id, resource_id=resource_id).to_json(deep=True)
 
 
 @core_app.post("/protocol/{id}/add-sink/{process_name}/{output_port_name}", tags=["Protocol"],

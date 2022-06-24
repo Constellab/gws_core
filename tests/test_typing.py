@@ -154,7 +154,7 @@ class TestTyping(BaseTestCase):
         self.assertTrue(len([x for x in paginator.current_items() if x.unique_name == 'FileTransformer']) > 0)
 
         # # Test search on related model
-        paginator: Paginator[Typing] = TypingService.search_transformers(SubFile._typing_name, SearchParams())
+        paginator: Paginator[Typing] = TypingService.search_transformers([SubFile._typing_name], SearchParams())
         # Test that it found the FileTransformer
         self.assertTrue(len([x for x in paginator.current_items() if x.unique_name == 'FileTransformer']) > 0)
 

@@ -6,6 +6,8 @@
 
 from typing import Any, Coroutine, List, Type
 
+from gws_core.task.transformer.transformer import Transformer
+
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...experiment.experiment import ExperimentType
@@ -16,7 +18,7 @@ from ...protocol.protocol_interface import IProtocol
 from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel
 from ..converter.converter import ConverterRunner
-from ..plug import Source
+from ..plug import Sink, Source
 from ..task import Task
 from .transformer_type import TransformerDict
 
@@ -39,7 +41,7 @@ class TransformerService():
         protocol: IProtocol = experiment.get_protocol()
 
         # create the source and save last process to create connectors later
-        last_process: IProcess = protocol.add_process(Source, 'source', {'resource_id': resource_model_id})
+        last_process: IProcess = protocol.add_process(Source, 'source', {Source.config_name: resource_model_id})
 
         index: int = 1
 
@@ -50,14 +52,14 @@ class TransformerService():
             new_process: IProcess = protocol.add_process(
                 transformer_type, f"transformer_{index}", transformer["config_values"])
 
-            protocol.add_connector(last_process.get_first_outport(), new_process << 'source')
+            protocol.add_connector(last_process.get_first_outport(), new_process << Transformer.input_name)
 
             # refresh data
             last_process = new_process
             index += 1
 
         # add sink and sink connector
-        protocol.add_sink('sink', last_process >> 'target')
+        protocol.add_sink('sink', last_process >> Transformer.output_name)
 
         #  run the experiment
         try:
@@ -68,7 +70,7 @@ class TransformerService():
             raise exception
 
         # return the resource model of the sink process
-        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model('resource')
+        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
 
     @classmethod
     async def call_transformers(cls, resource: Resource,
