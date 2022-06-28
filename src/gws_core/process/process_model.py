@@ -504,8 +504,7 @@ class ProcessModel(ModelWithUser):
 
     def check_is_updatable(self) -> None:
         if not self.is_updatable:
-            raise BadRequestException("The protocol can't be modified, please reset the experiment first",
-                                      show_as='warning')
+            raise BadRequestException("The protocol can't be modified, please reset the experiment first")
 
     @property
     def is_error(self) -> bool:
