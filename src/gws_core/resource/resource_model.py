@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import copy
 from enum import Enum
-from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Type, TypeVar,
-                    final)
+from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Set, Type,
+                    TypeVar, final)
 
+from gws_core.core.utils.utils import Utils
 from gws_core.resource.technical_info import TechnicalInfoDict
 from peewee import (CharField, DeferredForeignKey, ForeignKeyField,
                     ModelDelete, ModelSelect)
@@ -114,6 +115,25 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
     @classmethod
     def select_by_resource_typing_name(cls, resource_typing_name: str) -> ModelSelect:
         return cls.select_me().where(cls.resource_typing_name == resource_typing_name)
+
+    @classmethod
+    def select_by_type_and_sub_types(cls, type_: Type[Resource]) -> ModelSelect:
+        """select resource by type of any subclass of this type
+
+        :param type_: _description_
+        :type type_: Type[Resource]
+        :return: _description_
+        :rtype: ModelSelect
+        """
+        if not Utils.issubclass(type_, Resource):
+            raise Exception(f"{type_} is not a subclass of Resource")
+
+        # retrieve all the sub type of the type
+        resource_types: Set[Type[Resource]] = {type_}.union(Utils.get_all_subclasses(type_))
+        # get the typing names
+        resource_typing_names = [resource_type._typing_name for resource_type in resource_types]
+        # select the resource model with the typing name
+        return ResourceModel.select().where(ResourceModel.resource_typing_name.in_(resource_typing_names))
 
     @transaction()
     def save_full(self) -> 'ResourceModel':

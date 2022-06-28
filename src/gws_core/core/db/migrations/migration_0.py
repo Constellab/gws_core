@@ -4,10 +4,11 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, List
+from typing import Dict, List, Set, Type
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.db.sql_migrator import SqlMigrator
+from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.lab.lab_config_model import LabConfigModel
@@ -17,6 +18,7 @@ from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.report.report import Report
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set import ResourceSet
 from gws_core.tag.tag_model import TagModel
@@ -200,8 +202,9 @@ class Migration0312(BrickMigration):
         migrator.migrate()
 
         # Set the parent id for resource inside ResourceSet
-        resource_models: List[ResourceModel] = list(ResourceModel.select().where(
-            ResourceModel.resource_typing_name == ResourceSet._typing_name))
+
+        # retrieve all resource of type  ResourceListBase or children
+        resource_models: List[ResourceModel] = list(ResourceModel.select_by_type_and_sub_types(ResourceListBase))
         for resource_model in resource_models:
             resource_set: ResourceSet = resource_model.get_resource()
 
