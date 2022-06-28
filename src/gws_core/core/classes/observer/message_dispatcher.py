@@ -33,7 +33,7 @@ class MessageDispatcher:
         """
 
         if not isinstance(task, Task):
-            Exception("Only a task can be attach to the task_helper")
+            Exception("Only a task can be attached")
         observer = TaskProgressMessageObserver(task)
         self.attach(observer)
         return observer
