@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Type
 from fastapi.responses import FileResponse
 from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.core.utils.utils import Utils
+from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.view import View
 from gws_core.resource.view_config.view_config_service import ViewConfigService
@@ -218,6 +219,13 @@ class ResourceService(BaseService):
         if criteria is None or not criteria['value']:
             search_builder.add_expression(ResourceModel.parent_resource.is_null())
         search.remove_filter_criteria('include_children_resource')
+
+        # Handle the project filters, get all experiment of this project and filter by experiment
+        projects_criteria: SearchFilterCriteria = search.get_filter_criteria('project')
+        if projects_criteria is not None:
+            experiments: List[Experiment] = Experiment.select().where(Experiment.project == projects_criteria['value'])
+            search_builder.add_expression(ResourceModel.experiment.in_(experiments))
+            search.remove_filter_criteria('project')
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
