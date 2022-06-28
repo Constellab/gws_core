@@ -67,6 +67,9 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
     experiment: Experiment = DeferredForeignKey('Experiment', null=True, index=True)
     task_model: TaskModel = DeferredForeignKey('TaskModel', null=True, index=True)
 
+    # for children resource (usually resource inside ResourceSet), it stores the parent resource id
+    parent_resource: ResourceModel = ForeignKeyField('self', null=True, index=True)
+
     name: str = CharField(null=False)
 
     fs_node_model: FSNodeModel = ForeignKeyField(FSNodeModel, null=True, index=True, backref="+")

@@ -16,7 +16,9 @@ from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.report.report import Report
+from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.resource.resource_set import ResourceSet
 from gws_core.tag.tag_model import TagModel
 from gws_core.tag.taggable_model import TaggableModel
 from gws_core.task.plug import Source
@@ -186,3 +188,27 @@ class Migration0310(BrickMigration):
             taggable_model.save()
 
         CurrentUserService.set_current_user(None)
+
+
+@brick_migration('0.3.12', short_description='Add parent resource to resource model')
+class Migration0312(BrickMigration):
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+        migrator: SqlMigrator = SqlMigrator(ResourceModel.get_db())
+
+        migrator.add_column_if_not_exists(ResourceModel, ResourceModel.parent_resource)
+        migrator.migrate()
+
+        # Set the parent id for resource inside ResourceSet
+        resource_models: List[ResourceModel] = list(ResourceModel.select().where(
+            ResourceModel.resource_typing_name == ResourceSet._typing_name))
+        for resource_model in resource_models:
+            resource_set: ResourceSet = resource_model.get_resource()
+
+            # loop through children to set the parent resource
+            children_resources = resource_set._get_all_resource_models()
+            for child_resource_model in children_resources:
+                # update the parent only if the resource was created by the same task than parent (meaning it was created with the resource set)
+                if resource_model.task_model == child_resource_model.task_model:
+                    child_resource_model.parent_resource = resource_model
+                    child_resource_model.save()

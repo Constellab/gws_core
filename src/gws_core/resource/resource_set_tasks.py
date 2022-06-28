@@ -5,6 +5,7 @@
 
 
 from gws_core.config.config_types import ConfigParams
+from gws_core.impl.robot.robot_resource import Robot
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
@@ -14,8 +15,8 @@ from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-# @task_decorator(unique_name="ResourceSetGenerator",
-#                 hide=False)
+@task_decorator(unique_name="ResourceSetGenerator",
+                hide=False)
 class ResourceSetGenerator(Task):
     input_specs: InputSpecs = {
         "resource_1": InputSpec(Resource),
@@ -40,5 +41,7 @@ class ResourceSetGenerator(Task):
 
         if resource_3 is not None:
             resource_set.add_resource(resource_3, create_new_resource=False)
+
+        resource_set.add_resource(Robot.empty(), 'robot')
 
         return {'resource_set': resource_set}

@@ -146,6 +146,14 @@ class Utils:
 
     @staticmethod
     def get_all_subclasses(class_: Type) -> Set[Type]:
+        """Return all the subclasses type of a class, it does not include the main class
+
+        :param class_: class to retrieve the subclasses
+        :type class_: Type
+        :return: _description_
+        :rtype: Set[Type]
+        """
+
         return set(class_.__subclasses__()).union(
             [s for c in class_.__subclasses__() for s in Utils.get_all_subclasses(c)])
 

@@ -67,7 +67,7 @@ class ResourceSet(ResourceListBase):
         if not isinstance(resource, Resource):
             raise Exception('The resource_set only takes set of resources')
 
-        if isinstance(resource, ResourceSet):
+        if isinstance(resource, ResourceListBase):
             raise Exception('ResourceSet does not support nested')
 
         if self._model_id is not None:
@@ -88,9 +88,9 @@ class ResourceSet(ResourceListBase):
         # if the resource already exist, add it to the constant list so
         # the system will not create a new resource on save
         if not create_new_resource:
-            if self._constant_resource_ids is None:
-                self._constant_resource_ids = set()
-            self._constant_resource_ids.add(resource.uid)
+            if self.__constant_resource_ids is None:
+                self.__constant_resource_ids = set()
+            self.__constant_resource_ids.add(resource.uid)
 
         self._resources[name] = resource
 

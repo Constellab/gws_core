@@ -16,7 +16,8 @@ from gws_core.task.task_model import TaskModel
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
-from ..core.classes.search_builder import SearchBuilder, SearchParams
+from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
+                                           SearchParams)
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
@@ -209,6 +210,14 @@ class ResourceService(BaseService):
                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
 
         search_builder: SearchBuilder = ResourceModelSearchBuilder()
+
+        # Handle the children resource
+        criteria: SearchFilterCriteria = search.get_filter_criteria('include_children_resource')
+
+        # if the criteria is not provided or False, we don't include the children
+        if criteria is None or not criteria['value']:
+            search_builder.add_expression(ResourceModel.parent_resource.is_null())
+        search.remove_filter_criteria('include_children_resource')
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(

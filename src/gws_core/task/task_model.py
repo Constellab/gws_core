@@ -270,8 +270,9 @@ class TaskModel(ProcessModel):
         """
 
         # Handle specific case of ResourceSet, it saves all the sub
+        new_children_resources: List[ResourceModel] = []
         if isinstance(resource, ResourceListBase):
-            self._save_resource_list(resource, port_name)
+            new_children_resources = self._save_resource_list(resource, port_name)
 
         # check the resource r field before saving
         self._check_resource_r_fields(resource, port_name)
@@ -280,21 +281,29 @@ class TaskModel(ProcessModel):
         resource_model = ResourceModel.save_from_resource(
             resource, origin=ResourceOrigin.GENERATED, experiment=self.experiment, task_model=self)
 
+        # update the parent of new children resource
+        if isinstance(resource, ResourceListBase):
+            for child_resource in new_children_resources:
+                child_resource.parent_resource = resource_model
+                child_resource.save()
+
         return resource_model
 
-    def _save_resource_list(self, resource_list: ResourceListBase, port_name: str) -> None:
-        """Specific management to save resources of a resource set
+    def _save_resource_list(self, resource_list: ResourceListBase, port_name: str) -> List[ResourceModel]:
+        """Specific management to save resources of a resource set, return the new created resources
         """
 
+        new_children_resources: List[ResourceModel] = []
         for resource in resource_list.get_resources_as_set():
 
             # if this is a new resource
-            if not resource_list.resource_is_constant(resource.uid):
+            if not resource_list.__resource_is_constant(resource.uid):
 
                 # create and save the resource model from the resource
                 resource_model = self._save_resource(resource, port_name)
 
                 resource._model_id = resource_model.id
+                new_children_resources.append(resource_model)
             else:
                 # case when the resource is a constant and we don't create a new resource
                 # if the resource is not listed in task input, error
@@ -304,6 +313,7 @@ class TaskModel(ProcessModel):
                                               detail_args={'port_name': port_name})
 
         resource_list._set_r_field()
+        return new_children_resources
 
     def _check_resource_r_fields(self, resource: Resource, port_name: str):
         """check all ResourceRField are resource that are input of the task
