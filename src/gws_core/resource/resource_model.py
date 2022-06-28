@@ -436,7 +436,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
     def get_technical_info(self) -> TechnicalInfoDict:
         kv_store = self.get_kv_store()
         if 'technical_info' in kv_store:
-            return TechnicalInfoDict.from_json(kv_store.get('technical_info'))
+            return TechnicalInfoDict.deserialize(kv_store.get('technical_info'))
         return TechnicalInfoDict()
 
     @ property

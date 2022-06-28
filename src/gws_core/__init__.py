@@ -305,8 +305,8 @@ from .resource.r_field import BoolRField as BoolRField
 from .resource.r_field import DictRField as DictRField
 from .resource.r_field import FloatRField as FloatRField
 from .resource.r_field import IntRField as IntRField
-from .resource.r_field import JsonableObject as JsonableObject
-from .resource.r_field import JsonableObjectRField as JsonableObjectRField
+from .resource.r_field import SerializableObject as SerializableObject
+from .resource.r_field import SerializableRField as SerializableRField
 from .resource.r_field import ListRField as ListRField
 from .resource.r_field import PrimitiveRField as PrimitiveRField
 from .resource.r_field import RField as RField

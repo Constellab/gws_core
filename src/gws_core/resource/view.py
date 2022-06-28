@@ -78,7 +78,7 @@ class View:
         return {
             "type": self._type.value,
             "title": self._title,
-            "technical_info": self._technical_info.to_json(),
+            "technical_info": self._technical_info.serialize(),
             "data": self.data_to_dict(params),
         }
 

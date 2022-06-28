@@ -6,7 +6,7 @@
 
 from typing import Dict, List, Optional, Union
 
-from .r_field import JsonableObject
+from .r_field import SerializableObject
 
 
 class TechnicalInfo:
@@ -31,7 +31,7 @@ class TechnicalInfo:
         return TechnicalInfo(key=json_data["key"], value=json_data["value"])
 
 
-class TechnicalInfoDict(JsonableObject):
+class TechnicalInfoDict(SerializableObject):
     _technical_info: Dict[str, TechnicalInfo]
 
     def __init__(self):
@@ -48,14 +48,14 @@ class TechnicalInfoDict(JsonableObject):
     def get_all(self) -> Dict[str, TechnicalInfo]:
         return self._technical_info
 
-    def to_json(self) -> List[Dict[str, str]]:
+    def serialize(self) -> List[Dict[str, str]]:
         return [technical_info.to_json() for technical_info in self._technical_info.values()]
 
     def is_empty(self) -> bool:
         return len(self._technical_info) == 0
 
     @classmethod
-    def from_json(cls, json_data: List[Dict[str, str]]) -> 'TechnicalInfoDict':
+    def deserialize(cls, json_data: List[Dict[str, str]]) -> 'TechnicalInfoDict':
         technical_info_dict = TechnicalInfoDict()
         for technical_info_json in json_data:
             technical_info_dict.add(TechnicalInfo.from_json(technical_info_json))

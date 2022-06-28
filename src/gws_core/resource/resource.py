@@ -16,7 +16,7 @@ from ..core.model.base import Base
 from ..core.utils.reflector_helper import ReflectorHelper
 from ..impl.json.json_view import JSONView
 from ..model.typing_register_decorator import typing_registrator
-from ..resource.r_field import BaseRField, JsonableObjectRField, UUIDRField
+from ..resource.r_field import BaseRField, SerializableRField, UUIDRField
 from ..resource.view_decorator import view
 
 # Typing names generated for the class resource
@@ -28,7 +28,7 @@ class Resource(Base):
 
     uid: str = UUIDRField(searchable=True)
     name: str
-    technical_info: TechnicalInfoDict = JsonableObjectRField(TechnicalInfoDict)
+    technical_info: TechnicalInfoDict = SerializableRField(TechnicalInfoDict)
 
     # provide tags to this attribute to save them on resource generation
     tags: Dict[str, str] = {}
