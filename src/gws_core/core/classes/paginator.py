@@ -39,8 +39,6 @@ class PageInfo():
     total_number_of_items: int
     total_number_of_pages: int
     number_of_items_per_page: int
-    is_first_page: bool
-    is_last_page: bool
     from_index: int
     to_index: int
 
@@ -63,6 +61,14 @@ class PageInfo():
         self.from_index = (page - first_page) * number_of_items_per_page
         self.to_index = self.from_index + number_of_items_per_page
 
+    @property
+    def is_first_page(self) -> bool:
+        return self.page <= self.first_page
+
+    @property
+    def is_last_page(self) -> bool:
+        return self.page >= self.last_page
+
     def to_json(self) -> Dict:
         return {
             'page': self.page,
@@ -72,8 +78,8 @@ class PageInfo():
             'total_number_of_items': self.total_number_of_items,
             'total_number_of_pages': self.total_number_of_pages,
             'number_of_items_per_page': self.number_of_items_per_page,
-            'is_first_page': self.page <= self.first_page,
-            'is_last_page': self.page >= self.last_page,
+            'is_first_page': self.is_first_page,
+            'is_last_page': self.is_last_page,
             'total_is_approximate': self.total_is_approximate
         }
 
@@ -87,13 +93,15 @@ class Paginator(Generic[PaginatorType]):
     """
 
     page_info: PageInfo
-    paginated_query: ModelSelect
-
     results: List[PaginatorType]
+
+    _query: ModelSelect
+    _nb_of_items_per_page: int
+    _nb_max_of_items_per_page: int
 
     def __init__(self, query: ModelSelect,
                  page: int = 0,
-                 number_of_items_per_page: int = 20,
+                 nb_of_items_per_page: int = 20,
                  nb_max_of_items_per_page: int = 100,
                  view_params: dict = None):
         if not view_params:
@@ -101,46 +109,44 @@ class Paginator(Generic[PaginatorType]):
         else:
             self.view_params = view_params
 
+        self._query = query
+        self._nb_of_items_per_page = nb_of_items_per_page
+        self._nb_max_of_items_per_page = nb_max_of_items_per_page
+        self._call_query(page)
+
+    def _call_query(self, page: int) -> None:
         # add 1 to page because peewee starts with 1
-        self.paginated_query = query.paginate(page + 1, number_of_items_per_page)
-        self.results = list(self.paginated_query)
+        self.results = (self._query.paginate(page + 1, self._nb_of_items_per_page))
         self.page_info = PageInfo(
             int(page),
-            number_of_items_per_page, query.count(),
-            nb_max_of_items_per_page)
+            self._nb_of_items_per_page, self._query.count(),
+            self._nb_max_of_items_per_page)
 
-    def _get_paginated_info(self) -> PaginatorDict:
-        return {
-            'objects': None,
-            **self.page_info.to_json(),
-        }
-
-    def filter(self, filter_: Callable[[PaginatorType], Any]) -> None:
+    def filter(self, filter_: Callable[[PaginatorType], Any], min_nb_of_result: int = 0) -> None:
         """
         Filter the current items in the paginators, the total count become approximate
 
         :param filter: The filter to apply
         :type filter: `function`
+        :param min_nb_of_result: If provided, the query will be called multiple time until the number of result is
+                                  greater than this value.
+        :type min_nb_of_result: `int`
         """
 
         new_result = list(filter(filter_, self.results))
-        diff = len(self.results) - len(new_result)
-        self.results = new_result
-        self.page_info.total_number_of_items -= diff
 
-        # if there are more than one page of result, mark the total count as approximate
-        if self.page_info.total_number_of_pages > 1:
-            self.page_info.total_is_approximate = True
+        # if we don't have enough result, we call the query again until we have enough result
+        while len(new_result) < min_nb_of_result and not self.page_info.is_last_page:
+            self._call_query(self.page_info.next_page)
+            new_result += list(filter(filter_, self.results))
+
+        self.results = new_result
+
+        # mark the total count as approximate
+        self.page_info.total_is_approximate = True
 
     def to_json(self, deep: bool = False) -> PaginatorDict:
-        paginator_dict: PaginatorDict = self._get_paginated_info()
-
-        paginator_dict['objects'] = ListJsonable(self.results).to_json(deep=deep)
-        return paginator_dict
-
-    def current_items(self) -> ModelSelect:
-        """
-        Returns the current items in the paginators
-        """
-
-        return self.paginated_query
+        return {
+            "objects": ListJsonable(self.results).to_json(deep=deep),
+            **self.page_info.to_json(),
+        }

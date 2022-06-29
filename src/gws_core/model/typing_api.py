@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from fastapi.param_functions import Depends
 from gws_core.core.classes.search_builder import SearchParams
@@ -27,6 +27,26 @@ async def advanced_search(search_dict: SearchParams,
     return TypingService.search(search_dict, page, number_of_items_per_page).to_json()
 
 
+class SearchWithResourceTypes(BaseModel):
+    resource_typing_names: List[str]
+    search_params: SearchParams
+
+
+@core_app.post(
+    "/typing/processes/suggestion/{inputs_or_outputs}", tags=["Typing"],
+    summary="Search process with specific input type")
+async def process_with_input_search(search: SearchWithResourceTypes,
+                                    inputs_or_outputs: Literal['inputs', 'outputs'],
+                                    page: Optional[int] = 1,
+                                    number_of_items_per_page: Optional[int] = 20,
+                                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Advanced search for typing
+    """
+    return TypingService.suggest_process(search.search_params, search.resource_typing_names, inputs_or_outputs,
+                                         page, number_of_items_per_page).to_json()
+
+
 @core_app.post("/typing/importers/search/{resource_typing_name}/{extension}",
                tags=["Typing"], summary="Search typings")
 async def importers_advanced_search(search_dict: SearchParams,
@@ -42,14 +62,9 @@ async def importers_advanced_search(search_dict: SearchParams,
                                           search_dict, page, number_of_items_per_page).to_json()
 
 
-class TransformerSearch(BaseModel):
-    resource_typing_names: List[str]
-    search_params: SearchParams
-
-
 @core_app.post("/typing/transformers/search",
                tags=["Typing"], summary="Search typings")
-async def transformers_advanced_search(search: TransformerSearch,
+async def transformers_advanced_search(search: SearchWithResourceTypes,
                                        page: Optional[int] = 1,
                                        number_of_items_per_page: Optional[int] = 20,
                                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:

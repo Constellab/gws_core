@@ -1,18 +1,45 @@
 
 
-from importlib.resources import Resource
-from typing import Callable, List, Type
+from typing import Callable, Dict, List, Literal, Type
 
 from gws_core.core.classes.paginator import Paginator
-from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
+from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.utils.utils import Utils
+from gws_core.io.io_spec import IOSpec
 from gws_core.model.typing import Typing, TypingNameObj
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_search_builder import TypingSearchBuilder
+from gws_core.process.process import Process
 from gws_core.protocol.protocol_typing import ProtocolTyping
+from gws_core.resource.resource import Resource
 from gws_core.resource.resource_typing import ResourceTyping
 from gws_core.task.task_typing import TaskSubType, TaskTyping
 from peewee import ModelSelect
-from regex import B
+
+
+def filter_typing_by_specs(typing: Typing, resource_types: List[Type[Resource]],
+                           check_io: Literal['inputs', 'outputs']) -> bool:
+    """
+    Filter a process typing by its specs (inputs or outputs). Return true if the specs contains a resource types
+    that is stricly equals to one of the provided resource_types.
+    """
+    process_type: Type[Process] = typing.get_type()
+
+    # if the type does not exist or is not a process, we return false
+    if not process_type or not Utils.issubclass(process_type, Process):
+        return False
+
+    # get the corresponding io spec
+    io_specs: Dict[str, IOSpec] = process_type.get_input_specs(
+    ) if check_io == 'inputs' else process_type.get_output_specs()
+
+    for spec in io_specs.values():
+        io_resource_types = spec.resource_types
+        # return true only if one of the resource type is equals one of resource types in specs
+        for resource_type in resource_types:
+            if resource_type in io_resource_types:
+                return True
+    return False
 
 
 class TypingService():
@@ -43,7 +70,31 @@ class TypingService():
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
-            model_select, page=page, number_of_items_per_page=number_of_items_per_page)
+            model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
+    def suggest_process(cls, search: SearchParams, resource_typing_names: List[str],
+                        check_io: Literal['inputs', 'outputs'],
+                        page: int = 0, number_of_items_per_page: int = 20) -> Paginator[Typing]:
+        """
+        Suggest a process based on resources types. It filters process either on input or output specs.
+        Only return process that have at least one input or output has on of the resource type in the list.
+        """
+
+        search_builder = TypingSearchBuilder(Typing)
+
+        pagination = cls.search(search, page, number_of_items_per_page, search_builder)
+
+        # convert resource_typing_names to resource types
+        resource_types: List[Type[Resource]] = [
+            TypingManager.get_type_from_name(x) for x in resource_typing_names]
+
+        # filter the pagination task input
+        filter_function: Callable[[Typing],
+                                  bool] = lambda t: filter_typing_by_specs(t, resource_types, check_io)
+        pagination.filter(filter_function, number_of_items_per_page / 2)
+
+        return pagination
 
     @classmethod
     def search_importers(cls, resource_typing_name: str, extension: str,
@@ -66,12 +117,12 @@ class TypingService():
 
         pagination = cls.search(search, page, number_of_items_per_page, search_builder)
 
-        # filter the pagination by extension
+        # filter the pagination by extension manually after the search
         if extension and not ignore_file_extension:
             filter_function: Callable[[TaskTyping],
                                       bool] = lambda t: t.importer_extension_is_supported(extension)
 
-            pagination.filter(filter_function)
+            pagination.filter(filter_function, number_of_items_per_page / 2)
 
         return pagination
 

@@ -276,7 +276,7 @@ class ReportService():
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
-            model_select, page=page, number_of_items_per_page=number_of_items_per_page)
+            model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     ################################################# Image ########################################
 

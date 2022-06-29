@@ -21,4 +21,4 @@ class MonitorService(BaseService):
 
         query = Monitor.select()
         return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
+            query, page=page, nb_of_items_per_page=number_of_items_per_page)

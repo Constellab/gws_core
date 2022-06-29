@@ -85,7 +85,7 @@ class UserService(BaseService):
             query = query.where(Activity.activity_type ==
                                 activity_type.upper())
         return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
+            query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
     def fetch_user(cls, id: str) -> User:
@@ -98,7 +98,7 @@ class UserService(BaseService):
 
         query = User.select().order_by(User.created_at.desc())
         return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
+            query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     # -- G --
 

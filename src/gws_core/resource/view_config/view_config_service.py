@@ -90,7 +90,7 @@ class ViewConfigService():
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
-            model_select, page=page, number_of_items_per_page=number_of_items_per_page)
+            model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
     def search_by_resources(cls, resource_ids: List[str], view_types: List[ViewType], search: SearchParams,
@@ -106,4 +106,4 @@ class ViewConfigService():
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
-            model_select, page=page, number_of_items_per_page=number_of_items_per_page)
+            model_select, page=page, nb_of_items_per_page=number_of_items_per_page)

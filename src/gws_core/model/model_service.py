@@ -72,7 +72,7 @@ class ModelService(BaseService):
 
         query = model_type.select().order_by(model_type.created_at.desc())
         return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
+            query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
     def search(cls, typing_name: str, search_text: str,
@@ -80,7 +80,7 @@ class ModelService(BaseService):
         base_type: Type[Model] = TypingManager.get_type_from_name(typing_name)
 
         query = base_type.search(search_text)
-        return Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page,
+        return Paginator(query, page=page, nb_of_items_per_page=number_of_items_per_page,
                          nb_max_of_items_per_page=cls._number_of_items_per_page)
 
     ############################################## MODIFY ############################################

@@ -135,28 +135,28 @@ class TestTyping(BaseTestCase):
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         self.assertTrue(paginator.page_info.number_of_items_per_page > 0)
         # Check that there is no Hide element
-        self.assertEqual(len([x for x in paginator.current_items() if x.hide == True]), 0)
+        self.assertEqual(len([x for x in paginator.results if x.hide == True]), 0)
 
         # Search on full text
         search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "file"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         # Test that it found the FileTransformer
-        self.assertTrue(len([x for x in paginator.current_items() if x.unique_name == 'FileTransformer']) > 0)
+        self.assertTrue(len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
         search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "possible is"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         # Test that it found the FileTransformer
-        self.assertTrue(len([x for x in paginator.current_items() if x.unique_name == 'FileTransformer']) > 0)
+        self.assertTrue(len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
         search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "FileTransformer"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         # Test that it found the FileTransformer
-        self.assertTrue(len([x for x in paginator.current_items() if x.unique_name == 'FileTransformer']) > 0)
+        self.assertTrue(len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
         # # Test search on related model
         paginator: Paginator[Typing] = TypingService.search_transformers([SubFile._typing_name], SearchParams())
         # Test that it found the FileTransformer
-        self.assertTrue(len([x for x in paginator.current_items() if x.unique_name == 'FileTransformer']) > 0)
+        self.assertTrue(len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
     async def test_typing_search_with_deprecated(self):
         search_dict: SearchParams = SearchParams()
@@ -173,5 +173,5 @@ class TestTyping(BaseTestCase):
                                        {'key': 'include_deprecated', "operator": "EQ", "value": True}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         # Test that it found the FileTransformer
-        self.assertTrue(len([x for x in paginator.current_items()
+        self.assertTrue(len([x for x in paginator.results
                         if x.unique_name == 'CreateSimpleRobot2Deprecated']) > 0)

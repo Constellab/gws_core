@@ -43,7 +43,7 @@ async def add_process(id: str,
 
 @core_app.post("/protocol/{id}/add-process/{process_typing_name}/connected-to-output/{process_name}/{port_name}",
                tags=["Protocol"],
-               summary="Add a process to a protocol")
+               summary="Add a process to a protocol connected to a selected output")
 async def add_process_connected_to_output(id: str,
                                           process_typing_name: str,
                                           process_name: str,
@@ -58,6 +58,26 @@ async def add_process_connected_to_output(id: str,
         process_typing_name=process_typing_name,
         output_process_name=process_name,
         output_port_name=port_name
+    ).to_json()
+
+
+@core_app.post("/protocol/{id}/add-process/{process_typing_name}/connected-to-input/{process_name}/{port_name}",
+               tags=["Protocol"],
+               summary="Add a process to a protocol connected to a selected input")
+async def add_process_connected_to_input(id: str,
+                                         process_typing_name: str,
+                                         process_name: str,
+                                         port_name: str,
+                                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Add a process to a protocol
+    """
+
+    return ProtocolService.add_process_connected_to_input(
+        protocol_id=id,
+        process_typing_name=process_typing_name,
+        input_process_name=process_name,
+        input_port_name=port_name
     ).to_json()
 
 

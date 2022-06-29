@@ -15,7 +15,7 @@ from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from ..io.connector import Connector
-from ..io.port import InPort, OutPort
+from ..io.port import InPort, OutPort, Port
 from ..model.typing import Typing
 from ..model.typing_manager import TypingManager
 from ..process.process import Process
@@ -186,27 +186,68 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_process_connected_to_output(
-            cls, protocol_id: str, process_typing_name: str,
-            output_process_name: str, output_port_name: str) -> AddProcessWithLink:
+            cls, protocol_id: str, process_typing_name: str, output_process_name: str, output_port_name: str,
+            config_params: ConfigParamsDict = None) -> AddProcessWithLink:
         """Add a process to the protocol and connect it to an output port of a previous process.
-        It can only create transformer process
         """
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
-        process_typing: Typing = TypingManager.get_typing_from_name(process_typing_name)
+        existing_process: ProcessModel = protocol_model.get_process(output_process_name)
+        existing_out_port: Port = existing_process.out_port(output_port_name)
 
-        if not Utils.issubclass(process_typing.get_type(), Transformer):
-            raise BadRequestException("Only transformer process can be added to a process output")
+        new_process_type: Type[Process] = TypingManager.get_type_from_name(process_typing_name)
+
+        input_name: str
+        # check if any of the new process in port is compatible with the selected out port
+        for input_spec_name, input_spec in new_process_type.get_input_specs().items():
+            if existing_out_port.resource_spec.is_compatible_with_in_spec(input_spec):
+                input_name = input_spec_name
+                break
+
+        if input_name is None:
+            raise BadRequestException("The process has no input port compatible with selected output port")
 
         # create the process
-        new_process: ProcessModel = ProtocolService.add_process_to_protocol(protocol_model, process_typing.get_type())
+        new_process: ProcessModel = ProtocolService.add_process_to_protocol(
+            protocol_model, process_type=new_process_type, config_params=config_params)
 
-        previous_process: ProcessModel = protocol_model.get_process(output_process_name)
+        # Create the connector between the provided output port and the new process input port
+        connector = cls.add_connector_to_protocol(protocol_model, existing_out_port,
+                                                  new_process.in_port(input_name))
 
-        # Create the connector between the provided output port and the transformer default input port
-        connector = cls.add_connector_to_protocol(
-            protocol_model, previous_process.out_port(output_port_name),
-            new_process.in_port(Transformer.input_name))
+        return AddProcessWithLink(process_model=new_process, connector=connector)
+
+    @classmethod
+    @transaction()
+    def add_process_connected_to_input(
+            cls, protocol_id: str, process_typing_name: str, input_process_name: str, input_port_name: str,
+            config_params: ConfigParamsDict = None) -> AddProcessWithLink:
+        """Add a process to the protocol and connect it to an input port of a process.
+        """
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        existing_process: ProcessModel = protocol_model.get_process(input_process_name)
+        existing_in_port: Port = existing_process.in_port(input_port_name)
+
+        new_process_type: Type[Process] = TypingManager.get_type_from_name(process_typing_name)
+
+        output_name: str
+        # check if any of the new process out port is compatible with the selected in port
+        for output_spec_name, output_spec in new_process_type.get_output_specs().items():
+            if output_spec.is_compatible_with_in_spec(existing_in_port.resource_spec):
+                output_name = output_spec_name
+                break
+
+        if output_name is None:
+            raise BadRequestException("The process has no output port compatible with selected input port")
+
+        # create the process
+        new_process: ProcessModel = ProtocolService.add_process_to_protocol(
+            protocol_model, process_type=new_process_type, config_params=config_params)
+
+        # Create the connector between the provided input port and the new process output port
+        connector = cls.add_connector_to_protocol(protocol_model, new_process.out_port(output_name),
+                                                  existing_in_port)
 
         return AddProcessWithLink(process_model=new_process, connector=connector)
 
@@ -345,13 +386,6 @@ class ProtocolService(BaseService):
         """
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
-        return cls.add_source_to_protocol(protocol_model, resource_id)
-
-    @classmethod
-    def add_source_to_protocol(
-            cls, protocol_model: ProtocolModel, resource_id: str) -> ProcessModel:
-        """ Add a source task to the protocol. Configure it with the resource.
-        """
         # Create source task model
         source: TaskModel = ProcessFactory.create_source(resource_id)
 
@@ -366,20 +400,9 @@ class ProtocolService(BaseService):
             cls, protocol_id: str, resource_id: str, process_name: str, input_port_name: str, ) -> AddProcessWithLink:
         """ Add a source task to the protocol. Configure it with the resource. And add connector
             from source to process
-
         """
-        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
-
-        # add the source task to the protocol
-        source_model: ProcessModel = cls.add_source_to_protocol(protocol_model, resource_id)
-
-        process_model: ProcessModel = protocol_model.get_process(process_name)
-        # Create the connector
-        connector = cls.add_connector_to_protocol(
-            protocol_model, source_model.out_port(Source.output_name),
-            process_model.in_port(input_port_name))
-
-        return AddProcessWithLink(process_model=source_model, connector=connector)
+        return cls.add_process_connected_to_input(protocol_id, Source._typing_name, process_name, input_port_name,
+                                                  {Source.config_name: resource_id})
 
     @classmethod
     @transaction()
@@ -387,18 +410,5 @@ class ProtocolService(BaseService):
             cls, protocol_id: str, process_name: str, output_port_name: str) -> AddProcessWithLink:
         """ Add a sink task to the protocol. And add connector from process to sink
         """
-        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
-        # Create source task model
-        sink: TaskModel = ProcessFactory.create_sink()
-
-        # Add the source to the protocol
-        sink_model: ProcessModel = cls.add_process_model_to_protocol(protocol_model, sink)
-
-        process_model: ProcessModel = protocol_model.get_process(process_name)
-        # Create the connector
-        connector = cls.add_connector_to_protocol(
-            protocol_model, process_model.out_port(output_port_name),
-            sink_model.in_port(Sink.input_name))
-
-        return AddProcessWithLink(process_model=sink_model, connector=connector)
+        return cls.add_process_connected_to_output(protocol_id, Sink._typing_name, process_name, output_port_name)

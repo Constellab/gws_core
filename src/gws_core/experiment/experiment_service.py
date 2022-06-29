@@ -227,7 +227,7 @@ class ExperimentService(BaseService):
         query = Experiment.select().order_by(Experiment.created_at.desc())
 
         paginator: Paginator[Experiment] = Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
+            query, page=page, nb_of_items_per_page=number_of_items_per_page)
         return paginator
 
     @classmethod
@@ -240,7 +240,7 @@ class ExperimentService(BaseService):
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
-            model_select, page=page, number_of_items_per_page=number_of_items_per_page)
+            model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     ################################### COPY  ##############################
 

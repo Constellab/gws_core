@@ -107,6 +107,11 @@ class IOSpec:
     def is_compatible_with_resource_type(self, resource_type: Type[Resource]) -> bool:
         return self._resource_types_are_compatible(resource_types=[resource_type], expected_types=self.resource_types)
 
+    def is_compatible_with_resource_types(self, resource_types: Iterable[Type[Resource]]) -> bool:
+        """return True if one of the resource_types is compatible with the this spec
+        """
+        return self._resource_types_are_compatible(resource_types=resource_types, expected_types=self.resource_types)
+
     @abstractmethod
     def is_constant_out(self) -> bool:
         pass
@@ -156,6 +161,11 @@ class IOSpec:
                 return True
 
         return False
+
+    @classmethod
+    def _resource_types_is_type(cls, resource_type: Type[Resource],
+                                expected_types: Iterable[Type[Resource]]) -> bool:
+        return resource_type in expected_types
 
     def to_json(self) -> IOSpecDict:
         json_: IOSpecDict = {"resource_types": [],

@@ -57,7 +57,7 @@ class ResourceService(BaseService):
             .order_by(ResourceModel.created_at.desc())
 
         return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
+            query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
     def delete(cls, resource_id: str) -> None:
@@ -229,7 +229,7 @@ class ResourceService(BaseService):
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
-            model_select, page=page, number_of_items_per_page=number_of_items_per_page)
+            model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     ############################# DOWNLOAD ###########################
 

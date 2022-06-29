@@ -335,7 +335,7 @@ class ProcessFactory():
 
     @classmethod
     def create_source(cls, resouce_id: str) -> TaskModel:
-        return cls.create_task_model_from_type(Source, {'resource_id': resouce_id})
+        return cls.create_task_model_from_type(Source, {Source.config_name: resouce_id})
 
     @classmethod
     def create_sink(cls) -> TaskModel:

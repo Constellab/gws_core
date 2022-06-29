@@ -56,7 +56,7 @@ class CommentService(BaseService):
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
         return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
+            query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
     def get_model_comments(cls,
