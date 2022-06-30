@@ -130,7 +130,7 @@ class Switch2(Task):
         return {"resource": resource}
 
 
-@task_decorator(unique_name="Wait")
+@task_decorator(unique_name="Wait", short_description="Wait a number of seconds specified in the config")
 class Wait(Task):
     """
     Wait task

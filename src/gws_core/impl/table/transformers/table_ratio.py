@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
-from gws_core.config.param_spec import BoolParam, StrParam
+from gws_core.config.param_spec import BoolParam, ListParam
 from gws_core.impl.table.helper.table_ratio_helper import TableRatioHelper
 
 from ....task.transformer.transformer import Transformer, transformer_decorator
@@ -16,13 +16,78 @@ from ..table import Table
     short_description="Ration on column for a table",
 )
 class TableColumnRatio(Transformer):
+    """
+
+    This task allows you to do mathematical operation on a Table column.
+
+    It works with the column names, supports basic operations, comparator, parenthesis and some math functions.
+
+    ## Examples
+    Let's say you have this ```Table``` with the column A, B, C, D
+    | A | B  | C  | D  |
+    |---|----|----|----|
+    | 1 | 10 | 11 | -9 |
+    | 2 | 8  | 10 | -6 |
+    | 3 | 6  | 9  | -3 |
+
+    Here is few example that you you write in the ```operations``` config.
+
+    * Addition : ```A + B + C```
+    * Constant : ```A  + 10```
+    * Subtraction : ```A - C```
+    * Multiplication : ```A * C```
+    * Division : ```A / C```
+    * Exponentiation : ```A ** C```
+    * Modulus :  ``` A % C```
+    * Floor division : ``` A // C```
+    * Advanced exemple : ```(A + B) / (C * D)```
+
+    ## Comparaison
+
+    This task support comparaison, it will return the string ```True``` or ```False```.
+
+    Comparaison operators : ```==```, ```!=```, ```>```, ```<```, ```>=``` and ```<=```
+
+    ## Math functions
+
+    This task supports basic math functions : ```sin```, ```cos```, ```exp```, ```log```, ```expm1```, ```log1p```, ```sqrt```, ```sinh```, ```cosh```, ```tanh```, ```arcsin```, ```arccos```, ```arctan```, ```arccosh```, ```arcsinh```, ```arctanh```, ```abs```, ```arctan2``` and ```log10```.
+
+    Example : ```log(A)```
+
+
+    ## Assignement to a new column
+    To create the reuslt column in a new column, you can check the ```Set result in new column``` option.
+
+    You can also define a custom column name in the ```operations```. Example : ```E = A + B```, this will set the result in the E columns.
+
+    ## Multiple operation
+    Multiple operation are possible but it requires an assignment to a new columns.
+
+    For exemple, if you want to create 2 new calculated columns you could do write 2 operation (in 2 different lines) :
+    ```
+    E = A + B
+    F = C - D
+    ```
+
+    The result of the previous operation can also be use for the next operation (here we use the new column ```E``` to calculate ```F```) :
+    ```
+    E = A + B
+    F = E - D
+    ```
+
+
+    ## Advanced usage
+
+    This task uses the eval function of python dataframe. To see all the possibility, check the following link : https://pandas.pydata.org/pandas-docs/stable/user_guide/enhancingperf.html#expression-evaluation-via-eval
+
+    """
 
     config_specs: ConfigSpecs = {
-        "operation": StrParam(),
+        "operations": ListParam(human_name="Operations", short_description="Operations on columns, see documentation for more info"),
         "result_in_new_column":
         BoolParam(
             default_value=False, human_name="Set result in new column",
             short_description="Create a new column for the result, otherwise it only returns the result column"), }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        return TableRatioHelper.columns_ratio(source, params["operation"], params["result_in_new_column"])
+        return TableRatioHelper.columns_ratio(source, params["operations"], params["result_in_new_column"])
