@@ -219,3 +219,12 @@ class Utils:
             return False
 
         return bool(re.match("^[a-zA-Z0-9_]+$", str_))
+
+    @staticmethod
+    def str_remove_whitespaces(str_: str) -> str:
+        """Remove all whitespace of a string"""
+        if str_ is None:
+            return None
+
+        pattern = re.compile(r'\s+')
+        return re.sub(pattern, '', str_)

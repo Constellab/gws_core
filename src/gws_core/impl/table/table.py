@@ -323,10 +323,11 @@ class Table(Resource):
             raise BadRequestException("The length of column data must be equal to the number of rows")
         if self.column_exists(column_name):
             raise BadRequestException(f"The column name `{column_name}` already exists")
+
         if column_index is None:
             self._data[column_name] = column_data
         else:
-            self._data.insert(0, column_name, column_data)
+            self._data.insert(column_index, column_name, column_data)
 
         self._add_column_info(column_index)
 

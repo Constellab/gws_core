@@ -13,7 +13,7 @@ from ..table import Table
 @transformer_decorator(
     unique_name="TableColumnRatio",
     resource_type=Table,
-    short_description="Ration on column for a table",
+    short_description="Ratio on columns for a table",
 )
 class TableColumnRatio(Transformer):
     """
@@ -30,7 +30,7 @@ class TableColumnRatio(Transformer):
     | 2 | 8  | 10 | -6 |
     | 3 | 6  | 9  | -3 |
 
-    Here is few example that you you write in the ```operations``` config.
+    Here is few example that you can write in the ```operations``` config.
 
     * Addition : ```A + B + C```
     * Constant : ```A  + 10```
