@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws_core.config.tags_param_spec import TagsParam
+from typing import List
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
@@ -21,7 +21,7 @@ from ..table import Table
 @transformer_decorator(
     unique_name="TableRowsSelector",
     resource_type=Table,
-    short_description="Select table row",
+    short_description="Select table rows by name",
 )
 class TableRowSelector(Transformer):
     """
@@ -41,7 +41,7 @@ class TableRowSelector(Transformer):
 @transformer_decorator(
     unique_name="TableColumnsSelector",
     resource_type=Table,
-    short_description="Select table columns",
+    short_description="Select table columns by name",
 )
 class TableColumnSelector(Transformer):
     """
@@ -67,40 +67,63 @@ class TableColumnSelector(Transformer):
 @transformer_decorator(
     unique_name="TableRowTagsSelector",
     resource_type=Table,
-    short_description="Select table rows base on tag",
+    short_description="Select table rows by tags",
 )
 class TableRowTagsSelector(Transformer):
     """
     Select part of a table using row tags. Multiple row tags can be provided.
+
+    # Config
+    You can provide multiple tags in on input and tags in different input.
+
+    When you provide multiple tags in one input, only the data that have **all of the tag** key/value will be selected (```AND condition```).
+
+    When you provide tags in mulitple inputs the data that have **one of the provided tag** key/value will be selected (```OR condition```).
+
+    You can also provide multiple tags in multiple inputs to make complexe selection.
+
+
+    # Other
+    If you want to delete rows by tags instead of selcting them, use the **TableRowTagsDeleter**.
     """
 
     config_specs: ConfigSpecs = {
-        "tags": TagsParam(
-            human_name="Row tags",
-            short_description="Filter on row tags",
-        ),
+        'tags': DataframeFilterHelper.get_tags_param_set('row')
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        return source.select_by_row_tags([params.get('tags')])
+        tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get('tags'))
+        return source.select_by_row_tags(tags)
 
 
 @transformer_decorator(
     unique_name="TableColumnTagsSelector",
     resource_type=Table,
-    short_description="Select table column base on tag",
+    short_description="Select table column by tags",
 )
 class TableColumnTagsSelector(Transformer):
     """
     Select part of a table using column tags. Multiple column tags can be provided.
+
+    # Config
+    You can provide multiple tags in on input and tags in different input.
+
+    When you provide multiple tags in one input, only the data that have **all of the tag** key/value will be selected (```AND condition```).
+
+    When you provide tags in mulitple inputs the data that have **one of the provided tag** key/value will be selected (```OR condition```).
+
+    You can also provide multiple tags in multiple inputs to make complexe selection.
+
+
+    # Other
+    If you want to delete columns by tags instead of selcting them, use the **TableColumnTagsDeleter**.
     """
 
     config_specs: ConfigSpecs = {
-        "tags": TagsParam(
-            human_name="Column tags",
-            short_description="Filter on column tags",
-        )
+        'tags': DataframeFilterHelper.get_tags_param_set('column')
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        return source.select_by_column_tags([params.get('tags')])
+
+        tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get('tags'))
+        return source.select_by_column_tags(tags)

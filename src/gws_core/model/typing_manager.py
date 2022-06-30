@@ -77,7 +77,7 @@ class TypingManager:
         if typing.typing_name in cls._typings_before_save:
             raise Exception(
                 f"""2 differents {typing.object_type} in the brick {typing.brick} register with the same name : {typing.unique_name}.
-                                {typing.object_type} already register: [{cls._typings_before_save[typing.typing_name]['model_type'] }].
+                                {typing.object_type} already register: [{cls._typings_before_save[typing.typing_name].model_type }].
                                 {typing.object_type} trying to register : {object_class.full_classname()}
                                 Please update one of the unique name""")
 

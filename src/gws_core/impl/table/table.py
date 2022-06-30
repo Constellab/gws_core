@@ -41,6 +41,14 @@ ALLOWED_FILE_FORMATS = [*ALLOWED_XLS_FILE_FORMATS, *ALLOWED_TXT_FILE_FORMATS]
 
 @resource_decorator("Table")
 class Table(Resource):
+    """
+    Main 2d table with named columns and named rows. It can also contains tags for each column and row.
+
+    It has a lot of transformers to manipulate the data.
+
+    It has a lot of chart views to visualize the data.
+
+    """
 
     ALLOWED_DELIMITER = ["auto", "tab", "space", ",", ";"]
     DEFAULT_DELIMITER = "auto"
@@ -527,26 +535,12 @@ class Table(Resource):
     def select_by_row_names(self, filters: List[DataframeFilterName]) -> 'Table':
         data = DataframeFilterHelper.filter_by_axis_names(self._data, 'row', filters)
 
-        # copy meta data
-        positions = [self._data.index.get_loc(k) for k in self._data.index if k in data.index]
-        meta = copy.deepcopy(self._meta)
-        if "row_tags" in self._meta:
-            meta["row_tags"] = [meta["row_tags"][k] for k in positions]
-
-        # create a new table
-        return self._create_sub_table(data, meta)
+        return self._create_sub_table_filtered_by_rows(data)
 
     def select_by_column_names(self, filters: List[DataframeFilterName]) -> 'Table':
         data = DataframeFilterHelper.filter_by_axis_names(self._data, 'column', filters)
 
-        # copy meta data
-        positions = [self._data.columns.get_loc(k) for k in self._data.columns if k in data.columns]
-        meta = copy.deepcopy(self._meta)
-        if "column_tags" in self._meta:
-            meta["column_tags"] = [meta["column_tags"][k] for k in positions]
-
-        # create a new table
-        return self._create_sub_table(data, meta)
+        return self._create_sub_table_filtered_by_columns(data)
 
     def select_by_coords(self, from_row_id: int, from_column_id: int, to_row_id: int, to_column_id: int) -> 'Table':
         """Create a new table from coords. It includes the to_row_id and to_column_id
@@ -604,6 +598,26 @@ class Table(Resource):
         return self.select_by_tags("columns", tags)
 
     def select_by_tags(self, axis: AxisType, tags: List[dict]) -> 'Table':
+        positions = self._get_position_by_tags(axis, tags)
+
+        return self.select_by_row_positions(positions) if is_row_axis(axis) else self.select_by_column_positions(
+            positions)
+
+    def filter_out_by_tags(self, axis: AxisType, tags: List[dict]) -> 'Table':
+        # get position of the selected tags
+        positions = self._get_position_by_tags(axis, tags)
+
+        # get all the existing indexes
+        all_indexes = list(range(self.nb_rows)) if is_row_axis(axis) else list(range(self.nb_columns))
+
+        # get the indexes to keep by removing the selected ones from all index
+        indexes_to_keep = [index for index in all_indexes if index not in positions]
+
+        return self.select_by_row_positions(indexes_to_keep) if is_row_axis(axis) else self.select_by_column_positions(
+            indexes_to_keep)
+
+    def _get_position_by_tags(self, axis: AxisType, tags: List[dict]) -> List[int]:
+        """ Return the position of the tags in the axis """
         if not isinstance(tags, list):
             raise BadRequestException("A list of tags is required")
 
@@ -624,8 +638,7 @@ class Table(Resource):
             position_union.extend(position_instersect)
 
         position_union = sorted(list(set(position_union)))
-        return self.select_by_row_positions(position_union) if is_row_axis(axis) else self.select_by_column_positions(
-            position_union)
+        return position_union
 
     def select_numeric_columns(self, drop_na: Literal['all', 'any'] = 'all') -> 'Table':
         """
@@ -649,6 +662,46 @@ class Table(Resource):
             "row_tags": copy.deepcopy(self.get_row_tags())
         }
         return self._create_sub_table(data, meta)
+
+    # Selection by exclusion
+
+    def filter_out_by_row_names(self, filters: List[DataframeFilterName]) -> 'Table':
+        data = DataframeFilterHelper.filter_out_by_axis_names(self._data, 'row', filters)
+
+        return self._create_sub_table_filtered_by_rows(data)
+
+    def filter_out_by_column_names(self, filters: List[DataframeFilterName]) -> 'Table':
+        data = DataframeFilterHelper.filter_out_by_axis_names(self._data, 'column', filters)
+
+        return self._create_sub_table_filtered_by_columns(data)
+
+    def _create_sub_table_filtered_by_rows(self, filtered_df: DataFrame) -> 'Table':
+        """Create a sub Table based on a subset Dataframe of the original table filtered by rows"""
+
+        # copy meta data
+        positions = [self._data.index.get_loc(k) for k in self._data.index if k in filtered_df.index]
+        meta = copy.deepcopy(self._meta)
+
+        # get the row tags for the filtered rows
+        if "row_tags" in self._meta:
+            meta["row_tags"] = [meta["row_tags"][k] for k in positions]
+
+        # create a new table
+        return self._create_sub_table(filtered_df, meta)
+
+    def _create_sub_table_filtered_by_columns(self, filtered_df: DataFrame) -> 'Table':
+        """Create a sub Table based on a subset Dataframe of the original table filtered by columns"""
+
+        # copy meta data
+        positions = [self._data.columns.get_loc(k) for k in self._data.columns if k in filtered_df.columns]
+        meta = copy.deepcopy(self._meta)
+
+        # get the column tags for the filtered columns
+        if "column_tags" in self._meta:
+            meta["column_tags"] = [meta["column_tags"][k] for k in positions]
+
+        # create a new table
+        return self._create_sub_table(filtered_df, meta)
 
     def _create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
         """
@@ -704,7 +757,7 @@ class Table(Resource):
 
     # -- V ---
 
-    @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
+    @ view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
     def view_as_table(self, params: ConfigParams) -> TableView:
         """
         View as table
@@ -715,7 +768,7 @@ class Table(Resource):
     ################################################# PLOT VIEW #################################################
     # Plot view are hidden because they are manually called by the ResourceTableService
 
-    @view(view_type=TableLinePlot2DView, human_name='Line plot 2D', short_description='View columns as 2D-line plots', specs={}, hide=True)
+    @ view(view_type=TableLinePlot2DView, human_name='Line plot 2D', short_description='View columns as 2D-line plots', specs={}, hide=True)
     def view_as_line_plot_2d(self, params: ConfigParams) -> TableLinePlot2DView:
         """
         View columns as 2D-line plots
@@ -723,8 +776,8 @@ class Table(Resource):
 
         return TableLinePlot2DView(self)
 
-    @view(view_type=TableScatterPlot2DView, human_name='Scatter plot 2D',
-          short_description='View columns as 2D-scatter plots', specs={}, hide=True)
+    @ view(view_type=TableScatterPlot2DView, human_name='Scatter plot 2D',
+           short_description='View columns as 2D-scatter plots', specs={}, hide=True)
     def view_as_scatter_plot_2d(self, params: ConfigParams) -> TableScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
@@ -732,7 +785,7 @@ class Table(Resource):
 
         return TableScatterPlot2DView(self)
 
-    @view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={}, hide=True)
+    @ view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={}, hide=True)
     def view_as_bar_plot(self, params: ConfigParams) -> TableBarPlotView:
         """
         View one or several columns as 2D-bar plots
@@ -740,8 +793,8 @@ class Table(Resource):
 
         return TableBarPlotView(self)
 
-    @view(view_type=TableStackedBarPlotView, human_name='Stacked bar plot',
-          short_description='View columns as 2D-stacked bar plots', specs={}, hide=True)
+    @ view(view_type=TableStackedBarPlotView, human_name='Stacked bar plot',
+           short_description='View columns as 2D-stacked bar plots', specs={}, hide=True)
     def view_as_stacked_bar_plot(self, params: ConfigParams) -> TableStackedBarPlotView:
         """
         View one or several columns as 2D-stacked bar plots
@@ -749,7 +802,7 @@ class Table(Resource):
 
         return TableStackedBarPlotView(self)
 
-    @view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={}, hide=True)
+    @ view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={}, hide=True)
     def view_as_histogram(self, params: ConfigParams) -> TableHistogramView:
         """
         View columns as 2D-line plots
@@ -757,7 +810,7 @@ class Table(Resource):
 
         return TableHistogramView(self)
 
-    @view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={}, hide=True)
+    @ view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={}, hide=True)
     def view_as_box_plot(self, params: ConfigParams) -> TableBoxPlotView:
         """
         View one or several columns as box plots
@@ -765,7 +818,7 @@ class Table(Resource):
 
         return TableBoxPlotView(self)
 
-    @view(view_type=TableHeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={}, hide=True)
+    @ view(view_type=TableHeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={}, hide=True)
     def view_as_heatmap(self, params: ConfigParams) -> TableHeatmapView:
         """
         View the table as heatmap
@@ -773,7 +826,7 @@ class Table(Resource):
 
         return TableHeatmapView(self)
 
-    @view(view_type=TableVennDiagramView, human_name='VennDiagram', short_description='View table as Venn diagram', specs={}, hide=True)
+    @ view(view_type=TableVennDiagramView, human_name='VennDiagram', short_description='View table as Venn diagram', specs={}, hide=True)
     def view_as_venn_diagram(self, params: ConfigParams) -> TableHeatmapView:
         """
         View the table as Venn diagram
@@ -799,14 +852,14 @@ class Table(Resource):
 
     ############################## CLASS METHODS ###########################
 
-    @staticmethod
+    @ staticmethod
     def clean_tags(tags):
         try:
             return [{str(k): str(v) for k, v in t.items()} for t in tags]
         except:
             raise BadRequestException("The tags are not valid. Please check")
 
-    @classmethod
+    @ classmethod
     def from_dict(cls, data: dict, orient='index', dtype=None, columns=None) -> 'Table':
         dataframe = DataFrame.from_dict(data, orient, dtype, columns)
         res = cls(data=dataframe)

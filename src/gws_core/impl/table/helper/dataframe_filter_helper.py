@@ -9,6 +9,7 @@ from typing import List, Literal, Optional, TypedDict, Union
 import numpy
 from gws_core.config.param_set import ParamSet
 from gws_core.config.param_spec import BoolParam, StrParam
+from gws_core.config.tags_param_spec import TagsParam
 from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
@@ -60,6 +61,15 @@ class DataframeFilterHelper:
                 dataframe = dataframe.combine_first(new_df)
 
         return dataframe
+
+    @classmethod
+    def filter_out_by_axis_names(cls, data: DataFrame, axis: AxisName, filters: List[DataframeFilterName]):
+        filtered_dataframe = cls.filter_by_axis_names(data, axis, filters)
+
+        ax_index: Index = filtered_dataframe.index if axis == "row" else filtered_dataframe.columns
+
+        # delete the filtered rows/columns from the data
+        return data.drop(labels=ax_index, axis=0 if axis == "row" else 1)
 
     @classmethod
     def _filter_by_axis_names(cls, data: DataFrame, axis: AxisName, value: Union[List[str], str], use_regexp=False):
@@ -204,3 +214,27 @@ class DataframeFilterHelper:
             human_name=param_set_human_name,
             short_description=param_set_short_description,
             optional=optional)
+
+    @classmethod
+    def get_tags_param_set(cls, axis_name: AxisName) -> ParamSet:
+        """Get a param set for filtering a Table by tags
+        """
+
+        human_name = "Row tags" if axis_name == "row" else "Column tags"
+        return ParamSet({
+            "tags": TagsParam(
+                human_name=human_name,
+                short_description="If multiple tags provided, the data must have all of them (AND condition)",
+            )
+        },
+            human_name=human_name,
+            short_description="The different tag inputs are combined with an OR condition")
+
+    @classmethod
+    def convert_tags_params_to_tag_list(cls, tags: Union[dict, List[dict]]) -> List[dict]:
+        """Convert a tag params from the get_tags_param_set to a list of tags
+        """
+        if isinstance(tags, str):
+            tags = [tags]
+
+        return [tag['tags'] for tag in tags]
