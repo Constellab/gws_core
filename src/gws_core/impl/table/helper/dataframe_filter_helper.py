@@ -50,7 +50,19 @@ class DataframeFilterHelper:
             )
 
     @classmethod
-    def filter_by_axis_names(cls, data: DataFrame, axis: AxisName, value: Union[List[str], str], use_regexp=False):
+    def filter_by_axis_names(cls, data: DataFrame, axis: AxisName, filters: List[DataframeFilterName]):
+        dataframe: DataFrame = None
+        for filter_ in filters:
+            new_df = cls._filter_by_axis_names(data, axis, filter_["name"], filter_.get("is_regex", False))
+            if dataframe is None:
+                dataframe = new_df
+            else:
+                dataframe = dataframe.combine_first(new_df)
+
+        return dataframe
+
+    @classmethod
+    def _filter_by_axis_names(cls, data: DataFrame, axis: AxisName, value: Union[List[str], str], use_regexp=False):
         if (not axis) or (value is None):
             return data
         cls._check_axis_name(axis)
@@ -74,18 +86,6 @@ class DataframeFilterHelper:
                 value = [int(i) for i in value]
 
             return data.filter(items=value, axis=ax)
-
-    @classmethod
-    def filter_by_axis_names_2(cls, data: DataFrame, axis: AxisName, filters: List[DataframeFilterName]):
-        dataframe: DataFrame = None
-        for filter_ in filters:
-            new_df = cls.filter_by_axis_names(data, axis, filter_["name"], filter_.get("is_regex", False))
-            if dataframe is None:
-                dataframe = new_df
-            else:
-                dataframe = dataframe.combine_first(new_df)
-
-        return dataframe
 
     @classmethod
     def filter_by_aggregated_values(

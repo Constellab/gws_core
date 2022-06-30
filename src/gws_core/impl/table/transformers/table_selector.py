@@ -25,9 +25,9 @@ from ..table import Table
 )
 class TableRowSelector(Transformer):
     """
-    TableRowSelector
+    Select part of a table using row names. Multiple row names can be provided.
 
-    Select part of a table using row name
+    It also supports regexp.
     """
 
     config_specs: ConfigSpecs = {
@@ -45,9 +45,9 @@ class TableRowSelector(Transformer):
 )
 class TableColumnSelector(Transformer):
     """
-    TableColumnSelector
+    Select part of a table using column names. Multiple column names can be provided.
 
-    Select part of a table using column name
+    It also supports regexp.
     """
 
     config_specs: ConfigSpecs = {
@@ -70,6 +70,9 @@ class TableColumnSelector(Transformer):
     short_description="Select table rows base on tag",
 )
 class TableRowTagsSelector(Transformer):
+    """
+    Select part of a table using row tags. Multiple row tags can be provided.
+    """
 
     config_specs: ConfigSpecs = {
         "tags": TagsParam(
@@ -88,6 +91,9 @@ class TableRowTagsSelector(Transformer):
     short_description="Select table column base on tag",
 )
 class TableColumnTagsSelector(Transformer):
+    """
+    Select part of a table using column tags. Multiple column tags can be provided.
+    """
 
     config_specs: ConfigSpecs = {
         "tags": TagsParam(

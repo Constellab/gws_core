@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (BaseTestCase, Settings, Table, DataframeFilterHelper,
+from gws_core import (BaseTestCase, DataframeFilterHelper, Settings, Table,
                       TableImporter)
 from gws_core.data_provider.data_provider import DataProvider
 
@@ -19,14 +19,14 @@ class TestTableFilterHelper(BaseTestCase):
 
         # filter by row name
         df = DataframeFilterHelper.filter_by_axis_names(
-            data=table.get_data(), axis="row", value="L.*a$", use_regexp=True
+            data=table.get_data(), axis="row", filters=[{"name": "L.*a$", "is_regex": True}]
         )
         self.assertEqual(df.index.tolist(), ["Lea", "Laura"])
         self.assertEqual(df.columns.tolist(), ["Age", "Sex", "City", "Weight"])
 
         # filter by column name
         df = DataframeFilterHelper.filter_by_axis_names(
-            data=table.get_data(), axis="column", value="Cit.*", use_regexp=True
+            data=table.get_data(), axis="column", filters=[{"name": "Cit.*", "is_regex": True}]
         )
         self.assertEqual(df.index.tolist(), ["Luc", "Lea", "Laura", "Leon"])
         self.assertEqual(df.columns.tolist(), ["City"])

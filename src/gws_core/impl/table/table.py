@@ -525,7 +525,7 @@ class Table(Resource):
         return self.select_by_column_names([{"name": column_names}])
 
     def select_by_row_names(self, filters: List[DataframeFilterName]) -> 'Table':
-        data = DataframeFilterHelper.filter_by_axis_names_2(self._data, 'row', filters)
+        data = DataframeFilterHelper.filter_by_axis_names(self._data, 'row', filters)
 
         # copy meta data
         positions = [self._data.index.get_loc(k) for k in self._data.index if k in data.index]
@@ -537,7 +537,7 @@ class Table(Resource):
         return self._create_sub_table(data, meta)
 
     def select_by_column_names(self, filters: List[DataframeFilterName]) -> 'Table':
-        data = DataframeFilterHelper.filter_by_axis_names_2(self._data, 'column', filters)
+        data = DataframeFilterHelper.filter_by_axis_names(self._data, 'column', filters)
 
         # copy meta data
         positions = [self._data.columns.get_loc(k) for k in self._data.columns if k in data.columns]

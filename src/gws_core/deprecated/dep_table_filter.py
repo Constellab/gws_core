@@ -3,9 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from pandas import DataFrame
-
 from gws_core.io.io_spec import InputSpec, OutputSpec
+from pandas import DataFrame
 
 from ..config.config_types import ConfigParams, ConfigSpecs
 from ..config.param_set import ParamSet
@@ -14,7 +13,8 @@ from ..impl.table.helper.constructor.num_data_filter_param import \
     NumericDataFilterParamConstructor
 from ..impl.table.helper.constructor.text_data_filter_param import \
     TextDataFilterParamConstructor
-from ..impl.table.helper.dataframe_aggregator_helper import DataframeAggregatorHelper
+from ..impl.table.helper.dataframe_aggregator_helper import \
+    DataframeAggregatorHelper
 from ..impl.table.helper.dataframe_filter_helper import DataframeFilterHelper
 from ..impl.table.table import Table
 from ..task.task import Task
@@ -96,7 +96,7 @@ class TableFilter(Task):
 
         for _filter in params["axis_name_filter"]:
             data = DataframeFilterHelper.filter_by_axis_names(
-                data=data, axis=_filter["axis_type"], value=_filter["value"], use_regexp=_filter["use_regexp"]
+                data=data, axis=_filter["axis_type"], filters=[{"name": _filter["value"], "is_regex": _filter["use_regexp"]}]
             )
 
         for _filter in params["aggregation_filter"]:
