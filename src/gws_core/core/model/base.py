@@ -7,7 +7,7 @@ import inspect
 import re
 from typing import List, Type
 
-from ..utils.utils import Utils
+from ..utils.string_helper import StringHelper
 
 
 class Base:
@@ -36,9 +36,9 @@ class Base:
             name = name.strip("-")
 
         if slugify:
-            name = Utils.slugify(name, to_lower=True, snakefy=True)
+            name = StringHelper.slugify(name, to_lower=True, snakefy=True)
         elif snakefy:
-            name = Utils.slugify(name, to_lower=True, snakefy=True)
+            name = StringHelper.slugify(name, to_lower=True, snakefy=True)
         return name
 
     @classmethod
@@ -59,9 +59,9 @@ class Base:
         full_name = module + "." + name
 
         if slugify:
-            full_name = Utils.slugify(full_name, to_lower=True, snakefy=False)
+            full_name = StringHelper.slugify(full_name, to_lower=True, snakefy=False)
         elif snakefy:
-            full_name = Utils.slugify(full_name, to_lower=True, snakefy=True)
+            full_name = StringHelper.slugify(full_name, to_lower=True, snakefy=True)
 
         return full_name
 

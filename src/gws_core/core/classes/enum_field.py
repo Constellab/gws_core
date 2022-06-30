@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any, Type
 
-from gws_core.core.utils.utils import Utils
+from gws_core.core.utils.string_helper import StringHelper
 from peewee import CharField
 
 
@@ -21,4 +21,4 @@ class EnumField(CharField):
         return value
 
     def python_value(self, value: Any) -> Any:
-        return Utils.str_to_enum(self.choices, value)
+        return StringHelper.to_enum(self.choices, value)

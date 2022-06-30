@@ -7,7 +7,7 @@ from typing import Any, List, final
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from gws_core.core.utils.utils import Utils
+from gws_core.core.utils.string_helper import StringHelper
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
 
 from ..config.config_types import ConfigParams
@@ -105,7 +105,7 @@ class View:
 
         # check that the view type is valid
         try:
-            Utils.str_to_enum(ViewType, json_["type"])
+            StringHelper.to_enum(ViewType, json_["type"])
         except:
             return False
 

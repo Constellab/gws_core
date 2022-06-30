@@ -7,6 +7,7 @@ from collections.abc import Iterable as IterableClass
 from typing import Iterable, List, Optional, Tuple, Type, TypedDict, Union
 
 from gws_core.brick.brick_helper import BrickHelper
+from gws_core.core.utils.string_helper import StringHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.model.typing_dict import TypingRef
 
@@ -65,7 +66,7 @@ class IOSpec:
 
         # set the human name with a default value
         if human_name is not None:
-            self.human_name = Utils.snake_case_to_sentence(human_name)
+            self.human_name = StringHelper.snake_case_to_sentence(human_name)
         else:
             # TODO Remove support for None
             if default_type:

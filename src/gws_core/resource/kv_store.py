@@ -11,9 +11,10 @@ from shelve import open as shelve_open
 from time import time
 from typing import Any, Dict
 
+from gws_core.core.utils.string_helper import StringHelper
+
 from ..core.exception.exceptions import BadRequestException
 from ..core.utils.settings import Settings
-from ..core.utils.utils import Utils
 from ..impl.file.file_helper import FileHelper
 
 # ####################################################################
@@ -82,7 +83,7 @@ class KVStore(Dict[str, Any]):
         """Generate a new eloty file in the directory of the kvstore
         """
         self._create_dir()
-        file_path: str = os.path.join(self.full_file_dir, Utils.generate_uuid())
+        file_path: str = os.path.join(self.full_file_dir, StringHelper.generate_uuid())
         return FileHelper.create_empty_file_if_not_exist(file_path)
 
     def get(self, key, default=None):

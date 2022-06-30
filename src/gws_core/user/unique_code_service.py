@@ -4,13 +4,11 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, TypedDict
 
 from fastapi import status
+from gws_core.core.utils.string_helper import StringHelper
 from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.exception.exceptions.base_http_exception import BaseHTTPException
-from ..core.exception.exceptions.unauthorized_exception import \
-    UnauthorizedException
 from ..core.exception.gws_exceptions import GWSException
-from ..core.utils.utils import Utils
 
 
 class CodeObject(TypedDict):
@@ -41,7 +39,7 @@ class UniqueCodeService():
         :return: [description]
         :rtype: str
         """
-        uuid = Utils.generate_uuid()
+        uuid = StringHelper.generate_uuid()
 
         expriation_date = datetime.now() + timedelta(seconds=validity_duration)
         cls._generated_codes[uuid] = {'user_id': user_id, 'obj': obj, 'expiration_date': expriation_date}

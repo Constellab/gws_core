@@ -10,6 +10,7 @@ from gws_core import (BaseTestCase, Experiment, ExperimentDTO,
                       ExperimentService, ExperimentStatus, GTest, ProcessModel,
                       ProtocolModel, ResourceModel, Robot, RobotService,
                       RobotWorldTravelProto, Settings, TaskModel, Utils)
+from gws_core.core.utils.string_helper import StringHelper
 from gws_core.experiment.experiment_exception import \
     ResourceUsedInAnotherExperimentException
 from gws_core.experiment.experiment_interface import IExperiment
@@ -31,7 +32,7 @@ class TestExperiment(BaseTestCase):
 
     async def test_create_empty(self):
 
-        project_dto: ProjectDto = ProjectDto(id=Utils.generate_uuid(), title="Project", description="Desc")
+        project_dto: ProjectDto = ProjectDto(id=StringHelper.generate_uuid(), title="Project", description="Desc")
         experiment_dto: ExperimentDTO = ExperimentDTO(
             title="Experiment title", project=project_dto)
         experiment = ExperimentService.create_empty_experiment_from_dto(experiment_dto)

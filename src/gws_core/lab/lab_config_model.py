@@ -5,12 +5,12 @@
 
 import hashlib
 from json import dumps
-from typing import Dict, List, Optional, TypedDict
+from typing import List, Optional, TypedDict
 
 from gws_core.brick.brick_dto import BrickVersion
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.base_model import BaseModel
-from gws_core.core.utils.utils import Utils
+from gws_core.core.utils.string_helper import StringHelper
 from peewee import CharField, IntegerField
 
 from ..core.model.db_field import DateTimeUTC, JSONField
@@ -74,7 +74,7 @@ class LabConfigModel(BaseModel):
     @classmethod
     def _create(cls, hash: str, brick_versions: List[BrickVersion]) -> 'LabConfigModel':
         lab_config = LabConfigModel()
-        lab_config.id = Utils.generate_uuid()
+        lab_config.id = StringHelper.generate_uuid()
         lab_config.hash = hash
         lab_config.brick_versions = brick_versions
         lab_config.version = LAB_CONFIG_VERSION

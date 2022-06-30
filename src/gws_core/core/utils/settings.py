@@ -11,10 +11,10 @@ from json import dump, load
 from typing import Any, Dict, List, Literal, TypedDict, Union
 
 from gws_core.core.db.db_config import DbConfig
-from gws_core.core.utils.date_helper import DateHelper
 from gws_core.impl.file.file_helper import FileHelper
 
-from .utils import Utils
+from .date_helper import DateHelper
+from .string_helper import StringHelper
 
 __SETTINGS_DIR__ = "/conf/settings"
 __SETTINGS_NAME__ = "settings.json"
@@ -72,7 +72,7 @@ class Settings():
 
         if settings.get_data('secret_key') is None:
             # secret_key
-            secret_key = Utils.generate_random_chars(128)
+            secret_key = StringHelper.generate_random_chars(128)
             settings.set_data("secret_key", secret_key)
 
         for key, value in settings_json.items():
@@ -387,29 +387,29 @@ class Settings():
                 variable = re.sub(r"\$\{?"+token+r"\}?", value, variable)
         return variable
 
-    @ property
+    @property
     def is_prod(self) -> bool:
         return self.data.get("is_prod", False)
 
-    @ property
+    @property
     def is_dev(self) -> bool:
         return not self.is_prod
 
-    @ property
+    @property
     def is_debug(self) -> bool:
         return self.data.get("is_debug", False)
 
-    @ property
+    @property
     def is_test(self) -> bool:
         return self.data.get("is_test", False)
 
-    # -- N --
-
-    @ property
+    @property
     def name(self):
         return self.data.get("name", None)
 
-    # -- R --
+    def get_notebook_paths(self) -> str:
+        """ Returns all the paths of all the brick used by the Application """
+        return self.data["modules"]["notebook"]["path"]
 
     @classmethod
     def retrieve(cls) -> 'Settings':
@@ -442,7 +442,7 @@ class Settings():
 
     # -- V --
 
-    @ property
+    @property
     def version(self):
         return self.data.get("version", None)
 

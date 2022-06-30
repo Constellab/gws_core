@@ -4,7 +4,6 @@
 # About us: https://gencovery.com
 
 import os
-import shutil
 from typing import TypedDict
 
 from fastapi import UploadFile
@@ -12,7 +11,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
-from gws_core.core.utils.utils import Utils
+from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file_helper import FileHelper
 from PIL import Image
 
@@ -45,7 +44,7 @@ class ReportFileService():
 
         # generate a file name
         extension = FileHelper.get_extension(file.filename)
-        filename = Utils.generate_uuid() + '_' + str(DateHelper.now_utc_as_milliseconds()) + '.' + extension
+        filename = StringHelper.generate_uuid() + '_' + str(DateHelper.now_utc_as_milliseconds()) + '.' + extension
 
         file_path = os.path.join(dir, filename)
 

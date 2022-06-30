@@ -9,9 +9,8 @@ from typing import List, Union
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.numeric_helper import NumericHelper
-from gws_core.core.utils.utils import Utils
+from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.table.table import Table
-from gws_core.impl.table.transformers.table_selector import TableRowSelector
 from pandas import DataFrame
 
 
@@ -120,7 +119,7 @@ class TableRatioHelper():
     @staticmethod
     def _clean_operation_unknown_columns(operation: str, table: Table) -> str:
         """ Replace the unknown column name with '0' in the operation"""
-        clean_operation = Utils.str_remove_whitespaces(operation)
+        clean_operation = StringHelper.remove_whitespaces(operation)
 
         # split by all basic operator : +,-,*,/,^,(,),>,<,= to check column name
         column_names = split('\+|-|/|\*|\(|\)|\%|\^|>|<|=', clean_operation)

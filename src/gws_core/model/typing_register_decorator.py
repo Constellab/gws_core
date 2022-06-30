@@ -3,11 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import re
 from typing import Callable, Type
 
 from gws_core.core.db.version import Version
-from gws_core.core.utils.utils import Utils
+from gws_core.core.utils.string_helper import StringHelper
 
 from ..brick.brick_helper import BrickHelper
 from ..core.model.base import Base
@@ -44,7 +43,7 @@ def register_typing_class(
         deprecated_since: str = None, deprecated_message: str = None) -> None:
 
     if not human_name:
-        human_name = Utils.camel_case_to_sentence(unique_name)
+        human_name = StringHelper.camel_case_to_sentence(unique_name)
 
     typing = Typing(
         brick=BrickHelper.get_brick_name(object_class),
@@ -79,7 +78,7 @@ def register_gws_typing_class(
     from ..brick.brick_service import BrickService
 
     # check if unique name is only alpha numeric and '_'
-    if not unique_name or not Utils.str_is_alphanumeric(unique_name):
+    if not unique_name or not StringHelper.is_alphanumeric(unique_name):
         BrickService.log_brick_error(
             object_class,
             f"The unique name '{unique_name}' for typing object {human_name} is not valid. It must contains only alpha numeric characters and '_'")
