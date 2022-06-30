@@ -327,7 +327,7 @@ class Table(Resource):
         if column_index is None:
             self._meta["column_tags"].append({})
         else:
-            self._meta["column_tags"][column_index] = {}
+            self._meta["column_tags"].insert(column_index, {})
 
     def get_meta(self):
         """
