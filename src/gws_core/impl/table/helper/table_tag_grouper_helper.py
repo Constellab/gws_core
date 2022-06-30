@@ -12,7 +12,7 @@ from ....core.utils.utils import Utils
 from ..table import Table
 from ..table_types import AxisType, is_row_axis
 
-TableGroupFunction = Literal['mean', 'median', 'sort']
+TableGroupFunction = Literal['mean', 'median', 'sort', 'sum']
 
 
 class TableTagGrouperHelper:
@@ -122,7 +122,7 @@ class TableTagGrouperHelper:
 
     @classmethod
     def _group_with_aggregate(cls, table: Table, keys: List[str],
-                              func: Literal['mean', 'median'], axis: AxisType) -> Table:
+                              func: Literal['mean', 'median', 'sum'], axis: AxisType) -> Table:
         if len(keys) > 1:
             raise BadRequestException("Only one tag key is allowed with `mean` and `median` function")
 
@@ -142,6 +142,8 @@ class TableTagGrouperHelper:
                 grouped_table = grouped_table.get_data().mean(axis=axis, skipna=True).to_frame()
             elif func == "median":
                 grouped_table = grouped_table.get_data().median(axis=axis, skipna=True).to_frame()
+            elif func == "sum":
+                grouped_table = grouped_table.get_data().sum(axis=axis, skipna=True).to_frame()
             df_list[val] = grouped_table.T if is_row_axis(axis) else grouped_table
 
         df: DataFrame = concat(list(df_list.values()), axis=axis)

@@ -22,7 +22,7 @@ class TableRowTagGrouper(Transformer):
             short_description="Tags keys to use for data grouping",
         ),
         "grouping_func": StrParam(
-            allowed_values=["sort", "mean", "median"],
+            allowed_values=["sort", "mean", "median", "sum"],
             human_name="Grouping function",
             short_description="The grouping function. Only one key is allowed for `mean` and `median`.",
         ),
@@ -48,7 +48,7 @@ class TableColumnTagGrouper(Transformer):
             short_description="Tags keys to use for data grouping",
         ),
         "grouping_func": StrParam(
-            allowed_values=["sort", "mean", "median"],
+            allowed_values=["sort", "mean", "median", "sum"],
             human_name="Grouping function",
             short_description="The grouping function. Only one key is allowed for `mean` and `median`.",
         ),

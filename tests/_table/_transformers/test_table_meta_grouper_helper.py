@@ -7,13 +7,13 @@
 from gws_core import (BaseTestCase, Table, TableRowAnnotator,
                       TableTagGrouperHelper, TaskRunner)
 from gws_core_test_helper import GWSCoreTestHelper
+from pandas import DataFrame
 
 
 class TestTableAggregatorHelper(BaseTestCase):
     async def test_table_tag_grouper_helper(self):
         table = GWSCoreTestHelper.get_sample_table()
         metatable = GWSCoreTestHelper.get_sample_metadata_table()
-        print(table)
 
         # annotation
         tester = TaskRunner(
@@ -24,7 +24,7 @@ class TestTableAggregatorHelper(BaseTestCase):
             }
         )
         outputs = await tester.run()
-        annotated_table = outputs["sample_table"]
+        annotated_table: Table = outputs["sample_table"]
 
         # Sort
         # -----------------------
@@ -49,9 +49,9 @@ class TestTableAggregatorHelper(BaseTestCase):
         grouped_table = TableTagGrouperHelper.group_by_row_tags(annotated_table, keys=['Gender'], func="mean")
         self.assertEqual(grouped_table.row_names, ["F", "M"])
 
-        selected = annotated_table.select_by_row_tags([{"Gender": "F"}])
-        df1 = grouped_table.get_data().iloc[0, :]
-        df2 = selected.get_data().mean(axis=0, skipna=True)
+        selected: Table = annotated_table.select_by_row_tags([{"Gender": "F"}])
+        df1: DataFrame = grouped_table.get_data().iloc[0, :]
+        df2: DataFrame = selected.get_data().mean(axis=0, skipna=True)
         self.assertTrue(df1.equals(df2))
 
         selected = annotated_table.select_by_row_tags([{"Gender": "M"}])
@@ -74,4 +74,12 @@ class TestTableAggregatorHelper(BaseTestCase):
         df2 = selected.get_data().median(axis=0, skipna=True)
         self.assertTrue(df1.equals(df2))
 
-        print(grouped_table)
+        # Sum
+        # -----------------------
+        grouped_table = TableTagGrouperHelper.group_by_row_tags(annotated_table, keys=['Gender'], func="sum")
+        self.assertEqual(grouped_table.row_names, ["F", "M"])
+
+        selected = annotated_table.select_by_row_tags([{"Gender": "F"}])
+        df1 = grouped_table.get_data().iloc[0, :]
+        df2 = selected.get_data().sum(axis=0, skipna=True)
+        self.assertTrue(df1.equals(df2))
