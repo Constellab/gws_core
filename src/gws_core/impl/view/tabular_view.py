@@ -6,6 +6,7 @@
 
 from typing import Dict, List
 
+from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.resource.view_types import ViewType
 from pandas import DataFrame
 
@@ -149,11 +150,12 @@ class TabularView(View):
         column_tags = sliced_data_info["column_tags"]
         from_row_index, to_row_index, from_column_index, to_column_index = sliced_data_info["indexes"]
 
-        # Remove NaN values to convert to json
+        # Remove NaN and inf values to convert to json
         replace_nan_by: str = params.get("replace_nan_by", self.replace_nan_by)
         if replace_nan_by == "empty":
             replace_nan_by = ""
         data: DataFrame = data.fillna(replace_nan_by)
+        data = DataframeHelper.replace_inf(data, replace_nan_by)
 
         data_dict = data.to_dict('split')
         rows = [{"name": name, "tags": row_tags[i]} for i, name in enumerate(data_dict["index"])]

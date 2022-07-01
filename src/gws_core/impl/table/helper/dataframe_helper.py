@@ -3,10 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from cmath import inf
 from typing import Any, List
 
 from gws_core.core.utils.numeric_helper import NumericHelper
-from numpy import NaN
+from numpy import NaN, inf
 from pandas import DataFrame
 
 
@@ -59,6 +60,10 @@ class DataframeHelper:
     @classmethod
     def nanify(cls, data: DataFrame) -> DataFrame:
         return data.applymap(cls._nanify_value, na_action='ignore')
+
+    @classmethod
+    def replace_inf(cls, data: DataFrame, value=NaN) -> DataFrame:
+        return data.replace([inf, -inf], value)
 
     @staticmethod
     def _nanify_value(x):
