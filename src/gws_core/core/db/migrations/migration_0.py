@@ -97,9 +97,6 @@ class Migration039(BrickMigration):
         migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.brick_version)
         migrator.migrate()
 
-        # Authenticate the system user
-        CurrentUserService.set_current_user(User.get_sysuser())
-
         process_model_list: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
         for process_model in process_model_list:
 
@@ -136,8 +133,6 @@ class Migration039(BrickMigration):
                 Logger.error(f'Error while migrating process {process_model.id} : {err}')
                 Logger.log_exception_stack_trace(err)
 
-        CurrentUserService.set_current_user(None)
-
 
 @brick_migration('0.3.10', short_description='Add source config in TaskModel - Add order to TagModel - Update tags columns content')
 class Migration0310(BrickMigration):
@@ -153,9 +148,6 @@ class Migration0310(BrickMigration):
 
         task_models: List[TaskModel] = list(TaskModel.select().where(
             TaskModel.process_typing_name == Source._typing_name))
-
-        # Authenticate the system user
-        CurrentUserService.set_current_user(User.get_sysuser())
 
         # Update source config in task models
         for task_model in task_models:
@@ -189,8 +181,6 @@ class Migration0310(BrickMigration):
             taggable_model.set_tags(taggable_model.get_tags())
             taggable_model.save()
 
-        CurrentUserService.set_current_user(None)
-
 
 @brick_migration('0.3.12', short_description='Add parent resource to resource model')
 class Migration0312(BrickMigration):
@@ -202,9 +192,6 @@ class Migration0312(BrickMigration):
         migrator.migrate()
 
         # Set the parent id for resource inside ResourceSet
-
-        # Authenticate the system user
-        CurrentUserService.set_current_user(User.get_sysuser())
 
         # retrieve all resource of type  ResourceListBase or children
         resource_models: List[ResourceModel] = list(ResourceModel.select_by_type_and_sub_types(ResourceListBase))
@@ -218,5 +205,3 @@ class Migration0312(BrickMigration):
                 if resource_model.task_model == child_resource_model.task_model:
                     child_resource_model.parent_resource = resource_model
                     child_resource_model.save()
-
-        CurrentUserService.set_current_user(None)
