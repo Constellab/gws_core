@@ -55,7 +55,7 @@ class DataframeHelper:
     def dataframe_to_float(dataframe: DataFrame) -> DataFrame:
         """Convert all element of a dataframe to float, if element is not convertible, is sets Nan
         """
-        return dataframe.applymap(NumericHelper.to_float,  na_action='ignore')
+        return dataframe.applymap(lambda x: NumericHelper.to_float(x, NaN),  na_action='ignore')
 
     @classmethod
     def nanify(cls, data: DataFrame) -> DataFrame:
