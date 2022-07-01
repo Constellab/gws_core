@@ -6,7 +6,7 @@
 
 from typing import Any, List, Optional
 
-from numpy import isnan
+from numpy import inf, isnan
 
 
 class NumericHelper():
@@ -15,7 +15,7 @@ class NumericHelper():
 
     @staticmethod
     def list_to_float(list_: List[Any], remove_none: bool = False, default_value: Any = None) -> List[Optional[float]]:
-        """Convert a list of any to list of float.
+        """Convert a list of any to list of float. Replace infinity by default_value
 
         :param list_: _description_
         :type list_: List[Any]
@@ -33,8 +33,11 @@ class NumericHelper():
 
     @staticmethod
     def to_float(value: Any, default_value: Any = None) -> Optional[float]:
-        """Convert any to float. If not convertible to float or NaN, returns default_value
+        """Convert any to float. If NaN, inf or not convertible to float, returns default_value
         """
+
+        if value == inf or value == -inf:
+            return default_value
 
         try:
             result = float(value)

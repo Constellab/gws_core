@@ -55,8 +55,10 @@ class HeatmapView(View):
         if self._data is None:
             raise BadRequestException("No data found")
 
+        data: DataFrame = DataframeHelper.replace_nan_and_inf(self._data, None)
+
         return {
-            "table": self._data.replace({nan: None}).values.tolist(),
+            "table": data.values.tolist(),
             "rows": self._rows_info,
             "columns": self._columns_info,
             "x_label": self.x_label,

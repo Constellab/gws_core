@@ -154,8 +154,7 @@ class TabularView(View):
         replace_nan_by: str = params.get("replace_nan_by", self.replace_nan_by)
         if replace_nan_by == "empty":
             replace_nan_by = ""
-        data: DataFrame = data.fillna(replace_nan_by)
-        data = DataframeHelper.replace_inf(data, replace_nan_by)
+        data = DataframeHelper.replace_nan_and_inf(data, replace_nan_by)
 
         data_dict = data.to_dict('split')
         rows = [{"name": name, "tags": row_tags[i]} for i, name in enumerate(data_dict["index"])]

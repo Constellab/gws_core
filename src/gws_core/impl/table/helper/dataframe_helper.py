@@ -65,6 +65,11 @@ class DataframeHelper:
     def replace_inf(cls, data: DataFrame, value=NaN) -> DataFrame:
         return data.replace([inf, -inf], value)
 
+    @classmethod
+    def replace_nan_and_inf(cls, dataframe: DataFrame, value: Any) -> DataFrame:
+        data: DataFrame = dataframe.replace({NaN: value})
+        return cls.replace_inf(data, value)
+
     @staticmethod
     def _nanify_value(x):
         return x if isinstance(x, (float, int,)) else NaN
