@@ -203,6 +203,9 @@ class Migration0312(BrickMigration):
 
         # Set the parent id for resource inside ResourceSet
 
+        # Authenticate the system user
+        CurrentUserService.set_current_user(User.get_sysuser())
+
         # retrieve all resource of type  ResourceListBase or children
         resource_models: List[ResourceModel] = list(ResourceModel.select_by_type_and_sub_types(ResourceListBase))
         for resource_model in resource_models:
@@ -215,3 +218,5 @@ class Migration0312(BrickMigration):
                 if resource_model.task_model == child_resource_model.task_model:
                     child_resource_model.parent_resource = resource_model
                     child_resource_model.save()
+
+        CurrentUserService.set_current_user(None)
