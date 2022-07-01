@@ -196,12 +196,17 @@ class Migration0312(BrickMigration):
         # retrieve all resource of type  ResourceListBase or children
         resource_models: List[ResourceModel] = list(ResourceModel.select_by_type_and_sub_types(ResourceListBase))
         for resource_model in resource_models:
-            resource_set: ResourceSet = resource_model.get_resource()
 
-            # loop through children to set the parent resource
-            children_resources = resource_set._get_all_resource_models()
-            for child_resource_model in children_resources:
-                # update the parent only if the resource was created by the same task than parent (meaning it was created with the resource set)
-                if resource_model.task_model == child_resource_model.task_model:
-                    child_resource_model.parent_resource = resource_model
-                    child_resource_model.save()
+            try:
+                resource_set: ResourceSet = resource_model.get_resource()
+
+                # loop through children to set the parent resource
+                children_resources = resource_set._get_all_resource_models()
+                for child_resource_model in children_resources:
+                    # update the parent only if the resource was created by the same task than parent (meaning it was created with the resource set)
+                    if resource_model.task_model == child_resource_model.task_model:
+                        child_resource_model.parent_resource = resource_model
+                        child_resource_model.save()
+            except Exception as err:
+                Logger.error(f'Error while migrating resource {resource_model.id} : {err}')
+                Logger.log_exception_stack_trace(err)
