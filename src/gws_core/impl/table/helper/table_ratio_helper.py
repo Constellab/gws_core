@@ -138,4 +138,6 @@ class TableRatioHelper():
                 # replace the column name with '0' using \b to word delimiter
                 clean_operation = sub(rf'\b{column_name}\b', '0', clean_operation)
 
+        # replace +0 and -0 with empty string to lighten the operation
+        clean_operation = sub('\+0|\-0', '', clean_operation)
         return clean_operation
