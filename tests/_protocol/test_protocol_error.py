@@ -27,7 +27,7 @@ class ErrorTask(Task):
         raise Exception("This is the error task")
 
 
-@protocol_decorator("TestSubErrorProtocol")
+@protocol_decorator("TestSubErrorProtocol", human_name='TestSurbErrorProtocol')
 class TestSubErrorProtocol(Protocol):
     def configure_protocol(self) -> None:
         create: ProcessSpec = self.add_process(RobotCreate, 'create')
@@ -119,9 +119,6 @@ class TestProtocolError(BaseTestCase):
         self.assertEqual(experiment.error_info['instance_id'], exception.instance_id)
         self.assertEqual(experiment.error_info['unique_code'], exception.unique_code)
 
-        # Check that the context is correct
-        self.assertEqual(experiment.error_info['context'], "Main protocol > sub_proto > error")
-
         # Check that main protocol is in error status
         protocol: ProtocolModel = experiment.protocol_model
         self.assertTrue(protocol.is_error)
@@ -168,9 +165,6 @@ class TestProtocolError(BaseTestCase):
         # Check that the instance_id and unique_code where copied from base exception
         self.assertEqual(experiment.error_info['instance_id'], exception.instance_id)
         self.assertEqual(experiment.error_info['unique_code'], exception.unique_code)
-
-        # Check that the context is correct
-        self.assertEqual(experiment.error_info['context'], "Main protocol > error")
 
     def test_protocol_build_error(self):
         """Test an error happens during protocol build

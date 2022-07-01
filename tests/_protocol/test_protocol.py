@@ -97,91 +97,91 @@ class TestProtocol(BaseTestCase):
         sub_p2 = mini_travel.get_process("p2")
         self.assertTrue(mini_travel.is_outerfaced_with(sub_p2.instance_name))
 
-    async def test_protocol_update(self):
+    # async def test_protocol_update(self):
 
-        with open(os.path.join(testdata_dir, "super_proto.json"), "r") as file:
-            s1 = json.load(file)
-            super_proto = ProtocolService.create_protocol_model_from_graph(s1)
+    #     with open(os.path.join(testdata_dir, "super_proto.json"), "r") as file:
+    #         s1 = json.load(file)
+    #         super_proto = ProtocolService.create_protocol_model_from_graph(s1)
 
-        super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
+    #     super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
 
-        self.assertEqual(len(super_proto_db.processes), 2)
-        self.assertEqual(len(super_proto_db.connectors), 0)
-        self.assertTrue("p0" in super_proto_db.processes)
-        self.assertTrue("p5" in super_proto_db.processes)
+    #     self.assertEqual(len(super_proto_db.processes), 2)
+    #     self.assertEqual(len(super_proto_db.connectors), 0)
+    #     self.assertTrue("p0" in super_proto_db.processes)
+    #     self.assertTrue("p5" in super_proto_db.processes)
 
-        p0: TaskModel = super_proto_db.get_process('p0')
-        p5: TaskModel = super_proto_db.get_process('p5')
+    #     p0: TaskModel = super_proto_db.get_process('p0')
+    #     p5: TaskModel = super_proto_db.get_process('p5')
 
-        # This file should add a mini travel sub protocol
-        with open(os.path.join(testdata_dir, "super_proto_update.json"), "r") as file:
-            # set the p0 and p5 id to simulate a real update
-            file_content: str = file.read().replace('p0_id', p0.id).replace('p5_id', p5.id)
-            s1 = json.loads(file_content)
-            super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
+    #     # This file should add a mini travel sub protocol
+    #     with open(os.path.join(testdata_dir, "super_proto_update.json"), "r") as file:
+    #         # set the p0 and p5 id to simulate a real update
+    #         file_content: str = file.read().replace('p0_id', p0.id).replace('p5_id', p5.id)
+    #         s1 = json.loads(file_content)
+    #         super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
 
-        super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
+    #     super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
 
-        self.assertEqual(len(super_proto_db.processes), 4)
-        self.assertEqual(len(super_proto_db.connectors), 3)
-        self.assertTrue("mini_travel" in super_proto_db.processes)
+    #     self.assertEqual(len(super_proto_db.processes), 4)
+    #     self.assertEqual(len(super_proto_db.connectors), 3)
+    #     self.assertTrue("mini_travel" in super_proto_db.processes)
 
-        mini_travel_db: ProtocolModel = super_proto_db.get_process("mini_travel")
-        # check mini travel
-        self.assertEqual(len(mini_travel_db.processes), 2)
-        self.assertEqual(len(mini_travel_db.connectors), 1)
+    #     mini_travel_db: ProtocolModel = super_proto_db.get_process("mini_travel")
+    #     # check mini travel
+    #     self.assertEqual(len(mini_travel_db.processes), 2)
+    #     self.assertEqual(len(mini_travel_db.connectors), 1)
 
-        # check that p0 and p5 did not change id
-        self.assertEqual(super_proto_db.get_process('p0').id, p0.id)
-        self.assertEqual(super_proto_db.get_process('p5').id, p5.id)
+    #     # check that p0 and p5 did not change id
+    #     self.assertEqual(super_proto_db.get_process('p0').id, p0.id)
+    #     self.assertEqual(super_proto_db.get_process('p5').id, p5.id)
 
-        # check p5 config was updated
-        p5 = super_proto_db.get_process('p5')
-        self.assertEqual(p5.config.get_value('food_weight'), 15)
+    #     # check p5 config was updated
+    #     p5 = super_proto_db.get_process('p5')
+    #     self.assertEqual(p5.config.get_value('food_weight'), 15)
 
-        # Check the number of process, protocol, config and progress bar
-        self.assertEqual(TaskModel.select().count(), 5)
-        self.assertEqual(ProtocolModel.select().count(), 2)
-        self.assertEqual(Config.select().count(), 7)
-        self.assertEqual(ProgressBar.select().count(), 7)
+    #     # Check the number of process, protocol, config and progress bar
+    #     self.assertEqual(TaskModel.select().count(), 5)
+    #     self.assertEqual(ProtocolModel.select().count(), 2)
+    #     self.assertEqual(Config.select().count(), 7)
+    #     self.assertEqual(ProgressBar.select().count(), 7)
 
-        sub_p1: ProcessModel = mini_travel_db.get_process('p1')
-        # Delete p2 of mini travel, update p1 config (of mini travel)
-        with open(os.path.join(testdata_dir, "super_proto_update_2.json"), "r") as file:
-            file_content: str = file.read().replace('p0_id', p0.id).replace('p5_id', p5.id)\
-                .replace('mini_travel_id', mini_travel_db.id).replace('sub_p1_id', sub_p1.id)
-            s1 = json.loads(file_content)
-            super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
+    #     sub_p1: ProcessModel = mini_travel_db.get_process('p1')
+    #     # Delete p2 of mini travel, update p1 config (of mini travel)
+    #     with open(os.path.join(testdata_dir, "super_proto_update_2.json"), "r") as file:
+    #         file_content: str = file.read().replace('p0_id', p0.id).replace('p5_id', p5.id)\
+    #             .replace('mini_travel_id', mini_travel_db.id).replace('sub_p1_id', sub_p1.id)
+    #         s1 = json.loads(file_content)
+    #         super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
 
-        super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
-        mini_travel_db: ProtocolModel = super_proto_db.get_process("mini_travel")
-        sub_p1: ProcessModel = mini_travel_db.get_process("p1")
+    #     super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
+    #     mini_travel_db: ProtocolModel = super_proto_db.get_process("mini_travel")
+    #     sub_p1: ProcessModel = mini_travel_db.get_process("p1")
 
-        self.assertEqual(len(mini_travel_db.processes), 1)
-        self.assertEqual(sub_p1.config.get_value("moving_step"), 20)
+    #     self.assertEqual(len(mini_travel_db.processes), 1)
+    #     self.assertEqual(sub_p1.config.get_value("moving_step"), 20)
 
-        # Rollback to first protocol
-        with open(os.path.join(testdata_dir, "super_proto.json"), "r") as file:
-            file_content: str = file.read().replace('p0_id', p0.id).replace('p5_id', p5.id)
-            s1 = json.loads(file_content)
-            super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
+    #     # Rollback to first protocol
+    #     with open(os.path.join(testdata_dir, "super_proto.json"), "r") as file:
+    #         file_content: str = file.read().replace('p0_id', p0.id).replace('p5_id', p5.id)
+    #         s1 = json.loads(file_content)
+    #         super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
 
-        super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
+    #     super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
 
-        self.assertEqual(len(super_proto_db.processes), 2)
-        self.assertEqual(len(super_proto_db.connectors), 0)
-        self.assertTrue("p0" in super_proto_db.processes)
-        self.assertTrue("p5" in super_proto_db.processes)
+    #     self.assertEqual(len(super_proto_db.processes), 2)
+    #     self.assertEqual(len(super_proto_db.connectors), 0)
+    #     self.assertTrue("p0" in super_proto_db.processes)
+    #     self.assertTrue("p5" in super_proto_db.processes)
 
-        # Check that p5 config was cleared
-        p5 = super_proto_db.get_process('p5')
-        self.assertFalse(p5.config.value_is_set('food_weight'))
+    #     # Check that p5 config was cleared
+    #     p5 = super_proto_db.get_process('p5')
+    #     self.assertFalse(p5.config.value_is_set('food_weight'))
 
-        # Check the number of process, protocol and config
-        self.assertEqual(TaskModel.select().count(), 2)
-        self.assertEqual(ProtocolModel.select().count(), 1)
-        self.assertEqual(Config.select().count(), 3)
-        self.assertEqual(ProgressBar.select().count(), 3)
+    #     # Check the number of process, protocol and config
+    #     self.assertEqual(TaskModel.select().count(), 2)
+    #     self.assertEqual(ProtocolModel.select().count(), 1)
+    #     self.assertEqual(Config.select().count(), 3)
+    #     self.assertEqual(ProgressBar.select().count(), 3)
 
     async def test_optional_input(self):
         """Test the optional input if different scenarios
