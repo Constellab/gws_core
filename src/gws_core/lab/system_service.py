@@ -8,6 +8,7 @@ import sys
 from gws_core.central.central_service import CentralService
 from gws_core.core.db.db_migration import DbMigrationService
 from gws_core.core.utils.logger import Logger
+from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.lab.lab_config_model import LabConfigModel
 
@@ -98,8 +99,9 @@ class SystemService:
         if check_user:
             user: User = CurrentUserService.get_and_check_current_user()
 
-        # Stop all running experiment
-        ExperimentRunService.stop_all_running_experiment()
+        if Experiment.table_exists():
+            # Stop all running experiment
+            ExperimentRunService.stop_all_running_experiment()
 
         cls.deinit_queue_and_monitor()
 
