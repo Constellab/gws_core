@@ -30,7 +30,7 @@ class TestProtocolService(BaseTestCase):
         # Test add source
         resource_model: ResourceModel = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)
         source_model: ProcessModel = ProtocolService.add_source_to_process_input(
-            protocol_model.id, process_model.instance_name, 'robot', resource_model.id).process_model
+            protocol_model.id, resource_model.id, process_model.instance_name, 'robot').process_model
 
         protocol_model = protocol_model.refresh()
         source_model = protocol_model.get_process(source_model.instance_name)

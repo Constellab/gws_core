@@ -65,17 +65,17 @@ class TestIExperiment(BaseTestCase):
         sub_travel: IProtocol = super_travel.get_process('sub_travel')
         move_1: IProcess = sub_travel.get_process('move_1')
 
-        # Test removing the process
-        super_travel.delete_process('sub_travel')
-        self.assertRaises(Exception, super_travel.get_process, 'sub_travel')
-        # Test also that the process of sub_travel was delete form DB
-        self.assertRaises(Exception, ITask.get_by_id, move_1._process_model.id)
-
         # Remove interface
         super_travel.delete_interface('robot')
 
         # Remove outerface
         super_travel.delete_outerface('robot')
+
+        # Test removing the process
+        super_travel.delete_process('sub_travel')
+        self.assertRaises(Exception, super_travel.get_process, 'sub_travel')
+        # Test also that the process of sub_travel was delete form DB
+        self.assertRaises(Exception, ITask.get_by_id, move_1._process_model.id)
 
         # Test info in protocol model
         super_travel_model: ProtocolModel = super_travel._protocol_model

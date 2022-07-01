@@ -297,7 +297,7 @@ class TaskModel(ProcessModel):
         for resource in resource_list.get_resources_as_set():
 
             # if this is a new resource
-            if not resource_list.__resource_is_constant(resource.uid):
+            if not resource_list.__resource_is_constant__(resource.uid):
 
                 # create and save the resource model from the resource
                 resource_model = self._save_resource(resource, port_name)

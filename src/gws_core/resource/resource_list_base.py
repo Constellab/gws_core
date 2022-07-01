@@ -28,7 +28,7 @@ class ResourceListBase(Resource):
     """
 
     # list the resource ids that are constant (the system doesn't create new resources on save)
-    __constant_resource_ids: Set[str] = None
+    __constant_resource_ids__: Set[str] = None
 
     @abstractmethod
     def _get_resource_ids(self) -> Set[str]:
@@ -38,11 +38,11 @@ class ResourceListBase(Resource):
     def get_resources_as_set(self) -> Set[Resource]:
         pass
 
-    def __resource_is_constant(self, resource_uid: str) -> Set[Resource]:
+    def __resource_is_constant__(self, resource_uid: str) -> Set[Resource]:
         """return true if the resource is constant and was create before
         a task that generated this resource set
         """
-        return self.__constant_resource_ids is not None and resource_uid in self.__constant_resource_ids
+        return self.__constant_resource_ids__ is not None and resource_uid in self.__constant_resource_ids__
 
     def _get_resource_by_model_id(self, resource_model_id: str) -> Resource:
         if not resource_model_id in self._get_resource_ids():

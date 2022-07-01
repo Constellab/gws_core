@@ -59,4 +59,4 @@ class TestTableRatio(IsolatedAsyncioTestCase):
 
         # The real operation will be A + (0 - B) * 2
         self.assertEqual(result_table.nb_columns, 4)
-        self.assertEqual(list(result_table.get_data()['R0']), [-19, -14, 9])
+        self.assertEqual(list(result_table.get_data()['R0']), [-19, -14, -9])

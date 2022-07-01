@@ -88,9 +88,9 @@ class ResourceSet(ResourceListBase):
         # if the resource already exist, add it to the constant list so
         # the system will not create a new resource on save
         if not create_new_resource:
-            if self.__constant_resource_ids is None:
-                self.__constant_resource_ids = set()
-            self.__constant_resource_ids.add(resource.uid)
+            if self.__constant_resource_ids__ is None:
+                self.__constant_resource_ids__ = set()
+            self.__constant_resource_ids__.add(resource.uid)
 
         self._resources[name] = resource
 
