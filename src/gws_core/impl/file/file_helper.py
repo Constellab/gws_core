@@ -134,7 +134,7 @@ class FileHelper():
     def get_mime(cls, path: PathType):
         ext: str = cls.get_extension(path)
         if ext:
-            return mimetypes.types_map[ext]
+            return mimetypes.types_map.get('.' + ext)
         else:
             return None
 
