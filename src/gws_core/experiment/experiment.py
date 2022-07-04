@@ -236,6 +236,9 @@ class Experiment(ModelWithUser, TaggableModel):
             self.protocol_model.reset()
 
         # Delete all the resources previously generated to clear the DB
+        # sort the resources to have children resources before their parents to prevent error with
+        # foreign key constraint
+        output_resources.sort(key=lambda x: 'b' if x.parent_resource is None else 'a')
         for output_resource in output_resources:
             output_resource.delete_instance()
 
