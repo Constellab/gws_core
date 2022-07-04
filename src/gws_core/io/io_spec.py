@@ -188,7 +188,11 @@ class IOSpec:
 
         # retrieve all the resource type from the json specs
         for spec_json in json_['resource_types']:
-            resource_types.append(TypingManager.get_type_from_name(spec_json['typing_name']))
+            resource_type: ResourceType = TypingManager.get_type_from_name(spec_json['typing_name'])
+
+            if resource_type is None:
+                raise Exception(f"[IOSpec] Invalid resource type '{spec_json['typing_name']}'")
+            resource_types.append(resource_type)
 
         io_spec: IOSpec = cls(resource_types=resource_types, is_optional=json_.get('is_optional', False),
                               human_name=json_.get('human_name'),
