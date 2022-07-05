@@ -11,7 +11,7 @@ from numpy import NaN
 from pandas import DataFrame
 
 
-class TestTableRatio(IsolatedAsyncioTestCase):
+class TestTableUnfolder(IsolatedAsyncioTestCase):
 
     def test_row_unfolding(self):
         initial_df = DataFrame({'A': range(1, 5), 'B': [10, 8, 6, 4]})

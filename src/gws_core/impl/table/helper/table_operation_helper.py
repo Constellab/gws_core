@@ -14,16 +14,16 @@ from gws_core.impl.table.table import Table
 from pandas import DataFrame
 
 
-class TableRatioHelper():
+class TableOperationHelper():
 
     OPERATION_SEPARATOR: str = '\n'
 
     @staticmethod
-    def columns_ratio(source: Table, operations: Union[str, List[str]], result_in_new_column: bool) -> Table:
+    def column_operations(source: Table, operations: Union[str, List[str]], result_in_new_column: bool) -> Table:
 
         # convert the operations to str
         if isinstance(operations, list):
-            operations = TableRatioHelper.OPERATION_SEPARATOR.join(operations)
+            operations = TableOperationHelper.OPERATION_SEPARATOR.join(operations)
 
         dataframe = source.get_data()
 
@@ -55,66 +55,67 @@ class TableRatioHelper():
         return result_table
 
     @staticmethod
-    def rows_ratio(source: Table, operations: Union[str, List[str]], result_in_new_row: bool) -> Table:
+    def row_operation(source: Table, operations: Union[str, List[str]], result_in_new_row: bool) -> Table:
         t_table = source.transpose()
-        result_transposed = TableRatioHelper.columns_ratio(t_table, operations, result_in_new_row)
+        result_transposed = TableOperationHelper.column_operations(t_table, operations, result_in_new_row)
         return result_transposed.transpose()
 
     @staticmethod
-    def columns_ratio_from_table(table: Table, ratio_df: DataFrame,
-                                 ratio_name_column: str = None, ratio_operation_column: str = None,
-                                 error_on_unknown_column: bool = False) -> Table:
-        """Call multiple ratio on table, the ratios must be sto
+    def column_mass_operations(table: Table, operation_df: DataFrame,
+                               operation_name_column: str = None, operation_calculations_column: str = None,
+                               error_on_unknown_column: bool = False) -> Table:
+        """Call multiple operations on table, the operations must be stored in a DataFrame.
 
         :param table: _description_
         :type table: Table
-        :param ratio_df: _description_
-        :type ratio_df: DataFrame
-        :param ratio_name_column: name of the column that contains ratio name(take first column if none), defaults to None
-        :type ratio_name_column: str, optional
-        :param ratio_operation_column: name of the column that contains operation (take second column if none), defaults to None
-        :type ratio_operation_column: str, optional
-        :param error_on_unknown_column: If False, the unknow column are replace with 0, if true nothin is done, defaults to None
+        :param operation_df: _description_
+        :type operation_df: DataFrame
+        :param operation_name_column: name of the column that contains the operations' names(takes first column if none), defaults to None
+        :type operation_name_column: str, optional
+        :param operation_column: name of the column that contains operation (takes second column if none), defaults to None
+        :type operation_column: str, optional
+        :param error_on_unknown_column: If False, the unknow column are replace with 0 in the calculations,
+                                        If True an error is thrown if a column in the calculation does not exist, defaults to False
         :type error_on_unknown_column: str, optional
         :return: _description_
         :rtype: Table
         """
         operations: List[str] = []
 
-        if ratio_df.shape[1] < 2:
+        if operation_df.shape[1] < 2:
             raise Exception(
-                "The ratio table must have at least 2 columns")
+                "The operation table must have at least 2 columns")
 
-        # check ratio_name_column
-        if ratio_name_column is None:
-            ratio_name_column = 0
+        # check operation_name_column
+        if operation_name_column is None:
+            operation_name_column = 0
         else:
-            if ratio_name_column not in ratio_df.columns:
+            if operation_name_column not in operation_df.columns:
                 raise Exception(
-                    f"The ratio name column '{ratio_name_column}' does not exist in the ratio table")
+                    f"The operation name column '{operation_name_column}' does not exist in the operation table")
 
-        # check ratio_operation_column
-        if ratio_operation_column is None:
-            ratio_operation_column = 1
+        # check operation_column
+        if operation_calculations_column is None:
+            operation_calculations_column = 1
         else:
-            if ratio_operation_column not in ratio_df.columns:
+            if operation_calculations_column not in operation_df.columns:
                 raise Exception(
-                    f"The ratio operation column '{ratio_operation_column}' does not exist in the ratio table")
+                    f"The operation operation column '{operation_calculations_column}' does not exist in the operation table")
 
-        for index, row in ratio_df.iterrows():
-            operation: str = str(row[ratio_operation_column])
+        for index, row in operation_df.iterrows():
+            operation: str = str(row[operation_calculations_column])
 
             # if we throw an error if the column is unknown, do touch the operation
             if error_on_unknown_column:
                 clean_operation = operation
             else:
                 # remove the unknown columns
-                clean_operation = TableRatioHelper._clean_operation_unknown_columns(operation, table)
+                clean_operation = TableOperationHelper._clean_operation_unknown_columns(operation, table)
 
             # create the operation
-            operations.append(f"{row[ratio_name_column]} = {clean_operation}")
+            operations.append(f"{row[operation_name_column]} = {clean_operation}")
 
-        return TableRatioHelper.columns_ratio(table, operations, False)
+        return TableOperationHelper.column_operations(table, operations, False)
 
     @staticmethod
     def _clean_operation_unknown_columns(operation: str, table: Table) -> str:

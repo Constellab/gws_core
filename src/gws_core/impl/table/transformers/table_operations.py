@@ -4,18 +4,18 @@
 # About us: https://gencovery.com
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.config.param_spec import BoolParam, ListParam
-from gws_core.impl.table.helper.table_ratio_helper import TableRatioHelper
+from gws_core.impl.table.helper.table_operation_helper import TableOperationHelper
 
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ..table import Table
 
 
 @transformer_decorator(
-    unique_name="TableColumnRatio",
+    unique_name="TableColumnOperations",
     resource_type=Table,
-    short_description="Ratio on columns for a table",
+    short_description="Operations on columns for a table",
 )
-class TableColumnRatio(Transformer):
+class TableColumnOperations(Transformer):
     """
 
     This task allows you to do mathematical operation on a Table column.
@@ -90,4 +90,4 @@ class TableColumnRatio(Transformer):
             short_description="Create a new column for the result, otherwise it only returns the result column"), }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        return TableRatioHelper.columns_ratio(source, params["operations"], params["result_in_new_column"])
+        return TableOperationHelper.column_operations(source, params["operations"], params["result_in_new_column"])

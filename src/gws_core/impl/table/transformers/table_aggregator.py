@@ -20,6 +20,11 @@ from ..helper.dataframe_aggregator_helper import DataframeAggregatorHelper
 @transformer_decorator(unique_name="TableAggregator", resource_type=Table,
                        short_description="Aggregate the table along an axis")
 class TableAggregator(Transformer):
+    """
+    Transformer to aggregate the numerical values of table along an axis.
+
+    Available aggregation functions: ```mean```, ```std```, ```var```, ```min```, ```max```, ```median``` and ```sum```.
+    """
     config_specs: ConfigSpecs = {
         "direction": StrParam(
             human_name="Direction",
@@ -29,7 +34,7 @@ class TableAggregator(Transformer):
         "function": StrParam(
             human_name="Aggregation function",
             allowed_values=DataframeAggregatorHelper.VALID_AXIS_AGGREGATION_FUNCTIONS,
-            short_description="Function applied to aggregate value along a direction",
+            short_description="Function applied to aggregate values along a direction",
         ),
         "skip_nan": BoolParam(
             default_value=True,

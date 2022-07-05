@@ -176,8 +176,8 @@ from .impl.table.helper.dataframe_filter_helper import \
     DataframeFilterHelper as DataframeFilterHelper
 from .impl.table.helper.dataframe_scaler_helper import \
     DataframeScalerHelper as DataframeScalerHelper
-from .impl.table.helper.table_ratio_helper import \
-    TableRatioHelper as TableRatioHelper
+from .impl.table.helper.table_operation_helper import \
+    TableOperationHelper as TableOperationHelper
 from .impl.table.helper.table_tag_grouper_helper import \
     TableTagGrouperHelper as TableTagGrouperHelper
 from .impl.table.helper.table_unfolder_helper import \
@@ -207,8 +207,10 @@ from .impl.table.transformers.table_aggregator_filter import \
     TableAggregatorFilter as TableAggregatorFilter
 from .impl.table.transformers.table_data_filter import \
     TableDataFilter as TableDataFilter
-from .impl.table.transformers.table_ratio import \
-    TableColumnRatio as TableColumnRatio
+from .impl.table.transformers.table_mass_operations import \
+    TableColumnMassOperations as TableColumnMassOperations
+from .impl.table.transformers.table_operations import \
+    TableColumnOperations as TableColumnOperations
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
 from .impl.table.transformers.table_selector import \
     TableColumnSelector as TableColumnSelector

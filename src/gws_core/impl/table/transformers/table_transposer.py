@@ -17,6 +17,11 @@ from ...table.table import Table
 
 @transformer_decorator(unique_name="TableTransposer", resource_type=Table, short_description="Transposes the table")
 class TableTransposer(Transformer):
+    """
+    Transformer to transpose the table (switch columns and lines).
+
+    It also transpose the tags.
+    """
 
     config_specs: ConfigSpecs = {}
 

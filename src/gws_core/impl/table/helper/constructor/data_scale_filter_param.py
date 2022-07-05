@@ -3,6 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import List
+
+from gws_core.impl.table.table import Table
 from pandas import DataFrame
 
 from .....config.config_types import ConfigParams
@@ -21,8 +24,8 @@ from ..dataframe_scaler_helper import DataframeScalerHelper
 class DataScaleFilterParamConstructor:
 
     @staticmethod
-    def validate_filter(name: str, data: DataFrame, params: ConfigParams):
-        for _filter in params[name]:
+    def scale(data: DataFrame, params: List[dict]) -> Table:
+        for _filter in params:
             data = DataframeScalerHelper.scale(
                 data=data,
                 func=_filter["scaling_function"]
@@ -30,7 +33,7 @@ class DataScaleFilterParamConstructor:
         return data
 
     @staticmethod
-    def construct_filter(visibility: str = 'public', allowed_values=None):
+    def construct_filter(visibility: str = 'public', allowed_values=None) -> ParamSet:
         if allowed_values is not None:
             for val in allowed_values:
                 if val not in DataframeScalerHelper.VALID_SCALING_FUNCTIONS:

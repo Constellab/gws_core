@@ -16,6 +16,16 @@ from ..table import Table
     short_description="Group data along row tag keys",
 )
 class TableRowTagGrouper(Transformer):
+    """
+    Aggregate row of a table by tag values.
+    Provide a list of tag keys and a function to aggregate the rows.
+    The task will group the rows by the tag values and apply the function to the aggregated rows.
+
+    Available aggregation functions: ```sort```, ```mean```, ```median``` and ```sum```.
+
+    ⚠️ **If the function ```mean``` or ```median``` is used, only 1 tag key is allowed.** ⚠️
+
+    """
     config_specs: ConfigSpecs = {
         "tag_keys": ListParam(
             human_name="Tag keys",
@@ -42,6 +52,15 @@ class TableRowTagGrouper(Transformer):
     short_description="Group data along column tag keys",
 )
 class TableColumnTagGrouper(Transformer):
+    """
+    Aggregate column of a table by tag values.
+    Provide a list of tag keys and a function to aggregate the columns.
+    The task will group the columns by the tag values and apply the function to the aggregated columns.
+
+    Available aggregation functions: ```sort```, ```mean```, ```median``` and ```sum```.
+
+    ⚠️ **If the function ```mean``` or ```median``` is used, only 1 tag key is allowed.** ⚠️
+    """
     config_specs: ConfigSpecs = {
         "tag_keys": ListParam(
             human_name="Tag keys",

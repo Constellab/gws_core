@@ -7,7 +7,8 @@ from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.config.param_spec import BoolParam, StrParam
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from gws_core.impl.table.helper.table_ratio_helper import TableRatioHelper
+from gws_core.impl.table.helper.table_operation_helper import \
+    TableOperationHelper
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from gws_core.task.task import Task
@@ -18,15 +19,15 @@ from ..table import Table
 
 
 @task_decorator(
-    unique_name="TableColumnRatioMass",
-    human_name="Table column ratio mass",
-    short_description="Apply ratio stored in table to another table",
+    unique_name="TableColumnMassOperations",
+    human_name="Table column mass operation mass",
+    short_description="Apply operations stored in table to another table",
 )
-class TableColumnRatioMass(Task):
+class TableColumnMassOperations(Task):
     """
-    Task to apply a list of ratio contained in a table to another table. This is useful to apply a lot of ratio.
+    Task to apply a list of operation contained in a table to another table. This is useful to apply a lot of operations.
 
-    The operation column (see ```Ratio operation column``` config) defines operations to apply to the input table.
+    The ```Calculation column``` config defines operations to apply to the input table.
 
     **The input table must not contained special caracters in the column names**
 
@@ -67,33 +68,31 @@ class TableColumnRatioMass(Task):
 
 
     # Error on unknown column
-    If ```Error on unknown column``` is unchecked, the ratio will not fail on unknow columns (replace with 0) but only basic operations and comparaison are supported (no funcions).
+    If ```Error on unknown column``` is unchecked, the operation will not fail on unknow columns (replace with 0) but only basic operations and comparaison are supported (no functions).
 
-    If ```Error on unknown column``` is checked, the ratio will fail on unknow columns (raise an exception) but it supports all operations.
-
-
+    If ```Error on unknown column``` is checked, the operation will fail on unknow columns (raise an exception) but it supports all operations.
     """
 
     input_specs: InputSpecs = {
         'table':
         InputSpec(
             Table, human_name='Input table',
-            short_description='Table that contains the data to apply ratio on'),
-        'ratio_table':
+            short_description='Table that contains the data to apply operations on'),
+        'operation_table':
         InputSpec(
-            Table, human_name='Ratio table',
-            short_description='Table that contains the ratio name and operations')}
+            Table, human_name='Operation table',
+            short_description='Table that contains the operation\'s name and operations\'s calculations')}
     output_specs: OutputSpecs = {'target': OutputSpec(Table)}
 
     config_specs: ConfigSpecs = {
-        'ratio_name_column':
+        'name_column':
         StrParam(
-            optional=True, human_name='Ratio name column',
-            short_description='Name of the column in Ratio Table that contains ratio names. If not provided, the first column will be used'),
-        'ratio_operation_column':
+            optional=True, human_name='Name column',
+            short_description='Name of the column in Operation Table that contains operations\' names. If not provided, the first column will be used'),
+        'calculations_column':
         StrParam(
-            optional=True, human_name='Ratio operation column',
-            short_description='Name of the column in Ratio Table that contains ratio operations. If not provided, the second column will be used'),
+            optional=True, human_name='Calculations column',
+            short_description='Name of the column in Operation Table that contains operations\' calculations. If not provided, the second column will be used'),
         'error_on_unknown_column':
         BoolParam(
             default_value=False, human_name='Error on unknown column',
@@ -103,15 +102,11 @@ class TableColumnRatioMass(Task):
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         table: Table = inputs['table']
-        ratio_table: Table = inputs['ratio_table']
+        operation_table: Table = inputs['operation_table']
 
-        if ratio_table.nb_columns != 2:
-            raise BadRequestException(
-                "The ratio table must have exactly 2 columns, the first column contains the name of the ratio, the second column contains the ratio values")
-
-        result = TableRatioHelper.columns_ratio_from_table(
-            table, ratio_table.get_data(),
-            ratio_name_column=params.get('ratio_name_column'),
-            ratio_operation_column=params.get('ratio_operation_column'),
+        result = TableOperationHelper.column_mass_operations(
+            table, operation_table.get_data(),
+            operation_name_column=params.get('name_column'),
+            operation_calculations_column=params.get('calculations_column'),
             error_on_unknown_column=params.get('error_on_unknown_column'))
         return {'target': result}

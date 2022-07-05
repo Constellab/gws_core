@@ -22,13 +22,18 @@ from ..table import Table
     short_description="Scales the numeric values of the table",
 )
 class TableScaler(Transformer):
+    """
+    Transformer to apply one or multiple scalling functions to all numerical values of the table.
+
+    Available scaling functions: ```log2```, ```log10```, ```unit```, ```percent``` and ```standard```.
+    """
     config_specs: ConfigSpecs = {
         "scaling": DataScaleFilterParamConstructor.construct_filter(),
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
         data = source.get_data()
-        data = DataScaleFilterParamConstructor.validate_filter("scaling", data, params)
+        data: Table = DataScaleFilterParamConstructor.scale(data, params["scaling"])
         table = Table(data=data)
         # table.name = source.name + " (Scaled)"
         return table
