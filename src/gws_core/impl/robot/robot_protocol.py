@@ -39,7 +39,7 @@ class RobotSimpleTravel(Protocol):
         ])
 
 
-@protocol_decorator("RobotTravelProto", hide=False)
+@protocol_decorator("RobotTravelProto", hide=True)
 class RobotTravelProto(Protocol):
 
     def configure_protocol(self) -> None:
@@ -68,7 +68,7 @@ class RobotTravelProto(Protocol):
         self.add_outerface('robot', eat_2, 'robot')
 
 
-@protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro", hide=False)
+@protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro", hide=True)
 class RobotSuperTravelProto(Protocol):
     def configure_protocol(self) -> None:
         sub_travel: ProcessSpec = self.add_process(RobotTravelProto, 'sub_travel')

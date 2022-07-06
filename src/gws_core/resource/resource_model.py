@@ -69,7 +69,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
     task_model: TaskModel = DeferredForeignKey('TaskModel', null=True, index=True)
 
     # for children resource (usually resource inside ResourceSet), it stores the parent resource id
-    parent_resource: ResourceModel = ForeignKeyField('self', null=True, index=True)
+    # lazy_load = False to avoir loading the resource, and it only contains the id
+    parent_resource: str = ForeignKeyField('self', null=True, index=True, lazy_load=False)
 
     name: str = CharField(null=False)
 

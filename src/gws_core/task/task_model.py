@@ -44,7 +44,7 @@ class TaskModel(ProcessModel):
     """
 
     # Only for task of type Source, this is to store the resource used in config
-    # with lazy load = false, the Resource is not Loaded
+    # with lazy load = false, the Resource is not Loaded, it only contains the id
     source_config: str = ForeignKeyField(ResourceModel, null=True, index=True, lazy_load=False)
 
     _table_name = 'gws_task'
