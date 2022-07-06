@@ -45,7 +45,7 @@ class TaskModel(ProcessModel):
 
     # Only for task of type Source, this is to store the resource used in config
     # with lazy load = false, the Resource is not Loaded, it only contains the id
-    source_config: str = ForeignKeyField(ResourceModel, null=True, index=True, lazy_load=False)
+    source_config_id: str = ForeignKeyField(ResourceModel, null=True, index=True, lazy_load=False)
 
     _table_name = 'gws_task'
 
@@ -284,7 +284,7 @@ class TaskModel(ProcessModel):
         # update the parent of new children resource
         if isinstance(resource, ResourceListBase):
             for child_resource in new_children_resources:
-                child_resource.parent_resource = resource_model
+                child_resource.parent_resource_id = resource_model.id
                 child_resource.save()
 
         return resource_model

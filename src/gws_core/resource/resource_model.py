@@ -70,7 +70,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
     # for children resource (usually resource inside ResourceSet), it stores the parent resource id
     # lazy_load = False to avoir loading the resource, and it only contains the id
-    parent_resource: str = ForeignKeyField('self', null=True, index=True, lazy_load=False)
+    parent_resource_id: str = ForeignKeyField('self', null=True, index=True, lazy_load=False)
 
     name: str = CharField(null=False)
 

@@ -373,9 +373,9 @@ class ProtocolService(BaseService):
             resource_model_id = Source.get_resource_id_from_config(config_values)
 
             if resource_model_id is not None:
-                process_model.source_config = ResourceModel.get_by_id_and_check(resource_model_id)
+                process_model.source_config_id = ResourceModel.get_by_id_and_check(resource_model_id).id
             else:
-                process_model.source_config = None
+                process_model.source_config_id = None
             process_model.save()
 
     ########################## SPECIFIC PROCESS #####################

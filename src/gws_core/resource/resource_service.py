@@ -84,7 +84,7 @@ class ResourceService(BaseService):
                                       detail_args={"experiment": task_input.experiment.get_short_name()})
 
         # Check if resource is used as Config of a Source Task
-        task_model: TaskModel = TaskModel.select().where(TaskModel.source_config == resource_model.id).first()
+        task_model: TaskModel = TaskModel.select().where(TaskModel.source_config_id == resource_model.id).first()
 
         if task_model:
             raise BadRequestException(GWSException.RESOURCE_USED_ERROR.value,
@@ -217,7 +217,7 @@ class ResourceService(BaseService):
 
         # if the criteria is not provided or False, we don't include the children
         if criteria is None or not criteria['value']:
-            search_builder.add_expression(ResourceModel.parent_resource.is_null())
+            search_builder.add_expression(ResourceModel.parent_resource_id.is_null())
         search.remove_filter_criteria('include_children_resource')
 
         # Handle the project filters, get all experiment of this project and filter by experiment

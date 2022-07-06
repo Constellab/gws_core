@@ -142,7 +142,7 @@ class Migration0310(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(Typing.get_db())
 
-        migrator.add_column_if_not_exists(TaskModel, TaskModel.source_config)
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.source_config_id)
         migrator.add_column_if_not_exists(TagModel, TagModel.order)
         migrator.migrate()
 
@@ -154,7 +154,8 @@ class Migration0310(BrickMigration):
             resource_id = Source.get_resource_id_from_config(task_model.config.get_values())
 
             if resource_id is not None:
-                task_model.source_config = ResourceModel.get_by_id(resource_id)
+                resource: ResourceModel = ResourceModel.get_by_id(resource_id)
+                task_model.source_config_id = resource.id if resource is not None else None
                 task_model.save()
 
         # Update orders in tag models and set lowercase tag names
@@ -188,7 +189,7 @@ class Migration0312(BrickMigration):
     def migrate(cls, from_version: Version, to_version: Version) -> None:
         migrator: SqlMigrator = SqlMigrator(ResourceModel.get_db())
 
-        migrator.add_column_if_not_exists(ResourceModel, ResourceModel.parent_resource)
+        migrator.add_column_if_not_exists(ResourceModel, ResourceModel.parent_resource_id)
         migrator.migrate()
 
         # Set the parent id for resource inside ResourceSet
@@ -205,7 +206,7 @@ class Migration0312(BrickMigration):
                 for child_resource_model in children_resources:
                     # update the parent only if the resource was created by the same task than parent (meaning it was created with the resource set)
                     if resource_model.task_model == child_resource_model.task_model:
-                        child_resource_model.parent_resource = resource_model
+                        child_resource_model.parent_resource_id = resource_model
                         child_resource_model.save()
             except Exception as err:
                 Logger.error(f'Error while migrating resource {resource_model.id} : {err}')
