@@ -116,7 +116,11 @@ class ResourceImporter(Converter):
         if not source.exists():
             raise Exception(f"Cannot import file '{source.name}' because it doesn't exists.")
 
-        target = await self.import_from_path(source, params, target_type)
+        try:
+            target: Resource = await self.import_from_path(source, params, target_type)
+        except Exception as err:
+            raise Exception(
+                f"Cannot import file '{source.path}' using importer : '{self._typing_name}' because of the following error: {err}")
 
         if target.name is None:
             # set the target name = FsNode name without extension

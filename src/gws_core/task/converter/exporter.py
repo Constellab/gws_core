@@ -119,7 +119,11 @@ class ResourceExporter(Converter):
         # Create a new temp_dir to create the file here
         self.__temp_dir: str = Settings.retrieve().make_temp_dir()
 
-        fs_node: FSNode = await self.export_to_path(source, self.__temp_dir, params, target_type)
+        try:
+            fs_node: FSNode = await self.export_to_path(source, self.__temp_dir, params, target_type)
+        except Exception as err:
+            raise Exception(
+                f"Cannot export the resource '{source.name}' using exporter '{self._typing_name}' to a file, error : {err}")
 
         return fs_node
 
