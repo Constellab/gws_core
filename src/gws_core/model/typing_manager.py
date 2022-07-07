@@ -97,37 +97,46 @@ class TypingManager:
 
     @classmethod
     def _save_object_type_in_db(cls, typing: Typing) -> None:
-        query: ModelSelect = Typing.get_by_brick_and_unique_name(
-            typing.object_type, typing.brick, typing.unique_name)
+        try:
 
-        # set the version because the bricks are not loaded before
-        brick_info = BrickHelper.get_brick_info(typing.brick)
-        typing.brick_version = brick_info["version"]
+            query: ModelSelect = Typing.get_by_brick_and_unique_name(
+                typing.object_type, typing.brick, typing.unique_name)
 
-        # refresh or set the ancestors list
-        typing.refresh_ancestors()
+            # set the version because the bricks are not loaded before
+            try:
+                brick_info = BrickHelper.get_brick_info(typing.brick)
+            except:
+                Logger.error(
+                    f"Can't get the brick info for brick '{typing.brick}' of typing '{typing.typing_name}'. If you file in the correct folder in your brick ? Skipping the typing")
+                return
+            typing.brick_version = brick_info["version"]
 
-        # If it doesn't exist, create the type in DB
-        if query.count() == 0:
-            # force the creation (useful for tests when this is called multiple time with the same objects)
-            typing.save(force_insert=True)
-            return
+            # refresh or set the ancestors list
+            typing.refresh_ancestors()
 
-        typing_db: Typing = query.first()
+            # If it doesn't exist, create the type in DB
+            if query.count() == 0:
+                # force the creation (useful for tests when this is called multiple time with the same objects)
+                typing.save(force_insert=True)
+                return
 
-        # If the model type has changed, log a message and update the DB
-        if typing_db.model_type != typing.model_type or typing_db.related_model_typing_name != typing.related_model_typing_name or \
-                typing_db.object_sub_type != typing.object_sub_type or str(typing_db.data) != str(typing.data):
-            Logger.info(f"""Typing {typing.unique_name} in brick {typing.brick} has changed.""")
-            cls._update_typing(typing, typing_db)
-            return
+            typing_db: Typing = query.first()
 
-        # If another value has changed only udpate the DB
-        if typing_db.hide != typing.hide or typing_db.human_name != typing.human_name or typing_db.short_description != typing.short_description or \
-                typing_db.deprecated_since != typing.deprecated_since or typing_db.deprecated_message != typing.deprecated_message or \
-                typing_db.brick_version != typing.brick_version:
-            cls._update_typing(typing, typing_db)
-            return
+            # If the model type has changed, log a message and update the DB
+            if typing_db.model_type != typing.model_type or typing_db.related_model_typing_name != typing.related_model_typing_name or \
+                    typing_db.object_sub_type != typing.object_sub_type or str(typing_db.data) != str(typing.data):
+                Logger.info(f"""Typing {typing.unique_name} in brick {typing.brick} has changed.""")
+                cls._update_typing(typing, typing_db)
+                return
+
+            # If another value has changed only udpate the DB
+            if typing_db.hide != typing.hide or typing_db.human_name != typing.human_name or typing_db.short_description != typing.short_description or \
+                    typing_db.deprecated_since != typing.deprecated_since or typing_db.deprecated_message != typing.deprecated_message or \
+                    typing_db.brick_version != typing.brick_version:
+                cls._update_typing(typing, typing_db)
+                return
+        except Exception as err:
+            Logger.error(f"Error while saving the typing '{typing.typing_name}', skipping the typing. Error : {err}")
 
     @classmethod
     def _update_typing(cls, typing: Typing, typing_db: Typing) -> None:
