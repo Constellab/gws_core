@@ -7,7 +7,7 @@ import zlib
 from typing import Any, Dict, List, Type
 
 from gws_core.resource.resource_list_base import ResourceListBase
-from peewee import ForeignKeyField
+from peewee import ForeignKeyField, ModelSelect
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
@@ -144,6 +144,18 @@ class TaskModel(ProcessModel):
             return []
 
         return list(ResourceModel.select().where(ResourceModel.task_model == self))
+
+    @classmethod
+    def get_source_task_using_resource_in_another_experiment(
+            cls, resource_model_ids: List[str], exclude_experimence_id: str) -> ModelSelect:
+        """
+        Returns the source task models configured with one of the provided resource that are not the the provided experiment
+        """
+
+        return cls.select().where(
+            (cls.source_config_id.in_(resource_model_ids)) &
+            (cls.experiment != exclude_experimence_id)
+        )
 
     ################################# RUN #############################
 

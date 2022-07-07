@@ -209,6 +209,7 @@ class Experiment(ModelWithUser, TaggableModel):
         :rtype: `bool`
         """
         from ..task.task_input_model import TaskInputModel
+        from ..task.task_model import TaskModel
 
         if not self.is_saved():
             raise BadRequestException("Can't reset an experiment not saved before")
@@ -225,12 +226,23 @@ class Experiment(ModelWithUser, TaggableModel):
         if len(output_resources) > 0:
             output_resource_ids: List[str] = list(map(lambda x: x.id, output_resources))
 
+            # check if it is used as input
             other_experiment: TaskInputModel = TaskInputModel.get_other_experiments(
                 output_resource_ids, self.id).first()
 
             if other_experiment is not None:
                 raise ResourceUsedInAnotherExperimentException(
                     other_experiment.resource_model.name, other_experiment.experiment.get_short_name())
+
+            # check if it is used as source
+            other_task: TaskModel = TaskModel.get_source_task_using_resource_in_another_experiment(
+                output_resource_ids, self.id).first()
+
+            if other_task is not None:
+                # retrieve the resource model
+                resource_model: ResourceModel = [x for x in output_resources if x.id == other_task.source_config_id][0]
+                raise ResourceUsedInAnotherExperimentException(
+                    resource_model.name, other_task.experiment.get_short_name())
 
         if self.protocol_model:
             self.protocol_model.reset()
