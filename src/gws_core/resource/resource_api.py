@@ -78,11 +78,21 @@ async def get_a_resource(id: str,
     """
     Retrieve a ResourceModel from a ResourceModel ID
 
-    - **id**: the id of the protocol
+    - **id**: the id of the resource
     """
 
     return ResourceService.get_resource_by_id(id=id).to_json(
         deep=True)
+
+
+@core_app.get("/resource/{id}/children", tags=["Resource"], summary="Get a resource")
+async def get_resource_children(id: str,
+                                _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Retrieve a ResourceModel children resource of a ResourceModel ID
+    """
+
+    return ListJsonable(ResourceService.get_resource_children(id=id)).to_json()
 
 
 @core_app.delete("/resource/{id}", tags=["Resource"], summary="Delete a resource")

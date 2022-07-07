@@ -10,6 +10,7 @@ from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.fs_node import FSNode
+from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.view import View
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.task.converter.converter_service import ConverterService
@@ -41,6 +42,17 @@ class ResourceService(BaseService):
     @classmethod
     def get_resource_by_id(cls, id: str) -> ResourceModel:
         return ResourceModel.get_by_id_and_check(id)
+
+    @classmethod
+    def get_resource_children(cls, id: str) -> List[ResourceModel]:
+        resource_model: ResourceModel = cls.get_resource_by_id(id)
+
+        resource: Resource = resource_model.get_resource()
+
+        if isinstance(resource, ResourceListBase):
+            return resource._get_all_resource_models()
+
+        return []
 
     @classmethod
     def get_resources_of_type(cls,
