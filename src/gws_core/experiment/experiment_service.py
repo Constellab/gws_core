@@ -33,8 +33,9 @@ from ..user.activity import Activity
 from ..user.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
-from .experiment import Experiment, ExperimentType
+from .experiment import Experiment
 from .experiment_dto import ExperimentDTO
+from .experiment_enums import ExperimentType
 
 
 class ExperimentService(BaseService):

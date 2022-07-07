@@ -16,8 +16,8 @@ from gws_core.task.plug import Sink
 from ...config.config_types import ConfigParamsDict
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...experiment.experiment import ExperimentType
 from ...experiment.experiment_interface import IExperiment
+from ...experiment.experiment_enums import ExperimentType
 from ...impl.file.file import File
 from ...model.typing_manager import TypingManager
 from ...process.process_interface import IProcess

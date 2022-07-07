@@ -50,5 +50,6 @@ class TestImporter(BaseTestCase):
         # import the table file into a Table
         result: ResourceModel = await ConverterService.call_importer(resource_model.id, TableImporter._typing_name,  {})
 
+        self.assertEqual(result.origin, ResourceOrigin.IMPORTED)
         table: Table = result.get_resource()
         self.assertIsInstance(table, Table)

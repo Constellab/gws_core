@@ -10,14 +10,14 @@ from gws_core.task.transformer.transformer import Transformer
 
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...experiment.experiment import ExperimentType
 from ...experiment.experiment_interface import IExperiment
+from ...experiment.experiment_enums import ExperimentType
 from ...model.typing_manager import TypingManager
 from ...process.process_interface import IProcess
 from ...protocol.protocol_interface import IProtocol
 from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel
-from ..converter.converter import ConverterRunner
+from ..converter.converter import Converter, ConverterRunner
 from ..plug import Sink, Source
 from ..task import Task
 from .transformer_type import TransformerDict
@@ -86,12 +86,6 @@ class TransformerService():
     async def call_transformer(cls, resource: Resource,
                                transformer: TransformerDict) -> Resource:
         # retrieve transformer type
-        transformer_task: Type[Task] = TypingManager.get_type_from_name(transformer['typing_name'])
+        transformer_task: Type[Converter] = TypingManager.get_type_from_name(transformer['typing_name'])
 
-        converter_runner: ConverterRunner = ConverterRunner(transformer_task, params=transformer['config_values'],
-                                                            input=resource)
-
-        # run task, clear after task and get resource
-        resource: Resource = await converter_runner.run()
-        await converter_runner.run_after_task()
-        return resource
+        return transformer_task.call(resource, transformer['config_values'])

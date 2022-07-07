@@ -7,7 +7,7 @@
 import time
 
 from gws_core import (BaseTestCase, Experiment, ExperimentService,
-                      ExperimentStatus, GTest, Job, Queue, QueueService,
+                      ExperimentStatus, GTest, Queue, QueueService,
                       RobotService, Settings)
 
 settings = Settings.retrieve()

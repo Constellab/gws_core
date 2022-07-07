@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse
 from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment import Experiment
+from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.view import View
@@ -75,9 +76,20 @@ class ResourceService(BaseService):
     def delete(cls, resource_id: str) -> None:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
 
-        cls.check_before_resource_update(resource_model)
+        if resource_model.origin == ResourceOrigin.UPLOADED:
+            cls.check_before_resource_update(resource_model)
 
-        resource_model.delete_instance()
+            resource_model.delete_instance()
+        # if the resource was imported or transformed, we delete the experiment that generated it
+        elif resource_model.origin == ResourceOrigin.IMPORTED or resource_model.origin == ResourceOrigin.TRANSFORMED:
+            experiment: Experiment = resource_model.experiment
+            if experiment is None:
+                raise BadRequestException("The resource is not associated to an experiment")
+
+            experiment.delete_instance()
+
+        else:
+            raise BadRequestException("Can't delete this resource as it was created by an experiment")
 
     @classmethod
     def check_before_resource_update(cls, resource_model: ResourceModel) -> None:

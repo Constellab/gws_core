@@ -10,8 +10,9 @@ from ..experiment.experiment_run_service import ExperimentRunService
 from ..project.project import Project
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_interface import IProtocol
-from .experiment import Experiment, ExperimentType
+from .experiment import Experiment
 from .experiment_service import ExperimentService
+from .experiment_enums import ExperimentType
 
 
 class IExperiment:

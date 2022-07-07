@@ -1,9 +1,10 @@
 
 
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.experiment.experiment import (Experiment, ExperimentStatus,
-                                            ExperimentType)
+from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.experiment.experiment_enums import (ExperimentStatus,
+                                                  ExperimentType)
 from gws_core.project.project import Project
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.test.gtest import GTest

@@ -10,6 +10,7 @@ from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment import Experiment
+from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.model.typing import Typing
@@ -19,7 +20,7 @@ from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.report.report import Report
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_list_base import ResourceListBase
-from gws_core.resource.resource_model import ResourceModel
+from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_set import ResourceSet
 from gws_core.tag.tag_model import TagModel
 from gws_core.tag.taggable_model import TaggableModel
@@ -208,6 +209,30 @@ class Migration0312(BrickMigration):
                     if resource_model.task_model == child_resource_model.task_model:
                         child_resource_model.parent_resource_id = resource_model
                         child_resource_model.save()
+            except Exception as err:
+                Logger.error(f'Error while migrating resource {resource_model.id} : {err}')
+                Logger.log_exception_stack_trace(err)
+
+
+@brick_migration('0.3.13', short_description='Update orgin values of resources')
+class Migration0313(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        # retrieve all resource of type  ResourceListBase or children
+        resource_models: List[ResourceModel] = list(ResourceModel.select())
+        for resource_model in resource_models:
+
+            try:
+                if resource_model.experiment is not None:
+                    if resource_model.experiment.type == ExperimentType.IMPORTER:
+                        resource_model.origin = ResourceOrigin.IMPORTED
+                        resource_model.save()
+                    elif resource_model.experiment.type == ExperimentType.TRANSFORMER:
+                        resource_model.origin = ResourceOrigin.TRANSFORMED
+                        resource_model.save()
+
             except Exception as err:
                 Logger.error(f'Error while migrating resource {resource_model.id} : {err}')
                 Logger.log_exception_stack_trace(err)

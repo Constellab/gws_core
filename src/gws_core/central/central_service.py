@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
 from typing import Dict, List
 
 from gws_core.brick.brick_service import BrickService
@@ -11,8 +10,6 @@ from gws_core.central.central_dto import (CentralSendMailDTO, LabStartDTO,
                                           SaveExperimentToCentralDTO,
                                           SaveReportToCentralDTO,
                                           SendExperimentFinishMailData)
-from gws_core.experiment.experiment import Experiment
-from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_model import LabConfig
 from requests.models import Response
 

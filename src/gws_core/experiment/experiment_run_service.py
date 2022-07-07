@@ -22,7 +22,8 @@ from ..user.activity import Activity
 from ..user.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
-from .experiment import Experiment, ExperimentStatus, ExperimentType
+from .experiment import Experiment
+from .experiment_enums import ExperimentStatus, ExperimentType
 
 
 class ExperimentRunService():
