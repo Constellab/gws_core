@@ -66,7 +66,7 @@ class IOSpec:
 
         # set the human name with a default value
         if human_name is not None:
-            self.human_name = StringHelper.snake_case_to_sentence(human_name)
+            self.human_name = human_name
         else:
             # TODO Remove support for None
             if default_type:

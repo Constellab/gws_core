@@ -18,7 +18,7 @@ from ..table import Table
 
 @task_decorator(
     unique_name="TableColumnMassOperations",
-    human_name="Table column mass operation mass",
+    human_name="Table column operation mass",
     short_description="Apply operations stored in table to another table",
 )
 class TableColumnMassOperations(Task):
