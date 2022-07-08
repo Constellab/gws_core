@@ -11,6 +11,7 @@ from typing import (TYPE_CHECKING, Any, Dict, Generic, List, Optional, Set,
                     Type, TypeVar, final)
 
 from gws_core.core.utils.utils import Utils
+from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
 from peewee import (CharField, DeferredForeignKey, Expression, ForeignKeyField,
                     ModelDelete, ModelSelect)
@@ -452,6 +453,14 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         _json["resource_type_human_name"] = resource_typing.human_name
         _json["resource_type_short_description"] = resource_typing.short_description
         _json["is_downloadable"] = self.is_downloadable
+
+        resource_type: ResourceType = resource_typing.get_type()
+
+        # check if the resource has children resources
+        if resource_type is not None and Utils.issubclass(resource_type, ResourceListBase):
+            _json["has_children"] = True
+        else:
+            _json["has_children"] = False
 
         if self.fs_node_model:
             _json["fs_node"] = self.fs_node_model.to_json()
