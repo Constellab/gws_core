@@ -7,12 +7,12 @@ from __future__ import annotations
 
 import copy
 from enum import Enum
-from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Set, Type,
-                    TypeVar, final)
+from typing import (TYPE_CHECKING, Any, Dict, Generic, List, Optional, Set,
+                    Type, TypeVar, final)
 
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.technical_info import TechnicalInfoDict
-from peewee import (CharField, DeferredForeignKey, ForeignKeyField,
+from peewee import (CharField, DeferredForeignKey, Expression, ForeignKeyField,
                     ModelDelete, ModelSelect)
 
 from ..core.classes.enum_field import EnumField
@@ -177,6 +177,31 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
     @classmethod
     def delete_list(cls, resource_model_ids: str) -> ModelDelete:
         return ResourceModel.delete().where(ResourceModel.id.in_(resource_model_ids))
+
+    @classmethod
+    def get_search_by_types_expession(cls, typing_names: List[str]) -> Expression:
+        """Return the expression to search resource base on a type and all its subtypes.
+
+        If the Resource type is provided, it returns None
+        """
+
+        # If the main resource class is provided, return None because all the classes will be retrieved
+        if Resource._typing_name in typing_names:
+            return None
+
+        # Retrieve all type of typing_names
+        resource_types: List[Type] = [TypingManager.get_type_from_name(typing_name) for typing_name in typing_names]
+
+        # Get all type of class and subclasses
+        all_types: Set[Type[Resource]] = set()
+        for resource_type in resource_types:
+            all_types.update(Utils.get_all_subclasses(resource_type))
+            all_types.update([resource_type])
+
+        # Get the typing names
+        all_typing_names: List[str] = [resource_type._typing_name for resource_type in all_types]
+
+        return ResourceModel.resource_typing_name.in_(all_typing_names)
 
     ########################################## RESOURCE ######################################
 

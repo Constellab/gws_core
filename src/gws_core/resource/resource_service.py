@@ -56,23 +56,6 @@ class ResourceService(BaseService):
         return []
 
     @classmethod
-    def get_resources_of_type(cls,
-                              resource_typing_name: str,
-                              page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
-
-        # request the resource model
-        number_of_items_per_page = min(
-            number_of_items_per_page, cls._number_of_items_per_page)
-
-        # Get the resource models and filter them with resource type
-        # TODO problem, it does select sub class of resource type.
-        query = ResourceModel.select_by_resource_typing_name(resource_typing_name)\
-            .order_by(ResourceModel.created_at.desc())
-
-        return Paginator(
-            query, page=page, nb_of_items_per_page=number_of_items_per_page)
-
-    @classmethod
     def delete(cls, resource_id: str) -> None:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
 

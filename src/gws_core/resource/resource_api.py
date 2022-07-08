@@ -52,25 +52,6 @@ async def call_view_on_resource(id: str,
 
 ####################################### Resource Model ###################################
 
-@core_app.get("/resource/by-type/{resource_typing_name}", tags=["Resource"], summary="Get the list of resources")
-async def get_the_list_of_resources(resource_typing_name: Optional[str] = None,
-                                    page: Optional[int] = 1,
-                                    number_of_items_per_page: Optional[int] = 20,
-                                    _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
-    """
-    Retrieve the list of resources from resource type. The list is paginated.
-
-    - **resource_typing_name**: typing name of the resource to fetch
-    - **page**: the page number
-    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
-    """
-
-    return ResourceService.get_resources_of_type(
-        resource_typing_name=resource_typing_name,
-        page=page,
-        number_of_items_per_page=number_of_items_per_page,
-    ).to_json()
-
 
 @core_app.get("/resource/{id}", tags=["Resource"], summary="Get a resource")
 async def get_a_resource(id: str,

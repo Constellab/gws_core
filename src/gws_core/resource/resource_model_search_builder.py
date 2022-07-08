@@ -27,5 +27,7 @@ class ResourceModelSearchBuilder(SearchBuilder):
         if filter['key'] == 'tags':
             tags = TagHelper.tags_to_list(filter['value'])
             return ResourceModel.get_search_tag_expression(tags)
+        elif filter['key'] == 'resource_typing_name':
+            return ResourceModel.get_search_by_types_expession(filter['value'])
 
         return super().convert_filter_to_expression(filter)

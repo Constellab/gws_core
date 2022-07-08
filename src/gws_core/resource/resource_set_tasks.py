@@ -34,12 +34,16 @@ class ResourceSetGenerator(Task):
         resource_3 = inputs.get('resource_3')
 
         resource_set: ResourceSet = ResourceSet()
+
+        self.log_info_message('Adding resource 1')
         resource_set.add_resource(resource_1, create_new_resource=False)
 
         if resource_2 is not None:
+            self.log_info_message('Adding resource 2')
             resource_set.add_resource(resource_2, create_new_resource=False)
 
         if resource_3 is not None:
+            self.log_info_message('Adding resource 3')
             resource_set.add_resource(resource_3, create_new_resource=False)
 
         resource_set.add_resource(Robot.empty(), 'robot')
