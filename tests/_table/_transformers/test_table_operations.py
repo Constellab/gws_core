@@ -8,6 +8,7 @@ from unittest import IsolatedAsyncioTestCase
 from gws_core import Table
 from gws_core.impl.table.helper.table_operation_helper import \
     TableOperationHelper
+from numpy import NaN, isnan
 from pandas import DataFrame
 
 
@@ -58,6 +59,7 @@ class TestTableOperations(IsolatedAsyncioTestCase):
 
         result_table = TableOperationHelper.column_mass_operations(table, operation_df)
 
-        # The real operation will be A + (0 - B) * 2
+        # The result should be NaN
         self.assertEqual(result_table.nb_columns, 4)
-        self.assertEqual(list(result_table.get_data()['R0']), [-19, -14, -9])
+        # check if all element of R0 columns are NaN
+        self.assertTrue(all(isnan(list(result_table.get_data()['R0']))))

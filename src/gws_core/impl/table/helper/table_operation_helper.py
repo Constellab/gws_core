@@ -11,10 +11,14 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.table.table import Table
+from numpy import NaN
 from pandas import DataFrame
 
 
 class TableOperationHelper():
+
+    # custom str to set NaN on eval, the string is then replace with real NaN
+    _NaN_str = '__NaN__'
 
     OPERATION_SEPARATOR: str = '\n'
 
@@ -33,7 +37,8 @@ class TableOperationHelper():
             column_name = source.generate_new_column_name('Result')
             operations = f"{column_name} = {operations}"
 
-        eval_dataframe = dataframe.eval(operations)
+        eval_dataframe: DataFrame = dataframe.eval(operations)
+        eval_dataframe = eval_dataframe.replace(TableOperationHelper._NaN_str, NaN)
         result_table: Table
 
         # if the result is append to the dataframe
@@ -105,17 +110,45 @@ class TableOperationHelper():
         for index, row in operation_df.iterrows():
             operation: str = str(row[operation_calculations_column])
 
-            # if we throw an error if the column is unknown, do touch the operation
+            # if we throw an error if the column is unknown, don't touch the operation
             if error_on_unknown_column:
                 clean_operation = operation
             else:
                 # remove the unknown columns
-                clean_operation = TableOperationHelper._clean_operation_unknown_columns(operation, table)
+                # clean_operation = TableOperationHelper._clean_operation_unknown_columns(operation, table)
+
+                if TableOperationHelper._operation_contains_unknown_column(operation, table):
+                    clean_operation = f"'{TableOperationHelper._NaN_str}'"
+                else:
+                    clean_operation = operation
 
             # create the operation
             operations.append(f"{row[operation_name_column]} = {clean_operation}")
 
         return TableOperationHelper.column_operations(table, operations, False)
+
+    @staticmethod
+    def _operation_contains_unknown_column(operation: str, table: Table) -> bool:
+        """ Replace the unknown column name with '0' in the operation"""
+        clean_operation = StringHelper.remove_whitespaces(operation)
+
+        # split by all basic operator : +,-,*,/,^,(,),>,<,= to check column name
+        column_names = split('\+|-|/|\*|\(|\)|\%|\^|>|<|=', clean_operation)
+        column_names = [x for x in column_names if x]
+
+        # check if the column name is in the table or a float
+        for column_name in column_names:
+
+            # if the element is a number, skip it
+            column_int = NumericHelper.to_float(column_name)
+            if column_int is not None:
+                continue
+
+            # check if the column name exist and if not, replace it with '0'
+            if column_name not in table.column_names:
+                return True
+
+        return False
 
     @staticmethod
     def _clean_operation_unknown_columns(operation: str, table: Table) -> str:

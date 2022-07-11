@@ -5,8 +5,6 @@
 
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.config.param_spec import BoolParam, StrParam
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from gws_core.impl.table.helper.table_operation_helper import \
     TableOperationHelper
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -68,7 +66,7 @@ class TableColumnMassOperations(Task):
 
 
     # Error on unknown column
-    If ```Error on unknown column``` is unchecked, the operation will not fail on unknow columns (replace with 0) but only basic operations and comparaison are supported (no functions).
+    If ```Error on unknown column``` is unchecked, the operation will not fail on unknow columns (the result for operations with unknown column will be 'NaN') but only basic operations and comparaison are supported (no functions).
 
     If ```Error on unknown column``` is checked, the operation will fail on unknow columns (raise an exception) but it supports all operations.
     """
@@ -96,7 +94,7 @@ class TableColumnMassOperations(Task):
         'error_on_unknown_column':
         BoolParam(
             default_value=False, human_name='Error on unknown column',
-            short_description='If true, an error will be raised if a column is not found. If false, the column will be replace by 0.',
+            short_description="If true, an error will be raised if a column is not found. If false, the result will be 'NaN'.",
             visibility='protected')}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
