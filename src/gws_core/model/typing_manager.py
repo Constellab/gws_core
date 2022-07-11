@@ -1,6 +1,6 @@
 
 
-from typing import Any, Dict, Type
+from typing import Any, Dict, Optional, Type
 
 from peewee import ModelSelect
 
@@ -25,21 +25,31 @@ class TypingManager:
     _typings_name_cache: Dict[str, Typing] = {}
 
     @classmethod
-    def get_typing_from_name(cls, typing_name: str) -> Typing:
+    def get_typing_from_name(cls, typing_name: str) -> Optional[Typing]:
+        """Get typing from name and return None if not found"""
         if typing_name not in cls._typings_name_cache:
             typing: Typing = Typing.get_by_typing_name(typing_name)
 
             if typing is None:
-                raise BadRequestException(
-                    f"Can't find the typing with name {typing_name}, did you register the name with corresponding decorator ?")
+                return None
 
             cls._typings_name_cache[typing_name] = typing
 
         return cls._typings_name_cache[typing_name]
 
     @classmethod
+    def get_typing_from_name_and_check(cls, typing_name: str) -> Typing:
+        """Get typing from name and check if it exists"""
+        typing: Optional[Typing] = cls.get_typing_from_name(typing_name)
+
+        if typing is None:
+            raise BadRequestException(
+                f"Can't find the typing with name '{typing_name}', did you register the name with corresponding decorator ?")
+        return typing
+
+    @classmethod
     def get_type_from_name(cls, typing_name: str) -> Type[Any]:
-        return cls.get_typing_from_name(typing_name).get_type()
+        return cls.get_typing_from_name_and_check(typing_name).get_type()
 
     @classmethod
     def get_object_with_typing_name(cls, typing_name: str, object_id: str) -> Model:

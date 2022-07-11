@@ -144,7 +144,7 @@ class ProtocolService(BaseService):
                                    instance_name: str = None) -> ProcessModel:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
-        process_typing: Typing = TypingManager.get_typing_from_name(process_typing_name)
+        process_typing: Typing = TypingManager.get_typing_from_name_and_check(process_typing_name)
 
         return cls.add_process_to_protocol(protocol_model=protocol_model, process_type=process_typing.get_type(),
                                            instance_name=instance_name)

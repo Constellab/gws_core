@@ -11,6 +11,7 @@ from typing import (TYPE_CHECKING, Any, Dict, Generic, List, Optional, Set,
                     Type, TypeVar, final)
 
 from gws_core.core.utils.utils import Utils
+from gws_core.model.typing_dict import TypingStatus
 from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
 from peewee import (CharField, DeferredForeignKey, Expression, ForeignKeyField,
@@ -446,21 +447,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
         _json = super().to_json(deep=deep, **kwargs)
 
-        _json["typing_name"] = self._typing_name
         _json["tags"] = self.get_tags_json()
-
-        resource_typing: Typing = TypingManager.get_typing_from_name(self.resource_typing_name)
-        _json["resource_type_human_name"] = resource_typing.human_name
-        _json["resource_type_short_description"] = resource_typing.short_description
-        _json["is_downloadable"] = self.is_downloadable
-
-        resource_type: ResourceType = resource_typing.get_type()
-
-        # check if the resource has children resources
-        if resource_type is not None and Utils.issubclass(resource_type, ResourceListBase):
-            _json["has_children"] = True
-        else:
-            _json["has_children"] = False
 
         if self.fs_node_model:
             _json["fs_node"] = self.fs_node_model.to_json()
@@ -470,6 +457,23 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
                 'id': self.experiment.id,
                 'title': self.experiment.title,
             }
+
+        resource_typing: Optional[Typing] = TypingManager.get_typing_from_name(self.resource_typing_name)
+        if resource_typing:
+            _json["resource_type_human_name"] = resource_typing.human_name
+            _json["resource_type_short_description"] = resource_typing.short_description
+            _json["is_downloadable"] = self.is_downloadable
+            _json["type_status"] = resource_typing.get_type_status()
+
+            resource_type: ResourceType = resource_typing.get_type()
+
+            # check if the resource has children resources
+            if resource_type is not None and Utils.issubclass(resource_type, ResourceListBase):
+                _json["has_children"] = True
+            else:
+                _json["has_children"] = False
+        else:
+            _json["type_status"] = TypingStatus.UNAVAILABLE
 
         return _json
 
@@ -489,7 +493,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
             return TechnicalInfoDict.deserialize(kv_store.get('technical_info'))
         return TechnicalInfoDict()
 
-    @ property
+    @property
     def is_downloadable(self) -> bool:
         # the resource is downloadable if it's a file or if the export_to_path is defined
-        return self.fs_node_model is not None or self.get_resource_type()._is_exportable
+        resource_type: ResourceType = self.get_resource_type()
+        return self.fs_node_model is not None or (resource_type is not None and resource_type._is_exportable)

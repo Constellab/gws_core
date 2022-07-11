@@ -173,7 +173,7 @@ class IOSpec:
                              "is_optional": self.is_optional,
                              "human_name": self.human_name, "short_description": self.short_description}
         for resource_type in self.resource_types:
-            typing = TypingManager.get_typing_from_name(resource_type._typing_name)
+            typing = TypingManager.get_typing_from_name_and_check(resource_type._typing_name)
             resource_json: TypingRef = {"typing_name": typing.typing_name,
                                         "brick_version": str(BrickHelper.get_brick_version(typing.brick)),
                                         "human_name": typing.human_name}

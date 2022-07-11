@@ -4,9 +4,14 @@
 # About us: https://gencovery.com
 
 
+from enum import Enum
 from typing import Literal, Optional, TypedDict
 
-TypingStatus = Literal['SUCCESS', 'TYPE_UNAVAILABLE']
+
+class TypingStatus(Enum):
+    OK = 'OK'
+    UNAVAILABLE = 'UNAVAILABLE'
+
 
 # different object typed store in the typing table
 TypingObjectType = Literal["TASK", "RESOURCE", "PROTOCOL", "MODEL"]

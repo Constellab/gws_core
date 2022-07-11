@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import enum
 import inspect
 from typing import Any, Dict, List, Optional, Type
 
@@ -14,7 +15,7 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.model.base import Base
 from ..core.model.model import Model
 from ..core.utils.utils import Utils
-from .typing_dict import TypingDict, TypingObjectType, TypingRef
+from .typing_dict import TypingDict, TypingObjectType, TypingRef, TypingStatus
 
 # ####################################################################
 #
@@ -132,6 +133,11 @@ class Typing(Model):
     def typing_name(self) -> str:
         return Typing.typing_obj_to_str(self.object_type, self.brick, self.unique_name)
 
+    def get_type_status(self) -> TypingStatus:
+        # retrieve the task python type
+        model_t: Type[Base] = self.get_type()
+        return TypingStatus.OK if model_t is not None else TypingStatus.UNAVAILABLE
+
     def to_json(self, deep: bool = False, **kwargs) -> TypingDict:
         _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
 
@@ -139,11 +145,7 @@ class Typing(Model):
 
         # retrieve the task python type
         model_t: Type[Base] = self.get_type()
-
-        if model_t is None:
-            _json["status"] = 'TYPE_UNAVAILABLE'
-        else:
-            _json["status"] = 'SUCCESS'
+        _json["status"] = self.get_type_status()
 
         if deep and model_t:
             _json['doc'] = self.get_model_type_doc()

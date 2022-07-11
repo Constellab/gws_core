@@ -11,6 +11,7 @@ from abc import abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING, Dict, Type, TypedDict, final
 
+from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.model.typing import Typing
 from gws_core.task.plug import Source
 from peewee import CharField, ForeignKeyField
@@ -184,7 +185,7 @@ class ProcessModel(ModelWithUser):
         self._parent_protocol = parent_protocol
 
     def set_process_type(self, typing_name: str) -> None:
-        typing: Typing = TypingManager.get_typing_from_name(typing_name)
+        typing: Typing = TypingManager.get_typing_from_name_and_check(typing_name)
         self.process_typing_name = typing_name
         self.brick_version = typing.brick_version
 
@@ -504,7 +505,8 @@ class ProcessModel(ModelWithUser):
 
     def check_is_updatable(self) -> None:
         if not self.is_updatable:
-            raise BadRequestException("The protocol can't be modified, please reset the experiment first")
+            raise BadRequestException(GWSException.RESET_EXPERIMENT_REQUIRED.value,
+                                      GWSException.RESET_EXPERIMENT_REQUIRED.name)
 
     @property
     def is_error(self) -> bool:

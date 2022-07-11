@@ -127,7 +127,7 @@ class Migration039(BrickMigration):
                 process_model.data["inputs"] = process_model.inputs.to_json()
 
                 # set brick version
-                typing = TypingManager.get_typing_from_name(process_model.process_typing_name)
+                typing = TypingManager.get_typing_from_name_and_check(process_model.process_typing_name)
                 process_model.brick_version = BrickHelper.get_brick_version(typing.brick)
                 process_model.save()
             except Exception as err:

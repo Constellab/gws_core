@@ -4,6 +4,7 @@ from typing import Callable, Dict, List, Literal, Type
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_spec import IOSpec
 from gws_core.model.typing import Typing, TypingNameObj
@@ -48,14 +49,20 @@ class TypingService():
     def get_typing(cls, typing_name: str) -> Typing:
         typing_name_obj: TypingNameObj = TypingNameObj.from_typing_name(typing_name)
 
+        typing: Typing
         if typing_name_obj.object_type == 'TASK':
-            return TaskTyping.get_by_typing_name(typing_name)
+            typing = TaskTyping.get_by_typing_name(typing_name)
         elif typing_name_obj.object_type == 'PROTOCOL':
-            return ProtocolTyping.get_by_typing_name(typing_name)
+            typing = ProtocolTyping.get_by_typing_name(typing_name)
         elif typing_name_obj.object_type == 'RESOURCE':
-            return ResourceTyping.get_by_typing_name(typing_name)
+            typing = ResourceTyping.get_by_typing_name(typing_name)
         else:
-            return Typing.get_by_typing_name(typing_name)
+            typing = Typing.get_by_typing_name(typing_name)
+
+        if typing is None:
+            raise BadRequestException(
+                f"Can't find the typing with name '{typing_name}', did you register the name with corresponding decorator ?")
+        return typing
 
     @classmethod
     def search(cls, search: SearchParams,

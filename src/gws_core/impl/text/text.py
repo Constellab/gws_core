@@ -12,33 +12,32 @@ from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from .view.text_view import TextView
 
+# @resource_decorator("Text")
+# class Text(Resource):
+#     DEFAULT_FILE_FORMAT = "txt"
+#     _data: str = RField()
 
-@resource_decorator("Text")
-class Text(Resource):
-    DEFAULT_FILE_FORMAT = "txt"
-    _data: str = RField()
+#     def __init__(self, data: str = None):
+#         super().__init__()
+#         self._set_data(data)
 
-    def __init__(self, data: str = None):
-        super().__init__()
-        self._set_data(data)
+#     def _set_data(self, data: str) -> 'Text':
+#         if data is None:
+#             data = ""
+#         if not isinstance(data, str):
+#             raise BadRequestException(
+#                 "The data must be a string")
+#         self._data = data
+#         return self
 
-    def _set_data(self, data: str) -> 'Text':
-        if data is None:
-            data = ""
-        if not isinstance(data, str):
-            raise BadRequestException(
-                "The data must be a string")
-        self._data = data
-        return self
+#     def get_data(self):
+#         return self._data
 
-    def get_data(self):
-        return self._data
+#     @view(view_type=TextView, human_name='Text', short_description='View as text',
+#           specs={}, default_view=True)
+#     def view_as_text(self, params: ConfigParams) -> TextView:
+#         """
+#         View as table
+#         """
 
-    @view(view_type=TextView, human_name='Text', short_description='View as text',
-          specs={}, default_view=True)
-    def view_as_text(self, params: ConfigParams) -> TextView:
-        """
-        View as table
-        """
-
-        return TextView(self._data)
+#         return TextView(self._data)
