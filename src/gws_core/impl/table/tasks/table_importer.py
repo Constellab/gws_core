@@ -53,7 +53,12 @@ class TableImporter(ResourceImporter):
         header = params.get_value('header', 0)
         index_column = params.get_value('index_column', -1)
         metadata_columns = params.get_value('metadata_columns', [])
+
         comment_char = params.get_value('comment', "#")
+        # the empty string meanse no comment
+        if comment_char == "":
+            comment_char = None
+
         nrows = params.get_value('nrows')
 
         header = (None if header == -1 else header)
@@ -112,12 +117,14 @@ class TableImporter(ResourceImporter):
 
         # read comments
         comments = ""
-        with open(source.path, 'r', encoding=encoding) as fp:
-            for line in fp:
-                if line.startswith(comment_char):
-                    comments += line
-                else:
-                    break
+
+        if comment_char:
+            with open(source.path, 'r', encoding=encoding) as fp:
+                for line in fp:
+                    if line.startswith(comment_char):
+                        comments += line
+                    else:
+                        break
 
         table.set_comments(comments)
         return table

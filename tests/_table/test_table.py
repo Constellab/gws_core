@@ -19,7 +19,6 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 class TestTable(BaseTestCase):
     def test_table(self):
         table: Table = Table(data=[[1, 2, 3]], column_names=["a", "b", "c"])
-        print(table.get_data())
         self.assertEqual(
             table.get_meta(),
             {'row_tags': [{}],
@@ -33,10 +32,8 @@ class TestTable(BaseTestCase):
         table._set_data(
             data=[1, 2, 3], column_names=["data"], row_names=["a", "b", "c"]
         )
-        print(table.get_data())
         self.assertEqual(table.get_meta(), {'row_tags': [{}, {}, {}], 'column_tags': [
                          {}], 'column_tag_types': {}, 'row_tag_types': {}, 'comments': ''})
-        print(print(table.get_meta()))
 
     def test_table_select(self):
         meta = {
@@ -197,9 +194,8 @@ class TestTable(BaseTestCase):
     def test_table_import_1(self):
 
         file_path = GWSCoreTestHelper.get_small_data_file_path(1)
-        table = TableImporter.call(File(file_path))
+        table: Table = TableImporter.call(File(file_path))
         df = pandas.read_table(file_path)
-        print(df)
 
         self.assertTrue(numpy.array_equal(
             df.to_numpy(),
@@ -210,19 +206,14 @@ class TestTable(BaseTestCase):
         # self.assertEqual(table.row_names, ["R0", "R1"])
 
     def test_table_import_2(self):
+        """ Test import with weird caracters and #"""
 
         file_path = GWSCoreTestHelper.get_small_data_file_path(2)
-        table = TableImporter.call(File(file_path))
-        df = pandas.read_table(file_path)
-        print(df)
+        table: Table = TableImporter.call(File(file_path), params={"comment": ""})
 
-        self.assertTrue(numpy.array_equal(
-            df.to_numpy(),
-            table.get_data().to_numpy()
-        ))
-        self.assertEqual(table.column_names, ["A", "B", "3", "D", "1.5"])
-        self.assertEqual(table.row_names, [0, 1])
-        # self.assertEqual(table.row_names, ["R0", "R1"])
+        df = table.get_data()
+        self.assertEqual(df['A'][0], '#')
+        self.assertEqual(df['B'][0], 'éçàùè$€')
 
     async def test_importer_exporter(self):
         # importer
@@ -247,10 +238,8 @@ class TestTable(BaseTestCase):
         outputs = await tester.run()
         file_ = outputs["target"]
 
-        print(file_.path)
         with open(file_.path, 'r') as fp:
             text = fp.read()
-            print(text)
             self.assertTrue(text.startswith("#This is a table"))
 
         self.assertTrue(os.path.exists(file_.path))
