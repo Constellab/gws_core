@@ -11,7 +11,7 @@
         "gws_core:testdata_dir" : "${CURRENT_DIR}/tests/testdata"
     },
     "technical_info": {
-      "FRONT_VERSION": "0.3.7"
+      "FRONT_VERSION": "0.3.8"
     },
     "environment":{
         "pip":[
