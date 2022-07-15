@@ -5,11 +5,14 @@
 
 from typing import final
 
+from gws_core.core.utils.date_helper import DateHelper
+from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.user import User
 from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
                     ModelSelect)
 
 from ..core.model.base_model import BaseModel
-from ..core.model.db_field import JSONField
+from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..experiment.experiment import Experiment
 from ..lab.lab_config_model import LabConfigModel
@@ -24,9 +27,11 @@ class Report(ModelWithUser):
 
     project: Project = ForeignKeyField(Project, null=True)
 
-    is_validated: bool = BooleanField(default=False)
-
     lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
+
+    is_validated: bool = BooleanField(default=False)
+    validated_at = DateTimeUTC(null=True)
+    validated_by = ForeignKeyField(User, null=True, backref='+')
 
     _table_name = 'gws_report'
 
@@ -39,6 +44,9 @@ class Report(ModelWithUser):
                 'title': self.project.title
             }
 
+        if self.validated_by:
+            json_["validated_by"] = self.validated_by.to_json()
+
         if not deep:
             del json_["content"]
 
@@ -46,6 +54,8 @@ class Report(ModelWithUser):
 
     def validate(self) -> None:
         self.is_validated = True
+        self.validated_at = DateHelper.now_utc()
+        self.validated_by = CurrentUserService.get_and_check_current_user()
         self.lab_config = LabConfigModel.get_current_config()
 
 

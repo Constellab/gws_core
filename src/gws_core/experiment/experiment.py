@@ -8,14 +8,16 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List, TypedDict, final
 
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.user.current_user_service import CurrentUserService
 from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
-from ..core.model.db_field import JSONField
+from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
@@ -24,8 +26,8 @@ from ..resource.resource_model import ResourceModel
 from ..tag.taggable_model import TaggableModel
 from ..user.activity import Activity
 from ..user.user import User
-from .experiment_exception import ResourceUsedInAnotherExperimentException
 from .experiment_enums import ExperimentStatus, ExperimentType
+from .experiment_exception import ResourceUsedInAnotherExperimentException
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
@@ -61,7 +63,6 @@ class Experiment(ModelWithUser, TaggableModel):
     score = DoubleField(null=True)
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
-    is_validated: bool = BooleanField(default=False)
     error_info: ExperimentErrorInfo = JSONField(null=True)
     type: ExperimentType = EnumField(choices=ExperimentType,
                                      default=ExperimentType.EXPERIMENT)
@@ -69,6 +70,10 @@ class Experiment(ModelWithUser, TaggableModel):
     title = CharField(max_length=50)
     description = JSONField(null=True)
     lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
+
+    is_validated: bool = BooleanField(default=False)
+    validated_at = DateTimeUTC(null=True)
+    validated_by = ForeignKeyField(User, null=True, backref='+')
 
     _table_name = 'gws_experiment'
 
@@ -268,6 +273,8 @@ class Experiment(ModelWithUser, TaggableModel):
             raise BadRequestException("The experiment must be linked to a project before validating it")
 
         self.is_validated = True
+        self.validated_at = DateHelper.now_utc()
+        self.validated_by = CurrentUserService.get_and_check_current_user()
         self.save()
 
     @transaction()
@@ -404,6 +411,9 @@ class Experiment(ModelWithUser, TaggableModel):
                 'id': self.project.id,
                 'title': self.project.title
             }
+
+        if self.validated_by:
+            _json["validated_by"] = self.validated_by.to_json()
 
         return _json
 

@@ -211,7 +211,7 @@ class Migration0312(BrickMigration):
                 Logger.log_exception_stack_trace(err)
 
 
-@brick_migration('0.3.13', short_description='Update orgin values of resources, add show_in_databox and generated_by_port_name columns')
+@brick_migration('0.3.13', short_description='Update orgin values of resources, add show_in_databox and generated_by_port_name columns. Add validated info to experiment and report')
 class Migration0313(BrickMigration):
 
     @classmethod
@@ -221,6 +221,10 @@ class Migration0313(BrickMigration):
 
         migrator.add_column_if_not_exists(ResourceModel, ResourceModel.show_in_databox)
         migrator.add_column_if_not_exists(ResourceModel, ResourceModel.generated_by_port_name)
+        migrator.add_column_if_not_exists(Experiment, Experiment.validated_at)
+        migrator.add_column_if_not_exists(Experiment, Experiment.validated_by)
+        migrator.add_column_if_not_exists(Report, Report.validated_at)
+        migrator.add_column_if_not_exists(Report, Report.validated_by)
         migrator.migrate()
 
         # retrieve all resource of type  ResourceListBase or children
@@ -257,3 +261,18 @@ class Migration0313(BrickMigration):
             except Exception as err:
                 Logger.error(f'Error while migrating resource {resource_model.id} : {err}')
                 Logger.log_exception_stack_trace(err)
+
+        # update validated info to experiment and report
+        experiment_models: List[Experiment] = list(Experiment.select())
+        for experiment_model in experiment_models:
+            if experiment_model.is_validated:
+                experiment_model.validated_at = experiment_model.last_modified_at
+                experiment_model.validated_by = experiment_model.last_modified_by
+                experiment_model.save()
+
+        report_models: List[Report] = list(Report.select())
+        for report_model in report_models:
+            if report_model.is_validated:
+                report_model.validated_at = report_model.last_modified_at
+                report_model.validated_by = report_model.last_modified_by
+                report_model.save()
