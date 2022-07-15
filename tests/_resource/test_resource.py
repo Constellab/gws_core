@@ -35,7 +35,6 @@ class TestResourceFieldsFile(File):
 class TestResource(BaseTestCase):
 
     async def test_resource(self):
-        GTest.print('Waow')
 
         task_model: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=RobotCreate, instance_name="create")
@@ -49,6 +48,8 @@ class TestResource(BaseTestCase):
         resource_model: ResourceModel = create.out_port('robot').resource_model
         self.assertIsNotNone(resource_model.id)
         self.assertTrue(isinstance(resource_model, ResourceModel))
+        self.assertEqual(resource_model.origin, ResourceOrigin.GENERATED)
+        self.assertEqual(resource_model.generated_by_port_name, 'robot')
 
         # Check that the resource is a Robot
         robot: Robot = resource_model.get_resource()

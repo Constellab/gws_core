@@ -234,6 +234,14 @@ class ResourceService(BaseService):
             search_builder.add_expression(ResourceModel.experiment.in_(experiments))
             search.remove_filter_criteria('project')
 
+        # Handle 'include_intermediate_resource'
+        # If not provided or false, filter with resource where show_in_databox = True
+        # Otherwise, not filter
+        include_non_output: SearchFilterCriteria = search.get_filter_criteria('include_intermediate_resource')
+        if include_non_output is None or not include_non_output['value']:
+            search_builder.add_expression(ResourceModel.show_in_databox == True)
+        search.remove_filter_criteria('include_intermediate_resource')
+
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
             model_select, page=page, nb_of_items_per_page=number_of_items_per_page)

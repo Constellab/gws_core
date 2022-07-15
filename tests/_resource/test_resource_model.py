@@ -18,12 +18,12 @@ from gws_core.tag.tag_service import TagService
 @resource_decorator(unique_name="ForSearch")
 class ForSearch(Resource):
 
-    searchableText: str = RField(searchable=True)
+    searchable_text: str = RField(searchable=True)
 
     @classmethod
     def create(cls, text) -> 'ForSearch':
         for_search = ForSearch()
-        for_search.searchableText = text
+        for_search.searchable_text = text
         return for_search
 
 
@@ -73,7 +73,7 @@ class TestResourceModel(BaseTestCase):
         # Search on name tag & resource typing name
         search_dict.filtersCriteria = [
             self._get_tag_filter(str(nameTag)),
-            {"key": "resource_typing_name", "operator": "EQ", "value": ForSearch._typing_name}]
+            {"key": "resource_typing_name", "operator": "IN", "value": [ForSearch._typing_name]}]
         self.search(search_dict, 2)
 
         # Search on name tag & ResourceOrigin

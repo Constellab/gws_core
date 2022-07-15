@@ -67,7 +67,12 @@ class Sink(Task):
     config_specs: ConfigSpecs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        pass
+        # mark the resource to show in databox as it is an output
+        from ..resource.resource_model import ResourceModel
+        resource: Resource = inputs.get(Sink.input_name)
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource._model_id)
+        resource_model.show_in_databox = True
+        resource_model.save()
 
 
 @task_decorator(unique_name="FIFO2")

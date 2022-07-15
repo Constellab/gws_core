@@ -291,7 +291,7 @@ class TaskModel(ProcessModel):
 
         # create and save the resource model from the resource
         resource_model = ResourceModel.save_from_resource(
-            resource, origin=ResourceOrigin.GENERATED, experiment=self.experiment, task_model=self)
+            resource, origin=ResourceOrigin.GENERATED, experiment=self.experiment, task_model=self, port_name=port_name)
 
         # update the parent of new children resource
         if isinstance(resource, ResourceListBase):
