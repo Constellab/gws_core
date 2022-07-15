@@ -249,7 +249,7 @@ class Table(Resource):
         self._meta["column_tag_types"] = current_column_tag_types
 
     def get_data(self) -> DataFrame:
-        return self._data
+        return self._data.copy()
 
     @property
     def column_names(self) -> list:

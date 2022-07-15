@@ -211,6 +211,7 @@ from .impl.table.transformers.table_mass_operations import \
     TableColumnMassOperations as TableColumnMassOperations
 from .impl.table.transformers.table_operations import \
     TableColumnOperations as TableColumnOperations
+from .impl.table.transformers.table_replace import TableReplace as TableReplace
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
 from .impl.table.transformers.table_selector import \
     TableColumnSelector as TableColumnSelector
