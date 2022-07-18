@@ -28,7 +28,10 @@ class TechnicalInfo:
 
     @classmethod
     def from_json(cls, json_data: Dict[str, str]) -> 'TechnicalInfo':
-        return TechnicalInfo(key=json_data["key"], value=json_data["value"])
+        return TechnicalInfo(
+            key=json_data["key"],
+            value=json_data["value"],
+            short_description=json_data.get("short_description"))
 
 
 class TechnicalInfoDict(SerializableObject):
