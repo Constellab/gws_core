@@ -126,6 +126,14 @@ class Table(Resource):
 
         self._meta = meta
 
+    def get_meta(self) -> TableMeta:
+        """Get a copy of the table meta data information
+
+        :return: _description_
+        :rtype: TableMeta
+        """
+        return copy.deepcopy(self._meta)
+
     def _add_tag(
             self, axis, index: int, key: str, value: Union[str, int, float],
             type_: TableTagType = 'categorical'):
@@ -557,7 +565,7 @@ class Table(Resource):
         }
 
         # create a new table
-        return self._create_sub_table(data, meta)
+        return self.create_sub_table(data, meta)
 
     def select_by_row_tags(self, tags: List[dict]) -> 'Table':
         """
@@ -662,7 +670,7 @@ class Table(Resource):
             "column_tags": copy.deepcopy(selected_col_tags),
             "row_tags": copy.deepcopy(self.get_row_tags())
         }
-        return self._create_sub_table(data, meta)
+        return self.create_sub_table(data, meta)
 
     # Selection by exclusion
 
@@ -688,7 +696,7 @@ class Table(Resource):
             meta["row_tags"] = [meta["row_tags"][k] for k in positions]
 
         # create a new table
-        return self._create_sub_table(filtered_df, meta)
+        return self.create_sub_table(filtered_df, meta)
 
     def _create_sub_table_filtered_by_columns(self, filtered_df: DataFrame) -> 'Table':
         """Create a sub Table based on a subset Dataframe of the original table filtered by columns"""
@@ -702,9 +710,9 @@ class Table(Resource):
             meta["column_tags"] = [meta["column_tags"][k] for k in positions]
 
         # create a new table
-        return self._create_sub_table(filtered_df, meta)
+        return self.create_sub_table(filtered_df, meta)
 
-    def _create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
+    def create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
         """
         Create a new table from a dataframe and a meta
         """
@@ -719,7 +727,12 @@ class Table(Resource):
             self._data.__str__()
 
     def transpose(self) -> 'Table':
-        return self._create_sub_table(self._data.T, self._transpose_meta())
+        return Table(
+            data=self._data.T,
+            row_names=self.column_names,
+            column_names=self.row_names,
+            meta=self._transpose_meta()
+        )
 
     def _transpose_meta(self) -> TableMeta:
         return {

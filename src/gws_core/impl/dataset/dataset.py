@@ -168,8 +168,8 @@ class Dataset(Table):
 
         return self._data.shape[1]
 
-    def _create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
-        dataset: Dataset = super()._create_sub_table(dataframe, meta)
+    def create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
+        dataset: Dataset = super().create_sub_table(dataframe, meta)
         new_target_names = [name for name in self.target_names if name in dataset.column_names]
         dataset._set_target_names(new_target_names)
         return dataset

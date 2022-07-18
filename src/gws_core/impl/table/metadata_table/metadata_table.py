@@ -53,8 +53,8 @@ class MetadataTable(Table):
     def get_sample_ids(self) -> list:
         return self.get_column_as_list(self.sample_id_column)
 
-    def _create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
-        table: MetadataTable = super()._create_sub_table(dataframe, meta)
+    def create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
+        table: MetadataTable = super().create_sub_table(dataframe, meta)
         if not self.sample_id_column in table.column_names:
             raise BadRequestException("The sample_id_column is required and must be selected")
         return table

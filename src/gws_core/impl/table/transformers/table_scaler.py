@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from pandas import DataFrame
+
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ..helper.constructor.data_scale_filter_param import \
@@ -36,8 +38,6 @@ class TableScaler(Transformer):
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        data = source.get_data()
-        data: Table = DataScaleFilterParamConstructor.scale(data, params["scaling"])
-        table = Table(data=data)
-        # table.name = source.name + " (Scaled)"
+        data: DataFrame = DataScaleFilterParamConstructor.scale(source.get_data(), params["scaling"])
+        table = source.create_sub_table(data, source.get_meta())
         return table

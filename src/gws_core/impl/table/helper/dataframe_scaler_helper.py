@@ -13,7 +13,7 @@ from ....core.exception.exceptions import BadRequestException
 
 class DataframeScalerHelper:
 
-    VALID_SCALING_FUNCTIONS = ["none", "log2", "log10", "unit", "percent", "standard"]
+    VALID_SCALING_FUNCTIONS = ["none", "log", "log2", "log10", "unit", "percent", "standard"]
 
     @classmethod
     def _check_func(cls, func):
@@ -33,6 +33,8 @@ class DataframeScalerHelper:
             data = data.applymap(DataframeScalerHelper._log10, na_action='ignore')
         elif func == "log2":
             data = data.applymap(DataframeScalerHelper._log2, na_action='ignore')
+        elif func == "log":
+            data = data.applymap(DataframeScalerHelper._log, na_action='ignore')
         else:
             data = DataframeHelper.nanify(data)
             if func == "unit":
@@ -51,3 +53,7 @@ class DataframeScalerHelper:
     @staticmethod
     def _log2(x):
         return numpy.log2(x) if isinstance(x, (float, int,)) else numpy.NaN
+
+    @staticmethod
+    def _log(x):
+        return numpy.log(x) if isinstance(x, (float, int,)) else numpy.NaN

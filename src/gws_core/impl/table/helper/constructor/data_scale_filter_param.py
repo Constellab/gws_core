@@ -5,10 +5,8 @@
 
 from typing import List
 
-from gws_core.impl.table.table import Table
 from pandas import DataFrame
 
-from .....config.config_types import ConfigParams
 from .....config.param_set import ParamSet
 from .....config.param_spec import StrParam
 from .....core.exception.exceptions import BadRequestException
@@ -24,7 +22,7 @@ from ..dataframe_scaler_helper import DataframeScalerHelper
 class DataScaleFilterParamConstructor:
 
     @staticmethod
-    def scale(data: DataFrame, params: List[dict]) -> Table:
+    def scale(data: DataFrame, params: List[dict]) -> DataFrame:
         for _filter in params:
             data = DataframeScalerHelper.scale(
                 data=data,
