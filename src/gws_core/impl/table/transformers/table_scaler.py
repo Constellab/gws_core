@@ -26,6 +26,10 @@ class TableScaler(Transformer):
     Transformer to apply one or multiple scalling functions to all numerical values of the table.
 
     Available scaling functions: ```log2```, ```log10```, ```unit```, ```percent``` and ```standard```.
+    - ```log2, log10``` replace each element by the corresponding log value
+    - ```unit``` normalizes each element by the sum of its column
+    - ```percent``` is like ```unit``` but the final value is multiplied by 100.
+    - ```percent``` normalizes each element by the standard deviation of its column
     """
     config_specs: ConfigSpecs = {
         "scaling": DataScaleFilterParamConstructor.construct_filter(),
