@@ -62,8 +62,8 @@ class TableTagGrouperHelper:
 
         sorted_table = Table(df)
         new_row_tags = [row_tags[i] for i in new_row_position]
-        sorted_table.set_row_tags(new_row_tags)
-        sorted_table.set_column_tags(table.get_column_tags())
+        sorted_table.set_all_rows_tags(new_row_tags)
+        sorted_table.set_all_columns_tags(table.get_column_tags())
         return sorted_table
 
     ############################################## COLUMNS ######################################################
@@ -114,8 +114,8 @@ class TableTagGrouperHelper:
 
         sorted_table = Table(df)
         new_column_tags = [column_tags[i] for i in new_column_position]
-        sorted_table.set_column_tags(new_column_tags)
-        sorted_table.set_row_tags(table.get_row_tags())
+        sorted_table.set_all_columns_tags(new_column_tags)
+        sorted_table.set_all_rows_tags(table.get_row_tags())
         return sorted_table
 
     ############################################## BOTH ######################################################
@@ -152,10 +152,10 @@ class TableTagGrouperHelper:
             df.index = list(df_list.keys())
             grouped_table = Table(df)
             # set the other axis tags
-            grouped_table.set_column_tags(table.get_column_tags())
+            grouped_table.set_all_columns_tags(table.get_column_tags())
         else:
             df.columns = list(df_list.keys())
             grouped_table = Table(df)
             # set the other axis tags
-            grouped_table.set_row_tags(table.get_row_tags())
+            grouped_table.set_all_rows_tags(table.get_row_tags())
         return grouped_table

@@ -35,7 +35,6 @@ class DataProvider():
             "header": 0,
             "metadata_columns": [{
                 "column": "variety",
-                "type": Table.CATEGORICAL_TAG_TYPE,
                 "keep_in_data": True,
             }]
         })
@@ -47,7 +46,6 @@ class DataProvider():
             "header": 0,
             "metadata_columns": [{
                 "column": "variety",
-                "type": Table.CATEGORICAL_TAG_TYPE,
                 "keep_in_data": True,
                 "is_target": True
             }]
@@ -60,7 +58,6 @@ class DataProvider():
             "header": -1,
             "metadata_columns": [{
                 "column": "4",
-                "type": Table.CATEGORICAL_TAG_TYPE,
                 "keep_in_data": True,
                 "is_target": True
             }]

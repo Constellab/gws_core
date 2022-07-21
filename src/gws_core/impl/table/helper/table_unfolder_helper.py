@@ -82,5 +82,5 @@ class TableUnfolderHelper:
             row_tags.extend(complete_tags)
 
         table = Table(dataframe)
-        table.set_row_tags(row_tags)
+        table.set_all_rows_tags(row_tags)
         return table

@@ -4,98 +4,112 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (BaseTestCase, DataframeFilterHelper, Settings, Table,
-                      TableImporter)
-from gws_core.data_provider.data_provider import DataProvider
+from gws_core import BaseTestCase, DataframeFilterHelper
+from gws_core.impl.table.helper.dataframe_data_filter_helper import \
+    DataframeDataFilterHelper
 from pandas import DataFrame
-
-settings = Settings.retrieve()
-testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
 class TestTableFilterHelper(BaseTestCase):
-    async def test_table_filter_helper(self):
-        file = DataProvider.get_test_data_file("multi_index_data.csv")
-        table: Table = TableImporter.call(file, {"header": 0, "index_column": 0})
+    async def test_filter_by_axis_name(self):
+
+        initial_df = DataFrame(
+            {'Age': [1, 2, 3, 4],
+             'Sex': [8, 6, 4, 2],
+             'City': [8, 6, 4, 2],
+             'Weight': [8, 6, 4, 2]},
+            index=['Luc', 'Lea', 'Mickeal', 'Fred'])
 
         # filter by row name
-        df = DataframeFilterHelper.filter_by_axis_names(
-            data=table.get_data(), axis="row", filters=[{"name": "L.*a$", "is_regex": True}]
+        result: DataFrame = DataframeFilterHelper.filter_by_axis_names(
+            data=initial_df, axis="row", filters=[{"name": "L.*", "is_regex": True}]
         )
-        self.assertEqual(df.index.tolist(), ["Lea", "Laura"])
-        self.assertEqual(df.columns.tolist(), ["Age", "Sex", "City", "Weight"])
+        self.assertEqual(result.index.tolist(), ["Luc", "Lea"])
+        self.assertEqual(result.columns.tolist(), ["Age", "Sex", "City", "Weight"])
 
         # filter by column name
-        df = DataframeFilterHelper.filter_by_axis_names(
-            data=table.get_data(), axis="column", filters=[{"name": "Cit.*", "is_regex": True}]
+        result = DataframeFilterHelper.filter_by_axis_names(
+            data=initial_df, axis="column", filters=[{"name": "Cit.*", "is_regex": True}]
         )
-        self.assertEqual(df.index.tolist(), ["Luc", "Lea", "Laura", "Leon"])
-        self.assertEqual(df.columns.tolist(), ["City"])
+        self.assertEqual(result.index.tolist(), ["Luc", "Lea", "Mickeal", "Fred"])
+        self.assertEqual(result.columns.tolist(), ["City"])
 
-        # filter by aggreated column
-        df = DataframeFilterHelper.filter_by_aggregated_values(
-            data=table.get_data(), direction="vertical", func="sum", comp=">=", value=100
-        )
-        self.assertEqual(df.index.tolist(), ["Luc", "Lea", "Laura", "Leon"])
-        self.assertEqual(df.columns.tolist(), ["Age", "Weight"])
+    async def test_table_filter_aggregate(self):
 
-        # filter by aggreated column
-        df = DataframeFilterHelper.filter_by_aggregated_values(
-            data=table.get_data(), direction="vertical", func="sum", comp=">=", value=150
-        )
-        self.assertEqual(df.index.tolist(), ["Luc", "Lea", "Laura", "Leon"])
-        self.assertEqual(df.columns.tolist(), ["Weight"])
+        initial_df = DataFrame({'A': [1, 2, 3, 4], 'B': [8, 6, 4, 2]})
 
-        # filter by aggreated column
-        df = DataframeFilterHelper.filter_by_aggregated_values(
-            data=table.get_data(), direction="vertical", func="sum", comp="<", value=150
+        # filter columns where sum > 10 (only B)
+        result = DataframeDataFilterHelper.filter_by_aggregated_values(
+            data=initial_df, direction="vertical", func="sum", comp=">", value=10
         )
-        self.assertEqual(df.index.tolist(), ["Luc", "Lea", "Laura", "Leon"])
-        self.assertEqual(df.columns.tolist(), ["Age"])
 
-        # filter by aggreated column
-        df = DataframeFilterHelper.filter_by_aggregated_values(
-            data=table.get_data(), direction="vertical", func="median", comp=">=", value=150
-        )
-        self.assertTrue(df.empty)
+        expected_result = DataFrame({'B': [8, 6, 4, 2]})
+        self.assertTrue(result.equals(expected_result))
 
-        # filter by aggreated row
-        df = DataframeFilterHelper.filter_by_aggregated_values(
-            data=table.get_data(), direction="horizontal", func="var", comp=">=", value=50
+        # filter columns where sum > 0 (all columns)
+        result = DataframeDataFilterHelper.filter_by_aggregated_values(
+            data=initial_df, direction="vertical", func="sum", comp=">", value=0
         )
-        self.assertEqual(df.index.tolist(), ["Laura", "Leon"])
-        self.assertEqual(df.columns.tolist(), ["Age", "Sex", "City", "Weight"])
 
-        # filter numeric data
-        df = DataframeFilterHelper.filter_numeric_data(
-            data=table.get_data(), column_name="Age", comp=">=", value=30
-        )
-        self.assertEqual(df.index.tolist(), ["Laura", "Leon"])
-        self.assertEqual(df.columns.tolist(), ["Age", "Sex", "City", "Weight"])
+        self.assertTrue(result.equals(initial_df))
 
-        # filter numeric data
-        df = DataframeFilterHelper.filter_numeric_data(
-            data=table.get_data(), column_name="Age|Weight", comp=">=", value=30
+        # Filter row where sum >= 8 (first and second rows)
+        result = DataframeDataFilterHelper.filter_by_aggregated_values(
+            data=initial_df, direction="horizontal", func="sum", comp=">=", value=8
         )
-        self.assertEqual(df.index.tolist(), ["Laura", "Leon"])
-        self.assertEqual(df.columns.tolist(), ["Age", "Sex", "City", "Weight"])
 
-        df = DataframeFilterHelper.filter_numeric_data(
-            data=table.get_data(), column_name="Age|Sex", comp=">=", value=30
-        )
-        self.assertTrue(df.empty)
+        expected_result = DataFrame({'A': [1, 2], 'B': [8, 6]}, index=[0, 1])
+        self.assertTrue(result.equals(expected_result))
 
-        df = DataframeFilterHelper.filter_text_data(
-            data=table.get_data(), column_name="Sex", comp="=", value="M"
-        )
-        self.assertEqual(df.index.tolist(), ["Luc", "Leon"])
-        self.assertEqual(df.columns.tolist(), ["Age", "Sex", "City", "Weight"])
+    async def test_table_filter_numeric_data(self):
 
-        df = DataframeFilterHelper.filter_text_data(
-            data=table.get_data(), column_name="Sex", comp="!=", value="M"
+        initial_df = DataFrame({'A': [1, 2, 3, 4], 'B': [8, 6, 4, 2]})
+
+        # filter A column where value >= 3
+        result = DataframeDataFilterHelper.filter_column_numeric(
+            data=initial_df, column_name="A", comp=">=", value=3
         )
-        self.assertEqual(df.index.tolist(), ["Lea", "Laura"])
-        self.assertEqual(df.columns.tolist(), ["Age", "Sex", "City", "Weight"])
+        expected_result = DataFrame({'A': [3, 4], 'B': [4, 2]}, index=[2, 3])
+        self.assertTrue(result.equals(expected_result))
+
+        # filter where A and B columns are >= 3
+        result = DataframeDataFilterHelper.filter_column_numeric(
+            data=initial_df, column_name="*", comp=">=", value=3)
+        expected_result = DataFrame({'A': [3], 'B': [4]}, index=[2])
+        self.assertTrue(result.equals(expected_result))
+
+        # filter first row where value is >= 3
+        result = DataframeDataFilterHelper.filter_row_numeric(
+            data=initial_df, row_name="0", comp=">=", value=3
+        )
+        expected_result = DataFrame({'B': [8, 6, 4, 2]})
+        self.assertTrue(result.equals(expected_result))
+
+    async def test_table_filter_text_data(self):
+
+        initial_df = DataFrame({'A': ['a', 'b', 'c', 'd'], 'B': ['hello', 'nice', 'tacos', 'house']})
+
+        # filter A column where value == b
+        result = DataframeDataFilterHelper.filter_column_text(
+            data=initial_df, column_name="A", comp="=", value="b"
+        )
+        expected_result = DataFrame({'A': ['b'], 'B': ['nice']}, index=[1])
+        self.assertTrue(result.equals(expected_result))
+
+        # filter where B columns where value contains e
+        result = DataframeDataFilterHelper.filter_column_text(
+            data=initial_df, column_name="B", comp="contains", value="e"
+        )
+        expected_result = DataFrame({'A': ['a', 'b', 'd'], 'B': ['hello', 'nice', 'house']},
+                                    index=[0, 1, 3])
+        self.assertTrue(result.equals(expected_result))
+
+        # filter first row where value is == hello
+        result = DataframeDataFilterHelper.filter_row_text(
+            data=initial_df, row_name="0", comp="=", value="hello"
+        )
+        expected_result = DataFrame({'B': ['hello', 'nice', 'tacos', 'house']})
+        self.assertTrue(result.equals(expected_result))
 
     async def test_table_filter_out_helper(self):
 
@@ -104,7 +118,7 @@ class TestTableFilterHelper(BaseTestCase):
 
         # Column remove
         # Remove A column
-        sub_df = DataframeFilterHelper.filter_out_by_axis_names(
+        sub_df: DataFrame = DataframeFilterHelper.filter_out_by_axis_names(
             data=initial_df, axis="column", filters=[{"name": "A", "is_regex": False}]
         )
         self.assertEqual(sub_df.columns.tolist(), ['B', 'AA'])

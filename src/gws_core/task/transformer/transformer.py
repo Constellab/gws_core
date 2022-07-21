@@ -19,7 +19,8 @@ from ..task_decorator import task_decorator
 
 def transformer_decorator(unique_name: str, resource_type: Type[Resource],
                           allowed_user: UserGroup = UserGroup.USER,
-                          human_name: str = "", short_description: str = "", hide: bool = False):
+                          human_name: str = "", short_description: str = "", hide: bool = False,
+                          deprecated_since: str = None, deprecated_message: str = None):
     """ Decorator to place on a task instead of task_decorator. This create a specific task to transform the resource.
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
@@ -48,7 +49,8 @@ def transformer_decorator(unique_name: str, resource_type: Type[Resource],
         decorate_converter(task_class=task_class, unique_name=unique_name, task_type='TRANSFORMER',
                            source_type=resource_type, target_type=resource_type, related_resource=resource_type,
                            allowed_user=allowed_user, human_name=human_name,
-                           short_description=short_description, hide=hide)
+                           short_description=short_description, hide=hide,
+                           deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
         return task_class
     return decorator

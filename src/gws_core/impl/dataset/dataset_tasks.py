@@ -33,7 +33,6 @@ class DatasetImporter(TableImporter):
         'header': IntParam(default_value=0, min_value=-1, human_name="Header", short_description="Row to use as the column names. By default the first row is used (i.e. header=0). Set header=-1 to not read column names."),
         "metadata_columns": ParamSet({
             'column': StrParam(default_value=None, optional=True, visibility=StrParam.PUBLIC_VISIBILITY, human_name="Column", short_description="Column to use to tag rows using metadata."),
-            'type': StrParam(default_value=Table.CATEGORICAL_TAG_TYPE, optional=True, allowed_values=Table.ALLOWED_TAG_TYPES, visibility=StrParam.PUBLIC_VISIBILITY, human_name="Type", short_description="Types of metadata"),
             'keep_in_table': BoolParam(default_value=True, optional=True, visibility=BoolParam.PUBLIC_VISIBILITY, human_name="Keep in table", short_description="Set True to keep metadata in table; False otherwise"),
             'is_target': BoolParam(default_value=True, optional=True, visibility=BoolParam.PUBLIC_VISIBILITY, human_name="Is target", short_description="Set True to use the column as target; False otherwise"),
         }, optional=True, visibility=ParamSet.PUBLIC_VISIBILITY, human_name="Metadata and target columns", short_description="Columns data to use to tag rows of the dataset and also as targets"),

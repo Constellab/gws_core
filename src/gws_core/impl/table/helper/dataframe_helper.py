@@ -58,10 +58,6 @@ class DataframeHelper:
         return dataframe.applymap(lambda x: NumericHelper.to_float(x, NaN),  na_action='ignore')
 
     @classmethod
-    def nanify(cls, data: DataFrame) -> DataFrame:
-        return data.applymap(cls._nanify_value, na_action='ignore')
-
-    @classmethod
     def replace_inf(cls, data: DataFrame, value=NaN) -> DataFrame:
         return data.replace([inf, -inf], value)
 
@@ -70,6 +66,42 @@ class DataframeHelper:
         data: DataFrame = dataframe.replace({NaN: value})
         return cls.replace_inf(data, value)
 
-    @staticmethod
-    def _nanify_value(x):
-        return x if isinstance(x, (float, int,)) else NaN
+    @classmethod
+    def nanify_none_numeric(cls, data: DataFrame) -> DataFrame:
+        """ Convert all not numeric element to NaN"""
+        return data.applymap(lambda x: x if isinstance(x, (float, int)) else NaN,
+                             na_action='ignore')
+
+    @classmethod
+    def nanify_none_str(cls, data: DataFrame) -> DataFrame:
+        """ Convert all not string element to NaN"""
+        return data.applymap(lambda x: x if isinstance(x, str) else NaN,
+                             na_action='ignore')
+
+    @classmethod
+    def contains(cls, data: DataFrame, value: Any) -> DataFrame:
+        """
+        Return a dataframe with True if the value is in the column
+        """
+        return data.applymap(lambda x: value in x, na_action='ignore')
+
+    @classmethod
+    def starts_with(cls, data: DataFrame, value: str) -> DataFrame:
+        """
+        Return a dataframe with True if the cell starts with the value
+        """
+        return data.applymap(lambda x: x.startswith(value), na_action='ignore')
+
+    @classmethod
+    def ends_with(cls, data: DataFrame, value: str) -> DataFrame:
+        """
+        Return a dataframe with True if the cell ends with the value
+        """
+        return data.applymap(lambda x: x.endswith(value), na_action='ignore')
+
+    @classmethod
+    def stringify(cls, data: DataFrame) -> DataFrame:
+        """
+        Convert all element of a dataframe to string
+        """
+        return data.astype(str)

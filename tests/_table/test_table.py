@@ -7,55 +7,65 @@ import os
 
 import numpy
 import pandas
-from gws_core import (BaseTestCase, File, GTest, Settings, Table,
-                      TableExporter, TableImporter, TaskRunner)
+from gws_core import (BaseTestCase, File, Table, TableExporter, TableImporter,
+                      TaskRunner)
 from gws_core_test_helper import GWSCoreTestHelper
 from pandas import DataFrame
-
-settings = Settings.retrieve()
-testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
 class TestTable(BaseTestCase):
     def test_table(self):
         table: Table = Table(data=[[1, 2, 3]], column_names=["a", "b", "c"])
-        self.assertEqual(
-            table.get_meta(),
-            {'row_tags': [{}],
-             'column_tags': [{},
-                             {},
-                             {}],
-             'column_tag_types': {},
-             'row_tag_types': {},
-             'comments': ''})
 
-        table._set_data(
-            data=[1, 2, 3], column_names=["data"], row_names=["a", "b", "c"]
-        )
-        self.assertEqual(table.get_meta(), {'row_tags': [{}, {}, {}], 'column_tags': [
-                         {}], 'column_tag_types': {}, 'row_tag_types': {}, 'comments': ''})
+        self.assert_json(table.get_row_tags(), [{}])
+        self.assert_json(table.get_column_tags(), [{}, {}, {}])
+        self.assertEqual(table.comments, None)
+
+    def test_create_sub_table(self):
+        dataframe = DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+
+        row_tags = [{'a': "1"}, {'a': "2"}, {'a': "3"}]
+        column_tags = [{'b': "4"}, {'b': "5"}]
+
+        table = Table(data=dataframe, row_tags=row_tags, column_tags=column_tags)
+
+        # Simulate the filter by column B
+        sub_dataframe = DataFrame({'A': [1, 2, 3]})
+
+        sub_table = table.create_sub_table_filtered_by_columns(sub_dataframe)
+        self.assertTrue(sub_table.get_data().equals(sub_dataframe.copy()))
+        self.assertEqual(sub_table.get_row_tags(), row_tags)
+        # there should be only one column --> one tag
+        self.assertEqual(sub_table.get_column_tags(), [{'b': "4"}])
+
+        # Simulate the filter by row 1 & 2
+        sub_dataframe = DataFrame({'A': [1, 2], 'B': [4, 5]})
+
+        sub_table = table.create_sub_table_filtered_by_rows(sub_dataframe)
+        self.assertTrue(sub_table.get_data().equals(sub_dataframe.copy()))
+        self.assertEqual(sub_table.get_column_tags(), column_tags)
+        # there should be only two rows --> tow tag
+        self.assertEqual(sub_table.get_row_tags(), [{'a': "1"}, {'a': "2"}])
 
     def test_table_select(self):
-        meta = {
-            "row_tags": [
-                {"lg": "EN", "c": "US", "user": "Vi"},
-                {"lg": "JP", "c": "JP", "user": "Jo"},
-                {"lg": "FR", "c": "FR", "user": "Jo"},
-            ],
-            "column_tags": [
-                {"lg": "EN", "c": "UK"},
-                {"lg": "PT", "c": "PT"},
-                {"lg": "CH", "c": "CH"}
-            ],
-        }
+        row_tags = [
+            {"lg": "EN", "c": "US", "user": "Vi"},
+            {"lg": "JP", "c": "JP", "user": "Jo"},
+            {"lg": "FR", "c": "FR", "user": "Jo"},
+        ]
+        column_tags = [
+            {"lg": "EN", "c": "UK"},
+            {"lg": "PT", "c": "PT"},
+            {"lg": "CH", "c": "CH"}
+        ]
 
         table: Table = Table(
             data=[[1, 2, 3], [3, 4, 6], [3, 7, 6]],
             row_names=["NY", "Tokyo", "Paris"],
             column_names=["London", "Lisboa", "Beijin"],
-            meta=meta
+            row_tags=row_tags,
+            column_tags=column_tags
         )
-        self.assertEqual(table.get_meta(), meta)
 
         # ------------------------------------------------------------
         # Select by row positions
@@ -223,7 +233,7 @@ class TestTable(BaseTestCase):
         )
         self.assertTrue(os.path.exists(file_path))
         outputs = await tester.run()
-        table = outputs["target"]
+        table: Table = outputs["target"]
         df = pandas.read_table(file_path)
         self.assertTrue(numpy.array_equal(
             df.to_numpy(),

@@ -36,7 +36,7 @@ class DataframeScalerHelper:
         elif func == "log":
             data = data.applymap(DataframeScalerHelper._log, na_action='ignore')
         else:
-            data = DataframeHelper.nanify(data)
+            data = DataframeHelper.nanify_none_numeric(data)
             if func == "unit":
                 data = data / data.sum(skipna=None)
             elif func == "percent":

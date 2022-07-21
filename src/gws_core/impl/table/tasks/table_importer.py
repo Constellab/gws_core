@@ -29,7 +29,6 @@ class TableImporter(ResourceImporter):
         'index_column': IntParam(default_value=-1, min_value=-1, optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Index column", short_description="Column to use as the row names. By default no index is used (i.e. index_column=-1)."),
         "metadata_columns": ParamSet({
             'column': StrParam(default_value=None, optional=True, visibility=StrParam.PROTECTED_VISIBILITY, human_name="Column", short_description="Column to use to tag rows using metadata."),
-            'type': StrParam(default_value=Table.CATEGORICAL_TAG_TYPE, optional=True, allowed_values=Table.ALLOWED_TAG_TYPES, visibility=StrParam.PUBLIC_VISIBILITY, human_name="Type", short_description="Types of metadata"),
             'keep_in_table': BoolParam(default_value=True, optional=True, visibility=BoolParam.PROTECTED_VISIBILITY, human_name="Keep in table", short_description="Set True to keep metadata in table; False otherwise"),
         }, optional=True, visibility=ParamSet.PROTECTED_VISIBILITY, human_name="Metadata columns", short_description="Columns data to use to tag rows of the table"),
         'decimal': StrParam(default_value=".", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Decimal character", short_description="Character to recognize as decimal point (e.g. use ‘,’ for European/French data)."),
@@ -93,12 +92,10 @@ class TableImporter(ResourceImporter):
         if metadata_columns:
             row_tags = []
             meta_cols = []
-            meta_types = {}
             keep_in_table = {}
             for metadata in metadata_columns:
                 colname = metadata.get("column")
                 meta_cols.append(colname)
-                meta_types[colname] = metadata.get("type", Table.CATEGORICAL_TAG_TYPE)
                 keep_in_table[colname] = metadata.get("keep_in_table", True)
 
             tag_df = df[meta_cols]
@@ -110,8 +107,7 @@ class TableImporter(ResourceImporter):
                 row_tags.append(tag)
 
             table = target_type(data=df)
-            table.set_row_tags(row_tags)
-            table.set_row_tag_types(meta_types)
+            table.set_all_rows_tags(row_tags)
         else:
             table = target_type(data=df)
 

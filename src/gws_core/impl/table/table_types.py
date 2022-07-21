@@ -14,13 +14,12 @@ class TableHeaderInfo(TypedDict):
     tags: Dict[str, str]
 
 
+# TODO remove meta on version 0.3.15
 class TableMeta(TypedDict):
     """ Object that represent the table Meta information
     """
     row_tags: List[Dict[str, str]]
     column_tags: List[Dict[str, str]]
-    row_tag_types: Dict[str, str]
-    column_tag_types: Dict[str, str]
 
 
 AxisType = Literal[0, 1, "index", "columns"]
@@ -28,6 +27,3 @@ AxisType = Literal[0, 1, "index", "columns"]
 
 def is_row_axis(axis: AxisType) -> bool:
     return axis in [0, "index"]
-
-
-TableTagType = Literal['categorical', 'numerical']

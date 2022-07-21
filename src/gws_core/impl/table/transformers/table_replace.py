@@ -65,7 +65,7 @@ class TableReplace(Transformer):
 
             dataframe.replace(search_value, replace_value, regex=is_regex, inplace=True)
 
-        new_table = Table(dataframe, meta=source.get_meta())
+        new_table = Table(dataframe, row_tags=source.get_row_tags(), column_tags=source.get_column_tags())
         return new_table
 
     def convert_param_value(self, param_value: str) -> Any:

@@ -8,7 +8,7 @@ from unittest import IsolatedAsyncioTestCase
 from gws_core import Table
 from gws_core.impl.table.helper.table_operation_helper import \
     TableOperationHelper
-from numpy import NaN, isnan
+from numpy import isnan
 from pandas import DataFrame
 
 

@@ -4,26 +4,24 @@
 # About us: https://gencovery.com
 
 
-import copy
 from typing import Dict, List, Literal, Union
 
 import numpy as np
-from gws_core.core.utils.utils import Utils
+from gws_core.core.utils.logger import Logger
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
-from gws_core.tag.tag_helper import TagHelper
+from gws_core.impl.table.table_axis_tags import TableAxisTags
 from pandas import DataFrame, Series
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...resource.r_field import DictRField
+from ...resource.r_field import DictRField, SerializableRField, StrRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from .data_frame_r_field import DataFrameRField
 from .helper.dataframe_filter_helper import (DataframeFilterHelper,
                                              DataframeFilterName)
-from .table_types import (AxisType, TableHeaderInfo, TableMeta, TableTagType,
-                          is_row_axis)
+from .table_types import AxisType, TableHeaderInfo, TableMeta, is_row_axis
 from .view.table_barplot_view import TableBarPlotView
 from .view.table_boxplot_view import TableBoxPlotView
 from .view.table_heatmap_view import TableHeatmapView
@@ -58,21 +56,27 @@ class Table(Resource):
     ALLOWED_TXT_FILE_FORMATS = ALLOWED_TXT_FILE_FORMATS
     ALLOWED_FILE_FORMATS = ALLOWED_FILE_FORMATS
 
-    NUMERICAL_TAG_TYPE = "numerical"
-    CATEGORICAL_TAG_TYPE = "categorical"
-    ALLOWED_TAG_TYPES = Utils.get_literal_values(TableTagType)
     COMMENT_CHAR = '#'
 
     _data: DataFrame = DataFrameRField()
     _meta: TableMeta = DictRField()
 
+    _row_tags: TableAxisTags = SerializableRField(TableAxisTags)
+    _column_tags: TableAxisTags = SerializableRField(TableAxisTags)
+    comments: str = StrRField()
+
     def __init__(self, data: Union[DataFrame, np.ndarray, list] = None,
-                 row_names=None, column_names=None,  meta: TableMeta = None):
+                 row_names: List[str] = None, column_names: List[str] = None,
+                 row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None,
+                 meta: TableMeta = None):
         super().__init__()
-        self._set_data(data, row_names=row_names, column_names=column_names, meta=meta)
+        self._set_data(data, row_names=row_names, column_names=column_names,
+                       row_tags=row_tags, column_tags=column_tags, meta=meta)
 
     def _set_data(self, data: Union[DataFrame, np.ndarray] = None,
-                  row_names=None, column_names=None,  meta: TableMeta = None) -> 'Table':
+                  row_names=None, column_names=None,
+                  row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None,
+                  meta: TableMeta = None) -> 'Table':
         if data is None:
             data = DataFrame()
         else:
@@ -100,31 +104,26 @@ class Table(Resource):
                 data.index = row_names
 
         self._data = data
-        self._set_meta(meta)
+
+        if meta:
+            # TODO remove meta on version 0.3.15
+            Logger.warning(f"[Table] The meta data is deprecated. Use row_tags and column_tags instead.")
+            self._set_tags(row_tags=meta.get("row_tags", None), column_tags=meta.get("column_tags", None))
+        else:
+            self._set_tags(row_tags=row_tags, column_tags=column_tags)
+
         return self
 
-    def _set_meta(self, meta: TableMeta = None):
-        if meta is None:
-            meta = {
-                "row_tags": [{}] * self.nb_rows,
-                "column_tags": [{}] * self.nb_columns,
-                "row_tag_types": {},
-                "column_tag_types": {},
-                "comments": ""
-            }
+    def _set_tags(self, row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None):
+        if row_tags:
+            self.set_all_rows_tags(row_tags)
         else:
-            if "row_tags" not in meta:
-                meta["row_tags"] = [{}] * self.nb_rows
-            if "column_tags" not in meta:
-                meta["column_tags"] = [{}] * self.nb_columns
-            if "comments" not in meta:
-                meta["comments"] = ""
-            if len(meta["row_tags"]) != self._data.shape[0]:
-                raise BadRequestException("The length of row_tags must be equal to the number of rows")
-            if len(meta["column_tags"]) != self._data.shape[1]:
-                raise BadRequestException("The length of column_tags must be equal to the number of columns")
+            self.set_all_rows_tags([{}] * self.nb_rows)
 
-        self._meta = meta
+        if column_tags:
+            self.set_all_columns_tags(column_tags)
+        else:
+            self.set_all_columns_tags([{}] * self.nb_columns)
 
     def get_meta(self) -> TableMeta:
         """Get a copy of the table meta data information
@@ -132,129 +131,45 @@ class Table(Resource):
         :return: _description_
         :rtype: TableMeta
         """
-        return copy.deepcopy(self._meta)
+        # TODO remove meta on version 0.3.15
+        Logger.warning(f"[Table] The meta data is deprecated. Use row_tags and column_tags instead.")
+        return {
+            "row_tags": self.get_row_tags(),
+            "column_tags": self.get_column_tags()
+        }
 
-    def _add_tag(
-            self, axis, index: int, key: str, value: Union[str, int, float],
-            type_: TableTagType = 'categorical'):
-        if axis not in ["row", "column"]:
-            raise BadRequestException("The axis must be either 'row' or 'column'")
-        if not isinstance(index, int):
-            raise BadRequestException("The index must be an integer")
-        if not isinstance(key, str):
-            raise BadRequestException("The tag key must be a string")
-        if not isinstance(value, (str, int, float)):
-            raise BadRequestException("The tag value must be a string, int or float")
-        if type_ not in self.ALLOWED_TAG_TYPES:
-            raise BadRequestException(f"Invalid tag type '{type_}'. The tag type must be in {self.ALLOWED_TAG_TYPES}")
-
-        key = str(key)
-        value = str(value)
-
-        self._meta[axis + "_tags"][index][key] = value
-        if key not in self._meta[axis + "_tag_types"]:
-            self._meta[axis + "_tag_types"][key] = type_
-        else:
-            if self._meta[axis + "_tag_types"][key] != type_:
-                raise BadRequestException(f"Tag '{key}' already exists with a different type")
-
-    def add_row_tag(
-            self, row_index: int, key: str, value: Union[str, int, float],
-            type_: TableTagType = 'categorical'):
+    def add_row_tag(self, row_index: int, key: str, value: str) -> None:
         """
         Add a {key, value} tag to a row at a given index
-
-        :param row_index: The row index
-        :param row_index: int
-        :param key: The tag key
-        :param key: str
-        :param value: The tag value
-        :param value: str, int, float
         """
 
-        self._add_tag("row", row_index, key, value, type_=type_)
+        self._row_tags.add_tag_at(row_index, key, value)
 
-    def add_column_tag(
-            self, column_index: int, key: str, value: Union[str, int, float],
-            type_: TableTagType = 'categorical'):
+    def add_column_tag(self, column_index: int, key: str, value: str) -> None:
         """
         Add a {key, value} tag to a column at a given index
-
-        :param column_index: The column index
-        :param column_index: int
-        :param key: The tag key
-        :param key: str
-        :param value: The tag value
-        :param value: str, int, float
         """
 
-        self._add_tag("column", column_index, key, value, type_=type_)
-
-    def convert_row_tags_to_dummy_target_matrix(self, key: str) -> DataFrame:
-        tags = self.get_row_tags()
-        targets = [tag[key] for tag in tags]
-        labels = sorted(list(set(targets)))
-        nb_labels = len(labels)
-        nb_instances = len(targets)
-        data = np.zeros(shape=(nb_instances, nb_labels))
-        for i in range(0, nb_instances):
-            current_label = targets[i]
-            idx = labels.index(current_label)
-            data[i][idx] = 1.0
-
-        return DataFrame(data=data, index=targets, columns=labels)
+        self._column_tags.add_tag_at(column_index, key, value)
 
     def set_comments(self, comments: str = ""):
         if not isinstance(comments, str):
-            raise BadRequestException("The comments must be a string")
+            raise Exception("The comments must be a string")
         if comments and comments[0] != self.COMMENT_CHAR:
             comments = self.COMMENT_CHAR + comments
-        self._meta["comments"] = comments
+        self.comments = comments
 
-    def set_row_tags(self, tags: list):
-        if not isinstance(tags, list):
-            raise BadRequestException("The tags must be a list")
-        if len(tags) != self._data.shape[0]:
-            raise BadRequestException("The length of tags must be equal to the number of rows")
+    def set_all_rows_tags(self, tags: List[Dict[str, str]]) -> None:
+        if len(tags) != self.nb_rows:
+            raise Exception("The length of tags must be equal to the number of rows")
 
-        self._meta["row_tags"] = self.clean_tags(tags)
+        self._row_tags = TableAxisTags(tags)
 
-    def set_row_tag_types(self, types: dict):
-        current_row_tags = self.get_row_tags()
-        current_row_tag_types = self.get_row_tag_types()
-        all_current_keys = list(set([k for t in current_row_tags for k in t]))
-        for k, v in types.items():
-            if k not in all_current_keys:
-                raise BadRequestException(f"The tag `{k}` does not exist")
-            else:
-                if v not in self.ALLOWED_TAG_TYPES:
-                    raise BadRequestException(f"Invalid tag type '{v}'. The tag type in {self.ALLOWED_TAG_TYPES}")
-                current_row_tag_types[k] = v
+    def set_all_columns_tags(self, tags: List[Dict[str, str]]) -> None:
+        if len(tags) != self.nb_columns:
+            raise Exception("The length of tags must be equal to the number of columns")
 
-        self._meta["row_tag_types"] = current_row_tag_types
-
-    def set_column_tags(self, tags: list):
-        if not isinstance(tags, list):
-            raise BadRequestException("The tags must be a list")
-        if len(tags) != self._data.shape[1]:
-            raise BadRequestException("The length of tags must be equal to the number of columns")
-
-        self._meta["column_tags"] = self.clean_tags(tags)
-
-    def set_column_tag_types(self, types: dict):
-        current_column_tags = self.get_column_tags()
-        current_column_tag_types = self.get_column_tag_types()
-        all_current_keys = list(set([k for t in current_column_tags for k in t]))
-        for k, v in types.items():
-            if k not in all_current_keys:
-                raise BadRequestException(f"The tag `{k}` does not exist")
-            else:
-                if v not in self.ALLOWED_TAG_TYPES:
-                    raise BadRequestException(
-                        f"Invalid tag type '{v}'. The tag type must be in {self.ALLOWED_TAG_TYPES}")
-                current_column_tag_types[k] = v
-
-        self._meta["column_tag_types"] = current_column_tag_types
+        self._column_tags = TableAxisTags(tags)
 
     def get_data(self) -> DataFrame:
         return self._data.copy()
@@ -337,21 +252,7 @@ class Table(Resource):
         else:
             self._data.insert(column_index, column_name, column_data)
 
-        self._add_column_info(column_index)
-
-    def _add_column_info(self, column_index: int = None):
-        """ Add a new column to the meta data. """
-        if column_index is None:
-            self._meta["column_tags"].append({})
-        else:
-            self._meta["column_tags"].insert(column_index, {})
-
-    def get_meta(self):
-        """
-        Get metadata
-        """
-
-        return self._meta
+        self._column_tags.insert_new_empty_tags(column_index)
 
     def get_tags(self, axis: AxisType) -> List[Dict[str, str]]:
         """
@@ -360,28 +261,14 @@ class Table(Resource):
 
         return self.get_row_tags() if is_row_axis(axis) else self.get_column_tags()
 
-    def get_row_tags(self, none_if_empty: bool = False,
-                     from_index: int = None, to_index: int = None) -> List[Dict[str, str]]:
-        """
-        Get row tags
-        """
-        tags = self._meta["row_tags"]
-        are_tags_empty = [len(t) == 0 for t in tags]
-        if all(are_tags_empty) and none_if_empty:
-            return None
-
-        if from_index is not None and to_index is not None:
-            return tags[from_index:to_index + 1]
-
-        return tags
+    def get_row_tags(self, from_index: int = None, to_index: int = None,
+                     none_if_empty: bool = False,) -> List[Dict[str, str]]:
+        return self._row_tags.get_tags_between(from_index, to_index, none_if_empty)
 
     def get_available_row_tags(self) -> Dict[str, List[str]]:
         """Get the complete list of row tags with list of values for each
         """
-        return TagHelper.get_distinct_values(self.get_row_tags())
-
-    def get_row_tag_types(self):
-        return self._meta["row_tag_types"]
+        return self._row_tags.get_available_tags()
 
     def get_row_names_by_positions(self, positions: List[int]) -> List[Union[str, int]]:
         """Function to retrieve the row names based on row positions
@@ -406,28 +293,18 @@ class Table(Resource):
         row_position = self.get_row_position_from_name(row_name)
         return {
             "name": row_name,
-            "tags": self.get_row_tags()[row_position]
+            "tags": self._row_tags.get_tags_at(row_position)
         }
 
-    def get_column_tags(self, none_if_empty: bool = False,
-                        from_index: int = None, to_index: int = None) -> List[Dict[str, str]]:
-        tags = self._meta["column_tags"]
-        are_tags_empty = [len(t) == 0 for t in tags]
-        if all(are_tags_empty) and none_if_empty:
-            return None
+    def get_column_tags(self, from_index: int = None, to_index: int = None,
+                        none_if_empty: bool = False) -> List[Dict[str, str]]:
 
-        if from_index is not None and to_index is not None:
-            return tags[from_index:to_index + 1]
-
-        return tags
+        return self._column_tags.get_tags_between(from_index, to_index, none_if_empty)
 
     def get_available_column_tags(self) -> Dict[str, List[str]]:
         """Get the complete list of column tags with list of values for each
         """
-        return TagHelper.get_distinct_values(self.get_column_tags())
-
-    def get_column_tag_types(self):
-        return self._meta["column_tag_types"]
+        return self._column_tags.get_available_tags()
 
     def get_column_names_by_positions(self, positions: List[int]) -> List[Union[str, int]]:
         """Function to retrieve the column names based on row positions
@@ -452,21 +329,14 @@ class Table(Resource):
         column_position = self.get_column_position_from_name(column_name)
         return {
             "name": column_name,
-            "tags": self.get_column_tags()[column_position]
+            "tags": self._column_tags.get_tags_at(column_position)
         }
 
     def copy_column_tags(self, table: 'Table', from_index: int = None, to_index: int = None) -> None:
-        self.set_column_tag_types(copy.deepcopy(table.get_column_tag_types()))
-        self.set_column_tags(copy.deepcopy(table.get_column_tags(from_index=from_index, to_index=to_index)))
+        self.set_all_columns_tags(table.get_column_tags(from_index=from_index, to_index=to_index))
 
     def copy_row_tags(self, table: 'Table', from_index: int = None, to_index: int = None) -> None:
-        self.set_row_tag_types(copy.deepcopy(table.get_row_tag_types()))
-        self.set_row_tags(copy.deepcopy(table.get_row_tags(from_index=from_index, to_index=to_index)))
-
-    def get_comments(self):
-        return self._meta.get("comments")
-
-    # -- H --
+        self.set_all_rows_tags(table.get_row_tags(from_index=from_index, to_index=to_index))
 
     def head(self, nrows=5) -> DataFrame:
         """
@@ -479,8 +349,6 @@ class Table(Resource):
         """
 
         return self._data.head(nrows)
-
-    # -- I --
 
     @property
     def is_vector(self) -> bool:
@@ -544,12 +412,12 @@ class Table(Resource):
     def select_by_row_names(self, filters: List[DataframeFilterName]) -> 'Table':
         data = DataframeFilterHelper.filter_by_axis_names(self._data, 'row', filters)
 
-        return self._create_sub_table_filtered_by_rows(data)
+        return self.create_sub_table_filtered_by_rows(data)
 
     def select_by_column_names(self, filters: List[DataframeFilterName]) -> 'Table':
         data = DataframeFilterHelper.filter_by_axis_names(self._data, 'column', filters)
 
-        return self._create_sub_table_filtered_by_columns(data)
+        return self.create_sub_table_filtered_by_columns(data)
 
     def select_by_coords(self, from_row_id: int, from_column_id: int, to_row_id: int, to_column_id: int) -> 'Table':
         """Create a new table from coords. It includes the to_row_id and to_column_id
@@ -557,15 +425,9 @@ class Table(Resource):
         data: DataFrame = self._data.iloc[from_row_id: to_row_id + 1,
                                           from_column_id: to_column_id + 1]
 
-        meta: TableMeta = {
-            "column_tag_types": copy.deepcopy(self.get_column_tag_types()),
-            "row_tag_types": copy.deepcopy(self.get_row_tag_types()),
-            "column_tags": copy.deepcopy(self.get_column_tags(from_index=from_column_id, to_index=to_column_id)),
-            "row_tags": copy.deepcopy(self.get_row_tags(from_index=from_row_id, to_index=to_row_id))
-        }
-
         # create a new table
-        return self.create_sub_table(data, meta)
+        return self.create_sub_table(data, self.get_row_tags(from_index=from_row_id, to_index=to_row_id),
+                                     self.get_column_tags(from_index=from_column_id, to_index=to_column_id))
 
     def select_by_row_tags(self, tags: List[dict]) -> 'Table':
         """
@@ -661,64 +523,62 @@ class Table(Resource):
             data = data.dropna(how="all")
         if data.shape[1] == self._data.shape[0]:
             return self
+
         column_tags = self.get_column_tags()
         selected_col_tags = [column_tags[i] for i, name in enumerate(self.column_names) if name in data.columns]
 
-        meta: TableMeta = {
-            "column_tag_types": copy.deepcopy(self.get_column_tag_types()),
-            "row_tag_types": copy.deepcopy(self.get_row_tag_types()),
-            "column_tags": copy.deepcopy(selected_col_tags),
-            "row_tags": copy.deepcopy(self.get_row_tags())
-        }
-        return self.create_sub_table(data, meta)
+        return self.create_sub_table(data, self.get_row_tags(), selected_col_tags)
 
     # Selection by exclusion
 
     def filter_out_by_row_names(self, filters: List[DataframeFilterName]) -> 'Table':
         data = DataframeFilterHelper.filter_out_by_axis_names(self._data, 'row', filters)
 
-        return self._create_sub_table_filtered_by_rows(data)
+        return self.create_sub_table_filtered_by_rows(data)
 
     def filter_out_by_column_names(self, filters: List[DataframeFilterName]) -> 'Table':
         data = DataframeFilterHelper.filter_out_by_axis_names(self._data, 'column', filters)
 
-        return self._create_sub_table_filtered_by_columns(data)
+        return self.create_sub_table_filtered_by_columns(data)
 
-    def _create_sub_table_filtered_by_rows(self, filtered_df: DataFrame) -> 'Table':
-        """Create a sub Table based on a subset Dataframe of the original table filtered by rows"""
+    def create_sub_table_filtered_by_rows(self, filtered_df: DataFrame) -> 'Table':
+        """
+        Create a sub Table based on a subset Dataframe of this original table filtered by rows.
+        It copies the tags of this table into the new table based on row names that matched between
+        filtered_df and this dataframe.
+        """
 
-        # copy meta data
         positions = [self._data.index.get_loc(k) for k in self._data.index if k in filtered_df.index]
-        meta = copy.deepcopy(self._meta)
 
         # get the row tags for the filtered rows
-        if "row_tags" in self._meta:
-            meta["row_tags"] = [meta["row_tags"][k] for k in positions]
+        row_tags = self._row_tags.get_tags_at_indexes(positions)
 
         # create a new table
-        return self.create_sub_table(filtered_df, meta)
+        return self.create_sub_table(filtered_df, row_tags, self.get_column_tags())
 
-    def _create_sub_table_filtered_by_columns(self, filtered_df: DataFrame) -> 'Table':
-        """Create a sub Table based on a subset Dataframe of the original table filtered by columns"""
+    def create_sub_table_filtered_by_columns(self, filtered_df: DataFrame) -> 'Table':
+        """
+        Create a sub Table based on a subset Dataframe of this original table filtered by columns
+        It copies the tags of this table into the new table based on column names that matched between
+        filtered_df and this dataframe.
+        """
 
-        # copy meta data
         positions = [self._data.columns.get_loc(k) for k in self._data.columns if k in filtered_df.columns]
-        meta = copy.deepcopy(self._meta)
 
         # get the column tags for the filtered columns
-        if "column_tags" in self._meta:
-            meta["column_tags"] = [meta["column_tags"][k] for k in positions]
+        column_tags = self._column_tags.get_tags_at_indexes(positions)
 
         # create a new table
-        return self.create_sub_table(filtered_df, meta)
+        return self.create_sub_table(filtered_df, self.get_row_tags(), column_tags)
 
-    def create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
+    def create_sub_table(self, dataframe: DataFrame,
+                         row_tags: List[Dict[str, str]], column_tags: List[Dict[str, str]]) -> 'Table':
         """
         Create a new table from a dataframe and a meta
         """
         new_table: Table = self.clone()
         new_table._set_data(dataframe)
-        new_table._set_meta(meta)
+        new_table._set_tags(row_tags, column_tags)
         return new_table
 
     def __str__(self):
@@ -731,16 +591,9 @@ class Table(Resource):
             data=self._data.T,
             row_names=self.column_names,
             column_names=self.row_names,
-            meta=self._transpose_meta()
+            row_tags=self.get_column_tags(),
+            column_tags=self.get_row_tags()
         )
-
-    def _transpose_meta(self) -> TableMeta:
-        return {
-            "row_tags": self._meta["column_tags"],
-            "column_tags": self._meta["row_tags"],
-            "row_tag_types": self._meta["column_tag_types"],
-            "column_tag_types": self._meta["row_tag_types"]
-        }
 
     def to_list(self) -> list:
         return self.to_numpy().tolist()
@@ -865,14 +718,6 @@ class Table(Resource):
     #     return TableScatterPlot3DView(self)
 
     ############################## CLASS METHODS ###########################
-
-    @ staticmethod
-    def clean_tags(tags):
-        try:
-            return [{str(k): str(v) for k, v in t.items()} for t in tags]
-        except:
-            raise BadRequestException("The tags are not valid. Please check")
-
     @ classmethod
     def from_dict(cls, data: dict, orient='index', dtype=None, columns=None) -> 'Table':
         dataframe = DataFrame.from_dict(data, orient, dtype, columns)

@@ -3,13 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
+from typing import Dict, List
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from gws_core.impl.table.helper.dataframe_filter_helper import \
-    DataframeFilterName
-from gws_core.impl.table.table_types import TableMeta
 from pandas import DataFrame
 
 from ....resource.r_field import StrRField
@@ -53,8 +50,10 @@ class MetadataTable(Table):
     def get_sample_ids(self) -> list:
         return self.get_column_as_list(self.sample_id_column)
 
-    def create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
-        table: MetadataTable = super().create_sub_table(dataframe, meta)
+    def create_sub_table(
+            self, dataframe: DataFrame, row_tags: List[Dict[str, str]],
+            column_tags: List[Dict[str, str]]) -> 'Table':
+        table: MetadataTable = super().create_sub_table(dataframe, row_tags, column_tags)
         if not self.sample_id_column in table.column_names:
             raise BadRequestException("The sample_id_column is required and must be selected")
         return table

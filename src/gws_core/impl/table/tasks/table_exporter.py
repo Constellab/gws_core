@@ -51,7 +51,7 @@ class TableExporter(ResourceExporter):
                 index=params.get_value('write_index', True)
             )
 
-            comments = source.get_comments()
+            comments = source.comments
             # if params.get_value('write_metadata', True):
             #     tags = source.get_meta()
             #     if comments:

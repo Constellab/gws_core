@@ -44,7 +44,7 @@ class TableRowAnnotatorHelper(Task):
                 table_ids: list = table.get_data().iloc[:, 0].tolist()
                 tags = [unsorted_tags.get(id_, {}) for id_ in table_ids]
 
-        table.set_row_tags(tags)
+        table.set_all_rows_tags(tags)
         return table
 
 
@@ -83,5 +83,5 @@ class TableColumnAnnotatorHelper(Task):
                 table_ids: list = table.get_data().iloc[0, :].tolist()
                 tags = [unsorted_tags.get(id_, {}) for id_ in table_ids]
 
-        table.set_column_tags(tags)
+        table.set_all_columns_tags(tags)
         return table

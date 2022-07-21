@@ -21,8 +21,8 @@ class TestTableTransposer(IsolatedAsyncioTestCase):
                     {'gender': 'F', 'age': '10'},
                     {'gender': 'M', 'age': '20'}]
         column_tags = [{'test': 'ok'}, {'test': 'nok'}]
-        table.set_row_tags(row_tags)
-        table.set_column_tags(column_tags)
+        table.set_all_rows_tags(row_tags)
+        table.set_all_columns_tags(column_tags)
 
         transposed = table.transpose()
         self.assertTrue(transposed.get_data().equals(initial_df.T))

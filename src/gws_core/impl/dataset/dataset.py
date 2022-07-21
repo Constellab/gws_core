@@ -3,10 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Union, final
+from typing import Dict, List, Union, final
 
 import numpy as np
-from gws_core.impl.table.table_types import TableMeta
 from pandas import DataFrame
 from pandas.api.types import is_string_dtype
 
@@ -33,8 +32,11 @@ class Dataset(Table):
     _target_positions: List[int] = ListRField()
 
     def __init__(self, data: Union[DataFrame, np.ndarray, list] = None,
-                 row_names=None, column_names=None, target_names: List[str] = None, meta: List = None):
-        super().__init__(data, row_names=row_names, column_names=column_names, meta=meta)
+                 row_names=None, column_names=None, target_names: List[str] = None,
+                 row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None,
+                 meta: List = None):
+        super().__init__(data, row_names=row_names, column_names=column_names, meta=meta,
+                         row_tags=row_tags, column_tags=column_tags)
         self._set_target_names(target_names)
 
     def set_target_names(self, target_names: List = None):
@@ -70,7 +72,8 @@ class Dataset(Table):
         """
         dataset = cls(
             data=table.get_data(),
-            meta=table.get_meta()
+            row_tags=table.get_row_tags(),
+            column_tags=table.get_column_tags(),
         )
         return dataset
 
@@ -168,8 +171,10 @@ class Dataset(Table):
 
         return self._data.shape[1]
 
-    def create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
-        dataset: Dataset = super().create_sub_table(dataframe, meta)
+    def create_sub_table(
+            self, dataframe: DataFrame, row_tags: List[Dict[str, str]],
+            column_tags: List[Dict[str, str]]) -> 'Table':
+        dataset: Dataset = super().create_sub_table(dataframe, row_tags, column_tags)
         new_target_names = [name for name in self.target_names if name in dataset.column_names]
         dataset._set_target_names(new_target_names)
         return dataset

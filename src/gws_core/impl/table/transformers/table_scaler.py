@@ -39,5 +39,5 @@ class TableScaler(Transformer):
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = DataScaleFilterParamConstructor.scale(source.get_data(), params["scaling"])
-        table = source.create_sub_table(data, source.get_meta())
+        table = source.create_sub_table(data, row_tags=source.get_row_tags(), column_tags=source.get_column_tags())
         return table

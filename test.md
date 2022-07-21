@@ -1,14 +1,9 @@
-You can provided multiple values to replace. It also supports regex. If multiple values are provided,
-there are replaced sequentially, so the second replace can rewrite the first replace.
-The table's tags are kept.
 
-For each configuration, if ```Is regex``` is checked, the ```search value``` is considerer as a regex and there is no modification to it.
-Otherwise the ```search value``` is converted (see ```Convertion```). The ```replace value``` is always converted.
+For earch filters, the system will keep the columns where the value in the row provided by the parameter ```Row name``` validated condition (the ```comparator``` with the ```value``` parameter).The result table will have the same number of rows as the input table.
 
-### Convertion
-The params values supports 2 special values:
-- ```NaN```: convert to NaN
-- ```None```: convert to None
+The ```Row name``` supports pattern. This means that multiple rows can be used in the filter. In this 
+case all the values in the provided rows must validate the condition. You can set the value ```*``` in the ```Row name``` which mean that all the values in the column must validate the condition.
 
-If the value is someting else, the system tries to convert it to a ```number```. If this is convertible to a ```number``` the system will use the ```number```, otherwise the value is kept as is.
+Supported operators : ```=```, ```!=```, ```contains```, ```startwith``` and ```endswith```.
 
+If you need to apply filters on text values, you can use the ```Table column data text filter``` task.

@@ -37,10 +37,7 @@ class TestTableAnnotator(BaseTestCase):
                              {'Gender': 'F', 'Group': '3', 'Age': '15'},
                              {}]
 
-        self.assertEqual(
-            annotated_table.get_meta()['row_tags'], expected_row_tags
-        )
-        self.assertEqual(
+        self.assert_json(
             annotated_table.get_row_tags(), expected_row_tags
         )
 
@@ -71,9 +68,6 @@ class TestTableAnnotator(BaseTestCase):
                              {'Gender': 'F', 'Group': '3', 'Age': '15'},
                              {}]
 
-        self.assertEqual(
-            annotated_table.get_meta()['row_tags'], expected_row_tags
-        )
-        self.assertEqual(
+        self.assert_json(
             annotated_table.get_row_tags(), expected_row_tags
         )

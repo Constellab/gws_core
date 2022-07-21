@@ -172,6 +172,8 @@ from .impl.table.encoding.table_decoder import TableDecoder as TableDecoder
 from .impl.table.encoding.table_encoder import TableEncoder as TableEncoder
 from .impl.table.helper.dataframe_aggregator_helper import \
     DataframeAggregatorHelper as DataframeAggregatorHelper
+from .impl.table.helper.dataframe_data_filter_helper import \
+    DataframeDataFilterHelper as DataframeDataFilterHelper
 from .impl.table.helper.dataframe_filter_helper import \
     DataframeFilterHelper as DataframeFilterHelper
 from .impl.table.helper.dataframe_scaler_helper import \
@@ -202,11 +204,19 @@ from .impl.table.table_types import TableMeta as TableMeta
 from .impl.table.tasks.table_exporter import TableExporter as TableExporter
 from .impl.table.tasks.table_importer import TableImporter as TableImporter
 from .impl.table.transformers.table_aggregator import \
-    TableAggregator as TableAggregator
+    TableColumnAggregator as TableColumnAggregator
+from .impl.table.transformers.table_aggregator import \
+    TableRowAggregator as TableRowAggregator
 from .impl.table.transformers.table_aggregator_filter import \
     TableAggregatorFilter as TableAggregatorFilter
-from .impl.table.transformers.table_data_filter import \
-    TableDataFilter as TableDataFilter
+from .impl.table.transformers.table_data_filter_numeric import \
+    TableColumnDataNumericFilter as TableColumnDataNumericFilter
+from .impl.table.transformers.table_data_filter_numeric import \
+    TableRowDataNumericFilter as TableRowDataNumericFilter
+from .impl.table.transformers.table_data_filter_text import \
+    TableColumnDataTextFilter as TableColumnDataTextFilter
+from .impl.table.transformers.table_data_filter_text import \
+    TableRowDataTextFilter as TableRowDataTextFilter
 from .impl.table.transformers.table_mass_operations import \
     TableColumnMassOperations as TableColumnMassOperations
 from .impl.table.transformers.table_operations import \
