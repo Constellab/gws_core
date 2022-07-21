@@ -45,7 +45,7 @@ class TableColumnDataTextFilter(Transformer):
     The ```Row name``` supports pattern. This means that multiple rows can be used in the filter. In this
     case all the values in the provided rows must validate the condition. You can set the value ```*``` in the ```Row name``` which mean that all the values in the column must validate the condition.
 
-    Supported operators : ```=```, ```!=```, ```contains```, ```startwith``` and ```endswith```.
+    Supported operators : ```=```, ```!=```, ```contains```, ```contains not```, ```startwith``` and ```endswith```.
 
 If you need to apply filters on text values, you can use the ```Table column data text filter``` task.
     """
@@ -91,7 +91,7 @@ class TableRowDataTextFilter(Transformer):
     The ```Column name``` supports pattern. This means that multiple columns can be used in the filter. In this
     case all the values in the provided columns must validate the condition. You can set the value ```*``` in the ```Column name``` which mean that all the values in the row must validate the condition.
 
-    Supported operators : ```=```, ```!=```, ```contains```, ```startwith``` and ```endswith```.
+    Supported operators : ```=```, ```!=```, ```contains```, ```contains not```, ```startwith``` and ```endswith```.
 
     If you need to apply filters on text values, you can use the ```Table row data numeric filter``` task.
     """

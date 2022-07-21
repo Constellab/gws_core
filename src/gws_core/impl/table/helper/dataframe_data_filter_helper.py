@@ -14,7 +14,7 @@ from .dataframe_aggregator_helper import DataframeAggregatorHelper
 
 AxisName = Literal['row', 'column']
 DfNumericComparator = Literal["=", "!=", ">=", "<=", ">", "<"]
-DfTextComparator = Literal["=", "!=", "contains", "startswith", "endswith"]
+DfTextComparator = Literal["=", "!=", "contains", "contains not" "startswith", "endswith"]
 
 
 class DataframeDataFilterHelper:
@@ -105,6 +105,8 @@ class DataframeDataFilterHelper:
             bool_df = str_df != value
         elif comp == "contains":
             bool_df = DataframeHelper.contains(str_df, value)
+        elif comp == "contains not":
+            bool_df = DataframeHelper.contains_not(str_df, value)
         elif comp == "startswith":
             bool_df = DataframeHelper.starts_with(str_df, value)
         elif comp == "endswith":

@@ -86,6 +86,13 @@ class DataframeHelper:
         return data.applymap(lambda x: value in x, na_action='ignore')
 
     @classmethod
+    def contains_not(cls, data: DataFrame, value: Any) -> DataFrame:
+        """
+        Return a dataframe with True if the value is not in the column
+        """
+        return data.applymap(lambda x: value not in x, na_action='ignore')
+
+    @classmethod
     def starts_with(cls, data: DataFrame, value: str) -> DataFrame:
         """
         Return a dataframe with True if the cell starts with the value
