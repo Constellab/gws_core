@@ -6,6 +6,8 @@
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_aggregator_helper import \
     ValidAggregationFunctions
+from gws_core.impl.table.helper.dataframe_data_filter_helper import \
+    DataframeDataFilterHelper
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from pandas import DataFrame
 
@@ -71,7 +73,7 @@ class TableFilter(Task):
                 ),
                 "comparator": StrParam(
                     human_name="Comparator",
-                    allowed_values=DataframeFilterHelper.NUMERIC_COMPARATORS,
+                    allowed_values=DataframeDataFilterHelper.NUMERIC_COMPARATORS,
                     short_description="Comparator",
                 ),
                 "value": FloatParam(

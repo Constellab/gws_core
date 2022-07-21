@@ -10,7 +10,8 @@ from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
-from .dataframe_aggregator_helper import DataframeAggregatorHelper
+from .dataframe_aggregator_helper import (DataframeAggregatorHelper,
+                                          ValidAggregationFunctions)
 
 AxisName = Literal['row', 'column']
 DfNumericComparator = Literal["=", "!=", ">=", "<=", ">", "<"]
@@ -24,46 +25,50 @@ class DataframeDataFilterHelper:
     TEXT_COMPARATORS = Utils.get_literal_values(DfTextComparator)
 
     @classmethod
-    def filter_by_aggregated_values(
-            cls, data: DataFrame, direction: str, func: str, comp: str, value: float) -> DataFrame:
-        if (not direction) or (not func) or (not comp) or (value is None):
+    def filter_columns_by_aggregated_values(cls, data: DataFrame, func: ValidAggregationFunctions,
+                                            comp: DfNumericComparator, value: float) -> DataFrame:
+        """Filter the dataframe columns based on value of the provided rows with numeric comparator"""
+        if not func or not comp or value is None:
             return data
-        DataframeAggregatorHelper._check_func(func)
-        DataframeAggregatorHelper._check_direction(direction)
-        cls._check_numeric_comparator(comp)
-        if value is None:
-            return data
-        if isinstance(value, (int, float,)):
-            aggregated_data: DataFrame = DataframeAggregatorHelper.aggregate(data, direction, func)
+        transposed = data.T
 
-            bool_df: DataFrame
-            if comp == ">":
-                bool_df = aggregated_data > value
-            elif comp == ">=":
-                bool_df = aggregated_data >= value
-            elif comp == "<":
-                bool_df = aggregated_data < value
-            elif comp == "<=":
-                bool_df = aggregated_data <= value
-            elif comp == "=":
-                bool_df = aggregated_data == value
-            elif comp == "!=":
-                bool_df = aggregated_data != value
+        result = cls.filter_rows_by_aggregated_values(transposed, func, comp, value)
 
-            bool_df = bool_df.squeeze()  # convert to series for selection
-            if direction == "horizontal":
-                return data.loc[bool_df[bool_df].index, :]
-            else:
-                return data.loc[:, bool_df[bool_df].index]
-        else:
-            raise BadRequestException("A float value is required")
+        return result.T
 
     @classmethod
-    def filter_row_numeric(
+    def filter_rows_by_aggregated_values(cls, data: DataFrame, func: ValidAggregationFunctions,
+                                         comp: DfNumericComparator, value: float) -> DataFrame:
+        if not func or not comp or value is None:
+            return data
+        DataframeAggregatorHelper._check_func(func)
+        cls._check_numeric_comparator(comp)
+
+        aggregated_data: DataFrame = DataframeAggregatorHelper.aggregate(data, "horizontal", func)
+
+        bool_df: DataFrame
+        if comp == ">":
+            bool_df = aggregated_data > value
+        elif comp == ">=":
+            bool_df = aggregated_data >= value
+        elif comp == "<":
+            bool_df = aggregated_data < value
+        elif comp == "<=":
+            bool_df = aggregated_data <= value
+        elif comp == "=":
+            bool_df = aggregated_data == value
+        elif comp == "!=":
+            bool_df = aggregated_data != value
+
+        return cls._select_df_rows_from_bool_df(data, bool_df)
+
+    @classmethod
+    def filter_rows_numeric(
             cls, data: DataFrame, column_name_regex: str, comp: DfNumericComparator, value: float) -> DataFrame:
         """Filter the dataframe rows based on value of the provided columns with numeric comparator"""
         if (not column_name_regex) or (not comp) or (value is None):
             return data
+        cls._check_numeric_comparator(comp)
 
         # keep columns based on regex
         filtered_df: DataFrame = cls._filter_columns(data, column_name_regex)
@@ -87,7 +92,7 @@ class DataframeDataFilterHelper:
         return cls._select_df_rows_from_bool_df(data, bool_df)
 
     @classmethod
-    def filter_row_text(cls, data: DataFrame, column_name_regex: str, comp: DfTextComparator, value: str) -> DataFrame:
+    def filter_rows_text(cls, data: DataFrame, column_name_regex: str, comp: DfTextComparator, value: str) -> DataFrame:
         """Filter the dataframe rows based on value of the provided columns with text comparator"""
         if (not column_name_regex) or (not comp) or (value is None):
             return data
@@ -115,25 +120,25 @@ class DataframeDataFilterHelper:
         return cls._select_df_rows_from_bool_df(data, bool_df)
 
     @classmethod
-    def filter_column_numeric(
+    def filter_columns_numeric(
             cls, data: DataFrame, row_name_regex: str, comp: DfNumericComparator, value: float) -> DataFrame:
         """Filter the dataframe columns based on value of the provided rows with numeric comparator"""
         if not row_name_regex or not comp or value is None:
             return data
         transposed = data.T
 
-        result = cls.filter_column_numeric(transposed, row_name_regex, comp, value)
+        result = cls.filter_rows_numeric(transposed, row_name_regex, comp, value)
 
         return result.T
 
     @classmethod
-    def filter_column_text(cls, data: DataFrame, row_name_regex: str, comp: DfTextComparator, value: str) -> DataFrame:
+    def filter_columns_text(cls, data: DataFrame, row_name_regex: str, comp: DfTextComparator, value: str) -> DataFrame:
         """Filter the dataframe columns based on value of the provided rows with text comparator"""
         if not row_name_regex or not comp or value is None:
             return data
         transposed = data.T
 
-        result = cls.filter_column_text(transposed, row_name_regex, comp, value)
+        result = cls.filter_rows_text(transposed, row_name_regex, comp, value)
 
         return result.T
 

@@ -70,7 +70,7 @@ If you need to apply filters on text values, you can use the ```Table column dat
         data: DataFrame = source.get_data()
 
         for text_params in params.get("text_filter"):
-            data = DataframeDataFilterHelper.filter_column_text(
+            data = DataframeDataFilterHelper.filter_columns_text(
                 data=data, row_name_regex=text_params["row_name_regex"],
                 comp=text_params["comparator"],
                 value=text_params["value"])
@@ -122,7 +122,7 @@ class TableRowDataTextFilter(Transformer):
             data = DataframeHelper.stringify(data)
 
         for text_params in params.get("text_filter"):
-            data = DataframeDataFilterHelper.filter_row_text(
+            data = DataframeDataFilterHelper.filter_rows_text(
                 data=data, column_name_regex=text_params["column_name_regex"],
                 comp=text_params["comparator"],
                 value=text_params["value"])

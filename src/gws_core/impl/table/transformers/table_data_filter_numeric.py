@@ -70,7 +70,7 @@ class TableColumnDataNumericFilter(Transformer):
         data: DataFrame = source.get_data()
 
         for numeric_params in params.get("numeric_filter"):
-            data = DataframeDataFilterHelper.filter_column_numeric(
+            data = DataframeDataFilterHelper.filter_columns_numeric(
                 data=data, row_name_regex=numeric_params["row_name_regex"],
                 comp=numeric_params["comparator"],
                 value=numeric_params["value"])
@@ -117,7 +117,7 @@ class TableRowDataNumericFilter(Transformer):
         data: DataFrame = source.get_data()
 
         for numeric_params in params.get("numeric_filter"):
-            data = DataframeDataFilterHelper.filter_row_numeric(
+            data = DataframeDataFilterHelper.filter_rows_numeric(
                 data=data, column_name_regex=numeric_params["column_name_regex"],
                 comp=numeric_params["comparator"],
                 value=numeric_params["value"])

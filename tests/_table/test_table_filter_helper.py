@@ -39,23 +39,23 @@ class TestTableFilterHelper(BaseTestCase):
         initial_df = DataFrame({'A': [1, 2, 3, 4], 'B': [8, 6, 4, 2]})
 
         # filter columns where sum > 10 (only B)
-        result = DataframeDataFilterHelper.filter_by_aggregated_values(
-            data=initial_df, direction="vertical", func="sum", comp=">", value=10
+        result = DataframeDataFilterHelper.filter_columns_by_aggregated_values(
+            data=initial_df, func="sum", comp=">", value=10
         )
 
         expected_result = DataFrame({'B': [8, 6, 4, 2]})
         self.assertTrue(result.equals(expected_result))
 
         # filter columns where sum > 0 (all columns)
-        result = DataframeDataFilterHelper.filter_by_aggregated_values(
-            data=initial_df, direction="vertical", func="sum", comp=">", value=0
+        result = DataframeDataFilterHelper.filter_columns_by_aggregated_values(
+            data=initial_df, func="sum", comp=">", value=0
         )
 
         self.assertTrue(result.equals(initial_df))
 
         # Filter row where sum >= 8 (first and second rows)
-        result = DataframeDataFilterHelper.filter_by_aggregated_values(
-            data=initial_df, direction="horizontal", func="sum", comp=">=", value=8
+        result = DataframeDataFilterHelper.filter_rows_by_aggregated_values(
+            data=initial_df, func="sum", comp=">=", value=8
         )
 
         expected_result = DataFrame({'A': [1, 2], 'B': [8, 6]}, index=[0, 1])
@@ -65,22 +65,22 @@ class TestTableFilterHelper(BaseTestCase):
 
         initial_df = DataFrame({'A': [1, 2, 3, 4], 'B': [8, 6, 4, 2]})
 
-        # filter A column where value >= 3
-        result = DataframeDataFilterHelper.filter_column_numeric(
-            data=initial_df, column_name="A", comp=">=", value=3
+        # filter rows where A column value >= 3
+        result = DataframeDataFilterHelper.filter_rows_numeric(
+            data=initial_df, column_name_regex="A", comp=">=", value=3
         )
         expected_result = DataFrame({'A': [3, 4], 'B': [4, 2]}, index=[2, 3])
         self.assertTrue(result.equals(expected_result))
 
-        # filter where A and B columns are >= 3
-        result = DataframeDataFilterHelper.filter_column_numeric(
-            data=initial_df, column_name="*", comp=">=", value=3)
+        # filter rows where A and B columns are >= 3
+        result = DataframeDataFilterHelper.filter_rows_numeric(
+            data=initial_df, column_name_regex="*", comp=">=", value=3)
         expected_result = DataFrame({'A': [3], 'B': [4]}, index=[2])
         self.assertTrue(result.equals(expected_result))
 
-        # filter first row where value is >= 3
-        result = DataframeDataFilterHelper.filter_row_numeric(
-            data=initial_df, row_name="0", comp=">=", value=3
+        # filter columns where first row value is >= 3
+        result = DataframeDataFilterHelper.filter_columns_numeric(
+            data=initial_df, row_name_regex="0", comp=">=", value=3
         )
         expected_result = DataFrame({'B': [8, 6, 4, 2]})
         self.assertTrue(result.equals(expected_result))
@@ -89,24 +89,24 @@ class TestTableFilterHelper(BaseTestCase):
 
         initial_df = DataFrame({'A': ['a', 'b', 'c', 'd'], 'B': ['hello', 'nice', 'tacos', 'house']})
 
-        # filter A column where value == b
-        result = DataframeDataFilterHelper.filter_column_text(
-            data=initial_df, column_name="A", comp="=", value="b"
+        # filter rows where A column value == b
+        result = DataframeDataFilterHelper.filter_rows_text(
+            data=initial_df, column_name_regex="A", comp="=", value="b"
         )
         expected_result = DataFrame({'A': ['b'], 'B': ['nice']}, index=[1])
         self.assertTrue(result.equals(expected_result))
 
-        # filter where B columns where value contains e
-        result = DataframeDataFilterHelper.filter_column_text(
-            data=initial_df, column_name="B", comp="contains", value="e"
+        # filter rows where B columns value contains e
+        result = DataframeDataFilterHelper.filter_rows_text(
+            data=initial_df, column_name_regex="B", comp="contains", value="e"
         )
         expected_result = DataFrame({'A': ['a', 'b', 'd'], 'B': ['hello', 'nice', 'house']},
                                     index=[0, 1, 3])
         self.assertTrue(result.equals(expected_result))
 
-        # filter first row where value is == hello
-        result = DataframeDataFilterHelper.filter_row_text(
-            data=initial_df, row_name="0", comp="=", value="hello"
+        # filter columns where first row value is == hello
+        result = DataframeDataFilterHelper.filter_columns_text(
+            data=initial_df, row_name_regex="0", comp="=", value="hello"
         )
         expected_result = DataFrame({'B': ['hello', 'nice', 'tacos', 'house']})
         self.assertTrue(result.equals(expected_result))

@@ -208,7 +208,9 @@ from .impl.table.transformers.table_aggregator import \
 from .impl.table.transformers.table_aggregator import \
     TableRowAggregator as TableRowAggregator
 from .impl.table.transformers.table_aggregator_filter import \
-    TableAggregatorFilter as TableAggregatorFilter
+    TableColumnAggregatorFilter as TableColumnAggregatorFilter
+from .impl.table.transformers.table_aggregator_filter import \
+    TableRowAggregatorFilter as TableRowAggregatorFilter
 from .impl.table.transformers.table_data_filter_numeric import \
     TableColumnDataNumericFilter as TableColumnDataNumericFilter
 from .impl.table.transformers.table_data_filter_numeric import \

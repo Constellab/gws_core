@@ -23,7 +23,8 @@ from ..task.transformer.transformer import Transformer, transformer_decorator
 
 @transformer_decorator(unique_name="TableAggregator", resource_type=Table,
                        short_description="Aggregate the table along an axis", deprecated_since='0.3.14',
-                       deprecated_message='Use TableColumnAggregator or TableRowAggregator instead')
+                       deprecated_message='Use TableColumnAggregator or TableRowAggregator instead',
+                       hide=True)
 class TableAggregator(Transformer):
     """
     Transformer to aggregate the numerical values of table along an axis.
