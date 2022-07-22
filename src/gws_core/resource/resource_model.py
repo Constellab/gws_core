@@ -187,7 +187,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         return ResourceModel.delete().where(ResourceModel.id.in_(resource_model_ids))
 
     @classmethod
-    def get_search_by_types_expression(cls, typing_names: List[str]) -> Expression:
+    def get_by_types_and_sub_expression(cls, typing_names: List[str]) -> Expression:
         """Return the expression to search resource base on a type and all its subtypes.
 
         If the Resource type is provided, it returns None
@@ -210,6 +210,10 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         all_typing_names: List[str] = [resource_type._typing_name for resource_type in all_types]
 
         return ResourceModel.resource_typing_name.in_(all_typing_names)
+
+    @classmethod
+    def get_by_types_and_sub(cls, typing_names: List[str]) -> ModelSelect:
+        return ResourceModel.select().where(cls.get_by_types_and_sub_expression(typing_names))
 
     ########################################## RESOURCE ######################################
 

@@ -11,6 +11,7 @@ from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.impl.file.fs_node_model import FSNodeModel
+from gws_core.impl.table.table import Table
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
@@ -276,3 +277,33 @@ class Migration0313(BrickMigration):
                 report_model.validated_at = report_model.last_modified_at
                 report_model.validated_by = report_model.last_modified_by
                 report_model.save()
+
+
+@brick_migration('0.3.14', short_description='Update table meta (tags)')
+class Migration0314(BrickMigration):
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        resource_models: List[ResourceModel] = list(ResourceModel.get_by_types_and_sub([Table._typing_name]))
+
+        for resource_model in resource_models:
+            try:
+                table: Table = resource_model.get_resource()
+
+                changed: bool = False
+                if len(table.get_column_tags()) == 0:
+                    table.set_all_columns_tags(table._meta['column_tags'])
+                    changed = True
+
+                if len(table.get_row_tags()) == 0:
+                    table.set_all_rows_tags(table._meta['row_tags'])
+                    changed = True
+
+                if changed:
+                    table._meta = None
+                    resource_model.receive_fields_from_resource(table)
+                    resource_model.save()
+
+            except Exception as err:
+                Logger.error(f'Error while migrating resource {resource_model.id} : {err}')
+                Logger.log_exception_stack_trace(err)
