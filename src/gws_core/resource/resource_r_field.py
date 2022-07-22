@@ -5,7 +5,7 @@
 
 from typing import final
 
-from .r_field import BaseRField
+from .r_field.r_field import BaseRField
 from .resource import Resource
 from .resource_model import ResourceModel
 

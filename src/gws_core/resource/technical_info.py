@@ -6,7 +6,7 @@
 
 from typing import Dict, List, Optional, Union
 
-from .r_field import SerializableObject
+from .r_field.serializable_r_field import SerializableObject
 
 
 class TechnicalInfo:

@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Any, final
 
-from ...resource.r_field import BaseRField
+from ...resource.r_field.r_field import BaseRField
 
 
 class FileRField(BaseRField):

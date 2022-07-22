@@ -7,7 +7,7 @@
 import os
 
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.resource.r_field import BoolRField, StrRField
+from gws_core.resource.r_field.primitive_r_field import BoolRField, StrRField
 
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator

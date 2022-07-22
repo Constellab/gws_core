@@ -1,10 +1,9 @@
 
 
 from gws_core import (BaseTestCase, BoolRField, DataFrameRField, DictRField,
-                      FloatRField, IntRField, SerializableObject, KVStore,
-                      ListRField, ResourceModel, ResourceRField, Robot,
-                      StrRField)
-from gws_core.resource.r_field import SerializableRField
+                      FloatRField, IntRField, KVStore, ListRField,
+                      ResourceModel, ResourceRField, Robot, SerializableObject,
+                      SerializableRField, StrRField)
 from gws_core.resource.resource_model import ResourceOrigin
 from pandas.core.frame import DataFrame
 

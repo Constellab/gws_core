@@ -5,7 +5,8 @@ from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
 from ...config.param_spec import StrParam
-from ...resource.r_field import FloatRField, IntRField, ListRField
+from ...resource.r_field.list_r_field import ListRField
+from ...resource.r_field.primitive_r_field import FloatRField, IntRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view

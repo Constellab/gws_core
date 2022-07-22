@@ -317,17 +317,20 @@ from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
 from .resource.kv_store import KVStore as KVStore
 from .resource.lazy_view_param import LazyViewParam as LazyViewParam
 from .resource.multi_views import MultiViews as MultiViews
-from .resource.r_field import BoolRField as BoolRField
-from .resource.r_field import DictRField as DictRField
-from .resource.r_field import FloatRField as FloatRField
-from .resource.r_field import IntRField as IntRField
-from .resource.r_field import ListRField as ListRField
-from .resource.r_field import PrimitiveRField as PrimitiveRField
-from .resource.r_field import RField as RField
-from .resource.r_field import SerializableObject as SerializableObject
-from .resource.r_field import SerializableRField as SerializableRField
-from .resource.r_field import StrRField as StrRField
-from .resource.r_field import UUIDRField as UUIDRField
+from .resource.r_field.dict_r_field import DictRField as DictRField
+from .resource.r_field.list_r_field import ListRField as ListRField
+from .resource.r_field.primitive_r_field import BoolRField as BoolRField
+from .resource.r_field.primitive_r_field import FloatRField as FloatRField
+from .resource.r_field.primitive_r_field import IntRField as IntRField
+from .resource.r_field.primitive_r_field import \
+    PrimitiveRField as PrimitiveRField
+from .resource.r_field.primitive_r_field import StrRField as StrRField
+from .resource.r_field.primitive_r_field import UUIDRField as UUIDRField
+from .resource.r_field.r_field import RField as RField
+from .resource.r_field.serializable_r_field import \
+    SerializableObject as SerializableObject
+from .resource.r_field.serializable_r_field import \
+    SerializableRField as SerializableRField
 from .resource.resource import Resource as Resource
 from .resource.resource_decorator import \
     resource_decorator as resource_decorator

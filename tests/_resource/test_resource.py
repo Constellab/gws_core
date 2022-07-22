@@ -4,11 +4,10 @@
 # About us: https://gencovery.com
 from typing import List
 
-from gws_core import (BaseTestCase, Experiment, ExperimentService, File, GTest,
-                      ProcessFactory, ResourceModel, Robot, RobotCreate,
-                      TaskModel)
+from gws_core import (BaseTestCase, Experiment, ExperimentService, File,
+                      IntRField, ListRField, ProcessFactory, ResourceModel,
+                      Robot, RobotCreate, StrRField, TaskModel)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
-from gws_core.resource.r_field import IntRField, ListRField, StrRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_model import ResourceOrigin

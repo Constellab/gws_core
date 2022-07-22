@@ -9,7 +9,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from pandas import DataFrame
 
-from ....resource.r_field import StrRField
+from ....resource.r_field.primitive_r_field import StrRField
 from ....resource.resource_decorator import resource_decorator
 from ..table import Table
 

@@ -6,7 +6,7 @@
 
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...resource.r_field import DictRField
+from ...resource.r_field.dict_r_field import DictRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 

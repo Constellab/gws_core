@@ -14,7 +14,9 @@ from pandas import DataFrame, Series
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...resource.r_field import DictRField, SerializableRField, StrRField
+from ...resource.r_field.dict_r_field import DictRField
+from ...resource.r_field.primitive_r_field import StrRField
+from ...resource.r_field.serializable_r_field import SerializableRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view

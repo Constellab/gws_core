@@ -5,7 +5,7 @@
 
 from typing import Dict, Set
 
-from gws_core.resource.r_field import DictRField
+from gws_core.resource.r_field.dict_r_field import DictRField
 from gws_core.resource.resource_list_base import ResourceListBase
 
 from .resource import Resource

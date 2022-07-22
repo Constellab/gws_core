@@ -32,7 +32,7 @@ from ..impl.file.local_file_store import LocalFileStore
 from ..model.typing import Typing
 from ..model.typing_manager import TypingManager
 from ..resource.kv_store import KVStore
-from ..resource.r_field import BaseRField
+from .r_field.r_field import BaseRField
 from ..resource.resource import Resource
 from ..tag.taggable_model import TaggableModel
 

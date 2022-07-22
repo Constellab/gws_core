@@ -6,7 +6,7 @@
 from copy import deepcopy
 from typing import Dict, List
 
-from gws_core.resource.r_field import SerializableObject
+from gws_core.resource.r_field.serializable_r_field import SerializableObject
 from gws_core.tag.tag_helper import TagHelper
 
 

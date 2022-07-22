@@ -13,7 +13,7 @@ from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...impl.table.data_frame_r_field import DataFrameRField
 from ...impl.table.table import Table
-from ...resource.r_field import ListRField
+from ...resource.r_field.list_r_field import ListRField
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from .dataset_view import DatasetView
