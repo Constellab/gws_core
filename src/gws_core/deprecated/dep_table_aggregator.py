@@ -6,8 +6,8 @@
 
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_aggregator_helper import (
-    DataframeAggregatorHelper, ValidAggregationDirections,
-    ValidAggregationFunctions)
+    DataframeAggregatorHelper, DfAggregationDirections,
+    DfAggregationFunctions)
 from gws_core.impl.table.table import Table
 
 from ..config.config_types import ConfigParams, ConfigSpecs
@@ -34,12 +34,12 @@ class TableAggregator(Transformer):
     config_specs: ConfigSpecs = {
         "direction": StrParam(
             human_name="Direction",
-            allowed_values=Utils.get_literal_values(ValidAggregationDirections),
+            allowed_values=Utils.get_literal_values(DfAggregationDirections),
             short_description="Aggregation direction",
         ),
         "function": StrParam(
             human_name="Aggregation function",
-            allowed_values=Utils.get_literal_values(ValidAggregationFunctions),
+            allowed_values=Utils.get_literal_values(DfAggregationFunctions),
             short_description="Function applied to aggregate values along a direction",
         ),
         "skip_nan": BoolParam(

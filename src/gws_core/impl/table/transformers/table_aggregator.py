@@ -10,8 +10,7 @@ from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import BoolParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
-from ..helper.dataframe_aggregator_helper import (DataframeAggregatorHelper,
-                                                  ValidAggregationFunctions)
+from ..helper.dataframe_aggregator_helper import DataframeAggregatorHelper
 
 
 @transformer_decorator(unique_name="TableColumnAggregator", resource_type=Table,
@@ -25,7 +24,7 @@ class TableColumnAggregator(Transformer):
     config_specs: ConfigSpecs = {
         "function": StrParam(
             human_name="Aggregation function",
-            allowed_values=Utils.get_literal_values(ValidAggregationFunctions),
+            allowed_values=DataframeAggregatorHelper.AGGREGATION_FUNCTIONS,
             short_description="Function applied to aggregate values along the columns",
         ),
         "skip_nan": BoolParam(
@@ -58,7 +57,7 @@ class TableRowAggregator(Transformer):
     config_specs: ConfigSpecs = {
         "function": StrParam(
             human_name="Aggregation function",
-            allowed_values=Utils.get_literal_values(ValidAggregationFunctions),
+            allowed_values=DataframeAggregatorHelper.AGGREGATION_FUNCTIONS,
             short_description="Function applied to aggregate values along the rows",
         ),
         "skip_nan": BoolParam(

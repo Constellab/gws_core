@@ -5,7 +5,7 @@
 
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_aggregator_helper import (
-    ValidAggregationDirections, ValidAggregationFunctions)
+    DfAggregationDirections, DfAggregationFunctions)
 from gws_core.impl.table.helper.dataframe_data_filter_helper import \
     DataframeDataFilterHelper
 from gws_core.impl.table.table import Table
@@ -36,12 +36,12 @@ class TableAggregatorFilter(Transformer):
             {
                 "direction": StrParam(
                     human_name="Aggregation direction",
-                    allowed_values=Utils.get_literal_values(ValidAggregationDirections),
+                    allowed_values=Utils.get_literal_values(DfAggregationDirections),
                     short_description="Axis along which the filter is applied",
                 ),
                 "function": StrParam(
                     human_name="Aggregation function",
-                    allowed_values=Utils.get_literal_values(ValidAggregationFunctions),
+                    allowed_values=Utils.get_literal_values(DfAggregationFunctions),
                     short_description="Function applied on the axis",
                 ),
                 "comparator": StrParam(

@@ -11,9 +11,8 @@ from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
 from .dataframe_aggregator_helper import (DataframeAggregatorHelper,
-                                          ValidAggregationFunctions)
+                                          DfAggregationFunctions)
 
-AxisName = Literal['row', 'column']
 DfNumericComparator = Literal["=", "!=", ">=", "<=", ">", "<"]
 DfTextComparator = Literal["=", "!=", "contains", "contains not" "startswith", "endswith"]
 
@@ -25,7 +24,7 @@ class DataframeDataFilterHelper:
     TEXT_COMPARATORS = Utils.get_literal_values(DfTextComparator)
 
     @classmethod
-    def filter_columns_by_aggregated_values(cls, data: DataFrame, func: ValidAggregationFunctions,
+    def filter_columns_by_aggregated_values(cls, data: DataFrame, func: DfAggregationFunctions,
                                             comp: DfNumericComparator, value: float) -> DataFrame:
         """Filter the dataframe columns based on value of the provided rows with numeric comparator"""
         if not func or not comp or value is None:
@@ -37,7 +36,7 @@ class DataframeDataFilterHelper:
         return result.T
 
     @classmethod
-    def filter_rows_by_aggregated_values(cls, data: DataFrame, func: ValidAggregationFunctions,
+    def filter_rows_by_aggregated_values(cls, data: DataFrame, func: DfAggregationFunctions,
                                          comp: DfNumericComparator, value: float) -> DataFrame:
         if not func or not comp or value is None:
             return data

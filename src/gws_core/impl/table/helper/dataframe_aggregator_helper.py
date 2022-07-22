@@ -11,30 +11,34 @@ from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
 
-ValidAggregationDirections = Literal["horizontal", "vertical"]
-ValidAggregationFunctions = Literal["mean", "std", "var", "min", "max", "median", "sum"]
+DfAggregationDirections = Literal["horizontal", "vertical"]
+DfAggregationFunctions = Literal["mean", "std", "var", "min", "max", "median", "sum"]
 
 
 class DataframeAggregatorHelper:
+    """Helper to aggregate dataframe rows or columns base on dataframe values"""
+
+    AGGREGATION_DIRECTIONS = Utils.get_literal_values(DfAggregationDirections)
+    AGGREGATION_FUNCTIONS = Utils.get_literal_values(DfAggregationFunctions)
 
     @classmethod
-    def _check_direction(cls, direction: ValidAggregationDirections):
-        if not Utils.value_is_in_literal(direction, ValidAggregationDirections):
+    def _check_direction(cls, direction: DfAggregationDirections):
+        if not Utils.value_is_in_literal(direction, DfAggregationDirections):
             raise BadRequestException(
-                f"The direction '{direction}' is not valid. Valid directions are {Utils.get_literal_values(ValidAggregationDirections)}."
+                f"The direction '{direction}' is not valid. Valid directions are {Utils.get_literal_values(DfAggregationDirections)}."
             )
 
     @classmethod
-    def _check_func(cls, func: ValidAggregationFunctions):
-        if not Utils.value_is_in_literal(func, ValidAggregationFunctions):
+    def _check_func(cls, func: DfAggregationFunctions):
+        if not Utils.value_is_in_literal(func, DfAggregationFunctions):
             raise BadRequestException(
-                f"The aggregation function '{func}' is not valid. Valid aggregation functions are {Utils.get_literal_values(ValidAggregationFunctions)}."
+                f"The aggregation function '{func}' is not valid. Valid aggregation functions are {Utils.get_literal_values(DfAggregationFunctions)}."
             )
 
     @classmethod
     def aggregate(
-            cls, data: DataFrame, direction: ValidAggregationDirections,
-            func: ValidAggregationFunctions,
+            cls, data: DataFrame, direction: DfAggregationDirections,
+            func: DfAggregationFunctions,
             skip_nan: bool = True) -> DataFrame:
         if (direction is None) or (func is None):
             return data

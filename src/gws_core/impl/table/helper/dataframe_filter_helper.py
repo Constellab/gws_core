@@ -22,6 +22,7 @@ class DataframeFilterName(TypedDict):
 
 
 class DataframeFilterHelper:
+    """Helper to filter dataframe rows or columns base on dataframe columns or rows"""
 
     @classmethod
     def _check_axis_name(cls, axis: AxisName):

@@ -13,7 +13,7 @@ from ....config.param_set import ParamSet
 from ....config.param_spec import FloatParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
-from ..helper.dataframe_aggregator_helper import ValidAggregationFunctions
+from ..helper.dataframe_aggregator_helper import (DataframeAggregatorHelper)
 
 
 # ####################################################################
@@ -24,7 +24,7 @@ from ..helper.dataframe_aggregator_helper import ValidAggregationFunctions
 def get_function_param(axis_name: str) -> StrParam:
     return StrParam(
         human_name="Aggregation function",
-        allowed_values=Utils.get_literal_values(ValidAggregationFunctions),
+        allowed_values=DataframeAggregatorHelper.AGGREGATION_FUNCTIONS,
         short_description="Function applied on the " + axis_name,
     )
 
@@ -44,9 +44,21 @@ value_param = FloatParam(
 @transformer_decorator(
     unique_name="TableColumnAggregatorFilter",
     resource_type=Table,
-    short_description="Filters the table using various fitering rules on columns",
+    short_description="Filters the table columns based aggregation value",
 )
 class TableColumnAggregatorFilter(Transformer):
+    """
+    Filter the table columns using comparator on the aggregation of the values of the columns.
+
+    For example with this you can keep only the columns with a mean value greater than 0.5.
+
+    The returns table is the originial table with the columns filtered (not the aggregated table).
+
+    Supported aggregation functions: ```mean```, ```std```, ```var```, ```min```, ```max```, ```median``` and ```sum```.
+
+    Supported comparators: ```>```, ```<```, ```>=```, ```<=```, ```==```, ```!=```.
+
+    """
     config_specs: ConfigSpecs = {
         "aggregation_filter": ParamSet(
             {
@@ -78,9 +90,21 @@ class TableColumnAggregatorFilter(Transformer):
 @transformer_decorator(
     unique_name="TableRowAggregatorFilter",
     resource_type=Table,
-    short_description="Filters the table using various fitering rules on rows",
+    short_description="Filters the table rows based aggregation value",
 )
 class TableRowAggregatorFilter(Transformer):
+    """
+    Filter the table rows using comparator on the aggregation of the values of the rows.
+
+    For example with this you can keep only the rows with a mean value greater than 0.5.
+
+    The returns table is the originial table with the rows filtered (not the aggregated table).
+
+    Supported aggregation functions: ```mean```, ```std```, ```var```, ```min```, ```max```, ```median``` and ```sum```.
+
+    Supported comparators: ```>```, ```<```, ```>=```, ```<=```, ```==```, ```!=```.
+
+    """
     config_specs: ConfigSpecs = {
         "aggregation_filter": ParamSet(
             {
