@@ -180,8 +180,8 @@ from .impl.table.helper.dataframe_scaler_helper import \
     DataframeScalerHelper as DataframeScalerHelper
 from .impl.table.helper.table_operation_helper import \
     TableOperationHelper as TableOperationHelper
-from .impl.table.helper.table_tag_grouper_helper import \
-    TableTagGrouperHelper as TableTagGrouperHelper
+from .impl.table.helper.table_tag_aggregator_helper import \
+    TableTagAggregatorHelper as TableTagAggregatorHelper
 from .impl.table.helper.table_unfolder_helper import \
     TableUnfolderHelper as TableUnfolderHelper
 from .impl.table.metadata_table.helper.table_annotator_helper import \
@@ -233,10 +233,10 @@ from .impl.table.transformers.table_selector import \
     TableRowSelector as TableRowSelector
 from .impl.table.transformers.table_selector import \
     TableRowTagsSelector as TableRowTagsSelector
-from .impl.table.transformers.table_tag_grouper import \
-    TableColumnTagGrouper as TableColumnTagGrouper
-from .impl.table.transformers.table_tag_grouper import \
-    TableRowTagGrouper as TableRowTagGrouper
+from .impl.table.transformers.table_tag_aggregator import \
+    TableColumnTagAggregator as TableColumnTagAggregator
+from .impl.table.transformers.table_tag_aggregator import \
+    TableRowTagAggregator as TableRowTagAggregator
 from .impl.table.transformers.table_transposer import \
     TableTransposer as TableTransposer
 from .impl.table.transformers.table_unfolder import \

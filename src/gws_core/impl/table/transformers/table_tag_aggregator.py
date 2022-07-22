@@ -6,16 +6,16 @@
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import ListParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
-from ..helper.table_tag_grouper_helper import TableTagGrouperHelper
+from ..helper.table_tag_aggregator_helper import TableTagAggregatorHelper
 from ..table import Table
 
 
 @transformer_decorator(
-    unique_name="TableRowTagGrouper",
+    unique_name="TableRowTagAggregator",
     resource_type=Table,
-    short_description="Group data along row tag keys",
+    short_description="Aggregate data along row tag keys",
 )
-class TableRowTagGrouper(Transformer):
+class TableRowTagAggregator(Transformer):
     """
     Aggregate row of a table by tag values.
     Provide a list of tag keys and a function to aggregate the rows.
@@ -23,7 +23,7 @@ class TableRowTagGrouper(Transformer):
 
     Available aggregation functions: ```sort```, ```mean```, ```median``` and ```sum```.
 
-    ⚠️ **If the function ```mean``` or ```median``` is used, only 1 tag key is allowed.** ⚠️
+    ⚠️ **Multiple tag keys are only supported for ```sort``` function** ⚠️
 
     """
     config_specs: ConfigSpecs = {
@@ -34,7 +34,7 @@ class TableRowTagGrouper(Transformer):
         "grouping_func": StrParam(
             allowed_values=["sort", "mean", "median", "sum"],
             human_name="Grouping function",
-            short_description="The grouping function. Only one key is allowed for `mean` and `median`.",
+            short_description="The grouping function. Multiple tags are only supported for 'sort' function.",
         ),
     }
 
@@ -42,16 +42,16 @@ class TableRowTagGrouper(Transformer):
         table: Table = source
         keys = params["tag_keys"]
         func = params["grouping_func"]
-        table = TableTagGrouperHelper.group_by_row_tags(table, keys=keys, func=func)
+        table = TableTagAggregatorHelper.aggregate_by_row_tags(table, keys=keys, func=func)
         return table
 
 
 @transformer_decorator(
-    unique_name="TableColumnTagGrouper",
+    unique_name="TableColumnTagAggregator",
     resource_type=Table,
     short_description="Group data along column tag keys",
 )
-class TableColumnTagGrouper(Transformer):
+class TableColumnTagAggregator(Transformer):
     """
     Aggregate column of a table by tag values.
     Provide a list of tag keys and a function to aggregate the columns.
@@ -59,7 +59,7 @@ class TableColumnTagGrouper(Transformer):
 
     Available aggregation functions: ```sort```, ```mean```, ```median``` and ```sum```.
 
-    ⚠️ **If the function ```mean``` or ```median``` is used, only 1 tag key is allowed.** ⚠️
+    ⚠️ **Multiple tag keys are only supported for ```sort``` function** ⚠️
     """
     config_specs: ConfigSpecs = {
         "tag_keys": ListParam(
@@ -69,7 +69,7 @@ class TableColumnTagGrouper(Transformer):
         "grouping_func": StrParam(
             allowed_values=["sort", "mean", "median", "sum"],
             human_name="Grouping function",
-            short_description="The grouping function. Only one key is allowed for `mean` and `median`.",
+            short_description="The grouping function. Multiple tags are only supported for 'sort' function.",
         ),
     }
 
@@ -77,5 +77,5 @@ class TableColumnTagGrouper(Transformer):
         table: Table = source
         keys = params["tag_keys"]
         func = params["grouping_func"]
-        table = TableTagGrouperHelper.group_by_column_tags(table, keys=keys, func=func)
+        table = TableTagAggregatorHelper.aggregate_by_column_tags(table, keys=keys, func=func)
         return table

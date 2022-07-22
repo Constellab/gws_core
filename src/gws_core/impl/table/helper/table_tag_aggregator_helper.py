@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Literal
+from typing import Dict, List, Literal
 
 from pandas import DataFrame, concat
 
@@ -15,12 +15,13 @@ from ..table_types import AxisType, is_row_axis
 TableGroupFunction = Literal['mean', 'median', 'sort', 'sum']
 
 
-class TableTagGrouperHelper:
+class TableTagAggregatorHelper:
+    """Helper to aggregate table rows or columns base on table tags"""
 
     @classmethod
-    def group_by_row_tags(cls, table: Table, keys: List[str], func: TableGroupFunction = "mean") -> Table:
+    def aggregate_by_row_tags(cls, table: Table, keys: List[str], func: TableGroupFunction = "mean") -> Table:
         """
-        Group data along a list of row tag keys
+        Aggregtor data along a list of row tag keys
 
         :param data: A DataFrame comming from and AnnotatedTable (or with annotated key,value columns)
         :param data: DataFrame
@@ -39,7 +40,7 @@ class TableTagGrouperHelper:
         if func == "sort":
             return cls.sort_by_row_tags(table, keys)
         else:
-            return cls._group_with_aggregate(table.select_numeric_columns(), keys, func, "index")
+            return cls._aggregate_by_tags(table.select_numeric_columns(), keys, func, "index")
 
     @classmethod
     def sort_by_row_tags(cls, table: Table, keys: List[str]) -> Table:
@@ -69,7 +70,7 @@ class TableTagGrouperHelper:
     ############################################## COLUMNS ######################################################
 
     @classmethod
-    def group_by_column_tags(cls, table: Table, keys: List[str], func: TableGroupFunction = "mean") -> Table:
+    def aggregate_by_column_tags(cls, table: Table, keys: List[str], func: TableGroupFunction = "mean") -> Table:
         """
         Group data along a list of column tag keys
 
@@ -90,7 +91,7 @@ class TableTagGrouperHelper:
         if func == "sort":
             return cls.sort_by_column_tags(table, keys)
         else:
-            return cls._group_with_aggregate(table.select_numeric_columns(), keys, func, "columns")
+            return cls._aggregate_by_tags(table.select_numeric_columns(), keys, func, "columns")
 
     @classmethod
     def sort_by_column_tags(cls, table: Table, keys: List[str]) -> Table:
@@ -121,41 +122,42 @@ class TableTagGrouperHelper:
     ############################################## BOTH ######################################################
 
     @classmethod
-    def _group_with_aggregate(cls, table: Table, keys: List[str],
-                              func: Literal['mean', 'median', 'sum'], axis: AxisType) -> Table:
+    def _aggregate_by_tags(cls, table: Table, keys: List[str],
+                           func: Literal['mean', 'median', 'sum'], axis: AxisType) -> Table:
         if len(keys) > 1:
-            raise BadRequestException("Only one tag key is allowed with `mean` and `median` function")
-
-        tags = table.get_tags(axis)
-
-        all_tag_keys = list(set([k for t in tags for k, v in t.items()]))
+            raise BadRequestException("Multiple tags are only supported for 'sort' function")
         key = keys[0]
-        if key not in all_tag_keys:
+
+        all_tags: Dict[str, List[str]] = table.get_available_row_tags() \
+            if is_row_axis(axis) else table.get_available_column_tags()
+
+        if key not in all_tags:
             raise BadRequestException(f"The tag key '{key}' does not exist")
 
-        all_tag_values = list(set([v for t in tags for k, v in t.items() if k == key]))
-        all_tag_values = sorted(all_tag_values)
+        all_tag_values = sorted(all_tags[key])
         df_list = {}
         for val in all_tag_values:
-            grouped_table = table.select_by_tags(axis, [{key: val}])
+            filtered_table = table.select_by_tags(axis, [{key: val}])
+            aggregate_df: DataFrame
+
             if func == "mean":
-                grouped_table = grouped_table.get_data().mean(axis=axis, skipna=True).to_frame()
+                aggregate_df = filtered_table.get_data().mean(axis=axis, skipna=True).to_frame()
             elif func == "median":
-                grouped_table = grouped_table.get_data().median(axis=axis, skipna=True).to_frame()
+                aggregate_df = filtered_table.get_data().median(axis=axis, skipna=True).to_frame()
             elif func == "sum":
-                grouped_table = grouped_table.get_data().sum(axis=axis, skipna=True).to_frame()
-            df_list[val] = grouped_table.T if is_row_axis(axis) else grouped_table
+                aggregate_df = filtered_table.get_data().sum(axis=axis, skipna=True).to_frame()
+            df_list[val] = aggregate_df.T if is_row_axis(axis) else aggregate_df
 
         df: DataFrame = concat(list(df_list.values()), axis=axis)
 
+        # Create an array of tag where each key is the key the one tag per value
+        aggregate_tags = [{key: val} for val in all_tag_values]
+
+        result: Table = None
         if is_row_axis(axis):
             df.index = list(df_list.keys())
-            grouped_table = Table(df)
-            # set the other axis tags
-            grouped_table.set_all_columns_tags(table.get_column_tags())
+            result = Table(df, column_tags=table.get_column_tags(), row_tags=aggregate_tags)
         else:
             df.columns = list(df_list.keys())
-            grouped_table = Table(df)
-            # set the other axis tags
-            grouped_table.set_all_rows_tags(table.get_row_tags())
-        return grouped_table
+            result = Table(df, row_tags=table.get_row_tags(), column_tags=aggregate_tags)
+        return result
