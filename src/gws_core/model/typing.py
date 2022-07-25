@@ -181,6 +181,9 @@ class Typing(Model):
 
         # retrieve the task python type
         model_t: Type[Base] = self.get_type()
+
+        if model_t is None:
+            return ""
         return inspect.getdoc(model_t)
 
     ############################################# CLASS METHODS #########################################

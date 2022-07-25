@@ -409,6 +409,9 @@ class ProcessModel(ModelWithUser):
     def get_process_type(self) -> Type[Process]:
         return TypingManager.get_type_from_name(self.process_typing_name)
 
+    def get_process_typing(self) -> Typing:
+        return TypingManager.get_typing_from_name(self.process_typing_name)
+
     def is_source_task(self) -> bool:
         """return true if the process is of type Source
         """
@@ -467,38 +470,44 @@ class ProcessModel(ModelWithUser):
         """
         _json: dict = {}
 
-        process_type: Type[Process] = TypingManager.get_type_from_name(
-            self.process_typing_name)
-
-        if process_type:
-            _json["title"] = process_type._human_name
-            _json["description"] = process_type._short_description
-            _json["doc"] = inspect.getdoc(process_type)
+        process_typing: Typing = self.get_process_typing()
+        if process_typing:
+            _json["title"] = process_typing.human_name
+            _json["description"] = process_typing.short_description
+            _json["doc"] = process_typing.get_model_type_doc()
 
         return _json
 
     def export_config(self) -> Dict:
+
+        process_typing: Typing = self.get_process_typing()
+
+        if process_typing is None:
+            raise Exception(f"Could not find the process typing {self.process_typing_name}")
         return {
             "process_typing_name": self.process_typing_name,
             "instance_name": self.instance_name,
-            "config": self.config.get_and_check_values()
+            "config": self.config.get_and_check_values(),
+            "human_name": process_typing.human_name,
+            "short_description": process_typing.short_description,
+            "brick_version": self.brick_version,
         }
 
     ########################### STATUS MANAGEMENT ##################################
 
-    @property
+    @ property
     def is_running(self) -> bool:
         return self.status == ProcessStatus.RUNNING
 
-    @property
+    @ property
     def is_finished(self) -> bool:
         return self.status == ProcessStatus.SUCCESS or self.is_error
 
-    @property
+    @ property
     def is_draft(self) -> bool:
         return self.status == ProcessStatus.DRAFT
 
-    @property
+    @ property
     def is_updatable(self) -> bool:
         return not self.is_archived and (self.experiment is None or not self.experiment.is_validated) \
             and self.is_draft
@@ -508,15 +517,15 @@ class ProcessModel(ModelWithUser):
             raise BadRequestException(GWSException.RESET_EXPERIMENT_REQUIRED.value,
                                       GWSException.RESET_EXPERIMENT_REQUIRED.name)
 
-    @property
+    @ property
     def is_error(self) -> bool:
         return self.status == ProcessStatus.ERROR
 
-    @property
+    @ property
     def is_success(self) -> bool:
         return self.status == ProcessStatus.SUCCESS
 
-    @property
+    @ property
     def is_ready(self) -> bool:
         """
         Returns True if the process is ready (i.e. all its ports are
