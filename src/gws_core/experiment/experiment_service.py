@@ -6,6 +6,7 @@
 
 from typing import Dict, Type
 
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.lab_config_model import LabConfigModel
@@ -122,7 +123,12 @@ class ExperimentService(BaseService):
         experiment.check_is_updatable()
 
         experiment.title = experiment_DTO.title
-        experiment.project = ProjectService.get_or_create_project_from_dto(experiment_DTO.project)
+        project = ProjectService.get_or_create_project_from_dto(experiment_DTO.project)
+
+        if experiment.last_sync_at is not None and project != experiment.project:
+            raise BadRequestException("You can't change the project of an experiment that has been synced")
+
+        experiment.project = project
 
         experiment.save()
         return experiment
@@ -146,8 +152,16 @@ class ExperimentService(BaseService):
         return experiment.save()
 
     @classmethod
+    def reset_experiment(cls, id: str) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id)
+
+        return experiment.reset()
+
+    ###################################  VALIDATION  ##############################
+
+    @classmethod
     @transaction()
-    def validate_experiment_from_id(cls, id: str, project_dto: ProjectDto = None) -> Experiment:
+    def validate_experiment_by_id(cls, id: str, project_dto: ProjectDto = None) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
 
         project: Project = None
@@ -155,15 +169,12 @@ class ExperimentService(BaseService):
         if project_dto is not None:
             project = ProjectService.get_or_create_project_from_dto(project_dto)
 
-        return cls.validate_experiment(experiment, project)
+        experiment.project = project
+        return cls.validate_experiment(experiment)
 
     @classmethod
     @transaction()
-    def validate_experiment(cls, experiment: Experiment, project: Project = None) -> Experiment:
-        # set the project if it is provided
-        if project is not None:
-            experiment.project = project
-
+    def validate_experiment(cls, experiment: Experiment) -> Experiment:
         experiment.validate()
 
         user: User = CurrentUserService.get_and_check_current_user()
@@ -172,16 +183,30 @@ class ExperimentService(BaseService):
                             object_id=experiment.id,
                             user=user)
 
-        return experiment
+        # send the experiment to the central
+        cls._synchronize_with_central(experiment)
+
+        return experiment.save()
+
+    ###################################  SYNCHRO WITH CENTRAL  ##############################
 
     @classmethod
-    @transaction()
-    def validate_experiment_send_to_central(cls, id: str, project_dto: ProjectDto = None) -> Experiment:
-        experiment = cls.validate_experiment_from_id(id, project_dto)
+    def synchronize_with_central_by_id(cls, id: str) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id)
+        experiment = cls._synchronize_with_central(experiment)
+        return experiment.save()
 
+    @classmethod
+    def _synchronize_with_central(cls, experiment: Experiment) -> Experiment:
         if Settings.is_local_env():
             Logger.info('Skipping sending experiment to central as we are running in LOCAL')
             return experiment
+
+        if experiment.project is None:
+            raise BadRequestException("The experiment must be linked to a project before validating it")
+
+        experiment.last_sync_at = DateHelper.now_utc()
+        experiment.last_sync_by = CurrentUserService.get_and_check_current_user()
 
         lab_config: LabConfigModel = experiment.lab_config
         if lab_config is None:
@@ -193,14 +218,7 @@ class ExperimentService(BaseService):
         }
         # Save the experiment in central
         CentralService.save_experiment(experiment.project.id, save_experiment_dto)
-
         return experiment
-
-    @classmethod
-    def reset_experiment(cls, id: str) -> Experiment:
-        experiment: Experiment = Experiment.get_by_id_and_check(id)
-
-        return experiment.reset()
 
     ################################### GET  ##############################
 
@@ -264,8 +282,13 @@ class ExperimentService(BaseService):
       ################################### DELETE ##############################
 
     @classmethod
+    @transaction()
     def delete_experiment(cls, experiment_id: str) -> None:
 
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         experiment.delete_instance()
+
+        # if the experiment was sync with central, delete it in central too
+        if experiment.last_sync_at is not None and experiment.project is not None:
+            CentralService.delete_experiment(experiment.project.id, experiment.id)

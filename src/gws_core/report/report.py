@@ -33,6 +33,10 @@ class Report(ModelWithUser):
     validated_at = DateTimeUTC(null=True)
     validated_by = ForeignKeyField(User, null=True, backref='+')
 
+    # Date of the last synchronisation with central, null if never synchronised
+    last_sync_at = DateTimeUTC(null=True)
+    last_sync_by = ForeignKeyField(User, null=True, backref='+')
+
     _table_name = 'gws_report'
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
@@ -46,6 +50,9 @@ class Report(ModelWithUser):
 
         if self.validated_by:
             json_["validated_by"] = self.validated_by.to_json()
+
+        if self.last_sync_by:
+            json_["last_sync_by"] = self.last_sync_by.to_json()
 
         if not deep:
             del json_["content"]

@@ -91,7 +91,7 @@ def validate_an_experiment(id: str,
     - **id**: the id of the experiment
     """
 
-    return ExperimentService.validate_experiment_send_to_central(id=id, project_dto=project_dto).to_json(deep=True)
+    return ExperimentService.validate_experiment_by_id(id=id, project_dto=project_dto).to_json(deep=True)
 
 
 @core_app.put("/experiment/{id}/protocol", tags=["Experiment"], summary="Update an experiment's protocol")
@@ -137,6 +137,13 @@ def update_experiment_description(id: str,
 def reset_an_experiment(id: str,
                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return ExperimentService.reset_experiment(id).to_json(deep=True)
+
+
+@core_app.put("/experiment/{id}/sync-with-central", tags=["Experiment"],
+              summary="Synchronise the experiment with the central")
+def sync_with_central(id: str,
+                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return ExperimentService.synchronize_with_central_by_id(id).to_json(deep=True)
 
 ###################################### RUN ################################
 

@@ -105,6 +105,16 @@ class CentralService(BaseService):
             raise BadRequestException("Can't save the experiment in central")
 
     @classmethod
+    def delete_experiment(cls, project_id: str, experiment_id: str) -> None:
+        central_api_url: str = cls._get_central_api_url(
+            f"{cls._external_labs_route}/project/{project_id}/experiment/{experiment_id}")
+        response = ExternalApiService.delete(central_api_url, cls._get_request_header())
+
+        if response.status_code != 200:
+            Logger.error(f"Can't delete the experiment in central. Error : {response.text}")
+            raise BadRequestException("Can't delete the experiment in central")
+
+    @classmethod
     def save_report(cls, project_id: str, report: SaveReportToCentralDTO) -> None:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/project/{project_id}/report")
@@ -116,6 +126,16 @@ class CentralService(BaseService):
         if response.status_code != 200:
             Logger.error(f"Can't save the report in central. Error : {response.text}")
             raise BadRequestException("Can't save the report in central")
+
+    @classmethod
+    def delete_report(cls, project_id: str, report_id: str) -> None:
+        central_api_url: str = cls._get_central_api_url(
+            f"{cls._external_labs_route}/project/{project_id}/report/{report_id}")
+        response = ExternalApiService.delete(central_api_url, cls._get_request_header())
+
+        if response.status_code != 200:
+            Logger.error(f"Can't delete the report in central. Error : {response.text}")
+            raise BadRequestException("Can't delete the report in central")
 
     @classmethod
     def send_experiment_finished_mail(cls, user_id: str, experiment: SendExperimentFinishMailData) -> None:

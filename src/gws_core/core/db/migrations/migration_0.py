@@ -307,3 +307,29 @@ class Migration0314(BrickMigration):
             except Exception as err:
                 Logger.error(f'Error while migrating resource {resource_model.id} : {err}')
                 Logger.log_exception_stack_trace(err)
+
+
+@brick_migration('0.3.15', short_description='Add last_sync info to Experiment and Report')
+class Migration0315(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(Experiment.get_db())
+        migrator.add_column_if_not_exists(Experiment, Experiment.last_sync_at)
+        migrator.add_column_if_not_exists(Experiment, Experiment.last_sync_by)
+        migrator.add_column_if_not_exists(Report, Report.last_sync_at)
+        migrator.add_column_if_not_exists(Report, Report.last_sync_by)
+        migrator.migrate()
+
+        experiments: List[Experiment] = list(Experiment.select().where(Experiment.is_validated == True))
+        for experiment in experiments:
+            experiment.last_sync_at = experiment.last_modified_at
+            experiment.last_sync_by = experiment.last_modified_by
+            experiment.save()
+
+        reports: List[Report] = list(Report.select().where(Report.is_validated == True))
+        for report in reports:
+            report.last_sync_at = report.last_modified_at
+            report.last_sync_by = report.last_modified_by
+            report.save()

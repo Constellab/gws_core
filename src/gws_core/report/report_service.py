@@ -11,8 +11,10 @@ from fastapi.responses import FileResponse
 from gws_core.central.central_dto import SaveReportToCentralDTO
 from gws_core.core.classes.rich_text_content import (RichText, RichTextI,
                                                      RichTextResourceView)
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
+from gws_core.experiment.experiment_api import delete_experiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_model import LabConfigModel
@@ -23,6 +25,7 @@ from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.resource.view_types import report_supported_views
 from gws_core.task.task_input_model import TaskInputModel
+from gws_core.user.current_user_service import CurrentUserService
 from peewee import ModelSelect
 
 from ..central.central_service import CentralService
@@ -83,7 +86,12 @@ class ReportService():
         report: Report = cls._get_and_check_before_update(report_id)
 
         report.title = report_dto.title
-        report.project = ProjectService.get_or_create_project_from_dto(report_dto.project)
+        project = ProjectService.get_or_create_project_from_dto(report_dto.project)
+
+        if report.last_sync_at is not None and project != report.project:
+            raise BadRequestException("You can't change the project of an experiment that has been synced")
+
+        report.project = project
 
         # check that all associated experiment are in same project
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
@@ -113,9 +121,13 @@ class ReportService():
 
     @classmethod
     def delete(cls, report_id: str) -> None:
-        cls._get_and_check_before_update(report_id)
+        report: Report = cls._get_and_check_before_update(report_id)
 
         Report.delete_by_id(report_id)
+
+        # if the report was sync with central, delete it in central too
+        if report.last_sync_at is not None and report.project is not None:
+            CentralService.delete_report(report.project.id, report.id)
 
     @classmethod
     def validate(cls, report_id: str, project_dto: ProjectDto = None) -> Report:
@@ -138,11 +150,6 @@ class ReportService():
             if experiment.project and experiment.project.id != report.project.id:
                 raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.value,
                                           GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.name, {'title': experiment.title})
-
-        # validate experiment that were not validated
-        for experiment in experiments:
-            if not experiment.is_validated:
-                ExperimentService.validate_experiment(experiment, report.project)
 
         # refresh the associated resource (for precaution)
         cls._refresh_report_associated_resources(report)
@@ -167,6 +174,12 @@ class ReportService():
                                               GWSException.REPORT_VALIDATION_RESOURCE_UPLOADED_VIEW_OTHER_EXP.name,
                                               {'view_name': view_name, 'resource_name': resource.name})
 
+        # validate experiment that were not validated
+        for experiment in experiments:
+            if not experiment.is_validated:
+                experiment.project = report.project
+                ExperimentService.validate_experiment(experiment)
+
         report.validate()
 
         return report.save()
@@ -176,12 +189,31 @@ class ReportService():
     def validate_and_send_to_central(cls, report_id: str, project_dto: ProjectDto = None) -> Report:
         report = cls.validate(report_id, project_dto)
 
+        report = cls._synchronize_with_central(report)
+
+        return report.save()
+
+    ###################################  SYNCHRO WITH CENTRAL  ##############################
+    @classmethod
+    def synchronize_with_central_by_id(cls, id: str) -> Report:
+        report: Report = cls.get_by_id_and_check(id)
+        report = cls._synchronize_with_central(report)
+        return report.save()
+
+    @classmethod
+    def _synchronize_with_central(cls, report: Report) -> Report:
         if Settings.is_local_env():
             Logger.info('Skipping sending experiment to central as we are running in LOCAL')
             return report
 
+        if report.project is None:
+            raise BadRequestException("The experiment must be linked to a project before validating it")
+
+        report.last_sync_at = DateHelper.now_utc()
+        report.last_sync_by = CurrentUserService.get_and_check_current_user()
+
         # retrieve the experiment ids
-        experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
+        experiments: List[Experiment] = cls.get_experiments_by_report(report.id)
 
         lab_config: LabConfigModel = report.lab_config or LabConfigModel.get_current_config()
 
@@ -194,6 +226,8 @@ class ReportService():
         CentralService.save_report(report.project.id, save_report_dto)
 
         return report
+
+    ###################################  ASSOCIATED EXPERIMENT  ##############################
 
     @classmethod
     @transaction()

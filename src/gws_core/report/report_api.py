@@ -71,6 +71,12 @@ def validate(report_id: str, project_dto: Optional[ProjectDto] = None,
     return ReportService.validate_and_send_to_central(report_id, project_dto).to_json(deep=True)
 
 
+@core_app.put('/report/{report_id}/sync-with-central', tags=["Report"], summary="Sync the report with central")
+def sync_with_central(report_id: str,
+                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return ReportService.synchronize_with_central_by_id(report_id).to_json(deep=True)
+
+
 ################################################# Image ########################################
 
 @core_app.post("/report/image", tags=["Report"], summary="Upload an object")

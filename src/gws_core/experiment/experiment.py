@@ -75,6 +75,10 @@ class Experiment(ModelWithUser, TaggableModel):
     validated_at = DateTimeUTC(null=True)
     validated_by = ForeignKeyField(User, null=True, backref='+')
 
+    # Date of the last synchronisation with central, null if never synchronised
+    last_sync_at = DateTimeUTC(null=True)
+    last_sync_by = ForeignKeyField(User, null=True, backref='+')
+
     _table_name = 'gws_experiment'
 
     # cache of the _protocol
@@ -275,7 +279,6 @@ class Experiment(ModelWithUser, TaggableModel):
         self.is_validated = True
         self.validated_at = DateHelper.now_utc()
         self.validated_by = CurrentUserService.get_and_check_current_user()
-        self.save()
 
     @transaction()
     def delete_instance(self):
@@ -414,6 +417,9 @@ class Experiment(ModelWithUser, TaggableModel):
 
         if self.validated_by:
             _json["validated_by"] = self.validated_by.to_json()
+
+        if self.last_sync_by:
+            _json["last_sync_by"] = self.last_sync_by.to_json()
 
         return _json
 
