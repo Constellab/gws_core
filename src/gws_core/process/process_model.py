@@ -484,13 +484,16 @@ class ProcessModel(ModelWithUser):
 
         if process_typing is None:
             raise Exception(f"Could not find the process typing {self.process_typing_name}")
+
         return {
             "process_typing_name": self.process_typing_name,
             "instance_name": self.instance_name,
-            "config": self.config.get_and_check_values(),
+            "config": self.config.export_config(),
             "human_name": process_typing.human_name,
             "short_description": process_typing.short_description,
             "brick_version": self.brick_version,
+            "input_specs": self.inputs.export_specs(),
+            "output_specs": self.outputs.export_specs(),
         }
 
     ########################### STATUS MANAGEMENT ##################################

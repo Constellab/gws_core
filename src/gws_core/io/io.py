@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Dict, Generic, List, Type, TypeVar, final
 
-from gws_core.io.io_spec import IOSpec
+from gws_core.io.io_spec import IOSpec, IOSpecDict
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -268,6 +268,12 @@ class IO(Base, Generic[PortType]):
         for key, port in self._ports.items():
             _json[key] = port.to_json()
         return _json
+
+    def export_specs(self) -> Dict[str, IOSpecDict]:
+        config: Dict[str, IOSpecDict] = {}
+        for key, port in self._ports.items():
+            config[key] = port.export_specs()
+        return config
 
 # ####################################################################
 #

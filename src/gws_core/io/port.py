@@ -312,6 +312,9 @@ class Port(Base):
         _json["specs"] = self.resource_spec.to_json()
         return _json
 
+    def export_specs(self) -> IOSpecDict:
+        return self.resource_spec.to_json()
+
     def __eq__(self, __o: object) -> bool:
         if not isinstance(__o, Port):
             return False

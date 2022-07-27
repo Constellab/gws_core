@@ -158,6 +158,16 @@ class Config(ModelWithUser):
         data["specs"] = json_specs
         return data
 
+    def export_config(self) -> dict:
+        """
+        Export the config to a dict
+        """
+
+        return {
+            "specs": self.data["specs"],
+            "data": self.get_and_check_values()
+        }
+
     def copy(self) -> 'Config':
         """Copy the config to a new Config with a new Id
         """
