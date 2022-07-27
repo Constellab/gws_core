@@ -79,6 +79,7 @@ class Settings():
             settings.set_data(key, value)
 
         settings.save()
+        Settings._setting_instance = settings
 
     def save(self) -> bool:
         # create the parent directory
@@ -87,7 +88,6 @@ class Settings():
         with open(self._get_setting_file_path(), 'w') as f:
             dump(self.data, f, sort_keys=True)
 
-        Settings._setting_instance = self
         return True
 
     @classmethod
@@ -430,17 +430,8 @@ class Settings():
 
         return cls._setting_instance
 
-    # -- S --
-
-    def set_data(self, k: str, val: str):
-        self.data[k] = val
-        self.save()
-
-    # -- T --
-
-    # -- U --
-
-    # -- V --
+    def set_data(self, key: str, val: Any) -> None:
+        self.data[key] = val
 
     @property
     def version(self):

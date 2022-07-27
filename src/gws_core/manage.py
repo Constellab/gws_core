@@ -169,10 +169,16 @@ class SettingsLoader:
 
     @classmethod
     def get_git_commit(cls, cwd):
-        if os.path.exists(os.path.join(cwd, ".git")):
-            return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=cwd, stderr=subprocess.DEVNULL, text=True)
-        else:
+        if not os.path.exists(os.path.join(cwd, ".git")):
             return ""
+
+        git_commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=cwd, stderr=subprocess.DEVNULL, text=True)
+
+        if not git_commit:
+            return ""
+        return git_commit.strip()
 
 
 def load_settings(cwd):
