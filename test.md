@@ -1,9 +1,34 @@
+Transformer to extract values of tags into in new rows that are appended to the end of the table.
 
-For earch filters, the system will keep the columns where the value in the row provided by the parameter ```Row name``` validated condition (the ```comparator``` with the ```value``` parameter).The result table will have the same number of rows as the input table.
+Multiple tag keys can be provided to extract multiple tags (one row is created by tag key).
 
-The ```Row name``` supports pattern. This means that multiple rows can be used in the filter. In this 
-case all the values in the provided rows must validate the condition. You can set the value ```*``` in the ```Row name``` which mean that all the values in the column must validate the condition.
+## Example
+Let's say you have the following table, the first row does not really exist in the table, it is just to show the tags of the columns.
 
-Supported operators : ```=```, ```!=```, ```contains```, ```startwith``` and ```endswith```.
+| A          | B          |
+|------------|------------|
+| Gender : M | Gender : F |
+| 1          | 5          |
+| 2          | 6          |
+| 3          | 7          |
+| 4          | 8          |
 
-If you need to apply filters on text values, you can use the ```Table column data text filter``` task.
+Here is the result of the extraction of the ```Gender``` tag.
+
+| A          | B          |
+|------------|------------|
+| Gender : M | Gender : F |
+| 1          | 5          |
+| 2          | 6          |
+| 3          | 7          |
+| 4          | 8          |
+| M          | F          |
+
+A new row is created containing the values of the ```Gender``` tag.
+
+## Parameters
+
+- The ```New row name``` parameter allows you to define the names newly create rows that contains tags
+- The ```Tag values type```` parameters allows you to force the convertion of the tag values. 
+  - Use ```numeric``` to convert the tag values to float.
+  - User ```char``` to keep the tag values as strings.
