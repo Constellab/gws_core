@@ -10,6 +10,8 @@ from importlib.util import find_spec
 from json import dumps
 from typing import Any, List, Optional, Set, Tuple, Type, Union, get_args
 
+from numpy import double
+
 
 class Utils:
 
@@ -146,3 +148,31 @@ class Utils:
             new_list.append(f"{item}_{i}")
 
         return new_list
+
+    @staticmethod
+    def is_primitive(obj: Any) -> bool:
+        """Check if an object is a primitive type
+        """
+        return obj is None or type(obj) in (int, float, str, bool, double)
+
+    @staticmethod
+    def is_json(obj: Any) -> bool:
+        """Check if an object is a json. Ok is type is primitive or a list or a dict containing
+        list dict or primitive...
+        """
+        if Utils.is_primitive(obj):
+            return True
+
+        if isinstance(obj, list):
+            for item in obj:
+                if not Utils.is_json(item):
+                    return False
+            return True
+
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if not Utils.is_primitive(key) or not Utils.is_json(value):
+                    return False
+            return True
+
+        return False
