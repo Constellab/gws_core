@@ -221,3 +221,5 @@ dmypy.json
 bin/
 
 .idea
+
+test_doc.md

@@ -127,3 +127,22 @@ class Utils:
         """Check if two json are equals
         """
         return dumps(json1, sort_keys=True) == dumps(json2, sort_keys=True)
+
+    @staticmethod
+    def rename_duplicate_in_str_list(list_: List[str]) -> List[str]:
+        """Rename all duplicated element in a list of str with _1, _2... at the end
+        """
+        new_list = []
+
+        for item in list_:
+            if item not in new_list:
+                new_list.append(item)
+                continue
+
+            i = 1
+            while f"{item}_{i}" in new_list:
+                i += 1
+
+            new_list.append(f"{item}_{i}")
+
+        return new_list

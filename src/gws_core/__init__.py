@@ -178,6 +178,8 @@ from .impl.table.helper.dataframe_filter_helper import \
     DataframeFilterHelper as DataframeFilterHelper
 from .impl.table.helper.dataframe_scaler_helper import \
     DataframeScalerHelper as DataframeScalerHelper
+from .impl.table.helper.table_concat_helper import \
+    TableConcatHelper as TableConcatHelper
 from .impl.table.helper.table_operation_helper import \
     TableOperationHelper as TableOperationHelper
 from .impl.table.helper.table_tag_aggregator_helper import \
@@ -213,6 +215,10 @@ from .impl.table.transformers.table_aggregator_filter import \
     TableColumnAggregatorFilter as TableColumnAggregatorFilter
 from .impl.table.transformers.table_aggregator_filter import \
     TableRowAggregatorFilter as TableRowAggregatorFilter
+from .impl.table.transformers.table_concat import \
+    TableColumnConcat as TableColumnConcat
+from .impl.table.transformers.table_concat import \
+    TableRowConcat as TableRowConcat
 from .impl.table.transformers.table_data_filter_numeric import \
     TableColumnDataNumericFilter as TableColumnDataNumericFilter
 from .impl.table.transformers.table_data_filter_numeric import \
@@ -239,6 +245,10 @@ from .impl.table.transformers.table_tag_aggregator import \
     TableColumnTagAggregator as TableColumnTagAggregator
 from .impl.table.transformers.table_tag_aggregator import \
     TableRowTagAggregator as TableRowTagAggregator
+from .impl.table.transformers.table_tag_extractor import \
+    TableColumnTagExtractor as TableColumnTagExtractor
+from .impl.table.transformers.table_tag_extractor import \
+    TableRowTagExtractor as TableRowTagExtractor
 from .impl.table.transformers.table_transposer import \
     TableTransposer as TableTransposer
 from .impl.table.transformers.table_unfolder import \

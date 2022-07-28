@@ -303,6 +303,10 @@ class Table(Resource):
 
         return self._column_tags.get_tags_between(from_index, to_index, none_if_empty)
 
+    def get_column_tag_by_name(self, column_name: str) -> Dict[str, str]:
+        position = self.get_column_position_from_name(column_name)
+        return self._column_tags.get_tags_at(position)
+
     def get_available_column_tags(self) -> Dict[str, List[str]]:
         """Get the complete list of column tags with list of values for each
         """

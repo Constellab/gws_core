@@ -27,3 +27,7 @@ class TestUtils(IsolatedAsyncioTestCase):
         self.assertTrue(len(types) > 0)
         for type_ in types:
             self.assertTrue(issubclass(type_, Model))
+
+    def test_uniquify_str_list(self):
+        self.assertEqual(Utils.rename_duplicate_in_str_list(['A', 'B', 'A', 'B', 'A', 'A_1']),
+                         ['A', 'B', 'A_1', 'B_1', 'A_2', 'A_1_1'])

@@ -7,8 +7,9 @@ from cmath import inf
 from typing import Any, List
 
 from gws_core.core.utils.numeric_helper import NumericHelper
+from gws_core.core.utils.utils import Utils
 from numpy import NaN, inf
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 
 class DataframeHelper:
@@ -81,14 +82,14 @@ class DataframeHelper:
     @classmethod
     def contains(cls, data: DataFrame, value: Any) -> DataFrame:
         """
-        Return a dataframe with True if the value is in the column
+        Return a dataframe with True if the cell contains the value
         """
         return data.applymap(lambda x: value in x, na_action='ignore')
 
     @classmethod
     def contains_not(cls, data: DataFrame, value: Any) -> DataFrame:
         """
-        Return a dataframe with True if the value is not in the column
+        Return a dataframe with True if the cell does not contain the value
         """
         return data.applymap(lambda x: value not in x, na_action='ignore')
 
@@ -112,3 +113,21 @@ class DataframeHelper:
         Convert all element of a dataframe to string
         """
         return data.astype(str)
+
+    @classmethod
+    def rename_duplicate_column_names(cls, data: DataFrame) -> DataFrame:
+        """
+        Rename duplicate columns name by addind _1 ,_2 ... at the end of the name
+        """
+        renamed_columns = Utils.rename_duplicate_in_str_list(data.columns.to_list())
+        data.columns = renamed_columns
+        return data
+
+    @classmethod
+    def rename_duplicate_row_names(cls, data: DataFrame) -> DataFrame:
+        """
+        Rename duplicate rows  by addind _1 ,_2 ... at the end of the name
+        """
+        renamed_rows = Utils.rename_duplicate_in_str_list(data.index.to_list())
+        data.index = renamed_rows
+        return data
