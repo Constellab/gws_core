@@ -28,17 +28,12 @@ class DictRField(PrimitiveRField):
                               Do not mark huge fields as include in dict view, defaults to False
         :type include_in_dict_view: bool, optional
         """
-        super().__init__(validator=DictValidator(must_be_deep_jsonable=True), searchable=False,
+        super().__init__(validator=DictValidator(), searchable=False,
                          default_value=default_value, include_in_dict_view=include_in_dict_view)
 
     def get_default_value(self) -> Any:
         if self._default_value is None:
             return {}
-
-        if Utils.is_json(self._default_value):
-            raise BadRequestException(
-                "Incorrect default value for DictRField. The default value must be a json like type")
-
         try:
             return deepcopy(self._default_value)
         except:
