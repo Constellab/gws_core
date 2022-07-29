@@ -16,7 +16,7 @@ from ..model.typing import Typing
 from ..model.typing_dict import TypingObjectType
 from ..task.task import Task
 
-TaskSubType = Literal["TASK", "IMPORTER", "EXPORTER", "TRANSFORMER"]
+TaskSubType = Literal["TASK", "IMPORTER", "EXPORTER", "TRANSFORMER", "ACTIONS_TASK"]
 
 
 @final

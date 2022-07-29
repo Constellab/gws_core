@@ -229,7 +229,7 @@ class Table(Resource):
         dataframe = self.get_column_as_dataframe(column_name, skip_nan)
         return DataframeHelper.flatten_dataframe_by_column(dataframe)
 
-    def add_column(self, column_name: str, column_data: Union[list, Series], column_index: int = None):
+    def add_column(self, column_name: str, column_data: Union[list, Series] = None, column_index: int = None):
         """ Add a new column to the Dataframe.
         :param column_name: name of the column
         :type column_name: str
@@ -238,6 +238,9 @@ class Table(Resource):
         :param column_index: index for the column, if none, the column is append to the end, defaults to None
         :type column_index: int, optional
         """
+
+        if column_data is None:
+            column_data = [None] * self.nb_rows
 
         if isinstance(column_data, Series):
             column_data = column_data.tolist()

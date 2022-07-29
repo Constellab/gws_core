@@ -359,6 +359,9 @@ from .resource.view_types import ViewType as ViewType
 # Tag
 from .tag.tag import Tag as Tag
 from .tag.tag_helper import TagHelper as TagHelper
+# Task > Action
+from .task.action.actions import Action as Action
+from .task.action.actions import action_decorator as action_decorator
 # Task > Converter
 from .task.converter.converter import Converter as Converter
 from .task.converter.converter import ConverterRunner as ConverterRunner

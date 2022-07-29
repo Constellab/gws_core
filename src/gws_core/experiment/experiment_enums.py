@@ -24,3 +24,5 @@ class ExperimentType(Enum):
     IMPORTER = "IMPORTER"
     # specific experiment generated from a fs node extractor
     FS_NODE_EXTRACTOR = "FS_NODE_EXTRACTOR"
+    # specific experiment generated from a action task
+    ACTIONS = "ACTIONS"
