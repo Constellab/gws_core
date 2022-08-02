@@ -47,3 +47,8 @@ class ConfigParams(ConfigParamsDict):
         """
 
         return param_name in self and self[param_name] is not None
+
+    def __getitem__(self, __k: str) -> Any:
+        if __k not in self:
+            raise KeyError(f"The config does not have the parameter '{__k}'")
+        return super().__getitem__(__k)
