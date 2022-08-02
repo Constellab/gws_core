@@ -10,6 +10,7 @@ from gws_core.impl.table.helper.dataframe_data_filter_helper import \
 from pandas import DataFrame
 
 
+# test_table_filter_helper
 class TestTableFilterHelper(BaseTestCase):
     async def test_filter_by_axis_name(self):
 
@@ -63,26 +64,26 @@ class TestTableFilterHelper(BaseTestCase):
 
     async def test_table_filter_numeric_data(self):
 
-        initial_df = DataFrame({'A': [1, 2, 3, 4], 'B': [8, 6, 4, 2]})
+        initial_df = DataFrame({'A': [1.0, 2.0, 3.0, 4.0], 'B': [8.0, 6.0, 4.0, 2.0]})
 
         # filter rows where A column value >= 3
         result = DataframeDataFilterHelper.filter_rows_numeric(
             data=initial_df, column_name_regex="A", comp=">=", value=3
         )
-        expected_result = DataFrame({'A': [3, 4], 'B': [4, 2]}, index=[2, 3])
+        expected_result = DataFrame({'A': [3.0, 4.0], 'B': [4.0, 2.0]}, index=[2.0, 3.0])
         self.assertTrue(result.equals(expected_result))
 
         # filter rows where A and B columns are >= 3
         result = DataframeDataFilterHelper.filter_rows_numeric(
             data=initial_df, column_name_regex="*", comp=">=", value=3)
-        expected_result = DataFrame({'A': [3], 'B': [4]}, index=[2])
+        expected_result = DataFrame({'A': [3.0], 'B': [4.0]}, index=[2])
         self.assertTrue(result.equals(expected_result))
 
         # filter columns where first row value is >= 3
         result = DataframeDataFilterHelper.filter_columns_numeric(
             data=initial_df, row_name_regex="0", comp=">=", value=3
         )
-        expected_result = DataFrame({'B': [8, 6, 4, 2]})
+        expected_result = DataFrame({'B': [8.0, 6.0, 4.0, 2.0]})
         self.assertTrue(result.equals(expected_result))
 
     async def test_table_filter_text_data(self):

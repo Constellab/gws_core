@@ -7,17 +7,17 @@
 from typing import Any, List, TypedDict
 
 from gws_core.impl.table.table import Table
-from gws_core.task.action.actions import Action, action_decorator
+from gws_core.task.action.action import Action, action_decorator
 
 
-class AddColumnParam(TypedDict):
+class TableAddColumnParam(TypedDict):
     name: str
     index: int
 
 
 @action_decorator("TableAddColumn")
 class TableAddColumn(Action):
-    params: AddColumnParam
+    params: TableAddColumnParam
 
     def execute(self, resource: Table) -> Table:
         resource.add_column(name=self.params["name"], index=self.params["index"])
@@ -28,7 +28,7 @@ class TableAddColumn(Action):
         return resource
 
 
-class RemoveColumnParam(TypedDict):
+class TableRemoveColumnParam(TypedDict):
     name: str
     index: int
     data: List[Any]
@@ -36,7 +36,7 @@ class RemoveColumnParam(TypedDict):
 
 @action_decorator("TableRemoveColumn")
 class TableRemoveColumn(Action):
-    params: RemoveColumnParam
+    params: TableRemoveColumnParam
 
     def execute(self, resource: Table) -> Table:
         # save the column data in the params for undo

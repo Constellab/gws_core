@@ -329,6 +329,16 @@ class Table(Resource):
             lower_names = [x.lower() for x in self.row_names]
             return name.lower() in lower_names
 
+    def set_cell_value_at(self, row_index: int, column_index: int, value: Any):
+        """ Set the value of a cell at a given index
+        """
+        self._data.iat[row_index, column_index] = value
+
+    def get_cell_value_at(self, row_index: int, column_index: int) -> Any:
+        """ Get the value of a cell at a given index
+        """
+        return self._data.iat[row_index, column_index]
+
     def get_tags(self, axis: AxisType) -> List[Dict[str, str]]:
         """
         Get tags

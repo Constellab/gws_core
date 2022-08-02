@@ -13,7 +13,8 @@ from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.process.process_interface import IProcess
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
-from gws_core.task.action.actions import Action, ActionsManager
+from gws_core.task.action.actions_manager import ActionsManager
+from gws_core.task.action.action import Action
 from gws_core.task.action.actions_task import ActionsTask
 from gws_core.task.plug import Sink
 

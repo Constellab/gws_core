@@ -10,8 +10,9 @@ from gws_core import Action, Resource
 from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.impl.text.text import Text
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.task.action.actions_manager import ActionsManager
 from gws_core.task.action.action_service import ActionService
-from gws_core.task.action.actions import ActionsManager, action_decorator
+from gws_core.task.action.action import action_decorator
 from gws_core.test.base_test_case import BaseTestCase
 
 

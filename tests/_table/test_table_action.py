@@ -6,6 +6,7 @@
 
 from unittest import IsolatedAsyncioTestCase
 
+from gws_core.impl.table.action.table_cell_action import TableUpdateCell
 from gws_core.impl.table.action.table_column_action import (TableAddColumn,
                                                             TableRemoveColumn)
 from gws_core.impl.table.table import Table
@@ -43,4 +44,19 @@ class TestTable(IsolatedAsyncioTestCase):
 
         # Test undo
         table = remove_column_action.undo(table)
+        self.assertTrue(table.get_data().equals(original_df))
+
+    def test_update_cell(self):
+        original_df = DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+        table: Table = Table(original_df)
+
+        update_cell_action = TableUpdateCell({"row": 0, "column": 1, "new_value": 10})
+        # Test update a cell
+        table = update_cell_action.execute(table)
+
+        expected_df = DataFrame({"A": [1, 2, 3], "B": [10, 5, 6]})
+        self.assertTrue(table.get_data().equals(expected_df))
+
+        # Test undo
+        table = update_cell_action.undo(table)
         self.assertTrue(table.get_data().equals(original_df))

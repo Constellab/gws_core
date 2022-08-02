@@ -9,45 +9,21 @@ from typing import final
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.resource.resource import Resource
-from gws_core.task.action.actions import ActionsManager
+from gws_core.task.action.actions_manager import ActionsManager
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
-
-# def action_task_decorator(task_class: Type['ActionsTask'], unique_name: str,
-#                           source_type: Type[Resource] = Resource, target_type: Type[Resource] = Resource,
-#                           allowed_user: UserGroup = UserGroup.USER,
-#                           human_name: str = "", short_description: str = "", hide: bool = False,
-#                           deprecated_since: str = None, deprecated_message: str = None) -> None:
-#     def decorator(task_class: Type[Task]):
-
-#     if not Utils.issubclass(task_class, ActionsTask):
-#         BrickService.log_brick_error(
-#             task_class,
-#             f"The action_task_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ActionsTask")
-#         return
-
-#     # force the input and output specs
-#     task_class.input_specs = {"actions": InputSpec(Actions, human_name="Actions",
-#                                                    short_description="List of actions to modify the source resource"),
-#                               "source": InputSpec(source_type, human_name="Source")}
-#     task_class.output_specs = {"target": OutputSpec(target_type)}
-
-#     # register the task and set the human_name and short_description dynamically based on resource
-#     decorate_task(task_class, unique_name, human_name=human_name,
-#                   task_type="ACTIONS_TASK", short_description=short_description, allowed_user=allowed_user, hide=hide,
-#                   deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
 
 @task_decorator("ActionsTask", hide=True)
 class ActionsTask(Task):
 
-    actions_input_name: str = 'actions'
+    actions_input_name: str = 'actions_manager'
     source_input_name: str = 'source'
     target_output_name: str = 'target'
 
-    input_specs = {"actions": InputSpec(ActionsManager, human_name="Actions",
-                                        short_description="List of actions to modify the source resource"),
+    input_specs = {"actions_manager": InputSpec(ActionsManager, human_name="Actions",
+                                                short_description="List of actions to modify the source resource"),
                    "source": InputSpec(Resource, human_name="Source")}
     output_specs = {"target": OutputSpec(Resource)}
 
@@ -62,7 +38,7 @@ class ActionsTask(Task):
         # retrieve the action
         actions: ActionsManager = inputs.get(self.actions_input_name)
 
-        target = source
+        target: Resource = source
 
         for action in actions.get_actions():
             # execute the action

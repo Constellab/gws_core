@@ -258,3 +258,10 @@ class TestTable(IsolatedAsyncioTestCase):
         table.remove_column('B')
         expected_table = Table(DataFrame({'A': [1, 2, 3]}))
         self.assertTrue(table.equals(expected_table))
+
+    async def test_set_cell_value(self):
+        table = Table(DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]}))
+        self.assertEqual(table.get_cell_value_at(0, 1), 4)
+
+        table.set_cell_value_at(0, 1, 7)
+        self.assertEqual(table.get_cell_value_at(0, 1), 7)
