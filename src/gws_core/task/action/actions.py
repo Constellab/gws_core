@@ -104,6 +104,8 @@ class ActionsManager(Resource):
         self.actions.append(action.export_config())
 
     def pop_action(self) -> Action:
+        if len(self.actions) == 0:
+            raise Exception("No action to pop")
         action_dict = self.actions.pop()
         return self._instantiate_from_dict(action_dict)
 

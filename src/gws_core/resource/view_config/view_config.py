@@ -59,8 +59,8 @@ class ViewConfig(ModelWithUser):
         ))
 
         for view_config_db in view_configs_db:
-            if Utils.json_are_equals(view_config_db.config_values, view_config.config_values) and \
-                    Utils.json_are_equals(view_config_db.transformers, view_config.transformers):
+            if Utils.json_equals(view_config_db.config_values, view_config.config_values) and \
+                    Utils.json_equals(view_config_db.transformers, view_config.transformers):
                 return view_config_db
 
         return None

@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import BaseTestCase, GTest, KVStore
+from gws_core import BaseTestCase, KVStore
 from gws_core.impl.file.file_helper import FileHelper
 
 
@@ -14,6 +14,10 @@ class TestKVStore(BaseTestCase):
         s1['test'] = 'Super'
         self.assertEqual(s1['test'], 'Super')
         self.assertTrue(s1.file_exists())
+
+        s1.remove()
+        self.assertFalse(s1.file_exists())
+        self.assertFalse(FileHelper.exists_on_os(s1.full_file_dir))
 
     def test_store(self):
         s1 = KVStore.from_filename('s1')

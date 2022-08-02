@@ -12,6 +12,7 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_types import CallViewParams
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_service import TagService
+from gws_core.task.action.action_service import ActionService
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.transformer.transformer_service import TransformerService
 from gws_core.task.transformer.transformer_type import TransformerDict
@@ -184,3 +185,16 @@ async def get_the_list_of_resource_types(_: UserData = Depends(AuthService.check
     Retrieve a the complete list of resources types. The list is not paginated.
     """
     return ListJsonable(ResourceService.fetch_resource_type_list()).to_json()
+
+
+############################### ACTIONS ##############################
+
+@core_app.post("/resource/{id}/action/add/{action_typing_name}", tags=["Resource"],
+               summary="Add an action to a resource")
+async def add_action_to_resource(id: str, action_typing_name: str,
+                                 action_params: dict,
+                                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Add an action to a resource.
+    """
+    return ActionService.execute_action(id, action_typing_name, action_params).to_json()

@@ -6,6 +6,7 @@
 from copy import deepcopy
 from typing import Dict, List
 
+from gws_core.core.utils.utils import Utils
 from gws_core.resource.r_field.serializable_r_field import SerializableObject
 from gws_core.tag.tag_helper import TagHelper
 
@@ -22,30 +23,32 @@ class TableAxisTags(SerializableObject):
         else:
             self.set_all_tags(tags)
 
-    def insert_new_empty_tags(self, index: int = None):
+    def insert_new_empty_tags(self, index: int = None, count: int = 1):
         """
         Add a new empty tags dict.
         If index is None, the new tags will be added at the end of the list.
         """
         if index is None:
-            self._tags.append({})
-        else:
-            self._tags.insert(index, {})
+            index = self.size
 
-    def add_tag_at(self, index: int, key: str, value: str):
+        for _ in range(count):
+            self._tags.insert(index, {})
+            index += 1
+
+    def add_tag_at(self, index: int, key: str, value: str) -> None:
         self._check_tag_index(index)
         self._check_tag(key, value)
 
         self._tags[index][key] = value
 
-    def set_tags_at(self, index: int, tags: Dict[str, str]):
+    def set_tags_at(self, index: int, tags: Dict[str, str]) -> None:
         """ Set the tags at the given index (override previous tags)"""
         self._check_tag_index(index)
         self._check_tags(tags)
 
         self._tags[index] = tags
 
-    def set_all_tags(self, tags: List[Dict[str, str]]):
+    def set_all_tags(self, tags: List[Dict[str, str]]) -> None:
         if not isinstance(tags, list):
             raise Exception("The tags must be a list")
 
@@ -53,6 +56,10 @@ class TableAxisTags(SerializableObject):
             self._tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         except Exception as err:
             raise Exception(f"The tags are not valid. Please check. Error message: {err}")
+
+    def remove_tags_at(self, index: int) -> None:
+        self._check_tag_index(index)
+        del self._tags[index]
 
     def get_tags_between(self, from_index: int = None, to_index: int = None,
                          none_if_empty: bool = False) -> List[Dict[str, str]]:
@@ -117,3 +124,9 @@ class TableAxisTags(SerializableObject):
             return TableAxisTags([])
 
         return TableAxisTags(data["tags"])
+
+    def equals(self, __o: object) -> bool:
+        if not isinstance(__o, TableAxisTags):
+            return False
+
+        return Utils.json_equals(self._tags, __o._tags)

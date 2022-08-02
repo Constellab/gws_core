@@ -107,10 +107,9 @@ class KVStore(Dict[str, Any]):
         Remove the store
         """
 
-        if self.file_exists():
+        if not FileHelper.exists_on_os(self.full_file_dir):
             return
-        # os.remove(self.full_file_path)
-        os.remove(self.full_file_dir)
+        FileHelper.delete_dir(self.full_file_dir)
 
     def __setitem__(self, key, value):
         """

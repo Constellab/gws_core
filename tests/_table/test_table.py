@@ -3,22 +3,23 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
+from unittest import IsolatedAsyncioTestCase
 
-import numpy
-import pandas
-from gws_core import (BaseTestCase, File, Table, TableExporter, TableImporter,
-                      TaskRunner)
-from gws_core_test_helper import GWSCoreTestHelper
+from gws_core import Table
+from gws_core.core.utils.utils import Utils
 from pandas import DataFrame
 
 
-class TestTable(BaseTestCase):
+class TestTable(IsolatedAsyncioTestCase):
     def test_table(self):
-        table: Table = Table(data=[[1, 2, 3]], column_names=["a", "b", "c"])
+        table: Table = Table(data=[[1, 2, 3]], column_names=["a", "b", "c"], row_names=["r0"])
 
-        self.assert_json(table.get_row_tags(), [{}])
-        self.assert_json(table.get_column_tags(), [{}, {}, {}])
+        expected_df = DataFrame({'a': [1], 'b': [2], 'c': [3]}, index=["r0"])
+        self.assertTrue(table.get_data().equals(expected_df))
+        self.assertEqual(table.column_names, ["a", "b", "c"])
+        self.assertEqual(table.row_names, ["r0"])
+        Utils.assert_json_equals(table.get_row_tags(), [{}])
+        Utils.assert_json_equals(table.get_column_tags(), [{}, {}, {}])
         self.assertEqual(table.comments, None)
 
     def test_create_sub_table(self):
@@ -201,59 +202,6 @@ class TestTable(BaseTestCase):
         self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
         self.assertEqual(t.row_names, ["Tokyo", "Paris"])
 
-    def test_table_import_1(self):
-
-        file_path = GWSCoreTestHelper.get_small_data_file_path(1)
-        table: Table = TableImporter.call(File(file_path))
-        df = pandas.read_table(file_path)
-
-        self.assertTrue(numpy.array_equal(
-            df.to_numpy(),
-            table.get_data().to_numpy()
-        ))
-        self.assertEqual(table.column_names, ["A", "B", "C", "D", "E"])
-        self.assertEqual(table.row_names, [0, 1])
-        # self.assertEqual(table.row_names, ["R0", "R1"])
-
-    def test_table_import_2(self):
-        """ Test import with weird caracters and #"""
-
-        file_path = GWSCoreTestHelper.get_small_data_file_path(2)
-        table: Table = TableImporter.call(File(file_path), params={"comment": ""})
-
-        df = table.get_data()
-        self.assertEqual(df['A'][0], '#')
-        self.assertEqual(df['B'][0], 'éçàùè$€')
-
-    async def test_importer_exporter(self):
-        # importer
-        file_path = GWSCoreTestHelper.get_small_data_file_path(1)
-        tester = TaskRunner(
-            params={}, inputs={"source": File(path=file_path)}, task_type=TableImporter
-        )
-        self.assertTrue(os.path.exists(file_path))
-        outputs = await tester.run()
-        table: Table = outputs["target"]
-        df = pandas.read_table(file_path)
-        self.assertTrue(numpy.array_equal(
-            df.to_numpy(),
-            table.get_data().to_numpy()
-        ))
-
-        # exporter
-        table.set_comments("This is a table")
-        tester = TaskRunner(
-            params={}, inputs={"source": table}, task_type=TableExporter
-        )
-        outputs = await tester.run()
-        file_ = outputs["target"]
-
-        with open(file_.path, 'r') as fp:
-            text = fp.read()
-            self.assertTrue(text.startswith("#This is a table"))
-
-        self.assertTrue(os.path.exists(file_.path))
-
     async def test_generate_column_name(self):
         dataframe = DataFrame({'A': range(1, 6)})
 
@@ -261,3 +209,52 @@ class TestTable(BaseTestCase):
         self.assertEqual(table.generate_new_column_name('Test'), 'Test')
         # test generating a new that already exists
         self.assertEqual(table.generate_new_column_name('A'), 'A_1')
+
+    async def test_equals(self):
+        first: Table = Table(DataFrame({'A': [1, 2, 3]}), row_names=['r0', 'r1', 'r2'],
+                             row_tags=[{'lg': 'EN'}, {'lg': 'FR'}, {'lg': 'EN'}], column_tags=[{'c': 'UK'}])
+        second: Table = Table(DataFrame({'A': [1, 2, 3]}), row_names=['r0', 'r1', 'r2'],
+                              row_tags=[{'lg': 'EN'}, {'lg': 'FR'}, {'lg': 'EN'}], column_tags=[{'c': 'UK'}])
+
+        self.assertTrue(first.equals(second))
+
+        # wrong dataframe
+        second = Table(DataFrame({'B': [1, 2, 3]}), row_names=['r0', 'r1', 'r2'],
+                       row_tags=[{'lg': 'EN'}, {'lg': 'FR'}, {'lg': 'EN'}], column_tags=[{'c': 'UK'}])
+        self.assertFalse(first.equals(second))
+
+        # wrong row tags
+        second = Table(DataFrame({'A': [1, 2, 3]}), row_names=['r0', 'r1', 'r2'],
+                       row_tags=[{'lg': 'EN'}, {'lg': 'EN'}, {'lg': 'EN'}], column_tags=[{'c': 'UK'}])
+        self.assertFalse(first.equals(second))
+
+        # wrong column tags
+        second = Table(DataFrame({'A': [1, 2, 3]}), row_names=['r0', 'r1', 'r2'],
+                       row_tags=[{'lg': 'EN'}, {'lg': 'FR'}, {'lg': 'EN'}], column_tags=[{'c': 'FR'}])
+
+        self.assertFalse(first.equals(second))
+
+    async def test_table_modification(self):
+        table = Table()
+
+        # test adding and empty column to an empty table
+        table.add_column('A')
+        expected_table = Table(DataFrame({'A': [None]}))
+        self.assertTrue(table.equals(expected_table))
+
+        # test adding and removing a column
+        table = Table()
+        table.add_column('A', [1, 2, 3])
+
+        expected_table = Table(DataFrame({'A': [1, 2, 3]}))
+        self.assertTrue(table.equals(expected_table))
+
+        # adding an empty column
+        table.add_column('B')
+        expected_table = Table(DataFrame({'A': [1, 2, 3], 'B': [None, None, None]}))
+        self.assertTrue(table.equals(expected_table))
+
+        # removing B column
+        table.remove_column('B')
+        expected_table = Table(DataFrame({'A': [1, 2, 3]}))
+        self.assertTrue(table.equals(expected_table))

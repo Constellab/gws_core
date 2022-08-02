@@ -137,17 +137,23 @@ class Utils:
         new_list = []
 
         for item in list_:
-            if item not in new_list:
-                new_list.append(item)
-                continue
-
-            i = 1
-            while f"{item}_{i}" in new_list:
-                i += 1
-
-            new_list.append(f"{item}_{i}")
+            new_list.append(Utils.generate_unique_str_for_list(new_list, item))
 
         return new_list
+
+    @staticmethod
+    def generate_unique_str_for_list(list_: List[str], str_: str) -> str:
+        """Generate a unique str for a list of str.
+        Append _1, _2... at the end if the str is already in the list
+        """
+        if str_ not in list_:
+            return str_
+
+        i = 1
+        while f"{str_}_{i}" in list_:
+            i += 1
+
+        return f"{str_}_{i}"
 
     @staticmethod
     def is_primitive(obj: Any) -> bool:
@@ -176,3 +182,67 @@ class Utils:
             return True
 
         return False
+
+    @staticmethod
+    def json_equals(json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None) -> bool:
+        """Assert a json with possibility to ignore key
+        """
+        return Utils._json_equals_recur(json_1, json_2, ignore_keys, "") is None
+
+    @staticmethod
+    def assert_json_equals(json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None):
+        """Assert a json with possibility to ignore key
+        """
+        result = Utils._json_equals_recur(json_1, json_2, ignore_keys, "")
+
+        if result is None:
+            return None
+
+        raise AssertionError(result)
+
+    @staticmethod
+    def _json_equals_recur(
+            json_1: Union[dict, list],
+            json_2: Union[dict, list],
+            ignore_keys: List[str] = None,
+            cumulated_key: str = "") -> Optional[str]:
+
+        # handle list
+        if isinstance(json_1, list):
+            if not isinstance(json_2, list):
+                return f"The second object is not a list for key '{cumulated_key}'."
+
+            if len(json_1) != len(json_2):
+                return f"Length of array different for key '{cumulated_key}'."
+
+            for index, value in enumerate(json_1):
+                result = Utils._json_equals_recur(value, json_2[index], ignore_keys, f"{cumulated_key}[{index}]")
+
+                if result is not None:
+                    return result
+
+            return None
+
+        # Handle dict
+        if isinstance(json_1, dict):
+            if not isinstance(json_1, dict):
+                return f"The seconde object is not a dict for key '{cumulated_key}'."
+
+            if len(json_1) != len(json_2):
+                return f"Length of object different for key '{cumulated_key}'."
+
+            for key, value in json_1.items():
+                if ignore_keys and key in ignore_keys:
+                    continue
+
+                result = Utils._json_equals_recur(value, json_2[key], ignore_keys, f"{cumulated_key}.{key}")
+                if result is not None:
+                    return result
+
+            return None
+
+        # Handle primitive value
+        if json_1 != json_2:
+            return f"Values differents for key '{cumulated_key}'. First: '{json_1}'. Second: '{json_2}'"
+
+        return None

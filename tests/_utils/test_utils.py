@@ -52,3 +52,11 @@ class TestUtils(IsolatedAsyncioTestCase):
 
         self.assertTrue(Utils.is_json({"a": ['1', '2', {'test': 'Super'}]}))
         self.assertFalse(Utils.is_json({"a": ['1', '2', {'test': SubString('1')}]}))
+
+    def test_json_equals(self):
+        Utils.assert_json_equals({"a": ['1', '2', {'test': 'Super'}]}, {"a": ['1', '2', {'test': 'Super'}]})
+
+        self.assertFalse(Utils.json_equals([1, 2], [1, 2, 3]))
+        self.assertFalse(Utils.json_equals([1, 2], [2, 1]))
+        self.assertFalse(Utils.json_equals({'test': 'Super'}, {'test': 'Super!'}))
+        self.assertFalse(Utils.json_equals({'test': {'subTest': 'super'}}, {'test': {'subTest': 'super!'}}))

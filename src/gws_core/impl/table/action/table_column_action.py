@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import TypedDict
+from typing import Any, List, TypedDict
 
 from gws_core.impl.table.table import Table
 from gws_core.task.action.actions import Action, action_decorator
@@ -20,8 +20,33 @@ class TableAddColumn(Action):
     params: AddColumnParam
 
     def execute(self, resource: Table) -> Table:
-        resource.add_column(column_name=self.params["name"], column_index=self.params["index"])
+        resource.add_column(name=self.params["name"], index=self.params["index"])
         return resource
 
     def undo(self, resource: Table) -> Table:
-        return super().undo(resource)
+        resource.remove_column(self.params["name"])
+        return resource
+
+
+class RemoveColumnParam(TypedDict):
+    name: str
+    index: int
+    data: List[Any]
+
+
+@action_decorator("TableRemoveColumn")
+class TableRemoveColumn(Action):
+    params: RemoveColumnParam
+
+    def execute(self, resource: Table) -> Table:
+        # save the column data in the params for undo
+        self.params["data"] = resource.get_column_data(self.params["name"])
+        self.params["index"] = resource.get_column_position_from_name(self.params["name"])
+        resource.remove_column(self.params["name"])
+        return resource
+
+    def undo(self, resource: Table) -> Table:
+        resource.add_column(name=self.params["name"],
+                            index=self.params["index"],
+                            data=self.params["data"])
+        return resource

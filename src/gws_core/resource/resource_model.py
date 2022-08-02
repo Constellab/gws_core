@@ -111,11 +111,17 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
             self.fs_node_model.delete_instance()
 
         # TODO to improve, if there is an error, the kvstore is not restored
+        self.remove_kv_store()
+
+        return result
+
+    def remove_kv_store(self):
+        """
+        Remove the kv store if it exists
+        """
         kv_store: Optional[KVStore] = self.get_kv_store()
         if kv_store:
             kv_store.remove()
-
-        return result
 
     @classmethod
     def drop_table(cls, *args, **kwargs):

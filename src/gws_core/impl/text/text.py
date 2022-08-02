@@ -20,18 +20,18 @@ class Text(Resource):
 
     def __init__(self, data: str = None):
         super().__init__()
-        self._set_data(data)
+        self.set_data(data)
 
-    def _set_data(self, data: str) -> 'Text':
+    def set_data(self, data: str) -> None:
         if data is None:
             data = ""
+
         if not isinstance(data, str):
             raise BadRequestException(
                 "The data must be a string")
         self._data = data
-        return self
 
-    def get_data(self):
+    def get_data(self) -> str:
         return self._data
 
     @view(view_type=TextView, human_name='Text', short_description='View as text',

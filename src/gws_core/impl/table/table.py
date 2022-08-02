@@ -4,10 +4,11 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, List, Literal, Union
+from typing import Any, Dict, List, Literal, Union
 
 import numpy as np
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_axis_tags import TableAxisTags
 from pandas import DataFrame, Series
@@ -201,15 +202,13 @@ class Table(Resource):
         """  Generates a column name that is unique in the Dataframe base on name.
         If the column name doesn't exist, return name, otherwise return name_1 or name_2, ...
         """
-        if not self.column_exists(name):
-            return name
-        else:
-            i = 1
-            while True:
-                new_name = f"{name}_{i}"
-                if not self.column_exists(new_name):
-                    return new_name
-                i += 1
+        return Utils.generate_unique_str_for_list(self.column_names, name)
+
+    def get_column_data(self, column_name: str) -> List[Any]:
+        """
+        Returns the column data of the Dataframe with the given name.
+        """
+        return self._data[column_name].values.tolist()
 
     def get_column_as_dataframe(self, column_name: str, skip_nan=False) -> DataFrame:
         """
@@ -229,7 +228,7 @@ class Table(Resource):
         dataframe = self.get_column_as_dataframe(column_name, skip_nan)
         return DataframeHelper.flatten_dataframe_by_column(dataframe)
 
-    def add_column(self, column_name: str, column_data: Union[list, Series] = None, column_index: int = None):
+    def add_column(self, name: str, data: Union[list, Series] = None, index: int = None):
         """ Add a new column to the Dataframe.
         :param column_name: name of the column
         :type column_name: str
@@ -239,25 +238,96 @@ class Table(Resource):
         :type column_index: int, optional
         """
 
-        if column_data is None:
-            column_data = [None] * self.nb_rows
+        if data is None:
+            # use max 1 for special case when table is empty
+            data = [None] * max(self.nb_rows, 1)
 
-        if isinstance(column_data, Series):
-            column_data = column_data.tolist()
+        if isinstance(data, Series):
+            data = data.tolist()
 
-        if not isinstance(column_data, list):
+        if not isinstance(data, list):
             raise BadRequestException("The column data must be a list")
-        if len(column_data) != self.nb_rows:
+        if self.nb_rows > 0 and len(data) != self.nb_rows:
             raise BadRequestException("The length of column data must be equal to the number of rows")
-        if self.column_exists(column_name):
-            raise BadRequestException(f"The column name `{column_name}` already exists")
+        if self.column_exists(name):
+            raise BadRequestException(f"The column name `{name}` already exists")
 
-        if column_index is None:
-            self._data[column_name] = column_data
+        # if the table was empty, it will create new rows
+        # so we need to create the row tags
+        if self.nb_rows == 0:
+            self._row_tags.insert_new_empty_tags(count=len(data))
+
+        # insert columns
+        if index is None:
+            self._data[name] = data
         else:
-            self._data.insert(column_index, column_name, column_data)
+            self._data.insert(index, name, data)
 
-        self._column_tags.insert_new_empty_tags(column_index)
+        self._column_tags.insert_new_empty_tags(index)
+
+    def remove_column(self, column_name: str) -> None:
+        """ Remove a column from the Dataframe.
+        :param column_name: name of the column
+        :type column_name: str
+        """
+
+        if not self.column_exists(column_name):
+            raise BadRequestException(f"The column name `{column_name}` doesn't exist")
+
+        pos = self.get_column_position_from_name(column_name)
+        self._data.drop(columns=[column_name], inplace=True)
+        self._column_tags.remove_tags_at(pos)
+
+    # def add_row(self, row_name: str = None, row_data: Union[list, Series] = None, row_index: int = None):
+    #     """ Add a new row to the Dataframe.
+    #     :param row_data: data for the row, must be the same length as other rows
+    #     :type row_data: list
+    #     :param row_index: index for the row, if none, the row is append to the end, defaults to None
+    #     :type row_index: int, optional
+    #     """
+
+    #     if row_data is None:
+    #         row_data = [None] * max(self.nb_columns, 1)
+
+    #     if isinstance(row_data, Series):
+    #         row_data = row_data.tolist()
+
+    #     if not isinstance(row_data, list):
+    #         raise BadRequestException("The row data must be a list")
+    #     if self.nb_columns > 0 and len(row_data) != self.nb_columns:
+    #         raise BadRequestException("The length of row data must be equal to the number of columns")
+    #     if self.row_exists(row_name):
+    #         raise BadRequestException(f"The row name `{row_name}` already exists")
+
+    #     if row_index is None:
+    #         row_index = self.nb_rows
+
+    #     if row_name:
+    #         self.set_row_name(row_index, row_name)
+
+    #     self._data.loc[row_index] = row_data
+    #     self.row_names
+
+    #     self._row_tags.insert_new_empty_tags(row_index)
+
+    def set_row_name(self, row_index: int, name: str):
+        """ Set the name of a row at a given index
+        :param row_index: index of the row
+        :type row_index: int
+        :param name: name of the row
+        :type name: str
+        """
+        if self.row_exists(name):
+            raise BadRequestException(f"The row name `{name}` already exists")
+
+        self.row_names[row_index] = name
+
+    def row_exists(self, name: str, case_sensitive: bool = True) -> bool:
+        if case_sensitive:
+            return name in self.row_names
+        else:
+            lower_names = [x.lower() for x in self.row_names]
+            return name.lower() in lower_names
 
     def get_tags(self, axis: AxisType) -> List[Dict[str, str]]:
         """
@@ -594,6 +664,13 @@ class Table(Resource):
         return super().__str__() + "\n" + \
             "Table:\n" + \
             self._data.__str__()
+
+    def equals(self, o: object) -> bool:
+        if not isinstance(o, Table):
+            return False
+
+        return self._data.equals(o._data) and self._row_tags.equals(o._row_tags) and self._column_tags.equals(
+            o._column_tags)
 
     def transpose(self) -> 'Table':
         return Table(
