@@ -4,7 +4,16 @@
 # About us: https://gencovery.com
 
 
+from enum import Enum
 from typing import Dict, List, Literal, TypedDict
+
+
+class TableColumnType(Enum):
+    INTEGER = 'INTEGER'
+    FLOAT = 'FLOAT'
+    STRING = 'STRING'
+    BOOLEAN = 'BOOLEAN'
+    OBJECT = 'OBJECT'
 
 
 class TableHeaderInfo(TypedDict):
@@ -12,6 +21,10 @@ class TableHeaderInfo(TypedDict):
     """
     name: str
     tags: Dict[str, str]
+
+
+class TableColumnInfo(TableHeaderInfo):
+    type: TableColumnType
 
 
 # TODO remove meta on version 0.3.15

@@ -12,6 +12,8 @@ from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_axis_tags import TableAxisTags
 from pandas import DataFrame, Series
+from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
+                              is_string_dtype)
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -24,7 +26,8 @@ from ...resource.view_decorator import view
 from .data_frame_r_field import DataFrameRField
 from .helper.dataframe_filter_helper import (DataframeFilterHelper,
                                              DataframeFilterName)
-from .table_types import AxisType, TableHeaderInfo, TableMeta, is_row_axis
+from .table_types import (AxisType, TableColumnType, TableHeaderInfo,
+                          TableMeta, is_row_axis)
 from .view.table_barplot_view import TableBarPlotView
 from .view.table_boxplot_view import TableBoxPlotView
 from .view.table_heatmap_view import TableHeatmapView
@@ -368,10 +371,13 @@ class Table(Resource):
     def get_row_position_from_name(self, row_name: str) -> List[TableHeaderInfo]:
         return self._data.index.get_loc(row_name)
 
-    def get_rows_info(self) -> List[TableHeaderInfo]:
+    def get_rows_info(self, from_index: int = None, to_index: int = None) -> List[TableHeaderInfo]:
         rows_info: List[TableHeaderInfo] = []
         for index, row in self._data.iterrows():
             rows_info.append(self.get_row_info(row.name))
+
+        if from_index is not None or to_index is not None:
+            rows_info = rows_info[from_index:to_index]
         return rows_info
 
     def get_row_info(self, row_name: str) -> TableHeaderInfo:
@@ -408,18 +414,37 @@ class Table(Resource):
     def get_column_position_from_name(self, column_name: str) -> int:
         return self._data.columns.get_loc(column_name)
 
-    def get_columns_info(self) -> List[TableHeaderInfo]:
+    def get_columns_info(self, from_index: int = None, to_index: int = None) -> List[TableHeaderInfo]:
         column_infos: List[TableHeaderInfo] = []
         for column in self._data:
             column_infos.append(self.get_column_info(column))
+
+        if from_index is not None or to_index is not None:
+            column_infos = column_infos[from_index:to_index]
         return column_infos
 
     def get_column_info(self, column_name: str) -> TableHeaderInfo:
         column_position = self.get_column_position_from_name(column_name)
+
         return {
             "name": column_name,
+            "type": self.get_column_type(column_name),
             "tags": self._column_tags.get_tags_at(column_position)
         }
+
+    def get_column_type(self, column_name) -> TableColumnType:
+        # get the type of the column
+        column = self._data[column_name]
+        if is_integer_dtype(column):
+            return TableColumnType.INTEGER
+        elif is_float_dtype(column):
+            return TableColumnType.FLOAT
+        elif is_bool_dtype(column):
+            return TableColumnType.BOOLEAN
+        elif is_string_dtype(column):
+            return TableColumnType.STRING
+        else:
+            return TableColumnType.OBJECT
 
     def copy_column_tags(self, table: 'Table', from_index: int = None, to_index: int = None) -> None:
         self.set_all_columns_tags(table.get_column_tags(from_index=from_index, to_index=to_index))

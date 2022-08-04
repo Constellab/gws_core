@@ -21,9 +21,8 @@ if TYPE_CHECKING:
 
 class TableView(BaseTableView):
     """
-    Class table view.
-
-    This class creates tabular view using a Table.
+    Use this view to return a section of a Table and enable pagination to retrieve other section.
+    This view embed config to enable pagination.
 
     The view model is:
     ```
@@ -56,7 +55,7 @@ class TableView(BaseTableView):
         "from_column": IntParam(default_value=1, human_name="From column", visibility=StrParam.PROTECTED_VISIBILITY),
         "number_of_columns_per_page":
         IntParam(
-            default_value=TabularView.MAX_NUMBER_OF_COLUMNS_PER_PAGE, max_value=TabularView.MAX_NUMBER_OF_COLUMNS_PER_PAGE, min_value=1,
+            default_value=TabularView.DEFAULT_NUMBER_OF_COLUMNS_PER_PAGE, max_value=TabularView.MAX_NUMBER_OF_COLUMNS_PER_PAGE, min_value=1,
             human_name="Number of columns per page", visibility=StrParam.PROTECTED_VISIBILITY),
         'replace_nan_by':
         StrParam(
@@ -65,15 +64,12 @@ class TableView(BaseTableView):
             short_description="Text to use to replace NaN values. Defaults to empty string"), }
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        data = self._table.get_data()
-        row_tags = self._table.get_row_tags()
-        column_tags = self._table.get_column_tags()
-        helper_view = TabularView()
-        helper_view.set_data(data, row_tags=row_tags, column_tags=column_tags)
-        helper_view.from_row = params["from_row"]
-        helper_view.number_of_rows_per_page = params["number_of_rows_per_page"]
-        helper_view.from_column = params["from_column"]
-        helper_view.number_of_columns_per_page = params["number_of_columns_per_page"]
-        helper_view.replace_nan_by = params["replace_nan_by"]
-        view_data_dict = helper_view.data_to_dict(params)
-        return view_data_dict
+
+        tabular_view = TabularView(
+            self._table, from_row=params["from_row"] - 1,  # - 1 because communication uses 1-based indexing
+            from_column=params["from_column"] - 1,  # - 1 because communication uses 1-based indexing
+            number_of_rows_per_page=params["number_of_rows_per_page"],
+            number_of_columns_per_page=params["number_of_columns_per_page"],
+            replace_nan_by=params["replace_nan_by"])
+
+        return tabular_view.data_to_dict(ConfigParams())
