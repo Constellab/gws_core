@@ -5,8 +5,6 @@
 
 from typing import Dict, List
 
-from numpy import inf
-
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.resource.view_types import ViewType
 

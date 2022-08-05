@@ -26,6 +26,7 @@ class ViewType(Enum):
     DATASET = "dataset-view"
     FOLDER = "folder-view"
     SCATTER_PLOT_2D = "scatter-plot-2d-view"
+    VULCANO_PLOT = "vulcano-plot-view"
     SCATTER_PLOT_3D = "scatter-plot-3d-view"
     LINE_PLOT_2D = "line-plot-2d-view"
     LINE_PLOT_3D = "line-plot-3d-view"
