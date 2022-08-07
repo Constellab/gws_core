@@ -31,5 +31,5 @@ class TestTableBoxPlotView(BaseTestCase):
         self.assertEqual(first_data['median'][0], 4.35)
         self.assertEqual(first_data['q3'][0], 5.1)
         self.assertEqual(first_data['max'][0], 6.9)
-        self.assertEqual(round(first_data['lower_whisker'][0], 2), -3.65)
-        self.assertEqual(round(first_data['upper_whisker'][0], 2), 10.35)
+        self.assertEqual(round(first_data['lower_whisker'][0], 2), 1.4)
+        self.assertEqual(round(first_data['upper_whisker'][0], 2), 5.8)

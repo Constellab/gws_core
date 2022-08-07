@@ -106,13 +106,13 @@ class BoxPlotView(View):
         ymin = data.min(skipna=True).to_list()
         ymax = data.max(skipna=True).to_list()
 
-        quantile = numpy.nanquantile(data.to_numpy(), q=[0.25, 0.5, 0.75], axis=0)
-        median = quantile[1, :].tolist()
-        q1 = quantile[0, :]
-        q3 = quantile[2, :]
-        iqr = q3 - q1
-        lower_whisker = q1 - (1.5 * iqr)
-        upper_whisker = q3 + (1.5 * iqr)
+        quantile = numpy.nanquantile(data.to_numpy(), q=[0.1, 0.25, 0.5, 0.75, 0.9], axis=0)
+        median = quantile[2, :].tolist()
+        q1 = quantile[1, :]
+        q3 = quantile[3, :]
+        # iqr = q3 - q1
+        lower_whisker = quantile[0, :]
+        upper_whisker = quantile[4, :]
 
         x = list(range(0, data.shape[1]))
         self.add_series(

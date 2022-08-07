@@ -28,9 +28,9 @@ class TableImporter(ResourceImporter):
         'header': IntParam(default_value=0, min_value=-1, human_name="Header", short_description="Row to use as the column names. By default the first row is used (i.e. header=0). Set header=-1 to not read column names."),
         'index_column': IntParam(default_value=-1, min_value=-1, optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Index column", short_description="Column to use as the row names. By default no index is used (i.e. index_column=-1)."),
         "metadata_columns": ParamSet({
-            'column': StrParam(default_value=None, optional=True, visibility=StrParam.PROTECTED_VISIBILITY, human_name="Column", short_description="Column to use to tag rows using metadata."),
-            'keep_in_table': BoolParam(default_value=True, optional=True, visibility=BoolParam.PROTECTED_VISIBILITY, human_name="Keep in table", short_description="Set True to keep metadata in table; False otherwise"),
-        }, optional=True, visibility=ParamSet.PROTECTED_VISIBILITY, human_name="Metadata columns", short_description="Columns data to use to tag rows of the table"),
+            'column': StrParam(default_value=None, optional=True, visibility=StrParam.PROTECTED_VISIBILITY, human_name="Column", short_description="Metadata column to use to tag rows"),
+            'keep_in_table': BoolParam(default_value=False, optional=True, visibility=BoolParam.PROTECTED_VISIBILITY, human_name="Keep in table", short_description="Set True to keep the column in the final table; False otherwise"),
+        }, optional=True, visibility=ParamSet.PROTECTED_VISIBILITY, human_name="Metadata columns", short_description="Columns data to use to tag the rows of the table"),
         'decimal': StrParam(default_value=".", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Decimal character", short_description="Character to recognize as decimal point (e.g. use ‘,’ for European/French data)."),
         'nrows': IntParam(default_value=None, optional=True, min_value=0, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Number of rows", short_description="Number of rows to import. Useful to read piece of data."),
         'comment': StrParam(default_value="#", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Comment character", short_description="Character used to comment lines. Set empty to disable comment lines."),
@@ -96,10 +96,10 @@ class TableImporter(ResourceImporter):
             for metadata in metadata_columns:
                 colname = metadata.get("column")
                 meta_cols.append(colname)
-                keep_in_table[colname] = metadata.get("keep_in_table", True)
+                keep_in_table[colname] = metadata.get("keep_in_table", False)
 
             tag_df = df[meta_cols]
-            drop_cols = [col for col, keep in keep_in_table.items() if keep == False]
+            drop_cols = [col for col, keep in keep_in_table.items() if keep is False]
             if drop_cols:
                 df.drop(drop_cols, axis=1, inplace=False)
             for idx in df.index:
