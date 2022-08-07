@@ -8,6 +8,8 @@ import math
 import re
 from typing import Any, Dict, List, Literal, Type, Union
 
+from gws_core.core.utils.utils import Utils
+
 from ..exception.exceptions import BadRequestException
 from .path import URL, Path
 
@@ -387,25 +389,22 @@ class ListValidator(Validator):
         * `validator.validate('{"foo":1.2}') -> ValueError`
     """
 
-    must_be_deep_jsonable: bool
     min_number_of_occurrences: int = True
     max_number_of_occurrences: int = True
 
     def __init__(
-            self, must_be_deep_jsonable=True, min_number_of_occurrences: int = -1, max_number_of_occurrences: int = -1,
+            self, min_number_of_occurrences: int = -1, max_number_of_occurrences: int = -1,
             allowed_values: list = None):
         super().__init__(type_=list, allowed_values=allowed_values)
-        self.must_be_deep_jsonable = must_be_deep_jsonable
         self.min_number_of_occurrences = min_number_of_occurrences
         self.max_number_of_occurrences = max_number_of_occurrences
 
     def _validate(self, value):
         value: List = super()._validate(value)
 
-        # Check if the value is serializable
-        if self.must_be_deep_jsonable:
-            if not self.is_deep_jsonnable(value):
-                raise BadRequestException(f"The value {value} is not serializable.")
+        # Check if the value is json
+        if not Utils.is_json(value):
+            raise BadRequestException(f"The value {value} is not json like.")
 
         if self.min_number_of_occurrences >= 0 and len(value) < self.min_number_of_occurrences:
             raise BadRequestException(
@@ -416,13 +415,6 @@ class ListValidator(Validator):
                 f"The list contains {len(value)} elements but the maximum number of elements is {self.max_number_of_occurrences}.")
 
         return value
-
-    def is_deep_jsonnable(self, value: List) -> bool:
-        try:
-            json.loads(json.dumps(value))
-            return True
-        except:
-            return False
 
 
 class DictValidator(Validator):
@@ -443,28 +435,17 @@ class DictValidator(Validator):
         * `validator.validate([5.5,3]) -> ValueError`
     """
 
-    must_be_deep_jsonable = True
-
-    def __init__(self, must_be_deep_jsonable=True):
+    def __init__(self):
         super().__init__(type_=dict, allowed_values=None)
-        self.must_be_deep_jsonable = must_be_deep_jsonable
 
     def _validate(self, value):
         value: Dict = super()._validate(value)
 
         # Check if the value is jsonable
-        if self.must_be_deep_jsonable:
-            if not self.is_deep_jsonnable(value):
-                raise BadRequestException(f"The value {value} is not serializable.")
+        if not Utils.is_json(value):
+            raise BadRequestException(f"The value {value} is json like.")
 
         return value
-
-    def is_deep_jsonnable(self, value: List) -> bool:
-        try:
-            json.loads(json.dumps(value))
-            return True
-        except:
-            return False
 
 
 class URLValidator(StrValidator):

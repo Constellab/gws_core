@@ -3,9 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from __future__ import annotations
 
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List
 
+from gws_core.core.utils.logger import Logger
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.resource.view_types import ViewType
 from pandas import DataFrame
@@ -14,12 +16,14 @@ from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...resource.view import View
 
+if TYPE_CHECKING:
+    from gws_core.impl.table.table import Table
+
 
 class TabularView(View):
     """
-    Class table view.
-
-    This class creates tabular view using a DataFrame table.
+    Use this view to return a section of a Table.
+    This view has no parameter and it will not allow pagination to retrieve other rows or columns.
 
     The view model is:
     ```
@@ -41,133 +45,91 @@ class TabularView(View):
     """
 
     MAX_NUMBER_OF_ROWS_PER_PAGE = 100
-    MAX_NUMBER_OF_COLUMNS_PER_PAGE = 100
+    MAX_NUMBER_OF_COLUMNS_PER_PAGE = 500
+    DEFAULT_NUMBER_OF_COLUMNS_PER_PAGE = 250
 
-    from_row: int = 1
-    from_column: int = 1
+    from_row: int = 0
+    from_column: int = 0
     number_of_rows_per_page: int = MAX_NUMBER_OF_ROWS_PER_PAGE
     number_of_columns_per_page: int = MAX_NUMBER_OF_COLUMNS_PER_PAGE
     replace_nan_by: str = ""
 
-    _type: ViewType = ViewType.TABLE
-    _data: DataFrame = None
-    _row_tags: List[Dict[str, str]] = None
-    _column_tags: List[Dict[str, str]] = None
+    _type: ViewType = ViewType.TABULAR
+
+    _table: Table
+
+    # TODO set table not optional
+    def __init__(self, table: Table = None, from_row: int = 0, from_column: int = 0,
+                 number_of_rows_per_page: int = MAX_NUMBER_OF_ROWS_PER_PAGE,
+                 number_of_columns_per_page: int = MAX_NUMBER_OF_COLUMNS_PER_PAGE,
+                 replace_nan_by: str = ""):
+        super().__init__()
+
+        if table is None:
+            Logger.warning("[TabularView] empty construct is deprecated. Use constructor with table instead")
+
+        self._table = table
+        self.from_row = from_row
+        self.from_column = from_column
+        self.number_of_rows_per_page = number_of_rows_per_page
+        self.number_of_columns_per_page = number_of_columns_per_page
+        self.replace_nan_by = replace_nan_by
 
     def set_data(
             self, data: DataFrame, row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None):
-        if not isinstance(data, DataFrame):
-            raise BadRequestException("The data must be a DataFrame")
-        self._data = data
-        self._set_row_tags(row_tags)
-        self._set_column_tags(column_tags)
+        Logger.warning("[TabularView] set_data is deprecated. Use constructor instead")
 
-    def _set_row_tags(self, row_tags: List[Dict[str, str]]):
-        if row_tags is None:
-            self._row_tags = [{}] * self._data.shape[0]
-            return
+        self._table = Table(data, row_tags=row_tags, column_tags=column_tags)
 
-        if not isinstance(row_tags, list):
-            raise BadRequestException("The row_tags must be a list")
-        if len(row_tags) != self._data.shape[0]:
-            raise BadRequestException("The length of row_tags must be equal to the number of rows in data")
+    def _get_safe_from_row(self) -> int:
+        return min(max(self.from_row, 0), self._table.nb_rows - 1)
 
-        try:
-            row_tags = [{str(k): str(v) for k, v in t.items()} for t in row_tags]
-        except Exception as err:
-            raise BadRequestException(
-                "The row_tags cannot be cleaned. Please check that row_tags is a list of dict") from err
-        self._row_tags = row_tags
+    def _get_safe_from_column(self) -> int:
+        return min(max(self.from_column, 0), self._table.nb_columns - 1)
 
-    def _set_column_tags(self, column_tags: List[Dict[str, str]]):
-        if column_tags is None:
-            self._column_tags = [{}] * self._data.shape[1]
-            return
+    def _get_safe_to_row(self) -> int:
+        nb_of_rows_per_page = self._get_safe_nb_of_rows_per_page()
+        return min(self._get_safe_from_row() + nb_of_rows_per_page, self._table.nb_rows)
 
-        if not isinstance(column_tags, list):
-            raise BadRequestException("The column_tags must be a list")
-        if len(column_tags) != self._data.shape[1]:
-            raise BadRequestException("The length of column_tags must be equal to the number of columns in data")
+    def _get_safe_to_column(self) -> int:
+        nb_of_columns_per_page = self._get_safe_nb_of_columns_per_page()
+        return min(self._get_safe_from_column() + nb_of_columns_per_page, self._table.nb_columns)
 
-        try:
-            column_tags = [{str(k): str(v) for k, v in t.items()} for t in column_tags]
-        except Exception as err:
-            raise BadRequestException(
-                "The column_tags cannot be cleaned. Please check that column_tags is a list of dict") from err
-        self._column_tags = column_tags
+    def _get_safe_nb_of_rows_per_page(self) -> int:
+        return min(self.number_of_rows_per_page, self.MAX_NUMBER_OF_ROWS_PER_PAGE)
 
-    def _slice(self, from_row_index: int, to_row_index: int,
-               from_column_index: int, to_column_index: int) -> dict:
-        last_row_index = self._data.shape[0]
-        last_column_index = self._data.shape[1]
-        from_row_index = min(max(from_row_index, 0), last_row_index-1)
-        from_column_index = min(max(from_column_index, 0), last_column_index-1)
-        to_row_index = min(min(to_row_index, from_row_index + self.MAX_NUMBER_OF_ROWS_PER_PAGE), last_row_index)
-        to_column_index = min(
-            min(to_column_index, from_column_index + self.MAX_NUMBER_OF_COLUMNS_PER_PAGE),
-            last_column_index)
-
-        sliced_data = self._data.iloc[
-            from_row_index:to_row_index,
-            from_column_index:to_column_index,
-        ]
-        sliced_row_tags = self._row_tags[from_row_index:to_row_index]
-        sliced_column_tags = self._column_tags[from_column_index:to_column_index]
-        sliced_data_info = {
-            "data": sliced_data,
-            "row_tags": sliced_row_tags,
-            "column_tags": sliced_column_tags,
-            "indexes": (from_row_index, to_row_index, from_column_index, to_column_index,)
-        }
-        return sliced_data_info
+    def _get_safe_nb_of_columns_per_page(self) -> int:
+        return min(self.number_of_columns_per_page, self.MAX_NUMBER_OF_COLUMNS_PER_PAGE)
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        if self._data is None:
-            raise BadRequestException("No data found")
+        if self._table is None:
+            raise BadRequestException("No table found")
 
-        # continue ...
-        from_row: int = params.get("from_row", self.from_row)
-        number_of_rows_per_page: int = params.get("number_of_rows_per_page", self.number_of_rows_per_page)
-        from_column: int = params.get("from_column", self.from_column)
-        number_of_columns_per_page: int = params.get("number_of_columns_per_page", self.number_of_columns_per_page)
+        safe_from_row = self._get_safe_from_row()
+        safe_from_column = self._get_safe_from_column()
+        safe_to_row = self._get_safe_to_row()
+        safe_to_column = self._get_safe_to_column()
 
-        total_number_of_rows = self._data.shape[0]
-        total_number_of_columns = self._data.shape[1]
-
-        from_row_index: int = from_row - 1
-        from_column_index: int = from_column - 1
-        to_row_index: int = from_row_index + number_of_rows_per_page
-        to_column_index: int = from_column_index + number_of_columns_per_page
-
-        sliced_data_info = self._slice(
-            from_row_index=from_row_index,
-            to_row_index=to_row_index,
-            from_column_index=from_column_index,
-            to_column_index=to_column_index)
-
-        data = sliced_data_info["data"]
-        row_tags = sliced_data_info["row_tags"]
-        column_tags = sliced_data_info["column_tags"]
-        from_row_index, to_row_index, from_column_index, to_column_index = sliced_data_info["indexes"]
+        dataframe: DataFrame = self._table.get_data()
+        sub_dataframe = dataframe.iloc[
+            safe_from_row:safe_to_row,
+            safe_from_column:safe_to_column,
+        ]
 
         # Remove NaN and inf values to convert to json
-        replace_nan_by: str = params.get("replace_nan_by", self.replace_nan_by)
+        replace_nan_by: str = self.replace_nan_by
         if replace_nan_by == "empty":
             replace_nan_by = ""
-        data = DataframeHelper.replace_nan_and_inf(data, replace_nan_by)
-
-        data_dict = data.to_dict('split')
-        rows = [{"name": name, "tags": row_tags[i]} for i, name in enumerate(data_dict["index"])]
-        columns = [{"name": name, "tags": column_tags[i]} for i, name in enumerate(data_dict["columns"])]
+        data = DataframeHelper.replace_nan_and_inf(sub_dataframe, replace_nan_by)
 
         return {
-            "table": data_dict["data"],
-            "rows": rows,
-            "columns": columns,
-            "from_row": from_row_index,
-            "number_of_rows_per_page": number_of_rows_per_page,
-            "from_column": from_column_index,
-            "number_of_columns_per_page": number_of_columns_per_page,
-            "total_number_of_rows": total_number_of_rows,
-            "total_number_of_columns": total_number_of_columns,
+            "table": data.to_dict('split')["data"],
+            "rows": self._table.get_rows_info(safe_from_row, safe_to_row),
+            "columns": self._table.get_columns_info(safe_from_column, safe_to_column),
+            "from_row": safe_from_row + 1,  # return 1-based index
+            "number_of_rows_per_page": self._get_safe_nb_of_rows_per_page(),
+            "from_column": safe_from_column + 1,  # return 1-based index
+            "number_of_columns_per_page": self._get_safe_nb_of_columns_per_page(),
+            "total_number_of_rows": self._table.nb_rows,
+            "total_number_of_columns": self._table.nb_columns,
         }

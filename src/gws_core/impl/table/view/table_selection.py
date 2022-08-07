@@ -84,6 +84,17 @@ class TableSelection():
                         return False
             return True
 
+    def get_name(self) -> Optional[str]:
+        """Method to return a possible name of the selection (only if selection by columns)
+
+        :return: _description_
+        :rtype: Optional[str]
+        """
+        if self.type == 'columns':
+            return ' '.join(self.selection)
+        else:
+            return None
+
     @staticmethod
     def from_dict(d: Dict[str, Any]) -> 'TableSelection':
         if d['type'] == 'range':
@@ -103,6 +114,9 @@ class Serie1d():
     def y_is_single_column(self) -> bool:
         return self.y.is_single_column()
 
+    def get_y_selection_name(self) -> Optional[str]:
+        return self.y.get_name()
+
     @staticmethod
     def from_dict(d: Dict[str, Any]) -> 'Serie1d':
         return Serie1d(d['name'], TableSelection.from_dict(d['y']))
@@ -118,6 +132,9 @@ class Serie2d(Serie1d):
     def __init__(self, name: str, y: TableSelection, x: Optional[TableSelection]) -> None:
         super().__init__(name, y)
         self.x = x
+
+    def get_x_selection_name(self) -> Optional[str]:
+        return self.x.get_name() if self.x else None
 
     @staticmethod
     def from_dict(d: Dict[str, Any]) -> 'Serie2d':

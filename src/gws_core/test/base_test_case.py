@@ -6,6 +6,8 @@
 from typing import List, Union
 from unittest.async_case import IsolatedAsyncioTestCase
 
+from gws_core.core.utils.utils import Utils
+
 from ..experiment.queue_service import QueueService
 from .gtest import GTest
 
@@ -73,49 +75,4 @@ class BaseTestCase(IsolatedAsyncioTestCase):
     def assert_json(cls, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None) -> None:
         """Assert a json with possibility to ignore key
         """
-        cls._assert_json_recur(json_1, json_2, ignore_keys, "")
-
-    @classmethod
-    def _assert_json_recur(
-            cls, json_1: Union[dict, list],
-            json_2: Union[dict, list],
-            ignore_keys: List[str] = None,
-            cumulated_key: str = "") -> bool:
-
-        # handle list
-        if isinstance(json_1, list):
-            if not isinstance(json_2, list):
-                raise AssertionError(
-                    f"The second object is not a list for key '{cumulated_key}'.")
-
-            if len(json_1) != len(json_2):
-                raise AssertionError(
-                    f"Length of array different for key '{cumulated_key}'.")
-
-            for index, value in enumerate(json_1):
-                cls._assert_json_recur(value, json_2[index], ignore_keys, f"{cumulated_key}[{index}]")
-
-            return None
-
-        # Handle dict
-        if isinstance(json_1, dict):
-            if not isinstance(json_1, dict):
-                raise AssertionError(
-                    f"The seconde object is not a dict for key '{cumulated_key}'.")
-
-            if len(json_1) != len(json_2):
-                raise AssertionError(
-                    f"Length of object different for key '{cumulated_key}'.")
-
-            for key, value in json_1.items():
-                if ignore_keys and key in ignore_keys:
-                    continue
-
-                cls._assert_json_recur(value, json_2[key], ignore_keys, f"{cumulated_key}.{key}")
-
-            return None
-
-        # Handle primitive value
-        if json_1 != json_2:
-            raise AssertionError(
-                f"Values differents for key '{cumulated_key}'. First: '{json_1}'. Second: '{json_2}'")
+        Utils.assert_json_equals(json_1, json_2, ignore_keys)

@@ -3,9 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (BaseTestCase, Config, FloatParam, GTest, IntParam,
-                      ProcessFactory, RobotMove, TaskModel)
+from gws_core import (BaseTestCase, Config, FloatParam, ProcessFactory,
+                      RobotMove, TaskModel)
 from gws_core.config.config_exceptions import MissingConfigsException
+from gws_core.config.config_types import ConfigParams
 
 
 class TestConfig(BaseTestCase):
@@ -17,7 +18,10 @@ class TestConfig(BaseTestCase):
 
         config: Config = Config()
         config.set_specs(specs)
-        self.assertEqual(config.get_and_check_values(), {'moving_step': 0.1})
+
+        config_params = config.get_and_check_values()
+        self.assertIsInstance(config_params, ConfigParams)
+        self.assertEqual(config_params["moving_step"], 0.1)
 
         config.set_value('moving_step', 4.5)
         self.assertEqual(config.get_and_check_values(), {'moving_step': 4.5})

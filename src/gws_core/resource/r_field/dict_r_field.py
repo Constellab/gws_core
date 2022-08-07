@@ -7,6 +7,7 @@ from copy import deepcopy
 from typing import Any, Dict
 
 from gws_core.core.classes.validator import DictValidator
+from gws_core.core.utils.utils import Utils
 
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -27,7 +28,7 @@ class DictRField(PrimitiveRField):
                               Do not mark huge fields as include in dict view, defaults to False
         :type include_in_dict_view: bool, optional
         """
-        super().__init__(validator=DictValidator(must_be_deep_jsonable=False), searchable=False,
+        super().__init__(validator=DictValidator(), searchable=False,
                          default_value=default_value, include_in_dict_view=include_in_dict_view)
 
     def get_default_value(self) -> Any:

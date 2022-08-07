@@ -17,8 +17,9 @@ from gws_core.resource.view_helper import ViewHelper
 from gws_core.task.transformer.transformer_type import TransformerDict
 
 # List of chart callable on a Table
-TableChart = Literal['line-plot-2d', 'scatter-plot-2d', 'bar-plot',
-                     'stack-bar-plot', 'histogram', 'box-plot', 'heatmap', 'venn-diagram']
+TableChart = Literal['line-plot-2d', 'scatter-plot-2d', 'vulcano-plot',
+                     'bar-plot', 'stack-bar-plot', 'histogram',
+                     'box-plot', 'heatmap', 'venn-diagram']
 
 
 class ResourceTableService:
@@ -83,6 +84,8 @@ class ResourceTableService:
             return Table.view_as_line_plot_2d.__name__
         elif chart == 'scatter-plot-2d':
             return Table.view_as_scatter_plot_2d.__name__
+        elif chart == 'vulcano-plot':
+            return Table.view_as_vulcano_plot.__name__
         elif chart == 'bar-plot':
             return Table.view_as_bar_plot.__name__
         elif chart == 'stack-bar-plot':

@@ -68,13 +68,16 @@ class BaseEnvShell(Shell):
         Install the virtual env
         """
         if self.is_installed():
+            self.log_info_message(
+                f"Virtual environment '{self.base_env.env_dir_name}' already installed, skipping installation.")
             return
 
-        self.log_info_message("Installing the virtual environment, this might take few minutes.")
+        self.log_info_message(
+            f"Installing the virtual environment '{self.base_env.env_dir_name}' from file '{self.base_env.env_file_path}',  this might take few minutes.")
 
         self.base_env.install()
 
-        self.log_info_message("Virtual environment installed!")
+        self.log_info_message(f"Virtual environment '{self.base_env.env_dir_name}' installed!")
 
     def uninstall(self):
         if not self.is_installed():
