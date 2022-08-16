@@ -91,6 +91,11 @@ class TableColumnMassOperations(Task):
         StrParam(
             optional=True, human_name='Calculations column',
             short_description='Name of the column in Operation Table that contains operations\' calculations. If not provided, the second column will be used'),
+        'keep_original_columns':
+        BoolParam(
+            default_value=False, human_name='Keep original columns',
+            short_description="If true, the original columns of the Table will be added at the end of the Table. If false, only the calculcation columns are kept.",
+            visibility='protected'),
         'error_on_unknown_column':
         BoolParam(
             default_value=False, human_name='Error on unknown column',
@@ -106,5 +111,7 @@ class TableColumnMassOperations(Task):
             table, operation_table.get_data(),
             operation_name_column=params.get('name_column'),
             operation_calculations_column=params.get('calculations_column'),
-            error_on_unknown_column=params.get('error_on_unknown_column'))
+            error_on_unknown_column=params.get('error_on_unknown_column'),
+            keep_original_columns=params.get('keep_original_columns'),
+        )
         return {'target': result}

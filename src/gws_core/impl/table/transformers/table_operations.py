@@ -4,7 +4,8 @@
 # About us: https://gencovery.com
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.config.param_spec import BoolParam, ListParam
-from gws_core.impl.table.helper.table_operation_helper import TableOperationHelper
+from gws_core.impl.table.helper.table_operation_helper import \
+    TableOperationHelper
 
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ..table import Table
@@ -55,10 +56,8 @@ class TableColumnOperations(Transformer):
     Example : ```log(A)```
 
 
-    ## Assignement to a new column
-    To create the reuslt column in a new column, you can check the ```Set result in new column``` option.
-
-    You can also define a custom column name in the ```operations```. Example : ```E = A + B```, this will set the result in the E columns.
+    ## Define column names
+    You can define a custom column name in the ```operations```. Example : ```E = A + B```, this will set the result in the ```E``` columns.
 
     ## Multiple operation
     Multiple operation are possible but it requires an assignment to a new columns.
@@ -84,10 +83,12 @@ class TableColumnOperations(Transformer):
 
     config_specs: ConfigSpecs = {
         "operations": ListParam(human_name="Operations", short_description="Operations on columns, see documentation for more info"),
-        "result_in_new_column":
+        'keep_original_columns':
         BoolParam(
-            default_value=False, human_name="Set result in new column",
-            short_description="Create a new column for the result, otherwise it only returns the result column"), }
+            default_value=False, human_name='Keep original columns',
+            short_description="If true, the original columns of the Table will be added at the end of the Table. If false, only the calculcation columns are kept.",
+        )
+    }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        return TableOperationHelper.column_operations(source, params["operations"], params["result_in_new_column"])
+        return TableOperationHelper.column_operations(source, params["operations"], params["keep_original_columns"])

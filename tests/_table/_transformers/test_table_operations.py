@@ -12,6 +12,7 @@ from numpy import isnan
 from pandas import DataFrame
 
 
+# test_table_operations
 class TestTableOperations(IsolatedAsyncioTestCase):
 
     def test_table_column_operations(self):
@@ -19,11 +20,11 @@ class TestTableOperations(IsolatedAsyncioTestCase):
 
         table = Table(data=dataframe)
 
-        result_table = TableOperationHelper.column_operations(table, 'A + B', False)
-        expected_result = DataFrame({0: [11, 10, 9, 8, 7]})
+        result_table = TableOperationHelper.column_operations(table, ['A + B'], False)
+        expected_result = DataFrame({'Result': [11, 10, 9, 8, 7]})
         self.assertTrue(result_table.get_data().equals(expected_result))
 
-        result_table = TableOperationHelper.column_operations(table, 'A + B', True)
+        result_table = TableOperationHelper.column_operations(table, ['A + B'], True)
         expected_result = DataFrame({'Result': [11, 10, 9, 8, 7], 'A': range(1, 6), 'B': [10, 8, 6, 4, 2]})
         self.assertTrue(result_table.get_data().equals(expected_result))
 
@@ -50,9 +51,13 @@ class TestTableOperations(IsolatedAsyncioTestCase):
 
         # A + B and A - C
         result_table = TableOperationHelper.column_mass_operations(table, operation_df)
-        self.assertEqual(result_table.nb_columns, 5)
+        self.assertEqual(result_table.nb_columns, 2)
         self.assertEqual(list(result_table.get_data()['R0']), [11, 10, 9])
         self.assertEqual(list(result_table.get_data()['R1']), [-6, 1, -2])
+
+        # test by keeping original columns
+        result_table = TableOperationHelper.column_mass_operations(table, operation_df, keep_original_columns=True)
+        self.assertEqual(result_table.nb_columns, 5)
 
         # Test with unknown column in operation Z
         operation_df = DataFrame({'Operation_name': ['R0'], 'Operation': ['A + (Z - B) * 2']})
@@ -60,6 +65,6 @@ class TestTableOperations(IsolatedAsyncioTestCase):
         result_table = TableOperationHelper.column_mass_operations(table, operation_df)
 
         # The result should be NaN
-        self.assertEqual(result_table.nb_columns, 4)
+        self.assertEqual(result_table.nb_columns, 1)
         # check if all element of R0 columns are NaN
         self.assertTrue(all(isnan(list(result_table.get_data()['R0']))))
