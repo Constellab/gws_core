@@ -16,16 +16,20 @@ from pandas import DataFrame
 class TestTableOperations(IsolatedAsyncioTestCase):
 
     def test_table_column_operations(self):
-        dataframe = DataFrame({'A': range(1, 6), 'B': [10, 8, 6, 4, 2]})
+        row_tags = [{"Name": "R0"}, {"Name": "R1"}, {"Name": "R2"}]
+        dataframe = DataFrame({'A': [1, 2, 3], 'B': [10, 8, 6]},
+                              index=["R0", "R1", "R2"])
 
-        table = Table(data=dataframe)
+        table = Table(data=dataframe, row_tags=row_tags)
 
         result_table = TableOperationHelper.column_operations(table, ['A + B'], False)
-        expected_result = DataFrame({'Result': [11, 10, 9, 8, 7]})
-        self.assertTrue(result_table.get_data().equals(expected_result))
+        expected_df = DataFrame({'Result': [11, 10, 9]}, index=["R0", "R1", "R2"])
+        expected_table = Table(data=expected_df, row_tags=row_tags)
+        self.assertTrue(result_table.equals(expected_table))
 
         result_table = TableOperationHelper.column_operations(table, ['A + B'], True)
-        expected_result = DataFrame({'Result': [11, 10, 9, 8, 7], 'A': range(1, 6), 'B': [10, 8, 6, 4, 2]})
+        expected_result = DataFrame({'Result': [11, 10, 9], 'A': [1, 2, 3], 'B': [10, 8, 6]},
+                                    index=["R0", "R1", "R2"])
         self.assertTrue(result_table.get_data().equals(expected_result))
 
     # def test_table_row_operation(self):

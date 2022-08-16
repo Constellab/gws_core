@@ -283,6 +283,22 @@ class Table(Resource):
         self._data.drop(columns=[column_name], inplace=True)
         self._column_tags.remove_tags_at(pos)
 
+    def set_column_name(self, old_name: str, new_name: str) -> None:
+
+        if not self.column_exists(old_name):
+            raise BadRequestException(f"The column name `{old_name}` doesn't exist")
+        if self.column_exists(new_name):
+            raise BadRequestException(f"The column name `{new_name}` already exists")
+
+        self._data.rename(columns={old_name: new_name}, inplace=True)
+
+    def set_all_column_names(self, column_names: List[str]) -> None:
+
+        if len(column_names) != self.nb_columns:
+            raise BadRequestException("The length of column names must be equal to the number of columns")
+
+        self._data.columns = column_names
+
     # def add_row(self, row_name: str = None, row_data: Union[list, Series] = None, row_index: int = None):
     #     """ Add a new row to the Dataframe.
     #     :param row_data: data for the row, must be the same length as other rows
@@ -315,17 +331,27 @@ class Table(Resource):
 
     #     self._row_tags.insert_new_empty_tags(row_index)
 
-    def set_row_name(self, row_index: int, name: str):
+    def set_row_name(self, old_name: Any, new_name: str) -> None:
         """ Set the name of a row at a given index
         :param row_index: index of the row
         :type row_index: int
         :param name: name of the row
         :type name: str
         """
-        if self.row_exists(name):
-            raise BadRequestException(f"The row name `{name}` already exists")
 
-        self.row_names[row_index] = name
+        if not self.row_exists(old_name):
+            raise BadRequestException(f"The row name `{old_name}` does not exist")
+        if self.row_exists(new_name):
+            raise BadRequestException(f"The row name `{new_name}` already exists")
+
+        self._data.rename(index={old_name: new_name}, inplace=True)
+
+    def set_all_row_names(self, row_names: List[str]) -> None:
+
+        if len(row_names) != self.nb_rows:
+            raise BadRequestException("The length of row names must be equal to the number of rows")
+
+        self._data.index = row_names
 
     def row_exists(self, name: str, case_sensitive: bool = True) -> bool:
         if case_sensitive:
