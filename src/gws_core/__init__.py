@@ -161,9 +161,12 @@ from .impl.s3.swift import Swift as Swift
 from .impl.shell.base_env import BaseEnv as BaseEnv
 from .impl.shell.conda_env import CondaEnv as CondaEnv
 from .impl.shell.conda_env_task import CondaEnvShell as CondaEnvShell
+from .impl.shell.conda_env_task_2 import CondaEnvShell2 as CondaEnvShell2
 from .impl.shell.pip_env import PipEnv as PipEnv
 from .impl.shell.pip_env_task import PipEnvShell as PipEnvShell
+from .impl.shell.pip_env_task_2 import PipEnvShell2 as PipEnvShell2
 from .impl.shell.shell import Shell as Shell
+from .impl.shell.shell_2 import Shell2 as Shell2
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 # Impl > Table
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField

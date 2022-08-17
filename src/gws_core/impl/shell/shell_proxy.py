@@ -5,13 +5,16 @@
 
 import subprocess
 import time
-from typing import Any, List
+from typing import Any, List, Union
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import MessageObserver
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.task.task import Task
+
+from ...core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 
 
 class ShellProxy():
@@ -30,7 +33,7 @@ class ShellProxy():
         self.working_dir = working_dir
         self._message_dispatcher = MessageDispatcher()
 
-    def check_output(self, cmd: List[str], env: dict = None, text: bool = True,
+    def check_output(self, cmd: Union[list, str], env: dict = None, text: bool = True,
                      shell_mode: bool = False) -> Any:
 
         try:
@@ -46,8 +49,12 @@ class ShellProxy():
             Logger.log_exception_stack_trace(err)
             raise Exception(f"The shell process has failed. Error {err}.")
 
-    def run(self, cmd: List[str], env: dict = None,
+    def run(self, cmd: Union[list, str], env: dict = None,
             shell_mode: bool = False) -> None:
+
+        if env is not None and not isinstance(env, dict):
+            raise BadRequestException(
+                "Method 'build_os_env' must return a dictionnary")
 
         FileHelper.create_dir_if_not_exist(self.working_dir)
 

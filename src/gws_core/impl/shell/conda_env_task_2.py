@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
+
 from abc import abstractmethod
 
 from gws_core.impl.shell.conda_env import CondaEnv
@@ -11,11 +11,11 @@ from gws_core.impl.shell.conda_env import CondaEnv
 from ...config.config_types import ConfigParams
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
-from .base_env_task import BaseEnvShell
+from .base_env_task_2 import BaseEnvShell2
 
 
-@task_decorator("CondaEnvShell", hide=True)
-class CondaEnvShell(BaseEnvShell):
+@task_decorator("CondaEnvShell2", hide=True)
+class CondaEnvShell2(BaseEnvShell2):
     """
     CondaEnvShell task.
 
@@ -45,21 +45,30 @@ class CondaEnvShell(BaseEnvShell):
         ```
     """
 
-    env_file_path: str = None
-    _shell_mode = True
+    # must be overrided in the child class to provide the yml env file path
+    env_file_path: str
+
+    shell_proxy: CondaEnv = None
 
     def __init__(self):
         super().__init__()
-        self.base_env = CondaEnv(self.get_env_dir_name(), self.env_file_path, self.working_dir)
+
+        if self.env_file_path is None:
+            raise Exception(f"The env_file_path property must be set in the task {self._typing_name}")
+
+        self.shell_proxy = CondaEnv(self.get_env_dir_name(), self.env_file_path, self.working_dir)
+        self.shell_proxy.attach_task(self)
 
     @abstractmethod
-    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        """
-        This methods gathers the results of the shell task. It must be overloaded by subclasses.
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        """This must be overiwritten to perform the task of the task.
 
-        It must be overloaded to capture the standard output (stdout) and the
-        output files generated in the current working directory (see `gws.Shell.cwd`)
+        This is where most of your code must go
 
-        :param stdout: The standard output of the shell task
-        :type stdout: `str`
+        :param params: [description]
+        :type params: Config
+        :param inputs: [description]
+        :type inputs: Input
+        :param outputs: [description]
+        :type outputs: Output
         """

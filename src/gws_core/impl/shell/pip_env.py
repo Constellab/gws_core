@@ -12,36 +12,27 @@ from .base_env import BaseEnv
 
 class PipEnv(BaseEnv):
 
-    def install(self) -> bool:
+    def _install(self) -> bool:
         """
         Install an environment from a conda environment file.
         Return true if the env was installed, False if it was already installed.
         """
-        if self.is_installed():
-            return False
-
-        self.create_env_dir()
 
         pipfile_path = self.get_pip_file_path()
         cmd = [
             f"cp {self.env_file_path} {pipfile_path}", "&&",
-            "pipenv install", "&&",
-            "touch READY"
+            "pipenv install"
         ]
 
-        try:
-            env = os.environ.copy()
-            env["PIPENV_VENV_IN_PROJECT"] = "enabled"
-            res = subprocess.run(
-                " ".join(cmd),
-                cwd=self.get_env_dir_path(),
-                stderr=subprocess.PIPE,
-                env=env,
-                shell=True
-            )
-        except Exception as err:
-            raise Exception(
-                "Cannot install the virtual environment.") from err
+        env = os.environ.copy()
+        env["PIPENV_VENV_IN_PROJECT"] = "enabled"
+        res = subprocess.run(
+            " ".join(cmd),
+            cwd=self.get_env_dir_path(),
+            stderr=subprocess.PIPE,
+            env=env,
+            shell=True
+        )
 
         if res.returncode != 0:
             raise Exception(f"Cannot install the virtual environment. Error: {res.stderr}")
@@ -52,8 +43,6 @@ class PipEnv(BaseEnv):
         """ Uninstall the environment.
         Return true if the env was uninstalled, False if it was already uninstalled.
         """
-        if not self.is_installed():
-            return False
 
         cmd = [
             "pipenv uninstall --all", "&&",
@@ -75,6 +64,7 @@ class PipEnv(BaseEnv):
             try:
                 if FileHelper.exists_on_os(self.get_env_dir_path()):
                     FileHelper.delete_dir(self.get_env_dir_path())
+                    return True
             except:
                 raise Exception("Cannot remove the virtual environment.")
 

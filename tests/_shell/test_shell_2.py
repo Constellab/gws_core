@@ -6,45 +6,40 @@
 import os
 from typing import List
 
-from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec, Shell,
+from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec, Shell2,
                       StrParam, TaskInputs, TaskOutputs, TaskRunner,
                       task_decorator)
 from gws_core.progress_bar.progress_bar import ProgressBar, ProgressBarMessage
 
 
 @task_decorator("EchoInFile")
-class EchoInFile(Shell):
+class EchoInFile(Shell2):
     input_specs = {}
     output_specs = {'file': OutputSpec(File)}
     config_specs = {
         'name': StrParam(optional=True, short_description="The name to echo"),
     }
-    _shell_mode = True
 
-    def build_command(self, params: ConfigParams, __: TaskInputs) -> list:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         name = params.get_value("name")
-        return [f"echo \"{name}\" > echo.txt"]
+        self.shell_proxy.run([f"echo \"{name}\" > echo.txt"], shell_mode=True)
 
-    def gather_outputs(self, _: ConfigParams, __: TaskInputs) -> TaskOutputs:
         path = os.path.join(self.working_dir, "echo.txt")
         file = File(path=path)
         return {"file": file}
 
 
 @task_decorator("Echo")
-class Echo(Shell):
+class Echo(Shell2):
     input_specs = {}
     output_specs = {}
     config_specs = {
         'name': StrParam(optional=True, short_description="The name to echo"),
     }
-    _shell_mode = True
 
-    def build_command(self, params: ConfigParams, __: TaskInputs) -> list:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         name = params.get_value("name")
-        return [f"echo \"{name}\""]
-
-    def gather_outputs(self, _: ConfigParams, __: TaskInputs) -> TaskOutputs:
+        self.shell_proxy.run([f"echo \"{name}\""], shell_mode=True)
         return {}
 
 
