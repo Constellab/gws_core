@@ -65,6 +65,7 @@ class TableOperationHelper():
                 if not column in dataframe:
                     result_table.add_column(column, eval_dataframe[column])
 
+            # set the row names as the table was created empty
             result_table.set_all_row_names(source.row_names)
 
         result_table.copy_row_tags(source)
