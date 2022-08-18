@@ -20,7 +20,7 @@ class BaseEnv(ShellProxy):
     env_file_path: str = None
 
     def __init__(self, env_dir_name: str, env_file_path: str,
-                 working_dir: str):
+                 working_dir: str = None):
         super().__init__(working_dir)
         self.env_dir_name = env_dir_name
         self.env_file_path = env_file_path

@@ -15,6 +15,7 @@ from gws_core.task.task import Task
 
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ...core.utils.settings import Settings
 
 
 class ShellProxy():
@@ -28,9 +29,13 @@ class ShellProxy():
 
     _message_dispatcher: MessageDispatcher = None
 
-    def __init__(self, working_dir: str):
+    def __init__(self, working_dir: str = None):
         super().__init__()
-        self.working_dir = working_dir
+
+        if working_dir is not None:
+            self.working_dir = working_dir
+        else:
+            self.working_dir = Settings.retrieve().make_temp_dir()
         self._message_dispatcher = MessageDispatcher()
 
     def check_output(self, cmd: Union[list, str], env: dict = None, text: bool = True,
