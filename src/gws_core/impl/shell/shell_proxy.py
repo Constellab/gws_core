@@ -30,6 +30,12 @@ class ShellProxy():
     _message_dispatcher: MessageDispatcher = None
 
     def __init__(self, working_dir: str = None):
+        """_summary_
+
+        :param working_dir: working directory for the shell (all command will be executed from this dir)
+                            if not provided, an new temp directory is created, defaults to None
+        :type working_dir: str, optional
+        """
         super().__init__()
 
         if working_dir is not None:
