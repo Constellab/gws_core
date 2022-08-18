@@ -230,7 +230,8 @@ class ResourceService(BaseService):
         # Handle the project filters, get all experiment of this project and filter by experiment
         projects_criteria: SearchFilterCriteria = search.get_filter_criteria('project')
         if projects_criteria is not None:
-            experiments: List[Experiment] = Experiment.select().where(Experiment.project == projects_criteria['value'])
+            experiments: List[Experiment] = list(Experiment.select().where(
+                Experiment.project.in_(projects_criteria['value'])))
             search_builder.add_expression(ResourceModel.experiment.in_(experiments))
             search.remove_filter_criteria('project')
 
