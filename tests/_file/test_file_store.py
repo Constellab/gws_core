@@ -10,6 +10,7 @@ from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.folder import Folder
 
 
+# test_file_store
 class TestLocalFileStore(BaseTestCase):
 
     def test_file(self):
@@ -25,7 +26,7 @@ class TestLocalFileStore(BaseTestCase):
         # Add a file with the same name
         file_2 = file_store.add_file_from_path(file_path, 'mini_travel_graph.json')
         self.assertTrue(file_store.node_exists(file_2))
-        self.assertNotEqual(file_2.path, file.path)
+        self.assertEqual(file_2.get_default_name(), 'mini_travel_graph_1.json')
 
         file_store.delete_node(file)
         self.assertFalse(file_store.node_exists(file))
@@ -44,6 +45,12 @@ class TestLocalFileStore(BaseTestCase):
         # Create an empty folder
         folder: Folder = file_store.create_empty_folder('my-folder')
         self.assertTrue(file_store.node_exists(folder))
+        self.assertTrue(FileHelper.exists_on_os(folder.path))
+        self.assertEqual(folder.get_default_name(), 'my-folder')
+
+        # Create a folder with the same name
+        folder: Folder = file_store.create_empty_folder('my-folder')
+        self.assertEqual(folder.get_default_name(), 'my-folder_1')
         self.assertTrue(FileHelper.exists_on_os(folder.path))
 
         file_store.delete_node(folder)

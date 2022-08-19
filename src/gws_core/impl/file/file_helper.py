@@ -45,9 +45,14 @@ class FileHelper():
 
     @classmethod
     def get_extension(cls, path: PathType) -> str:
-        """Return the extension of a file without the '.'
+        """Return the extension of a file without the '.'.
+        Return None if no extension is found (like folder).
         """
-        return cls.clean_extension(cls.get_path(path).suffix)
+        extension = cls.clean_extension(cls.get_path(path).suffix)
+
+        if extension == '':
+            return None
+        return extension
 
     @classmethod
     def clean_extension(cls, extension: str) -> str:
