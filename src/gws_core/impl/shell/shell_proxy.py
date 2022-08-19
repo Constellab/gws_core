@@ -74,6 +74,7 @@ class ShellProxy():
                 self._message_dispatcher.notify_info_message("\n".join(stdout))
         except Exception as err:
             Logger.log_exception_stack_trace(err)
+            self._message_dispatcher.notify_error_message(str(err))
             raise Exception(f"The shell process has failed. Error {err}.")
 
     def clean_working_dir(self):

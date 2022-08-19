@@ -42,11 +42,9 @@ class ViewType(Enum):
     NETWORK = "network-view"
 
 
-# List of view supported in reports
-report_supported_views = [
-    ViewType.JSON, ViewType.TEXT, ViewType.TABLE, ViewType.DATASET, ViewType.SCATTER_PLOT_2D,
-    ViewType.LINE_PLOT_2D, ViewType.BAR_PLOT, ViewType.STACKED_BAR_PLOT, ViewType.HISTOGRAM,
-    ViewType.BOX_PLOT, ViewType.HEATMAP, ViewType.VENN_DIAGRAM, ViewType.MULTI_VIEWS, ViewType.NETWORK]
+# List of view type that cannot be used in a report
+exluded_views_in_historic = [
+    ViewType.VIEW, ViewType.FOLDER, ViewType.RESOURCES_LIST_VIEW, ViewType.EMPTY]
 
 
 class CallViewParams(TypedDict):

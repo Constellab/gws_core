@@ -14,16 +14,13 @@ from gws_core.core.classes.rich_text_content import (RichText, RichTextI,
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
-from gws_core.experiment.experiment_api import delete_experiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.report.report_file_service import ReportFileService, ReportImage
 from gws_core.report.report_resource import ReportResource
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view_config.view_config_service import ViewConfigService
-from gws_core.resource.view_types import report_supported_views
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.current_user_service import CurrentUserService
 from peewee import ModelSelect
@@ -334,11 +331,9 @@ class ReportService():
 
     ################################################# Resource View ########################################
     @classmethod
-    def search_available_resource_view(cls, report_id: str, search: SearchParams,
-                                       page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
-        """Method to search the resource views that are available for a report. It searches in the resource view in view config
+    def get_resources_of_associated_experiments(cls, report_id: str) -> List[ResourceModel]:
+        """Method to retrieve the resources of the experiments associated with a report
         """
-
         # add a filter on experiments of the report
         experiments = ReportService.get_experiments_by_report(report_id)
 
@@ -350,10 +345,7 @@ class ReportService():
 
         # retrieve the resources associated with the experiments
         resources = ResourceService.get_experiments_resources(experiment_ids)
-        resource_ids = [resource.id for resource in resources]
-
-        return ViewConfigService.search_by_resources(
-            resource_ids, report_supported_views, search, page, number_of_items_per_page)
+        return resources
 
     @classmethod
     def _refresh_report_associated_resources(cls, report: Report) -> None:

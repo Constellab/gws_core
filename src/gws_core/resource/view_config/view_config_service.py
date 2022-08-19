@@ -9,12 +9,13 @@ from typing import Any, Dict, List
 
 from gws_core.config.param_spec_helper import ParamSpecHelper
 from gws_core.resource.view_helper import ViewHelper
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view_types import exluded_views_in_historic
 from gws_core.user.current_user_service import CurrentUserService
 from peewee import ModelSelect
 
 from ...core.classes.paginator import Paginator
-from ...core.classes.search_builder import SearchBuilder, SearchParams
+from ...core.classes.search_builder import (SearchBuilder,
+                                            SearchFilterCriteria, SearchParams)
 from ...core.utils.logger import Logger
 from ...task.transformer.transformer_type import TransformerDict
 from ...user.user import User
@@ -37,6 +38,7 @@ class ViewConfigService():
         thread = Thread(target=cls.save_view_config, args=(resource_model, view, view_name,
                                                            config_values, transformers, CurrentUserService.get_and_check_current_user()))
         thread.start()
+        # a: ReportService
 
     @classmethod
     def save_view_config(cls, resource_model: ResourceModel, view: View,
@@ -79,7 +81,7 @@ class ViewConfigService():
                 last_view_config: ViewConfig = ViewConfig.select().order_by(ViewConfig.last_modified_at.asc()).first()
                 last_view_config.delete_instance()
         except Exception as err:
-            Logger.error('Error while saving view config', err)
+            Logger.error(f"Error while saving view config : {err}")
             Logger.log_exception_stack_trace(err)
 
     @classmethod
@@ -88,21 +90,26 @@ class ViewConfigService():
 
         search_builder: SearchBuilder = ViewConfigSearchBuilder()
 
-        model_select: ModelSelect = search_builder.build_search(search)
-        return Paginator(
-            model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+        return cls._search(search_builder, search, page, number_of_items_per_page)
 
     @classmethod
-    def search_by_resources(cls, resource_ids: List[str], view_types: List[ViewType], search: SearchParams,
-                            page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+    def search_for_report(cls, report_id: str, search: SearchParams,
+                          page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+        from ...report.report_service import ReportService
 
         search_builder: SearchBuilder = ViewConfigSearchBuilder()
 
-        # filter on resource ids
-        search_builder.add_expression(ViewConfig.resource_model.in_(resource_ids))
+        # retrieve resources associated to the report's experiments
+        resources: List[ResourceModel] = ReportService.get_resources_of_associated_experiments(report_id)
+        search_builder.add_expression(ViewConfig.resource_model.in_(resources))
 
-        # filter on view type
-        search_builder.add_expression(ViewConfig.view_type.in_(view_types))
+        return cls._search(search_builder, search, page, number_of_items_per_page)
+
+    @classmethod
+    def _search(cls, search_builder: SearchBuilder, search: SearchParams,
+                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+        # exclude the type of view that are not useful in historic
+        search_builder.add_expression(ViewConfig.view_type.not_in(exluded_views_in_historic))
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(

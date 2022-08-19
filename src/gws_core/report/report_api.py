@@ -96,18 +96,6 @@ def delete_image(filename: str,
                  _: UserData = Depends(AuthService.check_user_access_token)) -> None:
     ReportService.delete_image(filename)
 
-################################################# Resource View ########################################
-
-
-@core_app.post("/report/{id}/resource-views", tags=["Report"], summary="Search for available resource views")
-def get_avaibale_resource_views(id: str,
-                                search_dict: SearchParams,
-                                page: Optional[int] = 1,
-                                number_of_items_per_page: Optional[int] = 20,
-                                _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
-    return ReportService.search_available_resource_view(id, search_dict, page, number_of_items_per_page).to_json()
-
-
 ################################################# GET ########################################
 
 
