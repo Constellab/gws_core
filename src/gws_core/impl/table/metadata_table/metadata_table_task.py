@@ -64,11 +64,22 @@ class MetadataTableImporter(TableImporter):
         # check duplicates
         csv_table.sample_id_column = sample_id_column
         sample_ids_list = csv_table.get_sample_ids()
+
         sample_ids_set = set(sample_ids_list)
         contains_duplicates = len(sample_ids_list) != len(sample_ids_set)
         if contains_duplicates:
+
+            # find the duplicate
+            unique_set = set()
+            duplicates = []
+
+            for sample_id in sample_ids_list:
+                if sample_id in unique_set:
+                    duplicates.append(sample_id)
+                else:
+                    unique_set.add(sample_id)
             raise BadRequestException(
-                f"Cannot import MetadataTable. The list of sample ids contains duplicates")
+                f"Cannot import MetadataTable. The following sample_ids are duplicated: {duplicates}")
 
         return csv_table
 
