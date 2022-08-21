@@ -265,3 +265,21 @@ class TestTable(IsolatedAsyncioTestCase):
 
         table.set_cell_value_at(0, 1, 7)
         self.assertEqual(table.get_cell_value_at(0, 1), 7)
+
+    async def test_set_row_name(self):
+        table = Table(DataFrame({'A': [1, 2], 'B': [4, 5]}))
+
+        table.set_row_name(0, 'r0')
+        self.assertEqual(table.row_names[0], 'r0')
+
+        table.set_all_row_names(['r1', 'r2'])
+        self.assertEqual(table.row_names, ['r1', 'r2'])
+
+    async def test_set_column_name(self):
+        table = Table(DataFrame({'A': [1, 2], 'B': [4, 5]}))
+
+        table.set_column_name('A', 'C')
+        self.assertEqual(table.column_names[0], 'C')
+
+        table.set_all_column_names(['D', 'E'])
+        self.assertEqual(table.column_names, ['D', 'E'])

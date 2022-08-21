@@ -114,8 +114,10 @@ from .experiment.queue import Queue as Queue
 from .experiment.queue_service import QueueService as QueueService
 # Impl > Dataset
 from .impl.dataset.dataset import Dataset as Dataset
-from .impl.dataset.tasks.dataset_exporter import DatasetExporter as DatasetExporter
-from .impl.dataset.tasks.dataset_importer import DatasetImporter as DatasetImporter
+from .impl.dataset.tasks.dataset_exporter import \
+    DatasetExporter as DatasetExporter
+from .impl.dataset.tasks.dataset_importer import \
+    DatasetImporter as DatasetImporter
 # Extension
 # Impl > File
 from .impl.file.file import File as File
@@ -182,6 +184,8 @@ from .impl.table.helper.table_concat_helper import \
     TableConcatHelper as TableConcatHelper
 from .impl.table.helper.table_operation_helper import \
     TableOperationHelper as TableOperationHelper
+from .impl.table.helper.table_scaler_helper import \
+    TableScalerHelper as TableScalerHelper
 from .impl.table.helper.table_tag_aggregator_helper import \
     TableTagAggregatorHelper as TableTagAggregatorHelper
 from .impl.table.helper.table_tag_extractor_helper import \
@@ -232,6 +236,10 @@ from .impl.table.transformers.table_mass_operations import \
 from .impl.table.transformers.table_operations import \
     TableColumnOperations as TableColumnOperations
 from .impl.table.transformers.table_replace import TableReplace as TableReplace
+from .impl.table.transformers.table_scaler import \
+    TableColumnScaler as TableColumnScaler
+from .impl.table.transformers.table_scaler import \
+    TableRowScaler as TableRowScaler
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
 from .impl.table.transformers.table_selector import \
     TableColumnSelector as TableColumnSelector

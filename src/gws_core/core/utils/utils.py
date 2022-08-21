@@ -83,13 +83,13 @@ class Utils:
         return inspect.isclass(__cls) and issubclass(__cls, __class_or_tuple)
 
     @staticmethod
-    def value_is_in_literal(value: Any, literal_type: Type) -> bool:
+    def value_is_in_literal(value: Any, literal_type: Any) -> bool:
         """Check wheter a value in in a listeral list
         """
         return value in Utils.get_literal_values(literal_type)
 
     @staticmethod
-    def get_literal_values(literal_type: Type) -> Tuple[Any]:
+    def get_literal_values(literal_type: Any) -> Tuple[Any]:
         """Return the list of literal values
         """
         return list(get_args(literal_type))

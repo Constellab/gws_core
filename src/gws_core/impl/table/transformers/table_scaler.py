@@ -3,19 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from pandas import DataFrame
+from gws_core.config.param_spec import StrParam
+from gws_core.impl.table.helper.dataframe_scaler_helper import \
+    DataframeScalerHelper
+from gws_core.impl.table.helper.table_scaler_helper import TableScalerHelper
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
-from ..helper.constructor.data_scale_filter_param import \
-    DataScaleFilterParamConstructor
 from ..table import Table
-
-# ####################################################################
-#
-# TableScaler class
-#
-# ####################################################################
 
 
 @transformer_decorator(
@@ -25,19 +20,78 @@ from ..table import Table
 )
 class TableScaler(Transformer):
     """
-    Transformer to apply one or multiple scalling functions to all numerical values of the table.
+    Transformer to apply one scalling function to all numerical values of the table.
 
-    Available scaling functions: ```log2```, ```log10```, ```unit```, ```percent``` and ```standard```.
+    Available scaling functions: ```log2```, ```log10```, ```log```.
     - ```log2, log10``` replace each element by the corresponding log value
-    - ```unit``` normalizes each element by the sum of its column
-    - ```percent``` is like ```unit``` but the final value is multiplied by 100.
-    - ```percent``` normalizes each element by the standard deviation of its column
+    - ```log``` replace each element by the corresponding natural logarithm value
     """
     config_specs: ConfigSpecs = {
-        "scaling": DataScaleFilterParamConstructor.construct_filter(),
+        "scaling_function": StrParam(
+            human_name="Scaling function",
+            allowed_values=DataframeScalerHelper.SCALE_FUNCTIONS,
+        )
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        data: DataFrame = DataScaleFilterParamConstructor.scale(source.get_data(), params["scaling"])
-        table = source.create_sub_table(data, row_tags=source.get_row_tags(), column_tags=source.get_column_tags())
-        return table
+        return TableScalerHelper.scale(
+            table=source,
+            func=params["scaling_function"]
+        )
+
+
+axis_scale_param = StrParam(
+    human_name="Scaling function",
+    allowed_values=DataframeScalerHelper.AXIS_SCALE_FUNCTIONS,
+)
+
+
+@transformer_decorator(
+    unique_name="TableRowScaler",
+    resource_type=Table,
+    short_description="Scales the numeric values of the table along the row axis",
+)
+class TableRowScaler(Transformer):
+    """
+    Transformer to apply one scalling function to all numerical values of the table along the row axis.
+
+    Available scaling functions: ```unit```, ```percent``` and ```standard```.
+    - ```unit``` normalizes each element by the sum of its rows
+    - ```percent``` is like ```unit``` but the final value is multiplied by 100
+    - ```standard``` normalizes each element by the standard deviation of its rows
+    """
+    config_specs: ConfigSpecs = {
+        "scaling_function": axis_scale_param
+    }
+
+    async def transform(self, source: Table, params: ConfigParams) -> Table:
+        return TableScalerHelper.scale_by_rows(
+            table=source,
+            func=params["scaling_function"]
+        )
+
+
+@transformer_decorator(
+    unique_name="TableColumnScaler",
+    resource_type=Table,
+    short_description="Scales the numeric values of the table along the column axis",
+)
+class TableColumnScaler(Transformer):
+    """
+    Transformer to apply one scalling functions to all numerical values of the table along the column axis.
+
+    Available scaling functions: ```unit```, ```percent``` and ```standard```.
+    - ```unit``` normalizes each element by the sum of its columns
+    - ```percent``` is like ```unit``` but the final value is multiplied by 100
+    - ```standard``` normalizes each element by the standard deviation of its columns
+    """
+
+    config_specs: ConfigSpecs = {
+        "scaling_function": axis_scale_param
+    }
+
+    async def transform(self, source: Table, params: ConfigParams) -> Table:
+        return TableScalerHelper.scale_by_columns(
+            table=source,
+            func=params["scaling_function"]
+        )

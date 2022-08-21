@@ -6,13 +6,13 @@
 from re import split, sub
 from typing import List, Union
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.table.table import Table
 from numpy import NaN
 from pandas import DataFrame
+
+from ....core.utils.utils import Utils
 
 
 class TableOperationHelper():
@@ -23,26 +23,33 @@ class TableOperationHelper():
     OPERATION_SEPARATOR: str = '\n'
 
     @staticmethod
-    def column_operations(source: Table, operations: Union[str, List[str]], result_in_new_column: bool) -> Table:
+    def column_operations(source: Table, operations: List[str], keep_original_columns: bool) -> Table:
+
+        if not isinstance(operations, list):
+            raise Exception('The operations must be a list')
+
+        clean_operations: List[str] = []
+        column_names = source.column_names
+        for operation in operations:
+            if '=' in operation:
+                clean_operations.append(operation)
+            else:
+                column_name = Utils.generate_unique_str_for_list(column_names, 'Result')
+                clean_operations.append(f"{column_name} = {operation}")
+                # append the new column name to the list of column names to avoid duplicates 'Result' columns
+                column_names.append(column_name)
 
         # convert the operations to str
-        if isinstance(operations, list):
-            operations = TableOperationHelper.OPERATION_SEPARATOR.join(operations)
+        str_operation: str = TableOperationHelper.OPERATION_SEPARATOR.join(clean_operations)
 
         dataframe = source.get_data()
 
-        if result_in_new_column:
-            if '=' in operations:
-                raise BadRequestException("The operation cannot contain '=' if the result is set in a new column")
-            column_name = source.generate_new_column_name('Result')
-            operations = f"{column_name} = {operations}"
-
-        eval_dataframe: DataFrame = dataframe.eval(operations)
+        eval_dataframe: DataFrame = dataframe.eval(str_operation)
         eval_dataframe = eval_dataframe.replace(TableOperationHelper._NaN_str, NaN)
         result_table: Table
 
         # if the result is append to the dataframe
-        if '=' in operations:
+        if keep_original_columns:
             # get a copy of the dataframe
             result_table = Table(dataframe.copy())
 
@@ -53,22 +60,27 @@ class TableOperationHelper():
                     result_table.add_column(column, eval_dataframe[column], index)
                     index += 1
         else:
-            # create a Table with only calculated columns
-            result_table = Table(eval_dataframe)
+            result_table = Table()
+            for column in eval_dataframe:
+                if not column in dataframe:
+                    result_table.add_column(column, eval_dataframe[column])
+
+            result_table.set_all_row_names(source.row_names)
 
         result_table.copy_row_tags(source)
         return result_table
 
     @staticmethod
-    def row_operation(source: Table, operations: Union[str, List[str]], result_in_new_row: bool) -> Table:
+    def row_operation(source: Table, operations: Union[str, List[str]], keep_original_rows: bool) -> Table:
         t_table = source.transpose()
-        result_transposed = TableOperationHelper.column_operations(t_table, operations, result_in_new_row)
+        result_transposed = TableOperationHelper.column_operations(t_table, operations, keep_original_rows)
         return result_transposed.transpose()
 
     @staticmethod
     def column_mass_operations(table: Table, operation_df: DataFrame,
                                operation_name_column: str = None, operation_calculations_column: str = None,
-                               error_on_unknown_column: bool = False) -> Table:
+                               error_on_unknown_column: bool = False,
+                               keep_original_columns: bool = False) -> Table:
         """Call multiple operations on table, the operations must be stored in a DataFrame.
 
         :param table: _description_
@@ -82,6 +94,9 @@ class TableOperationHelper():
         :param error_on_unknown_column: If False, the unknow column are replace with 0 in the calculations,
                                         If True an error is thrown if a column in the calculation does not exist, defaults to False
         :type error_on_unknown_column: str, optional
+        :param keep_original_columns: If True, the original columns used for the calculations are added at the end of the table.
+                                      Otherwise, only the calculated columns are kept, defaults to False
+        :type keep_original_columns: str, optional
         :return: _description_
         :rtype: Table
         """
@@ -125,7 +140,7 @@ class TableOperationHelper():
             # create the operation
             operations.append(f"{row[operation_name_column]} = {clean_operation}")
 
-        return TableOperationHelper.column_operations(table, operations, False)
+        return TableOperationHelper.column_operations(table, operations, keep_original_columns)
 
     @staticmethod
     def _operation_contains_unknown_column(operation: str, table: Table) -> bool:
