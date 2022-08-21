@@ -113,7 +113,7 @@ class Dataset(Table):
         """
         Check if some targets contain string data types
         """
-        return is_string_dtype(self.get_targets())
+        return is_string_dtype(self.get_targets().to_numpy())
 
     # -- I --
 
