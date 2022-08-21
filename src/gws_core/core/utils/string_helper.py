@@ -40,9 +40,9 @@ class StringHelper():
         """
 
         if snakefy:
-            text = _slugify(text, to_lower=to_lower, separator="_")
+            text = _slugify(text, lowercase=to_lower, separator="_")
         else:
-            text = _slugify(text, to_lower=to_lower, separator='-')
+            text = _slugify(text, lowercase=to_lower, separator='-')
 
         return text
 
