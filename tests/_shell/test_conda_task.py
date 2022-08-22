@@ -14,8 +14,8 @@ __cdir__ = os.path.dirname(os.path.realpath(__file__))
 
 
 # test_shell_conda_2
-@task_decorator("CondaEnvTester")
-class CondaEnvTester(CondaEnvTask):
+@task_decorator("CondaEnvTaskTester")
+class CondaEnvTaskTester(CondaEnvTask):
     input_specs = {}
     output_specs = {'file': OutputSpec(File)}
     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_conda.yml")
@@ -40,7 +40,7 @@ class TestProcess(BaseTestCase):
 
     async def test_conda(self):
 
-        task_runner = TaskRunner(CondaEnvTester)
+        task_runner = TaskRunner(CondaEnvTaskTester)
 
         try:
             output = await task_runner.run()
@@ -51,13 +51,13 @@ class TestProcess(BaseTestCase):
                 file.read().strip(),
                 "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
 
-            task: CondaEnvTester = task_runner.get_task()
+            task: CondaEnvTaskTester = task_runner.get_task()
 
             self.assertTrue(task.shell_proxy.env_is_installed())
             task.shell_proxy.uninstall_env()
             self.assertFalse(task.shell_proxy.env_is_installed())
         except Exception as exception:
-            task: CondaEnvTester = task_runner.get_task()
+            task: CondaEnvTaskTester = task_runner.get_task()
             if task:
                 task.shell_proxy.uninstall_env()
             raise exception

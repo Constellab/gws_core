@@ -13,8 +13,8 @@ __cdir__ = os.path.dirname(os.path.realpath(__file__))
 
 
 # test_pipenv_task
-@task_decorator("PipEnvTester")
-class PipEnvTester(PipEnvTask):
+@task_decorator("PipEnvTaskTester")
+class PipEnvTaskTester(PipEnvTask):
     input_specs = {}
     output_specs = {'file': OutputSpec(File)}
     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_pip.txt")
@@ -32,7 +32,7 @@ class TestPipEnv(BaseTestCase):
 
     async def test_pipenv(self):
 
-        task_runner = TaskRunner(PipEnvTester)
+        task_runner = TaskRunner(PipEnvTaskTester)
 
         try:
             output = await task_runner.run()
@@ -43,13 +43,13 @@ class TestPipEnv(BaseTestCase):
                 file.read().strip(),
                 "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
 
-            task: PipEnvTester = task_runner.get_task()
+            task: PipEnvTaskTester = task_runner.get_task()
 
             self.assertTrue(task.shell_proxy.env_is_installed())
             task.shell_proxy.uninstall_env()
             self.assertFalse(task.shell_proxy.env_is_installed())
         except Exception as exception:
-            task: PipEnvTester = task_runner.get_task()
+            task: PipEnvTaskTester = task_runner.get_task()
             if task:
                 task.shell_proxy.uninstall_env()
             raise exception

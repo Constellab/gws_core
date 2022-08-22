@@ -13,8 +13,8 @@ from gws_core.impl.shell.shell_proxy import ShellProxy
 
 
 # test_shell_task
-@task_decorator("EchoInFile")
-class EchoInFile(ShellTask):
+@task_decorator("EchoInFileTask")
+class EchoInFileTask(ShellTask):
     input_specs = {}
     output_specs = {'file': OutputSpec(File)}
     config_specs = {
@@ -37,7 +37,7 @@ class TestShell(BaseTestCase):
         runner = TaskRunner(
             inputs={},
             params={"name": "John Doe"},
-            task_type=EchoInFile
+            task_type=EchoInFileTask
         )
         outputs = await runner.run()
         file: File = outputs["file"]

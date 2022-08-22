@@ -1,4 +1,7 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from time import sleep
 
@@ -46,9 +49,8 @@ class TestProgressBar(BaseTestCase):
         self.assertTrue(progress_bar_db.is_finished)
 
     def test_mulitple_messages(self):
+        ProgressBar._MIN_ALLOWED_DELTA_TIME = 1.0
         progress_bar: ProgressBar = ProgressBar()
-        # for test remove delta time
-        progress_bar._MIN_ALLOWED_DELTA_TIME = 1.0
         progress_bar.add_success_message('Hello')
 
         # test that the first message is directly saved
@@ -75,3 +77,5 @@ class TestProgressBar(BaseTestCase):
         self.assertIsNone(progress_bar._save_timer)
         progress_bar: ProgressBar = ProgressBar.get_by_id_and_check(progress_bar.id)
         self.assertEqual(len(progress_bar.messages), 5)
+
+        ProgressBar._MIN_ALLOWED_DELTA_TIME = 0
