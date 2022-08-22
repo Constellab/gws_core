@@ -3,9 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import selectors
 import subprocess
 import time
-from typing import Any, List, Union
+from typing import Any, List, Literal, Union
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import MessageObserver
@@ -24,6 +25,9 @@ class ShellProxy():
 
     This class is a proxy to Shell commandes. It allow running commands in a shell and get the output and stdout.
     """
+
+    # When running a command, the messages are buffered and dispatched every 1 seconds
+    _NOTIFY_MESSAGE_INTERVAL = 1
 
     working_dir: str = None
 
@@ -61,7 +65,7 @@ class ShellProxy():
             raise Exception(f"The shell process has failed. Error {err}.")
 
     def run(self, cmd: Union[list, str], env: dict = None,
-            shell_mode: bool = False) -> None:
+            shell_mode: bool = False) -> int:
 
         if env is not None and not isinstance(env, dict):
             raise BadRequestException(
@@ -69,27 +73,47 @@ class ShellProxy():
 
         FileHelper.create_dir_if_not_exist(self.working_dir)
 
+        self._message_dispatcher.notify_info_message(f"[ShellProxy] Running command: {cmd}")
         try:
-            Logger.info(f"[ShellProxy] Running command: {cmd}")
             proc = subprocess.Popen(
                 cmd,
                 cwd=self.working_dir,
                 env=env,
                 shell=shell_mode,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                stderr=subprocess.PIPE,
             )
-            tic_a = time.perf_counter()
-            stdout: list = []
-            for line in iter(proc.stdout.readline, b''):
-                stdout.append(line.decode().strip())
-                tic_b = time.perf_counter()
-                if tic_b - tic_a >= 0.1:      # save outputs every 0.1 sec in taskbar
-                    self._message_dispatcher.notify_info_message("\n".join(stdout))
-                    tic_a = time.perf_counter()
-                    stdout = []
-            if stdout:
-                self._message_dispatcher.notify_info_message("\n".join(stdout))
+
+            # use to read the stdout and stderr of the process
+            sel = selectors.DefaultSelector()
+            sel.register(proc.stdout, selectors.EVENT_READ)
+            sel.register(proc.stderr, selectors.EVENT_READ)
+
+            process_ended = False
+
+            while not process_ended:
+                for key, _ in sel.select():
+                    data: str = key.fileobj.read1().decode().strip()
+
+                    # when the process has finished
+                    if not data:
+                        process_ended = True
+                        break
+
+                    # dispatch the message to the observers
+                    if key.fileobj is proc.stdout:
+                        self._message_dispatcher.notify_info_message(data)
+                    else:
+                        self._message_dispatcher.notify_error_message(data)
+
+            # retrieve the return code of the process and dispatch the message to the observers
+            return_core = proc.wait()
+            if return_core == 0:
+                self._message_dispatcher.notify_info_message("[ShellProxy] Command executed successfully")
+            else:
+                self._message_dispatcher.notify_error_message("[ShellProxy] Command failed")
+
+            return return_core
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             self._message_dispatcher.notify_error_message(str(err))

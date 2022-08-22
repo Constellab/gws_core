@@ -297,7 +297,7 @@ class Model(BaseModel, PeeweeModel):
     def _before_update(self) -> None:
         """Method to override to trigger action before the entity is updated (not called on insert)
         """
-        self.last_modified_at = datetime.now()
+        self.last_modified_at = DateHelper.now_utc()
 
     @classmethod
     @transaction()

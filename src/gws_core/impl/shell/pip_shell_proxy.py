@@ -2,32 +2,35 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
 import os
 import subprocess
 
 from gws_core.impl.file.file_helper import FileHelper
 
-from .base_env import BaseEnv
+from .base_env_shell import BaseEnvShell
 
 
-class CondaEnv(BaseEnv):
+class PipShellProxy(BaseEnvShell):
 
-    def _install(self) -> bool:
+    def _install_env(self) -> bool:
         """
         Install an environment from a conda environment file.
         Return true if the env was installed, False if it was already installed.
         """
 
+        pipfile_path = self.get_pip_file_path()
         cmd = [
-            'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
-            f"conda env create -f {self.env_file_path} --force --prefix ./.venv"
+            f"cp {self.env_file_path} {pipfile_path}", "&&",
+            "pipenv install"
         ]
 
-        res: subprocess.CompletedProcess = subprocess.run(
+        env = os.environ.copy()
+        env["PIPENV_VENV_IN_PROJECT"] = "enabled"
+        res = subprocess.run(
             " ".join(cmd),
             cwd=self.get_env_dir_path(),
             stderr=subprocess.PIPE,
+            env=env,
             shell=True
         )
 
@@ -36,34 +39,34 @@ class CondaEnv(BaseEnv):
 
         return True
 
-    def _uninstall(self) -> bool:
+    def _uninstall_env(self) -> bool:
         """ Uninstall the environment.
         Return true if the env was uninstalled, False if it was already uninstalled.
         """
 
         cmd = [
-            'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
-            "conda remove -y --prefix .venv --all", "&&",
+            "pipenv uninstall --all", "&&",
             "cd ..", "&&",
             f"rm -rf {self.get_env_dir_path()}"
         ]
 
-        res: subprocess.CompletedProcess
         try:
+            env = os.environ.copy()
+            env["PIPENV_VENV_IN_PROJECT"] = "enabled"
             res = subprocess.run(
                 " ".join(cmd),
                 cwd=self.get_env_dir_path(),
-                stderr=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                env=env,
                 shell=True
             )
-        except Exception as err:
+        except:
             try:
                 if FileHelper.exists_on_os(self.get_env_dir_path()):
                     FileHelper.delete_dir(self.get_env_dir_path())
                     return True
-
-            except Exception as err:
-                raise Exception("Cannot remove the virtual environment.") from err
+            except:
+                raise Exception("Cannot remove the virtual environment.")
 
         if res.returncode != 0:
             raise Exception(f"Cannot remove the virtual environment. Error: {res.stderr}")
@@ -71,12 +74,27 @@ class CondaEnv(BaseEnv):
         return True
 
     def format_command(self, user_cmd: list) -> str:
+        """
+        This method builds the command to execute.
+
+        :return: The list of arguments used to build the final command in the Python method `subprocess.run`
+        :rtype: `list`
+        """
+
         if isinstance(user_cmd, list):
             user_cmd = [str(c) for c in user_cmd]
-            user_cmd = " ".join(user_cmd)
-        venv_dir = self.get_venv_dir_path()
-        cmd = f'bash -c "source /opt/conda/etc/profile.d/conda.sh && conda activate {venv_dir} && {user_cmd}"'
+        if user_cmd[0] in ["python", "python2", "python3"]:
+            del user_cmd[0]
+        user_cmd = ["pipenv", "run", "python", *user_cmd]
+        cmd = " ".join(user_cmd)
         return cmd
 
-    def get_venv_dir_path(self) -> str:
-        return os.path.join(self.get_env_dir_path(), "./.venv")
+    def build_os_env(self) -> dict:
+        env = os.environ.copy()
+        pipfile_path = self.get_pip_file_path()
+        env["PIPENV_PIPFILE"] = pipfile_path
+        env["PIPENV_VENV_IN_PROJECT"] = "enabled"
+        return env
+
+    def get_pip_file_path(self) -> str:
+        return os.path.join(self.get_env_dir_path(), "Pipfile")

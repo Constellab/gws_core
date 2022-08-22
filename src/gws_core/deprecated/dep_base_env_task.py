@@ -6,15 +6,16 @@
 from abc import abstractmethod
 from typing import Union
 
-from ...config.config_types import ConfigParams
-from ...task.task_decorator import task_decorator
-from ...task.task_io import TaskInputs, TaskOutputs
-from .base_env import BaseEnv
-from .shell import Shell
+from ..config.config_types import ConfigParams
+from ..impl.shell.base_env_shell import BaseEnvShell
+from ..task.task_decorator import task_decorator
+from ..task.task_io import TaskInputs, TaskOutputs
+from .dep_shell import Shell
 
 
-@task_decorator("BaseEnvShell", hide=True)
-class BaseEnvShell(Shell):
+@task_decorator("BaseEnvShell", hide=True, deprecated_since="0.3.16",
+                deprecated_message="Use BaseEnvShellTask")
+class DepBaseEnvShell(Shell):
     """
     EnvShell task.
 
@@ -30,7 +31,7 @@ class BaseEnvShell(Shell):
 
     unique_env_name = None
 
-    base_env: BaseEnv = None
+    base_env: BaseEnvShell = None
 
     _shell_mode = False
 
@@ -50,7 +51,7 @@ class BaseEnvShell(Shell):
         Returns True if the virtual env is installed. False otherwise
         """
 
-        return self.base_env.is_installed()
+        return self.base_env.env_is_installed()
 
     # -- T --
 
@@ -75,7 +76,7 @@ class BaseEnvShell(Shell):
         self.log_info_message(
             f"Installing the virtual environment '{self.base_env.env_dir_name}' from file '{self.base_env.env_file_path}',  this might take few minutes.")
 
-        self.base_env.install()
+        self.base_env.install_env()
 
         self.log_info_message(f"Virtual environment '{self.base_env.env_dir_name}' installed!")
 
@@ -85,7 +86,7 @@ class BaseEnvShell(Shell):
 
         self.log_info_message("Uninstalling the virtual environment ...")
 
-        self.base_env.uninstall()
+        self.base_env.uninstall_env()
 
         self.log_info_message("Virtual environment uninstalled!")
 

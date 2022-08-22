@@ -14,7 +14,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from .shell_proxy import ShellProxy
 
 
-class BaseEnv(ShellProxy):
+class BaseEnvShell(ShellProxy):
 
     env_dir_name: str = None
     env_file_path: str = None
@@ -44,7 +44,7 @@ class BaseEnv(ShellProxy):
         complete_env = {**self.build_os_env(), **env}
 
         # install env if not installed
-        self.install()
+        self.install_env()
 
         return super().run(formatted_cmd, complete_env, shell_mode)
 
@@ -59,18 +59,18 @@ class BaseEnv(ShellProxy):
         complete_env = {**self.build_os_env(), **env}
 
         # install env if not installed
-        self.install()
+        self.install_env()
 
         return super().check_output(formatted_cmd, complete_env, text, shell_mode)
 
     @final
-    def install(self) -> bool:
+    def install_env(self) -> bool:
         """
         Install the virtual env.
         Return True if the env was installed, False if it was already installed, or an error occured.
         """
 
-        if self.is_installed():
+        if self.env_is_installed():
             self._message_dispatcher.notify_info_message(
                 f"Virtual environment '{self.env_dir_name}' already installed, skipping installation.")
             return False
@@ -82,7 +82,7 @@ class BaseEnv(ShellProxy):
 
         is_install: bool = False
         try:
-            is_install = self._install()
+            is_install = self._install_env()
         except Exception as err:
             raise Exception("Cannot install the virtual environment.") from err
 
@@ -93,23 +93,23 @@ class BaseEnv(ShellProxy):
         return is_install
 
     @abstractmethod
-    def _install(self) -> bool:
+    def _install_env(self) -> bool:
         """
         Override this method to install the environment.
         """
 
-    def uninstall(self) -> bool:
+    def uninstall_env(self) -> bool:
         """
         Uninstall the virtual env.
         Return true if the env was uninstalled, False if it was already uninstalled or an error occured.
         """
-        if not self.is_installed():
+        if not self.env_is_installed():
             return False
 
         self._message_dispatcher.notify_info_message(f"Uninstalling the virtual environment '{self.env_dir_name}'")
         is_uninstall: bool = False
         try:
-            is_uninstall = self._uninstall()
+            is_uninstall = self._uninstall_env()
         except Exception as err:
             raise Exception("Cannot uninstall the virtual environment.") from err
 
@@ -119,7 +119,7 @@ class BaseEnv(ShellProxy):
         return is_uninstall
 
     @abstractmethod
-    def _uninstall(self) -> bool:
+    def _uninstall_env(self) -> bool:
         """
         Uninstall the virtual env.
         """
@@ -144,7 +144,7 @@ class BaseEnv(ShellProxy):
         """
 
     @final
-    def is_installed(self) -> bool:
+    def env_is_installed(self) -> bool:
         """
         Returns True if the virtual env is installed. False otherwise
         """

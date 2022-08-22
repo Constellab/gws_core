@@ -5,8 +5,9 @@
 
 import os
 
-from gws_core import (BaseTestCase, CondaEnvShell2, ConfigParams, File,
+from gws_core import (BaseTestCase, CondaEnvTask, ConfigParams, File,
                       OutputSpec, TaskInputs, TaskOutputs, task_decorator)
+from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.task.task_runner import TaskRunner
 
 __cdir__ = os.path.dirname(os.path.realpath(__file__))
@@ -14,16 +15,17 @@ __cdir__ = os.path.dirname(os.path.realpath(__file__))
 
 # test_shell_conda_2
 @task_decorator("CondaEnvTester")
-class CondaEnvTester(CondaEnvShell2):
+class CondaEnvTester(CondaEnvTask):
     input_specs = {}
     output_specs = {'file': OutputSpec(File)}
     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_conda.yml")
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
+                             shell_proxy: ShellProxy) -> TaskOutputs:
         command = [
             "python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"
         ]
-        self.shell_proxy.run(command, shell_mode=True)
+        shell_proxy.run(command, shell_mode=True)
 
         file = File(path=os.path.join(self.working_dir, "out.txt"))
         return {"file": file}
@@ -51,13 +53,13 @@ class TestProcess(BaseTestCase):
 
             task: CondaEnvTester = task_runner.get_task()
 
-            self.assertTrue(task.shell_proxy.is_installed())
-            task.shell_proxy.uninstall()
-            self.assertFalse(task.shell_proxy.is_installed())
+            self.assertTrue(task.shell_proxy.env_is_installed())
+            task.shell_proxy.uninstall_env()
+            self.assertFalse(task.shell_proxy.env_is_installed())
         except Exception as exception:
             task: CondaEnvTester = task_runner.get_task()
             if task:
-                task.shell_proxy.uninstall()
+                task.shell_proxy.uninstall_env()
             raise exception
 
         # proc_mdl: TaskModel = TaskService.create_task_model_from_type(

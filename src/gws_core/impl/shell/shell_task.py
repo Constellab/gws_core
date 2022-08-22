@@ -4,21 +4,18 @@
 # About us: https://gencovery.com
 
 import shlex
-import shutil
 from abc import abstractmethod
-
-from gws_core.impl.shell.shell_proxy import ShellProxy
+from typing import final
 
 from ...config.config_types import ConfigParams
-from ...core.utils.settings import Settings
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
-from ..file.file_helper import FileHelper
+from .shell_proxy import ShellProxy
 
 
-@task_decorator("Shell2", hide=True)
-class Shell2(Task):
+@task_decorator("ShellTask", hide=True)
+class ShellTask(Task):
     """
     Shell task.
 
@@ -29,29 +26,31 @@ class Shell2(Task):
     output_specs = {}
     config_specs = {}
 
-    _tmp_dir: str = None
-
     shell_proxy: ShellProxy = None
 
     def __init__(self):
         super().__init__()
-        self.shell_proxy = ShellProxy(self.working_dir)
+        self.shell_proxy = self.init_shell_proxy()
 
         # attach this task to the proxy log the output into the progress bar
         self.shell_proxy.attach_task(self)
 
-    @abstractmethod
+    def init_shell_proxy(self) -> ShellProxy:
+        """
+        Initialize the shell proxy
+        """
+
+        return ShellProxy()
+
+    @final
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        """This must be overiwritten to perform the task of the task.
+        return await self.run_with_proxy(params, inputs, self.shell_proxy)
 
-        This is where most of your code must go
-
-        :param params: [description]
-        :type params: Config
-        :param inputs: [description]
-        :type inputs: Input
-        :param outputs: [description]
-        :type outputs: Output
+    @abstractmethod
+    async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
+                             shell_proxy: ShellProxy) -> TaskOutputs:
+        """
+        Run the task with the shell proxy
         """
 
     async def run_after_task(self) -> None:
@@ -62,6 +61,7 @@ class Shell2(Task):
 
         self._clean_working_dir()
 
+    @final
     @property
     def working_dir(self) -> str:
         """
@@ -71,20 +71,14 @@ class Shell2(Task):
         :rtype: `srt`
         """
 
-        if self._tmp_dir is None:
-            settings = Settings.retrieve()
-            self._tmp_dir = settings.make_temp_dir()
-
-        return self._tmp_dir
+        return self.shell_proxy.working_dir
 
     def _clean_working_dir(self):
         """
         Clean the working dir
         """
 
-        if self._tmp_dir is not None:
-            FileHelper.delete_dir(self._tmp_dir)
-        self._tmp_dir = None
+        self.shell_proxy.clean_working_dir()
 
     @staticmethod
     def quote(string: str) -> str:

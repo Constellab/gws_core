@@ -12,6 +12,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec,
 __cdir__ = os.path.dirname(os.path.realpath(__file__))
 
 
+# test_dep_shell_pipenv
 @task_decorator("PipEnvTester")
 class PipEnvTester(PipEnvShell):
     input_specs = {}

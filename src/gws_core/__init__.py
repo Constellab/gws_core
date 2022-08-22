@@ -100,6 +100,9 @@ from .core.utils.settings import Settings as Settings
 from .core.utils.string_helper import StringHelper as StringHelper
 from .core.utils.utils import Utils as Utils
 from .core.utils.zip import Zip as Zip
+from .deprecated.dep_conda_env_shell import CondaEnvShell as CondaEnvShell
+from .deprecated.dep_pip_env_shell import PipEnvShell as PipEnvShell
+from .deprecated.dep_shell import Shell as Shell
 # Experiment
 from .experiment.experiment import Experiment as Experiment
 from .experiment.experiment_dto import ExperimentDTO as ExperimentDTO
@@ -158,16 +161,13 @@ from .impl.robot.robot_tasks import RobotWait as RobotWait
 from .impl.s3.base import BaseS3 as BaseS3
 from .impl.s3.ovh import OVHS3 as OVHS3
 from .impl.s3.swift import Swift as Swift
-from .impl.shell.base_env import BaseEnv as BaseEnv
-from .impl.shell.conda_env import CondaEnv as CondaEnv
-from .impl.shell.conda_env_task import CondaEnvShell as CondaEnvShell
-from .impl.shell.conda_env_task_2 import CondaEnvShell2 as CondaEnvShell2
-from .impl.shell.pip_env import PipEnv as PipEnv
-from .impl.shell.pip_env_task import PipEnvShell as PipEnvShell
-from .impl.shell.pip_env_task_2 import PipEnvShell2 as PipEnvShell2
-from .impl.shell.shell import Shell as Shell
-from .impl.shell.shell_2 import Shell2 as Shell2
+from .impl.shell.base_env_shell import BaseEnvShell as BaseEnvShell
+from .impl.shell.conda_env_task import CondaEnvTask as CondaEnvTask
+from .impl.shell.conda_shell_proxy import CondaShellProxy as CondaShellProxy
+from .impl.shell.pip_env_task import PipEnvTask as PipEnvTask
+from .impl.shell.pip_shell_proxy import PipShellProxy as PipShellProxy
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy
+from .impl.shell.shell_task import ShellTask as ShellTask
 # Impl > Table
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
 from .impl.table.encoding.encoding_table import EncodingTable as EncodingTable

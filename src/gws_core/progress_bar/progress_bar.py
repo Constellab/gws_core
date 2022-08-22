@@ -6,9 +6,11 @@
 import time
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, TypedDict, final
+from threading import Timer
+from typing import List, TypedDict, final
 
 from fastapi.encoders import jsonable_encoder
+from gws_core.core.utils.date_helper import DateHelper
 from peewee import CharField
 from starlette_context import context
 
@@ -43,12 +45,16 @@ class ProgressBar(Model):
     process_id = CharField(null=True, index=True)
     process_typing_name = CharField(null=True)
 
+    # time to limite the saving of the progress bar and update of the progress bar
     _MIN_ALLOWED_DELTA_TIME = 1.0
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0
 
     _table_name = "gws_process_progress_bar"
     _max_message_stack_length = 64
+
+    # store the timer to prevent to save the progress bar too often
+    _save_timer: Timer = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -120,7 +126,28 @@ class ProgressBar(Model):
         if len(self.data["messages"]) > self._max_message_stack_length:
             self.data["messages"].pop(0)
         self._log_message(message, type_)
-        self.save()
+
+        self._mark_for_save()
+
+    def _mark_for_save(self) -> None:
+        # if a timer is running, wait for it to save the progress bar
+        if self._save_timer:
+            return
+
+        if not self._is_saved or (
+                DateHelper.now_utc() - self.last_modified_at).total_seconds() >= self._MIN_ALLOWED_DELTA_TIME:
+            self.save()
+        else:
+            # call the save method in x seconds
+            self._save_timer = Timer(self._MIN_ALLOWED_DELTA_TIME, self.save)
+            self._save_timer.start()
+
+    def save(self, *args, **kwargs) -> 'Model':
+        # if there is a timer, stop it and clean the variable
+        if self._save_timer:
+            self._save_timer.cancel()
+            self._save_timer = None
+        return super().save(*args, **kwargs)
 
     def start(self, max_value: float = 100.0):
         if max_value <= 0.0:
@@ -165,7 +192,8 @@ class ProgressBar(Model):
             #perc = value/self.get_max_value()
             perc = value
             self.add_message("{:1.1f}%: {}".format(perc, message), ProgressBarMessageType.PROGRESS)
-        self.save()
+        else:
+            self._mark_for_save()
 
     @property
     def messages(self) -> List[ProgressBarMessage]:

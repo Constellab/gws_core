@@ -5,23 +5,23 @@
 
 import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec,
-                      PipEnvShell2, TaskInputs, TaskOutputs, TaskRunner,
-                      task_decorator)
+from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec, PipEnvTask,
+                      TaskInputs, TaskOutputs, TaskRunner, task_decorator)
+from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
 
 __cdir__ = os.path.dirname(os.path.realpath(__file__))
 
 
-# test_shell_pipenv_2
+# test_pipenv_task
 @task_decorator("PipEnvTester")
-class PipEnvTester(PipEnvShell2):
+class PipEnvTester(PipEnvTask):
     input_specs = {}
     output_specs = {'file': OutputSpec(File)}
     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_pip.txt")
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: PipShellProxy) -> TaskOutputs:
         command = ["python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"]
-        self.shell_proxy.run(command, shell_mode=True)
+        shell_proxy.run(command, shell_mode=True)
 
         # retrieve the result
         file = File(path=os.path.join(self.working_dir, "out.txt"))
@@ -45,13 +45,13 @@ class TestPipEnv(BaseTestCase):
 
             task: PipEnvTester = task_runner.get_task()
 
-            self.assertTrue(task.shell_proxy.is_installed())
-            task.shell_proxy.uninstall()
-            self.assertFalse(task.shell_proxy.is_installed())
+            self.assertTrue(task.shell_proxy.env_is_installed())
+            task.shell_proxy.uninstall_env()
+            self.assertFalse(task.shell_proxy.env_is_installed())
         except Exception as exception:
             task: PipEnvTester = task_runner.get_task()
             if task:
-                task.shell_proxy.uninstall()
+                task.shell_proxy.uninstall_env()
             raise exception
 
     # async def test_pipenv_proxy(self):

@@ -3,19 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
 from abc import abstractmethod
-
-from gws_core.impl.shell.pip_env import PipEnv
 
 from ...config.config_types import ConfigParams
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
-from .base_env_task import BaseEnvShell
+from .base_env_shell_task import BaseEnvShellTask
+from .pip_shell_proxy import PipShellProxy
+from .shell_proxy import ShellProxy
 
 
-@task_decorator("PipEnvShell", hide=True)
-class PipEnvShell(BaseEnvShell):
+@task_decorator("PipEnvTask", hide=True)
+class PipEnvTask(BaseEnvShellTask):
     """
     PipEnvShell task.
 
@@ -43,26 +42,22 @@ class PipEnvShell(BaseEnvShell):
         ```
     """
 
+    # must be overrided in the child class to provide the yml env file path
     env_file_path: str
-    base_env: PipEnv = None
-    _shell_mode = True
+
+    shell_proxy: PipShellProxy = None
 
     def __init__(self):
         super().__init__()
-        self.base_env = PipEnv(self.get_env_dir_name(), self.env_file_path, self.working_dir)
+
+        if self.env_file_path is None:
+            raise Exception(f"The env_file_path property must be set in the task {self._typing_name}")
+
+    def init_shell_proxy(self) -> ShellProxy:
+        return PipShellProxy(self.get_env_dir_name(), self.env_file_path)
 
     @abstractmethod
-    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: PipShellProxy) -> TaskOutputs:
         """
-        This methods gathers the results of the shell task. It must be overloaded by subclasses.
-
-        It must be overloaded to capture the standard output (stdout) and the
-        output files generated in the current working directory (see `gws.Shell.cwd`)
-
-        :param stdout: The standard output of the shell task
-        :type stdout: `str`
+        Run the task with the shell proxy
         """
-
-    async def run_after_task(self) -> None:
-        await super().run_after_task()
-        self.uninstall()

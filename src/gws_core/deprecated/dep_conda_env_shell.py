@@ -3,19 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
 from abc import abstractmethod
 
-from gws_core.impl.shell.conda_env import CondaEnv
+from ..config.config_types import ConfigParams
+from ..impl.shell.conda_shell_proxy import CondaShellProxy
+from ..task.task_decorator import task_decorator
+from ..task.task_io import TaskInputs, TaskOutputs
+from .dep_base_env_task import DepBaseEnvShell
 
-from ...config.config_types import ConfigParams
-from ...task.task_decorator import task_decorator
-from ...task.task_io import TaskInputs, TaskOutputs
-from .base_env_task_2 import BaseEnvShell2
 
-
-@task_decorator("CondaEnvShell2", hide=True)
-class CondaEnvShell2(BaseEnvShell2):
+@task_decorator("CondaEnvShell", hide=True, deprecated_since="0.3.16",
+                deprecated_message="Use new CondaShellTask instead")
+class CondaEnvShell(DepBaseEnvShell):
     """
     CondaEnvShell task.
 
@@ -45,30 +44,21 @@ class CondaEnvShell2(BaseEnvShell2):
         ```
     """
 
-    # must be overrided in the child class to provide the yml env file path
-    env_file_path: str
-
-    shell_proxy: CondaEnv = None
+    env_file_path: str = None
+    _shell_mode = True
 
     def __init__(self):
         super().__init__()
-
-        if self.env_file_path is None:
-            raise Exception(f"The env_file_path property must be set in the task {self._typing_name}")
-
-        self.shell_proxy = CondaEnv(self.get_env_dir_name(), self.env_file_path, self.working_dir)
-        self.shell_proxy.attach_task(self)
+        self.base_env = CondaShellProxy(self.get_env_dir_name(), self.env_file_path, self.working_dir)
 
     @abstractmethod
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        """This must be overiwritten to perform the task of the task.
+    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        """
+        This methods gathers the results of the shell task. It must be overloaded by subclasses.
 
-        This is where most of your code must go
+        It must be overloaded to capture the standard output (stdout) and the
+        output files generated in the current working directory (see `gws.Shell.cwd`)
 
-        :param params: [description]
-        :type params: Config
-        :param inputs: [description]
-        :type inputs: Input
-        :param outputs: [description]
-        :type outputs: Output
+        :param stdout: The standard output of the shell task
+        :type stdout: `str`
         """
