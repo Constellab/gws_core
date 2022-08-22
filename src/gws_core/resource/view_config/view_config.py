@@ -8,6 +8,7 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.view_types import ViewType
+from gws_core.tag.taggable_model import TaggableModel
 from peewee import CharField, ForeignKeyField
 
 from ...core.model.db_field import JSONField
@@ -15,7 +16,7 @@ from ...experiment.experiment import Experiment
 from ..resource_model import ResourceModel
 
 
-class ViewConfig(ModelWithUser):
+class ViewConfig(ModelWithUser, TaggableModel):
 
     title = CharField()
     view_type = EnumField(choices=ViewType)
@@ -30,6 +31,8 @@ class ViewConfig(ModelWithUser):
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         json_ = super().to_json(deep, **kwargs)
+
+        json_["tags"] = self.get_tags_json()
 
         if self.experiment is not None:
             json_["experiment"] = {

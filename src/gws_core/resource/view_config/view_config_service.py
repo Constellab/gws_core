@@ -85,6 +85,14 @@ class ViewConfigService():
             Logger.log_exception_stack_trace(err)
 
     @classmethod
+    def update_title(cls, view_config_id: str, title: str) -> ViewConfig:
+        view_config: ViewConfig = ViewConfig.get_by_id_and_check(view_config_id)
+        view_config.title = title
+        return view_config.save()
+
+    ############################################ SEARCH ############################################
+
+    @classmethod
     def search(cls, search: SearchParams,
                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
 

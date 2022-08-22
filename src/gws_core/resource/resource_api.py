@@ -18,7 +18,6 @@ from gws_core.task.transformer.transformer_service import TransformerService
 from gws_core.task.transformer.transformer_type import TransformerDict
 
 from ..core.classes.jsonable import DictJsonable, ListJsonable
-from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData

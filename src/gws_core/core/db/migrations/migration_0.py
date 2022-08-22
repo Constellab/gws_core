@@ -21,11 +21,13 @@ from gws_core.report.report import Report
 from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_set import ResourceSet
+from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.tag.tag_model import TagModel
 from gws_core.tag.taggable_model import TaggableModel
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
+from peewee import BigIntegerField, CharField
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -67,7 +69,7 @@ class Migration033(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(Typing.get_db())
 
         migrator.add_column_if_not_exists(FSNodeModel, FSNodeModel.is_symbolic_link)
-        migrator.alter_column_type(FSNodeModel, FSNodeModel.size)
+        migrator.alter_column_type(FSNodeModel, FSNodeModel.size.column_name, BigIntegerField(null=True))
         migrator.migrate()
 
 
@@ -333,3 +335,17 @@ class Migration0315(BrickMigration):
             report.last_sync_at = report.last_modified_at
             report.last_sync_by = report.last_modified_by
             report.save()
+
+
+@brick_migration('0.3.16', short_description='Add tag to ViewConfig. Set tag length to varchar 255')
+class Migration0316(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
+
+        migrator.add_column_if_not_exists(ViewConfig, ViewConfig.tags)
+        migrator.alter_column_type(Experiment, Experiment.tags.column_name, CharField(null=True, max_length=255))
+        migrator.alter_column_type(ResourceModel, ResourceModel.tags.column_name, CharField(null=True, max_length=255))
+        migrator.migrate()
