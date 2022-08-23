@@ -17,6 +17,20 @@ from gws_core.user.user_dto import UserData
 from ...core_app import core_app
 
 
+@core_app.get("/view-config/{id}", tags=["View config"],
+              summary="Get view config")
+def get_by_id(id: str,
+              _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    return ViewConfigService.get_by_id(id).to_json(deep=True)
+
+
+@core_app.post("/view-config/{id}/call", tags=["View config"],
+               summary="Call a view from a config")
+async def call_view_config(id: str,
+                           _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    return await ViewConfigService.call_view_config(id)
+
+
 @core_app.put("/view-config/{id}/title", tags=["View config"],
               summary="Update the title of a view config")
 def update_title(id: str,

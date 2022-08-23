@@ -29,6 +29,19 @@ class ViewConfigService():
     MAX_HISTORY_SIZE = 5000
 
     @classmethod
+    def get_by_id(cls, id: str) -> ViewConfig:
+        return ViewConfig.get_by_id_and_check(id)
+
+    @classmethod
+    async def call_view_config(cls, id: str) -> Dict:
+        from gws_core.resource.resource_service import ResourceService
+        view_config = cls.get_by_id(id)
+
+        return await ResourceService.get_and_call_view_on_resource_model(
+            view_config.resource_model.id, view_name=view_config.view_name, config_values=view_config.config_values,
+            transformers=view_config.transformers, save_view_config=False)
+
+    @classmethod
     def save_view_config_in_async(cls, resource_model: ResourceModel, view: View,
                                   view_name: str, config_values: Dict[str, Any],
                                   transformers: List[TransformerDict] = None) -> None:
