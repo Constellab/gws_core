@@ -346,6 +346,7 @@ class Migration0316(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
 
         migrator.add_column_if_not_exists(ViewConfig, ViewConfig.tags)
+        migrator.add_column_if_not_exists(ViewConfig, ViewConfig.highlighted)
         migrator.alter_column_type(Experiment, Experiment.tags.column_name, CharField(null=True, max_length=255))
         migrator.alter_column_type(ResourceModel, ResourceModel.tags.column_name, CharField(null=True, max_length=255))
         migrator.migrate()

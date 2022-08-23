@@ -9,7 +9,7 @@ from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.view_types import ViewType
 from gws_core.tag.taggable_model import TaggableModel
-from peewee import CharField, ForeignKeyField
+from peewee import BooleanField, CharField, ForeignKeyField
 
 from ...core.model.db_field import JSONField
 from ...experiment.experiment import Experiment
@@ -26,6 +26,8 @@ class ViewConfig(ModelWithUser, TaggableModel):
 
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, on_delete='CASCADE')
     resource_model: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
+
+    highlighted = BooleanField(default=False)
 
     _table_name = 'gws_view_config'
 

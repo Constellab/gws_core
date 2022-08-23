@@ -24,6 +24,14 @@ def update_title(id: str,
                  _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     return ViewConfigService.update_title(id, body["title"]).to_json(deep=True)
 
+
+@core_app.put("/view-config/{id}/highlighted", tags=["View config"],
+              summary="Update the highlighted of a view config")
+def update_highlighted(id: str,
+                       body: dict,
+                       _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    return ViewConfigService.update_highlighted(id, body["highlighted"]).to_json(deep=True)
+
 ###################################### SEARCH #######################################
 
 

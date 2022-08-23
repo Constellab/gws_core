@@ -14,8 +14,7 @@ from gws_core.user.current_user_service import CurrentUserService
 from peewee import ModelSelect
 
 from ...core.classes.paginator import Paginator
-from ...core.classes.search_builder import (SearchBuilder,
-                                            SearchFilterCriteria, SearchParams)
+from ...core.classes.search_builder import SearchBuilder, SearchParams
 from ...core.utils.logger import Logger
 from ...task.transformer.transformer_type import TransformerDict
 from ...user.user import User
@@ -27,7 +26,7 @@ from .view_config_search_builder import ViewConfigSearchBuilder
 
 class ViewConfigService():
 
-    MAX_HISTORY_SIZE = 100
+    MAX_HISTORY_SIZE = 5000
 
     @classmethod
     def save_view_config_in_async(cls, resource_model: ResourceModel, view: View,
@@ -90,6 +89,12 @@ class ViewConfigService():
         view_config.title = title
         return view_config.save()
 
+    @classmethod
+    def update_highlighted(cls, view_config_id: str, highlighted: bool) -> ViewConfig:
+        view_config: ViewConfig = ViewConfig.get_by_id_and_check(view_config_id)
+        view_config.highlighted = highlighted
+        return view_config.save()
+
     ############################################ SEARCH ############################################
 
     @classmethod
@@ -118,6 +123,11 @@ class ViewConfigService():
                 page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
         # exclude the type of view that are not useful in historic
         search_builder.add_expression(ViewConfig.view_type.not_in(exluded_views_in_historic))
+
+        # if the include none highlighted is not checked, filter highlighted
+        if not search.get_filter_criteria_value("include_none_highlighted"):
+            search_builder.add_expression(ViewConfig.highlighted == True)
+        search.remove_filter_criteria("include_none_highlighted")
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
