@@ -90,9 +90,9 @@ class ViewConfigService():
         return view_config.save()
 
     @classmethod
-    def update_highlighted(cls, view_config_id: str, highlighted: bool) -> ViewConfig:
+    def update_flagged(cls, view_config_id: str, flagged: bool) -> ViewConfig:
         view_config: ViewConfig = ViewConfig.get_by_id_and_check(view_config_id)
-        view_config.highlighted = highlighted
+        view_config.flagged = flagged
         return view_config.save()
 
     ############################################ SEARCH ############################################
@@ -124,10 +124,10 @@ class ViewConfigService():
         # exclude the type of view that are not useful in historic
         search_builder.add_expression(ViewConfig.view_type.not_in(exluded_views_in_historic))
 
-        # if the include none highlighted is not checked, filter highlighted
-        if not search.get_filter_criteria_value("include_none_highlighted"):
-            search_builder.add_expression(ViewConfig.highlighted == True)
-        search.remove_filter_criteria("include_none_highlighted")
+        # if the include not flagged is not checked, filter flagged
+        if not search.get_filter_criteria_value("include_not_flagged"):
+            search_builder.add_expression(ViewConfig.flagged == True)
+        search.remove_filter_criteria("include_not_flagged")
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(

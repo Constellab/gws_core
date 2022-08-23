@@ -27,7 +27,7 @@ class ViewConfig(ModelWithUser, TaggableModel):
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, on_delete='CASCADE')
     resource_model: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
 
-    highlighted = BooleanField(default=False)
+    flagged = BooleanField(default=False)
 
     _table_name = 'gws_view_config'
 
