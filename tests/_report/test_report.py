@@ -109,6 +109,12 @@ class TestReport(BaseTestCase):
         report_resources = ReportResource.get_by_report(report.id)
         self.assertEqual(len(report_resources), 1)
 
+        # test get report by resource
+        paginator = ReportService.get_by_resource(resource_model.id)
+        # check result
+        self.assertEqual(paginator.page_info.total_number_of_items, 1)
+        self.assertEqual(paginator.results[0].id, report.id)
+
         # test adding the same resource a second time it shouldn't create a new associated resource
         new_content = {"ops": [operation, operation]}
         ReportService.update_content(report.id, new_content)

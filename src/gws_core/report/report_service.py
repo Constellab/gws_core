@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import List, Set
+from typing import Callable, List, Set
 
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
@@ -347,6 +347,20 @@ class ReportService():
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
             model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
+    def get_by_resource(cls, resource_id: str,
+                        page: int = 0,
+                        number_of_items_per_page: int = 20) -> Paginator[Report]:
+        query = ReportResource.get_by_resource(resource_id).join(
+            Report).order_by(ReportResource.report.last_modified_at.desc())
+
+        paginator: Paginator[ReportResource] = Paginator(
+            query, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+        map_function: Callable[[ReportResource], Experiment] = lambda x: x.report
+        paginator.map_result(map_function)
+        return paginator
 
     ################################################# Image ########################################
 

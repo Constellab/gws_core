@@ -275,7 +275,7 @@ class ExperimentService(BaseService):
         """
 
         query = TaskInputModel.get_by_resource_model(resource_id).join(
-            Experiment).order_by(TaskInputModel.experiment.created_at.desc())
+            Experiment).order_by(TaskInputModel.experiment.last_modified_at.desc())
 
         paginator: Paginator[TaskInputModel] = Paginator(
             query, page=page, nb_of_items_per_page=number_of_items_per_page)

@@ -9,6 +9,7 @@ from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.param_functions import Depends
 from fastapi.responses import FileResponse
+from gws_core.core.classes.paginator import PaginatorDict
 from gws_core.report.report_file_service import ReportImage
 
 from ..core.classes.jsonable import ListJsonable
@@ -106,23 +107,23 @@ def delete_image(filename: str,
 ################################################# GET ########################################
 
 
-@ core_app.get("/report/{id}", tags=["Report"], summary="Get a report")
+@core_app.get("/report/{id}", tags=["Report"], summary="Get a report")
 def get_by_id(id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> List[Report]:
     return ReportService.get_by_id_and_check(id).to_json(deep=True)
 
 
-@ core_app.get("/report/experiment/{experiment_id}", tags=["Report"], summary="Find reports of an experiment")
+@core_app.get("/report/experiment/{experiment_id}", tags=["Report"], summary="Find reports of an experiment")
 def get_by_experiment(experiment_id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> List[Report]:
     return ListJsonable(ReportService.get_by_experiment(experiment_id)).to_json()
 
 
-@ core_app.get("/report/{report_id}/experiments", tags=["Report"], summary="Find experiments of a report")
+@core_app.get("/report/{report_id}/experiments", tags=["Report"], summary="Find experiments of a report")
 def get_experiment_by_report(
         report_id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> List[Experiment]:
     return ListJsonable(ReportService.get_experiments_by_report(report_id)).to_json()
 
 
-@ core_app.post("/report/advanced-search", tags=["Report"], summary="Advanced search for reports")
+@core_app.post("/report/advanced-search", tags=["Report"], summary="Advanced search for reports")
 async def advanced_search(search_dict: SearchParams,
                           page: Optional[int] = 1,
                           number_of_items_per_page: Optional[int] = 20,
@@ -132,3 +133,17 @@ async def advanced_search(search_dict: SearchParams,
     """
 
     return ReportService.search(search_dict, page, number_of_items_per_page).to_json()
+
+
+@core_app.get("/report/resource/{resource_id}", tags=["Experiment"],
+              summary="Get the list of report by resource")
+def get_by_resource(resource_id: str,
+                    page: Optional[int] = 1,
+                    number_of_items_per_page: Optional[int] = 20,
+                    _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+
+    return ReportService.get_by_resource(
+        resource_id=resource_id,
+        page=page,
+        number_of_items_per_page=number_of_items_per_page,
+    ).to_json()

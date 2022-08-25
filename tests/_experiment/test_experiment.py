@@ -256,7 +256,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(TaskModel.select().count(), 0)
 
     async def test_get_by_input_resource(self):
-        # generate a resource from an experiment
+        # generate a resource
         robot_model = ResourceModel.save_from_resource(Robot.empty(), origin=ResourceOrigin.UPLOADED)
 
         # create an experiment that uses this resource
