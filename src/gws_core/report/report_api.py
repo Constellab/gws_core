@@ -135,7 +135,7 @@ async def advanced_search(search_dict: SearchParams,
     return ReportService.search(search_dict, page, number_of_items_per_page).to_json()
 
 
-@core_app.get("/report/resource/{resource_id}", tags=["Experiment"],
+@core_app.get("/report/resource/{resource_id}", tags=["Report"],
               summary="Get the list of report by resource")
 def get_by_resource(resource_id: str,
                     page: Optional[int] = 1,

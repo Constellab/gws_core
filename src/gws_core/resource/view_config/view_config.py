@@ -9,7 +9,7 @@ from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.view_types import ViewType
 from gws_core.tag.taggable_model import TaggableModel
-from peewee import BooleanField, CharField, ForeignKeyField
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from ...core.model.db_field import JSONField
 from ...experiment.experiment import Experiment
@@ -69,3 +69,7 @@ class ViewConfig(ModelWithUser, TaggableModel):
                 return view_config_db
 
         return None
+
+    @classmethod
+    def get_by_resource(cls, resource_model_id: str) -> ModelSelect:
+        return ViewConfig.select().where(ViewConfig.resource_model == resource_model_id)

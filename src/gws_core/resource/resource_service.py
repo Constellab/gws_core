@@ -15,6 +15,7 @@ from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.view import View
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
+from gws_core.resource.view_types import CallViewResult
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_model import TaskModel
 from peewee import ModelSelect
@@ -179,7 +180,7 @@ class ResourceService(BaseService):
     async def get_and_call_view_on_resource_model(cls, resource_model_id: str,
                                                   view_name: str, config_values: Dict[str, Any],
                                                   transformers: List[TransformerDict],
-                                                  save_view_config: bool = False) -> Dict:
+                                                  save_view_config: bool = False) -> CallViewResult:
 
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
         return await cls.call_view_on_resource_model(resource_model, view_name, config_values, transformers, save_view_config)
@@ -189,7 +190,7 @@ class ResourceService(BaseService):
                                           view_name: str, config_values: Dict[str, Any],
                                           transformers: List[TransformerDict],
                                           save_view_config: bool = False,
-                                          view_config: ViewConfig = None) -> Dict:
+                                          view_config: ViewConfig = None) -> CallViewResult:
 
         resource: Resource = resource_model.get_resource()
 
@@ -208,7 +209,7 @@ class ResourceService(BaseService):
         }
 
     @classmethod
-    async def call_view_from_view_config(cls, view_config_id: str) -> Dict:
+    async def call_view_from_view_config(cls, view_config_id: str) -> CallViewResult:
         view_config = ViewConfigService.get_by_id(view_config_id)
 
         return await cls.call_view_on_resource_model(

@@ -6,6 +6,7 @@
 from typing import Dict, List, Optional
 
 from fastapi.param_functions import Depends
+from gws_core.core.classes.paginator import PaginatorDict
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view_config.view_config import ViewConfig
@@ -46,6 +47,23 @@ def update_flagged(id: str,
                    body: dict,
                    _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     return ViewConfigService.update_flagged(id, body["flagged"]).to_json(deep=True)
+
+@core_app.get("/view-config/resource/{resource_id}", tags=["View config"],
+              summary="Get the list of view config by resource")
+def get_by_input_resource(resource_id: str,
+                          page: Optional[int] = 1,
+                          number_of_items_per_page: Optional[int] = 20,
+                          _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+    """
+    Retrieve a list of experiments by the input resource
+    """
+
+    return ViewConfigService.get_by_resource(
+        resource_id=resource_id,
+        page=page,
+        number_of_items_per_page=number_of_items_per_page,
+    ).to_json()
+
 
 ###################################### SEARCH #######################################
 

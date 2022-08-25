@@ -148,3 +148,17 @@ class ViewConfigService():
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
             model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+     ############################################ GET ############################################
+
+    @classmethod
+    def get_by_resource(cls, resource_id: str,
+                        page: int = 0,
+                        number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
+
+        query = ViewConfig.get_by_resource(resource_id).order_by(ViewConfig.last_modified_at.desc())
+
+        paginator: Paginator[ViewConfig] = Paginator(
+            query, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+        return paginator
