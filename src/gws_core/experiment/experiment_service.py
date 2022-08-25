@@ -4,12 +4,13 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, Type
+from typing import Callable, Dict, Type
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.task.task_input_model import TaskInputModel
 from peewee import ModelSelect
 
 from ..central.central_dto import SaveExperimentToCentralDTO
@@ -260,6 +261,28 @@ class ExperimentService(BaseService):
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
             model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
+    def get_by_input_resource(cls, resource_id: str,
+                              page: int = 0,
+                              number_of_items_per_page: int = 20) -> Paginator[Experiment]:
+        """ Return the list of experiment that used the resource as input
+
+        :param resource_id: _description_
+        :type resource_id: str
+        :return: _description_
+        :rtype: Paginator[Experiment]
+        """
+
+        query = TaskInputModel.get_by_resource_model(resource_id).join(
+            Experiment).order_by(TaskInputModel.experiment.created_at.desc())
+
+        paginator: Paginator[TaskInputModel] = Paginator(
+            query, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+        map_function: Callable[[TaskInputModel], Experiment] = lambda x: x.experiment
+        paginator.map_result(map_function)
+        return paginator
 
     ################################### COPY  ##############################
 
