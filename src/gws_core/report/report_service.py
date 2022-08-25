@@ -14,6 +14,8 @@ from gws_core.core.classes.rich_text_content import (RichText, RichTextI,
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
+from gws_core.core.utils.string_helper import StringHelper
+from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_model import LabConfigModel
@@ -21,6 +23,8 @@ from gws_core.report.report_file_service import ReportFileService, ReportImage
 from gws_core.report.report_resource import ReportResource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
+from gws_core.resource.view_config.view_config import ViewConfig
+from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.current_user_service import CurrentUserService
 from peewee import ModelSelect
@@ -115,6 +119,37 @@ class ReportService():
         cls._refresh_report_associated_resources(report)
 
         return report.save()
+
+    @classmethod
+    @transaction()
+    def add_view_to_content(cls, report_id: str, view_config_id: str) -> Report:
+        report: Report = cls._get_and_check_before_update(report_id)
+
+        view_config: ViewConfig = ViewConfigService.get_by_id(view_config_id)
+
+        # create the json object for the rich text
+        view_content: RichTextResourceView = {
+            "id": view_config.id + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
+            "resource_id": view_config.resource_model.id,
+            "experiment_id": view_config.experiment.id if view_config.experiment else None,
+            "view_method_name": view_config.view_name,
+            "view_config": view_config.config_values,
+            "transformers": view_config.transformers,
+            "title": view_config.title,
+            "caption": ""
+        }
+
+        # get the rich text and add the resource view
+        rich_text = report.get_content_as_rich_text()
+        rich_text.append_resource_views(view_content)
+
+        report = cls.update_content(report_id, rich_text.get_content())
+
+        # if the view is associated to an experiment, link it to the report
+        if view_config.experiment:
+            cls.add_experiment(report_id, view_config.experiment.id, False)
+
+        return report
 
     @classmethod
     def delete(cls, report_id: str) -> None:
@@ -228,16 +263,20 @@ class ReportService():
 
     @classmethod
     @transaction()
-    def add_experiment(cls, report_id: str, experiment_id: str) -> Experiment:
+    def add_experiment(cls, report_id: str, experiment_id: str,
+                       error_if_already_associated: bool = True) -> Experiment:
         report: Report = cls._get_and_check_before_update(report_id)
 
-        experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
+        report_exp: ReportExperiment = ReportExperiment.find_by_pk(experiment_id, report_id).first()
 
-        for experiment in experiments:
-            # If the experiment was already added to the report
-            if experiment.id == experiment_id:
+        # If the experiment was already added to the report
+        if report_exp is not None:
+
+            if error_if_already_associated:
                 raise BadRequestException(GWSException.REPORT_EXP_ALREADY_ASSOCIATED.value,
                                           GWSException.REPORT_EXP_ALREADY_ASSOCIATED.name)
+            else:
+                return report_exp.experiment
 
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 

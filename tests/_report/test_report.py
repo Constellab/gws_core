@@ -2,17 +2,23 @@
 from typing import List
 
 from gws_core import Experiment, Robot
+from gws_core.config.config_types import ConfigParams
 from gws_core.core.classes.rich_text_content import (RichTextI,
                                                      RichTextResourceView,
                                                      RichTextSpecialOps)
+from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.impl.robot.robot_protocol import CreateSimpleRobot
+from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.project.project import Project
 from gws_core.project.project_dto import ProjectDto
-from gws_core.report.report import Report
+from gws_core.report.report import Report, ReportExperiment
 from gws_core.report.report_dto import ReportDTO
 from gws_core.report.report_resource import ReportResource
 from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_service import ResourceService
+from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -114,3 +120,31 @@ class TestReport(BaseTestCase):
         ReportService.update_content(report.id, new_content)
         report_resources = ReportResource.get_by_report(report.id)
         self.assertEqual(len(report_resources), 0)
+
+    # test to have a view config to a report
+    async def test_add_view_config_to_report(self):
+        # generate a resource from an experiment
+        experiment = IExperiment()
+        i_process = experiment.get_protocol().add_process(RobotCreate, 'create')
+        await experiment.run()
+        robot_model = i_process.get_output_resource_model('robot')
+
+        # create a view config
+        result = await ResourceService.call_view_on_resource_model(robot_model, "view_as_string", {}, [], True)
+
+        report = ReportService.create(ReportDTO(title='Test report'))
+        # add the view to the report
+        ReportService.add_view_to_content(report.id, result["view_config"]["id"])
+
+        # Retrieve the report rich text
+        report_db = ReportService.get_by_id_and_check(report.id)
+        rich_text = report_db.get_content_as_rich_text()
+
+        # check that a resource view exist in the rich text
+        resource_views: List[RichTextResourceView] = rich_text.get_resource_views()
+        self.assertEqual(len(resource_views), 1)
+        self.assertEqual(resource_views[0]['view_method_name'], "view_as_string")
+        self.assertEqual(resource_views[0]['resource_id'], robot_model.id)
+
+        # verify that the report was automatically associated with the experiment
+        self.assertEqual(ReportExperiment.find_by_pk(experiment._experiment.id, report.id).count(), 1)

@@ -13,6 +13,7 @@ from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.view import View
+from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_model import TaskModel
@@ -187,18 +188,32 @@ class ResourceService(BaseService):
     async def call_view_on_resource_model(cls, resource_model: ResourceModel,
                                           view_name: str, config_values: Dict[str, Any],
                                           transformers: List[TransformerDict],
-                                          save_view_config: bool = False) -> Dict:
+                                          save_view_config: bool = False,
+                                          view_config: ViewConfig = None) -> Dict:
 
         resource: Resource = resource_model.get_resource()
 
         view = await cls.get_view_on_resource(resource, view_name, config_values, transformers)
 
-        if save_view_config:
-            ViewConfigService.save_view_config_in_async(
+        view_config: ViewConfig = view_config
+        if save_view_config and not view_config:
+            view_config = ViewConfigService.save_view_config(
                 resource_model, view, view_name, config_values, transformers)
 
         # call the view to dict
-        return ViewHelper.call_view_to_dict(view, config_values)
+        return {
+            "view": ViewHelper.call_view_to_dict(view, config_values),
+            "resource_id": resource_model.id,
+            "view_config": view_config.to_json() if view_config else None
+        }
+
+    @classmethod
+    async def call_view_from_view_config(cls, view_config_id: str) -> Dict:
+        view_config = ViewConfigService.get_by_id(view_config_id)
+
+        return await cls.call_view_on_resource_model(
+            view_config.resource_model, view_name=view_config.view_name, config_values=view_config.config_values,
+            transformers=view_config.transformers, save_view_config=False, view_config=view_config)
 
     @classmethod
     async def get_view_on_resource(cls, resource: Resource,

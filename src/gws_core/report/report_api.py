@@ -45,6 +45,13 @@ def update_content(report_id: str, content: Dict, _: UserData = Depends(AuthServ
     return ReportService.update_content(report_id, content).to_json()
 
 
+@core_app.put("/report/{report_id}/content/add-view/{view_config_id}", tags=["Report"],
+              summary="Add a view to the report")
+def add_view_to_content(report_id: str, view_config_id: str,
+                        _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    return ReportService.add_view_to_content(report_id, view_config_id).to_json()
+
+
 @core_app.delete("/report/{report_id}", tags=["Report"], summary="Delete a report")
 def delete(report_id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> None:
     ReportService.delete(report_id)

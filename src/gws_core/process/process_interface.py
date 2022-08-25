@@ -100,7 +100,17 @@ class IProcess:
         :return: [description]
         :rtype: Resource
         """
-        return self._process_model.outputs.get_resource_model(name).get_resource()
+        return self.get_output_resource_model(name).get_resource()
+
+    def get_output_resource_model(self, name: str) -> ResourceModel:
+        """retrieve the resource model of the output
+
+        :param name: [description]
+        :type name: str
+        :return: [description]
+        :rtype: Resource
+        """
+        return self._process_model.outputs.get_resource_model(name)
 
     ############################################### PORTS #########################################
 

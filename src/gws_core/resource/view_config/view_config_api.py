@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 from fastapi.param_functions import Depends
 from gws_core.core.classes.search_builder import SearchParams
+from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.tag.tag import Tag
@@ -28,7 +29,7 @@ def get_by_id(id: str,
                summary="Call a view from a config")
 async def call_view_config(id: str,
                            _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
-    return await ViewConfigService.call_view_config(id)
+    return await ResourceService.call_view_from_view_config(id)
 
 
 @core_app.put("/view-config/{id}/title", tags=["View config"],

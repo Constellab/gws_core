@@ -33,29 +33,23 @@ class ViewConfigService():
         return ViewConfig.get_by_id_and_check(id)
 
     @classmethod
-    async def call_view_config(cls, id: str) -> Dict:
-        from gws_core.resource.resource_service import ResourceService
-        view_config = cls.get_by_id(id)
-
-        return await ResourceService.get_and_call_view_on_resource_model(
-            view_config.resource_model.id, view_name=view_config.view_name, config_values=view_config.config_values,
-            transformers=view_config.transformers, save_view_config=False)
-
-    @classmethod
     def save_view_config_in_async(cls, resource_model: ResourceModel, view: View,
                                   view_name: str, config_values: Dict[str, Any],
                                   transformers: List[TransformerDict] = None) -> None:
-        """Save a view config in the db asynchronously (it doesn't stop current thread)
+        """Save a view config in the db asynchronously (it doesn't block current thread)
         """
         thread = Thread(target=cls.save_view_config, args=(resource_model, view, view_name,
                                                            config_values, transformers, CurrentUserService.get_and_check_current_user()))
         thread.start()
-        # a: ReportService
 
     @classmethod
     def save_view_config(cls, resource_model: ResourceModel, view: View,
                          view_name: str, config_values: Dict[str, Any],
-                         transformers: List[TransformerDict] = None, user: User = None) -> None:
+                         transformers: List[TransformerDict] = None, user: User = None) -> ViewConfig:
+
+        # don't save types that are exlucded from the historic
+        if view.get_type() in exluded_views_in_historic:
+            return None
         try:
 
             if user:
@@ -71,7 +65,7 @@ class ViewConfigService():
             view_config: ViewConfig = ViewConfig(
                 resource_model=resource_model,
                 experiment=resource_model.experiment,
-                title=view.get_title(),
+                title=view.get_title() or resource_model.name,
                 view_name=view_meta_data.method_name,
                 view_type=view.get_type(),
                 config_values=config,
@@ -83,18 +77,27 @@ class ViewConfigService():
 
             # if not, create it
             if view_config_db is None:
-                view_config.save()
+                view_config_db = view_config.save()
             else:
                 # otherwise, refresh last modified date
-                view_config_db.save()
+                view_config_db = view_config_db.save()
 
-            # limite the length of the history
-            if(ViewConfig.select().count() > cls.MAX_HISTORY_SIZE):
-                last_view_config: ViewConfig = ViewConfig.select().order_by(ViewConfig.last_modified_at.asc()).first()
-                last_view_config.delete_instance()
+            # limit the length without blocking the thread
+            thread = Thread(target=cls._limit_length_history)
+            thread.start()
+
+            return view_config_db
         except Exception as err:
             Logger.error(f"Error while saving view config : {err}")
             Logger.log_exception_stack_trace(err)
+            return None
+
+    @classmethod
+    def _limit_length_history(cls) -> None:
+        # limit the length of the history
+        if(ViewConfig.select().count() > cls.MAX_HISTORY_SIZE):
+            last_view_config: ViewConfig = ViewConfig.select().order_by(ViewConfig.last_modified_at.asc()).first()
+            last_view_config.delete_instance()
 
     @classmethod
     def update_title(cls, view_config_id: str, title: str) -> ViewConfig:
