@@ -150,6 +150,12 @@ class ResourceService(BaseService):
         task_inputs: List[TaskInputModel] = list(TaskInputModel.get_by_experiments(experiment_ids))
         return [task_input.resource_model for task_input in task_inputs]
 
+    @classmethod
+    def update_flagged(cls, view_config_id: str, flagged: bool) -> ResourceModel:
+        view_config: ResourceModel = cls.get_resource_by_id(view_config_id)
+        view_config.flagged = flagged
+        return view_config.save()
+
     ############################# RESOURCE TYPE ###########################
 
     @classmethod
@@ -254,13 +260,13 @@ class ResourceService(BaseService):
             search_builder.add_expression(ResourceModel.experiment.in_(experiments))
             search.remove_filter_criteria('project')
 
-        # Handle 'include_intermediate_resource'
-        # If not provided or false, filter with resource where show_in_databox = True
+        # Handle 'include_not_flagged'
+        # If not provided or false, filter with resource where flagged = True
         # Otherwise, not filter
-        include_non_output: SearchFilterCriteria = search.get_filter_criteria('include_intermediate_resource')
+        include_non_output: SearchFilterCriteria = search.get_filter_criteria('include_not_flagged')
         if include_non_output is None or not include_non_output['value']:
-            search_builder.add_expression(ResourceModel.show_in_databox == True)
-        search.remove_filter_criteria('include_intermediate_resource')
+            search_builder.add_expression(ResourceModel.flagged == True)
+        search.remove_filter_criteria('include_not_flagged')
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(

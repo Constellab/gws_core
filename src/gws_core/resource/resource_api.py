@@ -114,6 +114,15 @@ def update_file_type(id: str,
                      _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     return ResourceService.update_resource_type(id, resource_typing_name).to_json()
 
+
+@core_app.put("/resource/{id}/flagged", tags=["Resource"],
+              summary="Update the flagged of a resource")
+def update_flagged(id: str,
+                   body: dict,
+                   _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    return ResourceService.update_flagged(id, body["flagged"]).to_json(deep=True)
+
+
 ############################# TAGS ###########################
 
 
