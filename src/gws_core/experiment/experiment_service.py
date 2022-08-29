@@ -6,10 +6,12 @@
 
 from typing import Callable, Dict, Type
 
+from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.task_input_model import TaskInputModel
 from peewee import ModelSelect
 
@@ -274,15 +276,18 @@ class ExperimentService(BaseService):
         :rtype: Paginator[Experiment]
         """
 
-        query = TaskInputModel.get_by_resource_model(resource_id).join(
-            Experiment).order_by(TaskInputModel.experiment.last_modified_at.desc())
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
 
-        paginator: Paginator[TaskInputModel] = Paginator(
+        expression_builder = ExpressionBuilder(TaskInputModel.resource_model == resource_id)
+
+        # if the resource was generacted by an experiment, skip this experiment in the result
+        if resource_model.experiment is not None:
+            expression_builder.add_expression(Experiment.id != resource_model.experiment.id)
+
+        query = Experiment.select().where(expression_builder.build()).join(TaskInputModel).distinct()
+
+        return Paginator(
             query, page=page, nb_of_items_per_page=number_of_items_per_page)
-
-        map_function: Callable[[TaskInputModel], Experiment] = lambda x: x.experiment
-        paginator.map_result(map_function)
-        return paginator
 
     ################################### COPY  ##############################
 

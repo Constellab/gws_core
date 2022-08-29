@@ -46,10 +46,6 @@ class ViewConfigService():
     def save_view_config(cls, resource_model: ResourceModel, view: View,
                          view_name: str, config_values: Dict[str, Any],
                          transformers: List[TransformerDict] = None, user: User = None) -> ViewConfig:
-
-        # don't save types that are exlucded from the historic
-        if view.get_type() in exluded_views_in_historic:
-            return None
         try:
 
             if user:

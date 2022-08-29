@@ -17,13 +17,14 @@ from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.impl.robot.robot_protocol import (CreateSimpleRobot,
                                                 MoveSimpleRobot)
-from gws_core.impl.robot.robot_tasks import RobotMove
+from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_model import ProcessStatus
 from gws_core.project.project_dto import ProjectDto
 from gws_core.resource.resource_model import ResourceOrigin
-from gws_core.task.plug import Source
+from gws_core.task.plug import Sink, Source
+from gws_core.task.task_input_model import TaskInputModel
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -256,14 +257,23 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(TaskModel.select().count(), 0)
 
     async def test_get_by_input_resource(self):
+
+        experiment = IExperiment()
+        protocol = experiment.get_protocol()
+        i_create = protocol.add_process(RobotCreate, 'create', {})
+        sink = protocol.add_sink('sink', i_create >> 'robot')
+        await experiment.run()
+
         # generate a resource
-        robot_model = ResourceModel.save_from_resource(Robot.empty(), origin=ResourceOrigin.UPLOADED)
+        robot_model = sink.get_input_resource_model(Sink.input_name)
 
         # create an experiment that uses this resource
         experiment_2 = IExperiment()
         protocol_2 = experiment_2.get_protocol()
         i_move = protocol_2.add_process(RobotMove, 'move', {})
+        i_move_2 = protocol_2.add_process(RobotMove, 'move2', {})
         protocol_2.add_source('source', robot_model.id, i_move << 'robot')
+        protocol_2.add_source('source_2', robot_model.id, i_move_2 << 'robot')
         await experiment_2.run()
 
         # retrieve the experiments that uses this experiment

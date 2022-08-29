@@ -196,14 +196,17 @@ class ResourceService(BaseService):
 
         view = await cls.get_view_on_resource(resource, view_name, config_values, transformers)
 
+        # call the view to dict
+        view_dict = ViewHelper.call_view_to_dict(view, config_values)
+
+        # Save the view config
         view_config: ViewConfig = view_config
         if save_view_config and not view_config:
             view_config = ViewConfigService.save_view_config(
                 resource_model, view, view_name, config_values, transformers)
 
-        # call the view to dict
         return {
-            "view": ViewHelper.call_view_to_dict(view, config_values),
+            "view": view_dict,
             "resource_id": resource_model.id,
             "view_config": view_config.to_json() if view_config else None
         }
