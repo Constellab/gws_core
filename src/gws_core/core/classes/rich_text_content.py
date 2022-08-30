@@ -46,7 +46,7 @@ class RichTextResourceView(TypedDict):
     transformers: List[TransformerDict]
     title: Optional[str]
     caption: Optional[str]
-    technical_info: List[Dict]
+    # technical_info: List[Dict]
 
 
 class RichText():
@@ -87,3 +87,16 @@ class RichText():
                 special_ops.append(op['insert'][ops_name.value])
 
         return special_ops
+
+    def append_resource_views(self, resource_view: RichTextResourceView) -> None:
+        self._append_element({RichTextSpecialOps.RESOURCE_VIEW.value: resource_view})
+
+    def _append_element(self, insert: Any, attributes: dict = None) -> None:
+        element = {"insert": insert}
+
+        if attributes:
+            element["attributes"] = attributes
+        self._content['ops'].append(element)
+
+    def get_content(self) -> RichTextI:
+        return self._content

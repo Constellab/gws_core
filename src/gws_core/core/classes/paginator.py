@@ -5,7 +5,7 @@
 
 from typing import Any, Callable, Dict, Generic, List, TypedDict, TypeVar
 
-from gws_core.core.classes.jsonable import ListJsonable
+from gws_core.core.classes.jsonable import Jsonable, ListJsonable
 from numpy.core.numeric import Infinity
 from peewee import ModelSelect
 
@@ -144,6 +144,14 @@ class Paginator(Generic[PaginatorType]):
 
         # mark the total count as approximate
         self.page_info.total_is_approximate = True
+
+    def map_result(self, map_result: Callable[[PaginatorType], Any]) -> None:
+        """Set a function that will be call on each element to convert the result element
+
+        :param map_result: _description_
+        :type map_result: Callable[[PaginatorType], Any]
+        """
+        self.results = [map_result(x) for x in self.results]
 
     def to_json(self, deep: bool = False) -> PaginatorDict:
         return {

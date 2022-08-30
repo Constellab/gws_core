@@ -8,48 +8,39 @@ import subprocess
 
 from gws_core.impl.file.file_helper import FileHelper
 
-from .base_env import BaseEnv
+from .base_env_shell import BaseEnvShell
 
 
-class CondaEnv(BaseEnv):
+class CondaShellProxy(BaseEnvShell):
 
-    def install(self) -> bool:
+    def _install_env(self) -> bool:
         """
         Install an environment from a conda environment file.
         Return true if the env was installed, False if it was already installed.
         """
-        if self.is_installed():
-            return False
-        self.create_env_dir()
+
         cmd = [
             'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
-            f"conda env create -f {self.env_file_path} --force --prefix ./.venv", "&&",
-            "touch READY",
+            f"conda env create -f {self.env_file_path} --force --prefix ./.venv"
         ]
 
-        res: subprocess.CompletedProcess
-        try:
-
-            res = subprocess.run(
-                " ".join(cmd),
-                cwd=self.get_env_dir_path(),
-                stderr=subprocess.PIPE,
-                shell=True
-            )
-        except Exception as err:
-            raise Exception("Cannot install the virtual environment.") from err
+        res: subprocess.CompletedProcess = subprocess.run(
+            " ".join(cmd),
+            cwd=self.get_env_dir_path(),
+            stderr=subprocess.PIPE,
+            shell=True
+        )
 
         if res.returncode != 0:
             raise Exception(f"Cannot install the virtual environment. Error: {res.stderr}")
 
         return True
 
-    def uninstall(self) -> bool:
+    def _uninstall_env(self) -> bool:
         """ Uninstall the environment.
         Return true if the env was uninstalled, False if it was already uninstalled.
         """
-        if not self.is_installed():
-            return False
+
         cmd = [
             'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
             "conda remove -y --prefix .venv --all", "&&",
@@ -69,6 +60,8 @@ class CondaEnv(BaseEnv):
             try:
                 if FileHelper.exists_on_os(self.get_env_dir_path()):
                     FileHelper.delete_dir(self.get_env_dir_path())
+                    return True
+
             except Exception as err:
                 raise Exception("Cannot remove the virtual environment.") from err
 

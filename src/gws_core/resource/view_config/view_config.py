@@ -8,14 +8,15 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.view_types import ViewType
-from peewee import CharField, ForeignKeyField
+from gws_core.tag.taggable_model import TaggableModel
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from ...core.model.db_field import JSONField
 from ...experiment.experiment import Experiment
 from ..resource_model import ResourceModel
 
 
-class ViewConfig(ModelWithUser):
+class ViewConfig(ModelWithUser, TaggableModel):
 
     title = CharField()
     view_type = EnumField(choices=ViewType)
@@ -26,10 +27,14 @@ class ViewConfig(ModelWithUser):
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, on_delete='CASCADE')
     resource_model: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
 
+    flagged = BooleanField(default=False)
+
     _table_name = 'gws_view_config'
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         json_ = super().to_json(deep, **kwargs)
+
+        json_["tags"] = self.get_tags_json()
 
         if self.experiment is not None:
             json_["experiment"] = {
@@ -64,3 +69,7 @@ class ViewConfig(ModelWithUser):
                 return view_config_db
 
         return None
+
+    @classmethod
+    def get_by_resource(cls, resource_model_id: str) -> ModelSelect:
+        return ViewConfig.select().where(ViewConfig.resource_model == resource_model_id)

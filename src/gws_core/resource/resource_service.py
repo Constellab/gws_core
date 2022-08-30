@@ -13,7 +13,9 @@ from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.view import View
+from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
+from gws_core.resource.view_types import CallViewResult
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_model import TaskModel
 from peewee import ModelSelect
@@ -148,6 +150,12 @@ class ResourceService(BaseService):
         task_inputs: List[TaskInputModel] = list(TaskInputModel.get_by_experiments(experiment_ids))
         return [task_input.resource_model for task_input in task_inputs]
 
+    @classmethod
+    def update_flagged(cls, view_config_id: str, flagged: bool) -> ResourceModel:
+        view_config: ResourceModel = cls.get_resource_by_id(view_config_id)
+        view_config.flagged = flagged
+        return view_config.save()
+
     ############################# RESOURCE TYPE ###########################
 
     @classmethod
@@ -178,7 +186,7 @@ class ResourceService(BaseService):
     async def get_and_call_view_on_resource_model(cls, resource_model_id: str,
                                                   view_name: str, config_values: Dict[str, Any],
                                                   transformers: List[TransformerDict],
-                                                  save_view_config: bool = False) -> Dict:
+                                                  save_view_config: bool = False) -> CallViewResult:
 
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
         return await cls.call_view_on_resource_model(resource_model, view_name, config_values, transformers, save_view_config)
@@ -187,18 +195,35 @@ class ResourceService(BaseService):
     async def call_view_on_resource_model(cls, resource_model: ResourceModel,
                                           view_name: str, config_values: Dict[str, Any],
                                           transformers: List[TransformerDict],
-                                          save_view_config: bool = False) -> Dict:
+                                          save_view_config: bool = False,
+                                          view_config: ViewConfig = None) -> CallViewResult:
 
         resource: Resource = resource_model.get_resource()
 
         view = await cls.get_view_on_resource(resource, view_name, config_values, transformers)
 
-        if save_view_config:
-            ViewConfigService.save_view_config_in_async(
+        # call the view to dict
+        view_dict = ViewHelper.call_view_to_dict(view, config_values)
+
+        # Save the view config
+        view_config: ViewConfig = view_config
+        if save_view_config and not view_config:
+            view_config = ViewConfigService.save_view_config(
                 resource_model, view, view_name, config_values, transformers)
 
-        # call the view to dict
-        return ViewHelper.call_view_to_dict(view, config_values)
+        return {
+            "view": view_dict,
+            "resource_id": resource_model.id,
+            "view_config": view_config.to_json() if view_config else None
+        }
+
+    @classmethod
+    async def call_view_from_view_config(cls, view_config_id: str) -> CallViewResult:
+        view_config = ViewConfigService.get_by_id(view_config_id)
+
+        return await cls.call_view_on_resource_model(
+            view_config.resource_model, view_name=view_config.view_name, config_values=view_config.config_values,
+            transformers=view_config.transformers, save_view_config=False, view_config=view_config)
 
     @classmethod
     async def get_view_on_resource(cls, resource: Resource,
@@ -230,17 +255,18 @@ class ResourceService(BaseService):
         # Handle the project filters, get all experiment of this project and filter by experiment
         projects_criteria: SearchFilterCriteria = search.get_filter_criteria('project')
         if projects_criteria is not None:
-            experiments: List[Experiment] = Experiment.select().where(Experiment.project == projects_criteria['value'])
+            experiments: List[Experiment] = list(Experiment.select().where(
+                Experiment.project.in_(projects_criteria['value'])))
             search_builder.add_expression(ResourceModel.experiment.in_(experiments))
             search.remove_filter_criteria('project')
 
-        # Handle 'include_intermediate_resource'
-        # If not provided or false, filter with resource where show_in_databox = True
+        # Handle 'include_not_flagged'
+        # If not provided or false, filter with resource where flagged = True
         # Otherwise, not filter
-        include_non_output: SearchFilterCriteria = search.get_filter_criteria('include_intermediate_resource')
+        include_non_output: SearchFilterCriteria = search.get_filter_criteria('include_not_flagged')
         if include_non_output is None or not include_non_output['value']:
-            search_builder.add_expression(ResourceModel.show_in_databox == True)
-        search.remove_filter_criteria('include_intermediate_resource')
+            search_builder.add_expression(ResourceModel.flagged == True)
+        search.remove_filter_criteria('include_not_flagged')
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(

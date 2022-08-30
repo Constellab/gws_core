@@ -7,7 +7,7 @@ import time
 from typing import Optional
 
 from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
-from ..config.param_spec import FloatParam, IntParam, StrParam
+from ..config.param_spec import BoolParam, FloatParam, IntParam, StrParam
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_spec import InputSpec, OutputSpec
@@ -64,15 +64,19 @@ class Sink(Task):
 
     input_specs: InputSpecs = {'resource': InputSpec(Resource)}
     output_specs: OutputSpecs = {}
-    config_specs: ConfigSpecs = {}
+    config_specs: ConfigSpecs = {
+        'flag_resource': BoolParam(default_value=True, human_name="Check to flag the resource provided in the output")
+    }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        # mark the resource to show in databox as it is an output
-        from ..resource.resource_model import ResourceModel
-        resource: Resource = inputs.get(Sink.input_name)
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource._model_id)
-        resource_model.show_in_databox = True
-        resource_model.save()
+
+        if params.get_value('flag_resource', False):
+            # mark the resource to show in databox as it is an output
+            from ..resource.resource_model import ResourceModel
+            resource: Resource = inputs.get(Sink.input_name)
+            resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource._model_id)
+            resource_model.flagged = True
+            resource_model.save()
 
 
 @task_decorator(unique_name="FIFO2")

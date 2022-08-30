@@ -10,9 +10,9 @@ from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec, Shell,
                       StrParam, TaskInputs, TaskOutputs, TaskRunner,
                       task_decorator)
 from gws_core.progress_bar.progress_bar import ProgressBar, ProgressBarMessage
-from gws_core.task.task import Task
 
 
+# test_dep_shell
 @task_decorator("EchoInFile")
 class EchoInFile(Shell):
     input_specs = {}

@@ -5,6 +5,7 @@
 
 from typing import final
 
+from gws_core.core.classes.rich_text_content import RichText
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
@@ -38,6 +39,12 @@ class Report(ModelWithUser):
     last_sync_by = ForeignKeyField(User, null=True, backref='+')
 
     _table_name = 'gws_report'
+
+    def get_content_as_rich_text(self) -> RichText:
+        return RichText(self.content)
+
+    def update_content_rich_text(self, rich_text: RichText) -> None:
+        self.content = rich_text.get_content()
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         json_ = super().to_json(deep=deep, **kwargs)

@@ -31,7 +31,7 @@ class TableRowsDeleter(Transformer):
     """
 
     config_specs: ConfigSpecs = {
-        "filters": DataframeFilterHelper.get_filter_param_set('row')
+        "filters": DataframeFilterHelper.get_filter_param_set('row', 'Row filters')
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
@@ -53,7 +53,7 @@ class TableColumnsDeleter(Transformer):
     """
 
     config_specs: ConfigSpecs = {
-        "filters": DataframeFilterHelper.get_filter_param_set('column')
+        "filters": DataframeFilterHelper.get_filter_param_set('column', 'Column filters')
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:

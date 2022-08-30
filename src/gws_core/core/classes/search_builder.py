@@ -60,6 +60,9 @@ class SearchParams(BaseModel):
 
         return criterias[0]
 
+    def has_filter_criteria(self, key: str) -> bool:
+        return self.get_filter_criteria(key) is not None
+
     def get_filter_criteria_value(self, key: str) -> None:
         criteria: SearchFilterCriteria = self.get_filter_criteria(key)
 
