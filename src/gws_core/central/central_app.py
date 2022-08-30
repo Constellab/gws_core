@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse
+from gws_core.config.config_types import ConfigParams
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_service import ResourceService
@@ -154,8 +155,11 @@ async def call_view_on_resource(id: str,
                                 view_name: str,
                                 call_view_params: CallViewParams,
                                 _: UserData = Depends(AuthCentral.check_central_api_key)) -> Any:
-    return await ResourceService.get_and_call_view_on_resource_model(id, view_name, call_view_params["values"],
-                                                                     call_view_params["transformers"], call_view_params["save_view_config"])
+    view_dict = await ResourceService.get_and_call_view_on_resource_model(id, view_name, call_view_params["values"],
+                                                                          call_view_params["transformers"],
+                                                                          call_view_params["save_view_config"])
+
+    return view_dict
 
 
 @central_app.get("/report/image/{filename}", tags=["Report"], summary="Get an object")
@@ -170,7 +174,7 @@ def dump_db(db_manager_name: str, _: UserData = Depends(AuthCentral.check_centra
     file = File()
     file.path = output_file
     FsNodeService.add_file_to_default_store(file, 'dump.sql')
-    return file.view_as_json().to_dict()
+    return file.view_as_json().to_dict(ConfigParams())
 
 
 def _convert_user_to_dto(user: User) -> Dict:

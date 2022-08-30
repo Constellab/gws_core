@@ -66,6 +66,23 @@ async def advanced_search(search_dict: SearchParams,
     return ExperimentService.search(search_dict, page, number_of_items_per_page).to_json()
 
 
+@core_app.get("/experiment/input-resource/{resource_id}", tags=["Experiment"],
+              summary="Get the list of experiments by input resource")
+def get_by_input_resource(resource_id: str,
+                          page: Optional[int] = 1,
+                          number_of_items_per_page: Optional[int] = 20,
+                          _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+    """
+    Retrieve a list of experiments by the input resource
+    """
+
+    return ExperimentService.get_by_input_resource(
+        resource_id=resource_id,
+        page=page,
+        number_of_items_per_page=number_of_items_per_page,
+    ).to_json()
+
+
 ###################################### CREATE ################################
 
 @core_app.post("/experiment", tags=["Experiment"], summary="Create an experiment")

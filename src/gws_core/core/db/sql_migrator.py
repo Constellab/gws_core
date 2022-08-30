@@ -33,8 +33,14 @@ class SqlMigrator:
     def add_column(self, model: BaseModel, field: Field) -> None:
         self._operations.append(self.migrator.add_column(model.get_table_name(), field.column_name, field))
 
-    def alter_column_type(self, model: BaseModel, field: Field) -> None:
-        self._operations.append(self.migrator.alter_column_type(model.get_table_name(), field.column_name, field))
+    def alter_column_type(self, model: BaseModel, field_name: str, field: Field) -> None:
+        self._operations.append(self.migrator.alter_column_type(model.get_table_name(), field_name, field))
+
+    def rename_column_if_exists(self, model: BaseModel, old_name: str, new_name: str) -> bool:
+        if not model.column_exists(old_name):
+            return False
+        self._operations.append(self.migrator.rename_column(model.get_table_name(), old_name, new_name))
+        return True
 
     def migrate(self) -> None:
         for operation in self._operations:

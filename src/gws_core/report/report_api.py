@@ -9,6 +9,7 @@ from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.param_functions import Depends
 from fastapi.responses import FileResponse
+from gws_core.core.classes.paginator import PaginatorDict
 from gws_core.report.report_file_service import ReportImage
 
 from ..core.classes.jsonable import ListJsonable
@@ -43,6 +44,13 @@ def update(report_id: str, report_dto: ReportDTO, _: UserData = Depends(AuthServ
 @core_app.put("/report/{report_id}/content", tags=["Report"], summary="Update a report content")
 def update_content(report_id: str, content: Dict, _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     return ReportService.update_content(report_id, content).to_json()
+
+
+@core_app.put("/report/{report_id}/content/add-view/{view_config_id}", tags=["Report"],
+              summary="Add a view to the report")
+def add_view_to_content(report_id: str, view_config_id: str,
+                        _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    return ReportService.add_view_to_content(report_id, view_config_id).to_json()
 
 
 @core_app.delete("/report/{report_id}", tags=["Report"], summary="Delete a report")
@@ -96,38 +104,26 @@ def delete_image(filename: str,
                  _: UserData = Depends(AuthService.check_user_access_token)) -> None:
     ReportService.delete_image(filename)
 
-################################################# Resource View ########################################
-
-
-@core_app.post("/report/{id}/resource-views", tags=["Report"], summary="Search for available resource views")
-def get_avaibale_resource_views(id: str,
-                                search_dict: SearchParams,
-                                page: Optional[int] = 1,
-                                number_of_items_per_page: Optional[int] = 20,
-                                _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
-    return ReportService.search_available_resource_view(id, search_dict, page, number_of_items_per_page).to_json()
-
-
 ################################################# GET ########################################
 
 
-@ core_app.get("/report/{id}", tags=["Report"], summary="Get a report")
+@core_app.get("/report/{id}", tags=["Report"], summary="Get a report")
 def get_by_id(id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> List[Report]:
     return ReportService.get_by_id_and_check(id).to_json(deep=True)
 
 
-@ core_app.get("/report/experiment/{experiment_id}", tags=["Report"], summary="Find reports of an experiment")
+@core_app.get("/report/experiment/{experiment_id}", tags=["Report"], summary="Find reports of an experiment")
 def get_by_experiment(experiment_id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> List[Report]:
     return ListJsonable(ReportService.get_by_experiment(experiment_id)).to_json()
 
 
-@ core_app.get("/report/{report_id}/experiments", tags=["Report"], summary="Find experiments of a report")
+@core_app.get("/report/{report_id}/experiments", tags=["Report"], summary="Find experiments of a report")
 def get_experiment_by_report(
         report_id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> List[Experiment]:
     return ListJsonable(ReportService.get_experiments_by_report(report_id)).to_json()
 
 
-@ core_app.post("/report/advanced-search", tags=["Report"], summary="Advanced search for reports")
+@core_app.post("/report/advanced-search", tags=["Report"], summary="Advanced search for reports")
 async def advanced_search(search_dict: SearchParams,
                           page: Optional[int] = 1,
                           number_of_items_per_page: Optional[int] = 20,
@@ -137,3 +133,17 @@ async def advanced_search(search_dict: SearchParams,
     """
 
     return ReportService.search(search_dict, page, number_of_items_per_page).to_json()
+
+
+@core_app.get("/report/resource/{resource_id}", tags=["Report"],
+              summary="Get the list of report by resource")
+def get_by_resource(resource_id: str,
+                    page: Optional[int] = 1,
+                    number_of_items_per_page: Optional[int] = 20,
+                    _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+
+    return ReportService.get_by_resource(
+        resource_id=resource_id,
+        page=page,
+        number_of_items_per_page=number_of_items_per_page,
+    ).to_json()

@@ -7,6 +7,7 @@ from typing import List, Union
 from unittest.async_case import IsolatedAsyncioTestCase
 
 from gws_core.core.utils.utils import Utils
+from gws_core.progress_bar.progress_bar import ProgressBar
 
 from ..experiment.queue_service import QueueService
 from .gtest import GTest
@@ -35,6 +36,9 @@ class BaseTestCase(IsolatedAsyncioTestCase):
         if not cls.init_before_each_test:
             cls.init_before_test()
         cls._class_setted_up = True
+
+        # remove the delay from the progress bar to avoid problem during tests
+        ProgressBar._MIN_ALLOWED_DELTA_TIME = 0
 
     @classmethod
     def tearDownClass(cls):

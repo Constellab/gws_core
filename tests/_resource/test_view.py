@@ -167,17 +167,15 @@ class TestView(BaseTestCase):
         resource: Resource = ResourceViewTestSub()
         resource_model: ResourceModel = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.UPLOADED)
 
-        await ResourceService.get_and_call_view_on_resource_model(resource_model.id, 'a_view_test', {"page": 1, "page_size": 5000}, [], True)
+        view_result = await ResourceService.get_and_call_view_on_resource_model(resource_model.id,
+                                                                                'a_view_test', {"page": 1, "page_size": 5000}, [], True)
 
-        # use a while because the view config is saved asynchronously
-        count = 0
-        while ViewConfig.select().count() == 0:
-            sleep(1)
-            count += 1
-            if count > 10:
-                raise Exception("View config not created")
-        view_config: ViewConfig = ViewConfig.select()[0]
+        self.assertIsNotNone(view_result["view_config"])
 
+        paginator = ViewConfigService.get_by_resource(resource_model.id)
+        self.assertEqual(paginator.page_info.total_number_of_items, 1)
+
+        view_config: ViewConfig = paginator.results[0]
         self.assertEqual(view_config.resource_model.id, resource_model.id)
         self.assertEqual(view_config.view_name, 'a_view_test')
         self.assertEqual(view_config.view_type, ViewType.TEXT)
@@ -185,5 +183,6 @@ class TestView(BaseTestCase):
         self.assert_json(view_config.config_values, {"page": 1, "page_size": 5000})
         self.assertEqual(view_config.transformers, [])
 
-        result = ViewConfigService.search(SearchParams())
-        self.assertTrue(result.page_info.total_number_of_items > 0)
+        # re-call the view from the view config
+        view_result_2 = await ResourceService.call_view_from_view_config(view_config.id)
+        self.assert_json(view_result['view'], view_result_2['view'])

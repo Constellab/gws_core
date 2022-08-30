@@ -10,6 +10,7 @@ from gws_core.core.exception.exceptions.not_found_exception import \
 from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment import Experiment
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.resource.view_config.view_config import ViewConfig
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
@@ -200,4 +201,4 @@ class TagService():
 
     @classmethod
     def get_entities_with_tag(cls, tags: List[Tag]) -> List[TaggableModel]:
-        return ResourceModel.find_by_tags(tags) + Experiment.find_by_tags(tags)
+        return ResourceModel.find_by_tags(tags) + Experiment.find_by_tags(tags) + ViewConfig.find_by_tags(tags)

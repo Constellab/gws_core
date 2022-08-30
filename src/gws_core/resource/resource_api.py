@@ -18,7 +18,6 @@ from gws_core.task.transformer.transformer_service import TransformerService
 from gws_core.task.transformer.transformer_type import TransformerDict
 
 from ..core.classes.jsonable import DictJsonable, ListJsonable
-from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData
@@ -114,6 +113,15 @@ def update_file_type(id: str,
                      resource_typing_name: str,
                      _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     return ResourceService.update_resource_type(id, resource_typing_name).to_json()
+
+
+@core_app.put("/resource/{id}/flagged", tags=["Resource"],
+              summary="Update the flagged of a resource")
+def update_flagged(id: str,
+                   body: dict,
+                   _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    return ResourceService.update_flagged(id, body["flagged"]).to_json(deep=True)
+
 
 ############################# TAGS ###########################
 

@@ -11,15 +11,15 @@ from typing import Union
 
 from gws_core.impl.shell.shell_proxy import ShellProxy
 
-from ...config.config_types import ConfigParams
-from ...core.exception.exceptions import BadRequestException
-from ...core.utils.settings import Settings
-from ...task.task import Task
-from ...task.task_decorator import task_decorator
-from ...task.task_io import TaskInputs, TaskOutputs
+from ..config.config_types import ConfigParams
+from ..core.exception.exceptions import BadRequestException
+from ..core.utils.settings import Settings
+from ..task.task import Task
+from ..task.task_decorator import task_decorator
+from ..task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("Shell", hide=True)
+@task_decorator("Shell", hide=True, deprecated_since="0.3.16", deprecated_message="Use new ShellTask instead")
 class Shell(Task):
     """
     Shell task.
@@ -108,6 +108,7 @@ class Shell(Task):
         """
         Task entrypoint
         """
+        self.log_info_message("[Deprecated] Shell task is deprecated. Use new shell tasks instead.")
 
         outputs: TaskOutputs
 

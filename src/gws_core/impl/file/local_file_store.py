@@ -135,7 +135,7 @@ class LocalFileStore(FileStore):
         # sanitize the node name
         dest_node_name = FileHelper.sanitize_name(dest_node_name)
 
-        #  create the file if another doesn't exists
+        #  create the node if another doesn't exists
         if not self.node_name_exists(dest_node_name):
             return os.path.join(self.path, dest_node_name)
 
@@ -144,9 +144,12 @@ class LocalFileStore(FileStore):
 
         # If the file exists, find a unique name with a number
         unique: int = 1
-        while self.node_name_exists(f"{file_name}_{unique}.{extension}"):
+        node_name = f"{file_name}_{unique}.{extension}" if extension else f"{file_name}_{unique}"
+        while self.node_name_exists(node_name):
             unique += 1
-        return os.path.join(self.path, f"{file_name}_{unique}.{extension}")
+            node_name = f"{file_name}_{unique}.{extension}" if extension else f"{file_name}_{unique}"
+
+        return os.path.join(self.path, node_name)
 
     def node_path_exists(self, node_path: str) -> bool:
         # clean the file path

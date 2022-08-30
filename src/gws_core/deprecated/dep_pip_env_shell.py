@@ -5,16 +5,16 @@
 
 from abc import abstractmethod
 
-from ...config.config_types import ConfigParams
-from ...task.task_decorator import task_decorator
-from ...task.task_io import TaskInputs, TaskOutputs
-from .base_env_shell_task import BaseEnvShellTask
-from .pip_shell_proxy import PipShellProxy
-from .shell_proxy import ShellProxy
+from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
+
+from ..config.config_types import ConfigParams
+from ..task.task_decorator import task_decorator
+from ..task.task_io import TaskInputs, TaskOutputs
+from .dep_base_env_task import DepBaseEnvShell
 
 
-@task_decorator("PipEnvTask", hide=True)
-class PipEnvTask(BaseEnvShellTask):
+@task_decorator("PipEnvShell", hide=True, deprecated_since="0.3.16", deprecated_message="Use PipEnvTask instead")
+class PipEnvShell(DepBaseEnvShell):
     """
     PipEnvShell task.
 
@@ -42,22 +42,26 @@ class PipEnvTask(BaseEnvShellTask):
         ```
     """
 
-    # must be overrided in the child class to provide the yml env file path
     env_file_path: str
-
-    shell_proxy: PipShellProxy = None
+    base_env: PipShellProxy = None
+    _shell_mode = True
 
     def __init__(self):
         super().__init__()
-
-        if self.env_file_path is None:
-            raise Exception(f"The env_file_path property must be set in the task {self._typing_name}")
-
-    def init_shell_proxy(self) -> ShellProxy:
-        return PipShellProxy(self.get_env_dir_name(), self.env_file_path)
+        self.base_env = PipShellProxy(self.get_env_dir_name(), self.env_file_path, self.working_dir)
 
     @abstractmethod
-    async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: PipShellProxy) -> TaskOutputs:
+    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
-        Run the task with the shell proxy
+        This methods gathers the results of the shell task. It must be overloaded by subclasses.
+
+        It must be overloaded to capture the standard output (stdout) and the
+        output files generated in the current working directory (see `gws.Shell.cwd`)
+
+        :param stdout: The standard output of the shell task
+        :type stdout: `str`
         """
+
+    async def run_after_task(self) -> None:
+        await super().run_after_task()
+        self.uninstall()

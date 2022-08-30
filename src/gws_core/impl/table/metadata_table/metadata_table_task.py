@@ -35,7 +35,7 @@ class MetadataTableImporter(TableImporter):
             short_description="Delimiter character. Only for parsing CSV files")
     }
 
-    async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[MetadataTable]) -> MetadataTable:
+    async def import_from_path(self, source: File, params: ConfigParams, target_type: Type[MetadataTable]) -> MetadataTable:
         """
         Import from a repository
 
@@ -49,12 +49,12 @@ class MetadataTableImporter(TableImporter):
 
         params["index_column"] = None
         params["comment"] = "#"
-        csv_table: MetadataTable = await super().import_from_path(file, params, target_type)
+        csv_table: MetadataTable = await super().import_from_path(source, params, target_type)
 
         sample_id_column = csv_table.column_names[0]
         if not sample_id_column:
             raise BadRequestException(
-                f"Cannot import MetadataTable. A name is required for the sample_id column (i.e. the first column)")
+                "Cannot import MetadataTable. A name is required for the sample_id column (i.e. the first column)")
 
         # sample_id_column = params.get_value("sample_id_column", MetadataTable.DEFAULT_SAMPLE_ID_COLUMN)
         # if not csv_table.column_exists(sample_id_column):
@@ -64,11 +64,22 @@ class MetadataTableImporter(TableImporter):
         # check duplicates
         csv_table.sample_id_column = sample_id_column
         sample_ids_list = csv_table.get_sample_ids()
+
         sample_ids_set = set(sample_ids_list)
         contains_duplicates = len(sample_ids_list) != len(sample_ids_set)
         if contains_duplicates:
+
+            # find the duplicate
+            unique_set = set()
+            duplicates = []
+
+            for sample_id in sample_ids_list:
+                if sample_id in unique_set:
+                    duplicates.append(sample_id)
+                else:
+                    unique_set.add(sample_id)
             raise BadRequestException(
-                f"Cannot import MetadataTable. The list of sample ids contains duplicates")
+                f"Cannot import MetadataTable. The following sample_ids are duplicated: {duplicates}")
 
         return csv_table
 

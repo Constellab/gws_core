@@ -18,7 +18,7 @@ class TaggableModel(PeeweeModel):
     """
     Class to extend to make the model support tags.
     """
-    tags = CharField(null=True, max_length=50)
+    tags = CharField(null=True, max_length=255)
 
     def add_or_replace_tag(self, tag_key: str, tag_value: str) -> None:
         self.tags = TagHelper.add_or_replace_tag(self.tags, tag_key, tag_value)

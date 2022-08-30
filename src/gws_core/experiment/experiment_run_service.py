@@ -49,8 +49,6 @@ class ExperimentRunService():
                                       "context": None, "instance_id": None})
         await cls.run_experiment(experiment)
 
-        cls._send_experiment_finished_mail(experiment)
-
     @classmethod
     async def run_experiment(cls, experiment: Experiment) -> Coroutine[Any, Any, Experiment]:
         """
@@ -80,12 +78,16 @@ class ExperimentRunService():
 
             experiment.mark_as_success()
 
+            cls._send_experiment_finished_mail(experiment)
+
             return experiment
         except Exception as err:
             exception: ExperimentRunException = ExperimentRunException.from_exception(
                 experiment=experiment, exception=err)
             experiment.mark_as_error({"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
                                       "context": exception.context, "instance_id": exception.instance_id})
+            cls._send_experiment_finished_mail(experiment)
+
             raise exception
 
     @classmethod
@@ -225,8 +227,8 @@ class ExperimentRunService():
         try:
             elapsed_time = experiment.protocol_model.progress_bar.get_elapsed_time()
 
-            # if the experiment runned in under 3 minutes, don't send an email
-            if elapsed_time < 60 * 3:
+            # if the experiment runned in under 5 minutes, don't send an email
+            if elapsed_time < 60 * 5:
                 return
 
             user: User = CurrentUserService.get_and_check_current_user()

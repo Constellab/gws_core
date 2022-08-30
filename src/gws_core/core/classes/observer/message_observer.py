@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
+from typing import List
 
 from gws_core.task.task import Task
 
@@ -27,6 +28,7 @@ class TaskProgressMessageObserver(MessageObserver):
     task: Task
 
     def __init__(self, task: Task):
+        super().__init__()
         self.task = task
 
     def update(self, message: DispatchedMessage) -> None:
@@ -40,3 +42,15 @@ class TaskProgressMessageObserver(MessageObserver):
             self.task.log_info_message(message.message)
         elif message.status == 'PROGRESS':
             self.task.update_progress_value(message.progress, message.message)
+
+
+class BasicMessageObserver(MessageObserver):
+
+    messages: List[DispatchedMessage]
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.messages = []
+
+    def update(self, message: DispatchedMessage) -> None:
+        self.messages.append(message)
