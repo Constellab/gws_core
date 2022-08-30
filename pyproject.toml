@@ -1,5 +1,5 @@
 [project]
-name = "gws_core"
+name = "gws-core"
 [build-system]
 requires = [
     "setuptools>=42",
