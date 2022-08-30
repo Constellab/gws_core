@@ -73,5 +73,5 @@ setuptools.setup(
     cmdclass={
         'install': InstallHook,
     },
-    data_files=[('', ['settings.json'])]
+    data_files=[('settings', ['settings.json'])]
 )
