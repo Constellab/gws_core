@@ -120,7 +120,6 @@ class ResourceImporter(Converter):
             raise Exception(f"Cannot import file '{source.name or source.path}' because it doesn't exists.")
 
         try:
-            source.path = 'lmklmk'
             target: Resource = await self.import_from_path(source, params, target_type)
         except Exception as err:
             raise Exception(
