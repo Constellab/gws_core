@@ -10,6 +10,8 @@ import re
 import subprocess
 import sys
 
+from gws_core.core.utils.logger import Logger
+
 from .brick.brick_service import BrickService
 from .core.utils.settings import Settings
 
@@ -133,11 +135,16 @@ class SettingsLoader:
             for channel in pip_env:
                 channel_source = channel["source"]
                 for package in channel.get("packages"):
-                    repo = package["name"]
+                    repo = cls._pip_package_to_module_name(package["name"])
                     is_brick = package.get("is_brick", False)
-                    if repo not in sys.modules:
-                        continue
-                    module = importlib.import_module(repo)
+
+                    module = None
+                    if repo in sys.modules:
+                        module = sys.modules[repo]
+                    else:
+                        Logger.info(f"Loading pip package '{repo}'")
+                        module = importlib.import_module(repo)
+
                     repo_dir = os.path.abspath(module.__file__)
                     cls.parse_settings(repo_dir, is_brick, repo_type="pip", channel_source=channel_source)
         else:
@@ -150,7 +157,11 @@ class SettingsLoader:
                 "source": channel_source,
             }
 
-    # -- R --
+    @classmethod
+    def _pip_package_to_module_name(cls, pip_package: str) -> str:
+        """Convert the pip package name to the module name
+        """
+        return pip_package.replace('-', '_')
 
     @classmethod
     def _update_dict(cls, d, u):
