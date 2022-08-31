@@ -135,21 +135,30 @@ class SettingsLoader:
             for channel in pip_env:
                 channel_source = channel["source"]
                 for package in channel.get("packages"):
-                    repo = cls._pip_package_to_module_name(package["name"])
+                    repo = package["name"]
                     is_brick = package.get("is_brick", False)
-
-                    module = None
-                    if repo in sys.modules:
-                        module = sys.modules[repo]
-                    else:
+                    if repo not in sys.modules:
                         Logger.info(f"Skipping pip package '{repo}'")
                         continue
-                        # TO uncomment when pip brick will be available
-                        # Logger.info(f"Loading pip package '{repo}'")
-                        # module = importlib.import_module(repo)
-
-                    repo_dir = os.path.abspath(module.__path__[0])
+                    module = importlib.import_module(repo)
+                    repo_dir = os.path.abspath(module.__file__)
                     cls.parse_settings(repo_dir, is_brick, repo_type="pip", channel_source=channel_source)
+
+                    # TO uncomment when pip brick will be available
+                    # repo = cls._pip_package_to_module_name(package["name"])
+                    # is_brick = package.get("is_brick", False)
+
+                    # module = None
+                    # if repo in sys.modules:
+                    #     module = sys.modules[repo]
+                    # else:
+                    #     Logger.info(f"Skipping pip package '{repo}'")
+                    #     continue
+                    #     # Logger.info(f"Loading pip package '{repo}'")
+                    #     # module = importlib.import_module(repo)
+
+                    # repo_dir = os.path.abspath(module.__path__[0])
+                    # cls.parse_settings(repo_dir, is_brick, repo_type="pip", channel_source=channel_source)
         else:
             sys.path.insert(0, os.path.abspath(cwd))
             cls.all_settings["modules"][repo_name] = {
