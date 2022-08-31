@@ -142,8 +142,11 @@ class SettingsLoader:
                     if repo in sys.modules:
                         module = sys.modules[repo]
                     else:
-                        Logger.info(f"Loading pip package '{repo}'")
-                        module = importlib.import_module(repo)
+                        Logger.info(f"Skipping pip package '{repo}'")
+                        continue
+                        # TO uncomment when pip brick will be available
+                        # Logger.info(f"Loading pip package '{repo}'")
+                        # module = importlib.import_module(repo)
 
                     repo_dir = os.path.abspath(module.__path__[0])
                     cls.parse_settings(repo_dir, is_brick, repo_type="pip", channel_source=channel_source)
