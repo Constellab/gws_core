@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ....resource.view_types import ViewSpecs, ViewType
+from ....resource.view.view_types import ViewSpecs, ViewType
 from ...view.lineplot_3d_view import LinePlot3DView
 from .table_scatterplot_3d_view import TableScatterPlot3DView
 

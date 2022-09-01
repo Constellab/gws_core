@@ -6,7 +6,7 @@
 
 from typing import Type
 
-from ..resource.view import View
+from .view import View
 from .view_types import ViewSpecs
 
 METHOD_SPEC_PREFIX: str = 'method_'

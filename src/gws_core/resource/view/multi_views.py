@@ -5,10 +5,10 @@
 
 from typing import List, TypedDict
 
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view_types import ViewType
 
-from ..config.config_types import ConfigParams, ConfigParamsDict
-from ..config.param_spec_helper import ParamSpecHelper
+from ...config.config_types import ConfigParams, ConfigParamsDict
+from ...config.param_spec_helper import ParamSpecHelper
 from .view import View
 
 

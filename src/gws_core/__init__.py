@@ -338,8 +338,6 @@ from .protocol.protocol_spec import ProcessSpec as ProcessSpec
 from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
 # Resource
 from .resource.kv_store import KVStore as KVStore
-from .resource.lazy_view_param import LazyViewParam as LazyViewParam
-from .resource.multi_views import MultiViews as MultiViews
 from .resource.r_field.dict_r_field import DictRField as DictRField
 from .resource.r_field.list_r_field import ListRField as ListRField
 from .resource.r_field.primitive_r_field import BoolRField as BoolRField
@@ -363,10 +361,12 @@ from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set import ResourceSet as ResourceSet
 from .resource.resource_typing import ResourceTyping as ResourceTyping
 from .resource.technical_info import TechnicalInfo as TechnicalInfo
-from .resource.view import View as View
-from .resource.view_decorator import view as view
-from .resource.view_types import ViewSpecs as ViewSpecs
-from .resource.view_types import ViewType as ViewType
+from .resource.view.lazy_view_param import LazyViewParam as LazyViewParam
+from .resource.view.multi_views import MultiViews as MultiViews
+from .resource.view.view import View as View
+from .resource.view.view_decorator import view as view
+from .resource.view.view_types import ViewSpecs as ViewSpecs
+from .resource.view.view_types import ViewType as ViewType
 # Tag
 from .tag.tag import Tag as Tag
 from .tag.tag_helper import TagHelper as TagHelper

@@ -9,12 +9,12 @@ from typing import TYPE_CHECKING, Any, Dict, List, TypedDict
 
 from gws_core.config.param_spec import StrParam
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
-from gws_core.resource.view_types import ViewSpecs, ViewType
+from gws_core.resource.view.view_types import ViewSpecs, ViewType
 from pandas import DataFrame
 
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ....resource.view import View
+from ....resource.view.view import View
 from .table_selection import CellRange, TableSelection
 
 if TYPE_CHECKING:

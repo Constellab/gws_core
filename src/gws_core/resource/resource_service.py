@@ -12,10 +12,10 @@ from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.resource_list_base import ResourceListBase
-from gws_core.resource.view import View
+from gws_core.resource.view.view import View
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
-from gws_core.resource.view_types import CallViewResult
+from gws_core.resource.view.view_types import CallViewResult
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_model import TaskModel
 from peewee import ModelSelect
@@ -28,14 +28,14 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.exception.gws_exceptions import GWSException
 from ..core.service.base_service import BaseService
 from ..model.typing_manager import TypingManager
-from ..resource.view_helper import ViewHelper
+from .view.view_helper import ViewHelper
 from ..task.task_input_model import TaskInputModel
 from ..task.transformer.transformer_service import TransformerService
 from ..task.transformer.transformer_type import TransformerDict
 from .resource_model import Resource, ResourceModel, ResourceOrigin
 from .resource_model_search_builder import ResourceModelSearchBuilder
 from .resource_typing import ResourceTyping
-from .view_meta_data import ResourceViewMetaData
+from .view.view_meta_data import ResourceViewMetaData
 
 
 class ResourceService(BaseService):

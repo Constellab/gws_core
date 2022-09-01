@@ -10,7 +10,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
 
-from ..config.config_types import ConfigParams
+from ...config.config_types import ConfigParams
 from .view_types import ViewSpecs, ViewType
 
 

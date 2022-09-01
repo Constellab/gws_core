@@ -13,7 +13,7 @@ from gws_core.impl.table.table import Table
 from gws_core.impl.table.view.table_view import TableView
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view_helper import ViewHelper
+from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.task.transformer.transformer_type import TransformerDict
 
 # List of chart callable on a Table

@@ -9,7 +9,7 @@ from ...resource.r_field.list_r_field import ListRField
 from ...resource.r_field.primitive_r_field import FloatRField, IntRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
-from ...resource.view_decorator import view
+from ...resource.view.view_decorator import view
 from ..json.json_view import JSONView
 from ..table.view.table_view import TableView
 from ..text.view.text_view import TextView

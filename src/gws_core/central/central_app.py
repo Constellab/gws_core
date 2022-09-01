@@ -13,7 +13,7 @@ from gws_core.config.config_types import ConfigParams
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view_types import CallViewParams
+from gws_core.resource.view.view_types import CallViewParams
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 

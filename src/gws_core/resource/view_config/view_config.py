@@ -7,7 +7,7 @@ from typing import List, Optional
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.utils import Utils
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view_types import ViewType
 from gws_core.tag.taggable_model import TaggableModel
 from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 

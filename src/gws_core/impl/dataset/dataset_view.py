@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from gws_core.config.config_types import ConfigParams
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view_types import ViewType
 
 from ...core.exception.exceptions import BadRequestException
 from ...impl.table.view.table_view import TableView

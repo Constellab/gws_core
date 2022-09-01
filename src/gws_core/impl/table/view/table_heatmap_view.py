@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, TypedDict
 
 from ....config.config_types import ConfigParams
 from ....config.param_spec import DictParam
-from ....resource.view_types import ViewSpecs, ViewType
+from ....resource.view.view_types import ViewSpecs, ViewType
 from ...view.heatmap_view import HeatmapView
 from .base_table_view import BaseTableView
 from .table_selection import CellRange, Serie1d, TableSelection

@@ -5,7 +5,7 @@
 
 from ..config.config import Config
 from ..config.config_types import ConfigParams, ConfigParamsDict
-from ..resource.view import View
+from ..resource.view.view import View
 
 
 class ViewTester():

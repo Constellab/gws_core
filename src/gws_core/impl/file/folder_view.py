@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, Any, List, Union
 
 from gws_core.config.config_types import ConfigParams
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.resource.view import View
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view import View
+from gws_core.resource.view.view_types import ViewType
 
 if TYPE_CHECKING:
     from gws_core.impl.file.fs_node_model import FSNodeModel

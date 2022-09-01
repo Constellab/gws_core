@@ -6,11 +6,11 @@
 from typing import Dict, List
 
 from gws_core.core.utils.numeric_helper import NumericHelper
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view_types import ViewType
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...resource.view import View
+from ...resource.view.view import View
 
 
 class ScatterPlot2DView(View):

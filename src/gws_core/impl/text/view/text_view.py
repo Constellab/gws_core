@@ -7,8 +7,8 @@ from ....config.param_spec import IntParam
 from ....core.classes.paginator import PageInfo
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ....resource.view import View
-from ....resource.view_types import ViewSpecs, ViewType
+from ....resource.view.view import View
+from ....resource.view.view_types import ViewSpecs, ViewType
 
 if TYPE_CHECKING:
     from ..text import Text

@@ -9,14 +9,14 @@ from gws_core import (BaseTestCase, ConfigParams, IntParam, JSONView, Resource,
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param_spec import ParamSpec
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.resource.any_view import AnyView
+from gws_core.resource.view.any_view import AnyView
 from gws_core.resource.lazy_view_param import LazyViewParam
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
-from gws_core.resource.view_helper import ViewHelper
-from gws_core.resource.view_meta_data import ResourceViewMetaData
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view_helper import ViewHelper
+from gws_core.resource.view.view_meta_data import ResourceViewMetaData
+from gws_core.resource.view.view_types import ViewType
 
 
 @resource_decorator("ResourceViewTest")

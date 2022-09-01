@@ -8,8 +8,8 @@ from threading import Thread
 from typing import Any, Dict, List
 
 from gws_core.config.param_spec_helper import ParamSpecHelper
-from gws_core.resource.view_helper import ViewHelper
-from gws_core.resource.view_types import exluded_views_in_historic
+from gws_core.resource.view.view_helper import ViewHelper
+from gws_core.resource.view.view_types import exluded_views_in_historic
 from gws_core.user.current_user_service import CurrentUserService
 from peewee import ModelSelect
 
@@ -19,7 +19,7 @@ from ...core.utils.logger import Logger
 from ...task.transformer.transformer_type import TransformerDict
 from ...user.user import User
 from ..resource_model import ResourceModel
-from ..view import View
+from ..view.view import View
 from .view_config import ViewConfig
 from .view_config_search_builder import ViewConfigSearchBuilder
 

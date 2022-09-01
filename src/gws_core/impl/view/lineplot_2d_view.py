@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view_types import ViewType
 
 from .scatterplot_2d_view import ScatterPlot2DView
 

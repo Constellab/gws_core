@@ -9,7 +9,7 @@ from ...core.exception.exceptions import BadRequestException
 from ...resource.r_field.r_field import RField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
-from ...resource.view_decorator import view
+from ...resource.view.view_decorator import view
 from .view.text_view import TextView
 
 

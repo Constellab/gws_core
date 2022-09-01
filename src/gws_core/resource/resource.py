@@ -16,7 +16,7 @@ from ..core.model.base import Base
 from ..core.utils.reflector_helper import ReflectorHelper
 from ..impl.json.json_view import JSONView
 from ..model.typing_register_decorator import typing_registrator
-from ..resource.view_decorator import view
+from .view.view_decorator import view
 from .r_field.primitive_r_field import UUIDRField
 from .r_field.r_field import BaseRField
 from .r_field.serializable_r_field import SerializableRField

@@ -9,12 +9,12 @@ from typing import TYPE_CHECKING, Dict, List
 
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view_types import ViewType
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...resource.view import View
+from ...resource.view.view import View
 
 if TYPE_CHECKING:
     from gws_core.impl.table.table import Table

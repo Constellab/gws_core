@@ -10,7 +10,7 @@ from gws_core.config.config_types import ConfigParams
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.impl.view.scatterplot_2d_view import ScatterPlot2DView
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view_types import ViewType
 
 
 class VulcanoPlotView(ScatterPlot2DView):

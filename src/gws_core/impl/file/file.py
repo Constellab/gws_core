@@ -11,10 +11,10 @@ from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
 from ...impl.json.json_view import JSONView
-from ...resource.any_view import AnyView
 from ...resource.resource_decorator import resource_decorator
-from ...resource.view import View
-from ...resource.view_decorator import view
+from ...resource.view.any_view import AnyView
+from ...resource.view.view import View
+from ...resource.view.view_decorator import view
 from ..text.view.text_view import TextView
 from .fs_node import FSNode
 

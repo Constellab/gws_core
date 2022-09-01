@@ -12,7 +12,7 @@ from gws_core.impl.file.folder_view import LocalFolderView
 
 from ...config.config_types import ConfigParams
 from ...resource.resource_decorator import resource_decorator
-from ...resource.view_decorator import view
+from ...resource.view.view_decorator import view
 from ..json.json_view import JSONView
 from .file_helper import FileHelper
 from .fs_node import FSNode

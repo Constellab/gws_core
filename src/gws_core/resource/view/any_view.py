@@ -6,10 +6,10 @@
 from typing import Dict
 
 from gws_core.core.utils.string_helper import StringHelper
-from gws_core.resource.view_types import ViewType
 
-from ..config.config_types import ConfigParams
-from ..resource.view import View
+from ...config.config_types import ConfigParams
+from .view import View
+from .view_types import ViewType
 
 
 class AnyView(View):

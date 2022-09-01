@@ -9,12 +9,12 @@ from typing import Dict, List, Union
 import numpy
 import pandas
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view_types import ViewType
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...resource.view import View
+from ...resource.view.view import View
 
 
 class BoxPlotView(View):

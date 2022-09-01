@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, List
 from ....config.config_types import ConfigParams
 from ....config.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
-from ....resource.view_types import ViewSpecs, ViewType
+from ....resource.view.view_types import ViewSpecs, ViewType
 from ...view.barplot_view import BarPlotView
 from .base_table_view import BaseTableView
 from .table_selection import Serie1d

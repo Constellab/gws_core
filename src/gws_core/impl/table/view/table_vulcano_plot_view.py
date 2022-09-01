@@ -14,7 +14,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.impl.table.view.base_table_view import BaseTableView
 from gws_core.impl.table.view.table_selection import Serie2d
 from gws_core.impl.view.vulcano_plot_view import VulcanoPlotView
-from gws_core.resource.view_types import ViewSpecs, ViewType
+from gws_core.resource.view.view_types import ViewSpecs, ViewType
 
 if TYPE_CHECKING:
     from ..table import Table

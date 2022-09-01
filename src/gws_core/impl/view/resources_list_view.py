@@ -7,8 +7,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
 from gws_core.config.config_types import ConfigParams
-from gws_core.resource.view import View
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view import View
+from gws_core.resource.view.view_types import ViewType
 
 from ...core.classes.jsonable import ListJsonable
 

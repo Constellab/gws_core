@@ -7,19 +7,18 @@ import inspect
 from typing import Any, Callable, Dict, List, Tuple, Type
 
 from gws_core.config.param_spec import ParamSpec
-from gws_core.resource.lazy_view_param import LazyViewParam
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.view_types import ViewSpecs
 
-from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
-from ..config.param_spec_helper import ParamSpecHelper
-from ..core.exception.exceptions.bad_request_exception import \
+from ...config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
+from ...config.param_spec_helper import ParamSpecHelper
+from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..core.utils.reflector_helper import ReflectorHelper
-from ..resource.resource import Resource
-from ..resource.view_decorator import VIEW_META_DATA_ATTRIBUTE
+from ...core.utils.reflector_helper import ReflectorHelper
+from ..resource import Resource
+from .lazy_view_param import LazyViewParam
 from .view import View
 from .view_meta_data import ResourceViewMetaData
+from .view_types import ViewSpecs
 
 
 class ViewHelper():

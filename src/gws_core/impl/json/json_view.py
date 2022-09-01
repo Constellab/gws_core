@@ -5,12 +5,12 @@
 
 from typing import Any, Dict
 
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view_types import ViewType
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...resource.view import View
+from ...resource.view.view import View
 
 
 class JSONView(View):

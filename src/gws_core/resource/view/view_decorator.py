@@ -6,11 +6,11 @@
 from typing import Callable, Type
 
 from gws_core.brick.brick_service import BrickService
-from gws_core.resource.lazy_view_param import LazyViewParam
 
-from ..config.param_spec import ParamSpec
-from ..core.classes.func_meta_data import FuncArgsMetaData
-from ..core.utils.reflector_helper import ReflectorHelper
+from ...config.param_spec import ParamSpec
+from ...core.classes.func_meta_data import FuncArgsMetaData
+from ...core.utils.reflector_helper import ReflectorHelper
+from .lazy_view_param import LazyViewParam
 from .view import View
 from .view_meta_data import ResourceViewMetaData
 from .view_types import ViewSpecs

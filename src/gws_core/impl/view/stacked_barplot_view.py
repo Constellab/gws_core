@@ -6,7 +6,7 @@
 from typing import Dict, List, Union
 
 from gws_core.core.utils.numeric_helper import NumericHelper
-from gws_core.resource.view_types import ViewType
+from gws_core.resource.view.view_types import ViewType
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams

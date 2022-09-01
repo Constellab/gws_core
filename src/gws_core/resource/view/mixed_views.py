@@ -3,12 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, TypedDict
+from typing import List
 
-from gws_core.resource.multi_views import MultiViews
+from gws_core.resource.view.multi_views import MultiViews
 
-from ..config.config_types import ConfigParams, ConfigParamsDict
-from ..config.param_spec_helper import ParamSpecHelper
+from ...config.config_types import ConfigParams, ConfigParamsDict
+from ...config.param_spec_helper import ParamSpecHelper
 from .view import View
 
 

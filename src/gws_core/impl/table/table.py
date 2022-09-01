@@ -24,7 +24,7 @@ from ...resource.r_field.primitive_r_field import StrRField
 from ...resource.r_field.serializable_r_field import SerializableRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
-from ...resource.view_decorator import view
+from ...resource.view.view_decorator import view
 from .data_frame_r_field import DataFrameRField
 from .helper.dataframe_filter_helper import (DataframeFilterHelper,
                                              DataframeFilterName)

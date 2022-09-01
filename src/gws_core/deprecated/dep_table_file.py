@@ -13,7 +13,7 @@ from ..impl.file.file import File
 from ..impl.table.table import Table
 from ..impl.table.view.table_view import TableView
 from ..resource.resource_decorator import resource_decorator
-from ..resource.view_decorator import view
+from ..resource.view.view_decorator import view
 
 
 @resource_decorator("TableFile",  hide=True, deprecated_since='0.3.3', deprecated_message='Use simple file')

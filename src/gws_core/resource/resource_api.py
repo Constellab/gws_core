@@ -9,7 +9,7 @@ from fastapi import Depends, Request
 from fastapi.responses import FileResponse
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.view_types import CallViewParams
+from gws_core.resource.view.view_types import CallViewParams
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_service import TagService
 from gws_core.task.action.action_service import ActionService
