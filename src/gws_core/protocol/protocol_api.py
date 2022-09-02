@@ -183,3 +183,13 @@ async def add_sink_to_process_ouput(id: str,
                                     _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return ProtocolService.add_sink_to_process_ouput(
         protocol_id=id, process_name=process_name, output_port_name=output_port_name).to_json()
+
+
+@core_app.post("/protocol/{id}/add-viewer/{process_name}/{output_port_name}", tags=["Protocol"],
+               summary="Add a viewer link a process' output")
+async def add_viewer_to_process_ouput(id: str,
+                                      process_name: str,
+                                      output_port_name: str,
+                                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.add_viewer_to_process_output(
+        protocol_id=id, process_name=process_name, output_port_name=output_port_name).to_json()

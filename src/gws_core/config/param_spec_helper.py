@@ -11,8 +11,8 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from .config_exceptions import MissingConfigsException
 from .config_types import ConfigParams, ConfigSpecs
 from .param_set import ParamSet
-from .param_spec import (BoolParam, FloatParam, IntParam, ListParam, ParamSpec,
-                         StrParam)
+from .param_spec import (BoolParam, DictParam, FloatParam, IntParam, ListParam,
+                         ParamSpec, StrParam)
 from .param_types import ParamValue
 from .tags_param_spec import TagsParam
 
@@ -101,4 +101,5 @@ class ParamSpecHelper():
 
     @staticmethod
     def _get_param_spec_types() -> List[Type[ParamSpec]]:
-        return [BoolParam, IntParam, FloatParam, StrParam, ListParam, ParamSet, TagsParam]
+        return [BoolParam, IntParam, FloatParam, StrParam, ListParam, ParamSet, TagsParam,
+                DictParam]

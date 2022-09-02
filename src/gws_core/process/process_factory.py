@@ -5,6 +5,7 @@
 
 from typing import Dict, List, Type
 
+from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 
 from ..config.config import Config
@@ -340,3 +341,7 @@ class ProcessFactory():
     @classmethod
     def create_sink(cls) -> TaskModel:
         return cls.create_task_model_from_type(Sink)
+
+    @classmethod
+    def create_viewer(cls, resource_typing_name: str) -> TaskModel:
+        return cls.create_task_model_from_type(Viewer, {Viewer.resource_config_name: resource_typing_name})

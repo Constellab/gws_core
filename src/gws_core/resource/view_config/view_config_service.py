@@ -45,13 +45,15 @@ class ViewConfigService():
     @classmethod
     def save_view_config(cls, resource_model: ResourceModel, view: View,
                          view_name: str, config_values: Dict[str, Any],
-                         transformers: List[TransformerDict] = None, user: User = None) -> ViewConfig:
+                         transformers: List[TransformerDict] = None,
+                         flagged: bool = False,
+                         user: User = None) -> ViewConfig:
         try:
 
             if user:
                 CurrentUserService.set_current_user(user)
 
-            view_meta_data = ViewHelper.get_and_check_view(resource_model.get_resource_type(), view_name)
+            view_meta_data = ViewHelper.get_and_check_view_meta(resource_model.get_resource_type(), view_name)
 
             # merge config with specs of the view method and the view
             config = {
@@ -66,6 +68,7 @@ class ViewConfigService():
                 view_type=view.get_type(),
                 config_values=config,
                 transformers=transformers,
+                flagged=flagged
             )
 
             # check is the view config already exists
@@ -91,7 +94,7 @@ class ViewConfigService():
     @classmethod
     def _limit_length_history(cls) -> None:
         # limit the length of the history
-        if(ViewConfig.select().count() > cls.MAX_HISTORY_SIZE):
+        if (ViewConfig.select().count() > cls.MAX_HISTORY_SIZE):
             last_view_config: ViewConfig = ViewConfig.select().order_by(ViewConfig.last_modified_at.asc()).first()
             last_view_config.delete_instance()
 

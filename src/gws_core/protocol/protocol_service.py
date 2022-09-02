@@ -7,6 +7,7 @@ from typing import List, Tuple, Type
 
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 from gws_core.task.transformer.transformer import Transformer
 
@@ -196,6 +197,14 @@ class ProtocolService(BaseService):
         existing_out_port: Port = existing_process.out_port(output_port_name)
 
         new_process_type: Type[Process] = TypingManager.get_type_from_name(process_typing_name)
+
+        return cls._add_process_connected_to_output(protocol_model, new_process_type, existing_out_port, config_params)
+
+    @classmethod
+    @transaction()
+    def _add_process_connected_to_output(
+            cls, protocol_model: ProtocolModel, new_process_type: Type[Process],
+            existing_out_port: Port, config_params: ConfigParamsDict = None) -> AddProcessWithLink:
 
         input_name: str
         # check if any of the new process in port is compatible with the selected out port
@@ -395,7 +404,6 @@ class ProtocolService(BaseService):
         return source_model
 
     @classmethod
-    @transaction()
     def add_source_to_process_input(
             cls, protocol_id: str, resource_id: str, process_name: str, input_port_name: str, ) -> AddProcessWithLink:
         """ Add a source task to the protocol. Configure it with the resource. And add connector
@@ -405,10 +413,28 @@ class ProtocolService(BaseService):
                                                   {Source.config_name: resource_id})
 
     @classmethod
-    @transaction()
     def add_sink_to_process_ouput(
             cls, protocol_id: str, process_name: str, output_port_name: str) -> AddProcessWithLink:
         """ Add a sink task to the protocol. And add connector from process to sink
         """
 
         return cls.add_process_connected_to_output(protocol_id, Sink._typing_name, process_name, output_port_name)
+
+    @classmethod
+    @transaction()
+    def add_viewer_to_process_output(
+            cls, protocol_id: str, process_name: str, output_port_name: str) -> AddProcessWithLink:
+        """ Add a view task to the protocol. And add connector from process to view task
+        """
+
+        # retrieve the type of the output process port to pre-configure the Viewer
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        existing_process: ProcessModel = protocol_model.get_process(process_name)
+        existing_out_port: Port = existing_process.out_port(output_port_name)
+
+        viewer_config = {Viewer.resource_config_name: existing_out_port.get_default_resource_type()._typing_name}
+
+        return cls.add_process_connected_to_output(
+            protocol_id, Viewer._typing_name, process_name, output_port_name,
+            viewer_config)

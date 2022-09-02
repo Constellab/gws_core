@@ -12,10 +12,13 @@ from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource_model import ResourceOrigin
+from gws_core.resource.view.view_types import ViewSpecs
+from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 from gws_core.test.base_test_case import BaseTestCase
 
 
+# test_protocol_service
 class TestProtocolService(BaseTestCase):
 
     def test_add_process(self):
@@ -49,6 +52,25 @@ class TestProtocolService(BaseTestCase):
 
         # Check that the connector was created
         self.assertEqual(len(protocol_model.connectors), 2)
+
+    def test_add_viewer(self):
+        protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
+
+        process_model: ProcessModel = ProtocolService.add_process_to_protocol_id(
+            protocol_model.id, RobotMove._typing_name)
+
+        # Test add view task
+        viewer_model = ProtocolService.add_viewer_to_process_output(
+            protocol_model.id, process_model.instance_name, 'robot').process_model
+        protocol_model = protocol_model.refresh()
+
+        viewer_model = protocol_model.get_process(viewer_model.instance_name)
+        self.assertEqual(viewer_model.get_process_type(), Viewer)
+        # check that the view task was pre-configured with the robot type
+        self.assertEqual(viewer_model.config.get_value(Viewer.resource_config_name), Robot._typing_name)
+
+        # Check that the connector was created
+        self.assertEqual(len(protocol_model.connectors), 1)
 
     def test_connector(self):
         protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()

@@ -1,22 +1,22 @@
 
 
-from time import sleep
-from typing import Dict, List
+from typing import List
 
 from gws_core import (BaseTestCase, ConfigParams, IntParam, JSONView, Resource,
                       ResourceService, StrParam, TextView, resource_decorator,
                       view)
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param_spec import ParamSpec
-from gws_core.core.classes.search_builder import SearchParams
-from gws_core.resource.view.any_view import AnyView
-from gws_core.resource.lazy_view_param import LazyViewParam
+from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
-from gws_core.resource.view_config.view_config import ViewConfig
-from gws_core.resource.view_config.view_config_service import ViewConfigService
+from gws_core.resource.view.any_view import AnyView
+from gws_core.resource.view.lazy_view_param import LazyViewParam
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_meta_data import ResourceViewMetaData
 from gws_core.resource.view.view_types import ViewType
+from gws_core.resource.view.viewer import Viewer
+from gws_core.resource.view_config.view_config import ViewConfig
+from gws_core.resource.view_config.view_config_service import ViewConfigService
 
 
 @resource_decorator("ResourceViewTest")
@@ -73,7 +73,7 @@ class ResourceLazySpecs(Resource):
     allowed_value = ['super']
 
     @view(view_type=AnyView, human_name='View overide',
-          specs={"lazy": LazyViewParam('get_param')})
+          specs={"lazy": LazyViewParam('get_param', StrParam())})
     def lazy_view(self, params: ConfigParams) -> AnyView:
         return AnyView('Test sub')
 
@@ -146,7 +146,9 @@ class TestView(BaseTestCase):
         resource: Resource = ResourceViewTestOverideParent()
         resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.UPLOADED)
 
-        specs: ConfigSpecs = ViewHelper.get_view_specs(resource_model, 'a_view_test')
+        resource = resource_model.get_resource()
+        view_meta = ViewHelper.get_and_check_view_meta(type(resource), 'a_view_test')
+        specs: ConfigSpecs = view_meta.get_view_specs_from_resource(resource, skip_private=True)
 
         # if the page was overrided and the private is working, the page should not be in the json
         self.assertFalse('page' in specs)
@@ -155,12 +157,23 @@ class TestView(BaseTestCase):
         resource: Resource = ResourceLazySpecs()
         resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.UPLOADED)
 
-        specs: ConfigSpecs = ViewHelper.get_view_specs(resource_model, 'lazy_view')
+        # call with a resource
+        view_meta = ViewHelper.get_and_check_view_meta(type(resource), 'lazy_view')
+        specs: ConfigSpecs = view_meta.get_view_specs_from_resource(resource_model.get_resource())
 
         self.assertEqual(len(specs), 1)
         self.assertTrue('lazy' in specs)
-        self.assertIsInstance(specs['lazy'], ParamSpec)
+        self.assertIsInstance(specs['lazy'], StrParam)
         self.assertEqual(specs['lazy'].allowed_values, ['super'])
+
+        # call with a resource type, like configuration before have the actual resource
+        specs: ConfigSpecs = view_meta.get_view_specs_from_type(type(resource))
+
+        self.assertEqual(len(specs), 1)
+        self.assertTrue('lazy' in specs)
+        self.assertIsInstance(specs['lazy'], StrParam)
+        # there should be no allowed value
+        self.assertIsNone(specs['lazy'].allowed_values)
 
     async def test_view_config(self):
 
@@ -186,3 +199,25 @@ class TestView(BaseTestCase):
         # re-call the view from the view config
         view_result_2 = await ResourceService.call_view_from_view_config(view_config.id)
         self.assert_json(view_result['view'], view_result_2['view'])
+
+    async def test_viewer(self):
+        """ Test that a view config is save when executing the view task
+        """
+        resource: Resource = ResourceViewTestSub()
+        resource_model: ResourceModel = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.UPLOADED)
+
+        # create an experiment with the view task
+        i_experiment = IExperiment()
+        i_protocol = i_experiment.get_protocol()
+
+        view_config = {'view_name': 'a_view_test', 'config_values': {"page": 1, "page_size": 5000}, 'transformers': []}
+        viewer = i_protocol.add_process(Viewer, 'viewer', {
+            Viewer.resource_config_name: resource._typing_name, 'view_config': view_config})
+
+        i_protocol.add_source('source', resource_model.id, viewer << Viewer.input_name)
+        await i_experiment.run()
+
+        # check that view config was saved
+        view_configs: List[ViewConfig] = list(ViewConfig.get_by_resource(resource_model.id))
+        self.assertEqual(len(view_configs), 1)
+        self.assertTrue(view_configs[0].flagged)

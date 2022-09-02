@@ -181,7 +181,8 @@ class Port(Base):
 
         return self._resource_provided
 
-    # -- G --
+    def get_default_resource_type(self) -> Type[Resource]:
+        return self.resource_spec.get_default_resource_type()
 
     def get_next_procs(self) -> List[ProcessModel]:
         """

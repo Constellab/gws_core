@@ -17,7 +17,7 @@ from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.transformer.transformer_service import TransformerService
 from gws_core.task.transformer.transformer_type import TransformerDict
 
-from ..core.classes.jsonable import DictJsonable, ListJsonable
+from ..core.classes.jsonable import ListJsonable
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData
@@ -26,18 +26,11 @@ from .resource_service import ResourceService
 ############################# VIEW ###########################
 
 
-@core_app.get("/resource/{id}/views", tags=["Resource"],
-              summary="Get the list of view for a resource type")
-async def get_resource_type_views(id: str,
-                                  _: UserData = Depends(AuthService.check_user_access_token)) -> list:
-    return ListJsonable(ResourceService.get_views_of_resource(id)).to_json()
-
-
 @core_app.get("/resource/{id}/views/{view_name}/specs", tags=["Resource"],
               summary="Get the specs for a view of a resource")
-async def get_view_specs(id: str, view_name: str,
-                         _: UserData = Depends(AuthService.check_user_access_token)) -> list:
-    return DictJsonable(ResourceService.get_view_specs(id, view_name)).to_json()
+async def get_view_specs_from_resource(id: str, view_name: str,
+                                       _: UserData = Depends(AuthService.check_user_access_token)) -> list:
+    return ResourceService.get_view_specs_from_resource(id, view_name)
 
 
 @core_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
@@ -187,7 +180,14 @@ def download_a_resource(
 ############################# RESOURCE TYPE ###########################
 
 
-@core_app.get("/resource-type", tags=["Resource"], summary="Get the list of resource types")
+@core_app.get("/resource-type/{resource_typing_name}/views", tags=["Resource type"],
+              summary="Get the list of view for a resource type")
+async def get_resource_type_views(resource_typing_name: str,
+                                  _: UserData = Depends(AuthService.check_user_access_token)) -> list:
+    return ListJsonable(ResourceService.get_views_of_resource(resource_typing_name)).to_json()
+
+
+@core_app.get("/resource-type", tags=["Resource type"], summary="Get the list of resource types")
 async def get_the_list_of_resource_types(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a the complete list of resources types. The list is not paginated.
@@ -195,10 +195,17 @@ async def get_the_list_of_resource_types(_: UserData = Depends(AuthService.check
     return ListJsonable(ResourceService.fetch_resource_type_list()).to_json()
 
 
+@core_app.get("/resource-type/{resource_type}/views/{view_name}/specs", tags=["Resource type"],
+              summary="Get the specs for a view of a resource type")
+async def get_view_specs_from_type(resource_type: str, view_name: str,
+                                   _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return ResourceService.get_view_specs_from_type(resource_type, view_name)
+
+
 ############################### ACTIONS ##############################
 
-@core_app.post("/resource/{id}/action/add/{action_typing_name}", tags=["Resource"],
-               summary="Add an action to a resource")
+@ core_app.post("/resource/{id}/action/add/{action_typing_name}", tags=["Resource"],
+                summary="Add an action to a resource")
 async def add_action_to_resource(id: str, action_typing_name: str,
                                  action_params: dict,
                                  _: UserData = Depends(AuthService.check_user_access_token)) -> dict:

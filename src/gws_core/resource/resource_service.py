@@ -13,9 +13,9 @@ from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.view.view import View
+from gws_core.resource.view.view_types import CallViewResult
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
-from gws_core.resource.view.view_types import CallViewResult
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_model import TaskModel
 from peewee import ModelSelect
@@ -28,13 +28,13 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.exception.gws_exceptions import GWSException
 from ..core.service.base_service import BaseService
 from ..model.typing_manager import TypingManager
-from .view.view_helper import ViewHelper
 from ..task.task_input_model import TaskInputModel
 from ..task.transformer.transformer_service import TransformerService
 from ..task.transformer.transformer_type import TransformerDict
 from .resource_model import Resource, ResourceModel, ResourceOrigin
 from .resource_model_search_builder import ResourceModelSearchBuilder
 from .resource_typing import ResourceTyping
+from .view.view_helper import ViewHelper
 from .view.view_meta_data import ResourceViewMetaData
 
 
@@ -165,10 +165,13 @@ class ResourceService(BaseService):
     ################################# VIEW ###############################
 
     @classmethod
-    def get_views_of_resource(cls, resource_model_id: str) -> List[ResourceViewMetaData]:
-        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
+    def get_views_of_resource(cls, resource_typing_name: str) -> List[ResourceViewMetaData]:
+        resource_type = TypingManager.get_type_from_name(resource_typing_name)
 
-        return cls.get_views_of_resource_type(resource_model.get_resource_type())
+        if not Utils.issubclass(resource_type, Resource):
+            raise BadRequestException('The provided type is not a Resource type')
+
+        return cls.get_views_of_resource_type(resource_type)
 
     @classmethod
     def get_views_of_resource_type(cls, resource_type: Type[Resource]) -> List[ResourceViewMetaData]:
@@ -177,10 +180,21 @@ class ResourceService(BaseService):
         return ViewHelper.get_views_of_resource_type(resource_type)
 
     @classmethod
-    def get_view_specs(cls, resource_model_id: str, view_name: str) -> ConfigSpecs:
+    def get_view_specs_from_resource(cls, resource_model_id: str, view_name: str) -> ConfigSpecs:
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
 
-        return ViewHelper.get_view_specs(resource_model, view_name)
+        resource = resource_model.get_resource()
+        view_meta = ViewHelper.get_and_check_view_meta(type(resource), view_name)
+
+        return view_meta.to_complete_json(resource)
+
+    @classmethod
+    def get_view_specs_from_type(cls, resource_typing_name: str, view_name: str) -> dict:
+        resource_type: Type[Resource] = TypingManager.get_type_from_name(resource_typing_name)
+
+        view_meta = ViewHelper.get_and_check_view_meta(resource_type, view_name)
+
+        return view_meta.to_complete_json()
 
     @classmethod
     async def get_and_call_view_on_resource_model(cls, resource_model_id: str,

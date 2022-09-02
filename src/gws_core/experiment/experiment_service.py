@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import Callable, Dict, Type
+from typing import Dict, Type
 
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
