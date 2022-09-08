@@ -51,6 +51,11 @@ class ProcessFactory():
         task_model: TaskModel = TaskModel()
         task_model.set_process_type(task_type._typing_name)
 
+        # Specific case for the source, to set the source_config id is provided
+        if task_type == Source and config_params.get(Source.config_name):
+            task_model.source_config_id = config_params.get(
+                Source.config_name)
+
         config: Config = Config()
         config.set_specs(task_type.config_specs)
         if config_params:

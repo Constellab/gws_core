@@ -15,6 +15,7 @@ from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.view.view_types import ViewSpecs
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
+from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -36,9 +37,11 @@ class TestProtocolService(BaseTestCase):
             protocol_model.id, resource_model.id, process_model.instance_name, 'robot').process_model
 
         protocol_model = protocol_model.refresh()
-        source_model = protocol_model.get_process(source_model.instance_name)
+        source_model: TaskModel = protocol_model.get_process(source_model.instance_name)
         self.assertEqual(source_model.get_process_type(), Source)
-        self.assertEqual(source_model.config.get_value('resource_id'), resource_model.id)
+        self.assertEqual(source_model.config.get_value(Source.config_name), resource_model.id)
+        # check that the source_config_id is set for the task model
+        self.assertEqual(source_model.source_config_id, resource_model.id)
 
         # Check that the connector was created
         self.assertEqual(len(protocol_model.connectors), 1)
