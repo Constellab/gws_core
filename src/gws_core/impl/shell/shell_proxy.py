@@ -3,10 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import selectors
+import select
 import subprocess
 import time
-from typing import Any, List, Literal, Union
+from typing import Any, List, Union
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import MessageObserver
@@ -25,9 +25,6 @@ class ShellProxy():
 
     This class is a proxy to Shell commandes. It allow running commands in a shell and get the output and stdout.
     """
-
-    # When running a command, the messages are buffered and dispatched every 1 seconds
-    _NOTIFY_MESSAGE_INTERVAL = 1
 
     working_dir: str = None
 
@@ -85,29 +82,72 @@ class ShellProxy():
             )
 
             # use to read the stdout and stderr of the process
-            sel = selectors.DefaultSelector()
-            sel.register(proc.stdout, selectors.EVENT_READ)
-            sel.register(proc.stderr, selectors.EVENT_READ)
+            # https://stackoverflow.com/questions/12270645/can-you-make-a-python-subprocess-output-stdout-and-stderr-as-usual-but-also-cap/12272262#12272262
+            tic_a = time.perf_counter()
+            stdout = []
+            stderr = []
 
-            process_ended = False
+            while True:
+                reads = [proc.stdout.fileno(), proc.stderr.fileno()]
+                ret = select.select(reads, [], [])
+                tic_b = time.perf_counter()
 
-            while not process_ended:
-                for key, _ in sel.select():
-                    data: str = key.fileobj.read1().decode().strip()
+                for fd in ret[0]:
+                    if fd == proc.stdout.fileno():
+                        read = proc.stdout.readline()
 
-                    # when the process has finished
-                    if not data:
-                        process_ended = True
-                        break
+                        if read:
+                            # if the previous message was an error, we dispatch the error
+                            if len(stderr) > 0:
+                                self._self_dispatch_stderrs(stderr)
+                                tic_a = time.perf_counter()
+                                stderr = []
 
-                    # dispatch the message to the observers
-                    if key.fileobj is proc.stdout:
-                        self._message_dispatcher.notify_info_message(data)
-                    else:
-                        self._message_dispatcher.notify_error_message(data)
+                            stdout.append(read)
+
+                    if fd == proc.stderr.fileno():
+                        read = proc.stderr.readline()
+
+                        if read:
+                            # if the previous message was an stdout, we dispatch the stdout
+                            if len(stdout) > 0:
+                                self._self_dispatch_stdouts(stdout)
+                                tic_a = time.perf_counter()
+                                stdout = []
+
+                            stderr.append(read)
+
+                poll = proc.poll()
+
+                # save outputs every 0.1 sec in taskbar or at the end of the process
+                if tic_b - tic_a >= 0.1 or poll is not None:
+                    if len(stdout) > 0:
+                        self._self_dispatch_stdouts(stdout)
+                        tic_a = time.perf_counter()
+                        stdout = []
+                    if len(stderr) > 0:
+                        self._self_dispatch_stderrs(stderr)
+                        tic_a = time.perf_counter()
+                        stderr = []
+
+                if poll is not None:
+                    break
+
+            # wait for the process to finish, use comminicate to avoir deadlock if messages are still in the buffer
+            # The communicate should always return empty output.
+            outs, errs = proc.communicate()
+            if outs:
+                self._message_dispatcher.notify_error_message(
+                    "[ShellProxy] The communicate method has returned an stdout output. This is not expected.")
+                self._self_dispatch_stdout(outs)
+            if errs:
+                self._message_dispatcher.notify_error_message(
+                    "[ShellProxy] The communicate method has returned an stderr output. This is not expected.")
+                self._self_dispatch_stderr(errs)
 
             # retrieve the return code of the process and dispatch the message to the observers
-            return_core = proc.wait()
+            # we can use wait instead of poll because we have already called communicate
+            return_core = proc.poll()
             if return_core == 0:
                 self._message_dispatcher.notify_info_message("[ShellProxy] Command executed successfully")
             else:
@@ -118,6 +158,24 @@ class ShellProxy():
             Logger.log_exception_stack_trace(err)
             self._message_dispatcher.notify_error_message(str(err))
             raise Exception(f"The shell process has failed. Error {err}.")
+
+    def _self_dispatch_stdouts(self, messages: List[bytes]) -> None:
+        if len(messages) > 0:
+            message = "\n".join([message.decode().strip() for message in messages])
+            self._message_dispatcher.notify_info_message(message)
+
+    def _self_dispatch_stderrs(self, messages: List[bytes]) -> None:
+        if len(messages) > 0:
+            message = "\n".join([message.decode().strip() for message in messages])
+            self._message_dispatcher.notify_error_message(message)
+
+    def _self_dispatch_stdout(self, message: bytes) -> None:
+        if message:
+            self._message_dispatcher.notify_info_message(message.decode().strip())
+
+    def _self_dispatch_stderr(self, message: bytes) -> None:
+        if message:
+            self._message_dispatcher.notify_error_message(message.decode().strip())
 
     def clean_working_dir(self):
         FileHelper.delete_dir(self.working_dir)
