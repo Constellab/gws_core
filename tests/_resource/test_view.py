@@ -210,7 +210,8 @@ class TestView(BaseTestCase):
         i_experiment = IExperiment()
         i_protocol = i_experiment.get_protocol()
 
-        view_config = {'view_name': 'a_view_test', 'config_values': {"page": 1, "page_size": 5000}, 'transformers': []}
+        view_config = {'view_method_name': 'a_view_test', 'config_values': {
+            "page": 1, "page_size": 5000}, 'transformers': []}
         viewer = i_protocol.add_process(Viewer, 'viewer', {
             Viewer.resource_config_name: resource._typing_name, 'view_config': view_config})
 
