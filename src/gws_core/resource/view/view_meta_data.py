@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Type
 
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param_spec import ParamSpec
+from gws_core.core.classes.jsonable import DictJsonable
 from gws_core.resource.view.lazy_view_param import LazyViewParam
 
 from .view import View
@@ -57,7 +58,8 @@ class ResourceViewMetaData():
     def to_complete_json(self, resource: Resource = None) -> dict:
         json_ = self.to_json()
 
-        json_["config_specs"] = self._get_view_specs(resource, skip_private=True)
+        jsonable_dict = DictJsonable(self._get_view_specs(resource, skip_private=True))
+        json_["config_specs"] = jsonable_dict.to_json()
 
         return json_
 
