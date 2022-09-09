@@ -165,7 +165,7 @@ class Config(ModelWithUser):
 
         return {
             "specs": self.data["specs"],
-            "data": self.get_and_check_values()
+            "values": self.get_and_check_values()
         }
 
     def copy(self) -> 'Config':

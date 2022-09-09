@@ -816,9 +816,9 @@ class ProtocolModel(ProcessModel):
         for key, process in self.processes.items():
             graph["nodes"][key] = process.export_config()
         for key, interface in self.interfaces.items():
-            graph['interfaces'][key] = interface.export_config()
+            graph['interfaces'][key] = interface.to_json()
         for key, outerface in self.outerfaces.items():
-            graph['outerfaces'][key] = outerface.export_config()
+            graph['outerfaces'][key] = outerface.to_json()
         _json["graph"] = graph
         return _json
 

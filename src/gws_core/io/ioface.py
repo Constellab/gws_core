@@ -49,12 +49,12 @@ class IOface:
     # -- T --
 
     def to_json(self, deep: bool = False) -> dict:
-        r_id = ""
-        if self.source_port.resource_model:
-            r_id = self.source_port.resource_model.id
-
         json_ = self.export_config()
-        json_["resource_id"] = r_id,
+        if self.source_port.resource_model:
+            json_["resource_id"] = self.source_port.resource_model.id
+        else:
+            json_["resource_id"] = None
+
         return json_
 
     def export_config(self) -> dict:

@@ -502,6 +502,13 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
         return _json
 
+    def export_config(self) -> dict:
+        return {
+            'id': self.id,
+            'name': self.name,
+            'resource_typing_name': self.resource_typing_name,
+        }
+
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model data.

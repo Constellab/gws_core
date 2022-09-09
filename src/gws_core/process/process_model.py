@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
 from abc import abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING, Dict, Type, TypedDict, final
@@ -460,6 +459,11 @@ class ProcessModel(ModelWithUser):
 
         _json["typing_name"] = self._typing_name
 
+        process_typing: Typing = self.get_process_typing()
+        if process_typing:
+            _json["human_name"] = process_typing.human_name
+            _json["short_description"] = process_typing.short_description
+
         return _json
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
@@ -492,8 +496,9 @@ class ProcessModel(ModelWithUser):
             "human_name": process_typing.human_name,
             "short_description": process_typing.short_description,
             "brick_version": self.brick_version,
-            "input_specs": self.inputs.export_specs(),
-            "output_specs": self.outputs.export_specs(),
+            "inputs": self.inputs.to_json(),
+            "outputs": self.outputs.to_json(),
+            "status": self.status.value,
         }
 
     ########################### STATUS MANAGEMENT ##################################

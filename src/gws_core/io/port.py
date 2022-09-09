@@ -303,15 +303,10 @@ class Port(Base):
         return self.resource_model.get_resource(new_instance=new_instance)
 
     def to_json(self) -> PortDict:
-        _json: PortDict = {"resource_id": None, "specs": None}
-
-        if self.resource_model:
-            _json["resource_id"] = self.resource_model.id
-        else:
-            _json["resource_id"] = ""
-
-        _json["specs"] = self.resource_spec.to_json()
-        return _json
+        return {
+            'resource_id': self.resource_model.id if self.resource_model else None,
+            'specs': self.resource_spec.to_json()
+        }
 
     def export_specs(self) -> IOSpecDict:
         return self.resource_spec.to_json()

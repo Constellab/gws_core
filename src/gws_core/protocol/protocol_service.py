@@ -5,11 +5,9 @@
 
 from typing import List, Tuple, Type
 
-from gws_core.core.utils.utils import Utils
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
-from gws_core.task.transformer.transformer import Transformer
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
