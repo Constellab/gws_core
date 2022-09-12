@@ -142,7 +142,9 @@ class MessageDispatcher:
             self._dispatch_timer.cancel()
             self._dispatch_timer = None
 
-        if len(self._waiting_messages) > 0:
+        # directly copy and clear the array because the observer update can take some times
+        messages = self._waiting_messages.copy()
+        self._waiting_messages.clear()
+        if len(messages) > 0:
             for observer in self._observers:
-                observer.update(self._waiting_messages)
-            self._waiting_messages = []
+                observer.update(messages)

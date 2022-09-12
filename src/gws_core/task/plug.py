@@ -156,10 +156,10 @@ class Wait(Task):
         waiting_time = params.get_value("waiting_time")
 
         current_time = 0
-        while(current_time < waiting_time):
+        while (current_time < waiting_time):
+            current_time = current_time + 1
             self.update_progress_value((current_time / waiting_time) * 100, 'Waiting 1 sec')
             time.sleep(1)
-            current_time = current_time + 1
         resource = inputs["resource"]
         return {"resource": resource}
 

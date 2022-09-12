@@ -44,6 +44,12 @@ class TestDispatcher(BaseTestCase):
         self.assertEqual(observer.messages[2].message, 'message 4')
         self.assertEqual(observer.messages[3].message, 'message 5')
 
+        # test direct dispatch
+        dispatcher.notify_info_message('message 6')
+        dispatcher.dispatched_waiting_messages()
+        self.assertEqual(len(observer.messages), 5)
+        self.assertEqual(observer.messages[4].message, 'message 6')
+
     async def test_dispatcher_with_progress_bar(self):
         dispatcher = MessageDispatcher(0.05, 0.25)
 
