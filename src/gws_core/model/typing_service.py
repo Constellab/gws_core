@@ -4,10 +4,12 @@ from typing import Callable, Dict, List, Literal, Type
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_spec import IOSpec
 from gws_core.model.typing import Typing, TypingNameObj
+from gws_core.model.typing_dict import TypingStatus
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_search_builder import TypingSearchBuilder
 from gws_core.process.process import Process
@@ -151,3 +153,21 @@ class TypingService():
         pagination = cls.search(search, page, number_of_items_per_page, search_builder)
 
         return pagination
+
+    @classmethod
+    def delete_unavailable_typings(cls, brick_name: str = None) -> List[str]:
+        """
+        Remove typing names that are not available in the database
+        """
+
+        typing_names: List[Typing] = None
+
+        if brick_name:
+            typing_names = list(Typing.select().where(Typing.brick == brick_name))
+        else:
+            typing_names = list(Typing.select())
+
+        unavailable_types: List[Typing] = [x for x in typing_names if x.get_type_status() == TypingStatus.UNAVAILABLE]
+
+        for typing in unavailable_types:
+            typing.delete_instance()

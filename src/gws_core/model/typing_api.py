@@ -73,3 +73,17 @@ async def transformers_advanced_search(search: SearchWithResourceTypes,
     """
     return TypingService.search_transformers(
         search.resource_typing_names, search.search_params, page, number_of_items_per_page).to_json()
+
+
+@core_app.delete("/typing/unavailable", tags=["Typing"],
+                 summary="Delete unavailable typings")
+def delete_unavailable_typings(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    TypingService.delete_unavailable_typings()
+
+
+@core_app.delete("/typing/unavailable/{brick_name}", tags=["Typing"],
+                 summary="Delete unavailable typings")
+def delete_unavailable_typings_for_brick(
+        brick_name: str,
+        _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    TypingService.delete_unavailable_typings(brick_name)
