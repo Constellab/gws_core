@@ -6,6 +6,8 @@
 from abc import abstractmethod
 from typing import Literal, Optional, Type, TypedDict, final
 
+from gws_core.core.classes.observer.dispatched_message import (
+    DispatchedMessage, DispatchedMessageStatus)
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.model.typing_register_decorator import typing_registrator
 
@@ -112,14 +114,15 @@ class Task(Process):
         self.message_dispatcher.notify_progress_value(progress=value, message=message)
 
     @final
-    def log_message(self, message: str, type_: ProgressBarMessageType = ProgressBarMessageType.INFO) -> None:
+    def log_message(self, message: str, type_: DispatchedMessageStatus) -> None:
         """Store a message in the progress
 
         :param message: message to store in the progress
         :type message: str
         """
+        message = DispatchedMessage(status=type_, message=message)
 
-        self.log_message(message=message, type_=type_)
+        self.message_dispatcher.notify_message(message)
 
     @final
     def log_info_message(self, message: str):

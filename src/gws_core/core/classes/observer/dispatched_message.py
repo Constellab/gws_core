@@ -6,13 +6,15 @@
 
 from typing import Literal, Optional
 
+DispatchedMessageStatus = Literal['SUCCESS', 'ERROR', 'WARNING', 'INFO', 'PROGRESS']
+
 
 class DispatchedMessage():
-    status: Literal['SUCCESS', 'ERROR', 'WARNING', 'INFO', 'PROGRESS']
+    status: DispatchedMessageStatus
     message: str
     progress: Optional[float] = None
 
-    def __init__(self, status: Literal['SUCCESS', 'ERROR', 'WARNING', 'INFO', 'PROGRESS'],
+    def __init__(self, status: DispatchedMessageStatus,
                  message: str,
                  progress: Optional[float] = None):
         self.status = status
