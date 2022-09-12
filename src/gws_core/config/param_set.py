@@ -53,6 +53,17 @@ class ParamSet(ParamSpec[list]):
             short_description=short_description,
         )
 
+    def get_default_value(self) -> ParamSpecType:
+        if self.optional:
+            return None
+
+        # if this is not option, return an array of 1 element with the
+        # default value of each param_spec
+        default_value = {}
+        for key, spec in self.param_set.items():
+            default_value[key] = spec.get_default_value()
+        return [default_value]
+
     def _get_validator(self) -> Validator:
         """ There is not assigne validator, instead the validate method has been overrided
         """

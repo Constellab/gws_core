@@ -1,10 +1,17 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
+from unittest import IsolatedAsyncioTestCase
 
-from gws_core import BaseTestCase, IntParam, ParamSet, StrParam
+from gws_core import IntParam, ParamSet, StrParam
 from gws_core.config.param_spec_helper import ParamSpecHelper
+from gws_core.core.utils.utils import Utils
 
 
-class TestParamSpec(BaseTestCase):
+# test_param_spec
+class TestParamSpec(IsolatedAsyncioTestCase):
 
     def test_param_to_json(self):
         param: IntParam = IntParam(default_value=1, human_name="Test", short_description="Description",
@@ -28,7 +35,9 @@ class TestParamSpec(BaseTestCase):
         self.assertEqual(param_2.max_number_of_occurrences, 3)
         self.assertIsInstance(param_2.param_set['str'], StrParam)
         self.assertIsInstance(param_2.param_set['int'], IntParam)
-        self.assertEqual(param_2.param_set['int'].default_value, 12)
+
+        # check the default value
+        Utils.assert_json_equals(param_2.get_default_value(), [{'str': None, 'int': 12}])
 
         value = [{"str": "Hello", "int": "10"}]
         expected_value = [{"str": "Hello", "int": 10}]
