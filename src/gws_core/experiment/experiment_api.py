@@ -6,6 +6,7 @@
 from typing import Dict, List, Optional
 
 from fastapi import Depends
+from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.search_builder import SearchParams
 
 from ..core.classes.paginator import PaginatorDict
@@ -21,7 +22,17 @@ from .experiment_dto import ExperimentDTO
 from .experiment_service import ExperimentService
 from .queue_service import QueueService
 
+
 ###################################### GET ###############################
+@core_app.get("/experiment/running", tags=["Experiment"],
+              summary="Get the list of running experiments")
+def get_the_list_of_running_experiments(
+        _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+    """
+    Retrieve a list of running experiments.
+    """
+
+    return ListJsonable(ExperimentService.get_running_experiments()).to_json()
 
 
 @core_app.get("/experiment/{id}", tags=["Experiment"], summary="Get an experiment")

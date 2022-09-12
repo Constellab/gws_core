@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, Type
+from typing import Dict, List, Type
 
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
@@ -39,7 +39,7 @@ from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from .experiment import Experiment
 from .experiment_dto import ExperimentDTO
-from .experiment_enums import ExperimentType
+from .experiment_enums import ExperimentStatus, ExperimentType
 
 
 class ExperimentService(BaseService):
@@ -288,6 +288,10 @@ class ExperimentService(BaseService):
 
         return Paginator(
             query, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
+    def get_running_experiments(cls) -> List[Experiment]:
+        return list(Experiment.select().where(Experiment.status == ExperimentStatus.RUNNING))
 
     ################################### COPY  ##############################
 
