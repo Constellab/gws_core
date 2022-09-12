@@ -294,11 +294,11 @@ class Migration0314(BrickMigration):
 
                 changed: bool = False
                 if len(table.get_column_tags()) == 0:
-                    table.set_all_columns_tags(table._meta['column_tags'])
+                    table.set_all_column_tags(table._meta['column_tags'])
                     changed = True
 
                 if len(table.get_row_tags()) == 0:
-                    table.set_all_rows_tags(table._meta['row_tags'])
+                    table.set_all_row_tags(table._meta['row_tags'])
                     changed = True
 
                 if changed:

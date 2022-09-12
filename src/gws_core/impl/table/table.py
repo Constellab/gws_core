@@ -124,14 +124,14 @@ class Table(Resource):
 
     def _set_tags(self, row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None):
         if row_tags:
-            self.set_all_rows_tags(row_tags)
+            self.set_all_row_tags(row_tags)
         else:
-            self.set_all_rows_tags([{}] * self.nb_rows)
+            self.set_all_row_tags([{}] * self.nb_rows)
 
         if column_tags:
-            self.set_all_columns_tags(column_tags)
+            self.set_all_column_tags(column_tags)
         else:
-            self.set_all_columns_tags([{}] * self.nb_columns)
+            self.set_all_column_tags([{}] * self.nb_columns)
 
     def get_meta(self) -> TableMeta:
         """Get a copy of the table meta data information
@@ -167,17 +167,27 @@ class Table(Resource):
             comments = self.COMMENT_CHAR + comments
         self.comments = comments
 
-    def set_all_rows_tags(self, tags: List[Dict[str, str]]) -> None:
+    def set_all_row_tags(self, tags: List[Dict[str, str]]) -> None:
         if len(tags) != self.nb_rows:
             raise Exception("The length of tags must be equal to the number of rows")
 
         self._row_tags = TableAxisTags(tags)
 
-    def set_all_columns_tags(self, tags: List[Dict[str, str]]) -> None:
+    # TODO deprecated, to remove
+    def set_all_rows_tags(self, tags: List[Dict[str, str]]) -> None:
+        Logger.error(f"[Table] The set_all_rows_tags is deprecated. Use set_all_row_tags instead.")
+        self.set_all_row_tags(tags)
+
+    def set_all_column_tags(self, tags: List[Dict[str, str]]) -> None:
         if len(tags) != self.nb_columns:
             raise Exception("The length of tags must be equal to the number of columns")
 
         self._column_tags = TableAxisTags(tags)
+
+    # TODO deprecated, to remove
+    def set_all_columns_tags(self, tags: List[Dict[str, str]]) -> None:
+        Logger.error(f"[Table] The set_all_columns_tags is deprecated. Use set_all_column_tags instead.")
+        self.set_all_column_tags(tags)
 
     def get_data(self) -> DataFrame:
         return self._data.copy()
@@ -475,10 +485,10 @@ class Table(Resource):
             return TableColumnType.OBJECT
 
     def copy_column_tags(self, table: 'Table', from_index: int = None, to_index: int = None) -> None:
-        self.set_all_columns_tags(table.get_column_tags(from_index=from_index, to_index=to_index))
+        self.set_all_column_tags(table.get_column_tags(from_index=from_index, to_index=to_index))
 
     def copy_row_tags(self, table: 'Table', from_index: int = None, to_index: int = None) -> None:
-        self.set_all_rows_tags(table.get_row_tags(from_index=from_index, to_index=to_index))
+        self.set_all_row_tags(table.get_row_tags(from_index=from_index, to_index=to_index))
 
     def head(self, nrows=5) -> DataFrame:
         """

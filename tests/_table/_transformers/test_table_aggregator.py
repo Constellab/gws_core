@@ -36,7 +36,7 @@ class TestTableAggregator(BaseTestCase):
         initial_df = DataFrame({'A': [1, 2], 'B': [10, 8]})
         table = Table(data=initial_df)
         column_tags = [{'test': 'ok'}, {'test': 'nok'}]
-        table.set_all_columns_tags(column_tags)
+        table.set_all_column_tags(column_tags)
 
         # Vertical
         task_runner = TaskRunner(TableColumnAggregator, {"function": "sum"})

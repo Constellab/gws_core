@@ -107,7 +107,7 @@ class TableImporter(ResourceImporter):
                 row_tags.append(tag)
 
             table = target_type(data=df)
-            table.set_all_rows_tags(row_tags)
+            table.set_all_row_tags(row_tags)
         else:
             table = target_type(data=df)
 

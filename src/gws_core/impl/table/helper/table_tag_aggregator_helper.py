@@ -63,8 +63,8 @@ class TableTagAggregatorHelper:
 
         sorted_table = Table(df)
         new_row_tags = [row_tags[i] for i in new_row_position]
-        sorted_table.set_all_rows_tags(new_row_tags)
-        sorted_table.set_all_columns_tags(table.get_column_tags())
+        sorted_table.set_all_row_tags(new_row_tags)
+        sorted_table.set_all_column_tags(table.get_column_tags())
         return sorted_table
 
     ############################################## COLUMNS ######################################################
@@ -115,8 +115,8 @@ class TableTagAggregatorHelper:
 
         sorted_table = Table(df)
         new_column_tags = [column_tags[i] for i in new_column_position]
-        sorted_table.set_all_columns_tags(new_column_tags)
-        sorted_table.set_all_rows_tags(table.get_row_tags())
+        sorted_table.set_all_column_tags(new_column_tags)
+        sorted_table.set_all_row_tags(table.get_row_tags())
         return sorted_table
 
     ############################################## BOTH ######################################################

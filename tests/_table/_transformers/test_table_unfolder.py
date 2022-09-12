@@ -17,11 +17,11 @@ class TestTableUnfolder(IsolatedAsyncioTestCase):
         initial_df = DataFrame({'A': range(1, 5), 'B': [10, 8, 6, 4]})
 
         table = Table(data=initial_df)
-        table.set_all_rows_tags([{'gender': 'M', 'age': '10'},
-                                 {'gender': 'F', 'age': '10'},
-                                 {'gender': 'F', 'age': '10'},
-                                 {'gender': 'M', 'age': '20'}])
-        table.set_all_columns_tags([{'test': 'ok'}, {'test': 'nok'}])
+        table.set_all_row_tags([{'gender': 'M', 'age': '10'},
+                                {'gender': 'F', 'age': '10'},
+                                {'gender': 'F', 'age': '10'},
+                                {'gender': 'M', 'age': '20'}])
+        table.set_all_column_tags([{'test': 'ok'}, {'test': 'nok'}])
 
         result = TableUnfolderHelper.unfold_rows_by_tags(table, ['gender'], 'column_name')
 
@@ -50,11 +50,11 @@ class TestTableUnfolder(IsolatedAsyncioTestCase):
         initial_df.index = ['a', 'b']
 
         table = Table(data=initial_df)
-        table.set_all_columns_tags([{'gender': 'M', 'age': '10'},
-                                    {'gender': 'F', 'age': '10'},
-                                    {'gender': 'F', 'age': '10'},
-                                    {'gender': 'M', 'age': '20'}])
-        table.set_all_rows_tags([{'test': 'ok'}, {'test': 'nok'}])
+        table.set_all_column_tags([{'gender': 'M', 'age': '10'},
+                                   {'gender': 'F', 'age': '10'},
+                                   {'gender': 'F', 'age': '10'},
+                                   {'gender': 'M', 'age': '20'}])
+        table.set_all_row_tags([{'test': 'ok'}, {'test': 'nok'}])
 
         result = TableUnfolderHelper.unfold_columns_by_tags(table, ['gender'], 'row_name')
 

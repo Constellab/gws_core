@@ -53,9 +53,9 @@ class TableAnnotator(Task):
         if params["axis"] == "row":
             table_ids: list = table.get_data().index.tolist()
             tags = [unsorted_tags.get(ids, {}) for ids in table_ids]
-            table.set_all_rows_tags(tags)
+            table.set_all_row_tags(tags)
         else:
             table_ids: list = table.get_data().columns.tolist()
             tags = [unsorted_tags.get(ids, {}) for ids in table_ids]
-            table.set_all_columns_tags(tags)
+            table.set_all_column_tags(tags)
         return {"table": table}
