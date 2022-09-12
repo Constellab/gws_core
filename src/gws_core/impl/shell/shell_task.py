@@ -33,7 +33,7 @@ class ShellTask(Task):
         self.shell_proxy = self.init_shell_proxy()
 
         # attach this task to the proxy log the output into the progress bar
-        self.shell_proxy.attach_task(self)
+        self.shell_proxy.attach_progress_bar(self._progress_bar_)
 
     def init_shell_proxy(self) -> ShellProxy:
         """

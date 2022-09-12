@@ -6,7 +6,8 @@
 from abc import abstractmethod
 from typing import List
 
-from gws_core.task.task import Task
+from gws_core.progress_bar.progress_bar import (ProgressBar,
+                                                ProgressBarMessageWithType)
 
 from .dispatched_message import DispatchedMessage
 
@@ -14,34 +15,32 @@ from .dispatched_message import DispatchedMessage
 class MessageObserver:
 
     @abstractmethod
-    def update(self, message: DispatchedMessage) -> None:
+    def update(self, messages: List[DispatchedMessage]) -> None:
         """Method called when a message is dispatched"""
 
 
-class TaskProgressMessageObserver(MessageObserver):
-    """Observer to log dispatched message to a task progress bar
+class ProgressBarMessageObserver(MessageObserver):
+    """Observer to log dispatched message to a progress bar
 
     :param MessageObserver: _description_
     :type MessageObserver: _type_
     """
 
-    task: Task
+    progress_bar: ProgressBar
 
-    def __init__(self, task: Task):
+    def __init__(self, progress_bar: ProgressBar):
         super().__init__()
-        self.task = task
+        self.progress_bar = progress_bar
 
-    def update(self, message: DispatchedMessage) -> None:
-        if message.status == 'SUCCESS':
-            self.task.log_success_message(message.message)
-        elif message.status == 'ERROR':
-            self.task.log_error_message(message.message)
-        elif message.status == 'WARNING':
-            self.task.log_warning_message(message.message)
-        elif message.status == 'INFO':
-            self.task.log_info_message(message.message)
-        elif message.status == 'PROGRESS':
-            self.task.update_progress_value(message.progress, message.message)
+    def update(self, messages: List[DispatchedMessage]) -> None:
+
+        # convert message to ProgressBarMessageWithType
+        progress_bar_messages: List[ProgressBarMessageWithType] = [
+            {'message': message.message, 'type': message.status, 'progress': message.progress}
+            for message in messages
+        ]
+
+        self.progress_bar.add_messages(progress_bar_messages)
 
 
 class BasicMessageObserver(MessageObserver):
@@ -52,5 +51,5 @@ class BasicMessageObserver(MessageObserver):
         super().__init__()
         self.messages = []
 
-    def update(self, message: DispatchedMessage) -> None:
-        self.messages.append(message)
+    def update(self, messages: List[DispatchedMessage]) -> None:
+        self.messages.extend(messages)

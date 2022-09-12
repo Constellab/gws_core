@@ -37,9 +37,6 @@ class BaseTestCase(IsolatedAsyncioTestCase):
             cls.init_before_test()
         cls._class_setted_up = True
 
-        # remove the delay from the progress bar to avoid problem during tests
-        ProgressBar._MIN_ALLOWED_DELTA_TIME = 0
-
     @classmethod
     def tearDownClass(cls):
         if cls._class_teared_down:

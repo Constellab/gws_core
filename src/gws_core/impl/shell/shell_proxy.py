@@ -12,7 +12,7 @@ from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import MessageObserver
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.task.task import Task
+from gws_core.progress_bar.progress_bar import ProgressBar
 
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -180,13 +180,10 @@ class ShellProxy():
     def clean_working_dir(self):
         FileHelper.delete_dir(self.working_dir)
 
-    def attach_task(self, task: Task) -> None:
-        """Attach a task to the shell proxy. The logs of the proxy will be dispatch to the task logs
-
-        :param task: _description_
-        :type task: Task
+    def attach_progress_bar(self, progress_bar: ProgressBar) -> None:
+        """Attach a progress_bar to the shell proxy. The logs of the proxy will be dispatch to the progress_bar logs
         """
-        self._message_dispatcher.attach_task(task)
+        self._message_dispatcher.attach_progress_bar(progress_bar)
 
     def attach_observer(self, observer: MessageObserver) -> None:
         """ Attach a custom observer to the shell proxy. The logs of the proxy will be dispatch to the observer"""

@@ -6,11 +6,9 @@
 import time
 from datetime import datetime
 from enum import Enum
-from threading import Timer
 from typing import List, TypedDict, final
 
 from fastapi.encoders import jsonable_encoder
-from gws_core.core.utils.date_helper import DateHelper
 from peewee import CharField
 from starlette_context import context
 
@@ -29,6 +27,12 @@ class ProgressBarMessageType(str, Enum):
     PROGRESS = "PROGRESS"
 
 
+class ProgressBarMessageWithType(TypedDict):
+    type: ProgressBarMessageType
+    message: str
+    progress: float
+
+
 class ProgressBarMessage(TypedDict):
     type: ProgressBarMessageType
     text: str
@@ -45,16 +49,11 @@ class ProgressBar(Model):
     process_id = CharField(null=True, index=True)
     process_typing_name = CharField(null=True)
 
-    # time to limite the saving of the progress bar and update of the progress bar
-    _MIN_ALLOWED_DELTA_TIME = 1.0
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0
 
     _table_name = "gws_process_progress_bar"
     _max_message_stack_length = 64
-
-    # store the timer to prevent to save the progress bar too often
-    _save_timer: Timer = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -115,6 +114,21 @@ class ProgressBar(Model):
         self.add_message(message, ProgressBarMessageType.WARNING)
 
     def add_message(self, message: str, type_: ProgressBarMessageType = ProgressBarMessageType.INFO):
+        self._add_message(message, type_)
+
+        self.save()
+
+    def add_messages(self, messages: List[ProgressBarMessageWithType]) -> None:
+        for message in messages:
+            if message["type"] == ProgressBarMessageType.PROGRESS:
+                self._update_progress(value=message["progress"], message=message["message"])
+            else:
+                self._add_message(message["message"], message["type"])
+
+        # save only once at the end
+        self.save()
+
+    def _add_message(self, message: str, type_: ProgressBarMessageType = ProgressBarMessageType.INFO):
         dtime = jsonable_encoder(datetime.now())
 
         progress_bar_message: ProgressBarMessage = {
@@ -126,28 +140,6 @@ class ProgressBar(Model):
         if len(self.data["messages"]) > self._max_message_stack_length:
             self.data["messages"].pop(0)
         self._log_message(message, type_)
-
-        self._mark_for_save()
-
-    def _mark_for_save(self) -> None:
-        # if a timer is running, wait for it to save the progress bar
-        if self._save_timer:
-            return
-
-        if not self._is_saved or (
-                DateHelper.now_utc() - self.last_modified_at).total_seconds() >= self._MIN_ALLOWED_DELTA_TIME:
-            self.save()
-        else:
-            # call the save method in x seconds
-            self._save_timer = Timer(self._MIN_ALLOWED_DELTA_TIME, self.save)
-            self._save_timer.start()
-
-    def save(self, *args, **kwargs) -> 'Model':
-        # if there is a timer, stop it and clean the variable
-        if self._save_timer:
-            self._save_timer.cancel()
-            self._save_timer = None
-        return super().save(*args, **kwargs)
 
     def start(self, max_value: float = 100.0):
         if max_value <= 0.0:
@@ -181,19 +173,20 @@ class ProgressBar(Model):
         """
         Increment the progress-bar value and log a progress message
         """
+        self._update_progress(value, message)
+        self.save()
+
+    def _update_progress(self, value: float, message: str) -> None:
+        """
+        Increment the progress-bar value and log a progress message
+        """
 
         # check if we update the progres
-        current_time = time.perf_counter()
-        delta_time = current_time - self.data["current_time"]
-        if delta_time < self._MIN_ALLOWED_DELTA_TIME and value < self.get_max_value():
-            return
         value = self._update_progress_value(value)
         if message:
             #perc = value/self.get_max_value()
             perc = value
-            self.add_message("{:1.1f}%: {}".format(perc, message), ProgressBarMessageType.PROGRESS)
-        else:
-            self._mark_for_save()
+            self._add_message("{:1.1f}%: {}".format(perc, message), ProgressBarMessageType.PROGRESS)
 
     @property
     def messages(self) -> List[ProgressBarMessage]:

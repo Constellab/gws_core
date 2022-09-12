@@ -39,7 +39,7 @@ from .core.classes.observer.message_dispatcher import \
 from .core.classes.observer.message_observer import \
     MessageObserver as MessageObserver
 from .core.classes.observer.message_observer import \
-    TaskProgressMessageObserver as TaskProgressMessageObserver
+    ProgressBarMessageObserver as ProgressBarMessageObserver
 # Core > Classes
 from .core.classes.paginator import Paginator as Paginator
 from .core.classes.paginator import PaginatorDict as PaginatorDict

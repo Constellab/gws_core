@@ -6,6 +6,7 @@
 from abc import abstractmethod
 from typing import Literal, Optional, Type, TypedDict, final
 
+from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.model.typing_register_decorator import typing_registrator
 
 from ..config.config_types import ConfigParams, ConfigSpecs
@@ -43,6 +44,8 @@ class Task(Process):
     # Current status of the task, do not update
     _status_: Literal['CHECK_BEFORE_RUN', 'RUN', 'RUN_AFTER_TASK']
 
+    message_dispatcher: MessageDispatcher
+
     def __init__(self):
         """
         Constructor
@@ -56,6 +59,7 @@ class Task(Process):
                 f"The task {self.full_classname()} is not decorated with @task_decorator, it can't be instantiate. Please decorate the task class with @task_decorator")
         self._progress_bar_ = None
         self._status_ = None
+        self.message_dispatcher = MessageDispatcher()
 
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         """
@@ -135,6 +139,10 @@ class Task(Process):
     @final
     def log_warning_message(self, message: str):
         self.log_message(message, ProgressBarMessageType.WARNING)
+
+    @final
+    def attach_progress_bar(self, progress_bar: ProgressBar) -> None:
+        self.message_dispatcher.attach_progress_bar(progress_bar)
 
     @final
     @classmethod

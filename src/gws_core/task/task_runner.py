@@ -71,7 +71,15 @@ class TaskRunner():
         task: Task = self._get_task_instance()
         task._status_ = 'CHECK_BEFORE_RUN'
 
-        return task.check_before_run(config_params, inputs)
+        result = None
+        try:
+            result = task.check_before_run(config_params, inputs)
+        except Exception as exception:
+            task.message_dispatcher.dispatched_waiting_messages()
+            raise exception
+
+        task.message_dispatcher.dispatched_waiting_messages()
+        return result
 
     async def run(self) -> TaskOutputs:
         """This method, checks the config, inputs and then run the task
@@ -84,15 +92,27 @@ class TaskRunner():
         task: Task = self._get_task_instance()
         task._status_ = 'RUN'
 
-        task_outputs: TaskOutputs = await task.run(config_params, inputs)
+        try:
+            task_outputs: TaskOutputs = await task.run(config_params, inputs)
+        except Exception as exception:
+            task.message_dispatcher.dispatched_waiting_messages()
+            raise exception
 
+        # dispatch all the waiting message before ending the task
+        task.message_dispatcher.dispatched_waiting_messages()
         return self._check_outputs(task_outputs)
 
     async def run_after_task(self) -> None:
         task: Task = self._get_task_instance()
         task._status_ = 'RUN_AFTER_TASK'
 
-        await task.run_after_task()
+        try:
+            await task.run_after_task()
+        except Exception as exception:
+            task.message_dispatcher.dispatched_waiting_messages()
+            raise exception
+
+        task.message_dispatcher.dispatched_waiting_messages()
 
     def set_param(self, param_name: str, config_param: ParamValue) -> None:
         self._params[param_name] = config_param
@@ -114,7 +134,7 @@ class TaskRunner():
             if self._progress_bar is None:
                 self._progress_bar = ProgressBar()
 
-            self._task._progress_bar_ = self._progress_bar
+            self._task.attach_progress_bar(self._progress_bar)
 
         return self._task
 

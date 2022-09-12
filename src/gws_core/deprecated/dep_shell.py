@@ -133,7 +133,7 @@ class Shell(Task):
             cmd = self._format_command(cmd)
 
             # attach this task to the proxy log the output into the progress bar
-            shell_proxy.attach_task(self)
+            shell_proxy.attach_progress_bar(self._progress_bar_)
 
             # run the command
             shell_proxy.run(cmd, user_env, self._shell_mode)
