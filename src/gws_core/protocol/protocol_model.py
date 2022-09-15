@@ -811,7 +811,7 @@ class ProtocolModel(ProcessModel):
         }
 
         for conn in self.connectors:
-            graph['links'].append(conn.export_config())
+            graph['links'].append(conn.to_json())
         for key, process in self.processes.items():
             graph["nodes"][key] = process.export_config()
         for key, interface in self.interfaces.items():
