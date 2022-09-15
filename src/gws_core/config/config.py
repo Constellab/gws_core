@@ -144,8 +144,8 @@ class Config(ModelWithUser):
     def _clear_values(self):
         self.data["values"] = {}
 
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        data: Dict = super().data_to_json(deep=deep, **kwargs)
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        json_ = super().to_json(deep=deep, **kwargs)
 
         # return all the spec but the private specs
         specs: ConfigSpecs = self.get_specs()
@@ -155,8 +155,9 @@ class Config(ModelWithUser):
                 continue
             json_specs[key] = spec.to_json()
 
-        data["specs"] = json_specs
-        return data
+        json_["specs"] = json_specs
+        json_["values"] = self.get_values()
+        return json_
 
     def export_config(self) -> dict:
         """
