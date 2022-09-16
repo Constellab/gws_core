@@ -81,6 +81,6 @@ class TestConfig(BaseTestCase):
         config: Config = Config()
         config.set_specs({'float_1': float_1, 'float_2': float_2})
 
-        json_ = config.data_to_json()
-        self.assertTrue('float_1' in json_['specs'])
-        self.assertFalse('float_2' in json_['specs'])
+        json_specs = config.to_json()['specs']
+        self.assertTrue('float_1' in json_specs)
+        self.assertFalse('float_2' in json_specs)

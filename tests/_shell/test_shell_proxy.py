@@ -7,6 +7,7 @@ from os import path
 from unittest import IsolatedAsyncioTestCase
 
 from gws_core import ShellProxy
+from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import \
     BasicMessageObserver
 
@@ -29,7 +30,9 @@ class TestShellProxy(IsolatedAsyncioTestCase):
         shell_proxy.clean_working_dir()
 
     async def test_notified(self):
-        shell_proxy = ShellProxy()
+        # disable the time buffer for message so they are sent immediately
+        dispatcher = MessageDispatcher(interval_time_dispatched_buffer=0)
+        shell_proxy = ShellProxy(message_dispatcher=dispatcher)
 
         message_observer = BasicMessageObserver()
         shell_proxy.attach_observer(message_observer)

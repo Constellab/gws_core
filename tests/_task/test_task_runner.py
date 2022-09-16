@@ -15,10 +15,11 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 
 
+# test_task_runner
 @task_decorator("TaskRunnerProgress")
 class TaskRunnerProgress(Task):
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        self.log_message('Hello')
+        self.log_info_message('Hello')
         self.update_progress_value(50, 'Hello 50%')
 
 
