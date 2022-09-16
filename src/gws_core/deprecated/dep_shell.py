@@ -112,7 +112,7 @@ class Shell(Task):
 
         outputs: TaskOutputs
 
-        shell_proxy = ShellProxy(self.working_dir)
+        shell_proxy = ShellProxy(self.working_dir, message_dispatcher=self.message_dispatcher)
 
         try:
             user_cmd = self.build_command(params, inputs)
@@ -131,9 +131,6 @@ class Shell(Task):
 
             cmd = [str(c) for c in user_cmd]
             cmd = self._format_command(cmd)
-
-            # attach this task to the proxy log the output into the progress bar
-            shell_proxy.attach_progress_bar(self._progress_bar_)
 
             # run the command
             shell_proxy.run(cmd, user_env, self._shell_mode)

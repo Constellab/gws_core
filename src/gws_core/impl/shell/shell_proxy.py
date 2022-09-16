@@ -193,5 +193,5 @@ class ShellProxy():
         """ Attach a custom observer to the shell proxy. The logs of the proxy will be dispatch to the observer"""
         self._message_dispatcher.attach(observer)
 
-    def dispatch_waiting_message(self) -> None:
+    def dispatch_waiting_messages(self) -> None:
         self._message_dispatcher.dispatch_waiting_messages()

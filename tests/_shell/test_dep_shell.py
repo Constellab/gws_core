@@ -42,6 +42,8 @@ class Echo(Shell):
     _shell_mode = True
 
     def build_command(self, params: ConfigParams, __: TaskInputs) -> list:
+        # no buffer so all message are directly dispatched
+        self.message_dispatcher.interval_time_dispatched_buffer = 0
         name = params.get_value("name")
         return [f"echo \"{name}\""]
 
