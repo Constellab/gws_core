@@ -75,10 +75,10 @@ class TaskRunner():
         try:
             result = task.check_before_run(config_params, inputs)
         except Exception as exception:
-            task.message_dispatcher.dispatched_waiting_messages()
+            task.dispatch_waiting_messages()
             raise exception
 
-        task.message_dispatcher.dispatched_waiting_messages()
+        task.dispatch_waiting_messages()
         return result
 
     async def run(self) -> TaskOutputs:
@@ -95,11 +95,11 @@ class TaskRunner():
         try:
             task_outputs: TaskOutputs = await task.run(config_params, inputs)
         except Exception as exception:
-            task.message_dispatcher.dispatched_waiting_messages()
+            task.dispatch_waiting_messages()
             raise exception
 
         # dispatch all the waiting message before ending the task
-        task.message_dispatcher.dispatched_waiting_messages()
+        task.dispatch_waiting_messages()
         return self._check_outputs(task_outputs)
 
     async def run_after_task(self) -> None:
@@ -109,10 +109,10 @@ class TaskRunner():
         try:
             await task.run_after_task()
         except Exception as exception:
-            task.message_dispatcher.dispatched_waiting_messages()
+            task.dispatch_waiting_messages()
             raise exception
 
-        task.message_dispatcher.dispatched_waiting_messages()
+        task.dispatch_waiting_messages()
 
     def set_param(self, param_name: str, config_param: ParamValue) -> None:
         self._params[param_name] = config_param

@@ -106,6 +106,12 @@ class MessageDispatcher:
         Trigger a message in each subscriber.
         """
 
+        # if there is no dispatched time, then directly dispatch the message
+        if self.interval_time_dispatched_buffer == 0:
+            self._waiting_messages.append(message)
+            self.dispatch_waiting_messages()
+            return
+
         if self._last_notify_time is None:
             self._last_notify_time = time.perf_counter()
 
@@ -133,10 +139,10 @@ class MessageDispatcher:
 
     def _lauch_dispatch_timer(self):
         if self._dispatch_timer is None:
-            self._dispatch_timer = Timer(self.interval_time_dispatched_buffer, self.dispatched_waiting_messages)
+            self._dispatch_timer = Timer(self.interval_time_dispatched_buffer, self.dispatch_waiting_messages)
             self._dispatch_timer.start()
 
-    def dispatched_waiting_messages(self):
+    def dispatch_waiting_messages(self):
         # if there is a timer, stop it and clean the variable
         if self._dispatch_timer:
             self._dispatch_timer.cancel()

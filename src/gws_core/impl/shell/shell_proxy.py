@@ -30,7 +30,7 @@ class ShellProxy():
 
     _message_dispatcher: MessageDispatcher = None
 
-    def __init__(self, working_dir: str = None):
+    def __init__(self, working_dir: str = None, message_dispatcher: MessageDispatcher = None):
         """_summary_
 
         :param working_dir: working directory for the shell (all command will be executed from this dir)
@@ -43,7 +43,11 @@ class ShellProxy():
             self.working_dir = working_dir
         else:
             self.working_dir = Settings.retrieve().make_temp_dir()
-        self._message_dispatcher = MessageDispatcher()
+
+        if message_dispatcher is not None:
+            self._message_dispatcher = message_dispatcher
+        else:
+            self._message_dispatcher = MessageDispatcher()
 
     def check_output(self, cmd: Union[list, str], env: dict = None, text: bool = True,
                      shell_mode: bool = False) -> Any:
@@ -188,3 +192,6 @@ class ShellProxy():
     def attach_observer(self, observer: MessageObserver) -> None:
         """ Attach a custom observer to the shell proxy. The logs of the proxy will be dispatch to the observer"""
         self._message_dispatcher.attach(observer)
+
+    def dispatch_waiting_message(self) -> None:
+        self._message_dispatcher.dispatch_waiting_messages()

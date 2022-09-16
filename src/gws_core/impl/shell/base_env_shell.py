@@ -8,6 +8,7 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import Any, Union, final
 
+from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -20,8 +21,8 @@ class BaseEnvShell(ShellProxy):
     env_file_path: str = None
 
     def __init__(self, env_dir_name: str, env_file_path: str,
-                 working_dir: str = None):
-        super().__init__(working_dir)
+                 working_dir: str = None, message_dispatcher: MessageDispatcher = None):
+        super().__init__(working_dir, message_dispatcher)
         self.env_dir_name = env_dir_name
         self.env_file_path = env_file_path
 

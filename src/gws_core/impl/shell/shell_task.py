@@ -8,6 +8,7 @@ from abc import abstractmethod
 from typing import final
 
 from ...config.config_types import ConfigParams
+from ...progress_bar.progress_bar import ProgressBar
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
@@ -32,15 +33,12 @@ class ShellTask(Task):
         super().__init__()
         self.shell_proxy = self.init_shell_proxy()
 
-        # attach this task to the proxy log the output into the progress bar
-        self.shell_proxy.attach_progress_bar(self._progress_bar_)
-
     def init_shell_proxy(self) -> ShellProxy:
         """
         Initialize the shell proxy
         """
 
-        return ShellProxy()
+        return ShellProxy(message_dispatcher=self.message_dispatcher)
 
     @final
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

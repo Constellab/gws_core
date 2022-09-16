@@ -145,6 +145,10 @@ class Task(Process):
         self.message_dispatcher.attach_progress_bar(progress_bar)
 
     @final
+    def dispatch_waiting_messages(self) -> None:
+        self.message_dispatcher.dispatch_waiting_messages()
+
+    @final
     @classmethod
     def get_input_specs(cls) -> InputSpecs:
         return cls.input_specs

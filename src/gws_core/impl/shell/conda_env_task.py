@@ -57,7 +57,8 @@ class CondaEnvTask(BaseEnvShellTask):
             raise Exception(f"The env_file_path property must be set in the task {self._typing_name}")
 
     def init_shell_proxy(self) -> ShellProxy:
-        return CondaShellProxy(self.get_env_dir_name(), self.env_file_path)
+        return CondaShellProxy(self.get_env_dir_name(), env_file_path=self.env_file_path,
+                               message_dispatcher=self.message_dispatcher)
 
     @abstractmethod
     async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: CondaShellProxy) -> TaskOutputs:

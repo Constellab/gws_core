@@ -55,6 +55,8 @@ class TestProcess(BaseTestCase):
 
             self.assertTrue(task.shell_proxy.env_is_installed())
             task.shell_proxy.uninstall_env()
+            # dispatched the message as the uninstall env notify a message
+            task.shell_proxy.dispatch_waiting_message()
             self.assertFalse(task.shell_proxy.env_is_installed())
         except Exception as exception:
             task: CondaEnvTaskTester = task_runner.get_task()
