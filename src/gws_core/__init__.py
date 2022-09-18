@@ -380,6 +380,8 @@ from .task.converter.exporter import ResourceExporter as ResourceExporter
 from .task.converter.exporter import exporter_decorator as exporter_decorator
 from .task.converter.importer import ResourceImporter as ResourceImporter
 from .task.converter.importer import importer_decorator as importer_decorator
+# Task > LiveTask
+from .task.live.live_task import LiveTask as LiveTask
 # Task
 from .task.plug import FIFO2 as FIFO2
 from .task.plug import Dispatch2 as Dispatch2
