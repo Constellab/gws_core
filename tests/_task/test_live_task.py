@@ -19,7 +19,7 @@ class TestLiveTask(BaseTestCase):
                     "df = DataFrame({'col1': [1,x], 'col2': [0,x+1]})",
                     "output = Table(data=df)",
                 ],
-                "params": "a=1; b=2"
+                "params": ["a=1", "b=2"]
             },
             task_type=LiveTask
         )

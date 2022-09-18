@@ -30,7 +30,7 @@ class LiveTask(Task):
     }
     config_specs: ConfigSpecs = {
         'code': ListParam(human_name="Code", short_description="The code text"),
-        'params': StrParam(optional=True, default_value='', human_name="Parameters", short_description="The parameters"),
+        'params': ListParam(optional=True, default_value=[], human_name="Parameters", short_description="The parameters"),
         'language': StrParam(allowed_values=['python'], default_value='python', human_name="Language", short_description="The code language"),
         'pip_packages': ListParam(optional=True, default_value=[], visibility=ListParam.PROTECTED_VISIBILITY, human_name="PIP packages", short_description="PIP packages"),
     }
@@ -38,20 +38,21 @@ class LiveTask(Task):
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
         language = params.get_value('language')
-        params_str = params.get_value('params')
+        params = params.get_value('params')
 
         # validate user input, params, code
 
         if language == "python":
             try:
                 # compute params
-                params_str = re.sub("\s*;\s*", "\n", params_str)
-                ctx = {}
-                exec(params_str, {}, ctx)
+                param_context = {}
+                if params:
+                    params_str = "\n".join(params)
+                    exec(params_str, {}, param_context)
 
                 # execute code
                 global_vars = globals()
-                local_vars = {'inputs': inputs, **ctx}
+                local_vars = {'inputs': inputs, **param_context}
                 code = "\n".join(code)
                 exec(code, global_vars, local_vars)
                 output = local_vars.get("output", None)
