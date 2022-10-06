@@ -108,20 +108,20 @@ class TableOperationHelper():
                 "The operation table must have at least 2 columns")
 
         # check operation_name_column
-        if operation_name_column is None:
+        if not operation_name_column:
             operation_name_column = 0
         else:
             if operation_name_column not in operation_df.columns:
                 raise Exception(
-                    f"The operation name column '{operation_name_column}' does not exist in the operation table")
+                    f"The operation name column '{operation_name_column}' does not exist in the operation table, please check your configuration")
 
         # check operation_column
-        if operation_calculations_column is None:
+        if not operation_calculations_column:
             operation_calculations_column = 1
         else:
             if operation_calculations_column not in operation_df.columns:
                 raise Exception(
-                    f"The operation operation column '{operation_calculations_column}' does not exist in the operation table")
+                    f"The operation operation column '{operation_calculations_column}' does not exist in the operation table, please check your configuration")
 
         for index, row in operation_df.iterrows():
             operation: str = str(row[operation_calculations_column])
