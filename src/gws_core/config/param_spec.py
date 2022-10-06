@@ -190,8 +190,8 @@ class ParamSpec(Generic[ParamSpecType]):
             return StrParam
         elif type_ == 'list':
             return ListParam
-        # elif type_ == 'dict':
-        #     return DictParam
+        elif type_ == 'dict':
+            return DictParam
         elif type_ == 'param_set':
             from .param_set import ParamSet
             return ParamSet

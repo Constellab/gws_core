@@ -14,6 +14,7 @@ from gws_core.impl.table.view.table_view import TableView
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_helper import ViewHelper
+from gws_core.resource.view.view_types import CallViewResult
 from gws_core.task.transformer.transformer_type import TransformerDict
 
 # List of chart callable on a Table
@@ -31,7 +32,7 @@ class ResourceTableService:
                                table_config_values: Dict[str, Any],
                                table_transformers: List[TransformerDict],
                                chart_type: TableChart,
-                               chart_config_values: Dict[str, Any]) -> Dict:
+                               chart_config_values: Dict[str, Any]) -> CallViewResult:
         """Method to call a chart on a table from the table view
         """
         resource_model: ResourceModel = ResourceService.get_resource_by_id(resource_id)
@@ -47,12 +48,17 @@ class ResourceTableService:
                 transformers=table_transformers, save_view_config=True)
 
         # otherwise, retrieve the table form the TableView
-        table: Table = await cls._get_table(resource_id, table_view_name, table_config_values, table_transformers)
+        table: Table = await cls._get_table(resource, table_view_name, table_config_values, table_transformers)
 
         view = await ResourceService.get_view_on_resource(table, view_name, chart_config_values, [])
 
         # call the view to dict
-        return ViewHelper.call_view_to_dict(view, chart_config_values)
+        view_dict = ViewHelper.call_view_to_dict(view, chart_config_values)
+        return {
+            "view": view_dict,
+            "resource_id": resource_model.id,
+            "view_config": None
+        }
 
     @classmethod
     async def _get_table(cls, resource: Resource, table_view_name: str,

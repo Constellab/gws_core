@@ -26,7 +26,7 @@ CONST_TASK_TYPING_NAME = "TASK.gws_core.Task"
 
 class CheckBeforeTaskResult(TypedDict, total=False):
     # If True, everything is ok
-    # If False the task will not be executed after this check it might be run latter if they are some SKippableIn inputs
+    # If False the task will not be executed after this check it might be run later if they are some SKippableIn inputs
     # If all the input values were provided and the check retuns False. the task will endup in error because it won't be run
     result: bool
 
@@ -86,7 +86,7 @@ class Task(Process):
     async def run_after_task(self) -> None:
         """
         This can be overwritten to perform action after the task run. This method is called after the
-        resource save. Temp object can be safely deleted here, the resources will still exist
+        resource save. This method is useful to delete temporary objects (like files) to clear the server after the task is run.
         """
 
     @final

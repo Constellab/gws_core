@@ -12,7 +12,7 @@ from .param_types import ParamSpecDict, ParamSpecVisibilty
 
 class ParamSet(ParamSpec[list]):
     """ ParamSet. Use to define a group of parameters that can be added multiple times. This will
-    provided a list of dictionary as values : List[Dict[str, Any]]
+    provid a list of dictionary as values : List[Dict[str, Any]]
 
     """
 

@@ -216,13 +216,15 @@ class InputSpec(IOSpec):
 
         :param resource_types: _description_
         :type resource_types: ResourceTypes
-        :param is_optional: _description_, defaults to False
+        :param is_optional: this input might not be connected to another task output and the task will still be executed.
+                      If the input is connected, the system will wait for the input to be provided before running the task.
+                      Also tells that None value is allowed as input.  , defaults to False
         :type is_optional: bool, optional
-        :param is_skippable: When true, this tells the system that the input is skippable. This mean that the task can be called
-                  even if this input was connected and the value no provided.
+        :param is_skippable (for expert): When true, this tells the system that the input is skippable. This mean that the task can be called
+                  even if this input is connected and the value not provided.
                   With this you can run your task even if the input value was not received
                   //!\\ WARNING If an input is skipped, the input is not set, the inputs['name'] will raise a KeyError exception (different from None)
-                  Has no effect when there is only one input, defaults to False
+                  Same as is_optional=True if there is only one input, defaults to False
         :type is_skippable: bool, optional
         :param human_name: _description_, defaults to None
         :type human_name: Optional[str], optional
@@ -286,7 +288,7 @@ class OutputSpec(IOSpec):
 
         :param resource_types: _description_
         :type resource_types: ResourceTypes
-        :param is_optional: _description_, defaults to False
+        :param is_optional: tell that this output may return None or not being provided, defaults to False
         :type is_optional: bool, optional
         :param sub_class: When true, it tells that the resource_types
                 are compatible with any child class of the provided resource type, defaults to False

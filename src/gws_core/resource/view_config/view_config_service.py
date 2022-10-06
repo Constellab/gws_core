@@ -78,7 +78,12 @@ class ViewConfigService():
             if view_config_db is None:
                 view_config_db = view_config.save()
             else:
-                # otherwise, refresh last modified date
+                # otherwise, refresh title, flagged and last modified date
+                view_config_db.title = view_config.title
+
+                # update the flagged status only if the view config is flagged
+                if view_config.flagged:
+                    view_config_db.flagged = view_config.flagged
                 view_config_db = view_config_db.save()
 
             # limit the length without blocking the thread
