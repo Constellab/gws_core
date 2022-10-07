@@ -354,7 +354,7 @@ from .resource.r_field.primitive_r_field import StrRField as StrRField
 from .resource.r_field.primitive_r_field import UUIDRField as UUIDRField
 from .resource.r_field.r_field import RField as RField
 from .resource.r_field.serializable_r_field import \
-    SerializableObject as SerializableObject
+    SerializableObjectJson as SerializableObjectJson
 from .resource.r_field.serializable_r_field import \
     SerializableRField as SerializableRField
 from .resource.resource import Resource as Resource

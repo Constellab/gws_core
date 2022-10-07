@@ -351,3 +351,14 @@ class Migration0316(BrickMigration):
         migrator.alter_column_type(Experiment, Experiment.tags.column_name, CharField(null=True, max_length=255))
         migrator.alter_column_type(ResourceModel, ResourceModel.tags.column_name, CharField(null=True, max_length=255))
         migrator.migrate()
+
+
+@brick_migration('0.3.18', short_description='Add layout to ProtocolModel')
+class Migration0318(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(ProtocolModel.get_db())
+        migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.layout)
+        migrator.migrate()

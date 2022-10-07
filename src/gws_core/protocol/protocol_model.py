@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Set, Union
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
+from ..core.model.db_field import SerializableDBField
 from ..io.connector import Connector
 from ..io.io import Inputs, Outputs
 from ..io.ioface import Interface, Outerface
@@ -18,6 +19,7 @@ from ..process.protocol_sub_process_builder import (
     ProtocolSubProcessBuilder, SubProcessBuilderReadFromDb)
 from ..user.activity import Activity
 from ..user.user import User
+from .protocol_layout import ProtocolLayout
 
 
 class ProtocolModel(ProcessModel):
@@ -29,6 +31,8 @@ class ProtocolModel(ProcessModel):
     It cannot be executed and is used to efficiently instanciate new similar protocols instance.
     :type is_template: `bool`
     """
+
+    layout: ProtocolLayout = SerializableDBField(object_type=ProtocolLayout, null=True)
 
     # For lazy loading, True when processes, interfazces and outerfaces are loaded
     # True by default when creating a new protoco
@@ -56,7 +60,6 @@ class ProtocolModel(ProcessModel):
         """Save the protocol, its progress bar, its config and all its processes
         """
         self.config.save()
-        # raise Exception("Bonjourrrr")
         self.progress_bar.save()
         self.save(update_graph=True)
 
@@ -330,6 +333,9 @@ class ProtocolModel(ProcessModel):
         self._delete_connectors_by_process(self.processes[name])
         self.remove_interfaces_by_process_name(name)
         self.remove_outerfaces_by_process_name(name)
+
+        if self.layout:
+            self.layout.remove_process(name)
         del self._processes[name]
 
     def _check_instance_name(self, instance_name: str) -> None:
@@ -800,6 +806,7 @@ class ProtocolModel(ProcessModel):
 
         if deep:
             _json["graph"] = self.dumps_data(minimize=False)
+            _json["layout"] = self.layout.to_json() if self.layout else {}
 
         return _json
 

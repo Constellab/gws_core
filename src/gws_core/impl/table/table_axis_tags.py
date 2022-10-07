@@ -7,11 +7,11 @@ from copy import deepcopy
 from typing import Dict, List
 
 from gws_core.core.utils.utils import Utils
-from gws_core.resource.r_field.serializable_r_field import SerializableObject
+from gws_core.resource.r_field.serializable_r_field import SerializableObjectJson
 from gws_core.tag.tag_helper import TagHelper
 
 
-class TableAxisTags(SerializableObject):
+class TableAxisTags(SerializableObjectJson):
 
     _tags: List[Dict[str, str]] = None
 

@@ -193,3 +193,21 @@ async def add_viewer_to_process_ouput(id: str,
                                       _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return ProtocolService.add_viewer_to_process_output(
         protocol_id=id, process_name=process_name, output_port_name=output_port_name).to_json()
+
+
+########################## LAYOUT #####################
+@core_app.put("/protocol/{id}/layout", tags=["Protocol"],
+              summary="Save the layout of a protocol")
+async def save_layout(id: str,
+                      layout_dict: dict,
+                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.save_layout(id, layout_dict)
+
+
+@core_app.put("/protocol/{id}/layout/{process_name}", tags=["Protocol"],
+              summary="Save the layout of 1 process in a protocol")
+async def save_process_layout(id: str,
+                              process_name: str,
+                              layout_dict: dict,
+                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.save_process_layout(id, process_name, layout_dict)

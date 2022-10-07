@@ -6,7 +6,7 @@
 
 from typing import Dict, List, Optional, Union
 
-from .r_field.serializable_r_field import SerializableObject
+from .r_field.serializable_r_field import SerializableObjectJson
 
 
 class TechnicalInfo:
@@ -34,7 +34,7 @@ class TechnicalInfo:
             short_description=json_data.get("short_description"))
 
 
-class TechnicalInfoDict(SerializableObject):
+class TechnicalInfoDict(SerializableObjectJson):
     _technical_info: Dict[str, TechnicalInfo]
 
     def __init__(self):

@@ -2,13 +2,13 @@
 
 from gws_core import (BaseTestCase, BoolRField, DataFrameRField, DictRField,
                       FloatRField, IntRField, KVStore, ListRField,
-                      ResourceModel, ResourceRField, Robot, SerializableObject,
+                      ResourceModel, ResourceRField, Robot, SerializableObjectJson,
                       SerializableRField, StrRField)
 from gws_core.resource.resource_model import ResourceOrigin
 from pandas.core.frame import DataFrame
 
 
-class TestJsonableObject(SerializableObject):
+class TestJsonableObject(SerializableObjectJson):
     name: str
 
     def __init__(self, name: str):

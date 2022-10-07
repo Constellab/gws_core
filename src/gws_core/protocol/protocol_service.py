@@ -5,6 +5,8 @@
 
 from typing import List, Tuple, Type
 
+from gws_core.protocol.protocol_layout import (ProcessLayout, ProtocolLayout,
+                                               ProtocolLayoutDict)
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
@@ -436,3 +438,20 @@ class ProtocolService(BaseService):
         return cls.add_process_connected_to_output(
             protocol_id, Viewer._typing_name, process_name, output_port_name,
             viewer_config)
+
+    ########################## LAYOUT #####################
+
+    @classmethod
+    def save_layout(cls, protocol_id: str, layout_dict: ProtocolLayoutDict) -> ProtocolLayoutDict:
+        layout = ProtocolLayout(layout_dict)
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        protocol_model.layout = layout
+        return protocol_model.save()
+
+    @classmethod
+    def save_process_layout(cls, protocol_id: str, process_instance_name: str, layout: ProcessLayout) -> None:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        protocol_model.layout.set_process(process_instance_name, layout)
+        return protocol_model.save()
