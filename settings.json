@@ -17,7 +17,9 @@
         "pip":[
             {
                 "source": "https://pypi.python.org/simple",
-                "packages":[]
+                "packages":[
+                  {"name": "openpyxl", "version": "3.0.10"}
+                ]
             },
             {
                 "source": "https://$GWS_PIP_PACKAGE_TOKEN@gitlab.com/api/v4/projects/27171024/packages/pypi",
