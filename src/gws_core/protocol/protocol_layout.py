@@ -16,6 +16,8 @@ class ProcessLayout(TypedDict):
 
 class ProtocolLayoutDict(TypedDict):
     process_layouts: Dict[str, ProcessLayout]
+    interface_layouts: Dict[str, ProcessLayout]
+    outerface_layouts: Dict[str, ProcessLayout]
 
 
 class ProtocolLayout(SerializableObject):
@@ -24,20 +26,28 @@ class ProtocolLayout(SerializableObject):
 
     # layout of the processes, key = process instance name
     process_layouts: Dict[str, ProcessLayout]
+    interface_layouts: Dict[str, ProcessLayout]
+    outerface_layouts: Dict[str, ProcessLayout]
 
     def __init__(self, json_: ProtocolLayoutDict = None) -> None:
         super().__init__()
 
         if json_:
-            self.process_layouts = json_['process_layouts']
+            self.process_layouts = json_.get('process_layouts', {})
+            self.interface_layouts = json_.get('interface_layouts', {})
+            self.outerface_layouts = json_.get('outerface_layouts', {})
         else:
             self.process_layouts = {}
+            self.interface_layouts = {}
+            self.outerface_layouts = {}
 
     def serialize(self) -> str:
         return dumps(self.to_json())
 
     def to_json(self) -> ProtocolLayoutDict:
-        return {'process_layouts': self.process_layouts}
+        return {'process_layouts': self.process_layouts,
+                'interface_layouts': self.interface_layouts,
+                'outerface_layouts': self.outerface_layouts}
 
     def set_process(self, instance_name: str, layout: ProcessLayout) -> None:
         self.process_layouts[instance_name] = layout
@@ -45,6 +55,20 @@ class ProtocolLayout(SerializableObject):
     def remove_process(self, instance_name: str) -> None:
         if instance_name in self.process_layouts:
             del self.process_layouts[instance_name]
+
+    def set_interface(self, interface_name: str,  layout: ProcessLayout) -> None:
+        self.interface_layouts[interface_name] = layout
+
+    def remove_interface(self, interface_name: str) -> None:
+        if interface_name in self.interface_layouts:
+            del self.process_layouts[interface_name]
+
+    def set_outerface(self, outerface_name: str,  layout: ProcessLayout) -> None:
+        self.outerface_layouts[outerface_name] = layout
+
+    def remove_outerface(self, outerface_name: str) -> None:
+        if outerface_name in self.outerface_layouts:
+            del self.process_layouts[outerface_name]
 
     def get_process(self, instance_name: str) -> ProcessLayout:
         if instance_name not in self.process_layouts:

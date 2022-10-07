@@ -200,14 +200,32 @@ async def add_viewer_to_process_ouput(id: str,
               summary="Save the layout of a protocol")
 async def save_layout(id: str,
                       layout_dict: dict,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.save_layout(id, layout_dict)
+                      _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    ProtocolService.save_layout(id, layout_dict)
 
 
-@core_app.put("/protocol/{id}/layout/{process_name}", tags=["Protocol"],
+@core_app.put("/protocol/{id}/layout/process/{process_name}", tags=["Protocol"],
               summary="Save the layout of 1 process in a protocol")
 async def save_process_layout(id: str,
                               process_name: str,
                               layout_dict: dict,
-                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.save_process_layout(id, process_name, layout_dict)
+                              _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    ProtocolService.save_process_layout(id, process_name, layout_dict)
+
+
+@core_app.put("/protocol/{id}/layout/interface/{interface_name}", tags=["Protocol"],
+              summary="Save the layout of 1 interface in a protocol")
+async def save_interface_layout(id: str,
+                                interface_name: str,
+                                layout_dict: dict,
+                                _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    ProtocolService.save_interface_layout(id, interface_name, layout_dict)
+
+
+@core_app.put("/protocol/{id}/layout/outerface/{outerface_name}", tags=["Protocol"],
+              summary="Save the layout of 1 outerface in a protocol")
+async def save_outerface_layout(id: str,
+                                outerface_name: str,
+                                layout_dict: dict,
+                                _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    ProtocolService.save_outerface_layout(id, outerface_name, layout_dict)

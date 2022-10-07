@@ -442,16 +442,30 @@ class ProtocolService(BaseService):
     ########################## LAYOUT #####################
 
     @classmethod
-    def save_layout(cls, protocol_id: str, layout_dict: ProtocolLayoutDict) -> ProtocolLayoutDict:
+    def save_layout(cls, protocol_id: str, layout_dict: ProtocolLayoutDict) -> None:
         layout = ProtocolLayout(layout_dict)
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
         protocol_model.layout = layout
-        return protocol_model.save()
+        protocol_model.save()
 
     @classmethod
     def save_process_layout(cls, protocol_id: str, process_instance_name: str, layout: ProcessLayout) -> None:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
         protocol_model.layout.set_process(process_instance_name, layout)
-        return protocol_model.save()
+        protocol_model.save()
+
+    @classmethod
+    def save_interface_layout(cls, protocol_id: str, interface_name: str, layout: ProcessLayout) -> None:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        protocol_model.layout.set_interface(interface_name, layout)
+        protocol_model.save()
+
+    @classmethod
+    def save_outerface_layout(cls, protocol_id: str, outerface_name: str, layout: ProcessLayout) -> None:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        protocol_model.layout.set_outerface(outerface_name, layout)
+        protocol_model.save()

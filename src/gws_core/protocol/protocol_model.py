@@ -5,7 +5,7 @@
 
 import asyncio
 import json
-from typing import Dict, List, Optional, Set, Union
+from typing import Dict, List, Literal, Optional, Set, Union
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -171,7 +171,7 @@ class ProtocolModel(ProcessModel):
     def refresh_graph_from_dump(self) -> None:
         """Refresh the graph json obnject inside the data from the dump method
         """
-        self.data["graph"] = self.dumps_data(minimize=True)
+        self.data["graph"] = self.dumps_graph(mode='minimize')
 
     # -- G --
 
@@ -653,6 +653,9 @@ class ProtocolModel(ProcessModel):
                 raise BadRequestException(
                     f"The interface '{name}' is connected in the parent protocol '{self.parent_protocol.get_instance_name_context()}', please remove the link connected to this interface in the parent protocol")
 
+        if self.layout:
+            self.layout.remove_interface(name)
+
     def port_is_interface(self, name: str, port: Port) -> bool:
         if not name in self.interfaces:
             return False
@@ -765,9 +768,12 @@ class ProtocolModel(ProcessModel):
                 raise BadRequestException(
                     f"The outerface '{name}' is connected in the parent protocol '{self.parent_protocol.get_instance_name_context()}', please remove the link connected to this outerface in the parent protocol")
 
+        if self.layout:
+            self.layout.remove_outerface(name)
+
     ############################### JSON #################################
 
-    def dumps_data(self, minimize: bool) -> dict:
+    def dumps_graph(self, mode: Literal['full', 'minimize', 'config']) -> dict:
         """
         Dumps the JSON graph representing the protocol.
 
@@ -781,19 +787,24 @@ class ProtocolModel(ProcessModel):
         }
 
         for conn in self.connectors:
-            link = conn.to_json()
-            graph['links'].append(link)
+            graph['links'].append(conn.to_json())
         for key, process in self.processes.items():
             process_json: dict
-            if minimize:
+            if mode == 'minimize':
                 process_json = process.get_minimum_json()
-            else:
+            elif mode == 'full':
                 process_json = process.to_json(deep=False)
+            else:
+                process_json = process.export_config()
+
             graph["nodes"][key] = process_json
         for key, interface in self.interfaces.items():
             graph['interfaces'][key] = interface.to_json()
         for key, outerface in self.outerfaces.items():
             graph['outerfaces'][key] = outerface.to_json()
+
+        graph["layout"] = self.layout.to_json() if self.layout else {}
+
         return graph
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
@@ -805,7 +816,7 @@ class ProtocolModel(ProcessModel):
         _json: dict = super().data_to_json(deep=deep)
 
         if deep:
-            _json["graph"] = self.dumps_data(minimize=False)
+            _json["graph"] = self.dumps_graph(mode='full')
             _json["layout"] = self.layout.to_json() if self.layout else {}
 
         return _json
@@ -813,23 +824,7 @@ class ProtocolModel(ProcessModel):
     def export_config(self) -> Dict:
 
         _json = super().export_config()
-
-        graph = {
-            "nodes": {},
-            "links": [],
-            "interfaces": {},
-            "outerfaces": {}
-        }
-
-        for conn in self.connectors:
-            graph['links'].append(conn.to_json())
-        for key, process in self.processes.items():
-            graph["nodes"][key] = process.export_config()
-        for key, interface in self.interfaces.items():
-            graph['interfaces'][key] = interface.to_json()
-        for key, outerface in self.outerfaces.items():
-            graph['outerfaces'][key] = outerface.to_json()
-        _json["graph"] = graph
+        _json["graph"] = self.dumps_graph('config')
         return _json
 
     ############################### OTHER #################################
