@@ -15,7 +15,7 @@ from gws_core.progress_bar.progress_bar import ProgressBar
 # test_dispatcher
 class TestDispatcher(BaseTestCase):
 
-    async def test_dispatcher(self):
+    def test_dispatcher(self):
         dispatcher = MessageDispatcher(0.05, 0.25)
 
         observer = BasicMessageObserver()
@@ -50,7 +50,7 @@ class TestDispatcher(BaseTestCase):
         self.assertEqual(len(observer.messages), 5)
         self.assertEqual(observer.messages[4].message, 'message 6')
 
-    async def test_dispatcher_with_progress_bar(self):
+    def test_dispatcher_with_progress_bar(self):
         dispatcher = MessageDispatcher(0.05, 0.25)
 
         progress_bar = ProgressBar()

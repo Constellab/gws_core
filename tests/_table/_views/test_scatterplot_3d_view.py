@@ -8,7 +8,7 @@ from gws_core.extra import DataProvider, TableScatterPlot3DView
 
 class TestTableScatterPlot2DView(BaseTestCase):
 
-    async def test_scatterplot_2d_view(self,):
+    def test_scatterplot_2d_view(self,):
         table = DataProvider.get_iris_table()
 
         tester = ViewTester(
@@ -37,7 +37,7 @@ class TestTableScatterPlot2DView(BaseTestCase):
         self.assertEqual(dic["data"]["series"][1]["data"]["y"], table.get_data()["sepal.width"].values.tolist())
         self.assertEqual(dic["data"]["series"][1]["data"]["z"], table.get_data()["petal.width"].values.tolist())
 
-    async def test_scatterplot_2d_view_without_params(self):
+    def test_scatterplot_2d_view_without_params(self):
         table = DataProvider.get_iris_table()
 
         tester = ViewTester(

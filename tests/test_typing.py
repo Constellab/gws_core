@@ -56,7 +56,7 @@ class SubFileTransformer(Transformer):
 
 class TestTyping(BaseTestCase):
 
-    async def test_process_type(self):
+    def test_process_type(self):
         """Test a get from a type and test convertion to json of a type that
         has mulitple spec and an optional spec
         """
@@ -70,7 +70,7 @@ class TestTyping(BaseTestCase):
         self.assertIsNotNone(eat_json['input_specs']['robot'])
         self.assertIsNotNone(eat_json['input_specs']['food'])
 
-    async def test_protocol_type(self):
+    def test_protocol_type(self):
         world_travel: ProtocolTyping = ProtocolTyping.get_by_model_type(RobotTravelProto)
 
         self.assertEqual(world_travel.get_type(), RobotTravelProto)
@@ -80,7 +80,7 @@ class TestTyping(BaseTestCase):
         self.assertIsNotNone(world_travel_json['input_specs']['robot'])
         self.assertIsNotNone(world_travel_json['output_specs']['robot'])
 
-    async def test_resource_type(self):
+    def test_resource_type(self):
         robot: ResourceTyping = ResourceTyping.get_by_model_type(Robot)
 
         self.assertEqual(robot.get_type(), Robot)
@@ -89,7 +89,7 @@ class TestTyping(BaseTestCase):
 
         self.assertEqual(robot_json['typing_name'], 'RESOURCE.gws_core.Robot')
 
-    async def test_get_children_typings(self):
+    def test_get_children_typings(self):
         typings: List[Typing] = Typing.get_children_typings('RESOURCE', File)
 
         # Check that we found the File type
@@ -97,7 +97,7 @@ class TestTyping(BaseTestCase):
         # Check that we found the SubFile type
         self.assertIsNotNone([x for x in typings if x.unique_name == 'SubFile'][0])
 
-    async def test_get_by_related_resource(self):
+    def test_get_by_related_resource(self):
         """Test the get of task typing by related resource
         """
 
@@ -117,7 +117,7 @@ class TestTyping(BaseTestCase):
         # Check that the SubFileTransformer is not present
         self.assertEqual(len([x for x in typings if x.unique_name == 'SubFileTransformer']), 0)
 
-    async def test_get_typing(self):
+    def test_get_typing(self):
         typing: Typing = TypingService.get_typing(SubFile._typing_name)
         self.assertIsInstance(typing, ResourceTyping)
 
@@ -127,7 +127,7 @@ class TestTyping(BaseTestCase):
         typing = TypingService.get_typing(CreateSimpleRobot2._typing_name)
         self.assertIsInstance(typing, ProtocolTyping)
 
-    async def test_typing_search(self):
+    def test_typing_search(self):
         search_dict: SearchParams = SearchParams()
 
         # Search on name brick
@@ -158,7 +158,7 @@ class TestTyping(BaseTestCase):
         # Test that it found the FileTransformer
         self.assertTrue(len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
-    async def test_typing_search_with_deprecated(self):
+    def test_typing_search_with_deprecated(self):
         search_dict: SearchParams = SearchParams()
 
         # Test with deprecated typing, it should not be found

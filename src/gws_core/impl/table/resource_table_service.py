@@ -28,11 +28,11 @@ class ResourceTableService:
     """
 
     @classmethod
-    async def call_table_chart(cls, resource_id: str, table_view_name: str,
-                               table_config_values: Dict[str, Any],
-                               table_transformers: List[TransformerDict],
-                               chart_type: TableChart,
-                               chart_config_values: Dict[str, Any]) -> CallViewResult:
+    def call_table_chart(cls, resource_id: str, table_view_name: str,
+                         table_config_values: Dict[str, Any],
+                         table_transformers: List[TransformerDict],
+                         chart_type: TableChart,
+                         chart_config_values: Dict[str, Any]) -> CallViewResult:
         """Method to call a chart on a table from the table view
         """
         resource_model: ResourceModel = ResourceService.get_resource_by_id(resource_id)
@@ -43,14 +43,14 @@ class ResourceTableService:
         # if the resource is a table, call directly the view on it
         if isinstance(resource, Table):
             # call the view and ignore table_config_values as the resource is the Table
-            return await ResourceService.call_view_on_resource_model(
+            return ResourceService.call_view_on_resource_model(
                 resource_model=resource_model, view_name=view_name, config_values=chart_config_values,
                 transformers=table_transformers, save_view_config=True)
 
         # otherwise, retrieve the table form the TableView
-        table: Table = await cls._get_table(resource, table_view_name, table_config_values, table_transformers)
+        table: Table = cls._get_table(resource, table_view_name, table_config_values, table_transformers)
 
-        view = await ResourceService.get_view_on_resource(table, view_name, chart_config_values, [])
+        view = ResourceService.get_view_on_resource(table, view_name, chart_config_values, [])
 
         # call the view to dict
         view_dict = ViewHelper.call_view_to_dict(view, chart_config_values)
@@ -61,14 +61,14 @@ class ResourceTableService:
         }
 
     @classmethod
-    async def _get_table(cls, resource: Resource, table_view_name: str,
-                         table_config_values: Dict[str, Any],
-                         table_transformers: List[TransformerDict]) -> Table:
+    def _get_table(cls, resource: Resource, table_view_name: str,
+                   table_config_values: Dict[str, Any],
+                   table_transformers: List[TransformerDict]) -> Table:
         """Method to retrieve the Table object from the view of a resource
         """
 
         # Get the table view
-        view: TableView = await ResourceService.get_view_on_resource(
+        view: TableView = ResourceService.get_view_on_resource(
             resource=resource, view_name=table_view_name, config_values=table_config_values,
             transformers=table_transformers)
 

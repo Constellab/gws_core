@@ -124,10 +124,10 @@ def get_experiment_by_report(
 
 
 @core_app.post("/report/advanced-search", tags=["Report"], summary="Advanced search for reports")
-async def advanced_search(search_dict: SearchParams,
-                          page: Optional[int] = 1,
-                          number_of_items_per_page: Optional[int] = 20,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+def advanced_search(search_dict: SearchParams,
+                    page: Optional[int] = 1,
+                    number_of_items_per_page: Optional[int] = 20,
+                    _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     """
     Advanced search on experiment
     """

@@ -202,8 +202,8 @@ class TaskModel(ProcessModel):
 
         await self._run_after_task()
 
-    async def _run_before_task(self) -> None:
-        await super()._run_before_task()
+    def _run_before_task(self) -> None:
+        super()._run_before_task()
 
         # Store all the resources user as input for this taks
         self.save_input_resources()

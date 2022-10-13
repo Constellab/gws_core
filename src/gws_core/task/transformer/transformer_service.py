@@ -10,8 +10,8 @@ from gws_core.task.transformer.transformer import Transformer
 
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...experiment.experiment_interface import IExperiment
 from ...experiment.experiment_enums import ExperimentType
+from ...experiment.experiment_interface import IExperiment
 from ...model.typing_manager import TypingManager
 from ...process.process_interface import IProcess
 from ...protocol.protocol_interface import IProtocol
@@ -73,18 +73,18 @@ class TransformerService():
         return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
 
     @classmethod
-    async def call_transformers(cls, resource: Resource,
-                                transformers: List[TransformerDict]) -> Resource:
+    def call_transformers(cls, resource: Resource,
+                          transformers: List[TransformerDict]) -> Resource:
 
         # call all transformers in a raw
         for transformer in transformers:
-            resource = await cls.call_transformer(resource, transformer)
+            resource = cls.call_transformer(resource, transformer)
 
         return resource
 
     @classmethod
-    async def call_transformer(cls, resource: Resource,
-                               transformer: TransformerDict) -> Resource:
+    def call_transformer(cls, resource: Resource,
+                         transformer: TransformerDict) -> Resource:
         # retrieve transformer type
         transformer_task: Type[Converter] = TypingManager.get_type_from_name(transformer['typing_name'])
 

@@ -28,9 +28,9 @@ def get_by_id(id: str,
 
 @core_app.post("/view-config/{id}/call", tags=["View config"],
                summary="Call a view from a config")
-async def call_view_config(id: str,
-                           _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
-    return await ResourceService.call_view_from_view_config(id)
+def call_view_config(id: str,
+                     _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    return ResourceService.call_view_from_view_config(id)
 
 
 @core_app.put("/view-config/{id}/title", tags=["View config"],
@@ -47,6 +47,7 @@ def update_flagged(id: str,
                    body: dict,
                    _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     return ViewConfigService.update_flagged(id, body["flagged"]).to_json(deep=True)
+
 
 @core_app.get("/view-config/resource/{resource_id}", tags=["View config"],
               summary="Get the list of view config by resource")

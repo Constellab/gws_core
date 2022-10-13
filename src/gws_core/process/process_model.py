@@ -335,7 +335,7 @@ class ProcessModel(ModelWithUser):
         if len(aws):
             await asyncio.gather(*aws)
 
-    async def _run_before_task(self) -> None:
+    def _run_before_task(self) -> None:
         self._switch_to_current_progress_bar()
         self.mark_as_started()
 

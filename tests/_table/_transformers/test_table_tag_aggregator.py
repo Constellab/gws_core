@@ -13,7 +13,7 @@ from pandas import DataFrame
 
 # test_table_tag_aggregator
 class TestTableTagAggregator(IsolatedAsyncioTestCase):
-    async def test_table_tag_aggregator_helper(self):
+    def test_table_tag_aggregator_helper(self):
 
         initial_df = DataFrame({'F1': [1, 2, 3, 4], 'F2': [7, 1, 10, 8], 'F3': [2, 1, 4, 2]})
         row_tags = [{'gender': 'M', 'town': 'Lyon'},

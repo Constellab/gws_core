@@ -13,7 +13,7 @@ from pandas import DataFrame
 
 
 class TestTableAggregator(BaseTestCase):
-    async def test_table_aggregator_helper(self):
+    def test_table_aggregator_helper(self):
         initial_df = DataFrame({'A': range(1, 5), 'B': [10, 8, 6, 4]})
 
         df = DataframeAggregatorHelper.aggregate(data=initial_df, direction="vertical", func="sum")

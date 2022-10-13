@@ -34,20 +34,20 @@ central_app = FastAPI(docs_url="/docs")
 
 # Catch HTTP Exceptions
 @central_app.exception_handler(HTTPException)
-async def allg_exception_handler(request, exc):
+def allg_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(request, exc)
 
 # Catch RequestValidationError (422 Unprocessable Entity)
 
 
 @central_app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc: RequestValidationError):
+def validation_exception_handler(request, exc: RequestValidationError):
     return ExceptionHandler.handle_request_validation_error(exc)
 
 
 # Catch all other exceptions
 @central_app.exception_handler(Exception)
-async def all_exception_handler(request, exc):
+def all_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(request, exc)
 
 
@@ -136,12 +136,12 @@ def get_users(_: UserData = Depends(AuthCentral.check_central_api_key)):
 
 
 @central_app.get("/settings", summary="Get settings")
-async def get_settings(_: UserData = Depends(AuthCentral.check_central_api_key)) -> dict:
+def get_settings(_: UserData = Depends(AuthCentral.check_central_api_key)) -> dict:
     return SettingsService.get_settings().to_json()
 
 
 @central_app.get("/health-check", summary="Health check route")
-async def health_check() -> bool:
+def health_check() -> bool:
     """
     Simple health check route
     """
@@ -151,13 +151,13 @@ async def health_check() -> bool:
 
 @central_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
                   summary="Call the view name for a resource")
-async def call_view_on_resource(id: str,
-                                view_name: str,
-                                call_view_params: CallViewParams,
-                                _: UserData = Depends(AuthCentral.check_central_api_key)) -> Any:
-    view_dict = await ResourceService.get_and_call_view_on_resource_model(id, view_name, call_view_params["values"],
-                                                                          call_view_params["transformers"],
-                                                                          call_view_params["save_view_config"])
+def call_view_on_resource(id: str,
+                          view_name: str,
+                          call_view_params: CallViewParams,
+                          _: UserData = Depends(AuthCentral.check_central_api_key)) -> Any:
+    view_dict = ResourceService.get_and_call_view_on_resource_model(id, view_name, call_view_params["values"],
+                                                                    call_view_params["transformers"],
+                                                                    call_view_params["save_view_config"])
 
     return view_dict
 

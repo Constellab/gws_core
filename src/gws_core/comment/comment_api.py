@@ -12,11 +12,11 @@ from .comment_service import CommentService
 
 
 @core_app.post("/comment/{object_typing_name}/{object_id}/add", tags=["Comment"], summary="And new object comment")
-async def add_object_comments(object_typing_name: str,
-                              object_id: str,
-                              message: str,
-                              reply_to_id: str = None,
-                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def add_object_comments(object_typing_name: str,
+                        object_id: str,
+                        message: str,
+                        reply_to_id: str = None,
+                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Add a new comment
 
@@ -36,11 +36,11 @@ async def add_object_comments(object_typing_name: str,
 
 
 @core_app.post("/comment/{object_typing_name}/{object_id}", tags=["Comment"], summary="Get the comments of an object")
-async def get_object_comments(object_typing_name: str,
-                              object_id: str,
-                              page: int = 0,
-                              number_of_items_per_page=20,
-                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def get_object_comments(object_typing_name: str,
+                        object_id: str,
+                        page: int = 0,
+                        number_of_items_per_page=20,
+                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Get object comments
 

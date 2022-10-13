@@ -15,24 +15,24 @@ core_app = FastAPI(docs_url="/docs")
 
 # Catch HTTP Exceptions
 @core_app.exception_handler(HTTPException)
-async def allg_exception_handler(request, exc):
+def allg_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(request, exc)
 
 
 # Catch RequestValidationError (422 Unprocessable Entity)
 @core_app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc: RequestValidationError):
+def validation_exception_handler(request, exc: RequestValidationError):
     return ExceptionHandler.handle_request_validation_error(exc)
 
 
 # Catch all other exceptions
 @core_app.exception_handler(Exception)
-async def all_exception_handler(request, exc):
+def all_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(request, exc)
 
 
 @core_app.get("/health-check", summary="Health check route")
-async def health_check() -> bool:
+def health_check() -> bool:
     """
     Simple health check route
     """

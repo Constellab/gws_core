@@ -35,7 +35,7 @@ class TestExperiment(BaseTestCase):
 
     init_before_each_test: bool = True
 
-    async def test_create_empty(self):
+    def test_create_empty(self):
 
         project_dto: ProjectDto = ProjectDto(id=StringHelper.generate_uuid(), title="Project", description="Desc")
         experiment_dto: ExperimentDTO = ExperimentDTO(
@@ -51,7 +51,7 @@ class TestExperiment(BaseTestCase):
         experiment = ExperimentService.get_experiment_by_id(experiment.id)
         self.assert_json(experiment.description, {"test": "ok"})
 
-    async def test_run(self):
+    def test_run(self):
         self.assertEqual(Experiment.count_running_or_queued_experiments(), 0)
 
         # Create experiment 1
@@ -110,7 +110,7 @@ class TestExperiment(BaseTestCase):
         self.assertIsInstance(spec, IOSpec)
         self.assertEqual(spec.resource_types, [Robot])
 
-    async def test_run_through_cli(self):
+    def test_run_through_cli(self):
 
         # experiment 3
         # -------------------------------

@@ -181,13 +181,13 @@ class ProtocolModel(ProcessModel):
 
     ############################### RUN #################################
 
-    async def _run_before_task(self):
+    def _run_before_task(self):
         if self.is_running or self.is_finished:
             return
         self._propagate_interfaces()
         if not self.experiment:
             raise BadRequestException("No experiment defined")
-        await super()._run_before_task()
+        super()._run_before_task()
 
     async def _run(self) -> None:
         # completely load the protocol before running it

@@ -2,8 +2,8 @@
 
 from gws_core import (BaseTestCase, BoolRField, DataFrameRField, DictRField,
                       FloatRField, IntRField, KVStore, ListRField,
-                      ResourceModel, ResourceRField, Robot, SerializableObjectJson,
-                      SerializableRField, StrRField)
+                      ResourceModel, ResourceRField, Robot,
+                      SerializableObjectJson, SerializableRField, StrRField)
 from gws_core.resource.resource_model import ResourceOrigin
 from pandas.core.frame import DataFrame
 
@@ -130,7 +130,7 @@ class TestRField(BaseTestCase):
 
         self.assertEqual(value.to_dict(), new_dataframe.to_dict())
 
-    async def test_resource_r_field(self):
+    def test_resource_r_field(self):
         resource_model = ResourceModel.save_from_resource(Robot.empty(), origin=ResourceOrigin.UPLOADED)
         robot: Robot = resource_model.get_resource()
 
@@ -143,7 +143,7 @@ class TestRField(BaseTestCase):
         self.assertEqual(robot.position, resource_deserilized.position)
         self.assertEqual(robot.weight, resource_deserilized.weight)
 
-    async def test_jsonable_object_r_field(self):
+    def test_jsonable_object_r_field(self):
 
         r_field = SerializableRField(TestJsonableObject)
         value = TestJsonableObject("test")

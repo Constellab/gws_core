@@ -13,14 +13,14 @@ class TestException(BaseTestCase):
     :type BaseTestCase: [type]
     """
 
-    async def test_exception_detail(self):
+    def test_exception_detail(self):
         """Test a BadRequestException with  detail args
         """
         exception = BadRequestException(detail="Error {{message}}", detail_args={"message": "test"})
         self.assertIsNotNone(exception.instance_id)
         self.assertEqual(exception.get_detail_with_args(), "Error test")
 
-    async def test_handle_know_exception(self):
+    def test_handle_know_exception(self):
         """Test handling a BaseHTTPException
         """
         try:
@@ -33,7 +33,7 @@ class TestException(BaseTestCase):
             self.assertEqual(body["detail"], "Error")
             self.assertEqual(body["instance_id"], err.instance_id)
 
-    async def test_http_exception(self):
+    def test_http_exception(self):
         """Test handling a http exception
         """
         try:
@@ -46,7 +46,7 @@ class TestException(BaseTestCase):
             self.assertEqual(body["detail"], "Error")
             self.assertIsNotNone(body["instance_id"])
 
-    async def test_unknown_exception(self):
+    def test_unknown_exception(self):
         """Test handling a unkonwn exception
         """
         try:

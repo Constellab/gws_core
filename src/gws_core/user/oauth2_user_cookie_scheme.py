@@ -4,7 +4,6 @@ from typing import Optional
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.requests import Request
 from fastapi.security import OAuth2
-from fastapi.security.utils import get_authorization_scheme_param
 
 from .user_exception import InvalidTokenException
 

@@ -78,7 +78,7 @@ class TestProtocol(BaseTestCase):
         Q = ProtocolModel.select()
         self.assertEqual(len(Q), count+2)
 
-    async def test_graph_load(self):
+    def test_graph_load(self):
 
         super_proto: ProtocolModel
         with open(os.path.join(testdata_dir, "super_proto_update.json"), "r") as f:

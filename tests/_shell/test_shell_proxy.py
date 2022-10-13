@@ -15,7 +15,7 @@ from gws_core.core.classes.observer.message_observer import \
 # test_shell_proxy
 class TestShellProxy(IsolatedAsyncioTestCase):
 
-    async def test_echo_in_file(self):
+    def test_echo_in_file(self):
         shell_proxy = ShellProxy()
 
         result = shell_proxy.run([f"echo \"John Doe\" > echo.txt"], shell_mode=True)
@@ -29,7 +29,7 @@ class TestShellProxy(IsolatedAsyncioTestCase):
 
         shell_proxy.clean_working_dir()
 
-    async def test_notified(self):
+    def test_notified(self):
         # disable the time buffer for message so they are sent immediately
         dispatcher = MessageDispatcher(interval_time_dispatched_buffer=0)
         shell_proxy = ShellProxy(message_dispatcher=dispatcher)

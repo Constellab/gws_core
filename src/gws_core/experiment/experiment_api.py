@@ -2,7 +2,6 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
 from typing import Dict, List, Optional
 
 from fastapi import Depends
@@ -58,7 +57,6 @@ def get_the_list_of_experiments(page: Optional[int] = 1,
     - **page**: the page number
     - **number_of_items_per_page**: the number of items per page (limited to 50)
     """
-
     return ExperimentService.fetch_experiment_list(
         page=page,
         number_of_items_per_page=number_of_items_per_page,
@@ -66,13 +64,14 @@ def get_the_list_of_experiments(page: Optional[int] = 1,
 
 
 @core_app.post("/experiment/advanced-search", tags=["Experiment"], summary="Advanced search for experiment")
-async def advanced_search(search_dict: SearchParams,
-                          page: Optional[int] = 1,
-                          number_of_items_per_page: Optional[int] = 20,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+def advanced_search(search_dict: SearchParams,
+                    page: Optional[int] = 1,
+                    number_of_items_per_page: Optional[int] = 20,
+                    _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     """
     Advanced search on experiment
     """
+    # time.sleep(10)
 
     return ExperimentService.search(search_dict, page, number_of_items_per_page).to_json()
 

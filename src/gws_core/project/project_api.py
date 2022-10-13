@@ -11,7 +11,7 @@ from .project_service import ProjectService
 
 
 @core_app.get("/project", tags=["Project"])
-async def read_user_me(_: UserData = Depends(AuthService.check_user_access_token)) -> List[ProjectDto]:
+def read_user_me(_: UserData = Depends(AuthService.check_user_access_token)) -> List[ProjectDto]:
     """
     Get the list of available projects.
     """

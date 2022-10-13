@@ -15,9 +15,9 @@ from .monitor_service import MonitorService
 
 
 @core_app.get("/lab/monitor", tags=["Lab"], summary="Get the lab monitor data")
-async def get_the_lab_monitor_data(page: Optional[int] = 1,
-                                   number_of_items_per_page: Optional[int] = 20,
-                                   _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+def get_the_lab_monitor_data(page: Optional[int] = 1,
+                             number_of_items_per_page: Optional[int] = 20,
+                             _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
     """
     Get lab monitor
     """

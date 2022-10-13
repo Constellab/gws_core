@@ -2,14 +2,13 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from gws_core import BaseTestCase, Table, ViewTester, ViewType
+from gws_core import BaseTestCase, ViewTester, ViewType
 from gws_core.extra import DataProvider, TableView
-from pandas import DataFrame
 
 
 class TestTableView(BaseTestCase):
 
-    async def test_table_view(self,):
+    def test_table_view(self):
         table = DataProvider.get_iris_table()
         vw = TableView(table)
         tester = ViewTester(view=vw)

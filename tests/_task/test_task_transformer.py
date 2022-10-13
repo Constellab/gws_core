@@ -60,6 +60,6 @@ class TestTaskTransformer(BaseTestCase):
 
         # create a robot resource
         robot = Robot.empty()
-        new_robot: Robot = await TransformerService.call_transformers(robot, transformers)
+        new_robot: Robot = TransformerService.call_transformers(robot, transformers)
 
         self.assertEqual(new_robot.age, age_config)

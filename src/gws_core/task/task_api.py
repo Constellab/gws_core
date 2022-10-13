@@ -18,8 +18,8 @@ from .task_service import TaskService
 
 
 @core_app.get("/task/{id}", tags=["Task"], summary="Get a task")
-async def get_a_task(id: str,
-                     _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def get_a_task(id: str,
+               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a task
 
@@ -32,8 +32,8 @@ async def get_a_task(id: str,
 
 
 @core_app.post("/task/{id}/fix", tags=["Task"], summary="Fix a task")
-async def fix_a_task(id: str,
-                     _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+def fix_a_task(id: str,
+               _: UserData = Depends(AuthService.check_user_access_token)) -> None:
     """
     Fix a task
 
@@ -46,7 +46,7 @@ async def fix_a_task(id: str,
 
 
 @core_app.post("/task/fix", tags=["Task"], summary="Run a task")
-async def fix_all_protocol(_: UserData = Depends(AuthService.check_user_access_token)):
+def fix_all_protocol(_: UserData = Depends(AuthService.check_user_access_token)):
     Logger.info('Start fixing all protocols')
     protocol_models = list(ProtocolModel.select())
     for protocol in protocol_models:

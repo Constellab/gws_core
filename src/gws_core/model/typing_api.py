@@ -11,16 +11,16 @@ from ..core_app import core_app
 
 
 @core_app.get("/typing/{typing_name}", tags=["Typing"], summary="Get a typing")
-async def get_typing(typing_name: str,
-                     _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def get_typing(typing_name: str,
+               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return TypingService.get_typing(typing_name).to_json(deep=True)
 
 
 @core_app.post("/typing/advanced-search", tags=["Typing"], summary="Search typings")
-async def advanced_search(search_dict: SearchParams,
-                          page: Optional[int] = 1,
-                          number_of_items_per_page: Optional[int] = 20,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def advanced_search(search_dict: SearchParams,
+                    page: Optional[int] = 1,
+                    number_of_items_per_page: Optional[int] = 20,
+                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Advanced search for typing
     """
@@ -35,11 +35,11 @@ class SearchWithResourceTypes(BaseModel):
 @core_app.post(
     "/typing/processes/suggestion/{inputs_or_outputs}", tags=["Typing"],
     summary="Search process with specific input type")
-async def process_with_input_search(search: SearchWithResourceTypes,
-                                    inputs_or_outputs: Literal['inputs', 'outputs'],
-                                    page: Optional[int] = 1,
-                                    number_of_items_per_page: Optional[int] = 20,
-                                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def process_with_input_search(search: SearchWithResourceTypes,
+                              inputs_or_outputs: Literal['inputs', 'outputs'],
+                              page: Optional[int] = 1,
+                              number_of_items_per_page: Optional[int] = 20,
+                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Advanced search for typing
     """
@@ -49,12 +49,12 @@ async def process_with_input_search(search: SearchWithResourceTypes,
 
 @core_app.post("/typing/importers/search/{resource_typing_name}/{extension}",
                tags=["Typing"], summary="Search typings")
-async def importers_advanced_search(search_dict: SearchParams,
-                                    resource_typing_name: str,
-                                    extension: str,
-                                    page: Optional[int] = 1,
-                                    number_of_items_per_page: Optional[int] = 20,
-                                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def importers_advanced_search(search_dict: SearchParams,
+                              resource_typing_name: str,
+                              extension: str,
+                              page: Optional[int] = 1,
+                              number_of_items_per_page: Optional[int] = 20,
+                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Advanced search for importers typing
     """
@@ -64,10 +64,10 @@ async def importers_advanced_search(search_dict: SearchParams,
 
 @core_app.post("/typing/transformers/search",
                tags=["Typing"], summary="Search typings")
-async def transformers_advanced_search(search: SearchWithResourceTypes,
-                                       page: Optional[int] = 1,
-                                       number_of_items_per_page: Optional[int] = 20,
-                                       _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def transformers_advanced_search(search: SearchWithResourceTypes,
+                                 page: Optional[int] = 1,
+                                 number_of_items_per_page: Optional[int] = 20,
+                                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Advanced search for transformers typing
     """

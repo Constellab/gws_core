@@ -5,7 +5,7 @@ from pandas import DataFrame
 
 class TestImporter(BaseTestCase):
 
-    async def test_importer(self):
+    def test_importer(self):
         ds = DataProvider.get_iris_dataset()
 
         self.assertEquals(ds.nb_features, 4)
@@ -19,7 +19,7 @@ class TestImporter(BaseTestCase):
 
         ds.convert_targets_to_dummy_matrix()
 
-    async def test_data_select(self):
+    def test_data_select(self):
         ds = DataProvider.get_iris_dataset()
 
         selected_ds: Dataset = ds.select_by_column_positions([1, 2])
@@ -42,7 +42,7 @@ class TestImporter(BaseTestCase):
         self.assertEqual(selected_ds.target_names, ["variety"])
         self.assertEqual(selected_ds.nb_rows, 3)
 
-    async def test_importer_no_head(self):
+    def test_importer_no_head(self):
         ds = DataProvider.get_no_head_iris_dataset()
         self.assertEquals(ds.nb_features, 4)
         self.assertEquals(ds.nb_targets, 1)

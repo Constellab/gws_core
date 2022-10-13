@@ -10,7 +10,7 @@ from gws_core import (BaseTestCase, Experiment, ExperimentService, Paginator,
 
 class TestPaginator(BaseTestCase):
 
-    async def test_paginator(self):
+    def test_paginator(self):
 
         protocol: ProtocolModel = RobotService.create_robot_world_travel()
         ExperimentService.create_experiment_from_protocol_model(

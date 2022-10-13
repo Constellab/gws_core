@@ -14,7 +14,7 @@ from pandas import DataFrame
 
 # test_table_concat
 class TestTableConcat(IsolatedAsyncioTestCase):
-    async def test_table_row_concat_helper(self):
+    def test_table_row_concat_helper(self):
 
         df_1: DataFrame = DataFrame({'F1': [1, 2], 'F2': [7, 1]})
         row_tags_1 = [{'id': '1'}, {'id': '2'}]
@@ -46,7 +46,7 @@ class TestTableConcat(IsolatedAsyncioTestCase):
         expected_column_tags = [{'id': 'F1', 'other': 'top'}, {'id': 'F2'}, {'id': 'F3'}, {'id': 'F4'}]
         BaseTestCase.assert_json(result.get_column_tags(), expected_column_tags)
 
-    async def test_table_row_concat_helper(self):
+    def test_table_column_concat_helper(self):
 
         df_1: DataFrame = DataFrame({'1': ['A1', 'B1'], '2': ['A2', 'B2']}, index=['A', 'B'])
         table_1 = Table(df_1)

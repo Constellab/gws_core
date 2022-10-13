@@ -197,24 +197,24 @@ class ResourceService(BaseService):
         return view_meta.to_complete_json()
 
     @classmethod
-    async def get_and_call_view_on_resource_model(cls, resource_model_id: str,
-                                                  view_name: str, config_values: Dict[str, Any],
-                                                  transformers: List[TransformerDict],
-                                                  save_view_config: bool = False) -> CallViewResult:
+    def get_and_call_view_on_resource_model(cls, resource_model_id: str,
+                                            view_name: str, config_values: Dict[str, Any],
+                                            transformers: List[TransformerDict],
+                                            save_view_config: bool = False) -> CallViewResult:
 
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
-        return await cls.call_view_on_resource_model(resource_model, view_name, config_values, transformers, save_view_config)
+        return cls.call_view_on_resource_model(resource_model, view_name, config_values, transformers, save_view_config)
 
     @classmethod
-    async def call_view_on_resource_model(cls, resource_model: ResourceModel,
-                                          view_name: str, config_values: Dict[str, Any],
-                                          transformers: List[TransformerDict],
-                                          save_view_config: bool = False,
-                                          view_config: ViewConfig = None) -> CallViewResult:
+    def call_view_on_resource_model(cls, resource_model: ResourceModel,
+                                    view_name: str, config_values: Dict[str, Any],
+                                    transformers: List[TransformerDict],
+                                    save_view_config: bool = False,
+                                    view_config: ViewConfig = None) -> CallViewResult:
 
         resource: Resource = resource_model.get_resource()
 
-        view = await cls.get_view_on_resource(resource, view_name, config_values, transformers)
+        view = cls.get_view_on_resource(resource, view_name, config_values, transformers)
 
         # call the view to dict
         view_dict = ViewHelper.call_view_to_dict(view, config_values)
@@ -232,21 +232,21 @@ class ResourceService(BaseService):
         }
 
     @classmethod
-    async def call_view_from_view_config(cls, view_config_id: str) -> CallViewResult:
+    def call_view_from_view_config(cls, view_config_id: str) -> CallViewResult:
         view_config = ViewConfigService.get_by_id(view_config_id)
 
-        return await cls.call_view_on_resource_model(
+        return cls.call_view_on_resource_model(
             view_config.resource_model, view_name=view_config.view_name, config_values=view_config.config_values,
             transformers=view_config.transformers, save_view_config=False, view_config=view_config)
 
     @classmethod
-    async def get_view_on_resource(cls, resource: Resource,
-                                   view_name: str, config_values: Dict[str, Any],
-                                   transformers: List[TransformerDict] = None) -> View:
+    def get_view_on_resource(cls, resource: Resource,
+                             view_name: str, config_values: Dict[str, Any],
+                             transformers: List[TransformerDict] = None) -> View:
 
         # if there is a transformer, call it before calling the view
         if transformers is not None and len(transformers) > 0:
-            resource = await TransformerService.call_transformers(resource, transformers)
+            resource = TransformerService.call_transformers(resource, transformers)
 
         return ViewHelper.generate_view_on_resource(resource, view_name, config_values)
 

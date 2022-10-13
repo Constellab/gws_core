@@ -13,7 +13,7 @@ from .system_service import SystemService
 
 
 @core_app.get("/system/info", tags=["System"], summary="Get system info")
-async def system_info(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def system_info(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Reset dev environment
     """
@@ -22,7 +22,7 @@ async def system_info(_: UserData = Depends(AuthService.check_user_access_token)
 
 
 @core_app.post("/system/dev-reset", tags=["System"], summary="Reset dev environment")
-async def dev_reset(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+def dev_reset(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
     """
     Reset dev environment
     """
@@ -31,10 +31,10 @@ async def dev_reset(_: UserData = Depends(AuthService.check_user_access_token)) 
 
 
 @core_app.post("/system/kill", tags=["System"], summary="Stop the python process and the API")
-async def kill_process(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+def kill_process(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
     SystemService.kill_process()
 
 
 @core_app.get("/system/settings",  tags=["System"], summary="Get settings")
-async def get_settings(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def get_settings(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return SettingsService.get_settings().to_json()

@@ -3,25 +3,23 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
 
 from gws_core import BaseTestCase, User, UserGroup, UserService
 from gws_core.user.auth_service import AuthService
 from gws_core.user.user import UserDataDict
 from gws_core.user.user_dto import UserData
-from starlette.responses import JSONResponse
 
 
 class TestUser(BaseTestCase):
 
-    async def test_sysuser_and_owner(self):
+    def test_sysuser_and_owner(self):
         """
         Simple test to check that the sysuser and owner users are created
         """
         user: User = UserService.get_sysuser()
         self.assertTrue(user.is_saved())
 
-    async def test_user_create(self):
+    def test_user_create(self):
         """
         Test the user creation from a json
         """
@@ -44,7 +42,7 @@ class TestUser(BaseTestCase):
         self.assertEqual(user_db.last_name, 'Lastname test')
         self.assertEqual(user_db.group, UserGroup.ADMIN)
 
-    async def test_authentication(self):
+    def test_authentication(self):
         """
         Test that a user can authenticate
         """

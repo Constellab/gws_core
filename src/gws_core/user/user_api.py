@@ -23,7 +23,7 @@ from .user_service import UserService
 
 
 @core_app.get("/user/me", tags=["User"])
-async def read_user_me(_: UserData = Depends(AuthService.check_user_access_token)):
+def read_user_me(_: UserData = Depends(AuthService.check_user_access_token)):
     """
     Get current user details.
     """
@@ -32,11 +32,11 @@ async def read_user_me(_: UserData = Depends(AuthService.check_user_access_token
 
 
 @core_app.get("/user/activity", tags=["User"], summary="Get user activities")
-async def get_user_activity(user_id: Optional[str] = None,
-                            activity_type: Optional[str] = None,
-                            page: int = 0,
-                            number_of_items_per_page: int = 20,
-                            _: UserData = Depends(AuthService.check_user_access_token)):
+def get_user_activity(user_id: Optional[str] = None,
+                      activity_type: Optional[str] = None,
+                      page: int = 0,
+                      number_of_items_per_page: int = 20,
+                      _: UserData = Depends(AuthService.check_user_access_token)):
     """
     Get the list of user activities on the lab
 
@@ -122,7 +122,7 @@ def logout() -> JSONResponse:
 
 
 @core_app.get("/user", tags=["User"])
-async def get_all_users(_: UserData = Depends(AuthService.check_user_access_token)):
+def get_all_users(_: UserData = Depends(AuthService.check_user_access_token)):
     """
     List the users.
     """

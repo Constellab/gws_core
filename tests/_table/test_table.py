@@ -202,7 +202,7 @@ class TestTable(IsolatedAsyncioTestCase):
         self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
         self.assertEqual(t.row_names, ["Tokyo", "Paris"])
 
-    async def test_generate_column_name(self):
+    def test_generate_column_name(self):
         dataframe = DataFrame({'A': range(1, 6)})
 
         table = Table(data=dataframe)
@@ -210,7 +210,7 @@ class TestTable(IsolatedAsyncioTestCase):
         # test generating a new that already exists
         self.assertEqual(table.generate_new_column_name('A'), 'A_1')
 
-    async def test_equals(self):
+    def test_equals(self):
         first: Table = Table(DataFrame({'A': [1, 2, 3]}), row_names=['r0', 'r1', 'r2'],
                              row_tags=[{'lg': 'EN'}, {'lg': 'FR'}, {'lg': 'EN'}], column_tags=[{'c': 'UK'}])
         second: Table = Table(DataFrame({'A': [1, 2, 3]}), row_names=['r0', 'r1', 'r2'],
@@ -234,7 +234,7 @@ class TestTable(IsolatedAsyncioTestCase):
 
         self.assertFalse(first.equals(second))
 
-    async def test_table_modification(self):
+    def test_table_modification(self):
         table = Table()
 
         # test adding and empty column to an empty table
@@ -259,14 +259,14 @@ class TestTable(IsolatedAsyncioTestCase):
         expected_table = Table(DataFrame({'A': [1, 2, 3]}))
         self.assertTrue(table.equals(expected_table))
 
-    async def test_set_cell_value(self):
+    def test_set_cell_value(self):
         table = Table(DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]}))
         self.assertEqual(table.get_cell_value_at(0, 1), 4)
 
         table.set_cell_value_at(0, 1, 7)
         self.assertEqual(table.get_cell_value_at(0, 1), 7)
 
-    async def test_set_row_name(self):
+    def test_set_row_name(self):
         table = Table(DataFrame({'A': [1, 2], 'B': [4, 5]}))
 
         table.set_row_name(0, 'r0')
@@ -275,7 +275,7 @@ class TestTable(IsolatedAsyncioTestCase):
         table.set_all_row_names(['r1', 'r2'])
         self.assertEqual(table.row_names, ['r1', 'r2'])
 
-    async def test_set_column_name(self):
+    def test_set_column_name(self):
         table = Table(DataFrame({'A': [1, 2], 'B': [4, 5]}))
 
         table.set_column_name('A', 'C')

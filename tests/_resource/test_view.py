@@ -175,13 +175,13 @@ class TestView(BaseTestCase):
         # there should be no allowed value
         self.assertIsNone(specs['lazy'].allowed_values)
 
-    async def test_view_config(self):
+    def test_view_config(self):
 
         resource: Resource = ResourceViewTestSub()
         resource_model: ResourceModel = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.UPLOADED)
 
-        view_result = await ResourceService.get_and_call_view_on_resource_model(resource_model.id,
-                                                                                'a_view_test', {"page": 1, "page_size": 5000}, [], True)
+        view_result = ResourceService.get_and_call_view_on_resource_model(
+            resource_model.id, 'a_view_test', {"page": 1, "page_size": 5000}, [], True)
 
         self.assertIsNotNone(view_result["view_config"])
 
@@ -197,7 +197,7 @@ class TestView(BaseTestCase):
         self.assertEqual(view_config.transformers, [])
 
         # re-call the view from the view config
-        view_result_2 = await ResourceService.call_view_from_view_config(view_config.id)
+        view_result_2 = ResourceService.call_view_from_view_config(view_config.id)
         self.assert_json(view_result['view'], view_result_2['view'])
 
     async def test_viewer(self):

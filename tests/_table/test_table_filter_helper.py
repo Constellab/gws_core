@@ -12,7 +12,7 @@ from pandas import DataFrame
 
 # test_table_filter_helper
 class TestTableFilterHelper(BaseTestCase):
-    async def test_filter_by_axis_name(self):
+    def test_filter_by_axis_name(self):
 
         initial_df = DataFrame(
             {'Age': [1, 2, 3, 4],
@@ -35,7 +35,7 @@ class TestTableFilterHelper(BaseTestCase):
         self.assertEqual(result.index.tolist(), ["Luc", "Lea", "Mickeal", "Fred"])
         self.assertEqual(result.columns.tolist(), ["City"])
 
-    async def test_table_filter_aggregate(self):
+    def test_table_filter_aggregate(self):
 
         initial_df = DataFrame({'A': [1, 2, 3, 4], 'B': [8, 6, 4, 2]})
 
@@ -62,7 +62,7 @@ class TestTableFilterHelper(BaseTestCase):
         expected_result = DataFrame({'A': [1, 2], 'B': [8, 6]}, index=[0, 1])
         self.assertTrue(result.equals(expected_result))
 
-    async def test_table_filter_numeric_data(self):
+    def test_table_filter_numeric_data(self):
 
         initial_df = DataFrame({'A': [1.0, 2.0, 3.0, 4.0], 'B': [8.0, 6.0, 4.0, 2.0]})
 
@@ -86,7 +86,7 @@ class TestTableFilterHelper(BaseTestCase):
         expected_result = DataFrame({'B': [8.0, 6.0, 4.0, 2.0]})
         self.assertTrue(result.equals(expected_result))
 
-    async def test_table_filter_text_data(self):
+    def test_table_filter_text_data(self):
 
         initial_df = DataFrame({'A': ['a', 'b', 'c', 'd'], 'B': ['hello', 'nice', 'tacos', 'house']})
 
@@ -112,7 +112,7 @@ class TestTableFilterHelper(BaseTestCase):
         expected_result = DataFrame({'B': ['hello', 'nice', 'tacos', 'house']})
         self.assertTrue(result.equals(expected_result))
 
-    async def test_table_filter_out_helper(self):
+    def test_table_filter_out_helper(self):
 
         initial_df = DataFrame({'A': range(1, 4), 'B': [10, 8, 6], 'AA': range(5, 8)})
         initial_df.index = ['A', 'B', 'AA']

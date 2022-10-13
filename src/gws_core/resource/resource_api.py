@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import time
 from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, Request
@@ -28,27 +29,30 @@ from .resource_service import ResourceService
 
 @core_app.get("/resource/{id}/views/{view_name}/specs", tags=["Resource"],
               summary="Get the specs for a view of a resource")
-async def get_view_specs_from_resource(id: str, view_name: str,
-                                       _: UserData = Depends(AuthService.check_user_access_token)) -> list:
+def get_view_specs_from_resource(id: str, view_name: str,
+                                 _: UserData = Depends(AuthService.check_user_access_token)) -> list:
     return ResourceService.get_view_specs_from_resource(id, view_name)
 
 
 @core_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
                summary="Call the view name for a resource")
-async def call_view_on_resource(id: str,
-                                view_name: str,
-                                call_view_params: CallViewParams,
-                                _: UserData = Depends(AuthService.check_user_access_token)) -> Any:
-    return await ResourceService.get_and_call_view_on_resource_model(id, view_name, call_view_params["values"],
-                                                                     call_view_params["transformers"], call_view_params["save_view_config"])
+def call_view_on_resource(id: str,
+                          view_name: str,
+                          call_view_params: CallViewParams,
+                          _: UserData = Depends(AuthService.check_user_access_token)) -> Any:
+
+    return ResourceService.get_and_call_view_on_resource_model(
+        id, view_name, call_view_params["values"],
+        call_view_params["transformers"],
+        call_view_params["save_view_config"])
 
 
 ####################################### Resource Model ###################################
 
 
 @core_app.get("/resource/{id}", tags=["Resource"], summary="Get a resource")
-async def get_a_resource(id: str,
-                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def get_a_resource(id: str,
+                   _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a ResourceModel from a ResourceModel ID
 
@@ -60,8 +64,8 @@ async def get_a_resource(id: str,
 
 
 @core_app.get("/resource/{id}/children", tags=["Resource"], summary="Get a resource")
-async def get_resource_children(id: str,
-                                _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def get_resource_children(id: str,
+                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a ResourceModel children resource of a ResourceModel ID
     """
@@ -70,8 +74,8 @@ async def get_resource_children(id: str,
 
 
 @core_app.delete("/resource/{id}", tags=["Resource"], summary="Delete a resource")
-async def delete_file(id: str,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+def delete_file(id: str,
+                _: UserData = Depends(AuthService.check_user_access_token)) -> None:
     """
     Delete a resource.
     """
@@ -80,10 +84,10 @@ async def delete_file(id: str,
 
 
 @core_app.post("/resource/advanced-search", tags=["Resource"], summary="Advanced search for resource")
-async def advanced_search(search_dict: SearchParams,
-                          page: Optional[int] = 1,
-                          number_of_items_per_page: Optional[int] = 20,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+def advanced_search(search_dict: SearchParams,
+                    page: Optional[int] = 1,
+                    number_of_items_per_page: Optional[int] = 20,
+                    _: UserData = Depends(AuthService.check_user_access_token)) -> None:
     """
     Advanced search on resources
     """
@@ -92,8 +96,8 @@ async def advanced_search(search_dict: SearchParams,
 
 
 @core_app.put("/resource/{id}/name/{name}", tags=["Resource"], summary="Update the resource name")
-async def update_name(id: str, name: str,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+def update_name(id: str, name: str,
+                _: UserData = Depends(AuthService.check_user_access_token)) -> None:
     """
     Advanced search on resources
     """
@@ -156,7 +160,7 @@ async def import_resource(config: dict,
 
 @core_app.get("/resource/{resource_typing_name}/exporter", tags=["Resource"],
               summary="Get the exporter info of a resource type")
-async def get_exporter_config(
+def get_exporter_config(
         resource_typing_name: str,
         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
 
@@ -182,13 +186,13 @@ def download_a_resource(
 
 @core_app.get("/resource-type/{resource_typing_name}/views", tags=["Resource type"],
               summary="Get the list of view for a resource type")
-async def get_resource_type_views(resource_typing_name: str,
-                                  _: UserData = Depends(AuthService.check_user_access_token)) -> list:
+def get_resource_type_views(resource_typing_name: str,
+                            _: UserData = Depends(AuthService.check_user_access_token)) -> list:
     return ListJsonable(ResourceService.get_views_of_resource(resource_typing_name)).to_json()
 
 
 @core_app.get("/resource-type", tags=["Resource type"], summary="Get the list of resource types")
-async def get_the_list_of_resource_types(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def get_the_list_of_resource_types(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a the complete list of resources types. The list is not paginated.
     """
@@ -197,18 +201,18 @@ async def get_the_list_of_resource_types(_: UserData = Depends(AuthService.check
 
 @core_app.get("/resource-type/{resource_type}/views/{view_name}/specs", tags=["Resource type"],
               summary="Get the specs for a view of a resource type")
-async def get_view_specs_from_type(resource_type: str, view_name: str,
-                                   _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def get_view_specs_from_type(resource_type: str, view_name: str,
+                             _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return ResourceService.get_view_specs_from_type(resource_type, view_name)
 
 
 ############################### ACTIONS ##############################
 
-@ core_app.post("/resource/{id}/action/add/{action_typing_name}", tags=["Resource"],
-                summary="Add an action to a resource")
-async def add_action_to_resource(id: str, action_typing_name: str,
-                                 action_params: dict,
-                                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+@core_app.post("/resource/{id}/action/add/{action_typing_name}", tags=["Resource"],
+               summary="Add an action to a resource")
+def add_action_to_resource(id: str, action_typing_name: str,
+                           action_params: dict,
+                           _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Add an action to a resource.
     """

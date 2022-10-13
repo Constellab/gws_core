@@ -9,7 +9,7 @@ from pandas import DataFrame
 
 class TestTableTransposer(BaseTestCase):
 
-    async def test_table_replace(self):
+    def test_table_replace(self):
         initial_df = DataFrame({'A': [1, 2], 'B': ['Hello', 'Bonjour']})
         table = Table(data=initial_df)
 

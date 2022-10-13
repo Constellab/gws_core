@@ -12,7 +12,7 @@ from pandas import DataFrame
 
 class TestTableTransposer(IsolatedAsyncioTestCase):
 
-    async def test(self):
+    def test(self):
         initial_df = DataFrame({'A': range(1, 5), 'B': [10, 8, 6, 4]})
 
         table = Table(data=initial_df)

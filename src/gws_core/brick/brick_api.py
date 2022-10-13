@@ -17,7 +17,7 @@ from ..user.user_dto import UserData
 from .brick_service import BrickService
 
 # @core_app.post("/brick/{brick_name}/{api_func}", response_class=JSONResponse, tags=["Bricks APIs"], summary="Call custom brick APIs")
-# async def call_a_custom_brick_api(brick_name: Optional[str] = "gws",
+# def call_a_custom_brick_api(brick_name: Optional[str] = "gws",
 #                                   api_func: Optional[str] = None,
 #                                   data: Optional[dict] = None,
 #                                   _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
@@ -49,14 +49,14 @@ from .brick_service import BrickService
 
 
 @core_app.get("/brick", tags=["Bricks"], summary="Get all brick with status")
-async def get_bricks_status(_: UserData = Depends(AuthService.check_user_access_token)) -> Any:
+def get_bricks_status(_: UserData = Depends(AuthService.check_user_access_token)) -> Any:
     bricks = BrickService.get_all_brick_models()
     return ListJsonable(bricks).to_json()
 
 
 @core_app.get("/brick/{brick_name}/technical-doc", tags=["Bricks"], summary="Generate technical doc for a brick")
-async def export_technical_doc(brick_name: str,
-                               _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+def export_technical_doc(brick_name: str,
+                         _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     return TechnicalDocService.generate_technical_doc(brick_name)
 
 
