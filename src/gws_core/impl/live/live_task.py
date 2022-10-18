@@ -11,9 +11,9 @@ from ...config.config_types import ConfigParams, ConfigSpecs
 from ...io.io_spec import InputSpec, OutputSpec
 from ...io.io_spec_helper import InputSpecs, OutputSpecs
 from ...resource.resource import Resource
-from ..task import Task
-from ..task_decorator import task_decorator
-from ..task_io import TaskInputs, TaskOutputs
+from ...task.task import Task
+from ...task.task_decorator import task_decorator
+from ...task.task_io import TaskInputs, TaskOutputs
 
 
 @task_decorator("LiveTask", human_name="Live task", short_description="Low-code live task")

@@ -5,6 +5,7 @@
 
 
 from gws_core.config.config_types import ConfigParams
+from gws_core.config.param_spec import StrParam
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
@@ -49,3 +50,22 @@ class ResourceSetGenerator(Task):
         resource_set.add_resource(Robot.empty(), 'robot')
 
         return {'resource_set': resource_set}
+
+
+@task_decorator(unique_name="ResourcePicker",
+                hide=False)
+class ResourcePicker(Task):
+    input_specs: InputSpecs = {
+        "resource_set": InputSpec(ResourceSet),
+    }
+    output_specs: OutputSpecs = {'resource': OutputSpec(Resource, is_constant=True)}
+
+    config_specs = {
+        'resource_name': StrParam(human_name="Resource name", short_description="The name of the resource to pick")
+    }
+
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        resource_set: ResourceSet = inputs.get('resource_set')
+        resource_name = params['resource_name']
+        resource = resource_set.get_resource(resource_name)
+        return {'resource': resource}
