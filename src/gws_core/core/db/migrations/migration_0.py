@@ -16,6 +16,7 @@ from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process_model import ProcessModel
+from gws_core.project.project import Project
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.report.report import Report
 from gws_core.resource.resource_list_base import ResourceListBase
@@ -353,7 +354,7 @@ class Migration0316(BrickMigration):
         migrator.migrate()
 
 
-@brick_migration('0.3.18', short_description='Add layout to ProtocolModel')
+@brick_migration('0.3.18', short_description='Add layout to ProtocolModel. Refactor project')
 class Migration0318(BrickMigration):
 
     @classmethod
@@ -361,4 +362,7 @@ class Migration0318(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(ProtocolModel.get_db())
         migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.layout)
+        migrator.add_column_if_not_exists(Project, Project.code)
+        migrator.add_column_if_not_exists(Project, Project.parent)
+        migrator.drop_column_if_exists(Project, 'description')
         migrator.migrate()

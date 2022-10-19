@@ -9,7 +9,7 @@ from typing import List
 from gws_core import (BaseTestCase, Experiment, ExperimentDTO,
                       ExperimentService, ExperimentStatus, GTest, ProcessModel,
                       ProtocolModel, ResourceModel, Robot, RobotService,
-                      RobotWorldTravelProto, Settings, TaskModel, Utils)
+                      RobotWorldTravelProto, TaskModel)
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.experiment.experiment_exception import \
     ResourceUsedInAnotherExperimentException
@@ -22,12 +22,7 @@ from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_model import ProcessStatus
 from gws_core.project.project_dto import ProjectDto
-from gws_core.resource.resource_model import ResourceOrigin
-from gws_core.task.plug import Sink, Source
-from gws_core.task.task_input_model import TaskInputModel
-
-settings = Settings.retrieve()
-testdata_dir = settings.get_variable("gws_core:testdata_dir")
+from gws_core.task.plug import Sink
 
 
 # test_experiment
@@ -37,7 +32,7 @@ class TestExperiment(BaseTestCase):
 
     def test_create_empty(self):
 
-        project_dto: ProjectDto = ProjectDto(id=StringHelper.generate_uuid(), title="Project", description="Desc")
+        project_dto: ProjectDto = ProjectDto(id=StringHelper.generate_uuid(), title="Project")
         experiment_dto: ExperimentDTO = ExperimentDTO(
             title="Experiment title", project=project_dto)
         experiment = ExperimentService.create_empty_experiment_from_dto(experiment_dto)
@@ -51,7 +46,7 @@ class TestExperiment(BaseTestCase):
         experiment = ExperimentService.get_experiment_by_id(experiment.id)
         self.assert_json(experiment.description, {"test": "ok"})
 
-    def test_run(self):
+    async def test_run(self):
         self.assertEqual(Experiment.count_running_or_queued_experiments(), 0)
 
         # Create experiment 1

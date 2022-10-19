@@ -176,6 +176,10 @@ class ReportService():
         if report.project is None:
             raise BadRequestException("The report must be associated to a project to be validated")
 
+        if report.project.children.count() > 0:
+            raise BadRequestException(
+                "The experiment must be associated with a leaf project (project with no children)")
+
         # check that all associated experiment are validated and are in same project
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
         for experiment in experiments:

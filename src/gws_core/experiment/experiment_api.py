@@ -71,8 +71,6 @@ def advanced_search(search_dict: SearchParams,
     """
     Advanced search on experiment
     """
-    # time.sleep(10)
-
     return ExperimentService.search(search_dict, page, number_of_items_per_page).to_json()
 
 

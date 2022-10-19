@@ -83,7 +83,7 @@ class ResourceSet(ResourceListBase):
         if name is None:
             raise Exception('The unique name was not provided and the resource name is not set')
         if name in self._resources:
-            raise Exception(f'Resource with name {name} already exists')
+            raise Exception(f"Resource with name '{name}' already exists in the ResourceSet")
 
         # if the resource already exist, add it to the constant list so
         # the system will not create a new resource on save

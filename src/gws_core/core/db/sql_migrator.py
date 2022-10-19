@@ -27,11 +27,15 @@ class SqlMigrator:
     def add_column_if_not_exists(self, model: BaseModel, field: Field) -> bool:
         if model.column_exists(field.column_name):
             return False
-        self.add_column(model, field)
+        self._operations.append(self.migrator.add_column(model.get_table_name(), field.column_name, field))
+        self.migrator.add_not_null
         return True
 
-    def add_column(self, model: BaseModel, field: Field) -> None:
-        self._operations.append(self.migrator.add_column(model.get_table_name(), field.column_name, field))
+    def drop_column_if_exists(self, model: BaseModel, column_name) -> bool:
+        if not model.column_exists(column_name):
+            return False
+        self._operations.append(self.migrator.drop_column(model.get_table_name(), column_name))
+        return True
 
     def alter_column_type(self, model: BaseModel, field_name: str, field: Field) -> None:
         self._operations.append(self.migrator.alter_column_type(model.get_table_name(), field_name, field))

@@ -276,6 +276,10 @@ class Experiment(ModelWithUser, TaggableModel):
         if self.project is None:
             raise BadRequestException("The experiment must be linked to a project before validating it")
 
+        if self.project.children.count() > 0:
+            raise BadRequestException(
+                "The experiment must be associated with a leaf project (project with no children)")
+
         self.is_validated = True
         self.validated_at = DateHelper.now_utc()
         self.validated_by = CurrentUserService.get_and_check_current_user()

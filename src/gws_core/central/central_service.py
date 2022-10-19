@@ -95,6 +95,20 @@ class CentralService(BaseService):
         return response.json()
 
     @classmethod
+    def get_projects(cls) -> List[CentralProject]:
+        """
+        Call the central api to get the list of project for the organization
+        """
+        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/project-trees")
+        response = ExternalApiService.get(central_api_url, cls._get_request_header())
+
+        if response.status_code != 200:
+            Logger.error(f"Can't retrieve projects for the lab. Error : {response.text}")
+            raise BadRequestException("Can't retrieve projects for the lab")
+
+        return response.json()
+
+    @classmethod
     def save_experiment(cls, project_id: str, save_experiment_dto: SaveExperimentToCentralDTO) -> None:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/project/{project_id}/experiment")
