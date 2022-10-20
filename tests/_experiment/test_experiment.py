@@ -10,7 +10,6 @@ from gws_core import (BaseTestCase, Experiment, ExperimentDTO,
                       ExperimentService, ExperimentStatus, GTest, ProcessModel,
                       ProtocolModel, ResourceModel, Robot, RobotService,
                       RobotWorldTravelProto, TaskModel)
-from gws_core.core.utils.string_helper import StringHelper
 from gws_core.experiment.experiment_exception import \
     ResourceUsedInAnotherExperimentException
 from gws_core.experiment.experiment_interface import IExperiment
@@ -21,7 +20,7 @@ from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_model import ProcessStatus
-from gws_core.project.project_dto import ProjectDto
+from gws_core.project.project import Project
 from gws_core.task.plug import Sink
 
 
@@ -32,15 +31,16 @@ class TestExperiment(BaseTestCase):
 
     def test_create_empty(self):
 
-        project_dto: ProjectDto = ProjectDto(id=StringHelper.generate_uuid(), title="Project")
+        project: Project = Project(title="Project")
+        project.save()
         experiment_dto: ExperimentDTO = ExperimentDTO(
-            title="Experiment title", project=project_dto)
+            title="Experiment title", project_id=project.id)
         experiment = ExperimentService.create_empty_experiment_from_dto(experiment_dto)
 
         self.assertIsNotNone(experiment.id)
         self.assertEqual(experiment.title, 'Experiment title')
         self.assertIsNotNone(experiment.protocol_model.id)
-        self.assertEqual(experiment.project.id, project_dto.id)
+        self.assertEqual(experiment.project.id, project.id)
 
         ExperimentService.update_experiment_description(experiment.id, {"test": "ok"})
         experiment = ExperimentService.get_experiment_by_id(experiment.id)

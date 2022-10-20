@@ -25,8 +25,6 @@ from ..core.service.base_service import BaseService
 from ..experiment.experiment_search_builder import ExperimentSearchBuilder
 from ..process.process_factory import ProcessFactory
 from ..project.project import Project
-from ..project.project_dto import ProjectDto
-from ..project.project_service import ProjectService
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_model import ProtocolModel
 from ..protocol.protocol_service import ProtocolService
@@ -49,21 +47,18 @@ class ExperimentService(BaseService):
     @classmethod
     def create_empty_experiment_from_dto(cls, experimentDTO: ExperimentDTO) -> Experiment:
 
-        # retrieve the project
-        project: Project = ProjectService.get_or_create_project_from_dto(experimentDTO.project)
-
         return cls.create_empty_experiment(
-            project=project,
+            project_id=experimentDTO.project_id,
             title=experimentDTO.title,
         )
 
     @classmethod
-    def create_empty_experiment(cls, project: Project = None, title: str = "",
+    def create_empty_experiment(cls, project_id: str = None, title: str = "",
                                 type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
 
         return cls.create_experiment_from_protocol_model(
             protocol_model=ProcessFactory.create_protocol_empty(),
-            project=project,
+            project=Project.get_by_id_and_check(project_id) if project_id else None,
             title=title,
             type_=type_
         )
@@ -120,18 +115,20 @@ class ExperimentService(BaseService):
     ################################### UPDATE ##############################
 
     @classmethod
-    def update_experiment(cls, id, experiment_DTO: ExperimentDTO) -> Experiment:
+    def update_experiment(cls, id: str, experiment_DTO: ExperimentDTO) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
 
         experiment.check_is_updatable()
 
         experiment.title = experiment_DTO.title
-        project = ProjectService.get_or_create_project_from_dto(experiment_DTO.project)
 
-        if experiment.last_sync_at is not None and project != experiment.project:
-            raise BadRequestException("You can't change the project of an experiment that has been synced")
+        # update the project
+        if experiment_DTO.project_id:
+            project = Project.get_by_id_and_check(experiment_DTO.project_id)
 
-        experiment.project = project
+            if experiment.last_sync_at is not None and project != experiment.project:
+                raise BadRequestException("You can't change the project of an experiment that has been synced")
+            experiment.project = project
 
         experiment.save()
         return experiment
@@ -164,15 +161,13 @@ class ExperimentService(BaseService):
 
     @classmethod
     @transaction()
-    def validate_experiment_by_id(cls, id: str, project_dto: ProjectDto = None) -> Experiment:
+    def validate_experiment_by_id(cls, id: str, project_id: str = None) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
 
-        project: Project = None
         # set the project if it is provided
-        if project_dto is not None:
-            project = ProjectService.get_or_create_project_from_dto(project_dto)
+        if project_id is not None:
+            experiment.project = Project.get_by_id_and_check(project_id)
 
-        experiment.project = project
         return cls.validate_experiment(experiment)
 
     @classmethod

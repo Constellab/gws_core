@@ -186,7 +186,7 @@ class TaskModel(ProcessModel):
             else:
                 return
 
-        await self._run_before_task()
+        self._run_before_task()
 
         # run the task
         await self._run_task(task_runner)

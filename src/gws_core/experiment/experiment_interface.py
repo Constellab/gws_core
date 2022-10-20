@@ -47,7 +47,7 @@ class IExperiment:
 
         if protocol_type is None:
             self._experiment = ExperimentService.create_empty_experiment(
-                title=title, project=project, type_=type_)
+                title=title, project_id=project, type_=type_)
         else:
             if not isclass(protocol_type) or not issubclass(protocol_type, Protocol):
                 raise Exception(f"The provided process_type '{str(protocol_type)}' is not a process")

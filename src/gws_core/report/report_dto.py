@@ -8,9 +8,10 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from ..project.project_dto import ProjectDto
-
 
 class ReportDTO(BaseModel):
     title: str = None
-    project: Optional[ProjectDto] = None
+    project_id: Optional[str] = None
+
+    class Config:
+        arbitrary_types_allowed = True

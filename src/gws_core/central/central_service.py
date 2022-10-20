@@ -80,21 +80,6 @@ class CentralService(BaseService):
         return True
 
     @classmethod
-    def get_current_user_projects(cls) -> List[CentralProject]:
-        """
-        Call the central api to get the list of project for the current user
-        """
-        user: User = CurrentUserService.get_and_check_current_user()
-        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/user/{user.id}/projects")
-        response = ExternalApiService.get(central_api_url, cls._get_request_header())
-
-        if response.status_code != 200:
-            Logger.error(f"Can't retrieve projects for the user {user.id}, {user.email}. Error : {response.text}")
-            raise BadRequestException("Can't retrieve projects for current user")
-
-        return response.json()
-
-    @classmethod
     def get_projects(cls) -> List[CentralProject]:
         """
         Call the central api to get the list of project for the organization

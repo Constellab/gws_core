@@ -10,7 +10,6 @@ from ...core.exception.exceptions import BadRequestException
 from ...core.model.base_model_service import BaseModelService
 from ...core.utils.settings import Settings
 from ...lab.system_service import SystemService
-from ...project.project_dto import ProjectDto
 from ...user.auth_service import AuthService
 from ...user.user import User
 

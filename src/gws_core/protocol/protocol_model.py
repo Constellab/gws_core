@@ -195,7 +195,7 @@ class ProtocolModel(ProcessModel):
         self._load_connectors()
 
         try:
-            await self._run_before_task()
+            self._run_before_task()
             await self._run_task()
             await self._run_after_task()
         except Exception as err:

@@ -2,23 +2,19 @@
 from typing import List
 
 from gws_core import Experiment, Robot
-from gws_core.config.config_types import ConfigParams
 from gws_core.core.classes.rich_text_content import (RichTextI,
                                                      RichTextResourceView,
                                                      RichTextSpecialOps)
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
-from gws_core.impl.robot.robot_protocol import CreateSimpleRobot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.project.project import Project
-from gws_core.project.project_dto import ProjectDto
 from gws_core.report.report import Report, ReportExperiment
 from gws_core.report.report_dto import ReportDTO
 from gws_core.report.report_resource import ReportResource
 from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -75,8 +71,7 @@ class TestReport(BaseTestCase):
         experiment_2.project = project
         experiment_2.save()
 
-        project_dto = ProjectDto(id=project.id, title=project.title)
-        report_2 = ReportService.validate(report_2.id, project_dto=project_dto)
+        report_2 = ReportService.validate(report_2.id, project=project)
         self.assertTrue(report_2.is_validated)
 
         # Try to update report_2

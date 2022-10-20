@@ -19,6 +19,7 @@ from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.project.project import Project
 from gws_core.report.report_file_service import ReportFileService, ReportImage
 from gws_core.report.report_resource import ReportResource
 from gws_core.resource.resource_model import ResourceModel
@@ -37,8 +38,6 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..experiment.experiment import Experiment
-from ..project.project_dto import ProjectDto
-from ..project.project_service import ProjectService
 from ..report.report_dto import ReportDTO
 from ..report.report_search_builder import ReportSearchBuilder
 from .report import Report, ReportExperiment
@@ -51,7 +50,7 @@ class ReportService():
     def create(cls, report_dto: ReportDTO, experiment_ids: List[str] = None) -> Report:
         report = Report()
         report.title = report_dto.title
-        report.project = ProjectService.get_or_create_project_from_dto(report_dto.project)
+        report.project = Project.get_by_id_and_check(report_dto.project_id) if report_dto.project_id else None
 
         # Set default content for report
         report.content = {
@@ -87,12 +86,13 @@ class ReportService():
         report: Report = cls._get_and_check_before_update(report_id)
 
         report.title = report_dto.title
-        project = ProjectService.get_or_create_project_from_dto(report_dto.project)
 
-        if report.last_sync_at is not None and project != report.project:
-            raise BadRequestException("You can't change the project of an experiment that has been synced")
-
-        report.project = project
+        # update project
+        if report_dto.project_id:
+            project = Project.get_by_id_and_check(report_dto.project_id)
+            if report.last_sync_at is not None and project != report.project:
+                raise BadRequestException("You can't change the project of an experiment that has been synced")
+            report.project = project
 
         # check that all associated experiment are in same project
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
@@ -162,7 +162,7 @@ class ReportService():
             CentralService.delete_report(report.project.id, report.id)
 
     @classmethod
-    def validate(cls, report_id: str, project_dto: ProjectDto = None) -> Report:
+    def validate(cls, report_id: str, project_id: str = None) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
 
         rich_text = RichText(report.content)
@@ -170,8 +170,8 @@ class ReportService():
             raise BadRequestException('The report is empty')
 
         # set the project if it is provided
-        if project_dto is not None:
-            report.project = ProjectService.get_or_create_project_from_dto(project_dto)
+        if project_id is not None:
+            report.project = Project.get_by_id_and_check(project_id)
 
         if report.project is None:
             raise BadRequestException("The report must be associated to a project to be validated")
@@ -222,8 +222,8 @@ class ReportService():
 
     @classmethod
     @transaction()
-    def validate_and_send_to_central(cls, report_id: str, project_dto: ProjectDto = None) -> Report:
-        report = cls.validate(report_id, project_dto)
+    def validate_and_send_to_central(cls, report_id: str, project_id: str = None) -> Report:
+        report = cls.validate(report_id, project_id)
 
         report = cls._synchronize_with_central(report)
 

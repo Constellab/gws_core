@@ -7,12 +7,12 @@ from typing import Dict, List, Optional
 from fastapi import Depends
 from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.search_builder import SearchParams
+from gws_core.project.project import Project
 
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
 from ..experiment.experiment import Experiment
 from ..experiment.experiment_run_service import ExperimentRunService
-from ..project.project_dto import ProjectDto
 from ..tag.tag import Tag
 from ..tag.tag_service import TagService
 from ..user.auth_service import AuthService
@@ -106,9 +106,9 @@ def create_an_experiment(experiment: ExperimentDTO,
 ###################################### UPDATE  ################################
 
 
-@core_app.put("/experiment/{id}/validate", tags=["Experiment"], summary="Validate an experiment")
+@core_app.put("/experiment/{id}/validate/{project_id}", tags=["Experiment"], summary="Validate an experiment")
 def validate_an_experiment(id: str,
-                           project_dto: Optional[ProjectDto] = None,
+                           project_id: str = None,
                            _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Validate a protocol
@@ -116,7 +116,7 @@ def validate_an_experiment(id: str,
     - **id**: the id of the experiment
     """
 
-    return ExperimentService.validate_experiment_by_id(id=id, project_dto=project_dto).to_json(deep=True)
+    return ExperimentService.validate_experiment_by_id(id=id, project_id=project_id).to_json(deep=True)
 
 
 @core_app.put("/experiment/{id}/protocol", tags=["Experiment"], summary="Update an experiment's protocol")

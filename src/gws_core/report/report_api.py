@@ -10,13 +10,13 @@ from fastapi import UploadFile
 from fastapi.param_functions import Depends
 from fastapi.responses import FileResponse
 from gws_core.core.classes.paginator import PaginatorDict
+from gws_core.project.project import Project
 from gws_core.report.report_file_service import ReportImage
 
 from ..core.classes.jsonable import ListJsonable
 from ..core.classes.search_builder import SearchParams
 from ..core_app import core_app
 from ..experiment.experiment import Experiment
-from ..project.project_dto import ProjectDto
 from ..report.report import Report
 from ..report.report_dto import ReportDTO
 from ..report.report_service import ReportService
@@ -73,10 +73,10 @@ def remove_experiment(
     ReportService.remove_experiment(report_id, experiment_id)
 
 
-@core_app.put("/report/{report_id}/validate", tags=["Report"], summary="Validate the report")
-def validate(report_id: str, project_dto: Optional[ProjectDto] = None,
+@core_app.put("/report/{report_id}/validate/{project_id}", tags=["Report"], summary="Validate the report")
+def validate(report_id: str, project_id: Optional[str] = None,
              _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
-    return ReportService.validate_and_send_to_central(report_id, project_dto).to_json(deep=True)
+    return ReportService.validate_and_send_to_central(report_id, project_id).to_json(deep=True)
 
 
 @core_app.put('/report/{report_id}/sync-with-central', tags=["Report"], summary="Sync the report with central")
