@@ -41,7 +41,7 @@ class TestPipEnv(BaseTestCase):
 
             self.assertEqual(
                 file.read().strip(),
-                "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb21lIjoicGF5bG9hZCJ9.4twFt5NiznN84AWoo1d7KO1T_yoc0Z6XOpOVswacPZg")
 
             task: PipEnvTaskTester = task_runner.get_task()
 
@@ -54,6 +54,7 @@ class TestPipEnv(BaseTestCase):
             task: PipEnvTaskTester = task_runner.get_task()
             if task:
                 task.shell_proxy.uninstall_env()
+                task.dispatch_waiting_messages()
             raise exception
 
     # async def test_pipenv_proxy(self):

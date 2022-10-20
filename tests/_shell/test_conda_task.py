@@ -13,7 +13,7 @@ from gws_core.task.task_runner import TaskRunner
 __cdir__ = os.path.dirname(os.path.realpath(__file__))
 
 
-# test_shell_conda_2
+# test_conda_task
 @task_decorator("CondaEnvTaskTester")
 class CondaEnvTaskTester(CondaEnvTask):
     input_specs = {}
@@ -66,6 +66,7 @@ class TestProcess(BaseTestCase):
             task: CondaEnvTaskTester = task_runner.get_task()
             if task:
                 task.shell_proxy.uninstall_env()
+                task.dispatch_waiting_messages()
             raise exception
 
         # proc_mdl: TaskModel = TaskService.create_task_model_from_type(

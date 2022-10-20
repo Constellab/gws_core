@@ -52,7 +52,7 @@ class Viewer(Task):
         config_values = view_config['config_values']
         transformers = view_config['transformers']
 
-        view = await ResourceService.get_view_on_resource(resource, view_method_name, config_values, transformers)
+        view = ResourceService.get_view_on_resource(resource, view_method_name, config_values, transformers)
 
         # save the view config as flagged
         ViewConfigService.save_view_config(
