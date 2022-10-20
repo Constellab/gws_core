@@ -78,7 +78,7 @@ class TestProcess(BaseTestCase):
         # file: Resource = proc.outputs.get_resource_model("file").get_resource()
         # self.assertEqual(
         #     file.read().strip(),
-        #     "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
+        #     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb21lIjoicGF5bG9hZCJ9.4twFt5NiznN84AWoo1d7KO1T_yoc0Z6XOpOVswacPZg")
 
         # self.assertTrue(CondaEnvTester.is_installed())
         # self.assertTrue(proc.is_finished)
