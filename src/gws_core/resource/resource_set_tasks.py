@@ -58,7 +58,7 @@ class ResourcePicker(Task):
     input_specs: InputSpecs = {
         "resource_set": InputSpec(ResourceSet),
     }
-    output_specs: OutputSpecs = {'resource': OutputSpec(Resource, is_constant=True)}
+    output_specs: OutputSpecs = {'resource': OutputSpec(Resource, sub_class=True, is_constant=True)}
 
     config_specs = {
         'resource_name': StrParam(human_name="Resource name", short_description="The name of the resource to pick")

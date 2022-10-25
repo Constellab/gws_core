@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import BaseTestCase, LiveTask, Table, TaskRunner
+from gws_core import BaseTestCase, LiveTask, Table, TaskRunner, Text
 from pandas import DataFrame
 
 
@@ -15,20 +15,29 @@ class TestLiveTask(BaseTestCase):
                 "code": [
                     "from pandas import DataFrame",
                     "from gws_core import Table",
-                    "x = a+b",
-                    "df = DataFrame({'col1': [1,x], 'col2': [0,x+1]})",
-                    "output = Table(data=df)",
+
+                    "# parameters a and b are active in the scope of the code",
+                    "df = DataFrame({'col1': [1,a], 'col2': [0,b]})",
+
+                    "# the target resource is active in the scope of the code",
+                    "df = df + source.get_data()",
+
+                    "# the target resource will be given to the outputs if it is defined",
+                    "target = Table(data=df)",
                 ],
-                "params": ["a=1", "b=2"]
+                "params": ["a=1", "b=2"],
+            },
+            inputs={
+                'source': Table(data=DataFrame({'col1': [0, 1], 'col2': [0, 2]}))
             },
             task_type=LiveTask
         )
 
-        output = await tester.run()
-        table = output["target"]
+        outputs = await tester.run()
+        table = outputs["target"]
 
         self.assertTrue(isinstance(table, Table))
 
         df = table.get_data()
-        expected_df = DataFrame({'col1': [1, 3], 'col2': [0, 4]})
+        expected_df = DataFrame({'col1': [1, 2], 'col2': [0, 4]})
         self.assertTrue(df.equals(expected_df))
