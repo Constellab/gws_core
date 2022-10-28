@@ -3,11 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import BaseTestCase, LiveTask, Table, TaskRunner, Text
+from gws_core import BaseTestCase, PyLiveTask, Table, TaskRunner, Text
 from pandas import DataFrame
 
 
-class TestLiveTask(BaseTestCase):
+class TestLiveTaskShellProxy(BaseTestCase):
 
     async def test_live_task_shell(self):
         tester = TaskRunner(
@@ -25,7 +25,7 @@ class TestLiveTask(BaseTestCase):
                 ],
                 "params": []
             },
-            task_type=LiveTask
+            task_type=PyLiveTask
         )
 
         outputs = await tester.run()

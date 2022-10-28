@@ -24,7 +24,7 @@ class BaseEnvShellTask(ShellTask):
     unique_env_name = None
     """ The unique name of the virtual environment.
         If `None`, a unique name is automtically defined for the Task.
-        The share virtual environments across diffrent task,
+        To share virtual environments across diffrent task,
         it is recommended to set (freeze) the ```unique_env_name``` in a base class and let other
         compatible tasks inherit this base class.
     """

@@ -56,7 +56,7 @@ class CondaShellProxy(BaseEnvShell):
                 stderr=subprocess.PIPE,
                 shell=True
             )
-        except Exception as err:
+        except Exception as _:
             try:
                 if FileHelper.exists_on_os(self.get_env_dir_path()):
                     FileHelper.delete_dir(self.get_env_dir_path())

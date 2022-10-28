@@ -4,11 +4,14 @@
 # About us: https://gencovery.com
 
 
+from ...config.config_types import ConfigParams
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...resource.r_field.dict_r_field import DictRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
+from ...resource.view.view_decorator import view
+from .json_view import JSONView
 
 
 @resource_decorator("JSONDict")
@@ -38,3 +41,7 @@ class JSONDict(Resource):
         return super().__str__() + "\n" + \
             "Dictionnary:\n" + \
             self.data.__str__()
+
+    @view(view_type=JSONView, human_name="Default view", short_description="View the file content", default_view=True)
+    def default_view(self, _: ConfigParams) -> JSONView:
+        return JSONView(self._data)

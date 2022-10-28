@@ -3,11 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import re
-
-from gws_core import BadRequestException, ListParam, StrParam
-
 from ...config.config_types import ConfigParams, ConfigSpecs
+from ...config.param_spec import ListParam
+from ...core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from ...io.io_spec import InputSpec, OutputSpec
 from ...io.io_spec_helper import InputSpecs, OutputSpecs
 from ...resource.resource import Resource
@@ -16,14 +15,13 @@ from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("LiveTask", human_name="Live task", short_description="Live task")
-class LiveTask(Task):
+@task_decorator("PyLiveTask", human_name="Python live task",
+                short_description="Live task to run Python snippets directly in the global environment. The input data and parameters are passed in memory to the snippet.")
+class PyLiveTask(Task):
     """
-    Task for live code execution.
+    This task executes python code snippets on the fly.
 
-    This task allows executing python code on the fly.
-
-    > **Warning**: Be careful to use code that you develped yourself or coming from trusted sources.
+    > **Warning**: It is recommended to use code snippets comming from trusted sources.
     """
 
     input_specs: InputSpecs = {
@@ -37,29 +35,37 @@ class LiveTask(Task):
         ListParam(
             optional=True, default_value=[],
             human_name="Parameters", short_description="The parameters"),
-        'code': ListParam(human_name="Code", short_description="The code text"),
-    }
+        'code': ListParam(human_name="Python code snippet", short_description="Python code snippet to run"), }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
         params = params.get_value('params')
 
-        # validate user inputs, params, code
-        try:
-            # compute params
-            param_context = {}
-            if params:
-                params_str: str = "\n".join(params)
+        # TODO: Delete later
+        code: str = "\n".join(code)
+
+        # compute params
+        param_context = {}
+        if params:
+            params_str: str = "\n".join(params)
+            try:
                 exec(params_str, {}, param_context)
+            except Exception as err:
+                raise BadRequestException("Cannot parse parameters") from err
 
-            # execute the live code
-            global_vars = globals()
-            local_vars = {'self': self, **inputs, **param_context}
-            code: str = "\n".join(code)
+        # execute the live code
+        global_vars = globals()
+        local_vars = {'self': self, "inputs": inputs, "params": param_context}
 
+        try:
             exec(code, global_vars, local_vars)
-            target = local_vars.get("target", None)
-
-            return {'target': target}
         except Exception as err:
             raise BadRequestException(f"An error occured during the excution of the live code. Error: {err}") from err
+
+        outputs = local_vars.get("outputs", None)
+
+        if outputs is not None:
+            if not isinstance(outputs, dict):
+                raise BadRequestException("The outputs must be a dictionary")
+
+        return outputs

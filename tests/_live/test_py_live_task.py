@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import BaseTestCase, LiveTask, Table, TaskRunner, Text
+from gws_core import BaseTestCase, PyLiveTask, Table, TaskRunner, Text
 from pandas import DataFrame
 
 
@@ -16,21 +16,22 @@ class TestLiveTask(BaseTestCase):
                     "from pandas import DataFrame",
                     "from gws_core import Table",
 
-                    "# parameters a and b are active in the scope of the code",
+                    "a = params['a']",
+                    "b = params['b']",
                     "df = DataFrame({'col1': [1,a], 'col2': [0,b]})",
 
-                    "# the target resource is active in the scope of the code",
+                    "source = inputs['source']",
                     "df = df + source.get_data()",
 
                     "# the target resource will be given to the outputs if it is defined",
-                    "target = Table(data=df)",
+                    "outputs = {'target': Table(data=df)}",
                 ],
                 "params": ["a=1", "b=2"],
             },
             inputs={
                 'source': Table(data=DataFrame({'col1': [0, 1], 'col2': [0, 2]}))
             },
-            task_type=LiveTask
+            task_type=PyLiveTask
         )
 
         outputs = await tester.run()

@@ -16,10 +16,10 @@ from ..core.model.base import Base
 from ..core.utils.reflector_helper import ReflectorHelper
 from ..impl.json.json_view import JSONView
 from ..model.typing_register_decorator import typing_registrator
-from .view.view_decorator import view
 from .r_field.primitive_r_field import UUIDRField
 from .r_field.r_field import BaseRField
 from .r_field.serializable_r_field import SerializableRField
+from .view.view_decorator import view
 
 # Typing names generated for the class resource
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
@@ -64,7 +64,7 @@ class Resource(Base):
 
     # -- G --
 
-    @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json", default_view=True)
+    @view(view_type=JSONView, human_name="View resource", short_description="View the complete resource as json", default_view=True)
     def view_as_json(self, params: ConfigParams) -> JSONView:
         """By default the view_as_json dumps the RFields mark with, include_in_dict_view=True
         This method is used to send the resource information back to the interface
