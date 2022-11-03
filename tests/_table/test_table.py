@@ -5,9 +5,10 @@
 
 from unittest import IsolatedAsyncioTestCase
 
+from pandas import DataFrame
+
 from gws_core import Table
 from gws_core.core.utils.utils import Utils
-from pandas import DataFrame
 
 
 class TestTable(IsolatedAsyncioTestCase):
@@ -72,60 +73,54 @@ class TestTable(IsolatedAsyncioTestCase):
         # Select by row positions
         # ------------------------------------------------------------
 
-        t = table.select_by_row_positions([1, 2])
-        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
-        self.assertEqual(t.row_names, ["Tokyo", "Paris"])
-        self.assertEqual(t.get_row_tags(), [
+        sub_table = table.select_by_row_positions([1, 2])
+        self.assertEqual(sub_table.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(sub_table.row_names, ["Tokyo", "Paris"])
+        self.assertEqual(sub_table.get_row_tags(), [
             {"lg": "JP", "c": "JP", "user": "Jo"},
             {"lg": "FR", "c": "FR", "user": "Jo"},
         ])
-        self.assertEqual(t.get_column_tags(), [
+        self.assertEqual(sub_table.get_column_tags(), [
             {"lg": "EN", "c": "UK"},
             {"lg": "PT", "c": "PT"},
             {"lg": "CH", "c": "CH"}
         ])
 
+        sub_table = table.select_by_row_positions([1, 2, 1])
+        self.assertEqual(sub_table.row_names, ["Tokyo", "Paris", "Tokyo"])
+
         # ------------------------------------------------------------
         # Select by column positions
         # ------------------------------------------------------------
 
-        t = table.select_by_column_positions([0, 2])
-        self.assertEqual(t.column_names, ["London", "Beijin"])
-        self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
-        self.assertEqual(t.get_row_tags(), [
+        sub_table = table.select_by_column_positions([0, 2])
+        self.assertEqual(sub_table.column_names, ["London", "Beijin"])
+        self.assertEqual(sub_table.row_names, ["NY", "Tokyo", "Paris"])
+        self.assertEqual(sub_table.get_row_tags(), [
             {"lg": "EN", "c": "US", "user": "Vi"},
             {"lg": "JP", "c": "JP", "user": "Jo"},
             {"lg": "FR", "c": "FR", "user": "Jo"},
         ])
-        self.assertEqual(t.get_column_tags(), [
+        self.assertEqual(sub_table.get_column_tags(), [
             {"lg": "EN", "c": "UK"},
             {"lg": "CH", "c": "CH"}
         ])
 
-        t = table.select_by_column_positions([2, 0])
-        self.assertEqual(t.column_names, ["Beijin", "London"])
-        self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
-        self.assertEqual(t.get_row_tags(), [
-            {"lg": "EN", "c": "US", "user": "Vi"},
-            {"lg": "JP", "c": "JP", "user": "Jo"},
-            {"lg": "FR", "c": "FR", "user": "Jo"},
-        ])
-        self.assertEqual(t.get_column_tags(), [
-            {"lg": "EN", "c": "UK"},
-            {"lg": "CH", "c": "CH"},
-        ])
+        # check that is we are selecting a column twice, it return the column twice
+        sub_table = table.select_by_column_positions([0, 2, 0])
+        self.assertEqual(sub_table.column_names, ["London", "Beijin", "London"])
 
         # ------------------------------------------------------------
         # Select by row names
         # ------------------------------------------------------------
 
-        t = table.select_by_row_names([{"name": ["Toky.*"], "is_regex": True}])
-        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
-        self.assertEqual(t.row_names, ["Tokyo"])
-        self.assertEqual(t.get_row_tags(), [
+        sub_table = table.select_by_row_names([{"name": ["Toky.*"], "is_regex": True}])
+        self.assertEqual(sub_table.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(sub_table.row_names, ["Tokyo"])
+        self.assertEqual(sub_table.get_row_tags(), [
             {"lg": "JP", "c": "JP", "user": "Jo"},
         ])
-        self.assertEqual(t.get_column_tags(), [
+        self.assertEqual(sub_table.get_column_tags(), [
             {"lg": "EN", "c": "UK"},
             {"lg": "PT", "c": "PT"},
             {"lg": "CH", "c": "CH"}
@@ -135,72 +130,72 @@ class TestTable(IsolatedAsyncioTestCase):
         # Select by column names
         # ------------------------------------------------------------
 
-        t = table.select_by_column_names([{"name": ["L.*"], "is_regex": True}])
-        self.assertEqual(t.column_names, ["London", "Lisboa"])
-        self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
-        self.assertEqual(t.get_row_tags(), [
+        sub_table = table.select_by_column_names([{"name": ["L.*"], "is_regex": True}])
+        self.assertEqual(sub_table.column_names, ["London", "Lisboa"])
+        self.assertEqual(sub_table.row_names, ["NY", "Tokyo", "Paris"])
+        self.assertEqual(sub_table.get_row_tags(), [
             {"lg": "EN", "c": "US", "user": "Vi"},
             {"lg": "JP", "c": "JP", "user": "Jo"},
             {"lg": "FR", "c": "FR", "user": "Jo"},
         ])
-        self.assertEqual(t.get_column_tags(), [
+        self.assertEqual(sub_table.get_column_tags(), [
             {"lg": "EN", "c": "UK"},
             {"lg": "PT", "c": "PT"},
         ])
 
-        t = table.select_by_column_names([{"name": ["L.*", "B.*"], "is_regex": True}])
-        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
-        self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
+        sub_table = table.select_by_column_names([{"name": ["L.*", "B.*"], "is_regex": True}])
+        self.assertEqual(sub_table.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(sub_table.row_names, ["NY", "Tokyo", "Paris"])
 
-        t = table.select_by_row_names([{"name": ["Tokyo", "Oui"]}])
-        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
-        self.assertEqual(t.row_names, ["Tokyo"])
+        sub_table = table.select_by_row_names([{"name": ["Tokyo", "Oui"]}])
+        self.assertEqual(sub_table.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(sub_table.row_names, ["Tokyo"])
 
         # ------------------------------------------------------------
         # Select by column tags
         # ------------------------------------------------------------
 
-        t = table.select_by_column_tags([{"lg": "PT"}])
-        self.assertEqual(t.column_names, ["Lisboa"])
-        self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
+        sub_table = table.select_by_column_tags([{"lg": "PT"}])
+        self.assertEqual(sub_table.column_names, ["Lisboa"])
+        self.assertEqual(sub_table.row_names, ["NY", "Tokyo", "Paris"])
 
-        t = table.select_by_column_tags([{"lg": "PT", "c": "PT"}])
-        self.assertEqual(t.column_names, ["Lisboa"])
-        self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
+        sub_table = table.select_by_column_tags([{"lg": "PT", "c": "PT"}])
+        self.assertEqual(sub_table.column_names, ["Lisboa"])
+        self.assertEqual(sub_table.row_names, ["NY", "Tokyo", "Paris"])
 
         # ------------------------------------------------------------
         # Select by row tags
         # ------------------------------------------------------------
 
         # ( t1 )
-        t = table.select_by_row_tags([{"c": "JP"}])
-        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
-        self.assertEqual(t.row_names, ["Tokyo"])
+        sub_table = table.select_by_row_tags([{"c": "JP"}])
+        self.assertEqual(sub_table.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(sub_table.row_names, ["Tokyo"])
 
         # ( t2 )
-        t = table.select_by_row_tags([{"user": "Jo"}])
-        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
-        self.assertEqual(t.row_names, ["Tokyo", "Paris"])
+        sub_table = table.select_by_row_tags([{"user": "Jo"}])
+        self.assertEqual(sub_table.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(sub_table.row_names, ["Tokyo", "Paris"])
 
         # ( t1 AND t2 )
-        t = table.select_by_row_tags([{"c": "JP", "user": "Jo"}])
-        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
-        self.assertEqual(t.row_names, ["Tokyo"])
+        sub_table = table.select_by_row_tags([{"c": "JP", "user": "Jo"}])
+        self.assertEqual(sub_table.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(sub_table.row_names, ["Tokyo"])
 
         # ( t1 ) OR ( t2 )
-        t = table.select_by_row_tags([{"user": "Jo"}, {"c": "JP"}])
-        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
-        self.assertEqual(t.row_names, ["Tokyo", "Paris"])
+        sub_table = table.select_by_row_tags([{"user": "Jo"}, {"c": "JP"}])
+        self.assertEqual(sub_table.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(sub_table.row_names, ["Tokyo", "Paris"])
 
         # ( t1 AND t2 ) OR t2
-        t = table.select_by_row_tags([{"user": "Jo", "c": "JP"}, {"c": "JP"}])
-        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
-        self.assertEqual(t.row_names, ["Tokyo"])
+        sub_table = table.select_by_row_tags([{"user": "Jo", "c": "JP"}, {"c": "JP"}])
+        self.assertEqual(sub_table.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(sub_table.row_names, ["Tokyo"])
 
         # ( t1 AND t2 ) OR t1
-        t = table.select_by_row_tags([{"user": "Jo", "c": "JP"}, {"user": "Jo"}])
-        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
-        self.assertEqual(t.row_names, ["Tokyo", "Paris"])
+        sub_table = table.select_by_row_tags([{"user": "Jo", "c": "JP"}, {"user": "Jo"}])
+        self.assertEqual(sub_table.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(sub_table.row_names, ["Tokyo", "Paris"])
 
     def test_generate_column_name(self):
         dataframe = DataFrame({'A': range(1, 6)})

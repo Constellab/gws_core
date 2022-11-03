@@ -7,15 +7,16 @@
 from typing import Any, Dict, List, Literal, Union
 
 import numpy as np
+from pandas import DataFrame, Series
+from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
+                              is_string_dtype)
+
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_axis_tags import TableAxisTags
 from gws_core.impl.table.view.table_vulcano_plot_view import \
     TableVulcanoPlotView
-from pandas import DataFrame, Series
-from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
-                              is_string_dtype)
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -715,7 +716,7 @@ class Table(Resource):
         filtered_df and this dataframe.
         """
 
-        positions = [self._data.columns.get_loc(k) for k in self._data.columns if k in filtered_df.columns]
+        positions = [self._data.columns.get_loc(k) for k in filtered_df.columns if k in self._data.columns]
 
         # get the column tags for the filtered columns
         column_tags = self._column_tags.get_tags_at_indexes(positions)
