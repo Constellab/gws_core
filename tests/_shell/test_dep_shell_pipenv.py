@@ -53,6 +53,7 @@ class TestPipEnv(BaseTestCase):
             task: PipEnvTester = task_runner.get_task()
             if task:
                 task.uninstall()
+                task.dispatch_waiting_messages()
             raise exception
 
     # async def test_pipenv_proxy(self):

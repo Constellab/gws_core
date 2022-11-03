@@ -63,6 +63,7 @@ class TestProcess(BaseTestCase):
             task: CondaEnvTester = task_runner.get_task()
             if task:
                 task.uninstall()
+                task.dispatch_waiting_messages()
             raise exception
 
         # proc_mdl: TaskModel = TaskService.create_task_model_from_type(

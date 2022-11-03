@@ -700,7 +700,7 @@ class Table(Resource):
         filtered_df and this dataframe.
         """
 
-        positions = [self._data.index.get_loc(k) for k in self._data.index if k in filtered_df.index]
+        positions = [self._data.index.get_loc(k) for k in filtered_df.index if k in self._data.index]
 
         # get the row tags for the filtered rows
         row_tags = self._row_tags.get_tags_at_indexes(positions)
