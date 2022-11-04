@@ -4,25 +4,23 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse
-from gws_core.config.config_types import ConfigParams
-from gws_core.impl.file.file_helper import FileHelper
-from gws_core.report.report_service import ReportService
-from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view.view_types import CallViewParams
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
+from gws_core.project.project_dto import CentralProject
+from gws_core.project.project_service import ProjectService
+from gws_core.report.report_service import ReportService
+from gws_core.resource.resource_service import ResourceService
+from gws_core.resource.view.view_types import CallViewParams
+
 from ..core.exception.exception_handler import ExceptionHandler
-from ..core.service.mysql_service import MySQLService
 from ..core.service.settings_service import SettingsService
 from ..core.utils.http_helper import HTTPHelper
-from ..impl.file.file import File
-from ..impl.file.fs_node_service import FsNodeService
 from ..user.auth_service import AuthService
 from ..user.user import User
 from ..user.user_dto import UserCentral, UserData
@@ -51,6 +49,32 @@ def all_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(request, exc)
 
 
+##################################################### GLOBAL  #####################################################
+@central_app.get("/settings", summary="Get settings")
+def get_settings(_: UserData = Depends(AuthCentral.check_central_api_key)) -> dict:
+    return SettingsService.get_settings().to_json()
+
+
+@central_app.get("/health-check", summary="Health check route")
+def health_check() -> bool:
+    """
+    Simple health check route
+    """
+
+    return True
+
+# @central_app.get("/db/{db_manager_name}/dump", tags=["DB management"])
+# def dump_db(db_manager_name: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
+#     output_file = MySQLService.dump_db(db_manager_name)
+#     file = File()
+#     file.path = output_file
+#     FsNodeService.add_file_to_default_store(file, 'dump.sql')
+#     return file.view_as_json().to_dict(ConfigParams())
+
+
+##################################################### USER #####################################################
+
+
 class TokenData(BaseModel):
     access_token: str
     token_type: str
@@ -69,7 +93,7 @@ class UserIdData(BaseModel):
 
 @central_app.post("/user/generate-temp-access", tags=["User management"])
 def generate_user_temp_access(user_central: UserCentral,
-                              _=Depends(AuthCentral.check_central_api_key)) -> str:
+                              _=Depends(AuthCentral.check_central_api_key_and_user)) -> str:
     """
     Generate a temporary link for the user to login in the lab
     """
@@ -77,8 +101,8 @@ def generate_user_temp_access(user_central: UserCentral,
     return {"temp_token":  AuthService.generate_user_temp_access(user_central)}
 
 
-@central_app.get("/user/{id}/activate", tags=["User management"])
-def activate_user(id: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
+@central_app.put("/user/{id}/activate", tags=["User management"])
+def activate_user(id: str, _: UserData = Depends(AuthCentral.check_central_api_key_and_user)):
     """
     Activate a user. Requires central privilege.
 
@@ -88,8 +112,8 @@ def activate_user(id: str, _: UserData = Depends(AuthCentral.check_central_api_k
     return _convert_user_to_dto(UserService.activate_user(id))
 
 
-@central_app.get("/user/{id}/deactivate", tags=["User management"])
-def deactivate_user(id: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
+@central_app.put("/user/{id}/deactivate", tags=["User management"])
+def deactivate_user(id: str, _: UserData = Depends(AuthCentral.check_central_api_key_and_user)):
     """
     Deactivate a user. Require central privilege.
 
@@ -100,7 +124,7 @@ def deactivate_user(id: str, _: UserData = Depends(AuthCentral.check_central_api
 
 
 @central_app.get("/user/{id}", tags=["User management"])
-def get_user(id: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
+def get_user(id: str, _: UserData = Depends(AuthCentral.check_central_api_key_and_user)):
     """
     Get the details of a user. Require central privilege.
 
@@ -113,7 +137,7 @@ def get_user(id: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
 @central_app.post("/user", tags=["User management"])
 def create_user(user: UserData, _: UserData = Depends(AuthCentral.check_central_api_key)):
     """
-    Create a new user
+    Create a new user. Do not check the current user in this route because a user can created his own account.
 
     UserData:
     - **id**: The user id
@@ -123,58 +147,16 @@ def create_user(user: UserData, _: UserData = Depends(AuthCentral.check_central_
     - **last_name**: The last name
     """
 
-    return _convert_user_to_dto(UserService.create_user(user.dict()))
+    return _convert_user_to_dto(UserService.create_central_user(user.dict()))
 
 
 @central_app.get("/user", tags=["User management"])
-def get_users(_: UserData = Depends(AuthCentral.check_central_api_key)):
+def get_users(_: UserData = Depends(AuthCentral.check_central_api_key_and_user)):
     """
     Get the all the users. Require central privilege.
     """
     HTTPHelper.is_http_context()
     return _convert_users_to_dto(UserService.get_all_users())
-
-
-@central_app.get("/settings", summary="Get settings")
-def get_settings(_: UserData = Depends(AuthCentral.check_central_api_key)) -> dict:
-    return SettingsService.get_settings().to_json()
-
-
-@central_app.get("/health-check", summary="Health check route")
-def health_check() -> bool:
-    """
-    Simple health check route
-    """
-
-    return True
-
-
-@central_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
-                  summary="Call the view name for a resource")
-def call_view_on_resource(id: str,
-                          view_name: str,
-                          call_view_params: CallViewParams,
-                          _: UserData = Depends(AuthCentral.check_central_api_key)) -> Any:
-    view_dict = ResourceService.get_and_call_view_on_resource_model(id, view_name, call_view_params["values"],
-                                                                    call_view_params["transformers"],
-                                                                    call_view_params["save_view_config"])
-
-    return view_dict
-
-
-@central_app.get("/report/image/{filename}", tags=["Report"], summary="Get an object")
-def get_image(filename: str,
-              _: UserData = Depends(AuthCentral.check_central_api_key)) -> FileResponse:
-    return ReportService.get_image_file_response(filename)
-
-
-@central_app.get("/db/{db_manager_name}/dump", tags=["DB management"])
-def dump_db(db_manager_name: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
-    output_file = MySQLService.dump_db(db_manager_name)
-    file = File()
-    file.path = output_file
-    FsNodeService.add_file_to_default_store(file, 'dump.sql')
-    return file.view_as_json().to_dict(ConfigParams())
 
 
 def _convert_user_to_dto(user: User) -> Dict:
@@ -192,3 +174,37 @@ def _convert_user_to_dto(user: User) -> Dict:
 
 def _convert_users_to_dto(users: List[User]) -> List[Dict]:
     return list(map(_convert_user_to_dto, users))
+
+
+##################################################### PROJECT #####################################################
+
+@central_app.post("/project", tags=["Project"])
+def create_project(project: CentralProject, _: UserData = Depends(AuthCentral.check_central_api_key_and_user)):
+    """
+    Register a central project to the lab
+
+    """
+
+    return ProjectService.synchronize_central_project(project)
+
+
+##################################################### OTHER #####################################################
+
+
+@central_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
+                  summary="Call the view name for a resource")
+def call_view_on_resource(id: str,
+                          view_name: str,
+                          call_view_params: CallViewParams,
+                          _: UserData = Depends(AuthCentral.check_central_api_key_and_user)) -> Any:
+    view_dict = ResourceService.get_and_call_view_on_resource_model(id, view_name, call_view_params["values"],
+                                                                    call_view_params["transformers"],
+                                                                    call_view_params["save_view_config"])
+
+    return view_dict
+
+
+@central_app.get("/report/image/{filename}", tags=["Report"], summary="Get an object")
+def get_image(filename: str,
+              _: UserData = Depends(AuthCentral.check_central_api_key_and_user)) -> FileResponse:
+    return ReportService.get_image_file_response(filename)

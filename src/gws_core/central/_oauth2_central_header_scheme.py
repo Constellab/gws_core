@@ -5,35 +5,24 @@
 
 from typing import Optional
 
-from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.requests import Request
 from fastapi.security import OAuth2
 from fastapi.security.utils import get_authorization_scheme_param
 
+from gws_core.central.central_service import CentralService
+
 from ..core.exception.exceptions import BadRequestException
 
 
-class OAuth2CentralAPIKeyHeader(OAuth2):
-    def __init__(
-        self,
-        tokenUrl: str,
-        scheme_name: str = None,
-        scopes: dict = None,
-        auto_error: bool = True,
-    ):
-        if not scopes:
-            scopes = {}
-        flows = OAuthFlowsModel(
-            password={"tokenUrl": tokenUrl, "scopes": scopes})
-        super().__init__(flows=flows, scheme_name=scheme_name, auto_error=auto_error)
+class CentralApiKeyHeader(OAuth2):
 
     async def __call__(self, request: Request) -> Optional[str]:
-        header_authorization: str = request.headers.get("Authorization")
+        header_authorization: str = request.headers.get(CentralService.api_key_header_key)
         header_scheme, header_param = get_authorization_scheme_param(
             header_authorization
         )
 
-        if header_scheme.lower() == "api-key":
+        if header_scheme.lower() == CentralService.api_key_header_prefix:
             authorization = True
             param = header_param
         else:
@@ -48,5 +37,13 @@ class OAuth2CentralAPIKeyHeader(OAuth2):
         return param
 
 
-oauth2_central_header_scheme = OAuth2CentralAPIKeyHeader(
-    tokenUrl="/user/generate-access-token")
+centra_api_key_header = CentralApiKeyHeader()
+
+
+class CentralAPIUserHeader(OAuth2):
+
+    async def __call__(self, request: Request) -> Optional[str]:
+        return request.headers.get(CentralService.user_id_header_key)
+
+
+central_header_api_user_header = CentralAPIUserHeader()

@@ -16,7 +16,7 @@ class Project(ModelWithUser):
     """
     code: str = CharField(null=False, max_length=20, default='')
     title: str = CharField(null=False, max_length=50)
-    parent = ForeignKeyField('self', null=True, backref='children')
+    parent = ForeignKeyField('self', null=True, backref='children', on_delete='CASCADE')
 
     children: List['Project']
 
@@ -44,3 +44,14 @@ class Project(ModelWithUser):
         """
 
         return cls.select().where(cls.parent.is_null())
+
+    def get_hierarchy_as_list(self) -> List['Project']:
+        """
+        Get all projects and children as a list.
+        """
+
+        children = [self]
+        for child in self.children:
+            children += child.get_hierarchy_as_list()
+
+        return children

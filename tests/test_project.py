@@ -5,6 +5,7 @@
 
 
 from gws_core import BaseTestCase
+from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.project.project import Project
 from gws_core.project.project_dto import CentralProject
 from gws_core.project.project_service import ProjectService
@@ -15,7 +16,7 @@ class TestProject(BaseTestCase):
 
     def test_get_or_create_project_with_children(self):
 
-        central_project: CentralProject = {
+        central_project: CentralProject = CentralProject(**{
             "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
             "code": "Root",
             "title": "Root project",
@@ -39,10 +40,10 @@ class TestProject(BaseTestCase):
                     "children": []
                 }
             ]
-        }
+        })
 
         # test synchronization
-        ProjectService._synchronize_project(central_project, None)
+        ProjectService.synchronize_central_project(central_project)
 
         all_projects_count = Project.select().count()
 
@@ -66,5 +67,16 @@ class TestProject(BaseTestCase):
         self.assertFalse(any(project_tree.code == 'WP1' for project_tree in project_trees))
 
         # Test another synchronization to check that the project is not duplicated
-        ProjectService._synchronize_project(central_project, None)
+        ProjectService.synchronize_central_project(central_project)
         self.assertEqual(Project.select().count(), all_projects_count)
+
+        # Test deletion
+        experiment = ExperimentService.create_empty_experiment('caf61803-70e5-4ac3-9adb-53a35f65a2f3')
+
+        # Should not be able to delete a project with experiments
+        with self.assertRaises(Exception):
+            ProjectService.delete_project(project.id)
+
+        ExperimentService.delete_experiment(experiment.id)
+        ProjectService.delete_project(project.id)
+        self.assertEqual(Project.select().count(), 0)

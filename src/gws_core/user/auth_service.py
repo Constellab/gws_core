@@ -8,8 +8,6 @@ from fastapi.param_functions import Depends
 from requests.models import Response
 from starlette.responses import JSONResponse, Response
 
-from gws_core.project.project_service import ProjectService
-
 from ..central.central_service import CentralService
 from ..core.exception.exceptions import (BadRequestException,
                                          UnauthorizedException)
@@ -81,12 +79,7 @@ class AuthService(BaseService):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        access_token = JWTService.create_jwt(user_id=user.id)
-
-        # on each user connexion, start a synchornization with central projects
-        ProjectService.synchronize_central_projects_async()
-
-        return access_token
+        return JWTService.create_jwt(user_id=user.id)
 
     @classmethod
     def generate_user_temp_access(cls, user_central: UserCentral) -> str:

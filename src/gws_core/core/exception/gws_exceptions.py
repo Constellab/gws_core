@@ -50,3 +50,5 @@ class GWSException(Enum):
     INVALID_FOLDER_ON_UPLOAD = "The folder is invalid. Error : '{{error}}'"
     REPORT_NO_ASSOCIATED_EXPERIMENT = "The report is not associated with an experiment. Please associate it to an experiment to access views."
     RESET_EXPERIMENT_REQUIRED = "The protocol can't be modified, please reset the experiment first"
+    DELETE_PROJECT_WITH_EXPERIMENTS = "The project can't be deleted because it contains experiments"
+    DELETE_PROJECT_WITH_REPORTS = "The project can't be deleted because it contains reports"

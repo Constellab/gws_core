@@ -5,9 +5,9 @@
 from typing import Dict, List, Optional
 
 from fastapi import Depends
+
 from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.project.project import Project
 
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app

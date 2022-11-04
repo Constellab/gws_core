@@ -21,10 +21,24 @@ class UserService(BaseService):
     # -- A --
 
     @classmethod
-    def activate_user(cls, id) -> User:
-        return cls.set_user_status(id, {"is_active": True})
+    def activate_user(cls, id: str) -> User:
+        return cls.set_user_active(id, True)
 
     # -- C --
+
+    @classmethod
+    def create_central_user(cls, user: UserDataDict) -> User:
+        db_user: User = cls.get_user_by_id(user["id"])
+
+        if db_user is None:
+            return cls._create_user(user)
+        else:
+            db_user.email = user["email"]
+            db_user.first_name = user["first_name"]
+            db_user.last_name = user["last_name"]
+            db_user.group = user["group"]
+            db_user.is_active = user["is_active"]
+            return db_user.save()
 
     @classmethod
     def create_user(cls, user: UserDataDict) -> User:
@@ -67,7 +81,7 @@ class UserService(BaseService):
 
     @classmethod
     def deactivate_user(cls, id) -> User:
-        return cls.set_user_status(id, {"is_active": False})
+        return cls.set_user_active(id, False)
 
     # -- F --
 
@@ -113,17 +127,11 @@ class UserService(BaseService):
     # -- S --
 
     @classmethod
-    def set_user_status(cls, id, data) -> User:
-        user = User.get_by_id(id)
-        if user is None:
-            raise BadRequestException("User not found")
-        if "is_active" in data:
-            user.is_active = data["is_active"]
-        if "group" in data:
-            user.group = data["group"]
-        if not user.save():
-            raise BadRequestException("Cannot save the user")
-        return user
+    def set_user_active(cls, id: str, is_active: bool) -> User:
+        user: User = User.get_by_id_and_check(id)
+
+        user.is_active = is_active
+        return user.save()
 
     @classmethod
     def get_all_users(cls) -> List[User]:

@@ -3,25 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, List, TypedDict
+from typing import List, Optional
 
 from pydantic import BaseModel
 
 
-class CentralProject(TypedDict):
+class CentralProject(BaseModel):
 
     id: str
     code: str
     title: str
-    children: List['CentralProject']
-
-
-class ProjectDto(BaseModel):
-
-    id: str = None
-    title: str = None
-
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, ProjectDto):
-            return False
-        return self.id == other.id
+    children: Optional[List['CentralProject']]

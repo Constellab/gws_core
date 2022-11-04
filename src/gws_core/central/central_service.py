@@ -5,13 +5,14 @@
 
 from typing import Dict, List
 
+from requests.models import Response
+
 from gws_core.brick.brick_service import BrickService
 from gws_core.central.central_dto import (CentralSendMailDTO, LabStartDTO,
                                           SaveExperimentToCentralDTO,
                                           SaveReportToCentralDTO,
                                           SendExperimentFinishMailData)
 from gws_core.lab.lab_config_model import LabConfig
-from requests.models import Response
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
@@ -28,10 +29,10 @@ class CentralService(BaseService):
 
     # external lab route on central
     _external_labs_route: str = 'external-labs'
-    _api_key_header_key: str = 'Authorization'
-    _api_key_header_prefix: str = 'api-key '
+    api_key_header_key: str = 'Authorization'
+    api_key_header_prefix: str = 'api-key'
     # Key to set the user in the request
-    _user_id_header_key: str = 'User'
+    user_id_header_key: str = 'User'
 
     @classmethod
     def check_api_key(cls, api_key: str) -> bool:
@@ -173,11 +174,11 @@ class CentralService(BaseService):
         Return the header for a request to central, with Api key and User if exists
         """
         # Header with the Api Key
-        headers = {cls._api_key_header_key: cls._api_key_header_prefix + Settings.get_central_api_key()}
+        headers = {cls.api_key_header_key: cls.api_key_header_prefix + ' ' + Settings.get_central_api_key()}
 
         user: User = CurrentUserService.get_current_user()
 
         if user:
-            headers[cls._user_id_header_key] = user.id
+            headers[cls.user_id_header_key] = user.id
 
         return headers

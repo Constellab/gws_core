@@ -37,18 +37,9 @@ class ExceptionHandler():
         """
 
         # retrieve the error
-        errors = exc.errors()
-
-        # get only the first error message
-        str_error = None
-        if len(errors) > 0:
-            str_error = errors[0].get('msg')
-
-        if not str_error:
-            str_error = 'Invalid data'
-
+        Logger.log_exception_stack_trace(exc)
         return ExceptionResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, code='unprocessable_entity_error',
-                                 detail=str_error,
+                                 detail=str(exc),
                                  instance_id=cls.generate_instance_id())
 
     @classmethod
