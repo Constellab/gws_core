@@ -23,7 +23,7 @@ from ..core.service.settings_service import SettingsService
 from ..core.utils.http_helper import HTTPHelper
 from ..user.auth_service import AuthService
 from ..user.user import User
-from ..user.user_dto import UserCentral, UserData
+from ..user.user_dto import UserData, UserLoginInfo
 from ..user.user_service import UserService
 from ._auth_central import AuthCentral
 
@@ -92,13 +92,13 @@ class UserIdData(BaseModel):
 
 
 @central_app.post("/user/generate-temp-access", tags=["User management"])
-def generate_user_temp_access(user_central: UserCentral,
+def generate_user_temp_access(user_login_info: UserLoginInfo,
                               _=Depends(AuthCentral.check_central_api_key_and_user)) -> str:
     """
     Generate a temporary link for the user to login in the lab
     """
 
-    return {"temp_token":  AuthService.generate_user_temp_access(user_central)}
+    return {"temp_token":  AuthService.generate_user_temp_access(user_login_info)}
 
 
 @central_app.put("/user/{id}/activate", tags=["User management"])

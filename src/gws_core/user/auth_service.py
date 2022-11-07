@@ -8,6 +8,8 @@ from fastapi.param_functions import Depends
 from requests.models import Response
 from starlette.responses import JSONResponse, Response
 
+from gws_core.lab.system_service import SystemService
+
 from ..central.central_service import CentralService
 from ..core.exception.exceptions import (BadRequestException,
                                          UnauthorizedException)
@@ -25,7 +27,7 @@ from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .unique_code_service import (CodeObject, InvalidUniqueCodeException,
                                   UniqueCodeService)
 from .user import User, UserDataDict
-from .user_dto import UserCentral, UserData
+from .user_dto import UserCentral, UserData, UserLoginInfo
 from .user_exception import InvalidTokenException, WrongCredentialsException
 from .user_service import UserService
 
@@ -82,8 +84,8 @@ class AuthService(BaseService):
         return JWTService.create_jwt(user_id=user.id)
 
     @classmethod
-    def generate_user_temp_access(cls, user_central: UserCentral) -> str:
-        user: User = UserService.fetch_user(user_central.id)
+    def generate_user_temp_access(cls, user_login_info: UserLoginInfo) -> str:
+        user: User = UserService.fetch_user(user_login_info.user.id)
         if not user:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.value,
@@ -97,13 +99,21 @@ class AuthService(BaseService):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # update the user info and save it
-        user.first_name = user_central.firstname
-        user.last_name = user_central.lastname
-        user.email = user_central.email
-        user.theme = user_central.theme
-        user.lang = user_central.lang
-        user.save()
+        user_central: UserCentral = user_login_info.user
+
+        if user.first_name != user_central.firstname or user.last_name != user_central.lastname or \
+                user.email != user_central.email or user.theme != user_central.theme or \
+                user.lang != user_central.lang:
+            # update the user info and save it
+            user.first_name = user_central.firstname
+            user.last_name = user_central.lastname
+            user.email = user_central.email
+            user.theme = user_central.theme
+            user.lang = user_central.lang
+            user.save()
+
+        # refresh the organization info
+        SystemService.save_organization_async(user_login_info.organization)
 
         return UniqueCodeService.generate_code(user.id, {}, 60)
 

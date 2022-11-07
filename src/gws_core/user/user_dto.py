@@ -1,6 +1,7 @@
 
-from gws_core.user.user import UserLanguage, UserTheme
 from pydantic import BaseModel
+
+from gws_core.user.user import UserLanguage, UserTheme
 
 from ..user.user_group import UserGroup
 
@@ -22,3 +23,17 @@ class UserCentral(BaseModel):
     email: str
     theme: UserTheme
     lang: UserLanguage
+
+
+class OrganizationCentral(BaseModel):
+    id: str
+    label: str
+    domain: str
+    photo: str
+
+# Info provided by the user when he logs in
+
+
+class UserLoginInfo(BaseModel):
+    user: UserCentral
+    organization: OrganizationCentral

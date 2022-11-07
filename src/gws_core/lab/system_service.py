@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import sys
+from threading import Thread
 
 from gws_core.central.central_service import CentralService
 from gws_core.core.db.db_migration import DbMigrationService
@@ -11,6 +12,7 @@ from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.user.user_dto import OrganizationCentral
 
 from ..brick.brick_service import BrickService
 from ..core.exception.exceptions.unauthorized_exception import \
@@ -143,7 +145,39 @@ class SystemService:
 
     @classmethod
     def get_lab_info(cls) -> dict:
+        settings = Settings.retrieve()
         return {
-            "lab_name": Settings.get_lab_name(),
-            "front_version": Settings.get_front_version(),
+            "lab_name": settings.get_lab_name(),
+            "front_version": settings.get_front_version(),
+            "organization": settings.get_organization(),
         }
+
+    @classmethod
+    def save_organization_async(cls, organization_central: OrganizationCentral) -> None:
+        thread = Thread(target=cls._save_organization, args=[organization_central])
+        thread.start()
+
+    @classmethod
+    def _save_organization(cls, organization_central: OrganizationCentral) -> None:
+        try:
+
+            settings = Settings.retrieve()
+            organization = settings.get_organization()
+
+            # if no organization were saved or one of its value was changed
+            # update the organization
+            if organization is None or organization['id'] != organization_central.id or \
+                    organization['label'] != organization_central.label or organization['domain'] != organization_central.domain or \
+                    organization['photo'] != organization_central.photo:
+                settings.set_organization({
+                    "id": organization_central.id,
+                    'label': organization_central.label,
+                    'domain': organization_central.domain,
+                    'photo': organization_central.photo,
+                })
+                settings.save()
+
+        except Exception as err:
+            Logger.error(f"Error while saving the organization : {err}")
+            Logger.log_exception_stack_trace(err)
+            return None

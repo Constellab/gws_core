@@ -8,7 +8,7 @@ import re
 import tempfile
 from copy import deepcopy
 from json import dump, load
-from typing import Any, Dict, List, Literal, TypedDict, Union
+from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
 from gws_core.core.db.db_config import DbConfig
 from gws_core.impl.file.file_helper import FileHelper
@@ -46,6 +46,13 @@ class BrickMigrationLog(TypedDict):
     version: str
     last_date_check: str
     history: List[BrickMigrationLogHistory]
+
+
+class Organization(TypedDict):
+    id: str
+    label: str
+    domain: str
+    photo: Optional[str]
 
 
 class Settings():
@@ -331,6 +338,12 @@ class Settings():
 
     def get_modules(self) -> Dict[str, ModuleInfo]:
         return self.data["modules"]
+
+    def get_organization(self) -> Organization:
+        return self.data.get("organization")
+
+    def set_organization(self, organization: Organization):
+        self.data["organization"] = organization
 
     # BRICK MIGRATION
 
