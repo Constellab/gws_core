@@ -32,7 +32,8 @@ class JSONImporter(ResourceImporter):
 
     async def import_from_path(self, source: File, params: ConfigParams, target_type: Type[JSONDict]) -> JSONDict:
         if source.is_empty():
-            raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name)
+            raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
+                                      detail_args={'filename': source.path})
 
         with open(source.path, "r", encoding="utf-8") as f:
             json_data = target_type()

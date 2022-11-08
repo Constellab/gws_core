@@ -6,6 +6,7 @@
 from typing import Type
 
 import pandas
+
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -40,7 +41,7 @@ class TableImporter(ResourceImporter):
     async def import_from_path(self, source: File, params: ConfigParams, target_type: Type[Table]) -> Table:
         if source.is_empty():
             raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
-                                      detail_args={'filename': source.name})
+                                      detail_args={'filename': source.path})
 
         encoding = params.get('encoding')
         if encoding == 'auto' or encoding is None or len(encoding) == 0:
