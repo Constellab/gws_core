@@ -426,6 +426,11 @@ class Table(Resource):
             "tags": self._row_tags.get_tags_at(row_position)
         }
 
+    def get_row_names(self, from_index: int = None, to_index: int = None) -> List[str]:
+        """Get the row names
+        """
+        return self._data.index.tolist()[from_index:to_index]
+
     def get_column_tags(self, from_index: int = None, to_index: int = None,
                         none_if_empty: bool = False) -> List[Dict[str, str]]:
 
@@ -470,6 +475,11 @@ class Table(Resource):
             "type": self.get_column_type(column_name),
             "tags": self._column_tags.get_tags_at(column_position)
         }
+
+    def get_column_names(self, from_index: int = None, to_index: int = None) -> List[str]:
+        """Get the column names
+        """
+        return self._data.columns.tolist()[from_index:to_index]
 
     def get_column_type(self, column_name) -> TableColumnType:
         # get the type of the column

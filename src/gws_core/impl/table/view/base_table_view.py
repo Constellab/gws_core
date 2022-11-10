@@ -5,17 +5,18 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, TypedDict
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict
+
+from pandas import DataFrame
 
 from gws_core.config.param_spec import StrParam
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.resource.view.view_types import ViewSpecs, ViewType
-from pandas import DataFrame
 
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....resource.view.view import View
-from .table_selection import CellRange, TableSelection
+from .table_selection import CellRange, Serie1dList, TableSelection
 
 if TYPE_CHECKING:
     from ..table import Table
@@ -163,3 +164,26 @@ class BaseTableView(View):
 
         else:
             return None
+
+    def get_x_tick_labels_from_series_list(self, serie_list: Serie1dList) -> Optional[List[str]]:
+        """Get the x tick labels from a serie list if possible, if all the series have the same
+        rows selection"""
+
+        # all the y series must have the same row selection
+        if serie_list.all_y_series_have_same_row_selection():
+            # if they all are column selection, the tick labels are all the row names
+            if serie_list.all_y_are_column_selection():
+                return self.get_table().get_row_names()
+            else:
+                # otherwise, take the first serie row selection as they all have the same selection
+                cell_range: List[CellRange] = serie_list.series[0].y.selection
+
+                x_tick_labels = []
+                # retrieve all the row names based on the row selection
+                for cell in cell_range:
+                    x_tick_labels += self.get_table().get_row_names(cell.get_from().row,
+                                                                    cell.get_to().row + 1)
+
+                return x_tick_labels
+
+        return None

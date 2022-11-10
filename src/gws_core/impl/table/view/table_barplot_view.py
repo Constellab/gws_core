@@ -13,7 +13,7 @@ from ....core.exception.exceptions import BadRequestException
 from ....resource.view.view_types import ViewSpecs, ViewType
 from ...view.barplot_view import BarPlotView
 from .base_table_view import BaseTableView
-from .table_selection import Serie1d
+from .table_selection import CellRange, Serie1d, Serie1dList
 
 if TYPE_CHECKING:
     from ..table import Table
@@ -67,9 +67,9 @@ class TableBarPlotView(BaseTableView):
         return BarPlotView()
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        series: List[Serie1d] = Serie1d.from_list(params.get_value("series"))
+        serie_list: Serie1dList = Serie1dList.from_list(params.get_value("series"))
 
-        if len(series) == 0:
+        if len(serie_list) == 0:
             raise BadRequestException('There must be at least one serie')
 
         # create view
@@ -77,7 +77,9 @@ class TableBarPlotView(BaseTableView):
         view.x_label = params.get_value("x_axis_label")
         view.y_label = params.get_value("y_axis_label")
 
-        for serie in series:
+        view.x_tick_labels = self.get_x_tick_labels_from_series_list(serie_list)
+
+        for serie in serie_list.series:
             y_data = self.get_values_from_selection_range(serie.y)
 
             view.add_series(
