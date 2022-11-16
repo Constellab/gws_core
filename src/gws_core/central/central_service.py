@@ -5,6 +5,7 @@
 
 from typing import Dict, List
 
+from pydantic import parse_obj_as
 from requests.models import Response
 
 from gws_core.brick.brick_service import BrickService
@@ -81,18 +82,19 @@ class CentralService(BaseService):
         return True
 
     @classmethod
-    def get_projects(cls) -> List[CentralProject]:
+    def get_all_lab_projects(cls) -> List[CentralProject]:
         """
-        Call the central api to get the list of project for the organization
+        Call the central api to get the list of project for this lab
         """
-        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/project-trees")
+        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/project/all-trees")
         response = ExternalApiService.get(central_api_url, cls._get_request_header())
 
         if response.status_code != 200:
             Logger.error(f"Can't retrieve projects for the lab. Error : {response.text}")
             raise BadRequestException("Can't retrieve projects for the lab")
 
-        return response.json()
+        # get response and parse it to a list of CentralProject
+        return parse_obj_as(List[CentralProject], response.json())
 
     @classmethod
     def save_experiment(cls, project_id: str, save_experiment_dto: SaveExperimentToCentralDTO) -> None:

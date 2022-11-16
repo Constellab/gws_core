@@ -177,8 +177,10 @@ class AuthService(BaseService):
         Log the user on the dev lab by calling the prod api
         Only allowed for the dev service
 
-        It check the user's prod token by calling the prod api and if it's valid, it
-        generate a token for the development environment
+        It check the user's prod token by calling the prod api. If the token is valie,
+        it create the user in the BD if not already there and return the user
+
+        The dev environment uses the same token as the prod environment
 
         :param credentials: [description]
         :type credentials: CredentialsDTO

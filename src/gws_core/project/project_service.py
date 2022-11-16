@@ -5,6 +5,7 @@
 
 from typing import List
 
+from gws_core.central.central_service import CentralService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
@@ -21,6 +22,15 @@ class ProjectService(BaseService):
     @classmethod
     def get_project_trees(cls) -> List[Project]:
         return list(Project.get_roots())
+
+    @classmethod
+    def synchronize_all_central_projects(cls) -> None:
+        """
+        Synchronize all the projects from central
+        """
+        central_projects = CentralService.get_all_lab_projects()
+        for central_project in central_projects:
+            cls.synchronize_central_project(central_project)
 
     @classmethod
     def synchronize_central_project(cls, project: CentralProject) -> None:

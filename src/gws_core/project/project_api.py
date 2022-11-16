@@ -6,6 +6,7 @@
 from typing import Dict
 
 from fastapi.param_functions import Depends
+
 from gws_core.core.classes.jsonable import ListJsonable
 
 from ..core_app import core_app
@@ -20,7 +21,7 @@ def synchronize_project(_: UserData = Depends(AuthService.check_user_access_toke
     Synchronize the projects from central
     """
 
-    return ProjectService.synchronize_central_projects()
+    return ProjectService.synchronize_all_central_projects()
 
 
 @core_app.get("/project/trees", tags=["Project"])
