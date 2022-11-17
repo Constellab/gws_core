@@ -7,16 +7,17 @@ from typing import Optional
 
 from fastapi import Cookie, Depends, Header
 from fastapi.responses import RedirectResponse
+from starlette.responses import JSONResponse
+
 from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.service.front_service import FrontService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
 from gws_core.user.user import User
-from starlette.responses import JSONResponse
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
-from .credentials_dto import CredentialsDTO
+from .credentials_dto import Credentials2Fa, CredentialsDTO
 from .user_dto import UserData
 from .user_exception import InvalidTokenException
 from .user_service import UserService
@@ -72,6 +73,15 @@ def login(credentials: CredentialsDTO) -> JSONResponse:
     """
 
     return AuthService.login(credentials)
+
+
+@core_app.post("/login-2fa", tags=["User"], summary="Login 2FA to the lab by requesting central")
+def login_2_fa(credentials: Credentials2Fa) -> JSONResponse:
+    """
+    Login 2FA to the lab by requesting central
+    """
+
+    return AuthService.login_with_2fa(credentials)
 
 
 @core_app.get("/check-token", tags=["User"], summary="Check user's token")

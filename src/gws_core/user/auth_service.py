@@ -10,7 +10,8 @@ from starlette.responses import JSONResponse, Response
 
 from gws_core.lab.system_service import SystemService
 
-from ..central.central_service import CentralService
+from ..central.central_service import (CentralService,
+                                       ExternalCheckCredentialResponse)
 from ..core.exception.exceptions import (BadRequestException,
                                          UnauthorizedException)
 from ..core.exception.gws_exceptions import GWSException
@@ -20,7 +21,7 @@ from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from .activity import Activity
 from .activity_service import ActivityService
-from .credentials_dto import CredentialsDTO
+from .credentials_dto import Credentials2Fa, CredentialsDTO
 from .current_user_service import CurrentUserService
 from .jwt_service import JWTService
 from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
@@ -46,18 +47,40 @@ class AuthService(BaseService):
             raise WrongCredentialsException()
 
         # skip the check with central in local env
-        if not Settings.is_local_env():
-            # Check the user credentials
-            credentials_valid: bool = CentralService.check_credentials(credentials)
-            if not credentials_valid:
-                raise WrongCredentialsException()
+        # if Settings.is_local_env():
+        #     return cls.log_user(user)
 
+        # Check the user credentials
+        check_response: ExternalCheckCredentialResponse = CentralService.check_credentials(credentials)
+
+        # if the user is logged
+        if check_response.status == 'OK':
+            return cls.log_user(user)
+        else:
+            # if the user need to be logged with 2FA
+            content = {"status": '2FA_REQUIRED', "twoFAUrlCode": check_response.twoFAUrlCode}
+            return JSONResponse(content=content)
+
+    @classmethod
+    def login_with_2fa(cls, credentials: Credentials2Fa) -> JSONResponse:
+
+        # Check if the code is valid
+        user_central: UserCentral = CentralService.check_2_fa(credentials)
+
+        # refresh and retrieve lab user
+        user: User = cls.get_and_refresh_user_from_central(user_central)
+
+        # Log the user
+        return cls.log_user(user)
+
+    @classmethod
+    def log_user(cls, user: User) -> JSONResponse:
         # now save user activity
         ActivityService.add(Activity.HTTP_AUTHENTICATION, object_type=User._typing_name, object_id=user.id, user=user)
 
         access_token = cls.generate_user_access_token(user.id)
 
-        content = {"expiresIn": JWTService.get_token_duration_in_seconds()}
+        content = {"status": "LOGGED_IN", "expiresIn": JWTService.get_token_duration_in_seconds()}
         response = JSONResponse(content=content)
 
         # Add the token is the cookies
@@ -85,7 +108,17 @@ class AuthService(BaseService):
 
     @classmethod
     def generate_user_temp_access(cls, user_login_info: UserLoginInfo) -> str:
-        user: User = UserService.fetch_user(user_login_info.user.id)
+        user: User = cls.get_and_refresh_user_from_central(user_login_info.user)
+
+        # refresh the organization info
+        SystemService.save_organization_async(user_login_info.organization)
+
+        return UniqueCodeService.generate_code(user.id, {}, 60)
+
+    @classmethod
+    def get_and_refresh_user_from_central(cls, user_central: UserCentral) -> User:
+        """Check user central exists in the lab and if yes, it updates the user info"""
+        user: User = UserService.fetch_user(user_central.id)
         if not user:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.value,
@@ -99,8 +132,6 @@ class AuthService(BaseService):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        user_central: UserCentral = user_login_info.user
-
         if user.first_name != user_central.firstname or user.last_name != user_central.lastname or \
                 user.email != user_central.email or user.theme != user_central.theme or \
                 user.lang != user_central.lang:
@@ -110,12 +141,9 @@ class AuthService(BaseService):
             user.email = user_central.email
             user.theme = user_central.theme
             user.lang = user_central.lang
-            user.save()
+            user = user.save()
 
-        # refresh the organization info
-        SystemService.save_organization_async(user_login_info.organization)
-
-        return UniqueCodeService.generate_code(user.id, {}, 60)
+        return user
 
     @classmethod
     def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> UserData:

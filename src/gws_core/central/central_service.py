@@ -3,9 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List
+from typing import Dict, List, Literal, Optional, TypedDict
 
-from pydantic import parse_obj_as
+from pydantic import BaseModel, parse_obj_as
 from requests.models import Response
 
 from gws_core.brick.brick_service import BrickService
@@ -13,7 +13,10 @@ from gws_core.central.central_dto import (CentralSendMailDTO, LabStartDTO,
                                           SaveExperimentToCentralDTO,
                                           SaveReportToCentralDTO,
                                           SendExperimentFinishMailData)
+from gws_core.core.exception.exceptions.base_http_exception import \
+    BaseHTTPException
 from gws_core.lab.lab_config_model import LabConfig
+from gws_core.user.user_dto import UserCentral
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
@@ -21,9 +24,15 @@ from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..project.project_dto import CentralProject
-from ..user.credentials_dto import CredentialsDTO
+from ..user.credentials_dto import Credentials2Fa, CredentialsDTO
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
+
+
+class ExternalCheckCredentialResponse(BaseModel):
+    status: Literal['OK', '2FA_REQUIRED']
+    user: Optional[UserCentral]
+    twoFAUrlCode: Optional[str]
 
 
 class CentralService(BaseService):
@@ -51,16 +60,33 @@ class CentralService(BaseService):
         return central_api_key == api_key
 
     @classmethod
-    def check_credentials(cls, credentials: CredentialsDTO) -> bool:
+    def check_credentials(cls, credentials: CredentialsDTO) -> ExternalCheckCredentialResponse:
+        """
+        Check the credential of an email/password by calling central, with 2Fa if needed
+        """
+        central_api_url: str = cls._get_central_api_url(
+            'auth/external/check-credentials/false')
+        response = ExternalApiService.post(central_api_url, credentials.dict())
+
+        if response.status_code < 200 or response.status_code >= 300:
+            cls.raise_error_from_response(response, BadRequestException("Error during authentication"))
+
+        return parse_obj_as(ExternalCheckCredentialResponse, response.json())
+
+    @classmethod
+    def check_2_fa(cls, credentials: Credentials2Fa) -> UserCentral:
         """
         Check the credential of an email/password by calling central
         and return true if ok
         """
         central_api_url: str = cls._get_central_api_url(
-            'auth/login')
+            'auth/external/check-2fa')
         response = ExternalApiService.post(central_api_url, credentials.dict())
 
-        return response.status_code == 201
+        if response.status_code < 200 or response.status_code >= 300:
+            cls.raise_error_from_response(response, BadRequestException("Error during 2FA check"))
+
+        return parse_obj_as(UserCentral, response.json())
 
     @classmethod
     def register_lab_start(cls, lab_config: LabConfig) -> bool:
@@ -184,3 +210,17 @@ class CentralService(BaseService):
             headers[cls.user_id_header_key] = user.id
 
         return headers
+
+    @classmethod
+    def raise_error_from_response(cls, response: Response, default_exception: Exception) -> None:
+        json_ = response.json()
+
+        # if this is a constellab know error
+        if 'status' in json_ and 'code' in json_ and 'detail' in json_ and 'instanceId' in json_:
+            raise BaseHTTPException(http_status_code=json_['status'],
+                                    unique_code=json_['code'],
+                                    detail=json_['detail'],
+                                    instance_id=json_['instanceId'])
+
+        # otherwise raise the default exception
+        raise default_exception
