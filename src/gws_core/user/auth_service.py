@@ -47,8 +47,8 @@ class AuthService(BaseService):
             raise WrongCredentialsException()
 
         # skip the check with central in local env
-        # if Settings.is_local_env():
-        #     return cls.log_user(user)
+        if Settings.is_local_env():
+            return cls.log_user(user)
 
         # Check the user credentials
         check_response: ExternalCheckCredentialResponse = CentralService.check_credentials(credentials)
