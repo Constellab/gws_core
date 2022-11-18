@@ -5,11 +5,12 @@
 
 from unittest import IsolatedAsyncioTestCase
 
+from numpy import NaN
+from pandas import DataFrame
+
 from gws_core.impl.table.helper.table_concat_helper import TableConcatHelper
 from gws_core.impl.table.table import Table
 from gws_core.test.base_test_case import BaseTestCase
-from numpy import NaN
-from pandas import DataFrame
 
 
 # test_table_concat
@@ -27,7 +28,7 @@ class TestTableConcat(IsolatedAsyncioTestCase):
         table_2 = Table(df_2, row_tags=row_tags_2, column_tags=column_tags_2)
 
         result: Table = TableConcatHelper.concat_table_rows(table_1, table_2,
-                                                            column_tags_option='ignore', fill_nan_option=NaN)
+                                                            column_tags_option='ignore', fill_nan=NaN)
 
         expected_df = DataFrame({'F1': [1, 2, 4, 5], 'F2': [7.0, 1.0, NaN, NaN],
                                  'F3': [NaN, NaN, 9.0, 8.0], 'F4': [NaN, NaN, 'n1', 'n2']}, index=[0, 1, '0_1', '1_1'])

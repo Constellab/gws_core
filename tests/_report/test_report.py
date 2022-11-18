@@ -1,3 +1,7 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from typing import List
 
@@ -18,6 +22,7 @@ from gws_core.resource.resource_service import ResourceService
 from gws_core.test.base_test_case import BaseTestCase
 
 
+# test_report
 class TestReport(BaseTestCase):
 
     def test_report(self):
@@ -71,7 +76,7 @@ class TestReport(BaseTestCase):
         experiment_2.project = project
         experiment_2.save()
 
-        report_2 = ReportService.validate(report_2.id, project=project)
+        report_2 = ReportService.validate(report_2.id, project.id)
         self.assertTrue(report_2.is_validated)
 
         # Try to update report_2
@@ -131,7 +136,7 @@ class TestReport(BaseTestCase):
         robot_model = i_process.get_output_resource_model('robot')
 
         # create a view config
-        result = await ResourceService.call_view_on_resource_model(robot_model, "view_as_string", {}, [], True)
+        result = ResourceService.call_view_on_resource_model(robot_model, "view_as_string", {}, [], True)
 
         report = ReportService.create(ReportDTO(title='Test report'))
         # add the view to the report

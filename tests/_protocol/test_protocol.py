@@ -18,6 +18,8 @@ from tests.protocol_examples import (TestNestedProtocol,
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
+# test_protocol
+
 
 class TestProtocol(BaseTestCase):
 
