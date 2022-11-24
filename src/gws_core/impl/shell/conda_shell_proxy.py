@@ -5,7 +5,7 @@
 
 import os
 import subprocess
-
+from typing import Union, final
 from gws_core.impl.file.file_helper import FileHelper
 
 from .base_env_shell import BaseEnvShell
@@ -80,3 +80,7 @@ class CondaShellProxy(BaseEnvShell):
 
     def get_venv_dir_path(self) -> str:
         return os.path.join(self.get_env_dir_path(), "./.venv")
+
+    @final
+    def run(self, cmd: Union[list, str], env: dict = None) -> None:
+        return super().run(cmd, env, shell_mode=True)

@@ -34,7 +34,6 @@ class BaseEnvShell(ShellProxy):
         else:
             raise Exception("Invalid env file path")
 
-    @final
     def run(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = False) -> None:
 
         formatted_cmd = self.format_command(cmd)
