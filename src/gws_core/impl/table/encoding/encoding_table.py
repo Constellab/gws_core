@@ -8,7 +8,7 @@ from typing import List, Type
 import pandas
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import StrParam
+from ....config.param.param_spec import StrParam
 from ....core.exception.exceptions import BadRequestException
 from ....impl.file.file import File
 from ....resource.r_field.primitive_r_field import StrRField

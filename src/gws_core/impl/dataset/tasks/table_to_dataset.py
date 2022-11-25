@@ -3,15 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
-from typing import Type
 
-from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_spec import OutputSpec
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_set import ParamSet
-from ....config.param_spec import BoolParam, IntParam, ListParam, StrParam
-from ....core.exception.exceptions import BadRequestException
+from ....config.param.param_spec import ListParam, StrParam
 from ....impl.table.table import Table
 from ....task.task import Task
 from ....task.task_decorator import task_decorator

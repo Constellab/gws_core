@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, List, Tuple, Type
 from gws_core.core.utils.utils import Utils
 
 from ...config.config_types import ConfigParams, ConfigParamsDict
-from ...config.param_spec_helper import ParamSpecHelper
+from ...config.param.param_spec_helper import ParamSpecHelper
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...core.utils.reflector_helper import ReflectorHelper

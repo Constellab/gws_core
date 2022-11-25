@@ -5,7 +5,7 @@
 
 from typing import Any, Dict, List, Optional
 
-from ..core.classes.validator import DictValidator, ListValidator, Validator
+from ...core.classes.validator import DictValidator, ListValidator, Validator
 from .param_spec import ParamSpec, ParamSpecType
 from .param_types import ParamSpecDict, ParamSpecVisibilty
 

@@ -7,11 +7,12 @@
 from threading import Thread
 from typing import Any, Dict, List
 
-from gws_core.config.param_spec_helper import ParamSpecHelper
+from peewee import ModelSelect
+
+from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_types import exluded_views_in_historic
 from gws_core.user.current_user_service import CurrentUserService
-from peewee import ModelSelect
 
 from ...core.classes.paginator import Paginator
 from ...core.classes.search_builder import SearchBuilder, SearchParams

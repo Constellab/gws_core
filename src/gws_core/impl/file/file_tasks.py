@@ -16,7 +16,7 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.model.typing_manager import TypingManager
 
 from ...config.config_types import ConfigParams, ConfigSpecs
-from ...config.param_spec import StrParam
+from ...config.param.param_spec import StrParam
 from ...impl.file.file import File
 from ...impl.file.file_store import FileStore
 from ...impl.file.local_file_store import LocalFileStore

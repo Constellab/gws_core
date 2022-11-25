@@ -14,7 +14,7 @@ from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 
 from ...config.config_types import ConfigParams, ConfigSpecs
-from ...config.param_spec import BoolParam, StrParam
+from ...config.param.param_spec import BoolParam, StrParam
 from ...task.converter.exporter import ResourceExporter, exporter_decorator
 from ...task.converter.importer import ResourceImporter, importer_decorator
 from .json_dict import JSONDict

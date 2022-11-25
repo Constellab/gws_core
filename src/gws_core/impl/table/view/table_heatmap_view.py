@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypedDict
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import DictParam
+from ....config.param.param_spec import DictParam
 from ....resource.view.view_types import ViewSpecs, ViewType
 from ...view.heatmap_view import HeatmapView
 from .base_table_view import BaseTableView

@@ -5,7 +5,7 @@
 
 
 from gws_core.config.config_types import ConfigParams
-from gws_core.config.param_spec import StrParam
+from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs

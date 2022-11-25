@@ -8,7 +8,7 @@ from typing import Any, Dict
 
 from ..core.exception.exceptions import BadRequestException
 from .config_types import ConfigSpecs
-from .param_spec_helper import ParamSpecHelper
+from .param.param_spec_helper import ParamSpecHelper
 
 
 class ConfigSpecsHelper():

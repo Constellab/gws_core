@@ -9,7 +9,7 @@ from gws_core import (BaseTestCase, ConfigParams, IntParam, JSONView, Resource,
                       ResourceService, StrParam, TextView, resource_decorator,
                       view)
 from gws_core.config.config_types import ConfigSpecs
-from gws_core.config.param_spec import ParamSpec
+from gws_core.config.param.param_spec import ParamSpec
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.view.any_view import AnyView

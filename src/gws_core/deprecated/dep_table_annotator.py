@@ -6,7 +6,7 @@
 from gws_core.io.io_spec import InputSpec, OutputSpec
 
 from ..config.config_types import ConfigParams, ConfigSpecs
-from ..config.param_spec import StrParam
+from ..config.param.param_spec import StrParam
 from ..impl.table.metadata_table.metadata_table import MetadataTable
 from ..impl.table.table import Table
 from ..io.io_spec_helper import InputSpecs, OutputSpecs

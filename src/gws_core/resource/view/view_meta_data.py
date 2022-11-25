@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Type
 
 from gws_core.config.config_types import ConfigSpecs
-from gws_core.config.param_spec import ParamSpec
+from gws_core.config.param.param_spec import ParamSpec
 from gws_core.core.classes.jsonable import DictJsonable
 from gws_core.resource.view.lazy_view_param import LazyViewParam
 

@@ -16,17 +16,17 @@ from .config.config_service import ConfigService as ConfigService
 from .config.config_types import ConfigParams as ConfigParams
 from .config.config_types import ConfigParamsDict as ConfigParamsDict
 from .config.config_types import ConfigSpecs as ConfigSpecs
-from .config.param_set import ParamSet as ParamSet
 # from .config.param_spec import DictParam as DictParam
-from .config.param_spec import BoolParam as BoolParam
-from .config.param_spec import FloatParam as FloatParam
-from .config.param_spec import IntParam as IntParam
-from .config.param_spec import ListParam as ListParam
-from .config.param_spec import NumericParam as NumericParam
-from .config.param_spec import ParamSpec as ParamSpec
-from .config.param_spec import StrParam as StrParam
-from .config.param_types import ParamValue as ParamValue
-from .config.tags_param_spec import TagsParam as TagsParam
+from .config.param.param_set import ParamSet as ParamSet
+from .config.param.param_spec import BoolParam as BoolParam
+from .config.param.param_spec import FloatParam as FloatParam
+from .config.param.param_spec import IntParam as IntParam
+from .config.param.param_spec import ListParam as ListParam
+from .config.param.param_spec import NumericParam as NumericParam
+from .config.param.param_spec import ParamSpec as ParamSpec
+from .config.param.param_spec import StrParam as StrParam
+from .config.param.param_types import ParamValue as ParamValue
+from .config.param.tags_param_spec import TagsParam as TagsParam
 # Core
 # Core > Classes > Observer
 from .core.classes.expose import Expose as Expose
@@ -289,6 +289,7 @@ from .impl.view.scatterplot_3d_view import \
 from .impl.view.stacked_barplot_view import \
     StackedBarPlotView as StackedBarPlotView
 from .impl.view.tabular_view import TabularView as TabularView
+from .impl.view.venn_diagram_view import VennDiagramView as VennDiagramView
 # Io
 from .io.connector import Connector as Connector
 from .io.io import IO as IO

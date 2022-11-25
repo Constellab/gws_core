@@ -6,7 +6,7 @@
 from unittest import IsolatedAsyncioTestCase
 
 from gws_core import IntParam, ParamSet, StrParam
-from gws_core.config.param_spec_helper import ParamSpecHelper
+from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.utils.utils import Utils
 
 

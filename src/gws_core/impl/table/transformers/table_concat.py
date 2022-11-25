@@ -6,8 +6,10 @@
 
 from typing import Any
 
+from numpy import NaN
+
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
-from gws_core.config.param_spec import StrParam
+from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.table.helper.table_concat_helper import TableConcatHelper
 from gws_core.impl.table.table import Table
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -15,7 +17,6 @@ from gws_core.io.io_spec_helper import InputSpecs
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
-from numpy import NaN
 
 fill_nan_param = StrParam(default_value='NaN',
                           human_name='Fill empty values with',

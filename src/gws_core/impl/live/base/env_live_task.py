@@ -7,8 +7,10 @@ import abc
 import os
 import re
 
+from gws_core.config.param.python_code_param import PythonCodeParam
+
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import ListParam, StrParam
+from ....config.param.param_spec import ListParam, StrParam
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....io.io_spec import InputSpec, OutputSpec
@@ -41,11 +43,12 @@ class EnvLiveTask(Task):
         StrParam(
             optional=True, default_value="", human_name="Shell arguments",
             short_description="Shell arguments used to call the script. Use wildcards {input:*} to pass the input files to the script. For example: '--data1 {input:filename_1} --data2 {input:filename_2} -o out_file.txt'."),
-        'code': ListParam(human_name="Code snippet", short_description="The code snippet to execute using shell command"),
         'captures':
         ListParam(
             human_name="Files to capture in outputs",
-            short_description="The realitve paths of the files to capture in the outputs. For example: Enter 'out_file.txt' to capture this file in the outputs"), }
+            short_description="The realitve paths of the files to capture in the outputs. For example: Enter 'out_file.txt' to capture this file in the outputs"),
+        'code': PythonCodeParam(human_name="Code snippet", short_description="The code snippet to execute using shell command"),
+    }
 
     shell_proxy: ShellProxy = None
     code_file_extension: str = None
@@ -65,8 +68,6 @@ class EnvLiveTask(Task):
                     file = source.get_resource(name)
                     args = args.replace("{input:"+name+"}", file.path)
 
-        # TODO: Delete later
-        code: str = "\n".join(code)
         env: str = "\n".join(env)
 
         fpath: str

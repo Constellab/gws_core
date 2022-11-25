@@ -9,7 +9,7 @@ from typing import Callable, Type
 from gws_core.resource.resource import Resource
 
 from ..brick.brick_service import BrickService
-from ..config.param_spec_helper import ParamSpecHelper
+from ..config.param.param_spec_helper import ParamSpecHelper
 from ..core.utils.utils import Utils
 from ..io.io_spec_helper import IOSpecsHelper
 from ..model.typing_register_decorator import register_gws_typing_class

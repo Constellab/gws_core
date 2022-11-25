@@ -8,7 +8,7 @@ from typing import List
 from gws_core.resource.view.multi_views import MultiViews
 
 from ...config.config_types import ConfigParams, ConfigParamsDict
-from ...config.param_spec_helper import ParamSpecHelper
+from ...config.param.param_spec_helper import ParamSpecHelper
 from .view import View
 
 

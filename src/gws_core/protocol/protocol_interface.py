@@ -11,7 +11,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.task.plug import Sink, Source
 
 from ..config.config_types import ConfigParamsDict
-from ..config.param_types import ParamValue
+from ..config.param.param_types import ParamValue
 from ..io.port import InPort, OutPort
 from ..process.process import Process
 from ..process.process_interface import IProcess

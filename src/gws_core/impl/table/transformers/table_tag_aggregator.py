@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import ListParam, StrParam
+from ....config.param.param_spec import ListParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ..helper.table_tag_aggregator_helper import TableTagAggregatorHelper
 from ..table import Table

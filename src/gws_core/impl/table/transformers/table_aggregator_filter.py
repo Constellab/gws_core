@@ -3,17 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from pandas import DataFrame
+
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_data_filter_helper import \
     DataframeDataFilterHelper
-from pandas import DataFrame
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_set import ParamSet
-from ....config.param_spec import FloatParam, StrParam
+from ....config.param.param_set import ParamSet
+from ....config.param.param_spec import FloatParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
-from ..helper.dataframe_aggregator_helper import (DataframeAggregatorHelper)
+from ..helper.dataframe_aggregator_helper import DataframeAggregatorHelper
 
 
 # ####################################################################

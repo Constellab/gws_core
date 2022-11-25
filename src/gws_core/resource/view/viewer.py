@@ -5,7 +5,7 @@
 from typing import Type
 
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
-from gws_core.config.param_spec import DictParam, StrParam
+from gws_core.config.param.param_spec import DictParam, StrParam
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_spec_helper import InputSpecs

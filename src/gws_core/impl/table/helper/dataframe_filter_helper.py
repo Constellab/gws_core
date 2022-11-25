@@ -5,11 +5,12 @@
 
 from typing import List, Literal, Optional, TypedDict, Union
 
-from gws_core.config.param_set import ParamSet
-from gws_core.config.param_spec import BoolParam, StrParam
-from gws_core.config.tags_param_spec import TagsParam
-from gws_core.core.utils.utils import Utils
 from pandas import DataFrame, Index
+
+from gws_core.config.param.param_set import ParamSet
+from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.config.param.tags_param_spec import TagsParam
+from gws_core.core.utils.utils import Utils
 
 from ....core.exception.exceptions import BadRequestException
 

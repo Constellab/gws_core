@@ -9,11 +9,10 @@ from gws_core.impl.table.helper.dataframe_aggregator_helper import (
 from gws_core.impl.table.helper.dataframe_data_filter_helper import \
     DataframeDataFilterHelper
 from gws_core.impl.table.table import Table
-from pandas import DataFrame
 
 from ..config.config_types import ConfigParams, ConfigSpecs
-from ..config.param_set import ParamSet
-from ..config.param_spec import FloatParam, StrParam
+from ..config.param.param_set import ParamSet
+from ..config.param.param_spec import FloatParam, StrParam
 from ..task.transformer.transformer import Transformer, transformer_decorator
 
 # ####################################################################

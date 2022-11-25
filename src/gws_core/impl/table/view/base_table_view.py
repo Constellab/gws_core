@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict
 
 from pandas import DataFrame
 
-from gws_core.config.param_spec import StrParam
+from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.resource.view.view_types import ViewSpecs, ViewType
 

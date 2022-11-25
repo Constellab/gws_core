@@ -5,13 +5,13 @@
 
 from typing import Any, Dict, final
 
-from ..config.param_spec_helper import ParamSpecHelper
 from ..core.model.model_with_user import ModelWithUser
 from .config_exceptions import InvalidParamValueException, UnkownParamException
 from .config_specs_helper import ConfigSpecsHelper
 from .config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
-from .param_spec import ParamSpec
-from .param_types import ParamValue
+from .param.param_spec import ParamSpec
+from .param.param_spec_helper import ParamSpecHelper
+from .param.param_types import ParamValue
 
 
 @final

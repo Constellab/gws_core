@@ -6,10 +6,11 @@
 from enum import Enum
 from typing import Any, Dict, List, Union
 
-from gws_core.task.transformer.transformer_type import TransformerDict
 from typing_extensions import TypedDict
 
-from ...config.param_spec import ParamSpec
+from gws_core.task.transformer.transformer_type import TransformerDict
+
+from ...config.param.param_spec import ParamSpec
 from .lazy_view_param import LazyViewParam
 
 ViewSpecs = Dict[str, Union[ParamSpec, LazyViewParam]]

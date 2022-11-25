@@ -1,6 +1,6 @@
 import time
 
-from gws_core.config.param_spec import FloatParam, StrParam
+from gws_core.config.param.param_spec import FloatParam, StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 
 from ...config.config_types import ConfigParams

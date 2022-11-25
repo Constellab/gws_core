@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable
 
-from gws_core.config.param_spec import ParamSpec
+from gws_core.config.param.param_spec import ParamSpec
 
 if TYPE_CHECKING:
     from gws_core.resource.resource import Resource

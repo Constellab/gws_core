@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core.config.param_spec import StrParam
+from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.table.helper.dataframe_scaler_helper import \
     DataframeScalerHelper
 from gws_core.impl.table.helper.table_scaler_helper import TableScalerHelper

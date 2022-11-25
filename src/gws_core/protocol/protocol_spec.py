@@ -6,7 +6,7 @@
 from typing import Type, TypedDict
 
 from ..config.config_types import ConfigParamsDict
-from ..config.param_types import ParamValue
+from ..config.param.param_types import ParamValue
 from ..process.process import Process
 
 

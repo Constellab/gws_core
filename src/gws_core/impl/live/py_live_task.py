@@ -3,8 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.config.param.python_code_param import PythonCodeParam
+
 from ...config.config_types import ConfigParams, ConfigSpecs
-from ...config.param_spec import ListParam
+from ...config.param.param_spec import ListParam
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...io.io_spec import InputSpec, OutputSpec
@@ -35,14 +37,11 @@ class PyLiveTask(Task):
         ListParam(
             optional=True, default_value=[],
             human_name="Parameters", short_description="The parameters"),
-        'code': ListParam(human_name="Python code snippet", short_description="Python code snippet to run"), }
+        'code': PythonCodeParam(human_name="Python code snippet", short_description="Python code snippet to run"), }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
         params = params.get_value('params')
-
-        # TODO: Delete later
-        code: str = "\n".join(code)
 
         # compute params
         param_context = {}

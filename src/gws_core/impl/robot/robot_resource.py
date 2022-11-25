@@ -4,7 +4,7 @@ from typing import Dict, List
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
-from ...config.param_spec import StrParam
+from ...config.param.param_spec import StrParam
 from ...resource.r_field.list_r_field import ListRField
 from ...resource.r_field.primitive_r_field import FloatRField, IntRField
 from ...resource.resource import Resource

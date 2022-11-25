@@ -8,10 +8,10 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from gws_core.core.utils.logger import Logger
 
-from ..core.classes.validator import (BoolValidator, DictValidator,
-                                      FloatValidator, IntValidator,
-                                      ListValidator, StrValidator, Validator)
-from ..core.exception.exceptions.bad_request_exception import \
+from ...core.classes.validator import (BoolValidator, DictValidator,
+                                       FloatValidator, IntValidator,
+                                       ListValidator, StrValidator, Validator)
+from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from .param_types import ParamSpecDict, ParamSpecVisibilty
 
@@ -193,7 +193,7 @@ class ParamSpec(Generic[ParamSpecType]):
         elif type_ == 'dict':
             return DictParam
         elif type_ == 'param_set':
-            from .param_set import ParamSet
+            from ..param_set import ParamSet
             return ParamSet
         else:
             raise BadRequestException("Invalid type")

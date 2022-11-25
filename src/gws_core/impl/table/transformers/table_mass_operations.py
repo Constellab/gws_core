@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
-from gws_core.config.param_spec import BoolParam, StrParam
+from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.impl.table.helper.table_operation_helper import \
     TableOperationHelper
 from gws_core.io.io_spec import InputSpec, OutputSpec

@@ -6,7 +6,7 @@
 from ..core.service.base_service import BaseService
 from .config import Config
 from .config_types import ConfigParamsDict
-from .param_types import ParamValue
+from .param.param_types import ParamValue
 
 
 class ConfigService(BaseService):

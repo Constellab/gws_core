@@ -5,10 +5,10 @@
 
 from typing import List
 
-from gws_core.config.param_spec import IntParam, StrParam
+from gws_core.config.param.param_spec import IntParam, StrParam
 
 from ..config.config_types import ConfigParams
-from ..config.param_spec import IntParam, StrParam
+from ..config.param.param_spec import IntParam, StrParam
 from ..impl.file.file import File
 from ..impl.table.table import Table
 from ..impl.table.view.table_view import TableView

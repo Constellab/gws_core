@@ -7,7 +7,7 @@
 from gws_core.core.utils.utils import Utils
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import BoolParam, StrParam
+from ....config.param.param_spec import BoolParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 from ..helper.dataframe_aggregator_helper import DataframeAggregatorHelper

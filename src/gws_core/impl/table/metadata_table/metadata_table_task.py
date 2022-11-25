@@ -8,7 +8,7 @@ from typing import Type
 from gws_core.impl.file.file import File
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import StrParam
+from ....config.param.param_spec import StrParam
 from ....core.exception.exceptions import BadRequestException
 from ....task.converter.exporter import exporter_decorator
 from ....task.converter.importer import importer_decorator

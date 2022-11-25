@@ -11,7 +11,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import BoolParam, IntParam, ListParam
+from ....config.param.param_spec import BoolParam, IntParam, ListParam
 from ....resource.view.view_types import ViewSpecs, ViewType
 from ...view.histogram_view import HistogramView
 from .base_table_view import BaseTableView

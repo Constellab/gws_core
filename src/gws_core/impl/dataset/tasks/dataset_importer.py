@@ -4,16 +4,11 @@
 # About us: https://gencovery.com
 
 
-import copy
-import os
 from typing import Type
 
-from gws_core.impl.file.file_helper import FileHelper
-
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_set import ParamSet
-from ....config.param_spec import BoolParam, IntParam, StrParam
-from ....core.exception.exceptions import BadRequestException
+from ....config.param.param_set import ParamSet
+from ....config.param.param_spec import BoolParam, IntParam, StrParam
 from ....impl.file.file import File
 from ....impl.table.table import Table
 from ....impl.table.tasks.table_importer import TableImporter

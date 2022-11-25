@@ -5,7 +5,7 @@
 
 from typing import Dict
 
-from gws_core.config.param_types import ParamSpecDict
+from gws_core.config.param.param_types import ParamSpecDict
 from gws_core.io.io_spec import IOSpecDict
 from gws_core.model.typing_dict import TypingDict
 

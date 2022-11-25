@@ -4,12 +4,13 @@
 # About us: https://gencovery.com
 from typing import Any, List
 
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
-from gws_core.config.param_set import ParamSet
-from gws_core.config.param_spec import BoolParam, StrParam
-from gws_core.core.utils.numeric_helper import NumericHelper
 from numpy import NaN
 from pandas import DataFrame
+
+from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.config.param.param_set import ParamSet
+from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.core.utils.numeric_helper import NumericHelper
 
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ..table import Table

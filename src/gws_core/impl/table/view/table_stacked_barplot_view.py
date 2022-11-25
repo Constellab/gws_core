@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from gws_core.config.config_types import ConfigParams
-from gws_core.config.param_spec import BoolParam
+from gws_core.config.param.param_spec import BoolParam
 from gws_core.impl.view.barplot_view import BarPlotView
 from gws_core.resource.view.view_types import ViewSpecs, ViewType
 

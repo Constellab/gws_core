@@ -11,7 +11,7 @@ from gws_core.impl.table.helper.dataframe_aggregator_helper import (
 from gws_core.impl.table.table import Table
 
 from ..config.config_types import ConfigParams, ConfigSpecs
-from ..config.param_spec import BoolParam, StrParam
+from ..config.param.param_spec import BoolParam, StrParam
 from ..task.transformer.transformer import Transformer, transformer_decorator
 
 # ####################################################################

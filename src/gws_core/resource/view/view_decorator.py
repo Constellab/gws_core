@@ -7,7 +7,7 @@ from typing import Callable, Type
 
 from gws_core.brick.brick_service import BrickService
 
-from ...config.param_spec import ParamSpec
+from ...config.param.param_spec import ParamSpec
 from ...core.classes.func_meta_data import FuncArgsMetaData
 from ...core.utils.reflector_helper import ReflectorHelper
 from .lazy_view_param import LazyViewParam
