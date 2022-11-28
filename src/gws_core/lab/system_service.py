@@ -12,7 +12,7 @@ from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.lab.lab_config_model import LabConfigModel
-from gws_core.user.user_dto import OrganizationCentral
+from gws_core.user.user_dto import SpaceCentral
 
 from ..brick.brick_service import BrickService
 from ..core.exception.exceptions.unauthorized_exception import \
@@ -149,35 +149,35 @@ class SystemService:
         return {
             "lab_name": settings.get_lab_name(),
             "front_version": settings.get_front_version(),
-            "organization": settings.get_organization(),
+            "space": settings.get_space(),
         }
 
     @classmethod
-    def save_organization_async(cls, organization_central: OrganizationCentral) -> None:
-        thread = Thread(target=cls._save_organization, args=[organization_central])
+    def save_space_async(cls, space_central: SpaceCentral) -> None:
+        thread = Thread(target=cls._save_space, args=[space_central])
         thread.start()
 
     @classmethod
-    def _save_organization(cls, organization_central: OrganizationCentral) -> None:
+    def _save_space(cls, space_central: SpaceCentral) -> None:
         try:
 
             settings = Settings.retrieve()
-            organization = settings.get_organization()
+            space = settings.get_space()
 
-            # if no organization were saved or one of its value was changed
-            # update the organization
-            if organization is None or organization['id'] != organization_central.id or \
-                    organization['label'] != organization_central.label or organization['domain'] != organization_central.domain or \
-                    organization['photo'] != organization_central.photo:
-                settings.set_organization({
-                    "id": organization_central.id,
-                    'label': organization_central.label,
-                    'domain': organization_central.domain,
-                    'photo': organization_central.photo,
+            # if no space were saved or one of its value was changed
+            # update the space
+            if space is None or space['id'] != space_central.id or \
+                    space['name'] != space_central.name or space['domain'] != space_central.domain or \
+                    space['photo'] != space_central.photo:
+                settings.set_space({
+                    "id": space_central.id,
+                    'name': space_central.name,
+                    'domain': space_central.domain,
+                    'photo': space_central.photo,
                 })
                 settings.save()
 
         except Exception as err:
-            Logger.error(f"Error while saving the organization : {err}")
+            Logger.error(f"Error while saving the space : {err}")
             Logger.log_exception_stack_trace(err)
             return None

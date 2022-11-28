@@ -48,9 +48,9 @@ class BrickMigrationLog(TypedDict):
     history: List[BrickMigrationLogHistory]
 
 
-class Organization(TypedDict):
+class Space(TypedDict):
     id: str
-    label: str
+    space: str
     domain: str
     photo: Optional[str]
 
@@ -339,11 +339,11 @@ class Settings():
     def get_modules(self) -> Dict[str, ModuleInfo]:
         return self.data["modules"]
 
-    def get_organization(self) -> Organization:
-        return self.data.get("organization")
+    def get_space(self) -> Space:
+        return self.data.get("space")
 
-    def set_organization(self, organization: Organization):
-        self.data["organization"] = organization
+    def set_space(self, space: Space):
+        self.data["space"] = space
 
     # BRICK MIGRATION
 

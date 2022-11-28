@@ -29,9 +29,9 @@ class UserCentral(BaseModel):
     lang: UserLanguage
 
 
-class OrganizationCentral(BaseModel):
+class SpaceCentral(BaseModel):
     id: str
-    label: str
+    name: str
     domain: str
     photo: str
 
@@ -40,4 +40,4 @@ class OrganizationCentral(BaseModel):
 
 class UserLoginInfo(BaseModel):
     user: UserCentral
-    organization: OrganizationCentral
+    space: SpaceCentral

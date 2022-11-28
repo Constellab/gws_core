@@ -110,8 +110,8 @@ class AuthService(BaseService):
     def generate_user_temp_access(cls, user_login_info: UserLoginInfo) -> str:
         user: User = cls.get_and_refresh_user_from_central(user_login_info.user)
 
-        # refresh the organization info
-        SystemService.save_organization_async(user_login_info.organization)
+        # refresh the space info
+        SystemService.save_space_async(user_login_info.space)
 
         return UniqueCodeService.generate_code(user.id, {}, 60)
 
