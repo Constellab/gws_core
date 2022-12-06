@@ -9,7 +9,6 @@ import uvicorn
 from fastapi import FastAPI
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
-from ._core_app_importer import *
 from .central.central_app import central_app
 from .core.classes.cors_config import CorsConfig
 from .core.utils.logger import Logger
