@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 import os
 import subprocess
+from typing import Union
 
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -11,6 +12,9 @@ from .base_env_shell import BaseEnvShell
 
 
 class PipShellProxy(BaseEnvShell):
+
+    CONFIG_FILE_NAME = "Pipfile"
+    LOCK_FILE_NAME = "Pipfile.lock"
 
     def _install_env(self) -> bool:
         """
@@ -31,10 +35,12 @@ class PipShellProxy(BaseEnvShell):
             cwd=self.get_env_dir_path(),
             stderr=subprocess.PIPE,
             env=env,
-            shell=True
+            shell=True,
+            check=False
         )
 
         if res.returncode != 0:
+            self._message_dispatcher.notify_error_message(res.stderr.decode('utf-8'))
             raise Exception(f"Cannot install the virtual environment. Error: {res.stderr}")
 
         return True
@@ -50,17 +56,18 @@ class PipShellProxy(BaseEnvShell):
             f"rm -rf {self.get_env_dir_path()}"
         ]
 
-        try:
-            env = os.environ.copy()
-            env["PIPENV_VENV_IN_PROJECT"] = "enabled"
-            res = subprocess.run(
-                " ".join(cmd),
-                cwd=self.get_env_dir_path(),
-                stderr=subprocess.DEVNULL,
-                env=env,
-                shell=True
-            )
-        except:
+        env = os.environ.copy()
+        env["PIPENV_VENV_IN_PROJECT"] = "enabled"
+        res = subprocess.run(
+            " ".join(cmd),
+            cwd=self.get_env_dir_path(),
+            stderr=subprocess.DEVNULL,
+            env=env,
+            shell=True,
+            check=False
+        )
+
+        if res.returncode != 0:
             try:
                 if FileHelper.exists_on_os(self.get_env_dir_path()):
                     FileHelper.delete_dir(self.get_env_dir_path())
@@ -68,12 +75,9 @@ class PipShellProxy(BaseEnvShell):
             except:
                 raise Exception("Cannot remove the virtual environment.")
 
-        if res.returncode != 0:
-            raise Exception(f"Cannot remove the virtual environment. Error: {res.stderr}")
-
         return True
 
-    def format_command(self, user_cmd: list) -> str:
+    def format_command(self, user_cmd: Union[list, str]) -> str:
         """
         This method builds the command to execute.
 
@@ -83,9 +87,7 @@ class PipShellProxy(BaseEnvShell):
 
         if isinstance(user_cmd, list):
             user_cmd = [str(c) for c in user_cmd]
-        if user_cmd[0] in ["python", "python2", "python3"]:
-            del user_cmd[0]
-        user_cmd = ["pipenv", "run", "python", *user_cmd]
+        user_cmd = ["pipenv", "run", *user_cmd]
         cmd = " ".join(user_cmd)
         return cmd
 
@@ -98,3 +100,19 @@ class PipShellProxy(BaseEnvShell):
 
     def get_pip_file_path(self) -> str:
         return os.path.join(self.get_env_dir_path(), "Pipfile")
+
+    def get_config_file_path(self) -> str:
+        return os.path.join(self.get_env_dir_path(), self.CONFIG_FILE_NAME)
+
+    @classmethod
+    def folder_is_env(cls, folder_path: str) -> bool:
+        """return true if the folder is a valid env folder"""
+
+        pipfile_path = os.path.join(folder_path, cls.CONFIG_FILE_NAME)
+        pipfile_lock_path = os.path.join(folder_path, cls.LOCK_FILE_NAME)
+        sub_venv_path = os.path.join(folder_path, cls.VENV_DIR_NAME)
+
+        return super().folder_is_env(folder_path) and \
+            FileHelper.exists_on_os(pipfile_path) and \
+            FileHelper.exists_on_os(pipfile_lock_path) and \
+            FileHelper.exists_on_os(sub_venv_path)

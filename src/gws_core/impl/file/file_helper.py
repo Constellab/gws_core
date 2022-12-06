@@ -32,7 +32,7 @@ class FileHelper():
             return os.path.getsize(path)
 
         total_size = 0
-        for dirpath, dirnames, filenames in os.walk(path):
+        for dirpath, _, filenames in os.walk(path):
             for filename in filenames:
                 fp = os.path.join(dirpath, filename)
                 # skip if it is symbolic link
@@ -167,6 +167,12 @@ class FileHelper():
             cls.delete_file(node_path)
 
     @classmethod
+    def delete_dir_content(cls, dir_path: PathType) -> None:
+        path = cls.get_path(dir_path)
+        for child in path.iterdir():
+            cls.delete_node(child)
+
+    @classmethod
     def get_dir_content_as_json(cls, path: PathType) -> Any:
         if cls.is_file(path):
             return cls.get_name_with_extension(path)
@@ -201,3 +207,8 @@ class FileHelper():
             return encoding_result.best().encoding
         else:
             return default_encoding
+
+    @classmethod
+    def copy_file(cls, source_path: PathType, destination_path: PathType) -> None:
+        """Copy a file from source to destination"""
+        shutil.copyfile(source_path, destination_path)

@@ -5,20 +5,33 @@
 
 import os
 from abc import abstractmethod
+from json import dump, load
 from pathlib import Path
-from typing import Any, Union, final
+from typing import Any, TypedDict, Union, final
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
 from .shell_proxy import ShellProxy
 
 
+class VEnvCreationInfo(TypedDict):
+    file_version: int
+    name: str
+    created_at: str
+    # path of the file that was used to create the env
+    origin_env_config_file_path: str
+
+
 class BaseEnvShell(ShellProxy):
 
     env_dir_name: str = None
     env_file_path: str = None
+
+    VENV_DIR_NAME = ".venv"
+    CREATION_INFO_FILE_NAME = "__creation.json"
 
     def __init__(self, env_dir_name: str, env_file_path: str,
                  working_dir: str = None, message_dispatcher: MessageDispatcher = None):
@@ -34,7 +47,7 @@ class BaseEnvShell(ShellProxy):
         else:
             raise Exception("Invalid env file path")
 
-    def run(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = False) -> None:
+    def run(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = False) -> int:
 
         formatted_cmd = self.format_command(cmd)
 
@@ -71,9 +84,15 @@ class BaseEnvShell(ShellProxy):
         """
 
         if self.env_is_installed():
-            self._message_dispatcher.notify_info_message(
-                f"Virtual environment '{self.env_dir_name}' already installed, skipping installation.")
-            return False
+            if self._check_if_config_file_changed():
+                self._message_dispatcher.notify_info_message(
+                    f"The virtual environment '{self.env_dir_name}' is already installed but the config file has changed.")
+                self.uninstall_env()
+            else:
+                # environment already installed and ok
+                self._message_dispatcher.notify_info_message(
+                    f"Virtual environment '{self.env_dir_name}' already installed, skipping installation.")
+                return False
 
         self.create_env_dir()
 
@@ -87,10 +106,29 @@ class BaseEnvShell(ShellProxy):
             raise Exception("Cannot install the virtual environment.") from err
 
         if is_install:
-            self._create_ready_file()
+            self._create_env_creation_file()
             self._message_dispatcher.notify_info_message(f"Virtual environment '{self.env_dir_name}' installed!")
 
         return is_install
+
+    def _check_if_config_file_changed(self) -> bool:
+        """
+        Checks if the env config file has changed since the last installation.
+        If the env is not installed, return False.
+        """
+        if not self.env_is_installed():
+            return False
+
+        # load the creation info file
+        with open(self.get_config_file_path(), "r", encoding='utf-8') as f:
+            current_config = f.read()
+
+        # loads the new config
+        with open(self.env_file_path, "r", encoding='utf-8') as f:
+            new_config = f.read()
+
+        # check if the env config file has changed
+        return current_config != new_config
 
     @abstractmethod
     def _install_env(self) -> bool:
@@ -135,12 +173,18 @@ class BaseEnvShell(ShellProxy):
         return {}
 
     @abstractmethod
-    def format_command(self, user_cmd: list) -> str:
+    def format_command(self, user_cmd: Union[list, str]) -> str:
         """
         Format the user command
 
         :param stdout: The final command
         :param type: `list`
+        """
+
+    @abstractmethod
+    def get_config_file_path(self) -> str:
+        """
+        Returns the path of the config file used to create the env
         """
 
     @final
@@ -149,15 +193,31 @@ class BaseEnvShell(ShellProxy):
         Returns True if the virtual env is installed. False otherwise
         """
 
-        return FileHelper.exists_on_os(self._get_ready_file_path())
+        return self.folder_is_env(self.get_env_dir_path())
 
     @final
-    def _create_ready_file(self) -> None:
+    def _create_env_creation_file(self) -> None:
         """
         Create the READY file
         """
+        env_info: VEnvCreationInfo = {
+            'file_version': 1,
+            'name': self.env_dir_name,
+            'created_at': DateHelper.now_utc().isoformat(),
+            'origin_env_config_file_path': self.env_file_path
+        }
 
-        FileHelper.create_empty_file_if_not_exist(self._get_ready_file_path())
+        with open(self._get_json_info_file_path(), "w", encoding="UTF-8") as outfile:
+            dump(env_info, outfile)
+
+    def _get_json_info_file_path(self) -> str:
+        """
+        Returns the path of the READY file.
+
+        The info file is automatically created in the env dir after it is installed.
+        and it contains information about the env creation
+        """
+        return os.path.join(self.get_env_dir_path(), self.CREATION_INFO_FILE_NAME)
 
     def _get_ready_file_path(self) -> str:
         """
@@ -188,3 +248,19 @@ class BaseEnvShell(ShellProxy):
         """
 
         return FileHelper.create_dir_if_not_exist(self.get_env_dir_path())
+
+    @classmethod
+    def folder_is_env(cls, folder_path: str) -> bool:
+        """return true if the folder is a valid env folder"""
+        return FileHelper.exists_on_os(os.path.join(folder_path, cls.CREATION_INFO_FILE_NAME))
+
+    @classmethod
+    def get_creation_info(cls, folder_path: str) -> VEnvCreationInfo:
+        """
+        Returns the json info file content
+        """
+        if not cls.folder_is_env(folder_path):
+            raise Exception("The virtual environment is not installed")
+
+        with open(os.path.join(folder_path, cls.CREATION_INFO_FILE_NAME), encoding="UTF-8") as json_file:
+            return load(json_file)

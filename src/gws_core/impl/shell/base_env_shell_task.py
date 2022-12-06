@@ -43,6 +43,6 @@ class BaseEnvShellTask(ShellTask):
         """
 
         if not cls.unique_env_name:
-            cls.unique_env_name = cls.full_classname()
+            cls.unique_env_name = cls._typing_name
 
         return cls.unique_env_name
