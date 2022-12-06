@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Optional
+
 from pydantic import BaseModel
 
 from gws_core.user.user import UserLanguage, UserTheme
@@ -33,11 +35,10 @@ class SpaceCentral(BaseModel):
     id: str
     name: str
     domain: str
-    photo: str
+    photo: Optional[str]
+
 
 # Info provided by the user when he logs in
-
-
 class UserLoginInfo(BaseModel):
     user: UserCentral
     space: SpaceCentral
