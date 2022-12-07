@@ -6,6 +6,8 @@
 
 from typing import Dict, List, Type
 
+from peewee import ModelSelect
+
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
@@ -13,7 +15,6 @@ from gws_core.core.utils.settings import Settings
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.task_input_model import TaskInputModel
-from peewee import ModelSelect
 
 from ..central.central_dto import SaveExperimentToCentralDTO
 from ..central.central_service import CentralService

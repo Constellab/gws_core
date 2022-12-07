@@ -8,6 +8,8 @@ from typing import Callable, List, Set
 
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from peewee import ModelSelect
+
 from gws_core.central.central_dto import SaveReportToCentralDTO
 from gws_core.core.classes.rich_text_content import (RichText, RichTextI,
                                                      RichTextResourceView)
@@ -28,7 +30,6 @@ from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.current_user_service import CurrentUserService
-from peewee import ModelSelect
 
 from ..central.central_service import CentralService
 from ..core.classes.paginator import Paginator
@@ -233,13 +234,21 @@ class ReportService():
     @classmethod
     def synchronize_with_central_by_id(cls, id: str) -> Report:
         report: Report = cls.get_by_id_and_check(id)
+
+        # retrieve the experiment ids
+        experiments: List[Experiment] = cls.get_experiments_by_report(report.id)
+        # syncronize the experiments that are not validated
+        for experiment in experiments:
+            if not experiment.is_validated:
+                ExperimentService.synchronize_with_central_by_id(experiment.id)
+
         report = cls._synchronize_with_central(report)
         return report.save()
 
     @classmethod
     def _synchronize_with_central(cls, report: Report) -> Report:
         if Settings.is_local_env():
-            Logger.info('Skipping sending experiment to central as we are running in LOCAL')
+            Logger.info('Skipping sending report to central as we are running in LOCAL')
             return report
 
         if report.project is None:
