@@ -10,11 +10,13 @@ from abc import abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING, Dict, Type, TypedDict, final
 
-from gws_core.core.exception.gws_exceptions import GWSException
-from gws_core.model.typing import Typing
-from gws_core.task.plug import Source
 from peewee import CharField, ForeignKeyField
 from starlette_context import context
+
+from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.core.utils.date_helper import DateHelper
+from gws_core.model.typing import Typing
+from gws_core.task.plug import Source
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField
@@ -23,7 +25,7 @@ from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
-from ..core.model.db_field import JSONField
+from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..core.utils.logger import Logger
 from ..experiment.experiment import Experiment
@@ -72,6 +74,9 @@ class ProcessModel(ModelWithUser):
     status: ProcessStatus = EnumField(choices=ProcessStatus,
                                       default=ProcessStatus.DRAFT)
     error_info: ProcessErrorInfo = JSONField(null=True)
+
+    started_at = DateTimeUTC(null=True)
+    ended_at = DateTimeUTC(null=True)
 
     _experiment: Experiment = None
     _parent_protocol: ProtocolModel = None
@@ -149,6 +154,8 @@ class ProcessModel(ModelWithUser):
 
         self.status = ProcessStatus.DRAFT
         self.error_info = None
+        self.started_at = None
+        self.ended_at = None
         self._reset_io()
         return self.save()
 
@@ -342,7 +349,6 @@ class ProcessModel(ModelWithUser):
         # Set the data inputs dict
         self.data["inputs"] = self.inputs.to_json()
 
-        self.progress_bar.start()
         self.save()
 
     async def _run_after_task(self):
@@ -546,17 +552,21 @@ class ProcessModel(ModelWithUser):
         return self.is_draft and self.inputs.is_ready
 
     def mark_as_started(self):
+        self.progress_bar.start()
         self.progress_bar.add_message(f"Start of process '{self.get_instance_name_context()}'")
         self.status = ProcessStatus.RUNNING
+        self.started_at = DateHelper.now_utc()
         self.save()
 
     def mark_as_success(self):
         self.progress_bar.stop_success(f"End of process '{self.get_instance_name_context()}'")
         self.status = ProcessStatus.SUCCESS
+        self.ended_at = DateHelper.now_utc()
         self.save()
 
     def mark_as_error(self, error_info: ProcessErrorInfo):
         self.progress_bar.stop_error(error_info["detail"])
         self.status = ProcessStatus.ERROR
         self.error_info = error_info
+        self.ended_at = DateHelper.now_utc()
         self.save()

@@ -7,13 +7,14 @@ import os
 from typing import TypedDict
 
 from fastapi import UploadFile
+from PIL import Image
+
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file_helper import FileHelper
-from PIL import Image
 
 
 class ReportImage(TypedDict):
@@ -76,4 +77,4 @@ class ReportFileService():
 
     @classmethod
     def _get_dir_path(cls) -> str:
-        return os.path.join(Settings.retrieve().get_data_dir(), cls._dir_name)
+        return os.path.join(Settings.get_instance().get_data_dir(), cls._dir_name)

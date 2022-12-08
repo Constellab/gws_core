@@ -4,11 +4,12 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (BaseTestCase, Settings, TableDecoder, TableEncoder,
-                      TaskRunner)
 from gws_core_test_helper import GWSCoreTestHelper
 
-settings = Settings.retrieve()
+from gws_core import (BaseTestCase, Settings, TableDecoder, TableEncoder,
+                      TaskRunner)
+
+settings = Settings.get_instance()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 

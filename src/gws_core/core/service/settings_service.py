@@ -11,4 +11,4 @@ class SettingsService(BaseService):
 
     @classmethod
     def get_settings(cls) -> Settings:
-        return Settings.retrieve()
+        return Settings.get_instance()

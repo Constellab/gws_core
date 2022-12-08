@@ -29,7 +29,7 @@ class DbMigrationService:
 
     @classmethod
     def migrate(cls):
-        settings: Settings = Settings.retrieve()
+        settings: Settings = Settings.get_instance()
 
         cls._init_brick_migrators()
 
@@ -79,7 +79,7 @@ class DbMigrationService:
 
             if not brick_name in brick_migrators:
                 # Retrieive previous brick version
-                previous_brick_model: BrickMigrationLog = Settings.retrieve().get_brick_migration_log(brick_name)
+                previous_brick_model: BrickMigrationLog = Settings.get_instance().get_brick_migration_log(brick_name)
 
                 if not previous_brick_model:
                     Logger.info(f"Skipping migration for brick {brick_name} because it is new")

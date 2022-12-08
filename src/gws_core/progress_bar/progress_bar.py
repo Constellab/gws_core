@@ -4,13 +4,15 @@
 # About us: https://gencovery.com
 
 import time
-from datetime import datetime
 from enum import Enum
 from typing import List, TypedDict, final
 
 from fastapi.encoders import jsonable_encoder
-from peewee import CharField
+from peewee import CharField, FloatField
 from starlette_context import context
+
+from gws_core.core.model.db_field import DateTimeUTC
+from gws_core.core.utils.date_helper import DateHelper
 
 from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions import BadRequestException
@@ -49,6 +51,10 @@ class ProgressBar(Model):
     process_id = CharField(null=True, index=True)
     process_typing_name = CharField(null=True)
 
+    current_value = FloatField(default=0.0)
+    started_at = DateTimeUTC(null=True)
+    ended_at = DateTimeUTC(null=True)
+
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0
 
@@ -63,30 +69,22 @@ class ProgressBar(Model):
 
     @property
     def is_initialized(self):
-        return self.data["max_value"] > 0.0
+        return self.started_at is not None
 
     @property
     def is_running(self):
-        return self.is_initialized and \
-            self.data["value"] > 0.0 and \
-            self.data["value"] < self.data["max_value"]
+        return self.is_initialized and self.ended_at is None
 
     @property
     def is_finished(self):
-        return self.is_initialized and \
-            self.data["value"] >= self.data["max_value"]
+        return self.is_initialized and self.ended_at is not None
 
     def _init_data(self) -> None:
         self.data = {
-            "value": self._MIN_VALUE,
-            "max_value": self._MAX_VALUE,
-            "average_speed": 0.0,
-            "start_time": 0.0,
-            "current_time": 0.0,
-            "elapsed_time": 0.0,
-            "remaining_time": 0.0,
             "messages": [],
         }
+        self.started_at = None
+        self.ended_at = None
 
     def reset(self) -> 'ProgressBar':
         """
@@ -119,6 +117,7 @@ class ProgressBar(Model):
         self.save()
 
     def add_messages(self, messages: List[ProgressBarMessageWithType]) -> None:
+
         for message in messages:
             if message["type"] == ProgressBarMessageType.PROGRESS:
                 self._update_progress(value=message["progress"], message=message["message"])
@@ -129,7 +128,7 @@ class ProgressBar(Model):
         self.save()
 
     def _add_message(self, message: str, type_: ProgressBarMessageType = ProgressBarMessageType.INFO):
-        dtime = jsonable_encoder(datetime.now())
+        dtime = jsonable_encoder(DateHelper.now_utc())
 
         progress_bar_message: ProgressBarMessage = {
             "type": type_,
@@ -139,16 +138,14 @@ class ProgressBar(Model):
         self.data["messages"].append(progress_bar_message)
         if len(self.data["messages"]) > self._max_message_stack_length:
             self.data["messages"].pop(0)
-        self._log_message(message, type_)
+        self._log_message(message + '   ' + str(self.ended_at), type_)
 
-    def start(self, max_value: float = 100.0):
-        if max_value <= 0.0:
-            raise BadRequestException("Invalid max value")
-        if self.data["start_time"] > 0.0:
+
+    def start(self):
+        if self.is_initialized:
             raise BadRequestException("The progress bar has already started")
-        self.data["max_value"] = max_value
-        self.data["start_time"] = time.perf_counter()
-        self.data["current_time"] = self.data["start_time"]
+
+        self.started_at = DateHelper.now_utc()
         self.save()
 
     def stop_success(self, success_message: str) -> None:
@@ -164,10 +161,8 @@ class ProgressBar(Model):
         self.save()
 
     def _stop(self) -> None:
-        _max = self.data["max_value"]
-        if self.data["value"] < _max:
-            self._update_progress_value(_max)
-        self.data["remaining_time"] = 0.0
+        self.current_value = self._MAX_VALUE
+        self.ended_at = DateHelper.now_utc()
 
     def update_progress(self, value: float, message: str) -> None:
         """
@@ -194,37 +189,20 @@ class ProgressBar(Model):
 
     ################################################## VALUE #################################################
 
-    def get_max_value(self) -> float:
-        return self.data["max_value"]
-
     def _update_progress_value(self, value: float) -> float:
-        _max = self.data["max_value"]
-        if _max == 0.0:
-            self.start()
-        # if value >= self._MAX_VALUE:
-        #     value = self._MAX_VALUE - 1e-6  # prevent blocking the progress_bar
         if value < self._MIN_VALUE:
             value = self._MIN_VALUE
-        current_time = time.perf_counter()
-        self.data["value"] = value
-        self.data["current_time"] = current_time
-        self.data["elapsed_time"] = current_time - self.data["start_time"]
-        self.data["average_speed"] = self.data["value"] / \
-            self.data["elapsed_time"]
-        self.data["remaining_time"] = self._compute_remaining_seconds()
+
+        if value > self._MAX_VALUE:
+            value = self._MAX_VALUE
+
+        self.current_value = value
         return value
 
-    def _compute_remaining_seconds(self):
-        nb_remaining_steps = self.data["max_value"] - self.data["value"]
-        if self.data["average_speed"] > 0.0:
-            nb_remaining_seconds = nb_remaining_steps / \
-                self.data["average_speed"]
-            return nb_remaining_seconds
-        else:
-            return -1
-
-    def get_elapsed_time(self) -> float:
-        return self.data['elapsed_time']
+    def get_total_duration(self) -> float:
+        if self.started_at is None or self.ended_at is None:
+            return 0.0
+        return (self.ended_at - self.started_at).total_seconds()
 
     ################################################## TO JSON #################################################
 
@@ -247,8 +225,12 @@ class ProgressBar(Model):
             "typing_name": self.process_typing_name,
         }
 
+        _json["messages"] = self.messages
+
         return _json
 
+    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
+        return {}
     ################################################## CLASS METHODS #################################################
 
     @classmethod

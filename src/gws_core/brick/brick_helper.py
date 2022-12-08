@@ -16,7 +16,7 @@ class BrickHelper():
     @classmethod
     def get_all_bricks(cls) -> Dict[str, ModuleInfo]:
         """ Returns the info of all the bricks used by the Application """
-        modules: Dict[str, ModuleInfo] = Settings.retrieve().get_modules()
+        modules: Dict[str, ModuleInfo] = Settings.get_instance().get_modules()
         bricks: Dict[str, ModuleInfo] = {}
         for name, brick_info in modules.items():
             # skip app and skeleton 'bricks'
@@ -61,7 +61,7 @@ class BrickHelper():
 
         if brick_name not in bricks:
             # secific case for the test mode when brick name is test filename
-            if Settings.retrieve().is_test:
+            if Settings.get_instance().is_test:
                 return {
                     "name": brick_name,
                     "is_brick": True,

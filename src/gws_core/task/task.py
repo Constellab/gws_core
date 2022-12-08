@@ -146,7 +146,7 @@ class Task(Process):
 
     @final
     def dispatch_waiting_messages(self) -> None:
-        self.message_dispatcher.dispatch_waiting_messages()
+        self.message_dispatcher.force_dispatch_waiting_messages()
 
     @final
     @classmethod

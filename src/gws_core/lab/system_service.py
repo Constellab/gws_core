@@ -74,7 +74,7 @@ class SystemService:
         """
         Drops tables
         """
-        settings: Settings = Settings.retrieve()
+        settings: Settings = Settings.get_instance()
         if settings.is_prod:
             raise Exception('Cannot drop all table in prod env')
 
@@ -85,7 +85,7 @@ class SystemService:
         """
         Drops tables
         """
-        settings: Settings = Settings.retrieve()
+        settings: Settings = Settings.get_instance()
 
         if settings.is_prod:
             raise Exception('Cannot delete the temp folder in prod environment')
@@ -93,7 +93,7 @@ class SystemService:
 
     @classmethod
     def reset_dev_envionment(cls, check_user=True) -> None:
-        settings: Settings = Settings.retrieve()
+        settings: Settings = Settings.get_instance()
 
         if not settings.is_dev:
             raise UnauthorizedException('The reset method can only be called in dev environment')
@@ -118,7 +118,7 @@ class SystemService:
 
     @classmethod
     def kill_process(cls) -> None:
-        settings: Settings = Settings.retrieve()
+        settings: Settings = Settings.get_instance()
 
         if not settings.is_dev:
             raise UnauthorizedException('The kill method can only be called in dev environment')
@@ -129,7 +129,7 @@ class SystemService:
     def register_lab_start(cls) -> None:
         """Method to call central after start to mark the lab as started in central
         """
-        settings: Settings = Settings.retrieve()
+        settings: Settings = Settings.get_instance()
 
         if settings.is_dev:
             return
@@ -145,7 +145,7 @@ class SystemService:
 
     @classmethod
     def get_lab_info(cls) -> dict:
-        settings = Settings.retrieve()
+        settings = Settings.get_instance()
         return {
             "lab_name": settings.get_lab_name(),
             "front_version": settings.get_front_version(),
@@ -161,7 +161,7 @@ class SystemService:
     def _save_space(cls, space_central: SpaceCentral) -> None:
         try:
 
-            settings = Settings.retrieve()
+            settings = Settings.get_instance()
             space = settings.get_space()
 
             # if no space were saved or one of its value was changed

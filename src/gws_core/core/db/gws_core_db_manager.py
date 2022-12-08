@@ -3,9 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from peewee import DatabaseProxy
+
 from gws_core.core.db.db_config import DbConfig, DbMode
 from gws_core.core.utils.settings import Settings
-from peewee import DatabaseProxy
 
 from .db_manager import AbstractDbManager
 
@@ -22,7 +23,7 @@ class GwsCoreDbManager(AbstractDbManager):
 
     @classmethod
     def get_config(cls, mode: DbMode) -> DbConfig:
-        settings = Settings.retrieve()
+        settings = Settings.get_instance()
         if mode == 'test':
             return settings.get_gws_core_test_db_config()
         elif mode == 'prod':

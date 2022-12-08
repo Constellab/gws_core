@@ -79,7 +79,7 @@ class App:
 
         SystemService.migrate_db()
         SystemService.init()
-        settings: Settings = Settings.retrieve()
+        settings: Settings = Settings.get_instance()
         Logger.info(
             f"Starting server in {('prod' if settings.is_prod else 'dev')} mode ...")
 

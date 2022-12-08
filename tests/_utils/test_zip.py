@@ -12,7 +12,7 @@ class TestDate(IsolatedAsyncioTestCase):
     def test_zip_unzip(self):
 
         # Init folder to zip
-        temp_dir: str = Settings.retrieve().make_temp_dir()
+        temp_dir: str = Settings.get_instance().make_temp_dir()
         to_zip_folder = os.path.join(temp_dir, 'to_zip')
         FileHelper.create_dir_if_not_exist(to_zip_folder)
         FileHelper.create_empty_file_if_not_exist(os.path.join(to_zip_folder, 'test.json'))

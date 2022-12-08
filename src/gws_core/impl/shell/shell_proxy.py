@@ -43,7 +43,7 @@ class ShellProxy():
         if working_dir is not None:
             self.working_dir = working_dir
         else:
-            self.working_dir = Settings.retrieve().make_temp_dir()
+            self.working_dir = Settings.get_instance().make_temp_dir()
 
         if message_dispatcher is not None:
             self._message_dispatcher = message_dispatcher
@@ -195,4 +195,4 @@ class ShellProxy():
         self._message_dispatcher.attach(observer)
 
     def dispatch_waiting_messages(self) -> None:
-        self._message_dispatcher.dispatch_waiting_messages()
+        self._message_dispatcher.force_dispatch_waiting_messages()

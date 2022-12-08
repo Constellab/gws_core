@@ -8,8 +8,8 @@ from typing import Dict, List, Type
 from gws_core.core.db.db_config import DbConfig, DbMode
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 
 from .db_manager import AbstractDbManager
 
@@ -63,7 +63,7 @@ class DbManagerService():
 
     @classmethod
     def get_db_mode(cls) -> DbMode:
-        settings = Settings.retrieve()
+        settings = Settings.get_instance()
         if settings.is_test:
             return 'test'
         elif settings.is_prod:

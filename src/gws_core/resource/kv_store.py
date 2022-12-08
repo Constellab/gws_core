@@ -216,7 +216,7 @@ class KVStore(Dict[str, Any]):
     @classmethod
     def get_base_dir(cls) -> str:
         if not cls._base_dir:
-            settings = Settings.retrieve()
+            settings = Settings.get_instance()
             cls._base_dir = settings.get_kv_store_base_dir()
 
         return cls._base_dir

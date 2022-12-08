@@ -75,7 +75,7 @@ class Settings():
     @classmethod
     def init(cls, settings_json: dict = None):
 
-        settings = Settings.retrieve()
+        settings = Settings.get_instance()
 
         if settings.get_data('secret_key') is None:
             # secret_key
@@ -286,10 +286,12 @@ class Settings():
         :return: The log directory
         :rtype: `str`
         """
+        if self.is_test:
+            return "/logs-test"
+        else:
+            return "/logs"
 
-        return "/logs"
-
-    def get_data_dir(self, test: bool = None) -> str:
+    def get_data_dir(self) -> str:
         """
         Get the default data directory.
         Depending on if the lab is in dev or prod mode, the appropriate directory is returned.
@@ -297,19 +299,16 @@ class Settings():
         :return: The default data directory
         :rtype: `str`
         """
-        if test is None:
-            test = self.is_test
-
-        if test:
+        if self.is_test:
             return "/data-test"
         else:
             return "/data"
 
-    def get_file_store_dir(self, test: bool = None) -> str:
-        return os.path.join(self.get_data_dir(test=test), "./filestore/")
+    def get_file_store_dir(self) -> str:
+        return os.path.join(self.get_data_dir(), "filestore/")
 
-    def get_kv_store_base_dir(self, test: bool = None) -> str:
-        return os.path.join(self.get_data_dir(test=test), "./kvstore/")
+    def get_kv_store_base_dir(self) -> str:
+        return os.path.join(self.get_data_dir(), "kvstore/")
 
     def get_variable(self, key) -> str:
         """ Returns a variable. Returns `None` if the variable does not exist """
@@ -425,8 +424,7 @@ class Settings():
         return self.data["modules"]["notebook"]["path"]
 
     @classmethod
-    def retrieve(cls) -> 'Settings':
-
+    def get_instance(cls) -> 'Settings':
         if cls._setting_instance is None:
             settings_json = None
 
@@ -442,6 +440,11 @@ class Settings():
             cls._setting_instance = Settings(settings_json)
 
         return cls._setting_instance
+
+    @classmethod
+    def retrieve(cls) -> 'Settings':
+        print("[Deprecated] Methode retrieve deprecated, please use get_instance")
+        return cls.get_instance()
 
     def set_data(self, key: str, val: Any) -> None:
         self.data[key] = val

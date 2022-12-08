@@ -10,7 +10,7 @@ class DataProvider():
 
     @classmethod
     def _get_test_data_dir(cls) -> str:
-        return Settings.retrieve().get_variable("gws_core:testdata_dir")
+        return Settings.get_instance().get_variable("gws_core:testdata_dir")
 
     @classmethod
     def get_test_data_path(cls, path: str) -> str:

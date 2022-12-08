@@ -95,10 +95,15 @@ class TaskRunner():
         try:
             task_outputs: TaskOutputs = await task.run(config_params, inputs)
         except Exception as exception:
+            # dispatch all the waiting message before ending the task
+            if len(task.message_dispatcher._waiting_messages) > 0:
+                Logger.info('Dispatching waiting messages')
             task.dispatch_waiting_messages()
             raise exception
 
         # dispatch all the waiting message before ending the task
+        if len(task.message_dispatcher._waiting_messages) > 0:
+            Logger.info('Dispatching waiting messages')
         task.dispatch_waiting_messages()
         return self._check_outputs(task_outputs)
 

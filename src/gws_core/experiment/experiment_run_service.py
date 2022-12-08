@@ -99,7 +99,7 @@ class ExperimentRunService():
         :type user: `gws.user.User`
         """
 
-        settings: Settings = Settings.retrieve()
+        settings: Settings = Settings.get_instance()
         cwd_dir = settings.get_cwd()
 
         # set the user in the context to make the update works
@@ -141,7 +141,7 @@ class ExperimentRunService():
                 f"gws.experiment.Experiment run_through_cli {str(cmd)}")
             Logger.info(
                 f"""The experiment logs are not shown in the console, because it is run in another linux process ({experiment.pid}).
-                To view them check the logs marked as {Logger.get_sub_process_text()} in the today's log file : {Logger.get_file_path()}""")
+                To view them check the logs marked as {Logger.SUB_PROCESS_TEXT} in the today's log file : {Logger.get_file_path()}""")
         except Exception as err:
             traceback.print_exc()
             exception: ExperimentRunException = ExperimentRunException.from_exception(
@@ -225,7 +225,7 @@ class ExperimentRunService():
         if not Settings.is_prod or experiment.type != ExperimentType.EXPERIMENT:
             return
         try:
-            elapsed_time = experiment.protocol_model.progress_bar.get_elapsed_time()
+            elapsed_time = experiment.protocol_model.progress_bar.get_total_duration()
 
             # if the experiment runned in under 5 minutes, don't send an email
             if elapsed_time < 60 * 5:

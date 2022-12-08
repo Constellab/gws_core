@@ -29,7 +29,7 @@ class Console:
         This function initializes objects for unit testing
         """
 
-        settings = Settings.retrieve()
+        settings = Settings.get_instance()
         if not settings.is_dev:
             raise BadRequestException(
                 "The unit tests can only be initialized in dev mode")
@@ -65,7 +65,7 @@ class Console:
         """
         Drops tables
         """
-        settings: Settings = Settings.retrieve()
+        settings: Settings = Settings.get_instance()
 
         if not settings.is_test:
             raise Exception('Can only delete the data and temp folder in test env')

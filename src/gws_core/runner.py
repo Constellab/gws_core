@@ -30,7 +30,7 @@ def call(test="",
     if show_sql:
         Logger.print_sql_queries()
 
-    settings = Settings.retrieve()
+    settings = Settings.get_instance()
     settings.set_data("app_host", ip)
     settings.set_data("app_port", port)
     settings.set_data("id", os.getenv("LAB_ID"))

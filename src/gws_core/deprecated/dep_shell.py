@@ -90,7 +90,7 @@ class Shell(Task):
         """
 
         if self._tmp_dir is None:
-            settings = Settings.retrieve()
+            settings = Settings.get_instance()
             self._tmp_dir = settings.make_temp_dir()
 
         return self._tmp_dir

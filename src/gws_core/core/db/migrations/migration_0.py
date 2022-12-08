@@ -6,8 +6,11 @@
 
 from typing import Dict, List
 
+from peewee import BigIntegerField, CharField
+
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.db.sql_migrator import SqlMigrator
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.impl.file.fs_node_model import FSNodeModel
@@ -15,7 +18,8 @@ from gws_core.impl.table.table import Table
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
-from gws_core.process.process_model import ProcessModel
+from gws_core.process.process_model import ProcessModel, ProcessStatus
+from gws_core.progress_bar.progress_bar import ProgressBar, ProgressBarMessage
 from gws_core.project.project import Project
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.report.report import Report
@@ -28,7 +32,6 @@ from gws_core.tag.taggable_model import TaggableModel
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
-from peewee import BigIntegerField, CharField
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -366,3 +369,49 @@ class Migration0318(BrickMigration):
         migrator.add_column_if_not_exists(Project, Project.parent)
         migrator.drop_column_if_exists(Project, 'description')
         migrator.migrate()
+
+
+@brick_migration('0.4.1', short_description='Add started_at and finished_at to ProcessModel, refactor progress bar')
+class Migration041(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(ProcessModel.get_db())
+        migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.started_at)
+        migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.ended_at)
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.started_at)
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.ended_at)
+        migrator.add_column_if_not_exists(ProgressBar, ProgressBar.current_value)
+        migrator.add_column_if_not_exists(ProgressBar, ProgressBar.started_at)
+        migrator.add_column_if_not_exists(ProgressBar, ProgressBar.ended_at)
+        migrator.migrate()
+
+        # refactor progress bar
+        progress_bars: List[ProgressBar] = list(ProgressBar.select())
+        for progress_bar in progress_bars:
+            progress_bar_data: dict = progress_bar.data
+
+            if 'messages' not in progress_bar_data or 'value' not in progress_bar_data:
+                continue
+
+            progress_bar.current_value = progress_bar_data['value']
+
+            messages: List[ProgressBarMessage] = progress_bar_data['messages']
+
+            if len(messages) > 0:
+                started_at: str = messages[0]['datetime']
+                progress_bar.started_at = DateHelper.from_str(started_at,  "%Y-%m-%dT%H:%M:%S.%f")
+
+                ended_at: str = messages[-1]['datetime']
+                progress_bar.ended_at = DateHelper.from_str(ended_at,  "%Y-%m-%dT%H:%M:%S.%f")
+
+            # keep only messages
+            progress_bar.data = {'messages': progress_bar_data['messages']}
+            progress_bar.save()
+
+        process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
+        for process_model in process_models:
+            process_model.started_at = process_model.progress_bar.started_at
+            process_model.ended_at = process_model.progress_bar.ended_at
+            process_model.save()

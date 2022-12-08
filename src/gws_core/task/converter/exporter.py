@@ -117,7 +117,7 @@ class ResourceExporter(Converter):
     @final
     async def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> FSNode:
         # Create a new temp_dir to create the file here
-        self.__temp_dir: str = Settings.retrieve().make_temp_dir()
+        self.__temp_dir: str = Settings.get_instance().make_temp_dir()
 
         try:
             fs_node: FSNode = await self.export_to_path(source, self.__temp_dir, params, target_type)

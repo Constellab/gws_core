@@ -47,7 +47,7 @@ class CentralService(BaseService):
     @classmethod
     def check_api_key(cls, api_key: str) -> bool:
 
-        settings: Settings = Settings.retrieve()
+        settings: Settings = Settings.get_instance()
 
         # In local env, we don't check the api key
         if settings.get_lab_environment() == 'LOCAL':

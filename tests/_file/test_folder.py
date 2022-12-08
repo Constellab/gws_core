@@ -18,7 +18,7 @@ class CreateFolderTest(Task):
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         folder = Folder()
-        folder.path = os.path.join(Settings.retrieve().get_data_dir(), 'test_folder')
+        folder.path = os.path.join(Settings.get_instance().get_data_dir(), 'test_folder')
         FileHelper.create_dir_if_not_exist(folder.path)
         return {'folder': folder}
 

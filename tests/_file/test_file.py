@@ -29,7 +29,7 @@ class CreateFileTest(Task):
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         file = File()
-        file.path = os.path.join(Settings.retrieve().get_data_dir(), 'test_file.txt')
+        file.path = os.path.join(Settings.get_instance().get_data_dir(), 'test_file.txt')
         file.write('Hello')
         return {'file': file}
 

@@ -160,6 +160,9 @@ class Wait(Task):
             current_time = current_time + 1
             self.update_progress_value((current_time / waiting_time) * 100, 'Waiting 1 sec')
             time.sleep(1)
+
+        # self.log_info_message('This is the end of the wait')
+
         resource = inputs["resource"]
         return {"resource": resource}
 

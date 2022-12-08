@@ -15,7 +15,7 @@ from tests.protocol_examples import (TestNestedProtocol,
                                      TestRobotWithSugarProtocol,
                                      TestSimpleProtocol)
 
-settings = Settings.retrieve()
+settings = Settings.get_instance()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 # test_protocol

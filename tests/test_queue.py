@@ -10,7 +10,7 @@ from gws_core import (BaseTestCase, Experiment, ExperimentService,
                       ExperimentStatus, GTest, Queue, QueueService,
                       RobotService, Settings)
 
-settings = Settings.retrieve()
+settings = Settings.get_instance()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 

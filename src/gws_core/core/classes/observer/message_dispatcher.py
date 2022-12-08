@@ -38,7 +38,9 @@ class MessageDispatcher:
     _last_notify_time: float = None
 
     # store the timer to prevent to save the progress bar too often
-    _dispatch_timer: Timer = None
+    _waiting_dispatch_timer: Timer = None
+    # store the thread when is it executing (after the timer and before it is finished)
+    _running_dispatch_timers: List[Timer] = []
 
     def __init__(self, interval_time_merging_message=0.1, interval_time_dispatched_buffer=1):
         self._observers = []
@@ -109,7 +111,7 @@ class MessageDispatcher:
         # if there is no dispatched time, then directly dispatch the message
         if self.interval_time_dispatched_buffer == 0:
             self._waiting_messages.append(message)
-            self.dispatch_waiting_messages()
+            self._dispatch_waiting_messages()
             return
 
         if self._last_notify_time is None:
@@ -138,19 +140,42 @@ class MessageDispatcher:
     # launche a timer to dispatch the message after a delay
 
     def _lauch_dispatch_timer(self):
-        if self._dispatch_timer is None:
-            self._dispatch_timer = Timer(self.interval_time_dispatched_buffer, self.dispatch_waiting_messages)
-            self._dispatch_timer.start()
+        if self._waiting_dispatch_timer is None:
+            self._waiting_dispatch_timer = Timer(self.interval_time_dispatched_buffer,
+                                                 self._dispatch_waiting_messages_after_timer)
+            self._waiting_dispatch_timer.start()
 
-    def dispatch_waiting_messages(self):
-        # if there is a timer, stop it and clean the variable
-        if self._dispatch_timer:
-            self._dispatch_timer.cancel()
-            self._dispatch_timer = None
+    def _dispatch_waiting_messages_after_timer(self):
+        #  set the waiting dispatch timer as the current dispatch timer
+        current_dispatch_timer = self._waiting_dispatch_timer
+        if current_dispatch_timer is not None:
+            self._running_dispatch_timers.append(current_dispatch_timer)
+        # clear the waiting dispatch timer
+        self._waiting_dispatch_timer = None
 
+        self._dispatch_waiting_messages()
+
+        # remove the running dispatch timer
+        self._running_dispatch_timers.remove(current_dispatch_timer)
+
+    def _dispatch_waiting_messages(self):
         # directly copy and clear the array because the observer update can take some times
         messages = self._waiting_messages.copy()
         self._waiting_messages.clear()
         if len(messages) > 0:
             for observer in self._observers:
                 observer.update(messages)
+
+    def force_dispatch_waiting_messages(self):
+        # if there is a waiting dispatch timer, cancel it
+        if self._waiting_dispatch_timer:
+            self._waiting_dispatch_timer.cancel()
+            self._waiting_dispatch_timer = None
+
+        # wait for all the running dispatch timer to finish
+        # because the dispatch_waiting_messages can take some times
+        if len(self._running_dispatch_timers) > 0:
+            for timer in self._running_dispatch_timers:
+                timer.join()
+
+        self._dispatch_waiting_messages()

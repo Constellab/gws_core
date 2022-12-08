@@ -46,7 +46,7 @@ class TestDispatcher(BaseTestCase):
 
         # test direct dispatch
         dispatcher.notify_info_message('message 6')
-        dispatcher.dispatch_waiting_messages()
+        dispatcher.force_dispatch_waiting_messages()
         self.assertEqual(len(observer.messages), 5)
         self.assertEqual(observer.messages[4].message, 'message 6')
 

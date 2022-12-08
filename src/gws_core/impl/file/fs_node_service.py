@@ -10,6 +10,7 @@ from typing import List, Type
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
@@ -50,7 +51,7 @@ class FsNodeService(BaseService):
                 f"The file '{resource.name}' does not exists on the server. It has been deleted")
 
         if isinstance(resource, Folder):
-            temp_dir: str = Settings.retrieve().make_temp_dir()
+            temp_dir: str = Settings.get_instance().make_temp_dir()
             filename = resource.name + '.zip'
             zip_file = os.path.join(temp_dir, filename)
             Zip.zipdir(resource.path, zip_file)

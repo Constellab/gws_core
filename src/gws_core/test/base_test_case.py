@@ -6,7 +6,9 @@
 from typing import List, Union
 from unittest.async_case import IsolatedAsyncioTestCase
 
+from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.progress_bar.progress_bar import ProgressBar
 
 from ..experiment.queue_service import QueueService
@@ -67,6 +69,7 @@ class BaseTestCase(IsolatedAsyncioTestCase):
         QueueService.deinit()
         GTest.drop_tables()
         GTest.delete_data_and_temp_folder()
+        FileHelper.delete_dir(Settings.get_instance().get_log_dir())
 
     @classmethod
     def print(cls, text):

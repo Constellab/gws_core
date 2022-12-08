@@ -12,6 +12,7 @@ from time import time
 from typing import List, Type, Union
 
 from genericpath import isdir
+
 from gws_core.impl.file.folder import Folder
 
 from ...core.decorator.transaction import transaction
@@ -94,7 +95,7 @@ class LocalFileStore(FileStore):
         """
         self._init_dir(str(Path(destination).parent))
 
-        if(os.path.isdir(source)):
+        if (os.path.isdir(source)):
             shutil.copytree(source, destination)
         else:
             shutil.copy2(source, destination)
@@ -201,7 +202,7 @@ class LocalFileStore(FileStore):
     @classmethod
     def get_base_dir(cls) -> str:
         if not cls._base_dir:
-            settings = Settings.retrieve()
+            settings = Settings.get_instance()
             cls._base_dir = settings.get_file_store_dir()
         return str(Path(cls._base_dir))
 
@@ -212,7 +213,7 @@ class LocalFileStore(FileStore):
         Remove all the files from the FileStore
         """
 
-        settings = Settings.retrieve()
+        settings = Settings.get_instance()
         if not settings.is_dev and not settings.is_test:
             raise BadRequestException("Only allowed in dev and test mode")
         file_store_list: List[FileStore] = cls.select()

@@ -10,6 +10,8 @@ from logging.handlers import TimedRotatingFileHandler
 from os import makedirs, path
 from typing import Any, Literal
 
+from gws_core.core.utils.date_helper import DateHelper
+
 from ..exception.exceptions.bad_request_exception import BadRequestException
 from .settings import Settings
 
@@ -26,6 +28,11 @@ class Logger:
 
     It logs into the console and in the log file
     """
+
+    SUB_PROCESS_TEXT = "[EXPERIMENT]"
+    SEPARATOR = " - "
+    DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+    FILE_NAME_DATE_FORMAT = "%Y-%m-%d"
 
     _logger: PythonLogger = None
     _file_path: str = None
@@ -67,7 +74,7 @@ class Logger:
         Logger._logger.addHandler(console_logger)
 
         # Configure the logs into the log files
-        settings = Settings.retrieve()
+        settings = Settings.get_instance()
 
         log_dir = settings.get_log_dir()
         if not path.exists(log_dir):
@@ -118,12 +125,6 @@ class Logger:
         return cls._file_path
 
     @classmethod
-    def get_sub_process_text(cls) -> str:
-        """return the text to annotated the sub process logs
-        """
-        return "[EXPERIMENT]"
-
-    @classmethod
     def _log_message(cls, level_name: MessageType, obj: Any) -> None:
         """Log a message
 
@@ -163,14 +164,15 @@ class Logger:
     @classmethod
     def _get_message(cls, level_name: str, message: str) -> str:
         # get the annoted text for Sub process logs
-        sub_process_text: str = f"{cls.get_sub_process_text()} -" if cls._is_experiment_process else ""
-        return f"{level_name} - {cls._get_date()} - {sub_process_text} {message}"
+        sub_process_text: str = f"{cls.SEPARATOR}{cls.SUB_PROCESS_TEXT}" if cls._is_experiment_process else ""
+
+        return f"{level_name}{cls.SEPARATOR}{cls._get_date()}{sub_process_text}{cls.SEPARATOR}{message}"
 
     # Get the current date in Human readable format
     @classmethod
     def _get_date(cls) -> str:
-        current_date: datetime = datetime.now()
-        return current_date.strftime("%Y-%m-%d %H:%M:%S.%f")
+        current_date: datetime = DateHelper.now_utc()
+        return current_date.strftime(cls.DATE_FORMAT)
 
     @classmethod
     def print_sql_queries(cls) -> None:
@@ -179,3 +181,36 @@ class Logger:
         logger = logging.getLogger('peewee')
         logger.addHandler(logging.StreamHandler())
         logger.setLevel(logging.DEBUG)
+
+    @classmethod
+    def date_to_file_name(cls, date: datetime) -> str:
+        """Convert a date to a file name.
+        If the date is the current date the file name is 'log'
+        Otherwise the file name is in the format 'log.YYYY-MM-DD'
+
+        :param date: date to convert
+        :type date: datetime
+        :return: the file name
+        :rtype: str
+        """
+
+        if DateHelper.are_same_day(date, DateHelper.now_utc()):
+            return 'log'
+
+        return date.strftime(cls.FILE_NAME_DATE_FORMAT)
+
+    @classmethod
+    def file_name_to_date(cls, file_name: str) -> datetime:
+        """Convert a file name to a date.
+        If the file name is 'log' the current date is returned
+        Otherwise file name must be in the format 'log.YYYY-MM-DD'
+
+        :param file_name: file name to convert
+        :type file_name: str
+        :return: the date
+        :rtype: datetime
+        """
+        if file_name == 'log':
+            return DateHelper.now_utc()
+
+        return DateHelper.from_str(file_name.split(".")[1], "%Y-%m-%d")

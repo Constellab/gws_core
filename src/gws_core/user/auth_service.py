@@ -218,7 +218,7 @@ class AuthService(BaseService):
         :rtype: Coroutine[Any, Any, str]
         """
 
-        settings: Settings = Settings.retrieve()
+        settings: Settings = Settings.get_instance()
 
         # Allow only this method on dev environment
         if settings.is_prod:
