@@ -43,7 +43,7 @@ class LogService:
         log_info = cls.get_log_info(node_name)
 
         if log_info is None:
-            raise BadRequestException(f"File {node_name} is not a log file")
+            raise BadRequestException(f"File '{node_name}' is not a log file")
 
         log_folder = Settings.get_instance().get_log_dir()
         log_file_path = os.path.join(log_folder, node_name)

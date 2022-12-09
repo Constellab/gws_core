@@ -25,7 +25,7 @@ class CondaEnvTaskTester(CondaEnvTask):
         command = [
             "python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"
         ]
-        shell_proxy.run(command, shell_mode=True)
+        shell_proxy.run(command)
 
         file = File(path=os.path.join(self.working_dir, "out.txt"))
         return {"file": file}

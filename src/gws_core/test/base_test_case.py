@@ -69,7 +69,6 @@ class BaseTestCase(IsolatedAsyncioTestCase):
         QueueService.deinit()
         GTest.drop_tables()
         GTest.delete_data_and_temp_folder()
-        FileHelper.delete_dir(Settings.get_instance().get_log_dir())
 
     @classmethod
     def print(cls, text):

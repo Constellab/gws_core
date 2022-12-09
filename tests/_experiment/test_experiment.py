@@ -184,7 +184,7 @@ class TestExperiment(BaseTestCase):
 
     def _check_process_reset(self, process_model: ProcessModel) -> None:
         self.assertEqual(process_model.status, ProcessStatus.DRAFT)
-        self.assertTrue(process_model.progress_bar.is_initialized)
+        self.assertFalse(process_model.progress_bar.is_started)
         self.assertFalse(process_model.progress_bar.is_running)
         self.assertFalse(process_model.progress_bar.is_finished)
         self.assertIsNone(process_model.error_info)

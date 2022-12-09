@@ -54,14 +54,14 @@ INFO - 2022-12-01 09:30:46.947581 - [EXPERIMENT] - second_log
         self.assertEqual(log_complete_info.get_log_file_date(),
                          DateHelper.from_str('01-12-2022', '%d-%m-%Y').date())
 
-        from_date = DateHelper.from_str('01-12-2022 09:25:00', '%d-%m-%Y %H:%M:%S')
-        to_date = DateHelper.from_str('01-12-2022 09:32:00', '%d-%m-%Y %H:%M:%S')
+        from_date = DateHelper.from_iso_str('2022-12-01T09:25:00+00:00')
+        to_date = DateHelper.from_iso_str('2022-12-01T09:32:00+00:00')
 
         log_lines = log_complete_info.get_log_lines_by_time(from_date, to_date)
         self.assertEqual(len(log_lines), 2)
         self.assertEqual(log_lines[0].content, 'first - log')
 
-        first_log_date = DateHelper.from_str('01-12-2022 09:26:46.906581', '%d-%m-%Y %H:%M:%S.%f')
+        first_log_date = DateHelper.from_iso_str('2022-12-01T09:26:46.906581+00:00')
         self.assertEqual(log_lines[0].date_time, first_log_date)
         self.assertEqual(log_lines[0].level, 'INFO')
         self.assertFalse(log_lines[0].is_from_experiment)

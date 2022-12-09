@@ -67,16 +67,16 @@ class ProgressBar(Model):
             self._init_data()
 
     @property
-    def is_initialized(self):
+    def is_started(self):
         return self.started_at is not None
 
     @property
     def is_running(self):
-        return self.is_initialized and self.ended_at is None
+        return self.is_started and self.ended_at is None
 
     @property
     def is_finished(self):
-        return self.is_initialized and self.ended_at is not None
+        return self.is_started and self.ended_at is not None
 
     def _init_data(self) -> None:
         self.data = {
@@ -140,7 +140,7 @@ class ProgressBar(Model):
         self._log_message(message, type_)
 
     def start(self):
-        if self.is_initialized:
+        if self.is_started:
             raise BadRequestException("The progress bar has already started")
 
         self.started_at = DateHelper.now_utc()
