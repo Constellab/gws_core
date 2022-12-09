@@ -24,7 +24,6 @@ class ViewType(Enum):
     TEXT = "text-view"
     TABLE = "table-view"
     TABULAR = "tabular-view"
-    DATASET = "dataset-view"
     FOLDER = "folder-view"
     SCATTER_PLOT_2D = "scatter-plot-2d-view"
     VULCANO_PLOT = "vulcano-plot-view"

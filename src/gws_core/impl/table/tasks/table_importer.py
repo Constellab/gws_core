@@ -89,6 +89,8 @@ class TableImporter(ResourceImporter):
 
         df.columns = df.columns.map(str)
 
+        print(metadata_columns)
+
         # set metadata
         if metadata_columns:
             row_tags = []
@@ -97,12 +99,12 @@ class TableImporter(ResourceImporter):
             for metadata in metadata_columns:
                 colname = metadata.get("column")
                 meta_cols.append(colname)
-                keep_in_table[colname] = metadata.get("keep_in_table", False)
+                keep_in_table[colname] = metadata.get("keep_in_table") or False
 
             tag_df = df[meta_cols]
             drop_cols = [col for col, keep in keep_in_table.items() if keep is False]
             if drop_cols:
-                df.drop(drop_cols, axis=1, inplace=False)
+                df.drop(drop_cols, axis=1, inplace=True)
             for idx in df.index:
                 tag = {col: tag_df.loc[idx, col] for col in tag_df.columns}
                 row_tags.append(tag)

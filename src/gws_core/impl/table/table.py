@@ -116,7 +116,7 @@ class Table(Resource):
 
         if meta:
             # TODO remove meta on version 0.3.15
-            Logger.warning(f"[Table] The meta data is deprecated. Use row_tags and column_tags instead.")
+            Logger.warning("[Table] The meta data is deprecated. Use row_tags and column_tags instead.")
             self._set_tags(row_tags=meta.get("row_tags", None), column_tags=meta.get("column_tags", None))
         else:
             self._set_tags(row_tags=row_tags, column_tags=column_tags)
@@ -141,7 +141,7 @@ class Table(Resource):
         :rtype: TableMeta
         """
         # TODO remove meta on version 0.3.15
-        Logger.warning(f"[Table] The meta data is deprecated. Use row_tags and column_tags instead.")
+        Logger.warning("[Table] The meta data is deprecated. Use row_tags and column_tags instead.")
         return {
             "row_tags": self.get_row_tags(),
             "column_tags": self.get_column_tags()
@@ -176,7 +176,7 @@ class Table(Resource):
 
     # TODO deprecated, to remove
     def set_all_rows_tags(self, tags: List[Dict[str, str]]) -> None:
-        Logger.error(f"[Table] The set_all_rows_tags is deprecated. Use set_all_row_tags instead.")
+        Logger.error("[Table] The set_all_rows_tags is deprecated. Use set_all_row_tags instead.")
         self.set_all_row_tags(tags)
 
     def set_all_column_tags(self, tags: List[Dict[str, str]]) -> None:
@@ -187,7 +187,7 @@ class Table(Resource):
 
     # TODO deprecated, to remove
     def set_all_columns_tags(self, tags: List[Dict[str, str]]) -> None:
-        Logger.error(f"[Table] The set_all_columns_tags is deprecated. Use set_all_column_tags instead.")
+        Logger.error("[Table] The set_all_columns_tags is deprecated. Use set_all_column_tags instead.")
         self.set_all_column_tags(tags)
 
     def get_data(self) -> DataFrame:

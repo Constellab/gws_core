@@ -2,8 +2,7 @@
 
 import os
 
-from gws_core import (Dataset, DatasetImporter, File, Settings, Table,
-                      TableImporter)
+from gws_core import File, Settings, Table, TableImporter
 
 
 class DataProvider():
@@ -29,36 +28,12 @@ class DataProvider():
         return File(cls.get_test_data_path('iris_no_head.csv'))
 
     @classmethod
-    def get_iris_table(cls) -> Table:
+    def get_iris_table(cls, keep_variety: bool = True) -> Table:
         return TableImporter.call(cls.get_iris_file(), {
             "delimiter": ",",
             "header": 0,
             "metadata_columns": [{
                 "column": "variety",
-                "keep_in_data": True,
-            }]
-        })
-
-    @classmethod
-    def get_iris_dataset(cls) -> Dataset:
-        return DatasetImporter.call(cls.get_iris_file(), {
-            "delimiter": ",",
-            "header": 0,
-            "metadata_columns": [{
-                "column": "variety",
-                "keep_in_data": True,
-                "is_target": True
-            }]
-        })
-
-    @classmethod
-    def get_no_head_iris_dataset(cls) -> Dataset:
-        return DatasetImporter.call(cls.get_no_head_iris_file(), {
-            "delimiter": ",",
-            "header": -1,
-            "metadata_columns": [{
-                "column": "4",
-                "keep_in_data": True,
-                "is_target": True
+                "keep_in_table": keep_variety,
             }]
         })

@@ -35,6 +35,9 @@ class DataframeFilterHelper:
     @classmethod
     def filter_by_axis_names(cls, data: DataFrame, axis: AxisName, filters: List[DataframeFilterName]):
         dataframe: DataFrame = None
+        if not isinstance(filters, list):
+            raise BadRequestException("The filters must be a list of dictionnary")
+
         for filter_ in filters:
             new_df = cls._filter_by_axis_names(data, axis, filter_["name"], filter_.get("is_regex", False))
             if dataframe is None:
