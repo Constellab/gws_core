@@ -197,7 +197,7 @@ class Logger:
         if DateHelper.are_same_day(date, DateHelper.now_utc()):
             return 'log'
 
-        return date.strftime(cls.FILE_NAME_DATE_FORMAT)
+        return 'log.' + date.strftime(cls.FILE_NAME_DATE_FORMAT)
 
     @classmethod
     def file_name_to_date(cls, file_name: str) -> datetime:

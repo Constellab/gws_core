@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import time
 from enum import Enum
 from typing import List, TypedDict, final
 
@@ -138,8 +137,7 @@ class ProgressBar(Model):
         self.data["messages"].append(progress_bar_message)
         if len(self.data["messages"]) > self._max_message_stack_length:
             self.data["messages"].pop(0)
-        self._log_message(message + '   ' + str(self.ended_at), type_)
-
+        self._log_message(message, type_)
 
     def start(self):
         if self.is_initialized:

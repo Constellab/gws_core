@@ -7,7 +7,7 @@ import os
 import re
 import tempfile
 from copy import deepcopy
-from json import dump, load
+from json import JSONDecodeError, dump, load
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
 from gws_core.core.db.db_config import DbConfig
@@ -430,8 +430,14 @@ class Settings():
 
             # try to read the settings file
             if cls._setting_file_exists():
-                with open(cls._get_setting_file_path()) as f:
-                    settings_json = load(f)
+                with open(cls._get_setting_file_path(), encoding='UTF-8') as f:
+                    try:
+                        settings_json = load(f)
+                    except JSONDecodeError as err:
+                        print(
+                            f"Error while reading settings file at '{cls._get_setting_file_path()}'. Please check the syntax of the file. Here is the file content")
+                        print(f.read())
+                        raise err
             # use default settings if no file exists
             else:
                 settings_json = __DEFAULT_SETTINGS__

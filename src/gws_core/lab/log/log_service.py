@@ -6,6 +6,7 @@
 
 import os
 from datetime import datetime
+from typing import List
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -14,7 +15,8 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
-from .log import LogCompleteInfo, LogInfo, LogsBetweenDatesResponse, LogsStatus
+from .log import (LogCompleteInfo, LogInfo, LogLine, LogsBetweenDatesResponse,
+                  LogsStatus)
 
 
 class LogService:
@@ -71,15 +73,42 @@ class LogService:
     def get_logs_between_dates(cls, from_date: datetime, to_date: datetime,
                                from_experiment: bool = None) -> LogsBetweenDatesResponse:
 
+        log_lines: List[LogLine] = []
+
+        # retrieve logs for each day
+        for date in DateHelper.date_range(from_date, to_date, include_end_date=True):
+            one_day_from: datetime = None
+            one_day_to: datetime = None
+            # if the from_date is the same day as the date, we use the from_date
+            # otherwise with use the date at 00:00:00
+            if DateHelper.are_same_day(from_date, date):
+                one_day_from = from_date
+            else:
+                one_day_from = datetime(year=date.year, month=date.month, day=date.day)
+
+            # if the to_date is the same day as the date, we use the to_date
+            # otherwise with use the date at 23:59:59
+            if DateHelper.are_same_day(to_date, date):
+                one_day_to = to_date
+            else:
+                one_day_to = datetime(year=date.year, month=date.month, day=date.day, hour=23, minute=59, second=59)
+
+            log_lines.extend(cls.get_logs_between_dates_same_day(one_day_from, one_day_to, from_experiment))
+
+        return LogsBetweenDatesResponse(logs=log_lines, from_date=from_date, to_date=to_date,
+                                        from_experiment=from_experiment)
+
+    @classmethod
+    def get_logs_between_dates_same_day(cls, from_date: datetime, to_date: datetime,
+                                        from_experiment: bool = None) -> List[LogLine]:
+
         if not DateHelper.are_same_day(from_date, to_date):
             raise BadRequestException("The dates must be on the same day")
 
         log_file_name = Logger.date_to_file_name(from_date)
 
         log_complete_info = cls.get_log_complete_info(log_file_name)
-        log_lines = log_complete_info.get_log_lines_by_time(from_date, to_date, from_experiment)
-        return LogsBetweenDatesResponse(logs=log_lines, from_date=from_date, to_date=to_date,
-                                        from_experiment=from_experiment)
+        return log_complete_info.get_log_lines_by_time(from_date, to_date, from_experiment)
 
     @classmethod
     def get_log_file_path(cls, node_name: str) -> str:
