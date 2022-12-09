@@ -92,7 +92,7 @@ class Settings():
         # create the parent directory
         FileHelper.create_dir_if_not_exist(__SETTINGS_DIR__)
 
-        with open(self._get_setting_file_path(), 'w') as f:
+        with open(self._get_setting_file_path(), 'w', encoding='UTF-8') as f:
             dump(self.data, f, sort_keys=True)
 
         return True
@@ -449,7 +449,7 @@ class Settings():
 
     @classmethod
     def retrieve(cls) -> 'Settings':
-        print("[Deprecated] Methode retrieve deprecated, please use get_instance")
+        print("[SETTINGS] Method 'retrieve' deprecated, please use 'get_instance'")
         return cls.get_instance()
 
     def set_data(self, key: str, val: Any) -> None:
