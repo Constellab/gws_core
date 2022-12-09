@@ -6,8 +6,9 @@
 
 from typing import TYPE_CHECKING, List, Union, final
 
-from gws_core.impl.file.file_helper import FileHelper
 from peewee import BigIntegerField, BooleanField, CharField
+
+from gws_core.impl.file.file_helper import FileHelper
 
 from ...core.model.model import Model
 from ...impl.file.file_store import FileStore
@@ -55,10 +56,11 @@ class FSNodeModel(Model):
         from gws_core.resource.resource_model import ResourceModel
         return ResourceModel.get(ResourceModel.fs_node_model == self)
 
-    def to_json(self, deep: bool = False) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         return {
             "id": self.id,
             "size": self.size,
             "is_file": FileHelper.is_file(self.path),
-            "name": FileHelper.get_name_with_extension(self.path)
+            "name": FileHelper.get_name_with_extension(self.path),
+            "path": self.path,
         }
