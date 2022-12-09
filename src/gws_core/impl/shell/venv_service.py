@@ -43,6 +43,9 @@ class VEnvService():
         """
         Get the status of the virtual environments.
         """
+        if not FileHelper.exists_on_os(Settings.get_global_env_dir()):
+            FileHelper.create_dir_if_not_exist(Settings.get_global_env_dir())
+
         venv_status: VEnsStatus = {
             'venv_folder': Settings.get_global_env_dir(),
             'envs': [],
