@@ -16,6 +16,7 @@ from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.table.table import Table
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.lab.monitor.monitor import Monitor
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process_model import ProcessModel, ProcessStatus
@@ -415,3 +416,17 @@ class Migration041(BrickMigration):
             process_model.started_at = process_model.progress_bar.started_at
             process_model.ended_at = process_model.progress_bar.ended_at
             process_model.save()
+
+
+@brick_migration('0.4.2', short_description='Add ram and GPU to monitor')
+class Migration042(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(Monitor.get_db())
+        migrator.add_column_if_not_exists(Monitor, Monitor.ram_usage_total)
+        migrator.add_column_if_not_exists(Monitor, Monitor.ram_usage_used)
+        migrator.add_column_if_not_exists(Monitor, Monitor.ram_usage_percent)
+        migrator.add_column_if_not_exists(Monitor, Monitor.ram_usage_free)
+        migrator.migrate()

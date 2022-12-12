@@ -79,7 +79,7 @@ class LogLine():
             self.date_time is not None and \
             self.content is not None
 
-    def to_dict(self) -> dict:
+    def to_json(self) -> dict:
         return {"level": self.level, "date_time": self.date_time,
                 "content": self.content, "is_from_experiment": self.is_from_experiment}
 
@@ -130,7 +130,7 @@ class LogCompleteInfo():
         return {"log_info": self.log_info, "content": self.content}
 
 
-class LogsBetweenDatesResponse():
+class LogsBetweenDatesDTO():
 
     logs: List[LogLine]
     from_date: datetime
@@ -144,8 +144,8 @@ class LogsBetweenDatesResponse():
         self.to_date = to_date
         self.from_experiment = from_experiment
 
-    def to_dict(self) -> dict:
-        return {"logs": [log.to_dict() for log in self.logs],
+    def to_json(self) -> dict:
+        return {"logs": [log.to_json() for log in self.logs],
                 "from_date": self.from_date,
                 "to_date": self.to_date,
                 "from_experiment": self.from_experiment}

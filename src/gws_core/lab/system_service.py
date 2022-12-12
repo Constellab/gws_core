@@ -12,6 +12,7 @@ from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.user.user_dto import SpaceCentral
 
 from ..brick.brick_service import BrickService
@@ -25,7 +26,6 @@ from ..model.model_service import ModelService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from ..user.user_service import UserService
-from .monitor import Monitor
 from .system_status import SystemStatus
 
 
@@ -53,12 +53,12 @@ class SystemService:
 
     @classmethod
     def init_queue_and_monitor(cls) -> None:
-        Monitor.init(daemon=True)
+        MonitorService.init()
         QueueService.init(daemon=True)
 
     @classmethod
     def deinit_queue_and_monitor(cls) -> None:
-        Monitor.deinit()
+        MonitorService.deinit()
         QueueService.deinit()
 
     @classmethod

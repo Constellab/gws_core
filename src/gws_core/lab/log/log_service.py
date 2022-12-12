@@ -15,7 +15,7 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
-from .log import (LogCompleteInfo, LogInfo, LogLine, LogsBetweenDatesResponse,
+from .log import (LogCompleteInfo, LogInfo, LogLine, LogsBetweenDatesDTO,
                   LogsStatus)
 
 
@@ -71,7 +71,7 @@ class LogService:
 
     @classmethod
     def get_logs_between_dates(cls, from_date: datetime, to_date: datetime,
-                               from_experiment: bool = None) -> LogsBetweenDatesResponse:
+                               from_experiment: bool = None) -> LogsBetweenDatesDTO:
 
         log_lines: List[LogLine] = []
 
@@ -95,8 +95,8 @@ class LogService:
 
             log_lines.extend(cls.get_logs_between_dates_same_day(one_day_from, one_day_to, from_experiment))
 
-        return LogsBetweenDatesResponse(logs=log_lines, from_date=from_date, to_date=to_date,
-                                        from_experiment=from_experiment)
+        return LogsBetweenDatesDTO(logs=log_lines, from_date=from_date, to_date=to_date,
+                                   from_experiment=from_experiment)
 
     @classmethod
     def get_logs_between_dates_same_day(cls, from_date: datetime, to_date: datetime,

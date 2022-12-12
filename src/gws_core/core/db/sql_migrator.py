@@ -4,9 +4,10 @@
 # About us: https://gencovery.com
 from typing import Any, List
 
-from gws_core.core.model.base_model import BaseModel
 from peewee import DatabaseProxy, Field
 from playhouse.migrate import MySQLMigrator
+
+from gws_core.core.model.base_model import BaseModel
 
 
 class SqlMigrator:
@@ -28,7 +29,6 @@ class SqlMigrator:
         if model.column_exists(field.column_name):
             return False
         self._operations.append(self.migrator.add_column(model.get_table_name(), field.column_name, field))
-        self.migrator.add_not_null
         return True
 
     def drop_column_if_exists(self, model: BaseModel, column_name) -> bool:
