@@ -116,23 +116,29 @@ class ExperimentService(BaseService):
     ################################### UPDATE ##############################
 
     @classmethod
-    def update_experiment(cls, id: str, experiment_DTO: ExperimentDTO) -> Experiment:
+    def update_experiment(cls, id: str, experiment_dto: ExperimentDTO) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
 
         experiment.check_is_updatable()
 
-        experiment.title = experiment_DTO.title
+        experiment.title = experiment_dto.title
 
         # update the project
-        if experiment_DTO.project_id:
-            project = Project.get_by_id_and_check(experiment_DTO.project_id)
+        if experiment_dto.project_id:
+            project = Project.get_by_id_and_check(experiment_dto.project_id)
 
             if experiment.last_sync_at is not None and project != experiment.project:
                 raise BadRequestException("You can't change the project of an experiment that has been synced")
             experiment.project = project
 
-        experiment.save()
-        return experiment
+        # if the project was removed
+        if experiment_dto.project_id is None and experiment.project is not None:
+            experiment.project = None
+            if experiment.last_sync_at is not None:
+                # delete the experiment in central
+                CentralService.delete_experiment(project_id=experiment.project.id, experiment_id=experiment.id)
+
+        return experiment.save()
 
     @classmethod
     def update_experiment_protocol(cls, id: str, protocol_graph: Dict) -> Experiment:

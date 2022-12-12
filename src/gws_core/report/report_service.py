@@ -95,6 +95,14 @@ class ReportService():
                 raise BadRequestException("You can't change the project of an experiment that has been synced")
             report.project = project
 
+        # if the project was removed
+        if report_dto.project_id is None and report.project is not None:
+            report.project = None
+
+            if report.last_sync_at is not None:
+                # delete the report in central
+                CentralService.delete_report(project_id=report.project.id, report_id=report.id)
+
         # check that all associated experiment are in same project
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
 
