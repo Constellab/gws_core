@@ -188,6 +188,15 @@ def create_project(project: CentralProject, _: UserData = Depends(AuthCentral.ch
     return ProjectService.synchronize_central_project(project)
 
 
+@central_app.delete("/project/{id}", tags=["Project"])
+def delete_project(id: str, _: UserData = Depends(AuthCentral.check_central_api_key_and_user)):
+    """
+    Remove a project from the lab
+
+    """
+
+    return ProjectService.delete_project(id)
+
 ##################################################### OTHER #####################################################
 
 
