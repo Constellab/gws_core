@@ -10,12 +10,13 @@ from datetime import datetime
 from typing import Any, Dict, List, Type
 
 from fastapi.encoders import jsonable_encoder
-from gws_core.core.model.base_model import BaseModel
-from gws_core.core.utils.date_helper import DateHelper
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     CharField, DoesNotExist, Field, ForeignKeyField,
                     ManyToManyField)
 from peewee import Model as PeeweeModel
+
+from gws_core.core.model.base_model import BaseModel
+from gws_core.core.utils.date_helper import DateHelper
 
 from ..decorator.json_ignore import json_ignore
 from ..decorator.transaction import transaction

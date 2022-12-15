@@ -418,7 +418,7 @@ class Migration041(BrickMigration):
             process_model.save()
 
 
-@brick_migration('0.4.2', short_description='Add ram and GPU to monitor')
+@brick_migration('0.4.2', short_description='Add ram to monitor')
 class Migration042(BrickMigration):
 
     @classmethod
@@ -430,3 +430,25 @@ class Migration042(BrickMigration):
         migrator.add_column_if_not_exists(Monitor, Monitor.ram_usage_percent)
         migrator.add_column_if_not_exists(Monitor, Monitor.ram_usage_free)
         migrator.migrate()
+
+
+@brick_migration('0.4.3', short_description='Add shared info and brick_version to ResourceModel')
+class Migration043(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(ResourceModel.get_db())
+        migrator.add_column_if_not_exists(ResourceModel, ResourceModel.imported_from)
+        migrator.add_column_if_not_exists(ResourceModel, ResourceModel.brick_version)
+        migrator.migrate()
+
+        # set  brick_version
+        resource_models: List[ResourceModel] = list(ResourceModel.select().where(ResourceModel.brick_version == ''))
+        for resource_model in resource_models:
+            try:
+                resource_model.set_resource_typing_name(resource_model.resource_typing_name)
+                resource_model.save()
+            except Exception as exception:
+                Logger.error(
+                    f'Error while setting brick_version for {resource_model.resource_typing_name}, resource id {resource_model.id} : {exception}')

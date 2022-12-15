@@ -6,6 +6,8 @@
 from typing import Any, Dict, List, Type
 
 from fastapi.responses import FileResponse
+from peewee import ModelSelect
+
 from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment import Experiment
@@ -18,7 +20,6 @@ from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_model import TaskModel
-from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
@@ -118,7 +119,7 @@ class ResourceService(BaseService):
         if not Utils.issubclass(file_type, Resource):
             raise BadRequestException('The type must be a Resource')
 
-        resource_model.resource_typing_name = file_type._typing_name
+        resource_model.set_resource_typing_name(file_type._typing_name)
         return resource_model.save()
 
     @classmethod

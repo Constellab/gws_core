@@ -212,3 +212,8 @@ class FileHelper():
     def copy_file(cls, source_path: PathType, destination_path: PathType) -> None:
         """Copy a file from source to destination"""
         shutil.copyfile(source_path, destination_path)
+
+    @classmethod
+    def move_file_or_dir(cls, source_path: PathType, destination_path: PathType) -> None:
+        """Move a file or a directory from source to destination"""
+        shutil.move(source_path, destination_path)

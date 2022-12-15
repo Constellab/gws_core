@@ -105,3 +105,12 @@ class ResourceSet(ResourceListBase):
     def resource_exists(self, resource_name: str) -> Resource:
         resources = self.get_resources()
         return resource_name in resources
+
+    def replace_resource_model_ids(self, id_replacements: Dict[str, str]) -> bool:
+        for key, value in self._resource_ids.items():
+            if not value in id_replacements:
+                raise Exception(f"Replacement for resource_id '{value}' not found")
+
+            self._resource_ids[key] = id_replacements[value]
+
+        return True
