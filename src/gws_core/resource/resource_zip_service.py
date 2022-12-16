@@ -8,6 +8,7 @@ from typing import List
 
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.share.shared_resource import SharedResource, SharedResourceMode
+from gws_core.user.user import User
 
 from .resource_zipper import ResourceUnzipper, ResourceZipper
 
@@ -15,8 +16,8 @@ from .resource_zipper import ResourceUnzipper, ResourceZipper
 class ResourceZipService():
 
     @classmethod
-    def download_complete_resource(cls, id: str) -> str:
-        resource_zipper = ResourceZipper()
+    def download_complete_resource(cls, id: str, shared_by: User) -> str:
+        resource_zipper = ResourceZipper(shared_by)
 
         resource_zipper.add_resource(id)
 

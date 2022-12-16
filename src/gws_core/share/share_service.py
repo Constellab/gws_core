@@ -85,7 +85,8 @@ class ShareService():
 
         shared_entity_link: SharedEntityLink = SharedEntityLink.find_by_token_and_check(token)
 
-        zip_path: str = ResourceZipService.download_complete_resource(shared_entity_link.entity_id)
+        zip_path: str = ResourceZipService.download_complete_resource(
+            shared_entity_link.entity_id, shared_entity_link.created_by)
 
         return FileResponse(zip_path, media_type=FileHelper.get_mime(zip_path),
                             filename=FileHelper.get_name_with_extension(zip_path))

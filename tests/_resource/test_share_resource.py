@@ -15,6 +15,7 @@ from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_zip_service import ResourceZipService
 from gws_core.share.shared_resource import SharedResource
+from gws_core.user.current_user_service import CurrentUserService
 
 
 def get_table() -> Table:
@@ -65,7 +66,8 @@ class TestShareResource(BaseTestCase):
         # save the resource model
         original_resource_model = ResourceModel.save_from_resource(table, origin=ResourceOrigin.UPLOADED)
 
-        dir = ResourceZipService.download_complete_resource(original_resource_model.id)
+        dir = ResourceZipService.download_complete_resource(
+            original_resource_model.id, CurrentUserService.get_and_check_current_user())
 
         new_resource_model: ResourceModel = ResourceZipService.import_resource_from_zip(dir)[0].refresh()
 
@@ -87,7 +89,8 @@ class TestShareResource(BaseTestCase):
 
         original_resource_model = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
 
-        dir = ResourceZipService.download_complete_resource(original_resource_model.id)
+        dir = ResourceZipService.download_complete_resource(
+            original_resource_model.id, CurrentUserService.get_and_check_current_user())
 
         new_resource_model = ResourceZipService.import_resource_from_zip(dir)[0]
 
@@ -113,7 +116,8 @@ class TestShareResource(BaseTestCase):
         original_resource_model = ResourceService.get_resource_by_id(resource_model_id)
         original_resource_set: ResourceSet = original_resource_model.get_resource()
 
-        dir = ResourceZipService.download_complete_resource(resource_model_id)
+        dir = ResourceZipService.download_complete_resource(
+            resource_model_id, CurrentUserService.get_and_check_current_user())
 
         resource_models: List[ResourceModel] = ResourceZipService.import_resource_from_zip(dir)
 

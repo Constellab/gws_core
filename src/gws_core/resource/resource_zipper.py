@@ -22,6 +22,7 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set import ResourceSet
 from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.user import User
 
 from .resource_model import ResourceModel, ResourceOrigin
 from .resource_service import ResourceService
@@ -71,7 +72,10 @@ class ResourceZipper():
 
     resource_info: ZipResourceInfo
 
-    def __init__(self,):
+    shared_by: User
+
+    def __init__(self, shared_by: User):
+        self.shared_by = shared_by
         self.temp_dir = Settings.get_instance().make_temp_dir()
         self.zip = Zipv2(self.get_zip_file_path())
         self.resource_info = {
@@ -87,9 +91,9 @@ class ResourceZipper():
         return {
             'lab_id': None,  # TODO settings.get_lab_id(),
             'lab_name': settings.get_lab_name(),
-            'user_id': user.id,
-            'user_firstname': user.first_name,
-            'user_lastname': user.last_name,
+            'user_id': self.shared_by.id,
+            'user_firstname': self.shared_by.first_name,
+            'user_lastname': self.shared_by.last_name,
             'space_id': space['id'] if space is not None else None,
             'space_name': space['name'] if space is not None else None
         }
