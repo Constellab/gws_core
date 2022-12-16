@@ -3,9 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import os
 from copy import deepcopy
 from typing import Dict, Union, final
 
+from gws_core.impl.file.file_r_field import FileRField
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
 
@@ -164,7 +166,10 @@ class Resource(Base):
 
         if isinstance(attr, BaseRField):
             if name in self._kv_store:
-                value = attr.deserialize(self._kv_store.get(name))
+                if isinstance(attr, FileRField):
+                    value = attr.deserialize(os.path.join(self._kv_store.full_file_dir, self._kv_store.get(name)))
+                else:
+                    value = attr.deserialize(self._kv_store.get(name))
                 setattr(self, name, value)
                 return value
             else:

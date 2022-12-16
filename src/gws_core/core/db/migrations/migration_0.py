@@ -13,6 +13,8 @@ from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_enums import ExperimentType
+from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.table.table import Table
 from gws_core.lab.lab_config_model import LabConfigModel
@@ -24,6 +26,8 @@ from gws_core.progress_bar.progress_bar import ProgressBar, ProgressBarMessage
 from gws_core.project.project import Project
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.report.report import Report
+from gws_core.resource.r_field.r_field import BaseRField
+from gws_core.resource.resource import Resource
 from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_set import ResourceSet
@@ -432,7 +436,7 @@ class Migration042(BrickMigration):
         migrator.migrate()
 
 
-@brick_migration('0.4.3', short_description='Add shared info and brick_version to ResourceModel')
+@brick_migration('0.4.3', short_description='Add shared info and brick_version to ResourceModel. Update FileRField')
 class Migration043(BrickMigration):
 
     @classmethod
@@ -443,11 +447,24 @@ class Migration043(BrickMigration):
         migrator.add_column_if_not_exists(ResourceModel, ResourceModel.brick_version)
         migrator.migrate()
 
-        # set  brick_version
-        resource_models: List[ResourceModel] = list(ResourceModel.select().where(ResourceModel.brick_version == ''))
+        # set brick_version
+        resource_models: List[ResourceModel] = list(ResourceModel.select())
         for resource_model in resource_models:
             try:
-                resource_model.set_resource_typing_name(resource_model.resource_typing_name)
+                if resource_model.brick_version == '':
+                    resource_model.set_resource_typing_name(resource_model.resource_typing_name)
+
+                # update all the FileRField to store only the name of the file instead of the full path
+                resource: Resource = resource_model.get_resource()
+                properties: Dict[str, BaseRField] = resource.__get_resource_r_fields__()
+
+                for key, r_field in properties.items():
+                    if isinstance(r_field, FileRField):
+                        value = resource._kv_store.get(key)
+                        # if this is a path, we store only the name of the file
+                        if FileHelper.exists_on_os(value):
+                            resource._kv_store[key] = FileHelper.get_name(value)
+
                 resource_model.save()
             except Exception as exception:
                 Logger.error(

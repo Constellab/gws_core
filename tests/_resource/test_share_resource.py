@@ -9,8 +9,8 @@ from typing import List
 from pandas import DataFrame
 
 from gws_core import (BaseTestCase, ConfigParams, File, IExperiment,
-                      ResourceModel, ResourceSet, Settings, Table, Task,
-                      TaskInputs, TaskOutputs, task_decorator)
+                      OutputSpec, ResourceModel, ResourceSet, Settings, Table,
+                      Task, TaskInputs, TaskOutputs, task_decorator)
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_zip_service import ResourceZipService
@@ -34,7 +34,7 @@ class GenerateResourceSet(Task):
 
     input_specs = {}
     output_specs = {
-        'resource_set': ResourceSet
+        'resource_set': OutputSpec(ResourceSet)
     }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -69,14 +69,16 @@ class TestShareResource(BaseTestCase):
         new_resource_model = ResourceZipService.import_resource_from_zip(dir)[0]
 
         self.assertNotEqual(original_resource_model.id, new_resource_model.id)
+        self.assertNotEqual(original_resource_model.kv_store_path, new_resource_model.kv_store_path)
         db_resource_model = ResourceService.get_resource_by_id(original_resource_model.id)
         self.assertEqual(db_resource_model.name, 'MyTestName')
 
-        resource: Table = db_resource_model.get_resource()
-        self.assertIsInstance(resource, Table)
-        self.assertTrue(table.equals(resource))
+        new_table: Table = db_resource_model.get_resource()
+        self.assertIsInstance(new_table, Table)
+        self.assertTrue(table.equals(new_table))
 
-        print(dir)
+        # old_table = original_resource_model.get_resource()
+        # self.assertNotEqual(str(new_table._kv_store.get('_data')), str(old_table._kv_store.get('_data')))
 
     def test_share_file_resource(self):
         # save the resource model

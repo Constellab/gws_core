@@ -14,6 +14,7 @@ from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
                     ForeignKeyField, ModelDelete, ModelSelect)
 
 from gws_core.core.utils.utils import Utils
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dict import TypingStatus
 from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
@@ -420,8 +421,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
                 # dump the resource value into the file
                 r_field.dump_to_file(r_field_value, str(file_path))
-                # store the file path in the kv_store
-                kv_store[key] = file_path
+                # store the file name (not absolute path) in the kv_store
+                kv_store[key] = FileHelper.get_name(file_path)
                 continue
 
             value: Any = r_field.serialize(r_field_value)

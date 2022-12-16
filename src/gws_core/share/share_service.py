@@ -4,7 +4,10 @@
 # About us: https://gencovery.com
 
 
+import os
+
 from fastapi.responses import FileResponse
+from requests.models import Response
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -12,8 +15,10 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.model.model import Model
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_zip_service import ResourceZipService
 
 from .shared_dto import GenerateShareLinkDTO
@@ -85,9 +90,21 @@ class ShareService():
                             filename=FileHelper.get_name_with_extension(zip_path))
 
     @classmethod
-    def copy_external_resource(cls, link: str) -> str:
+    def copy_external_resource(cls, link: str) -> ResourceModel:
         """Method that copy an external resource
         """
 
-        result = ExternalApiService.get(link)
-        # TODO what should we do with the result?
+        response: Response = ExternalApiService.get(link)
+
+        # create a temp dir
+        # temp_dir = Settings.get_instance().make_temp_dir()
+        temp_dir = '/lab/user/bricks/gws_core/test_to_zip'
+        zip_file = os.path.join(temp_dir, 'resource.zip')
+
+        # write the response to a file
+        with open(zip_file, "wb") as f:
+            f.write(response.content)
+
+        resource_models = ResourceZipService.import_resource_from_zip(zip_file)
+
+        return resource_models[0]

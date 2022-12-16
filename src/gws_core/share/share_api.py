@@ -7,9 +7,11 @@ from typing import Optional
 
 from fastapi import Depends
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core_app import core_app
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.auth_service import AuthService
 from gws_core.user.user_dto import UserData
 
@@ -47,3 +49,13 @@ def get_share_links(page: Optional[int] = 1,
 @core_app.get("/share/resource/download/{token}", tags=["Share"], summary="Download a resource")
 def download_resource(token: str) -> FileResponse:
     return ShareService.download_resource(token)
+
+
+class ImportDto(BaseModel):
+    url: str
+
+
+@core_app.post("/share/resource/import", tags=["Share"], summary="Download a resource")
+def import_resource(import_dto: ImportDto,
+                    _: UserData = Depends(AuthService.check_user_access_token)) -> ResourceModel:
+    return ShareService.copy_external_resource(import_dto.url).to_json()
