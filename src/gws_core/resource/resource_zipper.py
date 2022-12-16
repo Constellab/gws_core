@@ -15,13 +15,12 @@ from gws_core.core.utils.zip import Zipv2
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
-from gws_core.model.typing import Typing, TypingNameObj
+from gws_core.model.typing import TypingNameObj
 from gws_core.model.typing_manager import TypingManager
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set import ResourceSet
-from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
 from .resource_model import ResourceModel, ResourceOrigin
@@ -86,7 +85,6 @@ class ResourceZipper():
 
     def generate_origin(self) -> ZipOriginInfo:
         settings = Settings.get_instance()
-        user = CurrentUserService.get_and_check_current_user()
         space = settings.get_space()
         return {
             'lab_id': None,  # TODO settings.get_lab_id(),
