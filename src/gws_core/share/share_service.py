@@ -5,6 +5,7 @@
 
 
 import os
+from typing import List
 
 from fastapi.responses import FileResponse
 from requests.models import Response
@@ -97,14 +98,13 @@ class ShareService():
         response: Response = ExternalApiService.get(link)
 
         # create a temp dir
-        # temp_dir = Settings.get_instance().make_temp_dir()
-        temp_dir = '/lab/user/bricks/gws_core/test_to_zip'
+        temp_dir = Settings.get_instance().make_temp_dir()
         zip_file = os.path.join(temp_dir, 'resource.zip')
 
         # write the response to a file
         with open(zip_file, "wb") as f:
             f.write(response.content)
 
-        resource_models = ResourceZipService.import_resource_from_zip(zip_file)
+        resource_models: List[ResourceModel] = ResourceZipService.import_resource_from_zip(zip_file)
 
         return resource_models[0]

@@ -99,3 +99,7 @@ class BrickHelper():
                 'version': brick['version'],
             })
         return brick_versions
+
+    @classmethod
+    def brick_is_loaded(cls, brick_name: str) -> bool:
+        return brick_name in cls.get_all_bricks()

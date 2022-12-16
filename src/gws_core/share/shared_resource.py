@@ -9,31 +9,46 @@ from peewee import CharField, ForeignKeyField
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.model import Model
+from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.resource.resource_model import ResourceModel
 
 
 # Define if the resource is shared as a sender or a receiver
-class SharedResourceType(Enum):
+class SharedResourceMode(Enum):
     SENT = "SENT"
     RECEIVED = "RECEIVED"
 
 
-class SharedResource(Model):
+class SharedResource(ModelWithUser):
 
     _table_name = 'gws_shared_resource'
 
-    entity_type: SharedResourceType = EnumField(choices=SharedResourceType)
+    share_mode: SharedResourceMode = EnumField(choices=SharedResourceMode)
 
-    resource_id: str = ForeignKeyField(ResourceModel, backref="+")
+    resource: ResourceModel = ForeignKeyField(ResourceModel, backref="+")
 
-    lab_id: str = CharField()
+    lab_id: str = CharField(null=True)
 
     lab_name: str = CharField()
 
     user_id: str = CharField()
 
-    user_name: str = CharField()
+    user_firstname: str = CharField()
 
-    space_id: str = CharField()
+    user_lastname: str = CharField()
 
-    space_name: str = CharField()
+    space_id: str = CharField(null=True)
+
+    space_name: str = CharField(null=True)
+
+    @classmethod
+    def get_and_check_resource_origin(cls, resource_id: str) -> 'SharedResource':
+        """Method that check if the resource is shared and return the origin information
+        """
+        shared_resource = cls.get_or_none(
+            cls.resource == resource_id and cls.share_mode == SharedResourceMode.RECEIVED)
+
+        if shared_resource is None:
+            raise ValueError(f"The resource with id '{resource_id}' was not imported from another lab")
+
+        return shared_resource

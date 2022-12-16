@@ -18,6 +18,7 @@ from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import CallViewResult
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
+from gws_core.share.shared_resource import SharedResource
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_model import TaskModel
 
@@ -62,7 +63,7 @@ class ResourceService(BaseService):
     def delete(cls, resource_id: str) -> None:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
 
-        if resource_model.origin == ResourceOrigin.UPLOADED:
+        if resource_model.is_manually_generated():
             cls.check_before_resource_update(resource_model)
 
             resource_model.delete_instance()
@@ -81,7 +82,7 @@ class ResourceService(BaseService):
     def check_before_resource_update(cls, resource_model: ResourceModel) -> None:
         """Method to check if a resource is updatable
         """
-        if resource_model.origin != ResourceOrigin.UPLOADED:
+        if not resource_model.is_manually_generated():
             raise BadRequestException(GWSException.DELETE_GENERATED_RESOURCE_ERROR.value,
                                       GWSException.DELETE_GENERATED_RESOURCE_ERROR.value)
 
@@ -295,3 +296,9 @@ class ResourceService(BaseService):
         fs_node: FSNode = ConverterService.call_exporter_directly(id, exporter_typing_name, params)
 
         return FileResponse(fs_node.path, media_type='application/octet-stream', filename=fs_node.get_default_name())
+
+    ############################# SHARED RESOURCE ###########################
+
+    @classmethod
+    def get_shared_resource_origin_info(cls, resource_model_id: str) -> SharedResource:
+        return SharedResource.get_and_check_resource_origin(resource_model_id)

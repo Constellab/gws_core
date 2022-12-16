@@ -8,26 +8,42 @@ from json import dump, load
 from typing import Dict, List, Optional, Type, TypedDict
 from zipfile import ZipFile
 
+from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.zip import Zipv2
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
+from gws_core.model.typing import Typing, TypingNameObj
 from gws_core.model.typing_manager import TypingManager
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set import ResourceSet
+from gws_core.user.current_user_service import CurrentUserService
 
 from .resource_model import ResourceModel, ResourceOrigin
 from .resource_service import ResourceService
+
+
+class ZipOriginInfo(TypedDict):
+    lab_id: str
+    lab_name: str
+
+    user_id: str
+    user_firstname: str
+    user_lastname: str
+
+    space_id: str
+    space_name: str
 
 
 class ZipResource(TypedDict):
     id: str
     name: str
     resource_typing_name: str
+    brick_version: str
     data: dict
     parent_resource_id: str
     kvstore_dir_name: Optional[str]
@@ -39,6 +55,7 @@ class ZipResource(TypedDict):
 class ZipResourceInfo(TypedDict):
     zip_version: int
     resources: List[ZipResource]
+    origin: ZipOriginInfo
 
 
 class ResourceZipper():
@@ -59,7 +76,22 @@ class ResourceZipper():
         self.zip = Zipv2(self.get_zip_file_path())
         self.resource_info = {
             'zip_version': 1,
-            'resources': []
+            'resources': [],
+            'origin': self.generate_origin()
+        }
+
+    def generate_origin(self) -> ZipOriginInfo:
+        settings = Settings.get_instance()
+        user = CurrentUserService.get_and_check_current_user()
+        space = settings.get_space()
+        return {
+            'lab_id': None,  # TODO settings.get_lab_id(),
+            'lab_name': settings.get_lab_name(),
+            'user_id': user.id,
+            'user_firstname': user.first_name,
+            'user_lastname': user.last_name,
+            'space_id': space['id'] if space is not None else None,
+            'space_name': space['name'] if space is not None else None
         }
 
     def add_resource(self, resource_id: str, parent_resource_id: str = None) -> None:
@@ -70,6 +102,7 @@ class ResourceZipper():
             'id': resource_model.id,
             'name': resource_model.name,
             'resource_typing_name': resource_model.resource_typing_name,
+            'brick_version': resource_model.brick_version,
             'data': resource_model.data,
             'parent_resource_id': parent_resource_id,
             'kvstore_dir_name': None,
@@ -127,6 +160,8 @@ class ResourceZipper():
 
 class ResourceUnzipper():
 
+    info_json: ZipResourceInfo
+
     zip_file_path: str
     temp_dir: str
 
@@ -135,6 +170,7 @@ class ResourceUnzipper():
     resource_new_id_dict: Dict[str, str]
 
     def __init__(self, zip_file_path: str) -> None:
+        self.info_json = None
         self.zip_file_path = zip_file_path
         self.temp_dir = Settings.get_instance().make_temp_dir()
         self.resource_models = []
@@ -147,9 +183,11 @@ class ResourceUnzipper():
 
     def load_resources(self) -> List[ResourceModel]:
 
-        info_json: ZipResourceInfo = self.get_resource_info()
+        self._load_info_json()
 
-        for zip_resource in info_json['resources']:
+        self._check_compatibility()
+
+        for zip_resource in self.info_json['resources']:
             resource_model = self._load_resource(zip_resource)
 
             # store the new id of the resource link to the old id
@@ -161,12 +199,26 @@ class ResourceUnzipper():
 
         return self.resource_models
 
+    def _check_compatibility(self) -> None:
+        if self.info_json['zip_version'] != 1:
+            raise Exception(f'Zip version {self.info_json["zip_version"]} is not supported.')
+
+        for zip_resource in self.info_json['resources']:
+            typing = TypingNameObj.from_typing_name(zip_resource['resource_typing_name'])
+
+            if not BrickHelper.brick_is_loaded(typing.brick_name):
+                raise Exception(f'Brick {typing.brick_name} is not loaded.')
+
+            # check that the type exist
+            TypingManager.get_typing_from_name_and_check(zip_resource['resource_typing_name'])
+
     def _load_resource(self, zip_resource: ZipResource) -> ResourceModel:
         resource_model: ResourceModel = ResourceModel()
         resource_model.set_resource_typing_name(zip_resource['resource_typing_name'])
         resource_model.origin = ResourceOrigin.IMPORTED_FROM_LAB
         resource_model.name = zip_resource['name']
         resource_model.data = zip_resource['data']
+        resource_model.flagged = True  # flag the resource
 
         # handle the parent
         if zip_resource['parent_resource_id'] is not None:
@@ -210,7 +262,7 @@ class ResourceUnzipper():
 
         return self.resource_models
 
-    def get_resource_info(self) -> ZipResourceInfo:
+    def _load_info_json(self) -> ZipResourceInfo:
         info_json_path = os.path.join(self.temp_dir, ResourceZipper.INFO_JSON_FILE_NAME)
 
         if not FileHelper.exists_on_os(info_json_path):
@@ -231,7 +283,7 @@ class ResourceUnzipper():
             raise Exception(
                 f"The resources value in {info_json_path} file is invalid, must be a list")
 
-        return info_json
+        self.info_json = info_json
 
     def _replace_resource_ids_in_resources(self):
         for resource_model in self.resource_models:
@@ -241,3 +293,6 @@ class ResourceUnzipper():
 
             if result:
                 resource_model.receive_fields_from_resource(resource)
+
+    def get_origin_info(self) -> ZipOriginInfo:
+        return self.info_json['origin']

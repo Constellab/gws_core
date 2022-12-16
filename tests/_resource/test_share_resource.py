@@ -14,6 +14,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, IExperiment,
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_zip_service import ResourceZipService
+from gws_core.share.shared_resource import SharedResource
 
 
 def get_table() -> Table:
@@ -66,19 +67,19 @@ class TestShareResource(BaseTestCase):
 
         dir = ResourceZipService.download_complete_resource(original_resource_model.id)
 
-        new_resource_model = ResourceZipService.import_resource_from_zip(dir)[0]
+        new_resource_model: ResourceModel = ResourceZipService.import_resource_from_zip(dir)[0].refresh()
 
         self.assertNotEqual(original_resource_model.id, new_resource_model.id)
         self.assertNotEqual(original_resource_model.kv_store_path, new_resource_model.kv_store_path)
-        db_resource_model = ResourceService.get_resource_by_id(original_resource_model.id)
-        self.assertEqual(db_resource_model.name, 'MyTestName')
+        self.assertEqual(new_resource_model.name, 'MyTestName')
 
-        new_table: Table = db_resource_model.get_resource()
+        new_table: Table = new_resource_model.get_resource()
         self.assertIsInstance(new_table, Table)
         self.assertTrue(table.equals(new_table))
 
-        # old_table = original_resource_model.get_resource()
-        # self.assertNotEqual(str(new_table._kv_store.get('_data')), str(old_table._kv_store.get('_data')))
+        # test that the origin of the resource exist
+        shared_resource: SharedResource = ResourceService.get_shared_resource_origin_info(new_resource_model.id)
+        self.assertEqual(shared_resource.resource.id, new_resource_model.id)
 
     def test_share_file_resource(self):
         # save the resource model

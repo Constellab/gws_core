@@ -8,9 +8,11 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, Request
 from fastapi.responses import FileResponse
+
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.view_types import CallViewParams
+from gws_core.share.shared_resource import SharedResource
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_service import TagService
 from gws_core.task.action.action_service import ActionService
@@ -217,3 +219,13 @@ def add_action_to_resource(id: str, action_typing_name: str,
     Add an action to a resource.
     """
     return ActionService.execute_action(id, action_typing_name, action_params).to_json()
+
+
+############################# SHARED RESOURCE ###########################
+
+
+@core_app.get("/resource/{id}/shared-origin", tags=["Resource"],
+              summary="Get origin of this imported resource")
+def get_shared_resource_origin_info(id: str,
+                                    _: UserData = Depends(AuthService.check_user_access_token)) -> SharedResource:
+    return ResourceService.get_shared_resource_origin_info(id).to_json()

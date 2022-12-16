@@ -443,7 +443,6 @@ class Migration043(BrickMigration):
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
         migrator: SqlMigrator = SqlMigrator(ResourceModel.get_db())
-        migrator.add_column_if_not_exists(ResourceModel, ResourceModel.imported_from)
         migrator.add_column_if_not_exists(ResourceModel, ResourceModel.brick_version)
         migrator.migrate()
 

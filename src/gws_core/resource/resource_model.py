@@ -98,8 +98,6 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
     brick_version = CharField(null=False, max_length=50, default="")
 
-    imported_from: SharedResource = DeferredForeignKey('SharedResource', null=True, index=True)
-
     _table_name = 'gws_resource'
     _resource: ResourceType = None
 
@@ -296,7 +294,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         resource_model.task_model = task_model
         resource_model.generated_by_port_name = port_name
         # by default only the uploaded resource are showed in databox
-        resource_model.flagged = origin == ResourceOrigin.UPLOADED
+        resource_model.flagged = resource_model.is_manually_generated()
 
         # Get the name of the resource, and set it in the resource model
         name: str = None
@@ -443,9 +441,6 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
     def get_resource_type(self) -> Type[ResourceType]:
         return TypingManager.get_type_from_name(self.resource_typing_name)
 
-    def was_generated_by_an_experiment(self) -> bool:
-        return self.origin != ResourceOrigin.UPLOADED
-
     ########################################## KV STORE ######################################
 
     @final
@@ -550,3 +545,6 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         # the resource is downloadable if it's a file or if the export_to_path is defined
         resource_type: ResourceType = self.get_resource_type()
         return self.fs_node_model is not None or (resource_type is not None and resource_type._is_exportable)
+
+    def is_manually_generated(self) -> bool:
+        return self.origin == ResourceOrigin.UPLOADED or self.origin == ResourceOrigin.IMPORTED_FROM_LAB
