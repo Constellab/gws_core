@@ -56,7 +56,7 @@ def get_share_entity(entity_type: str, entity_id: str,
 # Open route to download a resource
 @core_app.get("/share/resource/download/{token}", tags=["Share"], summary="Download a resource")
 def download_resource(token: str) -> FileResponse:
-    zip_path = ShareService.download_resource(token)
+    zip_path = ShareService.download_resource_from_token(token)
     return FileHelper.create_file_response(zip_path)
 
 
