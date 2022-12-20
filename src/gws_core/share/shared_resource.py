@@ -8,7 +8,6 @@ from enum import Enum
 from peewee import CharField, ForeignKeyField
 
 from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.resource.resource_model import ResourceModel
 
@@ -27,7 +26,7 @@ class SharedResource(ModelWithUser):
 
     resource: ResourceModel = ForeignKeyField(ResourceModel, backref="+")
 
-    lab_id: str = CharField(null=True)
+    lab_id: str = CharField()
 
     lab_name: str = CharField()
 

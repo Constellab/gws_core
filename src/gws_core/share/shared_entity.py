@@ -50,13 +50,13 @@ class SharedEntityLink(ModelWithUser):
         return shared_entity_link
 
     @classmethod
-    def find_by_entity_id_and_type_and_check(
-            cls, entity_id: str, entity_type: SharedEntityLinkType) -> 'SharedEntityLink':
+    def find_by_entity_type_and_id_and_check(
+            cls, entity_type: SharedEntityLinkType, entity_id: str) -> 'SharedEntityLink':
         """Method that find a shared entity link by its entity id and type and check if it is valid
         """
 
-        shared_entity_link: SharedEntityLink = cls.find_by_entity_id_and_type(
-            entity_id=entity_id, entity_type=entity_type)
+        shared_entity_link: SharedEntityLink = cls.find_by_entity_type_and_id(
+            entity_type=entity_type, entity_id=entity_id)
 
         if not shared_entity_link:
             raise BadRequestException("Share link not found")
@@ -64,13 +64,10 @@ class SharedEntityLink(ModelWithUser):
         return shared_entity_link
 
     @classmethod
-    def find_by_entity_id_and_type(cls, entity_id: str, entity_type: SharedEntityLinkType) -> 'SharedEntityLink':
+    def find_by_entity_type_and_id(cls, entity_type: SharedEntityLinkType, entity_id: str) -> 'SharedEntityLink':
         """Method that find a shared entity link by its entity id and type
         """
-        try:
-            return cls.get(entity_id=entity_id, entity_type=entity_type)
-        except:
-            return None
+        return cls.get_or_none(entity_type=entity_type, entity_id=entity_id)
 
     @classmethod
     def get_model(cls, entity_id: str, entity_type: SharedEntityLinkType) -> Model:

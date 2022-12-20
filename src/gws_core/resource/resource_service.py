@@ -12,6 +12,7 @@ from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.view.view import View
@@ -295,7 +296,7 @@ class ResourceService(BaseService):
 
         fs_node: FSNode = ConverterService.call_exporter_directly(id, exporter_typing_name, params)
 
-        return FileResponse(fs_node.path, media_type='application/octet-stream', filename=fs_node.get_default_name())
+        return FileHelper.create_file_response(fs_node.path, fs_node.get_default_name())
 
     ############################# SHARED RESOURCE ###########################
 

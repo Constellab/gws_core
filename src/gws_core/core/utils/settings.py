@@ -107,11 +107,11 @@ class Settings():
 
     @classmethod
     def get_lab_prod_api_url(cls) -> str:
+        return os.environ.get("LAB_PROD_API_URL")
 
-        if "LAB_PROD_API_URL" not in os.environ:
-            return None
-
-        return os.environ["LAB_PROD_API_URL"]
+    @classmethod
+    def get_lab_dev_api_url(cls) -> str:
+        return os.environ.get("LAB_DEV_API_URL")
 
     @classmethod
     def get_lab_environment(cls) -> Literal["PROD", "LOCAL"]:
@@ -121,11 +121,7 @@ class Settings():
         :return: [description]
         :rtype: [type]
         """
-
-        if "LAB_ENVIRONMENT" not in os.environ:
-            return "PROD"
-
-        return os.environ["LAB_ENVIRONMENT"]
+        return os.environ.get("LAB_ENVIRONMENT", 'PROD')
 
     @classmethod
     def is_local_env(cls) -> bool:
@@ -138,29 +134,30 @@ class Settings():
         :return: [description]
         :rtype: [type]
         """
+        return os.environ.get("VIRTUAL_HOST")
 
-        if "VIRTUAL_HOST" not in os.environ:
-            return None
+    @classmethod
+    def get_lab_id(cls) -> str:
+        """Returns the name of the lab
+        """
 
-        return os.environ["VIRTUAL_HOST"]
+        # specific lab id for local env
+        if cls.is_local_env():
+            return '1'
+
+        return os.environ.get("LAB_ID")
 
     @classmethod
     def get_lab_name(cls) -> str:
         """Returns the name of the lab
         """
-
-        if "LAB_NAME" not in os.environ:
-            return 'Lab'
-        return os.environ["LAB_NAME"]
+        return os.environ.get("LAB_NAME", 'Lab')
 
     @classmethod
     def get_front_version(cls) -> str:
         """Returns the front version of the lab
         """
-
-        if "FRONT_VERSION" not in os.environ:
-            return ''
-        return os.environ["FRONT_VERSION"]
+        return os.environ.get("FRONT_VERSION", '')
 
     @classmethod
     def get_central_api_key(cls) -> str:
@@ -174,10 +171,7 @@ class Settings():
         if cls.is_local_env():
             return '123456'
 
-        if "CENTRAL_API_KEY" not in os.environ:
-            return None
-
-        return os.environ["CENTRAL_API_KEY"]
+        return os.environ.get("CENTRAL_API_KEY")
 
     @classmethod
     def get_central_api_url(cls) -> str:
@@ -191,10 +185,7 @@ class Settings():
         if cls.is_local_env():
             return 'http://host.docker.internal:3001'
 
-        if "CENTRAL_API_URL" not in os.environ:
-            return None
-
-        return os.environ["CENTRAL_API_URL"]
+        return os.environ.get("CENTRAL_API_URL")
 
     @classmethod
     def get_front_url(cls) -> str:
@@ -208,10 +199,7 @@ class Settings():
         if cls.is_local_env():
             return 'http://localhost:4200'
 
-        if "FRONT_URL" not in os.environ:
-            return ''
-
-        return os.environ["FRONT_URL"]
+        return os.environ.get("FRONT_URL", '')
 
     @classmethod
     def get_global_env_dir(cls) -> str:
@@ -246,12 +234,6 @@ class Settings():
             "db_name": "test_gws",
             "engine": "mariadb"
         }
-
-    # -- A --
-
-    @property
-    def author(self):
-        return self.data.get("author", "")
 
     def get_maria_db_backup_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "backups")
@@ -343,6 +325,9 @@ class Settings():
 
     def set_space(self, space: Space):
         self.data["space"] = space
+
+    def get_lab_api_url(self) -> str:
+        return self.get_lab_prod_api_url() if self.is_prod else self.get_lab_dev_api_url()
 
     # BRICK MIGRATION
 
@@ -466,8 +451,11 @@ class Settings():
         del data["environment"]["variables"]
         del data["secret_key"]
         return {
+            "lab_id": self.get_lab_id(),
+            "lab_name": self.get_lab_name(),
             "central_api_url": self.get_central_api_url(),
             "lab_prod_api_url": self.get_lab_prod_api_url(),
+            "lab_dev_api_url": self.get_lab_dev_api_url(),
             "lab_environemnt": self.get_lab_environment(),
             "virtual_host": self.get_virtual_host(),
             "cwd": self.get_cwd(),

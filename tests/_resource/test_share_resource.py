@@ -4,7 +4,6 @@
 # About us: https://gencovery.com
 
 import os
-from typing import List
 
 from pandas import DataFrame
 
@@ -13,7 +12,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, IExperiment,
                       Task, TaskInputs, TaskOutputs, task_decorator)
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.resource_zip_service import ResourceZipService
+from gws_core.share.share_service import ShareService
 from gws_core.share.shared_resource import SharedResource
 from gws_core.user.current_user_service import CurrentUserService
 
@@ -66,10 +65,11 @@ class TestShareResource(BaseTestCase):
         # save the resource model
         original_resource_model = ResourceModel.save_from_resource(table, origin=ResourceOrigin.UPLOADED)
 
-        dir = ResourceZipService.download_complete_resource(
+        zip_path = ShareService.download_resource(
             original_resource_model.id, CurrentUserService.get_and_check_current_user())
 
-        new_resource_model: ResourceModel = ResourceZipService.import_resource_from_zip(dir)[0].refresh()
+        resource_unzipper = ShareService.copy_resource_from_zip_2(zip_path)
+        new_resource_model: ResourceModel = resource_unzipper.resource_models[0].refresh()
 
         self.assertNotEqual(original_resource_model.id, new_resource_model.id)
         self.assertNotEqual(original_resource_model.kv_store_path, new_resource_model.kv_store_path)
@@ -89,10 +89,11 @@ class TestShareResource(BaseTestCase):
 
         original_resource_model = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
 
-        dir = ResourceZipService.download_complete_resource(
+        zip_path = ShareService.download_resource(
             original_resource_model.id, CurrentUserService.get_and_check_current_user())
 
-        new_resource_model = ResourceZipService.import_resource_from_zip(dir)[0]
+        resource_unzipper = ShareService.copy_resource_from_zip_2(zip_path)
+        new_resource_model: ResourceModel = resource_unzipper.resource_models[0].refresh()
 
         self.assertNotEqual(original_resource_model.id, new_resource_model.id)
 
@@ -116,13 +117,13 @@ class TestShareResource(BaseTestCase):
         original_resource_model = ResourceService.get_resource_by_id(resource_model_id)
         original_resource_set: ResourceSet = original_resource_model.get_resource()
 
-        dir = ResourceZipService.download_complete_resource(
+        zip_path = ShareService.download_resource(
             resource_model_id, CurrentUserService.get_and_check_current_user())
 
-        resource_models: List[ResourceModel] = ResourceZipService.import_resource_from_zip(dir)
+        resource_unzipper = ShareService.copy_resource_from_zip_2(zip_path)
 
-        self.assertEqual(3, len(resource_models))
-        new_resource_model = resource_models[0].refresh()
+        self.assertEqual(3, len(resource_unzipper.resource_models))
+        new_resource_model = resource_unzipper.resource_models[0].refresh()
 
         # check that this is another resource model
         self.assertNotEqual(original_resource_model.id, new_resource_model.id)
@@ -133,7 +134,7 @@ class TestShareResource(BaseTestCase):
         # check the table
         table: Table = resource_set.get_resource('table')
         self.assertIsNotNone(table)
-        original_table = original_resource_set.get_resource('table')
+        original_table: Table = original_resource_set.get_resource('table')
         # check that this is a new resource
         self.assertNotEqual(original_table._model_id, table._model_id)
         self.assertTrue(original_table.equals(table))

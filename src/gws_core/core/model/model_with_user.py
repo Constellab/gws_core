@@ -19,9 +19,6 @@ class ModelWithUser(Model):
     created_by = ForeignKeyField(User, null=True, backref='+')
     last_modified_by = ForeignKeyField(User, null=True, backref='+')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def _before_insert(self) -> None:
         super()._before_insert()
         self.created_by = CurrentUserService.get_and_check_current_user()

@@ -5,6 +5,7 @@
 from fastapi import Depends
 from fastapi.responses import FileResponse
 
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.user.auth_service import AuthService
 from gws_core.user.user_dto import UserData
 
@@ -31,4 +32,4 @@ def get_log_complete_info(log_file_name: str, _: UserData = Depends(AuthService.
 def download_log(log_file_name: str, _: UserData = Depends(AuthService.check_user_access_token)) -> FileResponse:
     log_file_path = LogService.get_log_file_path(log_file_name)
 
-    return FileResponse(log_file_path, media_type='text/plain', filename=log_file_name)
+    return FileHelper.create_file_response(log_file_path, media_type='text/plain')

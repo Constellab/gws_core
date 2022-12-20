@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core_app import core_app
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.auth_service import AuthService
 from gws_core.user.user_dto import UserData
@@ -45,10 +46,25 @@ def get_share_links(page: Optional[int] = 1,
     return ShareService.get_shared_links(page, number_of_items_per_page).to_json()
 
 
+@core_app.get("/share/{entity_type}/{entity_id}", tags=["Share"], summary="Get share entity")
+def get_share_entity(entity_type: str, entity_id: str,
+                     _: UserData = Depends(AuthService.check_user_access_token)) -> SharedEntityLink:
+    share_link = ShareService.find_by_entity_id_and_type(entity_type, entity_id)
+    return share_link.to_json() if share_link else None
+
+
 # Open route to download a resource
 @core_app.get("/share/resource/download/{token}", tags=["Share"], summary="Download a resource")
 def download_resource(token: str) -> FileResponse:
-    return ShareService.download_resource(token)
+    zip_path = ShareService.download_resource(token)
+    return FileHelper.create_file_response(zip_path)
+
+
+# Open to mark the resource as downloaded by another lab
+@core_app.post("/share/resource/mark-as-downloaded/{token}", tags=["Share"],
+               summary="Mark the resource as downloaded by another lab")
+def mark_resource_as_downloaded(token: str, destination: dict) -> FileResponse:
+    return ShareService.mark_resource_as_downloaded(token, destination)
 
 
 class ImportDto(BaseModel):

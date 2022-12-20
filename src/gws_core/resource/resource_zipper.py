@@ -30,6 +30,7 @@ from .resource_service import ResourceService
 class ZipOriginInfo(TypedDict):
     lab_id: str
     lab_name: str
+    lab_api_url: str
 
     user_id: str
     user_firstname: str
@@ -80,18 +81,20 @@ class ResourceZipper():
         self.resource_info = {
             'zip_version': 1,
             'resources': [],
-            'origin': self.generate_origin()
+            'origin': self.generate_origin(self.shared_by)
         }
 
-    def generate_origin(self) -> ZipOriginInfo:
+    @classmethod
+    def generate_origin(cls, user: User) -> ZipOriginInfo:
         settings = Settings.get_instance()
         space = settings.get_space()
         return {
-            'lab_id': None,  # TODO settings.get_lab_id(),
+            'lab_id': settings.get_lab_id(),
             'lab_name': settings.get_lab_name(),
-            'user_id': self.shared_by.id,
-            'user_firstname': self.shared_by.first_name,
-            'user_lastname': self.shared_by.last_name,
+            'lab_api_url': settings.get_lab_api_url(),
+            'user_id': user.id,
+            'user_firstname': user.first_name,
+            'user_lastname': user.last_name,
             'space_id': space['id'] if space is not None else None,
             'space_name': space['name'] if space is not None else None
         }

@@ -11,6 +11,7 @@ from re import sub
 from typing import Any, List, Union
 
 from charset_normalizer import from_path
+from fastapi.responses import FileResponse
 
 PathType = Union[str, Path]
 
@@ -216,4 +217,19 @@ class FileHelper():
     @classmethod
     def move_file_or_dir(cls, source_path: PathType, destination_path: PathType) -> None:
         """Move a file or a directory from source to destination"""
-        shutil.move(source_path, destination_path)
+        shutil.move(str(source_path), str(destination_path))
+
+    @classmethod
+    def create_file_response(cls, file_path: PathType, filename: str = None,
+                             media_type: str = None) -> FileResponse:
+        """Create a flask response from a file path"""
+        if not cls.exists_on_os(file_path):
+            raise FileNotFoundError(f'File {file_path} not found')
+
+        if not filename:
+            filename = cls.get_name_with_extension(file_path)
+
+        if not media_type:
+            media_type = cls.get_mime(file_path)
+
+        return FileResponse(file_path, media_type=media_type, filename=filename)

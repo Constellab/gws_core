@@ -55,10 +55,9 @@ class FsNodeService(BaseService):
             filename = resource.name + '.zip'
             zip_file = os.path.join(temp_dir, filename)
             Zip.zipdir(resource.path, zip_file)
-            return FileResponse(zip_file, media_type='application/octet-stream', filename=filename)
+            return FileHelper.create_file_response(zip_file,  filename=filename)
         else:
-            return FileResponse(resource.path, media_type='application/octet-stream',
-                                filename=resource.get_default_name())
+            return FileHelper.create_file_response(resource.path, filename=resource.get_default_name())
 
     ############################# UPLOAD / CREATION  ###########################
 

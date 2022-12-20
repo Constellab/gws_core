@@ -193,10 +193,7 @@ class Model(BaseModel, PeeweeModel):
 
     @classmethod
     def get_by_id(cls, id: str) -> 'Model':
-        try:
-            return cls.get(cls.id == id)
-        except:
-            return None
+        return cls.get_or_none(cls.id == id)
 
     @classmethod
     def get_by_id_and_check(cls, id: str) -> 'Model':

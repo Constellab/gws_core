@@ -396,8 +396,7 @@ class ReportService():
     @classmethod
     def get_image_file_response(cls, filename: str) -> FileResponse:
         file_path = cls.get_image_path(filename)
-        return FileResponse(file_path, media_type=FileHelper.get_mime(file_path),
-                            filename=filename)
+        return FileHelper.create_file_response(file_path, filename=filename)
 
     @classmethod
     def delete_image(cls, filename: str) -> None:
