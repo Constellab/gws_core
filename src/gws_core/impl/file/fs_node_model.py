@@ -31,15 +31,25 @@ class FSNodeModel(Model):
 
     _table_name = "gws_fs_node"
 
-    def delete_instance(self, *args, **kwargs):
+    def delete_instance(self, delete_file: bool = True, *args, **kwargs):
 
+        # if the file is a real file, not a symbolic link, delete it
+        if delete_file:
+            self.delete_object()
+
+        return super().delete_instance(*args, **kwargs)
+
+    def delete_object(self):
+        """Delete file in the server not in the database
+
+        :return: _description_
+        :rtype: _type_
+        """
         # if the file is a real file, not a symbolic link, delete it
         if not self.is_symbolic_link:
             # TODO add support for other FileStore
             file_store: FileStore = FileStore.get_default_instance()
             file_store.delete_node_path(self.path)
-
-        return super().delete_instance(*args, **kwargs)
 
     def get_file_store(self) -> FileStore:
         return FileStore.get_by_id_and_check(self.file_store_id)

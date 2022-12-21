@@ -40,7 +40,6 @@ from .r_field.r_field import BaseRField
 
 if TYPE_CHECKING:
     from ..experiment.experiment import Experiment
-    from ..share.shared_resource import SharedResource
     from ..task.task_model import TaskModel
 
 # Typing names generated for the class Resource
@@ -115,12 +114,20 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
     def delete_instance(self, *args, **kwargs):
         result = super().delete_instance(*args, **kwargs)
         if self.fs_node_model:
-            self.fs_node_model.delete_instance()
+            self.fs_node_model.delete_instance(delete_file=False)
+
+        self.delete_object()
+
+        return result
+
+    def delete_object(self):
+        """Delete the kv_store and the file if they exist does not delete model in DB
+        """
+        if self.fs_node_model:
+            self.fs_node_model.delete_object()
 
         # TODO to improve, if there is an error, the kvstore is not restored
         self.remove_kv_store()
-
-        return result
 
     def remove_kv_store(self):
         """

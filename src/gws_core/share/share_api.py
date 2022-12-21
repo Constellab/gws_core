@@ -44,7 +44,7 @@ class ImportDto(BaseModel):
 @core_app.post("/share/resource/import", tags=["Share"], summary="Download a resource")
 def import_resource(import_dto: ImportDto,
                     _: UserData = Depends(AuthService.check_user_access_token)) -> ResourceModel:
-    return ShareService.copy_external_resource(import_dto.url).to_json()
+    return ShareService.create_resource_from_external_lab(import_dto.url).to_json()
 
 
 # Open route to download a resource

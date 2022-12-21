@@ -66,10 +66,7 @@ class CentralService(BaseService):
         """
         central_api_url: str = cls._get_central_api_url(
             'auth/external/check-credentials/false')
-        response = ExternalApiService.post(central_api_url, credentials.dict())
-
-        if response.status_code < 200 or response.status_code >= 300:
-            cls.raise_error_from_response(response, BadRequestException("Error during authentication"))
+        response = ExternalApiService.post(central_api_url, credentials.dict(), raise_exception_if_error=True)
 
         return parse_obj_as(ExternalCheckCredentialResponse, response.json())
 
@@ -81,10 +78,7 @@ class CentralService(BaseService):
         """
         central_api_url: str = cls._get_central_api_url(
             'auth/external/check-2fa')
-        response = ExternalApiService.post(central_api_url, credentials.dict())
-
-        if response.status_code < 200 or response.status_code >= 300:
-            cls.raise_error_from_response(response, BadRequestException("Error during 2FA check"))
+        response = ExternalApiService.post(central_api_url, credentials.dict(), raise_exception_if_error=True)
 
         return parse_obj_as(UserCentral, response.json())
 
@@ -210,17 +204,3 @@ class CentralService(BaseService):
             headers[cls.user_id_header_key] = user.id
 
         return headers
-
-    @classmethod
-    def raise_error_from_response(cls, response: Response, default_exception: Exception) -> None:
-        json_ = response.json()
-
-        # if this is a constellab know error
-        if 'status' in json_ and 'code' in json_ and 'detail' in json_ and 'instanceId' in json_:
-            raise BaseHTTPException(http_status_code=json_['status'],
-                                    unique_code=json_['code'],
-                                    detail=json_['detail'],
-                                    instance_id=json_['instanceId'])
-
-        # otherwise raise the default exception
-        raise default_exception

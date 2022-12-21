@@ -33,7 +33,7 @@ class ShareLinkService:
         share_link = ShareLink.find_by_token_and_check(token)
 
         if share_link.valid_until < DateHelper.now_utc():
-            raise BadRequestException(f"Shared entity link with token {token} is expired")
+            raise BadRequestException("The link is expired")
 
         return share_link
 

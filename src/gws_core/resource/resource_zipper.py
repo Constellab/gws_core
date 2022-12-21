@@ -10,6 +10,8 @@ from zipfile import ZipFile
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.decorator.transaction import transaction
+from gws_core.core.service.external_lab_service import (
+    ExternalLabService, ExternalLabWithUserInfo)
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.zip import Zipv2
 from gws_core.impl.file.file_helper import FileHelper
@@ -27,19 +29,6 @@ from .resource_model import ResourceModel, ResourceOrigin
 from .resource_service import ResourceService
 
 
-class ZipOriginInfo(TypedDict):
-    lab_id: str
-    lab_name: str
-    lab_api_url: str
-
-    user_id: str
-    user_firstname: str
-    user_lastname: str
-
-    space_id: str
-    space_name: str
-
-
 class ZipResource(TypedDict):
     id: str
     name: str
@@ -54,12 +43,14 @@ class ZipResource(TypedDict):
 
 
 class ZipResourceInfo(TypedDict):
+    """ Content of the info.json file in the zip file when a resource is zipped"""
     zip_version: int
     resources: List[ZipResource]
-    origin: ZipOriginInfo
+    origin: ExternalLabWithUserInfo
 
 
 class ResourceZipper():
+    """ Class to generate a zip file containing everythinga needed to recreate a resource"""
 
     ZIP_FILE_NAME = 'resource.zip'
     KV_STORE_FILE_NAME = 'kvstore'
@@ -81,22 +72,7 @@ class ResourceZipper():
         self.resource_info = {
             'zip_version': 1,
             'resources': [],
-            'origin': self.generate_origin(self.shared_by)
-        }
-
-    @classmethod
-    def generate_origin(cls, user: User) -> ZipOriginInfo:
-        settings = Settings.get_instance()
-        space = settings.get_space()
-        return {
-            'lab_id': settings.get_lab_id(),
-            'lab_name': settings.get_lab_name(),
-            'lab_api_url': settings.get_lab_api_url(),
-            'user_id': user.id,
-            'user_firstname': user.first_name,
-            'user_lastname': user.last_name,
-            'space_id': space['id'] if space is not None else None,
-            'space_name': space['name'] if space is not None else None
+            'origin': ExternalLabService.get_current_lab_info(self.shared_by)
         }
 
     def add_resource(self, resource_id: str, parent_resource_id: str = None) -> None:
@@ -164,6 +140,7 @@ class ResourceZipper():
 
 
 class ResourceUnzipper():
+    """ Class to unzip a resource zip file and create the resource in the database"""
 
     info_json: ZipResourceInfo
 
@@ -260,7 +237,6 @@ class ResourceUnzipper():
 
         return resource_model
 
-    @transaction()
     def save_all_resources(self) -> List[ResourceModel]:
         for resource_model in self.resource_models:
             resource_model.save_full()
@@ -299,5 +275,5 @@ class ResourceUnzipper():
             if result:
                 resource_model.receive_fields_from_resource(resource)
 
-    def get_origin_info(self) -> ZipOriginInfo:
+    def get_origin_info(self) -> ExternalLabWithUserInfo:
         return self.info_json['origin']

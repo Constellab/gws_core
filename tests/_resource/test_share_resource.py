@@ -68,7 +68,7 @@ class TestShareResource(BaseTestCase):
         zip_path = ShareService.download_resource(
             original_resource_model.id, CurrentUserService.get_and_check_current_user())
 
-        resource_unzipper = ShareService.copy_resource_from_zip_2(zip_path)
+        resource_unzipper = ShareService.create_resource_from_zip(zip_path)
         new_resource_model: ResourceModel = resource_unzipper.resource_models[0].refresh()
 
         self.assertNotEqual(original_resource_model.id, new_resource_model.id)
@@ -92,7 +92,7 @@ class TestShareResource(BaseTestCase):
         zip_path = ShareService.download_resource(
             original_resource_model.id, CurrentUserService.get_and_check_current_user())
 
-        resource_unzipper = ShareService.copy_resource_from_zip_2(zip_path)
+        resource_unzipper = ShareService.create_resource_from_zip(zip_path)
         new_resource_model: ResourceModel = resource_unzipper.resource_models[0].refresh()
 
         self.assertNotEqual(original_resource_model.id, new_resource_model.id)
@@ -120,7 +120,7 @@ class TestShareResource(BaseTestCase):
         zip_path = ShareService.download_resource(
             resource_model_id, CurrentUserService.get_and_check_current_user())
 
-        resource_unzipper = ShareService.copy_resource_from_zip_2(zip_path)
+        resource_unzipper = ShareService.create_resource_from_zip(zip_path)
 
         self.assertEqual(3, len(resource_unzipper.resource_models))
         new_resource_model = resource_unzipper.resource_models[0].refresh()

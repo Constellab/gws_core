@@ -8,55 +8,92 @@ from typing import Any, Dict
 import requests
 from requests.models import Response
 
+from gws_core.core.exception.exceptions.base_http_exception import \
+    BaseHTTPException
+
 
 class ExternalApiService:
     """
     This class gives possibility to make http requests to external APIs
-
     """
 
+    # 1 hour timeout
+    TIMEOUT = 60 * 60
+
     @classmethod
-    def post(cls, url: str, body: Dict, headers: Dict[str, str] = None) -> Response:
+    def post(cls, url: str, body: Dict, headers: Dict[str, str] = None,
+             raise_exception_if_error: bool = False) -> Response:
         """
         Make an HTTP post request
         """
         if headers is None:
             headers = {}
-        return requests.post(url, json=body, headers=headers)
+        response = requests.post(url, json=body, headers=headers, timeout=cls.TIMEOUT)
+        return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
-    def put(cls, url: str, body: Dict, headers: Dict[str, str] = None, files: Any = None) -> Response:
+    def put(cls, url: str, body: Dict, headers: Dict[str, str] = None, files: Any = None,
+            raise_exception_if_error: bool = False) -> Response:
         """
         Make an HTTP put request
         """
         if headers is None:
             headers = {}
-        return requests.put(url, json=body, headers=headers, files=files)
+        response = requests.put(url, json=body, headers=headers, files=files, timeout=cls.TIMEOUT)
+        return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
-    def put_form_data(cls, url: str, data: Dict, headers: Dict[str, str] = None, files: Any = None) -> Response:
+    def put_form_data(cls, url: str, data: Dict, headers: Dict[str, str] = None, files: Any = None,
+                      raise_exception_if_error: bool = False) -> Response:
         """
         Make an HTTP put request
         """
         if headers is None:
             headers = {}
         session = requests.Session()
-        return session.put(url, data=data, headers=headers, files=files)
+        response = session.put(url, data=data, headers=headers, files=files, timeout=cls.TIMEOUT)
+        return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
-    def get(cls, url: str, headers: Dict[str, str] = None) -> Response:
+    def get(cls, url: str, headers: Dict[str, str] = None, raise_exception_if_error: bool = False) -> Response:
         """
         Make an HTTP get request
         """
         if headers is None:
             headers = {}
-        return requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=cls.TIMEOUT)
+        return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
-    def delete(cls, url: str, headers: Dict[str, str] = None) -> Response:
+    def delete(cls, url: str, headers: Dict[str, str] = None, raise_exception_if_error: bool = False) -> Response:
         """
         Make an HTTP get request
         """
         if headers is None:
             headers = {}
-        return requests.delete(url, headers=headers)
+        response = requests.delete(url, headers=headers, timeout=cls.TIMEOUT)
+        return cls._handle_response(response, raise_exception_if_error)
+
+    @classmethod
+    def _handle_response(cls, response: Response, raise_exception_if_error: bool) -> Response:
+        """
+        Handle the response of an HTTP request
+        """
+        if raise_exception_if_error and (response.status_code < 200 or response.status_code >= 300):
+            cls.raise_error_from_response(response)
+        return response
+
+    @classmethod
+    def raise_error_from_response(cls, response: Response) -> None:
+        json_ = response.json()
+
+        # if this is a constellab know error
+        if 'status' in json_ and 'code' in json_ and 'detail' in json_ and \
+                ('instanceId' in json_ or 'instance_id' in json_):
+            raise BaseHTTPException(http_status_code=json_['status'],
+                                    unique_code=json_['code'],
+                                    detail=json_['detail'],
+                                    instance_id=json_.get('instanceId') or json_.get('instance_id'))
+
+        # otherwise raise the default exception
+        raise BaseHTTPException(http_status_code=response.status_code, detail=response.text)

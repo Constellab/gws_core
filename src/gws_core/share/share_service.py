@@ -10,12 +10,13 @@ from typing import Type
 from requests.models import Response
 
 from gws_core.core.classes.paginator import Paginator
-from gws_core.core.service.external_lab_service import ExternalLabService
+from gws_core.core.decorator.transaction import transaction
+from gws_core.core.service.external_lab_service import (
+    ExternalLabService, ExternalLabWithUserInfo)
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.resource_zipper import (ResourceUnzipper,
-                                               ResourceZipper, ZipOriginInfo)
+from gws_core.resource.resource_zipper import ResourceUnzipper, ResourceZipper
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_entity_info import (SharedEntityInfo,
                                                SharedEntityMode)
@@ -27,6 +28,8 @@ from .share_link import ShareLink, ShareLinkType
 
 
 class ShareService():
+    """Service to manage communication between lab to share entities
+    """
 
     @classmethod
     def get_shared_to_list(
@@ -45,7 +48,7 @@ class ShareService():
 
     @classmethod
     def mark_entity_as_shared(cls, entity_type: ShareLinkType,
-                              token: str, receiver: ZipOriginInfo) -> None:
+                              token: str, receiver_lab: ExternalLabWithUserInfo) -> None:
         """Method called by an external lab after the an entity was successfully
         import in the external lab. This helps this lab to keep track of which lab downloaded the entity
         """
@@ -54,10 +57,10 @@ class ShareService():
         entity_type: Type[SharedEntityInfo] = cls._get_shared_entity_type(entity_type)
 
         # check if this resource was already downloaded by this lab
-        if entity_type.already_shared_with_lab(shared_entity_link.entity_id, receiver['lab_id']):
+        if entity_type.already_shared_with_lab(shared_entity_link.entity_id, receiver_lab['lab_id']):
             return
 
-        cls._create_shared_entity(entity_type, shared_entity_link.entity_id,  SharedEntityMode.SENT, receiver,
+        cls._create_shared_entity(entity_type, shared_entity_link.entity_id,  SharedEntityMode.SENT, receiver_lab,
                                   shared_entity_link.created_by)
 
     @classmethod
@@ -73,7 +76,7 @@ class ShareService():
 
     @classmethod
     def download_resource_from_token(cls, token: str) -> str:
-        """Method that download a resource
+        """Method that zip a resource and return the file
         """
 
         shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check_validity(token)
@@ -83,7 +86,7 @@ class ShareService():
 
     @classmethod
     def download_resource(cls, id: str, shared_by: User) -> str:
-        """Method that download a resource
+        """Method that zip a resource and return the file
         """
 
         resource_zipper = ResourceZipper(shared_by)
@@ -95,7 +98,7 @@ class ShareService():
         return resource_zipper.get_zip_file_path()
 
     @classmethod
-    def copy_external_resource(cls, link: str) -> ResourceModel:
+    def create_resource_from_external_lab(cls, link: str) -> ResourceModel:
         """Method that copy an external resource
         """
 
@@ -112,15 +115,15 @@ class ShareService():
         with open(zip_file, "wb") as f:
             f.write(response.content)
 
-        return cls.copy_resource_from_zip(zip_file, share_token)
+        return cls.create_resource_from_external_lab_zip(zip_file, share_token)
 
     @classmethod
-    def copy_resource_from_zip(cls, zip_path: str, share_token: str) -> ResourceModel:
+    def create_resource_from_external_lab_zip(cls, zip_path: str, share_token: str) -> ResourceModel:
 
-        resource_unzipper = cls.copy_resource_from_zip_2(zip_path)
+        resource_unzipper = cls.create_resource_from_zip(zip_path)
 
         # call the origin lab to mark the resource as received
-        current_lab_info = ResourceZipper.generate_origin(CurrentUserService.get_and_check_current_user())
+        current_lab_info = ExternalLabService.get_current_lab_info(CurrentUserService.get_and_check_current_user())
         response: Response = ExternalLabService.mark_shared_object_as_received(
             resource_unzipper.get_origin_info()['lab_api_url'],
             ShareLinkType.RESOURCE, share_token, current_lab_info)
@@ -131,35 +134,45 @@ class ShareService():
         return resource_unzipper.resource_models[0]
 
     @classmethod
-    def copy_resource_from_zip_2(cls, zip_path: str) -> ResourceUnzipper:
+    @transaction()
+    def create_resource_from_zip(cls, zip_path: str) -> ResourceUnzipper:
 
         resource_unzipper = ResourceUnzipper(zip_path)
 
-        resource_unzipper.load_resources()
-        resource_unzipper.save_all_resources()
+        try:
 
-        # for each new resource, create a shared resource to store the origin info
-        for resource_model in resource_unzipper.resource_models:
-            cls._create_shared_entity(SharedResource, resource_model.id, SharedEntityMode.RECEIVED,
-                                      resource_unzipper.get_origin_info(),
-                                      CurrentUserService.get_and_check_current_user())
-        return resource_unzipper
+            resource_unzipper.load_resources()
+            resource_unzipper.save_all_resources()
 
-    @ classmethod
+            # for each new resource, create a shared resource to store the origin info
+            for resource_model in resource_unzipper.resource_models:
+                cls._create_shared_entity(SharedResource, resource_model.id, SharedEntityMode.RECEIVED,
+                                          resource_unzipper.get_origin_info(),
+                                          CurrentUserService.get_and_check_current_user())
+            return resource_unzipper
+        except Exception as err:
+            # clean the resource models
+            for resource_model in resource_unzipper.resource_models:
+                resource_model.delete_object()
+
+            raise err
+
+    @classmethod
     def _create_shared_entity(cls, shared_entity_type: Type[SharedEntityInfo], entity_id: str,
-                              mode: SharedEntityMode, origin_info: ZipOriginInfo, created_by: User) -> None:
+                              mode: SharedEntityMode, lab_info: ExternalLabWithUserInfo, created_by: User) -> None:
         """Method that log the resource origin for each imported resources
         """
 
         shared_entity = shared_entity_type()
         shared_entity.entity = entity_id
         shared_entity.share_mode = mode
-        shared_entity.lab_id = origin_info['lab_id']
-        shared_entity.lab_name = origin_info['lab_name']
-        shared_entity.user_id = origin_info['user_id']
-        shared_entity.user_firstname = origin_info['user_firstname']
-        shared_entity.user_lastname = origin_info['user_lastname']
-        shared_entity.space_id = origin_info['space_id']
-        shared_entity.space_name = origin_info['space_name']
+        shared_entity.lab_id = lab_info['lab_id']
+        shared_entity.lab_name = lab_info['lab_name']
+        shared_entity.user_id = lab_info['user_id']
+        shared_entity.user_firstname = lab_info['user_firstname']
+        shared_entity.user_lastname = lab_info['user_lastname']
+        shared_entity.space_id = lab_info['space_id']
+        shared_entity.space_name = lab_info['space_name']
         shared_entity.created_by = created_by
         shared_entity.save()
+        raise Exception('test')
