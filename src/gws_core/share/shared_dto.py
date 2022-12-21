@@ -8,13 +8,13 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.share.shared_entity import SharedEntityLinkType
+from gws_core.share.share_link import ShareLinkType
 
 
 class GenerateShareLinkDTO(BaseModel):
 
     entity_id: str
-    entity_type: SharedEntityLinkType
+    entity_type: ShareLinkType
     valid_until: datetime
 
 

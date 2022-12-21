@@ -81,7 +81,7 @@ class TestShareResource(BaseTestCase):
 
         # test that the origin of the resource exist
         shared_resource: SharedResource = ResourceService.get_shared_resource_origin_info(new_resource_model.id)
-        self.assertEqual(shared_resource.resource.id, new_resource_model.id)
+        self.assertEqual(shared_resource.entity.id, new_resource_model.id)
 
     def test_share_file_resource(self):
         # save the resource model

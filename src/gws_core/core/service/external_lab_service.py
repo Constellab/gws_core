@@ -7,6 +7,7 @@ from requests.models import Response
 
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.resource.resource_zipper import ZipOriginInfo
+from gws_core.share.share_link import ShareLinkType
 
 
 class ExternalLabService():
@@ -21,7 +22,8 @@ class ExternalLabService():
         return ExternalApiService.get(link)
 
     @classmethod
-    def mark_shared_object_as_received(cls, lab_api_url: str, token: str, current_lab_info: ZipOriginInfo) -> Response:
+    def mark_shared_object_as_received(cls, lab_api_url: str, entity_type: ShareLinkType,
+                                       token: str, current_lab_info: ZipOriginInfo) -> Response:
         """Method that mark a shared object as received"""
         return ExternalApiService.post(
-            f"{lab_api_url}/{cls._core_api}/share/resource/mark-as-downloaded/{token}", current_lab_info)
+            f"{lab_api_url}/{cls._core_api}/share/{entity_type.value}/mark-as-shared/{token}", current_lab_info)
