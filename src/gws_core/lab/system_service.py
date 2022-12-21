@@ -3,16 +3,24 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import os
 import sys
 from threading import Thread
 
 from gws_core.central.central_service import CentralService
 from gws_core.core.db.db_migration import DbMigrationService
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core.impl.file.file_store import FileStore
+from gws_core.impl.file.fs_node_model import FSNodeModel
+from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor_service import MonitorService
+from gws_core.resource.kv_store import KVStore
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.user_dto import SpaceCentral
 
 from ..brick.brick_service import BrickService
@@ -50,6 +58,12 @@ class SystemService:
 
         BrickService.init()
         LabConfigModel.save_current_config()
+
+        # Init data folder
+        settings = Settings.get_instance()
+        FileHelper.create_dir_if_not_exist(settings.get_data_dir())
+        FileHelper.create_dir_if_not_exist(settings.get_kv_store_base_dir())
+        FileHelper.create_dir_if_not_exist(settings.get_file_store_dir())
 
     @classmethod
     def init_queue_and_monitor(cls) -> None:
@@ -181,3 +195,36 @@ class SystemService:
             Logger.error(f"Error while saving the space : {err}")
             Logger.log_exception_stack_trace(err)
             return None
+
+    @classmethod
+    def garbage_collector(cls) -> None:
+        if len(ExperimentRunService.get_all_running_experiments()) > 0:
+            raise BadRequestException('Cannot run the lab cleaning while there are running or waiting experiments')
+
+        Logger.info('Starting the garbage collector')
+        Logger.info('Deleting all the temp files')
+        FileHelper.delete_dir_content(Settings.get_instance().get_root_temp_dir())
+
+        Logger.info('Deleting all usunused resource kv stores')
+        kv_store_dir = KVStore.get_base_dir()
+        # loop through all the kv store files and folder
+
+        for file in os.listdir(kv_store_dir):
+            file_store_file_path = KVStore.get_full_file_path(file, with_extension=False)
+            # if a path has the name of a resource id of the path is store in one of the resource
+            # the path is used by a resource
+            if ResourceModel.get_or_none(
+                    ResourceModel.kv_store_path == file_store_file_path or ResourceModel.id == file) is None:
+                file_path = os.path.join(kv_store_dir, file)
+                Logger.info(f'Deleting KVStore {file_path}')
+                FileHelper.delete_node(file_path)
+
+        Logger.info('Deleting all usunused resource files')
+        file_store: LocalFileStore = FileStore.get_default_instance()
+        for file in os.listdir(file_store.path):
+            file_store_file_path = os.path.join(file_store.path, file)
+            if FSNodeModel.get_or_none(FSNodeModel.path == file_store_file_path) is None:
+                Logger.info(f'Deleting file {file_store_file_path}')
+                FileHelper.delete_node(file_store_file_path)
+
+        Logger.info('Ending the garbage collector')

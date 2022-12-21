@@ -38,3 +38,8 @@ def kill_process(_: UserData = Depends(AuthService.check_user_access_token)) -> 
 @core_app.get("/system/settings",  tags=["System"], summary="Get settings")
 def get_settings(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return SettingsService.get_settings().to_json()
+
+
+@core_app.post("/system/garbage-collector",  tags=["System"], summary="Trigger garbage collector")
+def garbage_collector(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    SystemService.garbage_collector()
