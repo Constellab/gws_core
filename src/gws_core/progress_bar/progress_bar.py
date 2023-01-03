@@ -58,7 +58,6 @@ class ProgressBar(Model):
     _MIN_VALUE = 0.0
 
     _table_name = "gws_process_progress_bar"
-    _max_message_stack_length = 64
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -135,8 +134,6 @@ class ProgressBar(Model):
             "datetime": dtime
         }
         self.data["messages"].append(progress_bar_message)
-        if len(self.data["messages"]) > self._max_message_stack_length:
-            self.data["messages"].pop(0)
         self._log_message(message, type_)
 
     def start(self):
@@ -177,7 +174,7 @@ class ProgressBar(Model):
         # check if we update the progres
         value = self._update_progress_value(value)
         if message:
-            #perc = value/self.get_max_value()
+            # perc = value/self.get_max_value()
             perc = value
             self._add_message("{:1.1f}%: {}".format(perc, message), ProgressBarMessageType.PROGRESS)
 
