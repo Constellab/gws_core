@@ -100,6 +100,12 @@ from .core.utils.settings import Settings as Settings
 from .core.utils.string_helper import StringHelper as StringHelper
 from .core.utils.utils import Utils as Utils
 from .core.utils.zip import Zip as Zip
+# Deprecated
+from .deprecated.dataset.dep_dataset import Dataset as Dataset
+from .deprecated.dataset.tasks.dep_dataset_exporter import \
+    DatasetExporter as DatasetExporter
+from .deprecated.dataset.tasks.dep_dataset_importer import \
+    DatasetImporter as DatasetImporter
 from .deprecated.dep_conda_env_shell import CondaEnvShell as CondaEnvShell
 from .deprecated.dep_pip_env_shell import PipEnvShell as PipEnvShell
 from .deprecated.dep_shell import Shell as Shell

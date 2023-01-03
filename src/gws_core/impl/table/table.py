@@ -4,19 +4,18 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Dict, List, Literal, Union
+from typing import Any, Dict, List, Literal, Union, Tuple
 
 import numpy as np
-from pandas import DataFrame, Series
-from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
-                              is_string_dtype)
-
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_axis_tags import TableAxisTags
 from gws_core.impl.table.view.table_vulcano_plot_view import \
     TableVulcanoPlotView
+from pandas import DataFrame, Series
+from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
+                              is_string_dtype)
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -563,6 +562,17 @@ class Table(Resource):
         return self._data.index.values.tolist()
 
     # -- S --
+
+    @property
+    def shape(self) -> Tuple[int]:
+        """
+        Returns the shape of the table.
+
+        :return: The shape
+        :rtype: Tuple[int]
+        """
+
+        return self._data.shape
 
     def select_by_row_positions(self, positions: List[int]) -> 'Table':
         row_names = self.get_row_names_by_positions(positions)
