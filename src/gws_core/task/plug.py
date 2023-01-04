@@ -158,25 +158,8 @@ class Wait(Task):
         current_time = 0
         while (current_time < waiting_time):
             current_time = current_time + 1
-            # self.update_progress_value((current_time / waiting_time) * 100, 'Waiting 1 sec')
-            self.log_info_message(
-                f"""
-                Waiting some second before continuing and adding a long messa&ge to test if it changes something  {current_time}
-                Waiting some second before continuing and adding a long messa&ge to test if it changes something  {current_time}
-                Waiting some second before continuing and adding a long messa&ge to test if it changes something  {current_time}
-                Waiting some second before continuing and adding a long messa&ge to test if it changes something  {current_time}
-                Waiting some second before continuing and adding a long messa&ge to test if it changes something  {current_time}
-                Waiting some second before continuing and adding a long messa&ge to test if it changes something  {current_time}
-                Waiting some second before continuing and adding a long messa&ge to test if it changes something  {current_time}
-                Waiting some second before continuing and adding a long messa&ge to test if it changes something  {current_time}
-                Waiting some second before continuing and adding a long messa&ge to test if it changes something  {current_time}
-                Waiting some second before continuing and adding a long messa&ge to test if it changes something  {current_time}
-                Waiting some second before continuing and adding a long messa&ge to test if it changes something  {current_time}
-                Waiting some second before continuing and adding a long messa&ge to test if it changes something  {current_time}
-                """)
-            time.sleep(0.1)
-
-        # self.log_info_message('This is the end of the wait')
+            self.update_progress_value((current_time / waiting_time) * 100, 'Waiting 1 sec')
+            time.sleep(1)
 
         resource = inputs["resource"]
         return {"resource": resource}
