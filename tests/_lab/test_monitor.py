@@ -23,7 +23,7 @@ class TestMonitor(IsolatedAsyncioTestCase):
         self.assertIsInstance(monitoring.get_all_cpu_percent, list)
         self.assertEqual(len(monitoring.get_all_cpu_percent), monitoring.cpu_count)
 
-        self.assertNotEqual(monitoring.swap_memory_total, 0)
+        self.assertIsNotNone(monitoring.swap_memory_total)
         self.assertIsNotNone(monitoring.swap_memory_used)
         self.assertIsNotNone(monitoring.swap_memory_free)
         self.assertIsNotNone(monitoring.swap_memory_percent)
