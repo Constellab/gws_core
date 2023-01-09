@@ -90,7 +90,7 @@ class AuthService(BaseService):
 
     @classmethod
     def generate_user_access_token(cls, id: str) -> str:
-        user: User = UserService.fetch_user(id)
+        user: User = UserService.get_by_id_or_none(id)
         if not user:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.value,
@@ -118,7 +118,7 @@ class AuthService(BaseService):
     @classmethod
     def get_and_refresh_user_from_central(cls, user_central: UserCentral) -> User:
         """Check user central exists in the lab and if yes, it updates the user info"""
-        user: User = UserService.fetch_user(user_central.id)
+        user: User = UserService.get_by_id_or_none(user_central.id)
         if not user:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.value,

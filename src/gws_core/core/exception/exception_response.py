@@ -30,7 +30,7 @@ class ExceptionResponse(JSONResponse):
         """
 
         super().__init__(status_code=status_code, content={
-            "code": code, "status": status_code, "detail": detail, "instance_id": instance_id, "show_as": show_as},
+            "code": code, "status": status_code, "detail": detail, "instanceId": instance_id, "show_as": show_as},
             headers=headers)
 
     def get_json_body(self) -> dict:

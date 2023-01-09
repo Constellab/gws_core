@@ -102,8 +102,8 @@ class UserService(BaseService):
             query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def fetch_user(cls, id: str) -> User:
-        return User.get_by_id(id)
+    def get_by_id_or_none(cls, id: str) -> User:
+        return User.get_or_none(id)
 
     @classmethod
     def fetch_user_list(cls,
