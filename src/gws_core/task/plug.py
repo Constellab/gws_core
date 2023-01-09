@@ -7,7 +7,8 @@ import time
 from typing import Optional
 
 from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
-from ..config.param.param_spec import BoolParam, FloatParam, IntParam, StrParam
+from ..config.param.param_spec import (BoolParam, FloatParam, IntParam,
+                                       StrParam, TextParam)
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_spec import InputSpec, OutputSpec
@@ -150,7 +151,8 @@ class Wait(Task):
     input_specs: InputSpecs = {'resource': InputSpec(Resource)}
     output_specs: OutputSpecs = {'resource': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)}
     config_specs: ConfigSpecs = {"waiting_time": FloatParam(
-        default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
+        default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second."),
+        "text": TextParam(default_value="Waiting", short_description="The text to show in the progress bar. Defaults to 'Waiting'.")}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         waiting_time = params.get_value("waiting_time")

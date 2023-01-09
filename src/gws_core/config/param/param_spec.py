@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from gws_core.core.utils.logger import Logger
 
@@ -160,11 +160,6 @@ class ParamSpec(Generic[ParamSpecType]):
         return cls()
 
     @classmethod
-    def create_from_json(cls, json_: Dict[str, Any]) -> "ParamSpec":
-        config_param_type: Type[ParamSpec] = cls._get_param_spec_class_type(json_["type"])
-        return config_param_type.load_from_json(json_)
-
-    @classmethod
     def load_from_json(cls, json_: Dict[str, Any]) -> "ParamSpec":
         param_spec = cls.empty()
         param_spec.default_value = json_.get("default_value")
@@ -175,28 +170,6 @@ class ParamSpec(Generic[ParamSpecType]):
         param_spec.visibility = json_.get("visibility")
         param_spec.allowed_values = json_.get("allowed_values")
         return param_spec
-
-    @classmethod
-    def _get_param_spec_class_type(cls, type_: str) -> Type["ParamSpec"]:
-        """Get the class type of ConfigParam base on type
-        """
-        if type_ == 'bool':
-            return BoolParam
-        elif type_ == 'int':
-            return IntParam
-        elif type_ == 'float':
-            return FloatParam
-        elif type_ == 'str':
-            return StrParam
-        elif type_ == 'list':
-            return ListParam
-        elif type_ == 'dict':
-            return DictParam
-        elif type_ == 'param_set':
-            from ..param_set import ParamSet
-            return ParamSet
-        else:
-            raise BadRequestException("Invalid type")
 
 
 class StrParam(ParamSpec[str]):
@@ -257,6 +230,111 @@ class StrParam(ParamSpec[str]):
     @classmethod
     def get_str_type(cls) -> str:
         return 'str'
+
+
+class StrParam(ParamSpec[str]):
+    """Short string param with possibility to list possible values and limit the length
+    If you want a long string params (like multi line text), use the TextParam.
+    """
+
+    min_length: Optional[int]
+    max_length: Optional[int]
+
+    def __init__(
+        self,
+        default_value: Optional[str] = None,
+        min_length: Optional[int] = None,
+        max_length: Optional[int] = None,
+        optional: bool = False,
+        visibility: ParamSpecVisibilty = "public",
+        human_name: Optional[str] = None,
+        short_description: Optional[str] = None,
+        allowed_values: Optional[List[str]] = None,
+        unit: Optional[str] = None,
+    ) -> None:
+        """
+        :param default_value: Default value, if None, and optional is false, the config is mandatory
+                        If a value is provided there is no need to set the optional
+                        Setting optional to True, allows default None value
+        :param optional: See default value
+        :type optional: Optional[str]
+        :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
+        :type visibility: ParamSpecVisibilty
+        :param human_name: Human readable name of the param, showed in the interface
+        :type human_name: Optional[str]
+        :param short_description: Description of the param, showed in the interface
+        :type short_description: Optional[str]
+        :param allowed_values: If present, the param value must be in the array
+        :type allowed_values: Optional[List[str]]
+        :param unit: Measure unit of the value (ex kg)
+        :type unit: Optional[str]
+        """
+
+        self.min_length = min_length
+        self.max_length = max_length
+        super().__init__(
+            default_value=default_value,
+            optional=optional,
+            visibility=visibility,
+            human_name=human_name,
+            short_description=short_description,
+            allowed_values=allowed_values,
+            unit=unit,
+        )
+
+    def _get_validator(self) -> Validator:
+        return StrValidator(
+            allowed_values=self.allowed_values,
+            min_length=self.max_length,
+            max_length=self.max_length
+        )
+
+    @classmethod
+    def get_str_type(cls) -> str:
+        return 'str'
+
+
+class TextParam(ParamSpec[str]):
+    """Text param used for long string (like multi line text)
+    If you want a short string param, use the StrParam.
+    """
+
+    def __init__(
+        self,
+        default_value: Optional[str] = None,
+        optional: bool = False,
+        visibility: ParamSpecVisibilty = "public",
+        human_name: Optional[str] = None,
+        short_description: Optional[str] = None,
+    ) -> None:
+        """
+        :param default_value: Default value, if None, and optional is false, the config is mandatory
+                        If a value is provided there is no need to set the optional
+                        Setting optional to True, allows default None value
+        :param optional: See default value
+        :type optional: Optional[str]
+        :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
+        :type visibility: ParamSpecVisibilty
+        :param human_name: Human readable name of the param, showed in the interface
+        :type human_name: Optional[str]
+        :param short_description: Description of the param, showed in the interface
+        :type short_description: Optional[str]
+        """
+
+        super().__init__(
+            default_value=default_value,
+            optional=optional,
+            visibility=visibility,
+            human_name=human_name,
+            short_description=short_description,
+        )
+
+    def _get_validator(self) -> Validator:
+        return StrValidator()
+
+    @classmethod
+    def get_str_type(cls) -> str:
+        return 'text'
 
 
 class BoolParam(ParamSpec[bool]):
