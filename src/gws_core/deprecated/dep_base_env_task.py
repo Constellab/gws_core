@@ -74,7 +74,7 @@ class DepBaseEnvShell(Shell):
             return
 
         self.log_info_message(
-            f"Installing the virtual environment '{self.base_env.env_dir_name}' from file '{self.base_env.env_file_path}',  this might take few minutes.")
+            f"Installing the virtual environment '{self.base_env.env_dir_name}' from file '{self.base_env.env_file_path}'. This might take few minutes.")
 
         self.base_env.install_env()
 

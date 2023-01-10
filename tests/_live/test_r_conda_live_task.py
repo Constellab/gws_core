@@ -18,7 +18,7 @@ class TestRCondaLiveTask(BaseTestCase):
 
         tester = TaskRunner(
             params={
-                "code": ["""
+                "code": """
                         print("Hello, world!")
                         d <- read.table(text=
                         'Name     Month  Rate1     Rate2
@@ -32,15 +32,15 @@ class TestRCondaLiveTask(BaseTestCase):
                         Cat        1      0        0', header=TRUE)
                         table = aggregate(d[, 3:4], list(d$Name), mean)
                         write.csv(table,"table.csv", row.names = TRUE)
-                        """
-                         ],
+                        """,
                 "args": "",
-                "env": ["name: .venv",
-                        "channels:",
-                        "- conda-forge",
-                        "dependencies:",
-                        "- r-base"],
-                "captures": ["table.csv"]
+                "env":
+                """name: .venv
+channels:
+- conda-forge
+dependencies:
+- r-base""",
+                "output_file_paths": ["table.csv"]
             },
             inputs={"source": file_set},
             task_type=RCondaLiveTask

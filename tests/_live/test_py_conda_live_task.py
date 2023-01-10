@@ -18,7 +18,7 @@ class TestPyCondaLiveTask(BaseTestCase):
 
         tester = TaskRunner(
             params={
-                "code": ["""
+                "code": """
 import jwt
 import sys
 # parse arguments
@@ -34,16 +34,16 @@ with open(result_path, "w", encoding="utf-8") as fp:
     fp.write(encoded_jwt)
 with open("out2.txt", "w", encoding="utf-8") as fp:
     fp.write(data_path)
-"""
-                         ],
+""",
                 "args": "--data {input:my_file} --result ./out1.txt",
-                "env": ["name: .venv3",
-                        "channels:",
-                        "- conda-forge",
-                        "dependencies:",
-                        "- python=3.8",
-                        "- pyjwt"],
-                "captures": ["./out1.txt", "out2.txt"]
+                "env": """
+name: .venv3
+channels:
+- conda-forge
+dependencies:
+- python=3.8
+- pyjwt""",
+                "output_file_paths": ["./out1.txt", "out2.txt"]
             },
             inputs={"source": file_set},
             task_type=PyCondaLiveTask

@@ -16,9 +16,9 @@ from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator(unique_name="ResourceSetGenerator",
+@task_decorator(unique_name="ResourceStacker", short_description="Stack a set of resource in a resource set",
                 hide=False)
-class ResourceSetGenerator(Task):
+class ResourceStacker(Task):
     input_specs: InputSpecs = {
         "resource_1": InputSpec(Resource),
         "resource_2": InputSpec(Resource, is_skippable=True),
@@ -37,22 +37,34 @@ class ResourceSetGenerator(Task):
         resource_set: ResourceSet = ResourceSet()
 
         self.log_info_message('Adding resource 1')
-        resource_set.add_resource(resource_1, create_new_resource=False)
+        if isinstance(resource_1, ResourceSet):
+            # prevent nesting resource sets
+            for _, sub_resource in resource_1.get_resources().items():
+                resource_set.add_resource(sub_resource, create_new_resource=False)
+        else:
+            resource_set.add_resource(resource_1, create_new_resource=False)
 
         if resource_2 is not None:
             self.log_info_message('Adding resource 2')
-            resource_set.add_resource(resource_2, create_new_resource=False)
+            if isinstance(resource_2, ResourceSet):
+                # prevent nesting resource sets
+                for _, sub_resource in resource_2.get_resources().items():
+                    resource_set.add_resource(sub_resource, create_new_resource=False)
+            else:
+                resource_set.add_resource(resource_2, create_new_resource=False)
 
         if resource_3 is not None:
             self.log_info_message('Adding resource 3')
-            resource_set.add_resource(resource_3, create_new_resource=False)
-
-        resource_set.add_resource(Robot.empty(), 'robot')
+            if isinstance(resource_3, ResourceSet):
+                # prevent nesting resource sets
+                for _, sub_resource in resource_3.get_resources().items():
+                    resource_set.add_resource(sub_resource, create_new_resource=False)
+            else:
+                resource_set.add_resource(resource_3, create_new_resource=False)
 
         return {'resource_set': resource_set}
 
-
-@task_decorator(unique_name="ResourcePicker",
+@task_decorator(unique_name="ResourcePicker", short_description="Pick a resource from a resource set",
                 hide=False)
 class ResourcePicker(Task):
     input_specs: InputSpecs = {

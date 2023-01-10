@@ -173,6 +173,7 @@ from .impl.shell.pip_env_task import PipEnvTask as PipEnvTask
 from .impl.shell.pip_shell_proxy import PipShellProxy as PipShellProxy
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 from .impl.shell.shell_task import ShellTask as ShellTask
+from .impl.shell.helper.env_shell_proxy_helper import EnvShellProxyHelper
 # Impl > Table
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
 from .impl.table.encoding.encoding_table import EncodingTable as EncodingTable

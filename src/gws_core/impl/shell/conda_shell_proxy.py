@@ -90,8 +90,8 @@ class CondaShellProxy(BaseEnvShell):
         return os.path.join(self.get_env_dir_path(), self.VENV_DIR_NAME)
 
     @final
-    def run(self, cmd: Union[list, str], env: dict = None) -> None:
-        return super().run(cmd, env, shell_mode=True)
+    def run(self, cmd: Union[list, str], env: dict = None, shell_mode=True) -> None:
+        return super().run(cmd, env, shell_mode=shell_mode)
 
     @classmethod
     def folder_is_env(cls, folder_path: str) -> bool:

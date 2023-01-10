@@ -8,7 +8,6 @@ from abc import abstractmethod
 from typing import final
 
 from ...config.config_types import ConfigParams
-from ...progress_bar.progress_bar import ProgressBar
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs

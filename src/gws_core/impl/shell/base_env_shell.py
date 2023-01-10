@@ -97,7 +97,7 @@ class BaseEnvShell(ShellProxy):
         self.create_env_dir()
 
         self._message_dispatcher.notify_info_message(
-            f"Installing the virtual environment '{self.env_dir_name}' from file '{self.env_file_path}',  this might take few minutes.")
+            f"Installing the virtual environment '{self.env_dir_name}' from file '{self.env_file_path}'. This might take few minutes.")
 
         is_install: bool = False
         try:

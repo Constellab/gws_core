@@ -38,20 +38,20 @@ class EnvLiveTask(Task):
     output_specs: OutputSpecs = {'target': OutputSpec(
         ResourceSet, sub_class=True, human_name="File set", short_description="File set"), }
     config_specs: ConfigSpecs = {
-        'env': ListParam(human_name="YAML environment", short_description="YAML environment text"),
+        'env': PythonCodeParam(human_name="YAML environment", short_description="YAML environment text"),
         'args':
         StrParam(
             optional=True, default_value="", human_name="Shell arguments",
             short_description="Shell arguments used to call the script. Use wildcards {input:*} to pass the input files to the script. For example: '--data1 {input:filename_1} --data2 {input:filename_2} -o out_file.txt'."),
-        'captures':
+        'output_file_paths':
         ListParam(
-            human_name="Files to capture in outputs",
-            short_description="The realitve paths of the files to capture in the outputs. For example: Enter 'out_file.txt' to capture this file in the outputs"),
+            human_name="Output file paths",
+            short_description="The paths of the files to capture in the outputs. For example: Enter 'out_file.txt' to capture this file in the outputs"),
         'code': PythonCodeParam(human_name="Code snippet", short_description="The code snippet to execute using shell command"),
     }
 
     shell_proxy: ShellProxy = None
-    code_file_extension: str = None
+    SNIPPET_FILE_EXTENSION: str = None
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
@@ -62,18 +62,18 @@ class EnvLiveTask(Task):
         source = inputs.get("source")
         if source is not None:
             if isinstance(source, File):
-                args = re.sub("{input:.*}", source.path, args)
+                args = re.sub("{input?:.*}", source.path, args)
             else:
                 for name in source.get_resources():
                     file = source.get_resource(name)
                     args = args.replace("{input:"+name+"}", file.path)
 
-        env: str = "\n".join(env)
+        # env: str = "\n".join(env)
 
         fpath: str
-        captures = params.get_value('captures', None)
-        for fpath in captures:
-            if len(captures) != len(set(captures)):
+        output_file_paths = params.get_value('output_file_paths', None)
+        for fpath in output_file_paths:
+            if len(output_file_paths) != len(set(output_file_paths)):
                 raise BadRequestException("The outputs files list contains duplicates")
             if fpath.startswith("/"):
                 raise BadRequestException(
@@ -82,7 +82,10 @@ class EnvLiveTask(Task):
         self.shell_proxy = self._create_shell_proxy(env)
 
         # create code file
-        code_file_path = os.path.join(self.shell_proxy.working_dir, f"code{self.code_file_extension}")
+        if self.SNIPPET_FILE_EXTENSION is None:
+            raise BadRequestException("No SNIPPET_FILE_EXTENSION defined")
+
+        code_file_path = os.path.join(self.shell_proxy.working_dir, f"code{self.SNIPPET_FILE_EXTENSION}")
         with open(code_file_path, 'w', encoding='utf-8') as fp:
             fp.write(code)
 
@@ -95,7 +98,7 @@ class EnvLiveTask(Task):
 
         # gather outputs files
         target = ResourceSet()
-        for filepath in captures:
+        for filepath in output_file_paths:
             full_path = os.path.join(self.shell_proxy.working_dir, filepath)
             file = File(path=full_path)
             file.name = filepath

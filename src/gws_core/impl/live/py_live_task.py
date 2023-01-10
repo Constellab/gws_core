@@ -3,6 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import runpy
+import tempfile
+
 from gws_core.config.param.python_code_param import PythonCodeParam
 
 from ...config.config_types import ConfigParams, ConfigSpecs
@@ -15,13 +18,16 @@ from ...resource.resource import Resource
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
+from .helper.template_reader_helper import TemplateReaderHelper
 
 
 @task_decorator("PyLiveTask", human_name="Python live task",
                 short_description="Live task to run Python snippets directly in the global environment. The input data and parameters are passed in memory to the snippet.")
 class PyLiveTask(Task):
     """
-    This task executes python code snippets on the fly.
+    Python live tasks allow to execute any Python code snippets on the fly.
+
+    Live tasks are fast and efficient tools to develop, test, use and share code snippets.
 
     > **Warning**: It is recommended to use code snippets comming from trusted sources.
     """
@@ -36,12 +42,22 @@ class PyLiveTask(Task):
         'params':
         ListParam(
             optional=True, default_value=[],
-            human_name="Parameters", short_description="The parameters"),
-        'code': PythonCodeParam(human_name="Python code snippet", short_description="Python code snippet to run"), }
+            human_name="Parameter definitions",
+            short_description="Please give one parameter definition per line"),
+        'code':
+        PythonCodeParam(
+            default_value=TemplateReaderHelper.read_snippet_template(file_name="py_live_snippet_template.py"),
+            human_name="Python code snippet",
+            short_description="Python code snippet to run"), }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
         params = params.get_value('params')
+
+        _, snippet_filepath = tempfile.mkstemp(suffix=".py")
+        with open(snippet_filepath, 'w', encoding="utf-8") as fp:
+            params_str: str = "\n".join(params)
+            fp.write(code)
 
         # compute params
         param_context = {}
@@ -53,18 +69,15 @@ class PyLiveTask(Task):
                 raise BadRequestException("Cannot parse parameters") from err
 
         # execute the live code
-        global_vars = globals()
-        local_vars = {'self': self, "inputs": inputs, "params": param_context}
-
-        try:
-            exec(code, global_vars, local_vars)
-        except Exception as err:
-            raise BadRequestException(f"An error occured during the excution of the live code. Error: {err}") from err
-
-        outputs = local_vars.get("outputs", None)
+        init_globals = {'self': self, "inputs": inputs, "params": param_context, **globals()}
+        global_vars = runpy.run_path(snippet_filepath, init_globals=init_globals)
+        outputs = global_vars.get("outputs", None)
 
         if outputs is not None:
             if not isinstance(outputs, dict):
                 raise BadRequestException("The outputs must be a dictionary")
+
+            if 'target' not in outputs:
+                raise BadRequestException("The outputs must have single key 'target'")
 
         return outputs

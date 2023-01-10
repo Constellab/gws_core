@@ -1,0 +1,8 @@
+name: .venv
+channels:
+  - conda-forge
+  - ...
+dependencies:
+  - r-base=3.8
+  - r-argparse
+  - ...

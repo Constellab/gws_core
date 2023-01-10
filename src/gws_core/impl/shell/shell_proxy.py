@@ -5,7 +5,6 @@
 
 import select
 import subprocess
-import tempfile
 import time
 from typing import Any, List, Union
 
@@ -196,3 +195,19 @@ class ShellProxy():
 
     def dispatch_waiting_messages(self) -> None:
         self._message_dispatcher.force_dispatch_waiting_messages()
+
+    def get_message_dispatcher(self) -> MessageDispatcher:
+        """ Get the message dispatcher """
+        return self._message_dispatcher
+
+    def log_info_message(self, message: str):
+        """ Log an info message using the dispatcher """
+        self._message_dispatcher.notify_info_message(message)
+
+    def log_error_message(self, message: str):
+        """ Log an error message using the dispatcher """
+        self._message_dispatcher.notify_error_message(message)
+
+    def log_warning_message(self, message: str):
+        """ Log a warining message using the dispatcher """
+        self._message_dispatcher.notify_warning_message(message)
