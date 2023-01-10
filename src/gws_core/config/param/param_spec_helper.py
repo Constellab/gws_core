@@ -10,7 +10,12 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 
 from ..config_exceptions import MissingConfigsException
 from ..config_types import ConfigParams, ConfigSpecs
+from .code_param.json_code_param import JsonCodeParam
+from .code_param.julia_code_param import JuliaCodeParam
+from .code_param.perl_code_param import PerlCodeParam
 from .code_param.python_code_param import PythonCodeParam
+from .code_param.r_code_param import RCodeParam
+from .code_param.yaml_code_param import YamlCodeParam
 from .param_set import ParamSet
 from .param_spec import (BoolParam, DictParam, FloatParam, IntParam, ListParam,
                          ParamSpec, StrParam, TextParam)
@@ -103,4 +108,4 @@ class ParamSpecHelper():
     @staticmethod
     def _get_param_spec_types() -> List[Type[ParamSpec]]:
         return [BoolParam, IntParam, FloatParam, StrParam, TextParam, ListParam, ParamSet, TagsParam,
-                DictParam, PythonCodeParam]
+                DictParam, PythonCodeParam, JsonCodeParam, JuliaCodeParam, PerlCodeParam, RCodeParam, YamlCodeParam]
