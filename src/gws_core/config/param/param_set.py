@@ -40,6 +40,7 @@ class ParamSet(ParamSpec[list]):
         :param max_number_of_occurrences: Nb max of occurence of values the params. If negative, there is no limit.
         :type max_number_of_occurrences: Optional[str]
         """
+
         self.max_number_of_occurrences = max_number_of_occurrences
 
         if param_set is None:
@@ -95,11 +96,16 @@ class ParamSet(ParamSpec[list]):
     def to_json(self) -> ParamSpecDict:
         json_: ParamSpecDict = super().to_json()
 
-        json_["max_number_of_occurrences"] = self.max_number_of_occurrences
-        json_["param_set"] = {}
+        # convert the additional info to json
+        additional_info_json = {
+            "max_number_of_occurrences": self.max_number_of_occurrences,
+            "param_set": {}
+        }
 
         for key, spec in self.param_set.items():
-            json_["param_set"][key] = spec.to_json()
+            additional_info_json["param_set"][key] = spec.to_json()
+
+        json_["additional_info"] = additional_info_json
 
         return json_
 
@@ -110,11 +116,12 @@ class ParamSet(ParamSpec[list]):
     @classmethod
     def load_from_json(cls, json_: Dict[str, Any]) -> "ParamSet":
         from .param_spec_helper import ParamSpecHelper
-        param_spec: ParamSet = super().load_from_json(json_)
-        param_spec.max_number_of_occurrences = json_.get("max_number_of_occurrences")
-        param_spec.param_set = {}
+        param_set: ParamSet = super().load_from_json(json_)
 
-        for key, param in json_["param_set"].items():
-            param_spec.param_set[key] = ParamSpecHelper.create_param_spec_from_json(param)
+        # load info from additional info
+        param_set.max_number_of_occurrences = json_.get("additional_info").get("max_number_of_occurrences")
 
-        return param_spec
+        for key, param in json_.get("additional_info").get("param_set").items():
+            param_set.param_set[key] = ParamSpecHelper.create_param_spec_from_json(param)
+
+        return param_set

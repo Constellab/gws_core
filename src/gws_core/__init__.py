@@ -16,6 +16,20 @@ from .config.config_service import ConfigService as ConfigService
 from .config.config_types import ConfigParams as ConfigParams
 from .config.config_types import ConfigParamsDict as ConfigParamsDict
 from .config.config_types import ConfigSpecs as ConfigSpecs
+from .config.param.code_param.bash_code_param import \
+    BashCodeParam as BashCodeParam
+# Code params
+from .config.param.code_param.json_code_param import \
+    JsonCodeParam as JsonCodeParam
+from .config.param.code_param.julia_code_param import \
+    JuliaCodeParam as JuliaCodeParam
+from .config.param.code_param.perl_code_param import \
+    PerlCodeParam as PerlCodeParam
+from .config.param.code_param.python_code_param import \
+    PythonCodeParam as PythonCodeParam
+from .config.param.code_param.r_code_param import RCodeParam as RCodeParam
+from .config.param.code_param.yaml_code_param import \
+    YamlCodeParam as YamlCodeParam
 # from .config.param_spec import DictParam as DictParam
 from .config.param.param_set import ParamSet as ParamSet
 from .config.param.param_spec import BoolParam as BoolParam
@@ -170,11 +184,11 @@ from .impl.s3.swift import Swift as Swift
 from .impl.shell.base_env_shell import BaseEnvShell as BaseEnvShell
 from .impl.shell.conda_env_task import CondaEnvTask as CondaEnvTask
 from .impl.shell.conda_shell_proxy import CondaShellProxy as CondaShellProxy
+from .impl.shell.helper.env_shell_proxy_helper import EnvShellProxyHelper
 from .impl.shell.pip_env_task import PipEnvTask as PipEnvTask
 from .impl.shell.pip_shell_proxy import PipShellProxy as PipShellProxy
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 from .impl.shell.shell_task import ShellTask as ShellTask
-from .impl.shell.helper.env_shell_proxy_helper import EnvShellProxyHelper
 # Impl > Table
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
 from .impl.table.encoding.encoding_table import EncodingTable as EncodingTable

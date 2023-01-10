@@ -25,11 +25,4 @@ class ParamSpecDict(TypedDict):
     short_description: Optional[str]
     visibility: Optional[ParamSpecVisibilty]
     allowed_values: Optional[List[ParamValue]]
-
-    # Numeric
-    min_value: Optional[float]
-    max_value: Optional[float]
-
-    # Params set
-    max_number_of_occurrences: Optional[int]
-    param_set: Optional[Dict[str, 'ParamSpecDict']]
+    additional_info: Dict[str, str]

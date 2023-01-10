@@ -4,11 +4,15 @@
 # About us: https://gencovery.com
 
 
+import json
+from copy import deepcopy
 from typing import Dict, List
 
 from peewee import BigIntegerField, CharField
 
 from gws_core.brick.brick_helper import BrickHelper
+from gws_core.config.config import Config
+from gws_core.config.param.param_types import ParamSpecDict
 from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.experiment.experiment import Experiment
@@ -468,3 +472,57 @@ class Migration043(BrickMigration):
             except Exception as exception:
                 Logger.error(
                     f'Error while setting brick_version for {resource_model.resource_typing_name}, resource id {resource_model.id} : {exception}')
+
+
+@brick_migration('0.4.4', short_description='Update config spec json')
+class Migration044(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        # update config json
+        configs: List[Config] = list(Config.select())
+        for config in configs:
+            specs = config.data['specs']
+
+            changed = False
+            new_specs = {}
+
+            for key, spec in specs.items():
+                # if the spec was already updated
+                if 'additional_info' in spec:
+                    continue
+
+                new_specs[key] = cls.update_config_spec_json(spec)
+                changed = True
+
+            if changed:
+                config.data['specs'] = new_specs
+                config.save()
+
+    @classmethod
+    def update_config_spec_json(cls, config_spec_json: ParamSpecDict) -> ParamSpecDict:
+        copy: ParamSpecDict = deepcopy(config_spec_json)
+
+        specs = {}
+
+        # copy all basic fields
+        for key in ['type', 'optional', 'visibility', 'default_value',
+                    'human_name', 'short_description', 'unit', 'allowed_values']:
+            if key in copy:
+                specs[key] = copy.get(key)
+                del copy[key]
+
+        # handle param set recursively
+        if 'param_set' in copy:
+            param_set = {}
+            for key, spec in copy['param_set'].items():
+                param_set[key] = cls.update_config_spec_json(spec)
+
+            # replace the param set in the copy
+            copy['param_set'] = param_set
+
+        # add the rest json to additional_info
+        specs['additional_info'] = copy
+
+        return specs

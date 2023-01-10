@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Dict, Generic, List, Optional, TypedDict, TypeVar
 
 from gws_core.core.utils.logger import Logger
 
@@ -42,6 +42,9 @@ class ParamSpec(Generic[ParamSpecType]):
     # Measure unit of the value (ex kg)
     unit: Optional[str]
 
+    # additional info specific for the param
+    additional_info: Optional[dict]
+
     PUBLIC_VISIBILITY = "public"
     PROTECTED_VISIBILITY = "protected"
     PRIVATE_VISIBILITY = "private"
@@ -78,6 +81,9 @@ class ParamSpec(Generic[ParamSpecType]):
         self.short_description = short_description
         self.unit = unit
 
+        if not hasattr(self, 'additional_info'):
+            self.additional_info = {}
+
         # the param is optional if the default value is set or optional is set to True
         self.optional = default_value is not None or optional
         self._check_visibility(visibility)
@@ -97,6 +103,7 @@ class ParamSpec(Generic[ParamSpecType]):
             "type": self.get_str_type(),
             "optional": self.optional,
             "visibility": self.visibility,
+            "additional_info": self.additional_info or {}
         }
 
         if self.default_value is not None:
@@ -169,14 +176,21 @@ class ParamSpec(Generic[ParamSpecType]):
         param_spec.unit = json_.get("unit")
         param_spec.visibility = json_.get("visibility")
         param_spec.allowed_values = json_.get("allowed_values")
+        param_spec.additional_info = json_.get("additional_info") or {}
         return param_spec
+
+
+class StrParamAdditionalInfo(TypedDict):
+    """Additional info for string param"""
+
+    min_length: Optional[int]
+    max_length: Optional[int]
 
 
 class StrParam(ParamSpec[str]):
     """String param"""
 
-    min_length: Optional[int]
-    max_length: Optional[int]
+    additional_info: Optional[StrParamAdditionalInfo]
 
     def __init__(
         self,
@@ -208,8 +222,10 @@ class StrParam(ParamSpec[str]):
         :type unit: Optional[str]
         """
 
-        self.min_length = min_length
-        self.max_length = max_length
+        self.additional_info = {
+            "min_length": min_length,
+            "max_length": max_length,
+        }
         super().__init__(
             default_value=default_value,
             optional=optional,
@@ -223,70 +239,8 @@ class StrParam(ParamSpec[str]):
     def _get_validator(self) -> Validator:
         return StrValidator(
             allowed_values=self.allowed_values,
-            min_length=self.max_length,
-            max_length=self.max_length
-        )
-
-    @classmethod
-    def get_str_type(cls) -> str:
-        return 'str'
-
-
-class StrParam(ParamSpec[str]):
-    """Short string param with possibility to list possible values and limit the length
-    If you want a long string params (like multi line text), use the TextParam.
-    """
-
-    min_length: Optional[int]
-    max_length: Optional[int]
-
-    def __init__(
-        self,
-        default_value: Optional[str] = None,
-        min_length: Optional[int] = None,
-        max_length: Optional[int] = None,
-        optional: bool = False,
-        visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = None,
-        short_description: Optional[str] = None,
-        allowed_values: Optional[List[str]] = None,
-        unit: Optional[str] = None,
-    ) -> None:
-        """
-        :param default_value: Default value, if None, and optional is false, the config is mandatory
-                        If a value is provided there is no need to set the optional
-                        Setting optional to True, allows default None value
-        :param optional: See default value
-        :type optional: Optional[str]
-        :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
-        :type visibility: ParamSpecVisibilty
-        :param human_name: Human readable name of the param, showed in the interface
-        :type human_name: Optional[str]
-        :param short_description: Description of the param, showed in the interface
-        :type short_description: Optional[str]
-        :param allowed_values: If present, the param value must be in the array
-        :type allowed_values: Optional[List[str]]
-        :param unit: Measure unit of the value (ex kg)
-        :type unit: Optional[str]
-        """
-
-        self.min_length = min_length
-        self.max_length = max_length
-        super().__init__(
-            default_value=default_value,
-            optional=optional,
-            visibility=visibility,
-            human_name=human_name,
-            short_description=short_description,
-            allowed_values=allowed_values,
-            unit=unit,
-        )
-
-    def _get_validator(self) -> Validator:
-        return StrValidator(
-            allowed_values=self.allowed_values,
-            min_length=self.max_length,
-            max_length=self.max_length
+            min_length=self.additional_info.get("min_length"),
+            max_length=self.additional_info.get("max_length"),
         )
 
     @classmethod
@@ -370,14 +324,20 @@ class ListParam(ParamSpec[list]):
         return 'list'
 
 
+class NumericParamAdditionalInfo(TypedDict):
+    """Additional info for string param"""
+
+    # The minimum value allowed (including)
+    min_value: Optional[float]
+
+    # The maximum value allowed (including)
+    max_value: Optional[float]
+
+
 class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
     """Abstract numerci param class (int or float)"""
 
-    # The minimum value allowed (including)
-    min_value: Optional[ParamSpecType]
-
-    # The maximum value allowed (including)
-    max_value: Optional[ParamSpecType]
+    additional_info: Optional[NumericParamAdditionalInfo]
 
     def __init__(
         self,
@@ -412,9 +372,10 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
         :param unit: Measure unit of the value (ex kg)
         :type unit: Optional[str]
         """
-
-        self.min_value = min_value
-        self.max_value = max_value
+        self.additional_info = {
+            "min_value": min_value,
+            "max_value": max_value,
+        }
         super().__init__(
             default_value=default_value,
             optional=optional,
@@ -429,26 +390,10 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
     def _get_validator(self) -> Validator:
         pass
 
-    def to_json(self) -> ParamSpecDict:
-        json_: ParamSpecDict = super().to_json()
-
-        if self.min_value:
-            json_["min_value"] = self.min_value
-        if self.max_value:
-            json_["max_value"] = self.max_value
-
-        return json_
-
     @classmethod
+    @abstractmethod
     def get_str_type(cls) -> str:
         pass
-
-    @classmethod
-    def load_from_json(cls, json_: Dict[str, Any]) -> "NumericParam":
-        param_spec: NumericParam = super().load_from_json(json_)
-        param_spec.min_value = json_.get("min_value")
-        param_spec.max_value = json_.get("max_value")
-        return param_spec
 
 
 class IntParam(NumericParam[int]):
@@ -457,8 +402,8 @@ class IntParam(NumericParam[int]):
     def _get_validator(self) -> Validator:
         return IntValidator(
             allowed_values=self.allowed_values,
-            min_value=self.min_value,
-            max_value=self.max_value,
+            min_value=self.additional_info.get("min_value"),
+            max_value=self.additional_info.get("max_value"),
         )
 
     @classmethod
@@ -472,8 +417,8 @@ class FloatParam(NumericParam[float]):
     def _get_validator(self) -> Validator:
         return FloatValidator(
             allowed_values=self.allowed_values,
-            min_value=self.min_value,
-            max_value=self.max_value,
+            min_value=self.additional_info.get("min_value"),
+            max_value=self.additional_info.get("max_value"),
         )
 
     @classmethod

@@ -10,11 +10,11 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 
 from ..config_exceptions import MissingConfigsException
 from ..config_types import ConfigParams, ConfigSpecs
+from .code_param.python_code_param import PythonCodeParam
 from .param_set import ParamSet
 from .param_spec import (BoolParam, DictParam, FloatParam, IntParam, ListParam,
                          ParamSpec, StrParam, TextParam)
 from .param_types import ParamValue
-from .python_code_param import PythonCodeParam
 from .tags_param_spec import TagsParam
 
 

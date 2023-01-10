@@ -6,7 +6,7 @@
 import runpy
 import tempfile
 
-from gws_core.config.param.python_code_param import PythonCodeParam
+from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 
 from ...config.config_types import ConfigParams, ConfigSpecs
 from ...config.param.param_spec import ListParam

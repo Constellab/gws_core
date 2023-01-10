@@ -159,6 +159,9 @@ class Config(ModelWithUser):
         json_["values"] = self.get_values()
         return json_
 
+    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
+        return {}
+
     def export_config(self) -> dict:
         """
         Export the config to a dict

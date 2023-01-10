@@ -6,13 +6,13 @@
 
 from gws_core.core.classes.validator import StrValidator, Validator
 
-from .param_spec import ParamSpec
+from ..param_spec import ParamSpec
 
 
-class PythonCodeParam(ParamSpec[str]):
-    """Param for python code. It shows a simple python IDE
-      in the interface to provide code for python.
-      The value of this param is a string containing the python code
+class YamlCodeParam(ParamSpec[str]):
+    """Param for yaml code. It shows a simple yaml IDE
+      in the interface to provide code for yaml.
+      The value of this param is a string containing the yaml code
       with each line separated by a newline character (\n).
 
     :param ParamSpec: _description_
@@ -21,7 +21,7 @@ class PythonCodeParam(ParamSpec[str]):
 
     @classmethod
     def get_str_type(cls) -> str:
-        return "python_code_param"
+        return "yaml_code_param"
 
     def _get_validator(self) -> Validator:
         return StrValidator()

@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core.config.param.python_code_param import PythonCodeParam
+from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 
 from ...config.config_types import ConfigSpecs
 from ...config.param.param_spec import ListParam, StrParam
