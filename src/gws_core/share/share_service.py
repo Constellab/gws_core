@@ -175,4 +175,3 @@ class ShareService():
         shared_entity.space_name = lab_info['space_name']
         shared_entity.created_by = created_by
         shared_entity.save()
-        raise Exception('test')
