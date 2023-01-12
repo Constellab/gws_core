@@ -286,6 +286,18 @@ class Settings():
         else:
             return "/data"
 
+    def get_brick_data_dir(self, brick_name: str) -> str:
+        """
+        Get the data directory of a brick.
+        It contains the data downloaded for a brick.
+
+        :param brick_name: The name of the brick
+        :type brick_name: `str`
+        :return: The brick data directory
+        :rtype: `str`
+        """
+        return os.path.join(self.get_data_dir(), 'bricks', brick_name)
+
     def get_file_store_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "filestore/")
 

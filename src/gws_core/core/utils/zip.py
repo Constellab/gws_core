@@ -14,35 +14,6 @@ class Zip:
     Zip class
     """
 
-    @staticmethod
-    def unzip(zipfile_path: str, destination_folder: str):
-        """
-        Unzip a file.
-
-        :param zipfile_path: Path of the file to unzip
-        :param zipfile_path: `str`
-        """
-
-        with ZipFile(zipfile_path, 'r') as zip_obj:
-            zip_obj.extractall(destination_folder)
-
-    @staticmethod
-    def zipdir(dir_to_zip: str, destination_file_path: str) -> str:
-        zipf = ZipFile(destination_file_path, 'w', ZIP_DEFLATED)
-
-        # ziph is zipfile handle
-        for root, dirs, files in os.walk(dir_to_zip):
-            for file in files:
-                zipf.write(os.path.join(root, file),
-                           os.path.relpath(os.path.join(root, file),
-                                           os.path.join(dir_to_zip, '..')))
-
-        zipf.close()
-        return destination_file_path
-
-
-class Zipv2:
-
     destination_file_path: str
     zipf: ZipFile
 
@@ -75,3 +46,31 @@ class Zipv2:
     def close(self) -> str:
         self.zipf.close()
         return self.destination_file_path
+
+    @staticmethod
+    def unzip(zipfile_path: str, destination_folder: str):
+        """
+        Unzip a file.
+
+        :param zipfile_path: Path of the file to unzip
+        :param zipfile_path: `str`
+        """
+
+        with ZipFile(zipfile_path, 'r') as zip_obj:
+            zip_obj.extractall(destination_folder)
+
+    @staticmethod
+    def zipdir(dir_to_zip: str, destination_file_path: str) -> str:
+        """Static method to zip 1 directory directly.
+
+        :param dir_to_zip: _description_
+        :type dir_to_zip: str
+        :param destination_file_path: _description_
+        :type destination_file_path: str
+        :return: _description_
+        :rtype: str
+        """
+
+        zip_ = Zip(destination_file_path)
+        zip_.add_dir(dir_to_zip)
+        return zip_.close()

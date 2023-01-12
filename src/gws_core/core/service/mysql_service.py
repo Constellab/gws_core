@@ -5,10 +5,10 @@
 
 import os
 
+from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.db.db_manager_service import DbManagerService
 
 from ..db.mysql import MySQLDump, MySQLLoad
-from ..utils.requests import Requests
 from .base_service import BaseService
 
 
@@ -58,11 +58,8 @@ class MySQLService(BaseService):
             if os.path.exists(local_file_path):
                 load.input_file = local_file_path
         elif remote_file_url:
-            Requests.download(
-                remote_file_url,
-                load.input_dir,
-                load.DUMP_FILENAME
-            )
+            file_downloader = FileDownloader(load.input_dir)
+            file_downloader.download_file(remote_file_url, load.DUMP_FILENAME)
         else:
             # use default MySQLLoad configs
             pass

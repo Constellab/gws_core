@@ -6,9 +6,12 @@
 from abc import abstractmethod
 from typing import Literal, Optional, Type, TypedDict, final
 
+from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.dispatched_message import (
     DispatchedMessage, DispatchedMessageStatus)
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
+from gws_core.core.utils.settings import Settings
+from gws_core.model.typing import TypingNameObj
 from gws_core.model.typing_register_decorator import typing_registrator
 
 from ..config.config_types import ConfigParams, ConfigSpecs
@@ -41,10 +44,14 @@ class Task(Process):
     output_specs: OutputSpecs = {}
     config_specs: ConfigSpecs = {}
 
+    # Message dispatcher used to log messages of the task
+    message_dispatcher: MessageDispatcher
+
+    # Object useful to download external files required by the task
+    file_downloader: FileDownloader
+
     # Current status of the task, do not update
     _status_: Literal['CHECK_BEFORE_RUN', 'RUN', 'RUN_AFTER_TASK']
-
-    message_dispatcher: MessageDispatcher
 
     def __init__(self):
         """
@@ -59,6 +66,11 @@ class Task(Process):
                 f"The task {self.full_classname()} is not decorated with @task_decorator, it can't be instantiate. Please decorate the task class with @task_decorator")
         self._status_ = None
         self.message_dispatcher = MessageDispatcher()
+        typing_name = TypingNameObj.from_typing_name(self._typing_name)
+        settings = Settings.get_instance()
+        destination_folder = settings.get_brick_data_dir(typing_name.brick_name)
+
+        self.file_downloader = FileDownloader(destination_folder, self.message_dispatcher)
 
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         """

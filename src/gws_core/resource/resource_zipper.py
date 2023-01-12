@@ -13,7 +13,7 @@ from gws_core.core.decorator.transaction import transaction
 from gws_core.core.service.external_lab_service import (
     ExternalLabService, ExternalLabWithUserInfo)
 from gws_core.core.utils.settings import Settings
-from gws_core.core.utils.zip import Zipv2
+from gws_core.core.utils.zip import Zip
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
@@ -59,7 +59,7 @@ class ResourceZipper():
 
     temp_dir: str
 
-    zip: Zipv2
+    zip: Zip
 
     resource_info: ZipResourceInfo
 
@@ -68,7 +68,7 @@ class ResourceZipper():
     def __init__(self, shared_by: User):
         self.shared_by = shared_by
         self.temp_dir = Settings.get_instance().make_temp_dir()
-        self.zip = Zipv2(self.get_zip_file_path())
+        self.zip = Zip(self.get_zip_file_path())
         self.resource_info = {
             'zip_version': 1,
             'resources': [],

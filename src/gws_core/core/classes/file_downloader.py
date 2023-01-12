@@ -1,0 +1,211 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+import os
+import time
+from typing import Dict
+
+import requests
+
+from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
+from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.settings import Settings
+from gws_core.core.utils.string_helper import StringHelper
+from gws_core.core.utils.zip import Zip
+from gws_core.impl.file.file_helper import FileHelper
+
+
+# Questions, est-ce qu'on créer une resource ?
+# Est-ce qu'on le mets dans data donc dans le backup ?
+# Est-ce qu'on laisse la possibilité de configurer une autre brick ?
+class FileDownloader():
+
+    message_dispatcher: MessageDispatcher
+    destination_folder: str
+
+    def __init__(self, destination_folder: str, message_dispatcher: MessageDispatcher = None):
+        self.destination_folder = destination_folder
+        self.message_dispatcher = message_dispatcher
+
+    def download_file_if_mising(self, url: str, filename: str, headers: Dict[str, str] = None,
+                                timeout: float = None, unzip_file: bool = False) -> str:
+        """ Download a file from a given url if the file does not already exist. This class is useful for downloading
+        a file that is required for a task.
+        If used within a task, it automatically logs the download progress and the time it took to download the file.
+
+        :param url: url to download the file from
+        :type url: str
+        :param filename: name of the file once downloaded. This filename must be unique for the brick. If a file downloader
+                         tries to download a file with the same name, it considers that the file has already been downloaded
+                         and will not download it. If you want to force the download of a file (new version for example), change the filename (adding v2 for example).
+        :type filename: str
+        :param headers: http header to attach to the download request, defaults to None
+        :type headers: Dict[str, str], optional
+        :param timeout: timeout of the download request, defaults to None
+        :type timeout: float, optional
+        :param unzip_file: if true the file is unzipped after the download and the zip file is deleted, defaults to False
+        :type unzip_file: bool, optional
+        :return: the path of the downloaded file/folder
+        :rtype: str
+        """
+
+        FileHelper.create_dir_if_not_exist(self.destination_folder)
+
+        file_path = os.path.join(self.destination_folder, filename)
+
+        if self._check_if_already_downloaded(file_path):
+            self._dispatch_message(f"File {file_path} already downloaded")
+            return file_path
+
+        # If the file needs to be unzipped, we need to download it to a temporary folder
+        download_destination = file_path if not unzip_file else os.path.join(
+            self.destination_folder, StringHelper.generate_uuid())
+        self.download_file(url, download_destination, headers, timeout)
+
+        if unzip_file:
+            return self.unzip_file(download_destination, file_path)
+
+        return file_path
+
+    def download_file(self, url: str, destination_path: str, headers: Dict[str, str] = None,
+                      timeout: float = None) -> str:
+        """
+        Download a file from a given url to a given file path
+
+        :param url: The url to download the file from
+        :type url: `str`
+        :param file_path: The path to save the file to
+        :type file_path: `str`
+        :param headers: The headers to send with the request
+        :type headers: `dict`
+        """
+
+        self._dispatch_message(f"Downloading {url} to {destination_path}")
+        started_at = time.time()
+
+        try:
+            with requests.get(url, stream=True, headers=headers, timeout=timeout) as request:
+                request.raise_for_status()
+
+                with open(destination_path, 'wb') as file:
+
+                    if request.headers.get('content-length') is None:
+                        file.write(request.content)
+                    else:
+                        # download the file in chunks with a progress bar
+                        total_size = int(request.headers.get('content-length'))
+                        last_progress_logged = 0.0
+
+                        # convert a to int and if it fails, use None
+                        for chunk in request.iter_content(chunk_size=max(int(total_size/1000), 1024*1024)):
+                            file.write(chunk)
+
+                            downloaded_size = file.tell()
+                            progress = downloaded_size / total_size
+
+                            # if the progress is less than 3% more than the previous log, do not display the progress
+                            if progress - last_progress_logged > 0.03:
+                                # calculate remaining time
+                                remaining_time = (
+                                    time.time() - started_at) / (downloaded_size / total_size) - (time.time() - started_at)
+
+                                self._dispatch_progress(total_size, downloaded_size, remaining_time)
+                                last_progress_logged = progress
+
+        except Exception as exc:
+            self._dispatch_error(f"Error downloading {url} to {destination_path}: {exc}")
+            raise exc
+
+        duration = DateHelper.get_duration_pretty_text(time.time() - started_at)
+        self._dispatch_message(f"Downloaded {url} to {destination_path} in {duration}")
+
+        return destination_path
+
+    def unzip_file(self, zip_file_path: str, unzip_path: str) -> str:
+        """
+        Unzip a file to a given path
+
+        :param file_path: The path to the file to unzip
+        :type file_path: `str`
+        :param unzip_path: The path to unzip the file to
+        :type unzip_path: `str`
+        """
+
+        self._dispatch_message(f"Unzipping {zip_file_path} to {unzip_path}")
+        started_at = time.time()
+
+        try:
+            Zip.unzip(zip_file_path, unzip_path)
+        except Exception as exc:
+            self._dispatch_error(f"Error unzipping {zip_file_path} to {unzip_path}: {exc}")
+            raise exc
+
+        duration = DateHelper.get_duration_pretty_text(time.time() - started_at)
+        self._dispatch_message(f"Unzipped {zip_file_path} to {unzip_path} in {duration}")
+
+        # delete zip file
+        FileHelper.delete_file(zip_file_path)
+
+        return unzip_path
+
+    def get_destination_folder(self) -> str:
+        """
+        Get the destination folder
+
+        :return: The destination folder
+        :rtype: `str`
+        """
+        settings = Settings.get_instance()
+        folder = settings.get_brick_data_dir(self.brick_name)
+
+        return folder
+
+    def _check_if_already_downloaded(self, file_path: str) -> bool:
+        """
+        Check if a file exists
+
+        :param file_path: The path to the file to check
+        :type file_path: `str`
+        :return: True if the file exists, False otherwise
+        :rtype: `bool`
+        """
+        return FileHelper.exists_on_os(file_path)
+
+    def _dispatch_progress(self, total: int, downloaded: int, remaining_time: float) -> None:
+        """
+        Dispatch the progress of the download
+
+        :param total: The total size of the file to download
+        :type total: `int`
+        :param downloaded: The amount of data downloaded so far
+        :type downloaded: `int`
+        """
+        if self.message_dispatcher is not None:
+            downloaded_str = FileHelper.get_file_size_pretty_text(downloaded)
+            total_str = FileHelper.get_file_size_pretty_text(total)
+
+            remaining_time_str = DateHelper.get_duration_pretty_text(remaining_time)
+            self.message_dispatcher.notify_info_message(
+                f"Downloaded {downloaded_str}/{total_str} - {remaining_time_str} remaining"
+            )
+
+    def _dispatch_message(self, message: str) -> None:
+        """
+        Dispatch a message
+
+        :param message: The message to dispatch
+        :type message: `dict`
+        """
+        if self.message_dispatcher is not None:
+            self.message_dispatcher.notify_info_message(message)
+
+    def _dispatch_error(self, message: str) -> None:
+        """
+        Dispatch an error message
+
+        :param message: The error message to dispatch
+        :type message: `str`
+        """
+        if self.message_dispatcher is not None:
+            self.message_dispatcher.notify_error_message(message)

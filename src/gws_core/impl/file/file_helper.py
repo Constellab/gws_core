@@ -233,3 +233,12 @@ class FileHelper():
             media_type = cls.get_mime(file_path)
 
         return FileResponse(file_path, media_type=media_type, filename=filename)
+
+    @classmethod
+    def get_file_size_pretty_text(cls, size: float) -> str:
+        """Get a human readable file size"""
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB', 'PB']:
+            if size < 1024.0:
+                return f'{size:.1f} {unit}'
+            size /= 1024.0
+        return f'{size:.1f} EB'

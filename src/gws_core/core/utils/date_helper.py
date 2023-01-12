@@ -42,3 +42,22 @@ class DateHelper:
 
         for n in range(int((end_date - start_date).days)):
             yield start_date + timedelta(n)
+
+    @staticmethod
+    def get_duration_pretty_text(duration_in_seconds: float) -> str:
+        """Return a string representing the duration in a human readable way.
+        """
+        duration_in_seconds = abs(duration_in_seconds)
+        if duration_in_seconds < 60:
+            return f'{duration_in_seconds:.1f} seconds'
+
+        duration_in_minutes = duration_in_seconds // 60
+        if duration_in_minutes < 60:
+            return f'{duration_in_minutes:.1f} minutes'
+
+        duration_in_hours = duration_in_minutes // 60
+        if duration_in_hours < 24:
+            return f'{duration_in_hours:.1f} hours'
+
+        duration_in_days = duration_in_hours // 24
+        return f'{duration_in_days:.1f} days'

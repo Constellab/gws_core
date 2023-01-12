@@ -11,7 +11,8 @@ from gws_core.core.utils.zip import Zip
 from gws_core.impl.file.file_helper import FileHelper
 
 
-class TestDate(IsolatedAsyncioTestCase):
+# test_zip
+class TestZip(IsolatedAsyncioTestCase):
 
     def test_zip_unzip(self):
 
