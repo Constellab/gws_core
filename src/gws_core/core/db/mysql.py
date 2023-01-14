@@ -160,7 +160,7 @@ class MySQLLoad(MySQLBase):
 #     """
 
 #     def build_command(self) -> List[str]:
-#         settings = Settings.retrieve()
+#         settings = Settings.get_instance()
 #         self.host = settings.get_maria_db_host()
 #         self.db_name = slugify(self.db_name, snakefy=True)                          #slugify string for security
 #         self.table_prefix = slugify(self.table_prefix, snakefy=True)                #slugify string for security
