@@ -202,8 +202,12 @@ class Settings():
         return os.environ.get("FRONT_URL", '')
 
     @classmethod
+    def _get_system_folder(cls) -> str:
+        return os.path.join('/lab', '.sys')
+
+    @classmethod
     def get_global_env_dir(cls) -> str:
-        return "/lab/.sys/.venv"
+        return os.path.join(cls._get_system_folder(), ".env")
 
     def get_gws_core_prod_db_config(self) -> DbConfig:
         return {
@@ -251,16 +255,6 @@ class Settings():
     def get_brick_list(self) -> List[str]:
         return [key for key in self.data["modules"] if self.data["modules"]["is_brick"]]
 
-    def get_lab_dir(self) -> str:
-        """
-        Get the lab directory.
-
-        :return: The lab directory
-        :rtype: `str`
-        """
-
-        return "/lab"
-
     def get_log_dir(self) -> str:
         """
         Get the log directory
@@ -296,7 +290,10 @@ class Settings():
         :return: The brick data directory
         :rtype: `str`
         """
-        return os.path.join(self.get_data_dir(), 'bricks', brick_name)
+        if self.is_test:
+            return os.path.join(self._get_system_folder(), 'brick-data-test', brick_name)
+        else:
+            return os.path.join(self._get_system_folder(), 'brick-data', brick_name)
 
     def get_file_store_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "filestore/")
@@ -471,7 +468,6 @@ class Settings():
             "lab_environemnt": self.get_lab_environment(),
             "virtual_host": self.get_virtual_host(),
             "cwd": self.get_cwd(),
-            "lab_dir": self.get_lab_dir(),
             "log_dir": self.get_log_dir(),
             "data_dir": self.get_data_dir(),
             "file_store_dir": self.get_file_store_dir(),

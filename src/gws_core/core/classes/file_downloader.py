@@ -16,10 +16,10 @@ from gws_core.core.utils.zip import Zip
 from gws_core.impl.file.file_helper import FileHelper
 
 
-# Questions, est-ce qu'on créer une resource ?
-# Est-ce qu'on le mets dans data donc dans le backup ?
-# Est-ce qu'on laisse la possibilité de configurer une autre brick ?
 class FileDownloader():
+    """Class to downloader external files. for now it only supports http(s) protocol.
+    If a message dispatcher is provided, it will automatically log the download progress and the time it took to download the file.
+    """
 
     message_dispatcher: MessageDispatcher
     destination_folder: str
@@ -28,8 +28,8 @@ class FileDownloader():
         self.destination_folder = destination_folder
         self.message_dispatcher = message_dispatcher
 
-    def download_file_if_mising(self, url: str, filename: str, headers: Dict[str, str] = None,
-                                timeout: float = None, unzip_file: bool = False) -> str:
+    def download_file_if_missing(self, url: str, filename: str, headers: Dict[str, str] = None,
+                                 timeout: float = None, unzip_file: bool = False) -> str:
         """ Download a file from a given url if the file does not already exist. This class is useful for downloading
         a file that is required for a task.
         If used within a task, it automatically logs the download progress and the time it took to download the file.

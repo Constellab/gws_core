@@ -10,7 +10,6 @@ from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.dispatched_message import (
     DispatchedMessage, DispatchedMessageStatus)
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
-from gws_core.core.utils.settings import Settings
 from gws_core.model.typing import TypingNameObj
 from gws_core.model.typing_register_decorator import typing_registrator
 
@@ -66,11 +65,6 @@ class Task(Process):
                 f"The task {self.full_classname()} is not decorated with @task_decorator, it can't be instantiate. Please decorate the task class with @task_decorator")
         self._status_ = None
         self.message_dispatcher = MessageDispatcher()
-        typing_name = TypingNameObj.from_typing_name(self._typing_name)
-        settings = Settings.get_instance()
-        destination_folder = settings.get_brick_data_dir(typing_name.brick_name)
-
-        self.file_downloader = FileDownloader(destination_folder, self.message_dispatcher)
 
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         """
@@ -169,3 +163,9 @@ class Task(Process):
     @classmethod
     def get_output_specs(cls) -> OutputSpecs:
         return cls.output_specs
+
+    @final
+    @classmethod
+    def get_brick_name(cls) -> str:
+        typing_name = TypingNameObj.from_typing_name(cls._typing_name)
+        return typing_name.brick_name
