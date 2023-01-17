@@ -335,6 +335,9 @@ class ProcessFactory():
         new_protocol_model.init_connectors_from_graph(protocol_model.data["graph"]["links"])
         new_protocol_model.refresh_graph_from_dump()
 
+        # copy the layout
+        new_protocol_model.layout = protocol_model.layout
+
         return new_protocol_model
 
       ############################################### SPECIFIC #################################################

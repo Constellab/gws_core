@@ -15,7 +15,7 @@ class TaskFileDownloader(FileDownloader):
     For example: TaskFileDownloader(brick_name=MyTaskClass.get_brick_name(), message_dispatcher=self.message_dispatcher)
 
     It is recommended to use MyTaskClass.get_brick_name() because this defines the destination of the downloader file.
-    So the destination will be the same even is your task is overriden by another task.
+    With this, the destination will be the same even is your task is overriden by another task (and the file will not be duplicated).
 
     :param FileDownloader: _description_
     :type FileDownloader: _type_
