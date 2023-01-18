@@ -19,7 +19,7 @@ class MonitorService(BaseService):
 
     TICK_INTERVAL_SECONDS = 30   # 30 seconds
     TICK_INTERVAL_CLEANUP = 60 * 60 * 24  # 24 hours
-    MONITORING_MAX_AGE = 60 * 60 * 24 * 30  # 30 days, clear monitoring data older than 30 days
+    MONITORING_MAX_LINES = 86400  # 86400 = 1 log every 30 seconds for 1 month
     _is_initialized: bool = False
 
     @classmethod
@@ -101,6 +101,9 @@ class MonitorService(BaseService):
 
     @classmethod
     def cleanup_old_monitor_data(cls):
-        date = DateHelper.now_utc() - timedelta(seconds=cls.MONITORING_MAX_AGE)
 
-        Monitor.delete().where(Monitor.created_at < date).execute()
+        # Keep only last x records
+        monitor: Monitor = Monitor.select().order_by(Monitor.created_at.desc()).offset(cls.MONITORING_MAX_LINES).first()
+
+        # Delete all record older
+        Monitor.delete().where(Monitor.created_at <= monitor.created_at).execute()

@@ -47,8 +47,8 @@ class ProgressBar(Model):
     ProgressBar class
     """
 
-    process_id = CharField(null=True, index=True)
-    process_typing_name = CharField(null=True)
+    process_id = CharField(null=False, index=True)
+    process_typing_name = CharField(null=False)
 
     current_value = FloatField(default=0.0)
     started_at = DateTimeUTC(null=True)
