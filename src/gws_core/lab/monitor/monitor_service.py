@@ -8,8 +8,8 @@ import threading
 from datetime import datetime, timedelta
 
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.logger import Logger
 
-from ...core.classes.paginator import Paginator
 from ...core.service.base_service import BaseService
 from .monitor import Monitor
 from .monitor_dto import MonitorBetweenDateDTO
@@ -35,6 +35,8 @@ class MonitorService(BaseService):
             return
         try:
             MonitorService.save_current_monitor()
+        except Exception as err:
+            Logger.error(f"Error while saving current monitor : {str(err)}")
         finally:
             thread = threading.Timer(
                 cls.TICK_INTERVAL_SECONDS, cls._system_monitor_tick)
@@ -47,6 +49,8 @@ class MonitorService(BaseService):
             return
         try:
             MonitorService.cleanup_old_monitor_data()
+        except Exception as err:
+            Logger.error(f"Error while cleaning monitor data : {str(err)}")
         finally:
             thread = threading.Timer(
                 cls.TICK_INTERVAL_CLEANUP, cls._system_monitor_cleanup)

@@ -52,5 +52,5 @@ class TableStackedBarPlotView(TableBarPlotView):
     }
     _type: ViewType = ViewType.STACKED_BAR_PLOT
 
-    def _get_view(sekf, params: ConfigParams) -> BarPlotView:
+    def _get_view(self, params: ConfigParams) -> BarPlotView:
         return StackedBarPlotView(normalize=params.get('normalize'))
