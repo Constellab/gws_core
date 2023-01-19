@@ -16,7 +16,6 @@ from gws_core.core.utils.date_helper import DateHelper
 from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
-from ..core.utils.http_helper import HTTPHelper
 from ..core.utils.logger import Logger
 
 
@@ -47,7 +46,7 @@ class ProgressBar(Model):
     ProgressBar class
     """
 
-    process_id = CharField(null=False, index=True)
+    process_id = CharField(null=False, index=True, unique=True)
     process_typing_name = CharField(null=False)
 
     current_value = FloatField(default=0.0)
@@ -229,16 +228,6 @@ class ProgressBar(Model):
     ################################################## CLASS METHODS #################################################
 
     @classmethod
-    def add_message_to_current(cls, message: str, type_: ProgressBarMessageType = ProgressBarMessageType.INFO) -> None:
-        progress_bar: ProgressBar = cls.get_current_progress_bar()
-
-        if progress_bar is None:
-            cls._log_message(message, type_)
-            return
-
-        progress_bar.add_message(message=message, type_=type_)
-
-    @classmethod
     def _log_message(cls, message: str, type_: ProgressBarMessageType) -> None:
         if type_ == ProgressBarMessageType.INFO or type_ == ProgressBarMessageType.SUCCESS:
             Logger.info(message)
@@ -248,24 +237,3 @@ class ProgressBar(Model):
             Logger.warning(message)
         elif type_ == ProgressBarMessageType.PROGRESS:
             Logger.progress(message)
-
-    @classmethod
-    def get_by_process_id(cls, process_id: str) -> 'ProgressBar':
-        return ProgressBar.get(ProgressBar.process_id == process_id)
-
-    @classmethod
-    def get_current_progress_bar(cls) -> 'ProgressBar':
-        """
-        Get the current progress bar.
-
-        This method allow accessing the current progress everywhere (i.e. at the application level)
-        """
-        if not HTTPHelper.is_http_context():
-            return None
-        return context.data.get("progress_bar")
-
-    class Meta:
-        indexes = (
-            # create a unique on process_id, process_typing_name
-            (('process_id', 'process_typing_name'), True),
-        )

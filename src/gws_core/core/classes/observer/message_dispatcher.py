@@ -179,3 +179,6 @@ class MessageDispatcher:
                 timer.join()
 
         self._dispatch_waiting_messages()
+
+    def has_observers(self):
+        return len(self._observers) > 0

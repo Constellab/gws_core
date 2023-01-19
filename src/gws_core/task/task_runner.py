@@ -5,6 +5,9 @@
 
 from typing import Dict, List, Type
 
+from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
+from gws_core.core.classes.observer.message_observer import \
+    BasicMessageObserver
 from gws_core.core.utils.logger import Logger
 from gws_core.io.io_spec import OutputSpec
 
@@ -38,7 +41,7 @@ class TaskRunner():
     _outputs: TaskOutputs
 
     _task: Task
-    _progress_bar: ProgressBar
+    _message_dispatcher: MessageDispatcher
 
     def __init__(self, task_type: Type[Task], params: ConfigParamsDict = None, inputs: Dict[str, Resource] = None):
         self._task_type = task_type
@@ -55,7 +58,7 @@ class TaskRunner():
 
         self._task = None
         self._outputs = None
-        self._progress_bar = None
+        self._message_dispatcher = MessageDispatcher()
 
     def check_before_run(self) -> CheckBeforeTaskResult:
         """This method check the config and inputs and then execute the check before run of the task
@@ -130,10 +133,7 @@ class TaskRunner():
         if self._task is None:
             self._task = self._task_type()
 
-            if self._progress_bar is None:
-                self._progress_bar = ProgressBar()
-
-            self._task.attach_progress_bar(self._progress_bar)
+            self._task.set_message_dispatcher(self._message_dispatcher)
 
         return self._task
 
@@ -261,7 +261,19 @@ class TaskRunner():
         return None
 
     def set_progress_bar(self, progress_bar: ProgressBar) -> None:
-        self._progress_bar = progress_bar
+        self._message_dispatcher.attach_progress_bar(progress_bar)
+
+    def add_log_observer(self) -> BasicMessageObserver:
+        """Method to create an observer and attached it to the task.
+        The log will be available in the retuned BasicMessageObserver.
+        This can be useful for testings
+
+        :return: _description_
+        :rtype: BasicMessageObserver
+        """
+        observer = BasicMessageObserver()
+        self._message_dispatcher.attach(observer)
+        return observer
 
     def get_task(self) -> Task:
         return self._task
