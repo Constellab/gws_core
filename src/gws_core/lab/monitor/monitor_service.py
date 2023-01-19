@@ -105,5 +105,7 @@ class MonitorService(BaseService):
         # Keep only last x records
         monitor: Monitor = Monitor.select().order_by(Monitor.created_at.desc()).offset(cls.MONITORING_MAX_LINES).first()
 
+        if monitor is None:
+            return
         # Delete all record older
         Monitor.delete().where(Monitor.created_at <= monitor.created_at).execute()

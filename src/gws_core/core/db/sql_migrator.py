@@ -46,6 +46,20 @@ class SqlMigrator:
         self._operations.append(self.migrator.rename_column(model.get_table_name(), old_name, new_name))
         return True
 
+    def drop_index_if_exists(self, model: BaseModel, index_name: str) -> bool:
+        if not model.index_exists(index_name):
+            return False
+        self._operations.append(self.migrator.drop_index(model.get_table_name(), index_name))
+        return True
+
+    def add_index_if_not_exists(
+            self, model: BaseModel, index_name: str, columns: List[str],
+            unique: bool = False) -> bool:
+        if model.index_exists(index_name):
+            return False
+        self._operations.append(self.migrator.add_index(model.get_table_name(), columns, unique))
+        return True
+
     def migrate(self) -> None:
         for operation in self._operations:
             operation.run()

@@ -534,8 +534,14 @@ class Migration045(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
         migrator: SqlMigrator = SqlMigrator(ProgressBar.get_db())
+        # set process_id and process_typing_name to not null
         migrator.alter_column_type(ProgressBar, 'process_id', CharField(null=False, index=True))
         migrator.alter_column_type(ProgressBar, 'process_typing_name', CharField(null=False))
+        # remove old index
+        migrator.drop_index_if_exists(ProgressBar, 'progressbar_process_id_process_typing_name')
+        # create a unique index on process_id
+        migrator.add_index_if_not_exists(
+            ProgressBar, 'gws_process_progress_bar_process_id', ['process_id'], True)
         migrator.migrate()
 
         # clean progress bar messages

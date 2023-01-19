@@ -2,12 +2,13 @@
 
 from typing import List, Type
 
-from gws_core.core.db.db_manager import AbstractDbManager
-from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from peewee import (ColumnMetadata, DatabaseProxy, ForeignKeyField,
                     ForeignKeyMetadata)
 from peewee import Model as PeeweeModel
 from peewee import ModelSelect
+
+from gws_core.core.db.db_manager import AbstractDbManager
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 
 from ...core.exception.exceptions import BadRequestException
 from .base import Base
@@ -112,6 +113,19 @@ class BaseModel(Base, PeeweeModel):
         """
         columns: List[ColumnMetadata] = cls.get_db().get_columns(cls.get_table_name())
         return len([x for x in columns if x.name == column_name]) > 0
+
+    @classmethod
+    def index_exists(cls, index_name: str) -> bool:
+        """
+        Returns True if the index exists in the table
+
+        :param index_name: The index name
+        :type index_name: `str`
+        :return: True if the index exists
+        :rtype: `bool`
+        """
+        indexes = cls.get_db().get_indexes(cls.get_table_name())
+        return len([x for x in indexes if x.name == index_name]) > 0
 
     @classmethod
     def get_db(cls) -> DatabaseProxy:
