@@ -4,16 +4,15 @@
 # About us: https://gencovery.com
 
 
+from unittest.async_case import IsolatedAsyncioTestCase
+
 from gws_core_test_helper import GWSCoreTestHelper
 
-from gws_core import (BaseTestCase, Settings, TableDecoder, TableEncoder,
-                      TaskRunner)
-
-settings = Settings.get_instance()
-testdata_dir = settings.get_variable("gws_core:testdata_dir")
+from gws_core import TableDecoder, TableEncoder, TaskRunner
 
 
-class TestTableEncoding(BaseTestCase):
+# test_table_encoding
+class TestTableEncoding(IsolatedAsyncioTestCase):
 
     async def test_table_encoding_decoding(self):
         # importer

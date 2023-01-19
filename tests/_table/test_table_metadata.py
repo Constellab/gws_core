@@ -4,12 +4,16 @@
 # About us: https://gencovery.com
 
 
-from gws_core import BaseTestCase, MetadataTableExporter, Table, TaskRunner
-from gws_core.data_provider.data_provider import DataProvider
+from unittest.async_case import IsolatedAsyncioTestCase
+
 from gws_core_test_helper import GWSCoreTestHelper
 
+from gws_core import MetadataTableExporter, TaskRunner
+from gws_core.data_provider.data_provider import DataProvider
 
-class TestTableMetadataExporter(BaseTestCase):
+
+# test_table_metadata
+class TestTableMetadataExporter(IsolatedAsyncioTestCase):
 
     async def test_table_metadata_exporter(self):
         # importer

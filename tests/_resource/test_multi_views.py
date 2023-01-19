@@ -1,10 +1,15 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
+from unittest import TestCase
 
 from gws_core import ConfigParams, MultiViews, TextView, ViewType
-from gws_core.test.base_test_case import BaseTestCase
 
 
-class TestMultiViews(BaseTestCase):
+# test_multi_views
+class TestMultiViews(TestCase):
 
     def test_multi_view(self):
         view = TextView(data='Hello')

@@ -3,13 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import BaseTestCase, TextView, ViewTester
+from unittest import TestCase
+
+from gws_core import TextView, ViewTester
 from gws_core.extra import DataProvider
 from gws_core.impl.text.text import Text
 from gws_core.impl.text.text_tasks import TextImporter
 
 
-class TestTextView(BaseTestCase):
+# test_text_view
+class TestTextView(TestCase):
 
     def test_text_view(self,):
         text: Text = TextImporter.call(DataProvider.get_iris_file())

@@ -2,14 +2,16 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from gws_core import BaseTestCase, TaskRunner
+from unittest.async_case import IsolatedAsyncioTestCase
+
+from gws_core import TaskRunner
 from gws_core.impl.robot.robot_resource import \
     Robot  # local import of the resource
 from gws_core.impl.robot.robot_tasks import \
     RobotMove  # local import of the task
 
 
-class TestRobotMove(BaseTestCase):
+class TestRobotMove(IsolatedAsyncioTestCase):
 
     async def test_robot_move(self):
 

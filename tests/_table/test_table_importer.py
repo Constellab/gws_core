@@ -4,16 +4,17 @@
 # About us: https://gencovery.com
 
 import os
+from unittest.async_case import IsolatedAsyncioTestCase
 
 import numpy
 import pandas
-from gws_core import File, Table, TableExporter, TableImporter, TaskRunner
-from gws_core.test.base_test_case import BaseTestCase
 from gws_core_test_helper import GWSCoreTestHelper
+
+from gws_core import File, Table, TableExporter, TableImporter, TaskRunner
 
 
 # test_table_importer
-class TestTable(BaseTestCase):
+class TestTableImporter(IsolatedAsyncioTestCase):
     def test_table_import_1(self):
 
         file_path = GWSCoreTestHelper.get_small_data_file_path(1)

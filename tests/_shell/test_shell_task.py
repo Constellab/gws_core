@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import os
-from cProfile import run
+from unittest.async_case import IsolatedAsyncioTestCase
 
 from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec, ShellTask,
                       StrParam, TaskInputs, TaskOutputs, TaskRunner,
@@ -41,14 +41,13 @@ class EchoTask(ShellTask):
 
     async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
                              shell_proxy: ShellProxy) -> TaskOutputs:
-        # no buffer so all message are directly dispatched
-        self.message_dispatcher.interval_time_dispatched_buffer = 0
         name = params.get_value("name")
         shell_proxy.run([f"echo \"{name}\""], shell_mode=True)
         return {}
 
 
-class TestShell(BaseTestCase):
+# test_shell_task
+class TestShell(IsolatedAsyncioTestCase):
 
     async def test_echo_in_file(self):
         runner = TaskRunner(
@@ -68,8 +67,9 @@ class TestShell(BaseTestCase):
             params={"name": "John Doe"},
             task_type=EchoTask
         )
+        observer = runner.add_log_observer()
 
         await runner.run()
 
         # there should be a John Doe mesage in the progress bar
-        self.assertEqual(len([x for x in runner._progress_bar.messages if x["text"] == "John Doe"]), 1)
+        self.assertEqual(len([x for x in observer.messages if "John Doe\n" in x.message]), 1)

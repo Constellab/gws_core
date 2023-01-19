@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core import IntParam, ParamSet, StrParam
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
@@ -11,7 +11,7 @@ from gws_core.core.utils.utils import Utils
 
 
 # test_param_spec
-class TestParamSpec(IsolatedAsyncioTestCase):
+class TestParamSpec(TestCase):
 
     def test_param_to_json(self):
         param: IntParam = IntParam(default_value=1, human_name="Test", short_description="Description",
@@ -22,8 +22,8 @@ class TestParamSpec(IsolatedAsyncioTestCase):
         self.assertEqual(dict_["default_value"], 1)
         self.assertEqual(dict_["human_name"], "Test")
         self.assertEqual(dict_["short_description"], "Description")
-        self.assertEqual(dict_["min_value"], 1)
-        self.assertEqual(dict_["max_value"], 10)
+        self.assertEqual(dict_["additional_info"]["min_value"], 1)
+        self.assertEqual(dict_["additional_info"]["max_value"], 10)
         self.assertEqual(dict_["allowed_values"], [1, 2])
         self.assertEqual(dict_["unit"], "km")
 

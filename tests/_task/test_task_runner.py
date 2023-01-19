@@ -2,10 +2,11 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+from unittest.async_case import IsolatedAsyncioTestCase
 
-from gws_core import (BadRequestException, BaseTestCase, ConfigParams, Robot,
-                      RobotMove, Table, Task, TaskInputs, TaskOutputs,
-                      TaskRunner, task_decorator)
+from gws_core import (BadRequestException, ConfigParams, Robot, RobotMove,
+                      Table, Task, TaskInputs, TaskOutputs, TaskRunner,
+                      task_decorator)
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.io.io_exception import (InvalidInputsException,
                                       InvalidOutputsException,
@@ -15,7 +16,6 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 
 
-# test_task_runner
 @task_decorator("TaskRunnerProgress")
 class TaskRunnerProgress(Task):
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -57,7 +57,8 @@ class TaskRunnerInvalidResource(Task):
         return {'test': ResourceCheckError()}
 
 
-class TestTaskRunner(BaseTestCase):
+# test_task_runner
+class TestTaskRunner(IsolatedAsyncioTestCase):
 
     async def test_task_tester(self):
         """Method to test the Task tester class

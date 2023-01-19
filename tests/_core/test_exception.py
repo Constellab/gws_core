@@ -1,11 +1,18 @@
-from typing import Dict
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
-from gws_core import (BadRequestException, BaseTestCase, ExceptionHandler,
-                      ExceptionResponse)
+from typing import Dict
+from unittest import TestCase
+
 from starlette.exceptions import HTTPException
 
+from gws_core import BadRequestException, ExceptionHandler, ExceptionResponse
 
-class TestException(BaseTestCase):
+
+# test_exception
+class TestException(TestCase):
     """File to test exception and exception handler. It is important to test the exception handler
     because if an exception happens in it, it would be bad
 
@@ -29,7 +36,7 @@ class TestException(BaseTestCase):
             response: ExceptionResponse = ExceptionHandler.handle_exception(request=None, exception=err)
             self.assertEqual(response.status_code, 400)
             body: Dict = response.get_json_body()
-            self.assertEqual(body["code"], "test_exception.known_exception")
+            self.assertEqual(body["code"], "_core.known_exception")
             self.assertEqual(body["detail"], "Error")
             self.assertEqual(body["instance_id"], err.instance_id)
 
@@ -42,7 +49,7 @@ class TestException(BaseTestCase):
             response: ExceptionResponse = ExceptionHandler.handle_exception(request=None, exception=err)
             self.assertEqual(response.status_code, 400)
             body: Dict = response.get_json_body()
-            self.assertEqual(body["code"], "test_exception.test_exception.py.test_http_exception")
+            self.assertEqual(body["code"], "_core.test_exception.py.test_http_exception")
             self.assertEqual(body["detail"], "Error")
             self.assertIsNotNone(body["instance_id"])
 
@@ -55,6 +62,6 @@ class TestException(BaseTestCase):
             response: ExceptionResponse = ExceptionHandler.handle_exception(request=None, exception=err)
             self.assertEqual(response.status_code, 500)
             body: Dict = response.get_json_body()
-            self.assertEqual(body["code"], "test_exception.test_exception.py.test_unknown_exception")
+            self.assertEqual(body["code"], "_core.test_exception.py.test_unknown_exception")
             self.assertEqual(body["detail"], "Error")
             self.assertIsNotNone(body["instance_id"])

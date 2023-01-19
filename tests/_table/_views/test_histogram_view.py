@@ -3,14 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 from typing import List
+from unittest import TestCase
 
 import numpy
+
 from gws_core import BaseTestCase, ViewTester, ViewType
 from gws_core.extra import DataProvider, TableHistogramView
 from gws_core.impl.table.view.table_selection import Serie1d
 
 
-class TestTableHistogramView(BaseTestCase):
+class TestTableHistogramView(TestCase):
     def test_histogram_view(self,):
         pass
 

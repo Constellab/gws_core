@@ -3,7 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import BaseTestCase, File, LocalFileStore
+from unittest import TestCase
+
+from gws_core import File, LocalFileStore
 from gws_core.data_provider.data_provider import DataProvider
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_store import FileStore
@@ -11,7 +13,7 @@ from gws_core.impl.file.folder import Folder
 
 
 # test_file_store
-class TestLocalFileStore(BaseTestCase):
+class TestLocalFileStore(TestCase):
 
     def test_file(self):
         file_store: FileStore = LocalFileStore()

@@ -5,6 +5,8 @@
 
 from abc import abstractmethod
 
+from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
+
 from ..config.config_types import ConfigParams
 from ..impl.shell.conda_shell_proxy import CondaShellProxy
 from ..task.task_decorator import task_decorator
@@ -47,8 +49,8 @@ class CondaEnvShell(DepBaseEnvShell):
     env_file_path: str = None
     _shell_mode = True
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, message_dispatcher: MessageDispatcher):
+        super().__init__(message_dispatcher)
         self.base_env = CondaShellProxy(self.get_env_dir_name(), self.env_file_path, self.working_dir)
 
     @abstractmethod

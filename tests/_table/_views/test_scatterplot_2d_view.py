@@ -4,13 +4,15 @@
 # About us: https://gencovery.com
 
 from typing import List
+from unittest import TestCase
 
-from gws_core import BaseTestCase, ViewTester, ViewType
+from gws_core import ViewTester, ViewType
 from gws_core.extra import DataProvider, TableScatterPlot2DView
 from gws_core.impl.table.view.table_selection import Serie2d
 
 
-class TestTableScatterPlot2DView(BaseTestCase):
+# test_scatterplot_2d_view
+class TestTableScatterPlot2DView(TestCase):
 
     def test_scatterplot_2d_view(self,):
         table = DataProvider.get_iris_table()

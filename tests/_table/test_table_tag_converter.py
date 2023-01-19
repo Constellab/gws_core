@@ -1,9 +1,15 @@
-from gws_core import BaseTestCase, Table
-from gws_core.extra import DataProvider
-from pandas import DataFrame
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
+from unittest import TestCase
+
+from gws_core import Table
 
 
-class TestTableTagConverter(BaseTestCase):
+# test_table_tag_converter
+class TestTableTagConverter(TestCase):
 
     def test_table_dummy_matrix(self):
         meta = {

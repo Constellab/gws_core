@@ -4,11 +4,16 @@
 # About us: https://gencovery.com
 
 
-from gws_core import BaseTestCase, Table, TableRowAnnotator, TaskRunner
+from unittest.async_case import IsolatedAsyncioTestCase
+
 from gws_core_test_helper import GWSCoreTestHelper
 
+from gws_core import Table, TableRowAnnotator, TaskRunner
+from gws_core.core.utils.utils import Utils
 
-class TestTableAnnotator(BaseTestCase):
+
+# test_table_annotator
+class TestTableAnnotator(IsolatedAsyncioTestCase):
 
     async def test_table_column_annotator(self):
         # importer
@@ -37,7 +42,7 @@ class TestTableAnnotator(BaseTestCase):
                              {'Gender': 'F', 'Group': '3', 'Age': '15'},
                              {}]
 
-        self.assert_json(
+        Utils.assert_json_equals(
             annotated_table.get_row_tags(), expected_row_tags
         )
 
@@ -68,6 +73,6 @@ class TestTableAnnotator(BaseTestCase):
                              {'Gender': 'F', 'Group': '3', 'Age': '15'},
                              {}]
 
-        self.assert_json(
+        Utils.assert_json_equals(
             annotated_table.get_row_tags(), expected_row_tags
         )

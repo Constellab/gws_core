@@ -3,11 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import BaseTestCase, KVStore
+from unittest import TestCase
+
+from gws_core import KVStore
 from gws_core.impl.file.file_helper import FileHelper
 
 
-class TestKVStore(BaseTestCase):
+# test_kv_store
+class TestKVStore(TestCase):
 
     def test_empty(self):
         s1 = KVStore.empty()

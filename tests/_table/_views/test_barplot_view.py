@@ -4,13 +4,15 @@
 # About us: https://gencovery.com
 
 from typing import List
+from unittest import TestCase
 
-from gws_core import BaseTestCase, ViewTester, ViewType
+from gws_core import ViewTester, ViewType
 from gws_core.extra import DataProvider, TableBarPlotView
 from gws_core.impl.table.view.table_selection import Serie1d
 
 
-class TestTableBarPlotView(BaseTestCase):
+# test_barplot_view
+class TestTableBarPlotView(TestCase):
 
     def test_barplot_2d_view(self,):
         table = DataProvider.get_iris_table()

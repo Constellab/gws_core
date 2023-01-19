@@ -2,12 +2,14 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from gws_core import BaseTestCase, ViewTester, ViewType
+from unittest import TestCase
+
+from gws_core import ViewTester, ViewType
 from gws_core.extra import DataProvider, TableScatterPlot3DView
 
 
 # test_scatterplot_3d_view
-class TestTableScatterPlot3DView(BaseTestCase):
+class TestTableScatterPlot3DView(TestCase):
 
     def test_scatterplot_3d_view(self,):
         table = DataProvider.get_iris_table()

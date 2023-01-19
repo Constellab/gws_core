@@ -53,11 +53,16 @@ class TestDispatcher(BaseTestCase):
     def test_dispatcher_with_progress_bar(self):
         dispatcher = MessageDispatcher(0.05, 0.25)
 
-        progress_bar = ProgressBar()
-        dispatcher.attach_progress_bar(progress_bar)
+        try:
 
-        dispatcher.notify_info_message('message 1')
-        sleep(0.30)
+            progress_bar = ProgressBar()
+            dispatcher.attach_progress_bar(progress_bar)
 
-        self.assertEqual(len(progress_bar.messages), 1)
-        self.assertEqual(progress_bar.messages[0]['text'], 'message 1')
+            dispatcher.notify_info_message('message 1')
+            sleep(0.30)
+
+            self.assertEqual(len(progress_bar.messages), 1)
+            self.assertEqual(progress_bar.messages[0]['text'], 'message 1')
+        except Exception as err:
+            dispatcher.force_dispatch_waiting_messages()
+            raise err

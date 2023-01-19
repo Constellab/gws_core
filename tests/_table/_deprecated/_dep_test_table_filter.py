@@ -4,12 +4,14 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (BaseTestCase, GTest, Table, TableFilter, TableImporter,
-                      TaskRunner)
+from unittest import TestCase
+
+from gws_core import Table, TableFilter, TableImporter, TaskRunner
 from gws_core.extra import DataProvider
 
 
-class TestTableFilter(BaseTestCase):
+# test_table_filter
+class TestTableFilter(TestCase):
 
     async def test_multi_index_table(self):
         file = DataProvider.get_test_data_file("multi_index_data.csv")

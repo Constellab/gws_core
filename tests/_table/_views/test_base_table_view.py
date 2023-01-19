@@ -3,13 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import BaseTestCase, Table
-from gws_core.impl.table.view.base_table_view import (BaseTableView, CellRange,
-                                                      TableSelection)
+from unittest import TestCase
+
 from pandas import DataFrame
 
+from gws_core import Table
+from gws_core.impl.table.view.base_table_view import (BaseTableView, CellRange,
+                                                      TableSelection)
 
-class TestTableView(BaseTestCase):
+
+# test_base_table_view
+class TestTableView(TestCase):
 
     def test_base_table_view(self):
         a_values = [1, 2, 3, 4, 5]

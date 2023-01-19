@@ -52,7 +52,7 @@ class Task(Process):
     # Current status of the task, do not update
     _status_: Literal['CHECK_BEFORE_RUN', 'RUN', 'RUN_AFTER_TASK']
 
-    def __init__(self):
+    def __init__(self, message_dispatcher: MessageDispatcher):
         """
         Constructor
         """
@@ -64,7 +64,7 @@ class Task(Process):
             raise BadRequestException(
                 f"The task {self.full_classname()} is not decorated with @task_decorator, it can't be instantiate. Please decorate the task class with @task_decorator")
         self._status_ = None
-        self.message_dispatcher = None
+        self.message_dispatcher = message_dispatcher
 
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         """
@@ -145,10 +145,6 @@ class Task(Process):
     @final
     def log_warning_message(self, message: str):
         self.log_message(message, ProgressBarMessageType.WARNING)
-
-    @final
-    def set_message_dispatcher(self, message_dispatcher: MessageDispatcher) -> None:
-        self.message_dispatcher = message_dispatcher
 
     @final
     def dispatch_waiting_messages(self) -> None:

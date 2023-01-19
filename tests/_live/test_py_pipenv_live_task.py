@@ -3,12 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (BaseTestCase, File, PyPipenvLiveTask, ResourceSet, Table,
-                      TaskRunner)
-from pandas import DataFrame
+from unittest.async_case import IsolatedAsyncioTestCase
+
+from gws_core import File, PyPipenvLiveTask, ResourceSet, Table, TaskRunner
 
 
-class TestPyPipLiveTask(BaseTestCase):
+# test_py_pipenv_live_task
+class TestPyPipLiveTask(IsolatedAsyncioTestCase):
 
     async def test_live_task_shell(self):
         file_set = ResourceSet()

@@ -4,14 +4,17 @@
 # About us: https://gencovery.com
 
 from typing import List
+from unittest import TestCase
 
-from gws_core import BaseTestCase, ViewTester
-from gws_core.extra import TableVennDiagramView
-from gws_core.impl.table.view.table_selection import Serie1d
 from gws_core_test_helper import GWSCoreTestHelper
 
+from gws_core import ViewTester
+from gws_core.extra import TableVennDiagramView
+from gws_core.impl.table.view.table_selection import Serie1d
 
-class TestVennDiagrammView(BaseTestCase):
+
+# test_venn_diagram_view
+class TestVennDiagrammView(TestCase):
 
     def test_venn_diagram_view(self,):
         table = GWSCoreTestHelper.get_venn_data_table()

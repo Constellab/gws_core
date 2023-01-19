@@ -4,9 +4,10 @@
 # About us: https://gencovery.com
 
 import os
+from unittest.async_case import IsolatedAsyncioTestCase
 
-from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec, PipEnvTask,
-                      TaskInputs, TaskOutputs, TaskRunner, task_decorator)
+from gws_core import (ConfigParams, File, OutputSpec, PipEnvTask, TaskInputs,
+                      TaskOutputs, TaskRunner, task_decorator)
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
 
 __cdir__ = os.path.dirname(os.path.realpath(__file__))
@@ -27,8 +28,10 @@ class PipEnvTaskTester(PipEnvTask):
         file = File(path=os.path.join(self.working_dir, "out.txt"))
         return {"file": file}
 
+# test_pipenv_task
 
-class TestPipEnv(BaseTestCase):
+
+class TestPipEnv(IsolatedAsyncioTestCase):
 
     async def test_pipenv(self):
 

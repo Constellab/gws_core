@@ -4,15 +4,19 @@
 # About us: https://gencovery.com
 
 
-from gws_core import DataframeAggregatorHelper, Table, TaskRunner
-from gws_core.impl.table.transformers.table_aggregator import \
-    TableColumnAggregator
-from gws_core.test.base_test_case import BaseTestCase
+from unittest.async_case import IsolatedAsyncioTestCase
+
 from numpy import NaN
 from pandas import DataFrame
 
+from gws_core import DataframeAggregatorHelper, Table, TaskRunner
+from gws_core.core.utils.utils import Utils
+from gws_core.impl.table.transformers.table_aggregator import \
+    TableColumnAggregator
 
-class TestTableAggregator(BaseTestCase):
+
+# test_table_aggregator
+class TestTableAggregator(IsolatedAsyncioTestCase):
     def test_table_aggregator_helper(self):
         initial_df = DataFrame({'A': range(1, 5), 'B': [10, 8, 6, 4]})
 
@@ -46,4 +50,4 @@ class TestTableAggregator(BaseTestCase):
 
         expected_df = DataFrame({'A': [3], 'B': [18]})
         self.assertTrue(result.get_data().equals(expected_df))
-        self.assert_json(result.get_column_tags(), column_tags)
+        Utils.assert_json_equals(result.get_column_tags(), column_tags)

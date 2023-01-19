@@ -2,11 +2,14 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from gws_core import BaseTestCase, ViewTester, ViewType
+from unittest import TestCase
+
+from gws_core import ViewTester, ViewType
 from gws_core.extra import DataProvider, TableView
 
 
-class TestTableView(BaseTestCase):
+# test_table_view
+class TestTableView(TestCase):
 
     def test_table_view(self):
         table = DataProvider.get_iris_table()

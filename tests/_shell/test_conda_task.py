@@ -4,9 +4,10 @@
 # About us: https://gencovery.com
 
 import os
+from unittest.async_case import IsolatedAsyncioTestCase
 
-from gws_core import (BaseTestCase, CondaEnvTask, ConfigParams, File,
-                      OutputSpec, TaskInputs, TaskOutputs, task_decorator)
+from gws_core import (CondaEnvTask, ConfigParams, File, OutputSpec, TaskInputs,
+                      TaskOutputs, task_decorator)
 from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.task.task_runner import TaskRunner
 
@@ -31,7 +32,8 @@ class CondaEnvTaskTester(CondaEnvTask):
         return {"file": file}
 
 
-class TestProcess(BaseTestCase):
+# test_conda_task
+class TestCondaTask(IsolatedAsyncioTestCase):
 
     # @classmethod
     # def tearDownClass(cls):

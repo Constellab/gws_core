@@ -3,11 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import BaseTestCase, Table, TableReplace
+from unittest import TestCase
+
 from pandas import DataFrame
 
+from gws_core import Table, TableReplace
 
-class TestTableTransposer(BaseTestCase):
+
+# test_table_replace
+class TestTableTransposer(TestCase):
 
     def test_table_replace(self):
         initial_df = DataFrame({'A': [1, 2], 'B': ['Hello', 'Bonjour']})

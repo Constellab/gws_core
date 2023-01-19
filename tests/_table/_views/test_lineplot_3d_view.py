@@ -1,9 +1,16 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
-from gws_core import BaseTestCase, ViewTester, ViewType
+from unittest import TestCase
+
+from gws_core import ViewTester, ViewType
 from gws_core.extra import DataProvider, TableLinePlot3DView
 
 
-class TestTableLinePlot3DView(BaseTestCase):
+# test_lineplot_3d_view
+class TestTableLinePlot3DView(TestCase):
 
     def test_lineplot_2d_view(self,):
         table = DataProvider.get_iris_table()

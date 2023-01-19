@@ -9,6 +9,7 @@ from gws_core.config.config_exceptions import MissingConfigsException
 from gws_core.config.config_types import ConfigParams
 
 
+# test_config
 class TestConfig(BaseTestCase):
 
     def test_config(self):
@@ -27,14 +28,8 @@ class TestConfig(BaseTestCase):
         self.assertEqual(config.get_and_check_values(), {'moving_step': 4.5})
         self.assertEqual(config.get_value('moving_step'), 4.5)
 
-        self.assert_json(config.data, {
-            "specs": {
-                'moving_step': {"type": "float", "default_value": 0.1, "optional": True, "visibility": "public"}
-            },
-            "values": {
-                'moving_step': 4.5
-            }
-        })
+        self.assert_json(config.data, {"specs": {'moving_step': {"type": "float", "default_value": 0.1, "optional": True,
+                         "visibility": "public", "additional_info": {"min_value": None, "max_value": None}}, }, "values": {'moving_step': 4.5}})
 
         config.save()
         config2: Config = Config.get_by_id(config.id)

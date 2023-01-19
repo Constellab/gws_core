@@ -131,9 +131,7 @@ class TaskRunner():
     def _get_task_instance(self) -> Task:
         # create the task only if it doesn't exists
         if self._task is None:
-            self._task = self._task_type()
-
-            self._task.set_message_dispatcher(self._message_dispatcher)
+            self._task = self._task_type(self._message_dispatcher)
 
         return self._task
 

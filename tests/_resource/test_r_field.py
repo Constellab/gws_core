@@ -1,11 +1,15 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
+from pandas.core.frame import DataFrame
 
 from gws_core import (BaseTestCase, BoolRField, DataFrameRField, DictRField,
                       FloatRField, IntRField, KVStore, ListRField,
                       ResourceModel, ResourceRField, Robot,
                       SerializableObjectJson, SerializableRField, StrRField)
 from gws_core.resource.resource_model import ResourceOrigin
-from pandas.core.frame import DataFrame
 
 
 class TestJsonableObject(SerializableObjectJson):

@@ -3,12 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import BaseTestCase, ViewTester, ViewType
+from unittest import TestCase
+
+from gws_core import ViewTester, ViewType
 from gws_core.extra import DataProvider, TableHeatmapView
 from gws_core.impl.table.view.table_selection import Serie1d
 
 
-class TestTableHeatmapView(BaseTestCase):
+# test_heatmap_view
+class TestTableHeatmapView(TestCase):
 
     def test_heatmap_view(self,):
         table = DataProvider.get_iris_table()

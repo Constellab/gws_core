@@ -1,4 +1,7 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from gws_core import (CheckBeforeTaskResult, ResourceModel, Robot, Source,
                       Switch2, TaskOutputs, TaskRunner)
@@ -12,6 +15,7 @@ from gws_core.task.plug import Sink
 from gws_core.test.base_test_case import BaseTestCase
 
 
+# test_plug
 class TestPlug(BaseTestCase):
 
     async def test_source(self):
