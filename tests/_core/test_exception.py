@@ -38,7 +38,7 @@ class TestException(TestCase):
             body: Dict = response.get_json_body()
             self.assertEqual(body["code"], "_core.known_exception")
             self.assertEqual(body["detail"], "Error")
-            self.assertEqual(body["instance_id"], err.instance_id)
+            self.assertEqual(body["instanceId"], err.instance_id)
 
     def test_http_exception(self):
         """Test handling a http exception
@@ -51,7 +51,7 @@ class TestException(TestCase):
             body: Dict = response.get_json_body()
             self.assertEqual(body["code"], "_core.test_exception.py.test_http_exception")
             self.assertEqual(body["detail"], "Error")
-            self.assertIsNotNone(body["instance_id"])
+            self.assertIsNotNone(body["instanceId"])
 
     def test_unknown_exception(self):
         """Test handling a unkonwn exception

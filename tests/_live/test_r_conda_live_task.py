@@ -13,6 +13,7 @@ from gws_core import (BaseTestCase, File, RCondaLiveTask, ResourceSet,
 class TestRCondaLiveTask(BaseTestCase):
 
     async def test_live_task_shell(self):
+        pass
         # file_set = ResourceSet()
         # file = File(path="./foo/bar")
         # file.name = "my_file"
