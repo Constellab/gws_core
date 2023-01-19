@@ -164,6 +164,7 @@ class SystemService:
             "lab_name": settings.get_lab_name(),
             "front_version": settings.get_front_version(),
             "space": settings.get_space(),
+            "id": settings.get_lab_id(),
         }
 
     @classmethod

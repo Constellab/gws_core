@@ -107,7 +107,7 @@ class ModelService(BaseService):
                     BrickService.log_brick_message(
                         brick_name=typing.brick,
                         message=f"The {typing.object_type} with unique name '{typing.unique_name}' is invalid. Is the brick loaded ? Did you delete the corresponding python model or rename its unique name ?",
-                        status='ERROR')
+                        status='WARNING')
 
     @classmethod
     def archive_model(cls, typing_name: str, id: str) -> Model:
