@@ -526,3 +526,17 @@ class Migration044(BrickMigration):
         specs['additional_info'] = copy
 
         return specs
+
+
+@brick_migration('0.4.5', short_description='Clean progress bar messages and set process id to not null')
+class Migration045(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+        migrator: SqlMigrator = SqlMigrator(ProgressBar.get_db())
+        migrator.alter_column_type(ProgressBar, 'process_id', CharField(null=False, index=True))
+        migrator.alter_column_type(ProgressBar, 'process_typing_name', CharField(null=False))
+        migrator.migrate()
+
+        # clean progress bar messages
+        ProgressBar.delete().where(ProgressBar.process_id is None).execute()
