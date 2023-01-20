@@ -7,8 +7,6 @@ import shlex
 from abc import abstractmethod
 from typing import final
 
-from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
-
 from ...config.config_types import ConfigParams
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
@@ -30,8 +28,7 @@ class ShellTask(Task):
 
     shell_proxy: ShellProxy = None
 
-    def __init__(self, message_dispatcher: MessageDispatcher):
-        super().__init__(message_dispatcher)
+    def init(self) -> None:
         self.shell_proxy = self.init_shell_proxy()
 
     def init_shell_proxy(self) -> ShellProxy:

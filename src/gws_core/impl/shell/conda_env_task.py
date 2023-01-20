@@ -6,8 +6,6 @@
 
 from abc import abstractmethod
 
-from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
-
 from ...config.config_types import ConfigParams
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
@@ -52,11 +50,10 @@ class CondaEnvTask(BaseEnvShellTask):
 
     shell_proxy: CondaShellProxy = None
 
-    def __init__(self, message_dispatcher: MessageDispatcher):
-        super().__init__(message_dispatcher)
-
+    def init(self) -> None:
         if self.env_file_path is None:
             raise Exception(f"The env_file_path property must be set in the task {self._typing_name}")
+        super().init()
 
     def init_shell_proxy(self) -> ShellProxy:
         return CondaShellProxy(self.get_env_dir_name(), env_file_path=self.env_file_path,

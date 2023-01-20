@@ -49,11 +49,10 @@ class PipEnvTask(BaseEnvShellTask):
 
     shell_proxy: PipShellProxy = None
 
-    def __init__(self, message_dispatcher: MessageDispatcher):
-        super().__init__(message_dispatcher)
-
+    def init(self) -> None:
         if self.env_file_path is None:
             raise Exception(f"The env_file_path property must be set in the task {self._typing_name}")
+        super().init()
 
     def init_shell_proxy(self) -> ShellProxy:
         return PipShellProxy(

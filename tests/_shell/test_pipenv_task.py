@@ -51,13 +51,13 @@ class TestPipEnv(IsolatedAsyncioTestCase):
             self.assertTrue(task.shell_proxy.env_is_installed())
             task.shell_proxy.uninstall_env()
             # dispatched the message as the uninstall env notify a message
-            task.dispatch_waiting_messages()
+            task_runner.force_dispatch_waiting_messages()
             self.assertFalse(task.shell_proxy.env_is_installed())
         except Exception as exception:
             task: PipEnvTaskTester = task_runner.get_task()
             if task:
                 task.shell_proxy.uninstall_env()
-                task.dispatch_waiting_messages()
+                task_runner.force_dispatch_waiting_messages()
             raise exception
 
     # async def test_pipenv_proxy(self):

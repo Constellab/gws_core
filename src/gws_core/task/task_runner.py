@@ -43,7 +43,8 @@ class TaskRunner():
     _task: Task
     _message_dispatcher: MessageDispatcher
 
-    def __init__(self, task_type: Type[Task], params: ConfigParamsDict = None, inputs: Dict[str, Resource] = None):
+    def __init__(self, task_type: Type[Task], params: ConfigParamsDict = None, inputs: Dict[str, Resource] = None,
+                 message_dispatcher: MessageDispatcher = None):
         self._task_type = task_type
 
         if params is None:
@@ -58,7 +59,11 @@ class TaskRunner():
 
         self._task = None
         self._outputs = None
-        self._message_dispatcher = MessageDispatcher()
+
+        if message_dispatcher is None:
+            self._message_dispatcher = MessageDispatcher()
+        else:
+            self._message_dispatcher = message_dispatcher
 
     def check_before_run(self) -> CheckBeforeTaskResult:
         """This method check the config and inputs and then execute the check before run of the task
@@ -78,10 +83,10 @@ class TaskRunner():
         try:
             result = task.check_before_run(config_params, inputs)
         except Exception as exception:
-            task.dispatch_waiting_messages()
+            self.force_dispatch_waiting_messages()
             raise exception
 
-        task.dispatch_waiting_messages()
+        self.force_dispatch_waiting_messages()
         return result
 
     async def run(self) -> TaskOutputs:
@@ -98,10 +103,10 @@ class TaskRunner():
         try:
             task_outputs: TaskOutputs = await task.run(config_params, inputs)
         except Exception as exception:
-            task.dispatch_waiting_messages()
+            self.force_dispatch_waiting_messages()
             raise exception
 
-        task.dispatch_waiting_messages()
+        self.force_dispatch_waiting_messages()
         return self._check_outputs(task_outputs)
 
     async def run_after_task(self) -> None:
@@ -111,10 +116,10 @@ class TaskRunner():
         try:
             await task.run_after_task()
         except Exception as exception:
-            task.dispatch_waiting_messages()
+            self.force_dispatch_waiting_messages()
             raise exception
 
-        task.dispatch_waiting_messages()
+        self.force_dispatch_waiting_messages()
 
     def set_param(self, param_name: str, config_param: ParamValue) -> None:
         self._params[param_name] = config_param
@@ -131,7 +136,14 @@ class TaskRunner():
     def _get_task_instance(self) -> Task:
         # create the task only if it doesn't exists
         if self._task is None:
-            self._task = self._task_type(self._message_dispatcher)
+            self._task = self._task_type()
+            self._task.__set_message_dispatcher__(self._message_dispatcher)
+
+            try:
+                self._task.init()
+            except Exception as exception:
+                self.force_dispatch_waiting_messages()
+                raise exception
 
         return self._task
 
@@ -272,6 +284,9 @@ class TaskRunner():
         observer = BasicMessageObserver()
         self._message_dispatcher.attach(observer)
         return observer
+
+    def force_dispatch_waiting_messages(self) -> None:
+        self._message_dispatcher.force_dispatch_waiting_messages()
 
     def get_task(self) -> Task:
         return self._task

@@ -5,7 +5,6 @@
 
 from abc import abstractmethod
 
-from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
 
 from ..config.config_types import ConfigParams
@@ -47,8 +46,7 @@ class PipEnvShell(DepBaseEnvShell):
     base_env: PipShellProxy = None
     _shell_mode = True
 
-    def __init__(self, message_dispatcher: MessageDispatcher):
-        super().__init__(message_dispatcher)
+    def init(self) -> None:
         self.base_env = PipShellProxy(self.get_env_dir_name(), self.env_file_path, self.working_dir)
 
     @abstractmethod
