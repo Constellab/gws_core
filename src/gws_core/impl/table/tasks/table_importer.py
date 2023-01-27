@@ -6,7 +6,6 @@
 from typing import Type
 
 import pandas
-
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -53,7 +52,7 @@ class TableImporter(ResourceImporter):
         header = params.get_value('header', 0)
         index_column = params.get_value('index_column', -1)
         metadata_columns = params.get_value('metadata_columns', [])
-
+        decimal = params.get_value('decimal', ".")
         comment_char = params.get_value('comment', "#")
         # the empty string meanse no comment
         if comment_char == "":
@@ -80,6 +79,7 @@ class TableImporter(ResourceImporter):
                 header=header,
                 index_col=index_column,
                 nrows=nrows,
+                decimal=decimal,
                 comment=comment_char,
                 encoding=encoding
             )
