@@ -10,7 +10,6 @@ import requests
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.core.utils.zip import Zip
 from gws_core.impl.file.file_helper import FileHelper
@@ -148,18 +147,6 @@ class FileDownloader():
         FileHelper.delete_file(zip_file_path)
 
         return unzip_path
-
-    def get_destination_folder(self) -> str:
-        """
-        Get the destination folder
-
-        :return: The destination folder
-        :rtype: `str`
-        """
-        settings = Settings.get_instance()
-        folder = settings.get_brick_data_dir(self.brick_name)
-
-        return folder
 
     def _check_if_already_downloaded(self, file_path: str) -> bool:
         """
