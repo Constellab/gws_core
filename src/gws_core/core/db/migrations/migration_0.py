@@ -533,6 +533,10 @@ class Migration045(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
+        # clean progress bar messages
+        ProgressBar.delete().where(ProgressBar.process_id is None).execute()
+        ProgressBar.delete().where(ProgressBar.process_id == '').execute()
+
         migrator: SqlMigrator = SqlMigrator(ProgressBar.get_db())
         # set process_id and process_typing_name to not null
         migrator.alter_column_type(ProgressBar, 'process_id', CharField(null=False, index=True))
@@ -543,6 +547,3 @@ class Migration045(BrickMigration):
         migrator.add_index_if_not_exists(
             ProgressBar, 'gws_process_progress_bar_process_id', ['process_id'], True)
         migrator.migrate()
-
-        # clean progress bar messages
-        ProgressBar.delete().where(ProgressBar.process_id is None).execute()
