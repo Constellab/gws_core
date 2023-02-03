@@ -255,9 +255,9 @@ class ReportService():
 
     @classmethod
     def _synchronize_with_central(cls, report: Report) -> Report:
-        if Settings.is_local_env():
-            Logger.info('Skipping sending report to central as we are running in LOCAL')
-            return report
+        # if Settings.is_local_env():
+        #     Logger.info('Skipping sending report to central as we are running in LOCAL')
+        #     return report
 
         if report.project is None:
             raise BadRequestException("The experiment must be linked to a project before validating it")

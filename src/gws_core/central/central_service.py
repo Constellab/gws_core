@@ -110,7 +110,7 @@ class CentralService(BaseService):
 
         if response.status_code != 200:
             Logger.error(f"Can't retrieve projects for the lab. Error : {response.text}")
-            raise BadRequestException("Can't retrieve projects for the lab")
+            raise BadRequestException(f"Can't retrieve projects for the lab. Error : {response.text}")
 
         # get response and parse it to a list of CentralProject
         return parse_obj_as(List[CentralProject], response.json())
@@ -123,7 +123,7 @@ class CentralService(BaseService):
 
         if response.status_code != 200:
             Logger.error(f"Can't save the experiment in central. Error : {response.text}")
-            raise BadRequestException("Can't save the experiment in central")
+            raise BadRequestException(f"Can't save the experiment in central. Error : {response.text}")
 
     @classmethod
     def delete_experiment(cls, project_id: str, experiment_id: str) -> None:
@@ -133,7 +133,7 @@ class CentralService(BaseService):
 
         if response.status_code != 200:
             Logger.error(f"Can't delete the experiment in central. Error : {response.text}")
-            raise BadRequestException("Can't delete the experiment in central")
+            raise BadRequestException(f"Can't delete the experiment in central. Error : {response.text}")
 
     @classmethod
     def save_report(cls, project_id: str, report: SaveReportToCentralDTO,
@@ -156,7 +156,7 @@ class CentralService(BaseService):
 
         if response.status_code != 200:
             Logger.error(f"Can't save the report in central. Error : {response.text}")
-            raise BadRequestException("Can't save the report in central")
+            raise BadRequestException(f"Can't save the report in central. Error : {response.text}")
 
     @ classmethod
     def delete_report(cls, project_id: str, report_id: str) -> None:
@@ -166,7 +166,7 @@ class CentralService(BaseService):
 
         if response.status_code != 200:
             Logger.error(f"Can't delete the report in central. Error : {response.text}")
-            raise BadRequestException("Can't delete the report in central")
+            raise BadRequestException(f"Can't delete the report in central. Error : {response.text}")
 
     @ classmethod
     def send_experiment_finished_mail(cls, user_id: str, experiment: SendExperimentFinishMailData) -> None:
