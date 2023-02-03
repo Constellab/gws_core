@@ -13,6 +13,8 @@ from gws_core.central.central_dto import (CentralSendMailDTO, LabStartDTO,
                                           SaveExperimentToCentralDTO,
                                           SaveReportToCentralDTO,
                                           SendExperimentFinishMailData)
+from gws_core.core.exception.exceptions.base_http_exception import \
+    BaseHTTPException
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_model import LabConfig
 from gws_core.user.user_dto import UserCentral
@@ -106,11 +108,13 @@ class CentralService(BaseService):
         Call the central api to get the list of project for this lab
         """
         central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/project/all-trees")
-        response = ExternalApiService.get(central_api_url, cls._get_request_header())
 
-        if response.status_code != 200:
-            Logger.error(f"Can't retrieve projects for the lab. Error : {response.text}")
-            raise BadRequestException(f"Can't retrieve projects for the lab. Error : {str(response)}")
+        try:
+            response = ExternalApiService.get(central_api_url, cls._get_request_header(),
+                                              raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't retrieve projects for the lab. Error : {err.detail}"
+            raise err
 
         # get response and parse it to a list of CentralProject
         return parse_obj_as(List[CentralProject], response.json())
@@ -119,21 +123,26 @@ class CentralService(BaseService):
     def save_experiment(cls, project_id: str, save_experiment_dto: SaveExperimentToCentralDTO) -> None:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/project/{project_id}/experiment")
-        response = ExternalApiService.put(central_api_url, save_experiment_dto, cls._get_request_header())
 
-        if response.status_code != 200:
-            Logger.error(f"Can't save the experiment in central. Error : {response.text}")
-            raise BadRequestException(f"Can't save the experiment in central. Error : {str(response)}")
+        try:
+            return ExternalApiService.put(central_api_url, save_experiment_dto, cls._get_request_header(),
+                                          raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't save the experiment in central. Error : {err.detail}"
+            raise err
 
     @classmethod
     def delete_experiment(cls, project_id: str, experiment_id: str) -> None:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/project/{project_id}/experiment/{experiment_id}")
-        response = ExternalApiService.delete(central_api_url, cls._get_request_header())
 
-        if response.status_code != 200:
-            Logger.error(f"Can't delete the experiment in central. Error : {response.text}")
-            raise BadRequestException(f"Can't delete the experiment in central. Error : {str(response)}")
+        try:
+            return ExternalApiService.delete(central_api_url, cls._get_request_header(),
+                                             raise_exception_if_error=True)
+
+        except BaseHTTPException as err:
+            err.detail = f"t delete the experiment in central. Error : {err.detail}"
+            raise err
 
     @classmethod
     def save_report(cls, project_id: str, report: SaveReportToCentralDTO,
@@ -149,24 +158,26 @@ class CentralService(BaseService):
             content_type = FileHelper.get_mime(file_path)
             files.append(('files', (filename, file, content_type)))
 
-        response = ExternalApiService.put_form_data(
-            central_api_url, data=report,
-            headers=cls._get_request_header(),
-            files=files)
-
-        if response.status_code != 200:
-            Logger.error(f"Can't save the report in central. Error : {response.text}")
-            raise BadRequestException(f"Can't save the report in central. Error : {str(response)}")
+        try:
+            return ExternalApiService.put_form_data(
+                central_api_url, data=report,
+                headers=cls._get_request_header(),
+                files=files,
+                raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't save the report in central. Error : {err.detail}"
+            raise err
 
     @ classmethod
     def delete_report(cls, project_id: str, report_id: str) -> None:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/project/{project_id}/report/{report_id}")
-        response = ExternalApiService.delete(central_api_url, cls._get_request_header())
-
-        if response.status_code != 200:
-            Logger.error(f"Can't delete the report in central. Error : {response.text}")
-            raise BadRequestException(f"Can't delete the report in central. Error : {str(response)}")
+        try:
+            return ExternalApiService.delete(central_api_url, cls._get_request_header(),
+                                             raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't delete the report in central. Error : {err.detail}"
+            raise err
 
     @ classmethod
     def send_experiment_finished_mail(cls, user_id: str, experiment: SendExperimentFinishMailData) -> None:
