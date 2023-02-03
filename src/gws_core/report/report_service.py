@@ -274,9 +274,30 @@ class ReportService():
             "report": report.to_json(deep=True),
             "experiment_ids": [experiment.id for experiment in experiments],
             "lab_config": lab_config.to_json(),
+            "resource_views": {}
         }
+
+        rich_text = RichText(report.content)
+
+        # retrieve all the figures file path
+        file_paths: List[str] = []
+
+        for figure in rich_text.get_figures():
+            file_paths.append(ReportFileService.get_file_path(figure['filename']))
+
+        # set the resource views in the json object
+        for resource_view in rich_text.get_resource_views():
+            # set the json view in the resource_views object
+            # with the view id as key
+            save_report_dto["resource_views"][
+                resource_view["id"]] = ResourceService.get_and_call_view_on_resource_model(
+                resource_view["resource_id"],
+                resource_view["view_method_name"],
+                resource_view["view_config"],
+                resource_view["transformers"])
+
         # Save the experiment in central
-        CentralService.save_report(report.project.id, save_report_dto)
+        CentralService.save_report(report.project.id, save_report_dto, file_paths)
 
         return report
 

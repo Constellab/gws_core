@@ -3,9 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import json
 from typing import Any, Dict
 
 import requests
+from fastapi.encoders import jsonable_encoder
 from requests.models import Response
 
 from gws_core.core.exception.exceptions.base_http_exception import \
@@ -43,7 +45,7 @@ class ExternalApiService:
         return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
-    def put_form_data(cls, url: str, data: Dict, headers: Dict[str, str] = None, files: Any = None,
+    def put_form_data(cls, url: str, data: Any, headers: Dict[str, str] = None, files: Any = None,
                       raise_exception_if_error: bool = False) -> Response:
         """
         Make an HTTP put request
@@ -51,7 +53,12 @@ class ExternalApiService:
         if headers is None:
             headers = {}
         session = requests.Session()
-        response = session.put(url, data=data, headers=headers, files=files, timeout=cls.TIMEOUT)
+        # Wrap the data in body key to retrive it
+        # use the jsonable_encoder to convert the data to json
+        # use the json.dumps to convert the data to string
+        body = {"body": json.dumps(jsonable_encoder(data))}
+        response = session.put(url, data=body, headers=headers, files=files, timeout=cls.TIMEOUT)
+
         return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
