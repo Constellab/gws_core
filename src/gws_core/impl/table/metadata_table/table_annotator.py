@@ -12,7 +12,7 @@ from ....task.task import Task
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
 from ...table.table import Table
-from .metadata_table import MetadataTable
+from .helper.table_annotator_helper import TableAnnotatorHelper
 
 # ####################################################################
 #
@@ -32,21 +32,26 @@ class TableRowAnnotator(Task):
     * if an `id` matches against a reference value of the `sample_table`, the corresponding row of the `sample_table` is taggeg with the metadata given by the `id`.
     """
 
-    input_specs: InputSpecs = {"sample_table": InputSpec(Table), "metadata_table": InputSpec(MetadataTable)}
+    input_specs: InputSpecs = {
+        "sample_table": InputSpec(Table, human_name="Sample table", short_description="Table to annotate"),
+        "metadata_table": InputSpec(Table, human_name="Metadata table", short_description="Table containing the metadata")}
     output_specs: OutputSpecs = {"sample_table": OutputSpec(Table)}
     config_specs: ConfigSpecs = {
         "reference_column":
         StrParam(
             default_value="", human_name="Reference column in sample table",
-            short_description="Column in the `sample_table` whose values are used for annotation. If empty, try to use the `row_names` or the `fisrt_column` instead.")
-    }
+            short_description="Column in the sample table whose values are used for annotation. If empty, is uses the row names."),
+        "metadata_ref_column":
+        StrParam(
+            default_value="", human_name="Reference column in metadata table",
+            short_description="Column in the metadata table whose values are used for annotation. If empty, is uses the row names.")}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        table: Table = inputs["sample_table"]
-        metadata_table: MetadataTable = inputs["metadata_table"]
-        reference_column = params.get_value("reference_column")
-        from .helper.table_annotator_helper import TableRowAnnotatorHelper
-        table: Table = TableRowAnnotatorHelper.annotate(table, metadata_table, reference_column)
+        table: Table = TableAnnotatorHelper.annotate_rows(
+            inputs["sample_table"],
+            inputs["metadata_table"],
+            params.get_value("reference_column"),
+            params.get_value("metadata_ref_column"))
         return {"sample_table": table}
 
 
@@ -67,19 +72,26 @@ class TableColumnAnnotator(Task):
     * if an `id` matches against a reference value of the `sample_table`, the corresponding column of the `sample_table` is taggeg with the metadata given by the `id`.
     """
 
-    input_specs: InputSpecs = {"sample_table": InputSpec(Table), "metadata_table": InputSpec(MetadataTable)}
+    input_specs: InputSpecs = {
+        "sample_table": InputSpec(Table, human_name="Sample table", short_description="Table to annotate"),
+        "metadata_table": InputSpec(Table, human_name="Metadata table", short_description="Table containing the metadata")
+    }
     output_specs: OutputSpecs = {"sample_table": OutputSpec(Table)}
     config_specs: ConfigSpecs = {
         "reference_row":
         StrParam(
             default_value="", human_name="Reference row in sample table",
-            short_description="Row whose data are used as reference for annotation. If empty, try to use the `headers` or the `first_row` instead.")
-    }
+            short_description="Row in the sample table whose data are used as reference for annotation. If empty, it uses the column names."),
+        "metadata_ref_column":
+        StrParam(
+            default_value="", human_name="Reference column in metadata table",
+            short_description="Column in the metadata table whose values are used for annotation. If empty, is uses the row names.")}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        table: Table = inputs["sample_table"]
-        metadata_table: MetadataTable = inputs["metadata_table"]
-        reference_row = params.get_value("reference_row")
-        from .helper.table_annotator_helper import TableColumnAnnotatorHelper
-        table: Table = TableColumnAnnotatorHelper.annotate(table, metadata_table, reference_row)
+
+        table: Table = TableAnnotatorHelper.annotate_columns(
+            inputs["sample_table"],
+            inputs["metadata_table"],
+            params.get_value("reference_row"),
+            params.get_value("metadata_ref_column"))
         return {"sample_table": table}

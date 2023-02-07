@@ -298,30 +298,8 @@ class Migration0313(BrickMigration):
 class Migration0314(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
-
-        resource_models: List[ResourceModel] = list(ResourceModel.get_by_types_and_sub([Table._typing_name]))
-
-        for resource_model in resource_models:
-            try:
-                table: Table = resource_model.get_resource()
-
-                changed: bool = False
-                if len(table.get_column_tags()) == 0:
-                    table.set_all_column_tags(table._meta['column_tags'])
-                    changed = True
-
-                if len(table.get_row_tags()) == 0:
-                    table.set_all_row_tags(table._meta['row_tags'])
-                    changed = True
-
-                if changed:
-                    table._meta = None
-                    resource_model.receive_fields_from_resource(table)
-                    resource_model.save()
-
-            except Exception as err:
-                Logger.error(f'Error while migrating resource {resource_model.id} : {err}')
-                Logger.log_exception_stack_trace(err)
+        pass
+        # migration deprecated, tags are now stored in the resource model
 
 
 @brick_migration('0.3.15', short_description='Add last_sync info to Experiment and Report')

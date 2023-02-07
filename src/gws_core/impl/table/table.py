@@ -4,18 +4,19 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Dict, List, Literal, Union, Tuple
+from typing import Any, Dict, List, Literal, Tuple, Union
 
 import numpy as np
+from pandas import DataFrame, Series
+from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
+                              is_string_dtype)
+
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_axis_tags import TableAxisTags
 from gws_core.impl.table.view.table_vulcano_plot_view import \
     TableVulcanoPlotView
-from pandas import DataFrame, Series
-from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
-                              is_string_dtype)
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -29,7 +30,7 @@ from .data_frame_r_field import DataFrameRField
 from .helper.dataframe_filter_helper import (DataframeFilterHelper,
                                              DataframeFilterName)
 from .table_types import (AxisType, TableColumnType, TableHeaderInfo,
-                          TableMeta, is_row_axis)
+                          is_row_axis)
 from .view.table_barplot_view import TableBarPlotView
 from .view.table_boxplot_view import TableBoxPlotView
 from .view.table_heatmap_view import TableHeatmapView
@@ -67,7 +68,6 @@ class Table(Resource):
     COMMENT_CHAR = '#'
 
     _data: DataFrame = DataFrameRField()
-    _meta: TableMeta = DictRField()
 
     _row_tags: TableAxisTags = SerializableRField(TableAxisTags)
     _column_tags: TableAxisTags = SerializableRField(TableAxisTags)
@@ -75,16 +75,14 @@ class Table(Resource):
 
     def __init__(self, data: Union[DataFrame, np.ndarray, list] = None,
                  row_names: List[str] = None, column_names: List[str] = None,
-                 row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None,
-                 meta: TableMeta = None):
+                 row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None):
         super().__init__()
         self._set_data(data, row_names=row_names, column_names=column_names,
-                       row_tags=row_tags, column_tags=column_tags, meta=meta)
+                       row_tags=row_tags, column_tags=column_tags)
 
     def _set_data(self, data: Union[DataFrame, np.ndarray] = None,
                   row_names=None, column_names=None,
-                  row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None,
-                  meta: TableMeta = None) -> 'Table':
+                  row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None) -> 'Table':
         if data is None:
             data = DataFrame()
         else:
@@ -113,12 +111,7 @@ class Table(Resource):
 
         self._data = data
 
-        if meta:
-            # TODO remove meta on version 0.3.15
-            Logger.warning("[Table] The meta data is deprecated. Use row_tags and column_tags instead.")
-            self._set_tags(row_tags=meta.get("row_tags", None), column_tags=meta.get("column_tags", None))
-        else:
-            self._set_tags(row_tags=row_tags, column_tags=column_tags)
+        self._set_tags(row_tags=row_tags, column_tags=column_tags)
 
         return self
 
@@ -133,33 +126,6 @@ class Table(Resource):
         else:
             self.set_all_column_tags([{}] * self.nb_columns)
 
-    def get_meta(self) -> TableMeta:
-        """Get a copy of the table meta data information
-
-        :return: _description_
-        :rtype: TableMeta
-        """
-        # TODO remove meta on version 0.3.15
-        Logger.warning("[Table] The meta data is deprecated. Use row_tags and column_tags instead.")
-        return {
-            "row_tags": self.get_row_tags(),
-            "column_tags": self.get_column_tags()
-        }
-
-    def add_row_tag(self, row_index: int, key: str, value: str) -> None:
-        """
-        Add a {key, value} tag to a row at a given index
-        """
-
-        self._row_tags.add_tag_at(row_index, key, value)
-
-    def add_column_tag(self, column_index: int, key: str, value: str) -> None:
-        """
-        Add a {key, value} tag to a column at a given index
-        """
-
-        self._column_tags.add_tag_at(column_index, key, value)
-
     def set_comments(self, comments: str = ""):
         if not isinstance(comments, str):
             raise Exception("The comments must be a string")
@@ -167,44 +133,10 @@ class Table(Resource):
             comments = self.COMMENT_CHAR + comments
         self.comments = comments
 
-    def set_all_row_tags(self, tags: List[Dict[str, str]]) -> None:
-        if len(tags) != self.nb_rows:
-            raise Exception("The length of tags must be equal to the number of rows")
-
-        self._row_tags = TableAxisTags(tags)
-
-    # TODO deprecated, to remove
-    def set_all_rows_tags(self, tags: List[Dict[str, str]]) -> None:
-        Logger.error("[Table] The set_all_rows_tags is deprecated. Use set_all_row_tags instead.")
-        self.set_all_row_tags(tags)
-
-    def set_all_column_tags(self, tags: List[Dict[str, str]]) -> None:
-        if len(tags) != self.nb_columns:
-            raise Exception("The length of tags must be equal to the number of columns")
-
-        self._column_tags = TableAxisTags(tags)
-
-    # TODO deprecated, to remove
-    def set_all_columns_tags(self, tags: List[Dict[str, str]]) -> None:
-        Logger.error("[Table] The set_all_columns_tags is deprecated. Use set_all_column_tags instead.")
-        self.set_all_column_tags(tags)
-
     def get_data(self) -> DataFrame:
         return self._data.copy()
 
-    @property
-    def column_names(self) -> list:
-        """
-        Returns the column names of the Datatable.
-
-        :return: The list of column names or `None` is no column names exist
-        :rtype: list or None
-        """
-
-        try:
-            return self._data.columns.values.tolist()
-        except:
-            return None
+    ########################################## COLUMN ##########################################
 
     def column_exists(self, name: str, case_sensitive: bool = True) -> bool:
         if case_sensitive:
@@ -213,35 +145,37 @@ class Table(Resource):
             lower_names = [x.lower() for x in self.column_names]
             return name.lower() in lower_names
 
-    def generate_new_column_name(self, name: str) -> str:
-        """  Generates a column name that is unique in the Dataframe base on name.
-        If the column name doesn't exist, return name, otherwise return name_1 or name_2, ...
-        """
-        return Utils.generate_unique_str_for_list(self.column_names, name)
-
-    def get_column_data(self, column_name: str) -> List[Any]:
+    def get_column_data(self, column_name: str, skip_nan: bool = False) -> List[Any]:
         """
         Returns the column data of the Dataframe with the given name.
         """
-        return self._data[column_name].values.tolist()
+        if not self.column_exists(column_name):
+            raise Exception(f"The column '{column_name}' doesn't exist")
+        values = self._data[column_name].values.tolist()
+
+        if skip_nan:
+            values = [x for x in values if not np.isnan(x)]
+
+        return values
 
     def get_column_as_dataframe(self, column_name: str, skip_nan=False) -> DataFrame:
         """
         Get a column as a dataframe
         """
 
-        df = self._data[[column_name]]
+        dataframe = self._data[[column_name]]
         if skip_nan:
-            df.dropna(inplace=True)
-        return df
+            dataframe.dropna(inplace=True)
+        return dataframe
 
+    # TODO deprecated since 0.4.7
     def get_column_as_list(self, column_name: str, skip_nan=False) -> list:
         """
         Get a column as a list
         """
+        Logger.error("[Table] The get_column_as_list is deprecated. Use get_column_data instead.")
 
-        dataframe = self.get_column_as_dataframe(column_name, skip_nan)
-        return DataframeHelper.flatten_dataframe_by_column(dataframe)
+        return self.get_column_data(column_name, skip_nan=skip_nan)
 
     def add_column(self, name: str, data: Union[list, Series] = None, index: int = None):
         """ Add a new column to the Dataframe.
@@ -309,6 +243,79 @@ class Table(Resource):
 
         self._data.columns = column_names
 
+    @property
+    def nb_columns(self) -> int:
+        """
+        Returns the number of columns.
+
+        :return: The number of columns
+        :rtype: int
+        """
+
+        return self._data.shape[1]
+
+    @property
+    def column_names(self) -> list:
+        """
+        Returns the column names of the Datatable.
+
+        :return: The list of column names or `None` is no column names exist
+        :rtype: list or None
+        """
+
+        try:
+            return self._data.columns.values.tolist()
+        except:
+            return None
+
+    def get_column_names(self, from_index: int = None, to_index: int = None) -> List[str]:
+        """Get the column names
+        """
+        return self._data.columns.tolist()[from_index:to_index]
+
+    def get_column_type(self, column_name) -> TableColumnType:
+        # get the type of the column
+        column = self._data[column_name]
+        if is_integer_dtype(column):
+            return TableColumnType.INTEGER
+        elif is_float_dtype(column):
+            return TableColumnType.FLOAT
+        elif is_bool_dtype(column):
+            return TableColumnType.BOOLEAN
+        elif is_string_dtype(column):
+            return TableColumnType.STRING
+        else:
+            return TableColumnType.OBJECT
+
+    def get_column_names_by_positions(self, positions: List[int]) -> List[Union[str, int]]:
+        """Function to retrieve the column names based on row positions
+        """
+        if not isinstance(positions, list):
+            raise BadRequestException("The positions must be a list of integers")
+        if not all(isinstance(x, int) for x in positions):
+            raise BadRequestException("The positions must be a list of integers")
+        # get the row names of the row positions
+        return list(self._data.iloc[:, positions].columns)
+
+    def get_column_position_from_name(self, column_name: str) -> int:
+        return self._data.columns.get_loc(column_name)
+
+    def generate_new_column_name(self, name: str) -> str:
+        """  Generates a column name that is unique in the Dataframe base on name.
+        If the column name doesn't exist, return name, otherwise return name_1 or name_2, ...
+        """
+        return Utils.generate_unique_str_for_list(self.column_names, name)
+
+    ############################################# ROWS #############################################
+
+    def get_row_data(self, row_name: str) -> List[Any]:
+        """
+        Returns the row data of the Dataframe with the given index.
+        """
+        if not self.row_exists(row_name):
+            raise Exception(f"The row '{row_name}' doesn't exist")
+        return self._data.loc[row_name].values.tolist()
+
     # def add_row(self, row_name: str = None, row_data: Union[list, Series] = None, row_index: int = None):
     #     """ Add a new row to the Dataframe.
     #     :param row_data: data for the row, must be the same length as other rows
@@ -370,6 +377,58 @@ class Table(Resource):
             lower_names = [x.lower() for x in self.row_names]
             return name.lower() in lower_names
 
+    def add_row_tag(self, row_index: int, key: str, value: str) -> None:
+        """
+        Add a {key, value} tag to a row at a given index
+        """
+
+        self._row_tags.add_tag_at(row_index, key, value)
+
+    def set_all_row_tags(self, tags: List[Dict[str, str]]) -> None:
+        if len(tags) != self.nb_rows:
+            raise Exception("The length of tags must be equal to the number of rows")
+
+        self._row_tags = TableAxisTags(tags)
+
+    def get_row_names(self, from_index: int = None, to_index: int = None) -> List[str]:
+        """Get the row names
+        """
+        return self._data.index.tolist()[from_index:to_index]
+
+    def get_row_names_by_positions(self, positions: List[int]) -> List[str]:
+        """Function to retrieve the row names based on row positions
+        """
+        if not isinstance(positions, list):
+            raise BadRequestException("The positions must be a list of integers")
+        if not all(isinstance(x, int) for x in positions):
+            raise BadRequestException("The positions must be a list of integers")
+        # get the row names of the row positions
+        return list(self._data.iloc[positions, :].index)
+
+    def get_row_position_from_name(self, row_name: str) -> int:
+        return self._data.index.get_loc(row_name)
+
+    @property
+    def nb_rows(self) -> int:
+        """
+        Returns the number of rows.
+
+        :return: The number of rows
+        :rtype: int
+        """
+
+        return self._data.shape[0]
+
+    @property
+    def row_names(self) -> List[str]:
+        """
+        Returns the row names.
+        """
+
+        return self._data.index.values.tolist()
+
+    ######################################## CELL ########################################
+
     def set_cell_value_at(self, row_index: int, column_index: int, value: Any):
         """ Set the value of a cell at a given index
         """
@@ -380,6 +439,8 @@ class Table(Resource):
         """
         return self._data.iat[row_index, column_index]
 
+    ######################################## TAGS ########################################
+
     def get_tags(self, axis: AxisType) -> List[Dict[str, str]]:
         """
         Get tags
@@ -387,48 +448,20 @@ class Table(Resource):
 
         return self.get_row_tags() if is_row_axis(axis) else self.get_column_tags()
 
-    def get_row_tags(self, from_index: int = None, to_index: int = None,
-                     none_if_empty: bool = False,) -> List[Dict[str, str]]:
-        return self._row_tags.get_tags_between(from_index, to_index, none_if_empty)
+    ######################################## COLUM TAGS ########################################
 
-    def get_available_row_tags(self) -> Dict[str, List[str]]:
-        """Get the complete list of row tags with list of values for each
+    def add_column_tag(self, column_index: int, key: str, value: str) -> None:
         """
-        return self._row_tags.get_available_tags()
-
-    def get_row_names_by_positions(self, positions: List[int]) -> List[Union[str, int]]:
-        """Function to retrieve the row names based on row positions
+        Add a {key, value} tag to a column at a given index
         """
-        if not isinstance(positions, list):
-            raise BadRequestException("The positions must be a list of integers")
-        if not all(isinstance(x, int) for x in positions):
-            raise BadRequestException("The positions must be a list of integers")
-        # get the row names of the row positions
-        return list(self._data.iloc[positions, :].index)
 
-    def get_row_position_from_name(self, row_name: str) -> List[TableHeaderInfo]:
-        return self._data.index.get_loc(row_name)
+        self._column_tags.add_tag_at(column_index, key, value)
 
-    def get_rows_info(self, from_index: int = None, to_index: int = None) -> List[TableHeaderInfo]:
-        rows_info: List[TableHeaderInfo] = []
-        for index, row in self._data.iterrows():
-            rows_info.append(self.get_row_info(row.name))
+    def set_all_column_tags(self, tags: List[Dict[str, str]]) -> None:
+        if len(tags) != self.nb_columns:
+            raise Exception("The length of tags must be equal to the number of columns")
 
-        if from_index is not None or to_index is not None:
-            rows_info = rows_info[from_index:to_index]
-        return rows_info
-
-    def get_row_info(self, row_name: str) -> TableHeaderInfo:
-        row_position = self.get_row_position_from_name(row_name)
-        return {
-            "name": row_name,
-            "tags": self._row_tags.get_tags_at(row_position)
-        }
-
-    def get_row_names(self, from_index: int = None, to_index: int = None) -> List[str]:
-        """Get the row names
-        """
-        return self._data.index.tolist()[from_index:to_index]
+        self._column_tags = TableAxisTags(tags)
 
     def get_column_tags(self, from_index: int = None, to_index: int = None,
                         none_if_empty: bool = False) -> List[Dict[str, str]]:
@@ -443,19 +476,6 @@ class Table(Resource):
         """Get the complete list of column tags with list of values for each
         """
         return self._column_tags.get_available_tags()
-
-    def get_column_names_by_positions(self, positions: List[int]) -> List[Union[str, int]]:
-        """Function to retrieve the column names based on row positions
-        """
-        if not isinstance(positions, list):
-            raise BadRequestException("The positions must be a list of integers")
-        if not all(isinstance(x, int) for x in positions):
-            raise BadRequestException("The positions must be a list of integers")
-        # get the row names of the row positions
-        return list(self._data.iloc[:, positions].columns)
-
-    def get_column_position_from_name(self, column_name: str) -> int:
-        return self._data.columns.get_loc(column_name)
 
     def get_columns_info(self, from_index: int = None, to_index: int = None) -> List[TableHeaderInfo]:
         column_infos: List[TableHeaderInfo] = []
@@ -475,104 +495,39 @@ class Table(Resource):
             "tags": self._column_tags.get_tags_at(column_position)
         }
 
-    def get_column_names(self, from_index: int = None, to_index: int = None) -> List[str]:
-        """Get the column names
-        """
-        return self._data.columns.tolist()[from_index:to_index]
-
-    def get_column_type(self, column_name) -> TableColumnType:
-        # get the type of the column
-        column = self._data[column_name]
-        if is_integer_dtype(column):
-            return TableColumnType.INTEGER
-        elif is_float_dtype(column):
-            return TableColumnType.FLOAT
-        elif is_bool_dtype(column):
-            return TableColumnType.BOOLEAN
-        elif is_string_dtype(column):
-            return TableColumnType.STRING
-        else:
-            return TableColumnType.OBJECT
-
     def copy_column_tags(self, table: 'Table', from_index: int = None, to_index: int = None) -> None:
         self.set_all_column_tags(table.get_column_tags(from_index=from_index, to_index=to_index))
+
+    ######################################## ROW TAGS ########################################
+    def get_row_tags(self, from_index: int = None, to_index: int = None,
+                     none_if_empty: bool = False,) -> List[Dict[str, str]]:
+        return self._row_tags.get_tags_between(from_index, to_index, none_if_empty)
+
+    def get_available_row_tags(self) -> Dict[str, List[str]]:
+        """Get the complete list of row tags with list of values for each
+        """
+        return self._row_tags.get_available_tags()
+
+    def get_rows_info(self, from_index: int = None, to_index: int = None) -> List[TableHeaderInfo]:
+        rows_info: List[TableHeaderInfo] = []
+        for _, row in self._data.iterrows():
+            rows_info.append(self.get_row_info(row.name))
+
+        if from_index is not None or to_index is not None:
+            rows_info = rows_info[from_index:to_index]
+        return rows_info
+
+    def get_row_info(self, row_name: str) -> TableHeaderInfo:
+        row_position = self.get_row_position_from_name(row_name)
+        return {
+            "name": row_name,
+            "tags": self._row_tags.get_tags_at(row_position)
+        }
 
     def copy_row_tags(self, table: 'Table', from_index: int = None, to_index: int = None) -> None:
         self.set_all_row_tags(table.get_row_tags(from_index=from_index, to_index=to_index))
 
-    def head(self, nrows=5) -> DataFrame:
-        """
-        Returns the first n rows for the columns ant targets.
-
-        :param nrows: Number of rows
-        :param nrows: int
-        :return: The `panda.DataFrame` objects representing the n first rows of the `data`
-        :rtype: pandas.DataFrame
-        """
-
-        return self._data.head(nrows)
-
-    @property
-    def is_vector(self) -> bool:
-        return self.nb_rows == 1 or self.nb_columns == 1
-
-    @property
-    def is_column_vector(self) -> bool:
-        return self.nb_columns == 1
-
-    @property
-    def is_row_vector(self) -> bool:
-        return self.nb_rows == 1
-
-    # -- N --
-
-    @property
-    def nb_columns(self) -> int:
-        """
-        Returns the number of columns.
-
-        :return: The number of columns
-        :rtype: int
-        """
-
-        return self._data.shape[1]
-
-    @property
-    def nb_rows(self) -> int:
-        """
-        Returns the number of rows.
-
-        :return: The number of rows
-        :rtype: int
-        """
-
-        return self._data.shape[0]
-
-    # -- R --
-
-    @property
-    def row_names(self) -> list:
-        """
-        Returns the row names.
-
-        :return: The list of row names
-        :rtype: list
-        """
-
-        return self._data.index.values.tolist()
-
-    # -- S --
-
-    @property
-    def shape(self) -> Tuple[int]:
-        """
-        Returns the shape of the table.
-
-        :return: The shape
-        :rtype: Tuple[int]
-        """
-
-        return self._data.shape
+    #################################### FILTERING ####################################
 
     def select_by_row_positions(self, positions: List[int]) -> 'Table':
         row_names = self.get_row_names_by_positions(positions)
@@ -714,6 +669,8 @@ class Table(Resource):
 
         return self.create_sub_table_filtered_by_columns(data)
 
+    ######################################## CREATE SUB TABLE ########################################
+
     def create_sub_table_filtered_by_rows(self, filtered_df: DataFrame) -> 'Table':
         """
         Create a sub Table based on a subset Dataframe of this original table filtered by rows.
@@ -753,6 +710,31 @@ class Table(Resource):
         new_table._set_data(dataframe)
         new_table._set_tags(row_tags, column_tags)
         return new_table
+
+    ######################################## OTHERS ########################################
+
+    def head(self, nrows=5) -> DataFrame:
+        """
+        Returns the first n rows for the columns ant targets.
+
+        :param nrows: Number of rows
+        :param nrows: int
+        :return: The `panda.DataFrame` objects representing the n first rows of the `data`
+        :rtype: pandas.DataFrame
+        """
+
+        return self._data.head(nrows)
+
+    @property
+    def shape(self) -> Tuple[int]:
+        """
+        Returns the shape of the table.
+
+        :return: The shape
+        :rtype: Tuple[int]
+        """
+
+        return self._data.shape
 
     def __str__(self):
         return super().__str__() + "\n" + \
@@ -802,7 +784,7 @@ class Table(Resource):
 
         return self._data.tail(nrows)
 
-    # -- V ---
+    ################################################# TABLE VIEW #################################################
 
     @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
     def view_as_table(self, params: ConfigParams) -> TableView:

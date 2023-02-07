@@ -5,7 +5,7 @@
 
 
 from enum import Enum
-from typing import Dict, List, Literal, TypedDict
+from typing import Dict, Literal, TypedDict
 
 
 class TableColumnType(Enum):
@@ -25,14 +25,6 @@ class TableHeaderInfo(TypedDict):
 
 class TableColumnInfo(TableHeaderInfo):
     type: TableColumnType
-
-
-# TODO remove meta on version 0.3.15
-class TableMeta(TypedDict):
-    """ Object that represent the table Meta information
-    """
-    row_tags: List[Dict[str, str]]
-    column_tags: List[Dict[str, str]]
 
 
 AxisType = Literal[0, 1, "index", "columns"]

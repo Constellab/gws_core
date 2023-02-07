@@ -7,15 +7,15 @@ from typing import Type
 
 from gws_core.impl.file.file import File
 
-from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param.param_spec import StrParam
-from ....core.exception.exceptions import BadRequestException
-from ....task.converter.exporter import exporter_decorator
-from ....task.converter.importer import importer_decorator
-from ..table import Table
-from ..tasks.table_exporter import TableExporter
-from ..tasks.table_importer import TableImporter
-from .metadata_table import MetadataTable
+from ..config.config_types import ConfigParams, ConfigSpecs
+from ..config.param.param_spec import StrParam
+from ..core.exception.exceptions import BadRequestException
+from ..impl.table.table import Table
+from ..impl.table.tasks.table_exporter import TableExporter
+from ..impl.table.tasks.table_importer import TableImporter
+from ..task.converter.exporter import exporter_decorator
+from ..task.converter.importer import importer_decorator
+from .dep_metadata_table import MetadataTable
 
 # ####################################################################
 #
@@ -24,7 +24,9 @@ from .metadata_table import MetadataTable
 # ####################################################################
 
 
-@importer_decorator("MetadataTableImporter", target_type=MetadataTable, supported_extensions=Table.ALLOWED_FILE_FORMATS)
+@importer_decorator("MetadataTableImporter", target_type=MetadataTable,
+                    supported_extensions=Table.ALLOWED_FILE_FORMATS, deprecated_since="0.4.7",
+                    deprecated_message="Use Table Importer instead", hide=True)
 class MetadataTableImporter(TableImporter):
 
     config_specs: ConfigSpecs = {
@@ -90,7 +92,8 @@ class MetadataTableImporter(TableImporter):
 # ####################################################################
 
 
-@exporter_decorator("MetadataTableExporter", source_type=MetadataTable)
+@exporter_decorator("MetadataTableExporter", source_type=MetadataTable, deprecated_since="0.4.7",
+                    deprecated_message="Use Table Exporter instead", hide=True)
 class MetadataTableExporter(TableExporter):
     config_specs: ConfigSpecs = {
         'file_name': StrParam(optional=True, short_description="File name (without extension)"),

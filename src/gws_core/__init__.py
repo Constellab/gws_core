@@ -123,6 +123,11 @@ from .deprecated.dataset.tasks.dep_dataset_exporter import \
 from .deprecated.dataset.tasks.dep_dataset_importer import \
     DatasetImporter as DatasetImporter
 from .deprecated.dep_conda_env_shell import CondaEnvShell as CondaEnvShell
+from .deprecated.dep_metadata_table import MetadataTable as MetadataTable
+from .deprecated.dep_metadata_table_task import \
+    MetadataTableExporter as MetadataTableExporter
+from .deprecated.dep_metadata_table_task import \
+    MetadataTableImporter as MetadataTableImporter
 from .deprecated.dep_pip_env_shell import PipEnvShell as PipEnvShell
 from .deprecated.dep_shell import Shell as Shell
 # Experiment
@@ -218,22 +223,13 @@ from .impl.table.helper.table_tag_extractor_helper import \
 from .impl.table.helper.table_unfolder_helper import \
     TableUnfolderHelper as TableUnfolderHelper
 from .impl.table.metadata_table.helper.table_annotator_helper import \
-    TableColumnAnnotatorHelper as TableColumnAnnotatorHelper
-from .impl.table.metadata_table.helper.table_annotator_helper import \
-    TableRowAnnotatorHelper as TableRowAnnotatorHelper
-from .impl.table.metadata_table.metadata_table import \
-    MetadataTable as MetadataTable
-from .impl.table.metadata_table.metadata_table_task import \
-    MetadataTableExporter as MetadataTableExporter
-from .impl.table.metadata_table.metadata_table_task import \
-    MetadataTableImporter as MetadataTableImporter
+    TableAnnotatorHelper as TableAnnotatorHelper
 from .impl.table.metadata_table.table_annotator import \
     TableColumnAnnotator as TableColumnAnnotator
 from .impl.table.metadata_table.table_annotator import \
     TableRowAnnotator as TableRowAnnotator
 from .impl.table.table import Table as Table
 from .impl.table.table_types import TableHeaderInfo as TableHeaderInfo
-from .impl.table.table_types import TableMeta as TableMeta
 from .impl.table.tasks.table_exporter import TableExporter as TableExporter
 from .impl.table.tasks.table_importer import TableImporter as TableImporter
 from .impl.table.transformers.table_aggregator import \

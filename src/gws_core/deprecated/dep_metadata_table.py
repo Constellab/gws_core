@@ -5,13 +5,14 @@
 
 from typing import Dict, List
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from pandas import DataFrame
 
-from ....resource.r_field.primitive_r_field import StrRField
-from ....resource.resource_decorator import resource_decorator
-from ..table import Table
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+
+from ..impl.table.table import Table
+from ..resource.r_field.primitive_r_field import StrRField
+from ..resource.resource_decorator import resource_decorator
 
 # ####################################################################
 #
@@ -22,7 +23,10 @@ from ..table import Table
 
 @resource_decorator("MetadataTable",
                     human_name="MetadataTable",
-                    short_description="Metadata table")
+                    short_description="Metadata table",
+                    deprecated_since="0.4.7",
+                    deprecated_message="Use Table instead",
+                    hide=True)
 class MetadataTable(Table):
     """
     Represents a sample metadata table
@@ -48,7 +52,7 @@ class MetadataTable(Table):
     sample_id_column: str = StrRField(default_value=DEFAULT_SAMPLE_ID_COLUMN)
 
     def get_sample_ids(self) -> list:
-        return self.get_column_as_list(self.sample_id_column)
+        return self.get_column_data(self.sample_id_column)
 
     def create_sub_table(
             self, dataframe: DataFrame, row_tags: List[Dict[str, str]],
