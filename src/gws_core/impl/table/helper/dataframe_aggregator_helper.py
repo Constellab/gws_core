@@ -46,7 +46,7 @@ class DataframeAggregatorHelper:
         cls._check_func(func)
         axis_num = 1 if direction == "horizontal" else 0
 
-        numeric_dataframe: DataFrame = DataframeHelper.nanify_none_numeric(data)
+        numeric_dataframe: DataFrame = DataframeHelper.nanify_none_number(data)
 
         aggregated_data: DataFrame
         if func == "mean":

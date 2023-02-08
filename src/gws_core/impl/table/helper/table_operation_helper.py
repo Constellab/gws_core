@@ -6,7 +6,8 @@
 from re import split, sub
 from typing import List, Union
 
-from pandas import NA, DataFrame
+from numpy import NaN
+from pandas import DataFrame
 
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.core.utils.string_helper import StringHelper
@@ -17,7 +18,7 @@ from ....core.utils.utils import Utils
 
 class TableOperationHelper():
 
-    # custom str to set NA on eval, the string is then replace with real NA
+    # custom str to set NaN on eval, the string is then replace with real NaN
     _NaN_str = '__NaN__'
 
     OPERATION_SEPARATOR: str = '\n'
@@ -45,7 +46,7 @@ class TableOperationHelper():
         dataframe = source.get_data()
 
         eval_dataframe: DataFrame = dataframe.eval(str_operation)
-        eval_dataframe = eval_dataframe.replace(TableOperationHelper._NaN_str, NA)
+        eval_dataframe = eval_dataframe.replace(TableOperationHelper._NaN_str, NaN)
         result_table: Table
 
         # if the result is append to the dataframe
@@ -75,7 +76,7 @@ class TableOperationHelper():
     def row_operation(source: Table, operations: Union[str, List[str]], keep_original_rows: bool) -> Table:
         t_table = source.transpose()
         result_transposed = TableOperationHelper.column_operations(t_table, operations, keep_original_rows)
-        return result_transposed.transpose(convert_dtypes=True)
+        return result_transposed.transpose(infer_objects=True)
 
     @staticmethod
     def column_mass_operations(table: Table, operation_df: DataFrame,

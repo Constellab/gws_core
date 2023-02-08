@@ -6,6 +6,7 @@
 from typing import Type
 
 import pandas
+
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -81,15 +82,13 @@ class TableImporter(ResourceImporter):
                 nrows=nrows,
                 decimal=decimal,
                 comment=comment_char,
-                encoding=encoding
+                encoding=encoding,
             )
         else:
             raise BadRequestException(
                 f"Valid file formats are {Table.ALLOWED_FILE_FORMATS}.")
 
         df.columns = df.columns.map(str)
-
-        print(metadata_columns)
 
         # set metadata
         if metadata_columns:

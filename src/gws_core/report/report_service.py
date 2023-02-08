@@ -426,7 +426,8 @@ class ReportService():
     ################################################# Resource View ########################################
     @classmethod
     def get_resources_of_associated_experiments(cls, report_id: str) -> List[ResourceModel]:
-        """Method to retrieve the resources of the experiments associated with a report
+        """Method to retrieve the resources of the experiments associated with a report.
+        Resources used as input or output of the experiments are returned.
         """
         # add a filter on experiments of the report
         experiments = ReportService.get_experiments_by_report(report_id)

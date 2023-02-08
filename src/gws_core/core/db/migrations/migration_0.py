@@ -3,8 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
-import json
 from copy import deepcopy
 from typing import Dict, List
 
@@ -20,12 +18,11 @@ from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.fs_node_model import FSNodeModel
-from gws_core.impl.table.table import Table
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor import Monitor
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
-from gws_core.process.process_model import ProcessModel, ProcessStatus
+from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar, ProgressBarMessage
 from gws_core.project.project import Project
 from gws_core.protocol.protocol_model import ProtocolModel

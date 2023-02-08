@@ -10,12 +10,14 @@ from typing import Any, Dict, List
 from peewee import ModelSelect
 
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.experiment.experiment import Experiment
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_types import exluded_views_in_historic
 from gws_core.user.current_user_service import CurrentUserService
 
 from ...core.classes.paginator import Paginator
-from ...core.classes.search_builder import SearchBuilder, SearchParams
+from ...core.classes.search_builder import (SearchBuilder,
+                                            SearchFilterCriteria, SearchParams)
 from ...core.utils.logger import Logger
 from ...task.transformer.transformer_type import TransformerDict
 from ...user.user import User
@@ -134,6 +136,7 @@ class ViewConfigService():
         search_builder: SearchBuilder = ViewConfigSearchBuilder()
 
         # retrieve resources associated to the report's experiments
+        # It retrieves the resources used as input or output of the experiments
         resources: List[ResourceModel] = ReportService.get_resources_of_associated_experiments(report_id)
         search_builder.add_expression(ViewConfig.resource_model.in_(resources))
 
@@ -149,6 +152,14 @@ class ViewConfigService():
         if not search.get_filter_criteria_value("include_not_flagged"):
             search_builder.add_expression(ViewConfig.flagged == True)
         search.remove_filter_criteria("include_not_flagged")
+
+        # Handle the project filters, get all experiment of this project and filter by experiment
+        projects_criteria: SearchFilterCriteria = search.get_filter_criteria('project')
+        if projects_criteria is not None:
+            experiments: List[Experiment] = list(Experiment.select().where(
+                Experiment.project.in_(projects_criteria['value'])))
+            search_builder.add_expression(ViewConfig.experiment.in_(experiments))
+            search.remove_filter_criteria('project')
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(

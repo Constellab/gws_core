@@ -6,6 +6,7 @@
 
 from unittest.async_case import IsolatedAsyncioTestCase
 
+from numpy import NaN
 from pandas import NA, DataFrame
 
 from gws_core import DataframeAggregatorHelper, Table, TaskRunner
@@ -24,10 +25,10 @@ class TestTableAggregator(IsolatedAsyncioTestCase):
         self.assertTrue(dataframe.equals(expected_df))
 
         # test with string and NaN in the dataframe
-        df_with_str = DataFrame({'A': [1, 2, 3, 'OK'], 'B': [10, None, 6, NA]})
+        df_with_str = DataFrame({'A': [1, 2, 3, 'OK'], 'B': [10, None, NaN, NA]})
 
         dataframe = DataframeAggregatorHelper.aggregate(data=df_with_str, direction="vertical", func="sum")
-        expected_df = DataFrame({'A': [6.0], 'B': [16.0]})
+        expected_df = DataFrame({'A': [6.0], 'B': [10.0]})
         self.assertTrue(dataframe.equals(expected_df))
 
         # Horizontal

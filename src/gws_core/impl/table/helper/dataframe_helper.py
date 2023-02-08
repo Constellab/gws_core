@@ -7,9 +7,8 @@ from cmath import inf
 from re import sub
 from typing import Any, List
 
-from numpy import inf
-from numpy import nan as np_nan
-from pandas import NA, DataFrame
+from numpy import NaN, inf
+from pandas import NA, DataFrame, isna
 
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.core.utils.string_helper import StringHelper
@@ -58,30 +57,28 @@ class DataframeHelper:
 
     @staticmethod
     def dataframe_to_float(dataframe: DataFrame) -> DataFrame:
-        """Convert all element of a dataframe to float, if element is not convertible, is sets NA
+        """Convert all element of a dataframe to float, if element is not convertible, is sets NaN
         """
-        return dataframe.applymap(lambda x: NumericHelper.to_float(x, NA),  na_action='ignore')
+        return dataframe.applymap(lambda x: NumericHelper.to_float(x, NaN),  na_action='ignore')
 
     @classmethod
-    def replace_inf(cls, data: DataFrame, value=NA) -> DataFrame:
+    def replace_inf(cls, data: DataFrame, value=NaN) -> DataFrame:
         return data.replace([inf, -inf], value)
 
     @classmethod
     def replace_nan_and_inf(cls, dataframe: DataFrame, value: Any) -> DataFrame:
-        data: DataFrame = dataframe.replace({NA: value})
+        data: DataFrame = dataframe.replace({NaN: value})
         return cls.replace_inf(data, value)
 
     @classmethod
-    def nanify_none_numeric(cls, data: DataFrame) -> DataFrame:
-        """ Convert all not numeric element to NA"""
-        return data.applymap(lambda x: x if isinstance(x, (float, int)) else NA,
-                             na_action='ignore')
+    def nanify_none_number(cls, data: DataFrame) -> DataFrame:
+        """ Convert all not numeric element to NaN"""
+        return data.applymap(lambda x: x if isinstance(x, (float, int)) else NaN)
 
     @classmethod
     def nanify_none_str(cls, data: DataFrame) -> DataFrame:
-        """ Convert all not string element to NA"""
-        return data.applymap(lambda x: x if isinstance(x, str) else NA,
-                             na_action='ignore')
+        """ Convert all not string element to NaN"""
+        return data.applymap(lambda x: x if isinstance(x, str) else NaN)
 
     @classmethod
     def contains(cls, data: DataFrame, value: Any) -> DataFrame:
@@ -173,7 +170,6 @@ class DataframeHelper:
           - replace ' ', '-', '.' with underscores
           - remove all other special characters
           - remove all accents
-          - if start with a number, add an underscore at the beginning
         """
         if name is None:
             return ''
@@ -183,13 +179,4 @@ class DataframeHelper:
         str_name = sub(r'[\s.-]+', '_', str_name)
         str_name = StringHelper.replace_accent_with_letter(str_name)
         str_name = sub('[^A-Za-z0-9_]+', '', str_name)
-        if str_name[0].isdigit():
-            str_name = '_' + str_name
         return str_name
-
-    @classmethod
-    def replace_numpy_nan_with_pandas_nan(cls, data: DataFrame) -> DataFrame:
-        """
-        Replace all numpy nan with pandas nan
-        """
-        return data.replace(np_nan, NA)

@@ -7,9 +7,10 @@
 from typing import Literal
 
 import numpy
+from pandas import DataFrame
+
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
-from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
 
@@ -38,7 +39,7 @@ class DataframeScalerHelper:
 
     @classmethod
     def scale_by_columns(cls, data: DataFrame, func: DfAxisScaleFunction) -> DataFrame:
-        result = DataframeHelper.nanify_none_numeric(data)
+        result = DataframeHelper.nanify_none_number(data)
 
         if func == "unit":
             result = result / result.sum(skipna=True)

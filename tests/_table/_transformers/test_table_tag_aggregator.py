@@ -27,7 +27,7 @@ class TestTableTagAggregator(IsolatedAsyncioTestCase):
 
         # Sort
         sorted_table = TableTagAggregatorHelper.aggregate_by_row_tags(table, keys=['gender'], func="sort")
-        self.assertEqual(sorted_table.row_names, ['_1', '_3', '_0', '_2'])
+        self.assertEqual(sorted_table.row_names, ['1', '3', '0', '2'])
 
         # Check that the tags where not affected
         BaseTestCase.assert_json(table.get_column_tags(), column_tags)
@@ -35,7 +35,7 @@ class TestTableTagAggregator(IsolatedAsyncioTestCase):
 
         sorted_table = TableTagAggregatorHelper.aggregate_by_row_tags(
             table, keys=['town', 'gender'], func="sort")
-        self.assertEqual(sorted_table.row_names, ['_1', '_3', '_0', '_2'])
+        self.assertEqual(sorted_table.row_names, ['1', '3', '0', '2'])
 
         # Mean on row
         grouped_table = TableTagAggregatorHelper.aggregate_by_row_tags(table, keys=['gender'], func="mean")

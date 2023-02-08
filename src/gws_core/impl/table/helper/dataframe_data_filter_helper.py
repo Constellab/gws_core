@@ -5,9 +5,10 @@
 
 from typing import Literal
 
+from pandas import DataFrame
+
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
-from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
 from .dataframe_aggregator_helper import (DataframeAggregatorHelper,
@@ -72,7 +73,7 @@ class DataframeDataFilterHelper:
         # keep columns based on regex
         filtered_df: DataFrame = cls._filter_columns(data, column_name_regex)
 
-        numeric_df: DataFrame = DataframeHelper.nanify_none_numeric(filtered_df)
+        numeric_df: DataFrame = DataframeHelper.nanify_none_number(filtered_df)
 
         bool_df: DataFrame = None
         if comp == ">":

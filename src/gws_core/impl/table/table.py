@@ -7,7 +7,6 @@
 from typing import Any, Dict, List, Literal, Tuple, Union
 
 import numpy as np
-from pandas import NA as panda_na
 from pandas import DataFrame, Series
 from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
                               is_string_dtype)
@@ -110,8 +109,7 @@ class Table(Resource):
 
         # format the row and column names
         # prevent having duplicate column and row names
-        dataframe = DataframeHelper.format_column_and_row_names(data)
-        self._data = DataframeHelper.replace_numpy_nan_with_pandas_nan(dataframe)
+        self._data = DataframeHelper.format_column_and_row_names(data)
 
         self._set_tags(row_tags=row_tags, column_tags=column_tags)
 
@@ -196,7 +194,7 @@ class Table(Resource):
 
         if data is None:
             # use max 1 for special case when table is empty
-            data = [panda_na] * max(self.nb_rows, 1)
+            data = [None] * max(self.nb_rows, 1)
 
         if isinstance(data, Series):
             data = data.tolist()
@@ -205,15 +203,17 @@ class Table(Resource):
 
         name = DataframeHelper.format_header_name(name)
 
-        if self.nb_rows > 0 and len(data) != self.nb_rows:
+        # if the table was empty, specific case
+        if self.nb_columns == 0 and self.nb_rows == 0:
+            self._row_tags.insert_new_empty_tags(count=len(data))
+
+            self._set_data(DataFrame({name: data}))
+            return
+
+        if len(data) != self.nb_rows:
             raise BadRequestException("The length of column data must be equal to the number of rows")
         if self.column_exists(name):
             raise BadRequestException(f"The column name `{name}` already exists")
-
-        # if the table was empty, it will create new rows
-        # so we need to create the row tags
-        if self.nb_rows == 0:
-            self._row_tags.insert_new_empty_tags(count=len(data))
 
         # insert columns
         if index is None:
@@ -334,7 +334,7 @@ class Table(Resource):
         if not self.row_exists(name, case_sensitive):
             raise BadRequestException(f"The row `{name}` doesn't exist")
 
-    def get_row_data(self, row_name: str, skip_na: bool) -> List[Any]:
+    def get_row_data(self, row_name: str, skip_na: bool = False) -> List[Any]:
         """
         Returns the row data of the Dataframe with the given index.
         """
@@ -355,7 +355,7 @@ class Table(Resource):
 
         if data is None:
             # use max 1 for special case when table is empty
-            data = [panda_na] * max(self.nb_columns, 1)
+            data = [None] * max(self.nb_columns, 1)
 
         if isinstance(data, Series):
             data = data.tolist()
@@ -376,7 +376,7 @@ class Table(Resource):
 
         if self.row_exists(name):
             raise BadRequestException(f"The row name `{name}` already exists")
-        if self.nb_columns > 0 and len(data) != self.nb_columns:
+        if len(data) != self.nb_columns:
             raise BadRequestException(
                 f"The length of row data must be equal to the number of columns. Nb columns: {self.nb_columns}, nb data: {len(data)}")
 
@@ -795,8 +795,9 @@ class Table(Resource):
         return self._data.equals(o._data) and self._row_tags.equals(o._row_tags) and self._column_tags.equals(
             o._column_tags)
 
-    def transpose(self, convert_dtypes: bool = False) -> 'Table':
-        data = self._data.T if not convert_dtypes else self._data.T.convert_dtypes()
+    def transpose(self, infer_objects: bool = False) -> 'Table':
+
+        data = self._data.T if not infer_objects else self._data.T.infer_objects()
         return Table(
             data=data,
             row_names=self.column_names,
@@ -805,13 +806,13 @@ class Table(Resource):
             column_tags=self.get_row_tags()
         )
 
-    def convert_dtypes(self) -> 'Table':
-        """Call convert dtypes on the underlying dataframe, it modifies the table inplace.
+    def infer_objects(self) -> 'Table':
+        """Call infer_objects on the underlying dataframe, it modifies the table dataframe.
 
         :return: _description_
         :rtype: Table
         """
-        self._data = self._data.convert_dtypes()
+        self._data = self._data.infer_objects()
         return self
 
     def to_list(self) -> list:
