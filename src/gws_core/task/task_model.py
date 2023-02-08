@@ -6,8 +6,9 @@ import inspect
 import zlib
 from typing import Any, Dict, List, Type
 
-from gws_core.resource.resource_list_base import ResourceListBase
 from peewee import ForeignKeyField, ModelSelect
+
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction

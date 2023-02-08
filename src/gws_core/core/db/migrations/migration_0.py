@@ -29,9 +29,9 @@ from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.report.report import Report
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
-from gws_core.resource.resource_list_base import ResourceListBase
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
-from gws_core.resource.resource_set import ResourceSet
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
+from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.tag.tag_model import TagModel
 from gws_core.tag.taggable_model import TaggableModel

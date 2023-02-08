@@ -21,8 +21,8 @@ from gws_core.model.typing import TypingNameObj
 from gws_core.model.typing_manager import TypingManager
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource import Resource
-from gws_core.resource.resource_list_base import ResourceListBase
-from gws_core.resource.resource_set import ResourceSet
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
+from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.user.user import User
 
 from .resource_model import ResourceModel, ResourceOrigin

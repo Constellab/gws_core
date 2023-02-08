@@ -11,11 +11,11 @@ from gws_core.config.config_types import ConfigParams
 from gws_core.impl.view.resources_list_view import ResourcesListView
 from gws_core.resource.view.view_decorator import view
 
-from .resource import Resource
-from .resource_decorator import resource_decorator
+from ..resource import Resource
+from ..resource_decorator import resource_decorator
 
 if TYPE_CHECKING:
-    from .resource_model import ResourceModel
+    from ..resource_model import ResourceModel
 
 
 @resource_decorator(unique_name="ResourceListBase", human_name="Resource list base",
@@ -47,7 +47,7 @@ class ResourceListBase(Resource):
         if not resource_model_id in self._get_resource_ids():
             raise Exception(f"The resource with id {resource_model_id} is not in the resource list")
 
-        from .resource_model import ResourceModel
+        from ..resource_model import ResourceModel
         return ResourceModel.get_by_id_and_check(resource_model_id).get_resource()
 
     @abstractmethod
@@ -68,7 +68,7 @@ class ResourceListBase(Resource):
         return resources
 
     def _get_all_resource_models(self) -> List[ResourceModel]:
-        from .resource_model import ResourceModel
+        from ..resource_model import ResourceModel
         resource_ids = list(self._get_resource_ids())
 
         if not resource_ids:

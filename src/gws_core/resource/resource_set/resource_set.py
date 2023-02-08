@@ -6,10 +6,10 @@
 from typing import Dict, Set
 
 from gws_core.resource.r_field.dict_r_field import DictRField
-from gws_core.resource.resource_list_base import ResourceListBase
 
-from .resource import Resource
-from .resource_decorator import resource_decorator
+from ..resource import Resource
+from ..resource_decorator import resource_decorator
+from .resource_list_base import ResourceListBase
 
 
 @resource_decorator(unique_name="ResourceSet", human_name="Resource set",

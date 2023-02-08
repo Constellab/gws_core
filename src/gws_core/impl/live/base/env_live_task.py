@@ -15,7 +15,7 @@ from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....io.io_spec import InputSpec, OutputSpec
 from ....io.io_spec_helper import InputSpecs, OutputSpecs
-from ....resource.resource_set import ResourceSet
+from ....resource.resource_set.resource_set import ResourceSet
 from ....task.task import Task
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs

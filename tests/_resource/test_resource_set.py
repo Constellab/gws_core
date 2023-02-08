@@ -12,7 +12,7 @@ from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.io.io_spec_helper import InputSpecs
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.resource_set import ResourceSet
+from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.test.base_test_case import BaseTestCase
 
 

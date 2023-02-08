@@ -14,7 +14,7 @@ from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node import FSNode
-from gws_core.resource.resource_list_base import ResourceListBase
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import CallViewResult
 from gws_core.resource.view_config.view_config import ViewConfig

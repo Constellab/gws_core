@@ -111,7 +111,7 @@ class ResourceExporter(Converter):
     # have 1 output called file that extend FsNode (like File or Folder)
     output_specs = {"target": OutputSpec(FSNode)}
 
-    # Override the config_spec to define custom spec for the importer
+    # Override the config_spec to define custom spec for the exporter
     config_specs: ConfigSpecs = {}
 
     @final

@@ -6,14 +6,14 @@
 
 from gws_core.config.config_types import ConfigParams
 from gws_core.config.param.param_spec import StrParam
-from gws_core.impl.robot.robot_resource import Robot
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
-from gws_core.resource.resource_set import ResourceSet
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
+
+from .resource_set import ResourceSet
 
 
 @task_decorator(unique_name="ResourceStacker", short_description="Stack a set of resource in a resource set",
@@ -63,6 +63,7 @@ class ResourceStacker(Task):
                 resource_set.add_resource(resource_3, create_new_resource=False)
 
         return {'resource_set': resource_set}
+
 
 @task_decorator(unique_name="ResourcePicker", short_description="Pick a resource from a resource set",
                 hide=False)

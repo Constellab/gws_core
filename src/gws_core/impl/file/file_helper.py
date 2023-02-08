@@ -242,3 +242,19 @@ class FileHelper():
                 return f'{size:.1f} {unit}'
             size /= 1024.0
         return f'{size:.1f} EB'
+
+    @staticmethod
+    def generate_unique_fs_node_for_list(list_fs_node_names: List[str], fs_node_name: str) -> str:
+        """Generate a unique fs node name for a list of node names.
+        Append _1, _2... before the extension if the str is already in the list
+        """
+        if fs_node_name not in list_fs_node_names:
+            return fs_node_name
+
+        i = 1
+        name = f"{FileHelper.get_name(fs_node_name)}_{i}.{FileHelper.get_extension(fs_node_name)}" if '.' in fs_node_name else f"{FileHelper.get_name(fs_node_name)}_{i}"
+        while name in list_fs_node_names:
+            i += 1
+            name = f"{FileHelper.get_name(fs_node_name)}_{i}.{FileHelper.get_extension(fs_node_name)}" if '.' in fs_node_name else f"{FileHelper.get_name(fs_node_name)}_{i}"
+
+        return name

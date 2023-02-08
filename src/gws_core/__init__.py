@@ -377,7 +377,7 @@ from .resource.resource_decorator import \
 from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_r_field import ResourceRField as ResourceRField
 from .resource.resource_service import ResourceService as ResourceService
-from .resource.resource_set import ResourceSet as ResourceSet
+from .resource.resource_set.resource_set import ResourceSet as ResourceSet
 from .resource.resource_typing import ResourceTyping as ResourceTyping
 from .resource.technical_info import TechnicalInfo as TechnicalInfo
 from .resource.view.lazy_view_param import LazyViewParam as LazyViewParam
