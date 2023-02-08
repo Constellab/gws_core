@@ -2,6 +2,8 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+from gws_core.resource.technical_info import TechnicalInfo
+
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
@@ -24,4 +26,6 @@ class TableTransposer(Transformer):
     config_specs: ConfigSpecs = {}
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        return source.transpose()
+        result = source.transpose()
+        result.add_technical_info(TechnicalInfo('Waow', 'super', 'cool'))
+        return result

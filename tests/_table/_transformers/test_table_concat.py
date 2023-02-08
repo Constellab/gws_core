@@ -5,8 +5,7 @@
 
 from unittest import IsolatedAsyncioTestCase
 
-from numpy import NaN
-from pandas import DataFrame
+from pandas import NA, DataFrame
 
 from gws_core.impl.table.helper.table_concat_helper import TableConcatHelper
 from gws_core.impl.table.table import Table
@@ -28,10 +27,14 @@ class TestTableConcat(IsolatedAsyncioTestCase):
         table_2 = Table(df_2, row_tags=row_tags_2, column_tags=column_tags_2)
 
         result: Table = TableConcatHelper.concat_table_rows(table_1, table_2,
-                                                            column_tags_option='ignore', fill_nan=NaN)
+                                                            column_tags_option='ignore', fill_nan=NA)
 
-        expected_df = DataFrame({'F1': [1, 2, 4, 5], 'F2': [7.0, 1.0, NaN, NaN],
-                                 'F3': [NaN, NaN, 9.0, 8.0], 'F4': [NaN, NaN, 'n1', 'n2']}, index=[0, 1, '0_1', '1_1'])
+        expected_df = DataFrame(
+            {'F1': [1, 2, 4, 5],
+             'F2': [7.0, 1.0, NA, NA],
+             'F3': [NA, NA, 9.0, 8.0],
+             'F4': [NA, NA, 'n1', 'n2']},
+            index=['_0', '_1', '_0_1', '_1_1'])
         expected_row_tags = [{'id': '1'}, {'id': '2'}, {'id': '3'}, {'id': '4'}]
         self.assertTrue(DataFrame.equals(result.get_data(), expected_df))
         BaseTestCase.assert_json(result.get_row_tags(), expected_row_tags)
@@ -48,7 +51,6 @@ class TestTableConcat(IsolatedAsyncioTestCase):
         BaseTestCase.assert_json(result.get_column_tags(), expected_column_tags)
 
     def test_table_column_concat_helper(self):
-
         df_1: DataFrame = DataFrame({'1': ['A1', 'B1'], '2': ['A2', 'B2']}, index=['A', 'B'])
         table_1 = Table(df_1)
 
@@ -56,13 +58,13 @@ class TestTableConcat(IsolatedAsyncioTestCase):
         table_2 = Table(df_2)
 
         result: Table = TableConcatHelper.concat_table_columns(
-            table_1, table_2, row_tags_option='ignore', fill_nan=NaN)
+            table_1, table_2, row_tags_option='ignore', fill_nan=NA)
 
         expected_df = DataFrame(
-            {'1': ['A1', 'B1', NaN],
-             '2': ['A2', 'B2', NaN],
-             '3': ['A3', NaN, 'C3'],
-             '4': ['A4', NaN, 'C4']},
-            index=['A', 'B', 'C'])
+            {'_1': ['A1', 'B1', NA],
+             '_2': ['A2', 'B2', NA],
+             '_3': ['A3', NA, 'C3'],
+             '_4': ['A4', NA, 'C4']},
+            index=['A', 'B', 'C']).convert_dtypes()
 
         self.assertTrue(DataFrame.equals(result.get_data(), expected_df))

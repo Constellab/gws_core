@@ -5,11 +5,11 @@
 
 from unittest import IsolatedAsyncioTestCase
 
+from pandas import DataFrame, isna
+
 from gws_core import Table
 from gws_core.impl.table.helper.table_operation_helper import \
     TableOperationHelper
-from numpy import isnan
-from pandas import DataFrame
 
 
 # test_table_operations
@@ -71,4 +71,4 @@ class TestTableOperations(IsolatedAsyncioTestCase):
         # The result should be NaN
         self.assertEqual(result_table.nb_columns, 1)
         # check if all element of R0 columns are NaN
-        self.assertTrue(all(isnan(list(result_table.get_data()['R0']))))
+        self.assertTrue(all(isna(list(result_table.get_data()['R0']))))

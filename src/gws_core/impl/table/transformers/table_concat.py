@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from numpy import NaN
+from pandas import NA
 
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
@@ -26,7 +26,7 @@ fill_nan_param = StrParam(default_value='NaN',
 
 def get_fill_nan_value(fill_nan_option: str) -> Any:
     if fill_nan_option == 'NaN':
-        return NaN
+        return NA
     elif fill_nan_option == 'Empty':
         return None
     elif fill_nan_option == '0':

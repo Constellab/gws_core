@@ -6,11 +6,11 @@
 
 from typing import Any, List, Literal
 
+from pandas import NA, DataFrame, concat, isna
+
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table import Table
-from numpy import NaN, isnan
-from pandas import DataFrame, concat
 
 # Option to handle the opposite tags during concat. Ex column tags during row contat
 #     - ignore: the tags are ignored and left empty
@@ -28,7 +28,7 @@ class TableConcatHelper:
     @classmethod
     def concat_table_rows(cls, table_1: Table, table_2: Table,
                           column_tags_option: TableConcatOppositeTagOption = 'ignore',
-                          fill_nan: Any = NaN) -> Table:
+                          fill_nan: Any = NA) -> Table:
         """Concatenate two tables along the rows.
         The total number of rows will be the sum of the two tables. The total number of columns will depend if the two table
         have common columns (based on name).
@@ -43,7 +43,7 @@ class TableConcatHelper:
         :type table_2: Table
         :param column_tags_option: Option for the columns tags, defaults to 'ignore'
         :type column_tags_option: TableConcatOppositeTagOption, optional
-        :param fill_empty: value to replace NaN with. , defaults to NaN
+        :param fill_empty: value to replace NA with. , defaults to NA
         :type fill_empty: Any, optional
         :return: _description_
         :rtype: Table
@@ -67,8 +67,8 @@ class TableConcatHelper:
         # fill empty values based on fill_empty
         # do nothing for NaN, it is already NaN
         if fill_nan is None:
-            concat_df.replace({NaN: None}, inplace=True)
-        elif isnan(fill_nan):
+            concat_df.replace({NA: None}, inplace=True)
+        elif isna(fill_nan):
             pass
         else:
             concat_df.fillna(fill_nan, inplace=True)
@@ -82,7 +82,7 @@ class TableConcatHelper:
     @classmethod
     def concat_table_columns(cls, table_1: Table, table_2: Table,
                              row_tags_option: TableConcatOppositeTagOption = 'ignore',
-                             fill_nan: Any = NaN) -> Table:
+                             fill_nan: Any = NA) -> Table:
         """Concatenate two tables along the columns.
         The total number of columns will be the sum of the two tables. The total number of rows will depend if the two table
         have common rows (based on name).
@@ -108,7 +108,7 @@ class TableConcatHelper:
 
         result = cls.concat_table_rows(t_table_1, t_table_2, row_tags_option, fill_nan)
 
-        return result.transpose()
+        return result.transpose(convert_dtypes=True)
 
     @classmethod
     def _get_column_tags(cls, concat_df: DataFrame, table: Table) -> List[dict]:

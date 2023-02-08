@@ -6,12 +6,12 @@
 
 from unittest import IsolatedAsyncioTestCase
 
-from gws_core import Table, TableTagExtractorHelper
-from gws_core.test.base_test_case import BaseTestCase
 from pandas import DataFrame
 
+from gws_core import Table, TableTagExtractorHelper
 
-# test_table_tag_aggregator
+
+# test_table_tag_extractor
 class TestTableTagAggregator(IsolatedAsyncioTestCase):
 
     def test_table_tag_extractor_helper(self):

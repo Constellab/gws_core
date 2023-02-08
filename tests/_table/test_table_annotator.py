@@ -16,14 +16,14 @@ from gws_core.core.utils.utils import Utils
 class TestTableAnnotator(IsolatedAsyncioTestCase):
 
     async def test_table_row_annotator_with_indexes(self):
-        dataframe = DataFrame({'F1': {'B': 1.3, 'A': 2.3,  'Z': 4.5},
-                               'F2': {'B': 1.5, 'A': 1.5, 'Z': 15.1},
-                               'F3': {'B': 1.5, 'A': 15.45,  'Z': 1.35}})
+        dataframe = DataFrame({'F1': {'B': 1.3, 2: 2.3,  'Z': 4.5},
+                               'F2': {'B': 1.5, 2: 1.5, 'Z': 15.1},
+                               'F3': {'B': 1.5, 2: 15.45,  'Z': 1.35}})
         table = Table(dataframe)
 
-        meta_df = DataFrame({'Gender': {'A': 'M', 'B': 'F', 'E': 'F'},
-                             'Group': {'A': 1, 'B': 15, 'E': 15},
-                             'Age': {'A': 18, 'B': 15, 'E': 15}})
+        meta_df = DataFrame({'Gender': {2: 'M', 'B': 'F', 'E': 'F'},
+                             'Group': {2: 1, 'B': 15, 'E': 15},
+                             'Age': {2: 18, 'B': 15, 'E': 15}})
         metatable = Table(meta_df)
 
         # The index in table, matches the index in metatable
@@ -40,13 +40,13 @@ class TestTableAnnotator(IsolatedAsyncioTestCase):
 
     async def test_table_row_annotator_with_columns(self):
         # importer
-        dataframe = DataFrame({'sample': {0: 'B', 1: 'A', 2: 'Z'},
+        dataframe = DataFrame({'sample': {0: 'B', 1: 2, 2: 'Z'},
                                'F1': {0: 1.3, 1: 2.3, 2: 4.5},
                                'F2': {0: 1.5, 1: 1.5, 2: 15.1},
                                'F3': {0: 1.5, 1: 15.45, 2: 1.35}})
         table = Table(dataframe)
 
-        meta_df = DataFrame({'sample-id': {0: 'A', 1: 'B', 2: 'E'},
+        meta_df = DataFrame({'sample-id': {0: 2, 1: 'B', 2: 'E'},
                              'Gender': {0: 'M', 1: 'F',  2: 'F'},
                              'Group': {0: 1, 1: 15,  2: 15},
                              'Age': {0: 18, 1: 15,  2: 15}})

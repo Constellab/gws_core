@@ -6,10 +6,11 @@
 
 from typing import Any, Dict, List, Literal
 
+from pandas import NA
+
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.table import Table
-from numpy import NaN
 
 TableTagExtractType = Literal['char', 'numeric']
 
@@ -48,7 +49,7 @@ class TableTagExtractorHelper:
         converted_tags: List[Any]
 
         if tag_values_type == 'numeric':
-            converted_tags = NumericHelper.list_to_float(tags_values, default_value=NaN)
+            converted_tags = NumericHelper.list_to_float(tags_values, default_value=NA)
         else:
             converted_tags = tags_values
 
@@ -77,4 +78,4 @@ class TableTagExtractorHelper:
 
         result = cls.extract_row_tags(t_table, key, tag_values_type, new_row_name)
 
-        return result.transpose()
+        return result.transpose(convert_dtypes=True)

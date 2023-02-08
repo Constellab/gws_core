@@ -4,8 +4,7 @@
 # About us: https://gencovery.com
 from typing import Any, List
 
-from numpy import NaN
-from pandas import DataFrame
+from pandas import NA, DataFrame
 
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
@@ -70,10 +69,10 @@ class TableReplace(Transformer):
         return new_table
 
     def convert_param_value(self, param_value: str) -> Any:
-        """Handle specific values like NaN and None, and tries to convert to float
+        """Handle specific values like NA and None, and tries to convert to float
       """
         if param_value == 'NaN':
-            return NaN
+            return NA
         elif param_value == 'None':
             return None
         else:

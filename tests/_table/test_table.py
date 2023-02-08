@@ -5,12 +5,15 @@
 
 from unittest import IsolatedAsyncioTestCase
 
+from numpy import nan as np_na
+from pandas import NA as panda_na
 from pandas import DataFrame
 
 from gws_core import Table
 from gws_core.core.utils.utils import Utils
 
 
+# test_table
 class TestTable(IsolatedAsyncioTestCase):
     def test_table(self):
         table: Table = Table(data=[[1, 2, 3]], column_names=["a", "b", "c"], row_names=["r0"])
@@ -41,12 +44,12 @@ class TestTable(IsolatedAsyncioTestCase):
         self.assertEqual(sub_table.get_column_tags(), [{'b': "4"}])
 
         # Simulate the filter by row 1 & 2
-        sub_dataframe = DataFrame({'A': [1, 2], 'B': [4, 5]})
+        sub_dataframe = DataFrame({'A': [1, 2], 'B': [4, 5]}, index=['_0', '_1'])
 
         sub_table = table.create_sub_table_filtered_by_rows(sub_dataframe)
         self.assertTrue(sub_table.get_data().equals(sub_dataframe.copy()))
         self.assertEqual(sub_table.get_column_tags(), column_tags)
-        # there should be only two rows --> tow tag
+        # there should be only two rows --> two tag
         self.assertEqual(sub_table.get_row_tags(), [{'a': "1"}, {'a': "2"}])
 
     def test_table_select(self):
@@ -87,7 +90,7 @@ class TestTable(IsolatedAsyncioTestCase):
         ])
 
         sub_table = table.select_by_row_positions([1, 2, 1])
-        self.assertEqual(sub_table.row_names, ["Tokyo", "Paris", "Tokyo"])
+        self.assertEqual(sub_table.row_names, ["Tokyo", "Paris", "Tokyo_1"])
 
         # ------------------------------------------------------------
         # Select by column positions
@@ -108,7 +111,7 @@ class TestTable(IsolatedAsyncioTestCase):
 
         # check that is we are selecting a column twice, it return the column twice
         sub_table = table.select_by_column_positions([0, 2, 0])
-        self.assertEqual(sub_table.column_names, ["London", "Beijin", "London"])
+        self.assertEqual(sub_table.column_names, ["London", "Beijin", "London_1"])
 
         # ------------------------------------------------------------
         # Select by row names
@@ -229,12 +232,12 @@ class TestTable(IsolatedAsyncioTestCase):
 
         self.assertFalse(first.equals(second))
 
-    def test_table_modification(self):
+    def test_column_table_modification(self):
         table = Table()
 
         # test adding and empty column to an empty table
         table.add_column('A')
-        expected_table = Table(DataFrame({'A': [None]}))
+        expected_table = Table(DataFrame({'A': [panda_na]}))
         self.assertTrue(table.equals(expected_table))
 
         # test adding and removing a column
@@ -246,12 +249,42 @@ class TestTable(IsolatedAsyncioTestCase):
 
         # adding an empty column
         table.add_column('B')
-        expected_table = Table(DataFrame({'A': [1, 2, 3], 'B': [None, None, None]}))
+        expected_table = Table(DataFrame({'A': [1, 2, 3], 'B': [panda_na, panda_na, panda_na]}))
         self.assertTrue(table.equals(expected_table))
 
         # removing B column
         table.remove_column('B')
         expected_table = Table(DataFrame({'A': [1, 2, 3]}))
+        self.assertTrue(table.equals(expected_table))
+
+    def test_row_table_modification(self):
+        table = Table()
+
+        # test adding and empty row to an empty table
+        table.add_row('A')
+        expected_table = Table(DataFrame({'_0': [panda_na]}), row_names=['A'])
+        self.assertTrue(table.equals(expected_table))
+
+        # test adding and removing a row
+        table = Table()
+        table.add_row('A', [1, 2, 3])
+
+        expected_table = Table(DataFrame({'_0': [1], '_1': [2], '_2': [3]}), row_names=['A'])
+        self.assertTrue(table.equals(expected_table))
+
+        # adding an empty row
+        table.add_row('B')
+        expected_table = Table(
+            DataFrame({'_0': [1, panda_na],
+                       '_1': [2, panda_na],
+                       '_2': [3, panda_na]}),
+            row_names=['A', 'B'])
+        self.assertTrue(table.equals(expected_table))
+
+        # removing B row
+        table.remove_row('B')
+        table.convert_dtypes()
+        expected_table = Table(DataFrame({'_0': [1], '_1': [2], '_2': [3]}), row_names=['A']).convert_dtypes()
         self.assertTrue(table.equals(expected_table))
 
     def test_set_cell_value(self):
@@ -264,7 +297,7 @@ class TestTable(IsolatedAsyncioTestCase):
     def test_set_row_name(self):
         table = Table(DataFrame({'A': [1, 2], 'B': [4, 5]}))
 
-        table.set_row_name(0, 'r0')
+        table.set_row_name('_0', 'r0')
         self.assertEqual(table.row_names[0], 'r0')
 
         table.set_all_row_names(['r1', 'r2'])
@@ -278,3 +311,12 @@ class TestTable(IsolatedAsyncioTestCase):
 
         table.set_all_column_names(['D', 'E'])
         self.assertEqual(table.column_names, ['D', 'E'])
+
+    def test_table_column_row_names(self):
+        # Test duplicate name and name with special characters
+        table = Table(DataFrame({'0': [1, 2], '1': [4, 5], '2': [4, 5], '3': [4, 5]}),
+                      row_names=['r0', 'r0'],
+                      column_names=['A', 'A', 1, '9é [a].-SUPER'])
+
+        self.assertEqual(table.row_names, ['r0', 'r0_1'])
+        self.assertEqual(table.column_names, ['A', 'A_1', '_1', '_9e_a_SUPER'])

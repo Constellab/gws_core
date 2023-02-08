@@ -7,6 +7,7 @@
 from typing import Any, Dict, List, Literal, Tuple, Union
 
 import numpy as np
+from pandas import NA as panda_na
 from pandas import DataFrame, Series
 from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
                               is_string_dtype)
@@ -20,7 +21,6 @@ from gws_core.impl.table.view.table_vulcano_plot_view import \
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...resource.r_field.dict_r_field import DictRField
 from ...resource.r_field.primitive_r_field import StrRField
 from ...resource.r_field.serializable_r_field import SerializableRField
 from ...resource.resource import Resource
@@ -104,12 +104,14 @@ class Table(Resource):
 
             if column_names:
                 data.columns = column_names
-            data.columns = data.columns
 
             if row_names:
                 data.index = row_names
 
-        self._data = data
+        # format the row and column names
+        # prevent having duplicate column and row names
+        dataframe = DataframeHelper.format_column_and_row_names(data)
+        self._data = DataframeHelper.replace_numpy_nan_with_pandas_nan(dataframe)
 
         self._set_tags(row_tags=row_tags, column_tags=column_tags)
 
@@ -145,23 +147,28 @@ class Table(Resource):
             lower_names = [x.lower() for x in self.column_names]
             return name.lower() in lower_names
 
+    def check_column_exists(self, name: str, case_sensitive: bool = True):
+        """ Raise an exception if the column doesn't exist
+        """
+        if not self.column_exists(name, case_sensitive):
+            raise Exception(f"The column '{name}' doesn't exist")
+
     def get_column_data(self, column_name: str, skip_nan: bool = False) -> List[Any]:
         """
         Returns the column data of the Dataframe with the given name.
         """
-        if not self.column_exists(column_name):
-            raise Exception(f"The column '{column_name}' doesn't exist")
-        values = self._data[column_name].values.tolist()
+        self.check_column_exists(column_name)
 
         if skip_nan:
-            values = [x for x in values if not np.isnan(x)]
-
-        return values
+            return self._data[column_name].dropna().tolist()
+        else:
+            return self._data[column_name].tolist()
 
     def get_column_as_dataframe(self, column_name: str, skip_nan=False) -> DataFrame:
         """
         Get a column as a dataframe
         """
+        self.check_column_exists(column_name)
 
         dataframe = self._data[[column_name]]
         if skip_nan:
@@ -189,13 +196,15 @@ class Table(Resource):
 
         if data is None:
             # use max 1 for special case when table is empty
-            data = [None] * max(self.nb_rows, 1)
+            data = [panda_na] * max(self.nb_rows, 1)
 
         if isinstance(data, Series):
             data = data.tolist()
-
         if not isinstance(data, list):
-            raise BadRequestException("The column data must be a list")
+            raise BadRequestException("The column data must be a list or a Series")
+
+        name = DataframeHelper.format_header_name(name)
+
         if self.nb_rows > 0 and len(data) != self.nb_rows:
             raise BadRequestException("The length of column data must be equal to the number of rows")
         if self.column_exists(name):
@@ -214,14 +223,16 @@ class Table(Resource):
 
         self._column_tags.insert_new_empty_tags(index)
 
+        # clean the index name if new rows were created
+        self._data.index = DataframeHelper.format_header_names(self._data.index)
+
     def remove_column(self, column_name: str) -> None:
         """ Remove a column from the Dataframe.
         :param column_name: name of the column
         :type column_name: str
         """
 
-        if not self.column_exists(column_name):
-            raise BadRequestException(f"The column name `{column_name}` doesn't exist")
+        self.check_column_exists(column_name)
 
         pos = self.get_column_position_from_name(column_name)
         self._data.drop(columns=[column_name], inplace=True)
@@ -229,8 +240,8 @@ class Table(Resource):
 
     def set_column_name(self, old_name: str, new_name: str) -> None:
 
-        if not self.column_exists(old_name):
-            raise BadRequestException(f"The column name `{old_name}` doesn't exist")
+        self.check_column_exists(old_name)
+
         if self.column_exists(new_name):
             raise BadRequestException(f"The column name `{new_name}` already exists")
 
@@ -239,7 +250,8 @@ class Table(Resource):
     def set_all_column_names(self, column_names: List[str]) -> None:
 
         if len(column_names) != self.nb_columns:
-            raise BadRequestException("The length of column names must be equal to the number of columns")
+            raise BadRequestException(
+                f"The length of column names must be equal to the number of columns. Nb columns: {self.nb_columns}, nb names: {len(column_names)}")
 
         self._data.columns = column_names
 
@@ -298,55 +310,94 @@ class Table(Resource):
         return list(self._data.iloc[:, positions].columns)
 
     def get_column_position_from_name(self, column_name: str) -> int:
+        self.check_column_exists(column_name)
         return self._data.columns.get_loc(column_name)
 
     def generate_new_column_name(self, name: str) -> str:
         """  Generates a column name that is unique in the Dataframe base on name.
         If the column name doesn't exist, return name, otherwise return name_1 or name_2, ...
         """
-        return Utils.generate_unique_str_for_list(self.column_names, name)
+        return Utils.generate_unique_str_for_list(self.column_names, DataframeHelper.format_header_name(name))
 
     ############################################# ROWS #############################################
 
-    def get_row_data(self, row_name: str) -> List[Any]:
+    def row_exists(self, name: str, case_sensitive: bool = True) -> bool:
+        if case_sensitive:
+            return name in self.row_names
+        else:
+            lower_names = [x.lower() for x in self.row_names]
+            return name.lower() in lower_names
+
+    def check_row_exists(self, name: str, case_sensitive: bool = True) -> None:
+        """ Method that raises an exception if the row doesn't exist.
+        """
+        if not self.row_exists(name, case_sensitive):
+            raise BadRequestException(f"The row `{name}` doesn't exist")
+
+    def get_row_data(self, row_name: str, skip_na: bool) -> List[Any]:
         """
         Returns the row data of the Dataframe with the given index.
         """
-        if not self.row_exists(row_name):
-            raise Exception(f"The row '{row_name}' doesn't exist")
-        return self._data.loc[row_name].values.tolist()
+        self.check_row_exists(row_name)
 
-    # def add_row(self, row_name: str = None, row_data: Union[list, Series] = None, row_index: int = None):
-    #     """ Add a new row to the Dataframe.
-    #     :param row_data: data for the row, must be the same length as other rows
-    #     :type row_data: list
-    #     :param row_index: index for the row, if none, the row is append to the end, defaults to None
-    #     :type row_index: int, optional
-    #     """
+        if skip_na:
+            return self._data.loc[row_name].dropna().tolist()
+        else:
+            return self._data.loc[row_name].tolist()
 
-    #     if row_data is None:
-    #         row_data = [None] * max(self.nb_columns, 1)
+    def add_row(self, name: str, data: Union[list, Series] = None, index: int = None) -> None:
+        """ Add a row to the Dataframe.
+        :param name: name of the row
+        :type name: str
+        :param data: data of the row
+        :type data: list
+        """
 
-    #     if isinstance(row_data, Series):
-    #         row_data = row_data.tolist()
+        if data is None:
+            # use max 1 for special case when table is empty
+            data = [panda_na] * max(self.nb_columns, 1)
 
-    #     if not isinstance(row_data, list):
-    #         raise BadRequestException("The row data must be a list")
-    #     if self.nb_columns > 0 and len(row_data) != self.nb_columns:
-    #         raise BadRequestException("The length of row data must be equal to the number of columns")
-    #     if self.row_exists(row_name):
-    #         raise BadRequestException(f"The row name `{row_name}` already exists")
+        if isinstance(data, Series):
+            data = data.tolist()
+        if not isinstance(data, list):
+            raise BadRequestException("The row data must be a list or a Series")
 
-    #     if row_index is None:
-    #         row_index = self.nb_rows
+        name = DataframeHelper.format_header_name(name)
 
-    #     if row_name:
-    #         self.set_row_name(row_index, row_name)
+        # if the table was empty, specific case
+        if self.nb_columns == 0 and self.nb_rows == 0:
+            self._column_tags.insert_new_empty_tags(count=len(data))
 
-    #     self._data.loc[row_index] = row_data
-    #     self.row_names
+            # generate column names
+            columns_names = DataframeHelper.format_header_names(range(len(data)))
 
-    #     self._row_tags.insert_new_empty_tags(row_index)
+            self._set_data([data], row_names=[name], column_names=columns_names)
+            return
+
+        if self.row_exists(name):
+            raise BadRequestException(f"The row name `{name}` already exists")
+        if self.nb_columns > 0 and len(data) != self.nb_columns:
+            raise BadRequestException(
+                f"The length of row data must be equal to the number of columns. Nb columns: {self.nb_columns}, nb data: {len(data)}")
+
+        # insert the row
+        if index is None:
+            self._data.loc[name] = data
+        else:
+            self._data.insert(index, name, data)
+
+        self._row_tags.insert_new_empty_tags(index)
+
+    def remove_row(self, row_name: str) -> None:
+        """ Remove a row from the Dataframe.
+        :param row_index: index of the row to remove
+        :type row_index: int
+        """
+        self.check_row_exists(row_name)
+
+        pos = self.get_row_position_from_name(row_name)
+        self._data.drop(row_name, inplace=True)
+        self._row_tags.remove_tags_at(pos)
 
     def set_row_name(self, old_name: Any, new_name: str) -> None:
         """ Set the name of a row at a given index
@@ -356,8 +407,8 @@ class Table(Resource):
         :type name: str
         """
 
-        if not self.row_exists(old_name):
-            raise BadRequestException(f"The row name `{old_name}` does not exist")
+        self.check_row_exists(old_name)
+
         if self.row_exists(new_name):
             raise BadRequestException(f"The row name `{new_name}` already exists")
 
@@ -370,13 +421,6 @@ class Table(Resource):
 
         self._data.index = row_names
 
-    def row_exists(self, name: str, case_sensitive: bool = True) -> bool:
-        if case_sensitive:
-            return name in self.row_names
-        else:
-            lower_names = [x.lower() for x in self.row_names]
-            return name.lower() in lower_names
-
     def add_row_tag(self, row_index: int, key: str, value: str) -> None:
         """
         Add a {key, value} tag to a row at a given index
@@ -386,7 +430,8 @@ class Table(Resource):
 
     def set_all_row_tags(self, tags: List[Dict[str, str]]) -> None:
         if len(tags) != self.nb_rows:
-            raise Exception("The length of tags must be equal to the number of rows")
+            raise Exception(
+                f"The length of tags must be equal to the number of rows, nb of rows={self.nb_rows}, nb of tags={len(tags)}")
 
         self._row_tags = TableAxisTags(tags)
 
@@ -406,6 +451,8 @@ class Table(Resource):
         return list(self._data.iloc[positions, :].index)
 
     def get_row_position_from_name(self, row_name: str) -> int:
+        """ Get the position of a row from its name """
+        self.check_row_exists(row_name)
         return self._data.index.get_loc(row_name)
 
     @property
@@ -748,14 +795,24 @@ class Table(Resource):
         return self._data.equals(o._data) and self._row_tags.equals(o._row_tags) and self._column_tags.equals(
             o._column_tags)
 
-    def transpose(self) -> 'Table':
+    def transpose(self, convert_dtypes: bool = False) -> 'Table':
+        data = self._data.T if not convert_dtypes else self._data.T.convert_dtypes()
         return Table(
-            data=self._data.T,
+            data=data,
             row_names=self.column_names,
             column_names=self.row_names,
             row_tags=self.get_column_tags(),
             column_tags=self.get_row_tags()
         )
+
+    def convert_dtypes(self) -> 'Table':
+        """Call convert dtypes on the underlying dataframe, it modifies the table inplace.
+
+        :return: _description_
+        :rtype: Table
+        """
+        self._data = self._data.convert_dtypes()
+        return self
 
     def to_list(self) -> list:
         return self.to_numpy().tolist()

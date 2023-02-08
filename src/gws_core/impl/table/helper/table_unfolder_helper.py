@@ -5,9 +5,9 @@
 
 from typing import Any, Dict, List
 
+from pandas import NA, DataFrame, concat
+
 from gws_core.tag.tag_helper import TagHelper
-from numpy import nan
-from pandas import DataFrame, concat
 
 from ..table import Table
 
@@ -27,7 +27,7 @@ class TableUnfolderHelper:
 
         t_t = table.transpose()
         result = cls.unfold_columns_by_tags(t_t, keys, tag_key_column_name)
-        return result.transpose()
+        return result.transpose(convert_dtypes=True)
 
     ############################################## COLUMNS ######################################################
 
@@ -59,14 +59,14 @@ class TableUnfolderHelper:
             row_index = 0
             complete_tags: List[dict] = []
             sub_table_row_tags: List[dict] = sub_table.get_row_tags()
-            for index, row in df.iterrows():
+            for _, row in df.iterrows():
                 name = f"{row.name}_{tag_values}"
 
                 # if the new row have fewer column than dataframe, append NaN
                 values: List[Any] = row.values.tolist()
                 column_diff = len(dataframe.columns) - len(values)
                 if column_diff > 0:
-                    values.extend([nan] * column_diff)
+                    values.extend([NA] * column_diff)
 
                 row_df = DataFrame([values], index=[name])
 

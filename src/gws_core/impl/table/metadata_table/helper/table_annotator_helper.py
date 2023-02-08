@@ -56,13 +56,13 @@ class TableAnnotatorHelper():
             if not table.column_exists(table_ref_column):
                 raise BadRequestException(f"The column '{table_ref_column}' does not exist in sample table")
             table_ids = table.get_column_data(table_ref_column)
-            # convert each value to string
-            table_ids = [str(id_) for id_ in table_ids]
         else:
             # use the index
             table_ids = table.get_row_names()
 
-        metadata_tags: Dict[str, Dict[str, Any]] = cls._get_metadata_tags(metadata_table, metadata_table_ref_column)
+        # convert each value to string
+        table_ids = [str(id_) for id_ in table_ids]
+        metadata_tags: Dict[str, Dict[str, str]] = cls._get_metadata_tags(metadata_table, metadata_table_ref_column)
 
         # for each id in the table, get the corresponding metadata tags
         tags = [metadata_tags.get(id_, {}) for id_ in table_ids]
@@ -100,13 +100,13 @@ class TableAnnotatorHelper():
             if not table.row_exists(table_ref_row):
                 raise BadRequestException(f"The column '{table_ref_row}' does not exist in sample table")
             table_ids = table.get_row_data(table_ref_row)
-            # convert each value to string
-            table_ids = [str(id_) for id_ in table_ids]
         else:
             # use the index
             table_ids = table.get_column_names()
 
-        metadata_tags: Dict[str, Dict[str, Any]] = cls._get_metadata_tags(metadata_table, metadata_table_ref_column)
+        # convert each value to string
+        table_ids = [str(id_) for id_ in table_ids]
+        metadata_tags: Dict[str, Dict[str, str]] = cls._get_metadata_tags(metadata_table, metadata_table_ref_column)
 
         # for each id in the table, get the corresponding metadata tags
         tags = [metadata_tags.get(id_, {}) for id_ in table_ids]
@@ -114,7 +114,7 @@ class TableAnnotatorHelper():
         return table
 
     @classmethod
-    def _get_metadata_tags(cls, metadata_table: Table, ref_column: str = None) -> Dict[str, Dict[str, Any]]:
+    def _get_metadata_tags(cls, metadata_table: Table, ref_column: str = None) -> Dict[str, Dict[str, str]]:
         """Return the metadata table as dict of tags where key = id and value = tags for the id
         """
         dataframe: DataFrame
@@ -128,4 +128,7 @@ class TableAnnotatorHelper():
             dataframe = metadata_table.get_data()
 
         # dataframe as dict of tags where key = id and value = tags for the id
-        return dataframe.to_dict('index')
+        dict = dataframe.to_dict('index')
+
+        # force the key to be a string
+        return {str(id_): tags for id_, tags in dict.items()}
