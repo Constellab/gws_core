@@ -40,33 +40,31 @@ class ResourceSetExporter(ResourceExporter):
         # use to store the exporter per typing name locally
         exporters: Dict[str, Type[ResourceExporter]] = {}
 
-        for resource_model in source._get_all_resource_models():
-            resource_type: Type[Resource] = resource_model.get_resource_type()
+        for resource in source.get_resources_as_set():
 
             # if the resource is a file, add it to the list directly
-            if Utils.issubclass(resource_type, FSNode):
-                fs_nodes.append(resource_model.get_resource())
+            if isinstance(resource, FSNode):
+                fs_nodes.append(resource)
                 continue
 
-            if resource_model.resource_typing_name not in exporters:
+            resource_typing_name = resource._typing_name
+            if resource_typing_name not in exporters:
                 try:
-                    exporter_typing: TaskTyping = ConverterService.get_resource_exporter_from_name(
-                        resource_model.resource_typing_name)
-                    exporters[resource_model.resource_typing_name] = exporter_typing.get_type()
+                    exporter_typing: TaskTyping = ConverterService.get_resource_exporter_from_name(resource_typing_name)
+                    exporters[resource_typing_name] = exporter_typing.get_type()
                 except Exception:
-                    Logger.info(f"Can't find exporter for resource {resource_model.resource_typing_name}")
+                    Logger.info(f"Can't find exporter for resource {resource_typing_name}")
                     continue
 
             # store the exporter for the resource type
-            exporter: ResourceExporter = exporters[resource_model.resource_typing_name]
+            exporter: ResourceExporter = exporters[resource_typing_name]
 
             # skip the exporter if 1 config is not optional
             if not ConfigSpecsHelper.all_config_are_optional(exporter.config_specs):
                 Logger.info(f"Skipping exporter {exporter._typing_name} because it has required config")
 
             # call the exporter without config
-            fs_nodes.append(ConverterService.call_exporter_directly(
-                resource_model.id, exporter_typing_name=exporter._typing_name, params={}))
+            fs_nodes.append(exporter.call(resource, params={}))
 
         # create a zip file with all the exported files
         temp_dir = Settings.get_instance().make_temp_dir()
