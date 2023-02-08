@@ -11,7 +11,7 @@ from gws_core import Table, TableReplace
 
 
 # test_table_replace
-class TestTableTransposer(TestCase):
+class TestTableReplace(TestCase):
 
     def test_table_replace(self):
         initial_df = DataFrame({'A': [1, 2], 'B': ['Hello', 'Bonjour']})
@@ -31,8 +31,8 @@ class TestTableTransposer(TestCase):
             },
         ]})
 
-        expected_result: DataFrame = DataFrame({'A': [1, 2], 'B': ['Text', 'Text 2']})
-        self.assertTrue(result.get_data().equals(expected_result))
+        expected_result: DataFrame = Table(DataFrame({'A': [1, 2], 'B': ['Text', 'Text 2']}))
+        self.assertTrue(result.equals(expected_result))
 
         # Text multiple string to replace using regex
         result_2: Table = TableReplace.call(table, {'replace_values': [
@@ -43,8 +43,8 @@ class TestTableTransposer(TestCase):
             },
         ]})
 
-        expected_result_2: DataFrame = DataFrame({'A': [1, 2], 'B': ['Text', 'Text']})
-        self.assertTrue(result_2.get_data().equals(expected_result_2))
+        expected_result_2: DataFrame = Table(DataFrame({'A': [1, 2], 'B': ['Text', 'Text']}))
+        self.assertTrue(result_2.equals(expected_result_2))
 
         # Text number replace
         result_3: Table = TableReplace.call(table, {'replace_values': [
@@ -55,5 +55,5 @@ class TestTableTransposer(TestCase):
             },
         ]})
 
-        expected_result_3: DataFrame = DataFrame({'A': ['Text', 2], 'B': ['Hello', 'Bonjour']})
-        self.assertTrue(result_3.get_data().equals(expected_result_3))
+        expected_result_3: DataFrame = Table(DataFrame({'A': ['Text', 2], 'B': ['Hello', 'Bonjour']}))
+        self.assertTrue(result_3.equals(expected_result_3))

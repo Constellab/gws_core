@@ -21,7 +21,7 @@ class TestTableView(TestCase):
         dataframe = DataFrame({'A': a_values, 'B': b_values})
 
         row_tags = [{'tag_1': '1'}, {'tag_2': '2'}, {'tag_3': '3'}, {'tag_4': '4'}, {'tag_5': '5'}]
-        table = Table(dataframe, meta={"row_tags": row_tags})
+        table = Table(dataframe, row_tags=row_tags)
 
         # get_values_from_columns
         base_view = BaseTableView(table)

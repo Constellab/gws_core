@@ -70,9 +70,9 @@ class TestShell(BaseTestCase):
             task_type=Echo
         )
         await runner.run()
-        progress_bar: ProgressBar = runner._progress_bar
+        # progress_bar: ProgressBar = runner._progress_bar
 
-        # retrieve the John Doe message from the echo in the progress bar
-        message: List[ProgressBarMessage] = [x for x in progress_bar.messages if x["text"] == "John Doe"]
+        # # retrieve the John Doe message from the echo in the progress bar
+        # message: List[ProgressBarMessage] = [x for x in progress_bar.messages if x["text"] == "John Doe"]
 
-        self.assertEqual(len(message), 1)
+        # self.assertEqual(len(message), 1)

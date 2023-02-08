@@ -3,10 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import BaseTestCase, PyLiveTask, Table, TaskRunner, Text
 from pandas import DataFrame
 
+from gws_core import BaseTestCase, PyLiveTask, Table, TaskRunner, Text
 
+
+# test_py_live_task
 class TestLiveTask(BaseTestCase):
 
     async def test_live_task(self):
@@ -17,8 +19,8 @@ from pandas import DataFrame
 from gws_core import Table
 
 def foo(a,b,source):
-    df = DataFrame({'col1': [1,a], 'col2': [0,b]})
-    df = df + source.get_data()
+    df = Table(DataFrame({'col1': [1,a], 'col2': [0,b]}))
+    df = df.get_data() + source.get_data()
 
     # the target resource will be given to the outputs if it is defined
     outputs = {'target': Table(data=df)}
@@ -38,13 +40,12 @@ outputs = foo(a,b,source)
         )
 
         outputs = await tester.run()
-        table = outputs["target"]
+        table: Table = outputs["target"]
 
         self.assertTrue(isinstance(table, Table))
 
-        df = table.get_data()
-        expected_df = DataFrame({'col1': [1, 2], 'col2': [0, 4]})
-        self.assertTrue(df.equals(expected_df))
+        expected_table = Table(DataFrame({'col1': [1, 2], 'col2': [0, 4]}))
+        self.assertTrue(table.equals(expected_table))
 
     async def test_live_task_shell_with_subproc(self):
         tester = TaskRunner(

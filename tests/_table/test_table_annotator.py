@@ -46,16 +46,16 @@ class TestTableAnnotator(IsolatedAsyncioTestCase):
                                'F3': {0: 1.5, 1: 15.45, 2: 1.35}})
         table = Table(dataframe)
 
-        meta_df = DataFrame({'sample-id': {0: 2, 1: 'B', 2: 'E'},
+        meta_df = DataFrame({'sample_id': {0: 2, 1: 'B', 2: 'E'},
                              'Gender': {0: 'M', 1: 'F',  2: 'F'},
                              'Group': {0: 1, 1: 15,  2: 15},
                              'Age': {0: 18, 1: 15,  2: 15}})
         metatable = Table(meta_df)
 
-        # The column sample in table, matches the column sample-id in metatable
+        # The column sample in table, matches the column sample_id in metatable
         # A and B rows are tagged, Z row is not tagged, tag for E are ignored
         annotated_table = TableAnnotatorHelper.annotate_rows(table, metatable,
-                                                             'sample', 'sample-id')
+                                                             'sample', 'sample_id')
 
         expected_row_tags = [{'Gender': 'F', 'Group': '15', 'Age': '15'},
                              {'Gender': 'M', 'Group': '1', 'Age': '18'},
@@ -95,7 +95,7 @@ class TestTableAnnotator(IsolatedAsyncioTestCase):
 
         table = Table(dataframe)
 
-        meta_df = DataFrame({'sample-id': {0: 'F1', 1: 'F2', 2: 'F9'},
+        meta_df = DataFrame({'sample_id': {0: 'F1', 1: 'F2', 2: 'F9'},
                              'Gender': {0: 'M', 1: 'F', 2: 'M'},
                              'Group': {0: 1, 1: 15, 2: 15},
                              'Age': {0: 18, 1: 15, 2: 15}})
@@ -105,7 +105,7 @@ class TestTableAnnotator(IsolatedAsyncioTestCase):
         # The column names in table, matches the column names in metatable
         # F1 and F2 columns are tagged, F3 column is not tagged, tag for F9 are ignored
         annotated_table = TableAnnotatorHelper.annotate_columns(table, metatable,
-                                                                'sample', 'sample-id')
+                                                                'sample', 'sample_id')
 
         expected_columns_tags = [{'Gender': 'M', 'Group': '1', 'Age': '18'},
                                  {'Gender': 'F', 'Group': '15', 'Age': '15'},

@@ -54,6 +54,7 @@ class SubFileTransformer(Transformer):
     pass
 
 
+# test_typing
 class TestTyping(BaseTestCase):
 
     def test_process_type(self):
@@ -138,17 +139,17 @@ class TestTyping(BaseTestCase):
         self.assertEqual(len([x for x in paginator.results if x.hide == True]), 0)
 
         # Search on full text
-        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "file"}]
+        search_dict.filtersCriteria = [{'key': 'text', "operator": "CONTAINS", "value": "file"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         # Test that it found the FileTransformer
         self.assertTrue(len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
-        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "possible is"}]
+        search_dict.filtersCriteria = [{'key': 'text', "operator": "CONTAINS", "value": "possib"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         # Test that it found the FileTransformer
         self.assertTrue(len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
-        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "FileTransformer"}]
+        search_dict.filtersCriteria = [{'key': 'text', "operator": "CONTAINS", "value": "FileTransformer"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         # Test that it found the FileTransformer
         self.assertTrue(len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)

@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from time import sleep
 from unittest import IsolatedAsyncioTestCase
 
 from gws_core.core.utils.date_helper import DateHelper
@@ -14,10 +15,9 @@ from gws_core.lab.log.log_service import LogService, LogsStatus
 
 
 # test_log_service
-class BaseTestCase(IsolatedAsyncioTestCase):
+class TestLogService(IsolatedAsyncioTestCase):
 
     def test_get_logs_status(self):
-
         Logger.info('test_get_logs_status')
 
         logs_status: LogsStatus = LogService.get_logs_status()
@@ -38,8 +38,6 @@ class BaseTestCase(IsolatedAsyncioTestCase):
         # check that the log contains the message of the test
         self.assertTrue('test_get_logs_status\n' in content)
         self.assertEqual(log_complete_info.get_log_file_date(), DateHelper.now_utc().date())
-
-        FileHelper.delete_dir(Settings.get_instance().get_log_dir())
 
     def test_complete_log_info(self):
 
@@ -71,3 +69,11 @@ INFO - 2022-12-01 09:30:46.947581 - [EXPERIMENT] - second_log
 
         log_lines = log_complete_info.get_log_lines_by_time(from_date, to_date, from_experiment=True)
         self.assertEqual(len(log_lines), 1)
+
+    def setUp(self) -> None:
+        FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
+        Logger._logger = None
+        Logger(level='INFO', _is_experiment_process=False)
+
+    def tearDown(self) -> None:
+        FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())

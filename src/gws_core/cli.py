@@ -6,8 +6,8 @@
 import asyncio
 
 import click
-from gws_core.user.current_user_service import CurrentUserService
 
+from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
 from .core.exception.exception_handler import ExceptionHandler
