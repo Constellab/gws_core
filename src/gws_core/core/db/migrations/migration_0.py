@@ -441,7 +441,10 @@ class Migration043(BrickMigration):
                         value = resource._kv_store.get(key)
                         # if this is a path, we store only the name of the file
                         if FileHelper.exists_on_os(value):
+                            # unlock the kv_store to update it directly
+                            resource._kv_store._lock = False
                             resource._kv_store[key] = FileHelper.get_name(value)
+                            resource._kv_store._lock = True
 
                 resource_model.save()
             except Exception as exception:
