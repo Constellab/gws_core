@@ -50,16 +50,6 @@ class TaskModel(ProcessModel):
 
     _table_name = 'gws_task'
 
-    def __init__(self, *args, **kwargs):
-        """
-        Constructor
-        """
-
-        super().__init__(*args, **kwargs)
-
-        if self.is_saved():
-            self._init_io_from_data()
-
     def _init_io_from_data(self):
         """Method used when instantiating a TaskModel from the DB, it init the input and output from the
           data object and it does not use the task specs
@@ -83,12 +73,10 @@ class TaskModel(ProcessModel):
         return zlib.compress(source.encode())
 
     def set_process_type(self, typing_name: str) -> None:
-        super().set_process_type(typing_name)
-        self._init_io_from_type()
-
-    def _init_io_from_type(self):
         """Method used when creating a new task model, it init the input and output from task specs
         """
+        super().set_process_type(typing_name)
+
         task_type: Type[Task] = self.get_process_type()
 
         self._inputs = Inputs(self)
