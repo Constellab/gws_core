@@ -114,6 +114,10 @@ class Settings():
         return os.environ.get("LAB_DEV_API_URL")
 
     @classmethod
+    def get_gws_core_db_password(cls) -> str:
+        return os.environ.get("GWS_CORE_DB_PASSWORD")
+
+    @classmethod
     def get_lab_environment(cls) -> Literal["PROD", "LOCAL"]:
         """Return the environment where the lab run
         PROD by default but it can also be local (when running on a local machine)
@@ -213,7 +217,7 @@ class Settings():
         return {
             "host":  "gws_core_prod_db",
             "user": "gws_core",
-            "password": "gencovery",
+            "password": self.get_gws_core_db_password(),
             "port": 3306,
             "db_name": "gws_core",
             "engine": "mariadb"
@@ -223,7 +227,7 @@ class Settings():
         return {
             "host":  "gws_core_dev_db",
             "user": "gws_core",
-            "password": "gencovery",
+            "password": self.get_gws_core_db_password(),
             "port": 3306,
             "db_name": "gws_core",
             "engine": "mariadb"
