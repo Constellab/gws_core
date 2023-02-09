@@ -11,6 +11,7 @@ from typing import Any, TypedDict, Union, final
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -103,7 +104,8 @@ class BaseEnvShell(ShellProxy):
         try:
             is_install = self._install_env()
         except Exception as err:
-            raise Exception("Cannot install the virtual environment.") from err
+            Logger.log_exception_stack_trace(err)
+            raise Exception(f"Cannot install the virtual environment. Error {err}") from err
 
         if is_install:
             self._create_env_creation_file()
@@ -149,7 +151,8 @@ class BaseEnvShell(ShellProxy):
         try:
             is_uninstall = self._uninstall_env()
         except Exception as err:
-            raise Exception("Cannot uninstall the virtual environment.") from err
+            Logger.log_exception_stack_trace(err)
+            raise Exception(f"Cannot uninstall the virtual environment. Error {err}") from err
 
         if is_uninstall:
             self._message_dispatcher.notify_info_message(f"Virtual environment '{self.env_dir_name}' uninstalled!")
