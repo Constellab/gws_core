@@ -30,7 +30,7 @@ class UserService(BaseService):
         db_user: User = cls.get_user_by_id(user.id)
 
         if db_user is None:
-            return cls._create_user(user)
+            return cls._create_user(user.dict())
         else:
             db_user.email = user.email
             db_user.first_name = user.first_name
