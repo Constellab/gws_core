@@ -200,7 +200,7 @@ class AuthService(BaseService):
         return user
 
     @classmethod
-    def dev_get_check_user(cls, token: str) -> User:
+    def dev_get_check_user(cls, token: str) -> Response:
         """[summary]
         Log the user on the dev lab by calling the prod api
         Only allowed for the dev service
@@ -234,8 +234,10 @@ class AuthService(BaseService):
 
         # Check if the user's token is valid in prod environment and retrieve user's information
         try:
+            # response: Response = ExternalApiService.get(
+            #     url=f"{prod_api_url}/core-api/user/me", headers={"Authorization": token})
             response: Response = ExternalApiService.get(
-                url=f"{prod_api_url}/core-api/user/me", headers={"Authorization": token})
+                url=f"{prod_api_url}/check-temp/{token}")
         except Exception as err:
             Logger.error(
                 f"Error during authentication to the prod api : {err}")
@@ -252,7 +254,16 @@ class AuthService(BaseService):
             raise BadRequestException(detail=GWSException.USER_NOT_ACTIVATED.value,
                                       unique_code=GWSException.USER_NOT_ACTIVATED.name)
 
-        return UserService.create_user_if_not_exists(user)
+        user: User = UserService.create_user_if_not_exists(user)
+
+        access_token = cls.generate_user_access_token(user.id)
+
+        response = Response()
+
+        # Add the token is the cookies
+        cls.set_token_in_response(access_token, JWTService.get_token_duration_in_seconds(), response)
+
+        return response
 
     @classmethod
     def logout(cls) -> JSONResponse:
@@ -269,7 +280,6 @@ class AuthService(BaseService):
             httponly=True,
             max_age=expireInSeconds,
             expires=expireInSeconds,
-            domain=Settings.get_virtual_host(),  # set the domain to virtual host so cookie works for dev and prod env,
             secure=not Settings.is_local_env(),
             samesite='strict'
         )

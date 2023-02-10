@@ -525,3 +525,20 @@ class Migration045(BrickMigration):
         migrator.add_index_if_not_exists(
             ProgressBar, 'gws_process_progress_bar_process_id', ['process_id'], True)
         migrator.migrate()
+
+
+@brick_migration('0.4.7', short_description='Remove created_by and last_modified_by from Project')
+class Migration047(BrickMigration):
+    """Remove created_by and last_modified_by from Project because project are synchronized on lab start
+
+    :param BrickMigration: _description_
+    :type BrickMigration: _type_
+    """
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(Project.get_db())
+        migrator.drop_column_if_exists(Project, "created_by_id")
+        migrator.drop_column_if_exists(Project, "last_modified_by_id")
+        migrator.migrate()

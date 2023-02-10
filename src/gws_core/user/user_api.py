@@ -7,12 +7,13 @@ from typing import Optional
 
 from fastapi import Cookie, Depends, Header
 from fastapi.responses import RedirectResponse
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 
 from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.service.front_service import FrontService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
+from gws_core.user.unique_code_service import UniqueCodeService
 from gws_core.user.user import User
 
 from ..core_app import core_app
@@ -107,19 +108,46 @@ def login_from_temp_token(unique_code: str) -> RedirectResponse:
         return RedirectResponse(FrontService.get_front_url())
 
 
-@core_app.post("/dev-login", tags=["User"], summary="Login to the dev lab using the prod token")
-def dev_login(authorization_header: Optional[str] = Header(default=None, alias="Authorization"),
-              authorization_cookie: Optional[str] = Cookie(default=None, alias="Authorization")) -> User:
+# @core_app.post("/dev-login", tags=["User"], summary="Login to the dev lab using the prod token")
+# def dev_login(authorization_header: Optional[str] = Header(default=None, alias="Authorization"),
+#               authorization_cookie: Optional[str] = Cookie(default=None, alias="Authorization")) -> Response:
+#     """
+#     Log the user on the dev lab by calling the prod api
+#     """
+#     # get the token from the header or the cookies
+#     token: str = authorization_header or authorization_cookie
+
+#     if token is None:
+#         raise InvalidTokenException()
+
+#     return AuthService.dev_get_check_user(token)
+
+@core_app.post("/dev-login/{code}", tags=["User"], summary="Login to the dev lab using the prod token")
+def dev_login(code: str) -> Response:
+    """
+    Log the user on the dev lab by calling the prod api
+    """
+
+    return AuthService.dev_get_check_user(code)
+
+
+@core_app.get("/generate-temp", tags=["User"], summary="Login to the dev lab using the prod token")
+def generate_temp_access(current_user: UserData = Depends(AuthService.check_user_access_token)) -> str:
     """
     Log the user on the dev lab by calling the prod api
     """
     # get the token from the header or the cookies
-    token: str = authorization_header or authorization_cookie
+    return UniqueCodeService.generate_code(current_user.id, {}, 60)
 
-    if token is None:
-        raise InvalidTokenException()
 
-    return AuthService.dev_get_check_user(token)
+@core_app.post("/check-temp/{code}", tags=["User"], summary="Login to the dev lab using the prod token")
+def check_temp(code: str) -> str:
+    """
+    Log the user on the dev lab by calling the prod api
+    """
+    # get the token from the header or the cookies
+    code_obj = UniqueCodeService.check_code(code)
+    return User.get_by_id_and_check(code_obj["user_id"])
 
 
 @core_app.post("/logout", tags=["User"], summary="Logout the user")

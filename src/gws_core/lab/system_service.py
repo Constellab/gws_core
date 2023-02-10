@@ -241,3 +241,4 @@ class SystemService:
     def synchronize_with_central(cls) -> None:
         UserService.synchronize_all_central_users()
         ProjectService.synchronize_all_central_projects()
+        Logger.info('Synchronization with central done')
