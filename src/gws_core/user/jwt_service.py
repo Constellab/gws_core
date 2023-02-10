@@ -54,7 +54,9 @@ class JWTService:
 
     @classmethod
     def _get_secret(cls) -> str:
-        if cls._secret is None:
-            cls._secret = Settings.get_instance().data.get("secret_key")
+        print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+        return '123456'
+        # if cls._secret is None:
+        #    cls._secret = Settings.get_instance().data.get("secret_key")
 
-        return cls._secret
+        # return cls._secret
