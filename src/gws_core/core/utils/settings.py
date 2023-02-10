@@ -154,7 +154,7 @@ class Settings():
         """
 
         # specific lab id for local env
-        if cls.is_local_env():
+        if cls.is_local_env() and not os.environ.get("LAB_ID"):
             return '1'
 
         return os.environ.get("LAB_ID")
@@ -180,7 +180,7 @@ class Settings():
         """
 
         # specific central api key for local env
-        if cls.is_local_env():
+        if cls.is_local_env() and not os.environ.get("CENTRAL_API_KEY"):
             return '123456'
 
         return os.environ.get("CENTRAL_API_KEY")
@@ -194,7 +194,7 @@ class Settings():
         """
 
         # specific central api url for local env
-        if cls.is_local_env():
+        if cls.is_local_env() and not os.environ.get("CENTRAL_API_URL"):
             return 'http://host.docker.internal:3001'
 
         return os.environ.get("CENTRAL_API_URL")
@@ -208,7 +208,7 @@ class Settings():
         """
 
         # specific central api url for local env
-        if cls.is_local_env():
+        if cls.is_local_env() and not os.environ.get("FRONT_URL"):
             return 'http://localhost:4200'
 
         return os.environ.get("FRONT_URL", '')
