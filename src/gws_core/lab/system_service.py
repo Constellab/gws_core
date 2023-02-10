@@ -19,6 +19,7 @@ from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor_service import MonitorService
+from gws_core.project.project_service import ProjectService
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.user_dto import SpaceCentral
@@ -229,3 +230,8 @@ class SystemService:
                 FileHelper.delete_node(file_store_file_path)
 
         Logger.info('Ending the garbage collector')
+
+    @classmethod
+    def synchronize_with_central(cls) -> None:
+        UserService.synchronize_all_central_users()
+        ProjectService.synchronize_all_central_projects()

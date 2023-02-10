@@ -17,7 +17,7 @@ from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_model import LabConfig
-from gws_core.user.user_dto import UserCentral
+from gws_core.user.user_dto import UserCentral, UserData
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
@@ -103,23 +103,6 @@ class CentralService(BaseService):
         return True
 
     @classmethod
-    def get_all_lab_projects(cls) -> List[CentralProject]:
-        """
-        Call the central api to get the list of project for this lab
-        """
-        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/project/all-trees")
-
-        try:
-            response = ExternalApiService.get(central_api_url, cls._get_request_header(),
-                                              raise_exception_if_error=True)
-        except BaseHTTPException as err:
-            err.detail = f"Can't retrieve projects for the lab. Error : {err.detail}"
-            raise err
-
-        # get response and parse it to a list of CentralProject
-        return parse_obj_as(List[CentralProject], response.json())
-
-    @classmethod
     def save_experiment(cls, project_id: str, save_experiment_dto: SaveExperimentToCentralDTO) -> None:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/project/{project_id}/experiment")
@@ -168,7 +151,7 @@ class CentralService(BaseService):
             err.detail = f"Can't save the report in central. Error : {err.detail}"
             raise err
 
-    @ classmethod
+    @classmethod
     def delete_report(cls, project_id: str, report_id: str) -> None:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/project/{project_id}/report/{report_id}")
@@ -179,7 +162,7 @@ class CentralService(BaseService):
             err.detail = f"Can't delete the report in central. Error : {err.detail}"
             raise err
 
-    @ classmethod
+    @classmethod
     def send_experiment_finished_mail(cls, user_id: str, experiment: SendExperimentFinishMailData) -> None:
         data: CentralSendMailDTO = {
             "receiver_ids": [user_id],
@@ -190,13 +173,49 @@ class CentralService(BaseService):
         }
         cls._send_mail(data)
 
-    @ classmethod
+    @classmethod
     def _send_mail(cls, send_mail_dto: CentralSendMailDTO) -> Response:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/send-mail")
         return ExternalApiService.post(central_api_url, send_mail_dto, cls._get_request_header())
 
-    @ classmethod
+    #################################### SYNCRONIZATION ####################################
+
+    @classmethod
+    def get_all_lab_projects(cls) -> List[CentralProject]:
+        """
+        Call the central api to get the list of project for this lab
+        """
+        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/project/all-trees")
+
+        try:
+            response = ExternalApiService.get(central_api_url, cls._get_request_header(),
+                                              raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't retrieve projects for the lab. Error : {err.detail}"
+            raise err
+
+        # get response and parse it to a list of CentralProject
+        return parse_obj_as(List[CentralProject], response.json())
+
+    @classmethod
+    def get_all_lab_users(cls) -> List[UserData]:
+        """
+        Call the central api to get the list of users for this lab
+        """
+        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/user")
+
+        try:
+            response = ExternalApiService.get(central_api_url, cls._get_request_header(),
+                                              raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't retrieve users for the lab. Error : {err.detail}"
+            raise err
+
+        # get response and parse it to a list of UserData
+        return parse_obj_as(List[UserData], response.json())
+
+    @classmethod
     def _get_central_api_url(cls, route: str) -> str:
         """
         Build an URL to call the central API
@@ -210,7 +229,7 @@ class CentralService(BaseService):
                 raise BadRequestException('The CENTRAL_API_URL environment variable is not set')
         return central_api_url + '/' + route
 
-    @ classmethod
+    @classmethod
     def _get_request_header(cls) -> Dict[str, str]:
         """
         Return the header for a request to central, with Api key and User if exists

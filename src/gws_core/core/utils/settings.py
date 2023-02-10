@@ -76,11 +76,7 @@ class Settings():
     def init(cls, settings_json: dict = None):
 
         settings = Settings.get_instance()
-
-        if settings.get_data('secret_key') is None:
-            # secret_key
-            secret_key = StringHelper.generate_random_chars(128)
-            settings.set_data("secret_key", secret_key)
+        settings._init_secrete_key()
 
         for key, value in settings_json.items():
             settings.set_data(key, value)
@@ -96,6 +92,18 @@ class Settings():
             dump(self.data, f, sort_keys=True)
 
         return True
+
+    def _init_secrete_key(self):
+        # if a secrete key is set in the environment variable, use it
+        secrete_key_env = os.environ.get("SECRET_KEY")
+        if secrete_key_env:
+            self.set_data("secret_key", secrete_key_env)
+
+        # if no secrete key is set, generate one if not already set
+        if self.get_data('secret_key') is None:
+            # secret_key
+            secret_key = StringHelper.generate_random_chars(128)
+            self.set_data("secret_key", secret_key)
 
     @classmethod
     def _get_setting_file_path(cls) -> str:

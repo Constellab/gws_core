@@ -138,3 +138,12 @@ def get_all_users(_: UserData = Depends(AuthService.check_user_access_token)):
     """
 
     return ListJsonable(UserService.get_all_real_users()).to_json()
+
+
+@core_app.post("/user/synchronize", tags=["User"])
+def synchronize_users(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    """
+    Synchronize the projects from central
+    """
+
+    return UserService.synchronize_all_central_users()

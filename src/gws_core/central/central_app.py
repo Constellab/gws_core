@@ -147,7 +147,7 @@ def create_user(user: UserData, _: UserData = Depends(AuthCentral.check_central_
     - **last_name**: The last name
     """
 
-    return _convert_user_to_dto(UserService.create_central_user(user.dict()))
+    return _convert_user_to_dto(UserService.create_central_user(user))
 
 
 @central_app.get("/user", tags=["User management"])

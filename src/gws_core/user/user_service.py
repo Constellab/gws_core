@@ -6,6 +6,9 @@
 
 from typing import List
 
+from gws_core.central.central_service import CentralService
+from gws_core.user.user_dto import UserData
+
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
@@ -18,26 +21,22 @@ class UserService(BaseService):
 
     _console_data = {"user": None}
 
-    # -- A --
-
     @classmethod
     def activate_user(cls, id: str) -> User:
         return cls.set_user_active(id, True)
 
-    # -- C --
-
     @classmethod
-    def create_central_user(cls, user: UserDataDict) -> User:
-        db_user: User = cls.get_user_by_id(user["id"])
+    def create_central_user(cls, user: UserData) -> User:
+        db_user: User = cls.get_user_by_id(user.id)
 
         if db_user is None:
             return cls._create_user(user)
         else:
-            db_user.email = user["email"]
-            db_user.first_name = user["first_name"]
-            db_user.last_name = user["last_name"]
-            db_user.group = user["group"]
-            db_user.is_active = user["is_active"]
+            db_user.email = user.email
+            db_user.first_name = user.first_name
+            db_user.last_name = user.last_name
+            db_user.group = user.group
+            db_user.is_active = user.is_active
             return db_user.save()
 
     @classmethod
@@ -77,13 +76,9 @@ class UserService(BaseService):
         user.save()
         return User.get_by_id(user.id)
 
-    # -- D --
-
     @classmethod
     def deactivate_user(cls, id) -> User:
         return cls.set_user_active(id, False)
-
-    # -- F --
 
     @classmethod
     def fecth_activity_list(cls,
@@ -114,8 +109,6 @@ class UserService(BaseService):
         return Paginator(
             query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
-    # -- G --
-
     @classmethod
     def get_user_by_id(cls, id: str) -> User:
         return User.get_by_id(id)
@@ -123,8 +116,6 @@ class UserService(BaseService):
     @classmethod
     def get_user_by_email(cls, email: str) -> User:
         return User.get_by_email(email)
-
-    # -- S --
 
     @classmethod
     def set_user_active(cls, id: str, is_active: bool) -> User:
@@ -159,8 +150,6 @@ class UserService(BaseService):
             )
             user.save()
 
-    # -- G --
-
     @classmethod
     def get_admin(cls):
         return User.get_admin()
@@ -176,3 +165,9 @@ class UserService(BaseService):
     @classmethod
     def user_exists(cls, id: str) -> bool:
         return cls.get_user_by_id(id) is not None
+
+    @classmethod
+    def synchronize_all_central_users(cls) -> None:
+        users = CentralService.get_all_lab_users()
+        for user in users:
+            cls.create_central_user(user)
