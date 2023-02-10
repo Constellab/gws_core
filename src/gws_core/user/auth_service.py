@@ -46,8 +46,8 @@ class AuthService(BaseService):
         except:
             raise WrongCredentialsException()
 
-        # skip the check with central in local env
-        if Settings.is_local_env():
+        # skip the check with central in local dev env
+        if Settings.is_local_env() and Settings.get_instance().is_dev:
             return cls.log_user(user)
 
         # Check the user credentials

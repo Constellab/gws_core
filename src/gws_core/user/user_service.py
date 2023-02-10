@@ -175,7 +175,7 @@ class UserService(BaseService):
             for user in users:
                 cls.create_central_user(user)
 
-            Logger.info(f"{len(users)} synchronized from central")
+            Logger.info(f"{len(users)} synchronized users from central")
         except Exception as err:
             Logger.error(f"Error while synchronizing users: {err}")
             raise err
