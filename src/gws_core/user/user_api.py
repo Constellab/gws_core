@@ -147,7 +147,8 @@ def check_temp(code: str) -> str:
     """
     # get the token from the header or the cookies
     code_obj = UniqueCodeService.check_code(code)
-    return User.get_by_id_and_check(code_obj["user_id"])
+    user: User = User.get_by_id_and_check(code_obj["user_id"])
+    return user.to_user_data_dict()
 
 
 @core_app.post("/logout", tags=["User"], summary="Logout the user")

@@ -236,8 +236,8 @@ class AuthService(BaseService):
         try:
             # response: Response = ExternalApiService.get(
             #     url=f"{prod_api_url}/core-api/user/me", headers={"Authorization": token})
-            response: Response = ExternalApiService.get(
-                url=f"{prod_api_url}/check-temp/{token}")
+            response: Response = ExternalApiService.post(
+                url=f"{prod_api_url}/core-api/check-temp/{token}", body=None)
         except Exception as err:
             Logger.error(
                 f"Error during authentication to the prod api : {err}")
