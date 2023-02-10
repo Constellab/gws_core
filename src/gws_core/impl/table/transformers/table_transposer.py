@@ -27,5 +27,4 @@ class TableTransposer(Transformer):
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
         result = source.transpose()
-        result.add_technical_info(TechnicalInfo('Waow', 'super', 'cool'))
         return result

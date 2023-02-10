@@ -9,6 +9,7 @@ from gws_core.central.central_service import CentralService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment import Experiment
 from gws_core.report.report import Report
 
@@ -28,9 +29,17 @@ class ProjectService(BaseService):
         """
         Synchronize all the projects from central
         """
-        central_projects = CentralService.get_all_lab_projects()
-        for central_project in central_projects:
-            cls.synchronize_central_project(central_project)
+
+        Logger.info("Synchronizing projects from central")
+
+        try:
+            central_projects = CentralService.get_all_lab_projects()
+            for central_project in central_projects:
+                cls.synchronize_central_project(central_project)
+            Logger.info(f"{len(central_projects)} projects synchronized from central")
+        except Exception as err:
+            Logger.error(f"Error while synchronizing projects from central: {err}")
+            raise err
 
     @classmethod
     def synchronize_central_project(cls, project: CentralProject) -> None:

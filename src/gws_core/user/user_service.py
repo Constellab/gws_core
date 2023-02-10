@@ -7,6 +7,7 @@
 from typing import List
 
 from gws_core.central.central_service import CentralService
+from gws_core.core.utils.logger import Logger
 from gws_core.user.user_dto import UserData
 
 from ..core.classes.paginator import Paginator
@@ -168,6 +169,13 @@ class UserService(BaseService):
 
     @classmethod
     def synchronize_all_central_users(cls) -> None:
-        users = CentralService.get_all_lab_users()
-        for user in users:
-            cls.create_central_user(user)
+        Logger.info("Synchronizing users from central")
+        try:
+            users = CentralService.get_all_lab_users()
+            for user in users:
+                cls.create_central_user(user)
+
+            Logger.info(f"{len(users)} synchronized from central")
+        except Exception as err:
+            Logger.error(f"Error while synchronizing users: {err}")
+            raise err

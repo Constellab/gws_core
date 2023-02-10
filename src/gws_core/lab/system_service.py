@@ -149,14 +149,20 @@ class SystemService:
         if settings.is_dev:
             return
 
-        Logger.info('Registering lab start on central')
+        try:
+            Logger.info('Registering lab start on central')
 
-        result = CentralService.register_lab_start(LabConfigModel.get_current_config().to_json())
+            result = CentralService.register_lab_start(LabConfigModel.get_current_config().to_json())
 
-        if result:
-            Logger.info('Lab start successfully registered on central')
-        else:
-            Logger.error('Error during lab start registration with central')
+            if result:
+                Logger.info('Lab start successfully registered on central')
+            else:
+                Logger.error('Error during lab start registration with central')
+
+            cls.synchronize_with_central()
+        except Exception as err:
+            Logger.error(f"Error during lab start : {err}")
+            Logger.log_exception_stack_trace(err)
 
     @classmethod
     def get_lab_info(cls) -> dict:
