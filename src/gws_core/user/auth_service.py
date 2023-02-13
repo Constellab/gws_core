@@ -200,7 +200,7 @@ class AuthService(BaseService):
         return user
 
     @classmethod
-    def dev_get_check_user(cls, token: str) -> Response:
+    def dev_get_check_user(cls, unique_code: str) -> Response:
         """[summary]
         Log the user on the dev lab by calling the prod api
         Only allowed for the dev service
@@ -234,10 +234,8 @@ class AuthService(BaseService):
 
         # Check if the user's token is valid in prod environment and retrieve user's information
         try:
-            # response: Response = ExternalApiService.get(
-            #     url=f"{prod_api_url}/core-api/user/me", headers={"Authorization": token})
             response: Response = ExternalApiService.post(
-                url=f"{prod_api_url}/core-api/check-temp/{token}", body=None)
+                url=f"{prod_api_url}/core-api/dev-login-unique-code/check/{unique_code}", body=None)
         except Exception as err:
             Logger.error(
                 f"Error during authentication to the prod api : {err}")
@@ -283,3 +281,16 @@ class AuthService(BaseService):
             secure=not Settings.is_local_env(),
             samesite='strict'
         )
+
+    @classmethod
+    def generate_dev_login_unique_code(cls, user_id: str) -> str:
+        # generate a code available for 60 seconds
+        return UniqueCodeService.generate_code(user_id, {}, 60)
+
+    @classmethod
+    def check_dev_login_unique_code(cls, unique_code: str) -> User:
+        # check the unique code
+        code_obj = UniqueCodeService.check_code(unique_code)
+
+        # return the user associated with the code
+        return User.get_by_id_and_check(code_obj["user_id"])
