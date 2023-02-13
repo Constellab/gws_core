@@ -25,36 +25,19 @@ class SettingsLoader:
     """
 
     LAB_WORKSPACE_DIR = "/lab"
-    NOTEBOOK_DIR = os.path.join(LAB_WORKSPACE_DIR, "user/notebooks")
+
+    SYS_WORKSPACE_DIR: str = os.path.join(LAB_WORKSPACE_DIR, '.sys')
+    USER_WORKSPACE_DIR: str = os.path.join(LAB_WORKSPACE_DIR, 'user')
+
+    USER_BRICKS_FOLDER = os.path.join(USER_WORKSPACE_DIR, 'bricks')
+    NOTEBOOK_FOLDER = os.path.join(USER_WORKSPACE_DIR, "notebooks")
+    SYS_BRICKS_FOLDER = os.path.join(SYS_WORKSPACE_DIR, 'bricks')
+    EXTERNAL_LIB_FOLDER = os.path.join(SYS_WORKSPACE_DIR, "lib")
+
     all_settings = {
         "cwd": "",
         "modules": {},
     }
-
-    # -- L --
-
-    @classmethod
-    def _load_bricks(cls, cwd: str = None):
-        cls.parse_settings(cwd, is_brick=True)
-        cls.all_settings["cwd"] = cwd
-
-    @classmethod
-    def _load_notebook(cls):
-        if not os.path.exists(cls.NOTEBOOK_DIR):
-            return
-        dirs = os.listdir(cls.NOTEBOOK_DIR)
-        for file_name in dirs:
-            if file_name.startswith("_") or file_name.startswith("."):
-                continue
-            file_path = os.path.join(cls.NOTEBOOK_DIR, file_name)
-            if os.path.isdir(file_path):
-                sys.path.insert(0, file_path)
-
-        cls.all_settings["modules"]["notebook"] = {
-            "path": cls.NOTEBOOK_DIR,
-            "is_brick": False,
-            "type": "notebook"
-        }
 
     @classmethod
     def load_settings(cls, cwd: str = None):
@@ -67,7 +50,28 @@ class SettingsLoader:
         # Is important to be able to traverse all Bricks/Model/Object inheritors
         BrickService.import_all_modules()
 
-    # -- P --
+    @classmethod
+    def _load_bricks(cls, cwd: str = None):
+        cls.parse_settings(cwd, is_brick=True)
+        cls.all_settings["cwd"] = cwd
+
+    @classmethod
+    def _load_notebook(cls):
+        if not os.path.exists(cls.NOTEBOOK_FOLDER):
+            return
+        dirs = os.listdir(cls.NOTEBOOK_FOLDER)
+        for file_name in dirs:
+            if file_name.startswith("_") or file_name.startswith("."):
+                continue
+            file_path = os.path.join(cls.NOTEBOOK_FOLDER, file_name)
+            if os.path.isdir(file_path):
+                sys.path.insert(0, file_path)
+
+        cls.all_settings["modules"]["notebook"] = {
+            "path": cls.NOTEBOOK_FOLDER,
+            "is_brick": False,
+            "type": "notebook"
+        }
 
     @staticmethod
     def parse_variables(repo_name, cwd, variables):
@@ -93,7 +97,7 @@ class SettingsLoader:
                     settings_data = json.load(fp)
                 except Exception as err:
                     raise Exception(
-                        f"Error: cannot parse the the settings file of '{repo_name}'") from err
+                        f"Error: cannot parse the the settings file of brick '{repo_name}'") from err
 
             sys.path.insert(0, os.path.join(cwd, "src"))
             cls.all_settings["modules"][repo_name] = {
@@ -118,14 +122,17 @@ class SettingsLoader:
                 for package in channel.get("packages"):
                     repo = package["name"]
                     is_brick = package.get("is_brick", False)
+
+                    # import brick from user workspace or system workspace
                     if is_brick:
-                        repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, "user", "bricks", repo)
+                        repo_dir = os.path.join(cls.USER_BRICKS_FOLDER, repo)
                         if not os.path.exists(repo_dir):
-                            repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, "user", "bricks", ".lib", repo)
+                            repo_dir = os.path.join(cls.SYS_BRICKS_FOLDER, repo)
                             if not os.path.exists(repo_dir):
-                                raise Exception(f"Repository '{repo_dir}' is not found")
+                                raise Exception(f"Repository '{repo_dir}' for brick '{repo}' is not found")
+                    # import external library
                     else:
-                        repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, ".sys", "lib", repo)
+                        repo_dir = os.path.join(cls.EXTERNAL_LIB_FOLDER, repo)
                         if not os.path.exists(repo_dir):
                             raise Exception(f"Repository '{repo_dir}' is not found")
                     cls.parse_settings(repo_dir, is_brick, repo_type="git", channel_source=channel_source)

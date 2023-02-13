@@ -302,10 +302,7 @@ class Settings():
         :return: The brick data directory
         :rtype: `str`
         """
-        if self.is_test:
-            return os.path.join(self._get_system_folder(), 'brick-data-test')
-        else:
-            return os.path.join(self._get_system_folder(), 'brick-data')
+        return os.path.join(self.get_data_dir(), 'brick-data')
 
     def get_brick_data_dir(self, brick_name: str) -> str:
         """
@@ -320,10 +317,10 @@ class Settings():
         return os.path.join(self.get_brick_data_main_dir(), brick_name)
 
     def get_file_store_dir(self) -> str:
-        return os.path.join(self.get_data_dir(), "filestore/")
+        return os.path.join(self.get_data_dir(), "filestore")
 
     def get_kv_store_base_dir(self) -> str:
-        return os.path.join(self.get_data_dir(), "kvstore/")
+        return os.path.join(self.get_data_dir(), "kvstore")
 
     def get_variable(self, key) -> str:
         """ Returns a variable. Returns `None` if the variable does not exist """
