@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import Literal, Optional, Type, TypedDict, final
+from typing import Literal, Optional, Type, final
+
+from typing_extensions import TypedDict
 
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.dispatched_message import (

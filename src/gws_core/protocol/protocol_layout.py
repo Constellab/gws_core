@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 from json import dumps, loads
-from typing import Dict, TypedDict
+from typing import Dict
+
+from typing_extensions import TypedDict
 
 from gws_core.core.model.db_field import SerializableObject
 

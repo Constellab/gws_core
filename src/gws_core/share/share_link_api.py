@@ -18,13 +18,13 @@ from .share_link import ShareLink
 from .shared_dto import GenerateShareLinkDTO
 
 
-@core_app.post("/share-link", tags=["Share"], summary="Generate a share link for an entity")
+@core_app.post("/share-link", tags=["Share"], summary="Generate a share link for an entity", response_model=None)
 def generate_share_link(share_dto: GenerateShareLinkDTO,
                         _: UserData = Depends(AuthService.check_user_access_token)) -> ShareLink:
     return ShareLinkService.generate_share_link(share_dto).to_json()
 
 
-@core_app.put("/share-link", tags=["Share"], summary="Update a share link for an entity")
+@core_app.put("/share-link", tags=["Share"], summary="Update a share link for an entity", response_model=None)
 def update_share_link(share_dto: GenerateShareLinkDTO,
                       _: UserData = Depends(AuthService.check_user_access_token)) -> ShareLink:
     return ShareLinkService.update_share_link(share_dto).to_json()
@@ -36,14 +36,14 @@ def delete_share_link(id: str,
     return ShareLinkService.delete_share_link(id)
 
 
-@core_app.get("/share-link", tags=["Share"], summary="Get share links")
+@core_app.get("/share-link", tags=["Share"], summary="Get share links", response_model=None)
 def get_share_links(page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
                     _: UserData = Depends(AuthService.check_user_access_token)) -> Paginator:
     return ShareLinkService.get_shared_links(page, number_of_items_per_page).to_json()
 
 
-@core_app.get("/share-link/{entity_type}/{entity_id}", tags=["Share"], summary="Get share entity")
+@core_app.get("/share-link/{entity_type}/{entity_id}", tags=["Share"], summary="Get share entity", response_model=None)
 def get_share_entity(entity_type: str, entity_id: str,
                      _: UserData = Depends(AuthService.check_user_access_token)) -> ShareLink:
     share_link = ShareLinkService.find_by_entity_id_and_type(entity_type, entity_id)

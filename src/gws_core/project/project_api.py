@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict
 
 from fastapi.param_functions import Depends
 
@@ -25,7 +24,7 @@ def synchronize_project(_: UserData = Depends(AuthService.check_user_access_toke
 
 
 @core_app.get("/project/trees", tags=["Project"])
-def get_project_trees(_: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+def get_project_trees(_: UserData = Depends(AuthService.check_user_access_token)):
     """
     Get the list of available projects with children.
     """

@@ -4,11 +4,13 @@
 # About us: https://gencovery.com
 
 from time import time
-from typing import Dict, Literal, TypedDict
+from typing import Dict, Literal
+
+from peewee import CharField
+from typing_extensions import TypedDict
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.utils.settings import ModuleInfo
-from peewee import CharField
 
 from ..core.model.model import Model
 

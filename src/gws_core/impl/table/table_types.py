@@ -5,7 +5,9 @@
 
 
 from enum import Enum
-from typing import Dict, Literal, TypedDict
+from typing import Dict, Literal
+
+from typing_extensions import TypedDict
 
 
 class TableColumnType(Enum):

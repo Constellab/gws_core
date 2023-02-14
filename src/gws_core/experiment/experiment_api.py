@@ -26,7 +26,7 @@ from .queue_service import QueueService
 @core_app.get("/experiment/running", tags=["Experiment"],
               summary="Get the list of running experiments")
 def get_the_list_of_running_experiments(
-        _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+        _: UserData = Depends(AuthService.check_user_access_token)) -> list:
     """
     Retrieve a list of running experiments.
     """
@@ -200,8 +200,8 @@ def stop_an_experiment(id: str,
 @core_app.put("/experiment/{id}/tags", tags=["Experiment"], summary="Update experiment tags")
 def save_tags(id: str,
               tags: List[Tag],
-              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    return TagService.save_tags_to_entity(Experiment, id, tags)
+              _: UserData = Depends(AuthService.check_user_access_token)) -> list:
+    return ListJsonable(TagService.save_tags_to_entity(Experiment, id, tags)).to_json()
 
 
 ################################### COPY ##############################

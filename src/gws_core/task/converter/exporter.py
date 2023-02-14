@@ -6,7 +6,9 @@
 
 import traceback
 from abc import abstractmethod
-from typing import Callable, Type, TypedDict, final
+from typing import Callable, Type, final
+
+from typing_extensions import TypedDict
 
 from gws_core.io.io_spec import InputSpec, OutputSpec
 

@@ -6,6 +6,8 @@
 from typing import Dict, List, Optional
 
 from fastapi.param_functions import Depends
+
+from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.paginator import PaginatorDict
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.resource.resource_service import ResourceService
@@ -97,4 +99,4 @@ def search_for_report(report_id: str,
 def save_tags(id: str,
               tags: List[Tag],
               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    return TagService.save_tags_to_entity(ViewConfig, id, tags)
+    return ListJsonable(TagService.save_tags_to_entity(ViewConfig, id, tags)).to_json()

@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, TypedDict
+from typing import Any
+
+from typing_extensions import TypedDict
 
 from gws_core.impl.table.table import Table
 from gws_core.task.action.action import Action

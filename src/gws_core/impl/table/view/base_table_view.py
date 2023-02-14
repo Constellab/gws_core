@@ -5,9 +5,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from pandas import DataFrame
+from typing_extensions import TypedDict
 
 from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper

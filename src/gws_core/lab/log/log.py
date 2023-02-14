@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 from datetime import date, datetime
-from typing import List, TypedDict
+from typing import List
+
+from typing_extensions import TypedDict
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger, MessageType
@@ -126,7 +128,7 @@ class LogCompleteInfo():
                 log_lines.append(log_line)
         return log_lines
 
-    def to_dict(self) -> dict:
+    def to_json(self) -> dict:
         return {"log_info": self.log_info, "content": self.content}
 
 

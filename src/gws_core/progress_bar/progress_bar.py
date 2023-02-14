@@ -4,11 +4,12 @@
 # About us: https://gencovery.com
 
 from enum import Enum
-from typing import List, TypedDict, final
+from typing import List, final
 
 from fastapi.encoders import jsonable_encoder
 from peewee import CharField, FloatField
 from starlette_context import context
+from typing_extensions import TypedDict
 
 from gws_core.core.model.db_field import DateTimeUTC
 from gws_core.core.utils.date_helper import DateHelper

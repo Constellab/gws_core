@@ -7,7 +7,9 @@ import os
 from abc import abstractmethod
 from json import dump, load
 from pathlib import Path
-from typing import Any, TypedDict, Union, final
+from typing import Any, Union, final
+
+from typing_extensions import TypedDict
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.date_helper import DateHelper

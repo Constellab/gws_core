@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 from abc import abstractmethod
 from collections.abc import Iterable as IterableClass
-from typing import Iterable, List, Optional, Tuple, Type, TypedDict, Union
+from typing import Iterable, List, Optional, Tuple, Type, Union
+
+from typing_extensions import TypedDict
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.utils.string_helper import StringHelper

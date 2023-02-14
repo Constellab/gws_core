@@ -4,10 +4,10 @@
 # About us: https://gencovery.com
 
 import os
-from typing import TypedDict
 
 from fastapi import UploadFile
 from PIL import Image
+from typing_extensions import TypedDict
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException

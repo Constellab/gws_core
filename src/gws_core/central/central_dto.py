@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, List, Literal, Optional, TypedDict
+from typing import Any, List, Literal, Optional
+
+from typing_extensions import TypedDict
 
 from gws_core.lab.lab_config_model import LabConfig
 

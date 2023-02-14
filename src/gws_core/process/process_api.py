@@ -15,7 +15,7 @@ from .process_service import ProcessService, ProcessType
 
 
 @core_app.get("/process/{process_type}/{id}/logs", tags=["Process"],
-              summary="Get the log of a process")
+              summary="Get the log of a process", response_model=None)
 def get_process_logs(process_type: ProcessType,
                      id: str,
                      _: UserData = Depends(AuthService.check_user_access_token)) -> LogsBetweenDatesDTO:
@@ -27,7 +27,7 @@ def get_process_logs(process_type: ProcessType,
 
 
 @core_app.get("/process/{process_type}/{id}/monitor", tags=["Process"],
-              summary="Get the monitoring data of a process")
+              summary="Get the monitoring data of a process", response_model=None)
 def get_process_monitors(process_type: ProcessType,
                          id: str,
                          _: UserData = Depends(AuthService.check_user_access_token)) -> MonitorBetweenDateDTO:

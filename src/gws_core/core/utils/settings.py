@@ -8,7 +8,9 @@ import re
 import tempfile
 from copy import deepcopy
 from json import JSONDecodeError, dump, load
-from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
+from typing import Any, Dict, List, Literal, Optional, Union
+
+from typing_extensions import TypedDict
 
 from gws_core.core.db.db_config import DbConfig
 from gws_core.impl.file.file_helper import FileHelper

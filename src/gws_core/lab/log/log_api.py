@@ -22,9 +22,9 @@ def get_logs_status(_: UserData = Depends(AuthService.check_user_access_token)) 
 
 @core_app.get("/log/{log_file_name}", tags=["Log"],
               summary="Get the content of a log file")
-def get_log_complete_info(log_file_name: str, _: UserData = Depends(AuthService.check_user_access_token)) -> str:
+def get_log_complete_info(log_file_name: str, _: UserData = Depends(AuthService.check_user_access_token)):
 
-    return LogService.get_log_complete_info(log_file_name)
+    return LogService.get_log_complete_info(log_file_name).to_json()
 
 
 @core_app.get("/log/{log_file_name}/download", tags=["Log"],

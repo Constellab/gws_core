@@ -2,15 +2,14 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
 from typing import Dict, List, Optional
 
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.param_functions import Depends
 from fastapi.responses import FileResponse
+
 from gws_core.core.classes.paginator import PaginatorDict
-from gws_core.project.project import Project
 from gws_core.report.report_file_service import ReportImage
 
 from ..core.classes.jsonable import ListJsonable
@@ -107,17 +106,19 @@ def delete_image(filename: str,
 ################################################# GET ########################################
 
 
-@core_app.get("/report/{id}", tags=["Report"], summary="Get a report")
+@core_app.get("/report/{id}", tags=["Report"], summary="Get a report", response_model=None)
 def get_by_id(id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> List[Report]:
     return ReportService.get_by_id_and_check(id).to_json(deep=True)
 
 
-@core_app.get("/report/experiment/{experiment_id}", tags=["Report"], summary="Find reports of an experiment")
+@core_app.get("/report/experiment/{experiment_id}", tags=["Report"],
+              summary="Find reports of an experiment", response_model=None)
 def get_by_experiment(experiment_id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> List[Report]:
     return ListJsonable(ReportService.get_by_experiment(experiment_id)).to_json()
 
 
-@core_app.get("/report/{report_id}/experiments", tags=["Report"], summary="Find experiments of a report")
+@core_app.get("/report/{report_id}/experiments", tags=["Report"],
+              summary="Find experiments of a report", response_model=None)
 def get_experiment_by_report(
         report_id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> List[Experiment]:
     return ListJsonable(ReportService.get_experiments_by_report(report_id)).to_json()

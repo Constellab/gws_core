@@ -5,8 +5,10 @@
 
 import os
 from json import dump, load
-from typing import Dict, List, Optional, Type, TypedDict
+from typing import Dict, List, Optional, Type
 from zipfile import ZipFile
+
+from typing_extensions import TypedDict
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.decorator.transaction import transaction

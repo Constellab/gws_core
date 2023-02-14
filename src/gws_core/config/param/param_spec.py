@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import Any, Dict, Generic, List, Optional, TypedDict, TypeVar
+from typing import Any, Dict, Generic, List, Optional, TypeVar
+
+from typing_extensions import TypedDict
 
 from gws_core.core.utils.logger import Logger
 

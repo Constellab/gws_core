@@ -8,10 +8,11 @@ from __future__ import annotations
 import asyncio
 from abc import abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, Dict, Type, TypedDict, final
+from typing import TYPE_CHECKING, Dict, Type, final
 
 from peewee import CharField, ForeignKeyField
 from starlette_context import context
+from typing_extensions import TypedDict
 
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper

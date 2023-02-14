@@ -28,7 +28,7 @@ def mark_entity_as_shared(entity_type: ShareLinkType, token: str, destination: d
 
 
 @core_app.get("/share/{entity_type}/{entity_id}/shared-to", tags=["Share"],
-              summary="Get info about which lab this object was shared to")
+              summary="Get info about which lab this object was shared to", response_model=None)
 def get_shared_to_list(entity_type: ShareLinkType,
                        entity_id: str,
                        _: UserData = Depends(AuthService.check_user_access_token)) -> Paginator[SharedResource]:
@@ -41,7 +41,7 @@ class ImportDto(BaseModel):
 ################################ RESOURCE ################################
 
 
-@core_app.post("/share/resource/import", tags=["Share"], summary="Download a resource")
+@core_app.post("/share/resource/import", tags=["Share"], summary="Download a resource", response_model=None)
 def import_resource(import_dto: ImportDto,
                     _: UserData = Depends(AuthService.check_user_access_token)) -> ResourceModel:
     return ShareService.create_resource_from_external_lab(import_dto.url).to_json()

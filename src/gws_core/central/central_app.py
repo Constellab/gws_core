@@ -93,7 +93,7 @@ class UserIdData(BaseModel):
 
 @central_app.post("/user/generate-temp-access", tags=["User management"])
 def generate_user_temp_access(user_login_info: UserLoginInfo,
-                              _=Depends(AuthCentral.check_central_api_key_and_user)) -> str:
+                              _=Depends(AuthCentral.check_central_api_key_and_user)) -> dict:
     """
     Generate a temporary link for the user to login in the lab
     """

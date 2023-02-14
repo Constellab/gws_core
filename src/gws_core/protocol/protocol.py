@@ -5,11 +5,13 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Dict, List, Type, TypedDict, final
+from typing import Dict, List, Type, final
+
+from peewee import Tuple
+from typing_extensions import TypedDict
 
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
-from peewee import Tuple
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException

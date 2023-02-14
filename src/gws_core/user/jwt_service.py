@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from typing import TypedDict
 
 from jwt import decode, encode
+from typing_extensions import TypedDict
 
 from ..core.utils.settings import Settings
 from .user_exception import InvalidTokenException

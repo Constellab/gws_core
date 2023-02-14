@@ -6,12 +6,14 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, List, TypedDict, final
+from typing import TYPE_CHECKING, List, final
+
+from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
+from typing_extensions import TypedDict
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.user.current_user_service import CurrentUserService
-from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction

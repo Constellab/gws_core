@@ -3,8 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import time
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from fastapi import Depends, Request
 from fastapi.responses import FileResponse
@@ -32,7 +31,7 @@ from .resource_service import ResourceService
 @core_app.get("/resource/{id}/views/{view_name}/specs", tags=["Resource"],
               summary="Get the specs for a view of a resource")
 def get_view_specs_from_resource(id: str, view_name: str,
-                                 _: UserData = Depends(AuthService.check_user_access_token)) -> list:
+                                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return ResourceService.get_view_specs_from_resource(id, view_name)
 
 
@@ -41,7 +40,7 @@ def get_view_specs_from_resource(id: str, view_name: str,
 def call_view_on_resource(id: str,
                           view_name: str,
                           call_view_params: CallViewParams,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> Any:
+                          _: UserData = Depends(AuthService.check_user_access_token)):
 
     return ResourceService.get_and_call_view_on_resource_model(
         id, view_name, call_view_params["values"],
@@ -128,8 +127,8 @@ def update_flagged(id: str,
 @core_app.put("/resource/{id}/tags", tags=["Resource"], summary="Update resource tags")
 def save_tags(id: str,
               tags: List[Tag],
-              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    return TagService.save_tags_to_entity(ResourceModel, id, tags)
+              _: UserData = Depends(AuthService.check_user_access_token)) -> list:
+    return ListJsonable(TagService.save_tags_to_entity(ResourceModel, id, tags)).to_json()
 
 
 ############################# TRANSFORMER ###########################
@@ -194,7 +193,7 @@ def get_resource_type_views(resource_typing_name: str,
 
 
 @core_app.get("/resource-type", tags=["Resource type"], summary="Get the list of resource types")
-def get_the_list_of_resource_types(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def get_the_list_of_resource_types(_: UserData = Depends(AuthService.check_user_access_token)) -> list:
     """
     Retrieve a the complete list of resources types. The list is not paginated.
     """
@@ -225,7 +224,7 @@ def add_action_to_resource(id: str, action_typing_name: str,
 
 
 @core_app.get("/resource/{id}/shared-origin", tags=["Resource"],
-              summary="Get origin of this imported resource")
+              summary="Get origin of this imported resource", response_model=None)
 def get_shared_resource_origin_info(id: str,
                                     _: UserData = Depends(AuthService.check_user_access_token)) -> SharedResource:
     return ResourceService.get_shared_resource_origin_info(id).to_json()

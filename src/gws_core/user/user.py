@@ -4,9 +4,10 @@
 # About us: https://gencovery.com
 
 from enum import Enum
-from typing import TypedDict, final
+from typing import final
 
 from peewee import BooleanField, CharField
+from typing_extensions import TypedDict
 
 from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException

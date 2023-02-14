@@ -5,7 +5,9 @@
 
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, TypedDict
+from typing import Any, Dict, List, Optional, Set
+
+from typing_extensions import TypedDict
 
 from gws_core.task.transformer.transformer_type import TransformerDict
 
