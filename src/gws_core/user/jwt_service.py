@@ -7,7 +7,7 @@ from ..core.utils.settings import Settings
 from .user_exception import InvalidTokenException
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 3        # 3 days
+ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 2        # 2 days
 
 
 class JWTData(TypedDict):
