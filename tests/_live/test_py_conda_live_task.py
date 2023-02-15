@@ -25,19 +25,23 @@ class TestPyCondaLiveTask(IsolatedAsyncioTestCase):
                 "code": """
 import jwt
 import sys
+import argparse
+
 # parse arguments
-for k,val in enumerate(sys.argv):
-    if val == "--data":
-        data_path = sys.argv[k+1]
-    elif val == "--result":
-        result_path = sys.argv[k+1]
-print(str(sys.argv))
+parser = argparse.ArgumentParser(description='Parse arguments')
+parser.add_argument('--data', dest='data')
+parser.add_argument('--result', dest='result')
+args = parser.parse_args()
+
+print(args)
+print(args.result)
+
 encoded_jwt = jwt.encode({"some": "payload"}, "secret", algorithm="HS256")
 print(encoded_jwt, end="")
-with open(result_path, "w", encoding="utf-8") as fp:
+with open(args.result, "w", encoding="utf-8") as fp:
     fp.write(encoded_jwt)
 with open("out2.txt", "w", encoding="utf-8") as fp:
-    fp.write(data_path)
+    fp.write(args.data)
 """,
                 "args": "--data {input:my_file} --result ./out1.txt",
                 "env": """

@@ -1,22 +1,22 @@
 # This is a snippet template for a Python live task.
 
 import sys
+import argparse
 
-from gws_core import File, TableImporter
 from pandas import DataFrame
 
-# Parse the input arguments
-# Here, we suppose that the code is called using a shell command "file.py --data ./path1 --out ./path2"
-for k, val in enumerate(sys.argv):
-    if val == "--data":  # <- path of the input data
-        data_path = sys.argv[k+1]
-    elif val == "--out":  # <- path of the output data
-        output_file_path = sys.argv[k+1]
+# Initialize the argument parser
+# Here, we suppose that the code is called using a shell command "file.py --datapath ./filepath"
+parser = argparse.ArgumentParser(description='Read the shell arguments')
+parser.add_argument('--datapath', dest='datapath', help='The input data path')
 
+# Parse arguments
+args = parser.parse_args()
+datapath = args.datapath
 
 # Do the job here ...
-table = TableImporter.call(File(path=data_path))
-df: DataFrame = table.get_data()
-df = df * 2
+data = pandas.read_csv(datapath)
 
-df.to_csv(output_file_path)
+# Write the output file
+# Please ensure that the path of this file is set in the list of `output file paths` of the form to caputure it in the outputs of the tasks.
+data.to_csv("result.csv")

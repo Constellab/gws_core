@@ -13,62 +13,65 @@ from gws_core import (BaseTestCase, File, RCondaLiveTask, ResourceSet,
 class TestRCondaLiveTask(BaseTestCase):
 
     async def test_live_task_shell(self):
-        pass
-        # file_set = ResourceSet()
-        # file = File(path="./foo/bar")
-        # file.name = "my_file"
-        # file_set.add_resource(file)
+        print("Skip the tests of RCondaLiveTask")
+        print("Please uncomment code to activate the test. This may take a while!")
+        return
 
-        # tester = TaskRunner(
-        #     params={
-        #         "code": """
-        #                         print("Hello, world!")
-        #                         d <- read.table(text=
-        #                         'Name     Month  Rate1     Rate2
-        #                         Aira       0      12        23
-        #                         Aira       0      12        23
-        #                         Aira       0      12        23
-        #                         Ben        1      10        4
-        #                         Ben        2      8         2
-        #                         Cat        1      3        18
-        #                         Cat        1      6        0
-        #                         Cat        1      0        0', header=TRUE)
-        #                         table = aggregate(d[, 3:4], list(d$Name), mean)
-        #                         write.csv(table,"table.csv", row.names = TRUE)
-        #                         """,
-        #         "args": "",
-        #         "env":
-        #         """name: .venv
-        # channels:
-        # - conda-forge
-        # dependencies:
-        # - r-base""",
-        #         "output_file_paths": ["table.csv"]
-        #     },
-        #     inputs={"source": file_set},
-        #     task_type=RCondaLiveTask
-        # )
+        file_set = ResourceSet()
+        file = File(path="./foo/bar")
+        file.name = "my_file"
+        file_set.add_resource(file)
 
-        # outputs = await tester.run()
-        # target = outputs["target"]
-        # self.assertTrue(isinstance(target, ResourceSet))
+        tester = TaskRunner(
+            params={
+                "code": """
+                                print("Hello, world!")
+                                d <- read.table(text=
+                                'Name     Month  Rate1     Rate2
+                                Aira       0      12        23
+                                Aira       0      12        23
+                                Aira       0      12        23
+                                Ben        1      10        4
+                                Ben        2      8         2
+                                Cat        1      3        18
+                                Cat        1      6        0
+                                Cat        1      0        0', header=TRUE)
+                                table = aggregate(d[, 3:4], list(d$Name), mean)
+                                write.csv(table,"table.csv", row.names = TRUE)
+                                """,
+                "args": "",
+                "env":
+                """name: .venv
+channels:
+- conda-forge
+dependencies:
+- r-base""",
+                "output_file_paths": ["table.csv"]
+            },
+            inputs={"source": file_set},
+            task_type=RCondaLiveTask
+        )
 
-        # resources = target.get_resources()
+        outputs = await tester.run()
+        target = outputs["target"]
+        self.assertTrue(isinstance(target, ResourceSet))
 
-        # file = resources["table.csv"]
-        # self.assertTrue(isinstance(file, File))
-        # print(file.read().strip())
+        resources = target.get_resources()
 
-        # table = TableImporter.call(file, params={"delimiter": ",", "index_column": 0})
+        file = resources["table.csv"]
+        self.assertTrue(isinstance(file, File))
+        print(file.read().strip())
 
-        # df = DataFrame(
-        #     data=[
-        #         ["Aira", 12, 23],
-        #         ["Ben", 9, 3],
-        #         ["Cat", 3, 6]
-        #     ],
-        #     index=[1, 2, 3],
-        #     columns=["Group.1", "Rate1", "Rate2"]
-        # )
+        table = TableImporter.call(file, params={"delimiter": ",", "index_column": 0})
 
-        # self.assertTrue(table.get_data().equals(df))
+        df = DataFrame(
+            data=[
+                ["Aira", 12, 23],
+                ["Ben", 9, 3],
+                ["Cat", 3, 6]
+            ],
+            index=[1, 2, 3],
+            columns=["Group.1", "Rate1", "Rate2"]
+        )
+
+        self.assertTrue(table.get_data().equals(df))
