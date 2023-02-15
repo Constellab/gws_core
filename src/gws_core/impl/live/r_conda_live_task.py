@@ -39,11 +39,11 @@ class RCondaLiveTask(CondaLiveTask):
         'args':
         StrParam(
             optional=True, default_value="", human_name="Shell arguments",
-            short_description="Shell arguments used to call the script. Use wildcards {input:*} to pass the input files to the script. For example: '--data1 {input:filename_1} --data2 {input:filename_2} -o out_file.txt'."),
+            short_description="Shell arguments used to call the script. For example: Use '--datapath {input:*}' to pass a single input `File`. Use '--datapath1 {input:file1} --datapath2 {input:file2}' to pass several files from an input `ResourceSet`."),
         'output_file_paths':
         ListParam(
             human_name="Output file paths",
-            short_description="The paths of the files to capture in the outputs. For example: Enter 'out_file.txt' to capture this file in the outputs"),
+            short_description="The paths of the files to capture in the outputs. For example: Enter 'result.csv' to capture this file in the outputs. Please ensure that this file is created by the script"),
         'code': PythonCodeParam(
             default_value=TemplateReaderHelper.read_snippet_template(file_name="r_env_snippet_template.R"),
             human_name="R code snippet", short_description="The R code snippet to execute using shell command"),

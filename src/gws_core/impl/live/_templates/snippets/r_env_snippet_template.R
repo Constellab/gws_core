@@ -1,15 +1,19 @@
 # This is a snippet template for a R live task.
 
-print("Hello, world!")
-d <- read.table(text=
-'Name     Month  Rate1     Rate2
-Aira       0      12        23
-Aira       0      12        23
-Aira       0      12        23
-Ben        1      10        4
-Ben        2      8         2
-Cat        1      3        18
-Cat        1      6        0
-Cat        1      0        0', header=TRUE)
-table = aggregate(d[, 3:4], list(d$Name), mean)
-write.csv(table,"table.csv", row.names = TRUE)
+library("argparse")
+
+# Initialize the argument parser
+# Here, we suppose that the code is called using a shell command "file.R --datapath ./filepath"
+parser <- ArgumentParser(description='Read the shell arguments')
+parser$add_argument('--datapath', dest='datapath', help='The input data path')
+
+# Parse arguments
+args <- parser$parse_args()
+datapath <- args$datapath
+
+# Do the job here ...
+table = read.csv(datapath)
+
+# Write the output file
+# Please ensure that the path of this file is set in the list of `output file paths` of the form to caputure it in the outputs of the tasks.
+write.csv(table,"result.csv", row.names = TRUE)
