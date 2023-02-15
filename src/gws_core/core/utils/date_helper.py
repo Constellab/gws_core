@@ -49,15 +49,24 @@ class DateHelper:
         """
         duration_in_seconds = abs(duration_in_seconds)
         if duration_in_seconds < 60:
-            return f'{duration_in_seconds:.1f} seconds'
+            return f'{duration_in_seconds:.0f} secs'
 
         duration_in_minutes = duration_in_seconds // 60
         if duration_in_minutes < 60:
-            return f'{duration_in_minutes:.1f} minutes'
+            rest_in_seconds = duration_in_seconds % 60
+            if rest_in_seconds > 0:
+                return f'{duration_in_minutes:.0f} mins, {rest_in_seconds:.0f} secs'
+            return f'{duration_in_minutes:.0f} mins'
 
-        duration_in_hours = duration_in_minutes // 60
+        duration_in_hours = duration_in_minutes / 60
         if duration_in_hours < 24:
-            return f'{duration_in_hours:.1f} hours'
+            rest_in_minutes = duration_in_minutes % 60
+            if rest_in_minutes > 0:
+                return f'{duration_in_hours:.0f} hours, {rest_in_minutes:.0f} mins'
+            return f'{duration_in_hours:.0f} hours'
 
-        duration_in_days = duration_in_hours // 24
-        return f'{duration_in_days:.1f} days'
+        duration_in_days = duration_in_hours / 24
+        rest_in_hours = duration_in_hours % 24
+        if rest_in_hours > 0:
+            return f'{duration_in_days:.0f} days, {rest_in_hours:.0f} hours'
+        return f'{duration_in_days:.0f} days'
