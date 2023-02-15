@@ -196,24 +196,3 @@ def delete_project(id: str, _: UserData = Depends(AuthCentral.check_central_api_
     """
 
     return ProjectService.delete_project(id)
-
-##################################################### OTHER #####################################################
-
-
-@central_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
-                  summary="Call the view name for a resource")
-def call_view_on_resource(id: str,
-                          view_name: str,
-                          call_view_params: CallViewParams,
-                          _: UserData = Depends(AuthCentral.check_central_api_key_and_user)) -> Any:
-    view_dict = ResourceService.get_and_call_view_on_resource_model(id, view_name, call_view_params["values"],
-                                                                    call_view_params["transformers"],
-                                                                    call_view_params["save_view_config"])
-
-    return view_dict
-
-
-@central_app.get("/report/image/{filename}", tags=["Report"], summary="Get an object")
-def get_image(filename: str,
-              _: UserData = Depends(AuthCentral.check_central_api_key_and_user)) -> FileResponse:
-    return ReportService.get_image_file_response(filename)

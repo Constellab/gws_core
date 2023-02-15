@@ -23,8 +23,8 @@ class CondaShellProxy(BaseEnvShell):
         """
 
         cmd = [
-            'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
-            f"conda env create -f {self.env_file_path} --force --prefix {self.VENV_DIR_NAME}"
+            f'bash -c "source /opt/conda/etc/profile.d/conda.sh && conda env create -f \
+{self.env_file_path} --force --prefix {self.VENV_DIR_NAME}"'
         ]
 
         res: subprocess.CompletedProcess = subprocess.run(
@@ -51,10 +51,9 @@ class CondaShellProxy(BaseEnvShell):
         """
 
         cmd = [
-            'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
-            f"conda remove -y --prefix {self.VENV_DIR_NAME} --all", "&&",
-            "cd ..", "&&",
-            f"rm -rf {self.get_env_dir_path()}"
+            f'bash -c "source /opt/conda/etc/profile.d/conda.sh && \
+conda remove -y --prefix {self.VENV_DIR_NAME} --all && \
+cd .. && rm -rf {self.get_env_dir_path()}"'
         ]
 
         res = subprocess.run(

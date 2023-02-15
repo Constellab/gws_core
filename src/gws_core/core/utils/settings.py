@@ -280,6 +280,21 @@ class Settings():
         else:
             return "/data"
 
+    def get_brick_data_main_dir(self) -> str:
+        """
+        Get the main data director for the brick.
+        It contains folder for each brick containing data of the brick.
+
+        :param brick_name: The name of the brick
+        :type brick_name: `str`
+        :return: The brick data directory
+        :rtype: `str`
+        """
+        if self.is_test:
+            return os.path.join(self._get_system_folder(), 'brick-data-test')
+        else:
+            return os.path.join(self._get_system_folder(), 'brick-data')
+
     def get_brick_data_dir(self, brick_name: str) -> str:
         """
         Get the data directory of a brick.
@@ -290,10 +305,7 @@ class Settings():
         :return: The brick data directory
         :rtype: `str`
         """
-        if self.is_test:
-            return os.path.join(self._get_system_folder(), 'brick-data-test', brick_name)
-        else:
-            return os.path.join(self._get_system_folder(), 'brick-data', brick_name)
+        return os.path.join(self.get_brick_data_main_dir(), brick_name)
 
     def get_file_store_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "filestore/")

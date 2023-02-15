@@ -103,7 +103,7 @@ class UserService(BaseService):
 
     @classmethod
     def get_by_id_or_none(cls, id: str) -> User:
-        return User.get_or_none(id)
+        return User.get_by_id(id)
 
     @classmethod
     def fetch_user_list(cls,
