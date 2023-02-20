@@ -40,6 +40,7 @@ class ViewType(Enum):
     EMPTY = "empty-view"
     MULTI_VIEWS = "multi-view"
     NETWORK = "network-view"
+    IMAGE = "image-view"
 
 
 # List of view type that cannot be used in a report

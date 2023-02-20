@@ -103,43 +103,54 @@ class FileHelper():
         return path
 
     @classmethod
-    def is_large(cls, path: PathType):
+    def is_large(cls, path: PathType) -> bool:
         return cls.get_size(path) > cls.LARGE_SIZE_IN_BYTES
 
     @classmethod
-    def is_json(cls, path: PathType):
+    def is_json(cls, path: PathType) -> bool:
         return cls.get_extension(path) in ["json"]
 
     @classmethod
-    def is_csv(cls, path: PathType):
+    def is_csv(cls, path: PathType) -> bool:
         return cls.get_extension(path) in ["csv", "tsv"]
 
     @classmethod
-    def is_txt(cls, path: PathType):
+    def is_txt(cls, path: PathType) -> bool:
         return cls.get_extension(path) in ["txt"]
 
     @classmethod
-    def is_jpg(cls, path: PathType):
+    def is_jpg(cls, path: PathType) -> bool:
         return cls.get_extension(path) in ["jpg", "jpeg"]
 
     @classmethod
-    def is_png(cls, path: PathType):
+    def is_png(cls, path: PathType) -> bool:
         return cls.get_extension(path) in ["png"]
 
     @classmethod
-    def is_file(cls, path: PathType):
+    def is_image(cls, path: PathType) -> bool:
+        return cls.get_extension(path) in ["jpg", "jpeg", "png", "gif", "bmp", "tiff",
+                                           "tif", "svg", "svgz", "heic", "heif", "heics",
+                                           "heifs", "jp2", "j2k", "jpf", "jpx", "jpm", "mj2",
+                                           "jfif", "webp", "avif", "apng", "ico"]
+
+    @classmethod
+    def is_file(cls, path: PathType) -> bool:
         return os.path.isfile(path)
 
     @classmethod
-    def is_dir(cls, path: PathType):
+    def is_dir(cls, path: PathType) -> bool:
         return os.path.isdir(path)
 
     # -- M --
 
     @classmethod
-    def get_mime(cls, path: PathType):
+    def get_mime(cls, path: PathType) -> str:
         ext: str = cls.get_extension(path)
         if ext:
+            # specific case not handled by mimetypes
+            if ext == 'jfif':
+                return 'image/jpeg'
+
             return mimetypes.types_map.get('.' + ext)
         else:
             return None

@@ -2,10 +2,13 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
 import json
 import os
 from typing import Any, AnyStr, Type
+
+from PIL import Image
+
+from gws_core.impl.view.image_view import ImageView
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -59,6 +62,9 @@ class File(FSNode):
 
     def is_png(self):
         return FileHelper.is_png(self.path)
+
+    def is_image(self):
+        return FileHelper.is_image(self.path)
 
     @property
     def mime(self):
@@ -143,6 +149,10 @@ class File(FSNode):
 
     @view(view_type=View, human_name="Default view", short_description="View the file with automatic view", default_view=True)
     def default_view(self, params: ConfigParams) -> View:
+
+        if self.is_image():
+            return ImageView.from_local_file(self.path)
+
         content = self.read()
 
         if self.is_json():
