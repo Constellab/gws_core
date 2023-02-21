@@ -41,11 +41,11 @@ class DataframeScalerHelper:
         result = DataframeHelper.nanify_none_numeric(data)
 
         if func == "unit":
-            result = result / result.sum(skipna=None)
+            result = result / result.sum(skipna=True)
         elif func == "percent":
-            result = (result / result.sum(skipna=None)) * 100
+            result = (result / result.sum(skipna=True)) * 100
         elif func == "standard":
-            result = (result - result.mean(skipna=True)) / result.std(skipna=None)
+            result = (result - result.mean(skipna=True)) / result.std(skipna=True)
 
         return result
 
