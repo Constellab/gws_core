@@ -91,7 +91,7 @@ class ExperimentRunService():
             raise exception
 
     @classmethod
-    def create_cli_process_for_experiment(cls, experiment: Experiment, user: User):
+    def create_cli_process_for_experiment(cls, experiment: Experiment, user: User) -> SysProc:
         """
         Run an experiment in a non-blocking way through the cli.
 
@@ -142,6 +142,7 @@ class ExperimentRunService():
             Logger.info(
                 f"""The experiment logs are not shown in the console, because it is run in another linux process ({experiment.pid}).
                 To view them check the logs marked as {Logger.SUB_PROCESS_TEXT} in the today's log file : {Logger.get_file_path()}""")
+            return sproc
         except Exception as err:
             traceback.print_exc()
             exception: ExperimentRunException = ExperimentRunException.from_exception(
