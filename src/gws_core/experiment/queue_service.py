@@ -1,6 +1,9 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 import threading
-from cmath import exp
 from typing import List
 
 from gws_core.core.exception.exceptions.base_http_exception import \
@@ -17,7 +20,7 @@ from ..user.current_user_service import CurrentUserService
 from .experiment import Experiment, ExperimentStatus
 from .queue import Job, Queue
 
-TICK_INTERVAL_SECONDS = 30   # 30 sec
+TICK_INTERVAL_SECONDS = 15   # 15 sec
 
 
 class QueueService(BaseService):
