@@ -19,7 +19,7 @@ class UserData(BaseModel):
     last_name: str = ""
     group: UserGroup
     is_active: bool
-    is_admin: bool
+    is_admin: Optional[bool]
 
 
 class UserCentral(BaseModel):
