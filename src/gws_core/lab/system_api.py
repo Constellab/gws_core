@@ -4,10 +4,7 @@
 # About us: https://gencovery.com
 
 from fastapi.param_functions import Depends
-
-from gws_core.core.exception.exceptions.unauthorized_exception import \
-    UnauthorizedException
-from gws_core.core.utils.settings import Settings
+from pydantic import BaseModel
 
 from ..core.service.settings_service import SettingsService
 from ..core_app import core_app
@@ -49,18 +46,12 @@ def garbage_collector(_: UserData = Depends(AuthService.check_user_access_token)
     SystemService.garbage_collector()
 
 
+class SynchronizeDTO(BaseModel):
+    sync_users: bool
+    sync_projects: bool
+
+
 @core_app.post("/system/synchronize",  tags=["System"], summary="Synchronise info with central")
-def synchronize(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
-    SystemService.synchronize_with_central()
-
-
-@core_app.post("/system/on-premise-synchronize",  tags=["System"], summary="Synchronise info with central")
-def on_premise_synchronize() -> None:
-    """Special route for on premise env to synchronize with central without auth
-
-    :raises UnauthorizedException: _description_
-    """
-    if not Settings.is_local_env():
-        raise UnauthorizedException("This endpoint is only available in local env")
-
-    SystemService.synchronize_with_central()
+def synchronize(sync_dto: SynchronizeDTO,
+                _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    SystemService.synchronize_with_central(sync_users=sync_dto.sync_users, sync_projects=sync_dto.sync_projects)

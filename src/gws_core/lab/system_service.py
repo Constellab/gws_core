@@ -238,7 +238,10 @@ class SystemService:
         Logger.info('Ending the garbage collector')
 
     @classmethod
-    def synchronize_with_central(cls) -> None:
-        UserService.synchronize_all_central_users()
-        ProjectService.synchronize_all_central_projects()
+    def synchronize_with_central(cls, sync_users: bool = True, sync_projects: bool = True) -> None:
+        if sync_users:
+            UserService.synchronize_all_central_users()
+
+        if sync_projects:
+            ProjectService.synchronize_all_central_projects()
         Logger.info('Synchronization with central done')
