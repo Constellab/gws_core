@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import os
 from copy import deepcopy
 from typing import Dict, List
 
@@ -527,7 +528,7 @@ class Migration045(BrickMigration):
         migrator.migrate()
 
 
-@brick_migration('0.4.7', short_description='Remove created_by and last_modified_by from Project')
+@brick_migration('0.4.7', short_description='Remove created_by and last_modified_by from Project. Update kvstore path')
 class Migration047(BrickMigration):
     """Remove created_by and last_modified_by from Project because project are synchronized on lab start
 
@@ -542,3 +543,14 @@ class Migration047(BrickMigration):
         migrator.drop_column_if_exists(Project, "created_by_id")
         migrator.drop_column_if_exists(Project, "last_modified_by_id")
         migrator.migrate()
+
+        # update kvstore path to an absolute clean path (replace /data/./kvstore by /data/kvstore)
+        resources: List[ResourceModel] = list(ResourceModel.select())
+        for resource in resources:
+            try:
+                if resource.kv_store_path is not None:
+                    resource.kv_store_path = os.path.abspath(resource.kv_store_path)
+                    resource.save()
+            except Exception as exception:
+                Logger.error(
+                    f'Error while updating kvstore path for {resource.resource_typing_name}, resource id {resource.id} : {exception}')

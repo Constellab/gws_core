@@ -217,20 +217,21 @@ class SystemService:
         kv_store_dir = KVStore.get_base_dir()
         # loop through all the kv store files and folder
 
-        for file in os.listdir(kv_store_dir):
-            file_store_file_path = KVStore.get_full_file_path(file, with_extension=False)
-            # if a path has the name of a resource id of the path is store in one of the resource
-            # the path is used by a resource
+        for file_name in os.listdir(kv_store_dir):
+            file_store_file_path = KVStore.get_full_file_path(file_name, with_extension=False)
+            # if filename correspond to a ressource, don't delete it
+            # check if filename is the resource id or is contained in the kv store path
+            # (use contains for security to avoid deleting everything)
             if ResourceModel.get_or_none(
-                    ResourceModel.kv_store_path == file_store_file_path or ResourceModel.id == file) is None:
-                file_path = os.path.join(kv_store_dir, file)
+                    ResourceModel.kv_store_path.contains(file_name) or ResourceModel.id == file_name) is None:
+                file_path = os.path.join(kv_store_dir, file_name)
                 Logger.info(f'Deleting KVStore {file_path}')
                 FileHelper.delete_node(file_path)
 
         Logger.info('Deleting all usunused resource files')
         file_store: LocalFileStore = FileStore.get_default_instance()
-        for file in os.listdir(file_store.path):
-            file_store_file_path = os.path.join(file_store.path, file)
+        for file_name in os.listdir(file_store.path):
+            file_store_file_path = os.path.join(file_store.path, file_name)
             if FSNodeModel.get_or_none(FSNodeModel.path == file_store_file_path) is None:
                 Logger.info(f'Deleting file {file_store_file_path}')
                 FileHelper.delete_node(file_store_file_path)

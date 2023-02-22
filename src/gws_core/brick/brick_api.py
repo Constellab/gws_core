@@ -4,9 +4,8 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Dict, List
-
 from fastapi import Depends
+
 from gws_core.brick.technical_doc_service import TechnicalDocService
 from gws_core.core.db.db_migration import DbMigrationService
 
@@ -49,26 +48,26 @@ from .brick_service import BrickService
 
 
 @core_app.get("/brick", tags=["Bricks"], summary="Get all brick with status")
-def get_bricks_status(_: UserData = Depends(AuthService.check_user_access_token)) -> Any:
+def get_bricks_status(_: UserData = Depends(AuthService.check_user_access_token)) -> list:
     bricks = BrickService.get_all_brick_models()
     return ListJsonable(bricks).to_json()
 
 
 @core_app.get("/brick/{brick_name}/technical-doc", tags=["Bricks"], summary="Generate technical doc for a brick")
 def export_technical_doc(brick_name: str,
-                         _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return TechnicalDocService.generate_technical_doc(brick_name)
 
 
 @core_app.post("/brick/{brick_name}/call-migration/{version}",  tags=["Bricks"], summary="Call a specific migration")
 def call_migration(brick_name: str,
                    version: str,
-                   _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                   _: UserData = Depends(AuthService.check_user_access_token)) -> None:
     return DbMigrationService.call_migration_manually(brick_name, version)
 
 
 @core_app.get("/brick/{brick_name}/migrations", tags=["Bricks"],
               summary="Get the list of migration version available for a brick")
 def get_brick_migration_versions(brick_name: str,
-                                 _: UserData = Depends(AuthService.check_user_access_token)) -> List[str]:
+                                 _: UserData = Depends(AuthService.check_user_access_token)) -> list:
     return ListJsonable(DbMigrationService.get_brick_migration_versions(brick_name)).to_json()
