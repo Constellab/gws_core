@@ -7,10 +7,10 @@ import time
 from typing import Optional
 
 from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
-from ..config.param.param_spec import (BoolParam, FloatParam, IntParam,
-                                       StrParam, TextParam)
+from ..config.param.param_spec import BoolParam, FloatParam, IntParam, StrParam
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..impl.shell.shell_proxy import ShellProxy
 from ..io.io_spec import InputSpec, OutputSpec
 from ..io.io_spec_helper import InputSpecs, OutputSpecs
 from ..resource.resource import Resource
@@ -161,6 +161,30 @@ class Wait(Task):
             current_time = current_time + 1
             self.update_progress_value((current_time / waiting_time) * 100, 'Waiting 1 sec')
             time.sleep(1)
+
+        resource = inputs["resource"]
+        return {"resource": resource}
+
+
+@task_decorator(unique_name="ShellWait", short_description="Wait a number of seconds in the shell specified in the config")
+class ShellWait(Task):
+    """
+    Wait task
+
+    This proccess waits during a given time before continuing.
+    """
+
+    input_specs: InputSpecs = {'resource': InputSpec(Resource)}
+    output_specs: OutputSpecs = {'resource': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)}
+    config_specs: ConfigSpecs = {"waiting_time": FloatParam(
+        default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
+
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        shell_proxy = ShellProxy(message_dispatcher=self.message_dispatcher)
+
+        waiting_time = params.get_value("waiting_time")
+
+        shell_proxy.run(f"sleep {waiting_time}", shell_mode=True)
 
         resource = inputs["resource"]
         return {"resource": resource}

@@ -85,11 +85,13 @@ class ShellProxy():
                 stderr=subprocess.PIPE,
             )
 
+            self._message_dispatcher.notify_info_message(f"[ShellProxy] Running command in process : {proc.pid}")
+
             # use to read the stdout and stderr of the process
             # https://stackoverflow.com/questions/12270645/can-you-make-a-python-subprocess-output-stdout-and-stderr-as-usual-but-also-cap/12272262#12272262
             tic_a = time.perf_counter()
-            stdout = []
-            stderr = []
+            stdout: List[bytes] = []
+            stderr: List[bytes] = []
 
             while True:
                 reads = [proc.stdout.fileno(), proc.stderr.fileno()]

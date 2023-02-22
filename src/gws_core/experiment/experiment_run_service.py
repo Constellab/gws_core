@@ -199,7 +199,7 @@ class ExperimentRunService():
 
         try:
             # Gracefully stops the experiment and exits!
-            sproc.kill()
+            sproc.kill_with_children()
             sproc.wait()
         except Exception as err:
             raise BadRequestException(
