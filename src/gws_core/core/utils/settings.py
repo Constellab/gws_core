@@ -216,8 +216,12 @@ class Settings():
         return os.environ.get("FRONT_URL", '')
 
     @classmethod
+    def get_lab_folder(cls) -> str:
+        return '/lab'
+
+    @classmethod
     def _get_system_folder(cls) -> str:
-        return os.path.join('/lab', '.sys')
+        return os.path.join(cls.get_lab_folder(), '.sys')
 
     @classmethod
     def get_global_env_dir(cls) -> str:

@@ -65,6 +65,7 @@ class SystemService:
         FileHelper.create_dir_if_not_exist(settings.get_data_dir())
         FileHelper.create_dir_if_not_exist(settings.get_kv_store_base_dir())
         FileHelper.create_dir_if_not_exist(settings.get_file_store_dir())
+        FileHelper.create_dir_if_not_exist(settings.get_brick_data_main_dir())
 
     @classmethod
     def init_queue_and_monitor(cls) -> None:

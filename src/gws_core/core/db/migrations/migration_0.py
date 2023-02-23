@@ -528,7 +528,7 @@ class Migration045(BrickMigration):
         migrator.migrate()
 
 
-@brick_migration('0.4.7', short_description='Remove created_by and last_modified_by from Project. Update kvstore path')
+@brick_migration('0.4.7', short_description='Remove created_by and last_modified_by from Project. Update kvstore path. Add external disk to monitor')
 class Migration047(BrickMigration):
     """Remove created_by and last_modified_by from Project because project are synchronized on lab start
 
@@ -542,6 +542,10 @@ class Migration047(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(Project.get_db())
         migrator.drop_column_if_exists(Project, "created_by_id")
         migrator.drop_column_if_exists(Project, "last_modified_by_id")
+        migrator.add_column_if_not_exists(Monitor, Monitor.external_disk_total)
+        migrator.add_column_if_not_exists(Monitor, Monitor.external_disk_usage_used)
+        migrator.add_column_if_not_exists(Monitor, Monitor.external_disk_usage_free)
+        migrator.add_column_if_not_exists(Monitor, Monitor.external_disk_usage_percent)
         migrator.migrate()
 
         # update kvstore path to an absolute clean path (replace /data/./kvstore by /data/kvstore)
