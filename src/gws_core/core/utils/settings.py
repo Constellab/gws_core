@@ -304,7 +304,10 @@ class Settings():
         :return: The brick data directory
         :rtype: `str`
         """
-        return os.path.join(self.get_data_dir(), 'brick-data')
+        if self.is_test:
+            return os.path.join(self._get_system_folder(), 'brick-data-test')
+        else:
+            return os.path.join(self._get_system_folder(), 'brick-data')
 
     def get_brick_data_dir(self, brick_name: str) -> str:
         """
@@ -338,16 +341,16 @@ class Settings():
 
     def get_root_temp_dir(self) -> str:
         """ Return the root temp dir """
-        mode = "prod" if self.is_prod else "dev"
-        app = "tests" if self.is_test else "app"
-        temp_dir = os.path.join(tempfile.gettempdir(), "gws", mode, app)
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir)
-        return temp_dir
+
+        return os.path.join(self._get_system_folder(), 'tmp')
 
     def make_temp_dir(self) -> str:
         """ Make a unique temp dir """
-        return tempfile.mkdtemp(dir=self.get_root_temp_dir())
+        dir = self.get_root_temp_dir()
+
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        return tempfile.mkdtemp(dir=dir)
 
     def get_modules(self) -> Dict[str, ModuleInfo]:
         return self.data["modules"]
