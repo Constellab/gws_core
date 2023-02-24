@@ -44,7 +44,6 @@ from .config.param.param_types import ParamValue as ParamValue
 from .config.param.tags_param_spec import TagsParam as TagsParam
 # Core
 # Core > Classes > Observer
-from .core.classes.expose import Expose as Expose
 from .core.classes.expression_builder import \
     ExpressionBuilder as ExpressionBuilder
 from .core.classes.file_downloader import FileDownloader as FileDownloader
