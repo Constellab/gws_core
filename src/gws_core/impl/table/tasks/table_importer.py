@@ -28,6 +28,7 @@ class TableImporter(ResourceImporter):
         'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, human_name="File format", short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, human_name="Delimiter", short_description="Delimiter character. Only for parsing CSV files"),
         'header': IntParam(default_value=0, min_value=-1, human_name="Header", short_description="Row to use as the column names. By default the first row is used (i.e. header=0). Set header=-1 to not read column names."),
+        'format_header_names': BoolParam(default_value=False, human_name="Format header names", short_description="If true, the column and row names are formatted to remove special characters and spaces (only '_' are allowed)."),
         'index_column': IntParam(default_value=-1, min_value=-1, optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Index column", short_description="Column to use as the row names. By default no index is used (i.e. index_column=-1)."),
         "metadata_columns": ParamSet({
             'column': StrParam(default_value=None, optional=True, visibility=StrParam.PROTECTED_VISIBILITY, human_name="Column", short_description="Metadata column to use to tag rows"),
@@ -40,7 +41,6 @@ class TableImporter(ResourceImporter):
     }
 
     def import_from_path(self, source: File, params: ConfigParams, target_type: Type[Table]) -> Table:
-        time.sleep(60)
         if source.is_empty():
             raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
                                       detail_args={'filename': source.path})
@@ -110,10 +110,10 @@ class TableImporter(ResourceImporter):
                 tag = {col: tag_df.loc[idx, col] for col in tag_df.columns}
                 row_tags.append(tag)
 
-            table = target_type(data=df)
+            table = target_type(data=df, format_header_names=params['format_header_names'])
             table.set_all_row_tags(row_tags)
         else:
-            table = target_type(data=df)
+            table = target_type(data=df, format_header_names=params['format_header_names'])
 
         # read comments
         comments = ""

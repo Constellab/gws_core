@@ -58,6 +58,8 @@ class Table(Resource):
      - Row names are converted to string and must be unique (if not, _1, _2, _3, ... are added to the name)
      - Column names are converted to string and must be unique (if not, _1, _2, _3, ... are added to the name)
 
+    If format_header_names is set to true, columns and row names are formatted (remove special characters, spaces, ...)
+
     """
 
     ALLOWED_DELIMITER = ["auto", "tab", "space", ",", ";"]
@@ -78,14 +80,16 @@ class Table(Resource):
 
     def __init__(self, data: Union[DataFrame, np.ndarray, list] = None,
                  row_names: List[str] = None, column_names: List[str] = None,
-                 row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None):
+                 row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None,
+                 format_header_names: bool = False):
         super().__init__()
         self._set_data(data, row_names=row_names, column_names=column_names,
-                       row_tags=row_tags, column_tags=column_tags)
+                       row_tags=row_tags, column_tags=column_tags, format_header_names=format_header_names)
 
     def _set_data(self, data: Union[DataFrame, np.ndarray] = None,
                   row_names=None, column_names=None,
-                  row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None) -> 'Table':
+                  row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None,
+                  format_header_names: bool = False) -> 'Table':
         if data is None:
             data = DataFrame()
         else:
@@ -113,7 +117,7 @@ class Table(Resource):
 
         # format the row and column names
         # prevent having duplicate column and row names
-        self._data = DataframeHelper.format_column_and_row_names(data)
+        self._data = DataframeHelper.format_column_and_row_names(data, strict=format_header_names)
 
         self._set_tags(row_tags=row_tags, column_tags=column_tags)
 
