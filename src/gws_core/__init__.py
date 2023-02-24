@@ -106,7 +106,6 @@ from .core.service.mysql_service import MySQLService as MySQLService
 from .core.service.settings_service import SettingsService as SettingsService
 # Core > Utils
 from .core.utils.cryptography import Cryptography as Cryptography
-from .core.utils.event import EventListener as EventListener
 from .core.utils.http_helper import HTTPHelper as HTTPHelper
 from .core.utils.logger import Logger as Logger
 from .core.utils.numeric_helper import NumericHelper as NumericHelper
