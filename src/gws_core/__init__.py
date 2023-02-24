@@ -58,8 +58,6 @@ from .core.classes.observer.message_observer import \
 # Core > Classes
 from .core.classes.paginator import Paginator as Paginator
 from .core.classes.paginator import PaginatorDict as PaginatorDict
-from .core.classes.path import URL as URL
-from .core.classes.path import Path as Path
 from .core.classes.search_builder import SearchBuilder as SearchBuilder
 from .core.classes.validator import BoolValidator as BoolValidator
 from .core.classes.validator import DictValidator as DictValidator
@@ -67,7 +65,6 @@ from .core.classes.validator import FloatValidator as FloatValidator
 from .core.classes.validator import IntValidator as IntValidator
 from .core.classes.validator import ListValidator as ListValidator
 from .core.classes.validator import NumericValidator as NumericValidator
-from .core.classes.validator import PathValidator as PathValidator
 from .core.classes.validator import StrValidator as StrValidator
 from .core.classes.validator import URLValidator as URLValidator
 from .core.classes.validator import Validator as Validator
