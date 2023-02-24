@@ -20,7 +20,7 @@ class PipEnvTaskTester(PipEnvTask):
     output_specs = {'file': OutputSpec(File)}
     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_pip.txt")
 
-    def runproxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: PipShellProxy) -> TaskOutputs:
+    def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: PipShellProxy) -> TaskOutputs:
         command = ["python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"]
         shell_proxy.run(command, shell_mode=True)
 

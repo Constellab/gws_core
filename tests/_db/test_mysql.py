@@ -4,13 +4,12 @@
 # About us: https://gencovery.com
 
 import os
-import unittest
 
 from gws_core import (BaseTestCase, File, FSNodeModel, FsNodeService, GTest,
                       LocalFileStore, MySQLService)
-from gws_core.comment.comment_service import CommentService
 
 
+# test_mysql
 class TestMySQLDumpLoad(BaseTestCase):
 
     def test_db_dump_load(self):

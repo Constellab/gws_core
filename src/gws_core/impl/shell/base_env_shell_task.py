@@ -30,8 +30,8 @@ class BaseEnvShellTask(ShellTask):
     """
 
     @abstractmethod
-    def runproxy(self, params: ConfigParams, inputs: TaskInputs,
-                 shell_proxy: ShellProxy) -> TaskOutputs:
+    def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
+                       shell_proxy: ShellProxy) -> TaskOutputs:
         """
         Run the task with the shell proxy
         """

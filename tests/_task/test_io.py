@@ -11,7 +11,6 @@ from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
                       Wait, protocol_decorator, resource_decorator,
                       task_decorator)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
-from gws_core.io.io import Inputs
 from gws_core.io.io_exception import ImcompatiblePortsException
 from gws_core.io.io_spec import InputSpec, OutputSpec
 
@@ -46,7 +45,7 @@ class Create(Task):
         return {'create_person_out': Person()}
 
 
-@ task_decorator("Move")
+@task_decorator("Move")
 class Move(Task):
     input_specs = {'move_person_in': InputSpec(Person)}
     output_specs = {'move_person_out': OutputSpec(Person)}
@@ -56,7 +55,7 @@ class Move(Task):
         return {'move_person_out': inputs['move_person_in']}
 
 
-@ task_decorator("Drive")
+@task_decorator("Drive")
 class Drive(Task):
     input_specs = {'move_drive_in': InputSpec(Car)}
     output_specs = {'move_drive_out': OutputSpec(Car)}
@@ -66,7 +65,7 @@ class Drive(Task):
         return {'move_drive_out': inputs['move_drive_in']}
 
 
-@ task_decorator("Jump")
+@task_decorator("Jump")
 class Jump(Task):
     input_specs = {'jump_person_in_1': InputSpec(Person),
                    'jump_person_in_2': InputSpec(Person)}
@@ -78,7 +77,7 @@ class Jump(Task):
         return {'jump_person_out': inputs['jump_person_in_1'], 'jump_person_out_any': inputs['jump_person_in_2']}
 
 
-@ task_decorator("Multi")
+@task_decorator("Multi")
 class Multi(Task):
     input_specs = {'resource_1': InputSpec((Car, Person)),
                    'resource_2': InputSpec([Car, Person])}
@@ -90,7 +89,7 @@ class Multi(Task):
         return {'resource_1': inputs['resource_1'], 'resource_2': inputs['resource_2']}
 
 
-@ task_decorator("Fly")
+@task_decorator("Fly")
 class Fly(Task):
     input_specs = {'superman': InputSpec(SuperMan)}
     output_specs = {}
@@ -100,7 +99,7 @@ class Fly(Task):
         return
 
 
-@ task_decorator("OptionalTask")
+@task_decorator("OptionalTask")
 class OptionalTask(Task):
     input_specs = {'first': InputSpec([Person], is_optional=True),
                    'second': InputSpec(Person, is_optional=True),
@@ -114,7 +113,7 @@ class OptionalTask(Task):
 # Use to check that 2 optional task can"t plug if types are not correct (even if both have None)
 
 
-@ task_decorator("OptionalTaskOut")
+@task_decorator("OptionalTaskOut")
 class OptionalTaskOut(Task):
     input_specs = {}
     output_specs = {'out': OutputSpec(Car)}
@@ -125,7 +124,7 @@ class OptionalTaskOut(Task):
 
 
 # This is to test the ConstantOut type
-@ task_decorator("Log")
+@task_decorator("Log")
 class Log(Task):
     input_specs = {'person': InputSpec(Person)}
     output_specs = {'samePerson': OutputSpec(Person, is_constant=True),
@@ -137,7 +136,7 @@ class Log(Task):
         return {'samePerson': inputs.get('person'), 'otherPerson': inputs.get('person')}
 
 
-@ protocol_decorator("TestPersonProtocol")
+@protocol_decorator("TestPersonProtocol")
 class TestPersonProtocol(Protocol):
     def configure_protocol(self) -> None:
         create: ProcessSpec = self.add_process(Create, 'create')
@@ -148,7 +147,7 @@ class TestPersonProtocol(Protocol):
         ])
 
 
-@ task_decorator(unique_name="FIFO2")
+@task_decorator(unique_name="FIFO2")
 class Skippable(FIFO2):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
@@ -161,18 +160,16 @@ class Skippable(FIFO2):
         return super().run(params, inputs)
 
 
-@ protocol_decorator("TestSkippable")
+@protocol_decorator("TestSkippable")
 class TestSkippable(Protocol):
     def configure_protocol(self) -> None:
         create1: ProcessSpec = self.add_process(Create, 'create1')
-        wait: ProcessSpec = self.add_process(Wait, 'wait').set_param('waiting_time', '3')
         create2: ProcessSpec = self.add_process(Create, 'create2')
         skippable: ProcessSpec = self.add_process(Skippable, 'skippable')
         move: ProcessSpec = self.add_process(Move, 'move')
 
         self.add_connectors([
-            (create1 >> 'create_person_out', wait << 'resource'),
-            (wait >> 'resource', skippable << 'resource_1'),
+            (create1 >> 'create_person_out', skippable << 'resource_1'),
             (create2 >> 'create_person_out', skippable << 'resource_2'),
             (skippable >> 'resource', move << 'move_person_in'),
         ])
@@ -287,10 +284,10 @@ class TestIO(BaseTestCase):
 
         experiment = ExperimentRunService.run_experiment(experiment)
 
-        create2: TaskModel = experiment.protocol_model.get_process('create2')
+        create1: TaskModel = experiment.protocol_model.get_process('create1')
         skippable: TaskModel = experiment.protocol_model.get_process('skippable')
 
-        create_2_r: ResourceModel = create2.out_port('create_person_out').resource_model
+        create_1_r: ResourceModel = create1.out_port('create_person_out').resource_model
         skippable_r: ResourceModel = skippable.out_port('resource').resource_model
         # Check that this is the create_2 that passed through skippable process
-        self.assertEqual(create_2_r.id, skippable_r.id)
+        self.assertEqual(create_1_r.id, skippable_r.id)

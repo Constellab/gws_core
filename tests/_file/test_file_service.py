@@ -5,16 +5,9 @@
 
 from typing import List
 
-from fastapi.testclient import TestClient
-
 from gws_core import (BaseTestCase, File, Folder, FsNodeService,
                       ResourceTyping, resource_decorator)
-from gws_core.app import app
-from gws_core.core_app import core_app
 from gws_core.resource.resource_typing import FileTyping
-
-client = TestClient(app)
-client2 = TestClient(core_app)
 
 
 @resource_decorator("SubFile2")
@@ -23,6 +16,7 @@ class SubFile(File):
     pass
 
 
+# test_file_service
 class TestFileService(BaseTestCase):
 
     def test_get_file_types(self):

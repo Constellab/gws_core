@@ -106,7 +106,7 @@ class EnvLiveTask(Task):
 
         return {'target': target}
 
-    def run_task(self) -> None:
+    def run_after_task(self) -> None:
         """
         This can be overwritten to perform action after the task run. This method is called after the
         resource save. Temp object can be safely deleted here, the resources will still exist

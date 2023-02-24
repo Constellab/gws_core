@@ -20,10 +20,11 @@ class RunAfterTask(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return None
 
-    def run_task(self) -> None:
+    def run_after_task(self) -> None:
         raise Exception('run_after_task')
 
 
+# test_task
 class TestTask(BaseTestCase):
 
     def test_task_singleton(self):

@@ -21,8 +21,8 @@ class EchoInFileTask(ShellTask):
         'name': StrParam(optional=True, short_description="The name to echo"),
     }
 
-    def runproxy(self, params: ConfigParams, inputs: TaskInputs,
-                 shell_proxy: ShellProxy) -> TaskOutputs:
+    def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
+                       shell_proxy: ShellProxy) -> TaskOutputs:
         name = params.get_value("name")
         shell_proxy.run([f"echo \"{name}\" > echo.txt"], shell_mode=True)
 
@@ -39,8 +39,8 @@ class EchoTask(ShellTask):
         'name': StrParam(optional=True, short_description="The name to echo"),
     }
 
-    def runproxy(self, params: ConfigParams, inputs: TaskInputs,
-                 shell_proxy: ShellProxy) -> TaskOutputs:
+    def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
+                       shell_proxy: ShellProxy) -> TaskOutputs:
         name = params.get_value("name")
         shell_proxy.run([f"echo \"{name}\""], shell_mode=True)
         return {}

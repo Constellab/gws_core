@@ -21,8 +21,8 @@ class CondaEnvTaskTester(CondaEnvTask):
     output_specs = {'file': OutputSpec(File)}
     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_conda.yml")
 
-    def runproxy(self, params: ConfigParams, inputs: TaskInputs,
-                 shell_proxy: ShellProxy) -> TaskOutputs:
+    def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
+                       shell_proxy: ShellProxy) -> TaskOutputs:
         command = [
             "python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"
         ]
