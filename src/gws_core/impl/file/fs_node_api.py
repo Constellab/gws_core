@@ -20,25 +20,8 @@ from ...user.user_dto import UserData
 from .fs_node_service import FsNodeService
 
 
-# TODO TO REMOVE
-@core_app.post("/fs-node/upload-files", tags=["Fs node"], summary="Upload files")
-def upload_a_file_or_list_of_files(files: List[UploadFile] = FastAPIFile(...),
-                                   typing_names: List[str] = None,
-                                   _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    """ Upload a list of files
-
-    :param files: list of files to upload, defaults to FastAPIFile(...)
-    :type files: List[UploadFile], optional
-    :param typingNames: list of typing names for the files, defaults to None
-    :type typingNames: List[str], optional
-    """
-
-    result = FsNodeService.upload_files(files=files, typing_names=typing_names)
-    return result.to_json()
-
-
 @core_app.post("/fs-node/upload-file", tags=["Fs node"], summary="Upload file")
-def uplaod_file(file: UploadFile = FastAPIFile(...),
+def upload_file(file: UploadFile = FastAPIFile(...),
                 typing_name: List[str] = None,
                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """ Upload a file

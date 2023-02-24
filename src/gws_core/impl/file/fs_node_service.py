@@ -62,17 +62,6 @@ class FsNodeService(BaseService):
     ############################# UPLOAD / CREATION  ###########################
 
     @classmethod
-    def upload_files(cls, files: List[UploadFile] = FastAPIFile(...), typing_names: List[str] = None) -> Jsonable:
-        """Upload multiple files to the serveur flat.
-        """
-        result: ListJsonable = ListJsonable()
-        for index, file in enumerate(files):
-            file_model: ResourceModel = cls.upload_file(file, typing_names[index])
-            result.append(file_model)
-
-        return result
-
-    @classmethod
     @transaction()
     def upload_file(cls, upload_file: UploadFile, typing_name: str) -> ResourceModel:
         """Upload a file to the store and create the resource.
