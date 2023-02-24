@@ -4,19 +4,15 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
 from gws_core.project.project_dto import CentralProject
 from gws_core.project.project_service import ProjectService
-from gws_core.report.report_service import ReportService
-from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view.view_types import CallViewParams
 
 from ..core.exception.exception_handler import ExceptionHandler
 from ..core.service.settings_service import SettingsService
@@ -32,20 +28,20 @@ central_app = FastAPI(docs_url="/docs")
 
 # Catch HTTP Exceptions
 @central_app.exception_handler(HTTPException)
-async def all_http_exception_handler(request, exc):
+def all_http_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(request, exc)
 
 # Catch RequestValidationError (422 Unprocessable Entity)
 
 
 @central_app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc: RequestValidationError):
+def validation_exception_handler(request, exc: RequestValidationError):
     return ExceptionHandler.handle_request_validation_error(exc)
 
 
 # Catch all other exceptions
 @central_app.exception_handler(Exception)
-async def all_exception_handler(request, exc):
+def all_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(request, exc)
 
 

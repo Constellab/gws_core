@@ -4,7 +4,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 from typing import List, Union
-from unittest.async_case import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core.core.utils.utils import Utils
 
@@ -12,7 +12,7 @@ from ..experiment.queue_service import QueueService
 from .gtest import GTest
 
 
-class BaseTestCase(IsolatedAsyncioTestCase):
+class BaseTestCase(TestCase):
     """Base class for test, contain method to ease testing and automatically init env and clear it after
     """
 

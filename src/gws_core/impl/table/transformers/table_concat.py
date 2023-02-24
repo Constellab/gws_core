@@ -104,7 +104,7 @@ class TableRowConcat(Task):
         'fill_nan': fill_nan_param
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         fill_nan_value = get_fill_nan_value(params['fill_nan'])
 
@@ -116,9 +116,11 @@ class TableRowConcat(Task):
         return {'table': result}
 
 
-@task_decorator(
+@ task_decorator(
     unique_name="TableColumnConcat",
     short_description="Concatenate two tables along the columns by merging rows",
+
+
 )
 class TableColumnConcat(Task):
     """
@@ -187,7 +189,7 @@ class TableColumnConcat(Task):
         'fill_nan': fill_nan_param
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         fill_nan_value = get_fill_nan_value(params['fill_nan'])
 

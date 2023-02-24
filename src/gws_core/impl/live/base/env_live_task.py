@@ -53,7 +53,7 @@ class EnvLiveTask(Task):
     shell_proxy: ShellProxy = None
     SNIPPET_FILE_EXTENSION: str = None
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
         args = params.get_value('args', "")
         env = params.get_value('env')
@@ -106,7 +106,7 @@ class EnvLiveTask(Task):
 
         return {'target': target}
 
-    async def run_after_task(self) -> None:
+    def run_task(self) -> None:
         """
         This can be overwritten to perform action after the task run. This method is called after the
         resource save. Temp object can be safely deleted here, the resources will still exist

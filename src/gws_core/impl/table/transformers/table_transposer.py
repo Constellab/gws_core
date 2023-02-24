@@ -25,6 +25,6 @@ class TableTransposer(Transformer):
 
     config_specs: ConfigSpecs = {}
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         result = source.transpose()
         return result

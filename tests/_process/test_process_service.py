@@ -11,7 +11,7 @@ from gws_core.process.process_service import ProcessService
 # test_process_service
 class TestProcessService(BaseTestCase):
 
-    async def test_get_log(self):
+    def test_get_log(self):
 
         # create a simple waiting experiment to let the log be created
         experiment = IExperiment()
@@ -21,7 +21,7 @@ class TestProcessService(BaseTestCase):
         wait: IProcess = protocol.add_task(Wait, 'wait', {'waiting_time': 1})
         protocol.add_connector(create_robot >> 'robot', wait << 'resource')
 
-        await experiment.run()
+        experiment.run()
 
         logs = ProcessService.get_logs_of_process('TASK', wait._process_model.id, is_sub_process=False)
         self.assertTrue(len(logs.logs) > 0)

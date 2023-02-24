@@ -35,13 +35,13 @@ class TestResourceFieldsFile(File):
 # test_resource
 class TestResource(BaseTestCase):
 
-    async def test_resource(self):
+    def test_resource(self):
 
         task_model: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=RobotCreate, instance_name="create")
         experiment = ExperimentService.create_experiment_from_task_model(task_model)
 
-        experiment: Experiment = await ExperimentRunService.run_experiment(experiment)
+        experiment: Experiment = ExperimentRunService.run_experiment(experiment)
 
         create: TaskModel = experiment.protocol_model.get_process('create')
 

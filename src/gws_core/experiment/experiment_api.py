@@ -71,6 +71,7 @@ def advanced_search(search_dict: SearchParams,
     """
     Advanced search on experiment
     """
+    raise Exception('Nuuuuul')
     return ExperimentService.search(search_dict, page, number_of_items_per_page).to_json()
 
 

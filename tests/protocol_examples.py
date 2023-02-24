@@ -75,7 +75,7 @@ class RobotWaitFood(Task):
     output_specs = {'food': OutputSpec(RobotFood)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Wait food", flush=True)
         time.sleep(3)
         return {'food': inputs['food']}
@@ -90,7 +90,7 @@ class RobotEmptyFood(Task):
     output_specs = {'food': OutputSpec(RobotFood)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}
 
 

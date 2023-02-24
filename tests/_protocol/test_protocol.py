@@ -25,7 +25,7 @@ class TestProtocol(BaseTestCase):
 
     init_before_each_test: bool = True
 
-    async def test_protocol(self):
+    def test_protocol(self):
 
         Q = ProtocolModel.select()
         count = len(Q)
@@ -39,12 +39,12 @@ class TestProtocol(BaseTestCase):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=proto)
 
-        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
+        experiment = ExperimentRunService.run_experiment(experiment=experiment)
 
         self.assertEqual(len(experiment.task_models), 7)
         self.assertEqual(experiment.status, ExperimentStatus.SUCCESS)
 
-    async def test_advanced_protocol(self):
+    def test_advanced_protocol(self):
 
         Q = ProtocolModel.select()
         count = len(Q)
@@ -73,7 +73,7 @@ class TestProtocol(BaseTestCase):
 
         self.assertEqual(ProtocolModel.select().count(), count+2)
 
-        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
+        experiment = ExperimentRunService.run_experiment(experiment=experiment)
 
         super_proto = ProtocolModel.get_by_id(super_proto.id)
 
@@ -99,7 +99,7 @@ class TestProtocol(BaseTestCase):
         sub_p2 = mini_travel.get_process("p2")
         self.assertTrue(mini_travel.is_outerfaced_with(sub_p2.instance_name))
 
-    # async def test_protocol_update(self):
+    # def test_protocol_update(self):
 
     #     with open(os.path.join(testdata_dir, "super_proto.json"), "r") as file:
     #         s1 = json.load(file)
@@ -185,7 +185,7 @@ class TestProtocol(BaseTestCase):
     #     self.assertEqual(Config.select().count(), 3)
     #     self.assertEqual(ProgressBar.select().count(), 3)
 
-    async def test_optional_input(self):
+    def test_optional_input(self):
         """Test the optional input if different scenarios
         1. It is connected and provided, so we wait for it
         2. It is not connected
@@ -196,7 +196,7 @@ class TestProtocol(BaseTestCase):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=protocol)
 
-        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
+        experiment = ExperimentRunService.run_experiment(experiment=experiment)
 
         eat_1: TaskModel = experiment.protocol_model.get_process('eat_1')
         food: RobotFood = eat_1.inputs.get_resource_model('food')

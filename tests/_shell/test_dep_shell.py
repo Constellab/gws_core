@@ -53,23 +53,23 @@ class Echo(Shell):
 
 class TestShell(BaseTestCase):
 
-    async def test_echo_n_file(self):
+    def test_echo_n_file(self):
         runner = TaskRunner(
             inputs={},
             params={"name": "John Doe"},
             task_type=EchoInFile
         )
-        outputs = await runner.run()
+        outputs = runner.run()
         file: File = outputs["file"]
         self.assertEqual(file.read().strip(), "John Doe")
 
-    async def test_echo(self):
+    def test_echo(self):
         runner = TaskRunner(
             inputs={},
             params={"name": "John Doe"},
             task_type=Echo
         )
-        await runner.run()
+        runner.run()
         # progress_bar: ProgressBar = runner._progress_bar
 
         # # retrieve the John Doe message from the echo in the progress bar

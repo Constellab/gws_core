@@ -61,6 +61,6 @@ class PipEnvShell(DepBaseEnvShell):
         :type stdout: `str`
         """
 
-    async def run_after_task(self) -> None:
-        await super().run_after_task()
+    def run_after_task(self) -> None:
+        super().run_after_task()
         self.uninstall()

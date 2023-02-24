@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from numpy import NaN
 from pandas import NA, DataFrame
@@ -12,7 +12,7 @@ from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 
 
 # test_dataframe_helper
-class TestTableConcat(IsolatedAsyncioTestCase):
+class TestTableConcat(TestCase):
 
     def test_detect_csv_delimiter(self):
         csv_str = "1,2,3\n4,5,6"

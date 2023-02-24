@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from pandas import DataFrame
 
@@ -12,7 +12,7 @@ from gws_core import Table
 
 
 # test_table_transposer
-class TestTableTransposer(IsolatedAsyncioTestCase):
+class TestTableTransposer(TestCase):
 
     def test(self):
         initial_df = DataFrame({'A': range(1, 5), 'B': [10, 0, 6, 4]}, index=['0', '1', '2', '3'])

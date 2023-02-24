@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from unittest.async_case import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from pandas import DataFrame
 
@@ -13,9 +13,9 @@ from gws_core.core.utils.utils import Utils
 
 
 # test_table_annotator
-class TestTableAnnotator(IsolatedAsyncioTestCase):
+class TestTableAnnotator(TestCase):
 
-    async def test_table_row_annotator_with_indexes(self):
+    def test_table_row_annotator_with_indexes(self):
         dataframe = DataFrame({'F1': {'B': 1.3, 2: 2.3,  'Z': 4.5},
                                'F2': {'B': 1.5, 2: 1.5, 'Z': 15.1},
                                'F3': {'B': 1.5, 2: 15.45,  'Z': 1.35}})
@@ -38,7 +38,7 @@ class TestTableAnnotator(IsolatedAsyncioTestCase):
             annotated_table.get_row_tags(), expected_row_tags
         )
 
-    async def test_table_row_annotator_with_columns(self):
+    def test_table_row_annotator_with_columns(self):
         # importer
         dataframe = DataFrame({'sample': {0: 'B', 1: 2, 2: 'Z'},
                                'F1': {0: 1.3, 1: 2.3, 2: 4.5},
@@ -65,7 +65,7 @@ class TestTableAnnotator(IsolatedAsyncioTestCase):
             annotated_table.get_row_tags(), expected_row_tags
         )
 
-    async def test_table_column_annotator_with_indexes(self):
+    def test_table_column_annotator_with_indexes(self):
         dataframe = DataFrame({'F1': {'B': 1.3, 'A': 2.3,  'Z': 4.5},
                                'F2': {'B': 1.5, 'A': 1.5, 'Z': 15.1},
                                'F3': {'B': 1.5, 'A': 15.45, 'Z': 1.35}})
@@ -88,7 +88,7 @@ class TestTableAnnotator(IsolatedAsyncioTestCase):
             annotated_table.get_column_tags(), expected_columns_tags
         )
 
-    async def test_table_column_annotator_with_columns(self):
+    def test_table_column_annotator_with_columns(self):
         dataframe = DataFrame({0: {'sample': 'F1', 'B': 1.3, 'A': 2.3,  'Z': 4.5},
                                1: {'sample': 'F2', 'B': 1.5, 'A': 1.5, 'Z': 15.1},
                                2: {'sample': 'F3', 'B': 1.5, 'A': 15.45,  'Z': 1.35}})

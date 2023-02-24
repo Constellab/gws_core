@@ -4,9 +4,7 @@
 # About us: https://gencovery.com
 
 
-import asyncio
 from abc import abstractmethod
-from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Tuple, Type, final
 
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -58,12 +56,12 @@ class Converter(Task):
     config_specs: ConfigSpecs = {}
 
     @final
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # retrieve resource
         resource: Resource = inputs.get(Converter.input_name)
 
         # call convert method
-        target: Resource = await self.convert(resource, params, self.get_target_type())
+        target: Resource = self.convert(resource, params, self.get_target_type())
 
         if target is None:
             raise Exception('The target resource is None')
@@ -75,7 +73,7 @@ class Converter(Task):
         return {Converter.output_name: target}
 
     @abstractmethod
-    async def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> Resource:
+    def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> Resource:
         """ Override this method to implement convert method
 
         :param resource: [description]
@@ -104,11 +102,9 @@ class Converter(Task):
 
         converter_runner: ConverterRunner = ConverterRunner(cls, params=params, input=source)
 
-        # call the run async method in a sync function
-        with ThreadPoolExecutor() as pool:
-            result = pool.submit(asyncio.run, converter_runner.run()).result()
-            pool.submit(asyncio.run, converter_runner.run_after_task())
-            return result
+        result = converter_runner.run()
+        converter_runner.run_after_task()
+        return result
 
     @final
     @classmethod
@@ -154,12 +150,12 @@ class ConverterRunner():
     def check_before_run(self) -> CheckBeforeTaskResult:
         self._task_runner.check_before_run()
 
-    async def run(self) -> Resource:
-        await self._task_runner.run()
+    def run(self) -> Resource:
+        self._task_runner.run()
         return self.get_output()
 
-    async def run_after_task(self) -> None:
-        await self._task_runner.run_after_task()
+    def run_after_task(self) -> None:
+        self._task_runner.run_after_task()
 
     def set_input(self, resource: Resource) -> None:
         self._task_runner.set_input(Converter.input_name, resource)

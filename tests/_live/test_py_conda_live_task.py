@@ -3,18 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from unittest.async_case import IsolatedAsyncioTestCase
+from unittest import TestCase
 
-from pandas import DataFrame
-
-from gws_core import (BaseTestCase, File, PyCondaLiveTask, ResourceSet, Table,
-                      TaskRunner)
+from gws_core import File, PyCondaLiveTask, ResourceSet, TaskRunner
 
 
 # test_py_conda_live_task
-class TestPyCondaLiveTask(IsolatedAsyncioTestCase):
+class TestPyCondaLiveTask(TestCase):
 
-    async def test_live_task_shell(self):
+    def test_live_task_shell(self):
         file_set = ResourceSet()
         file = File(path="./foo/bar")
         file.name = "my_file"
@@ -57,7 +54,7 @@ dependencies:
             task_type=PyCondaLiveTask
         )
 
-        outputs = await tester.run()
+        outputs = tester.run()
         target = outputs["target"]
         self.assertTrue(isinstance(target, ResourceSet))
 

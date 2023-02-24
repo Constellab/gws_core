@@ -12,7 +12,7 @@ from gws_core import (BaseTestCase, File, RCondaLiveTask, ResourceSet,
 # test_r_conda_live_task
 class TestRCondaLiveTask(BaseTestCase):
 
-    async def test_live_task_shell(self):
+    def test_live_task_shell(self):
         print("Skip the tests of RCondaLiveTask")
         print("Please uncomment code to activate the test. This may take a while!")
         return
@@ -52,7 +52,7 @@ dependencies:
             task_type=RCondaLiveTask
         )
 
-        outputs = await tester.run()
+        outputs = tester.run()
         target = outputs["target"]
         self.assertTrue(isinstance(target, ResourceSet))
 

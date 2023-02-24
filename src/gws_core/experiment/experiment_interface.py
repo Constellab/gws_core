@@ -11,8 +11,8 @@ from ..project.project import Project
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_interface import IProtocol
 from .experiment import Experiment
-from .experiment_service import ExperimentService
 from .experiment_enums import ExperimentType
+from .experiment_service import ExperimentService
 
 
 class IExperiment:
@@ -62,10 +62,10 @@ class IExperiment:
         """
         return self._protocol
 
-    async def run(self) -> None:
+    def run(self) -> None:
         """exceute the experiment, after that the resource should be generated and can be retrieve by process
         """
-        await ExperimentRunService.run_experiment(experiment=self._experiment)
+        ExperimentRunService.run_experiment(experiment=self._experiment)
 
     def reset(self) -> None:
         """Reset the status and the resources of the experiment, its protocols and tasks

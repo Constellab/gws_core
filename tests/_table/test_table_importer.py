@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import os
-from unittest.async_case import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 import numpy
 import pandas
@@ -14,7 +14,7 @@ from gws_core import File, Table, TableExporter, TableImporter, TaskRunner
 
 
 # test_table_importer
-class TestTableImporter(IsolatedAsyncioTestCase):
+class TestTableImporter(TestCase):
     def test_table_import_1(self):
 
         file_path = GWSCoreTestHelper.get_small_data_file_path(1)
@@ -38,14 +38,14 @@ class TestTableImporter(IsolatedAsyncioTestCase):
         self.assertEqual(df['A'][0], '#')
         self.assertEqual(df['B'][0], 'éçàùè$€')
 
-    async def test_importer_exporter(self):
+    def test_importer_exporter(self):
         # importer
         file_path = GWSCoreTestHelper.get_small_data_file_path(1)
         tester = TaskRunner(
             params={}, inputs={"source": File(path=file_path)}, task_type=TableImporter
         )
         self.assertTrue(os.path.exists(file_path))
-        outputs = await tester.run()
+        outputs = tester.run()
         table: Table = outputs["target"]
         df = pandas.read_table(file_path)
         self.assertTrue(numpy.array_equal(
@@ -58,7 +58,7 @@ class TestTableImporter(IsolatedAsyncioTestCase):
         tester = TaskRunner(
             params={}, inputs={"source": table}, task_type=TableExporter
         )
-        outputs = await tester.run()
+        outputs = tester.run()
         file_: File = outputs["target"]
 
         with open(file_.path, 'r') as fp:

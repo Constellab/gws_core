@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from pandas import DataFrame
 
@@ -13,7 +13,7 @@ from gws_core.test.base_test_case import BaseTestCase
 
 
 # test_table_tag_aggregator
-class TestTableTagAggregator(IsolatedAsyncioTestCase):
+class TestTableTagAggregator(TestCase):
     def test_table_tag_aggregator_helper(self):
 
         initial_df = DataFrame({'F1': [1, 2, 3, 4], 'F2': [7, 1, 10, 8], 'F3': [2, 1, 4, 2]})

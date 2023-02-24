@@ -3,8 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import asyncio
-
 import click
 
 from gws_core.user.current_user_service import CurrentUserService
@@ -29,7 +27,7 @@ def run_experiment(ctx, experiment_id, user_id):
         user: User = User.get_by_id_and_check(user_id)
         CurrentUserService.set_current_user(user)
 
-        asyncio.run(ExperimentRunService.run_experiment_in_cli(experiment_id))
+        ExperimentRunService.run_experiment_in_cli(experiment_id)
     except Exception as err:
         ExceptionHandler.handle_exception(None, err)
         raise BadRequestException(

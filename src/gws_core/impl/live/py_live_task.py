@@ -50,7 +50,7 @@ class PyLiveTask(Task):
             human_name="Python code snippet",
             short_description="Python code snippet to run"), }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
         params = params.get_value('params')
 

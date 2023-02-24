@@ -104,7 +104,7 @@ class Shell(Task):
             shutil.rmtree(self._tmp_dir, ignore_errors=True)
         self._tmp_dir = None
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         Task entrypoint
         """
@@ -147,7 +147,7 @@ class Shell(Task):
 
         return outputs
 
-    async def run_after_task(self) -> None:
+    def run_after_task(self) -> None:
         """
         This can be overwritten to perform action after the task run. This method is called after the
         resource save. Temp object can be safely deleted here, the resources will still exist

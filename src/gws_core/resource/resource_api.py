@@ -136,10 +136,11 @@ def save_tags(id: str,
 
 @core_app.post("/resource/{resource_model_id}/transform", tags=["Resource"],
                summary="Transform the resource")
-async def create_transformer_experiment(transformers: List[TransformerDict], resource_model_id: str,
-                                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def create_transformer_experiment(transformers: List[TransformerDict], resource_model_id: str,
+                                  _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
 
-    resource_model: ResourceModel = await TransformerService.create_and_run_transformer_experiment(transformers, resource_model_id)
+    resource_model: ResourceModel = TransformerService.create_and_run_transformer_experiment(
+        transformers, resource_model_id)
     return resource_model.to_json()
 
 ############################# IMPORTER ###########################
@@ -148,12 +149,12 @@ async def create_transformer_experiment(transformers: List[TransformerDict], res
 @core_app.post(
     "/resource/{resource_model_id}/import/{importer_typing_name}", tags=["Resource"],
     summary="Import the resource")
-async def import_resource(config: dict,
-                          resource_model_id: str,
-                          importer_typing_name: str,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def import_resource(config: dict,
+                    resource_model_id: str,
+                    importer_typing_name: str,
+                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
 
-    resource_model: ResourceModel = await ConverterService.call_importer(resource_model_id, importer_typing_name, config)
+    resource_model: ResourceModel = ConverterService.call_importer(resource_model_id, importer_typing_name, config)
     return resource_model.to_json()
 
 ############################# EXPORTER ###########################

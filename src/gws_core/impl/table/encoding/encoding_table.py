@@ -93,8 +93,8 @@ class EncodingTableImporter(TableImporter):
         'encoded_column': StrParam(default_value=ENCODED_COLUMN, short_description="The encoded column name"),
         'encoded_row': StrParam(default_value=ENCODED_ROW, short_description="The encoded row name"), }
 
-    async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[EncodingTable]) -> EncodingTable:
-        csv_table: EncodingTable = await super().import_from_path(file, params, target_type)
+    def import_from_path(self, file: File, params: ConfigParams, target_type: Type[EncodingTable]) -> EncodingTable:
+        csv_table: EncodingTable = super().import_from_path(file, params, target_type)
         original_column = params.get_value("original_column", target_type.ORIGINAL_COLUMN)
         original_row = params.get_value("original_row", target_type.ORIGINAL_ROW)
         encoded_column = params.get_value("encoded_column", target_type.ENCODED_COLUMN)

@@ -31,7 +31,7 @@ class ExperimentRunService():
     """
 
     @classmethod
-    async def run_experiment_in_cli(cls, experiment_id: str) -> None:
+    def run_experiment_in_cli(cls, experiment_id: str) -> None:
         """Method called by the cli sub process to run the experiment
         """
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
@@ -47,10 +47,10 @@ class ExperimentRunService():
             experiment.mark_as_error({"detail": error_text,
                                       "unique_code": GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
                                       "context": None, "instance_id": None})
-        await cls.run_experiment(experiment)
+        cls.run_experiment(experiment)
 
     @classmethod
-    async def run_experiment(cls, experiment: Experiment) -> Coroutine[Any, Any, Experiment]:
+    def run_experiment(cls, experiment: Experiment) -> Coroutine[Any, Any, Experiment]:
         """
         Run the experiment
         """
@@ -74,7 +74,7 @@ class ExperimentRunService():
         try:
             experiment.mark_as_started()
 
-            await experiment.protocol_model.run()
+            experiment.protocol_model.run()
 
             experiment.mark_as_success()
 

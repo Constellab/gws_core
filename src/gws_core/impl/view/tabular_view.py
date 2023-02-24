@@ -7,10 +7,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, List
 
+from pandas import DataFrame
+
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.resource.view.view_types import ViewType
-from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -58,7 +59,7 @@ class TabularView(View):
 
     _table: Table
 
-    # TODO set table not optional
+    # btyg set table not optional
     def __init__(self, table: Table = None, from_row: int = 0, from_column: int = 0,
                  number_of_rows_per_page: int = MAX_NUMBER_OF_ROWS_PER_PAGE,
                  number_of_columns_per_page: int = MAX_NUMBER_OF_COLUMNS_PER_PAGE,

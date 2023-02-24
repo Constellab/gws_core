@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from unittest.async_case import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from numpy import NaN
 from pandas import NA, DataFrame
@@ -16,7 +16,7 @@ from gws_core.impl.table.transformers.table_aggregator import \
 
 
 # test_table_aggregator
-class TestTableAggregator(IsolatedAsyncioTestCase):
+class TestTableAggregator(TestCase):
     def test_table_aggregator_helper(self):
         initial_df = DataFrame({'A': range(1, 5), 'B': [10, 8, 6, 4]})
 
@@ -36,7 +36,7 @@ class TestTableAggregator(IsolatedAsyncioTestCase):
         expected_df = DataFrame({0: [11, 10, 9, 8]})
         self.assertTrue(dataframe.equals(expected_df))
 
-    async def test_table_aggregator(self):
+    def test_table_aggregator(self):
         initial_df = DataFrame({'A': [1, 2], 'B': [10, 8]})
         table = Table(data=initial_df)
         column_tags = [{'test': 'ok'}, {'test': 'nok'}]
@@ -45,7 +45,7 @@ class TestTableAggregator(IsolatedAsyncioTestCase):
         # Vertical
         task_runner = TaskRunner(TableColumnAggregator, {"function": "sum"})
         task_runner.set_input('source', table)
-        await task_runner.run()
+        task_runner.run()
         result: Table = task_runner.get_output('target')
 
         expected_result = Table(DataFrame({'A': [3], 'B': [18]}))

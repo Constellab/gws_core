@@ -29,12 +29,12 @@ class PipEnvTester(PipEnvShell):
 
 class TestPipEnv(BaseTestCase):
 
-    async def test_pipenv(self):
+    def test_pipenv(self):
 
         task_runner = TaskRunner(PipEnvTester)
 
         try:
-            output = await task_runner.run()
+            output = task_runner.run()
 
             file: File = output["file"]
 
@@ -56,7 +56,7 @@ class TestPipEnv(BaseTestCase):
                 task_runner.force_dispatch_waiting_messages()
             raise exception
 
-    # async def test_pipenv_proxy(self):
+    # def test_pipenv_proxy(self):
 
     #     prox = ShellProxy(PipEnvTester)
     #     encoded_string = prox.check_output(

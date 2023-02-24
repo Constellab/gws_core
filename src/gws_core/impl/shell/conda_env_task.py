@@ -60,7 +60,7 @@ class CondaEnvTask(BaseEnvShellTask):
                                message_dispatcher=self.message_dispatcher)
 
     @abstractmethod
-    async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: CondaShellProxy) -> TaskOutputs:
+    def runproxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: CondaShellProxy) -> TaskOutputs:
         """
         Run the task with the shell proxy
         """

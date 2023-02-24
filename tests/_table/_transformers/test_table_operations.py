@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from pandas import DataFrame, isna
 
@@ -13,7 +13,7 @@ from gws_core.impl.table.helper.table_operation_helper import \
 
 
 # test_table_operations
-class TestTableOperations(IsolatedAsyncioTestCase):
+class TestTableOperations(TestCase):
 
     def test_table_column_operations(self):
         row_tags = [{"Name": "R0"}, {"Name": "R1"}, {"Name": "R2"}]

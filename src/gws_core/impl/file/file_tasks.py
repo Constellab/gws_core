@@ -34,7 +34,7 @@ class WriteToJsonFile(Task):
     output_specs: OutputSpecs = {'file': OutputSpec(File)}
     config_specs: ConfigSpecs = {'filename': StrParam(short_description='Name of the file')}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         file_store: FileStore = LocalFileStore.get_default_instance()
 
         file: File = file_store.create_empty_file(params.get_value('filename') + '.json')
@@ -45,8 +45,8 @@ class WriteToJsonFile(Task):
         return {"file": file}
 
 
-@task_decorator(unique_name="FsNodeExtractor", human_name="Fs node extractor",
-                short_description="Extract a sub file or folder from a folder to generated a new resource")
+@ task_decorator(unique_name="FsNodeExtractor", human_name="Fs node extractor",
+                 short_description="Extract a sub file or folder from a folder to generated a new resource")
 class FsNodeExtractor(Task):
     """Task to extract a file from a folder to create a resource
 
@@ -62,7 +62,7 @@ class FsNodeExtractor(Task):
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {"fs_node_path": StrParam(), "fs_node_typing_name": StrParam()}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # retrieve resource type
         _type: Type[FSNode] = TypingManager.get_type_from_name(params.get('fs_node_typing_name'))
 

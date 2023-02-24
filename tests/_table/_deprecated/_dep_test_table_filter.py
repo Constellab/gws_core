@@ -13,7 +13,7 @@ from gws_core.extra import DataProvider
 # test_table_filter
 class TestTableFilter(TestCase):
 
-    async def test_multi_index_table(self):
+    def test_multi_index_table(self):
         file = DataProvider.get_test_data_file("multi_index_data.csv")
         table: Table = TableImporter.call(file, {"header": 0, "index_column": 0})
 
@@ -27,7 +27,7 @@ class TestTableFilter(TestCase):
             inputs={"source": table},
             task_type=TableFilter,
         )
-        outputs = await tester.run()
+        outputs = tester.run()
         filtered_table: Table = outputs["target"]
         self.assertEqual(filtered_table.column_names, ["Age"])
         self.assertEqual(filtered_table.row_names, ["Luc", "Lea", "Laura", "Leon"])
@@ -44,7 +44,7 @@ class TestTableFilter(TestCase):
             inputs={"source": table},
             task_type=TableFilter,
         )
-        outputs = await tester.run()
+        outputs = tester.run()
         filtered_table = outputs["target"]
         self.assertEqual(filtered_table.column_names, ["Age"])
         self.assertEqual(filtered_table.row_names, ["Luc", "Lea"])
@@ -59,7 +59,7 @@ class TestTableFilter(TestCase):
             inputs={"source": table},
             task_type=TableFilter,
         )
-        outputs = await tester.run()
+        outputs = tester.run()
         filtered_table = outputs["target"]
 
         print("---->")
@@ -78,7 +78,7 @@ class TestTableFilter(TestCase):
             inputs={"source": table},
             task_type=TableFilter,
         )
-        outputs = await tester.run()
+        outputs = tester.run()
         filtered_table = outputs["target"]
         self.assertEqual(filtered_table.row_names, ["Laura", "Leon"])
         self.assertEqual(filtered_table.column_names, ["Age", "Sex", "City", "Weight"])
@@ -93,7 +93,7 @@ class TestTableFilter(TestCase):
             inputs={"source": table},
             task_type=TableFilter,
         )
-        outputs = await tester.run()
+        outputs = tester.run()
         filtered_table = outputs["target"]
         self.assertEqual(filtered_table.row_names, ["Lea", "Laura"])
         self.assertEqual(filtered_table.column_names, ["Age", "Sex", "City", "Weight"])

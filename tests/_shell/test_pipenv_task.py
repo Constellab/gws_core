@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import os
-from unittest.async_case import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core import (ConfigParams, File, OutputSpec, PipEnvTask, TaskInputs,
                       TaskOutputs, TaskRunner, task_decorator)
@@ -20,7 +20,7 @@ class PipEnvTaskTester(PipEnvTask):
     output_specs = {'file': OutputSpec(File)}
     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_pip.txt")
 
-    async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: PipShellProxy) -> TaskOutputs:
+    def runproxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: PipShellProxy) -> TaskOutputs:
         command = ["python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"]
         shell_proxy.run(command, shell_mode=True)
 
@@ -31,14 +31,14 @@ class PipEnvTaskTester(PipEnvTask):
 # test_pipenv_task
 
 
-class TestPipEnv(IsolatedAsyncioTestCase):
+class TestPipEnv(TestCase):
 
-    async def test_pipenv(self):
+    def test_pipenv(self):
 
         task_runner = TaskRunner(PipEnvTaskTester)
 
         try:
-            output = await task_runner.run()
+            output = task_runner.run()
 
             file: File = output["file"]
 
@@ -60,7 +60,7 @@ class TestPipEnv(IsolatedAsyncioTestCase):
                 task_runner.force_dispatch_waiting_messages()
             raise exception
 
-    # async def test_pipenv_proxy(self):
+    # def test_pipenv_proxy(self):
 
     #     prox = ShellProxy(PipEnvTester)
     #     encoded_string = prox.check_output(

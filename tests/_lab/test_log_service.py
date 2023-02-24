@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from time import sleep
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
@@ -15,7 +15,7 @@ from gws_core.lab.log.log_service import LogService, LogsStatus
 
 
 # test_log_service
-class TestLogService(IsolatedAsyncioTestCase):
+class TestLogService(TestCase):
 
     def test_get_logs_status(self):
         Logger.info('test_get_logs_status')

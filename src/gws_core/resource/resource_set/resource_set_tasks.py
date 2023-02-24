@@ -26,7 +26,7 @@ class ResourceStacker(Task):
     }
     output_specs: OutputSpecs = {'resource_set': OutputSpec(ResourceSet)}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         resource_1 = inputs.get('resource_1')
 
         if resource_1 is None:
@@ -77,7 +77,7 @@ class ResourcePicker(Task):
         'resource_name': StrParam(human_name="Resource name", short_description="The name of the resource to pick")
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         resource_set: ResourceSet = inputs.get('resource_set')
         resource_name = params['resource_name']
         resource = resource_set.get_resource(resource_name)

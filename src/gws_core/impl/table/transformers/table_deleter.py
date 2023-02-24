@@ -34,7 +34,7 @@ class TableRowsDeleter(Transformer):
         "filters": DataframeFilterHelper.get_filter_param_set('row', 'Row filters')
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         return source.filter_out_by_row_names(params.get('filters'))
 
 
@@ -56,7 +56,7 @@ class TableColumnsDeleter(Transformer):
         "filters": DataframeFilterHelper.get_filter_param_set('column', 'Column filters')
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         return source.filter_out_by_column_names(params.get('filters'))
 
 # ####################################################################
@@ -93,7 +93,7 @@ class TableRowTagsDeleter(Transformer):
         'tags': DataframeFilterHelper.get_tags_param_set('row')
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get('tags'))
         return source.filter_out_by_tags("index", tags)
 
@@ -125,6 +125,6 @@ class TableColumnTagsDeleter(Transformer):
         'tags': DataframeFilterHelper.get_tags_param_set('column')
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get('tags'))
         return source.filter_out_by_tags("columns", tags)

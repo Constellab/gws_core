@@ -1,10 +1,13 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 import os
 
 from gws_core import (BaseTestCase, ConfigParams, FileHelper, Folder,
-                      FSNodeModel, IExperiment, IProcess, LocalFileStore,
-                      OutputSpec, Settings, Task, TaskInputs, TaskOutputs,
-                      task_decorator)
+                      IExperiment, IProcess, LocalFileStore, OutputSpec,
+                      Settings, Task, TaskInputs, TaskOutputs, task_decorator)
 from gws_core.resource.resource_model import ResourceModel
 
 
@@ -16,7 +19,7 @@ class CreateFolderTest(Task):
     output_specs = {'folder': OutputSpec(Folder)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         folder = Folder()
         folder.path = os.path.join(Settings.get_instance().get_data_dir(), 'test_folder')
         FileHelper.create_dir_if_not_exist(folder.path)
@@ -44,11 +47,11 @@ class TestFolder(BaseTestCase):
         dic_ = vw.to_dict(params)
         self.assertIsNotNone(dic_["data"])
 
-    async def test_folder_process(self):
+    def test_folder_process(self):
         experiment: IExperiment = IExperiment()
         process: IProcess = experiment.get_protocol().add_process(CreateFolderTest, 'create_folder')
 
-        await experiment.run()
+        experiment.run()
 
         folder: Folder = process.get_output('folder')
 

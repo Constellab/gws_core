@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from pandas import DataFrame
 
@@ -15,7 +15,7 @@ from gws_core.impl.table.table import Table
 
 
 # test_table_action
-class TestTable(IsolatedAsyncioTestCase):
+class TestTable(TestCase):
 
     def test_add_column(self):
         original_df = DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})

@@ -31,7 +31,7 @@ class ActionsTask(Task):
     config_specs: ConfigSpecs = {}
 
     @final
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # retrieve the source
         source: Resource = inputs.get(self.source_input_name)
 

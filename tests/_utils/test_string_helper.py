@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from enum import Enum
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core import StringHelper
 
@@ -14,7 +14,7 @@ class SimpleEnum(Enum):
 
 
 # test_string_helper
-class TestStringHelper(IsolatedAsyncioTestCase):
+class TestStringHelper(TestCase):
 
     def test_camel_to_sentence(self):
         self.assertEqual(StringHelper.camel_case_to_sentence('TestClassBuild'), 'Test class build')

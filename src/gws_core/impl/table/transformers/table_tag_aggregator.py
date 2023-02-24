@@ -38,7 +38,7 @@ class TableRowTagAggregator(Transformer):
         ),
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableTagAggregatorHelper.aggregate_by_row_tags(source,
                                                               keys=params["tag_keys"], func=params["grouping_func"])
 
@@ -70,6 +70,6 @@ class TableColumnTagAggregator(Transformer):
         ),
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableTagAggregatorHelper.aggregate_by_column_tags(source,
                                                                  keys=params["tag_keys"], func=params["grouping_func"])

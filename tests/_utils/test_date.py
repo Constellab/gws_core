@@ -4,13 +4,13 @@
 # About us: https://gencovery.com
 
 from datetime import date, datetime
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core.core.utils.date_helper import DateHelper
 
 
 # test_date
-class TestDate(IsolatedAsyncioTestCase):
+class TestDate(TestCase):
 
     def test_convert_to_utc(self):
 

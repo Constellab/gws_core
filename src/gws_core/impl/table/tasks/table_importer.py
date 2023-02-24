@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import time
 from typing import Type
 
 import pandas
@@ -38,7 +39,8 @@ class TableImporter(ResourceImporter):
         'encoding': StrParam(default_value="auto", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="File encoding", short_description="Encoding of the file, 'auto' for automatic detection."),
     }
 
-    async def import_from_path(self, source: File, params: ConfigParams, target_type: Type[Table]) -> Table:
+    def import_from_path(self, source: File, params: ConfigParams, target_type: Type[Table]) -> Table:
+        time.sleep(60)
         if source.is_empty():
             raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
                                       detail_args={'filename': source.path})

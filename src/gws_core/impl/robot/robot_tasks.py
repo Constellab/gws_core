@@ -17,15 +17,15 @@ class RobotCreate(Task):
     output_specs = {'robot': OutputSpec(Robot)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Create", flush=True)
         robot: Robot = Robot.empty()
 
         return {'robot': robot}
 
 
-@task_decorator("RobotMove", human_name="Move robot",
-                short_description="This task emulates a short moving step of the robot", hide=True)
+@ task_decorator("RobotMove", human_name="Move robot",
+                 short_description="This task emulates a short moving step of the robot", hide=True)
 class RobotMove(Task):
     input_specs = {'robot': InputSpec(Robot, human_name="Robot",
                                       short_description="The robot to feed")}  # just for testing
@@ -33,15 +33,15 @@ class RobotMove(Task):
     config_specs = {'moving_step': FloatParam(default_value=0.1, short_description="The moving step of the robot"), 'direction': StrParam(
         default_value="north", allowed_values=["north", "south", "east", "west"], short_description="The moving direction")}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print(f"Moving {params.get_value('moving_step')}", flush=True)
         robot: Robot = inputs['robot']
         robot.move(direction=params.get_value('direction'), moving_step=params.get_value('moving_step'))
         return {'robot': robot}
 
 
-@task_decorator("RobotEat", human_name="Eat task",
-                short_description="This task emulates the meal of the robot before its flight!", hide=True)
+@ task_decorator("RobotEat", human_name="Eat task",
+                 short_description="This task emulates the meal of the robot before its flight!", hide=True)
 class RobotEat(Task):
     input_specs = {'robot': InputSpec(Robot), 'food': InputSpec(RobotFood, is_optional=True)}
     output_specs = {'robot': OutputSpec(Robot)}
@@ -49,7 +49,7 @@ class RobotEat(Task):
         'food_weight': FloatParam(default_value=3.14)
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         robot: Robot = inputs['robot']
 
         multiplicator: int = 1
@@ -62,8 +62,8 @@ class RobotEat(Task):
         return {'robot': robot}
 
 
-@task_decorator("RobotWait", human_name="Wait task",
-                short_description="This task emulates the resting time of the robot before its flight!", hide=True)
+@ task_decorator("RobotWait", human_name="Wait task",
+                 short_description="This task emulates the resting time of the robot before its flight!", hide=True)
 class RobotWait(Task):
     input_specs = {'robot': InputSpec(Robot)}
     output_specs = {'robot': OutputSpec(Robot)}
@@ -72,30 +72,30 @@ class RobotWait(Task):
         'waiting_time': FloatParam(default_value=0.5)
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print(f"Waiting {params.get_value('waiting_time')}", flush=True)
         time.sleep(params.get_value('waiting_time'))
         return {'robot': inputs['robot']}
 
 
-@task_decorator("RobotFly", human_name="Fly task",
-                short_description="This task emulates the fly of the robot. It inherites the Move task.", hide=True)
+@ task_decorator("RobotFly", human_name="Fly task",
+                 short_description="This task emulates the fly of the robot. It inherites the Move task.", hide=True)
 class RobotFly(RobotMove):
     config_specs = {'moving_step': FloatParam(default_value=1000.0, unit="km"), 'direction': StrParam(
         default_value="west", allowed_values=["north", "south", "east", "west"], short_description="The flying direction")}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Start flying ...")
-        return await super().run(params, inputs)
+        return super().run(params, inputs)
 
 
-@task_decorator("RobotAdd", hide=True)
+@ task_decorator("RobotAdd", hide=True)
 class RobotAdd(Task):
     input_specs = {'robot': InputSpec(Robot), 'addon': InputSpec(RobotAddOn)}
     output_specs = {'mega_robot': OutputSpec(MegaRobot)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Add robot addon...")
 
         robot: Robot = inputs['robot']
@@ -103,20 +103,20 @@ class RobotAdd(Task):
         return {'mega_robot':  mega}
 
 
-@task_decorator(unique_name="RobotAddOnCreate", human_name="The travel of `Astro`",
-                short_description="This is the travel of astro composed of several steps", hide=True)
+@ task_decorator(unique_name="RobotAddOnCreate", human_name="The travel of `Astro`",
+                 short_description="This is the travel of astro composed of several steps", hide=True)
 class RobotAddOnCreate(Task):
     input_specs = {}
     output_specs = {'addon': OutputSpec(RobotAddOn)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("AddOn Create", flush=True)
         return {'addon': RobotAddOn()}
 
 
-@task_decorator(unique_name="RobotSugarCreate", human_name="Create a sugar type of food",
-                short_description="Create a sugar type of food", hide=True)
+@ task_decorator(unique_name="RobotSugarCreate", human_name="Create a sugar type of food",
+                 short_description="Create a sugar type of food", hide=True)
 class RobotSugarCreate(Task):
     """Task that create a sugar type of food and wait 3 secondes for it
     used in TestRobotWithSugarProtocol
@@ -125,7 +125,7 @@ class RobotSugarCreate(Task):
     output_specs = {'sugar': OutputSpec(RobotFood)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Create sugar", flush=True)
         food: RobotFood = RobotFood()
         food.multiplicator = 10

@@ -38,7 +38,7 @@ class GenerateResourceSet(Task):
         'resource_set': OutputSpec(ResourceSet)
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # create a simple resource
         table = get_table()
 
@@ -108,10 +108,10 @@ class TestShareResource(BaseTestCase):
         self.assertEqual(resource.path, new_resource_model.fs_node_model.path)
         self.assertEqual('test', resource.read())
 
-    async def test_share_resource_set(self):
+    def test_share_resource_set(self):
         i_experiment: IExperiment = IExperiment()
         i_process = i_experiment.get_protocol().add_process(GenerateResourceSet, 'generate_resource_set')
-        await i_experiment.run()
+        i_experiment.run()
         resource_model_id = i_process.get_output_resource_model('resource_set').id
 
         original_resource_model = ResourceService.get_resource_by_id(resource_model_id)

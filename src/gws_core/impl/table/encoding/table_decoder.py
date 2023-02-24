@@ -3,8 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core.io.io_spec import InputSpec, OutputSpec
 from pandas import DataFrame
+
+from gws_core.io.io_spec import InputSpec, OutputSpec
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....io.io_spec_helper import InputSpecs, OutputSpecs
@@ -27,7 +28,7 @@ class TableDecoder(Task):
     output_specs: OutputSpecs = {"decoded_table": OutputSpec(Table)}
     config_specs: ConfigSpecs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         encoded_data: DataFrame = inputs["encoded_table"].get_data()
         encoding_table: EncodingTable = inputs["encoding_table"]
 

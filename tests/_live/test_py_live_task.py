@@ -11,7 +11,7 @@ from gws_core import BaseTestCase, PyLiveTask, Table, TaskRunner, Text
 # test_py_live_task
 class TestLiveTask(BaseTestCase):
 
-    async def test_live_task(self):
+    def test_live_task(self):
         tester = TaskRunner(
             params={
                 "code": """
@@ -39,7 +39,7 @@ outputs = foo(a,b,source)
             task_type=PyLiveTask
         )
 
-        outputs = await tester.run()
+        outputs = tester.run()
         table: Table = outputs["target"]
 
         self.assertTrue(isinstance(table, Table))
@@ -47,7 +47,7 @@ outputs = foo(a,b,source)
         expected_table = Table(DataFrame({'col1': [1, 2], 'col2': [0, 4]}))
         self.assertTrue(table.equals(expected_table))
 
-    async def test_live_task_shell_with_subproc(self):
+    def test_live_task_shell_with_subproc(self):
         tester = TaskRunner(
             params={
                 "code": """
@@ -63,11 +63,11 @@ outputs = {"target": target}
             task_type=PyLiveTask
         )
 
-        outputs = await tester.run()
+        outputs = tester.run()
         text = outputs["target"]
         self.assertTrue(isinstance(text, Text))
 
-    async def test_live_task_shell_with_shellproxy(self):
+    def test_live_task_shell_with_shellproxy(self):
         tester = TaskRunner(
             params={
                 "code": """
@@ -87,12 +87,12 @@ outputs = {"target": target}
             task_type=PyLiveTask
         )
 
-        outputs = await tester.run()
+        outputs = tester.run()
         text = outputs["target"]
         self.assertTrue(isinstance(text, Text))
         self.assertEqual(text.get_data().strip(), 'constellab')
 
-#     async def test_live_task_shell_with_pipenv(self):
+#     def test_live_task_shell_with_pipenv(self):
 #         tester = TaskRunner(
 #             params={
 #                 "code": """
@@ -122,7 +122,7 @@ outputs = {"target": target}
 #             task_type=PyLiveTask
 #         )
 
-#         outputs = await tester.run()
+#         outputs = tester.run()
 #         text = outputs["target"]
 #         self.assertTrue(isinstance(text, Text))
 #         self.assertEqual(text.get_data().strip(), 'constellab')

@@ -34,7 +34,7 @@ class TableToDataset(Task):
             short_description="Columns to use as targets"),
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """ Convert a Table to Dataset """
 
         table = inputs["table"]

@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from numpy import NaN
 from pandas import DataFrame
@@ -14,7 +14,7 @@ from gws_core.test.base_test_case import BaseTestCase
 
 
 # test_table_concat
-class TestTableConcat(IsolatedAsyncioTestCase):
+class TestTableConcat(TestCase):
     def test_table_row_concat_helper(self):
 
         df_1: DataFrame = DataFrame({'F1': [1, 2], 'F2': [7, 1]})

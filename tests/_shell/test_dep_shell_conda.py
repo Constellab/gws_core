@@ -35,12 +35,12 @@ class TestProcess(BaseTestCase):
     #     super().tearDownClass()
     #     CondaEnvTester.uninstall()
 
-    async def test_conda(self):
+    def test_conda(self):
 
         task_runner = TaskRunner(CondaEnvTester)
 
         try:
-            output = await task_runner.run()
+            output = task_runner.run()
 
             file: File = output["file"]
 
@@ -72,7 +72,7 @@ class TestProcess(BaseTestCase):
 
         # experiment: Experiment = ExperimentService.create_experiment_from_task_model(
         #     task_model=proc_mdl)
-        # experiment = await ExperimentRunService.run_experiment(experiment=experiment)
+        # experiment = ExperimentRunService.run_experiment(experiment=experiment)
 
         # proc = experiment.task_models[0]
 

@@ -33,11 +33,11 @@ class ForSearchCreate(Task):
     output_specs = {'search': OutputSpec(ForSearch)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'search': ForSearch.create('empty')}
 
 
-@resource_decorator(unique_name="SubFile")
+@ resource_decorator(unique_name="SubFile")
 class SubFile(File):
     pass
 

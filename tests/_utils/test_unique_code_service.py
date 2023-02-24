@@ -1,14 +1,14 @@
 
 
 from time import sleep
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core.user.unique_code_service import (CodeObject,
                                                InvalidUniqueCodeException,
                                                UniqueCodeService)
 
 
-class TestUniqueCodeService(IsolatedAsyncioTestCase):
+class TestUniqueCodeService(TestCase):
 
     def test_unique_code(self):
         code = UniqueCodeService.generate_code('0', {'obj': 'top'}, 1000)

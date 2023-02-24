@@ -25,7 +25,7 @@ class TextImporter(ResourceImporter):
 
     config_specs: ConfigSpecs = {'encoding': StrParam(default_value='utf-8', short_description="Text encoding")}
 
-    async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Text]) -> Text:
+    def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Text]) -> Text:
         try:
             with open(file.path, 'r+t', encoding=params.get_value('encoding', 'utf-8')) as fp:
                 text = fp.read()
@@ -51,7 +51,7 @@ class TextExporter(ResourceExporter):
         'encoding': StrParam(default_value='utf-8', visibility=StrParam.PROTECTED_VISIBILITY, short_description="Text encoding"),
     }
 
-    async def export_to_path(self, resource: Text, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
+    def export_to_path(self, resource: Text, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_name = params.get_value('file_name', type(self)._human_name)
         file_format = FileHelper.clean_extension(params.get_value('file_format', Text.DEFAULT_FILE_FORMAT))
         file_path = os.path.join(dest_dir, file_name + '.' + file_format)

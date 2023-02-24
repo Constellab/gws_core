@@ -74,7 +74,7 @@ class TableRowTagExtractor(Transformer):
         ),
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
 
         result = source
 
@@ -144,7 +144,7 @@ class TableColumnTagExtractor(Transformer):
         ),
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
 
         result = source
 

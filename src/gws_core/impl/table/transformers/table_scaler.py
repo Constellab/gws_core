@@ -33,7 +33,7 @@ class TableScaler(Transformer):
         )
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableScalerHelper.scale(
             table=source,
             func=params["scaling_function"]
@@ -64,7 +64,7 @@ class TableRowScaler(Transformer):
         "scaling_function": axis_scale_param
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableScalerHelper.scale_by_rows(
             table=source,
             func=params["scaling_function"]
@@ -90,7 +90,7 @@ class TableColumnScaler(Transformer):
         "scaling_function": axis_scale_param
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableScalerHelper.scale_by_columns(
             table=source,
             func=params["scaling_function"]

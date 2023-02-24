@@ -39,7 +39,7 @@ class RobotsGenerator(Task):
     input_specs: InputSpecs = {"robot_i": InputSpec(Robot)}
     output_specs: OutputSpecs = {'set': OutputSpec(ResourceSet)}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         robot_1 = inputs.get('robot_i')
         robot_2 = Robot.empty()
         robot_2.age = 99
@@ -55,7 +55,7 @@ class RobotsGenerator(Task):
 # test_resource_set
 class TestResourceSet(BaseTestCase):
 
-    async def test_resource_set(self):
+    def test_resource_set(self):
 
         resource_count = ResourceModel.select().count()
         experiment: IExperiment = IExperiment()
@@ -64,7 +64,7 @@ class TestResourceSet(BaseTestCase):
         robot_generator = protocol.add_process(RobotsGenerator, 'generator')
         experiment.get_protocol().add_connector(robot_create >> 'robot', robot_generator << 'robot_i')
 
-        await experiment.run()
+        experiment.run()
 
         # check that it created 3 resource (1 for the resrouce set and 2 robots)
         self.assertEqual(ResourceModel.select().count(), resource_count + 3)
@@ -98,7 +98,7 @@ class TestResourceSet(BaseTestCase):
         # check that the reset cleared the correct resources
         self.assertEqual(ResourceModel.select().count(), resource_count)
 
-    async def test_resource_set_exporter(self):
+    def test_resource_set_exporter(self):
         settings = Settings.get_instance()
 
         # exportable resource

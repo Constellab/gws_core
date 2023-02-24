@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from abc import abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING, Dict, Type, final
@@ -286,7 +285,7 @@ class ProcessModel(ModelWithUser):
     ################################# RUN #########################
 
     @final
-    async def run(self) -> None:
+    def run(self) -> None:
         """
         Run the process and save its state in the database.
         """
@@ -295,7 +294,7 @@ class ProcessModel(ModelWithUser):
             return
 
         try:
-            await self._run()
+            self._run()
         # Catch all exception and wrap them into a ProcessRunException to provide process info
         except ProcessRunException as err:
             # if the process is already finished, just raise the exception
@@ -331,17 +330,14 @@ class ProcessModel(ModelWithUser):
             raise exception
 
     @abstractmethod
-    async def _run(self) -> None:
+    def _run(self) -> None:
         """Function to run overrided by the sub classes
         """
 
-    async def _run_next_processes(self):
+    def _run_next_processes(self):
         self.outputs.propagate()
-        aws = []
         for proc in self.outputs.get_next_procs():
-            aws.append(proc.run())
-        if len(aws):
-            await asyncio.gather(*aws)
+            proc.run()
 
     def _run_before_task(self) -> None:
         self._switch_to_current_progress_bar()
@@ -352,7 +348,7 @@ class ProcessModel(ModelWithUser):
 
         self.save()
 
-    async def _run_after_task(self):
+    def _run_after_task(self):
         self.mark_as_success()
 
         # Set the data outputs dict
@@ -364,7 +360,7 @@ class ProcessModel(ModelWithUser):
         if not self.outputs.is_ready:
             return
 
-        await self._run_next_processes()
+        self._run_next_processes()
 
     def check_user_privilege(self, user: User) -> None:
         """Throw an exception if the user cand execute the protocol

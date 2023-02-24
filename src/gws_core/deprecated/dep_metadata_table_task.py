@@ -37,7 +37,7 @@ class MetadataTableImporter(TableImporter):
             short_description="Delimiter character. Only for parsing CSV files")
     }
 
-    async def import_from_path(self, source: File, params: ConfigParams, target_type: Type[MetadataTable]) -> MetadataTable:
+    def import_from_path(self, source: File, params: ConfigParams, target_type: Type[MetadataTable]) -> MetadataTable:
         """
         Import from a repository
 
@@ -51,7 +51,7 @@ class MetadataTableImporter(TableImporter):
 
         params["index_column"] = None
         params["comment"] = "#"
-        csv_table: MetadataTable = await super().import_from_path(source, params, target_type)
+        csv_table: MetadataTable = super().import_from_path(source, params, target_type)
 
         sample_id_column = csv_table.column_names[0]
         if not sample_id_column:
@@ -106,7 +106,8 @@ class MetadataTableExporter(TableExporter):
             allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER,
             short_description="Delimiter character. Only for CSV files")}
 
-    async def export_to_path(self, source: MetadataTable, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
+    def export_to_path(
+            self, source: MetadataTable, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         params["write_header"] = True
         params["write_index"] = False
-        return await super().export_to_path(source, dest_dir, params, target_type)
+        return super().export_to_path(source, dest_dir, params, target_type)

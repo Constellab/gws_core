@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from pandas import DataFrame
 
@@ -12,7 +12,7 @@ from gws_core.core.utils.utils import Utils
 
 
 # test_table
-class TestTable(IsolatedAsyncioTestCase):
+class TestTable(TestCase):
     def test_table(self):
         table: Table = Table(data=[[1, 2, 3]], column_names=["a", "b", "c"], row_names=["r0"])
 

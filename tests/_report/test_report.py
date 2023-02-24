@@ -128,11 +128,11 @@ class TestReport(BaseTestCase):
         self.assertEqual(len(report_resources), 0)
 
     # test to have a view config to a report
-    async def test_add_view_config_to_report(self):
+    def test_add_view_config_to_report(self):
         # generate a resource from an experiment
         experiment = IExperiment()
         i_process = experiment.get_protocol().add_process(RobotCreate, 'create')
-        await experiment.run()
+        experiment.run()
         robot_model = i_process.get_output_resource_model('robot')
 
         # create a view config

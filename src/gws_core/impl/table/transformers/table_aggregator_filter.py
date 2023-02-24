@@ -74,7 +74,7 @@ class TableColumnAggregatorFilter(Transformer):
         )
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
         for _filter in params["aggregation_filter"]:
@@ -120,7 +120,7 @@ class TableRowAggregatorFilter(Transformer):
         )
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
         for _filter in params["aggregation_filter"]:

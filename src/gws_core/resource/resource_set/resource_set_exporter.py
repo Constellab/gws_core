@@ -32,7 +32,8 @@ class ResourceSetExporter(ResourceExporter):
         If the exporter of the resource type has some required parameters, the resource will be ignored.
     """
 
-    async def export_to_path(self, source: ResourceListBase, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]) -> FSNode:
+    def export_to_path(
+            self, source: ResourceListBase, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]) -> FSNode:
 
         # use to store the exported files
         fs_nodes: List[FSNode] = []

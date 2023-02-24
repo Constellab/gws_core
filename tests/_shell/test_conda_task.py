@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import os
-from unittest.async_case import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core import (CondaEnvTask, ConfigParams, File, OutputSpec, TaskInputs,
                       TaskOutputs, task_decorator)
@@ -21,8 +21,8 @@ class CondaEnvTaskTester(CondaEnvTask):
     output_specs = {'file': OutputSpec(File)}
     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_conda.yml")
 
-    async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
-                             shell_proxy: ShellProxy) -> TaskOutputs:
+    def runproxy(self, params: ConfigParams, inputs: TaskInputs,
+                 shell_proxy: ShellProxy) -> TaskOutputs:
         command = [
             "python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"
         ]
@@ -33,19 +33,19 @@ class CondaEnvTaskTester(CondaEnvTask):
 
 
 # test_conda_task
-class TestCondaTask(IsolatedAsyncioTestCase):
+class TestCondaTask(TestCase):
 
     # @classmethod
     # def tearDownClass(cls):
     #     super().tearDownClass()
     #     CondaEnvTester.uninstall()
 
-    async def test_conda(self):
+    def test_conda(self):
 
         task_runner = TaskRunner(CondaEnvTaskTester)
 
         try:
-            output = await task_runner.run()
+            output = task_runner.run()
 
             file: File = output["file"]
 
@@ -77,7 +77,7 @@ class TestCondaTask(IsolatedAsyncioTestCase):
 
         # experiment: Experiment = ExperimentService.create_experiment_from_task_model(
         #     task_model=proc_mdl)
-        # experiment = await ExperimentRunService.run_experiment(experiment=experiment)
+        # experiment = ExperimentRunService.run_experiment(experiment=experiment)
 
         # proc = experiment.task_models[0]
 

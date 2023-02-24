@@ -26,7 +26,8 @@ from .transformer_type import TransformerDict
 class TransformerService():
 
     @classmethod
-    async def create_and_run_transformer_experiment(cls, transformers: List[TransformerDict], resource_model_id: str) -> Coroutine[Any, Any, ResourceModel]:
+    def create_and_run_transformer_experiment(cls, transformers: List[TransformerDict],
+                                              resource_model_id: str) -> Coroutine[Any, Any, ResourceModel]:
 
         if not transformers or len(transformers) == 0:
             raise BadRequestException('At least 1 transformer mustbe provided')
@@ -63,7 +64,7 @@ class TransformerService():
 
         #  run the experiment
         try:
-            await experiment.run()
+            experiment.run()
         except Exception as exception:
             # delete experiment if there was an error
             experiment.delete()

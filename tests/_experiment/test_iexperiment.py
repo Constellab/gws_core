@@ -5,7 +5,7 @@ from gws_core import (BaseTestCase, IExperiment, IProcess, IProtocol, ITask,
 
 class TestIExperiment(BaseTestCase):
 
-    async def test_iexperiment(self):
+    def test_iexperiment(self):
 
         experiment: IExperiment = IExperiment()
 
@@ -37,7 +37,7 @@ class TestIExperiment(BaseTestCase):
         robot_travel_2: IProtocol = protocol.get_process('robot_travel')
         self.assertIsInstance(robot_travel_2, IProtocol)
 
-        await experiment.run()
+        experiment.run()
 
         # Check that the move worked and the config was set
         robot_i: Robot = sub_move.get_input('robot')

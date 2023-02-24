@@ -46,7 +46,7 @@ class TableRowAnnotator(Task):
             default_value="", human_name="Reference column in metadata table",
             short_description="Column in the metadata table whose values are used for annotation. If empty, is uses the row names.")}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         table: Table = TableAnnotatorHelper.annotate_rows(
             inputs["sample_table"],
             inputs["metadata_table"],
@@ -87,7 +87,7 @@ class TableColumnAnnotator(Task):
             default_value="", human_name="Reference column in metadata table",
             short_description="Column in the metadata table whose values are used for annotation. If empty, is uses the row names.")}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         table: Table = TableAnnotatorHelper.annotate_columns(
             inputs["sample_table"],

@@ -85,7 +85,7 @@ class Task(Process):
         return {"result": True, "message": None}
 
     @abstractmethod
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """This must be overiwritten to perform the task of the task.
 
         This is where most of your code must go
@@ -98,7 +98,7 @@ class Task(Process):
         :type outputs: Output
         """
 
-    async def run_after_task(self) -> None:
+    def run_after_task(self) -> None:
         """
         This can be overwritten to perform action after the task run. This method is called after the
         resource save. This method is useful to delete temporary objects (like files) to clear the server after the task is run.

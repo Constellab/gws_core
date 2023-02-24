@@ -90,5 +90,5 @@ class TableColumnOperations(Transformer):
         )
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableOperationHelper.column_operations(source, params["operations"], params["keep_original_columns"])

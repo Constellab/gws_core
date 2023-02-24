@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from unittest.async_case import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core_test_helper import GWSCoreTestHelper
 
@@ -13,9 +13,9 @@ from gws_core.data_provider.data_provider import DataProvider
 
 
 # test_table_metadata
-class TestTableMetadataExporter(IsolatedAsyncioTestCase):
+class TestTableMetadataExporter(TestCase):
 
-    async def test_table_metadata_exporter(self):
+    def test_table_metadata_exporter(self):
         # importer
         metatable = GWSCoreTestHelper.get_sample_metadata_table()
         print(metatable)
@@ -28,7 +28,7 @@ class TestTableMetadataExporter(IsolatedAsyncioTestCase):
             },
             params={"delimiter": "tab"}
         )
-        outputs = await tester.run()
+        outputs = tester.run()
         file = outputs["target"]
 
         expected_file_path = DataProvider.get_test_data_path("sample_metadata.csv")

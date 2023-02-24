@@ -44,7 +44,7 @@ class TableAnnotator(Task):
             short_description="Column (Row) of the sample_table whose values are used as reference values for annotation. It empty, the row (column) names of the sample_table are used."),
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         table: Table = inputs["table"]
         metadata_table: MetadataTable = inputs["metadata_table"]
         metadata = metadata_table.get_data()

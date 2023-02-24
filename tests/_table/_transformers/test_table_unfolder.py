@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from numpy import NaN
 from pandas import DataFrame
@@ -13,7 +13,7 @@ from gws_core.test.base_test_case import BaseTestCase
 
 
 # test_table_unfolder
-class TestTableUnfolder(IsolatedAsyncioTestCase):
+class TestTableUnfolder(TestCase):
 
     def test_row_unfolding(self):
         initial_df = DataFrame({'A': range(1, 5), 'B': [10, 8, 6, 4]})

@@ -28,7 +28,7 @@ class TableEncoder(Task):
     output_specs: OutputSpecs = {"encoded_table": OutputSpec(Table)}
     config_specs: ConfigSpecs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         data: DataFrame = inputs["table"].get_data()
         encoding_table: EncodingTable = inputs["encoding_table"]
 
