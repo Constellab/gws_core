@@ -307,9 +307,9 @@ class TestTable(IsolatedAsyncioTestCase):
 
     def test_table_column_row_names(self):
         # Test duplicate name and name with special characters
-        table = Table(DataFrame({'0': [1, 2], '1': [4, 5], '2': [4, 5], '3': [4, 5]}),
+        table = Table(DataFrame({'0': [1, 2], '1': [4, 5], '2': [4, 5]}),
                       row_names=['r0', 'r0'],
-                      column_names=['A', 'A', 1, '9é [a].-SUPER'])
+                      column_names=['A', 'A', 1])
 
         self.assertEqual(table.row_names, ['r0', 'r0_1'])
-        self.assertEqual(table.column_names, ['A', 'A_1', '1', '9e_a_SUPER'])
+        self.assertEqual(table.column_names, ['A', 'A_1', '1'])

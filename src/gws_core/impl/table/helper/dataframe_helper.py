@@ -4,14 +4,12 @@
 # About us: https://gencovery.com
 
 from cmath import inf
-from re import sub
 from typing import Any, List
 
 from numpy import NaN, inf
-from pandas import NA, DataFrame, isna
+from pandas import DataFrame
 
 from gws_core.core.utils.numeric_helper import NumericHelper
-from gws_core.core.utils.string_helper import StringHelper
 from gws_core.core.utils.utils import Utils
 
 
@@ -155,10 +153,6 @@ class DataframeHelper:
     def format_header_names(cls, names: List[Any]) -> List[str]:
         """Format the names of a row or a column with the following rules:
           - convert to string
-          - replace ' ', '-', '.' with underscores
-          - remove all other special characters
-          - remove all accents
-          - convert to lower case
         """
 
         return [cls.format_header_name(name) for name in names]
@@ -167,16 +161,13 @@ class DataframeHelper:
     def format_header_name(cls, name: str) -> str:
         """Format the name of a row or a column with the following rules:
           - convert to string
-          - replace ' ', '-', '.' with underscores
-          - remove all other special characters
-          - remove all accents
         """
         if name is None:
             return ''
 
-        str_name: str = str(name)
+        return str(name)
         # with regex replace all spaces, dashes and dots with underscores
-        str_name = sub(r'[\s.-]+', '_', str_name)
-        str_name = StringHelper.replace_accent_with_letter(str_name)
-        str_name = sub('[^A-Za-z0-9_]+', '', str_name)
-        return str_name
+        # str_name = sub(r'[\s.-]+', '_', str_name)
+        # str_name = StringHelper.replace_accent_with_letter(str_name)
+        # str_name = sub('[^A-Za-z0-9_]+', '', str_name)
+        # return str_name
