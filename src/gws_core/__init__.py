@@ -308,11 +308,8 @@ from .io.connector import Connector as Connector
 from .io.io import IO as IO
 from .io.io import Inputs as Inputs
 from .io.io import Outputs as Outputs
-from .io.io_spec import ConstantOut as ConstantOut
 from .io.io_spec import InputSpec as InputSpec
-from .io.io_spec import OptionalIn as OptionalIn
 from .io.io_spec import OutputSpec as OutputSpec
-from .io.io_spec import SkippableIn as SkippableIn
 from .io.io_spec_helper import InputSpecs as InputSpecs
 from .io.io_spec_helper import OutputSpecs as OutputSpecs
 from .io.ioface import Interface as Interface
