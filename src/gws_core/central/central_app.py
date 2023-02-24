@@ -28,20 +28,20 @@ central_app = FastAPI(docs_url="/docs")
 
 # Catch HTTP Exceptions
 @central_app.exception_handler(HTTPException)
-def all_http_exception_handler(request, exc):
+async def all_http_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(request, exc)
 
 # Catch RequestValidationError (422 Unprocessable Entity)
 
 
 @central_app.exception_handler(RequestValidationError)
-def validation_exception_handler(request, exc: RequestValidationError):
+async def validation_exception_handler(request, exc: RequestValidationError):
     return ExceptionHandler.handle_request_validation_error(exc)
 
 
 # Catch all other exceptions
 @central_app.exception_handler(Exception)
-def all_exception_handler(request, exc):
+async def all_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(request, exc)
 
 
