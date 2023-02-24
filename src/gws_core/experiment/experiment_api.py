@@ -119,19 +119,6 @@ def validate_an_experiment(id: str,
     return ExperimentService.validate_experiment_by_id(id=id, project_id=project_id).to_json(deep=True)
 
 
-@core_app.put("/experiment/{id}/protocol", tags=["Experiment"], summary="Update an experiment's protocol")
-def update_experiment_protocol(id: str,
-                               protocol_graph: Dict,
-                               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    """
-    Update an experiment
-
-    - **protocol_graph**: the new protocol graph
-    """
-
-    return ExperimentService.update_experiment_protocol(id, protocol_graph).to_json(deep=True)
-
-
 @core_app.put("/experiment/{id}", tags=["Experiment"], summary="Update an experiment")
 def update_experiment(id: str,
                       experiment: ExperimentDTO,

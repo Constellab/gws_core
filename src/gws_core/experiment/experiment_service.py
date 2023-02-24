@@ -141,16 +141,6 @@ class ExperimentService(BaseService):
         return experiment.save()
 
     @classmethod
-    def update_experiment_protocol(cls, id: str, protocol_graph: Dict) -> Experiment:
-        experiment: Experiment = Experiment.get_by_id_and_check(id)
-
-        experiment.check_is_updatable()
-        ProtocolService.update_protocol_graph(protocol_model=experiment.protocol_model, graph=protocol_graph)
-
-        experiment.save()
-        return experiment
-
-    @classmethod
     def update_experiment_description(cls, id: str, description: Dict) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
 

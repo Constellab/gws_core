@@ -22,7 +22,6 @@ from ..model.typing_manager import TypingManager
 from ..process.process import Process
 from ..process.process_factory import ProcessFactory
 from ..process.process_model import ProcessModel
-from ..process.protocol_sub_process_builder import SubProcessBuilderUpdate
 from ..protocol.protocol_action import AddProcessWithLink
 from ..protocol.protocol_model import ProtocolModel
 from ..task.task_model import TaskModel
@@ -89,55 +88,6 @@ class ProtocolService(BaseService):
         return protocol
 
     ########################## UPDATE PROCESS #####################
-    @classmethod
-    def update_protocol_graph(cls, protocol_model: ProtocolModel, graph: dict) -> ProtocolModel:
-        protocol_model.check_is_updatable()
-        new_protocol: ProtocolModel = cls._update_protocol_graph_recur(
-            protocol_model, graph)
-
-        new_protocol.save_full()
-        return new_protocol
-
-    @classmethod
-    def _update_protocol_graph_recur(cls, protocol_model: ProtocolModel, graph: dict) -> ProtocolModel:
-
-        for process in protocol_model.processes.values():
-            # disconnect the port to prevent connection errors later
-            process.disconnect()
-
-        cls._remove_orphan_process(protocol_model=protocol_model, nodes=graph["nodes"])
-
-        protocol_model.build_from_graph(
-            graph=graph, sub_process_factory=SubProcessBuilderUpdate())
-
-        for key, process in protocol_model.processes.items():
-
-            # If this is a sub protocol and it's graph is defined
-            if isinstance(process, ProtocolModel) and 'graph' in graph["nodes"][key]['data']:
-                cls._update_protocol_graph_recur(
-                    protocol_model=process, graph=graph["nodes"][key]["data"]["graph"])
-
-        # Init the connector afterward because its needs the child to init correctly
-        protocol_model.disconnect_connectors()
-        protocol_model.init_connectors_from_graph(graph["links"])
-
-        return protocol_model
-
-    @classmethod
-    def _remove_orphan_process(cls, protocol_model: ProtocolModel, nodes: dict) -> None:
-        """Method to remove the removed process when saving a new protocols
-
-        :param nodes: [description]
-        :type nodes: Dict
-        """
-        process_names = []
-        for name, process in protocol_model.processes.items():
-            # if the process is not in the Dict or its type has changed, remove it
-            if not name in nodes or process.process_typing_name != nodes[name].get("process_typing_name"):
-                process_names.append(name)
-
-        for name in process_names:
-            cls.delete_process_of_protocol(protocol_model, name)
 
     @classmethod
     @transaction()

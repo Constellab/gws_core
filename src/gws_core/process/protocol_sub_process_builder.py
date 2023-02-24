@@ -12,7 +12,6 @@ from ..config.config_types import ConfigParamsDict
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
-from ..protocol.protocol import Protocol
 from ..task.task_model import TaskModel
 from .process import Process
 from .process_model import ProcessModel
@@ -103,28 +102,3 @@ class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
 
         return self._create_new_process(process_type=process_type, instance_name=instance_name,
                                         node_json=node_json)
-
-
-class SubProcessBuilderUpdate(ProtocolSubProcessBuilder):
-    """Factory used to get the processes or create a new one when building a protocol
-    """
-
-    def _instantiate_process(self, process_id: Optional[str],
-                             process_type: Type[Process],
-                             instance_name: str,
-                             node_json: Dict) -> ProcessModel:
-
-        if process_id is not None:
-            process_model: ProcessModel = self._get_process_from_db(
-                process_id=process_id, is_protocol=issubclass(process_type, Protocol))
-
-            # Update the process config
-            if node_json.get('config'):
-                params = node_json.get('config').get("data", {}).get("values", {})
-                process_model.config.set_values(params)
-
-            return process_model
-
-        else:
-            return self._create_new_process(process_type=process_type, instance_name=instance_name,
-                                            node_json=node_json)
