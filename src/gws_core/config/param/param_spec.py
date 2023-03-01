@@ -303,8 +303,6 @@ class BoolParam(ParamSpec[bool]):
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
         short_description: Optional[str] = None,
-        allowed_values: Optional[List[ParamSpecType]] = None,
-        unit: Optional[str] = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -319,8 +317,6 @@ class BoolParam(ParamSpec[bool]):
         :type human_name: Optional[str]
         :param short_description: Description of the param, showed in the interface
         :type short_description: Optional[str]
-        :param unit: Measure unit of the value (ex kg)
-        :type unit: Optional[str]
         """
 
         super().__init__(
@@ -329,8 +325,8 @@ class BoolParam(ParamSpec[bool]):
             visibility=visibility,
             human_name=human_name,
             short_description=short_description,
-            allowed_values=allowed_values,
-            unit=unit,
+            allowed_values=None,
+            unit=None,
         )
 
     def _get_validator(self) -> Validator:
