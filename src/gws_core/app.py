@@ -72,7 +72,7 @@ class App:
         cls.is_running = False
 
     @classmethod
-    def start(cls, ip: str = "0.0.0.0", port: int = 3000):
+    def start(cls, port: int = 3000):
         """
         Starts FastAPI uvicorn
         """
@@ -99,4 +99,4 @@ class App:
         cls.app.mount("/core-api/", core_app)
         cls.app.mount("/central-api/", central_app)
 
-        uvicorn.run(cls.app, host=ip, port=int(port))
+        uvicorn.run(cls.app, host='0.0.0.0', port=int(port))

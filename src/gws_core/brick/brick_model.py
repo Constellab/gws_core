@@ -84,6 +84,7 @@ class BrickModel(Model):
             json_['repo_commit'] = brick_info['repo_commit']
         except Exception as err:
             # If there was a problem during the birck loading, add a critical error and return brick
-            self.add_message(str(err), 'CRITICAL')
+            self.add_message(
+                f"Can't find brick '{self.name}', was it removed from the lab ? Error : {str(err)}", 'CRITICAL')
             return super().to_json(deep=deep, **kwargs)
         return json_

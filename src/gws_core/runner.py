@@ -9,8 +9,6 @@ import unittest
 from copy import Error
 from unittest.suite import BaseTestSuite
 
-import click
-
 from .app import App
 from .core.db.db_manager_service import DbManagerService
 from .core.exception.exceptions import BadRequestException
@@ -19,19 +17,16 @@ from .core.utils.settings import Settings
 from .lab.system_service import SystemService
 
 
-def call(test="",
-         cli=False, cli_test=False, runserver=False, runmode="dev", notebook=False,
-         ip="0.0.0.0", port="3000", log_level: str = None, show_sql=False, reset_env=False):
+def call(is_prod: bool = True, is_test: bool = False, test: str = "",
+         cli=False, runserver=False, notebook=False,
+         port="3000", log_level: str = None, show_sql=False, reset_env=False):
 
-    is_test = bool(test or cli_test)
-    is_prod = (runmode == "prod")
     Logger(level=log_level, _is_experiment_process=cli)
 
     if show_sql:
         Logger.print_sql_queries()
 
     settings = Settings.get_instance()
-    settings.set_data("app_host", ip)
     settings.set_data("app_port", port)
     settings.set_data("id", os.getenv("LAB_ID"))
     settings.set_data("is_prod", is_prod)
@@ -60,7 +55,7 @@ def call(test="",
 
     if runserver:
         # start app
-        App.start(ip=ip, port=port)
+        App.start(port=port)
     elif cli:
         tab = cli.split(".")
         n = len(tab)
@@ -109,35 +104,8 @@ def call(test="",
     else:
         Logger.error("No option provided on the run, did you forget '--runserver' or '--test' ?")
 
+# TODO to remove on next version (like 1.1.0)
 
-@click.command(context_settings=dict(
-    ignore_unknown_options=True,
-    allow_extra_args=True
-))
-@click.pass_context
-@click.option('--test', default="",
-              help='The name test file to launch (regular expression). Enter "all" to launch all the tests')
-@click.option('--cli', default="", help='Command to run using the command line interface')
-@click.option('--cli_test', is_flag=True, help='Use command line interface in test mode')
-@click.option('--runserver', is_flag=True, help='Starts the server')
-@click.option('--runmode', default="dev", help='Starting mode (dev or prod). Defaults to dev')
-@click.option('--notebook', is_flag=True, help='Starts the for notebook')
-@click.option('--ip', default="0.0.0.0", help='Server IP', show_default=True)
-@click.option('--port', default="3000", help='Server port', show_default=True)
-@click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
-@click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
-@click.option('--reset_env', is_flag=True, help='Reset environment')
-def run(ctx, test, cli, cli_test, runserver, runmode, notebook, ip, port, log_level, show_sql, reset_env):
-    call(
-        test=test,
-        cli=cli,
-        cli_test=cli_test,
-        runserver=runserver,
-        runmode=runmode,
-        notebook=notebook,
-        ip=ip,
-        port=port,
-        log_level=log_level,
-        show_sql=show_sql,
-        reset_env=reset_env
-    )
+
+def run():
+    print("/!\ runner.run() is deprecated, please remove it and use manage.start_app() instead")

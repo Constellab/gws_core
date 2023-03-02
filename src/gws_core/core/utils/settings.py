@@ -10,10 +10,9 @@ from copy import deepcopy
 from json import JSONDecodeError, dump, load
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from typing_extensions import TypedDict
-
 from gws_core.core.db.db_config import DbConfig
 from gws_core.impl.file.file_helper import FileHelper
+from typing_extensions import TypedDict
 
 from .date_helper import DateHelper
 from .string_helper import StringHelper
@@ -36,6 +35,8 @@ class ModuleInfo(TypedDict):
     repo_type: Literal['app', 'git', 'pip']
     repo_commit: str
     name: str
+    source: str
+    error: Optional[str]  # provided if the module could not be loaded
 
 
 class BrickMigrationLogHistory(TypedDict):
@@ -220,6 +221,10 @@ class Settings():
         return '/lab'
 
     @classmethod
+    def get_user_bricks_folder(cls) -> str:
+        return os.path.join(cls.get_lab_folder(), 'user', 'bricks')
+
+    @classmethod
     def _get_system_folder(cls) -> str:
         return os.path.join(cls.get_lab_folder(), '.sys')
 
@@ -269,9 +274,6 @@ class Settings():
             return self.data[k]
         else:
             return self.data.get(k, default)
-
-    def get_brick_list(self) -> List[str]:
-        return [key for key in self.data["modules"] if self.data["modules"]["is_brick"]]
 
     def get_log_dir(self) -> str:
         """

@@ -28,6 +28,9 @@ class WaitingMessage(TypedDict):
 
 class BrickService():
 
+    SETTINGS_JSON_FILE = "settings.json"
+    SOURCE_FOLDER = "src"
+
     _waiting_messages: List[WaitingMessage] = []
 
     @classmethod
@@ -133,23 +136,52 @@ class BrickService():
         return BrickModel.find_by_name(name)
 
     @classmethod
-    def import_all_modules(cls):
+    def import_all_bricks_in_python(cls) -> None:
         bricks_info: Dict[str, ModuleInfo] = BrickHelper.get_all_bricks()
         for brick_name, brick_info in bricks_info.items():
-            _, files = Utils.walk_dir(os.path.join(brick_info['path'], "src"))
-            for py_file in files:
-                parts = py_file.split("/src/")[-1].split("/")
-                parts[-1] = os.path.splitext(parts[-1])[0]  # remove .py extension
-                module_name = ".".join(parts)
-                try:
-                    importlib.import_module(module_name)
-                # On module load error, log an error but don't stop the app szo a brick won't break the whole app
-                except Exception as err:
-                    cls.log_brick_message(
-                        brick_name=brick_name,
-                        message=f"Cannot import module {module_name}. Skipping brick load. Error: {err}",
-                        status='CRITICAL')
-                    traceback.print_exc()
-                    # stop the brick load and go to next brick
-                    break
-                    # raise Exception(f"Cannot import module {module_name}.") from err
+
+            # for brick with error, just log the error and skip brick
+            if brick_info['error']:
+                cls.log_brick_message(brick_name=brick_name,
+                                      message=brick_info['error'],
+                                      status='CRITICAL')
+                continue
+
+            cls.import_brick_in_python(brick_name, brick_info['path'])
+
+    @classmethod
+    def import_brick_in_python(cls, brick_name: str, brick_path: str) -> None:
+        """Method to load a brick from path in python.
+
+        :param brick_name: _description_
+        :type brick_name: str
+        :param brick_path: _description_
+        :type brick_path: str
+        """
+        _, files = Utils.walk_dir(os.path.join(brick_path, cls.SOURCE_FOLDER))
+
+        # loop through each file in the brick source folder
+        for py_file in files:
+            parts = py_file.split(f"/{cls.SOURCE_FOLDER}/")[-1].split("/")
+            parts[-1] = os.path.splitext(parts[-1])[0]  # remove .py extension
+            module_name = ".".join(parts)
+            try:
+                importlib.import_module(module_name)
+            # On module load error, log an error but don't stop the app so a brick won't break the whole app
+            except Exception as err:
+                cls.log_brick_message(
+                    brick_name=brick_name,
+                    message=f"Cannot import module {module_name}. Skipping brick load. Error: {err}",
+                    status='CRITICAL')
+                traceback.print_exc()
+                # stop the brick load and go to next brick
+                break
+
+    @classmethod
+    def folder_is_brick(cls, path: str) -> bool:
+        """return true if the provided folder is a brick.
+        If the folder contains a settings.json and a src folder it is a brick
+
+        """
+        return os.path.exists(os.path.join(path, cls.SETTINGS_JSON_FILE)) and \
+            os.path.exists(os.path.join(path, cls.SOURCE_FOLDER))

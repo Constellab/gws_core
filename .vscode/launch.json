@@ -10,7 +10,7 @@
             "name": "Starts GWS server",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/manage.py",
+            "program": "/lab/.sys/app/manage.py",
             "console": "integratedTerminal"
         },
         // configuration to start the gws

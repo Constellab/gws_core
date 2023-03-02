@@ -14,9 +14,8 @@ if 'gws_core' not in sys.modules:
             raise Exception("Cannot find gws_core brick")
     sys.path.insert(0, core_lib_path)
 
-from gws_core import manage, runner
 
 if __name__ == "__main__":
+    from gws_core import manage
     __cdir__ = os.path.dirname(os.path.abspath(__file__))
-    manage.load_settings(__cdir__)
-    runner.run()
+    manage.start_app(__cdir__)
