@@ -5,10 +5,9 @@
 
 
 from fastapi.param_functions import Depends
+from gws_core.lab.system_service import SystemService
 from requests.models import Response
 from starlette.responses import JSONResponse, Response
-
-from gws_core.lab.system_service import SystemService
 
 from ..central.central_service import (CentralService,
                                        ExternalCheckCredentialResponse)
@@ -55,6 +54,8 @@ class AuthService(BaseService):
 
         # if the user is logged
         if check_response.status == 'OK':
+            if check_response.user:
+                return cls.get_and_refresh_user_from_central(check_response.user)
             return cls.log_user(user)
         else:
             # if the user need to be logged with 2FA
