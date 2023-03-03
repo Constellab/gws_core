@@ -77,7 +77,7 @@ class SettingsLoader:
                 folder_path = os.path.join(user_bricks, folder)
                 # if the brick was alreayd loaded, skip it
                 if folder in cls.all_settings["modules"]:
-                    return
+                    continue
                 if os.path.isdir(folder_path) and BrickService.folder_is_brick(folder_path):
                     Logger.info(f"Loading dev brick '{folder}' from '{folder_path}'")
                     cls.parse_settings(folder, folder_path, is_brick=True, repo_type="git")
