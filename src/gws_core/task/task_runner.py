@@ -82,6 +82,8 @@ class TaskRunner():
         result = None
         try:
             result = task.check_before_run(config_params, inputs)
+        except KeyError as exception:
+            raise Exception(f"KeyError : {str(exception)}")
         except Exception as exception:
             self.force_dispatch_waiting_messages()
             raise exception
@@ -102,6 +104,8 @@ class TaskRunner():
 
         try:
             task_outputs: TaskOutputs = task.run(config_params, inputs)
+        except KeyError as exception:
+            raise Exception(f"KeyError : {str(exception)}")
         except Exception as exception:
             self.force_dispatch_waiting_messages()
             raise exception
@@ -115,6 +119,8 @@ class TaskRunner():
 
         try:
             task.run_after_task()
+        except KeyError as exception:
+            raise Exception(f"KeyError : {str(exception)}")
         except Exception as exception:
             self.force_dispatch_waiting_messages()
             raise exception
