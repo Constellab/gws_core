@@ -180,12 +180,17 @@ class ShellWait(Task):
         default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        # Create the shell proxy. No need to provide the working directory.
+        # Provide the task message_dispatcher so command outputs, will be log in the task
         shell_proxy = ShellProxy(message_dispatcher=self.message_dispatcher)
 
+        # retrieve parameter
         waiting_time = params.get_value("waiting_time")
 
+        # run the command
         shell_proxy.run(f"sleep {waiting_time}", shell_mode=True)
 
+        # return the input resource as output
         resource = inputs["resource"]
         return {"resource": resource}
 

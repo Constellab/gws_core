@@ -113,9 +113,8 @@ class TypingManager:
                 typing.object_type, typing.brick, typing.unique_name)
 
             # set the version because the bricks are not loaded before
-            try:
-                brick_info = BrickHelper.get_brick_info(typing.brick)
-            except:
+            brick_info = BrickHelper.get_brick_info(typing.brick)
+            if brick_info is None:
                 Logger.error(
                     f"Can't get the brick info for brick '{typing.brick}' of typing '{typing.typing_name}'. Is the file in the correct folder in your brick ? Skipping the typing")
                 return

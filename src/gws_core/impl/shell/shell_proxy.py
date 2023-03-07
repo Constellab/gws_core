@@ -33,9 +33,12 @@ class ShellProxy():
     def __init__(self, working_dir: str = None, message_dispatcher: MessageDispatcher = None):
         """_summary_
 
-        :param working_dir: working directory for the shell (all command will be executed from this dir)
-                            if not provided, an new temp directory is created, defaults to None
+        :param working_dir: working directory for the shell (all command will be executed from this dir).
+                            If not provided, an new temp directory is created. defaults to None
         :type working_dir: str, optional
+        :param message_dispatcher: if provided, the output of the command will be redirected to the dispatcher.
+                                  Can be useful to log command outputs in task's logs. defaults to None
+        :type message_dispatcher: MessageDispatcher, optional
         """
         super().__init__()
 

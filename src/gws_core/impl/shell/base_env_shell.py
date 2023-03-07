@@ -9,13 +9,12 @@ from json import dump, load
 from pathlib import Path
 from typing import Any, Union, final
 
-from typing_extensions import TypedDict
-
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
+from typing_extensions import TypedDict
 
 from .shell_proxy import ShellProxy
 
@@ -36,19 +35,37 @@ class BaseEnvShell(ShellProxy):
     VENV_DIR_NAME = ".venv"
     CREATION_INFO_FILE_NAME = "__creation.json"
 
-    def __init__(self, env_dir_name: str, env_file_path: str,
+    def __init__(self, env_dir_name: str, env_file_path: Union[Path, str],
                  working_dir: str = None, message_dispatcher: MessageDispatcher = None):
+        """_summary_
+
+        :param env_dir_name: unique name for the env directory. This name will be used to create the env directory.
+                            If the env directory already exists, it will be reused.
+        :type env_dir_name: str
+        :param env_file_path: path to the env file. This file must contained dependencies for the virtual env and
+                              will be used to create the env. If the env file has changed, the env will be recreated and
+                              previous env will be deleted.
+        :type env_file_path: str
+        :param working_dir: working directory for the shell (all command will be executed from this dir).
+                            If not provided, an new temp directory is created. defaults to None
+        :type working_dir: str, optional
+        :param message_dispatcher: if provided, the output of the command will be redirected to the dispatcher.
+                                  Can be useful to log command outputs in task's logs. defaults to None
+        :type message_dispatcher: MessageDispatcher, optional
+        :raises Exception: _description_
+        :raises Exception: _description_
+        """
         super().__init__(working_dir, message_dispatcher)
         self.env_dir_name = env_dir_name
-        self.env_file_path = env_file_path
 
         # check env file path
-        if isinstance(env_file_path, str):
+        if isinstance(env_file_path, (str, Path)):
             if not FileHelper.exists_on_os(env_file_path):
                 raise Exception(
                     f"The environment file '{env_file_path}' does not exist")
         else:
             raise Exception("Invalid env file path")
+        self.env_file_path = str(env_file_path)
 
     def run(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = False) -> int:
 

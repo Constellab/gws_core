@@ -59,7 +59,7 @@ class DbMigrationService:
             brick_info: ModuleInfo
 
             try:
-                brick_info = BrickHelper.get_brick_info(migration_obj.brick_migration)
+                brick_info = BrickHelper.get_brick_info_and_check(migration_obj.brick_migration)
             except:
                 Logger.error(
                     f"Can't retrieve brick information for migration class : '{str(migration_obj.brick_migration)}'")

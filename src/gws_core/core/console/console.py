@@ -45,20 +45,12 @@ class Console:
         cls.user = user
 
     @classmethod
-    def create_tables(cls, models: list = None):
-        """
-        Create tables
-        """
-
-        BaseModelService.create_tables(models)
-
-    @classmethod
-    def drop_tables(cls, models: list = None):
+    def drop_tables(cls):
         """
         Drops tables
         """
 
-        BaseModelService.drop_tables(models)
+        BaseModelService.drop_tables()
 
     @classmethod
     def delete_data_and_temp_folder(cls):

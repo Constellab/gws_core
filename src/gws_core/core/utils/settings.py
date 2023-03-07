@@ -125,10 +125,6 @@ class Settings():
         return os.environ.get("LAB_DEV_API_URL")
 
     @classmethod
-    def get_gws_core_db_password(cls) -> str:
-        return os.environ.get("GWS_CORE_DB_PASSWORD")
-
-    @classmethod
     def get_lab_environment(cls) -> Literal["PROD", "LOCAL"]:
         """Return the environment where the lab run
         PROD by default but it can also be local (when running on a local machine)
@@ -150,6 +146,10 @@ class Settings():
         :rtype: [type]
         """
         return os.environ.get("VIRTUAL_HOST")
+
+    @classmethod
+    def get_gws_core_brick_name(cls) -> str:
+        return 'gws_core'
 
     @classmethod
     def get_lab_id(cls) -> str:
@@ -232,35 +232,30 @@ class Settings():
     def get_global_env_dir(cls) -> str:
         return os.path.join(cls._get_system_folder(), ".env")
 
-    def get_gws_core_prod_db_config(self) -> DbConfig:
+    @classmethod
+    def get_gws_core_db_config(cls) -> DbConfig:
         return {
-            "host":  "gws_core_prod_db",
-            "user": "gws_core",
-            "password": self.get_gws_core_db_password(),
-            "port": 3306,
-            "db_name": "gws_core",
+            "host":  os.environ.get("GWS_CORE_DB_HOST"),
+            "user": os.environ.get("GWS_CORE_DB_USER"),
+            "password": os.environ.get("GWS_CORE_DB_PASSWORD"),
+            "port": int(os.environ.get("GWS_CORE_DB_PORT")),
+            "db_name": os.environ.get("GWS_CORE_DB_NAME"),
             "engine": "mariadb"
         }
 
-    def get_gws_core_dev_db_config(self) -> DbConfig:
+    @classmethod
+    def get_test_db_config(cls) -> DbConfig:
         return {
-            "host":  "gws_core_dev_db",
-            "user": "gws_core",
-            "password": self.get_gws_core_db_password(),
-            "port": 3306,
-            "db_name": "gws_core",
+            "host":  os.environ.get("GWS_TEST_DB_HOST"),
+            "user": os.environ.get("GWS_TEST_DB_USER"),
+            "password": os.environ.get("GWS_TEST_DB_PASSWORD"),
+            "port": int(os.environ.get("GWS_TEST_DB_PORT")),
+            "db_name": os.environ.get("GWS_TEST_DB_NAME"),
             "engine": "mariadb"
         }
 
-    def get_gws_core_test_db_config(self) -> DbConfig:
-        return {
-            "host":  "test_gws_dev_db",
-            "user": "test_gws",
-            "password": "gencovery",
-            "port": 3306,
-            "db_name": "test_gws",
-            "engine": "mariadb"
-        }
+    def get_gws_core_db_name(self) -> str:
+        return 'gws_core'
 
     def get_maria_db_backup_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "backups")

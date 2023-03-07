@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import inspect
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from gws_core.core.db.version import Version
 
@@ -42,10 +42,12 @@ class BrickHelper():
         return modules[0]
 
     @classmethod
-    def get_brick_info(cls, obj: Any) -> ModuleInfo:
+    def get_brick_info(cls, obj: Any) -> Optional[ModuleInfo]:
         """Methode to return a brick.
         If object, retrieve the brick of the object
         If string, retrieve the brick of name
+
+        Return None if not found
 
         :param obj: class, method...
         :type obj: Any
@@ -70,9 +72,29 @@ class BrickHelper():
                     "repo_type": 'app',
                     "version": '0.0.0'
                 }
-            raise Exception(f"Can't find the brick information of object '{obj}'")
+            return None
 
         return bricks[brick_name]
+
+    @classmethod
+    def get_brick_info_and_check(cls, obj: Any) -> ModuleInfo:
+        """Methode to return a brick.
+        If object, retrieve the brick of the object
+        If string, retrieve the brick of name
+
+        Raise Exception if not found
+
+        :param obj: class, method...
+        :type obj: Any
+        :rtype: str
+        """
+
+        brick_info = cls.get_brick_info(obj)
+
+        if brick_info is None:
+            raise Exception(f"Can't find the brick information of object '{obj}'")
+
+        return brick_info
 
     @classmethod
     def get_brick_version(cls, obj: Any) -> Version:
@@ -81,7 +103,7 @@ class BrickHelper():
            If string, retrieve the brick of name
         """
 
-        brick_info = cls.get_brick_info(obj)
+        brick_info = cls.get_brick_info_and_check(obj)
         return Version(brick_info.get("version"))
 
     @classmethod

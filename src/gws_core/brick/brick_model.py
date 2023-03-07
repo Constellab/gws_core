@@ -6,11 +6,10 @@
 from time import time
 from typing import Dict, Literal
 
-from peewee import CharField
-from typing_extensions import TypedDict
-
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.utils.settings import ModuleInfo
+from peewee import CharField
+from typing_extensions import TypedDict
 
 from ..core.model.model import Model
 
@@ -64,7 +63,7 @@ class BrickModel(Model):
         self.data['messages'] = []
 
     def get_brick_info(self) -> ModuleInfo:
-        return BrickHelper.get_brick_info(self.name)
+        return BrickHelper.get_brick_info_and_check(self.name)
 
     @classmethod
     def delete_all(cls) -> None:
