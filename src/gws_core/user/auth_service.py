@@ -55,7 +55,7 @@ class AuthService(BaseService):
         # if the user is logged
         if check_response.status == 'OK':
             if check_response.user:
-                return cls.get_and_refresh_user_from_central(check_response.user)
+                cls.get_and_refresh_user_from_central(check_response.user)
             return cls.log_user(user)
         else:
             # if the user need to be logged with 2FA
