@@ -61,6 +61,10 @@ class SystemService:
         LabConfigModel.save_current_config()
 
         # Init data folder
+        cls.init_data_folder()
+
+    @classmethod
+    def init_data_folder(cls):
         settings = Settings.get_instance()
         FileHelper.create_dir_if_not_exist(settings.get_data_dir())
         FileHelper.create_dir_if_not_exist(settings.get_kv_store_base_dir())

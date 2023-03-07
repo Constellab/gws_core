@@ -6,6 +6,8 @@
 
 import shutil
 
+from gws_core.lab.system_status import SystemStatus
+
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.base_model_service import BaseModelService
 from ...core.utils.settings import Settings
@@ -24,7 +26,7 @@ class Console:
     user: User = None
 
     @classmethod
-    def init(cls, user: User = None):
+    def init_complete(cls, user: User = None):
         """
         This function initializes objects for unit testing
         """
@@ -43,6 +45,20 @@ class Console:
         AuthService.authenticate(id=user.id)
 
         cls.user = user
+
+    @classmethod
+    def init(cls):
+        """
+        This function initializes objects for unit testing
+        """
+
+        settings = Settings.get_instance()
+        if not settings.is_dev:
+            raise BadRequestException(
+                "The unit tests can only be initialized in dev mode")
+
+        SystemService.init_data_folder()
+        SystemStatus.app_is_initialized = True
 
     @classmethod
     def drop_tables(cls):
