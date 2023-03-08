@@ -3,16 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from enum import Enum
 from typing import List, final
 
 from fastapi.encoders import jsonable_encoder
-from peewee import CharField, FloatField
-from starlette_context import context
-from typing_extensions import TypedDict
-
+from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.model.db_field import DateTimeUTC
 from gws_core.core.utils.date_helper import DateHelper
+from peewee import CharField, FloatField
+from typing_extensions import TypedDict
 
 from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions import BadRequestException
@@ -20,22 +18,14 @@ from ..core.model.model import Model
 from ..core.utils.logger import Logger
 
 
-class ProgressBarMessageType(str, Enum):
-    INFO = "INFO"
-    SUCCESS = "SUCCESS"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    PROGRESS = "PROGRESS"
-
-
 class ProgressBarMessageWithType(TypedDict):
-    type: ProgressBarMessageType
+    type: MessageLevel
     message: str
     progress: float
 
 
 class ProgressBarMessage(TypedDict):
-    type: ProgressBarMessageType
+    type: MessageLevel
     text: str
     datetime: str
 
@@ -97,19 +87,22 @@ class ProgressBar(Model):
 
     ################################################## MESSAGE #################################################
 
+    def add_debug_message(self, message: str):
+        self.add_message(message, MessageLevel.DEBUG)
+
     def add_info_message(self, message: str):
-        self.add_message(message, ProgressBarMessageType.INFO)
+        self.add_message(message, MessageLevel.INFO)
 
     def add_success_message(self, message: str):
-        self.add_message(message, ProgressBarMessageType.SUCCESS)
+        self.add_message(message, MessageLevel.SUCCESS)
 
     def add_error_message(self, message: str):
-        self.add_message(message, ProgressBarMessageType.ERROR)
+        self.add_message(message, MessageLevel.ERROR)
 
     def add_warning_message(self, message: str):
-        self.add_message(message, ProgressBarMessageType.WARNING)
+        self.add_message(message, MessageLevel.WARNING)
 
-    def add_message(self, message: str, type_: ProgressBarMessageType = ProgressBarMessageType.INFO):
+    def add_message(self, message: str, type_: MessageLevel = MessageLevel.INFO):
         self._add_message(message, type_)
 
         self.save()
@@ -117,7 +110,7 @@ class ProgressBar(Model):
     def add_messages(self, messages: List[ProgressBarMessageWithType]) -> None:
 
         for message in messages:
-            if message["type"] == ProgressBarMessageType.PROGRESS:
+            if message["type"] == MessageLevel.PROGRESS:
                 self._update_progress(value=message["progress"], message=message["message"])
             else:
                 self._add_message(message["message"], message["type"])
@@ -125,7 +118,7 @@ class ProgressBar(Model):
         # save only once at the end
         self.save()
 
-    def _add_message(self, message: str, type_: ProgressBarMessageType = ProgressBarMessageType.INFO):
+    def _add_message(self, message: str, type_: MessageLevel = MessageLevel.INFO):
         dtime = jsonable_encoder(DateHelper.now_utc())
 
         progress_bar_message: ProgressBarMessage = {
@@ -176,7 +169,7 @@ class ProgressBar(Model):
         if message:
             # perc = value/self.get_max_value()
             perc = value
-            self._add_message("{:1.1f}%: {}".format(perc, message), ProgressBarMessageType.PROGRESS)
+            self._add_message("{:1.1f}%: {}".format(perc, message), MessageLevel.PROGRESS)
 
     @property
     def messages(self) -> List[ProgressBarMessage]:
@@ -229,12 +222,12 @@ class ProgressBar(Model):
     ################################################## CLASS METHODS #################################################
 
     @classmethod
-    def _log_message(cls, message: str, type_: ProgressBarMessageType) -> None:
-        if type_ == ProgressBarMessageType.INFO or type_ == ProgressBarMessageType.SUCCESS:
+    def _log_message(cls, message: str, type_: MessageLevel) -> None:
+        if type_ == MessageLevel.INFO or type_ == MessageLevel.SUCCESS:
             Logger.info(message)
-        elif type_ == ProgressBarMessageType.ERROR:
+        elif type_ == MessageLevel.ERROR:
             Logger.error(message)
-        elif type_ == ProgressBarMessageType.WARNING:
+        elif type_ == MessageLevel.WARNING:
             Logger.warning(message)
-        elif type_ == ProgressBarMessageType.PROGRESS:
+        elif type_ == MessageLevel.PROGRESS:
             Logger.progress(message)

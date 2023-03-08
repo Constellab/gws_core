@@ -66,3 +66,15 @@ class TestDispatcher(BaseTestCase):
         except Exception as err:
             dispatcher.force_dispatch_waiting_messages()
             raise err
+
+    def test_level(self):
+        dispatcher = MessageDispatcher(0, 0)
+
+        observer = BasicMessageObserver()
+        dispatcher.attach(observer)
+
+        dispatcher.notify_debug_message('message 1')
+        self.assertEqual(len(observer.messages), 0)
+
+        dispatcher.notify_info_message('message 1')
+        self.assertEqual(len(observer.messages), 1)

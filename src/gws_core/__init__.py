@@ -51,6 +51,7 @@ from .core.classes.observer.dispatched_message import \
     DispatchedMessage as DispatchedMessage
 from .core.classes.observer.message_dispatcher import \
     MessageDispatcher as MessageDispatcher
+from .core.classes.observer.message_level import MessageLevel as MessageLevel
 from .core.classes.observer.message_observer import \
     MessageObserver as MessageObserver
 from .core.classes.observer.message_observer import \
@@ -330,8 +331,6 @@ from .process.process_interface import IProcess as IProcess
 from .process.process_model import ProcessModel as ProcessModel
 # Progress Bar
 from .progress_bar.progress_bar import ProgressBar as ProgressBar
-from .progress_bar.progress_bar import \
-    ProgressBarMessageType as ProgressBarMessageType
 from .progress_bar.progress_bar_service import \
     ProgressBarService as ProgressBarService
 # Project

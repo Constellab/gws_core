@@ -7,6 +7,7 @@ import time
 from threading import Timer
 from typing import List
 
+from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.progress_bar.progress_bar import ProgressBar
 
 from .dispatched_message import DispatchedMessage
@@ -29,6 +30,9 @@ class MessageDispatcher:
     # During this time all the notify message are buffered before being dispatched all at once
     interval_time_dispatched_buffer: float = None
 
+    # Min level of message to be notified
+    message_level: MessageLevel = None
+
     _observers: List[MessageObserver] = None
 
     # list of the messages that are waiting to be dispatched by the timer
@@ -42,11 +46,13 @@ class MessageDispatcher:
     # store the thread when is it executing (after the timer and before it is finished)
     _running_dispatch_timers: List[Timer] = []
 
-    def __init__(self, interval_time_merging_message=0.1, interval_time_dispatched_buffer=1):
+    def __init__(self, interval_time_merging_message=0.1, interval_time_dispatched_buffer=1,
+                 log_level: MessageLevel = MessageLevel.INFO):
         self._observers = []
         self._waiting_messages = []
         self.interval_time_merging_message = interval_time_merging_message
         self.interval_time_dispatched_buffer = interval_time_dispatched_buffer
+        self.message_level = log_level
 
     def attach(self, observer: MessageObserver) -> None:
         """Attach the listener method and return an id to detach it later
@@ -103,10 +109,20 @@ class MessageDispatcher:
         """
         self.notify_message(DispatchedMessage.create_success_message(message))
 
+    def notify_debug_message(self, message: str) -> None:
+        """
+        Trigger a debug in each subscriber.
+        """
+        self.notify_message(DispatchedMessage.create_debug_message(message))
+
     def notify_message(self, message: DispatchedMessage) -> None:
         """
         Trigger a message in each subscriber.
         """
+
+        # if the message level is lower than the min level, we don't notify it
+        if message.status.get_int_value() < self.message_level.get_int_value():
+            return
 
         # if there is no dispatched time, then directly dispatch the message
         if self.interval_time_dispatched_buffer == 0:

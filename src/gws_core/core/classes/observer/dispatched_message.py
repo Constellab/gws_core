@@ -4,17 +4,17 @@
 # About us: https://gencovery.com
 
 
-from typing import Literal, Optional
+from typing import Optional
 
-DispatchedMessageStatus = Literal['SUCCESS', 'ERROR', 'WARNING', 'INFO', 'PROGRESS']
+from .message_level import MessageLevel
 
 
 class DispatchedMessage():
-    status: DispatchedMessageStatus
+    status: MessageLevel
     message: str
     progress: Optional[float] = None
 
-    def __init__(self, status: DispatchedMessageStatus,
+    def __init__(self, status: MessageLevel,
                  message: str,
                  progress: Optional[float] = None):
         self.status = status
@@ -23,20 +23,24 @@ class DispatchedMessage():
 
     @staticmethod
     def create_success_message(message: str) -> 'DispatchedMessage':
-        return DispatchedMessage(status='SUCCESS', message=message)
+        return DispatchedMessage(status=MessageLevel.SUCCESS, message=message)
 
     @staticmethod
     def create_progress_message(progress: float, message: str) -> 'DispatchedMessage':
-        return DispatchedMessage(status='PROGRESS', message=message, progress=progress)
+        return DispatchedMessage(status=MessageLevel.PROGRESS, message=message, progress=progress)
 
     @staticmethod
     def create_error_message(message: str) -> 'DispatchedMessage':
-        return DispatchedMessage(status='ERROR', message=message)
+        return DispatchedMessage(status=MessageLevel.ERROR, message=message)
 
     @staticmethod
     def create_warning_message(message: str) -> 'DispatchedMessage':
-        return DispatchedMessage(status='WARNING', message=message)
+        return DispatchedMessage(status=MessageLevel.WARNING, message=message)
 
     @staticmethod
     def create_info_message(message: str) -> 'DispatchedMessage':
-        return DispatchedMessage(status='INFO', message=message)
+        return DispatchedMessage(status=MessageLevel.INFO, message=message)
+
+    @staticmethod
+    def create_debug_message(message: str) -> 'DispatchedMessage':
+        return DispatchedMessage(status=MessageLevel.DEBUG, message=message)

@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import ProgressBar, ProgressBarMessageType
+from gws_core import MessageLevel, ProgressBar
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -25,7 +25,7 @@ class TestProgressBar(BaseTestCase):
 
         self.assertEqual(len(progress_bar.messages), 1)
         messages = progress_bar.messages[0]
-        self.assertEqual(messages['type'], ProgressBarMessageType.SUCCESS)
+        self.assertEqual(messages['type'], MessageLevel.SUCCESS)
         self.assertEqual(messages['text'], 'Hello')
         self.assertIsNotNone(messages['datetime'])
 
