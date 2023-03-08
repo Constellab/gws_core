@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Dict, Type, final
 
 from peewee import CharField, ForeignKeyField
 from starlette_context import context
-from typing_extensions import TypedDict
 
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
@@ -36,6 +35,7 @@ from ..progress_bar.progress_bar import ProgressBar
 from ..user.user import User
 from .process import Process
 from .process_exception import ProcessRunException
+from .process_types import ProcessErrorInfo
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
@@ -46,13 +46,6 @@ class ProcessStatus(Enum):
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     ERROR = "ERROR"
-
-
-class ProcessErrorInfo(TypedDict):
-    detail: str
-    unique_code: str
-    context: str
-    instance_id: str
 
 
 @json_ignore(["parent_protocol_id"])
@@ -567,3 +560,13 @@ class ProcessModel(ModelWithUser):
         self.error_info = error_info
         self.ended_at = DateHelper.now_utc()
         self.save()
+
+    def mark_as_error_and_parent(self, error_info: ProcessErrorInfo):
+        self.progress_bar.stop_error(error_info["detail"])
+        self.status = ProcessStatus.ERROR
+        self.error_info = error_info
+        self.ended_at = DateHelper.now_utc()
+        self.save()
+
+        if self.parent_protocol and not self.parent_protocol.is_error:
+            self.parent_protocol.mark_as_error_and_parent(error_info)

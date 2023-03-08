@@ -11,6 +11,8 @@ from typing import Any, Coroutine, List
 from gws_core.central.central_dto import SendExperimentFinishMailData
 from gws_core.central.central_service import CentralService
 from gws_core.core.service.front_service import FrontService
+from gws_core.process.process_types import ProcessErrorInfo
+from gws_core.task.task_model import TaskModel
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
@@ -170,9 +172,19 @@ class ExperimentRunService():
             object_id=experiment.id
         )
 
-        experiment.mark_as_error({"detail": GWSException.EXPERIMENT_STOPPED_MANUALLY.value,
-                                  "unique_code": GWSException.EXPERIMENT_STOPPED_MANUALLY.name,
-                                  "context": None, "instance_id": None})
+        # mark the experiment as error
+        error: ProcessErrorInfo = {
+            "detail": f"Experiment manually stopped by {CurrentUserService.get_and_check_current_user().full_name}",
+            "unique_code": "EXPERIMENT_STOPPED_MANUALLY",
+            "context": None,
+            "instance_id": None
+        }
+        experiment.mark_as_error(error)
+
+        # mark all the running tasks as error
+        task_models: List[TaskModel] = experiment.get_running_tasks()
+        for task_model in task_models:
+            task_model.mark_as_error_and_parent(error)
 
         return experiment
 

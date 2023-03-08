@@ -5,14 +5,13 @@
 
 from __future__ import annotations
 
-from enum import Enum
 from typing import TYPE_CHECKING, List, final
 
 from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
-from typing_extensions import TypedDict
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.classes.enum_field import EnumField
@@ -34,13 +33,6 @@ from .experiment_exception import ResourceUsedInAnotherExperimentException
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
     from ..task.task_model import TaskModel
-
-
-class ExperimentErrorInfo(TypedDict):
-    detail: str
-    unique_code: str
-    context: str
-    instance_id: str
 
 
 @final
@@ -65,7 +57,7 @@ class Experiment(ModelWithUser, TaggableModel):
     score = DoubleField(null=True)
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
-    error_info: ExperimentErrorInfo = JSONField(null=True)
+    error_info: ProcessErrorInfo = JSONField(null=True)
     type: ExperimentType = EnumField(choices=ExperimentType,
                                      default=ExperimentType.EXPERIMENT)
 
@@ -150,6 +142,12 @@ class Experiment(ModelWithUser, TaggableModel):
 
     def check_user_privilege(self, user: User) -> None:
         return self.protocol_model.check_user_privilege(user)
+
+    def get_running_tasks(self) -> List[TaskModel]:
+        from ..task.task_model import TaskModel
+        return list(TaskModel.select().where(
+            (TaskModel.experiment == self) &
+            (TaskModel.status == ExperimentStatus.RUNNING)))
 
     ########################################## MODEL METHODS ######################################
 
@@ -350,7 +348,7 @@ class Experiment(ModelWithUser, TaggableModel):
         self.status = ExperimentStatus.DRAFT
         self.save()
 
-    def mark_as_error(self, error_info: ExperimentErrorInfo) -> None:
+    def mark_as_error(self, error_info: ProcessErrorInfo) -> None:
         if self.is_error:
             return
         self.data["pid"] = 0
