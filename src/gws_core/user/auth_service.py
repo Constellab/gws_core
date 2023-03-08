@@ -5,9 +5,10 @@
 
 
 from fastapi.param_functions import Depends
-from gws_core.lab.system_service import SystemService
 from requests.models import Response
 from starlette.responses import JSONResponse, Response
+
+from gws_core.lab.system_service import SystemService
 
 from ..central.central_service import (CentralService,
                                        ExternalCheckCredentialResponse)
@@ -81,7 +82,7 @@ class AuthService(BaseService):
 
         access_token = cls.generate_user_access_token(user.id)
 
-        content = {"status": "LOGGED_IN", "expiresIn": JWTService.get_token_duration_in_seconds()}
+        content = {"status": "LOGGED_IN", "expiresIn": JWTService.get_token_duration_in_seconds() * 1000}
         response = JSONResponse(content=content)
 
         # Add the token is the cookies
