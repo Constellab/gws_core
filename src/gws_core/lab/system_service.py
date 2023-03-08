@@ -11,6 +11,7 @@ from gws_core.central.central_service import CentralService
 from gws_core.core.db.db_migration import DbMigrationService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
@@ -143,7 +144,9 @@ class SystemService:
         if not settings.is_dev:
             raise UnauthorizedException('The kill method can only be called in dev environment')
 
-        sys.exit()
+        # kill current process and all its children
+        sys_proc = SysProc.from_pid(os.getpid())
+        sys_proc.kill_with_children()
 
     @classmethod
     def register_lab_start(cls) -> None:
