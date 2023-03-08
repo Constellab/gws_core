@@ -5,6 +5,7 @@
 
 from fastapi import Depends
 
+from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.core_app import core_app
 from gws_core.lab.log.log import LogsBetweenDatesDTO
 from gws_core.lab.monitor.monitor_dto import MonitorBetweenDateDTO
@@ -24,6 +25,20 @@ def get_process_logs(process_type: ProcessType,
     """
 
     return ProcessService.get_logs_of_process(process_type, id).to_json()
+
+
+@core_app.get("/process/{process_type}/{id}/logs/download", tags=["Process"],
+              summary="Download the log of a process", response_model=None)
+def download_process_logs(process_type: ProcessType,
+                          id: str,
+                          _: UserData = Depends(AuthService.check_user_access_token)):
+    """
+    Retrieve a list of running experiments.
+    """
+
+    logs: LogsBetweenDatesDTO = ProcessService.get_logs_of_process(process_type, id)
+
+    return ResponseHelper.create_file_response_from_str(logs.to_str(), "logs.txt")
 
 
 @core_app.get("/process/{process_type}/{id}/monitor", tags=["Process"],

@@ -6,11 +6,12 @@
 from typing import List, final
 
 from fastapi.encoders import jsonable_encoder
+from peewee import CharField, FloatField
+from typing_extensions import TypedDict
+
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.model.db_field import DateTimeUTC
 from gws_core.core.utils.date_helper import DateHelper
-from peewee import CharField, FloatField
-from typing_extensions import TypedDict
 
 from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions import BadRequestException
@@ -175,6 +176,12 @@ class ProgressBar(Model):
     def messages(self) -> List[ProgressBarMessage]:
         return self.data["messages"]
 
+    def get_messages_as_str(self) -> str:
+        return "\n".join([self.progress_message_to_str(message) for message in self.messages])
+
+    @classmethod
+    def progress_message_to_str(cls, message: ProgressBarMessage) -> str:
+        return f"{message['type']} - {message['datetime']} - {message['text']}"
     ################################################## VALUE #################################################
 
     def _update_progress_value(self, value: float) -> float:

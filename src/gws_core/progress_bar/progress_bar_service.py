@@ -13,3 +13,8 @@ class ProgressBarService(BaseService):
     @classmethod
     def fetch_progress_bar(cls, id: str) -> ProgressBar:
         return ProgressBar.get_by_id_and_check(id)
+
+    @classmethod
+    def download_progress_bar(cls, id: str) -> str:
+        progress_bar: ProgressBar = ProgressBar.get_by_id_and_check(id)
+        return progress_bar.get_messages_as_str()

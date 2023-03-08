@@ -85,6 +85,9 @@ class LogLine():
         return {"level": self.level, "date_time": self.date_time,
                 "content": self.content, "is_from_experiment": self.is_from_experiment}
 
+    def to_str(self) -> str:
+        return f"{self.level} - {self.date_time} - {self.content}"
+
 
 class LogCompleteInfo():
 
@@ -151,3 +154,6 @@ class LogsBetweenDatesDTO():
                 "from_date": self.from_date,
                 "to_date": self.to_date,
                 "from_experiment": self.from_experiment}
+
+    def to_str(self) -> str:
+        return "\n".join([log.to_str() for log in self.logs])
