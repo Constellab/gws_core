@@ -37,7 +37,8 @@ from ..user.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from .experiment import Experiment
-from .experiment_dto import ExperimentDTO
+from .experiment_dto import (ExperimentDTO, RunningExperimentInfo,
+                             RunningProcessInfo)
 from .experiment_enums import ExperimentStatus, ExperimentType
 
 
@@ -150,6 +151,12 @@ class ExperimentService(BaseService):
 
     @classmethod
     def reset_experiment(cls, id: str) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id)
+
+        return experiment.reset()
+
+    @classmethod
+    def get_experiment_progress(cls, id: str) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
 
         return experiment.reset()
@@ -282,10 +289,28 @@ class ExperimentService(BaseService):
             query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def get_running_experiments(cls) -> List[Experiment]:
-        return list(Experiment.select().where(Experiment.status == ExperimentStatus.RUNNING))
+    def get_running_experiments(cls) -> List[RunningExperimentInfo]:
+        experiments: List[Experiment] = list(
+            Experiment.select().where(Experiment.status == ExperimentStatus.RUNNING).order_by(
+                Experiment.last_modified_at.desc()))
 
-    ################################### COPY  ##############################
+        return [cls.get_running_experiment_info(experiment) for experiment in experiments]
+
+    @classmethod
+    def get_running_experiment_info(cls, experiment: Experiment) -> RunningExperimentInfo:
+        tasks: List[TaskModel] = experiment.get_running_tasks()
+
+        running_experiment = RunningExperimentInfo.from_experiment(experiment)
+        for task in tasks:
+            running_task = RunningProcessInfo(id=task.id,
+                                              title=task.get_name(),
+                                              last_message=task.get_last_message(),
+                                              progression=task.get_progress_value())
+            running_experiment.add_running_task(running_task)
+
+        return running_experiment
+
+        ################################### COPY  ##############################
 
     @classmethod
     @transaction()

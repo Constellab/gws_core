@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, Dict, Type, final
+from typing import TYPE_CHECKING, Dict, Optional, Type, final
 
 from peewee import CharField, ForeignKeyField
 from starlette_context import context
@@ -31,7 +31,7 @@ from ..experiment.experiment import Experiment
 from ..io.io import Inputs, Outputs
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
-from ..progress_bar.progress_bar import ProgressBar
+from ..progress_bar.progress_bar import ProgressBar, ProgressBarMessage
 from ..user.user import User
 from .process import Process
 from .process_exception import ProcessRunException
@@ -401,6 +401,15 @@ class ProcessModel(ModelWithUser):
 
         return self.instance_name
 
+    def get_name(self) -> str:
+        """Return the name of the process
+        """
+        process_typing: Typing = self.get_process_typing()
+        if process_typing:
+            return process_typing.human_name
+
+        return self.instance_name
+
     def get_process_type(self) -> Type[Process]:
         return TypingManager.get_type_from_name(self.process_typing_name)
 
@@ -411,6 +420,22 @@ class ProcessModel(ModelWithUser):
         """return true if the process is of type Source
         """
         return self.process_typing_name == Source._typing_name
+
+    def get_last_message(self) -> Optional[ProgressBarMessage]:
+        """Return the last message of the process
+        """
+        if self.progress_bar is None:
+            return None
+
+        return self.progress_bar.get_last_message()
+
+    def get_progress_value(self) -> float:
+        """Return the last message of the process
+        """
+        if self.progress_bar is None:
+            return 0
+
+        return self.progress_bar.current_value
 
     ########################### JSON #################################
 

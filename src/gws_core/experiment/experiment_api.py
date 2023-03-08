@@ -31,7 +31,7 @@ def get_the_list_of_running_experiments(
     Retrieve a list of running experiments.
     """
 
-    return ListJsonable(ExperimentService.get_running_experiments()).to_json()
+    return ExperimentService.get_running_experiments()
 
 
 @core_app.get("/experiment/{id}", tags=["Experiment"], summary="Get an experiment")

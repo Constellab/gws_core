@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, final
+from typing import List, Optional, final
 
 from fastapi.encoders import jsonable_encoder
 from peewee import CharField, FloatField
@@ -175,6 +175,11 @@ class ProgressBar(Model):
     @property
     def messages(self) -> List[ProgressBarMessage]:
         return self.data["messages"]
+
+    def get_last_message(self) -> Optional[ProgressBarMessage]:
+        if not self.messages:
+            return None
+        return self.messages[-1]
 
     def get_messages_as_str(self) -> str:
         return "\n".join([self.progress_message_to_str(message) for message in self.messages])

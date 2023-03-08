@@ -2,12 +2,9 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from __future__ import annotations
 
 import json
 from typing import Dict, List, Literal, Optional, Set, Union
-
-from git import TYPE_CHECKING
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -22,9 +19,6 @@ from ..process.protocol_sub_process_builder import (
 from ..user.activity import Activity
 from ..user.user import User
 from .protocol_layout import ProtocolLayout
-
-if TYPE_CHECKING:
-    from ..task.task_model import TaskModel
 
 
 class ProtocolModel(ProcessModel):
@@ -338,25 +332,6 @@ class ProtocolModel(ProcessModel):
         if self.layout:
             self.layout.remove_process(name)
         del self._processes[name]
-
-    def get_running_tasks(self) -> List[TaskModel]:
-        """
-        Returns the processes that are running.
-
-        :return: The processes
-        :rtype: `list`
-        """
-        running_process: List[ProcessModel] = [process for process in self.processes.values() if process.is_running]
-
-        running_tasks: List[TaskModel] = []
-        for process in running_process:
-            if process.is_protocol():
-                protocol: ProtocolModel = process
-                running_tasks.extend(protocol.get_running_tasks())
-            else:
-                running_tasks.append(process)
-
-        return running_tasks
 
     def _check_instance_name(self, instance_name: str) -> None:
         if instance_name not in self.processes:
