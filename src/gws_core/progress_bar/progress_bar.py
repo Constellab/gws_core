@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from datetime import datetime
 from typing import List, Optional, final
 
 from fastapi.encoders import jsonable_encoder
@@ -181,6 +182,33 @@ class ProgressBar(Model):
             return None
         return self.messages[-1]
 
+    def get_messages_paginated(self, nb_of_messages: int, before_date: datetime = None) -> List[ProgressBarMessage]:
+        """
+        Get the last nb_of_messages messages
+        :param nb_of_messages: number of messages to get
+        :param from_datatime: if provided, get the last nb_of_messages messages before this date
+        :return:
+        """
+        if not self.messages:
+            return []
+
+        # get a copy of the message
+        messages = [*self.messages]
+        messages.reverse()
+
+        if before_date is None:
+            return messages[:nb_of_messages]
+
+        filtered_messages = []
+        for message in messages:
+            if DateHelper.from_iso_str(message["datetime"]) < before_date:
+                filtered_messages.append(message)
+
+            if len(filtered_messages) >= nb_of_messages:
+                break
+
+        return filtered_messages
+
     def get_messages_as_str(self) -> str:
         return "\n".join([self.progress_message_to_str(message) for message in self.messages])
 
@@ -220,12 +248,8 @@ class ProgressBar(Model):
 
         _json = super().to_json(deep=deep, **kwargs)
 
-        _json["process"] = {
-            "id": self.process_id,
-            "typing_name": self.process_typing_name,
-        }
-
-        _json["messages"] = self.messages
+        if deep:
+            _json["messages"] = self.messages
 
         return _json
 

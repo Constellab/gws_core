@@ -472,8 +472,7 @@ class ProcessModel(ModelWithUser):
 
         _json["config"] = self.config.to_json(
             deep=deep, **kwargs)
-        _json["progress_bar"] = self.progress_bar.to_json(
-            deep=deep, **kwargs)
+        _json["progress_bar"] = self.progress_bar.to_json(deep=False)
 
         _json["inputs"] = self.inputs.to_json()
         _json["outputs"] = self.outputs.to_json()
