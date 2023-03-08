@@ -33,8 +33,9 @@ class LogService:
             if log_info is not None:
                 log_status["log_files"].append(log_info)
 
-        # sort logs_files by name
-        log_status["log_files"].sort(key=lambda x: x["name"])
+        # sort logs_files by name in reverse but keep the last log file named 'log' at the top
+        log_status["log_files"].sort(key=lambda log: log["name"], reverse=True)
+        log_status["log_files"].sort(key=lambda log: log["name"] == "log", reverse=True)
 
         return log_status
 
@@ -82,18 +83,26 @@ class LogService:
             # if the from_date is the same day as the date, we use the from_date
             # otherwise with use the date at 00:00:00
             if DateHelper.are_same_day(from_date, date):
-                one_day_from = from_date
+                one_day_from = DateHelper.convert_datetime_to_utc(from_date)
             else:
-                one_day_from = datetime(year=date.year, month=date.month, day=date.day)
+                one_day_from = DateHelper.convert_datetime_to_utc(
+                    datetime(year=date.year, month=date.month, day=date.day))
 
             # if the to_date is the same day as the date, we use the to_date
             # otherwise with use the date at 23:59:59
             if DateHelper.are_same_day(to_date, date):
-                one_day_to = to_date
+                one_day_to = DateHelper.convert_datetime_to_utc(to_date)
             else:
-                one_day_to = datetime(year=date.year, month=date.month, day=date.day, hour=23, minute=59, second=59)
+                one_day_to = DateHelper.convert_datetime_to_utc(
+                    datetime(
+                        year=date.year, month=date.month, day=date.day,
+                        hour=23, minute=59, second=59))
 
-            log_lines.extend(cls.get_logs_between_dates_same_day(one_day_from, one_day_to, from_experiment))
+            try:
+                log_lines.extend(cls.get_logs_between_dates_same_day(one_day_from, one_day_to, from_experiment))
+            # skip error : file is not log file
+            except BadRequestException:
+                continue
 
         return LogsBetweenDatesDTO(logs=log_lines, from_date=from_date, to_date=to_date,
                                    from_experiment=from_experiment)
