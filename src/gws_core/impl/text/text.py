@@ -4,9 +4,10 @@
 # About us: https://gencovery.com
 
 
+from gws_core.resource.r_field.primitive_r_field import StrRField
+
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...resource.r_field.r_field import RField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view.view_decorator import view
@@ -16,7 +17,7 @@ from .view.text_view import TextView
 @resource_decorator("Text")
 class Text(Resource):
     DEFAULT_FILE_FORMAT = "txt"
-    _data: str = RField()
+    _data: str = StrRField(searchable=False)
 
     def __init__(self, data: str = None):
         super().__init__()

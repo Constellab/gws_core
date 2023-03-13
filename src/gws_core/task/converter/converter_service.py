@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Coroutine, List, Type
+from typing import List, Type
 
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_tasks import FsNodeExtractor
@@ -33,8 +33,7 @@ class ConverterService:
 
     @classmethod
     def call_importer(
-            cls, resource_model_id: str, importer_typing_name: str, config: ConfigParamsDict) -> Coroutine[
-            Any, Any, ResourceModel]:
+            cls, resource_model_id: str, importer_typing_name: str, config: ConfigParamsDict) -> ResourceModel:
         # Get and check the resource id
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
         resource_type: Type[File] = resource_model.get_resource_type()

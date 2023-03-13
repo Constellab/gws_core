@@ -7,12 +7,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, final
 
-from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
-
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.user.current_user_service import CurrentUserService
+from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -79,22 +78,14 @@ class Experiment(ModelWithUser, TaggableModel):
     _protocol: ProtocolModel = None
 
     @property
-    def is_pid_alive(self) -> bool:
-        if not self.pid:
-            raise BadRequestException("No such process found")
-
-        try:
-            sproc = SysProc.from_pid(self.pid)
-            return sproc.is_alive()
-        except Exception as err:
-            raise BadRequestException(
-                f"No such process found or its access is denied (pid = {self.pid})") from err
-
-    @property
     def pid(self) -> int:
         if "pid" not in self.data:
-            return 0
+            return None
         return self.data["pid"]
+
+    @pid.setter
+    def pid(self, value: int):
+        self.data["pid"] = value
 
     @property
     def protocol_model(self) -> ProtocolModel:
@@ -329,7 +320,7 @@ class Experiment(ModelWithUser, TaggableModel):
         :type pid: int
         """
         self.status = ExperimentStatus.WAITING_FOR_CLI_PROCESS
-        self.data["pid"] = pid
+        self.pid = pid
         self.save()
 
     def mark_as_started(self):
@@ -338,12 +329,12 @@ class Experiment(ModelWithUser, TaggableModel):
         self.save()
 
     def mark_as_success(self):
-        self.data["pid"] = 0
+        self.pid = None
         self.status = ExperimentStatus.SUCCESS
         self.save()
 
     def mark_as_draft(self):
-        self.data["pid"] = 0
+        self.pid = None
         self.score = None
         self.status = ExperimentStatus.DRAFT
         self.save()

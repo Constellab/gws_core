@@ -6,7 +6,7 @@
 import os
 import subprocess
 import traceback
-from typing import Any, Coroutine, List
+from typing import List
 
 from gws_core.central.central_dto import SendExperimentFinishMailData
 from gws_core.central.central_service import CentralService
@@ -52,7 +52,7 @@ class ExperimentRunService():
         cls.run_experiment(experiment)
 
     @classmethod
-    def run_experiment(cls, experiment: Experiment) -> Coroutine[Any, Any, Experiment]:
+    def run_experiment(cls, experiment: Experiment) -> Experiment:
         """
         Run the experiment
         """
@@ -161,7 +161,7 @@ class ExperimentRunService():
 
         # try to kill the pid if possible
         try:
-            if experiment.pid != 0:
+            if experiment.pid != None:
                 cls._kill_experiment_pid(experiment.pid)
         except Exception as err:
             Logger.error(str(err))

@@ -217,7 +217,6 @@ class AuthService(BaseService):
         :raises WrongCredentialsException: [description]
         :raises WrongCredentialsException: [description]
         :return: [description]
-        :rtype: Coroutine[Any, Any, str]
         """
 
         settings: Settings = Settings.get_instance()
