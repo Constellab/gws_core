@@ -19,7 +19,6 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
-from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
 from ..project.project import Project
 from ..resource.resource_model import ResourceModel
@@ -407,6 +406,7 @@ class Experiment(ModelWithUser, TaggableModel):
         if self.project:
             _json["project"] = {
                 'id': self.project.id,
+                'code': self.project.code,
                 'title': self.project.title
             }
 

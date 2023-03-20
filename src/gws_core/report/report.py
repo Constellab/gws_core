@@ -52,6 +52,7 @@ class Report(ModelWithUser):
         if self.project:
             json_["project"] = {
                 'id': self.project.id,
+                'code': self.project.code,
                 'title': self.project.title
             }
 

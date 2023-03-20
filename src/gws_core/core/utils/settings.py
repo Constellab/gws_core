@@ -254,6 +254,21 @@ class Settings():
             "engine": "mariadb"
         }
 
+    @classmethod
+    def get_root_temp_dir(cls) -> str:
+        """ Return the root temp dir """
+
+        return os.path.join(cls._get_system_folder(), 'tmp')
+
+    @classmethod
+    def make_temp_dir(cls) -> str:
+        """ Make a unique temp dir """
+        dir = cls.get_root_temp_dir()
+
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        return tempfile.mkdtemp(dir=dir)
+
     def get_gws_core_db_name(self) -> str:
         return 'gws_core'
 
@@ -339,19 +354,6 @@ class Settings():
         for key, val in variables.items():
             variables[key] = self._format_variable(val)
         return variables
-
-    def get_root_temp_dir(self) -> str:
-        """ Return the root temp dir """
-
-        return os.path.join(self._get_system_folder(), 'tmp')
-
-    def make_temp_dir(self) -> str:
-        """ Make a unique temp dir """
-        dir = self.get_root_temp_dir()
-
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        return tempfile.mkdtemp(dir=dir)
 
     def get_modules(self) -> Dict[str, ModuleInfo]:
         return self.data["modules"]
