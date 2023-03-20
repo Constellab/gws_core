@@ -8,9 +8,6 @@ from typing import Callable, List, Set
 
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-from peewee import ModelSelect
-
-from gws_core.central.central_dto import SaveReportToCentralDTO
 from gws_core.core.classes.rich_text_content import (RichText, RichTextI,
                                                      RichTextResourceView)
 from gws_core.core.utils.date_helper import DateHelper
@@ -28,10 +25,11 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
+from gws_core.space.space_dto import SaveReportToSpaceDTO
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.current_user_service import CurrentUserService
+from peewee import ModelSelect
 
-from ..central.central_service import CentralService
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
 from ..core.decorator.transaction import transaction
@@ -41,6 +39,7 @@ from ..core.exception.gws_exceptions import GWSException
 from ..experiment.experiment import Experiment
 from ..report.report_dto import ReportDTO
 from ..report.report_search_builder import ReportSearchBuilder
+from ..space.space_service import SpaceService
 from .report import Report, ReportExperiment
 
 
@@ -100,8 +99,8 @@ class ReportService():
             report.project = None
 
             if report.last_sync_at is not None:
-                # delete the report in central
-                CentralService.delete_report(project_id=report.project.id, report_id=report.id)
+                # delete the report in space
+                SpaceService.delete_report(project_id=report.project.id, report_id=report.id)
 
         # check that all associated experiment are in same project
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
@@ -166,9 +165,9 @@ class ReportService():
 
         Report.delete_by_id(report_id)
 
-        # if the report was sync with central, delete it in central too
+        # if the report was sync with space, delete it in space too
         if report.last_sync_at is not None and report.project is not None:
-            CentralService.delete_report(report.project.id, report.id)
+            SpaceService.delete_report(report.project.id, report.id)
 
     @classmethod
     def validate(cls, report_id: str, project_id: str = None) -> Report:
@@ -231,16 +230,16 @@ class ReportService():
 
     @classmethod
     @transaction()
-    def validate_and_send_to_central(cls, report_id: str, project_id: str = None) -> Report:
+    def validate_and_send_to_space(cls, report_id: str, project_id: str = None) -> Report:
         report = cls.validate(report_id, project_id)
 
-        report = cls._synchronize_with_central(report)
+        report = cls._synchronize_with_space(report)
 
         return report.save()
 
-    ###################################  SYNCHRO WITH CENTRAL  ##############################
+    ###################################  SYNCHRO WITH SPACE  ##############################
     @classmethod
-    def synchronize_with_central_by_id(cls, id: str) -> Report:
+    def synchronize_with_space_by_id(cls, id: str) -> Report:
         report: Report = cls.get_by_id_and_check(id)
 
         # retrieve the experiment ids
@@ -248,15 +247,15 @@ class ReportService():
         # syncronize the experiments that are not validated
         for experiment in experiments:
             if not experiment.is_validated:
-                ExperimentService.synchronize_with_central_by_id(experiment.id)
+                ExperimentService.synchronize_with_space_by_id(experiment.id)
 
-        report = cls._synchronize_with_central(report)
+        report = cls._synchronize_with_space(report)
         return report.save()
 
     @classmethod
-    def _synchronize_with_central(cls, report: Report) -> Report:
+    def _synchronize_with_space(cls, report: Report) -> Report:
         # if Settings.is_local_env():
-        #     Logger.info('Skipping sending report to central as we are running in LOCAL')
+        #     Logger.info('Skipping sending report to space as we are running in LOCAL')
         #     return report
 
         if report.project is None:
@@ -270,7 +269,7 @@ class ReportService():
 
         lab_config: LabConfigModel = report.lab_config or LabConfigModel.get_current_config()
 
-        save_report_dto: SaveReportToCentralDTO = {
+        save_report_dto: SaveReportToSpaceDTO = {
             "report": report.to_json(deep=True),
             "experiment_ids": [experiment.id for experiment in experiments],
             "lab_config": lab_config.to_json(),
@@ -296,8 +295,8 @@ class ReportService():
                 resource_view["view_config"],
                 resource_view["transformers"])
 
-        # Save the experiment in central
-        CentralService.save_report(report.project.id, save_report_dto, file_paths)
+        # Save the experiment in space
+        SpaceService.save_report(report.project.id, save_report_dto, file_paths)
 
         return report
 

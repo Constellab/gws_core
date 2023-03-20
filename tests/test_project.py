@@ -7,7 +7,7 @@
 from gws_core import BaseTestCase
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.project.project import Project
-from gws_core.project.project_dto import CentralProject
+from gws_core.project.project_dto import SpaceProject
 from gws_core.project.project_service import ProjectService
 
 
@@ -16,7 +16,7 @@ class TestProject(BaseTestCase):
 
     def test_get_or_create_project_with_children(self):
 
-        central_project: CentralProject = CentralProject(**{
+        space_project: SpaceProject = SpaceProject(**{
             "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
             "code": "Root",
             "title": "Root project",
@@ -43,7 +43,7 @@ class TestProject(BaseTestCase):
         })
 
         # test synchronization
-        ProjectService.synchronize_central_project(central_project)
+        ProjectService.synchronize_space_project(space_project)
 
         all_projects_count = Project.select().count()
 
@@ -67,7 +67,7 @@ class TestProject(BaseTestCase):
         self.assertFalse(any(project_tree.code == 'WP1' for project_tree in project_trees))
 
         # Test another synchronization to check that the project is not duplicated
-        ProjectService.synchronize_central_project(central_project)
+        ProjectService.synchronize_space_project(space_project)
         self.assertEqual(Project.select().count(), all_projects_count)
 
         # Test deletion

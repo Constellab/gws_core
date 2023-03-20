@@ -4,11 +4,11 @@
 # About us: https://gencovery.com
 
 
-from gws_core import GTest, User, UserService
+from gws_core import User, UserService
 from gws_core.test.base_test_case import BaseTestCase
 
 
-class TestCentral(BaseTestCase):
+class TestSpace(BaseTestCase):
 
     def test_create_user(self):
         data = {

@@ -8,10 +8,10 @@ import subprocess
 import traceback
 from typing import List
 
-from gws_core.central.central_dto import SendExperimentFinishMailData
-from gws_core.central.central_service import CentralService
 from gws_core.core.service.front_service import FrontService
 from gws_core.process.process_types import ProcessErrorInfo
+from gws_core.space.space_dto import SendExperimentFinishMailData
+from gws_core.space.space_service import SpaceService
 from gws_core.task.task_model import TaskModel
 
 from ..core.exception.exceptions import BadRequestException
@@ -251,7 +251,7 @@ class ExperimentRunService():
                 "experiment_link": FrontService.get_experiment_url(experiment_id=experiment.id)
             }
 
-            CentralService.send_experiment_finished_mail(user.id, experiment_dto)
+            SpaceService.send_experiment_finished_mail(user.id, experiment_dto)
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             Logger.error(f"Error while sending the experiment finished mail : {err}")

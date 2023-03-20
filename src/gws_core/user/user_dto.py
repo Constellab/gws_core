@@ -5,9 +5,8 @@
 
 from typing import Optional
 
-from pydantic import BaseModel
-
 from gws_core.user.user import UserLanguage, UserTheme
+from pydantic import BaseModel
 
 from ..user.user_group import UserGroup
 
@@ -20,8 +19,10 @@ class UserData(BaseModel):
     group: UserGroup
     is_active: bool
 
+# object that represent the user in the Space
 
-class UserCentral(BaseModel):
+
+class UserSpace(BaseModel):
     id: str
     firstname: str
     lastname: str
@@ -30,7 +31,7 @@ class UserCentral(BaseModel):
     lang: UserLanguage
 
 
-class SpaceCentral(BaseModel):
+class Space(BaseModel):
     id: str
     name: str
     domain: str
@@ -39,5 +40,5 @@ class SpaceCentral(BaseModel):
 
 # Info provided by the user when he logs in
 class UserLoginInfo(BaseModel):
-    user: UserCentral
-    space: SpaceCentral
+    user: UserSpace
+    space: Space

@@ -8,21 +8,20 @@ from typing import Optional
 from fastapi.requests import Request
 from fastapi.security import OAuth2
 from fastapi.security.utils import get_authorization_scheme_param
-
-from gws_core.central.central_service import CentralService
+from gws_core.space.space_service import SpaceService
 
 from ..core.exception.exceptions import BadRequestException
 
 
-class CentralApiKeyHeader(OAuth2):
+class SpaceApiKeyHeader(OAuth2):
 
     async def __call__(self, request: Request) -> Optional[str]:
-        header_authorization: str = request.headers.get(CentralService.api_key_header_key)
+        header_authorization: str = request.headers.get(SpaceService.api_key_header_key)
         header_scheme, header_param = get_authorization_scheme_param(
             header_authorization
         )
 
-        if header_scheme.lower() == CentralService.api_key_header_prefix:
+        if header_scheme.lower() == SpaceService.api_key_header_prefix:
             authorization = True
             param = header_param
         else:
@@ -37,13 +36,13 @@ class CentralApiKeyHeader(OAuth2):
         return param
 
 
-centra_api_key_header = CentralApiKeyHeader()
+space_api_key_header = SpaceApiKeyHeader()
 
 
-class CentralAPIUserHeader(OAuth2):
+class SpaceAPIUserHeader(OAuth2):
 
     async def __call__(self, request: Request) -> Optional[str]:
-        return request.headers.get(CentralService.user_id_header_key)
+        return request.headers.get(SpaceService.user_id_header_key)
 
 
-central_header_api_user_header = CentralAPIUserHeader()
+space_header_api_user_header = SpaceAPIUserHeader()

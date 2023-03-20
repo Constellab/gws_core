@@ -5,7 +5,6 @@
 
 
 from fastapi.param_functions import Depends
-
 from gws_core.core.classes.jsonable import ListJsonable
 
 from ..core_app import core_app
@@ -17,10 +16,10 @@ from .project_service import ProjectService
 @core_app.post("/project/synchronize", tags=["Project"])
 def synchronize_project(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
     """
-    Synchronize the projects from central
+    Synchronize the projects from space
     """
 
-    return ProjectService.synchronize_all_central_projects()
+    return ProjectService.synchronize_all_space_projects()
 
 
 @core_app.get("/project/trees", tags=["Project"])

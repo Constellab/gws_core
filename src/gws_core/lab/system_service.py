@@ -7,7 +7,6 @@ import os
 import sys
 from threading import Thread
 
-from gws_core.central.central_service import CentralService
 from gws_core.core.db.db_migration import DbMigrationService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -23,7 +22,8 @@ from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.project.project_service import ProjectService
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.user.user_dto import SpaceCentral
+from gws_core.space.space_service import SpaceService
+from gws_core.user.user_dto import Space
 
 from ..brick.brick_service import BrickService
 from ..core.exception.exceptions.unauthorized_exception import \
@@ -150,7 +150,7 @@ class SystemService:
 
     @classmethod
     def register_lab_start(cls) -> None:
-        """Method to call central after start to mark the lab as started in central
+        """Method to call space after start to mark the lab as started in space
         """
         settings: Settings = Settings.get_instance()
 
@@ -158,16 +158,16 @@ class SystemService:
             return
 
         try:
-            Logger.info('Registering lab start on central')
+            Logger.info('Registering lab start on space')
 
-            result = CentralService.register_lab_start(LabConfigModel.get_current_config().to_json())
+            result = SpaceService.register_lab_start(LabConfigModel.get_current_config().to_json())
 
             if result:
-                Logger.info('Lab start successfully registered on central')
+                Logger.info('Lab start successfully registered on space')
             else:
-                Logger.error('Error during lab start registration with central')
+                Logger.error('Error during lab start registration with space')
 
-            cls.synchronize_with_central()
+            cls.synchronize_with_space()
         except Exception as err:
             Logger.error(f"Error during lab start : {err}")
             Logger.log_exception_stack_trace(err)
@@ -183,12 +183,12 @@ class SystemService:
         }
 
     @classmethod
-    def save_space_async(cls, space_central: SpaceCentral) -> None:
-        thread = Thread(target=cls._save_space, args=[space_central])
+    def save_space_async(cls, space: Space) -> None:
+        thread = Thread(target=cls._save_space, args=[space])
         thread.start()
 
     @classmethod
-    def _save_space(cls, space_central: SpaceCentral) -> None:
+    def _save_space(cls, space: Space) -> None:
         try:
 
             settings = Settings.get_instance()
@@ -196,14 +196,14 @@ class SystemService:
 
             # if no space were saved or one of its value was changed
             # update the space
-            if space is None or space['id'] != space_central.id or \
-                    space['name'] != space_central.name or space['domain'] != space_central.domain or \
-                    space['photo'] != space_central.photo:
+            if space is None or space['id'] != space.id or \
+                    space['name'] != space.name or space['domain'] != space.domain or \
+                    space['photo'] != space.photo:
                 settings.set_space({
-                    "id": space_central.id,
-                    'name': space_central.name,
-                    'domain': space_central.domain,
-                    'photo': space_central.photo,
+                    "id": space.id,
+                    'name': space.name,
+                    'domain': space.domain,
+                    'photo': space.photo,
                 })
                 settings.save()
 
@@ -247,10 +247,10 @@ class SystemService:
         Logger.info('Ending the garbage collector')
 
     @classmethod
-    def synchronize_with_central(cls, sync_users: bool = True, sync_projects: bool = True) -> None:
+    def synchronize_with_space(cls, sync_users: bool = True, sync_projects: bool = True) -> None:
         if sync_users:
-            UserService.synchronize_all_central_users()
+            UserService.synchronize_all_space_users()
 
         if sync_projects:
-            ProjectService.synchronize_all_central_projects()
-        Logger.info('Synchronization with central done')
+            ProjectService.synchronize_all_space_projects()
+        Logger.info('Synchronization with space done')

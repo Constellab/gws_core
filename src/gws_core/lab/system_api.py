@@ -51,7 +51,7 @@ class SynchronizeDTO(BaseModel):
     sync_projects: bool
 
 
-@core_app.post("/system/synchronize",  tags=["System"], summary="Synchronise info with central")
+@core_app.post("/system/synchronize",  tags=["System"], summary="Synchronise info with space")
 def synchronize(sync_dto: SynchronizeDTO,
                 _: UserData = Depends(AuthService.check_user_access_token)) -> None:
-    SystemService.synchronize_with_central(sync_users=sync_dto.sync_users, sync_projects=sync_dto.sync_projects)
+    SystemService.synchronize_with_space(sync_users=sync_dto.sync_users, sync_projects=sync_dto.sync_projects)

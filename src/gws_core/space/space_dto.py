@@ -6,28 +6,27 @@
 
 from typing import Any, List, Literal, Optional
 
-from typing_extensions import TypedDict
-
 from gws_core.lab.lab_config_model import LabConfig
+from typing_extensions import TypedDict
 
 
 class LabStartDTO(TypedDict):
     lab_config: LabConfig
 
 
-class SaveExperimentToCentralDTO(TypedDict):
+class SaveExperimentToSpaceDTO(TypedDict):
     experiment: dict
     protocol: dict
     lab_config: dict
 
 
-class SaveReportToCentralDTO(TypedDict):
+class SaveReportToSpaceDTO(TypedDict):
     report: dict
     experiment_ids: List[str]
     lab_config: dict
 
 
-class CentralSendMailDTO(TypedDict):
+class SpaceSendMailDTO(TypedDict):
     receiver_ids: List[str]
     mail_template: Literal['experiment-finished']
     data: Optional[Any]

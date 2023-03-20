@@ -5,7 +5,6 @@
 from typing import Dict, List, Optional
 
 from fastapi import Depends
-
 from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.search_builder import SearchParams
 
@@ -151,11 +150,11 @@ def reset_an_experiment(id: str,
     return ExperimentService.reset_experiment(id).to_json(deep=True)
 
 
-@core_app.put("/experiment/{id}/sync-with-central", tags=["Experiment"],
-              summary="Synchronise the experiment with the central")
-def sync_with_central(id: str,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    return ExperimentService.synchronize_with_central_by_id(id).to_json(deep=True)
+@core_app.put("/experiment/{id}/sync-with-space", tags=["Experiment"],
+              summary="Synchronise the experiment with the space")
+def sync_with_space(id: str,
+                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return ExperimentService.synchronize_with_space_by_id(id).to_json(deep=True)
 
 ###################################### RUN ################################
 

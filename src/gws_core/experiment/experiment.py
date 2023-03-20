@@ -67,7 +67,7 @@ class Experiment(ModelWithUser, TaggableModel):
     validated_at = DateTimeUTC(null=True)
     validated_by = ForeignKeyField(User, null=True, backref='+')
 
-    # Date of the last synchronisation with central, null if never synchronised
+    # Date of the last synchronisation with space, null if never synchronised
     last_sync_at = DateTimeUTC(null=True)
     last_sync_by = ForeignKeyField(User, null=True, backref='+')
 

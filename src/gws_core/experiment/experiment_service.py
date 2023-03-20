@@ -6,8 +6,6 @@
 
 from typing import Dict, List, Type
 
-from peewee import ModelSelect
-
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
@@ -15,9 +13,8 @@ from gws_core.core.utils.settings import Settings
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.task_input_model import TaskInputModel
+from peewee import ModelSelect
 
-from ..central.central_dto import SaveExperimentToCentralDTO
-from ..central.central_service import CentralService
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
 from ..core.decorator.transaction import transaction
@@ -29,6 +26,8 @@ from ..project.project import Project
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_model import ProtocolModel
 from ..protocol.protocol_service import ProtocolService
+from ..space.space_dto import SaveExperimentToSpaceDTO
+from ..space.space_service import SpaceService
 from ..task.task import Task
 from ..task.task_model import TaskModel
 from ..task.task_service import TaskService
@@ -136,8 +135,8 @@ class ExperimentService(BaseService):
         if experiment_dto.project_id is None and experiment.project is not None:
             experiment.project = None
             if experiment.last_sync_at is not None:
-                # delete the experiment in central
-                CentralService.delete_experiment(project_id=experiment.project.id, experiment_id=experiment.id)
+                # delete the experiment in space
+                SpaceService.delete_experiment(project_id=experiment.project.id, experiment_id=experiment.id)
 
         return experiment.save()
 
@@ -185,23 +184,23 @@ class ExperimentService(BaseService):
                             object_id=experiment.id,
                             user=user)
 
-        # send the experiment to the central
-        cls._synchronize_with_central(experiment)
+        # send the experiment to the space
+        cls._synchronize_with_space(experiment)
 
         return experiment.save()
 
-    ###################################  SYNCHRO WITH CENTRAL  ##############################
+    ###################################  SYNCHRO WITH SPACE  ##############################
 
     @classmethod
-    def synchronize_with_central_by_id(cls, id: str) -> Experiment:
+    def synchronize_with_space_by_id(cls, id: str) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
-        experiment = cls._synchronize_with_central(experiment)
+        experiment = cls._synchronize_with_space(experiment)
         return experiment.save()
 
     @classmethod
-    def _synchronize_with_central(cls, experiment: Experiment) -> Experiment:
+    def _synchronize_with_space(cls, experiment: Experiment) -> Experiment:
         # if Settings.is_local_env():
-        #     Logger.info('Skipping sending experiment to central as we are running in LOCAL')
+        #     Logger.info('Skipping sending experiment to space as we are running in LOCAL')
         #     return experiment
 
         if experiment.project is None:
@@ -213,13 +212,13 @@ class ExperimentService(BaseService):
         lab_config: LabConfigModel = experiment.lab_config
         if lab_config is None:
             lab_config = LabConfigModel.get_current_config()
-        save_experiment_dto: SaveExperimentToCentralDTO = {
+        save_experiment_dto: SaveExperimentToSpaceDTO = {
             "experiment": experiment.to_json(),
             "protocol": experiment.export_protocol(),
             "lab_config": lab_config.to_json()
         }
-        # Save the experiment in central
-        CentralService.save_experiment(experiment.project.id, save_experiment_dto)
+        # Save the experiment in space
+        SpaceService.save_experiment(experiment.project.id, save_experiment_dto)
         return experiment
 
     ################################### GET  ##############################
@@ -338,6 +337,6 @@ class ExperimentService(BaseService):
 
         experiment.delete_instance()
 
-        # if the experiment was sync with central, delete it in central too
+        # if the experiment was sync with space, delete it in space too
         if experiment.last_sync_at is not None and experiment.project is not None:
-            CentralService.delete_experiment(experiment.project.id, experiment.id)
+            SpaceService.delete_experiment(experiment.project.id, experiment.id)

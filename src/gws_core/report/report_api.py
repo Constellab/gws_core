@@ -8,7 +8,6 @@ from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.param_functions import Depends
 from fastapi.responses import FileResponse
-
 from gws_core.core.classes.paginator import PaginatorDict
 from gws_core.report.report_file_service import ReportImage
 
@@ -75,13 +74,13 @@ def remove_experiment(
 @core_app.put("/report/{report_id}/validate/{project_id}", tags=["Report"], summary="Validate the report")
 def validate(report_id: str, project_id: Optional[str] = None,
              _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
-    return ReportService.validate_and_send_to_central(report_id, project_id).to_json(deep=True)
+    return ReportService.validate_and_send_to_space(report_id, project_id).to_json(deep=True)
 
 
-@core_app.put('/report/{report_id}/sync-with-central', tags=["Report"], summary="Sync the report with central")
-def sync_with_central(report_id: str,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    return ReportService.synchronize_with_central_by_id(report_id).to_json(deep=True)
+@core_app.put('/report/{report_id}/sync-with-space', tags=["Report"], summary="Sync the report with space")
+def sync_with_space(report_id: str,
+                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return ReportService.synchronize_with_space_by_id(report_id).to_json(deep=True)
 
 
 ################################################# Image ########################################

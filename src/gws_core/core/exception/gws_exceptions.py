@@ -16,7 +16,7 @@ class GWSException(Enum):
     FUNCTIONALITY_UNAVAILBLE_IN_PROD = "This functionnality is not available in the production environment"
     MISSING_PROD_API_URL = "Missing production API URL"
     ERROR_DURING_DEV_LOGIN = "Error during login in development environment"
-    CENTRAL_API_DEV_DISABLED = "The centrals routes are disabled in dev"
+    SPACE_API_DEV_DISABLED = "The space's routes are disabled in dev"
     OBJECT_ID_NOT_FOUND = "{{objectName}} with id : '{{id}}' not found"
     USER_NOT_ACTIVATED = "User not activated"
     RESOURCE_NOT_COMPATIBLE = "Trying to set an incompatible resource to port '{{port}}'. Resource type: '{{resource_type}}', excepted types : '{{expected_types}}'."

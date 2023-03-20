@@ -175,28 +175,28 @@ class Settings():
         return os.environ.get("FRONT_VERSION", '')
 
     @classmethod
-    def get_central_api_key(cls) -> str:
-        """Return the central api key
+    def get_space_api_key(cls) -> str:
+        """Return the space api key
 
         :return: [description]
         :rtype: [type]
         """
 
-        # specific central api key for local env
+        # specific space api key for local env
         if cls.is_local_env() and not os.environ.get("CENTRAL_API_KEY"):
             return '123456'
 
         return os.environ.get("CENTRAL_API_KEY")
 
     @classmethod
-    def get_central_api_url(cls) -> str:
-        """Return the central api url
+    def get_space_api_url(cls) -> str:
+        """Return the space api url
 
         :return: [description]
         :rtype: [type]
         """
 
-        # specific central api url for local env
+        # specific space api url for local env
         if cls.is_local_env() and not os.environ.get("CENTRAL_API_URL"):
             return 'http://host.docker.internal:3001'
 
@@ -204,13 +204,7 @@ class Settings():
 
     @classmethod
     def get_front_url(cls) -> str:
-        """Return the central api url
 
-        :return: [description]
-        :rtype: [type]
-        """
-
-        # specific central api url for local env
         if cls.is_local_env() and not os.environ.get("FRONT_URL"):
             return 'http://localhost:4200'
 
@@ -491,7 +485,7 @@ class Settings():
         return {
             "lab_id": self.get_lab_id(),
             "lab_name": self.get_lab_name(),
-            "central_api_url": self.get_central_api_url(),
+            "space_api_url": self.get_space_api_url(),
             "lab_prod_api_url": self.get_lab_prod_api_url(),
             "lab_dev_api_url": self.get_lab_dev_api_url(),
             "lab_environemnt": self.get_lab_environment(),

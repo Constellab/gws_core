@@ -5,13 +5,10 @@
 
 
 from fastapi.param_functions import Depends
+from gws_core.lab.system_service import SystemService
 from requests.models import Response
 from starlette.responses import JSONResponse, Response
 
-from gws_core.lab.system_service import SystemService
-
-from ..central.central_service import (CentralService,
-                                       ExternalCheckCredentialResponse)
 from ..core.exception.exceptions import (BadRequestException,
                                          UnauthorizedException)
 from ..core.exception.gws_exceptions import GWSException
@@ -19,6 +16,7 @@ from ..core.service.base_service import BaseService
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
+from ..space.space_service import ExternalCheckCredentialResponse, SpaceService
 from .activity import Activity
 from .activity_service import ActivityService
 from .credentials_dto import Credentials2Fa, CredentialsDTO
@@ -28,7 +26,7 @@ from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .unique_code_service import (CodeObject, InvalidUniqueCodeException,
                                   UniqueCodeService)
 from .user import User, UserDataDict
-from .user_dto import UserCentral, UserData, UserLoginInfo
+from .user_dto import UserData, UserLoginInfo, UserSpace
 from .user_exception import InvalidTokenException, WrongCredentialsException
 from .user_service import UserService
 
@@ -46,17 +44,17 @@ class AuthService(BaseService):
         except:
             raise WrongCredentialsException()
 
-        # skip the check with central in local dev env
+        # skip the check with space in local dev env
         if Settings.is_local_env() and Settings.get_instance().is_dev:
             return cls.log_user(user)
 
         # Check the user credentials
-        check_response: ExternalCheckCredentialResponse = CentralService.check_credentials(credentials)
+        check_response: ExternalCheckCredentialResponse = SpaceService.check_credentials(credentials)
 
         # if the user is logged
         if check_response.status == 'OK':
             if check_response.user:
-                cls.get_and_refresh_user_from_central(check_response.user)
+                cls.get_and_refresh_user_from_space(check_response.user)
             return cls.log_user(user)
         else:
             # if the user need to be logged with 2FA
@@ -67,10 +65,10 @@ class AuthService(BaseService):
     def login_with_2fa(cls, credentials: Credentials2Fa) -> JSONResponse:
 
         # Check if the code is valid
-        user_central: UserCentral = CentralService.check_2_fa(credentials)
+        user_space: UserSpace = SpaceService.check_2_fa(credentials)
 
         # refresh and retrieve lab user
-        user: User = cls.get_and_refresh_user_from_central(user_central)
+        user: User = cls.get_and_refresh_user_from_space(user_space)
 
         # Log the user
         return cls.log_user(user)
@@ -110,7 +108,7 @@ class AuthService(BaseService):
 
     @classmethod
     def generate_user_temp_access(cls, user_login_info: UserLoginInfo) -> str:
-        user: User = cls.get_and_refresh_user_from_central(user_login_info.user)
+        user: User = cls.get_and_refresh_user_from_space(user_login_info.user)
 
         # refresh the space info
         SystemService.save_space_async(user_login_info.space)
@@ -118,9 +116,9 @@ class AuthService(BaseService):
         return UniqueCodeService.generate_code(user.id, {}, 60)
 
     @classmethod
-    def get_and_refresh_user_from_central(cls, user_central: UserCentral) -> User:
-        """Check user central exists in the lab and if yes, it updates the user info"""
-        user: User = UserService.get_by_id_or_none(user_central.id)
+    def get_and_refresh_user_from_space(cls, user_space: UserSpace) -> User:
+        """Check user space exists in the lab and if yes, it updates the user info"""
+        user: User = UserService.get_by_id_or_none(user_space.id)
         if not user:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.value,
@@ -134,15 +132,15 @@ class AuthService(BaseService):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        if user.first_name != user_central.firstname or user.last_name != user_central.lastname or \
-                user.email != user_central.email or user.theme != user_central.theme or \
-                user.lang != user_central.lang:
+        if user.first_name != user_space.firstname or user.last_name != user_space.lastname or \
+                user.email != user_space.email or user.theme != user_space.theme or \
+                user.lang != user_space.lang:
             # update the user info and save it
-            user.first_name = user_central.firstname
-            user.last_name = user_central.lastname
-            user.email = user_central.email
-            user.theme = user_central.theme
-            user.lang = user_central.lang
+            user.first_name = user_space.firstname
+            user.last_name = user_space.lastname
+            user.email = user_space.email
+            user.theme = user_space.theme
+            user.lang = user_space.lang
             user = user.save()
 
         return user
