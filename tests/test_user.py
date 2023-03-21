@@ -33,7 +33,7 @@ class TestUser(BaseTestCase):
             "is_active": True,
             "is_admin": True
         }
-        UserService.create_user(user_data)
+        UserService.create_user_if_not_exists(user_data)
 
         user_db: User = UserService.get_user_by_id("06866542-f089-46dc-b57f-a11e25a23aa5")
 
@@ -55,7 +55,7 @@ class TestUser(BaseTestCase):
             "is_active": True,
             "is_admin": True
         }
-        UserService.create_user(user_data)
+        UserService.create_user_if_not_exists(user_data)
 
         token = AuthService.generate_user_access_token("06866542-f089-46dc-b57f-a11e25a23aa6")
 

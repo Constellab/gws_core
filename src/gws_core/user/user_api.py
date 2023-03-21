@@ -7,11 +7,13 @@ from typing import Optional
 
 from fastapi import Depends
 from fastapi.responses import RedirectResponse
+from starlette.responses import JSONResponse, Response
+
 from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.service.front_service import FrontService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
-from starlette.responses import JSONResponse, Response
+from gws_core.user.user import UserDataDict
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
@@ -124,7 +126,7 @@ def generate_dev_login_unique_code(current_user: UserData = Depends(AuthService.
 
 @core_app.post("/dev-login-unique-code/check/{unique_code}", tags=["User"],
                summary="Check the temp unique code to login to the dev lab")
-def check_dev_login_unique_code(unique_code: str) -> UserData:
+def check_dev_login_unique_code(unique_code: str) -> UserDataDict:
     """
     Check the temp unique code to login to the dev lab
     """

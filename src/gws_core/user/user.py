@@ -30,11 +30,11 @@ class UserDataDict(TypedDict):
     email: str
     first_name: str
     last_name: str
-    group: UserGroup
+    group: str
     is_active: bool
     is_admin: bool
-    theme: UserTheme
-    lang: UserLanguage
+    theme: str
+    lang: str
 
 
 # ####################################################################
@@ -150,9 +150,18 @@ class User(Model):
             "email": self.email,
             "first_name": self.first_name,
             "last_name": self.last_name,
-            "group": self.group,
+            "group": self.group.value,
             "is_active": self.is_active,
             "is_admin": self.is_admin,
-            "theme": self.theme,
-            "lang": self.lang
+            "theme": self.theme.value,
+            "lang": self.lang.value
         }
+
+    def from_user_data_dict(self, data: UserDataDict) -> None:
+        self.email = data['email']
+        self.first_name = data['first_name']
+        self.last_name = data['last_name']
+        self.group = UserGroup(data['group'])
+        self.is_active = data['is_active']
+        self.theme = UserTheme(data['theme'])
+        self.lang = UserLanguage(data['lang'])

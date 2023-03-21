@@ -14,7 +14,7 @@ from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from .activity import Activity
-from .user import User, UserDataDict, UserLanguage, UserTheme
+from .user import User, UserDataDict
 from .user_group import UserGroup
 
 
@@ -41,47 +41,32 @@ class UserService(BaseService):
             return db_user.save()
 
     @classmethod
-    def create_user(cls, user: UserDataDict) -> User:
-
-        if cls.user_exists(user["id"]):
-            raise BadRequestException("The user already exists")
-
-        return cls._create_user(user)
-
-    @classmethod
     def create_user_if_not_exists(cls, user: UserDataDict) -> User:
         db_user: User = cls.get_user_by_id(user["id"])
         if db_user is not None:
-            return db_user
+            db_user.from_user_data_dict(user)
+            return db_user.save()
 
         return cls._create_user(user)
 
     @classmethod
     def _create_user(cls, data: UserDataDict) -> User:
-        group: UserGroup = UserGroup.from_string(data.get('group', None), UserGroup.USER)
+        group: UserGroup = UserGroup(data['group'])
         if group == UserGroup.SYSUSER:
             raise BadRequestException("Cannot create sysuser")
 
-        user = User(
-            email=data['email'],
-            first_name=data['first_name'],
-            last_name=data['last_name'],
-            group=group,
-            is_active=data.get('is_active', True),
-            data={},
-            theme=data.get('theme', UserTheme.LIGHT_THEME),
-            lang=data.get('lang', UserLanguage.EN),
-        )
+        user = User(data={})
         # set the id later to mark the user as not saved
-        user.id = data['id']
+        user.id = data["id"]
+        user.from_user_data_dict(data)
         user.save()
         return User.get_by_id(user.id)
 
-    @classmethod
+    @ classmethod
     def deactivate_user(cls, id) -> User:
         return cls.set_user_active(id, False)
 
-    @classmethod
+    @ classmethod
     def fecth_activity_list(cls,
                             user_id: str = None,
                             activity_type: str = None,
