@@ -18,7 +18,7 @@ class TestSpace(BaseTestCase):
             "last_name": "",
             "group": "user"
         }
-        tf = UserService.create_user_if_not_exists(data)
+        tf = UserService.create_or_update_user(data)
         self.assertTrue(tf)
         user = User.get_by_id("1234567890")
         self.assertEqual(user.id, "1234567890")

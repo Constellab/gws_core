@@ -15,7 +15,6 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.share.share_link import ShareLinkType
 from gws_core.share.shared_resource import SharedResource
 from gws_core.user.auth_service import AuthService
-from gws_core.user.user_dto import UserData
 
 from .share_service import ShareService
 
@@ -31,7 +30,7 @@ def mark_entity_as_shared(entity_type: ShareLinkType, token: str, destination: d
               summary="Get info about which lab this object was shared to", response_model=None)
 def get_shared_to_list(entity_type: ShareLinkType,
                        entity_id: str,
-                       _: UserData = Depends(AuthService.check_user_access_token)) -> Paginator[SharedResource]:
+                       _=Depends(AuthService.check_user_access_token)) -> Paginator[SharedResource]:
     return ShareService.get_shared_to_list(entity_type, entity_id).to_json()
 
 
@@ -43,7 +42,7 @@ class ImportDto(BaseModel):
 
 @core_app.post("/share/resource/import", tags=["Share"], summary="Download a resource", response_model=None)
 def import_resource(import_dto: ImportDto,
-                    _: UserData = Depends(AuthService.check_user_access_token)) -> ResourceModel:
+                    _=Depends(AuthService.check_user_access_token)) -> ResourceModel:
     return ShareService.create_resource_from_external_lab(import_dto.url).to_json()
 
 

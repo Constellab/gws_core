@@ -1,18 +1,23 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 from typing import List, Literal, Optional
 
 from fastapi.param_functions import Depends
+from pydantic import BaseModel
+
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.model.typing_service import TypingService
 from gws_core.user.auth_service import AuthService
-from gws_core.user.user_dto import UserData
-from pydantic import BaseModel
 
 from ..core_app import core_app
 
 
 @core_app.get("/typing/{typing_name}", tags=["Typing"], summary="Get a typing")
 def get_typing(typing_name: str,
-               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+               _=Depends(AuthService.check_user_access_token)) -> dict:
     return TypingService.get_typing(typing_name).to_json(deep=True)
 
 
@@ -20,7 +25,7 @@ def get_typing(typing_name: str,
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                    _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Advanced search for typing
     """
@@ -39,7 +44,7 @@ def process_with_input_search(search: SearchWithResourceTypes,
                               inputs_or_outputs: Literal['inputs', 'outputs'],
                               page: Optional[int] = 1,
                               number_of_items_per_page: Optional[int] = 20,
-                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                              _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Advanced search for typing
     """
@@ -54,7 +59,7 @@ def importers_advanced_search(search_dict: SearchParams,
                               extension: str,
                               page: Optional[int] = 1,
                               number_of_items_per_page: Optional[int] = 20,
-                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                              _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Advanced search for importers typing
     """
@@ -67,7 +72,7 @@ def importers_advanced_search(search_dict: SearchParams,
 def transformers_advanced_search(search: SearchWithResourceTypes,
                                  page: Optional[int] = 1,
                                  number_of_items_per_page: Optional[int] = 20,
-                                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                                 _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Advanced search for transformers typing
     """
@@ -77,7 +82,7 @@ def transformers_advanced_search(search: SearchWithResourceTypes,
 
 @core_app.delete("/typing/unavailable", tags=["Typing"],
                  summary="Delete unavailable typings")
-def delete_unavailable_typings(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+def delete_unavailable_typings(_=Depends(AuthService.check_user_access_token)) -> None:
     TypingService.delete_unavailable_typings()
 
 
@@ -85,5 +90,5 @@ def delete_unavailable_typings(_: UserData = Depends(AuthService.check_user_acce
                  summary="Delete unavailable typings")
 def delete_unavailable_typings_for_brick(
         brick_name: str,
-        _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+        _=Depends(AuthService.check_user_access_token)) -> None:
     TypingService.delete_unavailable_typings(brick_name)

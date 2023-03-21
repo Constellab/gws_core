@@ -32,7 +32,6 @@ class UserDataDict(TypedDict):
     last_name: str
     group: str
     is_active: bool
-    is_admin: bool
     theme: str
     lang: str
 
@@ -71,16 +70,12 @@ class User(Model):
 
     _table_name = 'gws_user'
 
-    # -- A --
-
     def archive(self, archive: bool) -> None:
         """
         Archive method. This method is deactivated. Always returns False.
         """
 
         return None
-
-    # -- G --
 
     @classmethod
     def get_admin(cls) -> 'User':
@@ -98,13 +93,9 @@ class User(Model):
     def get_by_email(cls, email: str) -> 'User':
         return User.get(User.email == email)
 
-    # -- F --
-
     @property
     def full_name(self):
         return " ".join([self.first_name, self.last_name]).strip()
-
-    # -- I --
 
     @property
     def is_admin(self):
@@ -118,14 +109,10 @@ class User(Model):
     def is_sysuser(self):
         return self.group == UserGroup.SYSUSER
 
-    # -- L --
-
     def has_access(self, group: UserGroup) -> bool:
         """return true if the user group is equal or higher than the group
         """
         return self.group <= group
-
-    # -- S --
 
     def save(self, *arg, **kwargs) -> 'User':
         if not UserGroup.has_value(self.group):
@@ -152,7 +139,6 @@ class User(Model):
             "last_name": self.last_name,
             "group": self.group.value,
             "is_active": self.is_active,
-            "is_admin": self.is_admin,
             "theme": self.theme.value,
             "lang": self.lang.value
         }

@@ -5,9 +5,10 @@
 
 
 from fastapi.param_functions import Depends
-from gws_core.lab.system_service import SystemService
 from requests.models import Response
 from starlette.responses import JSONResponse, Response
+
+from gws_core.lab.system_service import SystemService
 
 from ..core.exception.exceptions import (BadRequestException,
                                          UnauthorizedException)
@@ -26,7 +27,7 @@ from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .unique_code_service import (CodeObject, InvalidUniqueCodeException,
                                   UniqueCodeService)
 from .user import User, UserDataDict
-from .user_dto import UserData, UserLoginInfo, UserSpace
+from .user_dto import UserLoginInfo, UserSpace
 from .user_exception import InvalidTokenException, WrongCredentialsException
 from .user_service import UserService
 
@@ -146,35 +147,26 @@ class AuthService(BaseService):
         return user
 
     @classmethod
-    def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> UserData:
+    def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> User:
 
         try:
             user_id: str = JWTService.check_user_access_token(token)
 
             db_user: User = cls.authenticate(user_id)
 
-            return UserData(
-                id=db_user.id,
-                email=db_user.email,
-                first_name=db_user.first_name,
-                last_name=db_user.last_name,
-                group=db_user.group,
-                is_active=db_user.is_active,
-                is_admin=db_user.is_admin,
-            )
+            return db_user
+
         except Exception:
             raise InvalidTokenException()
 
     @classmethod
-    def check_unique_code(cls, unique_code: str) -> UserData:
+    def check_unique_code(cls, unique_code: str) -> User:
         """Use link the the token to check access for a unique code generated. return the object associated with the code
         """
         try:
             code_obj: CodeObject = UniqueCodeService.check_code(unique_code)
 
-            cls.authenticate(code_obj["user_id"])
-
-            return code_obj['obj']
+            return cls.authenticate(code_obj["user_id"])
         except Exception:
             raise InvalidUniqueCodeException()
 
@@ -251,7 +243,7 @@ class AuthService(BaseService):
             raise BadRequestException(detail=GWSException.USER_NOT_ACTIVATED.value,
                                       unique_code=GWSException.USER_NOT_ACTIVATED.name)
 
-        user: User = UserService.create_user_if_not_exists(user)
+        user: User = UserService.create_or_update_user(user)
 
         access_token = cls.generate_user_access_token(user.id)
 

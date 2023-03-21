@@ -7,7 +7,6 @@
 from gws_core import BaseTestCase, User, UserGroup, UserService
 from gws_core.user.auth_service import AuthService
 from gws_core.user.user import UserDataDict
-from gws_core.user.user_dto import UserData
 
 
 class TestUser(BaseTestCase):
@@ -31,9 +30,8 @@ class TestUser(BaseTestCase):
             "last_name": "Lastname test",
             "group": "ADMIN",
             "is_active": True,
-            "is_admin": True
         }
-        UserService.create_user_if_not_exists(user_data)
+        UserService.create_or_update_user(user_data)
 
         user_db: User = UserService.get_user_by_id("06866542-f089-46dc-b57f-a11e25a23aa5")
 
@@ -53,11 +51,10 @@ class TestUser(BaseTestCase):
             "last_name": "Lastname test",
             "group": "ADMIN",
             "is_active": True,
-            "is_admin": True
         }
-        UserService.create_user_if_not_exists(user_data)
+        UserService.create_or_update_user(user_data)
 
         token = AuthService.generate_user_access_token("06866542-f089-46dc-b57f-a11e25a23aa6")
 
-        user_data: UserData = AuthService.check_user_access_token(token)
+        user_data: User = AuthService.check_user_access_token(token)
         self.assertEqual(user_data.id, "06866542-f089-46dc-b57f-a11e25a23aa6")

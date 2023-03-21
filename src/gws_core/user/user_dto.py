@@ -5,23 +5,12 @@
 
 from typing import Optional
 
-from gws_core.user.user import UserLanguage, UserTheme
 from pydantic import BaseModel
 
-from ..user.user_group import UserGroup
+from gws_core.user.user import UserLanguage, UserTheme
 
-
-class UserData(BaseModel):
-    id: str
-    email: str = ""
-    first_name: str = ""
-    last_name: str = ""
-    group: UserGroup
-    is_active: bool
 
 # object that represent the user in the Space
-
-
 class UserSpace(BaseModel):
     id: str
     firstname: str

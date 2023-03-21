@@ -5,6 +5,9 @@
 
 from typing import Dict, List, Literal, Optional
 
+from pydantic import BaseModel, parse_obj_as
+from requests.models import Response
+
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
@@ -14,9 +17,7 @@ from gws_core.space.space_dto import (LabStartDTO, SaveExperimentToSpaceDTO,
                                       SaveReportToSpaceDTO,
                                       SendExperimentFinishMailData,
                                       SpaceSendMailDTO)
-from gws_core.user.user_dto import UserData, UserSpace
-from pydantic import BaseModel, parse_obj_as
-from requests.models import Response
+from gws_core.user.user_dto import UserSpace
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
@@ -25,7 +26,7 @@ from ..core.utils.settings import Settings
 from ..project.project_dto import SpaceProject
 from ..user.credentials_dto import Credentials2Fa, CredentialsDTO
 from ..user.current_user_service import CurrentUserService
-from ..user.user import User
+from ..user.user import User, UserDataDict
 
 
 class ExternalCheckCredentialResponse(BaseModel):
@@ -197,7 +198,7 @@ class SpaceService(BaseService):
         return parse_obj_as(List[SpaceProject], response.json())
 
     @classmethod
-    def get_all_lab_users(cls) -> List[UserData]:
+    def get_all_lab_users(cls) -> List[UserDataDict]:
         """
         Call the space api to get the list of users for this lab
         """
@@ -210,8 +211,7 @@ class SpaceService(BaseService):
             err.detail = f"Can't retrieve users for the lab. Error : {err.detail}"
             raise err
 
-        # get response and parse it to a list of UserData
-        return parse_obj_as(List[UserData], response.json())
+        return response.json()
 
     @classmethod
     def _get_space_api_url(cls, route: str) -> str:

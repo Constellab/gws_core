@@ -8,17 +8,18 @@ from typing import Dict, List
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
-from gws_core.project.project_dto import SpaceProject
-from gws_core.project.project_service import ProjectService
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
+
+from gws_core.project.project_dto import SpaceProject
+from gws_core.project.project_service import ProjectService
 
 from ..core.exception.exception_handler import ExceptionHandler
 from ..core.service.settings_service import SettingsService
 from ..core.utils.http_helper import HTTPHelper
 from ..user.auth_service import AuthService
-from ..user.user import User
-from ..user.user_dto import UserData, UserLoginInfo
+from ..user.user import User, UserDataDict
+from ..user.user_dto import UserLoginInfo
 from ..user.user_service import UserService
 from ._auth_space import AuthSpace
 
@@ -46,7 +47,7 @@ async def all_exception_handler(request, exc):
 
 ##################################################### GLOBAL  #####################################################
 @space_app.get("/settings", summary="Get settings")
-def get_settings(_: UserData = Depends(AuthSpace.check_space_api_key)) -> dict:
+def get_settings(_=Depends(AuthSpace.check_space_api_key)) -> dict:
     return SettingsService.get_settings().to_json()
 
 
@@ -87,7 +88,7 @@ def generate_user_temp_access(user_login_info: UserLoginInfo,
 
 
 @space_app.put("/user/{id}/activate", tags=["User management"])
-def activate_user(id: str, _: UserData = Depends(AuthSpace.check_space_api_key_and_user)):
+def activate_user(id: str, _=Depends(AuthSpace.check_space_api_key_and_user)):
     """
     Activate a user. Requires space privilege.
 
@@ -98,7 +99,7 @@ def activate_user(id: str, _: UserData = Depends(AuthSpace.check_space_api_key_a
 
 
 @space_app.put("/user/{id}/deactivate", tags=["User management"])
-def deactivate_user(id: str, _: UserData = Depends(AuthSpace.check_space_api_key_and_user)):
+def deactivate_user(id: str, _=Depends(AuthSpace.check_space_api_key_and_user)):
     """
     Deactivate a user. Require space privilege.
 
@@ -109,7 +110,7 @@ def deactivate_user(id: str, _: UserData = Depends(AuthSpace.check_space_api_key
 
 
 @space_app.get("/user/{id}", tags=["User management"])
-def get_user(id: str, _: UserData = Depends(AuthSpace.check_space_api_key_and_user)):
+def get_user(id: str, _=Depends(AuthSpace.check_space_api_key_and_user)):
     """
     Get the details of a user. Require space privilege.
 
@@ -120,23 +121,16 @@ def get_user(id: str, _: UserData = Depends(AuthSpace.check_space_api_key_and_us
 
 
 @space_app.post("/user", tags=["User management"])
-def create_user(user: UserData, _: UserData = Depends(AuthSpace.check_space_api_key)):
+def create_user(user: UserDataDict, _=Depends(AuthSpace.check_space_api_key)):
     """
-    Create a new user. Do not check the current user in this route because a user can created his own account.
-
-    UserData:
-    - **id**: The user id
-    - **email**: The user emails
-    - **group**: The user group. Valid groups are: **owner** (lab owner), **user** (user with normal privileges), **admin** (adminstrator).
-    - **first_name**: The first names
-    - **last_name**: The last name
+    Create a new user.
     """
 
-    return _convert_user_to_dto(UserService.create_space_user(user))
+    return _convert_user_to_dto(UserService.create_or_update_user(user))
 
 
 @space_app.get("/user", tags=["User management"])
-def get_users(_: UserData = Depends(AuthSpace.check_space_api_key_and_user)):
+def get_users(_=Depends(AuthSpace.check_space_api_key_and_user)):
     """
     Get the all the users. Require space privilege.
     """
@@ -164,7 +158,7 @@ def _convert_users_to_dto(users: List[User]) -> List[Dict]:
 ##################################################### PROJECT #####################################################
 
 @space_app.post("/project", tags=["Project"])
-def create_project(project: SpaceProject, _: UserData = Depends(AuthSpace.check_space_api_key_and_user)):
+def create_project(project: SpaceProject, _=Depends(AuthSpace.check_space_api_key_and_user)):
     """
     Register a space project to the lab
 
@@ -174,7 +168,7 @@ def create_project(project: SpaceProject, _: UserData = Depends(AuthSpace.check_
 
 
 @space_app.delete("/project/{id}", tags=["Project"])
-def delete_project(id: str, _: UserData = Depends(AuthSpace.check_space_api_key_and_user)):
+def delete_project(id: str, _=Depends(AuthSpace.check_space_api_key_and_user)):
     """
     Remove a project from the lab
 

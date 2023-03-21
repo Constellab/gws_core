@@ -13,13 +13,12 @@ from gws_core.core.utils.response_helper import ResponseHelper
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
-from ..user.user_dto import UserData
 from .progress_bar_service import ProgressBarService
 
 
 @core_app.get("/progress-bar/{id}/download", tags=["Progress bar"], summary="Get a progress bar")
 def download_progress_bar(id: str,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                          _=Depends(AuthService.check_user_access_token)) -> dict:
 
     logs = ProgressBarService.download_progress_bar(id=id)
 
@@ -31,7 +30,7 @@ def download_progress_bar(id: str,
     summary="Get messages of a progress bar")
 def get_messages(id: str,
                  nb_of_messages: Optional[int] = 20,
-                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                 _=Depends(AuthService.check_user_access_token)) -> dict:
     """Get last progress bar messages
     """
 
@@ -44,7 +43,7 @@ def get_messages(id: str,
 def get_messages_from_date(id: str,
                            from_datetime: Optional[datetime],
                            nb_of_messages: Optional[int] = 20,
-                           _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                           _=Depends(AuthService.check_user_access_token)) -> dict:
     """Get progress bar messages older than a given date
     """
 

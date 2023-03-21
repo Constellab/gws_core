@@ -10,7 +10,6 @@ from gws_core.core_app import core_app
 from gws_core.lab.log.log import LogsBetweenDatesDTO
 from gws_core.lab.monitor.monitor_dto import MonitorBetweenDateDTO
 from gws_core.user.auth_service import AuthService
-from gws_core.user.user_dto import UserData
 
 from .process_service import ProcessService, ProcessType
 
@@ -19,7 +18,7 @@ from .process_service import ProcessService, ProcessType
               summary="Get the log of a process", response_model=None)
 def get_process_logs(process_type: ProcessType,
                      id: str,
-                     _: UserData = Depends(AuthService.check_user_access_token)) -> LogsBetweenDatesDTO:
+                     _=Depends(AuthService.check_user_access_token)) -> LogsBetweenDatesDTO:
     """
     Retrieve a list of running experiments.
     """
@@ -31,7 +30,7 @@ def get_process_logs(process_type: ProcessType,
               summary="Download the log of a process", response_model=None)
 def download_process_logs(process_type: ProcessType,
                           id: str,
-                          _: UserData = Depends(AuthService.check_user_access_token)):
+                          _=Depends(AuthService.check_user_access_token)):
     """
     Retrieve a list of running experiments.
     """
@@ -45,7 +44,7 @@ def download_process_logs(process_type: ProcessType,
               summary="Get the monitoring data of a process", response_model=None)
 def get_process_monitors(process_type: ProcessType,
                          id: str,
-                         _: UserData = Depends(AuthService.check_user_access_token)) -> MonitorBetweenDateDTO:
+                         _=Depends(AuthService.check_user_access_token)) -> MonitorBetweenDateDTO:
     """
     Retrieve a list of running experiments.
     """

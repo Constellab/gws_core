@@ -16,14 +16,13 @@ from gws_core.task.converter.converter_service import ConverterService
 
 from ...core_app import core_app
 from ...user.auth_service import AuthService
-from ...user.user_dto import UserData
 from .fs_node_service import FsNodeService
 
 
 @core_app.post("/fs-node/upload-file", tags=["Fs node"], summary="Upload file")
 def upload_file(file: UploadFile = FastAPIFile(...),
                 typing_name: List[str] = None,
-                _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                _=Depends(AuthService.check_user_access_token)) -> dict:
     """ Upload a file
 
     :param files: file to upload, defaults to FastAPIFile(...)
@@ -39,7 +38,7 @@ def upload_file(file: UploadFile = FastAPIFile(...),
 @core_app.post("/fs-node/upload-folder/{folder_typing_name}", tags=["Fs node"], summary="Upload a folder")
 def upload_folder(folder_typing_name: str,
                   files: List[UploadFile] = FastAPIFile(...),
-                  _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                  _=Depends(AuthService.check_user_access_token)) -> dict:
     """ Upload a folder
 
     :param files: list of files of folder, defaults to FastAPIFile(...)
@@ -52,7 +51,7 @@ def upload_folder(folder_typing_name: str,
 
 @core_app.get("/fs-node/{id}/download", tags=["Files"], summary="Download a file")
 def download_a_file(id: str,
-                    _: UserData = Depends(AuthService.check_user_access_token)) -> FileResponse:
+                    _=Depends(AuthService.check_user_access_token)) -> FileResponse:
     """
     Download a file. The access is made with a unique  code generated with get_download_file_url
     """
@@ -69,7 +68,7 @@ class ExtractFileDTO(TypedDict):
 @core_app.put("/fs-node/{id}/extract-file", tags=["Files"], summary="Extract a file from a folder")
 def extract_file(id: str,
                  extract: ExtractFileDTO,
-                 _: UserData = Depends(AuthService.check_user_access_token)) -> FileResponse:
+                 _=Depends(AuthService.check_user_access_token)) -> FileResponse:
     """
     Download a file. The access is made with a unique  code generated with get_download_file_url
     """
@@ -83,7 +82,7 @@ def extract_file(id: str,
 
 
 @core_app.get("/fs-node/file-type", tags=["Files"], summary="Get the list of file types")
-def get_file_types_list(_: UserData = Depends(AuthService.check_user_access_token)) -> List[Dict]:
+def get_file_types_list(_=Depends(AuthService.check_user_access_token)) -> List[Dict]:
     """
     Get the list of file types
     """
@@ -91,7 +90,7 @@ def get_file_types_list(_: UserData = Depends(AuthService.check_user_access_toke
 
 
 @core_app.get("/fs-node/folder-type", tags=["Files"], summary="Get the list of folder types")
-def get_folder_types_list(_: UserData = Depends(AuthService.check_user_access_token)) -> List[Dict]:
+def get_folder_types_list(_=Depends(AuthService.check_user_access_token)) -> List[Dict]:
     """
     Get the list of folder types
     """

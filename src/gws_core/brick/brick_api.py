@@ -12,31 +12,30 @@ from gws_core.core.db.db_migration import DbMigrationService
 from ..core.classes.jsonable import ListJsonable
 from ..core_app import core_app
 from ..user.auth_service import AuthService
-from ..user.user_dto import UserData
 from .brick_service import BrickService
 
 
 @core_app.get("/brick", tags=["Bricks"], summary="Get all brick with status")
-def get_bricks_status(_: UserData = Depends(AuthService.check_user_access_token)) -> list:
+def get_bricks_status(_=Depends(AuthService.check_user_access_token)) -> list:
     bricks = BrickService.get_all_brick_models()
     return ListJsonable(bricks).to_json()
 
 
 @core_app.get("/brick/{brick_name}/technical-doc", tags=["Bricks"], summary="Generate technical doc for a brick")
 def export_technical_doc(brick_name: str,
-                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                         _=Depends(AuthService.check_user_access_token)) -> dict:
     return TechnicalDocService.generate_technical_doc(brick_name)
 
 
 @core_app.post("/brick/{brick_name}/call-migration/{version}",  tags=["Bricks"], summary="Call a specific migration")
 def call_migration(brick_name: str,
                    version: str,
-                   _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                   _=Depends(AuthService.check_user_access_token)) -> None:
     return DbMigrationService.call_migration_manually(brick_name, version)
 
 
 @core_app.get("/brick/{brick_name}/migrations", tags=["Bricks"],
               summary="Get the list of migration version available for a brick")
 def get_brick_migration_versions(brick_name: str,
-                                 _: UserData = Depends(AuthService.check_user_access_token)) -> list:
+                                 _=Depends(AuthService.check_user_access_token)) -> list:
     return ListJsonable(DbMigrationService.get_brick_migration_versions(brick_name)).to_json()

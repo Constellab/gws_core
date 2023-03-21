@@ -5,16 +5,16 @@
 
 
 from fastapi.param_functions import Depends
+
 from gws_core.core.classes.jsonable import ListJsonable
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
-from ..user.user_dto import UserData
 from .project_service import ProjectService
 
 
 @core_app.post("/project/synchronize", tags=["Project"])
-def synchronize_project(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+def synchronize_project(_=Depends(AuthService.check_user_access_token)) -> None:
     """
     Synchronize the projects from space
     """
@@ -23,7 +23,7 @@ def synchronize_project(_: UserData = Depends(AuthService.check_user_access_toke
 
 
 @core_app.get("/project/trees", tags=["Project"])
-def get_project_trees(_: UserData = Depends(AuthService.check_user_access_token)):
+def get_project_trees(_=Depends(AuthService.check_user_access_token)):
     """
     Get the list of available projects with children.
     """

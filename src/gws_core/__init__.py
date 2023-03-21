@@ -424,6 +424,5 @@ from .user.auth_service import AuthService as AuthService
 from .user.credentials_dto import CredentialsDTO as CredentialsDTO
 from .user.current_user_service import CurrentUserService as CurrentUserService
 from .user.user import User as User
-from .user.user_dto import UserData as UserData
 from .user.user_group import UserGroup as UserGroup
 from .user.user_service import UserService as UserService

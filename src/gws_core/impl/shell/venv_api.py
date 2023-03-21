@@ -8,14 +8,13 @@ from pydantic import BaseModel
 from gws_core.impl.shell.venv_service import (VEnsStatus, VEnvCompleteInfo,
                                               VEnvService)
 from gws_core.user.auth_service import AuthService
-from gws_core.user.user_dto import UserData
 
 from ...core_app import core_app
 
 
 @core_app.get("/venv", tags=["VEnv"],
               summary="Get the list of virtual environments")
-def get_venv_list(_: UserData = Depends(AuthService.check_user_access_token)) -> VEnsStatus:
+def get_venv_list(_=Depends(AuthService.check_user_access_token)) -> VEnsStatus:
     """
     Retrieve a list of running experiments.
     """
@@ -30,7 +29,7 @@ class VenvNameRequest(BaseModel):
 @core_app.post("/venv/get", tags=["VEnv"],
                summary="Get a virtual environment")
 def get_venv(venv_name: VenvNameRequest,
-             _: UserData = Depends(AuthService.check_user_access_token)) -> VEnvCompleteInfo:
+             _=Depends(AuthService.check_user_access_token)) -> VEnvCompleteInfo:
     """
     Use a post and body to retrieve the name because the name can be weird
     """
@@ -41,7 +40,7 @@ def get_venv(venv_name: VenvNameRequest,
 @core_app.post("/venv/delete", tags=["VEnv"],
                summary="Delete a virtual environment")
 def delete_venv(venv_name: VenvNameRequest,
-                _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                _=Depends(AuthService.check_user_access_token)) -> None:
     """
     Delete a virtual environment
     Use body to retrieve the name because the name can be weird
@@ -52,7 +51,7 @@ def delete_venv(venv_name: VenvNameRequest,
 @core_app.delete("/venv", tags=["VEnv"],
                  summary="Delete all virtual environments")
 def delete_all_venv(
-        _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+        _=Depends(AuthService.check_user_access_token)) -> None:
     """
     Delete all virtual environments
     """

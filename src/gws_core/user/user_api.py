@@ -13,17 +13,16 @@ from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.service.front_service import FrontService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
-from gws_core.user.user import UserDataDict
+from gws_core.user.user import User, UserDataDict
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from .credentials_dto import Credentials2Fa, CredentialsDTO
-from .user_dto import UserData
 from .user_service import UserService
 
 
 @core_app.get("/user/me", tags=["User"])
-def read_user_me(_: UserData = Depends(AuthService.check_user_access_token)):
+def read_user_me(_=Depends(AuthService.check_user_access_token)):
     """
     Get current user details.
     """
@@ -36,7 +35,7 @@ def get_user_activity(user_id: Optional[str] = None,
                       activity_type: Optional[str] = None,
                       page: int = 0,
                       number_of_items_per_page: int = 20,
-                      _: UserData = Depends(AuthService.check_user_access_token)):
+                      _=Depends(AuthService.check_user_access_token)):
     """
     Get the list of user activities on the lab
 
@@ -84,7 +83,7 @@ def login_2_fa(credentials: Credentials2Fa) -> JSONResponse:
 
 
 @core_app.get("/check-token", tags=["User"], summary="Check user's token")
-def check_token(current_user: UserData = Depends(AuthService.check_user_access_token)) -> str:
+def check_token(current_user: User = Depends(AuthService.check_user_access_token)) -> str:
     """Simple route to check the user's token (used in automatic dev login), returns the user's id if valid
     """
     return current_user.id
@@ -95,9 +94,9 @@ def check_token(current_user: UserData = Depends(AuthService.check_user_access_t
 def login_from_temp_token(unique_code: str) -> RedirectResponse:
 
     try:
-        AuthService.check_unique_code(unique_code)
+        user: User = AuthService.check_unique_code(unique_code)
 
-        token = AuthService.generate_user_access_token(CurrentUserService.get_and_check_current_user().id)
+        token = AuthService.generate_user_access_token(user.id)
         response = RedirectResponse(FrontService.get_auto_login_url(JWTService.get_token_duration_in_seconds()))
         AuthService.set_token_in_response(token, JWTService.get_token_duration_in_seconds(), response)
         return response
@@ -117,7 +116,7 @@ def dev_login(code: str) -> Response:
 
 @core_app.get("/dev-login-unique-code/generate", tags=["User"],
               summary="Generate a temp unique code to login to the dev lab")
-def generate_dev_login_unique_code(current_user: UserData = Depends(AuthService.check_user_access_token)) -> str:
+def generate_dev_login_unique_code(current_user: User = Depends(AuthService.check_user_access_token)) -> str:
     """
     Generate a temp unique code to login to the dev lab
     """
@@ -143,7 +142,7 @@ def logout() -> JSONResponse:
 
 
 @core_app.get("/user", tags=["User"])
-def get_all_users(_: UserData = Depends(AuthService.check_user_access_token)):
+def get_all_users(_=Depends(AuthService.check_user_access_token)):
     """
     List the users.
     """
@@ -152,7 +151,7 @@ def get_all_users(_: UserData = Depends(AuthService.check_user_access_token)):
 
 
 @core_app.post("/user/synchronize", tags=["User"])
-def synchronize_users(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+def synchronize_users(_=Depends(AuthService.check_user_access_token)) -> None:
     """
     Synchronize the projects from space
     """

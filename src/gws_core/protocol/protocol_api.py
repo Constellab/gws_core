@@ -5,17 +5,17 @@
 
 
 from fastapi import Depends
+
 from gws_core.protocol.protocol_action import AddConnectorDTO
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
-from ..user.user_dto import UserData
 from .protocol_service import ProtocolService
 
 
 @core_app.get("/protocol/{id}", tags=["Protocol"], summary="Get a protocol")
 def get_a_protocol(id: str,
-                   _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                   _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a protocol
 
@@ -30,7 +30,7 @@ def get_a_protocol(id: str,
                summary="Add a process to a protocol")
 def add_process(id: str,
                 process_typing_name: str,
-                _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Add a process to a protocol
     """
@@ -48,7 +48,7 @@ def add_process_connected_to_output(id: str,
                                     process_typing_name: str,
                                     process_name: str,
                                     port_name: str,
-                                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                                    _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Add a process to a protocol
     """
@@ -68,7 +68,7 @@ def add_process_connected_to_input(id: str,
                                    process_typing_name: str,
                                    process_name: str,
                                    port_name: str,
-                                   _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                                   _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Add a process to a protocol
     """
@@ -85,7 +85,7 @@ def add_process_connected_to_input(id: str,
                  summary="Delete a process of a protocol")
 def delete_process(id: str,
                    process_instance_name: str,
-                   _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                   _=Depends(AuthService.check_user_access_token)) -> None:
     ProtocolService.delete_process_of_protocol_id(
         protocol_id=id,
         process_instance_name=process_instance_name
@@ -98,7 +98,7 @@ def delete_process(id: str,
                summary="Add a connector between 2 process of a protocol")
 def add_connector(id: str,
                   add_connector: AddConnectorDTO,
-                  _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                  _=Depends(AuthService.check_user_access_token)) -> dict:
     return ProtocolService.add_connector_to_protocol_id(
         protocol_id=id,
         output_process_name=add_connector.output_process_name,
@@ -113,7 +113,7 @@ def add_connector(id: str,
 def delete_connector(id: str,
                      dest_process_name: str,
                      dest_process_port_name: str,
-                     _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                     _=Depends(AuthService.check_user_access_token)) -> None:
     ProtocolService.delete_connector_of_protocol(
         protocol_id=id,
         dest_process_name=dest_process_name,
@@ -127,7 +127,7 @@ def delete_connector(id: str,
 def configure_process(id: str,
                       process_instance_name: str,
                       config_values: dict,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                      _=Depends(AuthService.check_user_access_token)) -> None:
 
     return ProtocolService.configure_process(
         protocol_id=id, process_instance_name=process_instance_name, config_values=config_values)
@@ -139,7 +139,7 @@ def configure_process(id: str,
                  summary="Delete an interface")
 def delete_interface(id: str,
                      interface_name: str,
-                     _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                     _=Depends(AuthService.check_user_access_token)) -> None:
 
     ProtocolService.delete_interface_of_protocol_id(id, interface_name)
 
@@ -148,7 +148,7 @@ def delete_interface(id: str,
                  summary="Delete an outerface")
 def delete_outerface(id: str,
                      outerface_name: str,
-                     _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                     _=Depends(AuthService.check_user_access_token)) -> None:
 
     ProtocolService.delete_outerface_of_protocol_id(id, outerface_name)
 
@@ -161,7 +161,7 @@ def add_source_to_process_input(id: str,
                                 resource_id: str,
                                 process_name: str,
                                 input_port_name: str,
-                                _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                                _=Depends(AuthService.check_user_access_token)) -> dict:
     return ProtocolService.add_source_to_process_input(
         protocol_id=id, resource_id=resource_id, process_name=process_name, input_port_name=input_port_name).to_json()
 
@@ -170,7 +170,7 @@ def add_source_to_process_input(id: str,
                summary="Add a configured source link to a process' input")
 def add_source_to_protocol(id: str,
                            resource_id: str,
-                           _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                           _=Depends(AuthService.check_user_access_token)) -> dict:
     return ProtocolService.add_source_to_protocol_id(
         protocol_id=id, resource_id=resource_id).to_json(deep=True)
 
@@ -180,7 +180,7 @@ def add_source_to_protocol(id: str,
 def add_sink_to_process_ouput(id: str,
                               process_name: str,
                               output_port_name: str,
-                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                              _=Depends(AuthService.check_user_access_token)) -> dict:
     return ProtocolService.add_sink_to_process_ouput(
         protocol_id=id, process_name=process_name, output_port_name=output_port_name).to_json()
 
@@ -190,7 +190,7 @@ def add_sink_to_process_ouput(id: str,
 def add_viewer_to_process_ouput(id: str,
                                 process_name: str,
                                 output_port_name: str,
-                                _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                                _=Depends(AuthService.check_user_access_token)) -> dict:
     return ProtocolService.add_viewer_to_process_output(
         protocol_id=id, process_name=process_name, output_port_name=output_port_name).to_json()
 
@@ -200,7 +200,7 @@ def add_viewer_to_process_ouput(id: str,
               summary="Save the layout of a protocol")
 def save_layout(id: str,
                 layout_dict: dict,
-                _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                _=Depends(AuthService.check_user_access_token)) -> None:
     ProtocolService.save_layout(id, layout_dict)
 
 
@@ -209,7 +209,7 @@ def save_layout(id: str,
 def save_process_layout(id: str,
                         process_name: str,
                         layout_dict: dict,
-                        _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                        _=Depends(AuthService.check_user_access_token)) -> None:
     ProtocolService.save_process_layout(id, process_name, layout_dict)
 
 
@@ -218,7 +218,7 @@ def save_process_layout(id: str,
 def save_interface_layout(id: str,
                           interface_name: str,
                           layout_dict: dict,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                          _=Depends(AuthService.check_user_access_token)) -> None:
     ProtocolService.save_interface_layout(id, interface_name, layout_dict)
 
 
@@ -227,5 +227,5 @@ def save_interface_layout(id: str,
 def save_outerface_layout(id: str,
                           outerface_name: str,
                           layout_dict: dict,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                          _=Depends(AuthService.check_user_access_token)) -> None:
     ProtocolService.save_outerface_layout(id, outerface_name, layout_dict)

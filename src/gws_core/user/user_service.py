@@ -8,7 +8,6 @@ from typing import List
 
 from gws_core.core.utils.logger import Logger
 from gws_core.space.space_service import SpaceService
-from gws_core.user.user_dto import UserData
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
@@ -20,28 +19,12 @@ from .user_group import UserGroup
 
 class UserService(BaseService):
 
-    _console_data = {"user": None}
-
     @classmethod
     def activate_user(cls, id: str) -> User:
         return cls.set_user_active(id, True)
 
     @classmethod
-    def create_space_user(cls, user: UserData) -> User:
-        db_user: User = cls.get_user_by_id(user.id)
-
-        if db_user is None:
-            return cls._create_user(user.dict())
-        else:
-            db_user.email = user.email
-            db_user.first_name = user.first_name
-            db_user.last_name = user.last_name
-            db_user.group = user.group
-            db_user.is_active = user.is_active
-            return db_user.save()
-
-    @classmethod
-    def create_user_if_not_exists(cls, user: UserDataDict) -> User:
+    def create_or_update_user(cls, user: UserDataDict) -> User:
         db_user: User = cls.get_user_by_id(user["id"])
         if db_user is not None:
             db_user.from_user_data_dict(user)
@@ -62,11 +45,11 @@ class UserService(BaseService):
         user.save()
         return User.get_by_id(user.id)
 
-    @ classmethod
+    @classmethod
     def deactivate_user(cls, id) -> User:
         return cls.set_user_active(id, False)
 
-    @ classmethod
+    @classmethod
     def fecth_activity_list(cls,
                             user_id: str = None,
                             activity_type: str = None,
@@ -158,7 +141,7 @@ class UserService(BaseService):
         try:
             users = SpaceService.get_all_lab_users()
             for user in users:
-                cls.create_space_user(user)
+                cls.create_or_update_user(user)
 
             Logger.info(f"{len(users)} synchronized users from space")
         except Exception as err:

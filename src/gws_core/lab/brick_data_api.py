@@ -9,12 +9,11 @@ from pydantic import BaseModel
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
-from ..user.user_dto import UserData
 from .brick_data_service import BrickData, BrickDataService
 
 
 @core_app.get("/brick-data", tags=["Brick data"], summary="Get brick data info")
-def get_brick_data_list(_: UserData = Depends(AuthService.check_user_access_token)) -> List[BrickData]:
+def get_brick_data_list(_=Depends(AuthService.check_user_access_token)) -> List[BrickData]:
     """
     Reset dev environment
     """
@@ -28,7 +27,7 @@ class DeleteBrickData(BaseModel):
 
 @core_app.post("/brick-data/delete", tags=["Brick data"], summary="Delete a brick data")
 def delete_brick_data(delete_brick_data: DeleteBrickData,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                      _=Depends(AuthService.check_user_access_token)) -> None:
     """
     Reset dev environment
     """
@@ -37,7 +36,7 @@ def delete_brick_data(delete_brick_data: DeleteBrickData,
 
 
 @core_app.delete("/brick-data", tags=["Brick data"], summary="Delete all brick data")
-def delete_all_brick_data(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+def delete_all_brick_data(_=Depends(AuthService.check_user_access_token)) -> None:
     """
     Reset dev environment
     """
