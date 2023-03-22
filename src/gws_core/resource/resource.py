@@ -48,8 +48,9 @@ class Resource(Base):
     _kv_store: KVStore = None
 
     def __init__(self):
-        """Resource constructor
-        /!\ It must have only optional parameters
+        """
+        Constructor, please do not overwrite this method, use the init method instead
+        Leave the constructor without parameters.
         """
 
         # check that the class level property _typing_name is set
@@ -64,7 +65,15 @@ class Resource(Base):
         for key, r_field in properties.items():
             setattr(self, key, r_field.get_default_value())
 
-    # -- G --
+        # call init
+        self.init()
+
+    def init(self) -> None:
+        """
+        This can be overwritten to perform custom initialization of the resource.
+        This method is called just after the __init__ (constructor) of the resource.
+        The default values of RFields are set before this method is called.
+        """
 
     @view(view_type=JSONView, human_name="View resource", short_description="View the complete resource as json", default_view=True)
     def view_as_json(self, params: ConfigParams) -> JSONView:
