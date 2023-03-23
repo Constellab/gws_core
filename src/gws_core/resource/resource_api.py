@@ -65,7 +65,7 @@ def get_a_resource(id: str,
 
 @core_app.get("/resource/{id}/children", tags=["Resource"], summary="Get a resource")
 def get_resource_children(id: str,
-                          _=Depends(AuthService.check_user_access_token)) -> dict:
+                          _=Depends(AuthService.check_user_access_token)) -> list:
     """
     Retrieve a ResourceModel children resource of a ResourceModel ID
     """
