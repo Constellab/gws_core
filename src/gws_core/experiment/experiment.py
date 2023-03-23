@@ -7,11 +7,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, final
 
+from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
+
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.user.current_user_service import CurrentUserService
-from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -322,9 +323,10 @@ class Experiment(ModelWithUser, TaggableModel):
         self.pid = pid
         self.save()
 
-    def mark_as_started(self):
+    def mark_as_started(self, pid: int):
         self.status = ExperimentStatus.RUNNING
         self.lab_config = LabConfigModel.get_current_config()
+        self.pid = pid
         self.save()
 
     def mark_as_success(self):
@@ -341,7 +343,7 @@ class Experiment(ModelWithUser, TaggableModel):
     def mark_as_error(self, error_info: ProcessErrorInfo) -> None:
         if self.is_error:
             return
-        self.data["pid"] = 0
+        self.pid = None
         self.status = ExperimentStatus.ERROR
         self.error_info = error_info
         Logger.error(error_info)

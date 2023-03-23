@@ -58,8 +58,9 @@ class ConverterService:
         try:
             experiment.run()
         except Exception as exception:
-            # delete experiment if there was an error
-            experiment.delete()
+            if not experiment.is_running():
+                # delete experiment if there was an error
+                experiment.delete()
             raise exception
 
         # return the resource model of the sink process
@@ -113,8 +114,8 @@ class ConverterService:
 
     @classmethod
     def call_file_extractor(cls, folder_model_id: str, sub_path: str, fs_node_typing_name: str) -> ResourceModel:
-        # Get and check the resource id
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(folder_model_id)
+        # Check that the resource exists
+        ResourceModel.get_by_id_and_check(folder_model_id)
 
         # Create an experiment containing 1 source, 1 extractor , 1 sink
         experiment: IExperiment = IExperiment(
@@ -135,8 +136,9 @@ class ConverterService:
         try:
             experiment.run()
         except Exception as exception:
-            # delete experiment if there was an error
-            experiment.delete()
+            if not experiment.is_running():
+                # delete experiment if there was an error
+                experiment.delete()
             raise exception
 
         # return the resource model of the sink process

@@ -74,7 +74,7 @@ class ExperimentRunService():
         )
 
         try:
-            experiment.mark_as_started()
+            experiment.mark_as_started(os.getpid())
 
             experiment.protocol_model.run()
 
@@ -166,12 +166,6 @@ class ExperimentRunService():
         except Exception as err:
             Logger.error(str(err))
 
-        ActivityService.add(
-            Activity.STOP,
-            object_type=experiment.full_classname(),
-            object_id=experiment.id
-        )
-
         # mark the experiment as error
         error: ProcessErrorInfo = {
             "detail": f"Experiment manually stopped by {CurrentUserService.get_and_check_current_user().full_name}",
@@ -185,6 +179,12 @@ class ExperimentRunService():
         task_models: List[TaskModel] = experiment.get_running_tasks()
         for task_model in task_models:
             task_model.mark_as_error_and_parent(error)
+
+        ActivityService.add(
+            Activity.STOP,
+            object_type=experiment.full_classname(),
+            object_id=experiment.id
+        )
 
         return experiment
 

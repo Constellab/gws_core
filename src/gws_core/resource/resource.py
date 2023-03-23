@@ -127,7 +127,7 @@ class Resource(Base):
 
     def replace_resource_model_ids(self, id_replacements: Dict[str, str]) -> bool:
         """Replace the model ids of the resources contained in this resource. This method
-          is called when a resource is copied in another lab and a completely new res!!!!!ource id is generated.
+          is called when a resource is copied in another lab and a completely new resource id is generated.
 
           Only override this method if you have a resource that contains other resources like ResourceSet.
           Only override this method if you know what you are doing.
