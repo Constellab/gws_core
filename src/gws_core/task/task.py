@@ -6,13 +6,14 @@
 from abc import abstractmethod
 from typing import Literal, Optional, Type, final
 
+from typing_extensions import TypedDict
+
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.dispatched_message import DispatchedMessage
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.model.typing import TypingNameObj
 from gws_core.model.typing_register_decorator import typing_registrator
-from typing_extensions import TypedDict
 
 from ..config.config_types import ConfigParams, ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
@@ -99,7 +100,7 @@ class Task(Process):
     def run_after_task(self) -> None:
         """
         This can be overwritten to perform action after the task run. This method is called after the
-        resource save. This method is useful to delete temporary objects (like files) to clear the server after the task is run.
+        resources are saved. This method is useful to delete temporary objects (like files) to clear the server after the task is run.
         """
 
     @final

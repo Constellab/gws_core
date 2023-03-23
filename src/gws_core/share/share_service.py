@@ -4,24 +4,22 @@
 # About us: https://gencovery.com
 
 
-import os
 from typing import Type
 
-from requests.models import Response
-
 from gws_core.core.classes.paginator import Paginator
-from gws_core.core.decorator.transaction import transaction
-from gws_core.core.service.external_lab_service import (
-    ExternalLabService, ExternalLabWithUserInfo)
-from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.settings import Settings
+from gws_core.core.service.external_lab_service import ExternalLabWithUserInfo
+from gws_core.experiment.experiment_enums import ExperimentType
+from gws_core.experiment.experiment_interface import IExperiment
+from gws_core.process.process_interface import IProcess
+from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.resource_zipper import ResourceUnzipper, ResourceZipper
+from gws_core.resource.resource_zipper import ResourceZipper
+from gws_core.share.resource_downloader import ResourceDownloader
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_entity_info import (SharedEntityInfo,
                                                SharedEntityMode)
 from gws_core.share.shared_resource import SharedResource
-from gws_core.user.current_user_service import CurrentUserService
+from gws_core.task.plug import Sink
 from gws_core.user.user import User
 
 from .share_link import ShareLink, ShareLinkType
@@ -75,18 +73,17 @@ class ShareService():
     #################################### RESOURCE ####################################
 
     @classmethod
-    def download_resource_from_token(cls, token: str) -> str:
-        """Method that zip a resource and return the file
+    def zip_resource_from_token(cls, token: str) -> str:
+        """Method that zip a resource and return the file path
         """
 
         shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check_validity(token)
 
-        return cls.download_resource(
-            shared_entity_link.entity_id, shared_entity_link.created_by)
+        return cls.zip_resource(shared_entity_link.entity_id, shared_entity_link.created_by)
 
     @classmethod
-    def download_resource(cls, id: str, shared_by: User) -> str:
-        """Method that zip a resource and return the file
+    def zip_resource(cls, id: str, shared_by: User) -> str:
+        """Method that zip a resource and return the file path
         """
 
         resource_zipper = ResourceZipper(shared_by)
@@ -98,64 +95,31 @@ class ShareService():
         return resource_zipper.get_zip_file_path()
 
     @classmethod
-    def create_resource_from_external_lab(cls, link: str) -> ResourceModel:
-        """Method that copy an external resource
-        """
+    def download_resource_from_external_lab(cls, link: str) -> ResourceModel:
+        # Create an experiment containing 1 resource downloader , 1 sink
+        experiment: IExperiment = IExperiment(
+            None, title="Resource downloader", type_=ExperimentType.RESOURCE_DOWNLOADER)
+        protocol: IProtocol = experiment.get_protocol()
 
-        # retrieve the token which is the last part of the link
-        share_token = link.split('/')[-1]
+        # Add the importer and the connector
+        importer: IProcess = protocol.add_process(ResourceDownloader, 'downloader', {
+            'link': link
+        })
 
-        response: Response = ExternalLabService.get_shared_object(link)
+        # Add sink and connect it
+        protocol.add_sink('sink', importer >> 'resource')
 
-        # create a temp dir
-        temp_dir = Settings.get_instance().make_temp_dir()
-        zip_file = os.path.join(temp_dir, 'resource.zip')
-
-        # write the response to a file
-        with open(zip_file, "wb") as f:
-            f.write(response.content)
-
-        return cls.create_resource_from_external_lab_zip(zip_file, share_token)
-
-    @classmethod
-    def create_resource_from_external_lab_zip(cls, zip_path: str, share_token: str) -> ResourceModel:
-
-        resource_unzipper = cls.create_resource_from_zip(zip_path)
-
-        # call the origin lab to mark the resource as received
-        current_lab_info = ExternalLabService.get_current_lab_info(CurrentUserService.get_and_check_current_user())
-        response: Response = ExternalLabService.mark_shared_object_as_received(
-            resource_unzipper.get_origin_info()['lab_api_url'],
-            ShareLinkType.RESOURCE, share_token, current_lab_info)
-
-        if response.status_code != 200:
-            Logger.error("Error while marking the resource as received: " + response.text)
-
-        return resource_unzipper.resource_models[0]
-
-    @classmethod
-    @transaction()
-    def create_resource_from_zip(cls, zip_path: str) -> ResourceUnzipper:
-
-        resource_unzipper = ResourceUnzipper(zip_path)
-
+        # run the experiment
         try:
+            experiment.run()
+        except Exception as exception:
+            if not experiment.is_running():
+                # delete experiment if there was an error
+                experiment.delete()
+            raise exception
 
-            resource_unzipper.load_resources()
-            resource_unzipper.save_all_resources()
-
-            # for each new resource, create a shared resource to store the origin info
-            for resource_model in resource_unzipper.resource_models:
-                cls._create_shared_entity(SharedResource, resource_model.id, SharedEntityMode.RECEIVED,
-                                          resource_unzipper.get_origin_info(),
-                                          CurrentUserService.get_and_check_current_user())
-            return resource_unzipper
-        except Exception as err:
-            # clean the resource models
-            for resource_model in resource_unzipper.resource_models:
-                resource_model.delete_object()
-
-            raise err
+        # return the resource model of the sink process
+        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
 
     @classmethod
     def _create_shared_entity(cls, shared_entity_type: Type[SharedEntityInfo], entity_id: str,

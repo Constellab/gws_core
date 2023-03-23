@@ -43,11 +43,11 @@ class ImportDto(BaseModel):
 @core_app.post("/share/resource/import", tags=["Share"], summary="Download a resource", response_model=None)
 def import_resource(import_dto: ImportDto,
                     _=Depends(AuthService.check_user_access_token)) -> ResourceModel:
-    return ShareService.create_resource_from_external_lab(import_dto.url).to_json()
+    return ShareService.download_resource_from_external_lab(import_dto.url).to_json()
 
 
 # Open route to download a resource
 @core_app.get("/share/resource/download/{token}", tags=["Share"], summary="Download a resource")
 def download_resource(token: str) -> FileResponse:
-    zip_path = ShareService.download_resource_from_token(token)
+    zip_path = ShareService.zip_resource_from_token(token)
     return FileHelper.create_file_response(zip_path)

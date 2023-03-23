@@ -16,7 +16,8 @@ disable=
     too-few-public-methods,
 
     bare-except,
-    raise-missing-from
+    raise-missing-from,
+    broad-exception-raised
 
 # White list pydantic to prevent warnings on imports 
 # https://github.com/samuelcolvin/pydantic/issues/1961#issuecomment-759522422

@@ -125,20 +125,6 @@ class Resource(Base):
         """
         return None
 
-    def replace_resource_model_ids(self, id_replacements: Dict[str, str]) -> bool:
-        """Replace the model ids of the resources contained in this resource. This method
-          is called when a resource is copied in another lab and a completely new resource id is generated.
-
-          Only override this method if you have a resource that contains other resources like ResourceSet.
-          Only override this method if you know what you are doing.
-
-          :param id_replacements: dictionary where key if the old model id and value is the new model id
-          :type id_replacements: Dict[str, str]
-          :return: _description_
-          :rtype: bool
-          """
-        return False
-
     def clone(self) -> 'Resource':
         """Clone the resource to create a new instance with a new id
             It copies the RFields

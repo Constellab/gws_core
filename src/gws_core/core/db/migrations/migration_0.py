@@ -18,6 +18,7 @@ from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
+from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor import Monitor
@@ -558,3 +559,21 @@ class Migration047(BrickMigration):
             except Exception as exception:
                 Logger.error(
                     f'Error while updating kvstore path for {resource.resource_typing_name}, resource id {resource.id} : {exception}')
+
+
+@brick_migration('0.5.0-beta.1', short_description='Update FsNode Rfield values')
+class Migration050Beta1(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        resource_models: List[ResourceModel] = list(ResourceModel.get_by_types_and_sub([FSNode._typing_name]))
+
+        for resource_model in resource_models:
+            try:
+                resource_model.data['path'] = resource_model.fs_node_model.path
+                resource_model.data['file_store_id'] = resource_model.fs_node_model.file_store_id
+                resource_model.save()
+            except Exception as exception:
+                Logger.error(
+                    f'Error while setting brick_version for {resource_model.resource_typing_name}, resource id {resource_model.id} : {exception}')

@@ -108,3 +108,4 @@ class IExperiment:
 
     def _refresh(self) -> None:
         self._experiment = self._experiment.refresh()
+        self._protocol.refresh()

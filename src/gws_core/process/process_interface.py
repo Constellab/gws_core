@@ -46,6 +46,9 @@ class IProcess:
     def get_process_type(self) -> Type[Process]:
         return self._process_model.get_process_type()
 
+    def refresh(self) -> None:
+        self._process_model = self._process_model.refresh()
+
     ############################################### CONFIG #########################################
 
     def set_param(self, param_name: str, value: ParamValue) -> None:

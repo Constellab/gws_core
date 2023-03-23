@@ -37,6 +37,7 @@ from ..resource.kv_store import KVStore
 from ..resource.resource import Resource
 from ..tag.taggable_model import TaggableModel
 from .r_field.r_field import BaseRField
+from .resource_factory import ResourceFactory
 
 if TYPE_CHECKING:
     from ..experiment.experiment import Experiment
@@ -262,13 +263,10 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         """
         Create the Resource object from the resource_typing_name
         """
-        resource_type: Type[ResourceType] = self.get_resource_type()
-        resource: ResourceType = resource_type()
-        # Pass the model id to the resource
-        resource._model_id = self.id
 
-        self.send_fields_to_resource(resource)
-        return resource
+        return ResourceFactory.create_resource(self.get_resource_type(),
+                                               kv_store=self.get_kv_store(), data=self.data,
+                                               resource_model_id=self.id, name=self.name)
 
     @classmethod
     def from_resource(cls, resource: ResourceType, origin: ResourceOrigin = ResourceOrigin.GENERATED,
@@ -293,6 +291,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
                 origin = ResourceOrigin.TRANSFORMED
             elif experiment.type == ExperimentType.ACTIONS:
                 origin = ResourceOrigin.ACTIONS
+            elif experiment.type == ExperimentType.RESOURCE_DOWNLOADER:
+                origin = ResourceOrigin.IMPORTED_FROM_LAB
 
         resource_model: ResourceModel = ResourceModel()
         resource_model.set_resource_typing_name(resource._typing_name)
@@ -331,6 +331,11 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
         # synchronize the model fields with the resource fields
         resource_model.receive_fields_from_resource(resource)
+
+        # set the resource model id in the resource
+        # it can be useful for the resource to have access to the model id
+        # in the run_after_task method for example
+        resource._model_id = resource_model.id
 
         return resource_model
 

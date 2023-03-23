@@ -7,7 +7,7 @@
 import os
 
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.resource.r_field.primitive_r_field import BoolRField
+from gws_core.resource.r_field.primitive_r_field import BoolRField, StrRField
 
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
@@ -22,8 +22,8 @@ class FSNode(Resource):
     provided when creating the resource
     """
 
-    path: str
-    file_store_id: str
+    path: str = StrRField(searchable=True)
+    file_store_id: str = StrRField(searchable=True)
 
     # when true, the node is considered as a symoblic link.
     # The node is not delete on resource deletion

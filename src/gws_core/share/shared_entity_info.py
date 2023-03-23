@@ -8,6 +8,8 @@ from enum import Enum
 from peewee import CharField, ForeignKeyField
 
 from gws_core.core.classes.enum_field import EnumField
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from gws_core.core.model.model import Model
 from gws_core.user.user import User
 
@@ -47,7 +49,7 @@ class SharedEntityInfo(Model):
     space_name: str = CharField(null=True)
 
     # current lab user that
-    # # In SENT mode is the one who created the share link
+    # In SENT mode is the one who created the share link
     # In RECEIVED mode, is the one that imported the entity
     created_by = ForeignKeyField(User, null=True, backref='+')
 
@@ -59,10 +61,11 @@ class SharedEntityInfo(Model):
         """Method that check if the entity is shared and return the origin information
         """
         shared_resource = cls.get_or_none(
-            cls.entity == entity_id and cls.share_mode == SharedEntityMode.RECEIVED)
+            (cls.entity == entity_id) &
+            (cls.share_mode == SharedEntityMode.RECEIVED))
 
         if shared_resource is None:
-            raise ValueError(f"The object with id '{entity_id}' was not imported from another lab")
+            raise BadRequestException("Information about lab import does not exist")
 
         return shared_resource
 
@@ -71,8 +74,9 @@ class SharedEntityInfo(Model):
         """Method that check if the entity is already shared with the lab
         """
         return cls.get_or_none(
-            cls.entity == entity_id, cls.share_mode == SharedEntityMode.SENT,
-            cls.lab_id == lab_id) is not None
+            (cls.entity == entity_id) &
+            (cls.share_mode == SharedEntityMode.SENT) &
+            (cls.lab_id == lab_id)) is not None
 
     @classmethod
     def get_sents(cls, entity_id: str) -> 'SharedEntityInfo':

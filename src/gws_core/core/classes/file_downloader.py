@@ -74,7 +74,7 @@ class FileDownloader():
 
         :param url: The url to download the file from
         :type url: `str`
-        :param file_path: The path to save the file to
+        :param file_path: The complete path to save the file to (including file name)
         :type file_path: `str`
         :param headers: The headers to send with the request
         :type headers: `dict`

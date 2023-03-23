@@ -29,6 +29,7 @@ class KVStore(Dict[str, Any]):
     KVStore class representing a key-value object storage engine.
     This class allows serializing/deserializing huge objects on store.
     """
+    FILE_NAME = 'store'
 
     # When true the KVStore can't be update (but read), it a modification happens, it
     # copies the file before updating the data
@@ -223,7 +224,7 @@ class KVStore(Dict[str, Any]):
 
     @classmethod
     def get_full_file_path(cls, file_name: str, with_extension: bool = True) -> str:
-        full_path: str = os.path.join(cls.get_base_dir(), file_name, "store")
+        full_path: str = os.path.join(cls.get_base_dir(), file_name, cls.FILE_NAME)
         if with_extension:
             full_path += '.db'
 

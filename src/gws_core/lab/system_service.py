@@ -231,7 +231,8 @@ class SystemService:
             # check if filename is the resource id or is contained in the kv store path
             # (use contains for security to avoid deleting everything)
             if ResourceModel.get_or_none(
-                    ResourceModel.kv_store_path.contains(file_name) or ResourceModel.id == file_name) is None:
+                (ResourceModel.kv_store_path.contains(file_name)) |
+                    (ResourceModel.id == file_name)) is None:
                 file_path = os.path.join(kv_store_dir, file_name)
                 Logger.info(f'Deleting KVStore {file_path}')
                 FileHelper.delete_node(file_path)

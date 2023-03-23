@@ -21,8 +21,8 @@ from .resource_set import ResourceSet
 class ResourceStacker(Task):
     input_specs: InputSpecs = {
         "resource_1": InputSpec(Resource),
-        "resource_2": InputSpec(Resource, is_skippable=True),
-        "resource_3": InputSpec(Resource, is_skippable=True),
+        "resource_2": InputSpec(Resource, is_optional=True),
+        "resource_3": InputSpec(Resource, is_optional=True),
     }
     output_specs: OutputSpecs = {'resource_set': OutputSpec(ResourceSet)}
 
