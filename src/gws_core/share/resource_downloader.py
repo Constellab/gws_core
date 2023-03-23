@@ -54,6 +54,7 @@ class ResourceDownloader(Task):
         file_downloader.download_file(self.link, destination_path=zip_file)
 
         # Convert the zip file to a resource
+        self.log_info_message("Unzipping the resource")
         self.resource_unzipper = ResourceUnzipper(zip_file)
         resource = self.resource_unzipper.load_resource()
 
@@ -66,12 +67,14 @@ class ResourceDownloader(Task):
             self.log_error_message("The resource unzipper is not set, can mark resource as received")
 
         # Create the shared entity info
+        self.log_info_message("Storing the resource origin info")
         resources: List[Resource] = self.resource_unzipper.get_all_generated_resources()
         for resource in resources:
             self._create_shared_entity(SharedResource, resource._model_id, SharedEntityMode.RECEIVED,
                                        self.resource_unzipper.get_origin_info(),
                                        CurrentUserService.get_and_check_current_user())
 
+        self.log_info_message("Marking the resource as received in the origin lab")
         # call the origin lab to mark the resource as received
         current_lab_info = ExternalLabService.get_current_lab_info(CurrentUserService.get_and_check_current_user())
 
@@ -83,6 +86,10 @@ class ResourceDownloader(Task):
 
         if response.status_code != 200:
             self.log_error_message("Error while marking the resource as received: " + response.text)
+
+        # clear temps files
+        self.log_info_message("Cleaning the temp files")
+        self.resource_unzipper.delete_temp_dir_and_files()
 
     def _create_shared_entity(self, shared_entity_type: Type[SharedEntityInfo], entity_id: str,
                               mode: SharedEntityMode, lab_info: ExternalLabWithUserInfo, created_by: User) -> None:

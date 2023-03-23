@@ -243,12 +243,6 @@ class ResourceUnzipper():
 
         return resource
 
-    def save_all_resources(self) -> List[ResourceModel]:
-        for resource_model in self.resource_models:
-            resource_model.save_full()
-
-        return self.resource_models
-
     def _load_info_json(self) -> ZipResourceInfo:
         info_json_path = os.path.join(self.temp_dir, ResourceZipper.INFO_JSON_FILE_NAME)
 
@@ -266,11 +260,13 @@ class ResourceUnzipper():
             raise Exception(
                 f"The zip_version value '{info_json.get('zip_version')}' in {info_json_path} file is invalid, must be an int")
 
-        if info_json.get('resource') is None:
+        # TODO : remove  'resource' in info_json when all lab are v0.5.0
+        if 'resource' in info_json and info_json.get('resource') is None:
             raise Exception(
                 f"The resource in {info_json_path} is missing")
 
-        if not isinstance(info_json.get('children_resources'), list):
+        # TODO : remove  'children_resources' in info_json when all lab are v0.5.0
+        if 'children_resources' in info_json and not isinstance(info_json.get('children_resources'), list):
             raise Exception(
                 f"The children_resources value in {info_json_path} file is invalid, must be a list")
 
@@ -298,3 +294,7 @@ class ResourceUnzipper():
 
     def get_all_generated_resources(self) -> List[Resource]:
         return [self.resource] + self.children_resources
+
+    def delete_temp_dir_and_files(self) -> None:
+        FileHelper.delete_dir(self.temp_dir)
+        FileHelper.delete_file(self.zip_file_path)

@@ -171,10 +171,11 @@ class FileDownloader():
         if self.message_dispatcher is not None:
             downloaded_str = FileHelper.get_file_size_pretty_text(downloaded)
             total_str = FileHelper.get_file_size_pretty_text(total)
+            percent = round(downloaded / total * 100)
 
             remaining_time_str = DateHelper.get_duration_pretty_text(remaining_time)
             self.message_dispatcher.notify_info_message(
-                f"Downloaded {downloaded_str}/{total_str} - {remaining_time_str} remaining"
+                f"Downloaded {downloaded_str}/{total_str} ({percent}%) - {remaining_time_str} remaining"
             )
 
     def _dispatch_message(self, message: str) -> None:

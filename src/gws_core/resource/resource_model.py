@@ -559,4 +559,4 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         return self.fs_node_model is not None or (resource_type is not None and resource_type._is_exportable)
 
     def is_manually_generated(self) -> bool:
-        return self.origin == ResourceOrigin.UPLOADED or self.origin == ResourceOrigin.IMPORTED_FROM_LAB
+        return self.origin == ResourceOrigin.UPLOADED

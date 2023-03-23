@@ -69,7 +69,7 @@ class ResourceService(BaseService):
 
             resource_model.delete_instance()
         # if the resource was imported or transformed, we delete the experiment that generated it
-        elif resource_model.origin == ResourceOrigin.IMPORTED or resource_model.origin == ResourceOrigin.TRANSFORMED:
+        elif resource_model.origin in [ResourceOrigin.IMPORTED, ResourceOrigin.TRANSFORMED, ResourceOrigin.IMPORTED_FROM_LAB]:
             experiment: Experiment = resource_model.experiment
             if experiment is None:
                 raise BadRequestException("The resource is not associated to an experiment")
