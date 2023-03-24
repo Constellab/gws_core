@@ -63,4 +63,4 @@ class TestProgressBar(BaseTestCase):
         messages = progress_bar.get_messages_paginated(nb_of_messages=2, before_date=from_date)
         self.assertEqual(len(messages), 2)
         self.assertEqual(messages[0]['text'], 'Hello2')
-        self.assertEqual(messages[0]['text'], 'Hello1')
+        self.assertEqual(messages[1]['text'], 'Hello1')

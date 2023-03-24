@@ -9,6 +9,7 @@ from gws_core.user.auth_service import AuthService
 from gws_core.user.user import UserDataDict
 
 
+# test_user
 class TestUser(BaseTestCase):
 
     def test_sysuser_and_owner(self):
@@ -30,6 +31,8 @@ class TestUser(BaseTestCase):
             "last_name": "Lastname test",
             "group": "ADMIN",
             "is_active": True,
+            "theme": "light-theme",
+            "lang": "en"
         }
         UserService.create_or_update_user(user_data)
 
@@ -51,6 +54,8 @@ class TestUser(BaseTestCase):
             "last_name": "Lastname test",
             "group": "ADMIN",
             "is_active": True,
+            "theme": "light-theme",
+            "lang": "en"
         }
         UserService.create_or_update_user(user_data)
 

@@ -26,6 +26,7 @@ class CreateFolderTest(Task):
         return {'folder': folder}
 
 
+# test_folder
 class TestFolder(BaseTestCase):
 
     def test_folder_attr(self):
@@ -49,10 +50,11 @@ class TestFolder(BaseTestCase):
 
     def test_folder_process(self):
         experiment: IExperiment = IExperiment()
-        process: IProcess = experiment.get_protocol().add_process(CreateFolderTest, 'create_folder')
+        experiment.get_protocol().add_process(CreateFolderTest, 'create_folder')
 
         experiment.run()
 
+        process = experiment.get_protocol().get_process('create_folder')
         folder: Folder = process.get_output('folder')
 
         file_store: LocalFileStore = LocalFileStore.get_default_instance()

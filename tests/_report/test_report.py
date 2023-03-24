@@ -131,8 +131,10 @@ class TestReport(BaseTestCase):
     def test_add_view_config_to_report(self):
         # generate a resource from an experiment
         experiment = IExperiment()
-        i_process = experiment.get_protocol().add_process(RobotCreate, 'create')
+        experiment.get_protocol().add_process(RobotCreate, 'create')
         experiment.run()
+
+        i_process = experiment.get_protocol().get_process('create')
         robot_model = i_process.get_output_resource_model('robot')
 
         # create a view config

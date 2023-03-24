@@ -66,6 +66,9 @@ class TestResourceSet(BaseTestCase):
 
         experiment.run()
 
+        robot_generator.refresh()
+        robot_create.refresh()
+
         # check that it created 3 resource (1 for the resrouce set and 2 robots)
         self.assertEqual(ResourceModel.select().count(), resource_count + 3)
 

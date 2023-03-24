@@ -42,7 +42,7 @@ class TestPlug(BaseTestCase):
         i_experiment.run()
 
         # check that the resource used in the sink was marked as output
-        resource = create.get_output('robot')
+        resource = create.refresh().get_output('robot')
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource._model_id)
         self.assertEqual(resource_model.flagged, True)
 

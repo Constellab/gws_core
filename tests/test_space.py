@@ -8,6 +8,7 @@ from gws_core import User, UserService
 from gws_core.test.base_test_case import BaseTestCase
 
 
+# test_space
 class TestSpace(BaseTestCase):
 
     def test_create_user(self):
@@ -16,7 +17,10 @@ class TestSpace(BaseTestCase):
             "email": "test@gencovery.com",
             "first_name": "",
             "last_name": "",
-            "group": "user"
+            "group": "USER",
+            "is_active": True,
+            "theme": "light-theme",
+            "lang": "en"
         }
         tf = UserService.create_or_update_user(data)
         self.assertTrue(tf)
