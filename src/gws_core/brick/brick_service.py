@@ -129,7 +129,7 @@ class BrickService():
 
     @classmethod
     def get_all_brick_models(cls) -> List[BrickModel]:
-        return list(BrickModel.select())
+        return list(BrickModel.select().order_by(BrickModel.name))
 
     @classmethod
     def get_brick_model(cls, name: str) -> BrickModel:
