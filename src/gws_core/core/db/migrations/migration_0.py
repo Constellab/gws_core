@@ -561,7 +561,7 @@ class Migration047(BrickMigration):
                     f'Error while updating kvstore path for {resource.resource_typing_name}, resource id {resource.id} : {exception}')
 
 
-@brick_migration('0.5.0-beta.1', short_description='Update FsNode Rfield values')
+@brick_migration('0.5.0-beta.2', short_description='Update FsNode Rfield values')
 class Migration050Beta1(BrickMigration):
 
     @classmethod
