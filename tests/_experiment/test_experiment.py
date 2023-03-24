@@ -86,7 +86,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(len(experiment1.resources), 15)
         self.assertEqual(len(experiment2.resources), 15)
         self.assertEqual(ResourceModel.get_by_experiment(experiment1.id).count(), 15)
-        self.assertEqual(experiment2.pid, 0)
+        self.assertIsNone(experiment2.pid)
 
         e2_bis: Experiment = ExperimentService.get_experiment_by_id(experiment1.id)
 
@@ -135,7 +135,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(Experiment.count_running_or_queued_experiments(), 0)
         experiment3 = Experiment.get_by_id_and_check(experiment3.id)
         self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
-        self.assertEqual(experiment3.pid, 0)
+        self.assertIsNone(experiment3.pid)
         self.assertEqual(experiment3.lab_config.id, LabConfigModel.id)
 
         Q = experiment3.resources
@@ -260,7 +260,7 @@ class TestExperiment(BaseTestCase):
         experiment.run()
 
         # generate a resource
-        robot_model = sink.get_input_resource_model(Sink.input_name)
+        robot_model = sink.refresh().get_input_resource_model(Sink.input_name)
 
         # create an experiment that uses this resource
         experiment_2 = IExperiment()
