@@ -12,6 +12,7 @@ import sys
 from typing import Dict, List, Literal
 
 import click
+
 from gws_core.core.utils.logger import Logger
 
 from . import runner
@@ -321,7 +322,13 @@ def load_settings(cwd: str) -> None:
 
 def start_app(cwd: str) -> None:
     SettingsLoader.ROOT_CWD = cwd
-    _start_app()
+    _start_app_console()
+
+
+def start_notebook(cwd: str, log_level: str = 'INFO') -> None:
+    SettingsLoader.ROOT_CWD = cwd
+    _start_app(test=False, cli='', runserver=True, is_prod=False, notebook=True,
+               port='3000', log_level=log_level, show_sql=False, reset_env=False)
 
 
 @click.command(context_settings=dict(
@@ -332,7 +339,6 @@ def start_app(cwd: str) -> None:
 @click.option('--test', default="",
               help='The name test file to launch (regular expression). Enter "all" to launch all the tests')
 @click.option('--cli', default="", help='Command to run using the command line interface')
-@click.option('--cli_test', is_flag=True, help='Use command line interface in test mode')
 @click.option('--runserver', is_flag=True, help='Starts the server')
 @click.option('--runmode', default="dev", help='Starting mode (dev or prod). Defaults to dev')
 @click.option('--notebook', is_flag=True, help='Starts the for notebook')
@@ -340,12 +346,17 @@ def start_app(cwd: str) -> None:
 @click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
 @click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
 @click.option('--reset_env', is_flag=True, help='Reset environment')
-def _start_app(ctx, test: bool, cli, cli_test: bool, runserver: bool,
-               runmode, notebook: bool, port, log_level: str, show_sql: bool, reset_env: bool):
+def _start_app_console(ctx, test: bool, cli: str, runserver: bool,
+                       runmode, notebook: bool, port: str, log_level: str, show_sql: bool, reset_env: bool):
     is_prod = runmode == "prod"
+
+    _start_app(test, cli, runserver, is_prod, notebook, port, log_level, show_sql, reset_env)
+
+
+def _start_app(test: str, cli: str, runserver: bool,
+               is_prod: bool, notebook: bool, port: str,
+               log_level: str, show_sql: bool, reset_env: bool):
     SettingsLoader.IS_PROD = is_prod
     SettingsLoader.load_settings()
 
-    is_test = bool(test or cli_test)
-
-    runner.call(is_prod, is_test, test, cli, runserver, notebook, port, log_level, show_sql, reset_env)
+    runner.call(is_prod, test, cli, runserver, notebook, port, log_level, show_sql, reset_env)

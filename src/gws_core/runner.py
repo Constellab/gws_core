@@ -17,14 +17,16 @@ from .core.utils.settings import Settings
 from .lab.system_service import SystemService
 
 
-def call(is_prod: bool = True, is_test: bool = False, test: str = "",
-         cli=False, runserver=False, notebook=False,
+def call(is_prod: bool = True, test: str = "",
+         cli: str = '', runserver=False, notebook=False,
          port="3000", log_level: str = None, show_sql=False, reset_env=False):
 
-    Logger(level=log_level, _is_experiment_process=cli)
+    Logger(level=log_level, _is_experiment_process=cli != '')
 
     if show_sql:
         Logger.print_sql_queries()
+
+    is_test: bool = bool(test)
 
     settings = Settings.get_instance()
     settings.set_data("app_port", port)
