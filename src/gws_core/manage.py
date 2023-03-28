@@ -327,7 +327,7 @@ def start_app(cwd: str) -> None:
 
 def start_notebook(cwd: str, log_level: str = 'INFO') -> None:
     SettingsLoader.ROOT_CWD = cwd
-    _start_app(test=False, cli='', runserver=True, is_prod=False, notebook=True,
+    _start_app(test=False, cli='', runserver=False, is_prod=False, notebook=True,
                port='3000', log_level=log_level, show_sql=False, reset_env=False)
 
 
