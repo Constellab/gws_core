@@ -149,5 +149,5 @@ class User(Model):
         self.last_name = data['last_name']
         self.group = UserGroup(data['group'])
         self.is_active = data['is_active']
-        self.theme = UserTheme(data['theme'])
-        self.lang = UserLanguage(data['lang'])
+        self.theme = UserTheme(data.get('theme', UserTheme.LIGHT_THEME.value))
+        self.lang = UserLanguage(data.get('lang', UserLanguage.EN.value))
