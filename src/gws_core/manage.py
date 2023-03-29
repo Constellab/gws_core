@@ -14,6 +14,7 @@ from typing import Dict, List, Literal
 import click
 
 from gws_core.core.utils.logger import Logger
+from gws_core.notebook.notebook import Notebook
 
 from . import runner
 from .brick.brick_service import BrickService
@@ -329,6 +330,7 @@ def start_notebook(cwd: str, log_level: str = 'INFO') -> None:
     SettingsLoader.ROOT_CWD = cwd
     _start_app(test=False, cli='', runserver=False, is_prod=False, notebook=True,
                port='3000', log_level=log_level, show_sql=False, reset_env=False)
+    Notebook.init_complete()
 
 
 @click.command(context_settings=dict(

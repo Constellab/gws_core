@@ -28,7 +28,8 @@ class TestTableAnnotator(TestCase):
 
         # The index in table, matches the index in metatable
         # A and B rows are tagged, Z row is not tagged, tag for E are ignored
-        annotated_table = TableAnnotatorHelper.annotate_rows(table, metatable)
+        annotated_table = TableAnnotatorHelper.annotate_rows(
+            table, metatable, use_table_row_names_as_ref=True, use_metadata_row_names_as_ref=True)
 
         expected_row_tags = [{'Gender': 'F', 'Group': '15', 'Age': '15'},
                              {'Gender': 'M', 'Group': '1', 'Age': '18'},
@@ -52,15 +53,20 @@ class TestTableAnnotator(TestCase):
                              'Age': {0: 18, 1: 15,  2: 15}})
         metatable = Table(meta_df)
 
-        # The column sample in table, matches the column sample_id in metatable
-        # A and B rows are tagged, Z row is not tagged, tag for E are ignored
-        annotated_table = TableAnnotatorHelper.annotate_rows(table, metatable,
-                                                             'sample', 'sample_id')
-
         expected_row_tags = [{'Gender': 'F', 'Group': '15', 'Age': '15'},
                              {'Gender': 'M', 'Group': '1', 'Age': '18'},
                              {}]
 
+        # The column sample in table, matches the column sample_id in metatable
+        # A and B rows are tagged, Z row is not tagged, tag for E are ignored
+        annotated_table = TableAnnotatorHelper.annotate_rows(table, metatable,
+                                                             'sample', 'sample_id')
+        Utils.assert_json_equals(
+            annotated_table.get_row_tags(), expected_row_tags
+        )
+
+        # Same test without using the column ref, it should take the first column
+        annotated_table = TableAnnotatorHelper.annotate_rows(table, metatable)
         Utils.assert_json_equals(
             annotated_table.get_row_tags(), expected_row_tags
         )
@@ -78,7 +84,8 @@ class TestTableAnnotator(TestCase):
 
         # The column names in table, matches the index in metatable
         # F1 and F2 columns are tagged, F3 column is not tagged, tag for F9 are ignored
-        annotated_table = TableAnnotatorHelper.annotate_columns(table, metatable)
+        annotated_table = TableAnnotatorHelper.annotate_columns(
+            table, metatable, use_table_column_names_as_ref=True, use_metadata_row_names_as_ref=True)
 
         expected_columns_tags = [{'Gender': 'F', 'Group': '15', 'Age': '15'},
                                  {'Gender': 'M', 'Group': '1', 'Age': '18'},
@@ -102,14 +109,21 @@ class TestTableAnnotator(TestCase):
 
         metatable = Table(meta_df)
 
+        expected_columns_tags = [{'Gender': 'M', 'Group': '1', 'Age': '18'},
+                                 {'Gender': 'F', 'Group': '15', 'Age': '15'},
+                                 {}]
+
         # The column names in table, matches the column names in metatable
         # F1 and F2 columns are tagged, F3 column is not tagged, tag for F9 are ignored
         annotated_table = TableAnnotatorHelper.annotate_columns(table, metatable,
                                                                 'sample', 'sample_id')
 
-        expected_columns_tags = [{'Gender': 'M', 'Group': '1', 'Age': '18'},
-                                 {'Gender': 'F', 'Group': '15', 'Age': '15'},
-                                 {}]
+        Utils.assert_json_equals(
+            annotated_table.get_column_tags(), expected_columns_tags
+        )
+
+        # Same test without using the column ref, it should take the first column/row
+        annotated_table = TableAnnotatorHelper.annotate_columns(table, metatable)
 
         Utils.assert_json_equals(
             annotated_table.get_column_tags(), expected_columns_tags
