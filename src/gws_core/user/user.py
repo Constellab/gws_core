@@ -4,10 +4,10 @@
 # About us: https://gencovery.com
 
 from enum import Enum
-from typing import Optional, final
+from typing import final
 
 from peewee import BooleanField, CharField
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
@@ -32,8 +32,8 @@ class UserDataDict(TypedDict):
     last_name: str
     group: str
     is_active: bool
-    theme: Optional[str]
-    lang: Optional[str]
+    theme: NotRequired[str]
+    lang: NotRequired[str]
 
 
 # ####################################################################
