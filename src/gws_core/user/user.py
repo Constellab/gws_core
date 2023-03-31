@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from enum import Enum
-from typing import final
+from typing import Optional, final
 
 from peewee import BooleanField, CharField
 from typing_extensions import TypedDict
@@ -32,8 +32,8 @@ class UserDataDict(TypedDict):
     last_name: str
     group: str
     is_active: bool
-    theme: str
-    lang: str
+    theme: Optional[str]
+    lang: Optional[str]
 
 
 # ####################################################################
