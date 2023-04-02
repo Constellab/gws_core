@@ -5,6 +5,7 @@
 
 import runpy
 import tempfile
+import os
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.impl.table.table import Table
@@ -85,6 +86,11 @@ class PyLiveTask(Task):
 
             if 'target' not in outputs:
                 raise BadRequestException("The outputs must have single key 'target'")
+
+        try:
+            os.unlink(snippet_filepath)
+        except:
+            pass
 
         return outputs
 

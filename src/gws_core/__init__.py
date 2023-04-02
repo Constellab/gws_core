@@ -112,6 +112,7 @@ from .core.utils.settings import Settings as Settings
 from .core.utils.string_helper import StringHelper as StringHelper
 from .core.utils.utils import Utils as Utils
 from .core.utils.zip import Zip as Zip
+from .core.utils.package_helper import PackageHelper as PackageHelper
 # Deprecated
 from .deprecated.dataset.dep_dataset import Dataset as Dataset
 from .deprecated.dataset.tasks.dep_dataset_exporter import \

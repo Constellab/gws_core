@@ -10,9 +10,17 @@
 #!require:pip pandas
 #!require:brick gws_core==4.1
 
-
+# Import modules
 from gws_core import Table
+from gws_core import PackageHelper as pkg
 from pandas import DataFrame
+
+# Check a module exists
+pkg.module_exists("pandas")         # returns True
+pkg.module_exists("my_pip_module")  # returns False
+# Install a pip package and load the module
+pkg.install("my-pip-package")
+my_module = pkg.load_module("my_pip_module")  # command 'import my_pip_module' should alwo work
 
 # Read parameters
 a = params['a']
