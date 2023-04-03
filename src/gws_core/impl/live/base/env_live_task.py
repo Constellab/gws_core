@@ -3,9 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import abc
 import os
 import re
+from abc import abstractmethod
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 
@@ -114,10 +114,10 @@ class EnvLiveTask(Task):
 
         self.shell_proxy.clean_working_dir()
 
-    @ abc.abstractmethod
+    @abstractmethod
     def _format_command(self, code_file_path: str, args: str) -> list:
         pass
 
-    @ abc.abstractmethod
+    @abstractmethod
     def _create_shell_proxy(self, env: str) -> ShellProxy:
         pass
