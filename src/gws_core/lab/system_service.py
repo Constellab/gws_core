@@ -196,7 +196,7 @@ class SystemService:
 
             # if no space were saved or one of its value was changed
             # update the space
-            if space is None or db_space_dict['id'] != space.id or \
+            if db_space_dict is None or db_space_dict['id'] != space.id or \
                     db_space_dict['name'] != space.name or db_space_dict['domain'] != space.domain or \
                     db_space_dict['photo'] != space.photo:
                 settings.set_space({
