@@ -21,6 +21,14 @@ def get_bricks_status(_=Depends(AuthService.check_user_access_token)) -> list:
     return ListJsonable(bricks).to_json()
 
 
+@core_app.get("/brick/{brick_name}", tags=["Bricks"], summary="Get info of a brick")
+def get_brick_info(brick_name: str, _=Depends(AuthService.check_user_access_token)) -> dict:
+    brick = BrickService.get_brick_model(brick_name)
+    if brick is None:
+        return None
+    return brick.to_json()
+
+
 @core_app.get("/brick/{brick_name}/technical-doc", tags=["Bricks"], summary="Generate technical doc for a brick")
 def export_technical_doc(brick_name: str,
                          _=Depends(AuthService.check_user_access_token)) -> dict:
