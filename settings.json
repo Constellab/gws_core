@@ -37,7 +37,7 @@
                   {"name": "pandas", "version": "1.5.2"},
                   {"name": "matplotlib", "version": "3.6.2"},
                   {"name": "scipy", "version": "1.10.0"},
-                  {"name": "scikit-learn", "version": "1.2.0"}
+                  {"name": "scikit-learn", "version": "1.2.0"},
                   {"name": "openai", "version": "0.2.27"}
                 ]
             },
