@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from enum import Enum
 from typing import final
 
 from peewee import BooleanField, CharField
@@ -12,17 +11,8 @@ from typing_extensions import NotRequired, TypedDict
 from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
+from .user_dto import UserLanguage, UserTheme
 from .user_group import UserGroup
-
-
-class UserTheme(Enum):
-    LIGHT_THEME = 'light-theme'
-    DARK_THEME = 'dark-theme'
-
-
-class UserLanguage(Enum):
-    EN = 'en'
-    FR = 'fr'
 
 
 class UserDataDict(TypedDict):

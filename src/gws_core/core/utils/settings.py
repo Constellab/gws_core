@@ -10,9 +10,11 @@ from copy import deepcopy
 from json import JSONDecodeError, dump, load
 from typing import Any, Dict, List, Literal, Optional, Union
 
+from typing_extensions import TypedDict
+
 from gws_core.core.db.db_config import DbConfig
 from gws_core.impl.file.file_helper import FileHelper
-from typing_extensions import TypedDict
+from gws_core.user.user_dto import SpaceDict
 
 from .date_helper import DateHelper
 from .string_helper import StringHelper
@@ -49,13 +51,6 @@ class BrickMigrationLog(TypedDict):
     version: str
     last_date_check: str
     history: List[BrickMigrationLogHistory]
-
-
-class Space(TypedDict):
-    id: str
-    space: str
-    domain: str
-    photo: Optional[str]
 
 
 class Settings():
@@ -352,10 +347,10 @@ class Settings():
     def get_modules(self) -> Dict[str, ModuleInfo]:
         return self.data["modules"]
 
-    def get_space(self) -> Space:
+    def get_space(self) -> SpaceDict:
         return self.data.get("space")
 
-    def set_space(self, space: Space):
+    def set_space(self, space: SpaceDict):
         self.data["space"] = space
 
     def get_lab_api_url(self) -> str:

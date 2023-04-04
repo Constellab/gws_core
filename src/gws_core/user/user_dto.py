@@ -3,11 +3,32 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel
+from typing_extensions import NotRequired, TypedDict
 
-from gws_core.user.user import UserLanguage, UserTheme
+
+class UserTheme(Enum):
+    LIGHT_THEME = 'light-theme'
+    DARK_THEME = 'dark-theme'
+
+
+class UserLanguage(Enum):
+    EN = 'en'
+    FR = 'fr'
+
+
+class UserDataDict(TypedDict):
+    id: str
+    email: str
+    first_name: str
+    last_name: str
+    group: str
+    is_active: bool
+    theme: NotRequired[str]
+    lang: NotRequired[str]
 
 
 # object that represent the user in the Space
@@ -31,3 +52,10 @@ class Space(BaseModel):
 class UserLoginInfo(BaseModel):
     user: UserSpace
     space: Space
+
+
+class SpaceDict(TypedDict):
+    id: str
+    name: str
+    domain: str
+    photo: Optional[str]
