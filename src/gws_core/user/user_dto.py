@@ -29,6 +29,7 @@ class UserDataDict(TypedDict):
     is_active: bool
     theme: NotRequired[str]
     lang: NotRequired[str]
+    photo: NotRequired[str]
 
 
 # object that represent the user in the Space
@@ -39,6 +40,7 @@ class UserSpace(BaseModel):
     email: str
     theme: UserTheme
     lang: UserLanguage
+    photo: str
 
 
 class Space(BaseModel):

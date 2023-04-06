@@ -135,13 +135,14 @@ class AuthService(BaseService):
 
         if user.first_name != user_space.firstname or user.last_name != user_space.lastname or \
                 user.email != user_space.email or user.theme != user_space.theme or \
-                user.lang != user_space.lang:
+                user.lang != user_space.lang or user.photo != user_space.photo:
             # update the user info and save it
             user.first_name = user_space.firstname
             user.last_name = user_space.lastname
             user.email = user_space.email
             user.theme = user_space.theme
             user.lang = user_space.lang
+            user.photo = user_space.photo
             user = user.save()
 
         return user

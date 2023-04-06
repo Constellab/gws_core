@@ -58,6 +58,8 @@ class User(Model):
     lang: UserLanguage = EnumField(choices=UserLanguage,
                                    default=UserLanguage.EN)
 
+    photo: str = CharField(null=True)
+
     _table_name = 'gws_user'
 
     def archive(self, archive: bool) -> None:
@@ -130,7 +132,8 @@ class User(Model):
             "group": self.group.value,
             "is_active": self.is_active,
             "theme": self.theme.value,
-            "lang": self.lang.value
+            "lang": self.lang.value,
+            "photo": self.photo
         }
 
     def from_user_data_dict(self, data: UserDataDict) -> None:
@@ -141,3 +144,4 @@ class User(Model):
         self.is_active = data['is_active']
         self.theme = UserTheme(data.get('theme', UserTheme.LIGHT_THEME.value))
         self.lang = UserLanguage(data.get('lang', UserLanguage.EN.value))
+        self.photo = data.get('photo', None)

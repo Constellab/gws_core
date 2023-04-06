@@ -40,6 +40,7 @@ from gws_core.tag.taggable_model import TaggableModel
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
+from gws_core.user.user import User
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -577,3 +578,14 @@ class Migration050Beta1(BrickMigration):
             except Exception as exception:
                 Logger.error(
                     f'Error while setting brick_version for {resource_model.resource_typing_name}, resource id {resource_model.id} : {exception}')
+
+
+@brick_migration('0.5.0-beta.5', short_description='Add photo to user', authenticate_sys_user=False)
+class Migration050Beta5(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(User.get_db())
+        migrator.add_column_if_not_exists(User, User.photo)
+        migrator.migrate()
