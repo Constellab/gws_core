@@ -28,7 +28,6 @@
                   {"name": "pyjwt", "version": "2.3.0"},
                   {"name": "pymysql", "version": "1.0.2"},
                   {"name": "python-multipart", "version": "0.0.5"},
-                  {"name": "requests", "version": "2.28.2"},
                   {"name": "starlette-context", "version": "0.3.3"},
                   {"name": "uvicorn", "version": "0.20.0"},
                   {"name": "charset-normalizer", "version": "2.0.12"},
