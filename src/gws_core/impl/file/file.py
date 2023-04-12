@@ -66,6 +66,12 @@ class File(FSNode):
     def is_image(self):
         return FileHelper.is_image(self.path)
 
+    def is_empty(self) -> bool:
+        return self.get_size() == 0
+
+    def is_readable(self) -> bool:
+        return self.extension not in ["exe", "dll", "so", "pyc", "pyo", "xlsx", "xls", "doc", "docx", "pdf"]
+
     @property
     def mime(self):
         return FileHelper.get_mime(self.path)
@@ -89,7 +95,8 @@ class File(FSNode):
             if not os.path.exists(self.dir):
                 os.makedirs(self.dir)
                 if not os.path.exists(self.dir):
-                    raise BadRequestException(f"Cannot create directory {self.dir}")
+                    raise BadRequestException(
+                        f"Cannot create directory {self.dir}")
             return open(self.path, mode="w+", encoding=encoding)
 
     def read_part(self, from_line: int = 1, to_line: int = 10) -> AnyStr:
@@ -132,6 +139,10 @@ class File(FSNode):
 
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json")
     def view_as_json(self, params: ConfigParams) -> JSONView:
+        # if the file is not readable,don't open the file and return the main view
+        if not self.is_readable():
+            return super().view_as_json(ConfigParams())
+
         content = self.read()
         try:
             json_: Any = json.loads(content)
@@ -152,6 +163,10 @@ class File(FSNode):
 
         if self.is_image():
             return ImageView.from_local_file(self.path)
+
+        # if the file is not readable, don't open the file and return the main view
+        if not self.is_readable():
+            return TextView("This file is not readable, please import it to view it")
 
         content = self.read()
 
@@ -179,6 +194,3 @@ class File(FSNode):
         mode = "a+"+self._mode
         with self.open(mode) as fp:
             fp.write(data)
-
-    def is_empty(self) -> bool:
-        return self.get_size() == 0 or len(self.read(size=10)) == 0

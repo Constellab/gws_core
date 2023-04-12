@@ -32,7 +32,8 @@ class TestTableImporter(TestCase):
         """ Test import with weird caracters and #"""
 
         file_path = GWSCoreTestHelper.get_small_data_file_path(2)
-        table: Table = TableImporter.call(File(file_path), params={"comment": ""})
+        table: Table = TableImporter.call(
+            File(file_path), params={"comment": ""})
 
         df = table.get_data()
         self.assertEqual(df['A'][0], '#')

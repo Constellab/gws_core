@@ -11,7 +11,7 @@ from gws_core.core.utils.utils import Utils
 from .gtest import GTest
 
 
-class BaseTestCaseComplete(TestCase):
+class BaseTestCaseLight(TestCase):
     """Base class for test, contain method to ease testing and automatically init env and clear it after
    Extend this class if your tests does not need database. If you are only using the TaskRunner, you can use this class.
    This will not init the database which is way faster.

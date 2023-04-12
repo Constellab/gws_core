@@ -6,15 +6,15 @@
 
 
 from ..experiment.queue_service import QueueService
-from .base_test_case_complete import BaseTestCaseComplete
+from .base_test_case_light import BaseTestCaseLight
 from .gtest import GTest
 
 
-class BaseTestCase(BaseTestCaseComplete):
+class BaseTestCase(BaseTestCaseLight):
     """Base class for test, contain method to ease testing and automatically init env and clear it after
     Extend this class if your tests require database. If you are only using the TaskRunner, you can use BaseTestCaseComplete.
     This will init the database which is way slower.
-    If you do not need the database, use BaseTestCaseComplete
+    If you do not need the database, use BaseTestCaseLight
     """
 
     @classmethod

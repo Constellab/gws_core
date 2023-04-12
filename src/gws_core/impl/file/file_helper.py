@@ -194,7 +194,8 @@ class FileHelper():
             result: List[Any] = []
 
             for child in children:
-                result.append(cls.get_dir_content_as_json(os.path.join(path, child)))
+                result.append(cls.get_dir_content_as_json(
+                    os.path.join(path, child)))
             dir_name: str = cls.get_dir_name(path)
             return {dir_name: result}
 
@@ -215,8 +216,9 @@ class FileHelper():
             return default_encoding
 
         encoding_result = from_path(file_path)
-        if encoding_result.best():
-            return encoding_result.best().encoding
+        best_encoding = encoding_result.best()
+        if best_encoding:
+            return best_encoding.encoding
         else:
             return default_encoding
 
