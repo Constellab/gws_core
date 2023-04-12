@@ -109,7 +109,8 @@ class SystemService:
         settings: Settings = Settings.get_instance()
 
         if settings.is_prod:
-            raise Exception('Cannot delete the temp folder in prod environment')
+            raise Exception(
+                'Cannot delete the temp folder in prod environment')
         FileHelper.delete_dir(settings.get_root_temp_dir())
 
     @classmethod
@@ -117,7 +118,8 @@ class SystemService:
         settings: Settings = Settings.get_instance()
 
         if not settings.is_dev:
-            raise UnauthorizedException('The reset method can only be called in dev environment')
+            raise UnauthorizedException(
+                'The reset method can only be called in dev environment')
 
         if check_user:
             user: User = CurrentUserService.get_and_check_current_user()
@@ -142,7 +144,8 @@ class SystemService:
         settings: Settings = Settings.get_instance()
 
         if not settings.is_dev:
-            raise UnauthorizedException('The kill method can only be called in dev environment')
+            raise UnauthorizedException(
+                'The kill method can only be called in dev environment')
 
         # kill current process and all its children
         sys_proc = SysProc.from_pid(os.getpid())
@@ -160,7 +163,8 @@ class SystemService:
         try:
             Logger.info('Registering lab start on space')
 
-            result = SpaceService.register_lab_start(LabConfigModel.get_current_config().to_json())
+            result = SpaceService.register_lab_start(
+                LabConfigModel.get_current_config().to_json())
 
             if result:
                 Logger.info('Lab start successfully registered on space')
@@ -215,18 +219,23 @@ class SystemService:
     @classmethod
     def garbage_collector(cls) -> None:
         if len(ExperimentRunService.get_all_running_experiments()) > 0:
-            raise BadRequestException('Cannot run the lab cleaning while there are running or waiting experiments')
+            raise BadRequestException(
+                'Cannot run the lab cleaning while there are running or waiting experiments')
 
         Logger.info('Starting the garbage collector')
         Logger.info('Deleting all the temp files')
-        FileHelper.delete_dir_content(Settings.get_instance().get_root_temp_dir())
+
+        temp_root_dir = Settings.get_instance().get_root_temp_dir()
+        if FileHelper.exists_on_os(temp_root_dir):
+            FileHelper.delete_dir_content(temp_root_dir)
 
         Logger.info('Deleting all usunused resource kv stores')
         kv_store_dir = KVStore.get_base_dir()
         # loop through all the kv store files and folder
 
         for file_name in os.listdir(kv_store_dir):
-            file_store_file_path = KVStore.get_full_file_path(file_name, with_extension=False)
+            file_store_file_path = KVStore.get_full_file_path(
+                file_name, with_extension=False)
             # if filename correspond to a ressource, don't delete it
             # check if filename is the resource id or is contained in the kv store path
             # (use contains for security to avoid deleting everything)

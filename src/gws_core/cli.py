@@ -5,12 +5,15 @@
 
 import click
 
+from gws_core.core.utils.settings import Settings
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
 from .core.exception.exception_handler import ExceptionHandler
 from .core.exception.exceptions import BadRequestException
 from .experiment.experiment_run_service import ExperimentRunService
+
+Settings
 
 
 @click.command(context_settings=dict(
@@ -20,7 +23,7 @@ from .experiment.experiment_run_service import ExperimentRunService
 @click.pass_context
 @click.option('--experiment-id', help='Experiment id')
 @click.option('--user-id', help='User id')
-def run_experiment(ctx, experiment_id, user_id):
+def run_experiment(ctx, experiment_id: str, user_id: str):
     try:
 
         # Authenticate the user
