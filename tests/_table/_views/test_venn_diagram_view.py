@@ -6,10 +6,11 @@
 from typing import List
 from unittest import TestCase
 
-from gws_core_test_helper import GWSCoreTestHelper
+from pandas import DataFrame
 
 from gws_core import ViewTester
 from gws_core.extra import TableVennDiagramView
+from gws_core.impl.table.table import Table
 from gws_core.impl.table.view.table_selection import Serie1d
 
 
@@ -17,7 +18,22 @@ from gws_core.impl.table.view.table_selection import Serie1d
 class TestVennDiagrammView(TestCase):
 
     def test_venn_diagram_view(self,):
-        table = GWSCoreTestHelper.get_venn_data_table()
+
+        # create dataframe from following table :
+        # A	B	C	D	E
+        # 1	2	3	4	1
+        # a	3	c	a	2
+        # 3	4	1	b
+        # 	1	2	c
+        dataframe = DataFrame({'A': [1, 'a', 3, None],
+                               'B': [2, 3, 4, 1],
+                               'C': [3, 'c', 1, 2],
+                               'D': [4, 'a', None, 'c'],
+                               'E': [1, 2, None, None]})
+
+        # create table from dataframe
+        table = Table(dataframe)
+
         tester = ViewTester(
             view=TableVennDiagramView(table)
         )
@@ -33,9 +49,12 @@ class TestVennDiagrammView(TestCase):
 
         # 4 series :
         series: List[Serie1d] = [{"name": "first", "y": {"type": "columns", "selection": ["A"]}},
-                                 {"name": "second", "y": {"type": "columns", "selection": ["B"]}},
-                                 {"name": "third", "y": {"type": "columns", "selection": ["D"]}},
-                                 {"name": "fourth", "y": {"type": "columns", "selection": ["E"]}},
+                                 {"name": "second", "y": {
+                                     "type": "columns", "selection": ["B"]}},
+                                 {"name": "third", "y": {
+                                     "type": "columns", "selection": ["D"]}},
+                                 {"name": "fourth", "y": {
+                                     "type": "columns", "selection": ["E"]}},
                                  ]
         dic = tester.to_dict({"series": series})
         self.assertEqual(len(dic["data"]["sections"]), 15)

@@ -18,29 +18,10 @@ class GWSCoreTestHelper():
         })
 
     @classmethod
-    def get_sample_table(cls, index_column=0) -> Table:
-        return TableImporter.call(File(DataProvider.get_test_data_path("sample_data.csv")), {
-            "index_column": index_column,
-            "header": 0,
-        })
-
-    @classmethod
-    def get_sample_metadata_table(cls) -> MetadataTable:
-        file = File(DataProvider.get_test_data_path("sample_metadata.csv"))
-        return MetadataTableImporter.call(file)
-
-    @classmethod
     def get_data_encoding_table(cls) -> Table:
         return EncodingTableImporter.call(File(DataProvider.get_test_data_path("data_encoding.csv")), {
             "original_column": "ocn",
             "original_row": "orn",
             "encoded_column": "ecn",
             "encoded_row": "ern",
-        })
-
-    @classmethod
-    def get_venn_data_table(cls) -> Table:
-        return TableImporter.call(File(DataProvider.get_test_data_path("venn_data.csv")), {
-            "delimiter": "tab",
-            "header": 0
         })
