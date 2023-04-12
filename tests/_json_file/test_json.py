@@ -6,7 +6,7 @@
 import json
 from unittest import TestCase
 
-from gws_core import BaseTestCase, GTest, JSONDict
+from gws_core import JSONDict
 from gws_core.data_provider.data_provider import DataProvider
 from gws_core.impl.file.file import File
 from gws_core.impl.json.json_tasks import JSONImporter
