@@ -5,6 +5,7 @@
 from typing import Dict, List, Optional
 
 from fastapi import Depends
+from pydantic import BaseModel
 
 from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.search_builder import SearchParams
@@ -131,6 +132,24 @@ def update_experiment(id: str,
     """
 
     return ExperimentService.update_experiment(id, experiment).to_json(deep=True)
+
+
+class UpdateProject(BaseModel):
+    project_id: Optional[str]
+
+
+@core_app.put("/experiment/{id}/project", tags=["Experiment"], summary="Update the project of an experiment")
+def update_experiment_project(id: str,
+                              project: UpdateProject,
+                              _=Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Update the project of an experiment
+
+    - **id**: the id of the experiment
+    - **project_id**: the id of the project
+    """
+
+    return ExperimentService.update_experiment_project(id, project.project_id).to_json(deep=True)
 
 
 @core_app.put("/experiment/{id}/description", tags=["Experiment"], summary="Update an experiment's description")

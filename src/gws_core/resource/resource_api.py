@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 from fastapi import Depends, Request
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.resource.resource_model import ResourceModel
@@ -120,6 +121,16 @@ def update_flagged(id: str,
     return ResourceService.update_flagged(id, body["flagged"]).to_json(deep=True)
 
 
+class UpdateProject(BaseModel):
+    project_id: Optional[str]
+
+
+@core_app.put("/resource/{id}/project", tags=["Resource"],
+              summary="Update the project of a resource")
+def update_project(id: str,
+                   project: UpdateProject,
+                   _=Depends(AuthService.check_user_access_token)) -> Dict:
+    return ResourceService.update_project(id, project.project_id).to_json(deep=True)
 ############################# TAGS ###########################
 
 
@@ -153,7 +164,8 @@ def import_resource(config: dict,
                     importer_typing_name: str,
                     _=Depends(AuthService.check_user_access_token)) -> dict:
 
-    resource_model: ResourceModel = ConverterService.call_importer(resource_model_id, importer_typing_name, config)
+    resource_model: ResourceModel = ConverterService.call_importer(
+        resource_model_id, importer_typing_name, config)
     return resource_model.to_json()
 
 ############################# EXPORTER ###########################
