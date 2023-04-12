@@ -44,7 +44,8 @@ class ExperimentRunService():
                     f"Cannot run the experiment {experiment.id} as its status was changed before process could run it")
 
         except Exception as err:
-            error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + str(err)
+            error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + \
+                str(err)
             Logger.error(error_text)
             experiment.mark_as_error({"detail": error_text,
                                       "unique_code": GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
@@ -124,7 +125,7 @@ class ExperimentRunService():
         ]
 
         if settings.is_test:
-            cmd.append("--cli_test")
+            cmd.append("--test")
 
         cmd.append("--runmode")
         if settings.is_prod:
@@ -224,7 +225,8 @@ class ExperimentRunService():
             try:
                 cls.stop_experiment(experiment.id)
             except Exception as err:
-                Logger.error(f'Could not stop experiment {experiment.id}. {str(err)}')
+                Logger.error(
+                    f'Could not stop experiment {experiment.id}. {str(err)}')
 
     @classmethod
     def get_all_running_experiments(cls) -> List[Experiment]:
@@ -254,4 +256,5 @@ class ExperimentRunService():
             SpaceService.send_experiment_finished_mail(user.id, experiment_dto)
         except Exception as err:
             Logger.log_exception_stack_trace(err)
-            Logger.error(f"Error while sending the experiment finished mail : {err}")
+            Logger.error(
+                f"Error while sending the experiment finished mail : {err}")
