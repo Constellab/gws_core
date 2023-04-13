@@ -12,6 +12,7 @@ import sys
 from typing import Dict, List, Literal
 
 import click
+
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.utils.logger import Logger
 from gws_core.notebook.notebook import Notebook
@@ -212,7 +213,7 @@ class SettingsLoader:
                     repo_dir = os.path.join(
                         cls.EXTERNAL_LIB_FOLDER, module_name)
                     cls._load_package(package_name=module_name, package_path=repo_dir,
-                                      channel_source=channel_source)
+                                      channel_source=channel_source, repo_type="git")
 
     @classmethod
     def _load_pip_dependencies(cls, pip_env: List[dict]) -> None:
@@ -228,7 +229,7 @@ class SettingsLoader:
                 module = importlib.import_module(module_name)
                 module_dir = os.path.abspath(module.__file__)
                 cls._load_package(package_name=module_name, package_path=module_dir,
-                                  channel_source=channel_source)
+                                  channel_source=channel_source, repo_type="pip")
 
                 # TO uncomment when pip brick will be available
                 # repo = cls._pip_package_to_module_name(package["name"])
@@ -247,7 +248,7 @@ class SettingsLoader:
                 # cls.parse_settings(repo_dir, is_brick, repo_type="pip", channel_source=channel_source)
 
     @classmethod
-    def _load_package(cls, package_path: str, package_name: str, channel_source: str) -> None:
+    def _load_package(cls, package_path: str, package_name: str, channel_source: str, repo_type: Literal['git', 'pip']) -> None:
 
         # if the package is already loaded, skip it
         if package_name in cls.settings.get_modules():
@@ -275,7 +276,13 @@ class SettingsLoader:
         brick_module["repo_commit"] = cls._get_git_commit(package_path)
 
         # loading module
-        sys.path.insert(0, os.path.abspath(package_path))
+        # for git repo, if an src folder is present, add it to the path
+        # otherwise add the repo folder to the path
+        sub_src_folder = os.path.join(package_path, cls.SOURCE_FOLDER_NAME)
+        if repo_type == 'git' and os.path.exists(sub_src_folder):
+            sys.path.insert(0, os.path.abspath(sub_src_folder))
+        else:
+            sys.path.insert(0, os.path.abspath(package_path))
         cls._save_module(brick_module)
 
     @classmethod
