@@ -8,24 +8,15 @@ from typing import Any, Dict, List, Optional
 
 from gws_core.core.db.version import Version
 
-from ..core.utils.settings import ModuleInfo, Settings
-from .brick_dto import BrickVersion
+from ..core.utils.settings import Settings
+from .brick_dto import BrickInfo, BrickVersion
 
 
 class BrickHelper():
     @classmethod
-    def get_all_bricks(cls) -> Dict[str, ModuleInfo]:
+    def get_all_bricks(cls) -> Dict[str, BrickInfo]:
         """ Returns the info of all the bricks used by the Application """
-        modules: Dict[str, ModuleInfo] = Settings.get_instance().get_modules()
-        bricks: Dict[str, ModuleInfo] = {}
-        for name, brick_info in modules.items():
-            # skip app and skeleton 'bricks'
-            if name == 'app' or name == 'skeleton':
-                continue
-            if brick_info.get("is_brick"):  # "brick" in brick_info["type"]:
-                brick_info["name"] = name  # save the name in the object
-                bricks[name] = brick_info
-        return bricks
+        return Settings.get_instance().get_bricks()
 
     @classmethod
     def get_brick_name(cls, obj: Any) -> str:
@@ -42,7 +33,7 @@ class BrickHelper():
         return modules[0]
 
     @classmethod
-    def get_brick_info(cls, obj: Any) -> Optional[ModuleInfo]:
+    def get_brick_info(cls, obj: Any) -> Optional[BrickInfo]:
         """Methode to return a brick.
         If object, retrieve the brick of the object
         If string, retrieve the brick of name
@@ -65,19 +56,20 @@ class BrickHelper():
             # secific case for the test mode when brick name is test filename
             if Settings.get_instance().is_test:
                 return {
-                    "name": brick_name,
-                    "is_brick": True,
                     "path": '',
+                    "name": brick_name,
+                    "version": '0.0.0',
                     "repo_commit": '',
-                    "repo_type": 'app',
-                    "version": '0.0.0'
+                    "repo_type": 'git',
+                    "parent_name": None,
+                    "error": None,
                 }
             return None
 
         return bricks[brick_name]
 
     @classmethod
-    def get_brick_info_and_check(cls, obj: Any) -> ModuleInfo:
+    def get_brick_info_and_check(cls, obj: Any) -> BrickInfo:
         """Methode to return a brick.
         If object, retrieve the brick of the object
         If string, retrieve the brick of name
@@ -92,7 +84,8 @@ class BrickHelper():
         brick_info = cls.get_brick_info(obj)
 
         if brick_info is None:
-            raise Exception(f"Can't find the brick information of object '{obj}'")
+            raise Exception(
+                f"Can't find the brick information of object '{obj}'")
 
         return brick_info
 

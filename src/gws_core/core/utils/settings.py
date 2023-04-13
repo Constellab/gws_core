@@ -10,11 +10,11 @@ from copy import deepcopy
 from json import JSONDecodeError, dump, load
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from typing_extensions import TypedDict
-
+from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.user.user_dto import SpaceDict
+from typing_extensions import TypedDict
 
 from .date_helper import DateHelper
 from .string_helper import StringHelper
@@ -32,12 +32,13 @@ __DEFAULT_SETTINGS__ = {
 
 class ModuleInfo(TypedDict):
     path: str
-    version: str
-    is_brick: bool
-    repo_type: Literal['app', 'git', 'pip']
-    repo_commit: str
     name: str
     source: str
+    version: str
+    repo_type: Literal['app', 'git', 'pip']
+    repo_commit: Optional[str]
+    # name of the package that depend on this module
+    parent_name: Optional[str]
     error: Optional[str]  # provided if the module could not be loaded
 
 
@@ -71,16 +72,17 @@ class Settings():
         self.data = data
 
     @classmethod
-    def init(cls, settings_json: dict = None):
+    def init(cls) -> 'Settings':
 
         settings = Settings.get_instance()
         settings._init_secrete_key()
 
-        for key, value in settings_json.items():
-            settings.set_data(key, value)
-
-        settings.save()
         Settings._setting_instance = settings
+
+        settings.data['modules'] = {}
+        settings.data['bricks'] = {}
+
+        return settings
 
     def save(self) -> bool:
         # create the parent directory
@@ -268,6 +270,9 @@ class Settings():
         """ Returns the current working directory of the Application (i.e. the main brick directory) """
         return self.data["cwd"]
 
+    def set_cwd(self, cwd: str):
+        self.data["cwd"] = cwd
+
     def get_data(self, k: str, default=None) -> str:
         if k == "session_key":
             return self.data[k]
@@ -332,26 +337,30 @@ class Settings():
     def get_kv_store_base_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "kvstore")
 
-    def get_variable(self, key) -> str:
-        """ Returns a variable. Returns `None` if the variable does not exist """
-        value = self.data.get("variables", {}).get(key)
-        return self._format_variable(value)
-
-    def get_variables(self) -> dict:
-        """ Returns the variables dict """
-        variables = self.data.get("variables", {})
-        for key, val in variables.items():
-            variables[key] = self._format_variable(val)
-        return variables
-
     def get_modules(self) -> Dict[str, ModuleInfo]:
-        return self.data["modules"]
+        return self.data.get("modules", {})
+
+    def add_module(self, module_info: ModuleInfo) -> None:
+        if 'modules' not in self.data:
+            self.data['modules'] = {}
+        self.data["modules"][module_info["name"]] = module_info
+
+    def get_bricks(self) -> Dict[str, BrickInfo]:
+        return self.data.get("bricks", {})
+
+    def add_brick(self, brick_info: BrickInfo) -> None:
+        if 'bricks' not in self.data:
+            self.data['bricks'] = {}
+        self.data["bricks"][brick_info['name']] = brick_info
 
     def get_space(self) -> SpaceDict:
         return self.data.get("space")
 
     def set_space(self, space: SpaceDict):
         self.data["space"] = space
+
+    def set_pip_freeze(self, pip_freeze: List[str]):
+        self.data["pip_freeze"] = pip_freeze
 
     def get_lab_api_url(self) -> str:
         return self.get_lab_prod_api_url() if self.is_prod else self.get_lab_dev_api_url()
@@ -371,7 +380,8 @@ class Settings():
     def update_brick_migration_log(self, brick_name: str, version: str) -> None:
         """Add a new brick migration log and update last migration version
         """
-        brick_migrations: Dict[str, BrickMigrationLog] = self.get_brick_migrations_logs()
+        brick_migrations: Dict[str,
+                               BrickMigrationLog] = self.get_brick_migrations_logs()
         brick_migration: BrickMigrationLog
         # if this is the first time the migration is executed for this brick
         if brick_name not in brick_migrations:
@@ -398,6 +408,22 @@ class Settings():
             })
         self.data["brick_migrations"] = brick_migrations
         self.save()
+
+    def get_variable(self, key) -> str:
+        """ Returns a variable. Returns `None` if the variable does not exist """
+        value = self.data.get("variables", {}).get(key)
+        return self._format_variable(value)
+
+    def get_variables(self) -> dict:
+        """ Returns the variables dict """
+        variables = self.data.get("variables", {})
+        for key, val in variables.items():
+            variables[key] = self._format_variable(val)
+        return variables
+
+    def set_variable(self, key: str, value: str) -> None:
+        """ Set a variable """
+        self.data.setdefault("variables", {})[key] = value
 
     def _format_variable(self, variable: str) -> str:
         """ Format a variable """

@@ -8,13 +8,12 @@ import os
 from time import time
 from typing import Dict, Literal
 
-from peewee import CharField
-from typing_extensions import TypedDict
-
+from gws_core.brick.brick_dto import BrickInfo
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.settings import ModuleInfo
 from gws_core.impl.file.file_helper import FileHelper
+from peewee import CharField
+from typing_extensions import TypedDict
 
 from ..core.model.model import Model
 
@@ -49,7 +48,8 @@ class BrickModel(Model):
         if timestamp is None:
             timestamp = time()
 
-        brick_message: BrickMessage = {"message": message, "status": status, 'timestamp': timestamp}
+        brick_message: BrickMessage = {
+            "message": message, "status": status, 'timestamp': timestamp}
         self.data['messages'].append(brick_message)
 
         # update the brick status
@@ -67,7 +67,7 @@ class BrickModel(Model):
     def clear_messages(self) -> None:
         self.data['messages'] = []
 
-    def get_brick_info(self) -> ModuleInfo:
+    def get_brick_info(self) -> BrickInfo:
         return BrickHelper.get_brick_info_and_check(self.name)
 
     @classmethod
@@ -86,16 +86,8 @@ class BrickModel(Model):
             json_['version'] = brick_info['version']
             json_['repo_type'] = brick_info['repo_type']
             json_['brick_path'] = brick_info['path']
-
-            # read the brick installation info file
-            installation_info = self._read_instalation_info(brick_info['path'])
-            if brick_info['repo_commit']:
-                json_['repo_commit'] = brick_info['repo_commit']
-            else:
-                json_['repo_commit'] = installation_info.get('repo_commit')
-
-            if 'parent_name' in installation_info:
-                json_['parent_name'] = installation_info['parent_name']
+            json_['repo_commit'] = brick_info['repo_commit']
+            json_['parent_name'] = brick_info['parent_name']
 
         except Exception as err:
             # If there was a problem during the birck loading, add a critical error and return brick
@@ -104,21 +96,5 @@ class BrickModel(Model):
             return super().to_json(deep=deep, **kwargs)
 
         return json_
-
-    def _read_instalation_info(self, brick_path: str) -> dict:
-        brick_installation_info = os.path.join(brick_path, '.brick-installation.json')
-
-        if FileHelper.exists_on_os(brick_installation_info):
-            # read the brick installation info file
-            with open(brick_installation_info, 'r', encoding='utf-8') as fp:
-                try:
-                    settings_data: dict = json.load(fp)
-                    return {
-                        'repo_commit': settings_data.get('git_hash'),
-                        'parent_name': settings_data.get('parent_name')
-                    }
-                except Exception:
-                    Logger.error(f"Error: cannot parse the the brick-installation.json of brick '{self.name}'")
-                    return {}
 
         return {}

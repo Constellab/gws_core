@@ -12,7 +12,7 @@ import sys
 from typing import Dict, List, Literal
 
 import click
-
+from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.utils.logger import Logger
 from gws_core.notebook.notebook import Notebook
 
@@ -45,6 +45,9 @@ class SettingsLoader:
     SOURCE_FOLDER_NAME = "src"
     START_APP_FOLDER = 'app'
 
+    GIT_INSTALLATION_FILE = ".gws-git-installation.json"
+    SETTINGS_JSON_FILE = "settings.json"
+
     ROOT_CWD: str = None
     IS_PROD: bool = None
 
@@ -53,12 +56,17 @@ class SettingsLoader:
         "modules": {},
     }
 
+    settings: Settings = None
+
     @classmethod
     def load_settings(cls) -> None:
+        cls.settings = Settings.init()
         cls._init()
-        cls._load_notebook()
-        cls.all_settings["pip_freeze"] = cls.pip_freeze().split()
-        Settings.init(cls.all_settings)
+
+        cls.settings.set_cwd(cls.ROOT_CWD)
+        cls.settings.set_pip_freeze(cls.pip_freeze().split())
+        # save the settings
+        cls.settings.save()
 
         # /!\ Ensure that all bricks' modules are loaded on Application startup
         # Is important to be able to traverse all Bricks/Model/Object inheritors
@@ -66,8 +74,19 @@ class SettingsLoader:
 
     @classmethod
     def _init(cls):
-        module_name = cls.ROOT_CWD.strip("/").split("/")[-1]
-        cls.parse_settings(module_name, cls.ROOT_CWD, is_brick=True, repo_type="app")
+
+        # read settings file
+        settings: dict = None
+        try:
+            settings = cls._read_brick_settings(cls.ROOT_CWD)
+        except Exception as err:
+            Logger.error(
+                f"Error: cannot parse the main settings file under '{cls.ROOT_CWD}'")
+            raise err
+
+        bricks = settings["environment"].get("bricks", [])
+        # load all the bricks dependencies
+        cls._load_brick_dependencies(bricks, parent_name=None)
 
         # in dev mode also load bricks from the user bricks folder
         if not cls.IS_PROD:
@@ -78,79 +97,42 @@ class SettingsLoader:
             for folder in os.listdir(user_bricks):
                 folder_path = os.path.join(user_bricks, folder)
                 # if the brick was alreayd loaded, skip it
-                if folder in cls.all_settings["modules"]:
+                if folder in cls.settings.get_bricks():
                     continue
                 if os.path.isdir(folder_path) and BrickService.folder_is_brick(folder_path):
-                    Logger.info(f"Loading dev brick '{folder}' from '{folder_path}'")
-                    cls.parse_settings(folder, folder_path, is_brick=True, repo_type="git")
+                    Logger.info(
+                        f"Loading dev brick '{folder}' from '{folder_path}'")
+                    cls.load_brick(folder)
                 else:
                     Logger.warning(
                         f"{Settings.get_user_bricks_folder()} folder should only contain bricks, please remove {folder} element.")
 
-        cls.all_settings["cwd"] = cls.ROOT_CWD
-
     @classmethod
-    def _load_notebook(cls):
-        if not os.path.exists(cls.NOTEBOOK_FOLDER):
-            return
-        dirs = os.listdir(cls.NOTEBOOK_FOLDER)
-        for file_name in dirs:
-            if file_name.startswith("_") or file_name.startswith("."):
-                continue
-            file_path = os.path.join(cls.NOTEBOOK_FOLDER, file_name)
-            if os.path.isdir(file_path):
-                sys.path.insert(0, file_path)
+    def load_brick(cls, brick_name: str, parent_name: str = None) -> None:
 
-        cls.all_settings["modules"]["notebook"] = {
-            "path": cls.NOTEBOOK_FOLDER,
-            "is_brick": False,
-            "type": "notebook"
-        }
-
-    @classmethod
-    def parse_variables(cls, repo_name: str, cwd: str, variables: Dict[str, str]) -> Dict[str, str]:
-        for key, value in variables.items():
-            value = value.replace("${LAB_DIR}", cls.LAB_WORKSPACE_DIR)
-            value = value.replace("${DATA_DIR}", cls.DATA_DIR)
-            value = value.replace("${CURRENT_DIR}", cwd)
-            value = value.replace("${CURRENT_BRICK}", repo_name)
-            variables[key] = value
-
-        return variables
-
-    @classmethod
-    def parse_settings(cls, module_name: str, module_path: str, is_brick,
-                       repo_type: RepoType, channel_source=""):
-        channel_source = re.sub(r"((https?|ssh)://)(.+@)?(.+)", r"\1\4", channel_source)
+        # repo dir is the path to the brick folder
+        # if the brick is not found in the user workspace, we look for it in the system workspace
+        brick_path = os.path.join(cls.USER_BRICKS_FOLDER, brick_name) if os.path.exists(
+            os.path.join(cls.USER_BRICKS_FOLDER, brick_name)) else os.path.join(cls.SYS_BRICKS_FOLDER, brick_name)
 
         # if the package is already loaded, skip it
-        if module_name in cls.all_settings["modules"]:
+        if brick_name in cls.settings.get_bricks():
             return
 
-        if is_brick:
-            cls._load_brick(module_path, module_name, repo_type, channel_source)
-        else:
-            cls._load_package(module_path, module_name, channel_source)
-
-    @classmethod
-    def _load_brick(cls, brick_path: str, brick_name: str, repo_type: RepoType, channel_source: str) -> None:
-
-        brick_module: ModuleInfo = {
-            "name": brick_name,
+        brick_module: BrickInfo = {
             "path": brick_path,
-            "repo_type": repo_type,
-            # we don't consider app as a brick
-            "is_brick":  brick_name != cls.START_APP_FOLDER,
-            "source": channel_source,
-            "repo_commit": None,
+            "name": brick_name,
             "version": None,
+            "repo_type": None,
+            "repo_commit": None,
+            "parent_name": parent_name,
             "error": None
         }
 
         if not os.path.exists(brick_path):
             brick_module["error"] = f"Folder '{brick_path}' for brick '{brick_name}' is not found. Skipping brick."
             Logger.error(brick_module["error"])
-            cls._save_module(brick_module)
+            cls._save_brick(brick_module)
             return
 
         # read settings file
@@ -159,16 +141,19 @@ class SettingsLoader:
             try:
                 settings_data: dict = json.load(fp)
             except Exception as err:
-                Logger.error(f"Error: cannot parse the the settings file of brick '{brick_name}'")
+                Logger.error(
+                    f"Error: cannot parse the the settings file of brick '{brick_name}'")
                 Logger.log_exception_stack_trace(err)
-                brick_module["error"] = f"Error: cannot parse the the settings file of brick '{brick_name}'. Error {err}"
-                cls._save_module(brick_module)
+                brick_module[
+                    "error"] = f"Error: cannot parse the the settings file of brick '{brick_name}'. Error {err}"
+                cls._save_brick(brick_module)
                 return
 
         # get brick version
         if not settings_data.get('version'):
-            brick_module["error"] = f"Missing version in settings.json for brick {brick_name}. Skipping brick."
-            cls._save_module(brick_module)
+            brick_module[
+                "error"] = f"Missing version in settings.json for brick {brick_name}. Skipping brick."
+            cls._save_brick(brick_module)
             return
 
         brick_module["version"] = settings_data.get('version')
@@ -177,26 +162,42 @@ class SettingsLoader:
         sys.path.insert(0, os.path.join(brick_path, cls.SOURCE_FOLDER_NAME))
 
         # get brick commit and version
-        brick_module["repo_commit"] = cls.get_git_commit(brick_path) if repo_type == "git" else ""
-        cls._save_module(brick_module)
+        git_commit = cls._get_git_commit(brick_path)
+        brick_module["repo_commit"] = git_commit
+        brick_module["repo_type"] = 'git' if git_commit else 'pip'
+        cls._save_brick(brick_module)
 
-        # parse variables
-        if not "variables" in settings_data:
-            settings_data["variables"] = {}
-        cls.parse_variables(brick_name, brick_path, settings_data["variables"])
-
-        cls._update_dict(cls.all_settings, settings_data)
+        # parse and save variables
+        cls._save_brick_variables(
+            brick_name, brick_path, settings_data["variables"])
 
         # loads git packages
         git_env = settings_data["environment"].get("git", [])
-        cls._load_git_dependencies(git_env)
+        cls._load_git_dependencies(git_env, parent_name=brick_name)
 
         # loads pip packages
         pip_env = settings_data["environment"].get("pip", [])
         cls._load_pip_dependencies(pip_env)
 
+        bricks = settings_data["environment"].get("bricks", [])
+        cls._load_brick_dependencies(bricks, parent_name=brick_name)
+
     @classmethod
-    def _load_git_dependencies(cls, git_env: List[dict]) -> None:
+    def _read_brick_settings(cls, brick_path: str) -> dict:
+        file_path = os.path.join(brick_path, cls.SETTINGS_JSON_FILE)
+        with open(file_path, 'r', encoding='utf-8') as fp:
+            return json.load(fp)
+
+    @classmethod
+    def _load_brick_dependencies(cls, bricks: List[dict], parent_name: str = None) -> None:
+
+        for brick in bricks:
+            brick_name = brick["name"]
+
+            cls.load_brick(brick_name=brick_name, parent_name=parent_name)
+
+    @classmethod
+    def _load_git_dependencies(cls, git_env: List[dict], parent_name: str) -> None:
 
         for channel in git_env:
             channel_source = channel["source"]
@@ -205,17 +206,13 @@ class SettingsLoader:
                 is_brick = package.get("is_brick", False)
 
                 # import brick from user workspace or system workspace
-                if is_brick:
-                    repo_dir = os.path.join(cls.USER_BRICKS_FOLDER, module_name)
-                    if not os.path.exists(repo_dir):
-                        repo_dir = os.path.join(cls.SYS_BRICKS_FOLDER, module_name)
-                        if not os.path.exists(repo_dir):
-                            # set the dir to original location, the error is handled in parse settings
-                            repo_dir = os.path.join(cls.USER_BRICKS_FOLDER, module_name)
-                # import external library
+                if is_brick:  # TODO to remove once all brick are under bricks object
+                    cls.load_brick(module_name, parent_name=parent_name)
                 else:
-                    repo_dir = os.path.join(cls.EXTERNAL_LIB_FOLDER, module_name)
-                cls.parse_settings(module_name, repo_dir, is_brick, repo_type="git", channel_source=channel_source)
+                    repo_dir = os.path.join(
+                        cls.EXTERNAL_LIB_FOLDER, module_name)
+                    cls._load_package(package_name=module_name, package_path=repo_dir,
+                                      channel_source=channel_source)
 
     @classmethod
     def _load_pip_dependencies(cls, pip_env: List[dict]) -> None:
@@ -224,13 +221,14 @@ class SettingsLoader:
             channel_source = channel["source"]
             for package in channel.get("packages"):
                 module_name = package["name"]
-                is_brick = package.get("is_brick", False)
+
                 if module_name not in sys.modules:
                     Logger.info(f"Skipping pip package '{module_name}'")
                     continue
                 module = importlib.import_module(module_name)
                 module_dir = os.path.abspath(module.__file__)
-                cls.parse_settings(module_name, module_dir, is_brick, repo_type="pip", channel_source=channel_source)
+                cls._load_package(package_name=module_name, package_path=module_dir,
+                                  channel_source=channel_source)
 
                 # TO uncomment when pip brick will be available
                 # repo = cls._pip_package_to_module_name(package["name"])
@@ -251,15 +249,18 @@ class SettingsLoader:
     @classmethod
     def _load_package(cls, package_path: str, package_name: str, channel_source: str) -> None:
 
+        # if the package is already loaded, skip it
+        if package_name in cls.settings.get_modules():
+            return
+
         brick_module: ModuleInfo = {
-            "name": package_name,
             "path": package_path,
-            "repo_type": "",
-            # we don't consider app as a brick
-            "is_brick":  False,
+            "name": package_name,
             "source": channel_source,
-            "repo_commit": None,
             "version": None,
+            "repo_type": "",
+            "repo_commit": None,
+            "parent_name": None,
             "error": None
         }
 
@@ -271,15 +272,30 @@ class SettingsLoader:
             return
 
         # get brick commit
-        brick_module["repo_commit"] = cls.get_git_commit(package_path)
+        brick_module["repo_commit"] = cls._get_git_commit(package_path)
 
         # loading module
         sys.path.insert(0, os.path.abspath(package_path))
         cls._save_module(brick_module)
 
     @classmethod
+    def _save_brick_variables(cls, repo_name: str, cwd: str, variables: Dict[str, str]) -> None:
+        """Save the repo variable in the settings and replace the variables with the correct value.
+        """
+        for key, value in variables.items():
+            value = value.replace("${LAB_DIR}", cls.LAB_WORKSPACE_DIR)
+            value = value.replace("${DATA_DIR}", cls.DATA_DIR)
+            value = value.replace("${CURRENT_DIR}", cwd)
+            value = value.replace("${CURRENT_BRICK}", repo_name)
+            cls.settings.set_variable(key, value)
+
+    @classmethod
     def _save_module(cls, module_info: ModuleInfo) -> None:
-        cls.all_settings["modules"][module_info["name"]] = module_info
+        cls.settings.add_module(module_info)
+
+    @classmethod
+    def _save_brick(cls, brick_info: BrickInfo) -> None:
+        cls.settings.add_brick(brick_info)
 
     @classmethod
     def _pip_package_to_module_name(cls, pip_package: str) -> str:
@@ -288,32 +304,32 @@ class SettingsLoader:
         return pip_package.replace('-', '_')
 
     @classmethod
-    def _update_dict(cls, d, u):
-        for key, value in u.items():
-            if isinstance(value, dict):
-                d[key] = cls._update_dict(d.get(key, {}), value)
-            elif isinstance(value, list):
-                d[key] = d.get(key, []) + value
-            else:
-                d[key] = value
-        return d
-
-    @classmethod
     def pip_freeze(cls):
         return subprocess.check_output(["python3", "-m", "pip", "freeze"], stderr=subprocess.DEVNULL, text=True)
 
     @classmethod
-    def get_git_commit(cls, cwd):
-        if not os.path.exists(os.path.join(cwd, ".git")):
+    def _get_git_commit(cls, cwd) -> str:
+        """retrieve the git commit info from GIT_INSTALLATION_FILE file
+
+        :param cwd: _description_
+        :type cwd: _type_
+        :return: _description_
+        :rtype: str
+        """
+
+        git_install_path = os.path.join(cwd, cls.GIT_INSTALLATION_FILE)
+
+        if not os.path.exists(git_install_path):
             return ""
 
-        git_commit = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
-            cwd=cwd, stderr=subprocess.DEVNULL, text=True)
-
-        if not git_commit:
-            return ""
-        return git_commit.strip()
+        with open(git_install_path, 'r', encoding='utf-8') as fp:
+            try:
+                settings_data: dict = json.load(fp)
+                return settings_data.get('git_hash')
+            except Exception:
+                Logger.error(
+                    f"Error: cannot parse the the gws-git-installation.json of git package '{cwd}'")
+                return None
 
 
 def load_settings(cwd: str) -> None:
@@ -352,7 +368,8 @@ def _start_app_console(ctx, test: bool, cli: str, runserver: bool,
                        runmode, notebook: bool, port: str, log_level: str, show_sql: bool, reset_env: bool):
     is_prod = runmode == "prod"
 
-    _start_app(test, cli, runserver, is_prod, notebook, port, log_level, show_sql, reset_env)
+    _start_app(test, cli, runserver, is_prod, notebook,
+               port, log_level, show_sql, reset_env)
 
 
 def _start_app(test: str, cli: str, runserver: bool,
@@ -361,4 +378,5 @@ def _start_app(test: str, cli: str, runserver: bool,
     SettingsLoader.IS_PROD = is_prod
     SettingsLoader.load_settings()
 
-    runner.call(is_prod, test, cli, runserver, notebook, port, log_level, show_sql, reset_env)
+    runner.call(is_prod, test, cli, runserver, notebook,
+                port, log_level, show_sql, reset_env)
