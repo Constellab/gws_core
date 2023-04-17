@@ -46,7 +46,8 @@ class ResourceSet(ResourceListBase):
 
     def _set_r_field(self) -> None:
         """ set _resource_ids with key = resource_name and value = resource_id"""
-        self._resource_ids = {name: resource._model_id for name, resource in self._resources.items()}
+        self._resource_ids = {
+            name: resource._model_id for name, resource in self._resources.items()}
 
     def add_resource(self, resource: Resource,
                      unique_name: str = None,
@@ -65,25 +66,29 @@ class ResourceSet(ResourceListBase):
         :type create_new_resource: bool, optional
         """
         if not isinstance(resource, Resource):
-            raise Exception('The resource_set only takes set of resources')
+            raise Exception('The resource_set accepts only Resource')
 
         if isinstance(resource, ResourceListBase):
             raise Exception('ResourceSet does not support nested')
 
         if self._model_id is not None:
-            raise Exception("The ResourceSet is already saved, you can't add a resource to it")
+            raise Exception(
+                "The ResourceSet is already saved, you can't add a resource to it")
 
         if not create_new_resource and resource._model_id is None:
-            raise Exception("The resource must be saved before, if you use the create_new_resource option")
+            raise Exception(
+                "The resource must be saved before, if you use the create_new_resource option")
 
         if self._resources is None:
             self._resources = {}
 
         name = unique_name or resource.name
         if name is None:
-            raise Exception('The unique name was not provided and the resource name is not set')
+            raise Exception(
+                'The unique name was not provided and the resource name is not set')
         if name in self._resources:
-            raise Exception(f"Resource with name '{name}' already exists in the ResourceSet")
+            raise Exception(
+                f"Resource with name '{name}' already exists in the ResourceSet")
 
         # if the resource already exist, add it to the constant list so
         # the system will not create a new resource on save

@@ -18,18 +18,13 @@ class TestLiveTask(BaseTestCase):
 from pandas import DataFrame
 from gws_core import Table
 
-def foo(a,b,source):
-    df = Table(DataFrame({'col1': [1,a], 'col2': [0,b]}))
-    df = df.get_data() + source.get_data()
 
-    # the target resource will be given to the outputs if it is defined
-    outputs = {'target': Table(data=df)}
-    return outputs
+df = Table(DataFrame({'col1': [1,a], 'col2': [0,b]}))
+df = df.get_data() + source.get_data()
 
-a = params['a']
-b = params['b']
-source = inputs['source']
-outputs = foo(a,b,source)
+# return Dataframe (it should be converted to table)
+target = df
+
             """,
                 "params": ["a=1", "b=2"],
             },
@@ -56,7 +51,6 @@ import subprocess
 import sys
 result = subprocess.run([sys.executable, '-c', 'print(\"gencovery\")'], capture_output=True, text=True)
 target = Text(data=result.stdout)
-outputs = {"target": target}
                 """,
                 "params": []
             },
@@ -80,7 +74,6 @@ with open(result_file_path, 'r+t') as fp:
     data = fp.read()
 shell_proxy.clean_working_dir()
 target = Text(data=data)
-outputs = {"target": target}
                 """,
                 "params": []
             },
@@ -88,41 +81,27 @@ outputs = {"target": target}
         )
 
         outputs = tester.run()
-        text = outputs["target"]
+        text: Text = outputs["target"]
         self.assertTrue(isinstance(text, Text))
         self.assertEqual(text.get_data().strip(), 'constellab')
 
-#     def test_live_task_shell_with_pipenv(self):
-#         tester = TaskRunner(
-#             params={
-#                 "code": """
-# import os
-# from gws_core import Text, EnvShellProxyHelper
+    def test_live_task_with_exception(self):
+        tester = TaskRunner(
+            params={
+                "code": """
+raise Exception('This is not working')
+""",
+                "params": []
+            },
+            task_type=PyLiveTask
+        )
 
-# yml_text = " \\
-# name: .venv3\\n \\
-# channels:\\n \\
-# - conda-forge\\n \\
-# dependencies:\\n \\
-# - python=3.8\\n \\
-# - pyjwt"
-# shell_proxy = EnvShellProxyHelper.create_conda_shell_proxy(yml_text)
+        error = False
+        try:
+            tester.run()
+        except Exception as err:
+            error = True
+            # check that the error of the snippet is the same as the one raised
+            self.assertEqual(str(err), 'This is not working')
 
-# cmd = ["python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"]
-# shell_proxy.run(cmd, shell_mode=True)
-# result_file_path = os.path.join(shell_proxy.working_dir, 'out.txt')
-
-# with open(result_file_path, 'r+t') as fp:
-#     data = fp.read()
-# shell_proxy.clean_working_dir()
-# target = Text(data=data)
-# outputs = {"target": target}
-# """,
-#             },
-#             task_type=PyLiveTask
-#         )
-
-#         outputs = tester.run()
-#         text = outputs["target"]
-#         self.assertTrue(isinstance(text, Text))
-#         self.assertEqual(text.get_data().strip(), 'constellab')
+        self.assertTrue(error)

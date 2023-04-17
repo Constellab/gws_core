@@ -224,7 +224,7 @@ class SettingsLoader:
                 module_name = package["name"]
 
                 if module_name not in sys.modules:
-                    Logger.info(f"Skipping pip package '{module_name}'")
+                    # Logger.info(f"Skipping pip package '{module_name}'")
                     continue
                 module = importlib.import_module(module_name)
                 module_dir = os.path.abspath(module.__file__)

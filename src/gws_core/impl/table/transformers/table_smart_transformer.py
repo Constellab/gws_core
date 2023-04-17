@@ -8,7 +8,7 @@ from pandas import DataFrame
 
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.config.param.param_spec import TextParam
-from gws_core.impl.live.live_code_helper import LiveCodeHelper
+from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.impl.table.table import Table
 from gws_core.impl.text.text import Text
 from gws_core.io.io_spec import InputSpec, OutputSpec

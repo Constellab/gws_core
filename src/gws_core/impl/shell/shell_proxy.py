@@ -77,7 +77,8 @@ class ShellProxy():
 
         FileHelper.create_dir_if_not_exist(self.working_dir)
 
-        self._message_dispatcher.notify_info_message(f"[ShellProxy] Running command: {cmd}")
+        self._message_dispatcher.notify_info_message(
+            f"[ShellProxy] Running command: {cmd}")
         try:
             proc = subprocess.Popen(
                 cmd,
@@ -88,7 +89,8 @@ class ShellProxy():
                 stderr=subprocess.PIPE,
             )
 
-            self._message_dispatcher.notify_info_message(f"[ShellProxy] Running command in process : {proc.pid}")
+            self._message_dispatcher.notify_info_message(
+                f"[ShellProxy] Running command in process : {proc.pid}")
 
             # use to read the stdout and stderr of the process
             # https://stackoverflow.com/questions/12270645/can-you-make-a-python-subprocess-output-stdout-and-stderr-as-usual-but-also-cap/12272262#12272262
@@ -103,7 +105,7 @@ class ShellProxy():
 
                 for fd in ret[0]:
                     if fd == proc.stdout.fileno():
-                        read = proc.stdout.readline()
+                        read = proc.stdout.read()
 
                         if read:
                             # if the previous message was an error, we dispatch the error
@@ -115,7 +117,7 @@ class ShellProxy():
                             stdout.append(read)
 
                     if fd == proc.stderr.fileno():
-                        read = proc.stderr.readline()
+                        read = proc.stderr.read()
 
                         if read:
                             # if the previous message was an stdout, we dispatch the stdout
@@ -158,9 +160,11 @@ class ShellProxy():
             # we can use wait instead of poll because we have already called communicate
             return_core = proc.poll()
             if return_core == 0:
-                self._message_dispatcher.notify_info_message("[ShellProxy] Command executed successfully")
+                self._message_dispatcher.notify_info_message(
+                    "[ShellProxy] Command executed successfully")
             else:
-                self._message_dispatcher.notify_error_message("[ShellProxy] Command failed")
+                self._message_dispatcher.notify_error_message(
+                    "[ShellProxy] Command failed")
 
             return return_core
         except Exception as err:
@@ -170,21 +174,25 @@ class ShellProxy():
 
     def _self_dispatch_stdouts(self, messages: List[bytes]) -> None:
         if len(messages) > 0:
-            message = "\n".join([message.decode().strip() for message in messages])
+            message = "\n".join([message.decode().strip()
+                                for message in messages])
             self._message_dispatcher.notify_info_message(message)
 
     def _self_dispatch_stderrs(self, messages: List[bytes]) -> None:
         if len(messages) > 0:
-            message = "\n".join([message.decode().strip() for message in messages])
+            message = "\n".join([message.decode().strip()
+                                for message in messages])
             self._message_dispatcher.notify_error_message(message)
 
     def _self_dispatch_stdout(self, message: bytes) -> None:
         if message:
-            self._message_dispatcher.notify_info_message(message.decode().strip())
+            self._message_dispatcher.notify_info_message(
+                message.decode().strip())
 
     def _self_dispatch_stderr(self, message: bytes) -> None:
         if message:
-            self._message_dispatcher.notify_error_message(message.decode().strip())
+            self._message_dispatcher.notify_error_message(
+                message.decode().strip())
 
     def clean_working_dir(self):
         FileHelper.delete_dir(self.working_dir)

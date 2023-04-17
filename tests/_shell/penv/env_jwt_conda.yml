@@ -3,5 +3,5 @@ channels:
   - conda-forge
 dependencies:
   - python=3.8
-  - pyjwt
+  - pyjwt==2.3.0
  

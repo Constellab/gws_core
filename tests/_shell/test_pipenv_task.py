@@ -21,16 +21,16 @@ class PipEnvTaskTester(PipEnvTask):
     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_pip.txt")
 
     def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: PipShellProxy) -> TaskOutputs:
-        command = ["python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"]
+        command = ["python", os.path.join(
+            __cdir__, "penv", "jwt_encode.py"), ">", "out.txt"]
         shell_proxy.run(command, shell_mode=True)
 
         # retrieve the result
         file = File(path=os.path.join(self.working_dir, "out.txt"))
         return {"file": file}
 
+
 # test_pipenv_task
-
-
 class TestPipEnv(TestCase):
 
     def test_pipenv(self):
@@ -59,13 +59,3 @@ class TestPipEnv(TestCase):
                 task.shell_proxy.uninstall_env()
                 task_runner.force_dispatch_waiting_messages()
             raise exception
-
-    # def test_pipenv_proxy(self):
-
-    #     prox = ShellProxy(PipEnvTester)
-    #     encoded_string = prox.check_output(
-    #         ["python", os.path.join(__cdir__, "penv", "jwt_encode.py")]
-    #     )
-    #     self.assertEqual(
-    #         encoded_string,
-    #         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb21lIjoicGF5bG9hZCJ9.4twFt5NiznN84AWoo1d7KO1T_yoc0Z6XOpOVswacPZg")

@@ -3,18 +3,20 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import hashlib
 import os
 from abc import abstractmethod
 from json import dump, load
 from pathlib import Path
 from typing import Any, Union, final
 
+from typing_extensions import TypedDict
+
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
-from typing_extensions import TypedDict
 
 from .shell_proxy import ShellProxy
 
@@ -34,6 +36,9 @@ class BaseEnvShell(ShellProxy):
 
     VENV_DIR_NAME = ".venv"
     CREATION_INFO_FILE_NAME = "__creation.json"
+
+    # overrided by subclasses. Use to define the default env file name
+    CONFIG_FILE_NAME: str = None
 
     def __init__(self, env_dir_name: str, env_file_path: Union[Path, str],
                  working_dir: str = None, message_dispatcher: MessageDispatcher = None):
@@ -124,11 +129,13 @@ class BaseEnvShell(ShellProxy):
             is_install = self._install_env()
         except Exception as err:
             Logger.log_exception_stack_trace(err)
-            raise Exception(f"Cannot install the virtual environment. Error {err}") from err
+            raise Exception(
+                f"Cannot install the virtual environment. Error {err}") from err
 
         if is_install:
             self._create_env_creation_file()
-            self._message_dispatcher.notify_info_message(f"Virtual environment '{self.env_dir_name}' installed!")
+            self._message_dispatcher.notify_info_message(
+                f"Virtual environment '{self.env_dir_name}' installed!")
 
         return is_install
 
@@ -165,16 +172,19 @@ class BaseEnvShell(ShellProxy):
         if not self.env_is_installed():
             return False
 
-        self._message_dispatcher.notify_info_message(f"Uninstalling the virtual environment '{self.env_dir_name}'")
+        self._message_dispatcher.notify_info_message(
+            f"Uninstalling the virtual environment '{self.env_dir_name}'")
         is_uninstall: bool = False
         try:
             is_uninstall = self._uninstall_env()
         except Exception as err:
             Logger.log_exception_stack_trace(err)
-            raise Exception(f"Cannot uninstall the virtual environment. Error {err}") from err
+            raise Exception(
+                f"Cannot uninstall the virtual environment. Error {err}") from err
 
         if is_uninstall:
-            self._message_dispatcher.notify_info_message(f"Virtual environment '{self.env_dir_name}' uninstalled!")
+            self._message_dispatcher.notify_info_message(
+                f"Virtual environment '{self.env_dir_name}' uninstalled!")
 
         return is_uninstall
 
@@ -259,7 +269,8 @@ class BaseEnvShell(ShellProxy):
         All env are in the global env dir.
         """
 
-        env_dir = os.path.join(Settings.get_global_env_dir(), self.env_dir_name)
+        env_dir = os.path.join(
+            Settings.get_global_env_dir(), self.env_dir_name)
 
         return env_dir
 
@@ -286,3 +297,21 @@ class BaseEnvShell(ShellProxy):
 
         with open(os.path.join(folder_path, cls.CREATION_INFO_FILE_NAME), encoding="UTF-8") as json_file:
             return load(json_file)
+
+    @classmethod
+    def from_env_str(cls, env_str: str, message_dispatcher: MessageDispatcher) -> "BaseEnvShell":
+        """
+        Create the virtual environment from a string containing the environment definition.
+
+        The env dir name is generated from an hash of the env_str.
+        So if the env_str is the same, the env dir name will be the same.
+        """
+
+        unique_env_dir_name = hashlib.md5(env_str.encode('utf-8')).hexdigest()
+        temp_dir = Settings.make_temp_dir()
+        env_file_path = os.path.join(temp_dir, cls.CONFIG_FILE_NAME)
+        with open(env_file_path, 'w', encoding="utf-8") as file_path:
+            file_path.write(env_str)
+
+        return cls(env_dir_name=unique_env_dir_name,
+                   env_file_path=env_file_path, message_dispatcher=message_dispatcher)

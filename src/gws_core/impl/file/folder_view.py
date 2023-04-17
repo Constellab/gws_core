@@ -67,9 +67,11 @@ class LocalFolderView(View):
         # recursive call on folder content
         if FileHelper.is_dir(path):
             children: List[str] = os.listdir(path)
+            children.sort()
             _json['children'] = []
 
             for child in children:
-                _json['children'].append(self._get_content(os.path.join(path, child), node_models))
+                _json['children'].append(self._get_content(
+                    os.path.join(path, child), node_models))
 
         return _json
