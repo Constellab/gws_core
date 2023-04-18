@@ -100,7 +100,7 @@ class UserService(BaseService):
     @classmethod
     def get_all_real_users(cls) -> List[User]:
         return list(User.select().where(User.group != UserGroup.SYSUSER)
-                    .order_by(User.last_name, User.first_name))
+                    .order_by(User.first_name, User.last_name))
 
     # Create the admin
     @classmethod
