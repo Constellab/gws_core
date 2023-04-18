@@ -31,6 +31,7 @@ class PyPipenvLiveTask(EnvLiveTask):
     SNIPPET_FILE_EXTENSION: str = "py"
 
     config_specs: ConfigSpecs = {
+        'params': EnvLiveTask.get_list_param_config(),
         'env': PythonCodeParam(
             default_value=LiveCodeHelper.get_pip_env_file_template(),
             human_name="Pipenv configuration", short_description="Pipenv configuration"

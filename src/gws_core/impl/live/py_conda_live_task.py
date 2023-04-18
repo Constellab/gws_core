@@ -32,6 +32,7 @@ class PyCondaLiveTask(EnvLiveTask):
     SNIPPET_FILE_EXTENSION: str = "py"
 
     config_specs: ConfigSpecs = {
+        'params': EnvLiveTask.get_list_param_config(),
         'env': PythonCodeParam(
             default_value=LiveCodeHelper.get_conda_env_file_template(),
             human_name="YAML configurtation", short_description="YAML configuration of the conda environment"

@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.config.param.code_param.r_code_param import RCodeParam
@@ -35,6 +34,7 @@ class RCondaLiveTask(EnvLiveTask):
     SNIPPET_FILE_EXTENSION: str = "R"
 
     config_specs: ConfigSpecs = {
+        'params': EnvLiveTask.get_list_param_config(),
         'env': PythonCodeParam(
             default_value=LiveCodeHelper.get_r_conda_env_file_template(),
             human_name="YAML configurtation", short_description="YAML configuration of the R conda environment"

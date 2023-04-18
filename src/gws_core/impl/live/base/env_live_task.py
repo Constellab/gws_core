@@ -6,8 +6,9 @@
 import os
 import shutil
 from abc import abstractmethod
-from typing import Optional
+from typing import List, Optional
 
+from gws_core.config.param.param_spec import ListParam, ParamSpec
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
@@ -72,7 +73,8 @@ class EnvLiveTask(Task):
         self.shell_proxy = self._create_shell_proxy(env)
 
         # create the executable code file
-        code_file_path = self.generate_code_file(code, self.target_temp_folder,
+        code_file_path = self.generate_code_file(code, params.get_value('params'),
+                                                 self.target_temp_folder,
                                                  self.source_temp_folder)
 
         # validate user inputs, params, code
@@ -86,13 +88,14 @@ class EnvLiveTask(Task):
         target = self.get_target_resources(self.target_temp_folder)
         return {'target': target}
 
-    def generate_code_file(self, code: str, target_path: str, source_path: str) -> str:
+    def generate_code_file(self, code: str, params: List[str], target_path: str, source_path: str) -> str:
         # create the executable code file
         if self.SNIPPET_FILE_EXTENSION is None:
             raise BadRequestException("No SNIPPET_FILE_EXTENSION defined")
 
         # format code to add inputs
-        formatted_code = self._format_code(code, target_path, source_path)
+        formatted_code = self._format_code(
+            code, params, target_path, source_path)
         code_file_path = os.path.join(
             self.shell_proxy.working_dir, f"code.{self.SNIPPET_FILE_EXTENSION}")
 
@@ -166,14 +169,15 @@ class EnvLiveTask(Task):
     def _create_shell_proxy(self, env: str) -> ShellProxy:
         pass
 
-    def _format_code(self, code: str, target_path: str, source_path: Optional[str]) -> str:
+    def _format_code(self, code: str, params: List[str], target_path: str, source_path: Optional[str]) -> str:
         """
         Format the code to add parameters and input/output paths"""
+        str_params = '\n'.join(params) if params else ''
         return f"""
 # read parameters
 target_folder = "{target_path}"
 source_path = "{source_path}"
-
+{str_params}
 # code snippet
 {code}
 """
@@ -191,3 +195,10 @@ source_path = "{source_path}"
 
         if self.target_temp_folder:
             shutil.rmtree(self.target_temp_folder, ignore_errors=True)
+
+    @classmethod
+    def get_list_param_config(cls) -> ParamSpec:
+        return ListParam(
+            optional=True, default_value=[],
+            human_name="Parameter definitions",
+            short_description="Please give one parameter definition per line")

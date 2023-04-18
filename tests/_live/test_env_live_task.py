@@ -131,7 +131,7 @@ pyjwt = '==2.3.0'"""
 import os
 
 # loop over source_path files and concatenate them into a single string
-data = ""
+data = text_start
 for file in os.listdir(source_path):
     with open(os.path.join(source_path, file), "r", encoding="utf-8") as fp:
         data += fp.read()
@@ -150,6 +150,7 @@ with open(result_path_2, "w", encoding="utf-8") as fp:
                 """,
                 # SET ENVIRONMENT
                 "env": self.pip_env_str,
+                "params": ["text_start='Start'"]
             },
             inputs={"source": resource_set},
             task_type=PyPipenvLiveTask
@@ -169,6 +170,8 @@ with open(result_path_2, "w", encoding="utf-8") as fp:
 
         self.assertTrue('Micheal !' in result_1.read().strip())
         self.assertTrue('Hello world' in result_1.read().strip())
+        # check that the param was correctly set
+        self.assertTrue('Start' in result_1.read().strip())
 
         tester.run_after_task()
 
