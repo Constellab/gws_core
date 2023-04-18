@@ -39,21 +39,8 @@ class RCondaLiveTask(EnvLiveTask):
             default_value=LiveCodeHelper.get_r_conda_env_file_template(),
             human_name="YAML configurtation", short_description="YAML configuration of the R conda environment"
         ),
-<<<<<<< HEAD
-        'args':
-        StrParam(
-            optional=True, default_value="", human_name="Shell arguments",
-            short_description="Shell arguments used to call the script. For example: Use '--datapath {input:*}' to pass a single input `File`. Use '--datapath1 {input:file1} --datapath2 {input:file2}' to pass several files from an input `ResourceSet`."),
-        'output_file_paths':
-        ListParam(
-            human_name="Output file paths",
-            short_description="The paths of the files to capture in the outputs. For example: Enter 'result.csv' to capture this file in the outputs. Please ensure that this file is created by the script"),
-        'code': PythonCodeParam(
-            default_value=TemplateReaderHelper.read_snippet_template(file_name="r_env_snippet_template.R"),
-=======
         'code': RCodeParam(
             default_value=LiveCodeHelper.get_r_template(),
->>>>>>> 1.0.x
             human_name="R code snippet", short_description="The R code snippet to execute using shell command"),
     }
 
