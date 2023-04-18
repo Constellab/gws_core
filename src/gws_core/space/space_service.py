@@ -54,7 +54,8 @@ class SpaceService(BaseService):
             return True
 
         if settings.is_dev:
-            raise BadRequestException("The space routes are desactivated in dev environment")
+            raise BadRequestException(
+                "The space routes are desactivated in dev environment")
 
         space_api_key = Settings.get_space_api_key()
         return space_api_key == api_key
@@ -66,7 +67,8 @@ class SpaceService(BaseService):
         """
         space_api_url: str = cls._get_space_api_url(
             'auth/external/check-credentials/false')
-        response = ExternalApiService.post(space_api_url, credentials.dict(), raise_exception_if_error=True)
+        response = ExternalApiService.post(
+            space_api_url, credentials.dict(), raise_exception_if_error=True)
 
         return parse_obj_as(ExternalCheckCredentialResponse, response.json())
 
@@ -78,7 +80,8 @@ class SpaceService(BaseService):
         """
         space_api_url: str = cls._get_space_api_url(
             'auth/external/check-2fa')
-        response = ExternalApiService.post(space_api_url, credentials.dict(), raise_exception_if_error=True)
+        response = ExternalApiService.post(
+            space_api_url, credentials.dict(), raise_exception_if_error=True)
 
         return parse_obj_as(UserSpace, response.json())
 
@@ -87,17 +90,20 @@ class SpaceService(BaseService):
         """
         Call the space api to mark the lab as started
         """
-        space_api_url: str = cls._get_space_api_url(f"{cls._external_labs_route}/start")
+        space_api_url: str = cls._get_space_api_url(
+            f"{cls._external_labs_route}/start")
 
         body: LabStartDTO = {
             "lab_config": lab_config
         }
 
-        response = ExternalApiService.put(space_api_url, body, cls._get_request_header())
+        try:
+            ExternalApiService.put(space_api_url, body, cls._get_request_header(),
+                                   raise_exception_if_error=True)
 
-        if response.status_code != 200:
+        except BaseHTTPException as err:
             BrickService.log_brick_error(
-                SpaceService, f"Can't register lab start on space. Error : {str(response)}")
+                SpaceService, f"Can't register lab start on space. Error : {err.detail}")
             return False
         return True
 
@@ -185,7 +191,8 @@ class SpaceService(BaseService):
         """
         Call the space api to get the list of project for this lab
         """
-        space_api_url: str = cls._get_space_api_url(f"{cls._external_labs_route}/project/all-trees")
+        space_api_url: str = cls._get_space_api_url(
+            f"{cls._external_labs_route}/project/all-trees")
 
         try:
             response = ExternalApiService.get(space_api_url, cls._get_request_header(),
@@ -202,7 +209,8 @@ class SpaceService(BaseService):
         """
         Call the space api to get the list of users for this lab
         """
-        space_api_url: str = cls._get_space_api_url(f"{cls._external_labs_route}/user")
+        space_api_url: str = cls._get_space_api_url(
+            f"{cls._external_labs_route}/user")
 
         try:
             response = ExternalApiService.get(space_api_url, cls._get_request_header(),
@@ -222,9 +230,11 @@ class SpaceService(BaseService):
         space_api_url = Settings.get_space_api_url()
         if space_api_url is None:
             if Settings.is_dev:
-                raise BadRequestException("The space routes are desactivated in dev and test environment")
+                raise BadRequestException(
+                    "The space routes are desactivated in dev and test environment")
             else:
-                raise BadRequestException('The space_API_URL environment variable is not set')
+                raise BadRequestException(
+                    'The space_API_URL environment variable is not set')
         return space_api_url + '/' + route
 
     @classmethod
@@ -233,7 +243,8 @@ class SpaceService(BaseService):
         Return the header for a request to space, with Api key and User if exists
         """
         # Header with the Api Key
-        headers = {cls.api_key_header_key: cls.api_key_header_prefix + ' ' + Settings.get_space_api_key()}
+        headers = {cls.api_key_header_key: cls.api_key_header_prefix +
+                   ' ' + Settings.get_space_api_key()}
 
         user: User = CurrentUserService.get_current_user()
 
