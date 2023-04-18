@@ -60,6 +60,6 @@ class TableAggregatorFilter(Transformer):
         )
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         raise Exception(
             'This transformer is deprecated. Use Table Column Aggregator filter or Table Row Aggregator filter instead')

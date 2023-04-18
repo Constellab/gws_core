@@ -3,15 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
+
+from numpy import NaN
+from pandas import NA, DataFrame
 
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
-from numpy import NaN
-from pandas import DataFrame
 
 
 # test_dataframe_helper
-class TestTableConcat(IsolatedAsyncioTestCase):
+class TestTableConcat(TestCase):
 
     def test_detect_csv_delimiter(self):
         csv_str = "1,2,3\n4,5,6"
@@ -57,5 +58,13 @@ class TestTableConcat(IsolatedAsyncioTestCase):
 
         result = DataframeHelper.rename_duplicate_row_names(df)
         expected_result = DataFrame([1, 2, 3, 4, 5, 6], index=['A', 'B', 'A_1', 'B_1', 'A_2', 'A_1_1'])
+
+        self.assertTrue(result.equals(expected_result))
+
+    def test_nanify_none_numeric(self):
+        df = DataFrame({'F1': ['1', 2, None, NaN, NA]})
+
+        result = DataframeHelper.nanify_none_number(df)
+        expected_result = DataFrame({'F1': [NaN, 2.0, NaN, NaN, NaN]})
 
         self.assertTrue(result.equals(expected_result))

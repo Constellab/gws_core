@@ -51,9 +51,12 @@ class Logger:
         """
         if Logger._logger is not None:
             return
-            #raise BadRequestException("The logger already exists")
+            # raise BadRequestException("The logger already exists")
 
         Logger._is_experiment_process = _is_experiment_process
+
+        if level is None:
+            level = "INFO"
 
         if level not in ["ERROR", "INFO", "DEBUG"]:
             raise BadRequestException(

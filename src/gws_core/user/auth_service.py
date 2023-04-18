@@ -10,8 +10,6 @@ from starlette.responses import JSONResponse, Response
 
 from gws_core.lab.system_service import SystemService
 
-from ..central.central_service import (CentralService,
-                                       ExternalCheckCredentialResponse)
 from ..core.exception.exceptions import (BadRequestException,
                                          UnauthorizedException)
 from ..core.exception.gws_exceptions import GWSException
@@ -19,6 +17,7 @@ from ..core.service.base_service import BaseService
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
+from ..space.space_service import ExternalCheckCredentialResponse, SpaceService
 from .activity import Activity
 from .activity_service import ActivityService
 from .credentials_dto import Credentials2Fa, CredentialsDTO
@@ -28,7 +27,7 @@ from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .unique_code_service import (CodeObject, InvalidUniqueCodeException,
                                   UniqueCodeService)
 from .user import User, UserDataDict
-from .user_dto import UserCentral, UserData, UserLoginInfo
+from .user_dto import UserLoginInfo, UserSpace
 from .user_exception import InvalidTokenException, WrongCredentialsException
 from .user_service import UserService
 
@@ -46,15 +45,17 @@ class AuthService(BaseService):
         except:
             raise WrongCredentialsException()
 
-        # skip the check with central in local env
-        if Settings.is_local_env():
+        # skip the check with space in local dev env
+        if Settings.is_local_env() and Settings.get_instance().is_dev:
             return cls.log_user(user)
 
         # Check the user credentials
-        check_response: ExternalCheckCredentialResponse = CentralService.check_credentials(credentials)
+        check_response: ExternalCheckCredentialResponse = SpaceService.check_credentials(credentials)
 
         # if the user is logged
         if check_response.status == 'OK':
+            if check_response.user:
+                cls.get_and_refresh_user_from_space(check_response.user)
             return cls.log_user(user)
         else:
             # if the user need to be logged with 2FA
@@ -65,10 +66,10 @@ class AuthService(BaseService):
     def login_with_2fa(cls, credentials: Credentials2Fa) -> JSONResponse:
 
         # Check if the code is valid
-        user_central: UserCentral = CentralService.check_2_fa(credentials)
+        user_space: UserSpace = SpaceService.check_2_fa(credentials)
 
         # refresh and retrieve lab user
-        user: User = cls.get_and_refresh_user_from_central(user_central)
+        user: User = cls.get_and_refresh_user_from_space(user_space)
 
         # Log the user
         return cls.log_user(user)
@@ -80,7 +81,7 @@ class AuthService(BaseService):
 
         access_token = cls.generate_user_access_token(user.id)
 
-        content = {"status": "LOGGED_IN", "expiresIn": JWTService.get_token_duration_in_seconds()}
+        content = {"status": "LOGGED_IN", "expiresIn": JWTService.get_token_duration_in_seconds() * 1000}
         response = JSONResponse(content=content)
 
         # Add the token is the cookies
@@ -108,7 +109,7 @@ class AuthService(BaseService):
 
     @classmethod
     def generate_user_temp_access(cls, user_login_info: UserLoginInfo) -> str:
-        user: User = cls.get_and_refresh_user_from_central(user_login_info.user)
+        user: User = cls.get_and_refresh_user_from_space(user_login_info.user)
 
         # refresh the space info
         SystemService.save_space_async(user_login_info.space)
@@ -116,9 +117,9 @@ class AuthService(BaseService):
         return UniqueCodeService.generate_code(user.id, {}, 60)
 
     @classmethod
-    def get_and_refresh_user_from_central(cls, user_central: UserCentral) -> User:
-        """Check user central exists in the lab and if yes, it updates the user info"""
-        user: User = UserService.get_by_id_or_none(user_central.id)
+    def get_and_refresh_user_from_space(cls, user_space: UserSpace) -> User:
+        """Check user space exists in the lab and if yes, it updates the user info"""
+        user: User = UserService.get_by_id_or_none(user_space.id)
         if not user:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.value,
@@ -132,49 +133,41 @@ class AuthService(BaseService):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        if user.first_name != user_central.firstname or user.last_name != user_central.lastname or \
-                user.email != user_central.email or user.theme != user_central.theme or \
-                user.lang != user_central.lang:
+        if user.first_name != user_space.firstname or user.last_name != user_space.lastname or \
+                user.email != user_space.email or user.theme != user_space.theme or \
+                user.lang != user_space.lang or user.photo != user_space.photo:
             # update the user info and save it
-            user.first_name = user_central.firstname
-            user.last_name = user_central.lastname
-            user.email = user_central.email
-            user.theme = user_central.theme
-            user.lang = user_central.lang
+            user.first_name = user_space.firstname
+            user.last_name = user_space.lastname
+            user.email = user_space.email
+            user.theme = user_space.theme
+            user.lang = user_space.lang
+            user.photo = user_space.photo
             user = user.save()
 
         return user
 
     @classmethod
-    def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> UserData:
+    def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> User:
 
         try:
             user_id: str = JWTService.check_user_access_token(token)
 
             db_user: User = cls.authenticate(user_id)
 
-            return UserData(
-                id=db_user.id,
-                email=db_user.email,
-                first_name=db_user.first_name,
-                last_name=db_user.last_name,
-                group=db_user.group,
-                is_active=db_user.is_active,
-                is_admin=db_user.is_admin,
-            )
+            return db_user
+
         except Exception:
             raise InvalidTokenException()
 
     @classmethod
-    def check_unique_code(cls, unique_code: str) -> UserData:
+    def check_unique_code(cls, unique_code: str) -> User:
         """Use link the the token to check access for a unique code generated. return the object associated with the code
         """
         try:
             code_obj: CodeObject = UniqueCodeService.check_code(unique_code)
 
-            cls.authenticate(code_obj["user_id"])
-
-            return code_obj['obj']
+            return cls.authenticate(code_obj["user_id"])
         except Exception:
             raise InvalidUniqueCodeException()
 
@@ -200,7 +193,7 @@ class AuthService(BaseService):
         return user
 
     @classmethod
-    def dev_get_check_user(cls, token: str) -> User:
+    def dev_get_check_user(cls, unique_code: str) -> Response:
         """[summary]
         Log the user on the dev lab by calling the prod api
         Only allowed for the dev service
@@ -215,7 +208,6 @@ class AuthService(BaseService):
         :raises WrongCredentialsException: [description]
         :raises WrongCredentialsException: [description]
         :return: [description]
-        :rtype: Coroutine[Any, Any, str]
         """
 
         settings: Settings = Settings.get_instance()
@@ -234,8 +226,8 @@ class AuthService(BaseService):
 
         # Check if the user's token is valid in prod environment and retrieve user's information
         try:
-            response: Response = ExternalApiService.get(
-                url=f"{prod_api_url}/core-api/user/me", headers={"Authorization": token})
+            response: Response = ExternalApiService.post(
+                url=f"{prod_api_url}/core-api/dev-login-unique-code/check/{unique_code}", body=None)
         except Exception as err:
             Logger.error(
                 f"Error during authentication to the prod api : {err}")
@@ -252,7 +244,16 @@ class AuthService(BaseService):
             raise BadRequestException(detail=GWSException.USER_NOT_ACTIVATED.value,
                                       unique_code=GWSException.USER_NOT_ACTIVATED.name)
 
-        return UserService.create_user_if_not_exists(user)
+        user: User = UserService.create_or_update_user(user)
+
+        access_token = cls.generate_user_access_token(user.id)
+
+        response = Response()
+
+        # Add the token is the cookies
+        cls.set_token_in_response(access_token, JWTService.get_token_duration_in_seconds(), response)
+
+        return response
 
     @classmethod
     def logout(cls) -> JSONResponse:
@@ -269,7 +270,19 @@ class AuthService(BaseService):
             httponly=True,
             max_age=expireInSeconds,
             expires=expireInSeconds,
-            domain=Settings.get_virtual_host(),  # set the domain to virtual host so cookie works for dev and prod env,
             secure=not Settings.is_local_env(),
             samesite='strict'
         )
+
+    @classmethod
+    def generate_dev_login_unique_code(cls, user_id: str) -> str:
+        # generate a code available for 60 seconds
+        return UniqueCodeService.generate_code(user_id, {}, 60)
+
+    @classmethod
+    def check_dev_login_unique_code(cls, unique_code: str) -> User:
+        # check the unique code
+        code_obj = UniqueCodeService.check_code(unique_code)
+
+        # return the user associated with the code
+        return User.get_by_id_and_check(code_obj["user_id"])

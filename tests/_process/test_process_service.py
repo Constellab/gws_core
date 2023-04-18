@@ -5,13 +5,16 @@
 
 from gws_core import (BaseTestCase, IExperiment, IProcess, IProtocol,
                       RobotCreate, Wait)
+from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.process.process_service import ProcessService
 
 
 # test_process_service
 class TestProcessService(BaseTestCase):
 
-    async def test_get_log(self):
+    def test_get_log(self):
 
         # create a simple waiting experiment to let the log be created
         experiment = IExperiment()
@@ -21,9 +24,18 @@ class TestProcessService(BaseTestCase):
         wait: IProcess = protocol.add_task(Wait, 'wait', {'waiting_time': 1})
         protocol.add_connector(create_robot >> 'robot', wait << 'resource')
 
-        await experiment.run()
+        experiment.run()
 
-        logs = ProcessService.get_logs_of_process('TASK', wait._process_model.id, is_sub_process=False)
+        logs = ProcessService.get_logs_of_process('TASK', wait.refresh()._process_model.id, is_sub_process=False)
         self.assertTrue(len(logs.logs) > 0)
         # search log with content : Waiting 1 seconds
         self.assertTrue(len([log for log in logs.logs if 'Waiting 1 sec' in log.content]) > 0)
+
+    def setUp(self) -> None:
+        # force init the logger
+        FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
+        Logger._logger = None
+        Logger(level='INFO', _is_experiment_process=False)
+
+    def tearDown(self) -> None:
+        FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())

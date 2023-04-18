@@ -21,7 +21,7 @@ class TestTableHeatmapView(TestCase):
 
         # 1 series with all columns
         serie: Serie1d = {"name": "first", "y": {"type": "columns", "selection": [
-            "sepal.length",  "sepal.width", "petal.length", "petal.width"]}}
+            "sepal_length",  "sepal_width", "petal_length", "petal_width"]}}
 
         view_dict = tester.to_dict({"serie": serie})
         self.assertEqual(view_dict["type"], ViewType.HEATMAP.value)

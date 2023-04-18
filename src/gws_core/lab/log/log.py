@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 from datetime import date, datetime
-from typing import List, TypedDict
+from typing import List
+
+from typing_extensions import TypedDict
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger, MessageType
@@ -83,6 +85,9 @@ class LogLine():
         return {"level": self.level, "date_time": self.date_time,
                 "content": self.content, "is_from_experiment": self.is_from_experiment}
 
+    def to_str(self) -> str:
+        return f"{self.level} - {self.date_time} - {self.content}"
+
 
 class LogCompleteInfo():
 
@@ -126,7 +131,7 @@ class LogCompleteInfo():
                 log_lines.append(log_line)
         return log_lines
 
-    def to_dict(self) -> dict:
+    def to_json(self) -> dict:
         return {"log_info": self.log_info, "content": self.content}
 
 
@@ -149,3 +154,6 @@ class LogsBetweenDatesDTO():
                 "from_date": self.from_date,
                 "to_date": self.to_date,
                 "from_experiment": self.from_experiment}
+
+    def to_str(self) -> str:
+        return "\n".join([log.to_str() for log in self.logs])

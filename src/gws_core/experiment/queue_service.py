@@ -1,10 +1,14 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 import threading
-from cmath import exp
 from typing import List
 
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
+from gws_core.core.model.sys_proc import SysProc
 from gws_core.user.user import User
 
 from ..core.exception.exceptions import NotFoundException
@@ -17,7 +21,7 @@ from ..user.current_user_service import CurrentUserService
 from .experiment import Experiment, ExperimentStatus
 from .queue import Job, Queue
 
-TICK_INTERVAL_SECONDS = 30   # 30 sec
+TICK_INTERVAL_SECONDS = 60   # 60 sec
 
 
 class QueueService(BaseService):
@@ -96,8 +100,13 @@ class QueueService(BaseService):
             f"Experiment {experiment.id}, is_running = {experiment.is_running}")
 
         try:
-            ExperimentRunService.create_cli_process_for_experiment(
+            sproc = ExperimentRunService.create_cli_process_for_experiment(
                 experiment=experiment, user=job.user)
+
+            if sproc:
+                # wait for the experiment to finish in a separate thread
+                thread = threading.Thread(target=cls._wait_experiment_finish, args=(sproc,))
+                thread.start()
         except Exception as err:
             Logger.error(
                 f"An error occured while runnig the experiment. Error: {err}.")
@@ -163,6 +172,12 @@ class QueueService(BaseService):
     @classmethod
     def get_queue_jobs(cls) -> List[Job]:
         return Queue.get_jobs()
+
+    @classmethod
+    def _wait_experiment_finish(cls, proc: SysProc):
+        proc.wait()
+        # force a tick to run the next experiment if possible
+        cls._tick()
 
     @classmethod
     def experiment_is_in_queue(cls, experiment_id: str) -> bool:

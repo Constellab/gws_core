@@ -6,7 +6,9 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, List, Type, TypedDict, final
+from typing import TYPE_CHECKING, List, Type, final
+
+from typing_extensions import TypedDict
 
 from ..core.model.base import Base
 from ..resource.resource import Resource

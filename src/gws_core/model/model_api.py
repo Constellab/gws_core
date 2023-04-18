@@ -7,19 +7,19 @@
 from typing import Optional
 
 from fastapi import Depends
-from gws_core.core.classes.paginator import PaginatorDict
 from pydantic.main import BaseModel
+
+from gws_core.core.classes.paginator import PaginatorDict
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
-from ..user.user_dto import UserData
 from .model_service import ModelService
 
 
 @core_app.post("/model/{typing_name}/{id}/archive", tags=["Models"], summary="Archive a model")
 def archive_a_model(typing_name: str,
                     id: str,
-                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                    _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Archive a Model
 
@@ -37,7 +37,7 @@ def archive_a_model(typing_name: str,
 @core_app.post("/model/{typing_name}/{id}/unarchive", tags=["Models"], summary="Unarchive a model")
 def unarchive_a_model(typing_name: str,
                       id: str,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                      _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Unarchive a Model
 
@@ -55,7 +55,7 @@ def unarchive_a_model(typing_name: str,
 @core_app.get("/model/{typing_name}/{id}/verify", tags=["Models"], summary="Verify model hash")
 def verify_a_model_hash(typing_name: str,
                         id: str,
-                        _: UserData = Depends(AuthService.check_user_access_token)) -> bool:
+                        _=Depends(AuthService.check_user_access_token)) -> bool:
     """
     Verify a Model hash.
 
@@ -74,7 +74,7 @@ def verify_a_model_hash(typing_name: str,
 
 @core_app.get("/model/{typing_name}/count", tags=["Models"], summary="Count the number of models")
 def count_the_number_of_models(typing_name: str,
-                               _: UserData = Depends(AuthService.check_user_access_token)) -> int:
+                               _=Depends(AuthService.check_user_access_token)) -> int:
     """
     Get the count of objects of a given model type
 
@@ -87,7 +87,7 @@ def count_the_number_of_models(typing_name: str,
 @core_app.get("/model/{typing_name}/{id}", tags=["Models"], summary="Get a model")
 def get_a_model(typing_name: str,
                 id: str,
-                _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Get a Model
 
@@ -103,7 +103,7 @@ def get_a_model(typing_name: str,
 def get_the_list_of_models(typing_name: str,
                            page: Optional[int] = 0,
                            number_of_items_per_page: Optional[int] = 20,
-                           _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+                           _=Depends(AuthService.check_user_access_token)) -> PaginatorDict:
     """
     Get a list of Models
 
@@ -129,7 +129,7 @@ def search(typing_name: str,
            search: SearchBody,
            page: Optional[int] = 0,
            number_of_items_per_page: Optional[int] = 20,
-           _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+           _=Depends(AuthService.check_user_access_token)) -> PaginatorDict:
     """
     Call search in a model
 

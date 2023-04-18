@@ -31,7 +31,7 @@ class SqlMigrator:
         self._operations.append(self.migrator.add_column(model.get_table_name(), field.column_name, field))
         return True
 
-    def drop_column_if_exists(self, model: BaseModel, column_name) -> bool:
+    def drop_column_if_exists(self, model: BaseModel, column_name: str) -> bool:
         if not model.column_exists(column_name):
             return False
         self._operations.append(self.migrator.drop_column(model.get_table_name(), column_name))

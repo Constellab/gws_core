@@ -5,7 +5,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING
+
+from typing_extensions import TypedDict
 
 from ....config.config_types import ConfigParams
 from ....config.param.param_spec import DictParam

@@ -3,22 +3,19 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import runpy
-import tempfile
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
+from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
+from gws_core.resource.resource_factory import ResourceFactory
 
 from ...config.config_types import ConfigParams, ConfigSpecs
 from ...config.param.param_spec import ListParam
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from ...io.io_spec import InputSpec, OutputSpec
 from ...io.io_spec_helper import InputSpecs, OutputSpecs
 from ...resource.resource import Resource
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
-from .helper.template_reader_helper import TemplateReaderHelper
 
 
 @task_decorator("PyLiveTask", human_name="Python live task",
@@ -46,38 +43,28 @@ class PyLiveTask(Task):
             short_description="Please give one parameter definition per line"),
         'code':
         PythonCodeParam(
-            default_value=TemplateReaderHelper.read_snippet_template(file_name="py_live_snippet_template.py"),
+            default_value=LiveCodeHelper.get_python_template(),
             human_name="Python code snippet",
             short_description="Python code snippet to run"), }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
         params = params.get_value('params')
 
-        _, snippet_filepath = tempfile.mkstemp(suffix=".py")
-        with open(snippet_filepath, 'w', encoding="utf-8") as fp:
-            params_str: str = "\n".join(params)
-            fp.write(code)
+        str_params = "\n".join(params)
 
-        # compute params
-        param_context = {}
-        if params:
-            params_str: str = "\n".join(params)
-            try:
-                exec(params_str, {}, param_context)
-            except Exception as err:
-                raise BadRequestException("Cannot parse parameters") from err
+        # add the params to the code
+        code_with_params = f"{str_params}\n#Code snippet\n{code}"
 
         # execute the live code
-        init_globals = {'self': self, "inputs": inputs, "params": param_context, **globals()}
-        global_vars = runpy.run_path(snippet_filepath, init_globals=init_globals)
-        outputs = global_vars.get("outputs", None)
+        init_globals = {'self': self, "source": inputs.get('source'),
+                        **globals()}
+        result = LiveCodeHelper.run_python_code(code_with_params, init_globals)
+        output = result.get("target", None)
 
-        if outputs is not None:
-            if not isinstance(outputs, dict):
-                raise BadRequestException("The outputs must be a dictionary")
+        if not isinstance(output, Resource):
+            self.log_info_message(
+                'The output is not a Resource. Trying to convert it to a Resource...')
+            output = ResourceFactory.create_from_object(output)
 
-            if 'target' not in outputs:
-                raise BadRequestException("The outputs must have single key 'target'")
-
-        return outputs
+        return {'target': output}

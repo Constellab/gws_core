@@ -23,10 +23,10 @@ class TestTableHistogramView(TestCase):
     #     )
 
     #     # 2 series :
-    #     # first : y = petal.length
-    #     # second :  y = petal.width
-    #     series: List[Serie1d] = [{"name": "first", "y": {"type": "columns", "selection": ["petal.length"]}},
-    #                              {"name": "second", "y": {"type": "columns", "selection": ["petal.width"]}}
+    #     # first : y = petal_length
+    #     # second :  y = petal_width
+    #     series: List[Serie1d] = [{"name": "first", "y": {"type": "columns", "selection": ["petal_length"]}},
+    #                              {"name": "second", "y": {"type": "columns", "selection": ["petal_width"]}}
     #                              ]
     #     dic = tester.to_dict({"series": series})
 

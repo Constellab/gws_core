@@ -4,16 +4,33 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (ConfigParams, InputSpec, OutputSpec, OutputSpecs, Task,
-                      TaskInputs, TaskOutputs, task_decorator)
+import os
+
+from pandas import DataFrame
+
+from gws_core import (ConfigParams, InputSpec, OutputSpec, OutputSpecs,
+                      Resource, Task, TaskInputs, TaskOutputs,
+                      resource_decorator, task_decorator)
+from gws_core.core.utils.settings import Settings
+from gws_core.core.utils.zip import Zip
 from gws_core.experiment.experiment_interface import IExperiment
+from gws_core.impl.file.file import File
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
+from gws_core.impl.table.table import Table
 from gws_core.io.io_spec_helper import InputSpecs
 from gws_core.protocol.protocol_interface import IProtocol
-from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.resource_set import ResourceSet
+from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_set.resource_set import ResourceSet
+from gws_core.resource.resource_set.resource_set_exporter import \
+    ResourceSetExporter
 from gws_core.test.base_test_case import BaseTestCase
+
+
+@resource_decorator(unique_name="EmptyResource")
+class EmptyResource(Resource):
+    pass
 
 
 @task_decorator(unique_name="RobotsGenerator")
@@ -22,7 +39,7 @@ class RobotsGenerator(Task):
     input_specs: InputSpecs = {"robot_i": InputSpec(Robot)}
     output_specs: OutputSpecs = {'set': OutputSpec(ResourceSet)}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         robot_1 = inputs.get('robot_i')
         robot_2 = Robot.empty()
         robot_2.age = 99
@@ -35,9 +52,10 @@ class RobotsGenerator(Task):
         return {'set': resource_set}
 
 
+# test_resource_set
 class TestResourceSet(BaseTestCase):
 
-    async def test_resource_set(self):
+    def test_resource_set(self):
 
         resource_count = ResourceModel.select().count()
         experiment: IExperiment = IExperiment()
@@ -46,7 +64,10 @@ class TestResourceSet(BaseTestCase):
         robot_generator = protocol.add_process(RobotsGenerator, 'generator')
         experiment.get_protocol().add_connector(robot_create >> 'robot', robot_generator << 'robot_i')
 
-        await experiment.run()
+        experiment.run()
+
+        robot_generator.refresh()
+        robot_create.refresh()
 
         # check that it created 3 resource (1 for the resrouce set and 2 robots)
         self.assertEqual(ResourceModel.select().count(), resource_count + 3)
@@ -79,3 +100,32 @@ class TestResourceSet(BaseTestCase):
         experiment.reset()
         # check that the reset cleared the correct resources
         self.assertEqual(ResourceModel.select().count(), resource_count)
+
+    def test_resource_set_exporter(self):
+        settings = Settings.get_instance()
+
+        # exportable resource
+        table = Table(DataFrame({'a': [1, 2, 3]}))
+        # resource not exportable
+        empty_resource = EmptyResource()
+
+        # add a file
+        file_path = FileHelper.create_empty_file_if_not_exist(os.path.join(settings.make_temp_dir(), 'test.json'))
+        file = File(file_path)
+
+        resource_set: ResourceSet = ResourceSet()
+        resource_set.add_resource(table, unique_name='table')
+        resource_set.add_resource(empty_resource, unique_name='empty_resource')
+        resource_set.add_resource(file, unique_name='test')
+
+        zip_file: File = ResourceSetExporter.call(resource_set, {})
+
+        self.assertTrue(zip_file.exists())
+
+        dest_folder = settings.make_temp_dir()
+        Zip.unzip(zip_file.path, dest_folder)
+
+        self.assertTrue(os.path.exists(os.path.join(dest_folder, 'table.csv')))
+        self.assertTrue(os.path.exists(os.path.join(dest_folder, 'test.json')))
+        # empty resource should not be exported
+        self.assertFalse(os.path.exists(os.path.join(dest_folder, 'empty_resource.json')))

@@ -55,14 +55,14 @@ class DepBaseEnvShell(Shell):
 
     # -- T --
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         Task entrypoint
         """
 
         if not self.is_installed():
             self.install()
-        return await super().run(params, inputs)
+        return super().run(params, inputs)
 
     def install(self):
         """

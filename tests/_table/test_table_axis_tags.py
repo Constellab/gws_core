@@ -3,13 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core.impl.table.table_axis_tags import TableAxisTags
 from gws_core.test.base_test_case import BaseTestCase
 
 
-class TestTableAxisTags(IsolatedAsyncioTestCase):
+class TestTableAxisTags(TestCase):
 
     def test_table_axis_tags(self):
         tags = TableAxisTags()

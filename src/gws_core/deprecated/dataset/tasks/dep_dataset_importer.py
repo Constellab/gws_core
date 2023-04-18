@@ -37,8 +37,8 @@ class DatasetImporter(TableImporter):
         'comment': StrParam(default_value="#", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Comment character", short_description="Character used to comment lines."),
     }
 
-    async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Dataset]) -> Dataset:
-        dataset: Dataset = await super().import_from_path(file, params, target_type=target_type)
+    def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Dataset]) -> Dataset:
+        dataset: Dataset = super().import_from_path(file, params, target_type=target_type)
 
         # set targets names if exist
         targets = []

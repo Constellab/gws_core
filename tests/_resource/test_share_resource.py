@@ -12,8 +12,8 @@ from gws_core import (BaseTestCase, ConfigParams, File, IExperiment,
                       Task, TaskInputs, TaskOutputs, task_decorator)
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
+from gws_core.resource.resource_zipper import ResourceUnzipper
 from gws_core.share.share_service import ShareService
-from gws_core.share.shared_resource import SharedResource
 from gws_core.user.current_user_service import CurrentUserService
 
 
@@ -38,7 +38,7 @@ class GenerateResourceSet(Task):
         'resource_set': OutputSpec(ResourceSet)
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # create a simple resource
         table = get_table()
 
@@ -65,23 +65,21 @@ class TestShareResource(BaseTestCase):
         # save the resource model
         original_resource_model = ResourceModel.save_from_resource(table, origin=ResourceOrigin.UPLOADED)
 
-        zip_path = ShareService.download_resource(
+        zip_path = ShareService.zip_resource(
             original_resource_model.id, CurrentUserService.get_and_check_current_user())
 
-        resource_unzipper = ShareService.create_resource_from_zip(zip_path)
-        new_resource_model: ResourceModel = resource_unzipper.resource_models[0].refresh()
+        resource_unzipper: ResourceUnzipper = ResourceUnzipper(zip_path)
+        new_table: Table = resource_unzipper.load_resource()
+        # new_resource_model: ResourceModel = resource_unzipper.resource_models[0].refresh()
 
-        self.assertNotEqual(original_resource_model.id, new_resource_model.id)
-        self.assertNotEqual(original_resource_model.kv_store_path, new_resource_model.kv_store_path)
-        self.assertEqual(new_resource_model.name, 'MyTestName')
-
-        new_table: Table = new_resource_model.get_resource()
+        # new_table: Table = new_resource_model.get_resource()
         self.assertIsInstance(new_table, Table)
         self.assertTrue(table.equals(new_table))
+        self.assertEqual(new_table.name, 'MyTestName')
 
         # test that the origin of the resource exist
-        shared_resource: SharedResource = ResourceService.get_shared_resource_origin_info(new_resource_model.id)
-        self.assertEqual(shared_resource.entity.id, new_resource_model.id)
+        # shared_resource: SharedResource = ResourceService.get_shared_resource_origin_info(new_resource_model.id)
+        # self.assertEqual(shared_resource.entity.id, new_resource_model.id)
 
     def test_share_file_resource(self):
         # save the resource model
@@ -89,46 +87,34 @@ class TestShareResource(BaseTestCase):
 
         original_resource_model = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
 
-        zip_path = ShareService.download_resource(
+        zip_path = ShareService.zip_resource(
             original_resource_model.id, CurrentUserService.get_and_check_current_user())
 
-        resource_unzipper = ShareService.create_resource_from_zip(zip_path)
-        new_resource_model: ResourceModel = resource_unzipper.resource_models[0].refresh()
+        resource_unzipper: ResourceUnzipper = ResourceUnzipper(zip_path)
+        resource: File = resource_unzipper.load_resource()
 
-        self.assertNotEqual(original_resource_model.id, new_resource_model.id)
-
-        new_resource_model = ResourceService.get_resource_by_id(new_resource_model.id)
-        self.assertEqual(new_resource_model.name, 'test.txt')
-        # check that the fsnode model exist and the path is different that the original one
-        # because a new fsnode is created
-        self.assertIsNotNone(new_resource_model.fs_node_model)
-        self.assertNotEqual(new_resource_model.fs_node_model.path, original_resource_model.fs_node_model.path)
-
-        resource: File = new_resource_model.get_resource()
-        self.assertEqual(resource.path, new_resource_model.fs_node_model.path)
+        self.assertEqual(resource.name, 'test.txt')
+        # check that the path is different form the original
+        self.assertNotEqual(resource.path, original_resource_model.fs_node_model.path)
         self.assertEqual('test', resource.read())
 
-    async def test_share_resource_set(self):
+    def test_share_resource_set(self):
         i_experiment: IExperiment = IExperiment()
-        i_process = i_experiment.get_protocol().add_process(GenerateResourceSet, 'generate_resource_set')
-        await i_experiment.run()
+        i_experiment.get_protocol().add_process(GenerateResourceSet, 'generate_resource_set')
+        i_experiment.run()
+        i_process = i_experiment.get_protocol().get_process('generate_resource_set')
         resource_model_id = i_process.get_output_resource_model('resource_set').id
 
         original_resource_model = ResourceService.get_resource_by_id(resource_model_id)
         original_resource_set: ResourceSet = original_resource_model.get_resource()
 
-        zip_path = ShareService.download_resource(
+        zip_path = ShareService.zip_resource(
             resource_model_id, CurrentUserService.get_and_check_current_user())
 
-        resource_unzipper = ShareService.create_resource_from_zip(zip_path)
+        resource_unzipper: ResourceUnzipper = ResourceUnzipper(zip_path)
+        resource_set: ResourceSet = resource_unzipper.load_resource()
 
-        self.assertEqual(3, len(resource_unzipper.resource_models))
-        new_resource_model = resource_unzipper.resource_models[0].refresh()
-
-        # check that this is another resource model
-        self.assertNotEqual(original_resource_model.id, new_resource_model.id)
-
-        resource_set: ResourceSet = new_resource_model.get_resource()
+        self.assertEqual(3, len(resource_unzipper.get_all_generated_resources()))
         self.assertIsInstance(resource_set, ResourceSet)
 
         # check the table
@@ -146,7 +132,3 @@ class TestShareResource(BaseTestCase):
         original_file = original_resource_set.get_resource('file')
         # check that this is a new resource
         self.assertNotEqual(original_file._model_id, file._model_id)
-
-        # Check that there is 2 children of the main resource
-        children = ResourceService.get_resource_children(new_resource_model.id)
-        self.assertEqual(2, len(children))

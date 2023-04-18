@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import asyncio
 import json
 from typing import Dict, List, Literal, Optional, Set, Union
 
@@ -189,19 +188,19 @@ class ProtocolModel(ProcessModel):
             raise BadRequestException("No experiment defined")
         super()._run_before_task()
 
-    async def _run(self) -> None:
+    def _run(self) -> None:
         # completely load the protocol before running it
         self._load_from_graph()
         self._load_connectors()
 
         try:
             self._run_before_task()
-            await self._run_task()
-            await self._run_after_task()
+            self._run_task()
+            self._run_after_task()
         except Exception as err:
             raise err
 
-    async def _run_task(self) -> None:
+    def _run_task(self) -> None:
         """
         BUILT-IN PROTOCOL TASK
 
@@ -213,14 +212,10 @@ class ProtocolModel(ProcessModel):
         for process in self.processes.values():
             if process.is_ready or self.is_interfaced_with(process.instance_name):
                 sources.append(process)
-        aws = []
-        # TODO est-ce qu'il faut mettre à jour la progress bar ?
         for proc in sources:
-            aws.append(proc.run())
-        if len(aws):
-            await asyncio.gather(*aws)
+            proc.run()
 
-    async def _run_after_task(self):
+    def _run_after_task(self):
         if self.is_finished:
             return
         # Exit the function if an inner process has not yet finished!
@@ -230,7 +225,7 @@ class ProtocolModel(ProcessModel):
         # Good! The protocol task is finished!
         self._propagate_outerfaces()
 
-        await super()._run_after_task()
+        super()._run_after_task()
 
     def save_after_task(self) -> None:
         """Method called after the task to save the process

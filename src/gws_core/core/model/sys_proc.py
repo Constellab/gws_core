@@ -1,5 +1,11 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
-import psutil
+from typing import List
+
+from psutil import Popen, Process
 
 from ..exception.exceptions import BadRequestException
 
@@ -18,34 +24,47 @@ class SysProc:
     This class that only exposes necessary functionalities to easily manage shell processes.
     """
 
-    _ps: psutil.Process = None
+    _process: Process = None
 
     @staticmethod
     def from_pid(pid) -> 'SysProc':
         proc = SysProc()
-        proc._ps = psutil.Process(pid)
+        proc._process = Process(pid)
         return proc
 
     def is_alive(self) -> bool:
-        return self._ps.is_running()
+        return self._process.is_running()
 
     def is_zombie(self) -> bool:
-        return self._ps.status() == "zombie"
+        return self._process.status() == "zombie"
 
     def kill(self):
-        self._ps.kill()
+        self._process.kill()
+
+    def kill_with_children(self):
+        for child in self.get_all_children():
+            child.kill()
+        self.kill()
+
+    def get_all_children(self) -> List[Process]:
+        """Return all the chlidren of process recursively.
+
+        :return: _description_
+        :rtype: List[Process]
+        """
+        return self._process.children(recursive=True)
 
     @property
     def pid(self) -> int:
-        if self._ps is None:
+        if self._process is None:
             return 0
-        return self._ps.pid
+        return self._process.pid
 
     @classmethod
     def popen(cls, cmd, *args, **kwargs) -> 'SysProc':
         try:
             proc = SysProc()
-            proc._ps = psutil.Popen(cmd, *args, **kwargs)
+            proc._process = Popen(cmd, *args, **kwargs)
             return proc
         except Exception as err:
             raise BadRequestException(
@@ -55,22 +74,10 @@ class SysProc:
         """
         Get process statistics
         """
-        return self._ps.as_dict()
-
-    @property
-    def stdout(self):
-        if isinstance(self._ps, psutil.Popen):
-            return self._ps.stdout
-        return None
-
-    @property
-    def stderr(self):
-        if isinstance(self._ps, psutil.Popen):
-            return self._ps.stderr
-        return None
+        return self._process.as_dict()
 
     def wait(self, timeout=None):
         """
         Wait for a process PID to terminate
         """
-        self._ps.wait(timeout=timeout)
+        self._process.wait(timeout=timeout)

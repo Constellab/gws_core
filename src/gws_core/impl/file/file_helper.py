@@ -103,43 +103,54 @@ class FileHelper():
         return path
 
     @classmethod
-    def is_large(cls, path: PathType):
+    def is_large(cls, path: PathType) -> bool:
         return cls.get_size(path) > cls.LARGE_SIZE_IN_BYTES
 
     @classmethod
-    def is_json(cls, path: PathType):
+    def is_json(cls, path: PathType) -> bool:
         return cls.get_extension(path) in ["json"]
 
     @classmethod
-    def is_csv(cls, path: PathType):
+    def is_csv(cls, path: PathType) -> bool:
         return cls.get_extension(path) in ["csv", "tsv"]
 
     @classmethod
-    def is_txt(cls, path: PathType):
+    def is_txt(cls, path: PathType) -> bool:
         return cls.get_extension(path) in ["txt"]
 
     @classmethod
-    def is_jpg(cls, path: PathType):
+    def is_jpg(cls, path: PathType) -> bool:
         return cls.get_extension(path) in ["jpg", "jpeg"]
 
     @classmethod
-    def is_png(cls, path: PathType):
+    def is_png(cls, path: PathType) -> bool:
         return cls.get_extension(path) in ["png"]
 
     @classmethod
-    def is_file(cls, path: PathType):
+    def is_image(cls, path: PathType) -> bool:
+        return cls.get_extension(path) in ["jpg", "jpeg", "png", "gif", "bmp", "tiff",
+                                           "tif", "svg", "svgz", "heic", "heif", "heics",
+                                           "heifs", "jp2", "j2k", "jpf", "jpx", "jpm", "mj2",
+                                           "jfif", "webp", "avif", "apng", "ico"]
+
+    @classmethod
+    def is_file(cls, path: PathType) -> bool:
         return os.path.isfile(path)
 
     @classmethod
-    def is_dir(cls, path: PathType):
+    def is_dir(cls, path: PathType) -> bool:
         return os.path.isdir(path)
 
     # -- M --
 
     @classmethod
-    def get_mime(cls, path: PathType):
+    def get_mime(cls, path: PathType) -> str:
         ext: str = cls.get_extension(path)
         if ext:
+            # specific case not handled by mimetypes
+            if ext == 'jfif':
+                return 'image/jpeg'
+
             return mimetypes.types_map.get('.' + ext)
         else:
             return None
@@ -183,7 +194,8 @@ class FileHelper():
             result: List[Any] = []
 
             for child in children:
-                result.append(cls.get_dir_content_as_json(os.path.join(path, child)))
+                result.append(cls.get_dir_content_as_json(
+                    os.path.join(path, child)))
             dir_name: str = cls.get_dir_name(path)
             return {dir_name: result}
 
@@ -204,8 +216,9 @@ class FileHelper():
             return default_encoding
 
         encoding_result = from_path(file_path)
-        if encoding_result.best():
-            return encoding_result.best().encoding
+        best_encoding = encoding_result.best()
+        if best_encoding:
+            return best_encoding.encoding
         else:
             return default_encoding
 
@@ -242,3 +255,19 @@ class FileHelper():
                 return f'{size:.1f} {unit}'
             size /= 1024.0
         return f'{size:.1f} EB'
+
+    @staticmethod
+    def generate_unique_fs_node_for_list(list_fs_node_names: List[str], fs_node_name: str) -> str:
+        """Generate a unique fs node name for a list of node names.
+        Append _1, _2... before the extension if the str is already in the list
+        """
+        if fs_node_name not in list_fs_node_names:
+            return fs_node_name
+
+        i = 1
+        name = f"{FileHelper.get_name(fs_node_name)}_{i}.{FileHelper.get_extension(fs_node_name)}" if '.' in fs_node_name else f"{FileHelper.get_name(fs_node_name)}_{i}"
+        while name in list_fs_node_names:
+            i += 1
+            name = f"{FileHelper.get_name(fs_node_name)}_{i}.{FileHelper.get_extension(fs_node_name)}" if '.' in fs_node_name else f"{FileHelper.get_name(fs_node_name)}_{i}"
+
+        return name

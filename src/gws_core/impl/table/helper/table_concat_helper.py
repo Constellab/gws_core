@@ -6,11 +6,12 @@
 
 from typing import Any, List, Literal
 
+from numpy import NaN
+from pandas import DataFrame, concat, isna
+
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table import Table
-from numpy import NaN, isnan
-from pandas import DataFrame, concat
 
 # Option to handle the opposite tags during concat. Ex column tags during row contat
 #     - ignore: the tags are ignored and left empty
@@ -68,7 +69,7 @@ class TableConcatHelper:
         # do nothing for NaN, it is already NaN
         if fill_nan is None:
             concat_df.replace({NaN: None}, inplace=True)
-        elif isnan(fill_nan):
+        elif isna(fill_nan):
             pass
         else:
             concat_df.fillna(fill_nan, inplace=True)
@@ -108,7 +109,7 @@ class TableConcatHelper:
 
         result = cls.concat_table_rows(t_table_1, t_table_2, row_tags_option, fill_nan)
 
-        return result.transpose()
+        return result.transpose(infer_objects=True)
 
     @classmethod
     def _get_column_tags(cls, concat_df: DataFrame, table: Table) -> List[dict]:

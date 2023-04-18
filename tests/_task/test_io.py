@@ -11,7 +11,6 @@ from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
                       Wait, protocol_decorator, resource_decorator,
                       task_decorator)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
-from gws_core.io.io import Inputs
 from gws_core.io.io_exception import ImcompatiblePortsException
 from gws_core.io.io_spec import InputSpec, OutputSpec
 
@@ -42,7 +41,7 @@ class Create(Task):
     output_specs = {'create_person_out': OutputSpec(Person)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'create_person_out': Person()}
 
 
@@ -52,7 +51,7 @@ class Move(Task):
     output_specs = {'move_person_out': OutputSpec(Person)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'move_person_out': inputs['move_person_in']}
 
 
@@ -62,7 +61,7 @@ class Drive(Task):
     output_specs = {'move_drive_out': OutputSpec(Car)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'move_drive_out': inputs['move_drive_in']}
 
 
@@ -74,7 +73,7 @@ class Jump(Task):
                     'jump_person_out_any': OutputSpec(resource_types=Person, sub_class=True)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'jump_person_out': inputs['jump_person_in_1'], 'jump_person_out_any': inputs['jump_person_in_2']}
 
 
@@ -86,7 +85,7 @@ class Multi(Task):
                     'resource_2': OutputSpec([Car, Person])}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'resource_1': inputs['resource_1'], 'resource_2': inputs['resource_2']}
 
 
@@ -96,7 +95,7 @@ class Fly(Task):
     output_specs = {}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return
 
 
@@ -108,7 +107,7 @@ class OptionalTask(Task):
     output_specs = {}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return
 
 # Use to check that 2 optional task can"t plug if types are not correct (even if both have None)
@@ -120,7 +119,7 @@ class OptionalTaskOut(Task):
     output_specs = {'out': OutputSpec(Car)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return
 
 
@@ -132,7 +131,7 @@ class Log(Task):
                     'otherPerson': OutputSpec(Person)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print('Log person')
         return {'samePerson': inputs.get('person'), 'otherPerson': inputs.get('person')}
 
@@ -150,7 +149,7 @@ class TestPersonProtocol(Protocol):
 
 @task_decorator(unique_name="FIFO2")
 class Skippable(FIFO2):
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         resource1 = inputs.get("resource_1")
         resource2 = inputs.get("resource_2")
@@ -158,21 +157,19 @@ class Skippable(FIFO2):
         if resource1 and resource2:
             raise BadRequestException('The two resources are set and it should be only one because of Skippable')
 
-        return await super().run(params, inputs)
+        return super().run(params, inputs)
 
 
 @protocol_decorator("TestSkippable")
 class TestSkippable(Protocol):
     def configure_protocol(self) -> None:
         create1: ProcessSpec = self.add_process(Create, 'create1')
-        wait: ProcessSpec = self.add_process(Wait, 'wait').set_param('waiting_time', '3')
         create2: ProcessSpec = self.add_process(Create, 'create2')
         skippable: ProcessSpec = self.add_process(Skippable, 'skippable')
         move: ProcessSpec = self.add_process(Move, 'move')
 
         self.add_connectors([
-            (create1 >> 'create_person_out', wait << 'resource'),
-            (wait >> 'resource', skippable << 'resource_1'),
+            (create1 >> 'create_person_out', skippable << 'resource_1'),
             (create2 >> 'create_person_out', skippable << 'resource_2'),
             (skippable >> 'resource', move << 'move_person_in'),
         ])
@@ -262,14 +259,14 @@ class TestIO(BaseTestCase):
         # Test that you can plug a subclass of Person to a Superman
         Connector(jump.out_port('jump_person_out_any'), fly.in_port('superman'))
 
-    async def test_unmodified_output(self):
+    def test_unmodified_output(self):
         """Test the UnmodifiableOut type. It tests that this is the same resource
         on log input and log output
         """
         protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(TestPersonProtocol)
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
 
-        experiment = await ExperimentRunService.run_experiment(experiment)
+        experiment = ExperimentRunService.run_experiment(experiment)
 
         person1: ResourceModel = experiment.protocol_model.get_process(
             'create').out_port('create_person_out').resource_model
@@ -279,18 +276,18 @@ class TestIO(BaseTestCase):
         self.assertEqual(person1.id, same_person.id)
         self.assertNotEqual(person1, other_erson.id)
 
-    async def test_skippable_input(self):
+    def test_skippable_input(self):
         """Test the SkippableIn special type with FIFO, it also tests that FIFO work
         (testing,SkippableIn but also UnmodifiableOut with subclass) """
         protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(TestSkippable)
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
 
-        experiment = await ExperimentRunService.run_experiment(experiment)
+        experiment = ExperimentRunService.run_experiment(experiment)
 
-        create2: TaskModel = experiment.protocol_model.get_process('create2')
+        create1: TaskModel = experiment.protocol_model.get_process('create1')
         skippable: TaskModel = experiment.protocol_model.get_process('skippable')
 
-        create_2_r: ResourceModel = create2.out_port('create_person_out').resource_model
+        create_1_r: ResourceModel = create1.out_port('create_person_out').resource_model
         skippable_r: ResourceModel = skippable.out_port('resource').resource_model
         # Check that this is the create_2 that passed through skippable process
-        self.assertEqual(create_2_r.id, skippable_r.id)
+        self.assertEqual(create_1_r.id, skippable_r.id)

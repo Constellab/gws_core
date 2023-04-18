@@ -3,12 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import json
+import os
 from time import time
-from typing import Dict, Literal, TypedDict
+from typing import Dict, Literal
 
+from gws_core.brick.brick_dto import BrickInfo
 from gws_core.brick.brick_helper import BrickHelper
-from gws_core.core.utils.settings import ModuleInfo
+from gws_core.core.utils.logger import Logger
+from gws_core.impl.file.file_helper import FileHelper
 from peewee import CharField
+from typing_extensions import TypedDict
 
 from ..core.model.model import Model
 
@@ -43,7 +48,8 @@ class BrickModel(Model):
         if timestamp is None:
             timestamp = time()
 
-        brick_message: BrickMessage = {"message": message, "status": status, 'timestamp': timestamp}
+        brick_message: BrickMessage = {
+            "message": message, "status": status, 'timestamp': timestamp}
         self.data['messages'].append(brick_message)
 
         # update the brick status
@@ -61,8 +67,8 @@ class BrickModel(Model):
     def clear_messages(self) -> None:
         self.data['messages'] = []
 
-    def get_brick_info(self) -> ModuleInfo:
-        return BrickHelper.get_brick_info(self.name)
+    def get_brick_info(self) -> BrickInfo:
+        return BrickHelper.get_brick_info_and_check(self.name)
 
     @classmethod
     def delete_all(cls) -> None:
@@ -79,9 +85,16 @@ class BrickModel(Model):
             brick_info = self.get_brick_info()
             json_['version'] = brick_info['version']
             json_['repo_type'] = brick_info['repo_type']
+            json_['brick_path'] = brick_info['path']
             json_['repo_commit'] = brick_info['repo_commit']
+            json_['parent_name'] = brick_info['parent_name']
+
         except Exception as err:
             # If there was a problem during the birck loading, add a critical error and return brick
-            self.add_message(str(err), 'CRITICAL')
+            self.add_message(
+                f"Can't find brick '{self.name}', was it removed from the lab ? Error : {str(err)}", 'CRITICAL')
             return super().to_json(deep=deep, **kwargs)
+
         return json_
+
+        return {}

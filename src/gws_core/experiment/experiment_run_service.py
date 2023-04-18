@@ -6,11 +6,13 @@
 import os
 import subprocess
 import traceback
-from typing import Any, Coroutine, List
+from typing import List
 
-from gws_core.central.central_dto import SendExperimentFinishMailData
-from gws_core.central.central_service import CentralService
 from gws_core.core.service.front_service import FrontService
+from gws_core.process.process_types import ProcessErrorInfo
+from gws_core.space.space_dto import SendExperimentFinishMailData
+from gws_core.space.space_service import SpaceService
+from gws_core.task.task_model import TaskModel
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
@@ -31,7 +33,7 @@ class ExperimentRunService():
     """
 
     @classmethod
-    async def run_experiment_in_cli(cls, experiment_id: str) -> None:
+    def run_experiment_in_cli(cls, experiment_id: str) -> None:
         """Method called by the cli sub process to run the experiment
         """
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
@@ -42,15 +44,16 @@ class ExperimentRunService():
                     f"Cannot run the experiment {experiment.id} as its status was changed before process could run it")
 
         except Exception as err:
-            error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + str(err)
+            error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + \
+                str(err)
             Logger.error(error_text)
             experiment.mark_as_error({"detail": error_text,
                                       "unique_code": GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
                                       "context": None, "instance_id": None})
-        await cls.run_experiment(experiment)
+        cls.run_experiment(experiment)
 
     @classmethod
-    async def run_experiment(cls, experiment: Experiment) -> Coroutine[Any, Any, Experiment]:
+    def run_experiment(cls, experiment: Experiment) -> Experiment:
         """
         Run the experiment
         """
@@ -72,9 +75,9 @@ class ExperimentRunService():
         )
 
         try:
-            experiment.mark_as_started()
+            experiment.mark_as_started(os.getpid())
 
-            await experiment.protocol_model.run()
+            experiment.protocol_model.run()
 
             experiment.mark_as_success()
 
@@ -91,7 +94,7 @@ class ExperimentRunService():
             raise exception
 
     @classmethod
-    def create_cli_process_for_experiment(cls, experiment: Experiment, user: User):
+    def create_cli_process_for_experiment(cls, experiment: Experiment, user: User) -> SysProc:
         """
         Run an experiment in a non-blocking way through the cli.
 
@@ -122,7 +125,7 @@ class ExperimentRunService():
         ]
 
         if settings.is_test:
-            cmd.append("--cli_test")
+            cmd.append("--test")
 
         cmd.append("--runmode")
         if settings.is_prod:
@@ -142,6 +145,7 @@ class ExperimentRunService():
             Logger.info(
                 f"""The experiment logs are not shown in the console, because it is run in another linux process ({experiment.pid}).
                 To view them check the logs marked as {Logger.SUB_PROCESS_TEXT} in the today's log file : {Logger.get_file_path()}""")
+            return sproc
         except Exception as err:
             traceback.print_exc()
             exception: ExperimentRunException = ExperimentRunException.from_exception(
@@ -158,20 +162,30 @@ class ExperimentRunService():
 
         # try to kill the pid if possible
         try:
-            if experiment.pid != 0:
+            if experiment.pid != None:
                 cls._kill_experiment_pid(experiment.pid)
         except Exception as err:
             Logger.error(str(err))
+
+        # mark the experiment as error
+        error: ProcessErrorInfo = {
+            "detail": f"Experiment manually stopped by {CurrentUserService.get_and_check_current_user().full_name}",
+            "unique_code": "EXPERIMENT_STOPPED_MANUALLY",
+            "context": None,
+            "instance_id": None
+        }
+        experiment.mark_as_error(error)
+
+        # mark all the running tasks as error
+        task_models: List[TaskModel] = experiment.get_running_tasks()
+        for task_model in task_models:
+            task_model.mark_as_error_and_parent(error)
 
         ActivityService.add(
             Activity.STOP,
             object_type=experiment.full_classname(),
             object_id=experiment.id
         )
-
-        experiment.mark_as_error({"detail": GWSException.EXPERIMENT_STOPPED_MANUALLY.value,
-                                  "unique_code": GWSException.EXPERIMENT_STOPPED_MANUALLY.name,
-                                  "context": None, "instance_id": None})
 
         return experiment
 
@@ -198,7 +212,7 @@ class ExperimentRunService():
 
         try:
             # Gracefully stops the experiment and exits!
-            sproc.kill()
+            sproc.kill_with_children()
             sproc.wait()
         except Exception as err:
             raise BadRequestException(
@@ -211,7 +225,8 @@ class ExperimentRunService():
             try:
                 cls.stop_experiment(experiment.id)
             except Exception as err:
-                Logger.error(f'Could not stop experiment {experiment.id}. {str(err)}')
+                Logger.error(
+                    f'Could not stop experiment {experiment.id}. {str(err)}')
 
     @classmethod
     def get_all_running_experiments(cls) -> List[Experiment]:
@@ -238,7 +253,8 @@ class ExperimentRunService():
                 "experiment_link": FrontService.get_experiment_url(experiment_id=experiment.id)
             }
 
-            CentralService.send_experiment_finished_mail(user.id, experiment_dto)
+            SpaceService.send_experiment_finished_mail(user.id, experiment_dto)
         except Exception as err:
             Logger.log_exception_stack_trace(err)
-            Logger.error(f"Error while sending the experiment finished mail : {err}")
+            Logger.error(
+                f"Error while sending the experiment finished mail : {err}")

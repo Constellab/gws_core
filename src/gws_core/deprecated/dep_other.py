@@ -4,10 +4,10 @@
 # About us: https://gencovery.com
 
 
+from gws_core.deprecated.dep_metadata_table import MetadataTable
 from gws_core.impl.file.file import File
-from gws_core.impl.table.table import Table
 from gws_core.impl.table.encoding.encoding_table import EncodingTable
-from gws_core.impl.table.metadata_table.metadata_table import MetadataTable
+from gws_core.impl.table.table import Table
 from gws_core.impl.table.tasks.table_exporter import TableExporter
 from gws_core.impl.table.tasks.table_importer import TableImporter
 from gws_core.resource.resource_decorator import resource_decorator

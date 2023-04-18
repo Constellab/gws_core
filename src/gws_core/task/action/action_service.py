@@ -13,8 +13,8 @@ from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.process.process_interface import IProcess
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
-from gws_core.task.action.actions_manager import ActionsManager
 from gws_core.task.action.action import Action
+from gws_core.task.action.actions_manager import ActionsManager
 from gws_core.task.action.actions_task import ActionsTask
 from gws_core.task.plug import Sink
 
@@ -24,7 +24,7 @@ class ActionService():
     ACTION_PROCESS_INSTANCE_NAME: str = 'action'
 
     @classmethod
-    async def create_and_run_action_experiment(cls, resource_model_id: str) -> ResourceModel:
+    def create_and_run_action_experiment(cls, resource_model_id: str) -> ResourceModel:
 
         # Get and check the resource id
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
@@ -52,7 +52,7 @@ class ActionService():
 
         #  run the experiment
         try:
-            await experiment.run()
+            experiment.run()
         except Exception as exception:
             # delete experiment if there was an error
             experiment.delete()

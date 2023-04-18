@@ -33,7 +33,7 @@ class Viewer(Task):
         "view_config": DictParam()
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         from gws_core.resource.resource_service import ResourceService
         from gws_core.resource.view_config.view_config_service import \
             ViewConfigService

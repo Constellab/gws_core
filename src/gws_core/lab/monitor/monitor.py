@@ -8,6 +8,8 @@ from typing import List
 import psutil
 from peewee import FloatField
 
+from gws_core.core.utils.settings import Settings
+
 from ...core.model.model import Model
 
 # ####################################################################
@@ -34,6 +36,12 @@ class Monitor(Model):
     disk_usage_used = FloatField()
     disk_usage_free = FloatField()
     disk_usage_percent = FloatField()
+
+    # External disk
+    external_disk_total = FloatField(default=0)
+    external_disk_usage_used = FloatField(default=0)
+    external_disk_usage_free = FloatField(default=0)
+    external_disk_usage_percent = FloatField(default=0)
 
     # Swap Memory
     swap_memory_total = FloatField()
@@ -74,6 +82,13 @@ class Monitor(Model):
         monitor.disk_usage_used = disk.used
         monitor.disk_usage_free = disk.free
         monitor.disk_usage_percent = disk.percent
+
+        # External Disk
+        disk = psutil.disk_usage(Settings.get_lab_folder())
+        monitor.external_disk_total = disk.total
+        monitor.external_disk_usage_used = disk.used
+        monitor.external_disk_usage_free = disk.free
+        monitor.external_disk_usage_percent = disk.percent
 
         # Network
         iobytes = psutil.net_io_counters()

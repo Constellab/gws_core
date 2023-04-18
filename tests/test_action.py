@@ -10,9 +10,9 @@ from gws_core import Action, Resource
 from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.impl.text.text import Text
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
-from gws_core.task.action.actions_manager import ActionsManager
-from gws_core.task.action.action_service import ActionService
 from gws_core.task.action.action import action_decorator
+from gws_core.task.action.action_service import ActionService
+from gws_core.task.action.actions_manager import ActionsManager
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -49,7 +49,7 @@ class TestAction(BaseTestCase):
         self.assertIsInstance(action, UpdateText)
         self.assertEqual(action.params, {"new_text": "new_text"})
 
-    async def test_action_service(self):
+    def test_action_service(self):
 
         old_text = 'This is an old text'
         new_text = 'This is the new text'
@@ -59,7 +59,7 @@ class TestAction(BaseTestCase):
         resource_model = ResourceModel.save_from_resource(text, origin=ResourceOrigin.UPLOADED)
 
         # create the action experiment with empty list of actions
-        result_model: ResourceModel = await ActionService.create_and_run_action_experiment(resource_model.id)
+        result_model: ResourceModel = ActionService.create_and_run_action_experiment(resource_model.id)
 
         # check the type of the generated resource
         self.assertEqual(result_model.origin, ResourceOrigin.ACTIONS)

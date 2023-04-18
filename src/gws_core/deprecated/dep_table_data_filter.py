@@ -27,5 +27,5 @@ class TableDataFilter(Transformer):
     config_specs: ConfigSpecs = {
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         raise Exception("This task is deprecated. Please use TableDataFilter or TableAggregatorFilter instead")

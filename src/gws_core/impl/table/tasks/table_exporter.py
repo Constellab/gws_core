@@ -29,7 +29,7 @@ class TableExporter(ResourceExporter):
         'write_index': BoolParam(default_value=True, visibility=BoolParam.PROTECTED_VISIBILITY, short_description="Set True to write row names (index), False otherwise"),
     }
 
-    async def export_to_path(self, source: Table, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
+    def export_to_path(self, source: Table, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_name = params.get_value('file_name', source.name) or 'table'
         file_format = FileHelper.clean_extension(params.get_value('file_format', Table.DEFAULT_FILE_FORMAT))
         file_path = os.path.join(dest_dir, file_name + '.' + file_format)

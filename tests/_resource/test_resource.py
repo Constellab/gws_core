@@ -11,6 +11,7 @@ from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_model import ResourceOrigin
+from gws_core.resource.technical_info import TechnicalInfo
 
 
 @resource_decorator(unique_name="TestResourceFields")
@@ -31,15 +32,16 @@ class TestResourceFieldsFile(File):
     long_str = StrRField(searchable=False)
 
 
+# test_resource
 class TestResource(BaseTestCase):
 
-    async def test_resource(self):
+    def test_resource(self):
 
         task_model: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=RobotCreate, instance_name="create")
         experiment = ExperimentService.create_experiment_from_task_model(task_model)
 
-        experiment: Experiment = await ExperimentRunService.run_experiment(experiment)
+        experiment: Experiment = ExperimentRunService.run_experiment(experiment)
 
         create: TaskModel = experiment.protocol_model.get_process('create')
 
@@ -92,3 +94,17 @@ class TestResource(BaseTestCase):
         self.assertEqual(resource.position, new_resource.position)
         self.assertEqual(resource.age, new_resource.age)
         self.assertEqual(resource.long_str, new_resource.long_str)
+
+    def test_technical_info(self):
+        robot = Robot()
+        robot.add_technical_info(TechnicalInfo('key', 'value', 'description'))
+
+        resource_model = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.UPLOADED)
+
+        db_resource: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
+
+        robot_db: Robot = db_resource.get_resource()
+        technical_info: TechnicalInfo = robot_db.technical_info.get('key')
+        self.assertEqual(technical_info.key, 'key')
+        self.assertEqual(technical_info.value, 'value')
+        self.assertEqual(technical_info.short_description, 'description')

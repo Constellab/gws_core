@@ -16,7 +16,8 @@ from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dict import TypingStatus
-from gws_core.resource.resource_list_base import ResourceListBase
+from gws_core.project.project import Project
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
 
 from ..core.classes.enum_field import EnumField
@@ -37,6 +38,7 @@ from ..resource.kv_store import KVStore
 from ..resource.resource import Resource
 from ..tag.taggable_model import TaggableModel
 from .r_field.r_field import BaseRField
+from .resource_factory import ResourceFactory
 
 if TYPE_CHECKING:
     from ..experiment.experiment import Experiment
@@ -76,18 +78,24 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
     # Path to the kv store if the kv exists for this resource model
     kv_store_path = CharField(null=True)
 
-    origin: ResourceOrigin = EnumField(choices=ResourceOrigin, default=ResourceOrigin.GENERATED)
+    origin: ResourceOrigin = EnumField(
+        choices=ResourceOrigin, default=ResourceOrigin.GENERATED)
 
-    experiment: Experiment = DeferredForeignKey('Experiment', null=True, index=True)
-    task_model: TaskModel = DeferredForeignKey('TaskModel', null=True, index=True)
+    experiment: Experiment = DeferredForeignKey(
+        'Experiment', null=True, index=True)
+    project: Project = ForeignKeyField(Project, null=True, index=True)
+    task_model: TaskModel = DeferredForeignKey(
+        'TaskModel', null=True, index=True)
 
     # for children resource (usually resource inside ResourceSet), it stores the parent resource id
     # lazy_load = False to avoir loading the resource, and it only contains the id
-    parent_resource_id: str = ForeignKeyField('self', null=True, index=True, lazy_load=False)
+    parent_resource_id: str = ForeignKeyField(
+        'self', null=True, index=True, lazy_load=False)
 
     name: str = CharField(null=False)
 
-    fs_node_model: FSNodeModel = ForeignKeyField(FSNodeModel, null=True, index=True, backref="+")
+    fs_node_model: FSNodeModel = ForeignKeyField(
+        FSNodeModel, null=True, index=True, backref="+")
 
     # true when the resource is UPLOADED or is an experiment output
     flagged: bool = BooleanField(default=False)
@@ -165,9 +173,11 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
             raise Exception(f"{type_} is not a subclass of Resource")
 
         # retrieve all the sub type of the type
-        resource_types: Set[Type[Resource]] = {type_}.union(Utils.get_all_subclasses(type_))
+        resource_types: Set[Type[Resource]] = {
+            type_}.union(Utils.get_all_subclasses(type_))
         # get the typing names
-        resource_typing_names = [resource_type._typing_name for resource_type in resource_types]
+        resource_typing_names = [
+            resource_type._typing_name for resource_type in resource_types]
         # select the resource model with the typing name
         return ResourceModel.select().where(ResourceModel.resource_typing_name.in_(resource_typing_names))
 
@@ -220,7 +230,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
             return None
 
         # Retrieve all type of typing_names
-        resource_types: List[Type] = [TypingManager.get_type_from_name(typing_name) for typing_name in typing_names]
+        resource_types: List[Type] = [TypingManager.get_type_from_name(
+            typing_name) for typing_name in typing_names]
 
         # Get all type of class and subclasses
         all_types: Set[Type[Resource]] = set()
@@ -229,7 +240,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
             all_types.update([resource_type])
 
         # Get the typing names
-        all_typing_names: List[str] = [resource_type._typing_name for resource_type in all_types]
+        all_typing_names: List[str] = [
+            resource_type._typing_name for resource_type in all_types]
 
         return ResourceModel.resource_typing_name.in_(all_typing_names)
 
@@ -262,13 +274,10 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         """
         Create the Resource object from the resource_typing_name
         """
-        resource_type: Type[ResourceType] = self.get_resource_type()
-        resource: ResourceType = resource_type()
-        # Pass the model id to the resource
-        resource._model_id = self.id
 
-        self.send_fields_to_resource(resource)
-        return resource
+        return ResourceFactory.create_resource(self.get_resource_type(),
+                                               kv_store=self.get_kv_store(), data=self.data,
+                                               resource_model_id=self.id, name=self.name)
 
     @classmethod
     def from_resource(cls, resource: ResourceType, origin: ResourceOrigin = ResourceOrigin.GENERATED,
@@ -284,7 +293,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         # If the origin is not uploaded, then the experiment and the task must be provided
         if origin != ResourceOrigin.UPLOADED and origin != ResourceOrigin.ACTIONS:
             if experiment is None or task_model is None:
-                raise Exception("To create a GENERATED resource, you must provide the experiment and the task")
+                raise Exception(
+                    "To create a GENERATED resource, you must provide the experiment and the task")
 
             # replace the origin if the experiment has a special type
             if experiment.type == ExperimentType.IMPORTER:
@@ -293,6 +303,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
                 origin = ResourceOrigin.TRANSFORMED
             elif experiment.type == ExperimentType.ACTIONS:
                 origin = ResourceOrigin.ACTIONS
+            elif experiment.type == ExperimentType.RESOURCE_DOWNLOADER:
+                origin = ResourceOrigin.IMPORTED_FROM_LAB
 
         resource_model: ResourceModel = ResourceModel()
         resource_model.set_resource_typing_name(resource._typing_name)
@@ -308,7 +320,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         try:
             name = resource.name or resource.get_default_name()
         except Exception as err:
-            Logger.error(f'Error while getting the default name of the resource {type(resource)}. Err : {str(err)}')
+            Logger.error(
+                f'Error while getting the default name of the resource {type(resource)}. Err : {str(err)}')
             Logger.log_exception_stack_trace(err)
 
         if name is None:
@@ -319,7 +332,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         tags = resource.tags
         if tags is not None:
             if not isinstance(tags, dict):
-                Logger.error(f"The 'tags' attribute of the resource {type(resource)} is not a dict.")
+                Logger.error(
+                    f"The 'tags' attribute of the resource {type(resource)} is not a dict.")
             else:
                 resource_model.set_tags_dict(tags)
                 # register the tags globally
@@ -331,6 +345,11 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
         # synchronize the model fields with the resource fields
         resource_model.receive_fields_from_resource(resource)
+
+        # set the resource model id in the resource
+        # it can be useful for the resource to have access to the model id
+        # in the run_after_task method for example
+        resource._model_id = resource_model.id
 
         return resource_model
 
@@ -368,7 +387,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
             resource, origin=origin, experiment=experiment, task_model=task_model, port_name=port_name).save_full()
 
     def set_resource_typing_name(self, typing_name: str) -> None:
-        typing: Typing = TypingManager.get_typing_from_name_and_check(typing_name)
+        typing: Typing = TypingManager.get_typing_from_name_and_check(
+            typing_name)
         self.resource_typing_name = typing_name
         self.brick_version = typing.brick_version
 
@@ -381,7 +401,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         # set the name
         resource.name = self.name
 
-        properties: Dict[str, BaseRField] = resource.__get_resource_r_fields__()
+        properties: Dict[str,
+                         BaseRField] = resource.__get_resource_r_fields__()
 
         kv_store: KVStore = self.get_kv_store()
         resource._kv_store = kv_store
@@ -390,7 +411,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         for key, r_field in properties.items():
             # If the property is searchable, it is stored in the DB
             if r_field.searchable:
-                loaded_value = copy.deepcopy(r_field.deserialize(self.data.get(key)))
+                loaded_value = copy.deepcopy(
+                    r_field.deserialize(self.data.get(key)))
                 setattr(resource, key, loaded_value)
 
             # if it comes from the kvstore, lazy load it
@@ -459,7 +481,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         kv_store: KVStore = KVStore(self.kv_store_path)
 
         # Lock the kvstore so the file can't be updated
-        kv_store.lock(KVStore.get_full_file_path(file_name=self.id, with_extension=False))
+        kv_store.lock(KVStore.get_full_file_path(
+            file_name=self.id, with_extension=False))
         return kv_store
 
     def _get_or_create_kv_store(self) -> KVStore:
@@ -505,7 +528,15 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
                 'title': self.experiment.title,
             }
 
-        resource_typing: Optional[Typing] = TypingManager.get_typing_from_name(self.resource_typing_name)
+        if self.project is not None:
+            _json["project"] = {
+                'id': self.project.id,
+                'title': self.project.title,
+                'code': self.project.code,
+            }
+
+        resource_typing: Optional[Typing] = TypingManager.get_typing_from_name(
+            self.resource_typing_name)
         if resource_typing:
             _json["resource_type_human_name"] = resource_typing.human_name
             _json["resource_type_short_description"] = resource_typing.short_description
@@ -554,4 +585,4 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         return self.fs_node_model is not None or (resource_type is not None and resource_type._is_exportable)
 
     def is_manually_generated(self) -> bool:
-        return self.origin == ResourceOrigin.UPLOADED or self.origin == ResourceOrigin.IMPORTED_FROM_LAB
+        return self.origin == ResourceOrigin.UPLOADED

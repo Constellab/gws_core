@@ -60,16 +60,16 @@ class EncodingTable(Table):
     encoded_row: str = StrRField(default_value=ENCODED_COLUMN)
 
     def get_original_column_data(self) -> list:
-        return self.get_column_as_list(self.original_column)
+        return self.get_column_data(self.original_column)
 
     def get_original_row_data(self) -> list:
-        return self.get_column_as_list(self.original_row)
+        return self.get_column_data(self.original_row)
 
     def get_encoded_row_data(self) -> list:
-        return self.get_column_as_list(self.encoded_row)
+        return self.get_column_data(self.encoded_row)
 
     def get_encoded_column_data(self) -> list:
-        return self.get_column_as_list(self.encoded_column)
+        return self.get_column_data(self.encoded_column)
 
     def select_by_column_positions(self, positions: List[int]) -> 'EncodingTable':
         raise BadRequestException("Not allowed of EncodingTable")
@@ -93,8 +93,8 @@ class EncodingTableImporter(TableImporter):
         'encoded_column': StrParam(default_value=ENCODED_COLUMN, short_description="The encoded column name"),
         'encoded_row': StrParam(default_value=ENCODED_ROW, short_description="The encoded row name"), }
 
-    async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[EncodingTable]) -> EncodingTable:
-        csv_table: EncodingTable = await super().import_from_path(file, params, target_type)
+    def import_from_path(self, file: File, params: ConfigParams, target_type: Type[EncodingTable]) -> EncodingTable:
+        csv_table: EncodingTable = super().import_from_path(file, params, target_type)
         original_column = params.get_value("original_column", target_type.ORIGINAL_COLUMN)
         original_row = params.get_value("original_row", target_type.ORIGINAL_ROW)
         encoded_column = params.get_value("encoded_column", target_type.ENCODED_COLUMN)

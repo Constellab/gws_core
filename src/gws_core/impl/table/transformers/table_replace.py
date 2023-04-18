@@ -49,7 +49,7 @@ class TableReplace(Transformer):
         ),
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         dataframe: DataFrame = source.get_data()
         params: List[dict] = params.get("replace_values")
 

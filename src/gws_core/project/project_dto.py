@@ -8,9 +8,9 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-class CentralProject(BaseModel):
+class SpaceProject(BaseModel):
 
     id: str
     code: str
     title: str
-    children: Optional[List['CentralProject']]
+    children: Optional[List['SpaceProject']]

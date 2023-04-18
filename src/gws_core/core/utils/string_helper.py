@@ -10,6 +10,7 @@ import uuid
 from typing import Any, Type
 
 from slugify import slugify as _slugify
+from unidecode import unidecode
 
 
 class StringHelper():
@@ -94,3 +95,11 @@ class StringHelper():
 
         pattern = re.compile(r'\s+')
         return re.sub(pattern, '', str_)
+
+    @staticmethod
+    def replace_accent_with_letter(str_: str) -> str:
+        """Replace accent with letter"""
+        if str_ is None:
+            return None
+
+        return unidecode(str_)

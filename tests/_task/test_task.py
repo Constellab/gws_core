@@ -17,13 +17,14 @@ from tests.protocol_examples import TestSimpleProtocol
 @task_decorator(unique_name="RunAfterTask")
 class RunAfterTask(Task):
     @abstractmethod
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return None
 
-    async def run_after_task(self) -> None:
+    def run_after_task(self) -> None:
         raise Exception('run_after_task')
 
 
+# test_task
 class TestTask(BaseTestCase):
 
     def test_task_singleton(self):
@@ -38,7 +39,7 @@ class TestTask(BaseTestCase):
 
         self.assertTrue(p0.id != p1.id)
 
-    async def test_process(self):
+    def test_process(self):
 
         proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestSimpleProtocol)
 
@@ -59,7 +60,7 @@ class TestTask(BaseTestCase):
 
         self.assertEqual(experiment.created_by, GTest.user)
 
-        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
+        experiment = ExperimentRunService.run_experiment(experiment=experiment)
 
         # Refresh the processes
         protocol: ProtocolModel = experiment.protocol_model
@@ -106,7 +107,7 @@ class TestTask(BaseTestCase):
         print(" \n------ Experiment --------")
         print(experiment.to_json())
 
-    async def test_after_run(self):
+    def test_after_run(self):
         """Test that the after run method is called
         To test it, we check that it raised an exception
         """
@@ -115,4 +116,4 @@ class TestTask(BaseTestCase):
         experiment.get_protocol().add_process(RunAfterTask, 'run')
 
         with self.assertRaises(Exception):
-            await experiment.run()
+            experiment.run()

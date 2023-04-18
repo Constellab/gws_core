@@ -3,8 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Any, List
 
-from typing import Any, List, TypedDict
+from typing_extensions import TypedDict
 
 from gws_core.impl.table.table import Table
 from gws_core.task.action.action import Action, action_decorator

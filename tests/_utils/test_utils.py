@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 from typing import Literal, Set, Type
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core import Model, Utils
 
@@ -14,7 +14,7 @@ class SubString(str):
     pass
 
 
-class TestUtils(IsolatedAsyncioTestCase):
+class TestUtils(TestCase):
 
     def test_get_model_type(self):
         model_type: Type[Model] = Utils.get_model_type(Model.full_classname())

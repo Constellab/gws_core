@@ -39,17 +39,17 @@ class ShellTask(Task):
         return ShellProxy(message_dispatcher=self.message_dispatcher)
 
     @final
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        return await self.run_with_proxy(params, inputs, self.shell_proxy)
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        return self.run_with_proxy(params, inputs, self.shell_proxy)
 
     @abstractmethod
-    async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
-                             shell_proxy: ShellProxy) -> TaskOutputs:
+    def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
+                       shell_proxy: ShellProxy) -> TaskOutputs:
         """
         Run the task with the shell proxy
         """
 
-    async def run_after_task(self) -> None:
+    def run_after_task(self) -> None:
         """
         This can be overwritten to perform action after the task run. This method is called after the
         resource save. Temp object can be safely deleted here, the resources will still exist

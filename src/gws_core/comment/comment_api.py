@@ -7,7 +7,6 @@ from fastapi import Depends
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
-from ..user.user_dto import UserData
 from .comment_service import CommentService
 
 
@@ -16,7 +15,7 @@ def add_object_comments(object_typing_name: str,
                         object_id: str,
                         message: str,
                         reply_to_id: str = None,
-                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                        _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Add a new comment
 
@@ -40,7 +39,7 @@ def get_object_comments(object_typing_name: str,
                         object_id: str,
                         page: int = 0,
                         number_of_items_per_page=20,
-                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                        _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Get object comments
 

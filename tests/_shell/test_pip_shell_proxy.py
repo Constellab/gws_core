@@ -5,7 +5,7 @@
 
 
 import os
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core.impl.shell.base_env_shell import VEnvCreationInfo
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
@@ -14,7 +14,7 @@ from gws_core.impl.shell.venv_service import (VEnsStatus, VEnvBasicInfo,
 
 
 # test_pip_shell_proxy
-class TestPipShellProxy(IsolatedAsyncioTestCase):
+class TestPipShellProxy(TestCase):
 
     def test_pip_shell_proxy(self):
 

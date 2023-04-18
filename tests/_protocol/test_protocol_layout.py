@@ -23,7 +23,7 @@ class TestProtocolLayout(BaseTestCase):
 
         i_protocol.add_connector(robot_create >> 'robot', robot_move << 'robot')
 
-        protocol_model: ProtocolModel = i_protocol._protocol_model
+        protocol_model: ProtocolModel = i_protocol._process_model
 
         # add layout for create robot process
         ProtocolService.save_process_layout(protocol_model.id, 'robot_create', {'x': 10, 'y': 10})

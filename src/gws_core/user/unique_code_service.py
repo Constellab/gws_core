@@ -1,9 +1,11 @@
 
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, TypedDict
+from typing import Any, Dict
 
 from fastapi import status
+from typing_extensions import TypedDict
+
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.user.current_user_service import CurrentUserService
 

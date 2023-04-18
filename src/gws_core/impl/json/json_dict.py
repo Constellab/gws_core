@@ -44,4 +44,4 @@ class JSONDict(Resource):
 
     @view(view_type=JSONView, human_name="Default view", short_description="View the file content", default_view=True)
     def default_view(self, _: ConfigParams) -> JSONView:
-        return JSONView(self._data)
+        return JSONView(self.data)

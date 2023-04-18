@@ -20,25 +20,25 @@ class TestTableScatterPlot3DView(TestCase):
         dic = tester.to_dict(dict(
             series=[
                 {
-                    "x_data_column": "sepal.length",
-                    "y_data_column": "sepal.width",
-                    "z_data_column": "petal.length"
+                    "x_data_column": "sepal_length",
+                    "y_data_column": "sepal_width",
+                    "z_data_column": "petal_length"
                 },
                 {
-                    "x_data_column": "sepal.length",
-                    "y_data_column": "sepal.width",
-                    "z_data_column": "petal.width"
+                    "x_data_column": "sepal_length",
+                    "y_data_column": "sepal_width",
+                    "z_data_column": "petal_width"
                 }
             ]
         ))
         self.assertEqual(dic["type"], ViewType.SCATTER_PLOT_3D.value)
-        self.assertEqual(dic["data"]["series"][0]["data"]["x"], table.get_data()["sepal.length"].values.tolist())
-        self.assertEqual(dic["data"]["series"][0]["data"]["y"], table.get_data()["sepal.width"].values.tolist())
-        self.assertEqual(dic["data"]["series"][0]["data"]["z"], table.get_data()["petal.length"].values.tolist())
+        self.assertEqual(dic["data"]["series"][0]["data"]["x"], table.get_data()["sepal_length"].values.tolist())
+        self.assertEqual(dic["data"]["series"][0]["data"]["y"], table.get_data()["sepal_width"].values.tolist())
+        self.assertEqual(dic["data"]["series"][0]["data"]["z"], table.get_data()["petal_length"].values.tolist())
 
-        self.assertEqual(dic["data"]["series"][1]["data"]["x"], table.get_data()["sepal.length"].values.tolist())
-        self.assertEqual(dic["data"]["series"][1]["data"]["y"], table.get_data()["sepal.width"].values.tolist())
-        self.assertEqual(dic["data"]["series"][1]["data"]["z"], table.get_data()["petal.width"].values.tolist())
+        self.assertEqual(dic["data"]["series"][1]["data"]["x"], table.get_data()["sepal_length"].values.tolist())
+        self.assertEqual(dic["data"]["series"][1]["data"]["y"], table.get_data()["sepal_width"].values.tolist())
+        self.assertEqual(dic["data"]["series"][1]["data"]["z"], table.get_data()["petal_width"].values.tolist())
 
     def test_scatterplot_3d_view_without_params(self):
         table = DataProvider.get_iris_table()
@@ -54,8 +54,8 @@ class TestTableScatterPlot3DView(TestCase):
         y = x
         self.assertEqual(dic["data"]["series"][0]["data"]["x"], x)
         self.assertEqual(dic["data"]["series"][0]["data"]["y"], y)
-        self.assertEqual(dic["data"]["series"][0]["data"]["z"], table.get_data()["sepal.length"].values.tolist())
+        self.assertEqual(dic["data"]["series"][0]["data"]["z"], table.get_data()["sepal_length"].values.tolist())
 
         self.assertEqual(dic["data"]["series"][1]["data"]["x"], x)
         self.assertEqual(dic["data"]["series"][1]["data"]["y"], y)
-        self.assertEqual(dic["data"]["series"][1]["data"]["z"], table.get_data()["sepal.width"].values.tolist())
+        self.assertEqual(dic["data"]["series"][1]["data"]["z"], table.get_data()["sepal_width"].values.tolist())

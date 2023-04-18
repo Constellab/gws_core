@@ -3,7 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, TypedDict
+from typing import List
+
+from typing_extensions import TypedDict
 
 from gws_core.resource.view.view_types import ViewType
 

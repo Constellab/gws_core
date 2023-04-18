@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 import os
-from typing import List, Literal, TypedDict
+from typing import List, Literal
+
+from typing_extensions import TypedDict
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException

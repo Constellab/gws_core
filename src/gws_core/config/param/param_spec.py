@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import Any, Dict, Generic, List, Optional, TypedDict, TypeVar
+from typing import Any, Dict, Generic, List, Optional, TypeVar
+
+from typing_extensions import TypedDict
 
 from gws_core.core.utils.logger import Logger
 
@@ -293,6 +295,39 @@ class TextParam(ParamSpec[str]):
 
 class BoolParam(ParamSpec[bool]):
     """Boolean param"""
+
+    def __init__(
+        self,
+        default_value: Optional[ParamSpecType] = False,
+        optional: bool = False,
+        visibility: ParamSpecVisibilty = "public",
+        human_name: Optional[str] = None,
+        short_description: Optional[str] = None,
+    ) -> None:
+        """
+        :param default_value: Default value, if None, and optional is false, the config is mandatory
+                        If a value is provided there is no need to set the optional
+                        Setting optional to True, allows default None value
+        :param optional: See default value
+        :type optional: Optional[str]
+        :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
+        :type visibility: ParamSpecVisibilty
+        :type default: Optional[ConfigParamType]
+        :param human_name: Human readable name of the param, showed in the interface
+        :type human_name: Optional[str]
+        :param short_description: Description of the param, showed in the interface
+        :type short_description: Optional[str]
+        """
+
+        super().__init__(
+            default_value=default_value,
+            optional=optional,
+            visibility=visibility,
+            human_name=human_name,
+            short_description=short_description,
+            allowed_values=None,
+            unit=None,
+        )
 
     def _get_validator(self) -> Validator:
         return BoolValidator()

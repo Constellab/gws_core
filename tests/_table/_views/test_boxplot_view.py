@@ -21,8 +21,8 @@ class TestTableBoxPlotView(TestCase):
         )
 
         # 1 series :
-        # first : y = petal.length
-        series: List[Serie1d] = [{"name": "first", "y": {"type": "columns", "selection": ["petal.length"]}}]
+        # first : y = petal_length
+        series: List[Serie1d] = [{"name": "first", "y": {"type": "columns", "selection": ["petal_length"]}}]
         dic = tester.to_dict({"series": series})
         self.assertEqual(dic["type"], ViewType.BOX_PLOT.value)
 

@@ -3,9 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Literal, Optional, TypedDict, Union
+from typing import List, Literal, Optional, Union
 
 from pandas import DataFrame, Index
+from typing_extensions import TypedDict
 
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import BoolParam, StrParam

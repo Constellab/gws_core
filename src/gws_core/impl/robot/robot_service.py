@@ -26,9 +26,9 @@ class RobotService(BaseService):
         return experiment
 
     @classmethod
-    async def run_create_simple_robot_sync(cls) -> IExperiment:
+    def rune_simple_robot_sync(cls) -> IExperiment:
         experiment = IExperiment(protocol_type=CreateSimpleRobot, title="The journey of Astro.")
-        await experiment.run()
+        experiment.run()
         return experiment
 
     @classmethod

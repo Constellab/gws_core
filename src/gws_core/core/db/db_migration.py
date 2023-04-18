@@ -59,7 +59,7 @@ class DbMigrationService:
             brick_info: ModuleInfo
 
             try:
-                brick_info = BrickHelper.get_brick_info(migration_obj.brick_migration)
+                brick_info = BrickHelper.get_brick_info_and_check(migration_obj.brick_migration)
             except:
                 Logger.error(
                     f"Can't retrieve brick information for migration class : '{str(migration_obj.brick_migration)}'")
@@ -125,11 +125,16 @@ class DbMigrationService:
         return cls._brick_migrators[brick_name].get_migration_objects()
 
 
-def brick_migration(version: str, short_description: str) -> Callable:
+def brick_migration(version: str, short_description: str, authenticate_sys_user: bool = True) -> Callable:
     """Decorator to place on sub class of BrickMigration to declare a new migration code
 
     :param version: version of this migration
     :type version: str
+    :param short_description: short description of the migration
+    :type short_description: str
+    :param authenticate_sys_user: if True, the migration will be executed with the sys user authenticated.
+                                  Can be useful to set to False when User table is changed.
+    :type authenticate_sys_user: bool
     :return: [description]
     :rtype: Callable
     """
@@ -152,7 +157,8 @@ def brick_migration(version: str, short_description: str) -> Callable:
 
             # Register the migration
 
-        DbMigrationService.register_migration_object(MigrationObject(class_, version_obj, short_description))
+        DbMigrationService.register_migration_object(MigrationObject(
+            class_, version_obj, short_description, authenticate_sys_user))
 
         return class_
 

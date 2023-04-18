@@ -30,11 +30,11 @@ class IProtocol(IProcess):
     To create it use the add_protocol method on another protocol
     """
 
-    _protocol_model: ProtocolModel
+    _process_model: ProtocolModel
 
     def __init__(self, protocol_model: ProtocolModel) -> None:
         super().__init__(process_model=protocol_model)
-        self._protocol_model = protocol_model
+        self._process_model = protocol_model
 
     ####################################### PROCESS #########################################
 
@@ -59,7 +59,7 @@ class IProtocol(IProcess):
         """Add a task to this
         """
         task_model: TaskModel = ProtocolService.add_process_to_protocol(
-            protocol_model=self._protocol_model, process_type=task_type, instance_name=instance_name,
+            protocol_model=self._process_model, process_type=task_type, instance_name=instance_name,
             config_params=config_params)
 
         return ITask(task_model)
@@ -68,7 +68,7 @@ class IProtocol(IProcess):
         """Add an empty protocol to this protocol
         """
         protocol_model: ProcessModel = ProtocolService.add_empty_protocol_to_protocol(
-            self._protocol_model, instance_name)
+            self._process_model, instance_name)
         return IProtocol(protocol_model)
 
     def add_protocol(self, protocol_type: Type[Protocol],
@@ -76,7 +76,7 @@ class IProtocol(IProcess):
         """Add a protocol from a protocol type
         """
         protocol_model: ProtocolModel = ProtocolService.add_process_to_protocol(
-            protocol_model=self._protocol_model, process_type=protocol_type,
+            protocol_model=self._process_model, process_type=protocol_type,
             instance_name=instance_name, config_params=config_params)
 
         return IProtocol(protocol_model)
@@ -90,7 +90,7 @@ class IProtocol(IProcess):
         :return: [description]
         :rtype: IProcess
         """
-        process: ProcessModel = self._protocol_model.get_process(instance_name)
+        process: ProcessModel = self._process_model.get_process(instance_name)
 
         if isinstance(process, ProtocolModel):
             return IProtocol(process)
@@ -98,7 +98,7 @@ class IProtocol(IProcess):
             return ITask(process)
 
     def delete_process(self, instance_name: str) -> None:
-        ProtocolService.delete_process_of_protocol(self._protocol_model, instance_name)
+        ProtocolService.delete_process_of_protocol(self._process_model, instance_name)
 
     ####################################### CONNECTORS #########################################
 
@@ -107,7 +107,7 @@ class IProtocol(IProcess):
 
         Exemple : protocol.add_connector(create >> 'robot', sub_proto << 'robot_i')
         """
-        ProtocolService.add_connector_to_protocol(self._protocol_model, out_port, in_port)
+        ProtocolService.add_connector_to_protocol(self._process_model, out_port, in_port)
 
     def add_connectors(self, connectors: List[Tuple[OutPort,  InPort]]) -> None:
         """Add multiple connector inside the protocol
@@ -117,7 +117,7 @@ class IProtocol(IProcess):
             (sub_proto >> 'robot_o', robot_travel << 'robot')
         ])
         """
-        ProtocolService.add_connectors_to_protocol(self._protocol_model, connectors)
+        ProtocolService.add_connectors_to_protocol(self._process_model, connectors)
 
     ####################################### INTERFACE & OUTERFACE #########################################
 
@@ -132,7 +132,7 @@ class IProtocol(IProcess):
         :type process_input_name: str
         """
         port: InPort = from_process << process_input_name
-        ProtocolService.add_interface_to_protocol(self._protocol_model, name, port)
+        ProtocolService.add_interface_to_protocol(self._process_model, name, port)
 
     def add_outerface(self, name: str, to_process: IProcess, process_ouput_name: str) -> None:
         """Add an outerface to link the output of one of the protocol's process to the output of the protocol
@@ -145,17 +145,17 @@ class IProtocol(IProcess):
         :type process_ouput_name: str
         """
         port: OutPort = to_process >> process_ouput_name
-        ProtocolService.add_outerface_to_protocol(self._protocol_model, name, port)
+        ProtocolService.add_outerface_to_protocol(self._process_model, name, port)
 
     def delete_interface(self, name: str) -> None:
         """Delete an interface of the protocol
         """
-        ProtocolService.delete_interface_of_protocol(self._protocol_model, name)
+        ProtocolService.delete_interface_of_protocol(self._process_model, name)
 
     def delete_outerface(self, name: str) -> None:
         """Delete an outerface of the protocol
         """
-        ProtocolService.delete_outerface_of_protocol(self._protocol_model, name)
+        ProtocolService.delete_outerface_of_protocol(self._process_model, name)
 
     ############################################### Config ####################################
     # Block config of the protocol because it does not transfer the config to the task

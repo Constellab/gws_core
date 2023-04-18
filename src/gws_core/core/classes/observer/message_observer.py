@@ -6,6 +6,7 @@
 from abc import abstractmethod
 from typing import List
 
+from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.progress_bar.progress_bar import (ProgressBar,
                                                 ProgressBarMessageWithType)
 
@@ -36,7 +37,8 @@ class ProgressBarMessageObserver(MessageObserver):
 
         # convert message to ProgressBarMessageWithType
         progress_bar_messages: List[ProgressBarMessageWithType] = [
-            {'message': message.message, 'type': message.status, 'progress': message.progress}
+            {'message': message.message, 'type': message.status,
+                'progress': message.progress}
             for message in messages
         ]
 
@@ -53,3 +55,11 @@ class BasicMessageObserver(MessageObserver):
 
     def update(self, messages: List[DispatchedMessage]) -> None:
         self.messages.extend(messages)
+
+    def has_message_containing(self, sub_text: str, level: MessageLevel = None) -> bool:
+        for message in self.messages:
+            if level is not None and message.status != level:
+                continue
+            if sub_text in message.message:
+                return True
+        return False

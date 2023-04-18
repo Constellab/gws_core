@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from numpy import NaN
 from pandas import DataFrame
@@ -14,7 +14,7 @@ from gws_core.test.base_test_case import BaseTestCase
 
 
 # test_table_concat
-class TestTableConcat(IsolatedAsyncioTestCase):
+class TestTableConcat(TestCase):
     def test_table_row_concat_helper(self):
 
         df_1: DataFrame = DataFrame({'F1': [1, 2], 'F2': [7, 1]})
@@ -30,8 +30,12 @@ class TestTableConcat(IsolatedAsyncioTestCase):
         result: Table = TableConcatHelper.concat_table_rows(table_1, table_2,
                                                             column_tags_option='ignore', fill_nan=NaN)
 
-        expected_df = DataFrame({'F1': [1, 2, 4, 5], 'F2': [7.0, 1.0, NaN, NaN],
-                                 'F3': [NaN, NaN, 9.0, 8.0], 'F4': [NaN, NaN, 'n1', 'n2']}, index=[0, 1, '0_1', '1_1'])
+        expected_df = DataFrame(
+            {'F1': [1, 2, 4, 5],
+             'F2': [7.0, 1.0, NaN, NaN],
+             'F3': [NaN, NaN, 9.0, 8.0],
+             'F4': [NaN, NaN, 'n1', 'n2']},
+            index=['0', '1', '0_1', '1_1'])
         expected_row_tags = [{'id': '1'}, {'id': '2'}, {'id': '3'}, {'id': '4'}]
         self.assertTrue(DataFrame.equals(result.get_data(), expected_df))
         BaseTestCase.assert_json(result.get_row_tags(), expected_row_tags)
@@ -48,8 +52,7 @@ class TestTableConcat(IsolatedAsyncioTestCase):
         BaseTestCase.assert_json(result.get_column_tags(), expected_column_tags)
 
     def test_table_column_concat_helper(self):
-
-        df_1: DataFrame = DataFrame({'1': ['A1', 'B1'], '2': ['A2', 'B2']}, index=['A', 'B'])
+        df_1: DataFrame = DataFrame({'1': [1, 2], '2': ['A2', 'B2']}, index=['A', 'B'])
         table_1 = Table(df_1)
 
         df_2: DataFrame = DataFrame({'3': ['A3', 'C3'], '4': ['A4', 'C4']}, index=['A', 'C'])
@@ -59,7 +62,7 @@ class TestTableConcat(IsolatedAsyncioTestCase):
             table_1, table_2, row_tags_option='ignore', fill_nan=NaN)
 
         expected_df = DataFrame(
-            {'1': ['A1', 'B1', NaN],
+            {'1': [1, 2, NaN],
              '2': ['A2', 'B2', NaN],
              '3': ['A3', NaN, 'C3'],
              '4': ['A4', NaN, 'C4']},

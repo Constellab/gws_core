@@ -6,7 +6,6 @@
 import hashlib
 import json
 import uuid
-from datetime import datetime
 from typing import Any, Dict, List, Type
 
 from fastapi.encoders import jsonable_encoder
@@ -76,18 +75,6 @@ class Model(BaseModel, PeeweeModel):
                 self.data = {}
         else:
             self._is_saved = True
-
-    # -- A --
-
-    def add_related_model(self, relation_name: str, related_model: 'Model'):
-        # ToDo : Add annotation name
-        if "__relations" not in self.data:
-            self.data["__relations"] = {}
-        self.data["__relations"][relation_name] = {
-            "id": related_model.id,
-            "type": related_model.full_classname(),
-            # "name": related_model.name
-        }
 
     def archive(self, archive: bool) -> 'Model':
         """

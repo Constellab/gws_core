@@ -7,10 +7,10 @@ import time
 from typing import Optional
 
 from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
-from ..config.param.param_spec import (BoolParam, FloatParam, IntParam,
-                                       StrParam, TextParam)
+from ..config.param.param_spec import BoolParam, FloatParam, IntParam, StrParam
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..impl.shell.shell_proxy import ShellProxy
 from ..io.io_spec import InputSpec, OutputSpec
 from ..io.io_spec_helper import InputSpecs, OutputSpecs
 from ..resource.resource import Resource
@@ -38,7 +38,7 @@ class Source(Task):
         'resource_id': StrParam(optional=True, short_description="The id of the resource"),
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         r_id: str = params.get_value(Source.config_name)
         if not r_id:
             raise BadRequestException('Source error, the resource was not provided')
@@ -69,7 +69,7 @@ class Sink(Task):
         'flag_resource': BoolParam(default_value=True, human_name="Check to flag the resource provided in the output")
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         if params.get_value('flag_resource', False):
             # mark the resource to show in databox as it is an output
@@ -102,7 +102,7 @@ class FIFO2(Task):
 
         return {"result": True}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         if inputs.has_resource("resource_1"):
             return {"resource": inputs["resource_1"]}
@@ -134,7 +134,7 @@ class Switch2(Task):
         # The switch is ready to execute if the correct input was set
         return {"result": is_ready}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         index = params.get_value("index")
         resource = inputs[f"resource_{index}"]
         return {"resource": resource}
@@ -153,7 +153,7 @@ class Wait(Task):
     config_specs: ConfigSpecs = {"waiting_time": FloatParam(
         default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         waiting_time = params.get_value("waiting_time")
 
         current_time = 0
@@ -162,6 +162,35 @@ class Wait(Task):
             self.update_progress_value((current_time / waiting_time) * 100, 'Waiting 1 sec')
             time.sleep(1)
 
+        resource = inputs["resource"]
+        return {"resource": resource}
+
+
+@task_decorator(unique_name="ShellWait", short_description="Wait a number of seconds in the shell specified in the config")
+class ShellWait(Task):
+    """
+    Wait task
+
+    This proccess waits during a given time before continuing.
+    """
+
+    input_specs: InputSpecs = {'resource': InputSpec(Resource)}
+    output_specs: OutputSpecs = {'resource': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)}
+    config_specs: ConfigSpecs = {"waiting_time": FloatParam(
+        default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
+
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        # Create the shell proxy. No need to provide the working directory.
+        # Provide the task message_dispatcher so command outputs, will be log in the task
+        shell_proxy = ShellProxy(message_dispatcher=self.message_dispatcher)
+
+        # retrieve parameter
+        waiting_time = params.get_value("waiting_time")
+
+        # run the command
+        shell_proxy.run(f"sleep {waiting_time}", shell_mode=True)
+
+        # return the input resource as output
         resource = inputs["resource"]
         return {"resource": resource}
 
@@ -181,7 +210,7 @@ class Dispatch2(Task):
     }
     config_specs: ConfigSpecs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         resource = inputs["resource"]
         return {
             "resource_1": resource,

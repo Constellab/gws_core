@@ -8,9 +8,10 @@ from typing import Dict, List, Union
 
 import numpy
 import pandas
+from pandas import DataFrame
+
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.resource.view.view_types import ViewType
-from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -71,9 +72,8 @@ class BoxPlotView(View):
     _type: ViewType = ViewType.BOX_PLOT
     _title: str = "Box Plot"
 
-    def add_data(
-            self, data: Union[List[float],
-                              DataFrame] = None, name: str = None, tags: List[Dict[str, str]] = None) -> None:
+    def add_data(self, data: List[float] = None, name: str = None,
+                 tags: List[Dict[str, str]] = None) -> None:
         """
         Add series of raw data.
 
@@ -89,8 +89,8 @@ class BoxPlotView(View):
         data = DataFrame(data)
         self.add_data_from_dataframe(DataFrame(data), name, tags)
 
-    def add_data_from_dataframe(
-            self, data: DataFrame = None, name: str = None, tags: List[Dict[str, str]] = None) -> None:
+    def add_data_from_dataframe(self, data: DataFrame = None, name: str = None,
+                                tags: List[Dict[str, str]] = None) -> None:
         if data is None or not isinstance(data, DataFrame):
             raise BadRequestException("The data is required and must be a DataFrame")
 

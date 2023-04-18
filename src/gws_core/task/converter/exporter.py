@@ -6,7 +6,9 @@
 
 import traceback
 from abc import abstractmethod
-from typing import Callable, Type, TypedDict, final
+from typing import Callable, Type, final
+
+from typing_extensions import TypedDict
 
 from gws_core.io.io_spec import InputSpec, OutputSpec
 
@@ -111,16 +113,16 @@ class ResourceExporter(Converter):
     # have 1 output called file that extend FsNode (like File or Folder)
     output_specs = {"target": OutputSpec(FSNode)}
 
-    # Override the config_spec to define custom spec for the importer
+    # Override the config_spec to define custom spec for the exporter
     config_specs: ConfigSpecs = {}
 
     @final
-    async def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> FSNode:
+    def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> FSNode:
         # Create a new temp_dir to create the file here
         self.__temp_dir: str = Settings.get_instance().make_temp_dir()
 
         try:
-            fs_node: FSNode = await self.export_to_path(source, self.__temp_dir, params, target_type)
+            fs_node: FSNode = self.export_to_path(source, self.__temp_dir, params, target_type)
         except Exception as err:
             raise Exception(
                 f"Cannot export the resource '{source.name}' using exporter '{self._typing_name}' to a file, error : {err}")
@@ -128,7 +130,8 @@ class ResourceExporter(Converter):
         return fs_node
 
     @abstractmethod
-    async def export_to_path(self, source: Resource, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]) -> FSNode:
+    def export_to_path(
+            self, source: Resource, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]) -> FSNode:
         """Override this method to generate a fs_node (File or Folder) from the resource
 
         :param resource: resource to export to fs_node

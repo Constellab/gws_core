@@ -64,4 +64,4 @@ class TestException(TestCase):
             body: Dict = response.get_json_body()
             self.assertEqual(body["code"], "_core.test_exception.py.test_unknown_exception")
             self.assertEqual(body["detail"], "Error")
-            self.assertIsNotNone(body["instance_id"])
+            self.assertIsNotNone(body["instanceId"])

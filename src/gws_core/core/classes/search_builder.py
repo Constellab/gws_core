@@ -1,15 +1,20 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 
 from typing import Any, Callable, List, Literal, Optional, Type
 
-from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from peewee import (Expression, Field, FloatField, IntegerField, ModelSelect,
                     Ordering)
 from playhouse.mysql_ext import Match
 from pydantic import BaseModel
 from typing_extensions import TypedDict
+
+from gws_core.core.classes.enum_field import EnumField
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 
 from ..model.model import Model
 from .expression_builder import ExpressionBuilder

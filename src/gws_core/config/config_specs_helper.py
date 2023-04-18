@@ -39,3 +39,13 @@ class ConfigSpecsHelper():
         for key, value in dict.items():
             config_specs[key] = ParamSpecHelper.create_param_spec_from_json(value)
         return config_specs
+
+    @classmethod
+    def all_config_are_optional(cls, specs: ConfigSpecs) -> bool:
+        """Check if all the config are optional
+        """
+        for spec in specs.values():
+            if not spec.optional:
+                return False
+
+        return True

@@ -4,21 +4,20 @@
 # About us: https://gencovery.com
 
 
-from unittest.async_case import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core_test_helper import GWSCoreTestHelper
 
 from gws_core import TableDecoder, TableEncoder, TaskRunner
+from gws_core.impl.table.table import Table
 
 
 # test_table_encoding
-class TestTableEncoding(IsolatedAsyncioTestCase):
+class TestTableEncoding(TestCase):
 
-    async def test_table_encoding_decoding(self):
+    def test_table_encoding_decoding(self):
         # importer
         table = GWSCoreTestHelper.get_small_data_table()
-
-        print(table)
 
         table_en = GWSCoreTestHelper.get_data_encoding_table()
 
@@ -30,11 +29,12 @@ class TestTableEncoding(IsolatedAsyncioTestCase):
                 "encoding_table": table_en,
             }
         )
-        outputs = await tester.run()
-        etable = outputs["encoded_table"]
+        outputs = tester.run()
+        etable: Table = outputs["encoded_table"]
         self.assertEqual(etable.row_names, ["oui", "non"])
         self.assertEqual(etable.column_names, ["B1", "C1", "D1", "E"])
-        self.assertTrue((etable.get_data().values == table.get_data().values).all())
+        self.assertTrue((etable.get_data().values ==
+                        table.get_data().values).all())
 
         # decoding
         tester = TaskRunner(
@@ -44,6 +44,6 @@ class TestTableEncoding(IsolatedAsyncioTestCase):
                 "encoding_table": table_en,
             }
         )
-        outputs = await tester.run()
-        dtable = outputs["decoded_table"]
+        outputs = tester.run()
+        dtable: Table = outputs["decoded_table"]
         self.assertTrue(dtable.get_data().equals(table.get_data()))

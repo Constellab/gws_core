@@ -4,17 +4,18 @@
 # About us: https://gencovery.com
 
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
+
+from pandas import DataFrame
 
 from gws_core.impl.table.action.table_cell_action import TableUpdateCell
 from gws_core.impl.table.action.table_column_action import (TableAddColumn,
                                                             TableRemoveColumn)
 from gws_core.impl.table.table import Table
-from pandas import DataFrame
 
 
 # test_table_action
-class TestTable(IsolatedAsyncioTestCase):
+class TestTable(TestCase):
 
     def test_add_column(self):
         original_df = DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
@@ -24,8 +25,8 @@ class TestTable(IsolatedAsyncioTestCase):
         # Test add a column
         table = add_column_action.execute(table)
 
-        expected_df = DataFrame({"A": [1, 2, 3], "B": [4, 5, 6], "C": [None, None, None]})
-        self.assertTrue(table.get_data().equals(expected_df))
+        expected = Table(DataFrame({"A": [1, 2, 3], "B": [4, 5, 6], "C": [None, None, None]}))
+        self.assertTrue(table.equals(expected))
 
         # Test undo
         table = add_column_action.undo(table)
@@ -39,8 +40,8 @@ class TestTable(IsolatedAsyncioTestCase):
         # Test remove a column
         table = remove_column_action.execute(table)
 
-        expected_df = DataFrame({"B": [4, 5, 6]})
-        self.assertTrue(table.get_data().equals(expected_df))
+        expected = Table(DataFrame({"B": [4, 5, 6]}))
+        self.assertTrue(table.equals(expected))
 
         # Test undo
         table = remove_column_action.undo(table)
@@ -54,8 +55,8 @@ class TestTable(IsolatedAsyncioTestCase):
         # Test update a cell
         table = update_cell_action.execute(table)
 
-        expected_df = DataFrame({"A": [1, 2, 3], "B": [10, 5, 6]})
-        self.assertTrue(table.get_data().equals(expected_df))
+        expected = Table(DataFrame({"A": [1, 2, 3], "B": [10, 5, 6]}))
+        self.assertTrue(table.equals(expected))
 
         # Test undo
         table = update_cell_action.undo(table)

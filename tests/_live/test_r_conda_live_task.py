@@ -3,75 +3,65 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from unittest import TestCase
+
 from pandas import DataFrame
 
-from gws_core import (BaseTestCase, File, RCondaLiveTask, ResourceSet,
-                      TableImporter, TaskRunner)
+from gws_core import File, RCondaLiveTask, TableImporter, TaskRunner
+from gws_core.impl.table.table import Table
+from gws_core.impl.table.tasks.table_exporter import TableExporter
 
 
 # test_r_conda_live_task
-class TestRCondaLiveTask(BaseTestCase):
+class TestRCondaLiveTask(TestCase):
 
-    async def test_live_task_shell(self):
-        print("Skip the tests of RCondaLiveTask")
-        print("Please uncomment code to activate the test. This may take a while!")
-        return
+    def test_live_task_shell(self):
+        dataframe = DataFrame({
+            "one": [5.1, 4.9, 4.7, 4.6, 5.0],
+            "two": [3.5, 3.0, 3.2, 3.1, 3.6],
+        })
+        table = Table(dataframe)
 
-        file_set = ResourceSet()
-        file = File(path="./foo/bar")
-        file.name = "my_file"
-        file_set.add_resource(file)
+        result = TableExporter.call(
+            table, params={"delimiter": ","})
 
         tester = TaskRunner(
             params={
                 "code": """
-                                print("Hello, world!")
-                                d <- read.table(text=
-                                'Name     Month  Rate1     Rate2
-                                Aira       0      12        23
-                                Aira       0      12        23
-                                Aira       0      12        23
-                                Ben        1      10        4
-                                Ben        2      8         2
-                                Cat        1      3        18
-                                Cat        1      6        0
-                                Cat        1      0        0', header=TRUE)
-                                table = aggregate(d[, 3:4], list(d$Name), mean)
-                                write.csv(table,"table.csv", row.names = TRUE)
-                                """,
-                "args": "",
+# This is a snippet template for a R live task.
+
+# retrieve the command line arguments
+# Read the input csv file with column name
+csv = read.csv(source_path, header = TRUE, sep = ",")
+
+# Remove column named 'one'
+csv_result = csv[, -which(names(csv) == "one")]
+
+# Write the csv file into the result folder
+write.csv(csv_result, file = paste(target_folder, "/result.csv", sep = ""), row.names = FALSE)
+""",
                 "env":
-                """name: .venv
+                """
+name: .venv
 channels:
 - conda-forge
 dependencies:
 - r-base""",
-                "output_file_paths": ["table.csv"]
             },
-            inputs={"source": file_set},
+            inputs={"source": result},
             task_type=RCondaLiveTask
         )
 
-        outputs = await tester.run()
+        outputs = tester.run()
         target = outputs["target"]
-        self.assertTrue(isinstance(target, ResourceSet))
 
-        resources = target.get_resources()
+        self.assertTrue(isinstance(target, File))
 
-        file = resources["table.csv"]
-        self.assertTrue(isinstance(file, File))
-        print(file.read().strip())
+        table: Table = TableImporter.call(
+            target, params={"delimiter": ",", "index_column": 0})
 
-        table = TableImporter.call(file, params={"delimiter": ",", "index_column": 0})
+        # check that the column 'one' has been removed
+        self.assertTrue(table.column_exists("two"))
+        self.assertFalse(table.column_exists("one"))
 
-        df = DataFrame(
-            data=[
-                ["Aira", 12, 23],
-                ["Ben", 9, 3],
-                ["Cat", 3, 6]
-            ],
-            index=[1, 2, 3],
-            columns=["Group.1", "Rate1", "Rate2"]
-        )
-
-        self.assertTrue(table.get_data().equals(df))
+        tester.run_after_task()

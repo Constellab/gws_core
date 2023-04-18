@@ -9,12 +9,12 @@ import uvicorn
 from fastapi import FastAPI
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
-from .central.central_app import central_app
 from .core.classes.cors_config import CorsConfig
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
 from .core_app import core_app
 from .lab.system_service import SystemService
+from .space.space_app import space_app
 
 app = FastAPI(docs_url=None)
 
@@ -26,14 +26,14 @@ app = FastAPI(docs_url=None)
 
 
 @app.on_event("startup")
-async def startup():
+def startup():
     """ Called before the app is started """
 
     App.init()
 
 
 @app.on_event("shutdown")
-async def shutdown():
+def shutdown():
     """ Called before the application is stopped """
 
     App.deinit()
@@ -72,7 +72,7 @@ class App:
         cls.is_running = False
 
     @classmethod
-    def start(cls, ip: str = "0.0.0.0", port: int = 3000):
+    def start(cls, port: int = 3000):
         """
         Starts FastAPI uvicorn
         """
@@ -97,6 +97,8 @@ class App:
 
         # api routes
         cls.app.mount("/core-api/", core_app)
-        cls.app.mount("/central-api/", central_app)
+        # TODO to remove once all lab are on version 0.5.0
+        cls.app.mount("/central-api/", space_app)
+        cls.app.mount("/space-api/", space_app)
 
-        uvicorn.run(cls.app, host=ip, port=int(port))
+        uvicorn.run(cls.app, host='0.0.0.0', port=int(port))

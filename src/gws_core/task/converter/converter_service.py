@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Coroutine, List, Type
+from typing import List, Type
 
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_tasks import FsNodeExtractor
@@ -16,8 +16,8 @@ from gws_core.task.plug import Sink
 from ...config.config_types import ConfigParamsDict
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...experiment.experiment_interface import IExperiment
 from ...experiment.experiment_enums import ExperimentType
+from ...experiment.experiment_interface import IExperiment
 from ...impl.file.file import File
 from ...model.typing_manager import TypingManager
 from ...process.process_interface import IProcess
@@ -32,7 +32,8 @@ class ConverterService:
     ################################################ IMPORTER ################################################
 
     @classmethod
-    async def call_importer(cls, resource_model_id: str, importer_typing_name: str, config: ConfigParamsDict) -> Coroutine[Any, Any, ResourceModel]:
+    def call_importer(
+            cls, resource_model_id: str, importer_typing_name: str, config: ConfigParamsDict) -> ResourceModel:
         # Get and check the resource id
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
         resource_type: Type[File] = resource_model.get_resource_type()
@@ -55,10 +56,11 @@ class ConverterService:
 
         # run the experiment
         try:
-            await experiment.run()
+            experiment.run()
         except Exception as exception:
-            # delete experiment if there was an error
-            experiment.delete()
+            if not experiment.is_running():
+                # delete experiment if there was an error
+                experiment.delete()
             raise exception
 
         # return the resource model of the sink process
@@ -111,9 +113,9 @@ class ConverterService:
     ################################################ FILE EXTRACTOR ################################################
 
     @classmethod
-    async def call_file_extractor(cls, folder_model_id: str, sub_path: str, fs_node_typing_name: str) -> ResourceModel:
-        # Get and check the resource id
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(folder_model_id)
+    def call_file_extractor(cls, folder_model_id: str, sub_path: str, fs_node_typing_name: str) -> ResourceModel:
+        # Check that the resource exists
+        ResourceModel.get_by_id_and_check(folder_model_id)
 
         # Create an experiment containing 1 source, 1 extractor , 1 sink
         experiment: IExperiment = IExperiment(
@@ -132,10 +134,11 @@ class ConverterService:
 
         #  run the experiment
         try:
-            await experiment.run()
+            experiment.run()
         except Exception as exception:
-            # delete experiment if there was an error
-            experiment.delete()
+            if not experiment.is_running():
+                # delete experiment if there was an error
+                experiment.delete()
             raise exception
 
         # return the resource model of the sink process

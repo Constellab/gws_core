@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import os
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core import Settings
 from gws_core.core.utils.zip import Zip
@@ -12,7 +12,7 @@ from gws_core.impl.file.file_helper import FileHelper
 
 
 # test_zip
-class TestZip(IsolatedAsyncioTestCase):
+class TestZip(TestCase):
 
     def test_zip_unzip(self):
 

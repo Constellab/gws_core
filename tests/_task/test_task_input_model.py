@@ -45,9 +45,9 @@ class RobotMainTravel(Protocol):
 
 class TestTaskInputModel(BaseTestCase):
 
-    async def test_task_input_model(self):
+    def test_task_input_model(self):
         experiment: IExperiment = IExperiment(RobotMainTravel)
-        await experiment.run()
+        experiment.run()
 
         ################################ CHECK TASK INPUT ################################
         # Check if the Input resource was set
@@ -65,13 +65,13 @@ class TestTaskInputModel(BaseTestCase):
         self.assertEqual(len(task_inputs), 1)
         self.assertEqual(task_inputs[0].is_interface, True)
 
-    async def test_task_input_model_select(self):
+    def test_task_input_model_select(self):
         # Test the select of input model task and delete by experiment
         experiment_1: IExperiment = IExperiment(CreateSimpleRobot)
-        await experiment_1.run()
+        experiment_1.run()
 
         experiment_2: IExperiment = IExperiment(CreateSimpleRobot)
-        await experiment_2.run()
+        experiment_2.run()
 
         task_input: TaskInputModel = TaskInputModel.get_by_experiment(experiment_1._experiment.id).first()
         self.assertIsNotNone(task_input)
@@ -82,7 +82,7 @@ class TestTaskInputModel(BaseTestCase):
         # Create another experiment that use the previous resource
         experiment_3: IExperiment = IExperiment(MoveSimpleRobot)
         experiment_3.get_protocol().get_process('source').set_param('resource_id', task_input.resource_model.id)
-        await experiment_3.run()
+        experiment_3.run()
         # Get all the task input where the resource is used in another experiment
         task_input: TaskInputModel = TaskInputModel.get_other_experiments(
             [task_input.resource_model.id], experiment_1._experiment.id).first()

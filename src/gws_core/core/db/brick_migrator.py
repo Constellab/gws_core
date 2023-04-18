@@ -35,11 +35,14 @@ class MigrationObject():
     brick_migration: Type['BrickMigration']
     version: Version
     short_description: str
+    authenticate_sys_user: bool
 
-    def __init__(self, brick_migration: Type['BrickMigration'], version: Version, short_description: str) -> None:
+    def __init__(self, brick_migration: Type['BrickMigration'], version: Version, short_description: str,
+                 authenticate_sys_user: bool) -> None:
         self.brick_migration = brick_migration
         self.version = version
         self.short_description = short_description
+        self.authenticate_sys_user = authenticate_sys_user
 
     def to_json(self) -> dict:
         return {
@@ -106,11 +109,13 @@ class BrickMigrator():
         Logger.info(
             f"Start migrating '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'. Description: {migration_object.short_description}")
 
+        no_authenticated_user: bool = False
         # Authenticate the system user if there is no current user (when calling migration on start)
-        current_user = CurrentUserService.get_current_user()
-        no_authenticated_user: bool = current_user is None
-        if no_authenticated_user:
-            CurrentUserService.set_current_user(User.get_sysuser())
+        if migration_object.authenticate_sys_user:
+            current_user = CurrentUserService.get_current_user()
+            no_authenticated_user = current_user is None
+            if no_authenticated_user:
+                CurrentUserService.set_current_user(User.get_sysuser())
 
         try:
             migration_object.brick_migration.migrate(self.current_brick_version, migration_object.version)

@@ -3,25 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from enum import Enum
-from typing import TypedDict, final
+from typing import final
 
 from peewee import BooleanField, CharField
+from typing_extensions import NotRequired, TypedDict
 
 from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
+from .user_dto import UserLanguage, UserTheme
 from .user_group import UserGroup
-
-
-class UserTheme(Enum):
-    LIGHT_THEME = 'light-theme'
-    DARK_THEME = 'dark-theme'
-
-
-class UserLanguage(Enum):
-    EN = 'en'
-    FR = 'fr'
 
 
 class UserDataDict(TypedDict):
@@ -29,11 +20,10 @@ class UserDataDict(TypedDict):
     email: str
     first_name: str
     last_name: str
-    group: UserGroup
+    group: str
     is_active: bool
-    is_admin: bool
-    theme: UserTheme
-    lang: UserLanguage
+    theme: NotRequired[str]
+    lang: NotRequired[str]
 
 
 # ####################################################################
@@ -68,9 +58,9 @@ class User(Model):
     lang: UserLanguage = EnumField(choices=UserLanguage,
                                    default=UserLanguage.EN)
 
-    _table_name = 'gws_user'
+    photo: str = CharField(null=True)
 
-    # -- A --
+    _table_name = 'gws_user'
 
     def archive(self, archive: bool) -> None:
         """
@@ -78,8 +68,6 @@ class User(Model):
         """
 
         return None
-
-    # -- G --
 
     @classmethod
     def get_admin(cls) -> 'User':
@@ -97,13 +85,9 @@ class User(Model):
     def get_by_email(cls, email: str) -> 'User':
         return User.get(User.email == email)
 
-    # -- F --
-
     @property
     def full_name(self):
         return " ".join([self.first_name, self.last_name]).strip()
-
-    # -- I --
 
     @property
     def is_admin(self):
@@ -117,14 +101,10 @@ class User(Model):
     def is_sysuser(self):
         return self.group == UserGroup.SYSUSER
 
-    # -- L --
-
     def has_access(self, group: UserGroup) -> bool:
         """return true if the user group is equal or higher than the group
         """
         return self.group <= group
-
-    # -- S --
 
     def save(self, *arg, **kwargs) -> 'User':
         if not UserGroup.has_value(self.group):
@@ -149,9 +129,19 @@ class User(Model):
             "email": self.email,
             "first_name": self.first_name,
             "last_name": self.last_name,
-            "group": self.group,
+            "group": self.group.value,
             "is_active": self.is_active,
-            "is_admin": self.is_admin,
-            "theme": self.theme,
-            "lang": self.lang
+            "theme": self.theme.value,
+            "lang": self.lang.value,
+            "photo": self.photo
         }
+
+    def from_user_data_dict(self, data: UserDataDict) -> None:
+        self.email = data['email']
+        self.first_name = data['first_name']
+        self.last_name = data['last_name']
+        self.group = UserGroup(data['group'])
+        self.is_active = data['is_active']
+        self.theme = UserTheme(data.get('theme', UserTheme.LIGHT_THEME.value))
+        self.lang = UserLanguage(data.get('lang', UserLanguage.EN.value))
+        self.photo = data.get('photo', None)

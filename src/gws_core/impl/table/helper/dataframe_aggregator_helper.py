@@ -5,9 +5,10 @@
 
 from typing import Literal
 
+from pandas import DataFrame
+
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
-from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
 
@@ -36,17 +37,16 @@ class DataframeAggregatorHelper:
             )
 
     @classmethod
-    def aggregate(
-            cls, data: DataFrame, direction: DfAggregationDirections,
-            func: DfAggregationFunctions,
-            skip_nan: bool = True) -> DataFrame:
+    def aggregate(cls, data: DataFrame, direction: DfAggregationDirections,
+                  func: DfAggregationFunctions,
+                  skip_nan: bool = True) -> DataFrame:
         if (direction is None) or (func is None):
             return data
         cls._check_direction(direction)
         cls._check_func(func)
         axis_num = 1 if direction == "horizontal" else 0
 
-        numeric_dataframe: DataFrame = DataframeHelper.nanify_none_numeric(data)
+        numeric_dataframe: DataFrame = DataframeHelper.nanify_none_number(data)
 
         aggregated_data: DataFrame
         if func == "mean":

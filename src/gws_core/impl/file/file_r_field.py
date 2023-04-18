@@ -20,12 +20,13 @@ class FileRField(BaseRField):
     @final
     def serialize(self, r_field_value: Any) -> str:
         """
-        METHOD NOT USED
+        METHOD NOT USED. Ignore this method.
         """
 
     @abstractmethod
     def load_from_file(self, file_path: str) -> Any:
-        """Implement this method to load your object from the file
+        """Implement this method to load your object from the file.
+        This method is called when the RField of the resource is loaded.
 
         :param file_path: path of the file
         :type file_path: str
@@ -35,8 +36,8 @@ class FileRField(BaseRField):
 
     @abstractmethod
     def dump_to_file(self, r_field_value: Any, file_path: str) -> None:
-        """Implement this method to dump your object into a file to ba able
-        to load it later
+        """Implement this method to dump your object into a file to be able
+        to load it later. This method is called when the resource is saved.
 
         :param r_field_value: object to dump (value of the r_field)
         :type r_field_value: Any

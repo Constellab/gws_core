@@ -6,13 +6,13 @@
 from gws_core.io.io_spec import InputSpec, OutputSpec
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param.param_spec import StrParam
+from ....config.param.param_spec import BoolParam, StrParam
 from ....io.io_spec_helper import InputSpecs, OutputSpecs
 from ....task.task import Task
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
 from ...table.table import Table
-from .metadata_table import MetadataTable
+from .helper.table_annotator_helper import TableAnnotatorHelper
 
 # ####################################################################
 #
@@ -32,21 +32,55 @@ class TableRowAnnotator(Task):
     * if an `id` matches against a reference value of the `sample_table`, the corresponding row of the `sample_table` is taggeg with the metadata given by the `id`.
     """
 
-    input_specs: InputSpecs = {"sample_table": InputSpec(Table), "metadata_table": InputSpec(MetadataTable)}
+    input_specs: InputSpecs = {
+        "sample_table": InputSpec(Table, human_name="Sample table", short_description="Table to annotate"),
+        "metadata_table": InputSpec(Table, human_name="Metadata table", short_description="Table containing the metadata")}
     output_specs: OutputSpecs = {"sample_table": OutputSpec(Table)}
     config_specs: ConfigSpecs = {
         "reference_column":
         StrParam(
             default_value="", human_name="Reference column in sample table",
-            short_description="Column in the `sample_table` whose values are used for annotation. If empty, try to use the `row_names` or the `fisrt_column` instead.")
+            short_description="Column in the sample table whose values are used for annotation. If empty, is uses the row names."),
+        "metadata_ref_column":
+        StrParam(
+            default_value="", human_name="Reference column in metadata table",
+            short_description="Column in the metadata table whose values are used for annotation. If empty, is uses the row names."),
+        "use_table_row_names_as_ref":  BoolParam(
+            default_value=False, human_name="Use sample table row names as reference", visibility="protected",
+            short_description="If checked, the row names of the sample table are used as reference for annotation and the reference column param is ignored."),
+        "use_metadata_row_names_as_ref":  BoolParam(
+            default_value=False, human_name="Use metadata table row names as reference", visibility="protected",
+            short_description="If checked, the row names of the metadata table are used as reference for annotation and the metadata reference column param is ignored.")
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        table: Table = inputs["sample_table"]
-        metadata_table: MetadataTable = inputs["metadata_table"]
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+
         reference_column = params.get_value("reference_column")
-        from .helper.table_annotator_helper import TableRowAnnotatorHelper
-        table: Table = TableRowAnnotatorHelper.annotate(table, metadata_table, reference_column)
+        metadata_ref_column = params.get_value("metadata_ref_column")
+        use_table_row_names_as_ref = params.get_value("use_table_row_names_as_ref")
+        use_metadata_row_names_as_ref = params.get_value("use_metadata_row_names_as_ref")
+
+        if use_table_row_names_as_ref:
+            self.log_info_message("Using sample table row names as reference for annotation")
+        elif reference_column:
+            self.log_info_message(f"Using sample table column '{reference_column}' as reference for annotation")
+        else:
+            self.log_info_message("Using sample table first column as reference for annotation")
+
+        if use_metadata_row_names_as_ref:
+            self.log_info_message("Using metadata table row names as reference for annotation")
+        elif metadata_ref_column:
+            self.log_info_message(f"Using metadata table column '{metadata_ref_column}' as reference for annotation")
+        else:
+            self.log_info_message("Using metadata table first column as reference for annotation")
+
+        table: Table = TableAnnotatorHelper.annotate_rows(
+            inputs["sample_table"],
+            inputs["metadata_table"],
+            reference_column,
+            metadata_ref_column,
+            use_table_row_names_as_ref,
+            use_metadata_row_names_as_ref)
         return {"sample_table": table}
 
 
@@ -67,19 +101,54 @@ class TableColumnAnnotator(Task):
     * if an `id` matches against a reference value of the `sample_table`, the corresponding column of the `sample_table` is taggeg with the metadata given by the `id`.
     """
 
-    input_specs: InputSpecs = {"sample_table": InputSpec(Table), "metadata_table": InputSpec(MetadataTable)}
+    input_specs: InputSpecs = {
+        "sample_table": InputSpec(Table, human_name="Sample table", short_description="Table to annotate"),
+        "metadata_table": InputSpec(Table, human_name="Metadata table", short_description="Table containing the metadata")
+    }
     output_specs: OutputSpecs = {"sample_table": OutputSpec(Table)}
     config_specs: ConfigSpecs = {
         "reference_row":
         StrParam(
             default_value="", human_name="Reference row in sample table",
-            short_description="Row whose data are used as reference for annotation. If empty, try to use the `headers` or the `first_row` instead.")
+            short_description="Row in the sample table whose data are used as reference for annotation. If empty, it uses the column names."),
+        "metadata_ref_column":
+        StrParam(
+            default_value="", human_name="Reference column in metadata table",
+            short_description="Column in the metadata table whose values are used for annotation. If empty, is uses the row names."),
+        "use_table_column_names_as_ref":  BoolParam(
+            default_value=False, human_name="Use sample table column names as reference", visibility="protected",
+            short_description="If checked, the column names of the sample table are used as reference for annotation and the reference row param is ignored."),
+        "use_metadata_row_names_as_ref":  BoolParam(
+            default_value=False, human_name="Use metadata table row names as reference", visibility="protected",
+            short_description="If checked, the row names of the metadata table are used as reference for annotation and the metadata reference column param is ignored.")
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        table: Table = inputs["sample_table"]
-        metadata_table: MetadataTable = inputs["metadata_table"]
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+
         reference_row = params.get_value("reference_row")
-        from .helper.table_annotator_helper import TableColumnAnnotatorHelper
-        table: Table = TableColumnAnnotatorHelper.annotate(table, metadata_table, reference_row)
+        metadata_ref_column = params.get_value("metadata_ref_column")
+        use_table_column_names_as_ref = params.get_value("use_table_column_names_as_ref")
+        use_metadata_row_names_as_ref = params.get_value("use_metadata_row_names_as_ref")
+
+        if use_table_column_names_as_ref:
+            self.log_info_message("Using sample table column names as reference for annotation")
+        elif reference_row:
+            self.log_info_message(f"Using sample table row '{reference_row}' as reference for annotation")
+        else:
+            self.log_info_message("Using sample table first row as reference for annotation")
+
+        if use_metadata_row_names_as_ref:
+            self.log_info_message("Using metadata table row names as reference for annotation")
+        elif metadata_ref_column:
+            self.log_info_message(f"Using metadata table column '{metadata_ref_column}' as reference for annotation")
+        else:
+            self.log_info_message("Using metadata table first column as reference for annotation")
+
+        table: Table = TableAnnotatorHelper.annotate_columns(
+            inputs["sample_table"],
+            inputs["metadata_table"],
+            reference_row,
+            metadata_ref_column,
+            use_table_column_names_as_ref,
+            use_metadata_row_names_as_ref)
         return {"sample_table": table}

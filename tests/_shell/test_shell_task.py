@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import os
-from unittest.async_case import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec, ShellTask,
                       StrParam, TaskInputs, TaskOutputs, TaskRunner,
@@ -21,8 +21,8 @@ class EchoInFileTask(ShellTask):
         'name': StrParam(optional=True, short_description="The name to echo"),
     }
 
-    async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
-                             shell_proxy: ShellProxy) -> TaskOutputs:
+    def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
+                       shell_proxy: ShellProxy) -> TaskOutputs:
         name = params.get_value("name")
         shell_proxy.run([f"echo \"{name}\" > echo.txt"], shell_mode=True)
 
@@ -39,27 +39,27 @@ class EchoTask(ShellTask):
         'name': StrParam(optional=True, short_description="The name to echo"),
     }
 
-    async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
-                             shell_proxy: ShellProxy) -> TaskOutputs:
+    def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
+                       shell_proxy: ShellProxy) -> TaskOutputs:
         name = params.get_value("name")
         shell_proxy.run([f"echo \"{name}\""], shell_mode=True)
         return {}
 
 
 # test_shell_task
-class TestShell(IsolatedAsyncioTestCase):
+class TestShell(TestCase):
 
-    async def test_echo_in_file(self):
+    def test_echo_in_file(self):
         runner = TaskRunner(
             inputs={},
             params={"name": "John Doe"},
             task_type=EchoInFileTask
         )
-        outputs = await runner.run()
+        outputs = runner.run()
         file: File = outputs["file"]
         self.assertEqual(file.read().strip(), "John Doe")
 
-    async def test_echo(self):
+    def test_echo(self):
         """Test the echo and check that is was logged in the progress bar
         """
         runner = TaskRunner(
@@ -69,7 +69,7 @@ class TestShell(IsolatedAsyncioTestCase):
         )
         observer = runner.add_log_observer()
 
-        await runner.run()
+        runner.run()
 
         # there should be a John Doe mesage in the progress bar
         self.assertEqual(len([x for x in observer.messages if "John Doe\n" in x.message]), 1)

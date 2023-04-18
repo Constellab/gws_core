@@ -81,7 +81,7 @@ class TableRowTagUnfolder(Transformer):
 
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         table: Table = source
 
         if params.get('filters'):
@@ -126,7 +126,7 @@ class TableColumnTagUnfolder(Transformer):
 
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         table: Table = source
 
         if params.get('filters'):

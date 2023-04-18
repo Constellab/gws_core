@@ -4,12 +4,14 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import Literal, Optional, Type, TypedDict, final
+from typing import Literal, Optional, Type, final
+
+from typing_extensions import TypedDict
 
 from gws_core.core.classes.file_downloader import FileDownloader
-from gws_core.core.classes.observer.dispatched_message import (
-    DispatchedMessage, DispatchedMessageStatus)
+from gws_core.core.classes.observer.dispatched_message import DispatchedMessage
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
+from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.model.typing import TypingNameObj
 from gws_core.model.typing_register_decorator import typing_registrator
 
@@ -18,7 +20,6 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_spec_helper import InputSpecs, OutputSpecs
 from ..process.process import Process
-from ..progress_bar.progress_bar import ProgressBarMessageType
 from ..resource.resource import Resource
 from ..task.task_io import TaskInputs, TaskOutputs
 
@@ -83,7 +84,7 @@ class Task(Process):
         return {"result": True, "message": None}
 
     @abstractmethod
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """This must be overiwritten to perform the task of the task.
 
         This is where most of your code must go
@@ -96,10 +97,10 @@ class Task(Process):
         :type outputs: Output
         """
 
-    async def run_after_task(self) -> None:
+    def run_after_task(self) -> None:
         """
         This can be overwritten to perform action after the task run. This method is called after the
-        resource save. This method is useful to delete temporary objects (like files) to clear the server after the task is run.
+        resources are saved. This method is useful to delete temporary objects (like files) to clear the server after the task is run.
         """
 
     @final
@@ -127,7 +128,7 @@ class Task(Process):
         self.message_dispatcher.notify_progress_value(progress=value, message=message)
 
     @final
-    def log_message(self, message: str, type_: DispatchedMessageStatus) -> None:
+    def log_message(self, message: str, type_: MessageLevel) -> None:
         """Store a message in the progress
 
         :param message: message to store in the progress
@@ -138,20 +139,24 @@ class Task(Process):
         self.message_dispatcher.notify_message(message)
 
     @final
+    def log_debug_message(self, message: str):
+        self.log_message(message, MessageLevel.DEBUG)
+
+    @final
     def log_info_message(self, message: str):
-        self.log_message(message, ProgressBarMessageType.INFO)
+        self.log_message(message, MessageLevel.INFO)
 
     @final
     def log_success_message(self, message: str):
-        self.log_message(message, ProgressBarMessageType.SUCCESS)
+        self.log_message(message, MessageLevel.SUCCESS)
 
     @final
     def log_error_message(self, message: str):
-        self.log_message(message, ProgressBarMessageType.ERROR)
+        self.log_message(message, MessageLevel.ERROR)
 
     @final
     def log_warning_message(self, message: str):
-        self.log_message(message, ProgressBarMessageType.WARNING)
+        self.log_message(message, MessageLevel.WARNING)
 
     @final
     def __set_message_dispatcher__(self, message_dispatcher: MessageDispatcher) -> None:

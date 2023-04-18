@@ -82,6 +82,8 @@ class TaskRunner():
         result = None
         try:
             result = task.check_before_run(config_params, inputs)
+        except KeyError as exception:
+            raise Exception(f"KeyError : {str(exception)}")
         except Exception as exception:
             self.force_dispatch_waiting_messages()
             raise exception
@@ -89,7 +91,7 @@ class TaskRunner():
         self.force_dispatch_waiting_messages()
         return result
 
-    async def run(self) -> TaskOutputs:
+    def run(self) -> TaskOutputs:
         """This method, checks the config, inputs and then run the task
 
         :return: [description]
@@ -101,7 +103,9 @@ class TaskRunner():
         task._status_ = 'RUN'
 
         try:
-            task_outputs: TaskOutputs = await task.run(config_params, inputs)
+            task_outputs: TaskOutputs = task.run(config_params, inputs)
+        except KeyError as exception:
+            raise Exception(f"KeyError : {str(exception)}")
         except Exception as exception:
             self.force_dispatch_waiting_messages()
             raise exception
@@ -109,12 +113,14 @@ class TaskRunner():
         self.force_dispatch_waiting_messages()
         return self._check_outputs(task_outputs)
 
-    async def run_after_task(self) -> None:
+    def run_after_task(self) -> None:
         task: Task = self._get_task_instance()
         task._status_ = 'RUN_AFTER_TASK'
 
         try:
-            await task.run_after_task()
+            task.run_after_task()
+        except KeyError as exception:
+            raise Exception(f"KeyError : {str(exception)}")
         except Exception as exception:
             self.force_dispatch_waiting_messages()
             raise exception

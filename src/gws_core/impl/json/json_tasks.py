@@ -30,7 +30,7 @@ from .json_dict import JSONDict
 class JSONImporter(ResourceImporter):
     config_specs: ConfigSpecs = {'file_format': StrParam(default_value="json", short_description="File format")}
 
-    async def import_from_path(self, source: File, params: ConfigParams, target_type: Type[JSONDict]) -> JSONDict:
+    def import_from_path(self, source: File, params: ConfigParams, target_type: Type[JSONDict]) -> JSONDict:
         if source.is_empty():
             raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
                                       detail_args={'filename': source.path})
@@ -61,7 +61,7 @@ class JSONExporter(ResourceExporter):
             default_value=False, visibility=BoolParam.PROTECTED_VISIBILITY,
             short_description="True to indent and prettify the JSON file, False otherwise")}
 
-    async def export_to_path(self, resource: JSONDict, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
+    def export_to_path(self, resource: JSONDict, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_name = params.get_value('file_name', type(self)._human_name)
         file_format = FileHelper.clean_extension(params.get_value('file_format', 'json'))
         file_path = os.path.join(dest_dir, file_name + '.' + file_format)

@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Coroutine, List, Type
+from typing import List, Type
 
 from gws_core.task.transformer.transformer import Transformer
 
@@ -17,7 +17,7 @@ from ...process.process_interface import IProcess
 from ...protocol.protocol_interface import IProtocol
 from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel
-from ..converter.converter import Converter, ConverterRunner
+from ..converter.converter import Converter
 from ..plug import Sink, Source
 from ..task import Task
 from .transformer_type import TransformerDict
@@ -26,7 +26,8 @@ from .transformer_type import TransformerDict
 class TransformerService():
 
     @classmethod
-    async def create_and_run_transformer_experiment(cls, transformers: List[TransformerDict], resource_model_id: str) -> Coroutine[Any, Any, ResourceModel]:
+    def create_and_run_transformer_experiment(cls, transformers: List[TransformerDict],
+                                              resource_model_id: str) -> ResourceModel:
 
         if not transformers or len(transformers) == 0:
             raise BadRequestException('At least 1 transformer mustbe provided')
@@ -63,7 +64,7 @@ class TransformerService():
 
         #  run the experiment
         try:
-            await experiment.run()
+            experiment.run()
         except Exception as exception:
             # delete experiment if there was an error
             experiment.delete()

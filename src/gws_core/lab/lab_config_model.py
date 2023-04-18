@@ -5,13 +5,15 @@
 
 import hashlib
 from json import dumps
-from typing import List, Optional, TypedDict
+from typing import List, Optional
+
+from peewee import CharField, IntegerField
+from typing_extensions import TypedDict
 
 from gws_core.brick.brick_dto import BrickVersion
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.base_model import BaseModel
 from gws_core.core.utils.string_helper import StringHelper
-from peewee import CharField, IntegerField
 
 from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.utils.date_helper import DateHelper

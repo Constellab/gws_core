@@ -6,11 +6,12 @@
 from re import split, sub
 from typing import List, Union
 
+from numpy import NaN
+from pandas import DataFrame
+
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.table.table import Table
-from numpy import NaN
-from pandas import DataFrame
 
 from ....core.utils.utils import Utils
 
@@ -75,7 +76,7 @@ class TableOperationHelper():
     def row_operation(source: Table, operations: Union[str, List[str]], keep_original_rows: bool) -> Table:
         t_table = source.transpose()
         result_transposed = TableOperationHelper.column_operations(t_table, operations, keep_original_rows)
-        return result_transposed.transpose()
+        return result_transposed.transpose(infer_objects=True)
 
     @staticmethod
     def column_mass_operations(table: Table, operation_df: DataFrame,

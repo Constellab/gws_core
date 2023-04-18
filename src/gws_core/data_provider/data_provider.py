@@ -1,4 +1,7 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 import os
 
@@ -16,16 +19,8 @@ class DataProvider():
         return os.path.join(cls._get_test_data_dir(), path)
 
     @classmethod
-    def get_test_data_file(cls, path: str) -> File:
-        return File(cls.get_test_data_path(path))
-
-    @classmethod
     def get_iris_file(cls) -> File:
         return File(cls.get_test_data_path('iris.csv'))
-
-    @classmethod
-    def get_no_head_iris_file(cls) -> File:
-        return File(cls.get_test_data_path('iris_no_head.csv'))
 
     @classmethod
     def get_iris_table(cls, keep_variety: bool = True) -> Table:

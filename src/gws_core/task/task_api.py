@@ -7,19 +7,19 @@
 from typing import List
 
 from fastapi import Depends
+
 from gws_core.core.utils.logger import Logger
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.task.task_input_model import TaskInputModel
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
-from ..user.user_dto import UserData
 from .task_service import TaskService
 
 
 @core_app.get("/task/{id}", tags=["Task"], summary="Get a task")
 def get_a_task(id: str,
-               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+               _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a task
 
@@ -33,7 +33,7 @@ def get_a_task(id: str,
 
 @core_app.post("/task/{id}/fix", tags=["Task"], summary="Fix a task")
 def fix_a_task(id: str,
-               _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+               _=Depends(AuthService.check_user_access_token)) -> None:
     """
     Fix a task
 
@@ -46,7 +46,7 @@ def fix_a_task(id: str,
 
 
 @core_app.post("/task/fix", tags=["Task"], summary="Run a task")
-def fix_all_protocol(_: UserData = Depends(AuthService.check_user_access_token)):
+def fix_all_protocol(_=Depends(AuthService.check_user_access_token)):
     Logger.info('Start fixing all protocols')
     protocol_models = list(ProtocolModel.select())
     for protocol in protocol_models:

@@ -2,21 +2,26 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core.lab.monitor.monitor_service import MonitorService
 
 
 # test_monitor
-class TestMonitor(IsolatedAsyncioTestCase):
+class TestMonitor(TestCase):
 
-    async def test_get_current_monitor(self):
+    def test_get_current_monitor(self):
         monitoring = MonitorService.get_current_monitor()
 
         self.assertNotEqual(monitoring.disk_total, 0)
         self.assertNotEqual(monitoring.disk_usage_used, 0)
         self.assertNotEqual(monitoring.disk_usage_free, 0)
         self.assertNotEqual(monitoring.disk_usage_percent, 0)
+
+        self.assertNotEqual(monitoring.external_disk_total, 0)
+        self.assertNotEqual(monitoring.external_disk_usage_used, 0)
+        self.assertNotEqual(monitoring.external_disk_usage_free, 0)
+        self.assertNotEqual(monitoring.external_disk_usage_percent, 0)
 
         self.assertNotEqual(monitoring.cpu_count, 0)
         self.assertNotEqual(monitoring.cpu_percent, 0)

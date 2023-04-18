@@ -102,7 +102,7 @@ class TableColumnMassOperations(Task):
             short_description="If true, an error will be raised if a column is not found. If false, the result will be 'NaN'.",
             visibility='protected')}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         table: Table = inputs['table']
         operation_table: Table = inputs['operation_table']

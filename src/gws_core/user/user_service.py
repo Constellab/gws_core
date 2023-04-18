@@ -6,84 +6,48 @@
 
 from typing import List
 
+from gws_core.core.utils.logger import Logger
+from gws_core.space.space_service import SpaceService
+
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from .activity import Activity
-from .user import User, UserDataDict, UserLanguage, UserTheme
+from .user import User, UserDataDict
 from .user_group import UserGroup
 
 
 class UserService(BaseService):
 
-    _console_data = {"user": None}
-
-    # -- A --
-
     @classmethod
     def activate_user(cls, id: str) -> User:
         return cls.set_user_active(id, True)
 
-    # -- C --
-
     @classmethod
-    def create_central_user(cls, user: UserDataDict) -> User:
-        db_user: User = cls.get_user_by_id(user["id"])
-
-        if db_user is None:
-            return cls._create_user(user)
-        else:
-            db_user.email = user["email"]
-            db_user.first_name = user["first_name"]
-            db_user.last_name = user["last_name"]
-            db_user.group = user["group"]
-            db_user.is_active = user["is_active"]
-            return db_user.save()
-
-    @classmethod
-    def create_user(cls, user: UserDataDict) -> User:
-
-        if cls.user_exists(user["id"]):
-            raise BadRequestException("The user already exists")
-
-        return cls._create_user(user)
-
-    @classmethod
-    def create_user_if_not_exists(cls, user: UserDataDict) -> User:
+    def create_or_update_user(cls, user: UserDataDict) -> User:
         db_user: User = cls.get_user_by_id(user["id"])
         if db_user is not None:
-            return db_user
+            db_user.from_user_data_dict(user)
+            return db_user.save()
 
         return cls._create_user(user)
 
     @classmethod
     def _create_user(cls, data: UserDataDict) -> User:
-        group: UserGroup = UserGroup.from_string(data.get('group', None), UserGroup.USER)
+        group: UserGroup = UserGroup(data['group'])
         if group == UserGroup.SYSUSER:
             raise BadRequestException("Cannot create sysuser")
 
-        user = User(
-            email=data['email'],
-            first_name=data['first_name'],
-            last_name=data['last_name'],
-            group=group,
-            is_active=data.get('is_active', True),
-            data={},
-            theme=data.get('theme', UserTheme.LIGHT_THEME),
-            lang=data.get('lang', UserLanguage.EN),
-        )
+        user = User(data={})
         # set the id later to mark the user as not saved
-        user.id = data['id']
+        user.id = data["id"]
+        user.from_user_data_dict(data)
         user.save()
         return User.get_by_id(user.id)
-
-    # -- D --
 
     @classmethod
     def deactivate_user(cls, id) -> User:
         return cls.set_user_active(id, False)
-
-    # -- F --
 
     @classmethod
     def fecth_activity_list(cls,
@@ -114,8 +78,6 @@ class UserService(BaseService):
         return Paginator(
             query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
-    # -- G --
-
     @classmethod
     def get_user_by_id(cls, id: str) -> User:
         return User.get_by_id(id)
@@ -123,8 +85,6 @@ class UserService(BaseService):
     @classmethod
     def get_user_by_email(cls, email: str) -> User:
         return User.get_by_email(email)
-
-    # -- S --
 
     @classmethod
     def set_user_active(cls, id: str, is_active: bool) -> User:
@@ -140,7 +100,7 @@ class UserService(BaseService):
     @classmethod
     def get_all_real_users(cls) -> List[User]:
         return list(User.select().where(User.group != UserGroup.SYSUSER)
-                    .order_by(User.last_name, User.first_name))
+                    .order_by(User.first_name, User.last_name))
 
     # Create the admin
     @classmethod
@@ -159,8 +119,6 @@ class UserService(BaseService):
             )
             user.save()
 
-    # -- G --
-
     @classmethod
     def get_admin(cls):
         return User.get_admin()
@@ -176,3 +134,16 @@ class UserService(BaseService):
     @classmethod
     def user_exists(cls, id: str) -> bool:
         return cls.get_user_by_id(id) is not None
+
+    @classmethod
+    def synchronize_all_space_users(cls) -> None:
+        Logger.info("Synchronizing users from space")
+        try:
+            users = SpaceService.get_all_lab_users()
+            for user in users:
+                cls.create_or_update_user(user)
+
+            Logger.info(f"{len(users)} synchronized users from space")
+        except Exception as err:
+            Logger.error(f"Error while synchronizing users: {err}")
+            raise err

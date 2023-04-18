@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import os
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core import FileDownloader, Settings
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
@@ -18,7 +18,7 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
 # test_file_downloader
-class TestFileDownloader(IsolatedAsyncioTestCase):
+class TestFileDownloader(TestCase):
 
     def test_download(self):
         message_dispatcher = MessageDispatcher(0, 0)
@@ -46,7 +46,7 @@ class TestFileDownloader(IsolatedAsyncioTestCase):
         FileHelper.delete_dir(destination_folder)
         self.assertFalse(os.path.exists(destination_folder))
 
-    async def test_task_file_downloader(self):
+    def test_task_file_downloader(self):
         task_file_downloader = TaskFileDownloader('gws_core', None)
 
         file_destination = os.path.join(task_file_downloader.destination_folder, "my_file.pdf")

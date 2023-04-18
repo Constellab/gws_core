@@ -15,7 +15,6 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.share.share_link import ShareLinkType
 from gws_core.share.shared_resource import SharedResource
 from gws_core.user.auth_service import AuthService
-from gws_core.user.user_dto import UserData
 
 from .share_service import ShareService
 
@@ -28,10 +27,10 @@ def mark_entity_as_shared(entity_type: ShareLinkType, token: str, destination: d
 
 
 @core_app.get("/share/{entity_type}/{entity_id}/shared-to", tags=["Share"],
-              summary="Get info about which lab this object was shared to")
+              summary="Get info about which lab this object was shared to", response_model=None)
 def get_shared_to_list(entity_type: ShareLinkType,
                        entity_id: str,
-                       _: UserData = Depends(AuthService.check_user_access_token)) -> Paginator[SharedResource]:
+                       _=Depends(AuthService.check_user_access_token)) -> Paginator[SharedResource]:
     return ShareService.get_shared_to_list(entity_type, entity_id).to_json()
 
 
@@ -41,14 +40,14 @@ class ImportDto(BaseModel):
 ################################ RESOURCE ################################
 
 
-@core_app.post("/share/resource/import", tags=["Share"], summary="Download a resource")
+@core_app.post("/share/resource/import", tags=["Share"], summary="Download a resource", response_model=None)
 def import_resource(import_dto: ImportDto,
-                    _: UserData = Depends(AuthService.check_user_access_token)) -> ResourceModel:
-    return ShareService.create_resource_from_external_lab(import_dto.url).to_json()
+                    _=Depends(AuthService.check_user_access_token)) -> ResourceModel:
+    return ShareService.download_resource_from_external_lab(import_dto.url).to_json()
 
 
 # Open route to download a resource
 @core_app.get("/share/resource/download/{token}", tags=["Share"], summary="Download a resource")
 def download_resource(token: str) -> FileResponse:
-    zip_path = ShareService.download_resource_from_token(token)
+    zip_path = ShareService.zip_resource_from_token(token)
     return FileHelper.create_file_response(zip_path)

@@ -6,8 +6,9 @@ import inspect
 import zlib
 from typing import Any, Dict, List, Type
 
-from gws_core.resource.resource_list_base import ResourceListBase
 from peewee import ForeignKeyField, ModelSelect
+
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
@@ -49,16 +50,6 @@ class TaskModel(ProcessModel):
 
     _table_name = 'gws_task'
 
-    def __init__(self, *args, **kwargs):
-        """
-        Constructor
-        """
-
-        super().__init__(*args, **kwargs)
-
-        if self.is_saved():
-            self._init_io_from_data()
-
     def _init_io_from_data(self):
         """Method used when instantiating a TaskModel from the DB, it init the input and output from the
           data object and it does not use the task specs
@@ -82,12 +73,10 @@ class TaskModel(ProcessModel):
         return zlib.compress(source.encode())
 
     def set_process_type(self, typing_name: str) -> None:
-        super().set_process_type(typing_name)
-        self._init_io_from_type()
-
-    def _init_io_from_type(self):
         """Method used when creating a new task model, it init the input and output from task specs
         """
+        super().set_process_type(typing_name)
+
         task_type: Type[Task] = self.get_process_type()
 
         self._inputs = Inputs(self)
@@ -159,7 +148,7 @@ class TaskModel(ProcessModel):
 
     ################################# RUN #############################
 
-    async def _run(self) -> None:
+    def _run(self) -> None:
         """
         Run the task and save its state in the database.
         """
@@ -189,18 +178,18 @@ class TaskModel(ProcessModel):
         self._run_before_task()
 
         # run the task
-        await self._run_task(task_runner)
+        self._run_task(task_runner)
 
         # execute the run after task method
         try:
-            await task_runner.run_after_task()
+            task_runner.run_after_task()
         except Exception as err:
             if not isinstance(err, ProcessRunException):
                 Logger.log_exception_stack_trace(err)
             raise ProcessRunException.from_exception(process_model=self, exception=err,
                                                      error_prefix='Error during check after task') from err
 
-        await self._run_after_task()
+        self._run_after_task()
 
     def _run_before_task(self) -> None:
         super()._run_before_task()
@@ -236,14 +225,14 @@ class TaskModel(ProcessModel):
 
             input_resource.save()
 
-    async def _run_task(self, task_runner: TaskRunner) -> None:
+    def _run_task(self, task_runner: TaskRunner) -> None:
         """
         Run the task and save its state in the database.
         """
 
         try:
             # Run the task task
-            await task_runner.run()
+            task_runner.run()
 
         except InvalidOutputsException as err:
             # Save the valid resources

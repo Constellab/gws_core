@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from os import path
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core import ShellProxy
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
@@ -13,7 +13,7 @@ from gws_core.core.classes.observer.message_observer import \
 
 
 # test_shell_proxy
-class TestShellProxy(IsolatedAsyncioTestCase):
+class TestShellProxy(TestCase):
 
     def test_echo_in_file(self):
         shell_proxy = ShellProxy()

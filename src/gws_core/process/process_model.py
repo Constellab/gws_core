@@ -5,10 +5,9 @@
 
 from __future__ import annotations
 
-import asyncio
 from abc import abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, Dict, Type, TypedDict, final
+from typing import TYPE_CHECKING, Dict, Optional, Type, final
 
 from peewee import CharField, ForeignKeyField
 from starlette_context import context
@@ -32,10 +31,11 @@ from ..experiment.experiment import Experiment
 from ..io.io import Inputs, Outputs
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
-from ..progress_bar.progress_bar import ProgressBar
+from ..progress_bar.progress_bar import ProgressBar, ProgressBarMessage
 from ..user.user import User
 from .process import Process
 from .process_exception import ProcessRunException
+from .process_types import ProcessErrorInfo
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
@@ -46,13 +46,6 @@ class ProcessStatus(Enum):
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     ERROR = "ERROR"
-
-
-class ProcessErrorInfo(TypedDict):
-    detail: str
-    unique_code: str
-    context: str
-    instance_id: str
 
 
 @json_ignore(["parent_protocol_id"])
@@ -285,7 +278,7 @@ class ProcessModel(ModelWithUser):
     ################################# RUN #########################
 
     @final
-    async def run(self) -> None:
+    def run(self) -> None:
         """
         Run the process and save its state in the database.
         """
@@ -294,7 +287,7 @@ class ProcessModel(ModelWithUser):
             return
 
         try:
-            await self._run()
+            self._run()
         # Catch all exception and wrap them into a ProcessRunException to provide process info
         except ProcessRunException as err:
             # if the process is already finished, just raise the exception
@@ -330,17 +323,14 @@ class ProcessModel(ModelWithUser):
             raise exception
 
     @abstractmethod
-    async def _run(self) -> None:
+    def _run(self) -> None:
         """Function to run overrided by the sub classes
         """
 
-    async def _run_next_processes(self):
+    def _run_next_processes(self):
         self.outputs.propagate()
-        aws = []
         for proc in self.outputs.get_next_procs():
-            aws.append(proc.run())
-        if len(aws):
-            await asyncio.gather(*aws)
+            proc.run()
 
     def _run_before_task(self) -> None:
         self._switch_to_current_progress_bar()
@@ -351,7 +341,7 @@ class ProcessModel(ModelWithUser):
 
         self.save()
 
-    async def _run_after_task(self):
+    def _run_after_task(self):
         self.mark_as_success()
 
         # Set the data outputs dict
@@ -363,7 +353,7 @@ class ProcessModel(ModelWithUser):
         if not self.outputs.is_ready:
             return
 
-        await self._run_next_processes()
+        self._run_next_processes()
 
     def check_user_privilege(self, user: User) -> None:
         """Throw an exception if the user cand execute the protocol
@@ -411,6 +401,15 @@ class ProcessModel(ModelWithUser):
 
         return self.instance_name
 
+    def get_name(self) -> str:
+        """Return the name of the process
+        """
+        process_typing: Typing = self.get_process_typing()
+        if process_typing:
+            return process_typing.human_name
+
+        return self.instance_name
+
     def get_process_type(self) -> Type[Process]:
         return TypingManager.get_type_from_name(self.process_typing_name)
 
@@ -421,6 +420,22 @@ class ProcessModel(ModelWithUser):
         """return true if the process is of type Source
         """
         return self.process_typing_name == Source._typing_name
+
+    def get_last_message(self) -> Optional[ProgressBarMessage]:
+        """Return the last message of the process
+        """
+        if self.progress_bar is None:
+            return None
+
+        return self.progress_bar.get_last_message()
+
+    def get_progress_value(self) -> float:
+        """Return the last message of the process
+        """
+        if self.progress_bar is None:
+            return 0
+
+        return self.progress_bar.current_value
 
     ########################### JSON #################################
 
@@ -457,8 +472,7 @@ class ProcessModel(ModelWithUser):
 
         _json["config"] = self.config.to_json(
             deep=deep, **kwargs)
-        _json["progress_bar"] = self.progress_bar.to_json(
-            deep=deep, **kwargs)
+        _json["progress_bar"] = self.progress_bar.to_json(deep=False)
 
         _json["inputs"] = self.inputs.to_json()
         _json["outputs"] = self.outputs.to_json()
@@ -570,3 +584,13 @@ class ProcessModel(ModelWithUser):
         self.error_info = error_info
         self.ended_at = DateHelper.now_utc()
         self.save()
+
+    def mark_as_error_and_parent(self, error_info: ProcessErrorInfo):
+        self.progress_bar.stop_error(error_info["detail"])
+        self.status = ProcessStatus.ERROR
+        self.error_info = error_info
+        self.ended_at = DateHelper.now_utc()
+        self.save()
+
+        if self.parent_protocol and not self.parent_protocol.is_error:
+            self.parent_protocol.mark_as_error_and_parent(error_info)

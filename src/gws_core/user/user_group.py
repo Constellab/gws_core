@@ -41,10 +41,6 @@ class UserGroup(Enum):
         }
         return switcher.get(user_group)
 
-    @classmethod
-    def from_string(cls, user_group: str, default_value: 'UserGroup' = None) -> 'UserGroup':
-        return cls._value2member_map_.get(user_group, default_value)
-
     def __lt__(self, other: 'UserGroup') -> bool:
         return UserGroup.get_value(self) < UserGroup.get_value(other)
 

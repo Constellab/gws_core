@@ -4,12 +4,15 @@
 # About us: https://gencovery.com
 
 from cmath import inf
+from re import sub
 from typing import Any, List
 
-from gws_core.core.utils.numeric_helper import NumericHelper
-from gws_core.core.utils.utils import Utils
 from numpy import NaN, inf
-from pandas import DataFrame, Series
+from pandas import DataFrame
+
+from gws_core.core.utils.numeric_helper import NumericHelper
+from gws_core.core.utils.string_helper import StringHelper
+from gws_core.core.utils.utils import Utils
 
 
 class DataframeHelper:
@@ -35,7 +38,7 @@ class DataframeHelper:
 
         for delimiter in DataframeHelper.CSV_DELIMITERS:
             count: int = sub_csv.count(delimiter)
-            if(count > max_delimiter_count):
+            if (count > max_delimiter_count):
                 max_delimiter = delimiter
                 max_delimiter_count = count
 
@@ -54,7 +57,7 @@ class DataframeHelper:
 
     @staticmethod
     def dataframe_to_float(dataframe: DataFrame) -> DataFrame:
-        """Convert all element of a dataframe to float, if element is not convertible, is sets Nan
+        """Convert all element of a dataframe to float, if element is not convertible, is sets NaN
         """
         return dataframe.applymap(lambda x: NumericHelper.to_float(x, NaN),  na_action='ignore')
 
@@ -68,16 +71,14 @@ class DataframeHelper:
         return cls.replace_inf(data, value)
 
     @classmethod
-    def nanify_none_numeric(cls, data: DataFrame) -> DataFrame:
+    def nanify_none_number(cls, data: DataFrame) -> DataFrame:
         """ Convert all not numeric element to NaN"""
-        return data.applymap(lambda x: x if isinstance(x, (float, int)) else NaN,
-                             na_action='ignore')
+        return data.applymap(lambda x: x if isinstance(x, (float, int)) else NaN)
 
     @classmethod
     def nanify_none_str(cls, data: DataFrame) -> DataFrame:
         """ Convert all not string element to NaN"""
-        return data.applymap(lambda x: x if isinstance(x, str) else NaN,
-                             na_action='ignore')
+        return data.applymap(lambda x: x if isinstance(x, str) else NaN)
 
     @classmethod
     def contains(cls, data: DataFrame, value: Any) -> DataFrame:
@@ -115,6 +116,15 @@ class DataframeHelper:
         return data.astype(str)
 
     @classmethod
+    def rename_duplicate_column_and_row_names(cls, data: DataFrame) -> DataFrame:
+        """
+        Rename duplicate columns and rows name by addind _1 ,_2 ... at the end of the name
+        """
+        data = cls.rename_duplicate_column_names(data)
+        data = cls.rename_duplicate_row_names(data)
+        return data
+
+    @classmethod
     def rename_duplicate_column_names(cls, data: DataFrame) -> DataFrame:
         """
         Rename duplicate columns name by addind _1 ,_2 ... at the end of the name
@@ -131,3 +141,47 @@ class DataframeHelper:
         renamed_rows = Utils.rename_duplicate_in_str_list(data.index.to_list())
         data.index = renamed_rows
         return data
+
+    @classmethod
+    def format_column_and_row_names(cls, data: DataFrame, strict: bool = False) -> DataFrame:
+        """
+        Format the columns and row names and remove duplicate names
+        """
+        data.columns = cls.format_header_names(data.columns, strict)
+        data.index = cls.format_header_names(data.index, strict)
+        return cls.rename_duplicate_column_and_row_names(data)
+
+    @classmethod
+    def format_header_names(cls, names: List[Any], strict: bool = False) -> List[str]:
+        """Format the names of a row or a column with the following rules:
+          - convert to string
+
+          If strict is True, the following rules are applied:
+          - replace ' ', '-', '.' with underscores
+          - remove all other special characters
+          - remove all accents
+        """
+
+        return [cls.format_header_name(name, strict) for name in names]
+
+    @classmethod
+    def format_header_name(cls, name: str, strict: bool = False) -> str:
+        """Format the names of a row or a column with the following rules:
+          - convert to string
+
+          If strict is True, the following rules are applied:
+          - replace ' ', '-', '.' with underscores
+          - remove all other special characters
+          - remove all accents
+        """
+        if name is None:
+            return ''
+
+        str_name = str(name)
+
+        if strict:
+            # with regex replace all spaces, dashes and dots with underscores
+            str_name = sub(r'[\s.-]+', '_', str_name)
+            str_name = StringHelper.replace_accent_with_letter(str_name)
+            str_name = sub('[^A-Za-z0-9_]+', '', str_name)
+        return str_name

@@ -10,11 +10,10 @@ from .task_model import TaskModel
 
 class ITask(IProcess):
 
-    _task_model: TaskModel
+    _process_model: TaskModel
 
     def __init__(self, task_model: TaskModel) -> None:
         super().__init__(process_model=task_model)
-        self._task_model = task_model
 
     ############################################### CLASS METHODS ####################################
 

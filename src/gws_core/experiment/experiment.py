@@ -5,13 +5,14 @@
 
 from __future__ import annotations
 
-from enum import Enum
-from typing import TYPE_CHECKING, List, TypedDict, final
+from typing import TYPE_CHECKING, List, final
+
+from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.user.current_user_service import CurrentUserService
-from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -19,7 +20,6 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
-from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
 from ..project.project import Project
 from ..resource.resource_model import ResourceModel
@@ -32,13 +32,6 @@ from .experiment_exception import ResourceUsedInAnotherExperimentException
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
     from ..task.task_model import TaskModel
-
-
-class ExperimentErrorInfo(TypedDict):
-    detail: str
-    unique_code: str
-    context: str
-    instance_id: str
 
 
 @final
@@ -63,7 +56,7 @@ class Experiment(ModelWithUser, TaggableModel):
     score = DoubleField(null=True)
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
-    error_info: ExperimentErrorInfo = JSONField(null=True)
+    error_info: ProcessErrorInfo = JSONField(null=True)
     type: ExperimentType = EnumField(choices=ExperimentType,
                                      default=ExperimentType.EXPERIMENT)
 
@@ -75,7 +68,7 @@ class Experiment(ModelWithUser, TaggableModel):
     validated_at = DateTimeUTC(null=True)
     validated_by = ForeignKeyField(User, null=True, backref='+')
 
-    # Date of the last synchronisation with central, null if never synchronised
+    # Date of the last synchronisation with space, null if never synchronised
     last_sync_at = DateTimeUTC(null=True)
     last_sync_by = ForeignKeyField(User, null=True, backref='+')
 
@@ -85,22 +78,14 @@ class Experiment(ModelWithUser, TaggableModel):
     _protocol: ProtocolModel = None
 
     @property
-    def is_pid_alive(self) -> bool:
-        if not self.pid:
-            raise BadRequestException("No such process found")
-
-        try:
-            sproc = SysProc.from_pid(self.pid)
-            return sproc.is_alive()
-        except Exception as err:
-            raise BadRequestException(
-                f"No such process found or its access is denied (pid = {self.pid})") from err
-
-    @property
     def pid(self) -> int:
         if "pid" not in self.data:
-            return 0
+            return None
         return self.data["pid"]
+
+    @pid.setter
+    def pid(self, value: int):
+        self.data["pid"] = value
 
     @property
     def protocol_model(self) -> ProtocolModel:
@@ -148,6 +133,12 @@ class Experiment(ModelWithUser, TaggableModel):
 
     def check_user_privilege(self, user: User) -> None:
         return self.protocol_model.check_user_privilege(user)
+
+    def get_running_tasks(self) -> List[TaskModel]:
+        from ..task.task_model import TaskModel
+        return list(TaskModel.select().where(
+            (TaskModel.experiment == self) &
+            (TaskModel.status == ExperimentStatus.RUNNING)))
 
     ########################################## MODEL METHODS ######################################
 
@@ -329,29 +320,30 @@ class Experiment(ModelWithUser, TaggableModel):
         :type pid: int
         """
         self.status = ExperimentStatus.WAITING_FOR_CLI_PROCESS
-        self.data["pid"] = pid
+        self.pid = pid
         self.save()
 
-    def mark_as_started(self):
+    def mark_as_started(self, pid: int):
         self.status = ExperimentStatus.RUNNING
         self.lab_config = LabConfigModel.get_current_config()
+        self.pid = pid
         self.save()
 
     def mark_as_success(self):
-        self.data["pid"] = 0
+        self.pid = None
         self.status = ExperimentStatus.SUCCESS
         self.save()
 
     def mark_as_draft(self):
-        self.data["pid"] = 0
+        self.pid = None
         self.score = None
         self.status = ExperimentStatus.DRAFT
         self.save()
 
-    def mark_as_error(self, error_info: ExperimentErrorInfo) -> None:
+    def mark_as_error(self, error_info: ProcessErrorInfo) -> None:
         if self.is_error:
             return
-        self.data["pid"] = 0
+        self.pid = None
         self.status = ExperimentStatus.ERROR
         self.error_info = error_info
         Logger.error(error_info)
@@ -416,6 +408,7 @@ class Experiment(ModelWithUser, TaggableModel):
         if self.project:
             _json["project"] = {
                 'id': self.project.id,
+                'code': self.project.code,
                 'title': self.project.title
             }
 

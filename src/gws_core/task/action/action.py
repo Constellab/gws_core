@@ -5,7 +5,9 @@
 
 
 from abc import abstractmethod
-from typing import Type, TypedDict, final
+from typing import Type, final
+
+from typing_extensions import TypedDict
 
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.model.base import Base

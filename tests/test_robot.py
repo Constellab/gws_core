@@ -2,7 +2,7 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from unittest.async_case import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core import TaskRunner
 from gws_core.impl.robot.robot_resource import \
@@ -11,9 +11,9 @@ from gws_core.impl.robot.robot_tasks import \
     RobotMove  # local import of the task
 
 
-class TestRobotMove(IsolatedAsyncioTestCase):
+class TestRobotMove(TestCase):
 
-    async def test_robot_move(self):
+    def test_robot_move(self):
 
         # create an empty robot
         robot_output = Robot.empty()
@@ -24,7 +24,7 @@ class TestRobotMove(IsolatedAsyncioTestCase):
             params={'moving_step': 3, 'direction': 'south'},
             inputs={'robot': robot_output},
         )
-        outputs = await runner.run()
+        outputs = runner.run()
 
         # retrieve the robot output
         robot_output: Robot = outputs['robot']

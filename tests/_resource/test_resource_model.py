@@ -33,11 +33,11 @@ class ForSearchCreate(Task):
     output_specs = {'search': OutputSpec(ForSearch)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'search': ForSearch.create('empty')}
 
 
-@resource_decorator(unique_name="SubFile")
+@ resource_decorator(unique_name="SubFile")
 class SubFile(File):
     pass
 
@@ -54,7 +54,7 @@ class TestResourceModel(BaseTestCase):
         otherTag = Tag('other', 'super')
         self._create_resource_with_tag(
             'this is information about a great banana', {'name': 'test'},
-            ResourceOrigin.GENERATED, task._task_model)
+            ResourceOrigin.GENERATED, task._process_model)
         self._create_resource_with_tag('the weather is not so great today',
                                        {'name': 'test', 'other': 'super'}, ResourceOrigin.UPLOADED)
 
@@ -87,7 +87,7 @@ class TestResourceModel(BaseTestCase):
         self.search(search_dict, 1)
 
         # Search on Task
-        search_dict.filtersCriteria = [{"key": "task_model", "operator": "EQ", "value": task._task_model.id}]
+        search_dict.filtersCriteria = [{"key": "task_model", "operator": "EQ", "value": task._process_model.id}]
         self.search(search_dict, 1)
 
         # Search on Data with full text

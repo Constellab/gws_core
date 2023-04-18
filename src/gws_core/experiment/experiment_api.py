@@ -5,6 +5,7 @@
 from typing import Dict, List, Optional
 
 from fastapi import Depends
+from pydantic import BaseModel
 
 from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.search_builder import SearchParams
@@ -16,7 +17,6 @@ from ..experiment.experiment_run_service import ExperimentRunService
 from ..tag.tag import Tag
 from ..tag.tag_service import TagService
 from ..user.auth_service import AuthService
-from ..user.user_dto import UserData
 from .experiment_dto import ExperimentDTO
 from .experiment_service import ExperimentService
 from .queue_service import QueueService
@@ -26,17 +26,17 @@ from .queue_service import QueueService
 @core_app.get("/experiment/running", tags=["Experiment"],
               summary="Get the list of running experiments")
 def get_the_list_of_running_experiments(
-        _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+        _=Depends(AuthService.check_user_access_token)) -> list:
     """
     Retrieve a list of running experiments.
     """
 
-    return ListJsonable(ExperimentService.get_running_experiments()).to_json()
+    return ExperimentService.get_running_experiments()
 
 
 @core_app.get("/experiment/{id}", tags=["Experiment"], summary="Get an experiment")
 def get_an_experiment(id: str,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                      _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve an experiment
 
@@ -49,7 +49,7 @@ def get_an_experiment(id: str,
 @core_app.get("/experiment", tags=["Experiment"], summary="Get the list of experiments")
 def get_the_list_of_experiments(page: Optional[int] = 1,
                                 number_of_items_per_page: Optional[int] = 20,
-                                _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+                                _=Depends(AuthService.check_user_access_token)) -> PaginatorDict:
     """
     Retrieve a list of experiments. The list is paginated.
 
@@ -67,7 +67,7 @@ def get_the_list_of_experiments(page: Optional[int] = 1,
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+                    _=Depends(AuthService.check_user_access_token)) -> Dict:
     """
     Advanced search on experiment
     """
@@ -79,7 +79,7 @@ def advanced_search(search_dict: SearchParams,
 def get_by_input_resource(resource_id: str,
                           page: Optional[int] = 1,
                           number_of_items_per_page: Optional[int] = 20,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+                          _=Depends(AuthService.check_user_access_token)) -> PaginatorDict:
     """
     Retrieve a list of experiments by the input resource
     """
@@ -95,7 +95,7 @@ def get_by_input_resource(resource_id: str,
 
 @core_app.post("/experiment", tags=["Experiment"], summary="Create an experiment")
 def create_an_experiment(experiment: ExperimentDTO,
-                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                         _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Create an experiment.
     """
@@ -109,7 +109,7 @@ def create_an_experiment(experiment: ExperimentDTO,
 @core_app.put("/experiment/{id}/validate/{project_id}", tags=["Experiment"], summary="Validate an experiment")
 def validate_an_experiment(id: str,
                            project_id: str = None,
-                           _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                           _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Validate a protocol
 
@@ -119,23 +119,10 @@ def validate_an_experiment(id: str,
     return ExperimentService.validate_experiment_by_id(id=id, project_id=project_id).to_json(deep=True)
 
 
-@core_app.put("/experiment/{id}/protocol", tags=["Experiment"], summary="Update an experiment's protocol")
-def update_experiment_protocol(id: str,
-                               protocol_graph: Dict,
-                               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    """
-    Update an experiment
-
-    - **protocol_graph**: the new protocol graph
-    """
-
-    return ExperimentService.update_experiment_protocol(id, protocol_graph).to_json(deep=True)
-
-
 @core_app.put("/experiment/{id}", tags=["Experiment"], summary="Update an experiment")
 def update_experiment(id: str,
                       experiment: ExperimentDTO,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                      _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Update an experiment
 
@@ -147,10 +134,28 @@ def update_experiment(id: str,
     return ExperimentService.update_experiment(id, experiment).to_json(deep=True)
 
 
+class UpdateProject(BaseModel):
+    project_id: Optional[str]
+
+
+@core_app.put("/experiment/{id}/project", tags=["Experiment"], summary="Update the project of an experiment")
+def update_experiment_project(id: str,
+                              project: UpdateProject,
+                              _=Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Update the project of an experiment
+
+    - **id**: the id of the experiment
+    - **project_id**: the id of the project
+    """
+
+    return ExperimentService.update_experiment_project(id, project.project_id).to_json(deep=True)
+
+
 @core_app.put("/experiment/{id}/description", tags=["Experiment"], summary="Update an experiment's description")
 def update_experiment_description(id: str,
                                   description: Dict,
-                                  _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                                  _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Update an experiment's description
     """
@@ -160,22 +165,22 @@ def update_experiment_description(id: str,
 
 @core_app.put("/experiment/{id}/reset", tags=["Experiment"], summary="Reset an experiment")
 def reset_an_experiment(id: str,
-                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                        _=Depends(AuthService.check_user_access_token)) -> dict:
     return ExperimentService.reset_experiment(id).to_json(deep=True)
 
 
-@core_app.put("/experiment/{id}/sync-with-central", tags=["Experiment"],
-              summary="Synchronise the experiment with the central")
-def sync_with_central(id: str,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    return ExperimentService.synchronize_with_central_by_id(id).to_json(deep=True)
+@core_app.put("/experiment/{id}/sync-with-space", tags=["Experiment"],
+              summary="Synchronise the experiment with the space")
+def sync_with_space(id: str,
+                    _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ExperimentService.synchronize_with_space_by_id(id).to_json(deep=True)
 
 ###################################### RUN ################################
 
 
 @core_app.post("/experiment/{id}/start", tags=["Experiment"], summary="Start an experiment")
 def start_an_experiment(id: str,
-                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                        _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Start an experiment
 
@@ -187,7 +192,7 @@ def start_an_experiment(id: str,
 
 @core_app.post("/experiment/{id}/stop", tags=["Experiment"], summary="Stop an experiment")
 def stop_an_experiment(id: str,
-                       _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                       _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Stop an experiment
 
@@ -200,15 +205,15 @@ def stop_an_experiment(id: str,
 @core_app.put("/experiment/{id}/tags", tags=["Experiment"], summary="Update experiment tags")
 def save_tags(id: str,
               tags: List[Tag],
-              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    return TagService.save_tags_to_entity(Experiment, id, tags)
+              _=Depends(AuthService.check_user_access_token)) -> list:
+    return ListJsonable(TagService.save_tags_to_entity(Experiment, id, tags)).to_json()
 
 
 ################################### COPY ##############################
 
 @core_app.put("/experiment/{id}/clone", tags=["Experiment"], summary="Clone an experiment")
 def clone_experiment(id: str,
-                     _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                     _=Depends(AuthService.check_user_access_token)) -> dict:
     return ExperimentService.clone_experiment(id).to_json()
 
 ################################### DELETE ##############################
@@ -216,5 +221,5 @@ def clone_experiment(id: str,
 
 @core_app.delete("/experiment/{id}", tags=["Experiment"], summary="Delete an experiment")
 def delete_experiment(id: str,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                      _=Depends(AuthService.check_user_access_token)) -> None:
     return ExperimentService.delete_experiment(id)

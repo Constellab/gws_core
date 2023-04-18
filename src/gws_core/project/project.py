@@ -7,10 +7,10 @@ from typing import List
 
 from peewee import CharField, ForeignKeyField, ModelSelect
 
-from ..core.model.model_with_user import ModelWithUser
+from gws_core.core.model.model import Model
 
 
-class Project(ModelWithUser):
+class Project(Model):
     """
     Project class.
     """
@@ -55,3 +55,9 @@ class Project(ModelWithUser):
             children += child.get_hierarchy_as_list()
 
         return children
+
+    def _before_insert(self) -> None:
+        pass
+
+    def _before_update(self) -> None:
+        pass

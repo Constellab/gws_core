@@ -23,11 +23,11 @@ from gws_core.protocol.protocol_exception import ProtocolBuildException
 class ErrorTask(Task):
     input_specs: InputSpecs = {'robot': InputSpec(Robot)}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         raise Exception("This is the error task")
 
 
-@protocol_decorator("TestSubErrorProtocol", human_name='TestSurbErrorProtocol')
+@ protocol_decorator("TestSubErrorProtocol", human_name='TestSurbErrorProtocol')
 class TestSubErrorProtocol(Protocol):
     def configure_protocol(self) -> None:
         create: ProcessSpec = self.add_process(RobotCreate, 'create')
@@ -36,7 +36,7 @@ class TestSubErrorProtocol(Protocol):
         self.add_connector(create >> 'robot', error << 'robot')
 
 
-@protocol_decorator("TestErrorProtocol")
+@ protocol_decorator("TestErrorProtocol")
 class TestErrorProtocol(Protocol):
     def configure_protocol(self) -> None:
         self.add_process(TestSubErrorProtocol, 'sub_proto')
@@ -44,16 +44,16 @@ class TestErrorProtocol(Protocol):
 ############## Before task error ###################
 
 
-@task_decorator("CheckBeforeTaskError")
+@ task_decorator("CheckBeforeTaskError")
 class CheckBeforeTaskError(Task):
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         return {"result": False, "message": "We can't run this task"}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         pass
 
 
-@protocol_decorator("CheckBeforeTaskErrorProtocol")
+@ protocol_decorator("CheckBeforeTaskErrorProtocol")
 class CheckBeforeTaskErrorProtocol(Protocol):
     def configure_protocol(self) -> None:
         self.add_process(CheckBeforeTaskError, 'error')
@@ -61,22 +61,22 @@ class CheckBeforeTaskErrorProtocol(Protocol):
 #################### Error on protocol build ###########################
 
 
-@resource_decorator("NotRobot")
+@ resource_decorator("NotRobot")
 class NotRobot(Resource):
     pass
 
 
-@task_decorator("NotRobotCreate")
+@ task_decorator("NotRobotCreate")
 class NotRobotCreate(Task):
     input_specs = {}
     output_specs = {'not_robot': OutputSpec(NotRobot)}
     config_specs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'not_robot': NotRobot()}
 
 
-@protocol_decorator("TestSubProtocolBuildError")
+@ protocol_decorator("TestSubProtocolBuildError")
 class TestSubProtocolBuildError(Protocol):
     def configure_protocol(self) -> None:
         not_robot: ProcessSpec = self.add_process(NotRobotCreate, 'not_robot')
@@ -87,7 +87,7 @@ class TestSubProtocolBuildError(Protocol):
         ])
 
 
-@protocol_decorator("TestNestedProtocol")
+@ protocol_decorator("TestNestedProtocol")
 class TestProtocolBuildError(Protocol):
     def configure_protocol(self) -> None:
         self.add_process(TestSubProtocolBuildError, 'sub_proto')
@@ -95,7 +95,7 @@ class TestProtocolBuildError(Protocol):
 
 class TestProtocolError(BaseTestCase):
 
-    async def test_error_on_task(self):
+    def test_error_on_task(self):
         """Test an experiment with a task that throws an exception """
 
         protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestErrorProtocol)
@@ -105,7 +105,7 @@ class TestProtocolError(BaseTestCase):
         # check that the experiment end up in error and get exception
         exception: ExperimentRunException
         try:
-            await ExperimentRunService.run_experiment(experiment=experiment)
+            ExperimentRunService.run_experiment(experiment=experiment)
         except ExperimentRunException as err:
             exception = err
         else:
@@ -144,7 +144,7 @@ class TestProtocolError(BaseTestCase):
         self.assertEqual(error_process.error_info['instance_id'], exception.instance_id)
         self.assertEqual(error_process.error_info['unique_code'], exception.unique_code)
 
-    async def test_error_on_before_check(self):
+    def test_error_on_before_check(self):
         protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(CheckBeforeTaskErrorProtocol)
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
@@ -152,7 +152,7 @@ class TestProtocolError(BaseTestCase):
         # check that the experiment end up in error and get exception
         exception: ExperimentRunException
         try:
-            await ExperimentRunService.run_experiment(experiment=experiment)
+            ExperimentRunService.run_experiment(experiment=experiment)
         except ExperimentRunException as err:
             exception = err
         else:

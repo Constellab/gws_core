@@ -67,7 +67,7 @@ class TableColumnDataNumericFilter(Transformer):
         ),
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
         for numeric_params in params.get("numeric_filter"):
@@ -114,7 +114,7 @@ class TableRowDataNumericFilter(Transformer):
         ),
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
         for numeric_params in params.get("numeric_filter"):

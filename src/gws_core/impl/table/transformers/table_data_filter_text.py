@@ -67,7 +67,7 @@ If you need to apply filters on text values, you can use the ```Table column dat
         ),
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
         for text_params in params.get("text_filter"):
@@ -116,7 +116,7 @@ class TableRowDataTextFilter(Transformer):
                                      short_description="If true convert all the value (including numeric) to text. Otherwise none text value are ignored.")
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
         if params.get("stringify_table"):

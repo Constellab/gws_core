@@ -21,7 +21,7 @@ class TechnicalDocService():
         """Method to return the technical doc information about a brick to upload it on the hub
         """
 
-        brick_info = BrickHelper.get_brick_info(brick_name)
+        brick_info = BrickHelper.get_brick_info_and_check(brick_name)
 
         return {
             "json_version": 1,

@@ -87,5 +87,5 @@ class TableFilter(Task):
         ),
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         raise Exception("This task is deprecated. Please use TableDataFilter or TableAggregatorFilter instead")

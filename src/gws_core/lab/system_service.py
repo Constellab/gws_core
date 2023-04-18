@@ -7,10 +7,10 @@ import os
 import sys
 from threading import Thread
 
-from gws_core.central.central_service import CentralService
 from gws_core.core.db.db_migration import DbMigrationService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
@@ -19,9 +19,11 @@ from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor_service import MonitorService
+from gws_core.project.project_service import ProjectService
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.user.user_dto import SpaceCentral
+from gws_core.space.space_service import SpaceService
+from gws_core.user.user_dto import Space
 
 from ..brick.brick_service import BrickService
 from ..core.exception.exceptions.unauthorized_exception import \
@@ -60,10 +62,15 @@ class SystemService:
         LabConfigModel.save_current_config()
 
         # Init data folder
+        cls.init_data_folder()
+
+    @classmethod
+    def init_data_folder(cls):
         settings = Settings.get_instance()
         FileHelper.create_dir_if_not_exist(settings.get_data_dir())
         FileHelper.create_dir_if_not_exist(settings.get_kv_store_base_dir())
         FileHelper.create_dir_if_not_exist(settings.get_file_store_dir())
+        FileHelper.create_dir_if_not_exist(settings.get_brick_data_main_dir())
 
     @classmethod
     def init_queue_and_monitor(cls) -> None:
@@ -102,7 +109,8 @@ class SystemService:
         settings: Settings = Settings.get_instance()
 
         if settings.is_prod:
-            raise Exception('Cannot delete the temp folder in prod environment')
+            raise Exception(
+                'Cannot delete the temp folder in prod environment')
         FileHelper.delete_dir(settings.get_root_temp_dir())
 
     @classmethod
@@ -110,7 +118,8 @@ class SystemService:
         settings: Settings = Settings.get_instance()
 
         if not settings.is_dev:
-            raise UnauthorizedException('The reset method can only be called in dev environment')
+            raise UnauthorizedException(
+                'The reset method can only be called in dev environment')
 
         if check_user:
             user: User = CurrentUserService.get_and_check_current_user()
@@ -128,34 +137,44 @@ class SystemService:
         cls.init_queue_and_monitor()
 
         if check_user:
-            UserService.create_user_if_not_exists(user.to_user_data_dict())
+            UserService.create_or_update_user(user.to_user_data_dict())
 
     @classmethod
     def kill_process(cls) -> None:
         settings: Settings = Settings.get_instance()
 
         if not settings.is_dev:
-            raise UnauthorizedException('The kill method can only be called in dev environment')
+            raise UnauthorizedException(
+                'The kill method can only be called in dev environment')
 
-        sys.exit()
+        # kill current process and all its children
+        sys_proc = SysProc.from_pid(os.getpid())
+        sys_proc.kill_with_children()
 
     @classmethod
     def register_lab_start(cls) -> None:
-        """Method to call central after start to mark the lab as started in central
+        """Method to call space after start to mark the lab as started in space
         """
         settings: Settings = Settings.get_instance()
 
         if settings.is_dev:
             return
 
-        Logger.info('Registering lab start on central')
+        try:
+            Logger.info('Registering lab start on space')
 
-        result = CentralService.register_lab_start(LabConfigModel.get_current_config().to_json())
+            result = SpaceService.register_lab_start(
+                LabConfigModel.get_current_config().to_json())
 
-        if result:
-            Logger.info('Lab start successfully registered on central')
-        else:
-            Logger.error('Error during lab start registration with central')
+            if result:
+                Logger.info('Lab start successfully registered on space')
+            else:
+                Logger.error('Error during lab start registration with space')
+
+            cls.synchronize_with_space()
+        except Exception as err:
+            Logger.error(f"Error during lab start : {err}")
+            Logger.log_exception_stack_trace(err)
 
     @classmethod
     def get_lab_info(cls) -> dict:
@@ -168,27 +187,27 @@ class SystemService:
         }
 
     @classmethod
-    def save_space_async(cls, space_central: SpaceCentral) -> None:
-        thread = Thread(target=cls._save_space, args=[space_central])
+    def save_space_async(cls, space: Space) -> None:
+        thread = Thread(target=cls._save_space, args=[space])
         thread.start()
 
     @classmethod
-    def _save_space(cls, space_central: SpaceCentral) -> None:
+    def _save_space(cls, space: Space) -> None:
         try:
 
             settings = Settings.get_instance()
-            space = settings.get_space()
+            db_space_dict = settings.get_space()
 
             # if no space were saved or one of its value was changed
             # update the space
-            if space is None or space['id'] != space_central.id or \
-                    space['name'] != space_central.name or space['domain'] != space_central.domain or \
-                    space['photo'] != space_central.photo:
+            if db_space_dict is None or db_space_dict['id'] != space.id or \
+                    db_space_dict['name'] != space.name or db_space_dict['domain'] != space.domain or \
+                    db_space_dict['photo'] != space.photo:
                 settings.set_space({
-                    "id": space_central.id,
-                    'name': space_central.name,
-                    'domain': space_central.domain,
-                    'photo': space_central.photo,
+                    "id": space.id,
+                    'name': space.name,
+                    'domain': space.domain,
+                    'photo': space.photo,
                 })
                 settings.save()
 
@@ -200,32 +219,48 @@ class SystemService:
     @classmethod
     def garbage_collector(cls) -> None:
         if len(ExperimentRunService.get_all_running_experiments()) > 0:
-            raise BadRequestException('Cannot run the lab cleaning while there are running or waiting experiments')
+            raise BadRequestException(
+                'Cannot run the lab cleaning while there are running or waiting experiments')
 
         Logger.info('Starting the garbage collector')
         Logger.info('Deleting all the temp files')
-        FileHelper.delete_dir_content(Settings.get_instance().get_root_temp_dir())
+
+        temp_root_dir = Settings.get_instance().get_root_temp_dir()
+        if FileHelper.exists_on_os(temp_root_dir):
+            FileHelper.delete_dir_content(temp_root_dir)
 
         Logger.info('Deleting all usunused resource kv stores')
         kv_store_dir = KVStore.get_base_dir()
         # loop through all the kv store files and folder
 
-        for file in os.listdir(kv_store_dir):
-            file_store_file_path = KVStore.get_full_file_path(file, with_extension=False)
-            # if a path has the name of a resource id of the path is store in one of the resource
-            # the path is used by a resource
+        for file_name in os.listdir(kv_store_dir):
+            file_store_file_path = KVStore.get_full_file_path(
+                file_name, with_extension=False)
+            # if filename correspond to a ressource, don't delete it
+            # check if filename is the resource id or is contained in the kv store path
+            # (use contains for security to avoid deleting everything)
             if ResourceModel.get_or_none(
-                    ResourceModel.kv_store_path == file_store_file_path or ResourceModel.id == file) is None:
-                file_path = os.path.join(kv_store_dir, file)
+                (ResourceModel.kv_store_path.contains(file_name)) |
+                    (ResourceModel.id == file_name)) is None:
+                file_path = os.path.join(kv_store_dir, file_name)
                 Logger.info(f'Deleting KVStore {file_path}')
                 FileHelper.delete_node(file_path)
 
         Logger.info('Deleting all usunused resource files')
         file_store: LocalFileStore = FileStore.get_default_instance()
-        for file in os.listdir(file_store.path):
-            file_store_file_path = os.path.join(file_store.path, file)
+        for file_name in os.listdir(file_store.path):
+            file_store_file_path = os.path.join(file_store.path, file_name)
             if FSNodeModel.get_or_none(FSNodeModel.path == file_store_file_path) is None:
                 Logger.info(f'Deleting file {file_store_file_path}')
                 FileHelper.delete_node(file_store_file_path)
 
         Logger.info('Ending the garbage collector')
+
+    @classmethod
+    def synchronize_with_space(cls, sync_users: bool = True, sync_projects: bool = True) -> None:
+        if sync_users:
+            UserService.synchronize_all_space_users()
+
+        if sync_projects:
+            ProjectService.synchronize_all_space_projects()
+        Logger.info('Synchronization with space done')

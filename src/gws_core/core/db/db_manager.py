@@ -58,6 +58,11 @@ class AbstractDbManager:
         pass
 
     @classmethod
+    @abstractmethod
+    def get_brick_name(cls) -> str:
+        pass
+
+    @classmethod
     def init(cls, mode: DbMode):
         """ Initialize the DbManager """
         cls.mode = mode

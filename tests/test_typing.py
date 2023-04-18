@@ -54,6 +54,7 @@ class SubFileTransformer(Transformer):
     pass
 
 
+# test_typing
 class TestTyping(BaseTestCase):
 
     def test_process_type(self):
@@ -71,7 +72,8 @@ class TestTyping(BaseTestCase):
         self.assertIsNotNone(eat_json['input_specs']['food'])
 
     def test_protocol_type(self):
-        world_travel: ProtocolTyping = ProtocolTyping.get_by_model_type(RobotTravelProto)
+        world_travel: ProtocolTyping = ProtocolTyping.get_by_model_type(
+            RobotTravelProto)
 
         self.assertEqual(world_travel.get_type(), RobotTravelProto)
 
@@ -93,29 +95,36 @@ class TestTyping(BaseTestCase):
         typings: List[Typing] = Typing.get_children_typings('RESOURCE', File)
 
         # Check that we found the File type
-        self.assertIsNotNone([x for x in typings if x.unique_name == 'File'][0])
+        self.assertIsNotNone(
+            [x for x in typings if x.unique_name == 'File'][0])
         # Check that we found the SubFile type
-        self.assertIsNotNone([x for x in typings if x.unique_name == 'SubFile'][0])
+        self.assertIsNotNone(
+            [x for x in typings if x.unique_name == 'SubFile'][0])
 
     def test_get_by_related_resource(self):
         """Test the get of task typing by related resource
         """
 
         # find task typings related to Table
-        typings: List[Typing] = TaskTyping.get_by_related_resource(SubFile, 'TRANSFORMER')
+        typings: List[Typing] = TaskTyping.get_by_related_resource(
+            SubFile, 'TRANSFORMER')
 
         # Check that we found the FileTransformer
-        self.assertEqual(len([x for x in typings if x.unique_name == 'FileTransformer']), 1)
+        self.assertEqual(
+            len([x for x in typings if x.unique_name == 'FileTransformer']), 1)
         # Check that we found the SubFileTransformer
-        self.assertEqual(len([x for x in typings if x.unique_name == 'SubFileTransformer']), 1)
+        self.assertEqual(
+            len([x for x in typings if x.unique_name == 'SubFileTransformer']), 1)
 
         # find task typings related to Table
         typings = TaskTyping.get_by_related_resource(File,  'TRANSFORMER')
 
         # Check that we found the FileTransformer
-        self.assertEqual(len([x for x in typings if x.unique_name == 'FileTransformer']), 1)
+        self.assertEqual(
+            len([x for x in typings if x.unique_name == 'FileTransformer']), 1)
         # Check that the SubFileTransformer is not present
-        self.assertEqual(len([x for x in typings if x.unique_name == 'SubFileTransformer']), 0)
+        self.assertEqual(
+            len([x for x in typings if x.unique_name == 'SubFileTransformer']), 0)
 
     def test_get_typing(self):
         typing: Typing = TypingService.get_typing(SubFile._typing_name)
@@ -131,32 +140,42 @@ class TestTyping(BaseTestCase):
         search_dict: SearchParams = SearchParams()
 
         # Search on name brick
-        search_dict.filtersCriteria = [{'key': 'brick', "operator": "EQ", "value": "gws_core"}]
+        search_dict.filtersCriteria = [
+            {'key': 'brick', "operator": "EQ", "value": "gws_core"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         self.assertTrue(paginator.page_info.number_of_items_per_page > 0)
         # Check that there is no Hide element
-        self.assertEqual(len([x for x in paginator.results if x.hide == True]), 0)
+        self.assertEqual(
+            len([x for x in paginator.results if x.hide == True]), 0)
 
-        # Search on full text
-        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "file"}]
+        # Search on text
+        search_dict.filtersCriteria = [
+            {'key': 'text', "operator": "CONTAINS", "value": "filetra"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         # Test that it found the FileTransformer
-        self.assertTrue(len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
+        self.assertTrue(
+            len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
-        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "possible is"}]
+        search_dict.filtersCriteria = [
+            {'key': 'text', "operator": "CONTAINS", "value": "possib"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         # Test that it found the FileTransformer
-        self.assertTrue(len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
+        self.assertTrue(
+            len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
-        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "FileTransformer"}]
+        search_dict.filtersCriteria = [
+            {'key': 'text', "operator": "CONTAINS", "value": "FileTransformer"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         # Test that it found the FileTransformer
-        self.assertTrue(len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
+        self.assertTrue(
+            len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
         # # Test search on related model
-        paginator: Paginator[Typing] = TypingService.search_transformers([SubFile._typing_name], SearchParams())
+        paginator: Paginator[Typing] = TypingService.search_transformers(
+            [SubFile._typing_name], SearchParams())
         # Test that it found the FileTransformer
-        self.assertTrue(len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
+        self.assertTrue(
+            len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
     def test_typing_search_with_deprecated(self):
         search_dict: SearchParams = SearchParams()

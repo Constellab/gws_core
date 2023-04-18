@@ -4,16 +4,18 @@
 # About us: https://gencovery.com
 
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
-from gws_core import Table
 from pandas import DataFrame
 
+from gws_core import Table
 
-class TestTableTransposer(IsolatedAsyncioTestCase):
+
+# test_table_transposer
+class TestTableTransposer(TestCase):
 
     def test(self):
-        initial_df = DataFrame({'A': range(1, 5), 'B': [10, 8, 6, 4]})
+        initial_df = DataFrame({'A': range(1, 5), 'B': [10, 0, 6, 4]}, index=['0', '1', '2', '3'])
 
         table = Table(data=initial_df)
         row_tags = [{'gender': 'M', 'age': '10'},

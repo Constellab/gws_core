@@ -204,7 +204,7 @@ class TestView(BaseTestCase):
         view_result_2 = ResourceService.call_view_from_view_config(view_config.id)
         self.assert_json(view_result['view'], view_result_2['view'])
 
-    async def test_viewer(self):
+    def test_viewer(self):
         """ Test that a view config is save when executing the view task
         """
         resource: Resource = ResourceViewTestSub()
@@ -220,7 +220,7 @@ class TestView(BaseTestCase):
             Viewer.resource_config_name: resource._typing_name, 'view_config': view_config})
 
         i_protocol.add_source('source', resource_model.id, viewer << Viewer.input_name)
-        await i_experiment.run()
+        i_experiment.run()
 
         # check that view config was saved
         view_configs: List[ViewConfig] = list(ViewConfig.get_by_resource(resource_model.id))

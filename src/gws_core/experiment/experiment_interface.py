@@ -4,6 +4,8 @@
 # About us: https://gencovery.com
 
 from inspect import isclass
+from multiprocessing import Process
+from time import sleep
 from typing import Type
 
 from ..experiment.experiment_run_service import ExperimentRunService
@@ -11,8 +13,8 @@ from ..project.project import Project
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_interface import IProtocol
 from .experiment import Experiment
-from .experiment_service import ExperimentService
 from .experiment_enums import ExperimentType
+from .experiment_service import ExperimentService
 
 
 class IExperiment:
@@ -62,10 +64,30 @@ class IExperiment:
         """
         return self._protocol
 
-    async def run(self) -> None:
-        """exceute the experiment, after that the resource should be generated and can be retrieve by process
+    def run(self) -> None:
+        """execute the experiment, after that the resource should be generated and can be retrieve by process
         """
-        await ExperimentRunService.run_experiment(experiment=self._experiment)
+
+        # run the experiment in a sub process so it can be stopped
+        process = Process(target=ExperimentRunService.run_experiment, args=(self._experiment,))
+        process.start()
+        process.join()
+
+        self._refresh()
+
+        if self._experiment.is_error:
+            raise Exception(self._experiment.error_info['detail'])
+
+        # when stop manually the experiment, wait a bit for the status to be updated
+        # because the experiment status is updated after the process is stopped
+        if process.exitcode is None:
+            sleep(2)
+            self._refresh()
+            if self._experiment.is_error:
+                raise Exception(self._experiment.error_info['detail'])
+
+        if process.exitcode != 0:
+            raise Exception(f"Error in during the execution of the experiment")
 
     def reset(self) -> None:
         """Reset the status and the resources of the experiment, its protocols and tasks
@@ -80,3 +102,10 @@ class IExperiment:
 
     def get_experiment_model(self) -> Experiment:
         return self._experiment
+
+    def is_running(self) -> bool:
+        return self._experiment.is_running
+
+    def _refresh(self) -> None:
+        self._experiment = self._experiment.refresh()
+        self._protocol.refresh()

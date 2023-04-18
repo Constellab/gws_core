@@ -46,7 +46,7 @@ class TestExperiment(BaseTestCase):
         experiment = ExperimentService.get_experiment_by_id(experiment.id)
         self.assert_json(experiment.description, {"test": "ok"})
 
-    async def test_run(self):
+    def test_run(self):
         self.assertEqual(Experiment.count_running_or_queued_experiments(), 0)
 
         # Create experiment 1
@@ -74,9 +74,9 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(Experiment.select().count(), 1)
 
         print("Run experiment_2 ...")
-        experiment2 = await ExperimentRunService.run_experiment(experiment=experiment2)
+        experiment2 = ExperimentRunService.run_experiment(experiment=experiment2)
 
-        #self.assertEqual(e2.processes.count(), 18)
+        # self.assertEqual(e2.processes.count(), 18)
         self.assertEqual(len(experiment2.task_models), 16)
         self.assertEqual(experiment2.status, ExperimentStatus.SUCCESS)
         # check that the lab config was saved in the experiment
@@ -86,7 +86,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(len(experiment1.resources), 15)
         self.assertEqual(len(experiment2.resources), 15)
         self.assertEqual(ResourceModel.get_by_experiment(experiment1.id).count(), 15)
-        self.assertEqual(experiment2.pid, 0)
+        self.assertIsNone(experiment2.pid)
 
         e2_bis: Experiment = ExperimentService.get_experiment_by_id(experiment1.id)
 
@@ -135,7 +135,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(Experiment.count_running_or_queued_experiments(), 0)
         experiment3 = Experiment.get_by_id_and_check(experiment3.id)
         self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
-        self.assertEqual(experiment3.pid, 0)
+        self.assertIsNone(experiment3.pid)
         self.assertEqual(experiment3.lab_config.id, LabConfigModel.id)
 
         Q = experiment3.resources
@@ -151,7 +151,7 @@ class TestExperiment(BaseTestCase):
                 self.assertEqual(r.is_archived, tf)
 
             processes: List[ProcessModel] = experiment3.task_models
-            #self.assertEqual( len(Q), 18)
+            # self.assertEqual( len(Q), 18)
             self.assertEqual(len(processes), 16)
             for process in processes:
                 self.assertEqual(process.is_archived, tf)
@@ -166,10 +166,10 @@ class TestExperiment(BaseTestCase):
         print("Archive experiment again...")
         _test_archive(True)
 
-    async def test_reset(self):
+    def test_reset(self):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
 
-        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
+        experiment = ExperimentRunService.run_experiment(experiment=experiment)
 
         experiment.reset()
 
@@ -202,11 +202,11 @@ class TestExperiment(BaseTestCase):
             for process in process_model.processes.values():
                 self._check_process_reset(process)
 
-    async def test_reset_error(self):
+    def test_reset_error(self):
         """ Test that we can't reset an experiment if one of its resource is used by another experiment
         """
         experiment: IExperiment = IExperiment(CreateSimpleRobot)
-        await experiment.run()
+        experiment.run()
 
         # Retrieve the robot
         resource = experiment.get_protocol().get_process('facto').get_output('robot')
@@ -214,16 +214,16 @@ class TestExperiment(BaseTestCase):
         # Create a new experiment that uses the previously generated robot
         experiment2: IExperiment = IExperiment(MoveSimpleRobot)
         experiment2.get_protocol().get_process('source').set_param('resource_id', resource._model_id)
-        await experiment2.run()
+        experiment2.run()
 
         with self.assertRaises(ResourceUsedInAnotherExperimentException):
             experiment.reset()
 
-    async def test_protocol_copy(self):
+    def test_protocol_copy(self):
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
 
-        await ExperimentRunService.run_experiment(experiment)
+        ExperimentRunService.run_experiment(experiment)
 
         protocol_count = ProtocolModel.select().count()
         task_model = TaskModel.select().count()
@@ -235,13 +235,13 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(TaskModel.select().count(), task_model * 2)
         self.assertEqual(ResourceModel.select().count(), resource_count)
 
-        await ExperimentRunService.run_experiment(experiment_copy)
+        ExperimentRunService.run_experiment(experiment_copy)
         self.assertEqual(ResourceModel.select().count(), resource_count * 2)
 
-    async def test_delete(self):
+    def test_delete(self):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
 
-        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
+        experiment = ExperimentRunService.run_experiment(experiment=experiment)
 
         experiment.delete_instance()
 
@@ -251,16 +251,16 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(ProtocolModel.select().count(), 0)
         self.assertEqual(TaskModel.select().count(), 0)
 
-    async def test_get_by_input_resource(self):
+    def test_get_by_input_resource(self):
 
         experiment = IExperiment()
         protocol = experiment.get_protocol()
         i_create = protocol.add_process(RobotCreate, 'create', {})
         sink = protocol.add_sink('sink', i_create >> 'robot')
-        await experiment.run()
+        experiment.run()
 
         # generate a resource
-        robot_model = sink.get_input_resource_model(Sink.input_name)
+        robot_model = sink.refresh().get_input_resource_model(Sink.input_name)
 
         # create an experiment that uses this resource
         experiment_2 = IExperiment()
@@ -269,7 +269,7 @@ class TestExperiment(BaseTestCase):
         i_move_2 = protocol_2.add_process(RobotMove, 'move2', {})
         protocol_2.add_source('source', robot_model.id, i_move << 'robot')
         protocol_2.add_source('source_2', robot_model.id, i_move_2 << 'robot')
-        await experiment_2.run()
+        experiment_2.run()
 
         # retrieve the experiments that uses this experiment
         paginator = ExperimentService.get_by_input_resource(robot_model.id)

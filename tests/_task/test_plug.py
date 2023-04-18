@@ -18,7 +18,7 @@ from gws_core.test.base_test_case import BaseTestCase
 # test_plug
 class TestPlug(BaseTestCase):
 
-    async def test_source(self):
+    def test_source(self):
         """Test the source task
         """
         robot: Robot = Robot.empty()
@@ -26,12 +26,12 @@ class TestPlug(BaseTestCase):
 
         task_tester = TaskRunner(Source, {'resource_id': robot_model.id})
 
-        outputs: TaskOutputs = await task_tester.run()
+        outputs: TaskOutputs = task_tester.run()
 
         robot_o: Robot = outputs['resource']
         self.assertEqual(robot_o._model_id, robot_model.id)
 
-    async def test_sink(self):
+    def test_sink(self):
         i_experiment: IExperiment = IExperiment()
         i_protocol: IProtocol = i_experiment.get_protocol()
 
@@ -39,14 +39,14 @@ class TestPlug(BaseTestCase):
         sink: IProcess = i_protocol.add_task(Sink, 'sink')
         i_protocol.add_connector(create >> 'robot', sink << 'resource')
 
-        await i_experiment.run()
+        i_experiment.run()
 
         # check that the resource used in the sink was marked as output
-        resource = create.get_output('robot')
+        resource = create.refresh().get_output('robot')
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource._model_id)
         self.assertEqual(resource_model.flagged, True)
 
-    async def test_switch(self):
+    def test_switch(self):
         """Test the switch2 task
         """
         robot: Robot = Robot.empty()
@@ -64,12 +64,12 @@ class TestPlug(BaseTestCase):
         result: CheckBeforeTaskResult = task_tester.check_before_run()
         self.assertTrue(result['result'])
 
-        outputs: TaskOutputs = await task_tester.run()
+        outputs: TaskOutputs = task_tester.run()
 
         robot_o: Robot = outputs['resource']
         self.assertEqual(robot_o, robot_2)
 
-    async def test_fifo(self):
+    def test_fifo(self):
         """Test the switch2 task
         """
         robot: Robot = Robot.empty()
@@ -81,7 +81,7 @@ class TestPlug(BaseTestCase):
         result: CheckBeforeTaskResult = task_tester.check_before_run()
         self.assertTrue(result['result'])
 
-        outputs: TaskOutputs = await task_tester.run()
+        outputs: TaskOutputs = task_tester.run()
 
         robot_o: Robot = outputs['resource']
         self.assertEqual(robot_o, robot)

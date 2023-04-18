@@ -60,11 +60,11 @@ def transformer_decorator(unique_name: str, resource_type: Type[Resource],
 class Transformer(Converter):
 
     @final
-    async def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> Resource:
-        return await self.transform(source, params)
+    def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> Resource:
+        return self.transform(source, params)
 
     @abstractmethod
-    async def transform(self, source: Resource, params: ConfigParams) -> Resource:
+    def transform(self, source: Resource, params: ConfigParams) -> Resource:
         """Override this method to write the Transformer code
 
         :param source: resource to modifify, the source object can be directly modify as this is already a new copy

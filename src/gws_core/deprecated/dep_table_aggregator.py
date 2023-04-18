@@ -6,8 +6,7 @@
 
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_aggregator_helper import (
-    DataframeAggregatorHelper, DfAggregationDirections,
-    DfAggregationFunctions)
+    DataframeAggregatorHelper, DfAggregationDirections, DfAggregationFunctions)
 from gws_core.impl.table.table import Table
 
 from ..config.config_types import ConfigParams, ConfigSpecs
@@ -49,7 +48,7 @@ class TableAggregator(Transformer):
         ),
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         data = DataframeAggregatorHelper.aggregate(
             data=source.get_data(),
             direction=params["direction"],

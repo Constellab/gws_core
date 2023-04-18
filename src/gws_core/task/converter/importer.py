@@ -111,7 +111,7 @@ class ResourceImporter(Converter):
     _supported_extensions: List[str] = []
 
     @final
-    async def convert(self, source: FSNode, params: ConfigParams, target_type: Type[Resource]) -> Resource:
+    def convert(self, source: FSNode, params: ConfigParams, target_type: Type[Resource]) -> Resource:
 
         if not source.path:
             raise Exception("Cannot import the file because the path is not defined.")
@@ -120,7 +120,7 @@ class ResourceImporter(Converter):
             raise Exception(f"Cannot import file '{source.name or source.path}' because it doesn't exists.")
 
         try:
-            target: Resource = await self.import_from_path(source, params, target_type)
+            target: Resource = self.import_from_path(source, params, target_type)
         except Exception as err:
             raise Exception(
                 f"Cannot import file '{source.path}' using importer : '{self._typing_name}' because of the following error: {err}")
@@ -131,7 +131,7 @@ class ResourceImporter(Converter):
         return target
 
     @abstractmethod
-    async def import_from_path(self, source: FSNode, params: ConfigParams, target_type: Type[Resource]) -> Resource:
+    def import_from_path(self, source: FSNode, params: ConfigParams, target_type: Type[Resource]) -> Resource:
         """Override the import form path method to create the destination resource from the file
 
         :param fs_node: file resource to import

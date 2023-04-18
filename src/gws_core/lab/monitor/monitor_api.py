@@ -8,10 +8,8 @@ from typing import Optional
 from fastapi import Depends
 from pydantic import BaseModel
 
-from ...core.classes.paginator import PaginatorDict
 from ...core_app import core_app
 from ...user.auth_service import AuthService
-from ...user.user_dto import UserData
 from .monitor_service import MonitorService
 
 
@@ -22,7 +20,7 @@ class GetMonitorRequest(BaseModel):
 
 @core_app.post("/monitor", tags=["Lab"], summary="Get the lab monitor data")
 def get_the_lab_monitor_data(request: GetMonitorRequest,
-                             _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+                             _=Depends(AuthService.check_user_access_token)):
     """
     Get lab monitor
     """

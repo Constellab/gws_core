@@ -3,9 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import TypedDict
-
 from requests.models import Response
+from typing_extensions import TypedDict
 
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.settings import Settings

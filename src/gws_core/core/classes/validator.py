@@ -11,7 +11,6 @@ from typing import Any, Dict, List, Literal, Type, Union
 from gws_core.core.utils.utils import Utils
 
 from ..exception.exceptions import BadRequestException
-from .path import URL, Path
 
 ValidatorType = Literal["bool", "int", "float", "str", "list", "dict"]
 
@@ -449,7 +448,7 @@ class DictValidator(Validator):
 
 
 class URLValidator(StrValidator):
-    _type = URL
+    _type = str
 
     def _validate(self, value):
         value = super()._validate(value)
@@ -469,7 +468,3 @@ class URLValidator(StrValidator):
             return value
         else:
             raise BadRequestException(f"The URL {value} is not valid")
-
-
-class PathValidator(StrValidator):
-    _type = Path

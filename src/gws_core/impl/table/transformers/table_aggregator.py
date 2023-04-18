@@ -34,7 +34,7 @@ class TableColumnAggregator(Transformer):
         ),
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         data = DataframeAggregatorHelper.aggregate(
             data=source.get_data(),
             direction="vertical",
@@ -67,7 +67,7 @@ class TableRowAggregator(Transformer):
         ),
     }
 
-    async def transform(self, source: Table, params: ConfigParams) -> Table:
+    def transform(self, source: Table, params: ConfigParams) -> Table:
         data = DataframeAggregatorHelper.aggregate(
             data=source.get_data(),
             direction="horizontal",

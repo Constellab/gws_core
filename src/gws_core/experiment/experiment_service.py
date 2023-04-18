@@ -4,20 +4,16 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, List, Type
+from typing import Dict, List, Optional, Type
 
 from peewee import ModelSelect
 
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.settings import Settings
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.task_input_model import TaskInputModel
 
-from ..central.central_dto import SaveExperimentToCentralDTO
-from ..central.central_service import CentralService
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
 from ..core.decorator.transaction import transaction
@@ -29,6 +25,8 @@ from ..project.project import Project
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_model import ProtocolModel
 from ..protocol.protocol_service import ProtocolService
+from ..space.space_dto import SaveExperimentToSpaceDTO
+from ..space.space_service import SpaceService
 from ..task.task import Task
 from ..task.task_model import TaskModel
 from ..task.task_service import TaskService
@@ -37,7 +35,8 @@ from ..user.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from .experiment import Experiment
-from .experiment_dto import ExperimentDTO
+from .experiment_dto import (ExperimentDTO, RunningExperimentInfo,
+                             RunningProcessInfo)
 from .experiment_enums import ExperimentStatus, ExperimentType
 
 
@@ -59,7 +58,8 @@ class ExperimentService(BaseService):
 
         return cls.create_experiment_from_protocol_model(
             protocol_model=ProcessFactory.create_protocol_empty(),
-            project=Project.get_by_id_and_check(project_id) if project_id else None,
+            project=Project.get_by_id_and_check(
+                project_id) if project_id else None,
             title=title,
             type_=type_
         )
@@ -71,7 +71,8 @@ class ExperimentService(BaseService):
             type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
         if not isinstance(task_model, TaskModel, ):
             raise BadRequestException("An instance of TaskModel is required")
-        proto = ProtocolService.create_protocol_model_from_task_model(task_model=task_model)
+        proto = ProtocolService.create_protocol_model_from_task_model(
+            task_model=task_model)
         return cls.create_experiment_from_protocol_model(
             protocol_model=proto, project=project, title=title, type_=type_)
 
@@ -81,7 +82,8 @@ class ExperimentService(BaseService):
             cls, protocol_model: ProtocolModel, project: Project = None, title: str = "",
             type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
         if not isinstance(protocol_model, ProtocolModel):
-            raise BadRequestException("An instance of ProtocolModel is required")
+            raise BadRequestException(
+                "An instance of ProtocolModel is required")
         experiment = Experiment()
         experiment.title = title
         experiment.project = project
@@ -100,7 +102,8 @@ class ExperimentService(BaseService):
             project: Project = None, title: str = "",
             type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
 
-        protocol_model: ProtocolModel = ProtocolService.create_protocol_model_from_type(protocol_type=protocol_type)
+        protocol_model: ProtocolModel = ProtocolService.create_protocol_model_from_type(
+            protocol_type=protocol_type)
         return cls.create_experiment_from_protocol_model(
             protocol_model=protocol_model, project=project, title=title, type_=type_)
 
@@ -109,45 +112,73 @@ class ExperimentService(BaseService):
             cls, task_type: Type[Task], project: Project = None, title: str = "",
             type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
 
-        task_model: TaskModel = TaskService.create_task_model_from_type(task_type=task_type)
+        task_model: TaskModel = TaskService.create_task_model_from_type(
+            task_type=task_type)
         return cls.create_experiment_from_task_model(
             task_model=task_model, project=project, title=title, type_=type_)
 
     ################################### UPDATE ##############################
 
     @classmethod
-    def update_experiment(cls, id: str, experiment_dto: ExperimentDTO) -> Experiment:
-        experiment: Experiment = Experiment.get_by_id_and_check(id)
+    def update_experiment(cls, experiment_id: str, experiment_dto: ExperimentDTO) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         experiment.check_is_updatable()
 
         experiment.title = experiment_dto.title
 
-        # update the project
-        if experiment_dto.project_id:
-            project = Project.get_by_id_and_check(experiment_dto.project_id)
-
-            if experiment.last_sync_at is not None and project != experiment.project:
-                raise BadRequestException("You can't change the project of an experiment that has been synced")
-            experiment.project = project
-
-        # if the project was removed
-        if experiment_dto.project_id is None and experiment.project is not None:
-            experiment.project = None
-            if experiment.last_sync_at is not None:
-                # delete the experiment in central
-                CentralService.delete_experiment(project_id=experiment.project.id, experiment_id=experiment.id)
-
-        return experiment.save()
+        return cls._update_experiment_project(experiment, experiment_dto.project_id)
 
     @classmethod
-    def update_experiment_protocol(cls, id: str, protocol_graph: Dict) -> Experiment:
-        experiment: Experiment = Experiment.get_by_id_and_check(id)
+    def update_experiment_project(cls, experiment_id: str, project_id: Optional[str]) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         experiment.check_is_updatable()
-        ProtocolService.update_protocol_graph(protocol_model=experiment.protocol_model, graph=protocol_graph)
 
-        experiment.save()
+        return cls._update_experiment_project(experiment, project_id)
+
+    @classmethod
+    @transaction()
+    def _update_experiment_project(cls, experiment: Experiment, new_project_id: Optional[str]) -> Experiment:
+        project_changed = False
+        project_removed = False
+
+        new_project: Project = None
+        # update the project
+        if new_project_id:
+            new_project = Project.get_by_id_and_check(new_project_id)
+
+            if experiment.last_sync_at is not None and new_project != experiment.project:
+                raise BadRequestException(
+                    "You can't change the project of an experiment that has been synced")
+
+            if experiment.project != new_project:
+                project_changed = True
+
+        if experiment.project is not None and new_project_id is None:
+            project_removed = True
+
+        experiment.project = new_project
+
+        # update experiment
+        experiment = experiment.save()
+
+        # update generated resources project
+        if project_changed or project_removed:
+            resources: List[ResourceModel] = ResourceModel.get_by_experiment(
+                experiment.id)
+            for resource in resources:
+                resource.project = experiment.project
+                resource.save()
+
+        # if the project was removed
+        if project_removed:
+            experiment.project = None
+            if experiment.last_sync_at is not None:
+                # delete the experiment in space
+                SpaceService.delete_experiment(
+                    project_id=experiment.project.id, experiment_id=experiment.id)
+
         return experiment
 
     @classmethod
@@ -160,6 +191,12 @@ class ExperimentService(BaseService):
 
     @classmethod
     def reset_experiment(cls, id: str) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id)
+
+        return experiment.reset()
+
+    @classmethod
+    def get_experiment_progress(cls, id: str) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
 
         return experiment.reset()
@@ -188,27 +225,28 @@ class ExperimentService(BaseService):
                             object_id=experiment.id,
                             user=user)
 
-        # send the experiment to the central
-        cls._synchronize_with_central(experiment)
+        # send the experiment to the space
+        cls._synchronize_with_space(experiment)
 
         return experiment.save()
 
-    ###################################  SYNCHRO WITH CENTRAL  ##############################
+    ###################################  SYNCHRO WITH SPACE  ##############################
 
     @classmethod
-    def synchronize_with_central_by_id(cls, id: str) -> Experiment:
+    def synchronize_with_space_by_id(cls, id: str) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
-        experiment = cls._synchronize_with_central(experiment)
+        experiment = cls._synchronize_with_space(experiment)
         return experiment.save()
 
     @classmethod
-    def _synchronize_with_central(cls, experiment: Experiment) -> Experiment:
+    def _synchronize_with_space(cls, experiment: Experiment) -> Experiment:
         # if Settings.is_local_env():
-        #     Logger.info('Skipping sending experiment to central as we are running in LOCAL')
+        #     Logger.info('Skipping sending experiment to space as we are running in LOCAL')
         #     return experiment
 
         if experiment.project is None:
-            raise BadRequestException("The experiment must be linked to a project before validating it")
+            raise BadRequestException(
+                "The experiment must be linked to a project before validating it")
 
         experiment.last_sync_at = DateHelper.now_utc()
         experiment.last_sync_by = CurrentUserService.get_and_check_current_user()
@@ -216,13 +254,14 @@ class ExperimentService(BaseService):
         lab_config: LabConfigModel = experiment.lab_config
         if lab_config is None:
             lab_config = LabConfigModel.get_current_config()
-        save_experiment_dto: SaveExperimentToCentralDTO = {
+        save_experiment_dto: SaveExperimentToSpaceDTO = {
             "experiment": experiment.to_json(),
             "protocol": experiment.export_protocol(),
             "lab_config": lab_config.to_json()
         }
-        # Save the experiment in central
-        CentralService.save_experiment(experiment.project.id, save_experiment_dto)
+        # Save the experiment in space
+        SpaceService.save_experiment(
+            experiment.project.id, save_experiment_dto)
         return experiment
 
     ################################### GET  ##############################
@@ -278,24 +317,46 @@ class ExperimentService(BaseService):
         :rtype: Paginator[Experiment]
         """
 
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
+            resource_id)
 
-        expression_builder = ExpressionBuilder(TaskInputModel.resource_model == resource_id)
+        expression_builder = ExpressionBuilder(
+            TaskInputModel.resource_model == resource_id)
 
         # if the resource was generacted by an experiment, skip this experiment in the result
         if resource_model.experiment is not None:
-            expression_builder.add_expression(Experiment.id != resource_model.experiment.id)
+            expression_builder.add_expression(
+                Experiment.id != resource_model.experiment.id)
 
-        query = Experiment.select().where(expression_builder.build()).join(TaskInputModel).distinct()
+        query = Experiment.select().where(expression_builder.build()
+                                          ).join(TaskInputModel).distinct()
 
         return Paginator(
             query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def get_running_experiments(cls) -> List[Experiment]:
-        return list(Experiment.select().where(Experiment.status == ExperimentStatus.RUNNING))
+    def get_running_experiments(cls) -> List[RunningExperimentInfo]:
+        experiments: List[Experiment] = list(
+            Experiment.select().where(Experiment.status == ExperimentStatus.RUNNING).order_by(
+                Experiment.last_modified_at.desc()))
 
-    ################################### COPY  ##############################
+        return [cls.get_running_experiment_info(experiment) for experiment in experiments]
+
+    @classmethod
+    def get_running_experiment_info(cls, experiment: Experiment) -> RunningExperimentInfo:
+        tasks: List[TaskModel] = experiment.get_running_tasks()
+
+        running_experiment = RunningExperimentInfo.from_experiment(experiment)
+        for task in tasks:
+            running_task = RunningProcessInfo(id=task.id,
+                                              title=task.get_name(),
+                                              last_message=task.get_last_message(),
+                                              progression=task.get_progress_value())
+            running_experiment.add_running_task(running_task)
+
+        return running_experiment
+
+        ################################### COPY  ##############################
 
     @classmethod
     @transaction()
@@ -305,7 +366,8 @@ class ExperimentService(BaseService):
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         new_experiment: Experiment = cls.create_experiment_from_protocol_model(
-            protocol_model=ProtocolService.copy_protocol(experiment.protocol_model),
+            protocol_model=ProtocolService.copy_protocol(
+                experiment.protocol_model),
             project=experiment.project,
             title=experiment.title + " copy",
         )
@@ -323,6 +385,7 @@ class ExperimentService(BaseService):
 
         experiment.delete_instance()
 
-        # if the experiment was sync with central, delete it in central too
+        # if the experiment was sync with space, delete it in space too
         if experiment.last_sync_at is not None and experiment.project is not None:
-            CentralService.delete_experiment(experiment.project.id, experiment.id)
+            SpaceService.delete_experiment(
+                experiment.project.id, experiment.id)

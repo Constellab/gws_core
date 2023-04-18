@@ -3,7 +3,7 @@
     "author"        : "Gencovery",
     "author_email"  : "admin@gencovery.com",
     "description"   : "Core Gencovery Web Services",
-    "version"       : "0.4.6",
+    "version"       : "0.5.0",
     "app_dir"       : "./",
     "app_host"      : "0.0.0.0",
     "app_port"      : 3000,
@@ -11,14 +11,33 @@
         "gws_core:testdata_dir" : "${CURRENT_DIR}/tests/testdata"
     },
     "technical_info": {
-      "FRONT_VERSION": "0.5.5"
+      "FRONT_VERSION": "1.0.3",
+      "GLAB_VERSION": "1.0.0"
     },
     "environment":{
         "pip":[
             {
                 "source": "https://pypi.python.org/simple",
                 "packages":[
-                  {"name": "openpyxl", "version": "3.0.10"}
+                  {"name": "openpyxl", "version": "3.0.10"},
+                  {"name": "awesome-slugify", "version": "1.6.5"},
+                  {"name": "cryptography", "version": "39.0.1"},
+                  {"name": "fastapi", "version": "0.91.0"},
+                  {"name": "peewee", "version": "3.15.4"},
+                  {"name": "psutil", "version": "5.9.0"},
+                  {"name": "pyjwt", "version": "2.3.0"},
+                  {"name": "pymysql", "version": "1.0.2"},
+                  {"name": "python-multipart", "version": "0.0.5"},
+                  {"name": "starlette-context", "version": "0.3.3"},
+                  {"name": "uvicorn", "version": "0.20.0"},
+                  {"name": "charset-normalizer", "version": "2.0.12"},
+                  {"name": "dill", "version": "0.3.4"},
+                  {"name": "numpy", "version": "1.24.1"},
+                  {"name": "pandas", "version": "1.5.2"},
+                  {"name": "matplotlib", "version": "3.6.2"},
+                  {"name": "scipy", "version": "1.10.0"},
+                  {"name": "scikit-learn", "version": "1.2.0"},
+                  {"name": "openai", "version": "0.27.2"}
                 ]
             },
             {

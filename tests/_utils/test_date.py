@@ -4,13 +4,13 @@
 # About us: https://gencovery.com
 
 from datetime import date, datetime
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core.core.utils.date_helper import DateHelper
 
 
 # test_date
-class TestDate(IsolatedAsyncioTestCase):
+class TestDate(TestCase):
 
     def test_convert_to_utc(self):
 
@@ -34,3 +34,26 @@ class TestDate(IsolatedAsyncioTestCase):
             count += 1
 
         self.assertEqual(count, 10)
+
+    def test_pretty_date(self):
+
+        duration_in_seconds = 45.12
+        self.assertEqual(DateHelper.get_duration_pretty_text(duration_in_seconds), '45 secs')
+
+        duration_in_seconds = 60
+        self.assertEqual(DateHelper.get_duration_pretty_text(duration_in_seconds), '1 mins')
+
+        duration_in_seconds = 60 + 58.2
+        self.assertEqual(DateHelper.get_duration_pretty_text(duration_in_seconds), '1 mins, 58 secs')
+
+        duration_in_seconds = 60 * 60
+        self.assertEqual(DateHelper.get_duration_pretty_text(duration_in_seconds), '1 hours')
+
+        duration_in_seconds = (60 * 60) + (60 * 2)
+        self.assertEqual(DateHelper.get_duration_pretty_text(duration_in_seconds), '1 hours, 2 mins')
+
+        duration_in_seconds = 60 * 60 * 24
+        self.assertEqual(DateHelper.get_duration_pretty_text(duration_in_seconds), '1 days')
+
+        duration_in_seconds = (60 * 60 * 24 * 2) + (60 * 60 * 2)
+        self.assertEqual(DateHelper.get_duration_pretty_text(duration_in_seconds), '2 days, 2 hours')

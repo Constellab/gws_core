@@ -5,7 +5,7 @@
 
 
 import os
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core.impl.shell.base_env_shell import VEnvCreationInfo
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
@@ -14,7 +14,7 @@ from gws_core.impl.shell.venv_service import (VEnsStatus, VEnvBasicInfo,
 
 
 # test_conda_shell_proxy
-class TestCondaShellProxy(IsolatedAsyncioTestCase):
+class TestCondaShellProxy(TestCase):
 
     def test_conda_shell_proxy(self):
 

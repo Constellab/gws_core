@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 from abc import abstractmethod
 from collections.abc import Iterable as IterableClass
-from typing import Iterable, List, Optional, Tuple, Type, TypedDict, Union
+from typing import Iterable, List, Optional, Tuple, Type, Union
+
+from typing_extensions import TypedDict
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.utils.string_helper import StringHelper
@@ -61,33 +63,24 @@ class IOSpec:
 
         self.check_resource_types()
 
-        # TODO Remove support for None
         default_type = self.get_default_resource_type()
 
         # set the human name with a default value
         if human_name is not None:
             self.human_name = human_name
         else:
-            # TODO Remove support for None
-            if default_type:
-                self.human_name = default_type._human_name
+            self.human_name = default_type._human_name
 
         # set the short description with a default value
         if short_description is not None:
             self.short_description = short_description
         else:
-            # TODO Remove support for None
-            if default_type:
-                self.short_description = default_type._short_description
+            self.short_description = default_type._short_description
 
     def check_resource_types(self):
         for resource_type in self.resource_types:
             if resource_type is None:
-                # TODO Remove support for None
-                print("[WARNING] None type will not be supported soon, please set optional parameter to True instead")
-                self.is_optional = True
-                continue
-                # raise Exception(f"Resource type can't be None, please set optional parameter to True instead")
+                raise Exception(f"Resource type can't be None, please set optional parameter to True instead")
 
             if not Utils.issubclass(resource_type, Resource):
                 raise Exception(
@@ -260,13 +253,6 @@ class InputSpec(IOSpec):
     def from_json(cls, json_: IOSpecDict) -> 'OutputSpec':
         input_spec: InputSpec = super().from_json(json_)
         input_spec._is_skippable = json_.get('is_skippable', False)
-
-        # TODO TO REMOVE For retropcompatibility
-        if json_.get('io_spec') == 'OptionalIn' or json_.get('type_io') == 'OptionalIn':
-            input_spec.is_optional = True
-
-        if json_.get('io_spec') == 'SkippableIn' or json_.get('type_io') == 'SkippableIn':
-            input_spec._is_skippable = True
         return input_spec
 
 
@@ -328,56 +314,6 @@ class OutputSpec(IOSpec):
         output_spec._sub_class = json_.get('sub_class', False)
         output_spec._is_constant = json_.get('is_constant', False)
 
-        # TODO TO REMOVE For retropcompatibility
-        if json_.get('io_spec') == 'ConstantOut' or json_.get('type_io') == 'ConstantOut':
-            output_spec._is_constant = True
-
         if "data" in json_ and json_.get('data').get('sub_class'):
             output_spec._sub_class = True
         return output_spec
-
-
-class OptionalIn(InputSpec):
-    """Special type to use in Input specs
-    This type tell the system that the input is optional.
-    The input can be not connected and the task will still run (the input value will then be None)
-    If the input is connected, the task will wait for the resource to run himself (this is the difference from SkippableIn)
-    """
-
-    def __init__(self, resource_types: ResourceTypes, is_optional: bool = True, human_name: Optional[str] = None,
-                 short_description: Optional[str] = None) -> None:
-        super().__init__(resource_types=resource_types, is_optional=is_optional,
-                         human_name=human_name, short_description=short_description)
-        print('[WARNING] OptionalIn is deprecated, please use InputSpec with is_optional=True instead')
-
-
-class SkippableIn(InputSpec):
-    """Special type to use in Input specs
-    This type tell the system that the input is skippable. This mean that the task can be called
-    even if this input was connected and the value no provided.
-    With this you can run your task even if the input vaue was not received
-    //!\\ WARNING If an input is skipped, the input is not set, the inputs['name'] will raise a KeyError exception (different from None)
-
-    Has no effect when there is only one input
-
-    """
-
-    def __init__(self, resource_types: ResourceTypes, is_optional: bool = True, human_name: Optional[str] = None,
-                 short_description: Optional[str] = None) -> None:
-        super().__init__(resource_types=resource_types, is_optional=is_optional,
-                         human_name=human_name, short_description=short_description)
-        print('[WARNING] SkippableIn is deprecated, please use InputSpec with is_skippable=True instead')
-
-
-class ConstantOut(OutputSpec):
-    """Special type to use in Output specs
-    This type tells the system that the output resource was not modified from the input resource
-    and it does not need to create a new resource after the task
-    """
-
-    def __init__(self, resource_types: ResourceTypes, is_optional: bool = False, sub_class: bool = False,
-                 human_name: Optional[str] = None, short_description: Optional[str] = None) -> None:
-        super().__init__(resource_types=resource_types, is_optional=is_optional, sub_class=sub_class,
-                         human_name=human_name, short_description=short_description)
-        self._is_constant = True
-        print('[WARNING] ConstantOut is deprecated, please use OutputSpec with is_constant=True instead')

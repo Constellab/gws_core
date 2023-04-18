@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List, Optional, Type
 
 from fastapi.responses import FileResponse
 from peewee import ModelSelect
@@ -14,7 +14,8 @@ from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node import FSNode
-from gws_core.resource.resource_list_base import ResourceListBase
+from gws_core.project.project import Project
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import CallViewResult
 from gws_core.resource.view_config.view_config import ViewConfig
@@ -62,22 +63,25 @@ class ResourceService(BaseService):
 
     @classmethod
     def delete(cls, resource_id: str) -> None:
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
+            resource_id)
 
         if resource_model.is_manually_generated():
             cls.check_before_resource_update(resource_model)
 
             resource_model.delete_instance()
         # if the resource was imported or transformed, we delete the experiment that generated it
-        elif resource_model.origin == ResourceOrigin.IMPORTED or resource_model.origin == ResourceOrigin.TRANSFORMED:
+        elif resource_model.origin in [ResourceOrigin.IMPORTED, ResourceOrigin.TRANSFORMED, ResourceOrigin.IMPORTED_FROM_LAB]:
             experiment: Experiment = resource_model.experiment
             if experiment is None:
-                raise BadRequestException("The resource is not associated to an experiment")
+                raise BadRequestException(
+                    "The resource is not associated to an experiment")
 
             ExperimentService.delete_experiment(experiment.id)
 
         else:
-            raise BadRequestException("Can't delete this resource as it was created by an experiment")
+            raise BadRequestException(
+                "Can't delete this resource as it was created by an experiment")
 
     @classmethod
     def check_before_resource_update(cls, resource_model: ResourceModel) -> None:
@@ -88,7 +92,8 @@ class ResourceService(BaseService):
                                       GWSException.DELETE_GENERATED_RESOURCE_ERROR.value)
 
         # Check if resource is used as input of a task
-        task_input: TaskInputModel = TaskInputModel.get_by_resource_model(resource_model.id).first()
+        task_input: TaskInputModel = TaskInputModel.get_by_resource_model(
+            resource_model.id).first()
 
         if task_input:
             raise BadRequestException(GWSException.RESOURCE_USED_ERROR.value,
@@ -96,7 +101,8 @@ class ResourceService(BaseService):
                                       detail_args={"experiment": task_input.experiment.get_short_name()})
 
         # Check if resource is used as Config of a Source Task
-        task_model: TaskModel = TaskModel.select().where(TaskModel.source_config_id == resource_model.id).first()
+        task_model: TaskModel = TaskModel.select().where(
+            TaskModel.source_config_id == resource_model.id).first()
 
         if task_model:
             raise BadRequestException(GWSException.RESOURCE_USED_ERROR.value,
@@ -105,18 +111,21 @@ class ResourceService(BaseService):
 
     @classmethod
     def update_name(cls, resource_model_id: str, name: str) -> ResourceModel:
-        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
+        resource_model: ResourceModel = cls.get_resource_by_id(
+            resource_model_id)
 
         resource_model.name = name
         return resource_model.save()
 
     @classmethod
     def update_resource_type(cls, file_id: str, file_typing_name: str) -> ResourceModel:
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(file_id)
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
+            file_id)
 
         ResourceService.check_before_resource_update(resource_model)
 
-        file_type: Type[Resource] = TypingManager.get_type_from_name(file_typing_name)
+        file_type: Type[Resource] = TypingManager.get_type_from_name(
+            file_typing_name)
 
         if not Utils.issubclass(file_type, Resource):
             raise BadRequestException('The type must be a Resource')
@@ -133,7 +142,8 @@ class ResourceService(BaseService):
         :return: _description_
         :rtype: List[ResourceModel]
         """
-        generated_resources = cls.get_experiment_output_resources(experiment_ids)
+        generated_resources = cls.get_experiment_output_resources(
+            experiment_ids)
 
         task_inputs = cls.get_experiment_input_resources(experiment_ids)
 
@@ -150,14 +160,28 @@ class ResourceService(BaseService):
 
     @classmethod
     def get_experiment_input_resources(cls, experiment_ids: List[str]) -> List[ResourceModel]:
-        task_inputs: List[TaskInputModel] = list(TaskInputModel.get_by_experiments(experiment_ids))
+        task_inputs: List[TaskInputModel] = list(
+            TaskInputModel.get_by_experiments(experiment_ids))
         return [task_input.resource_model for task_input in task_inputs]
 
     @classmethod
     def update_flagged(cls, view_config_id: str, flagged: bool) -> ResourceModel:
-        view_config: ResourceModel = cls.get_resource_by_id(view_config_id)
-        view_config.flagged = flagged
-        return view_config.save()
+        resource_model: ResourceModel = cls.get_resource_by_id(view_config_id)
+        resource_model.flagged = flagged
+        return resource_model.save()
+
+    @classmethod
+    def update_project(cls, resource_id: str, project_id: Optional[str]) -> ResourceModel:
+        resource_model: ResourceModel = cls.get_resource_by_id(resource_id)
+
+        if resource_model.experiment is not None:
+            raise BadRequestException(
+                "Can't update the project of a resource that was generated by an experiment")
+
+        project: Project = Project.get_by_id_and_check(
+            project_id) if project_id else None
+        resource_model.project = project
+        return resource_model.save()
 
     ############################# RESOURCE TYPE ###########################
 
@@ -172,30 +196,36 @@ class ResourceService(BaseService):
         resource_type = TypingManager.get_type_from_name(resource_typing_name)
 
         if not Utils.issubclass(resource_type, Resource):
-            raise BadRequestException('The provided type is not a Resource type')
+            raise BadRequestException(
+                'The provided type is not a Resource type')
 
         return cls.get_views_of_resource_type(resource_type)
 
     @classmethod
     def get_views_of_resource_type(cls, resource_type: Type[Resource]) -> List[ResourceViewMetaData]:
         if not issubclass(resource_type, Resource):
-            raise BadRequestException("Can't find views of an object other than a Resource")
+            raise BadRequestException(
+                "Can't find views of an object other than a Resource")
         return ViewHelper.get_views_of_resource_type(resource_type)
 
     @classmethod
     def get_view_specs_from_resource(cls, resource_model_id: str, view_name: str) -> ConfigSpecs:
-        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
+        resource_model: ResourceModel = cls.get_resource_by_id(
+            resource_model_id)
 
         resource = resource_model.get_resource()
-        view_meta = ViewHelper.get_and_check_view_meta(type(resource), view_name)
+        view_meta = ViewHelper.get_and_check_view_meta(
+            type(resource), view_name)
 
         return view_meta.to_complete_json(resource)
 
     @classmethod
     def get_view_specs_from_type(cls, resource_typing_name: str, view_name: str) -> dict:
-        resource_type: Type[Resource] = TypingManager.get_type_from_name(resource_typing_name)
+        resource_type: Type[Resource] = TypingManager.get_type_from_name(
+            resource_typing_name)
 
-        view_meta = ViewHelper.get_and_check_view_meta(resource_type, view_name)
+        view_meta = ViewHelper.get_and_check_view_meta(
+            resource_type, view_name)
 
         return view_meta.to_complete_json()
 
@@ -205,7 +235,8 @@ class ResourceService(BaseService):
                                             transformers: List[TransformerDict],
                                             save_view_config: bool = False) -> CallViewResult:
 
-        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
+        resource_model: ResourceModel = cls.get_resource_by_id(
+            resource_model_id)
         return cls.call_view_on_resource_model(resource_model, view_name, config_values, transformers, save_view_config)
 
     @classmethod
@@ -217,7 +248,8 @@ class ResourceService(BaseService):
 
         resource: Resource = resource_model.get_resource()
 
-        view = cls.get_view_on_resource(resource, view_name, config_values, transformers)
+        view = cls.get_view_on_resource(
+            resource, view_name, config_values, transformers)
 
         # call the view to dict
         view_dict = ViewHelper.call_view_to_dict(view, config_values)
@@ -249,7 +281,8 @@ class ResourceService(BaseService):
 
         # if there is a transformer, call it before calling the view
         if transformers is not None and len(transformers) > 0:
-            resource = TransformerService.call_transformers(resource, transformers)
+            resource = TransformerService.call_transformers(
+                resource, transformers)
 
         return ViewHelper.generate_view_on_resource(resource, view_name, config_values)
 
@@ -262,25 +295,20 @@ class ResourceService(BaseService):
         search_builder: SearchBuilder = ResourceModelSearchBuilder()
 
         # Handle the children resource
-        criteria: SearchFilterCriteria = search.get_filter_criteria('include_children_resource')
+        criteria: SearchFilterCriteria = search.get_filter_criteria(
+            'include_children_resource')
 
         # if the criteria is not provided or False, we don't include the children
         if criteria is None or not criteria['value']:
-            search_builder.add_expression(ResourceModel.parent_resource_id.is_null())
+            search_builder.add_expression(
+                ResourceModel.parent_resource_id.is_null())
         search.remove_filter_criteria('include_children_resource')
-
-        # Handle the project filters, get all experiment of this project and filter by experiment
-        projects_criteria: SearchFilterCriteria = search.get_filter_criteria('project')
-        if projects_criteria is not None:
-            experiments: List[Experiment] = list(Experiment.select().where(
-                Experiment.project.in_(projects_criteria['value'])))
-            search_builder.add_expression(ResourceModel.experiment.in_(experiments))
-            search.remove_filter_criteria('project')
 
         # Handle 'include_not_flagged'
         # If not provided or false, filter with resource where flagged = True
         # Otherwise, not filter
-        include_non_output: SearchFilterCriteria = search.get_filter_criteria('include_not_flagged')
+        include_non_output: SearchFilterCriteria = search.get_filter_criteria(
+            'include_not_flagged')
         if include_non_output is None or not include_non_output['value']:
             search_builder.add_expression(ResourceModel.flagged == True)
         search.remove_filter_criteria('include_not_flagged')
@@ -294,7 +322,8 @@ class ResourceService(BaseService):
     @classmethod
     def download_resource(cls, id: str, exporter_typing_name: str, params: ConfigParamsDict) -> FileResponse:
 
-        fs_node: FSNode = ConverterService.call_exporter_directly(id, exporter_typing_name, params)
+        fs_node: FSNode = ConverterService.call_exporter_directly(
+            id, exporter_typing_name, params)
 
         return FileHelper.create_file_response(fs_node.path, fs_node.get_default_name())
 

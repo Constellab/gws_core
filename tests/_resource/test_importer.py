@@ -42,13 +42,13 @@ class TestImporter(BaseTestCase):
                                                    search_params, 0, 1000)
         self.assertTrue(len(importers.results) > 0)
 
-    async def test_importer(self):
+    def test_importer(self):
         file = File(path=DataProvider.get_iris_file().path)
 
         resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
 
         # import the table file into a Table
-        result: ResourceModel = await ConverterService.call_importer(resource_model.id, TableImporter._typing_name,  {})
+        result: ResourceModel = ConverterService.call_importer(resource_model.id, TableImporter._typing_name,  {})
 
         self.assertEqual(result.origin, ResourceOrigin.IMPORTED)
         table: Table = result.get_resource()

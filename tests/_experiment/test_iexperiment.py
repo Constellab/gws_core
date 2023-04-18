@@ -2,10 +2,10 @@ from gws_core import (BaseTestCase, IExperiment, IProcess, IProtocol, ITask,
                       ProtocolModel, Robot, RobotCreate, RobotMove,
                       RobotSuperTravelProto, RobotTravelProto)
 
-
+# test_iexperiment
 class TestIExperiment(BaseTestCase):
 
-    async def test_iexperiment(self):
+    def test_iexperiment(self):
 
         experiment: IExperiment = IExperiment()
 
@@ -37,7 +37,10 @@ class TestIExperiment(BaseTestCase):
         robot_travel_2: IProtocol = protocol.get_process('robot_travel')
         self.assertIsInstance(robot_travel_2, IProtocol)
 
-        await experiment.run()
+        experiment.run()
+        sub_proto = protocol.get_process('sub_proto')
+        sub_move = sub_proto.get_process('sub_move')
+        robot_travel = protocol.get_process('robot_travel')
 
         # Check that the move worked and the config was set
         robot_i: Robot = sub_move.get_input('robot')
@@ -78,11 +81,11 @@ class TestIExperiment(BaseTestCase):
         self.assertRaises(Exception, ITask.get_by_id, move_1._process_model.id)
 
         # Test info in protocol model
-        super_travel_model: ProtocolModel = super_travel._protocol_model
+        super_travel_model: ProtocolModel = super_travel._process_model
         self._test_super_travel_after_remove(super_travel_model)
 
         # Verify that the DB was updated
-        super_travel_db: ProtocolModel = IProtocol.get_by_id(super_travel_model.id)._protocol_model
+        super_travel_db: ProtocolModel = IProtocol.get_by_id(super_travel_model.id)._process_model
         self._test_super_travel_after_remove(super_travel_db)
 
     def _test_super_travel_after_remove(self, super_travel_model: ProtocolModel):

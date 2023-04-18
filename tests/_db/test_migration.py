@@ -19,6 +19,7 @@ class MigrationError(BrickMigration):
         raise Exception()
 
 
+# test_migration
 class TestMigration(BaseTestCase):
 
     def test_version(self):
@@ -45,7 +46,8 @@ class TestMigration(BaseTestCase):
         version_6: Version = Version('1.10.0')
         sorted_version = [version_4, version_3, version, version_5, version_6]
         sorted_version.sort()
-        self.assertEqual(sorted_version, [version_4, version, version_3, version_6, version_5])
+        self.assertEqual(sorted_version, [
+                         version_4, version, version_3, version_6, version_5])
 
         with self.assertRaises(VersionInvalidException):
             Version('1.2')
@@ -61,11 +63,16 @@ class TestMigration(BaseTestCase):
 
     def test_brick_migrator(self):
 
-        brick_migrator: BrickMigrator = BrickMigrator('gws_core_test', Version('1.0.0'))
-        brick_migrator.append_migration(MigrationObject(MigrationTest, Version('1.2.0'), ''))
-        brick_migrator.append_migration(MigrationObject(MigrationTest, Version('1.0.0'), ''))
-        brick_migrator.append_migration(MigrationObject(MigrationTest, Version('1.0.1'), ''))
-        brick_migrator.append_migration(MigrationObject(MigrationTest, Version('2.0.1'), ''))
+        brick_migrator: BrickMigrator = BrickMigrator(
+            'gws_core_test', Version('1.0.0'))
+        brick_migrator.append_migration(
+            MigrationObject(MigrationTest, Version('1.2.0'), '', False))
+        brick_migrator.append_migration(
+            MigrationObject(MigrationTest, Version('1.0.0'), '', False))
+        brick_migrator.append_migration(
+            MigrationObject(MigrationTest, Version('1.0.1'), '', False))
+        brick_migrator.append_migration(
+            MigrationObject(MigrationTest, Version('2.0.1'), '', False))
 
         # check that the migration list is in order and without the 1.0.0
         to_migrate = brick_migrator._get_to_migrate_list()
@@ -79,4 +86,5 @@ class TestMigration(BaseTestCase):
 
         # Check that the migrate worked and update brick version
         brick_migrator.migrate()
-        self.assertEqual(brick_migrator.current_brick_version, Version('2.0.1'))
+        self.assertEqual(brick_migrator.current_brick_version,
+                         Version('2.0.1'))

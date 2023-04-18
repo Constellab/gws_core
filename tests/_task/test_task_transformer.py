@@ -18,14 +18,14 @@ class RobotTransform(Transformer):
 
     config_specs: ConfigSpecs = {'age': IntParam()}
 
-    async def transform(self, source: Robot, params: ConfigParams) -> Robot:
+    def transform(self, source: Robot, params: ConfigParams) -> Robot:
         source.age = params['age']
         return source
 
 
 class TestTaskTransformer(BaseTestCase):
 
-    async def test_create_transformer_experiment(self):
+    def test_create_transformer_experiment(self):
 
         age_config = 99
 
@@ -37,7 +37,8 @@ class TestTaskTransformer(BaseTestCase):
         # create and run
         transformers: List[TransformerDict] = [
             {'typing_name': RobotTransform._typing_name, 'config_values': {'age': age_config}}]
-        resource_model: ResourceModel = await TransformerService.create_and_run_transformer_experiment(transformers, robot_model.id)
+        resource_model: ResourceModel = TransformerService.create_and_run_transformer_experiment(
+            transformers, robot_model.id)
 
         self.assertEqual(resource_model.origin, ResourceOrigin.TRANSFORMED)
 
@@ -45,7 +46,7 @@ class TestTaskTransformer(BaseTestCase):
         robot: Robot = resource_model.get_resource()
         self.assertEqual(robot.age, age_config)
 
-    async def test_call_transformers(self):
+    def test_call_transformers(self):
 
         age_config = 99
 

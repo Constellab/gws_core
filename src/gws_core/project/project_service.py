@@ -5,16 +5,17 @@
 
 from typing import List
 
-from gws_core.central.central_service import CentralService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment import Experiment
 from gws_core.report.report import Report
+from gws_core.space.space_service import SpaceService
 
 from ..core.service.base_service import BaseService
 from .project import Project
-from .project_dto import CentralProject
+from .project_dto import SpaceProject
 
 
 class ProjectService(BaseService):
@@ -24,24 +25,32 @@ class ProjectService(BaseService):
         return list(Project.get_roots())
 
     @classmethod
-    def synchronize_all_central_projects(cls) -> None:
+    def synchronize_all_space_projects(cls) -> None:
         """
-        Synchronize all the projects from central
+        Synchronize all the projects from space
         """
-        central_projects = CentralService.get_all_lab_projects()
-        for central_project in central_projects:
-            cls.synchronize_central_project(central_project)
+
+        Logger.info("Synchronizing projects from space")
+
+        try:
+            space_projects = SpaceService.get_all_lab_projects()
+            for space_project in space_projects:
+                cls.synchronize_space_project(space_project)
+            Logger.info(f"{len(space_projects)} projects synchronized from space")
+        except Exception as err:
+            Logger.error(f"Error while synchronizing projects from space: {err}")
+            raise err
 
     @classmethod
-    def synchronize_central_project(cls, project: CentralProject) -> None:
-        """Method that synchronize a project from central into the lab
+    def synchronize_space_project(cls, project: SpaceProject) -> None:
+        """Method that synchronize a project from space into the lab
         """
 
-        cls._synchronize_central_project(project, None)
+        cls._synchronize_space_project(project, None)
 
     @classmethod
-    def _synchronize_central_project(cls, project: CentralProject, parent: Project) -> None:
-        """Method that synchronize a project from central into the lab
+    def _synchronize_space_project(cls, project: SpaceProject, parent: Project) -> None:
+        """Method that synchronize a project from space into the lab
         """
 
         lab_project: Project = Project.get_by_id(project.id)
@@ -58,7 +67,7 @@ class ProjectService(BaseService):
 
         if project.children is not None:
             for child in project.children:
-                cls._synchronize_central_project(child, lab_project)
+                cls._synchronize_space_project(child, lab_project)
 
     @classmethod
     def delete_project(cls, project_id: str) -> None:

@@ -63,7 +63,7 @@ class ShareLink(ModelWithUser):
     def find_by_entity_type_and_id(cls, entity_type: ShareLinkType, entity_id: str) -> 'ShareLink':
         """Method that find a shared entity link by its entity id and type
         """
-        return cls.get_or_none(entity_type=entity_type, entity_id=entity_id)
+        return cls.get_or_none((cls.entity_type == entity_type) & (cls.entity_id == entity_id))
 
     @classmethod
     def get_model(cls, entity_id: str, entity_type: ShareLinkType) -> Model:

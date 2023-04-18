@@ -48,8 +48,9 @@ class Resource(Base):
     _kv_store: KVStore = None
 
     def __init__(self):
-        """Resource constructor
-        /!\ It must have only optional parameters
+        """
+        Constructor, please do not overwrite this method, use the init method instead
+        Leave the constructor without parameters.
         """
 
         # check that the class level property _typing_name is set
@@ -64,7 +65,15 @@ class Resource(Base):
         for key, r_field in properties.items():
             setattr(self, key, r_field.get_default_value())
 
-    # -- G --
+        # call init
+        self.init()
+
+    def init(self) -> None:
+        """
+        This can be overwritten to perform custom initialization of the resource.
+        This method is called just after the __init__ (constructor) of the resource.
+        The default values of RFields are set before this method is called.
+        """
 
     @view(view_type=JSONView, human_name="View resource", short_description="View the complete resource as json", default_view=True)
     def view_as_json(self, params: ConfigParams) -> JSONView:
@@ -115,20 +124,6 @@ class Resource(Base):
         It is also call when uploading a resource (usually for files or folder), if there is an error returned, the resource will not be uploaded
         """
         return None
-
-    def replace_resource_model_ids(self, id_replacements: Dict[str, str]) -> bool:
-        """Replace the model ids of the resources contained in this resource. This method
-          is called when a resource is copied in another lab and a completely new res!!!!!ource id is generated.
-
-          Only override this method if you have a resource that contains other resources like ResourceSet.
-          Only override this method if you know what you are doing.
-
-          :param id_replacements: dictionary where key if the old model id and value is the new model id
-          :type id_replacements: Dict[str, str]
-          :return: _description_
-          :rtype: bool
-          """
-        return False
 
     def clone(self) -> 'Resource':
         """Clone the resource to create a new instance with a new id

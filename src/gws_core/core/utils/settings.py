@@ -8,10 +8,13 @@ import re
 import tempfile
 from copy import deepcopy
 from json import JSONDecodeError, dump, load
-from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
+from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.user.user_dto import SpaceDict
+from typing_extensions import TypedDict
 
 from .date_helper import DateHelper
 from .string_helper import StringHelper
@@ -29,11 +32,14 @@ __DEFAULT_SETTINGS__ = {
 
 class ModuleInfo(TypedDict):
     path: str
-    version: str
-    is_brick: bool
-    repo_type: Literal['app', 'git', 'pip']
-    repo_commit: str
     name: str
+    source: str
+    version: str
+    repo_type: Literal['app', 'git', 'pip']
+    repo_commit: Optional[str]
+    # name of the package that depend on this module
+    parent_name: Optional[str]
+    error: Optional[str]  # provided if the module could not be loaded
 
 
 class BrickMigrationLogHistory(TypedDict):
@@ -46,13 +52,6 @@ class BrickMigrationLog(TypedDict):
     version: str
     last_date_check: str
     history: List[BrickMigrationLogHistory]
-
-
-class Space(TypedDict):
-    id: str
-    space: str
-    domain: str
-    photo: Optional[str]
 
 
 class Settings():
@@ -73,20 +72,17 @@ class Settings():
         self.data = data
 
     @classmethod
-    def init(cls, settings_json: dict = None):
+    def init(cls) -> 'Settings':
 
         settings = Settings.get_instance()
+        settings._init_secrete_key()
 
-        if settings.get_data('secret_key') is None:
-            # secret_key
-            secret_key = StringHelper.generate_random_chars(128)
-            settings.set_data("secret_key", secret_key)
-
-        for key, value in settings_json.items():
-            settings.set_data(key, value)
-
-        settings.save()
         Settings._setting_instance = settings
+
+        settings.data['modules'] = {}
+        settings.data['bricks'] = {}
+
+        return settings
 
     def save(self) -> bool:
         # create the parent directory
@@ -96,6 +92,18 @@ class Settings():
             dump(self.data, f, sort_keys=True)
 
         return True
+
+    def _init_secrete_key(self):
+        # if a secrete key is set in the environment variable, use it
+        secrete_key_env = os.environ.get("SECRET_KEY")
+        if secrete_key_env:
+            self.set_data("secret_key", secrete_key_env)
+
+        # if no secrete key is set, generate one if not already set
+        if self.get_data('secret_key') is None:
+            # secret_key
+            secret_key = StringHelper.generate_random_chars(128)
+            self.set_data("secret_key", secret_key)
 
     @classmethod
     def _get_setting_file_path(cls) -> str:
@@ -137,12 +145,16 @@ class Settings():
         return os.environ.get("VIRTUAL_HOST")
 
     @classmethod
+    def get_gws_core_brick_name(cls) -> str:
+        return 'gws_core'
+
+    @classmethod
     def get_lab_id(cls) -> str:
         """Returns the name of the lab
         """
 
         # specific lab id for local env
-        if cls.is_local_env():
+        if cls.is_local_env() and not os.environ.get("LAB_ID"):
             return '1'
 
         return os.environ.get("LAB_ID")
@@ -160,84 +172,96 @@ class Settings():
         return os.environ.get("FRONT_VERSION", '')
 
     @classmethod
-    def get_central_api_key(cls) -> str:
-        """Return the central api key
+    def get_space_api_key(cls) -> str:
+        """Return the space api key
 
         :return: [description]
         :rtype: [type]
         """
 
-        # specific central api key for local env
-        if cls.is_local_env():
+        # specific space api key for local env
+        if cls.is_local_env() and not os.environ.get("CENTRAL_API_KEY"):
             return '123456'
 
         return os.environ.get("CENTRAL_API_KEY")
 
     @classmethod
-    def get_central_api_url(cls) -> str:
-        """Return the central api url
+    def get_space_api_url(cls) -> str:
+        """Return the space api url
 
         :return: [description]
         :rtype: [type]
         """
 
-        # specific central api url for local env
-        if cls.is_local_env():
+        # specific space api url for local env
+        if cls.is_local_env() and not os.environ.get("CENTRAL_API_URL"):
             return 'http://host.docker.internal:3001'
 
         return os.environ.get("CENTRAL_API_URL")
 
     @classmethod
     def get_front_url(cls) -> str:
-        """Return the central api url
 
-        :return: [description]
-        :rtype: [type]
-        """
-
-        # specific central api url for local env
-        if cls.is_local_env():
+        if cls.is_local_env() and not os.environ.get("FRONT_URL"):
             return 'http://localhost:4200'
 
         return os.environ.get("FRONT_URL", '')
 
     @classmethod
+    def get_lab_folder(cls) -> str:
+        return '/lab'
+
+    @classmethod
+    def get_user_bricks_folder(cls) -> str:
+        return os.path.join(cls.get_lab_folder(), 'user', 'bricks')
+
+    @classmethod
     def _get_system_folder(cls) -> str:
-        return os.path.join('/lab', '.sys')
+        return os.path.join(cls.get_lab_folder(), '.sys')
 
     @classmethod
     def get_global_env_dir(cls) -> str:
         return os.path.join(cls._get_system_folder(), ".env")
 
-    def get_gws_core_prod_db_config(self) -> DbConfig:
+    @classmethod
+    def get_gws_core_db_config(cls) -> DbConfig:
         return {
-            "host":  "gws_core_prod_db",
-            "user": "gws_core",
-            "password": "gencovery",
-            "port": 3306,
-            "db_name": "gws_core",
+            "host":  os.environ.get("GWS_CORE_DB_HOST"),
+            "user": os.environ.get("GWS_CORE_DB_USER"),
+            "password": os.environ.get("GWS_CORE_DB_PASSWORD"),
+            "port": int(os.environ.get("GWS_CORE_DB_PORT")),
+            "db_name": os.environ.get("GWS_CORE_DB_NAME"),
             "engine": "mariadb"
         }
 
-    def get_gws_core_dev_db_config(self) -> DbConfig:
+    @classmethod
+    def get_test_db_config(cls) -> DbConfig:
         return {
-            "host":  "gws_core_dev_db",
-            "user": "gws_core",
-            "password": "gencovery",
-            "port": 3306,
-            "db_name": "gws_core",
+            "host":  os.environ.get("GWS_TEST_DB_HOST"),
+            "user": os.environ.get("GWS_TEST_DB_USER"),
+            "password": os.environ.get("GWS_TEST_DB_PASSWORD"),
+            "port": int(os.environ.get("GWS_TEST_DB_PORT")),
+            "db_name": os.environ.get("GWS_TEST_DB_NAME"),
             "engine": "mariadb"
         }
 
-    def get_gws_core_test_db_config(self) -> DbConfig:
-        return {
-            "host":  "test_gws_dev_db",
-            "user": "test_gws",
-            "password": "gencovery",
-            "port": 3306,
-            "db_name": "test_gws",
-            "engine": "mariadb"
-        }
+    @classmethod
+    def get_root_temp_dir(cls) -> str:
+        """ Return the root temp dir """
+
+        return os.path.join(cls._get_system_folder(), 'tmp')
+
+    @classmethod
+    def make_temp_dir(cls) -> str:
+        """ Make a unique temp dir """
+        dir = cls.get_root_temp_dir()
+
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        return tempfile.mkdtemp(dir=dir)
+
+    def get_gws_core_db_name(self) -> str:
+        return 'gws_core'
 
     def get_maria_db_backup_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "backups")
@@ -246,14 +270,14 @@ class Settings():
         """ Returns the current working directory of the Application (i.e. the main brick directory) """
         return self.data["cwd"]
 
+    def set_cwd(self, cwd: str):
+        self.data["cwd"] = cwd
+
     def get_data(self, k: str, default=None) -> str:
         if k == "session_key":
             return self.data[k]
         else:
             return self.data.get(k, default)
-
-    def get_brick_list(self) -> List[str]:
-        return [key for key in self.data["modules"] if self.data["modules"]["is_brick"]]
 
     def get_log_dir(self) -> str:
         """
@@ -308,44 +332,35 @@ class Settings():
         return os.path.join(self.get_brick_data_main_dir(), brick_name)
 
     def get_file_store_dir(self) -> str:
-        return os.path.join(self.get_data_dir(), "filestore/")
+        return os.path.join(self.get_data_dir(), "filestore")
 
     def get_kv_store_base_dir(self) -> str:
-        return os.path.join(self.get_data_dir(), "kvstore/")
-
-    def get_variable(self, key) -> str:
-        """ Returns a variable. Returns `None` if the variable does not exist """
-        value = self.data.get("variables", {}).get(key)
-        return self._format_variable(value)
-
-    def get_variables(self) -> dict:
-        """ Returns the variables dict """
-        variables = self.data.get("variables", {})
-        for key, val in variables.items():
-            variables[key] = self._format_variable(val)
-        return variables
-
-    def get_root_temp_dir(self) -> str:
-        """ Return the root temp dir """
-        mode = "prod" if self.is_prod else "dev"
-        app = "tests" if self.is_test else "app"
-        temp_dir = os.path.join(tempfile.gettempdir(), "gws", mode, app)
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir)
-        return temp_dir
-
-    def make_temp_dir(self) -> str:
-        """ Make a unique temp dir """
-        return tempfile.mkdtemp(dir=self.get_root_temp_dir())
+        return os.path.join(self.get_data_dir(), "kvstore")
 
     def get_modules(self) -> Dict[str, ModuleInfo]:
-        return self.data["modules"]
+        return self.data.get("modules", {})
 
-    def get_space(self) -> Space:
+    def add_module(self, module_info: ModuleInfo) -> None:
+        if 'modules' not in self.data:
+            self.data['modules'] = {}
+        self.data["modules"][module_info["name"]] = module_info
+
+    def get_bricks(self) -> Dict[str, BrickInfo]:
+        return self.data.get("bricks", {})
+
+    def add_brick(self, brick_info: BrickInfo) -> None:
+        if 'bricks' not in self.data:
+            self.data['bricks'] = {}
+        self.data["bricks"][brick_info['name']] = brick_info
+
+    def get_space(self) -> SpaceDict:
         return self.data.get("space")
 
-    def set_space(self, space: Space):
+    def set_space(self, space: SpaceDict):
         self.data["space"] = space
+
+    def set_pip_freeze(self, pip_freeze: List[str]):
+        self.data["pip_freeze"] = pip_freeze
 
     def get_lab_api_url(self) -> str:
         return self.get_lab_prod_api_url() if self.is_prod else self.get_lab_dev_api_url()
@@ -365,7 +380,8 @@ class Settings():
     def update_brick_migration_log(self, brick_name: str, version: str) -> None:
         """Add a new brick migration log and update last migration version
         """
-        brick_migrations: Dict[str, BrickMigrationLog] = self.get_brick_migrations_logs()
+        brick_migrations: Dict[str,
+                               BrickMigrationLog] = self.get_brick_migrations_logs()
         brick_migration: BrickMigrationLog
         # if this is the first time the migration is executed for this brick
         if brick_name not in brick_migrations:
@@ -392,6 +408,22 @@ class Settings():
             })
         self.data["brick_migrations"] = brick_migrations
         self.save()
+
+    def get_variable(self, key) -> str:
+        """ Returns a variable. Returns `None` if the variable does not exist """
+        value = self.data.get("variables", {}).get(key)
+        return self._format_variable(value)
+
+    def get_variables(self) -> dict:
+        """ Returns the variables dict """
+        variables = self.data.get("variables", {})
+        for key, val in variables.items():
+            variables[key] = self._format_variable(val)
+        return variables
+
+    def set_variable(self, key: str, value: str) -> None:
+        """ Set a variable """
+        self.data.setdefault("variables", {})[key] = value
 
     def _format_variable(self, variable: str) -> str:
         """ Format a variable """
@@ -474,7 +506,7 @@ class Settings():
         return {
             "lab_id": self.get_lab_id(),
             "lab_name": self.get_lab_name(),
-            "central_api_url": self.get_central_api_url(),
+            "space_api_url": self.get_space_api_url(),
             "lab_prod_api_url": self.get_lab_prod_api_url(),
             "lab_dev_api_url": self.get_lab_dev_api_url(),
             "lab_environemnt": self.get_lab_environment(),

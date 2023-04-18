@@ -3,17 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
+
+from pandas import DataFrame, isna
 
 from gws_core import Table
 from gws_core.impl.table.helper.table_operation_helper import \
     TableOperationHelper
-from numpy import isnan
-from pandas import DataFrame
 
 
 # test_table_operations
-class TestTableOperations(IsolatedAsyncioTestCase):
+class TestTableOperations(TestCase):
 
     def test_table_column_operations(self):
         row_tags = [{"Name": "R0"}, {"Name": "R1"}, {"Name": "R2"}]
@@ -71,4 +71,4 @@ class TestTableOperations(IsolatedAsyncioTestCase):
         # The result should be NaN
         self.assertEqual(result_table.nb_columns, 1)
         # check if all element of R0 columns are NaN
-        self.assertTrue(all(isnan(list(result_table.get_data()['R0']))))
+        self.assertTrue(all(isna(list(result_table.get_data()['R0']))))

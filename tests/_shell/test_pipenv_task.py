@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import os
-from unittest.async_case import IsolatedAsyncioTestCase
+from unittest import TestCase
 
 from gws_core import (ConfigParams, File, OutputSpec, PipEnvTask, TaskInputs,
                       TaskOutputs, TaskRunner, task_decorator)
@@ -20,25 +20,25 @@ class PipEnvTaskTester(PipEnvTask):
     output_specs = {'file': OutputSpec(File)}
     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_pip.txt")
 
-    async def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: PipShellProxy) -> TaskOutputs:
-        command = ["python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"]
+    def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs, shell_proxy: PipShellProxy) -> TaskOutputs:
+        command = ["python", os.path.join(
+            __cdir__, "penv", "jwt_encode.py"), ">", "out.txt"]
         shell_proxy.run(command, shell_mode=True)
 
         # retrieve the result
         file = File(path=os.path.join(self.working_dir, "out.txt"))
         return {"file": file}
 
+
 # test_pipenv_task
+class TestPipEnv(TestCase):
 
-
-class TestPipEnv(IsolatedAsyncioTestCase):
-
-    async def test_pipenv(self):
+    def test_pipenv(self):
 
         task_runner = TaskRunner(PipEnvTaskTester)
 
         try:
-            output = await task_runner.run()
+            output = task_runner.run()
 
             file: File = output["file"]
 
@@ -59,13 +59,3 @@ class TestPipEnv(IsolatedAsyncioTestCase):
                 task.shell_proxy.uninstall_env()
                 task_runner.force_dispatch_waiting_messages()
             raise exception
-
-    # async def test_pipenv_proxy(self):
-
-    #     prox = ShellProxy(PipEnvTester)
-    #     encoded_string = prox.check_output(
-    #         ["python", os.path.join(__cdir__, "penv", "jwt_encode.py")]
-    #     )
-    #     self.assertEqual(
-    #         encoded_string,
-    #         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb21lIjoicGF5bG9hZCJ9.4twFt5NiznN84AWoo1d7KO1T_yoc0Z6XOpOVswacPZg")

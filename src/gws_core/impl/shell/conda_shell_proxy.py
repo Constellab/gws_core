@@ -36,11 +36,14 @@ class CondaShellProxy(BaseEnvShell):
         )
 
         if res.returncode != 0:
-            self._message_dispatcher.notify_error_message(res.stderr.decode('utf-8'))
-            raise Exception(f"Cannot install the virtual environment. Error: {res.stderr}")
+            self._message_dispatcher.notify_error_message(
+                res.stderr.decode('utf-8'))
+            raise Exception(
+                f"Cannot install the virtual environment. Error: {res.stderr}")
 
         # copy the file the was used to create the env into the env dir
-        env_file_path = os.path.join(self.get_env_dir_path(), self.CONFIG_FILE_NAME)
+        env_file_path = os.path.join(
+            self.get_env_dir_path(), self.CONFIG_FILE_NAME)
         FileHelper.copy_file(self.env_file_path, env_file_path)
 
         return True
@@ -70,7 +73,8 @@ cd .. && rm -rf {self.get_env_dir_path()}"'
                     return True
 
             except Exception as err:
-                raise Exception("Cannot remove the virtual environment.") from err
+                raise Exception(
+                    "Cannot remove the virtual environment.") from err
 
         return True
 
