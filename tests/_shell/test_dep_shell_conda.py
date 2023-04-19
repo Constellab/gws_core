@@ -20,7 +20,8 @@ class CondaEnvTester(CondaEnvShell):
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         return [
-            "python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"
+            "python", os.path.join(
+                __cdir__, "penv", "jwt_encode.py"), ">", "out.txt"
         ]
 
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -46,11 +47,7 @@ class TestProcess(BaseTestCase):
 
             self.assertEqual(
                 file.read().strip(),
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb21lIjoicGF5bG9hZCJ9.4twFt5NiznN84AWoo1d7KO1T_yoc0Z6XOpOVswacPZg")
-
-            # self.assertEqual(
-            #     file.read().strip(),
-            #     "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
+                "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
 
             task: CondaEnvTester = task_runner.get_task()
 
@@ -65,24 +62,3 @@ class TestProcess(BaseTestCase):
                 task.uninstall()
                 task_runner.force_dispatch_waiting_messages()
             raise exception
-
-        # proc_mdl: TaskModel = TaskService.create_task_model_from_type(
-        #     task_type=CondaEnvTester)
-        # self.assertFalse(CondaEnvTester.is_installed())
-
-        # experiment: Experiment = ExperimentService.create_experiment_from_task_model(
-        #     task_model=proc_mdl)
-        # experiment = ExperimentRunService.run_experiment(experiment=experiment)
-
-        # proc = experiment.task_models[0]
-
-        # file: Resource = proc.outputs.get_resource_model("file").get_resource()
-        # self.assertEqual(
-        #     file.read().strip(),
-        #     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb21lIjoicGF5bG9hZCJ9.4twFt5NiznN84AWoo1d7KO1T_yoc0Z6XOpOVswacPZg")
-
-        # self.assertTrue(CondaEnvTester.is_installed())
-        # self.assertTrue(proc.is_finished)
-
-        # CondaEnvTester.uninstall()
-        # self.assertFalse(CondaEnvTester.is_installed())

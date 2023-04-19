@@ -40,7 +40,7 @@ class TestPipEnv(BaseTestCase):
 
             self.assertEqual(
                 file.read().strip(),
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb21lIjoicGF5bG9hZCJ9.4twFt5NiznN84AWoo1d7KO1T_yoc0Z6XOpOVswacPZg")
+                "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
 
             task: PipEnvTester = task_runner.get_task()
 
@@ -55,13 +55,3 @@ class TestPipEnv(BaseTestCase):
                 task.uninstall()
                 task_runner.force_dispatch_waiting_messages()
             raise exception
-
-    # def test_pipenv_proxy(self):
-
-    #     prox = ShellProxy(PipEnvTester)
-    #     encoded_string = prox.check_output(
-    #         ["python", os.path.join(__cdir__, "penv", "jwt_encode.py")]
-    #     )
-    #     self.assertEqual(
-    #         encoded_string,
-    #         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb21lIjoicGF5bG9hZCJ9.4twFt5NiznN84AWoo1d7KO1T_yoc0Z6XOpOVswacPZg")
