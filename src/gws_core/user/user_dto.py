@@ -40,7 +40,7 @@ class UserSpace(BaseModel):
     email: str
     theme: UserTheme
     lang: UserLanguage
-    photo: str
+    photo: Optional[str]
 
 
 class Space(BaseModel):
