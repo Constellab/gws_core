@@ -24,6 +24,7 @@ class UserDataDict(TypedDict):
     is_active: bool
     theme: NotRequired[str]
     lang: NotRequired[str]
+    photo: NotRequired[str]
 
 
 # ####################################################################
@@ -121,6 +122,7 @@ class User(Model):
             "email": self.email,
             "first_name": self.first_name,
             "last_name": self.last_name,
+            "photo": self.photo
         }
 
     def to_user_data_dict(self) -> UserDataDict:
