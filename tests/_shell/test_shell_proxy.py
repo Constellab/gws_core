@@ -18,7 +18,8 @@ class TestShellProxy(TestCase):
     def test_echo_in_file(self):
         shell_proxy = ShellProxy()
 
-        result = shell_proxy.run([f"echo \"John Doe\" > echo.txt"], shell_mode=True)
+        result = shell_proxy.run(
+            [f"echo \"John Doe\" > echo.txt"], shell_mode=True)
         self.assertEqual(result, 0)
 
         # Check that the file was created with the content
@@ -41,11 +42,33 @@ class TestShellProxy(TestCase):
         self.assertNotEqual(result, 0)
 
         # Check that the message observer received echo AA info message
-        echo_message = [x for x in message_observer.messages if x.message == "AA" and x.status == 'INFO']
-        self.assertEqual(len(echo_message), 1)
+        self.assertEqual(len([
+            x for x in message_observer.messages if x.message == "AA" and x.status == 'INFO']), 1)
 
         # Check that the message observer received ui error message
-        error_message = [x for x in message_observer.messages if "ui: not found" in x.message and x.status == 'ERROR']
+        error_message = [
+            x for x in message_observer.messages if "ui: not found" in x.message and x.status == 'ERROR']
         self.assertEqual(len(error_message), 1)
+
+        shell_proxy.clean_working_dir()
+
+    def test_notified_2(self):
+        """Test that multi lines echo are fully notified
+        """
+        # disable the time buffer for message so they are sent immediately
+        dispatcher = MessageDispatcher(interval_time_dispatched_buffer=0)
+        shell_proxy = ShellProxy(message_dispatcher=dispatcher)
+
+        message_observer = BasicMessageObserver()
+        shell_proxy.attach_observer(message_observer)
+
+        result = shell_proxy.run([f'echo "AA\nBB"'], shell_mode=True)
+        self.assertEqual(result, 0)
+
+        # Check that the message observer received echo AA info message
+        self.assertEqual(len([
+            x for x in message_observer.messages if x.message == "AA" and x.status == 'INFO']), 1)
+        self.assertEqual(len([
+            x for x in message_observer.messages if x.message == "BB" and x.status == 'INFO']), 1)
 
         shell_proxy.clean_working_dir()

@@ -94,54 +94,35 @@ class ShellProxy():
 
             # use to read the stdout and stderr of the process
             # https://stackoverflow.com/questions/12270645/can-you-make-a-python-subprocess-output-stdout-and-stderr-as-usual-but-also-cap/12272262#12272262
-            tic_a = time.perf_counter()
-            stdout: List[bytes] = []
-            stderr: List[bytes] = []
-
             while True:
+                # get the file descriptors of the stdout and stderr
                 reads = [proc.stdout.fileno(), proc.stderr.fileno()]
+
+                # return the list of file descriptors that are ready to be read
                 ret = select.select(reads, [], [])
-                tic_b = time.perf_counter()
 
-                for fd in ret[0]:
-                    if fd == proc.stdout.fileno():
-                        read = proc.stdout.read()
+                has_read: bool = False
 
+                for file_no in ret[0]:
+                    # read the stdout
+                    if file_no == proc.stdout.fileno():
+                        read = proc.stdout.readline()
                         if read:
-                            # if the previous message was an error, we dispatch the error
-                            if len(stderr) > 0:
-                                self._self_dispatch_stderrs(stderr)
-                                tic_a = time.perf_counter()
-                                stderr = []
+                            self._self_dispatch_stdout(read)
+                            has_read = True
 
-                            stdout.append(read)
-
-                    if fd == proc.stderr.fileno():
-                        read = proc.stderr.read()
-
+                    # read the stderr
+                    if file_no == proc.stderr.fileno():
+                        read = proc.stderr.readline()
                         if read:
-                            # if the previous message was an stdout, we dispatch the stdout
-                            if len(stdout) > 0:
-                                self._self_dispatch_stdouts(stdout)
-                                tic_a = time.perf_counter()
-                                stdout = []
-
-                            stderr.append(read)
+                            self._self_dispatch_stderr(read)
+                            has_read = True
 
                 poll = proc.poll()
 
-                # save outputs every 0.1 sec in taskbar or at the end of the process
-                if tic_b - tic_a >= 0.1 or poll is not None:
-                    if len(stdout) > 0:
-                        self._self_dispatch_stdouts(stdout)
-                        tic_a = time.perf_counter()
-                        stdout = []
-                    if len(stderr) > 0:
-                        self._self_dispatch_stderrs(stderr)
-                        tic_a = time.perf_counter()
-                        stderr = []
-
-                if poll is not None:
+                # stop if the process has finished and there is no more data to read
+                # we need to check if there is no more data to read because the process can be finished but there is still data in the buffer (if long log at the end)
+                if poll is not None and not has_read:
                     break
 
             # wait for the process to finish, use comminicate to avoir deadlock if messages are still in the buffer
@@ -166,6 +147,8 @@ class ShellProxy():
                 self._message_dispatcher.notify_error_message(
                     "[ShellProxy] Command failed")
 
+            self.dispatch_waiting_messages()
+
             return return_core
         except Exception as err:
             Logger.log_exception_stack_trace(err)
@@ -185,14 +168,12 @@ class ShellProxy():
             self._message_dispatcher.notify_error_message(message)
 
     def _self_dispatch_stdout(self, message: bytes) -> None:
-        if message:
-            self._message_dispatcher.notify_info_message(
-                message.decode().strip())
+        self._message_dispatcher.notify_info_message(
+            message.decode().strip())
 
     def _self_dispatch_stderr(self, message: bytes) -> None:
-        if message:
-            self._message_dispatcher.notify_error_message(
-                message.decode().strip())
+        self._message_dispatcher.notify_error_message(
+            message.decode().strip())
 
     def clean_working_dir(self):
         FileHelper.delete_dir(self.working_dir)
