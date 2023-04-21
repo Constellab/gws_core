@@ -4,8 +4,8 @@
 # About us: https://gencovery.com
 
 
-from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.config.param.code_param.r_code_param import RCodeParam
+from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
 from gws_core.impl.live.base.env_live_task import EnvLiveTask
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
@@ -35,9 +35,9 @@ class RCondaLiveTask(EnvLiveTask):
 
     config_specs: ConfigSpecs = {
         'params': EnvLiveTask.get_list_param_config(),
-        'env': PythonCodeParam(
+        'env': YamlCodeParam(
             default_value=LiveCodeHelper.get_r_conda_env_file_template(),
-            human_name="YAML configurtation", short_description="YAML configuration of the R conda environment"
+            human_name="Conda environment (YAML)", short_description="YAML configuration of the R conda environment"
         ),
         'code': RCodeParam(
             default_value=LiveCodeHelper.get_r_template(),

@@ -3,4 +3,3 @@ channels:
   - conda-forge
 dependencies:
   - r-base
-  - r-argparse

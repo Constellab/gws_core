@@ -171,14 +171,15 @@ class EnvLiveTask(Task):
 
     def _format_code(self, code: str, params: List[str], target_path: str, source_path: Optional[str]) -> str:
         """
-        Format the code to add parameters and input/output paths"""
-        str_params = '\n'.join(params) if params else ''
-        return f"""
-# read parameters
-target_folder = "{target_path}"
-source_path = "{source_path}"
-{str_params}
-# code snippet
+        Format the code to add parameters and input/output paths
+        """
+
+        # format the param to string and include the last carry return
+        # only if there are some param, this is useful to limit the line number difference
+        # when error occured
+        str_params = '\n'.join(params) + '\n' if len(params) > 0 else ''
+        return f"""target_folder = "{target_path}"
+source_path = "{source_path}"{str_params}
 {code}
 """
 

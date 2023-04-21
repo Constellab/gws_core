@@ -5,6 +5,7 @@
 
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
+from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
 from gws_core.impl.live.base.env_live_task import EnvLiveTask
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
@@ -33,9 +34,9 @@ class PyCondaLiveTask(EnvLiveTask):
 
     config_specs: ConfigSpecs = {
         'params': EnvLiveTask.get_list_param_config(),
-        'env': PythonCodeParam(
+        'env': YamlCodeParam(
             default_value=LiveCodeHelper.get_conda_env_file_template(),
-            human_name="YAML configurtation", short_description="YAML configuration of the conda environment"
+            human_name="Conda environment (YAML)", short_description="YAML configuration of the conda environment"
         ),
         'code': PythonCodeParam(
             default_value=LiveCodeHelper.get_python_with_env_template(),

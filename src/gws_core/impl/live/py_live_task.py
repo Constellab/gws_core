@@ -2,7 +2,7 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
+import traceback
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
@@ -51,14 +51,27 @@ class PyLiveTask(Task):
         code: str = params.get_value('code')
         params = params.get_value('params')
 
+        # convert param to string and leave empty if no params so it does not offset the
+        # line number of the code
         str_params = "\n".join(params)
+        if len(params) > 0:
+            str_params = str_params + "\n"
 
         # add the params to the code
-        code_with_params = f"{str_params}\n#Code snippet\n{code}"
+        code_with_params = f"{str_params}{code}"
 
         # execute the live code
         init_globals = {'self': self, "source": inputs.get('source'),
                         **globals()}
+
+        try:
+            result = LiveCodeHelper.run_python_code(
+                code_with_params, init_globals)
+        except Exception as err:
+            self.log_error_message(
+                'Error during the execution of the live task, here is the detail')
+            self.log_error_message(traceback.format_exc())
+            raise (err)
         result = LiveCodeHelper.run_python_code(code_with_params, init_globals)
         output = result.get("target", None)
 
