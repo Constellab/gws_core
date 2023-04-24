@@ -202,4 +202,4 @@ source_path = "{source_path}"{str_params}
         return ListParam(
             optional=True, default_value=[],
             human_name="Parameter definitions",
-            short_description="Please give one parameter definition per line")
+            short_description="Please give one parameter definition per line (https://constellab.community/tech-doc/doc/developer-guide/live-task/getting-started#parameters)")

@@ -23,12 +23,11 @@ class RCondaLiveTask(EnvLiveTask):
 
     Live tasks are fast and efficient tools to develop, test, use and share code snippets.
 
-    Conda is a tool to automatically creates and manages a virtualenv for your projects.
-    Confgure you R environment using a YAML data and enjoy!
+    **Warning**: It is recommended to use code snippets comming from trusted sources.
 
-    See also https://https://docs.conda.io/, https://www.r-project.org/
+    Here is the general documentation for live task (including how to use the parameters): https://constellab.community/tech-doc/doc/developer-guide/live-task/getting-started
 
-    > **Warning**: It is recommended to use code snippets comming from trusted sources.
+    Here is the documentation of the live task: https://constellab.community/tech-doc/doc/developer-guide/live-task/env-live-task
     """
 
     SNIPPET_FILE_EXTENSION: str = "R"

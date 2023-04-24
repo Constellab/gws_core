@@ -5,6 +5,7 @@
 import traceback
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
+from gws_core.impl.live.base.env_live_task import EnvLiveTask
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.resource.resource_factory import ResourceFactory
 
@@ -26,7 +27,11 @@ class PyLiveTask(Task):
 
     Live tasks are fast and efficient tools to develop, test, use and share code snippets.
 
-    > **Warning**: It is recommended to use code snippets comming from trusted sources.
+    **Warning**: It is recommended to use code snippets comming from trusted sources.
+
+    Here is the general documentation for live task (including how to use the parameters): https://constellab.community/tech-doc/doc/developer-guide/live-task/getting-started
+
+    Here is the documentation of the live task: https://constellab.community/tech-doc/doc/developer-guide/live-task/python-live-task
     """
 
     input_specs: InputSpecs = {
@@ -36,11 +41,7 @@ class PyLiveTask(Task):
         'target': OutputSpec(Resource, sub_class=True, is_optional=True),
     }
     config_specs: ConfigSpecs = {
-        'params':
-        ListParam(
-            optional=True, default_value=[],
-            human_name="Parameter definitions",
-            short_description="Please give one parameter definition per line"),
+        'params': EnvLiveTask.get_list_param_config(),
         'code':
         PythonCodeParam(
             default_value=LiveCodeHelper.get_python_template(),
