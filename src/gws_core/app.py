@@ -97,8 +97,6 @@ class App:
 
         # api routes
         cls.app.mount("/core-api/", core_app)
-        # TODO to remove once all lab are on version 0.5.0
-        cls.app.mount("/central-api/", space_app)
         cls.app.mount("/space-api/", space_app)
 
         uvicorn.run(cls.app, host='0.0.0.0', port=int(port))

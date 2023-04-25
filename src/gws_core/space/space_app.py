@@ -11,6 +11,7 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
+from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.project.project_dto import SpaceProject
 from gws_core.project.project_service import ProjectService
 
@@ -175,3 +176,15 @@ def delete_project(id: str, _=Depends(AuthSpace.check_space_api_key_and_user)):
     """
 
     return ProjectService.delete_project(id)
+
+
+############################################### EXPERIMENT #####################################################
+
+@space_app.get("/experiment/count-running-or-queued", tags=["Experiment"])
+def count_running_or_queued_experiments(_=Depends(AuthSpace.check_space_api_key_and_user)):
+    """
+    Count the number of running or queued experiments
+
+    """
+
+    return {"experiment_count": ExperimentService.count_running_or_queued_experiments()}
