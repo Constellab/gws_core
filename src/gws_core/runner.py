@@ -46,7 +46,8 @@ def call(is_prod: bool = True, test: str = "",
     # Init the db
     if is_test:
         if App.is_running:
-            raise BadRequestException("Cannot run tests while the Application is running.")
+            raise BadRequestException(
+                "Cannot run tests while the Application is running.")
 
     DbManagerService.init_all_db()
 
@@ -79,24 +80,23 @@ def call(is_prod: bool = True, test: str = "",
         for test_file in tests:
             tab = test_file.split("/")
             if len(tab) == 2:
-                modules = settings.get_modules()
+                bricks = settings.get_bricks()
                 brick_name = tab[0]
                 test_file = tab[1]
-                if brick_name not in modules:
+                if brick_name not in bricks:
                     raise BadRequestException(
                         f"The brick '{brick_name}' is not found. It is maybe not loaded on this lab.")
-                if not modules[brick_name].get("is_brick"):
-                    raise BadRequestException(
-                        f"Module '{brick_name}' is not a brick. Unit testing is not allowed for external modules.")
-                brick_dir = modules[brick_name]["path"]
+                brick_dir = bricks[brick_name]["path"]
             else:
                 test_file = tab[0]
                 brick_dir = settings.get_cwd()
 
-            test_suite.addTests(loader.discover(os.path.join(brick_dir, "./tests/"), pattern=test_file+".py"))
+            test_suite.addTests(loader.discover(os.path.join(
+                brick_dir, "./tests/"), pattern=test_file+".py"))
 
         if test_suite.countTestCases() == 0:
-            raise Error(f"No test file with name '{test}' found. Or the file does not contain tests")
+            raise Error(
+                f"No test file with name '{test}' found. Or the file does not contain tests")
 
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
@@ -104,7 +104,8 @@ def call(is_prod: bool = True, test: str = "",
         # nothing ...
         pass
     else:
-        Logger.error("No option provided on the run, did you forget '--runserver' or '--test' ?")
+        Logger.error(
+            "No option provided on the run, did you forget '--runserver' or '--test' ?")
 
 # TODO to remove on next version (like 1.1.0)
 
