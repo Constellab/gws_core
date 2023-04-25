@@ -14,6 +14,7 @@ from starlette.exceptions import HTTPException
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.project.project_dto import SpaceProject
 from gws_core.project.project_service import ProjectService
+from gws_core.user.activity_service import ActivityService
 
 from ..core.exception.exception_handler import ExceptionHandler
 from ..core.service.settings_service import SettingsService
@@ -180,11 +181,17 @@ def delete_project(id: str, _=Depends(AuthSpace.check_space_api_key_and_user)):
 
 ############################################### EXPERIMENT #####################################################
 
-@space_app.get("/experiment/count-running-or-queued", tags=["Experiment"])
-def count_running_or_queued_experiments(_=Depends(AuthSpace.check_space_api_key_and_user)):
+@space_app.get("/lab/global-activity", tags=["Experiment"])
+def lab_activity(_=Depends(AuthSpace.check_space_api_key)):
     """
     Count the number of running or queued experiments
 
     """
 
-    return {"experiment_count": ExperimentService.count_running_or_queued_experiments()}
+    last_activity = ActivityService.get_last_activity()
+
+    return {
+        "running_experiments": ExperimentService.count_running_or_queued_experiments(),
+        "queued_experiments": ExperimentService.count_queued_experiments(),
+        "last_activity": last_activity.to_json() if last_activity is not None else None
+    }

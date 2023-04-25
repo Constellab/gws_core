@@ -155,7 +155,8 @@ class Experiment(ModelWithUser, TaggableModel):
             object_type=self.full_classname(),
             object_id=self.id
         )
-        self.protocol_model.archive(archive, archive_resources=archive_resources)
+        self.protocol_model.archive(
+            archive, archive_resources=archive_resources)
 
         return super().archive(archive)
 
@@ -171,14 +172,13 @@ class Experiment(ModelWithUser, TaggableModel):
 
     @classmethod
     def count_running_or_queued_experiments(cls) -> int:
-        """
-        :return: the count of experiment in progress or waiting for a cli process
-        :rtype: `int`
-        """
-
         return Experiment.select().where((Experiment.status == ExperimentStatus.RUNNING) |
                                          (Experiment.status == ExperimentStatus.IN_QUEUE) |
                                          (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS)).count()
+
+    @classmethod
+    def count_queued_experiments(cls) -> int:
+        return Experiment.select().where((Experiment.status == ExperimentStatus.IN_QUEUE)).count()
 
     @transaction()
     def reset(self) -> 'Experiment':
@@ -192,19 +192,23 @@ class Experiment(ModelWithUser, TaggableModel):
         from ..task.task_model import TaskModel
 
         if not self.is_saved():
-            raise BadRequestException("Can't reset an experiment not saved before")
+            raise BadRequestException(
+                "Can't reset an experiment not saved before")
 
         if self.is_validated or self.is_archived:
-            raise BadRequestException("Can't reset a validated or archived experiment")
+            raise BadRequestException(
+                "Can't reset a validated or archived experiment")
 
         if self.is_running:
             raise BadRequestException("Can't reset a running experiment")
 
         # Check if any resource of this experiment is used in another one
-        output_resources: List[ResourceModel] = list(ResourceModel.get_by_experiment(self.id))
+        output_resources: List[ResourceModel] = list(
+            ResourceModel.get_by_experiment(self.id))
 
         if len(output_resources) > 0:
-            output_resource_ids: List[str] = list(map(lambda x: x.id, output_resources))
+            output_resource_ids: List[str] = list(
+                map(lambda x: x.id, output_resources))
 
             # check if it is used as input
             other_experiment: TaskInputModel = TaskInputModel.get_other_experiments(
@@ -220,7 +224,8 @@ class Experiment(ModelWithUser, TaggableModel):
 
             if other_task is not None:
                 # retrieve the resource model
-                resource_model: ResourceModel = [x for x in output_resources if x.id == other_task.source_config_id][0]
+                resource_model: ResourceModel = [
+                    x for x in output_resources if x.id == other_task.source_config_id][0]
                 raise ResourceUsedInAnotherExperimentException(
                     resource_model.name, other_task.experiment.get_short_name())
 
@@ -230,7 +235,8 @@ class Experiment(ModelWithUser, TaggableModel):
         # Delete all the resources previously generated to clear the DB
         # sort the resources to have children resources before their parents to prevent error with
         # foreign key constraint
-        output_resources.sort(key=lambda x: 'b' if x.parent_resource_id is None else 'a')
+        output_resources.sort(
+            key=lambda x: 'b' if x.parent_resource_id is None else 'a')
         for output_resource in output_resources:
             output_resource.delete_instance()
 
@@ -265,7 +271,8 @@ class Experiment(ModelWithUser, TaggableModel):
                                       unique_code=GWSException.EXPERIMENT_VALIDATE_RUNNING.name)
 
         if self.project is None:
-            raise BadRequestException("The experiment must be linked to a project before validating it")
+            raise BadRequestException(
+                "The experiment must be linked to a project before validating it")
 
         if self.project.children.count() > 0:
             raise BadRequestException(
@@ -367,7 +374,8 @@ class Experiment(ModelWithUser, TaggableModel):
 
         # check experiment status
         if not self.is_running:
-            raise BadRequestException(detail=f"Experiment '{self.id}' is not running")
+            raise BadRequestException(
+                detail=f"Experiment '{self.id}' is not running")
 
     def check_is_updatable(self) -> None:
         """Throw an error if the experiment is not updatable
@@ -422,7 +430,8 @@ class Experiment(ModelWithUser, TaggableModel):
 
     def export_protocol(self) -> dict:
         json_ = self.protocol_model.export_config()
-        del json_["instance_name"]  # remove the main instance name because it is not relevant
+        # remove the main instance name because it is not relevant
+        del json_["instance_name"]
         return {
             "version": 1,  # version of the protocol json format
             "data": json_

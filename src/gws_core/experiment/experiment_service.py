@@ -280,6 +280,10 @@ class ExperimentService(BaseService):
         return Experiment.count_running_or_queued_experiments()
 
     @classmethod
+    def count_queued_experiments(cls) -> int:
+        return Experiment.count_queued_experiments()
+
+    @classmethod
     def get_experiment_by_id(cls, id: str) -> Experiment:
         return Experiment.get_by_id_and_check(id)
 

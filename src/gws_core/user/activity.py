@@ -2,7 +2,6 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-import json
 from typing import final
 
 from peewee import CharField, ForeignKeyField
@@ -18,7 +17,7 @@ class Activity(Model):
     (User) Activity class
     """
 
-    user = ForeignKeyField(User, null=False, index=True)
+    user: User = ForeignKeyField(User, null=False, index=True)
     activity_type = CharField(null=False, index=True)
     object_type = CharField(null=True, index=True)
     object_id = CharField(null=True, index=True)
@@ -46,7 +45,7 @@ class Activity(Model):
         return None
 
     @classmethod
-    def add(cls, activity_type: str, *, object_type: str = None, object_id: str = None, user: User = None):
+    def add(cls, activity_type: str, object_type: str = None, object_id: str = None, user: User = None):
         if user is None:
             user = CurrentUserService.get_and_check_current_user()
         activity = Activity(
@@ -57,7 +56,9 @@ class Activity(Model):
         )
         activity.save()
 
-    # -- T --
+    @classmethod
+    def get_last_activity(cls) -> "Activity":
+        return Activity.select().order_by(Activity.created_at.desc()).first()
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
@@ -72,10 +73,8 @@ class Activity(Model):
         """
 
         _json = super().to_json(deep=deep, **kwargs)
-        _json["user"] = {
-            "id": self.user.id,
-            "first_name": self.user.first_name,
-            "last_name": self.user.last_name
-        }
+
+        if self.user:
+            _json["user"] = self.user.to_json()
 
         return _json
