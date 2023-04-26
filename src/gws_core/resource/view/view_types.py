@@ -41,6 +41,7 @@ class ViewType(Enum):
     MULTI_VIEWS = "multi-view"
     NETWORK = "network-view"
     IMAGE = "image-view"
+    HTML = "html-view"
 
 
 # List of view type that cannot be used in a report

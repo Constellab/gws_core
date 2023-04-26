@@ -6,8 +6,7 @@ import json
 import os
 from typing import Any, AnyStr, Type
 
-from PIL import Image
-
+from gws_core.impl.view.html_view import HTMLView
 from gws_core.impl.view.image_view import ImageView
 
 from ...config.config_types import ConfigParams
@@ -161,8 +160,11 @@ class File(FSNode):
     @view(view_type=View, human_name="Default view", short_description="View the file with automatic view", default_view=True)
     def default_view(self, params: ConfigParams) -> View:
 
+        # specific extension
         if self.is_image():
             return ImageView.from_local_file(self.path)
+        if self.extension == 'html':
+            return HTMLView(self.read())
 
         # if the file is not readable, don't open the file and return the main view
         if not self.is_readable():
