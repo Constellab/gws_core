@@ -32,7 +32,7 @@
                   {"name": "uvicorn", "version": "0.20.0"},
                   {"name": "charset-normalizer", "version": "2.0.12"},
                   {"name": "dill", "version": "0.3.4"},
-                  {"name": "numpy", "version": "1.24.1"},
+                  {"name": "numpy", "version": "1.23.5"},
                   {"name": "pandas", "version": "1.5.2"},
                   {"name": "matplotlib", "version": "3.6.2"},
                   {"name": "scipy", "version": "1.10.0"},
