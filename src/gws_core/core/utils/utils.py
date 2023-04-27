@@ -216,7 +216,8 @@ class Utils:
                 return f"Length of array different for key '{cumulated_key}'."
 
             for index, value in enumerate(json_1):
-                result = Utils._json_equals_recur(value, json_2[index], ignore_keys, f"{cumulated_key}[{index}]")
+                result = Utils._json_equals_recur(
+                    value, json_2[index], ignore_keys, f"{cumulated_key}[{index}]")
 
                 if result is not None:
                     return result
@@ -235,7 +236,11 @@ class Utils:
                 if ignore_keys and key in ignore_keys:
                     continue
 
-                result = Utils._json_equals_recur(value, json_2[key], ignore_keys, f"{cumulated_key}.{key}")
+                if key not in json_2:
+                    return f"Key '{cumulated_key}' missing in second json."
+
+                result = Utils._json_equals_recur(
+                    value, json_2[key], ignore_keys, f"{cumulated_key}.{key}")
                 if result is not None:
                     return result
 

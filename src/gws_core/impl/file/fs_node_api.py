@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse
 from typing_extensions import TypedDict
 
 from gws_core.core.classes.jsonable import ListJsonable
+from gws_core.resource.view.view_types import CallViewResult
 from gws_core.task.converter.converter_service import ConverterService
 
 from ...core_app import core_app
@@ -31,7 +32,8 @@ def upload_file(file: UploadFile = FastAPIFile(...),
     :type typingNames: List[str], optional
     """
 
-    result = FsNodeService.upload_file(upload_file=file, typing_name=typing_name[0])
+    result = FsNodeService.upload_file(
+        upload_file=file, typing_name=typing_name[0])
     return result.to_json()
 
 
@@ -45,7 +47,8 @@ def upload_folder(folder_typing_name: str,
     :type files: List[UploadFile], optional
     """
 
-    result = FsNodeService.upload_folder(folder_typing_name=folder_typing_name, files=files)
+    result = FsNodeService.upload_folder(
+        folder_typing_name=folder_typing_name, files=files)
     return result.to_json()
 
 
@@ -56,6 +59,20 @@ def download_a_file(id: str,
     Download a file. The access is made with a unique  code generated with get_download_file_url
     """
     return FsNodeService.download_file(id=id)
+
+
+class SubFilePath(TypedDict):
+    sub_file_path: str
+
+
+@core_app.post("/fs-node/{id}/folder/sub-file-view", tags=["Files"], summary="Call the default view of a folder sub file")
+def call_folder_sub_file_view(id: str,
+                              data: SubFilePath,
+                              _=Depends(AuthService.check_user_access_token)):
+    """
+    Download a file. The access is made with a unique  code generated with get_download_file_url
+    """
+    return FsNodeService.call_folder_sub_file_view(resource_id=id, sub_file_path=data['sub_file_path'])
 
 ############################# FILE EXTRACTOR ###########################
 

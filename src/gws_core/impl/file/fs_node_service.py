@@ -5,7 +5,7 @@
 
 import os
 from pathlib import Path
-from typing import List, Type
+from typing import Any, List, Type
 
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
@@ -16,8 +16,9 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
 from gws_core.core.utils.zip import Zip
+from gws_core.resource.resource_service import ResourceService
+from gws_core.resource.view.view_types import CallViewResult
 
-from ...core.classes.jsonable import Jsonable, ListJsonable
 from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -43,7 +44,8 @@ class FsNodeService(BaseService):
         resource: Resource = resource_model.get_resource()
 
         if not isinstance(resource, FSNode):
-            raise BadRequestException("Can't download resource because it is not an FsNode")
+            raise BadRequestException(
+                "Can't download resource because it is not an FsNode")
 
         file_store: FileStore = LocalFileStore.get_default_instance()
         if not file_store.node_path_exists(resource.path):
@@ -72,7 +74,8 @@ class FsNodeService(BaseService):
 
         # retrieve the name of the file without the folder if there are some
         filename = FileHelper.get_name_with_extension(upload_file.filename)
-        file: File = file_store.add_from_temp_file(upload_file.file, filename, file_type)
+        file: File = file_store.add_from_temp_file(
+            upload_file.file, filename, file_type)
 
         # Call the check resource on file
         try:
@@ -99,7 +102,8 @@ class FsNodeService(BaseService):
 
     @classmethod
     def _add_file_to_store(cls, file: File, store: FileStore, dest_file_name: str = None) -> ResourceModel:
-        new_file: File = store.add_file_from_path(source_file_path=file.path, dest_file_name=dest_file_name)
+        new_file: File = store.add_file_from_path(
+            source_file_path=file.path, dest_file_name=dest_file_name)
         return cls.create_fs_node_model(new_file)
 
 ############################# FS NODE  ###########################
@@ -117,7 +121,8 @@ class FsNodeService(BaseService):
         if len(files) == 0:
             raise BadRequestException('The folder is empty')
 
-        folder_type: Type[Folder] = TypingManager.get_type_from_name(folder_typing_name)
+        folder_type: Type[Folder] = TypingManager.get_type_from_name(
+            folder_typing_name)
 
         if not Utils.issubclass(folder_type, Folder):
             raise BadRequestException('The type is not a sub class of Folder')
@@ -128,14 +133,16 @@ class FsNodeService(BaseService):
 
         # create the folder
         file_store: FileStore = LocalFileStore.get_default_instance()
-        folder_model: ResourceModel = cls.create_empty_folder(folder_name, file_store, folder_type)
+        folder_model: ResourceModel = cls.create_empty_folder(
+            folder_name, file_store, folder_type)
         folder: Folder = folder_model.get_resource()
 
         # Add all the file under the create folder
         for file in files:
             file_path: Path = FileHelper.get_path(file.filename)
             # replace the initial folder name with the name of the generated folder
-            new_file_path = os.path.join(folder.get_default_name(), *file_path.parts[1:])
+            new_file_path = os.path.join(
+                folder.get_default_name(), *file_path.parts[1:])
             # use file.file to access temporary file
             file_store.add_from_temp_file(file.file, new_file_path)
 
@@ -160,6 +167,19 @@ class FsNodeService(BaseService):
     def create_empty_folder(cls, path: str, store: FileStore, folder_type: Type[Folder] = Folder) -> ResourceModel:
         folder = store.create_empty_folder(path, folder_type)
         return cls.create_fs_node_model(folder)
+
+    @classmethod
+    def call_folder_sub_file_view(cls, resource_id: str, sub_file_path: str) -> CallViewResult:
+        resource_model: ResourceModel = ResourceService.get_resource_by_id(
+            resource_id)
+
+        view_name = Folder.view_sub_file.__name__
+
+        return ResourceService.call_view_on_resource_model(
+            resource_model=resource_model, view_name=view_name, config_values={
+                'sub_file_path': sub_file_path},
+            transformers=[], save_view_config=True)
+
 
 ############################# FILE TYPE ###########################
 

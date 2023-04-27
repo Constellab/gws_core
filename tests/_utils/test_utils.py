@@ -14,6 +14,7 @@ class SubString(str):
     pass
 
 
+# test_utils
 class TestUtils(TestCase):
 
     def test_get_model_type(self):
@@ -51,12 +52,20 @@ class TestUtils(TestCase):
         self.assertFalse(Utils.is_json(SubString('1')))
 
         self.assertTrue(Utils.is_json({"a": ['1', '2', {'test': 'Super'}]}))
-        self.assertFalse(Utils.is_json({"a": ['1', '2', {'test': SubString('1')}]}))
+        self.assertFalse(Utils.is_json(
+            {"a": ['1', '2', {'test': SubString('1')}]}))
 
     def test_json_equals(self):
-        Utils.assert_json_equals({"a": ['1', '2', {'test': 'Super'}]}, {"a": ['1', '2', {'test': 'Super'}]})
+        Utils.assert_json_equals({"a": ['1', '2', {'test': 'Super'}]}, {
+                                 "a": ['1', '2', {'test': 'Super'}]})
 
         self.assertFalse(Utils.json_equals([1, 2], [1, 2, 3]))
         self.assertFalse(Utils.json_equals([1, 2], [2, 1]))
-        self.assertFalse(Utils.json_equals({'test': 'Super'}, {'test': 'Super!'}))
-        self.assertFalse(Utils.json_equals({'test': {'subTest': 'super'}}, {'test': {'subTest': 'super!'}}))
+        self.assertFalse(Utils.json_equals(
+            {'test': 'Super'}, {'test': 'Super!'}))
+        self.assertFalse(Utils.json_equals(
+            {'test': {'subTest': 'super'}}, {'test': {'subTest': 'super!'}}))
+        self.assertFalse(Utils.json_equals(
+            {'test1': 'Super'}, {'test': 'Super'}))
+        self.assertFalse(Utils.json_equals(
+            {'test1': 'Super'}, {'test1': 'Super', 'test': 'Super'}))

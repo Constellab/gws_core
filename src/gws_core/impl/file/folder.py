@@ -8,12 +8,16 @@ import os
 from pathlib import Path
 from typing import List
 
+from gws_core.config.param.param_spec import StrParam
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+from gws_core.impl.file.file import File
 from gws_core.impl.file.folder_view import LocalFolderView
+from gws_core.resource.view.view import View
 
 from ...config.config_types import ConfigParams
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view.view_decorator import view
-from ..json.json_view import JSONView
 from .file_helper import FileHelper
 from .fs_node import FSNode
 
@@ -50,5 +54,21 @@ class Folder(FSNode):
 
     @view(view_type=LocalFolderView, human_name="View folder content",
           short_description="View the sub files and folders", default_view=True)
-    def view_as_json(self, params: ConfigParams) -> JSONView:
+    def view_as_json(self, params: ConfigParams) -> LocalFolderView:
         return LocalFolderView(self.path)
+
+    @view(view_type=View, human_name="View folder content",
+          short_description="View the sub files and folders", specs={
+              'sub_file_path': StrParam()
+          })
+    def view_sub_file(self, params: ConfigParams) -> View:
+        complete_path = os.path.join(self.path, params['sub_file_path'])
+
+        if not FileHelper.exists_on_os(complete_path):
+            raise BadRequestException("The file does not exist")
+
+        if not FileHelper.is_file(complete_path):
+            raise BadRequestException("The path is not a file")
+
+        sub_file = File(complete_path)
+        return sub_file.default_view(ConfigParams({}))
