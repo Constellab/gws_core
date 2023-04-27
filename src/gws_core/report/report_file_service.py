@@ -41,13 +41,17 @@ class ReportFileService():
         except Exception:
             raise BadRequestException('The uploaded file is not an image')
 
-        dir = cls._init_dir()
-
         # generate a file name
-        extension = FileHelper.get_extension(file.filename)
-        filename = StringHelper.generate_uuid() + '_' + str(DateHelper.now_utc_as_milliseconds()) + '.' + extension
+        # when the file data was set (like pasted from clipboard), the content type is 'application/octet-stream'
+        if file.content_type == 'application/octet-stream':
+            extension = 'png'
+        else:
+            extension = FileHelper.get_extension(file.filename)
+        filename = StringHelper.generate_uuid() + '_' + \
+            str(DateHelper.now_utc_as_milliseconds()) + '.' + extension
 
-        file_path = os.path.join(dir, filename)
+        dest_dir = cls._init_dir()
+        file_path = os.path.join(dest_dir, filename)
 
         image.save(file_path)
         image.close()
@@ -66,10 +70,10 @@ class ReportFileService():
 
     @classmethod
     def _init_dir(cls) -> str:
-        dir = cls._get_dir_path()
+        dir_ = cls._get_dir_path()
 
-        FileHelper.create_dir_if_not_exist(dir)
-        return dir
+        FileHelper.create_dir_if_not_exist(dir_)
+        return dir_
 
     @classmethod
     def get_file_path(cls, filename: str) -> str:
