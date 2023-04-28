@@ -1,9 +1,11 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
-
-from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Dict, Generic, List, Type, TypeVar, final
+from typing import Dict, Generic, List, Type, TypeVar, final
 
 from gws_core.io.io_spec import IOSpec, IOSpecDict
 
@@ -14,9 +16,6 @@ from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .io_exception import ResourceNotCompatibleException
 from .port import InPort, OutPort, Port, PortDict
-
-if TYPE_CHECKING:
-    from ..process.process_model import ProcessModel
 
 IODict = Dict[str, PortDict]
 
@@ -36,11 +35,9 @@ class IO(Base, Generic[PortType]):
     """
 
     _ports: Dict[str, PortType] = {}
-    _parent: ProcessModel
     _counter = 0
 
-    def __init__(self, parent: ProcessModel):
-        self._parent = parent
+    def __init__(self):
         self._ports = dict()
 
     def disconnect(self):
@@ -73,33 +70,6 @@ class IO(Base, Generic[PortType]):
                 return False
         return True
 
-    # -- N --
-
-    def get_next_procs(self) -> List[ProcessModel]:
-        """
-        Returns the list of (right-hand side) processes connected to the IO ports.
-
-        :return: List of processes
-        :rtype: list
-        """
-
-        next_proc = []
-        for port in self._ports.values():
-            for proc in port.get_next_procs():
-                next_proc.append(proc)
-        return next_proc
-
-    @property
-    def parent(self) -> ProcessModel:
-        """
-        Returns the parent of the IO, i.e. the task that holds this IO.
-
-        :return: The parent task
-        :rtype: Task
-        """
-
-        return self._parent
-
     def reset(self) -> None:
         for port in self._ports.values():
             port.reset()
@@ -128,20 +98,19 @@ class IO(Base, Generic[PortType]):
         """
 
         port_type: Type[PortType] = self._get_port_type()
-        port: PortType = port_type(self, name, resource_spec)
+        port: PortType = port_type(name, resource_spec)
         self.add_port(name, port)
         return port
 
     def add_port(self, name: str, port: PortType) -> None:
         if not isinstance(name, str):
-            raise BadRequestException("Invalid port specs. The port name must be a string")
+            raise BadRequestException(
+                "Invalid port specs. The port name must be a string")
         self._ports[name] = port
 
     @abstractmethod
     def _get_port_type(self) -> Type[PortType]:
         pass
-
-    # -- G --
 
     def get_port_names(self) -> List[str]:
         """
@@ -172,17 +141,14 @@ class IO(Base, Generic[PortType]):
 
     def _check_port_name(self, name) -> None:
 
-        error: str = None
         if not isinstance(name, str):
-            error = f"The port name must be a string. Actual value: '{name}'"
+            raise BadRequestException(
+                f"The port name must be a string. Actual value: '{name}'")
 
         if not self.port_exists(name):
-            error = f"{self.classname()} port '{name}' not found"
+            raise BadRequestException(
+                f"{self.classname()} port '{name}' not found")
 
-        if error:
-            if self.parent:
-                error += f" | Process : {self.parent.get_info()}"
-            raise BadRequestException(error)
     ################################################### RESOURCE ########################################
 
     def get_resource_models(self) -> Dict[str, ResourceModel]:
@@ -243,8 +209,8 @@ class IO(Base, Generic[PortType]):
     ################################################### JSON ########################################
 
     @classmethod
-    def load_from_json(cls, parent: ProcessModel, io_json: IODict) -> IO:
-        io: IO = cls(parent)
+    def load_from_json(cls, io_json: IODict) -> 'IO':
+        io: IO = cls()
         if io_json is None:
             return io
 
@@ -252,10 +218,11 @@ class IO(Base, Generic[PortType]):
         port_type: Type[PortType] = io._get_port_type()
         for key, port_dict in io_json.items():
 
-            port: PortType = port_type.load_from_json(port_dict, io, key)
+            port: PortType = port_type.load_from_json(port_dict, key)
 
             if port_dict["resource_id"]:
-                resource_model: ResourceModel = ResourceModel.get_by_id_and_check(port_dict["resource_id"])
+                resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
+                    port_dict["resource_id"])
                 port.resource_model = resource_model
 
             io.add_port(key, port)
@@ -288,26 +255,11 @@ class Inputs(IO[InPort]):
     Input class
     """
 
-    @property
-    def is_connected(self) -> bool:
-        """
-        Returns True if a port of the Input is left-connected.
-
-        :return: True if a port of the Input is left-connected.
-        :rtype: bool
-        """
-
-        for port in self._ports.values():
-            if not port.is_left_connected:
-                return False
-
-        return True
-
     def _get_port_type(self) -> Type[InPort]:
         return InPort
 
     def all_connected_port_values_provided(self) -> bool:
-        """Return true if all the ports that are connected, received a resource
+        """Return true if all the connected ports, received a resource
         """
         for port in self.ports.values():
             if port.is_left_connected and not port.resource_provided:
@@ -330,25 +282,3 @@ class Outputs(IO[OutPort]):
 
     def _get_port_type(self) -> Type[OutPort]:
         return OutPort
-
-    @property
-    def is_connected(self) -> bool:
-        """
-        Returns True if a port of the Output is right-connected.
-
-        :return: True if a port of the Output is right-connected.
-        :rtype: bool
-        """
-        for port in self._ports.values():
-            if not port.is_right_connected:
-                return False
-
-        return True
-
-    def propagate(self):
-        """
-        Propagates the resources of the child port to the connected (right-hande side) ports
-        """
-
-        for port in self._ports.values():
-            port.propagate()

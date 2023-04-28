@@ -10,6 +10,7 @@ from typing import Dict, List, Type, final
 from peewee import Tuple
 from typing_extensions import TypedDict
 
+from gws_core.config.config_types import ConfigParamsDict
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 
@@ -90,7 +91,6 @@ class Protocol(Process):
         :param config_params: [description]
         :type config_params: ConfigParams
         """
-        pass
 
     @final
     def add_process(self, process_type: Type[Process], instance_name: str,
@@ -237,7 +237,8 @@ class Protocol(Process):
         """Get the process spec of the process with the given instance name """
 
         if instance_name not in self._process_specs:
-            raise Exception(f"The process with instance name '{instance_name}' doesn't exist.")
+            raise Exception(
+                f"The process with instance name '{instance_name}' doesn't exist.")
         return self._process_specs[instance_name]
 
     @classmethod
@@ -269,10 +270,12 @@ class Protocol(Process):
 
         for name, interface in self._interfaces.items():
             # retreive the process spec
-            process_spec = self.get_process_spec(interface["process_instance_name"])
+            process_spec = self.get_process_spec(
+                interface["process_instance_name"])
 
             # retrieve the corresponding input spec
-            input_specs[name] = process_spec.process_type.get_input_specs()[interface["port_name"]]
+            input_specs[name] = process_spec.process_type.get_input_specs()[
+                interface["port_name"]]
 
         return input_specs
 
@@ -282,9 +285,11 @@ class Protocol(Process):
 
         for name, outerface in self._outerfaces.items():
             # retreive the process spec
-            process_spec = self.get_process_spec(outerface["process_instance_name"])
+            process_spec = self.get_process_spec(
+                outerface["process_instance_name"])
 
             # retrieve the corresponding input spec
-            output_specs[name] = process_spec.process_type.get_output_specs()[outerface["port_name"]]
+            output_specs[name] = process_spec.process_type.get_output_specs()[
+                outerface["port_name"]]
 
         return output_specs

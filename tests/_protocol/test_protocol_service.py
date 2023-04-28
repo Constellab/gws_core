@@ -29,17 +29,21 @@ class TestProtocolService(BaseTestCase):
             protocol_model.id, RobotMove._typing_name)
 
         protocol_model = protocol_model.refresh()
-        self.assertEqual(protocol_model.get_process(process_model.instance_name).get_process_type(), RobotMove)
+        self.assertEqual(protocol_model.get_process(
+            process_model.instance_name).get_process_type(), RobotMove)
 
         # Test add source
-        resource_model: ResourceModel = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)
+        resource_model: ResourceModel = ResourceModel.save_from_resource(
+            Robot.empty(), ResourceOrigin.UPLOADED)
         source_model: ProcessModel = ProtocolService.add_source_to_process_input(
             protocol_model.id, resource_model.id, process_model.instance_name, 'robot').process_model
 
         protocol_model = protocol_model.refresh()
-        source_model: TaskModel = protocol_model.get_process(source_model.instance_name)
+        source_model: TaskModel = protocol_model.get_process(
+            source_model.instance_name)
         self.assertEqual(source_model.get_process_type(), Source)
-        self.assertEqual(source_model.config.get_value(Source.config_name), resource_model.id)
+        self.assertEqual(source_model.config.get_value(
+            Source.config_name), resource_model.id)
         # check that the source_config_id is set for the task model
         self.assertEqual(source_model.source_config_id, resource_model.id)
 
@@ -70,7 +74,8 @@ class TestProtocolService(BaseTestCase):
         viewer_model = protocol_model.get_process(viewer_model.instance_name)
         self.assertEqual(viewer_model.get_process_type(), Viewer)
         # check that the view task was pre-configured with the robot type
-        self.assertEqual(viewer_model.config.get_value(Viewer.resource_config_name), Robot._typing_name)
+        self.assertEqual(viewer_model.config.get_value(
+            Viewer.resource_config_name), Robot._typing_name)
 
         # Check that the connector was created
         self.assertEqual(len(protocol_model.connectors), 1)
@@ -93,13 +98,14 @@ class TestProtocolService(BaseTestCase):
         connector: Connector = protocol_model.connectors[0]
 
         # Check the port of the connector
-        self.assertEqual(connector.out_port.name, 'robot')
-        self.assertEqual(connector.out_port.parent.parent.id, create.id)
-        self.assertEqual(connector.in_port.name, 'robot')
-        self.assertEqual(connector.in_port.parent.parent.id, move.id)
+        self.assertEqual(connector.left_port_name, 'robot')
+        self.assertEqual(connector.left_process.id, create.id)
+        self.assertEqual(connector.right_port_name, 'robot')
+        self.assertEqual(connector.right_process.id, move.id)
 
         # Test removing connector
-        ProtocolService.delete_connector_of_protocol(protocol_model.id, move.instance_name, 'robot')
+        ProtocolService.delete_connector_of_protocol(
+            protocol_model.id, move.instance_name, 'robot')
 
         protocol_model = protocol_model.refresh()
 

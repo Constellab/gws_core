@@ -61,12 +61,14 @@ def fix_all_protocol(_=Depends(AuthService.check_user_access_token)):
 
 def fix_protocol(protocol: ProtocolModel):
     for process in protocol.processes.values():
-        task_input_model: List[TaskInputModel] = list(TaskInputModel.get_by_task_model(process.id))
+        task_input_model: List[TaskInputModel] = list(
+            TaskInputModel.get_by_task_model(process.id))
 
         for task_input in task_input_model:
 
             if not process.inputs.port_exists(task_input.port_name):
-                Logger.error(f"Port {task_input.port_name} does not exist in {process.id}, in protocol {protocol.id}")
+                Logger.error(
+                    f"Port {task_input.port_name} does not exist in {process.id}, in protocol {protocol.id}")
                 continue
 
             port = process.in_port(task_input.port_name)
@@ -80,14 +82,16 @@ def fix_protocol(protocol: ProtocolModel):
             process.data["inputs"] = process.inputs.to_json()
 
             # set the output of the previous process
-            connector = protocol.get_connector_from_right(process.instance_name, task_input.port_name)
+            connector = protocol.get_connector_from_right(
+                process.instance_name, task_input.port_name)
 
             if connector is None:
                 Logger.error(
                     f"No connector found for {process.instance_name}:{task_input.port_name}, in protocol {protocol.id}")
                 continue
 
-            connector.out_port.resource_model = task_input.resource_model
-            connector.left_process.data["outputs"] = connector.left_process.outputs.to_json()
+            connector.left_port.resource_model = task_input.resource_model
+            connector.left_process.data["outputs"] = connector.left_process.outputs.to_json(
+            )
 
     protocol.save_full()

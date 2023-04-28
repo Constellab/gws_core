@@ -5,15 +5,14 @@
 
 from typing import Dict, List, Type
 
+from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 
 from ..config.config import Config
-from ..config.config_types import ConfigParams, ConfigParamsDict
+from ..config.config_types import ConfigParamsDict
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..io.connector import Connector
-from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
 from ..progress_bar.progress_bar import ProgressBar
 from ..protocol.protocol import Protocol, ProtocolCreateConfig
@@ -61,14 +60,16 @@ class ProcessFactory():
                 task_model.source_config_id = config_params.get(
                     Source.config_name)
 
-        cls._init_process_model(process_model=task_model, config=config, instance_name=instance_name)
+        cls._init_process_model(process_model=task_model,
+                                config=config, instance_name=instance_name)
 
         return task_model
 
     @classmethod
     def create_task_model_from_typing_name(
             cls, typing_name: str, config_params: ConfigParamsDict = None, instance_name: str = None) -> TaskModel:
-        task_type: Type[Task] = TypingManager.get_type_from_name(typing_name=typing_name)
+        task_type: Type[Task] = TypingManager.get_type_from_name(
+            typing_name=typing_name)
         return cls.create_task_model_from_type(
             task_type=task_type, config_params=config_params, instance_name=instance_name)
 
@@ -94,7 +95,8 @@ class ProcessFactory():
             protocol_model.set_process_type(protocol_type._typing_name)
 
             config: Config = Config()
-            cls._init_process_model(process_model=protocol_model, config=config, instance_name=instance_name)
+            cls._init_process_model(
+                process_model=protocol_model, config=config, instance_name=instance_name)
 
             protocol: Protocol = protocol_type.instantiate_protocol()
             create_config: ProtocolCreateConfig = protocol.get_create_config()
@@ -108,39 +110,23 @@ class ProcessFactory():
                 except ProtocolBuildException as err:
                     raise err
                 except Exception as err:
-                    raise ProtocolBuildException.from_exception('Task', key, err)
-
-            # Set the protocol interfaces
-            interfaces: Dict[str, InPort] = {}
-            for key, interface in create_config["interfaces"].items():
-                interfaces[key] = processes[interface["process_instance_name"]].in_port(interface["port_name"])
-
-            # Set the protocol outerfaces
-            outerfaces: Dict[str, OutPort] = {}
-            for key, outerface in create_config["outerfaces"].items():
-                outerfaces[key] = processes[outerface["process_instance_name"]].out_port(outerface["port_name"])
-
-            # Set the connectors
-            connectors: List[Connector] = []
-            for connector in create_config["connectors"]:
-                from_proc: ProcessModel = processes[connector["from_process"]]
-                to_proc: ProcessModel = processes[connector["to_process"]]
-                connectors.append(Connector(
-                    out_port=from_proc.out_port(connector["from_port"]),
-                    in_port=to_proc.in_port(connector["to_port"])))
+                    raise ProtocolBuildException.from_exception(
+                        'Task', key, err)
 
             # create the protocol from a statis protocol class
             return cls._build_protocol_model(
                 protocol_model=protocol_model,
                 processes=processes,
-                connectors=connectors,
-                interfaces=interfaces,
-                outerfaces=outerfaces
+                connectors=create_config["connectors"],
+                interfaces=create_config["interfaces"],
+                outerfaces=create_config["outerfaces"]
             )
         except ProtocolBuildException as err:
-            raise ProtocolBuildException.from_build_exception(parent_instance_name=instance_name, exception=err)
+            raise ProtocolBuildException.from_build_exception(
+                parent_instance_name=instance_name, exception=err)
         except Exception as err:
-            raise ProtocolBuildException.from_exception('Protocol', instance_name, err)
+            raise ProtocolBuildException.from_exception(
+                'Protocol', instance_name, err)
 
     @classmethod
     def create_protocol_empty(cls, instance_name: str = None) -> ProtocolModel:
@@ -148,9 +134,11 @@ class ProcessFactory():
 
     @classmethod
     def create_protocol_model_from_data(cls, processes: Dict[str, ProcessModel] = None,
-                                        connectors: List[Connector] = None,
-                                        interfaces: Dict[str, InPort] = None,
-                                        outerfaces: Dict[str, OutPort] = None,
+                                        connectors: List[ConnectorSpec] = None,
+                                        interfaces: Dict[str,
+                                                         InterfaceSpec] = None,
+                                        outerfaces: Dict[str,
+                                                         InterfaceSpec] = None,
                                         instance_name: str = None) -> ProtocolModel:
         protocol_model: ProtocolModel = ProtocolModel()
 
@@ -166,14 +154,14 @@ class ProcessFactory():
             processes=processes,
             connectors=connectors,
             interfaces=interfaces,
-            outerfaces=outerfaces,
+            outerfaces=outerfaces
         )
 
     @classmethod
     def _build_protocol_model(cls, protocol_model: ProtocolModel, processes: Dict[str, ProcessModel] = None,
-                              connectors: List[Connector] = None,
-                              interfaces: Dict[str, InPort] = None,
-                              outerfaces: Dict[str, OutPort] = None) -> ProtocolModel:
+                              connectors: List[ConnectorSpec] = None,
+                              interfaces: Dict[str, InterfaceSpec] = None,
+                              outerfaces: Dict[str, InterfaceSpec] = None) -> ProtocolModel:
         if processes is None:
             processes = {}
         if connectors is None:
@@ -196,15 +184,12 @@ class ProcessFactory():
             protocol_model.add_process_model(proc, name)
 
         # set connectors
-        for conn in connectors:
-            if not isinstance(conn, Connector):
-                raise BadRequestException(
-                    "The list of connector must contain instances of Connectors")
-            protocol_model.add_connector(conn)
+        protocol_model.add_connectors(connectors)
 
-        # set interfaces
+        # set interfaces and outerfaces
         protocol_model.add_interfaces(interfaces)
         protocol_model.add_outerfaces(outerfaces)
+
         # refresh the json graph
         protocol_model.refresh_graph_from_dump()
 
@@ -223,7 +208,8 @@ class ProcessFactory():
         protocol: ProtocolModel = cls.create_protocol_model_from_type(
             protocol_type=Protocol)
 
-        cls._create_protocol_model_from_graph_recur(protocol=protocol, graph=graph)
+        cls._create_protocol_model_from_graph_recur(
+            protocol=protocol, graph=graph)
         return protocol
 
     @classmethod
@@ -268,7 +254,8 @@ class ProcessFactory():
     @classmethod
     def create_process_model_from_typing_name(
             cls, typing_name: str, config_params: ConfigParamsDict = None, instance_name: str = None) -> TaskModel:
-        process_type: Type[Process] = TypingManager.get_type_from_name(typing_name=typing_name)
+        process_type: Type[Process] = TypingManager.get_type_from_name(
+            typing_name=typing_name)
         return cls.create_process_model_from_type(
             process_type=process_type, config_params=config_params, instance_name=instance_name)
 
@@ -317,7 +304,8 @@ class ProcessFactory():
         :rtype: ProtocolModel
         """
         new_protocol_model: ProtocolModel = cls.create_protocol_empty()
-        new_protocol_model.set_process_type(protocol_model.get_process_type()._typing_name)
+        new_protocol_model.set_process_type(
+            protocol_model.get_process_type()._typing_name)
 
         # If the instance name is the same as the id, don't set it
         instance_name = protocol_model.instance_name if protocol_model.instance_name != protocol_model.id else None
@@ -327,12 +315,16 @@ class ProcessFactory():
 
         # copy all the sub process
         for key, process in protocol_model.processes.items():
-            new_protocol_model.add_process_model(cls.copy_process(process), key)
+            new_protocol_model.add_process_model(
+                cls.copy_process(process), key)
 
         # copy the data and then refresh it to update information
-        new_protocol_model._init_interfaces_from_graph(protocol_model.data["graph"]["interfaces"])
-        new_protocol_model._init_outerfaces_from_graph(protocol_model.data["graph"]["outerfaces"])
-        new_protocol_model.init_connectors_from_graph(protocol_model.data["graph"]["links"])
+        new_protocol_model._init_interfaces_from_graph(
+            protocol_model.data["graph"]["interfaces"])
+        new_protocol_model._init_outerfaces_from_graph(
+            protocol_model.data["graph"]["outerfaces"])
+        new_protocol_model.init_connectors_from_graph(
+            protocol_model.data["graph"]["links"])
         new_protocol_model.refresh_graph_from_dump()
 
         # copy the layout

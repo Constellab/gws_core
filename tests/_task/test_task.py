@@ -41,7 +41,8 @@ class TestTask(BaseTestCase):
 
     def test_process(self):
 
-        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestSimpleProtocol)
+        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(
+            TestSimpleProtocol)
 
         p0: TaskModel = proto.get_process('p0')
         p1: TaskModel = proto.get_process('p1')
@@ -49,9 +50,6 @@ class TestTask(BaseTestCase):
 
         self.assertTrue(p0.created_by.is_sysuser)
         self.assertEqual(proto.created_by, GTest.user)
-
-        self.assertEqual(len(p1.outputs.get_next_procs()), 1)
-        self.assertEqual(len(p2.outputs.get_next_procs()), 2)
 
         p2.config.set_value('food_weight', '5.6')
 
@@ -83,7 +81,8 @@ class TestTask(BaseTestCase):
         self.assertEqual(
             p1.outputs.get_resource_model('robot').get_resource().position[1],
             elon.position[1] + p1.config.get_value('moving_step'))
-        self.assertEqual(p1.outputs.get_resource_model('robot').get_resource().weight, elon.weight)
+        self.assertEqual(p1.outputs.get_resource_model(
+            'robot').get_resource().weight, elon.weight)
 
         # check p2
         self.assertEqual(p2.outputs.get_resource_model('robot').get_resource().position,
@@ -97,7 +96,8 @@ class TestTask(BaseTestCase):
         self.assertEqual(p3.outputs.get_resource_model('robot').get_resource().weight,
                          p3.inputs.get_resource_model('robot').get_resource().weight)
 
-        res = ResourceModel.get_by_id(p3.outputs.get_resource_model('robot').id)
+        res = ResourceModel.get_by_id(
+            p3.outputs.get_resource_model('robot').id)
         self.assertTrue(isinstance(res, ResourceModel))
 
         self.assertTrue(

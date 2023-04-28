@@ -3,10 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, List, Type, final
+from typing import List, Type, final
 
 from typing_extensions import TypedDict
 
@@ -14,10 +13,6 @@ from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .io_spec import InputSpec, IOSpec, IOSpecDict, OutputSpec
-
-if TYPE_CHECKING:
-    from ..process.process_model import ProcessModel
-    from .io import IO
 
 
 class PortDict(TypedDict):
@@ -39,20 +34,16 @@ class Port(Base):
     _resource_spec: IOSpec = None
     _prev: 'Port' = None
     _next: List['Port'] = []
-    _parent: IO
 
     # Switch to true when the set_resource_model is set (even if it is set with a None value)
     _resource_provided: bool = False
 
-    def __init__(self, parent: IO, name: str, _resource_spec: IOSpec):
+    def __init__(self, name: str, _resource_spec: IOSpec):
         self._resource_model = None
         self._prev = None
         self._next = []
-        self._parent = parent
         self.name = name
         self._resource_spec = _resource_spec
-
-    # -- D --
 
     def disconnect(self):
         """
@@ -68,19 +59,6 @@ class Port(Base):
         self._prev = None
         self._next = []
 
-    # -- I --
-
-    @property
-    def is_connected(self) -> bool:
-        """
-        Returns True if the port is left-connected or right-connected to a another port.
-
-        :return: True if the port is left-connected or right-connected, False otherwise.
-        :rtype: bool
-        """
-
-        return self.is_left_connected or self.is_right_connected
-
     @property
     def is_left_connected(self) -> bool:
         """
@@ -90,34 +68,6 @@ class Port(Base):
         :rtype: bool
         """
         return not self._prev is None
-
-    def is_left_connected_to(self, port: 'Port') -> bool:
-        """
-        Returns True if the port is left-connected to a given Port, False otherwise.
-
-        :return: True if the port is connected, False otherwise.
-        :rtype: bool
-        """
-        return self._prev is port
-
-    @property
-    def is_right_connected(self) -> bool:
-        """
-        Returns True if the port is right-connected to a another port.
-
-        :return: True if the port is right-connected, False otherwise.
-        :rtype: bool
-        """
-        return len(self._next) > 0
-
-    def is_right_connected_to(self, port: 'Port') -> bool:
-        """
-        Returns True if the port is right-connected to a given Port, False otherwise.
-
-        :return: True if the port is connected, False otherwise.
-        :rtype: bool
-        """
-        return port in self._next
 
     @property
     def is_ready(self) -> bool:
@@ -186,26 +136,9 @@ class Port(Base):
     def get_default_resource_type(self) -> Type[Resource]:
         return self.resource_spec.get_default_resource_type()
 
-    def get_next_procs(self) -> List[ProcessModel]:
-        """
-        Returns the list of right-hand side processes connected to the port.
-
-        :return: List of processes
-        :rtype: list
-        """
-        next_proc = []
-        for port in self._next:
-            io = port._parent
-            next_proc.append(io._parent)
-        return next_proc
-
-    # -- N --
-
     @property
     def next(self) -> List['Port']:
         return self._next
-
-    # -- P --
 
     @property
     def prev(self) -> 'Port':
@@ -216,37 +149,6 @@ class Port(Base):
 
     def set_previous(self, port: 'Port') -> None:
         self._prev = port
-
-    @property
-    def parent(self) -> IO:
-        """
-        Returns the parent IO of the Port, i.e. the IO (Input or Output) that holds this Port.
-
-        :return: The parent IO
-        :rtype: IO
-        """
-        return self._parent
-
-    @property
-    def process(self) -> ProcessModel:
-        """
-        Returns the parent Process of the Port.
-
-        :return: The parent Process
-        :rtype: Process
-        """
-
-        return self.parent.parent
-
-    def propagate(self):
-        """
-        Propagates the resource of the port to the connected (right-hande side) port
-        """
-
-        for port in self._next:
-            port.resource_model = self._resource_model
-
-    # -- R --
 
     def reset(self):
         self._resource_model = None
@@ -274,7 +176,6 @@ class Port(Base):
 
         return self._resource_model
 
-    # -- S --
     @resource_model.setter
     def resource_model(self, resource_model: ResourceModel) -> None:
         """
@@ -287,7 +188,6 @@ class Port(Base):
         self._resource_provided = True
         self._resource_model = resource_model
 
-    # -- S --
     def resource_type_is_compatible(self, resource_type: Type[Resource]) -> bool:
         """
         Sets the resource of the port.
@@ -313,17 +213,11 @@ class Port(Base):
     def export_specs(self) -> IOSpecDict:
         return self.resource_spec.to_json()
 
-    def __eq__(self, __o: object) -> bool:
-        if not isinstance(__o, Port):
-            return False
-
-        return self.name == __o.name and self.process.instance_name == __o.process.instance_name
-
     @classmethod
-    def load_from_json(cls, json_: PortDict, parent: IO, name: str) -> 'Port':
+    def load_from_json(cls, json_: PortDict, name: str) -> 'Port':
         spec_type: Type[IOSpec] = cls._get_io_spec_type()
         specs: IOSpec = spec_type.from_json(json_['specs'])
-        return cls(parent, name, specs)
+        return cls(name, specs)
 
     @classmethod
     @abstractmethod

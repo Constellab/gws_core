@@ -33,7 +33,8 @@ class TransformerService():
             raise BadRequestException('At least 1 transformer mustbe provided')
 
         # Get and check the resource id
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
+            resource_model_id)
         resource_type: Type[Resource] = resource_model.get_resource_type()
 
         # Create an experiment containing 1 source, X transformers task , 1 sink
@@ -42,18 +43,21 @@ class TransformerService():
         protocol: IProtocol = experiment.get_protocol()
 
         # create the source and save last process to create connectors later
-        last_process: IProcess = protocol.add_process(Source, 'source', {Source.config_name: resource_model_id})
+        last_process: IProcess = protocol.add_process(
+            Source, 'source', {Source.config_name: resource_model_id})
 
         index: int = 1
 
         # create all transformer process with connectors
         for transformer in transformers:
-            transformer_type: Type[Task] = TypingManager.get_type_from_name(transformer["typing_name"])
+            transformer_type: Type[Task] = TypingManager.get_type_from_name(
+                transformer["typing_name"])
 
             new_process: IProcess = protocol.add_process(
                 transformer_type, f"transformer_{index}", transformer["config_values"])
 
-            protocol.add_connector(last_process.get_first_outport(), new_process << Transformer.input_name)
+            protocol.add_connector_new(last_process, last_process.get_first_outport().name,
+                                       new_process, Transformer.input_name)
 
             # refresh data
             last_process = new_process
@@ -87,6 +91,7 @@ class TransformerService():
     def call_transformer(cls, resource: Resource,
                          transformer: TransformerDict) -> Resource:
         # retrieve transformer type
-        transformer_task: Type[Converter] = TypingManager.get_type_from_name(transformer['typing_name'])
+        transformer_task: Type[Converter] = TypingManager.get_type_from_name(
+            transformer['typing_name'])
 
         return transformer_task.call(resource, transformer['config_values'])

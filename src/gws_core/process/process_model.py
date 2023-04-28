@@ -10,7 +10,6 @@ from enum import Enum
 from typing import TYPE_CHECKING, Dict, Optional, Type, final
 
 from peewee import CharField, ForeignKeyField
-from starlette_context import context
 
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
@@ -57,7 +56,8 @@ class ProcessModel(ModelWithUser):
     """
 
     parent_protocol_id = CharField(max_length=36, null=True, index=True)
-    experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, backref="+")
+    experiment: Experiment = ForeignKeyField(
+        Experiment, null=True, index=True, backref="+")
     instance_name = CharField(null=True)
     config: Config = ForeignKeyField(Config, null=False, backref='+')
     progress_bar: ProgressBar = ForeignKeyField(
@@ -131,7 +131,8 @@ class ProcessModel(ModelWithUser):
 
         if not self._parent_protocol and self.parent_protocol_id:
             from ..protocol.protocol_model import ProtocolModel
-            self._parent_protocol = ProtocolModel.get_by_id(self.parent_protocol_id)
+            self._parent_protocol = ProtocolModel.get_by_id(
+                self.parent_protocol_id)
 
         return self._parent_protocol
 
@@ -184,7 +185,8 @@ class ProcessModel(ModelWithUser):
         self._parent_protocol = parent_protocol
 
     def set_process_type(self, typing_name: str) -> None:
-        typing: Typing = TypingManager.get_typing_from_name_and_check(typing_name)
+        typing: Typing = TypingManager.get_typing_from_name_and_check(
+            typing_name)
         self.process_typing_name = typing_name
         self.brick_version = typing.brick_version
 
@@ -196,18 +198,6 @@ class ProcessModel(ModelWithUser):
             raise BadRequestException(
                 "The protocol is already related to an experiment")
         self.experiment = experiment
-
-    def _switch_to_current_progress_bar(self):
-        """
-        Swicth to the application to current progress bar.
-
-        The current progress bar will be accessible everywhere (i.e. at the application level)
-        """
-
-        try:
-            context.data["progress_bar"] = self.progress_bar
-        except:
-            pass
 
     ################################# INPUTS #############################
 
@@ -231,7 +221,7 @@ class ProcessModel(ModelWithUser):
         if "inputs" not in self.data:
             self.data["inputs"] = {}
 
-        self._inputs = Inputs.load_from_json(self, self.data["inputs"])
+        self._inputs = Inputs.load_from_json(self.data["inputs"])
 
     def in_port(self, port_name: str) -> InPort:
         """
@@ -264,7 +254,7 @@ class ProcessModel(ModelWithUser):
         if "outputs" not in self.data:
             self.data["outputs"] = {}
 
-        self._outputs = Outputs.load_from_json(self, self.data["outputs"])
+        self._outputs = Outputs.load_from_json(self.data["outputs"])
 
     def out_port(self, port_name: str) -> OutPort:
         """
@@ -309,7 +299,8 @@ class ProcessModel(ModelWithUser):
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             # Create a new processRunException with correct info
-            exception: ProcessRunException = ProcessRunException.from_exception(self, err)
+            exception: ProcessRunException = ProcessRunException.from_exception(
+                self, err)
             self.mark_as_error(
                 {
                     "detail": exception.get_detail_with_args(),
@@ -327,13 +318,7 @@ class ProcessModel(ModelWithUser):
         """Function to run overrided by the sub classes
         """
 
-    def _run_next_processes(self):
-        self.outputs.propagate()
-        for proc in self.outputs.get_next_procs():
-            proc.run()
-
     def _run_before_task(self) -> None:
-        self._switch_to_current_progress_bar()
         self.mark_as_started()
 
         # Set the data inputs dict
@@ -349,11 +334,6 @@ class ProcessModel(ModelWithUser):
 
         # Save the process (to save the new data)
         self.save_after_task()
-
-        if not self.outputs.is_ready:
-            return
-
-        self._run_next_processes()
 
     def check_user_privilege(self, user: User) -> None:
         """Throw an exception if the user cand execute the protocol
@@ -507,7 +487,8 @@ class ProcessModel(ModelWithUser):
         process_typing: Typing = self.get_process_typing()
 
         if process_typing is None:
-            raise Exception(f"Could not find the process typing {self.process_typing_name}")
+            raise Exception(
+                f"Could not find the process typing {self.process_typing_name}")
 
         return {
             "process_typing_name": self.process_typing_name,
@@ -523,19 +504,19 @@ class ProcessModel(ModelWithUser):
 
     ########################### STATUS MANAGEMENT ##################################
 
-    @ property
+    @property
     def is_running(self) -> bool:
         return self.status == ProcessStatus.RUNNING
 
-    @ property
+    @property
     def is_finished(self) -> bool:
         return self.status == ProcessStatus.SUCCESS or self.is_error
 
-    @ property
+    @property
     def is_draft(self) -> bool:
         return self.status == ProcessStatus.DRAFT
 
-    @ property
+    @property
     def is_updatable(self) -> bool:
         return not self.is_archived and (self.experiment is None or not self.experiment.is_validated) \
             and self.is_draft
@@ -545,15 +526,15 @@ class ProcessModel(ModelWithUser):
             raise BadRequestException(GWSException.RESET_EXPERIMENT_REQUIRED.value,
                                       GWSException.RESET_EXPERIMENT_REQUIRED.name)
 
-    @ property
+    @property
     def is_error(self) -> bool:
         return self.status == ProcessStatus.ERROR
 
-    @ property
+    @property
     def is_success(self) -> bool:
         return self.status == ProcessStatus.SUCCESS
 
-    @ property
+    @property
     def is_ready(self) -> bool:
         """
         Returns True if the process is ready (i.e. all its ports are
@@ -567,13 +548,15 @@ class ProcessModel(ModelWithUser):
 
     def mark_as_started(self):
         self.progress_bar.start()
-        self.progress_bar.add_message(f"Start of process '{self.get_instance_name_context()}'")
+        self.progress_bar.add_message(
+            f"Start of process '{self.get_instance_name_context()}'")
         self.status = ProcessStatus.RUNNING
         self.started_at = DateHelper.now_utc()
         self.save()
 
     def mark_as_success(self):
-        self.progress_bar.stop_success(f"End of process '{self.get_instance_name_context()}'")
+        self.progress_bar.stop_success(
+            f"End of process '{self.get_instance_name_context()}'")
         self.status = ProcessStatus.SUCCESS
         self.ended_at = DateHelper.now_utc()
         self.save()

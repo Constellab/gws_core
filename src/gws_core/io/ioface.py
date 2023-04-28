@@ -6,29 +6,37 @@
 
 from typing import final
 
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.process.process_model import ProcessModel
+
 from ..resource.resource_model import ResourceModel
 from .port import InPort, OutPort, Port
 
 
 class IOface:
     name: str = None
-    source_port: Port = None
-    target_port: Port = None
 
-    def __init__(self, name: str, source_port: Port, target_port: Port):
-        if not isinstance(source_port, Port):
-            raise BadRequestException("The source port must be a port")
+    source_process: ProcessModel = None
+    target_process: ProcessModel = None
 
-        if not isinstance(target_port, Port):
-            raise BadRequestException("The target port must be a port")
+    source_port_name: str = None
+    target_port_name: str = None
+
+    def __init__(self, name: str, source_process: ProcessModel, target_process: ProcessModel,
+                 source_port_name: str, target_port_name: str):
 
         self.name = name
-        self.source_port = source_port
-        self.target_port = target_port
+        self.source_process = source_process
+        self.target_process = target_process
+        self.source_port_name = source_port_name
+        self.target_port_name = target_port_name
 
-    # -- D --
+    @property
+    def source_port(self) -> Port:
+        return self.source_process.in_port(self.source_port_name)
+
+    @property
+    def target_port(self) -> Port:
+        return self.target_process.in_port(self.target_port_name)
 
     def disconnect(self):
         """
@@ -41,16 +49,12 @@ class IOface:
         if self.target_port:
             self.target_port.disconnect()
 
-    # -- R --
-
     def reset(self):
         if self.source_port:
             self.source_port.reset()
 
         if self.target_port:
             self.target_port.reset()
-
-    # -- T --
 
     def to_json(self, deep: bool = False) -> dict:
         json_ = self.export_config()
@@ -65,12 +69,12 @@ class IOface:
         return {
             "name": self.name,
             "from": {
-                "node": self.source_port.process.instance_name,
-                "port": self.source_port.name,
+                "node": self.source_process.instance_name,
+                "port": self.source_port_name,
             },
             "to": {
-                "node": self.target_port.process.instance_name,
-                "port": self.target_port.name,
+                "node": self.target_process.instance_name,
+                "port": self.target_port_name,
             },
         }
 
@@ -80,15 +84,13 @@ class Interface(IOface):
     source_port: InPort = None
     target_port: InPort = None
 
-    def __init__(self, name: str, source_port: InPort, target_port: InPort):
+    @property
+    def source_port(self) -> InPort:
+        return self.source_process.in_port(self.source_port_name)
 
-        if not isinstance(source_port, InPort):
-            raise BadRequestException("The source port must be an input port")
-
-        if not isinstance(target_port, InPort):
-            raise BadRequestException("The target port must be an input port")
-
-        super().__init__(name, source_port, target_port)
+    @property
+    def target_port(self) -> InPort:
+        return self.target_process.in_port(self.target_port_name)
 
     def set_resource(self, resource_model: ResourceModel):
         self.source_port.resource_model = resource_model
@@ -105,15 +107,13 @@ class Outerface(IOface):
     source_port: OutPort = None
     target_port: OutPort = None
 
-    def __init__(self, name: str, source_port: OutPort, target_port: OutPort):
+    @property
+    def source_port(self) -> OutPort:
+        return self.source_process.out_port(self.source_port_name)
 
-        if not isinstance(source_port, OutPort):
-            raise BadRequestException("The source port must be an output port")
-
-        if not isinstance(target_port, OutPort):
-            raise BadRequestException("The target port must be an output port")
-
-        super().__init__(name, source_port, target_port)
+    @property
+    def target_port(self) -> OutPort:
+        return self.target_process.out_port(self.target_port_name)
 
     def get_resource(self) -> ResourceModel:
         return self.source_port.resource_model

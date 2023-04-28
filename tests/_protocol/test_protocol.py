@@ -4,7 +4,6 @@
 # About us: https://gencovery.com
 
 import json
-import os
 
 from gws_core import (BaseTestCase, Experiment, ExperimentService,
                       ExperimentStatus, ProtocolModel, ProtocolService, Robot,

@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Type
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Type
 
 from gws_core.config.config_service import ConfigService
 from gws_core.process.process import Process
@@ -39,7 +39,8 @@ class IProcess:
         from ..protocol.protocol_interface import IProtocol
 
         if self._process_model.parent_protocol is None:
-            raise Exception(f"The process '{self.instance_name}' does not have a parent protocol")
+            raise Exception(
+                f"The process '{self.instance_name}' does not have a parent protocol")
 
         return IProtocol(self._process_model.parent_protocol)
 
@@ -55,12 +56,14 @@ class IProcess:
     def set_param(self, param_name: str, value: ParamValue) -> None:
         """Set the param value
         """
-        ConfigService.update_config_value(self._process_model.config, param_name, value)
+        ConfigService.update_config_value(
+            self._process_model.config, param_name, value)
 
     def set_config_params(self, config_params: ConfigParamsDict) -> None:
         """Set the config param values
         """
-        ConfigService.update_config_params(self._process_model.config, config_params)
+        ConfigService.update_config_params(
+            self._process_model.config, config_params)
 
     def get_param(self, name: str) -> Any:
         return self._process_model.config.get_value(name)
@@ -83,8 +86,10 @@ class IProcess:
         """
 
         # create the resource and save it
-        resource_model: ResourceModel = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.UPLOADED)
-        self._process_model.inputs.set_resource_model(port_name=name, resource_model=resource_model)
+        resource_model: ResourceModel = ResourceModel.save_from_resource(
+            resource, origin=ResourceOrigin.UPLOADED)
+        self._process_model.inputs.set_resource_model(
+            port_name=name, resource_model=resource_model)
 
     def get_input(self, name: str) -> Resource:
         """retrieve the resource of the input
@@ -128,11 +133,11 @@ class IProcess:
 
     ############################################### PORTS #########################################
 
-    def __lshift__(self, name: str) -> InPort:
-        return self._process_model.in_port(name)
+    def __lshift__(self, name: str) -> Tuple[ProcessModel, str]:
+        return (self._process_model, name)
 
-    def __rshift__(self, name: str) -> OutPort:
-        return self._process_model.out_port(name)
+    def __rshift__(self, name: str) -> Tuple[ProcessModel, str]:
+        return (self._process_model, name)
 
     def get_first_inport(self) -> InPort:
         return list(self._process_model.inputs.ports.values())[0]

@@ -46,7 +46,8 @@ class TaskModel(ProcessModel):
 
     # Only for task of type Source, this is to store the resource used in config
     # with lazy load = false, the Resource is not Loaded, it only contains the id
-    source_config_id: str = ForeignKeyField(ResourceModel, null=True, index=True, lazy_load=False)
+    source_config_id: str = ForeignKeyField(
+        ResourceModel, null=True, index=True, lazy_load=False)
 
     _table_name = 'gws_task'
 
@@ -79,7 +80,7 @@ class TaskModel(ProcessModel):
 
         task_type: Type[Task] = self.get_process_type()
 
-        self._inputs = Inputs(self)
+        self._inputs = Inputs()
         # create the input ports from the Task input specs
         for k in task_type.input_specs:
             self._inputs.create_port(k, task_type.input_specs[k])
@@ -87,7 +88,7 @@ class TaskModel(ProcessModel):
         # Set the data inputs dict
         self.data["inputs"] = self.inputs.to_json()
 
-        self._outputs = Outputs(self)
+        self._outputs = Outputs()
         # create the output ports from the Task output specs
         for k in task_type.output_specs:
             self._outputs.create_port(k, task_type.output_specs[k])
@@ -155,9 +156,11 @@ class TaskModel(ProcessModel):
 
         # build the task tester
         params: ConfigParamsDict = self.config.get_values()
-        inputs: Dict[str, Resource] = self.inputs.get_resources(new_instance=True)
+        inputs: Dict[str, Resource] = self.inputs.get_resources(
+            new_instance=True)
 
-        task_runner: TaskRunner = TaskRunner(self.get_process_type(), params, inputs)
+        task_runner: TaskRunner = TaskRunner(
+            self.get_process_type(), params, inputs)
         task_runner.set_progress_bar(self.progress_bar)
 
         check_result: CheckBeforeTaskResult
@@ -171,7 +174,8 @@ class TaskModel(ProcessModel):
         # If the check before task retuned False
         if isinstance(check_result, dict) and check_result.get('result') is False:
             if self.inputs.all_connected_port_values_provided():
-                raise CheckBeforeTaskStopException(message=check_result.get('message'))
+                raise CheckBeforeTaskStopException(
+                    message=check_result.get('message'))
             else:
                 return
 
@@ -210,7 +214,8 @@ class TaskModel(ProcessModel):
                 continue
 
             if not resource_model.is_saved():
-                raise Exception(f"The resource of port '{key}' is not saved, it can't be used as input of the task")
+                raise Exception(
+                    f"The resource of port '{key}' is not saved, it can't be used as input of the task")
 
             # Create the Input resource to save the resource use as input
             input_resource: TaskInputModel = TaskInputModel()
@@ -250,7 +255,8 @@ class TaskModel(ProcessModel):
         for key, resource in task_outputs.items():
 
             if not self.outputs.port_exists(key):
-                raise Exception(f"Error while saving the task output. The port '{key}' does not exists")
+                raise Exception(
+                    f"Error while saving the task output. The port '{key}' does not exists")
 
             resource_model: ResourceModel
 
@@ -259,7 +265,8 @@ class TaskModel(ProcessModel):
             if port.is_constant_out:
                 # If the port is mark as is_constant_out, we don't create a new resource
                 # We use the same resource
-                resource_model = ResourceModel.get_by_id_and_check(resource._model_id)
+                resource_model = ResourceModel.get_by_id_and_check(
+                    resource._model_id)
             else:
                 resource_model = self._save_resource(resource, port.name)
 
@@ -273,7 +280,8 @@ class TaskModel(ProcessModel):
         # Handle specific case of ResourceSet, it saves all the sub
         new_children_resources: List[ResourceModel] = []
         if isinstance(resource, ResourceListBase):
-            new_children_resources = self._save_resource_list(resource, port_name)
+            new_children_resources = self._save_resource_list(
+                resource, port_name)
 
         # check the resource r field before saving
         self._check_resource_r_fields(resource, port_name)
@@ -321,7 +329,8 @@ class TaskModel(ProcessModel):
         """
 
         # get the ResourceRField of the resource
-        r_fields: Dict[str, ResourceRField] = ReflectorHelper.get_property_names_of_type(type(resource), ResourceRField)
+        r_fields: Dict[str, ResourceRField] = ReflectorHelper.get_property_names_of_type(
+            type(resource), ResourceRField)
 
         for key, r_field in r_fields.items():
             # get the attribute value corresponding to the r_field

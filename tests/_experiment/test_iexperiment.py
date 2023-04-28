@@ -2,6 +2,7 @@ from gws_core import (BaseTestCase, IExperiment, IProcess, IProtocol, ITask,
                       ProtocolModel, Robot, RobotCreate, RobotMove,
                       RobotSuperTravelProto, RobotTravelProto)
 
+
 # test_iexperiment
 class TestIExperiment(BaseTestCase):
 
@@ -17,15 +18,17 @@ class TestIExperiment(BaseTestCase):
 
         # create manually a sub proto
         sub_proto: IProtocol = protocol.add_empty_protocol('sub_proto')
-        sub_move: IProcess = sub_proto.add_process(RobotMove, 'sub_move', {'moving_step': 20})
+        sub_move: IProcess = sub_proto.add_process(
+            RobotMove, 'sub_move', {'moving_step': 20})
         # test parent of sub_move
         self.assertEqual(sub_move.parent_protocol.instance_name, 'sub_proto')
 
-        sub_proto.add_interface('robot_i', sub_move, 'robot')
-        sub_proto.add_outerface('robot_o', sub_move, 'robot')
+        sub_proto.add_interface('robot_i', sub_move.instance_name, 'robot')
+        sub_proto.add_outerface('robot_o', sub_move.instance_name, 'robot')
 
         # Add a RobotTravel protocol
-        robot_travel: IProtocol = protocol.add_protocol(RobotTravelProto, 'robot_travel')
+        robot_travel: IProtocol = protocol.add_protocol(
+            RobotTravelProto, 'robot_travel')
 
         # Add main protocol connectors
         protocol.add_connectors([
@@ -85,7 +88,8 @@ class TestIExperiment(BaseTestCase):
         self._test_super_travel_after_remove(super_travel_model)
 
         # Verify that the DB was updated
-        super_travel_db: ProtocolModel = IProtocol.get_by_id(super_travel_model.id)._process_model
+        super_travel_db: ProtocolModel = IProtocol.get_by_id(
+            super_travel_model.id)._process_model
         self._test_super_travel_after_remove(super_travel_db)
 
     def _test_super_travel_after_remove(self, super_travel_model: ProtocolModel):
@@ -95,15 +99,20 @@ class TestIExperiment(BaseTestCase):
         :type protocol_model: ProtocolModel
         """
         # Test thath the sub process was deleted
-        self.assertRaises(Exception, super_travel_model.get_process, 'sub_travel')
+        self.assertRaises(
+            Exception, super_travel_model.get_process, 'sub_travel')
 
         # Test that the connectors were deleted
         self.assertEqual(len(super_travel_model.connectors), 1)
 
         # Test that the interface and input are delete
-        self.assertRaises(Exception, super_travel_model.interfaces.__getitem__, 'robot')
-        self.assertRaises(Exception, super_travel_model.inputs.get_port, 'robot')
+        self.assertRaises(
+            Exception, super_travel_model.interfaces.__getitem__, 'robot')
+        self.assertRaises(
+            Exception, super_travel_model.inputs.get_port, 'robot')
 
         # Test that the outerface and output
-        self.assertRaises(Exception, super_travel_model.outerfaces.__getitem__, 'robot')
-        self.assertRaises(Exception, super_travel_model.outputs.get_port, 'robot')
+        self.assertRaises(
+            Exception, super_travel_model.outerfaces.__getitem__, 'robot')
+        self.assertRaises(
+            Exception, super_travel_model.outputs.get_port, 'robot')
