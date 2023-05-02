@@ -15,19 +15,19 @@ from gws_core.experiment.experiment_exception import \
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.impl.robot.robot_protocol import (CreateSimpleRobot,
-                                                MoveSimpleRobot)
+                                                MoveSimpleRobot,
+                                                RobotSimpleTravel)
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_model import ProcessStatus
 from gws_core.project.project import Project
+from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.task.plug import Sink
 
 
 # test_experiment
 class TestExperiment(BaseTestCase):
-
-    init_before_each_test: bool = True
 
     def test_create_empty(self):
 
@@ -35,139 +35,144 @@ class TestExperiment(BaseTestCase):
         project.save()
         experiment_dto: ExperimentDTO = ExperimentDTO(
             title="Experiment title", project_id=project.id)
-        experiment = ExperimentService.create_empty_experiment_from_dto(experiment_dto)
+        experiment = ExperimentService.create_empty_experiment_from_dto(
+            experiment_dto)
 
         self.assertIsNotNone(experiment.id)
         self.assertEqual(experiment.title, 'Experiment title')
         self.assertIsNotNone(experiment.protocol_model.id)
         self.assertEqual(experiment.project.id, project.id)
 
-        ExperimentService.update_experiment_description(experiment.id, {"test": "ok"})
+        ExperimentService.update_experiment_description(
+            experiment.id, {"test": "ok"})
         experiment = ExperimentService.get_experiment_by_id(experiment.id)
         self.assert_json(experiment.description, {"test": "ok"})
 
     def test_run(self):
+
+        experiment_count = Experiment.select().count()
+        task_count = TaskModel.select().count()
+        resource_count = ResourceModel.select().count()
+
         self.assertEqual(Experiment.count_running_or_queued_experiments(), 0)
 
         # Create experiment 1
-        # -------------------------------
-        print("Create experiment 1")
-        proto1: ProtocolModel = RobotService.create_robot_world_travel()
+        proto1: ProtocolModel = RobotService.create_robot_simple_travel()
 
-        experiment1: Experiment = ExperimentService.create_experiment_from_protocol_model(
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=proto1, title="My exp title")
 
-        self.assertEqual(len(experiment1.task_models), 16)
-        self.assertEqual(TaskModel.select().count(), 16)
-        self.assertEqual(ResourceModel.select().count(), 0)
-        self.assertEqual(Experiment.select().count(), 1)
+        self.assertEqual(Experiment.select().count(), experiment_count + 1)
 
-        # Create experiment 2 = experiment 2
-        # -------------------------------
-        print("Create experiment_2 = experiment_1 ...")
-        experiment2: Experiment = Experiment.get_by_id_and_check(experiment1.id)
+        # Refresh experiment to be sure it was saved
+        experiment = Experiment.get_by_id_and_check(
+            experiment.id)
 
-        self.assertEqual(experiment2, experiment1)
-        self.assertEqual(len(experiment2.task_models), 16)
-        self.assertEqual(TaskModel.select().count(), 16)
-        self.assertEqual(ResourceModel.select().count(), 0)
-        self.assertEqual(Experiment.select().count(), 1)
+        self.assertEqual(Experiment.select().count(), experiment_count + 1)
+        self.assertEqual(len(experiment.task_models),
+                         RobotSimpleTravel.tasks_count)
+        self.assertEqual(TaskModel.select().count(),
+                         task_count + RobotSimpleTravel.tasks_count)
+        self.assertEqual(ResourceModel.select().count(), resource_count)
+        self.assertEqual(experiment.title, "My exp title")
 
         print("Run experiment_2 ...")
-        experiment2 = ExperimentRunService.run_experiment(experiment=experiment2)
+        experiment = ExperimentRunService.run_experiment(
+            experiment=experiment)
 
-        # self.assertEqual(e2.processes.count(), 18)
-        self.assertEqual(len(experiment2.task_models), 16)
-        self.assertEqual(experiment2.status, ExperimentStatus.SUCCESS)
+        self.assertEqual(experiment.status, ExperimentStatus.SUCCESS)
         # check that the lab config was saved in the experiment
-        self.assertEqual(experiment2.lab_config.id, LabConfigModel.id)
+        self.assertEqual(experiment.lab_config.id, LabConfigModel.id)
 
-        self.assertEqual(ResourceModel.select().count(), 15)
-        self.assertEqual(len(experiment1.resources), 15)
-        self.assertEqual(len(experiment2.resources), 15)
-        self.assertEqual(ResourceModel.get_by_experiment(experiment1.id).count(), 15)
-        self.assertIsNone(experiment2.pid)
+        self.assertEqual(ResourceModel.select().count(),
+                         resource_count + RobotSimpleTravel.resources_count)
+        self.assertEqual(len(experiment.resources),
+                         RobotSimpleTravel.resources_count)
+        self.assertEqual(ResourceModel.get_by_experiment(
+            experiment.id).count(), RobotSimpleTravel.resources_count)
+        self.assertIsNone(experiment.pid)
 
-        e2_bis: Experiment = ExperimentService.get_experiment_by_id(experiment1.id)
-
-        self.assertEqual(e2_bis.title, "My exp title")
-        self.assertEqual(len(e2_bis.task_models), 16)
-        self.assertEqual(Experiment.select().count(), 1)
+        # refresh experiment
+        experiment = Experiment.get_by_id_and_check(
+            experiment.id)
 
         # Test the configuration on fly_1 process (west 2000)
-        fly_1: ProcessModel = e2_bis.protocol_model.get_process('fly_1')
-        robot1: Robot = fly_1.inputs.get_resource_model('robot').get_resource()
-        robot2: Robot = fly_1.outputs.get_resource_model('robot').get_resource()
+        move_1: ProcessModel = experiment.protocol_model.get_process('move_1')
+        robot1: Robot = move_1.inputs.get_resource_model(
+            'robot').get_resource()
+        robot2: Robot = move_1.outputs.get_resource_model(
+            'robot').get_resource()
         self.assertEqual(robot1.position[0], robot2.position[0] + 2000)
 
         # Check if the port resource spec was correctly loaded
-        spec: IOSpec = fly_1.inputs.get_port('robot').resource_spec
+        spec: IOSpec = move_1.inputs.get_port('robot').resource_spec
         self.assertIsInstance(spec, IOSpec)
         self.assertEqual(spec.resource_types, [Robot])
 
     def test_run_through_cli(self):
 
-        # experiment 3
-        # -------------------------------
-        print("Create experiment_3")
-        proto3 = RobotService.create_robot_world_travel()
-        experiment3 = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto3)
+        proto = RobotService.create_robot_world_travel()
+        experiment = ExperimentService.create_experiment_from_protocol_model(
+            protocol_model=proto)
 
-        print("Run experiment_3 through cli ...")
         ExperimentRunService.create_cli_process_for_experiment(
-            experiment=experiment3, user=GTest.user)
-        self.assertEqual(experiment3.status,
+            experiment=experiment, user=GTest.user)
+        self.assertEqual(experiment.status,
                          ExperimentStatus.WAITING_FOR_CLI_PROCESS)
-        self.assertTrue(experiment3.pid > 0)
-        print(f"Experiment pid = {experiment3.pid}", )
+        self.assertTrue(experiment.pid > 0)
 
         waiting_count = 0
-        experiment3: Experiment = Experiment.get_by_id_and_check(experiment3.id)
-        print(experiment3.protocol_model)
-        while experiment3.status != ExperimentStatus.SUCCESS:
+        experiment: Experiment = Experiment.get_by_id_and_check(
+            experiment.id)
+        print(experiment.protocol_model)
+        while experiment.status != ExperimentStatus.SUCCESS:
             print("Waiting 3 secs the experiment to finish ...")
             time.sleep(3)
             if waiting_count == 10:
                 raise Exception("The experiment is not finished")
-            experiment3 = experiment3.refresh()  # reload from DB
+            experiment = experiment.refresh()  # reload from DB
             waiting_count += 1
 
         self.assertEqual(Experiment.count_running_or_queued_experiments(), 0)
-        experiment3 = Experiment.get_by_id_and_check(experiment3.id)
-        self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
-        self.assertIsNone(experiment3.pid)
-        self.assertEqual(experiment3.lab_config.id, LabConfigModel.id)
+        experiment = Experiment.get_by_id_and_check(experiment.id)
+        self.assertEqual(experiment.status, ExperimentStatus.SUCCESS)
+        self.assertIsNone(experiment.pid)
+        self.assertEqual(experiment.lab_config.id, LabConfigModel.id)
 
-        Q = experiment3.resources
-        self.assertEqual(len(Q), 15)
-
-        # archive experiment
-        def _test_archive(tf):
-            OK = experiment3.archive(tf)
-            self.assertTrue(OK)
-            resources: List[ResourceModel] = experiment3.resources
-            self.assertEqual(len(resources), 15)
-            for r in resources:
-                self.assertEqual(r.is_archived, tf)
-
-            processes: List[ProcessModel] = experiment3.task_models
-            # self.assertEqual( len(Q), 18)
-            self.assertEqual(len(processes), 16)
-            for process in processes:
-                self.assertEqual(process.is_archived, tf)
-                self.assertEqual(process.config.is_archived, tf)
+        self.assertEqual(len(experiment.resources),
+                         RobotWorldTravelProto.resource_count)
 
         print("Archive experiment ...")
-        _test_archive(True)
+        self._archive_experiment(experiment, True)
 
         print("Unarchive experiment ...")
-        _test_archive(False)
+        self._archive_experiment(experiment, False)
 
         print("Archive experiment again...")
-        _test_archive(True)
+        self._archive_experiment(experiment, True)
+
+    def _archive_experiment(self, experiment: Experiment, archive: bool) -> None:
+        result = experiment.archive(archive)
+        self.assertTrue(result)
+
+        # check that the resources are archived
+        resources: List[ResourceModel] = experiment.resources
+        self.assertEqual(len(resources), RobotWorldTravelProto.resource_count)
+        for resource in resources:
+            self.assertEqual(resource.is_archived, archive)
+
+        # check that the process are archived
+        processes: List[ProcessModel] = experiment.task_models
+        self.assertEqual(len(processes), RobotWorldTravelProto.tasks_count)
+        for process in processes:
+            self.assertEqual(process.is_archived, archive)
+            self.assertEqual(process.config.is_archived, archive)
 
     def test_reset(self):
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
+
+        resource_count = ResourceModel.select().count()
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(
+            RobotWorldTravelProto)
 
         experiment = ExperimentRunService.run_experiment(experiment=experiment)
 
@@ -175,12 +180,13 @@ class TestExperiment(BaseTestCase):
 
         self.assertEqual(experiment.status, ExperimentStatus.DRAFT)
         # Check that all the resources were deleted
-        self.assertEqual(ResourceModel.select().count(), 0)
+        self.assertEqual(ResourceModel.select().count(), resource_count)
 
         # check recursively all the status
         self._check_process_reset(experiment.protocol_model)
         # Same test with experiment from DB
-        self._check_process_reset(ExperimentService.get_experiment_by_id(experiment.id).protocol_model)
+        self._check_process_reset(
+            ExperimentService.get_experiment_by_id(experiment.id).protocol_model)
 
     def _check_process_reset(self, process_model: ProcessModel) -> None:
         self.assertEqual(process_model.status, ProcessStatus.DRAFT)
@@ -213,7 +219,8 @@ class TestExperiment(BaseTestCase):
 
         # Create a new experiment that uses the previously generated robot
         experiment2: IExperiment = IExperiment(MoveSimpleRobot)
-        experiment2.get_protocol().get_process('source').set_param('resource_id', resource._model_id)
+        experiment2.get_protocol().get_process(
+            'source').set_param('resource_id', resource._model_id)
         experiment2.run()
 
         with self.assertRaises(ResourceUsedInAnotherExperimentException):
@@ -221,35 +228,52 @@ class TestExperiment(BaseTestCase):
 
     def test_protocol_copy(self):
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
+        count_protocol = ProtocolModel.select().count()
+        count_task = TaskModel.select().count()
+        count_resource = ResourceModel.select().count()
+
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(
+            RobotWorldTravelProto)
 
         ExperimentRunService.run_experiment(experiment)
 
-        protocol_count = ProtocolModel.select().count()
-        task_model = TaskModel.select().count()
-        resource_count = ResourceModel.select().count()
+        added_protocol = count_protocol - ProtocolModel.select().count()
+        added_task = count_task - TaskModel.select().count()
+        added_resource = count_resource - ResourceModel.select().count()
 
         experiment_copy = ExperimentService.clone_experiment(experiment.id)
 
-        self.assertEqual(ProtocolModel.select().count(), protocol_count * 2)
-        self.assertEqual(TaskModel.select().count(), task_model * 2)
-        self.assertEqual(ResourceModel.select().count(), resource_count)
+        self.assertEqual(ProtocolModel.select().count(),
+                         count_protocol - (added_protocol * 2))
+        self.assertEqual(TaskModel.select().count(),
+                         count_task - (added_task * 2))
+        # resources are not copied
+        self.assertEqual(ResourceModel.select().count(),
+                         count_resource - added_resource)
 
         ExperimentRunService.run_experiment(experiment_copy)
-        self.assertEqual(ResourceModel.select().count(), resource_count * 2)
+        self.assertEqual(ResourceModel.select().count(),
+                         count_resource - (added_resource * 2))
 
     def test_delete(self):
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
+
+        count_experiment = Experiment.select().count()
+        count_protocol = ProtocolModel.select().count()
+        count_task = TaskModel.select().count()
+        count_resource = ResourceModel.select().count()
+
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(
+            RobotWorldTravelProto)
 
         experiment = ExperimentRunService.run_experiment(experiment=experiment)
 
         experiment.delete_instance()
 
-        self.assertEqual(Experiment.select().count(), 0)
+        self.assertEqual(Experiment.select().count(), count_experiment)
         # Check that all the resources were deleted
-        self.assertEqual(ResourceModel.select().count(), 0)
-        self.assertEqual(ProtocolModel.select().count(), 0)
-        self.assertEqual(TaskModel.select().count(), 0)
+        self.assertEqual(ResourceModel.select().count(), count_resource)
+        self.assertEqual(ProtocolModel.select().count(), count_protocol)
+        self.assertEqual(TaskModel.select().count(), count_task)
 
     def test_get_by_input_resource(self):
 
@@ -277,3 +301,45 @@ class TestExperiment(BaseTestCase):
         # check result
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, experiment_2._experiment.id)
+
+    def test_start_and_stop(self):
+        experiment = ExperimentService.create_empty_experiment()
+
+        main_protocol: ProtocolModel = experiment.protocol_model
+        create_process: TaskModel = ProtocolService.add_process_to_protocol(
+            main_protocol, RobotCreate)
+
+        # first run
+        experiment = ExperimentRunService.run_experiment(experiment)
+        create_process = create_process.refresh()
+
+        self.assertEqual(experiment.status, ExperimentStatus.SUCCESS)
+        # retrieve resource to compare it after
+        created_robot = create_process.out_port('robot').resource_model
+        self.assertIsNotNone(created_robot)
+
+        # add a move process to the protocol
+        main_protocol = main_protocol.refresh()
+        move_process: TaskModel = ProtocolService.add_process_to_protocol(
+            main_protocol, RobotMove)
+        ProtocolService.add_connector_to_protocol(main_protocol, create_process.instance_name,
+                                                  'robot', move_process.instance_name, 'robot')
+
+        # Check process and protocol status
+        create_process = create_process.refresh()
+        self.assertEqual(create_process.status, ProcessStatus.SUCCESS)
+        main_protocol = main_protocol.refresh()
+        self.assertEqual(main_protocol.status, ProcessStatus.PARTIALLY_RUN)
+
+        # Re-run experiment with new process
+        experiment = ExperimentRunService.run_experiment(experiment.refresh())
+        self.assertEqual(experiment.status, ExperimentStatus.SUCCESS)
+
+        # Check that the create process was not re-run by comparing output
+        create_process = create_process.refresh()
+        created_robot_2 = create_process.out_port('robot').resource_model
+        self.assertEqual(created_robot.id, created_robot_2.id)
+
+        # Check that the move process was run
+        move_process = move_process.refresh()
+        self.assertEqual(move_process.status, ProcessStatus.SUCCESS)

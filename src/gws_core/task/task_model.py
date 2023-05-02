@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Type
 
 from peewee import ForeignKeyField, ModelSelect
 
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 
 from ..config.config_types import ConfigParamsDict
@@ -23,7 +24,7 @@ from ..io.port import Port
 from ..model.typing_manager import TypingManager
 from ..process.process_exception import (CheckBeforeTaskStopException,
                                          ProcessRunException)
-from ..process.process_model import ProcessModel
+from ..process.process_model import ProcessModel, ProcessStatus
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel, ResourceOrigin
 from ..resource.resource_r_field import ResourceRField
@@ -348,6 +349,14 @@ class TaskModel(ProcessModel):
                                           unique_code=GWSException.INVALID_LINKED_RESOURCE.name,
 
                                           detail_args={'port_name': port_name})
+
+    def mark_as_started(self):
+        self.progress_bar.start()
+        self.progress_bar.add_message(
+            f"Start of task '{self.get_instance_name_context()}'")
+        self.status = ProcessStatus.RUNNING
+        self.started_at = DateHelper.now_utc()
+        self.save()
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """

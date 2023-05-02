@@ -18,10 +18,7 @@ from tests.protocol_examples import (TestNestedProtocol,
 # test_protocol
 class TestProtocol(BaseTestCase):
 
-    init_before_each_test: bool = True
-
     def test_protocol(self):
-
         query = ProtocolModel.select()
         count = len(query)
 

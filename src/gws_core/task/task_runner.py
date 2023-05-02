@@ -222,6 +222,14 @@ class TaskRunner():
 
         for key, spec in self._get_task_outputs_specs().items():
 
+            # handle the case where the output is None
+            if key not in task_outputs or task_outputs[key] is None:
+                if not spec.is_optional:
+                    text = "was not provided" if key not in task_outputs else "is None"
+                    error_text = error_text + \
+                        f"The output '{key}' {text}."
+                continue
+
             # If the resource for the output port was provided
             if key in task_outputs:
                 resource: Resource = task_outputs[key]
@@ -231,12 +239,8 @@ class TaskRunner():
                     error_text = error_text + error
 
                 # save the resource event if there is an error
-                verified_outputs[key] = resource
-
-            # If the output is missing
-            else:
-                if not spec.is_optional:
-                    error_text = error_text + f"The output '{key}' was not provided."
+                if isinstance(resource, Resource):
+                    verified_outputs[key] = resource
 
         # save the verified outputs before thowing an error
         self._outputs = verified_outputs
@@ -249,12 +253,6 @@ class TaskRunner():
     def _check_output(self, output_resource: Resource, spec: OutputSpec, key: str) -> str:
         """Method to check a output resource, return str if there is an error with the resource
         """
-
-        if output_resource is None:
-            # No error if the spec is optional
-            if spec.is_optional:
-                return None
-            return f"The output '{key}' is None."
 
         if not isinstance(output_resource, Resource):
             return f"The output '{key}' of type '{type(output_resource)}' is not a resource. It must extend the Resource class"

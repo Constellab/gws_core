@@ -79,16 +79,16 @@ class Port(Base):
         """
 
         # If the type is skippable, the port is always ready
-        if self.is_skippable_in:
+        if self.is_skippable_in or self.is_optional:
             return True
 
-        if self.is_optional:
-            # If the port is connected but the set_resource was not called,
-            # the port is not ready
-            if self.is_left_connected and not self._resource_provided:
-                return False
-            else:
-                return True
+        # if self.is_optional:
+        #     # If the port is connected but the set_resource was not called,
+        #     # the port is not ready
+        #     if self.is_left_connected and not self._resource_provided:
+        #         return False
+        #     else:
+        #         return True
 
         return self._resource_provided
 

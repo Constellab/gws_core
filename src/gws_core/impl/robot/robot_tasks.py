@@ -11,7 +11,7 @@ from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("RobotCreate", human_name="Create robot", short_description="This task creates a robot", hide=True)
+@task_decorator("RobotCreate", human_name="Create robot", short_description="This task creates a robot", hide=False)
 class RobotCreate(Task):
     input_specs = {}  # no required input
     output_specs = {'robot': OutputSpec(Robot)}
@@ -25,25 +25,28 @@ class RobotCreate(Task):
 
 
 @ task_decorator("RobotMove", human_name="Move robot",
-                 short_description="This task emulates a short moving step of the robot", hide=True)
+                 short_description="This task emulates a short moving step of the robot", hide=False)
 class RobotMove(Task):
     input_specs = {'robot': InputSpec(Robot, human_name="Robot",
                                       short_description="The robot to feed")}  # just for testing
-    output_specs = {'robot': OutputSpec(Robot)}
+    output_specs = {'robot': OutputSpec(
+        Robot), 'food': OutputSpec(RobotFood, is_optional=True)}
     config_specs = {'moving_step': FloatParam(default_value=0.1, short_description="The moving step of the robot"), 'direction': StrParam(
         default_value="north", allowed_values=["north", "south", "east", "west"], short_description="The moving direction")}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print(f"Moving {params.get_value('moving_step')}", flush=True)
         robot: Robot = inputs['robot']
-        robot.move(direction=params.get_value('direction'), moving_step=params.get_value('moving_step'))
-        return {'robot': robot}
+        robot.move(direction=params.get_value('direction'),
+                   moving_step=params.get_value('moving_step'))
+        return {'robot': robot, 'food': None}
 
 
 @ task_decorator("RobotEat", human_name="Eat task",
-                 short_description="This task emulates the meal of the robot before its flight!", hide=True)
+                 short_description="This task emulates the meal of the robot before its flight!", hide=False)
 class RobotEat(Task):
-    input_specs = {'robot': InputSpec(Robot), 'food': InputSpec(RobotFood, is_optional=True)}
+    input_specs = {'robot': InputSpec(
+        Robot), 'food': InputSpec(RobotFood, is_optional=True)}
     output_specs = {'robot': OutputSpec(Robot)}
     config_specs = {
         'food_weight': FloatParam(default_value=3.14)
@@ -57,7 +60,8 @@ class RobotEat(Task):
             food: RobotFood = inputs['food']
             multiplicator = food.multiplicator
 
-        print(f"Eating {params.get_value('food_weight')} with multiplicator : {multiplicator}", flush=True)
+        print(
+            f"Eating {params.get_value('food_weight')} with multiplicator : {multiplicator}", flush=True)
         robot.weight += params.get_value('food_weight') * multiplicator
         return {'robot': robot}
 

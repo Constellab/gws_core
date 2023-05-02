@@ -105,7 +105,8 @@ class QueueService(BaseService):
 
             if sproc:
                 # wait for the experiment to finish in a separate thread
-                thread = threading.Thread(target=cls._wait_experiment_finish, args=(sproc,))
+                thread = threading.Thread(
+                    target=cls._wait_experiment_finish, args=(sproc,))
                 thread.start()
         except Exception as err:
             Logger.error(
@@ -139,20 +140,8 @@ class QueueService(BaseService):
         experiment.check_is_runnable()
 
         if experiment.is_running or experiment.status == ExperimentStatus.IN_QUEUE:
-            raise BadRequestException("The experiment is already running or in the queue")
-
-        if experiment.status != ExperimentStatus.DRAFT:
-            Logger.info(f"Resetting experiment {experiment.id} before adding it to the queue")
-
-            try:
-                experiment.reset()
-            except BaseHTTPException as err:
-                raise err
-            except Exception as err:
-                # printing stack trace
-                Logger.log_exception_stack_trace(err)
-                raise BadRequestException(
-                    f"Error while resetting experiment {experiment.id} before adding it to the queue")
+            raise BadRequestException(
+                "The experiment is already running or in the queue")
 
         user = CurrentUserService.get_and_check_current_user()
         cls._add_job(user=user, experiment=experiment, auto_start=True)

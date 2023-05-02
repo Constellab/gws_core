@@ -6,6 +6,7 @@
 import json
 from typing import Dict, List, Literal, Optional, Set, Union
 
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 
 from ..core.decorator.transaction import transaction
@@ -15,7 +16,7 @@ from ..io.connector import Connector
 from ..io.io import Inputs, Outputs
 from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort, Port
-from ..process.process_model import ProcessModel
+from ..process.process_model import ProcessModel, ProcessStatus
 from ..process.protocol_sub_process_builder import (
     ProtocolSubProcessBuilder, SubProcessBuilderReadFromDb)
 from ..user.activity import Activity
@@ -63,7 +64,7 @@ class ProtocolModel(ProcessModel):
         """
         self.config.save()
         self.progress_bar.save()
-        self.save(update_graph=True)
+        self.save_graph()
 
         for process in self.processes.values():
             process.set_parent_protocol(self)
@@ -105,20 +106,39 @@ class ProtocolModel(ProcessModel):
         for process in self.processes.values():
             process.reset()
         self._reset_iofaces()
-        return self.save(update_graph=True)
+        return self.save_graph()
 
-    # -- S --
     @transaction()
-    def save(self, *args, update_graph=False, **kwargs) -> 'ProtocolModel':
+    def save(self, *args, **kwargs) -> 'ProtocolModel':
         if not self.is_saved():
             Activity.add(
                 Activity.CREATE,
                 object_type=self.full_classname(),
                 object_id=self.id
             )
-        if update_graph:
-            self.refresh_graph_from_dump()
+
         return super().save(*args, **kwargs)
+
+    @transaction()
+    def save_graph(self, refresh_status: bool = False) -> 'ProtocolModel':
+        self.refresh_graph_from_dump()
+
+        if refresh_status:
+            # Specific rules when updating the process to redefine the status
+            # if one of the process is running, the protocol is running
+            if any([process.status == ProcessStatus.RUNNING for process in self.processes.values()]):
+                self.status = ProcessStatus.RUNNING
+            # if all the process are successful, the protocol is successful
+            elif all([process.status == ProcessStatus.SUCCESS for process in self.processes.values()]):
+                self.status = ProcessStatus.SUCCESS
+            # if one of the process is draft, the protocol is partially run
+            elif any([process.status == ProcessStatus.DRAFT for process in self.processes.values()]):
+                self.status = ProcessStatus.PARTIALLY_RUN
+            # if one of the process is failed, the protocol is failed
+            elif any([process.status == ProcessStatus.ERROR for process in self.processes.values()]):
+                self.status = ProcessStatus.ERROR
+
+        return self.save()
 
     def set_experiment(self, experiment):
         super().set_experiment(experiment)
@@ -213,13 +233,13 @@ class ProtocolModel(ProcessModel):
 
         runned_processes = {}
         count_processes = len(self.processes)
+
         while len(runned_processes) < count_processes:
 
             has_runned = False
             for process in self.processes.values():
 
-                # process: ProcessModel = process.refresh()
-                if process.is_ready and process.instance_name not in runned_processes:
+                if process.instance_name not in runned_processes and self.process_is_ready(process):
                     has_runned = True
                     self._run_process(process)
 
@@ -234,13 +254,6 @@ class ProtocolModel(ProcessModel):
         if len(runned_processes) < count_processes:
             self.progress_bar.add_warning_message(
                 "Some processes are not ready to be runned")
-
-        # sources: List[ProcessModel] = []
-        # for process in self.processes.values():
-        #     if process.is_ready or self.is_interfaced_with(process.instance_name):
-        #         sources.append(process)
-        # for proc in sources:
-        #     proc.run()
 
     def _run_process(self, process: ProcessModel) -> None:
         self.progress_bar.add_info_message(
@@ -259,8 +272,19 @@ class ProtocolModel(ProcessModel):
         for next_process in next_processes.values():
             next_process.save()
 
-        # TODO TO REMOVE
-        # process.outputs.propagate()
+    def process_is_ready(self, process: ProcessModel) -> bool:
+        if not process.is_draft:
+            return False
+        # if not process.is_ready:
+        #     return False
+
+        # if it ready, check that all the previous precesses are finished in success
+        # it prevent from running a process if an optional input is not set
+        for process in self.get_previous_processes(process.instance_name):
+            if not process.is_success:
+                return False
+
+        return True
 
     def _run_after_task(self):
         if self.is_finished:
@@ -278,7 +302,7 @@ class ProtocolModel(ProcessModel):
         """Method called after the task to save the process
         """
         # override the method to update the graph before saving
-        self.save(update_graph=True)
+        self.save_graph()
 
     ############################### PROCESS #################################
     @property
@@ -383,6 +407,18 @@ class ProtocolModel(ProcessModel):
         if self.layout:
             self.layout.remove_process(name)
         del self._processes[name]
+
+    def get_previous_processes(self, process_name: str) -> List[ProcessModel]:
+        """
+        Returns the previous processes of a process.
+
+        :param process: The process
+        :type process: Process
+        :return: The previous processes
+        :rtype: List[Process]
+        """
+        self._check_instance_name(process_name)
+        return [connector.left_process for connector in self.connectors if connector.right_process.instance_name == process_name]
 
     def _check_instance_name(self, instance_name: str) -> None:
         if instance_name not in self.processes:
@@ -946,3 +982,28 @@ class ProtocolModel(ProcessModel):
             return "Main protocol"
 
         return f"{self.parent_protocol.get_protocol_chain_info()} > {self.instance_name}"
+
+    def mark_as_started(self):
+        # specific case for protocol
+        # if we start a protocol that was already started
+        # we don't want to reset the progress bar
+        if not self.progress_bar.is_started:
+            self.progress_bar.start()
+            self.started_at = DateHelper.now_utc()
+            self.progress_bar.add_message(
+                f"Start of protocol '{self.get_instance_name_context()}'")
+        else:
+            self.progress_bar.add_message(
+                f"Restart of protocol '{self.get_instance_name_context()}'")
+        self.status = ProcessStatus.RUNNING
+        self.save()
+
+    def mark_as_partially_run(self):
+        self.progress_bar.add_message(
+            f"Marking protocol as PARTIALLY RUN '{self.get_instance_name_context()}'")
+        self.status = ProcessStatus.PARTIALLY_RUN
+        self.ended_at = None
+        self.save()
+
+        if self.parent_protocol and self.parent_protocol.is_finished:
+            self.parent_protocol.mark_as_partially_run()

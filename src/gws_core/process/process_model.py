@@ -45,6 +45,8 @@ class ProcessStatus(Enum):
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     ERROR = "ERROR"
+    # For protocol, it means that some process of protocol were not run (or added after run)
+    PARTIALLY_RUN = "PARTIALLY_RUN"
 
 
 @json_ignore(["parent_protocol_id"])
@@ -140,9 +142,6 @@ class ProcessModel(ModelWithUser):
     def reset(self) -> 'ProcessModel':
         """
         Reset the process
-
-        :return: Returns True if is process is successfully reset;  False otherwise
-        :rtype: `bool`
         """
         self.progress_bar.reset()
 
@@ -151,7 +150,12 @@ class ProcessModel(ModelWithUser):
         self.started_at = None
         self.ended_at = None
         self._reset_io()
-        return self.save()
+        process_model = self.save()
+
+        if self.parent_protocol and self.parent_protocol.is_finished:
+            self.parent_protocol.mark_as_partially_run()
+
+        return process_model
 
     def _reset_io(self):
         self.inputs.reset()
@@ -272,9 +276,6 @@ class ProcessModel(ModelWithUser):
         """
         Run the process and save its state in the database.
         """
-
-        if not self.is_ready:
-            return
 
         try:
             self._run()
@@ -510,7 +511,7 @@ class ProcessModel(ModelWithUser):
 
     @property
     def is_finished(self) -> bool:
-        return self.status == ProcessStatus.SUCCESS or self.is_error
+        return self.is_success or self.is_error
 
     @property
     def is_draft(self) -> bool:
@@ -522,6 +523,7 @@ class ProcessModel(ModelWithUser):
             and self.is_draft
 
     def check_is_updatable(self) -> None:
+        return  # TODO TO REMOVE
         if not self.is_updatable:
             raise BadRequestException(GWSException.RESET_EXPERIMENT_REQUIRED.value,
                                       GWSException.RESET_EXPERIMENT_REQUIRED.name)
@@ -535,6 +537,10 @@ class ProcessModel(ModelWithUser):
         return self.status == ProcessStatus.SUCCESS
 
     @property
+    def is_partially_run(self) -> bool:
+        return self.status == ProcessStatus.PARTIALLY_RUN
+
+    @property
     def is_ready(self) -> bool:
         """
         Returns True if the process is ready (i.e. all its ports are
@@ -546,13 +552,9 @@ class ProcessModel(ModelWithUser):
 
         return self.is_draft and self.inputs.is_ready
 
+    @abstractmethod
     def mark_as_started(self):
-        self.progress_bar.start()
-        self.progress_bar.add_message(
-            f"Start of process '{self.get_instance_name_context()}'")
-        self.status = ProcessStatus.RUNNING
-        self.started_at = DateHelper.now_utc()
-        self.save()
+        pass
 
     def mark_as_success(self):
         self.progress_bar.stop_success(

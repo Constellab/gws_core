@@ -1,3 +1,8 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 from typing import final
 
 from ..core.exception.exceptions.bad_request_exception import \
@@ -50,17 +55,15 @@ class Connector:
         # Set outport as previous of inport
         right_port.set_previous(left_port)
 
-    # Check compatibilities between the two ports
-    def check_compatibilities(self) -> 'Connector':
-
-        return self
+        # Automatically propagate the resource if the left port has a resource
+        if left_port.resource_provided:
+            self.propagate_resource()
 
     def disconnect(self) -> None:
         self.left_port.disconnect()
         self.right_port.disconnect()
 
-    # -- V --
-    def to_json(self, deep: bool = False) -> dict:
+    def to_json(self) -> dict:
         """
         Returns a dictionnary describing the Connector.
 
@@ -68,14 +71,7 @@ class Connector:
         :rtype: dict
         """
 
-        r_id = ""
-        if self.left_port.resource_model:
-            r_id = self.left_port.resource_model.id
-
-        json_ = self.export_config()
-        json_["resource_id"] = r_id
-
-        return json_
+        return self.export_config()
 
     def export_config(self) -> dict:
         return {

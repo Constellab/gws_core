@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Tuple, Type
+from typing import List, Type
 
 from gws_core.protocol.protocol_layout import (ProcessLayout, ProtocolLayout,
                                                ProtocolLayoutDict)
@@ -131,7 +131,7 @@ class ProtocolService(BaseService):
         process_model.save_full()
 
         # Refresh the protocol graph and save
-        protocol_model.save(update_graph=True)
+        protocol_model.save_graph(refresh_status=True)
 
         return process_model
 
@@ -235,10 +235,27 @@ class ProtocolService(BaseService):
 
         # delete the process from the parent protocol
         protocol_model.remove_process(process_instance_name)
-        protocol_model.save(update_graph=True)
+        protocol_model.save_graph(refresh_status=True)
 
         # delete the process form the DB
         process_model.delete_instance()
+
+    @classmethod
+    @transaction()
+    def reset_process(cls, protocol_id: str, process_instance_name: str) -> ProcessModel:
+        protocol_model = cls.get_protocol_by_id(protocol_id)
+        return cls.reset_process_of_protocol(protocol_model, process_instance_name)
+
+    @classmethod
+    @transaction()
+    def reset_process_of_protocol(cls, protocol_model: ProtocolModel, process_instance_name: str) -> ProcessModel:
+        protocol_model.check_is_updatable()
+        process_model: ProcessModel = protocol_model.get_process(
+            process_instance_name)
+
+        process_model.reset()
+
+        return process_model
 
     ########################## CONNECTORS #####################
 
@@ -247,7 +264,7 @@ class ProtocolService(BaseService):
             cls, protocol_model: ProtocolModel, connectors: List[ConnectorSpec]) -> ProtocolModel:
         protocol_model.check_is_updatable()
         protocol_model.add_connectors(connectors)
-        return protocol_model.save(update_graph=True)
+        return protocol_model.save_graph(refresh_status=True)
 
     @classmethod
     def add_connector_to_protocol_id(cls, protocol_id: str, from_process_name: str, from_port_name: str,
@@ -265,7 +282,7 @@ class ProtocolService(BaseService):
         protocol_model.check_is_updatable()
         connector = protocol_model.add_connector(from_process_name, from_port_name,
                                                  to_process_name, to_port_name)
-        protocol_model.save(update_graph=True)
+        protocol_model.save_graph(refresh_status=True)
         return connector
 
     @classmethod
@@ -277,7 +294,7 @@ class ProtocolService(BaseService):
         protocol_model.check_is_updatable()
         protocol_model.delete_connector_from_right(
             dest_process_name, dest_process_port_name)
-        protocol_model.save(update_graph=True)
+        protocol_model.save_graph(refresh_status=True)
 
     ########################## INTERFACE & OUTERFACE #####################
     @classmethod
@@ -286,7 +303,7 @@ class ProtocolService(BaseService):
         protocol_model.check_is_updatable()
         protocol_model.add_interface(
             name, target_process_name, target_port_name)
-        return protocol_model.save(update_graph=True)
+        return protocol_model.save_graph(refresh_status=True)
 
     @classmethod
     def add_outerface_to_protocol(
@@ -294,7 +311,7 @@ class ProtocolService(BaseService):
         protocol_model.check_is_updatable()
         protocol_model.add_outerface(
             name, source_process_name, source_port_name)
-        return protocol_model.save(update_graph=True)
+        return protocol_model.save_graph(refresh_status=True)
 
     @classmethod
     def delete_interface_of_protocol_id(cls, protocol_id: str, interface_name: str) -> None:
@@ -305,7 +322,7 @@ class ProtocolService(BaseService):
     def delete_interface_of_protocol(cls, protocol_model: ProtocolModel, interface_name: str) -> None:
         protocol_model.check_is_updatable()
         protocol_model.remove_interface(interface_name)
-        protocol_model.save(update_graph=True)
+        protocol_model.save_graph(refresh_status=True)
 
     @classmethod
     def delete_outerface_of_protocol_id(cls, protocol_id: str, outerface_name: str) -> None:
@@ -316,7 +333,7 @@ class ProtocolService(BaseService):
     def delete_outerface_of_protocol(cls, protocol_model: ProtocolModel, outerface_name: str) -> None:
         protocol_model.check_is_updatable()
         protocol_model.remove_outerface(outerface_name)
-        protocol_model.save(update_graph=True)
+        protocol_model.save_graph(refresh_status=True)
 
     @classmethod
     @transaction()

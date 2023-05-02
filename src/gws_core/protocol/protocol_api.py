@@ -101,10 +101,10 @@ def add_connector(id: str,
                   _=Depends(AuthService.check_user_access_token)) -> dict:
     return ProtocolService.add_connector_to_protocol_id(
         protocol_id=id,
-        output_process_name=add_connector.output_process_name,
-        out_port_name=add_connector.output_port_name,
-        input_process_name=add_connector.input_process_name,
-        in_port_name=add_connector.input_port_name,
+        from_process_name=add_connector.output_process_name,
+        from_port_name=add_connector.output_port_name,
+        to_process_name=add_connector.input_process_name,
+        to_port_name=add_connector.input_port_name,
     ).to_json(deep=True)
 
 
