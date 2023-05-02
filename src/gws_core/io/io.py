@@ -40,14 +40,6 @@ class IO(Base, Generic[PortType]):
     def __init__(self):
         self._ports = dict()
 
-    def disconnect(self):
-        """
-        Disconnect the IO
-        """
-
-        for port in self._ports.values():
-            port.disconnect()
-
     @property
     def is_ready(self) -> bool:
         """
@@ -258,14 +250,6 @@ class Inputs(IO[InPort]):
     def _get_port_type(self) -> Type[InPort]:
         return InPort
 
-    def all_connected_port_values_provided(self) -> bool:
-        """Return true if all the connected ports, received a resource
-        """
-        for port in self.ports.values():
-            if port.is_left_connected and not port.resource_provided:
-                return False
-
-        return True
 
 # ####################################################################
 #

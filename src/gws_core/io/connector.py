@@ -5,8 +5,6 @@
 
 from typing import final
 
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from ..process.process_model import ProcessModel
 from .io_exception import ImcompatiblePortsException
 from .port import InPort, OutPort
@@ -42,26 +40,13 @@ class Connector:
         left_port: OutPort = self.left_port
         right_port: InPort = self.right_port
 
-        if right_port.is_left_connected:
-            raise BadRequestException(
-                "The right-hand side port is already connected")
-
-        if check_compatiblity and not self.left_port.resource_spec.is_compatible_with_in_spec(self.right_port.resource_spec):
+        if check_compatiblity and not left_port.resource_spec.is_compatible_with_in_spec(right_port.resource_spec):
             raise ImcompatiblePortsException(
-                out_port=self.left_port, in_port=self.right_port)
-
-        # Add inport to the next of outport
-        left_port.add_next(right_port)
-        # Set outport as previous of inport
-        right_port.set_previous(left_port)
+                out_port=left_port, in_port=right_port)
 
         # Automatically propagate the resource if the left port has a resource
         if left_port.resource_provided:
             self.propagate_resource()
-
-    def disconnect(self) -> None:
-        self.left_port.disconnect()
-        self.right_port.disconnect()
 
     def to_json(self) -> dict:
         """

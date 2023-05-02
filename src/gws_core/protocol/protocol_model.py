@@ -85,17 +85,6 @@ class ProtocolModel(ProcessModel):
             process.archive(archive, archive_resources=archive_resources)
         return super().archive(archive)
 
-    def disconnect(self):
-        """
-        Disconnect the inputs, outputs, interfaces and outerfaces
-        """
-
-        super().disconnect()
-        for interface in self.interfaces.values():
-            interface.disconnect()
-        for outerface in self.outerfaces.values():
-            outerface.disconnect()
-
     @transaction()
     def reset(self) -> 'ProtocolModel':
         """
@@ -532,11 +521,6 @@ class ProtocolModel(ProcessModel):
                 connectors.append(connector)
 
         return connectors
-
-    def disconnect_connectors(self) -> None:
-        for connector in self.connectors:
-            connector.disconnect()
-        self._connectors = []
 
     def delete_connector_from_right(self, right_process_name: str, right_process_port_name: str) -> None:
         """ remove the connector which right side is connected to the specified port of the specified process

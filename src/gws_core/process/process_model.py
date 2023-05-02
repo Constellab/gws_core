@@ -118,16 +118,6 @@ class ProcessModel(ModelWithUser):
 
         return result
 
-    # -- D --
-
-    def disconnect(self):
-        """
-        Disconnect the inputs and outputs ports
-        """
-
-        self.inputs.disconnect()
-        self.outputs.disconnect()
-
     @property
     def parent_protocol(self) -> ProtocolModel:
 

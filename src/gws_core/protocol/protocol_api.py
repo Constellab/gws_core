@@ -105,7 +105,7 @@ def add_connector(id: str,
         from_port_name=add_connector.output_port_name,
         to_process_name=add_connector.input_process_name,
         to_port_name=add_connector.input_port_name,
-    ).to_json(deep=True)
+    ).to_json()
 
 
 @core_app.delete("/protocol/{id}/connector/{dest_process_name}/{dest_process_port_name}", tags=["Protocol"],

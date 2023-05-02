@@ -41,7 +41,8 @@ class Source(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         r_id: str = params.get_value(Source.config_name)
         if not r_id:
-            raise BadRequestException('Source error, the resource was not provided')
+            raise BadRequestException(
+                'Source error, the resource was not provided')
 
         # retrieve the resource model based and id and resource type
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(r_id)
@@ -75,7 +76,8 @@ class Sink(Task):
             # mark the resource to show in databox as it is an output
             from ..resource.resource_model import ResourceModel
             resource: Resource = inputs.get(Sink.input_name)
-            resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource._model_id)
+            resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
+                resource._model_id)
             resource_model.flagged = True
             resource_model.save()
 
@@ -88,9 +90,10 @@ class FIFO2(Task):
     The FIFO2 (First-In-First-Out) task sends to the output port the first resource received in an input port
     """
 
-    input_specs: InputSpecs = {'resource_1': InputSpec(Resource, is_skippable=True),
-                               'resource_2': InputSpec(Resource, is_skippable=True)}
-    output_specs: OutputSpecs = {'resource': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)}
+    input_specs: InputSpecs = {'resource_1': InputSpec(Resource, is_optional=True),
+                               'resource_2': InputSpec(Resource, is_optional=True)}
+    output_specs: OutputSpecs = {'resource': OutputSpec(
+        resource_types=Resource, sub_class=True, is_constant=True)}
     config_specs: ConfigSpecs = {}
 
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
@@ -121,9 +124,10 @@ class Switch2(Task):
     The Switch2 proccess sends to the output port the resource corresponding to the parameter `index`
     """
 
-    input_specs: InputSpecs = {'resource_1': InputSpec(Resource, is_skippable=True),
-                               'resource_2': InputSpec(Resource, is_skippable=True)}
-    output_specs: OutputSpecs = {'resource': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)}
+    input_specs: InputSpecs = {'resource_1': InputSpec(Resource, is_optional=True),
+                               'resource_2': InputSpec(Resource, is_optional=True)}
+    output_specs: OutputSpecs = {'resource': OutputSpec(
+        resource_types=Resource, sub_class=True, is_constant=True)}
     config_specs: ConfigSpecs = {"index": IntParam(
         default_value=1, min_value=1, max_value=2, short_description="The index of the input resource to switch on. Defaults to 1.")}
 
@@ -149,7 +153,8 @@ class Wait(Task):
     """
 
     input_specs: InputSpecs = {'resource': InputSpec(Resource)}
-    output_specs: OutputSpecs = {'resource': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)}
+    output_specs: OutputSpecs = {'resource': OutputSpec(
+        resource_types=Resource, sub_class=True, is_constant=True)}
     config_specs: ConfigSpecs = {"waiting_time": FloatParam(
         default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
 
@@ -159,7 +164,8 @@ class Wait(Task):
         current_time = 0
         while (current_time < waiting_time):
             current_time = current_time + 1
-            self.update_progress_value((current_time / waiting_time) * 100, 'Waiting 1 sec')
+            self.update_progress_value(
+                (current_time / waiting_time) * 100, 'Waiting 1 sec')
             time.sleep(1)
 
         resource = inputs["resource"]
@@ -175,7 +181,8 @@ class ShellWait(Task):
     """
 
     input_specs: InputSpecs = {'resource': InputSpec(Resource)}
-    output_specs: OutputSpecs = {'resource': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)}
+    output_specs: OutputSpecs = {'resource': OutputSpec(
+        resource_types=Resource, sub_class=True, is_constant=True)}
     config_specs: ConfigSpecs = {"waiting_time": FloatParam(
         default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
 

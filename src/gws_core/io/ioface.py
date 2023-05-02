@@ -38,17 +38,6 @@ class IOface:
     def target_port(self) -> Port:
         return self.target_process.in_port(self.target_port_name)
 
-    def disconnect(self):
-        """
-        Disconnect the IOFace
-        """
-
-        if self.source_port:
-            self.source_port.disconnect()
-
-        if self.target_port:
-            self.target_port.disconnect()
-
     def reset(self):
         if self.source_port:
             self.source_port.reset()

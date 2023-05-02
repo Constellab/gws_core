@@ -174,11 +174,8 @@ class TaskModel(ProcessModel):
 
         # If the check before task retuned False
         if isinstance(check_result, dict) and check_result.get('result') is False:
-            if self.inputs.all_connected_port_values_provided():
-                raise CheckBeforeTaskStopException(
-                    message=check_result.get('message'))
-            else:
-                return
+            raise CheckBeforeTaskStopException(
+                message=check_result.get('message'))
 
         self._run_before_task()
 

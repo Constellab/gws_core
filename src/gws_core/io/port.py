@@ -32,42 +32,14 @@ class Port(Base):
 
     _resource_model: ResourceModel = None
     _resource_spec: IOSpec = None
-    _prev: 'Port' = None
-    _next: List['Port'] = []
 
     # Switch to true when the set_resource_model is set (even if it is set with a None value)
     _resource_provided: bool = False
 
     def __init__(self, name: str, _resource_spec: IOSpec):
         self._resource_model = None
-        self._prev = None
-        self._next = []
         self.name = name
         self._resource_spec = _resource_spec
-
-    def disconnect(self):
-        """
-        Disconnect the port
-        """
-
-        if self._prev:
-            self._prev._next = []
-
-        for port in self._next:
-            port._prev = None
-
-        self._prev = None
-        self._next = []
-
-    @property
-    def is_left_connected(self) -> bool:
-        """
-        Returns True if the port is left-connected to a another port.
-
-        :return: True if the port is left-connected, False otherwise.
-        :rtype: bool
-        """
-        return not self._prev is None
 
     @property
     def is_ready(self) -> bool:
@@ -79,16 +51,8 @@ class Port(Base):
         """
 
         # If the type is skippable, the port is always ready
-        if self.is_skippable_in or self.is_optional:
+        if self.is_optional:
             return True
-
-        # if self.is_optional:
-        #     # If the port is connected but the set_resource was not called,
-        #     # the port is not ready
-        #     if self.is_left_connected and not self._resource_provided:
-        #         return False
-        #     else:
-        #         return True
 
         return self._resource_provided
 
@@ -117,15 +81,6 @@ class Port(Base):
         return self.resource_spec.is_constant_out()
 
     @property
-    def is_skippable_in(self) -> bool:
-        """return true if the port type is SKippableIn
-
-        :return: [description]
-        :rtype: bool
-        """
-        return self.resource_spec.is_skippable_in()
-
-    @property
     def resource_provided(self) -> bool:
         """
         Returns True if the resource of the port was provided
@@ -135,20 +90,6 @@ class Port(Base):
 
     def get_default_resource_type(self) -> Type[Resource]:
         return self.resource_spec.get_default_resource_type()
-
-    @property
-    def next(self) -> List['Port']:
-        return self._next
-
-    @property
-    def prev(self) -> 'Port':
-        return self._prev
-
-    def add_next(self, port: 'Port') -> None:
-        self._next.append(port)
-
-    def set_previous(self, port: 'Port') -> None:
-        self._prev = port
 
     def reset(self):
         self._resource_model = None

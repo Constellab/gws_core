@@ -9,7 +9,7 @@ from typing import Iterable, List, Optional, Tuple, Type, Union
 from typing_extensions import TypedDict
 
 from gws_core.brick.brick_helper import BrickHelper
-from gws_core.core.utils.string_helper import StringHelper
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
 from gws_core.model.typing_dict import TypingRef
 
@@ -26,7 +26,6 @@ class IOSpecDict(TypedDict):
     human_name: Optional[str]
     short_description: Optional[str]
     is_optional: bool
-    is_skippable: Optional[bool]
     sub_classsub_class: Optional[bool]
     is_constant: Optional[bool]
 
@@ -80,7 +79,8 @@ class IOSpec:
     def check_resource_types(self):
         for resource_type in self.resource_types:
             if resource_type is None:
-                raise Exception(f"Resource type can't be None, please set optional parameter to True instead")
+                raise Exception(
+                    f"Resource type can't be None, please set optional parameter to True instead")
 
             if not Utils.issubclass(resource_type, Resource):
                 raise Exception(
@@ -111,10 +111,6 @@ class IOSpec:
         pass
 
     @abstractmethod
-    def is_skippable_in(self) -> bool:
-        pass
-
-    @abstractmethod
     def is_subclass_out(self) -> bool:
         pass
 
@@ -127,7 +123,8 @@ class IOSpec:
         return tuple(self.resource_types)
 
     def get_resources_human_names(self) -> str:
-        list_str = [(resource_type._human_name if resource_type else 'None') for resource_type in self.resource_types]
+        list_str = [(resource_type._human_name if resource_type else 'None')
+                    for resource_type in self.resource_types]
 
         if len(list_str) == 1:
             return list_str[0]
@@ -166,7 +163,8 @@ class IOSpec:
                              "is_optional": self.is_optional,
                              "human_name": self.human_name, "short_description": self.short_description}
         for resource_type in self.resource_types:
-            typing = TypingManager.get_typing_from_name_and_check(resource_type._typing_name)
+            typing = TypingManager.get_typing_from_name_and_check(
+                resource_type._typing_name)
             resource_json: TypingRef = {"typing_name": typing.typing_name,
                                         "brick_version": str(BrickHelper.get_brick_version(typing.brick)),
                                         "human_name": typing.human_name}
@@ -181,10 +179,12 @@ class IOSpec:
 
         # retrieve all the resource type from the json specs
         for spec_json in json_['resource_types']:
-            resource_type: ResourceType = TypingManager.get_type_from_name(spec_json['typing_name'])
+            resource_type: ResourceType = TypingManager.get_type_from_name(
+                spec_json['typing_name'])
 
             if resource_type is None:
-                raise Exception(f"[IOSpec] Invalid resource type '{spec_json['typing_name']}'")
+                raise Exception(
+                    f"[IOSpec] Invalid resource type '{spec_json['typing_name']}'")
             resource_types.append(resource_type)
 
         io_spec: IOSpec = cls(resource_types=resource_types, is_optional=json_.get('is_optional', False),
@@ -197,8 +197,6 @@ class InputSpec(IOSpec):
     """ Spec for an input task port
     """
     _name: str = "InputSpec"
-
-    _is_skippable: bool
 
     def __init__(self, resource_types: ResourceTypes,
                  is_optional: bool = False,
@@ -213,11 +211,7 @@ class InputSpec(IOSpec):
                       If the input is connected, the system will wait for the input to be provided before running the task.
                       Also tells that None value is allowed as input.  , defaults to False
         :type is_optional: bool, optional
-        :param is_skippable (for expert): When true, this tells the system that the input is skippable. This mean that the task can be called
-                  even if this input is connected and the value not provided.
-                  With this you can run your task even if the input value was not received
-                  //!\\ WARNING If an input is skipped, the input is not set, the inputs['name'] will raise a KeyError exception (different from None)
-                  Same as is_optional=True if there is only one input, defaults to False
+        :param is_skippable DEPRECATED, use is_optional instead.
         :type is_skippable: bool, optional
         :param human_name: _description_, defaults to None
         :type human_name: Optional[str], optional
@@ -226,17 +220,15 @@ class InputSpec(IOSpec):
         """
         # if the input is skippable force it to be optional
         if is_skippable:
+            Logger.warning(
+                '[DEPRECATED] is_skippable is deprecated, use is_optional instead')
             is_optional = True
 
         super().__init__(resource_types=resource_types, is_optional=is_optional,
                          human_name=human_name, short_description=short_description)
-        self._is_skippable = is_skippable
 
     def is_constant_out(self) -> bool:
         return False
-
-    def is_skippable_in(self) -> bool:
-        return self._is_skippable
 
     def is_subclass_out(self) -> bool:
         return False
@@ -245,14 +237,12 @@ class InputSpec(IOSpec):
 
     def to_json(self) -> IOSpecDict:
         json_ = super().to_json()
-        json_["is_skippable"] = self._is_skippable
 
         return json_
 
     @classmethod
     def from_json(cls, json_: IOSpecDict) -> 'OutputSpec':
         input_spec: InputSpec = super().from_json(json_)
-        input_spec._is_skippable = json_.get('is_skippable', False)
         return input_spec
 
 
@@ -293,9 +283,6 @@ class OutputSpec(IOSpec):
 
     def is_constant_out(self) -> bool:
         return self._is_constant
-
-    def is_skippable_in(self) -> bool:
-        return False
 
     def is_subclass_out(self) -> bool:
         return self._sub_class
