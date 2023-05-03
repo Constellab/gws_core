@@ -109,24 +109,8 @@ class ProtocolModel(ProcessModel):
         return super().save(*args, **kwargs)
 
     @transaction()
-    def save_graph(self, refresh_status: bool = False) -> 'ProtocolModel':
+    def save_graph(self) -> 'ProtocolModel':
         self.refresh_graph_from_dump()
-
-        if refresh_status:
-            # Specific rules when updating the process to redefine the status
-            # if one of the process is running, the protocol is running
-            if any([process.status == ProcessStatus.RUNNING for process in self.processes.values()]):
-                self.status = ProcessStatus.RUNNING
-            # if all the process are successful, the protocol is successful
-            elif all([process.status == ProcessStatus.SUCCESS for process in self.processes.values()]):
-                self.status = ProcessStatus.SUCCESS
-            # if one of the process is draft, the protocol is partially run
-            elif any([process.status == ProcessStatus.DRAFT for process in self.processes.values()]):
-                self.status = ProcessStatus.PARTIALLY_RUN
-            # if one of the process is failed, the protocol is failed
-            elif any([process.status == ProcessStatus.ERROR for process in self.processes.values()]):
-                self.status = ProcessStatus.ERROR
-
         return self.save()
 
     def set_experiment(self, experiment):
@@ -184,8 +168,6 @@ class ProtocolModel(ProcessModel):
         """
         self.data["graph"] = self.dumps_graph(mode='minimize')
 
-    # -- G --
-
     @property
     def graph(self):
         return self.data.get("graph", {})
@@ -207,20 +189,22 @@ class ProtocolModel(ProcessModel):
 
         try:
             self._run_before_task()
-            self._run_task()
+            self._run_protocol()
             self._run_after_task()
         except Exception as err:
             raise err
 
-    def _run_task(self) -> None:
+    def _run_protocol(self) -> None:
         """
         BUILT-IN PROTOCOL TASK
 
         Runs the process and save its state in the database.
         Override mother class method.
         """
+        # create a dictionaly of runned processes with the instance name as key
+        runned_processes = {
+            key: process for key, process in self.processes.items() if process.is_finished}
 
-        runned_processes = {}
         count_processes = len(self.processes)
 
         while len(runned_processes) < count_processes:
@@ -262,14 +246,12 @@ class ProtocolModel(ProcessModel):
             next_process.save()
 
     def process_is_ready(self, process: ProcessModel) -> bool:
-        if not process.is_draft:
+        if not process.is_runnable:
             return False
-        # if not process.is_ready:
-        #     return False
 
         # if it ready, check that all the previous precesses are finished in success
         # it prevent from running a process if an optional input is not set
-        for process in self.get_previous_processes(process.instance_name):
+        for process in self.get_direct_previous_processes(process.instance_name):
             if not process.is_success:
                 return False
 
@@ -278,11 +260,7 @@ class ProtocolModel(ProcessModel):
     def _run_after_task(self):
         if self.is_finished:
             return
-        # Exit the function if an inner process has not yet finished!
-        for process in self.processes.values():
-            if not process.is_finished:
-                return
-        # Good! The protocol task is finished!
+
         self._propagate_outerfaces()
 
         super()._run_after_task()
@@ -397,7 +375,7 @@ class ProtocolModel(ProcessModel):
             self.layout.remove_process(name)
         del self._processes[name]
 
-    def get_previous_processes(self, process_name: str) -> List[ProcessModel]:
+    def get_direct_previous_processes(self, process_name: str) -> Set[ProcessModel]:
         """
         Returns the previous processes of a process.
 
@@ -407,7 +385,46 @@ class ProtocolModel(ProcessModel):
         :rtype: List[Process]
         """
         self._check_instance_name(process_name)
-        return [connector.left_process for connector in self.connectors if connector.right_process.instance_name == process_name]
+        return {connector.left_process for connector in self.connectors if connector.right_process.instance_name == process_name}
+
+    def get_direct_next_processes(self, process_name: str) -> Set[ProcessModel]:
+        """
+        Returns the next processes of a process.
+
+        :param process: The process
+        :type process: Process
+        :return: The next processes
+        :rtype: List[Process]
+        """
+        self._check_instance_name(process_name)
+        return {connector.right_process for connector in self.connectors if connector.left_process.instance_name == process_name}
+
+    def get_all_next_processes(self, process_name: str, check_parent_protocol: bool = True) -> Set[ProcessModel]:
+        """
+        Returns all the next processes of a process in this protocol and parent protocols.
+
+        :param process: The process
+        :type process: Process
+        :return: The next processes
+        :rtype: List[Process]
+        """
+        self._check_instance_name(process_name)
+
+        next_processes: Set[ProcessModel] = self.get_direct_next_processes(
+            process_name)
+        all_next_processes: Set[ProcessModel] = set(next_processes)
+
+        # recursively get the next processes of the next processes
+        for process in next_processes:
+            all_next_processes.update(
+                self.get_all_next_processes(process.instance_name, False))
+
+        # get the next processes of the parent protocol
+        if check_parent_protocol and self.parent_protocol:
+            all_next_processes.update(
+                self.parent_protocol.get_all_next_processes(self.instance_name))
+
+        return all_next_processes
 
     def _check_instance_name(self, instance_name: str) -> None:
         if instance_name not in self.processes:
@@ -522,7 +539,7 @@ class ProtocolModel(ProcessModel):
 
         return connectors
 
-    def delete_connector_from_right(self, right_process_name: str, right_process_port_name: str) -> None:
+    def delete_connector_from_right(self, right_process_name: str, right_process_port_name: str) -> Optional[Connector]:
         """ remove the connector which right side is connected to the specified port of the specified process
         return the list of deleted connectors
         """
@@ -531,6 +548,8 @@ class ProtocolModel(ProcessModel):
 
         if connector_to_delete:
             self._delete_connector_from_list([connector_to_delete])
+
+        return connector_to_delete
 
     def delete_connectors_from_left(self, left_process_name: str, left_process_port_name: str) -> None:
         """ remove the connector which left side is connected to the specified port of the specified process
@@ -929,10 +948,6 @@ class ProtocolModel(ProcessModel):
     def is_protocol(self) -> bool:
         return True
 
-    @property
-    def is_built(self):
-        return bool(self.connectors)
-
     def check_user_privilege(self, user: User) -> None:
         """Throw an exception if the user cand execute the protocol
 
@@ -968,6 +983,10 @@ class ProtocolModel(ProcessModel):
         return f"{self.parent_protocol.get_protocol_chain_info()} > {self.instance_name}"
 
     def mark_as_started(self):
+        if self.is_running:
+            return
+
+        self.ended_at = None
         # specific case for protocol
         # if we start a protocol that was already started
         # we don't want to reset the progress bar
@@ -983,11 +1002,23 @@ class ProtocolModel(ProcessModel):
         self.save()
 
     def mark_as_partially_run(self):
+        if self.is_partially_run:
+            return
         self.progress_bar.add_message(
-            f"Marking protocol as PARTIALLY RUN '{self.get_instance_name_context()}'")
+            "The protocol was modified, marking it as PARTIALLY RUN")
         self.status = ProcessStatus.PARTIALLY_RUN
-        self.ended_at = None
         self.save()
 
         if self.parent_protocol and self.parent_protocol.is_finished:
             self.parent_protocol.mark_as_partially_run()
+
+        if self.experiment and self.experiment.is_finished:
+            self.experiment.mark_as_partially_run()
+
+    def mark_as_draft(self):
+        if self.is_draft:
+            return
+        self.ended_at = None
+        self.status = ProcessStatus.DRAFT
+        self.error_info = None
+        self.save()

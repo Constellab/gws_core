@@ -106,7 +106,8 @@ class Model(BaseModel, PeeweeModel):
                 val = getattr(self, prop)
                 hash_obj.update(str(val).encode())
             except Exception as err:
-                Logger.error(f"Erreur during the hash of the field property '{prop}'. Object: '{val}'")
+                Logger.error(
+                    f"Erreur during the hash of the field property '{prop}'. Object: '{val}'")
                 raise err
 
         for prop in self.property_names(JSONField):
@@ -114,7 +115,8 @@ class Model(BaseModel, PeeweeModel):
                 val = getattr(self, prop)
                 hash_obj.update(json.dumps(val, sort_keys=True).encode())
             except Exception as err:
-                Logger.error(f"Erreur during the hash of the json field property '{prop}'. Object: '{val}'")
+                Logger.error(
+                    f"Erreur during the hash of the json field property '{prop}'. Object: '{val}'")
                 raise err
 
         for prop in self.property_names(BlobField):
@@ -122,7 +124,8 @@ class Model(BaseModel, PeeweeModel):
                 val = getattr(self, prop)
                 hash_obj.update(val)
             except Exception as err:
-                Logger.error(f"Erreur during the hash of the blob field property '{prop}'. Object: '{val}'")
+                Logger.error(
+                    f"Erreur during the hash of the blob field property '{prop}'. Object: '{val}'")
                 raise err
 
         for prop in self.property_names(ForeignKeyField):
@@ -130,10 +133,12 @@ class Model(BaseModel, PeeweeModel):
                 val = getattr(self, prop)
                 if isinstance(val, Model):
                     if val.hash is None:
-                        raise Exception(f"The model '{prop}' does not have a hash. It was not saved")
+                        raise Exception(
+                            f"The model '{prop}' does not have a hash. It was not saved")
                     hash_obj.update(val.hash.encode())
             except Exception as err:
-                Logger.error(f"Erreur during the hash of the foreign key property '{prop}'. Object: '{val}'")
+                Logger.error(
+                    f"Erreur during the hash of the foreign key property '{prop}'. Object: '{val}'")
                 raise err
 
         return hash_obj
@@ -168,7 +173,15 @@ class Model(BaseModel, PeeweeModel):
             return False
         return (self is other) or ((self.id is not None) and (self.id == other.id))
 
-    # -- G --
+    def __hash__(self) -> int:
+        """
+        Returns the hash of the model
+
+        :return: The hash of the model
+        :rtype: int
+        """
+
+        return hash(self.id)
 
     def get_related_model(self, relation_name: str) -> 'Model':
         if ("__relations" not in self.data) or (relation_name not in self.data["__relations"]):

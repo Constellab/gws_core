@@ -51,6 +51,9 @@ class IProcess:
         self._process_model = self._process_model.refresh()
         return self
 
+    def get_model(self) -> ProcessModel:
+        return self._process_model
+
     ############################################### CONFIG #########################################
 
     def set_param(self, param_name: str, value: ParamValue) -> None:

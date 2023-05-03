@@ -14,6 +14,8 @@ from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
                     ForeignKeyField, ModelDelete, ModelSelect)
 
 from gws_core.core.utils.utils import Utils
+from gws_core.experiment.experiment_exception import \
+    ResourceUsedInAnotherExperimentException
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dict import TypingStatus
 from gws_core.project.project import Project
@@ -128,6 +130,15 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
         return result
 
+    @classmethod
+    def delete_multiple_resources(cls, resources: List[ResourceModel]):
+        # sort the resources to have children resources before their parents to prevent error with
+        # foreign key constraint
+        resources.sort(
+            key=lambda x: 'b' if x.parent_resource_id is None else 'a')
+        for output_resource in resources:
+            output_resource.delete_instance()
+
     def delete_object(self):
         """Delete the kv_store and the file if they exist does not delete model in DB
         """
@@ -211,8 +222,12 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         return ResourceModel.select().where(ResourceModel.experiment == experiment_id)
 
     @classmethod
-    def get_by_experiments(cls, experiment_ids: str) -> ModelSelect:
+    def get_by_experiments(cls, experiment_ids: List[str]) -> ModelSelect:
         return ResourceModel.select().where(ResourceModel.experiment.in_(experiment_ids))
+
+    @classmethod
+    def get_by_task_models(cls, task_model_ids: List[str]) -> ModelSelect:
+        return ResourceModel.select().where(ResourceModel.task_model.in_(task_model_ids))
 
     @classmethod
     def delete_list(cls, resource_model_ids: str) -> ModelDelete:
@@ -248,6 +263,36 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
     @classmethod
     def get_by_types_and_sub(cls, typing_names: List[str]) -> ModelSelect:
         return ResourceModel.select().where(cls.get_by_types_and_sub_expression(typing_names))
+
+    @classmethod
+    def check_if_any_resource_is_used_in_another_exp(cls, resources: List[ResourceModel], experiment_id: str) -> None:
+        """Raised an exception if one of the resources if used in another experiment. As input or as config of a Source task
+        """
+        from ..task.task_input_model import TaskInputModel
+        from ..task.task_model import TaskModel
+
+        if len(resources) > 0:
+            resource_ids: List[str] = list(
+                map(lambda x: x.id, resources))
+
+            # check if it is used as input
+            other_experiment: TaskInputModel = TaskInputModel.get_other_experiments(
+                resource_ids, experiment_id).first()
+
+            if other_experiment is not None:
+                raise ResourceUsedInAnotherExperimentException(
+                    other_experiment.resource_model.name, other_experiment.experiment.get_short_name())
+
+            # check if it is used as source
+            other_task: TaskModel = TaskModel.get_source_task_using_resource_in_another_experiment(
+                resource_ids, experiment_id).first()
+
+            if other_task is not None:
+                # retrieve the resource model
+                resource_model: ResourceModel = [
+                    x for x in resources if x.id == other_task.source_config_id][0]
+                raise ResourceUsedInAnotherExperimentException(
+                    resource_model.name, other_task.experiment.get_short_name())
 
     ########################################## RESOURCE ######################################
 

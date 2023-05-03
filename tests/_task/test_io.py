@@ -289,25 +289,3 @@ class TestIO(BaseTestCase):
 
         self.assertEqual(person1.id, same_person.id)
         self.assertNotEqual(person1, other_erson.id)
-
-    # TODO check what to do with this test as the new system is not compatible
-    # def test_skippable_input(self):
-    #     """Test the SkippableIn special type with FIFO, it also tests that FIFO work
-    #     (testing,SkippableIn but also UnmodifiableOut with subclass) """
-    #     protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(
-    #         TestSkippable)
-    #     experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
-    #         protocol)
-
-    #     experiment = ExperimentRunService.run_experiment(experiment)
-
-    #     create1: TaskModel = experiment.protocol_model.get_process('create1')
-    #     skippable: TaskModel = experiment.protocol_model.get_process(
-    #         'skippable')
-
-    #     create_1_r: ResourceModel = create1.out_port(
-    #         'create_person_out').resource_model
-    #     skippable_r: ResourceModel = skippable.out_port(
-    #         'resource').resource_model
-    #     # Check that this is the create_2 that passed through skippable process
-    #     self.assertEqual(create_1_r.id, skippable_r.id)

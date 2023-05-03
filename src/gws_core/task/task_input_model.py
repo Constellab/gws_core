@@ -24,10 +24,14 @@ class TaskInputModel(BaseModel):
     :rtype: [type]
     """
 
-    experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, on_delete='CASCADE')
-    task_model: TaskModel = ForeignKeyField(TaskModel, null=True, index=True, on_delete='CASCADE')
-    protocol_model: ProtocolModel = ForeignKeyField(ProtocolModel, null=True, index=True, on_delete='CASCADE')
-    resource_model: ResourceModel = ForeignKeyField(ResourceModel, null=True, index=True, on_delete='CASCADE')
+    experiment: Experiment = ForeignKeyField(
+        Experiment, null=True, index=True, on_delete='CASCADE')
+    task_model: TaskModel = ForeignKeyField(
+        TaskModel, null=True, index=True, on_delete='CASCADE')
+    protocol_model: ProtocolModel = ForeignKeyField(
+        ProtocolModel, null=True, index=True, on_delete='CASCADE')
+    resource_model: ResourceModel = ForeignKeyField(
+        ResourceModel, null=True, index=True, on_delete='CASCADE')
 
     port_name: str = CharField()
     is_interface: bool = BooleanField()
@@ -60,6 +64,10 @@ class TaskInputModel(BaseModel):
     @classmethod
     def delete_by_experiment(cls, experiment_id: str) -> int:
         return TaskInputModel.delete().where(TaskInputModel.experiment == experiment_id).execute()
+
+    @classmethod
+    def delete_by_task_ids(cls, task_ids: List[str]) -> int:
+        return TaskInputModel.delete().where(TaskInputModel.task_model.in_(task_ids)).execute()
 
     @classmethod
     def resource_is_used_by_experiment(cls, resource_model_id: str, experiment_ids: List[str]) -> bool:

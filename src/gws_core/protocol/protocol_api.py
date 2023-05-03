@@ -6,7 +6,7 @@
 
 from fastapi import Depends
 
-from gws_core.protocol.protocol_action import AddConnectorDTO
+from gws_core.protocol.protocol_dto import AddConnectorDTO
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
@@ -38,7 +38,7 @@ def add_process(id: str,
     return ProtocolService.add_process_to_protocol_id(
         protocol_id=id,
         process_typing_name=process_typing_name
-    ).to_json(deep=True)
+    ).to_json()
 
 
 @core_app.post("/protocol/{id}/add-process/{process_typing_name}/connected-to-output/{process_name}/{port_name}",
@@ -85,11 +85,23 @@ def add_process_connected_to_input(id: str,
                  summary="Delete a process of a protocol")
 def delete_process(id: str,
                    process_instance_name: str,
-                   _=Depends(AuthService.check_user_access_token)) -> None:
-    ProtocolService.delete_process_of_protocol_id(
+                   _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.delete_process_of_protocol_id(
         protocol_id=id,
         process_instance_name=process_instance_name
-    )
+    ).to_json()
+
+
+@core_app.put("/protocol/{id}/process/{process_instance_name}/reset", tags=["Protocol"],
+              summary="Reset a process of a protocol")
+def reset_process(id: str,
+                  process_instance_name: str,
+                  _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.reset_process_of_protocol_id(
+        protocol_id=id,
+        process_instance_name=process_instance_name
+    ).to_json()
+
 
 ########################## CONNECTORS #####################
 
@@ -113,12 +125,12 @@ def add_connector(id: str,
 def delete_connector(id: str,
                      dest_process_name: str,
                      dest_process_port_name: str,
-                     _=Depends(AuthService.check_user_access_token)) -> None:
-    ProtocolService.delete_connector_of_protocol(
+                     _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.delete_connector_of_protocol(
         protocol_id=id,
         dest_process_name=dest_process_name,
         dest_process_port_name=dest_process_port_name
-    )
+    ).to_json()
 
 
 ########################## CONFIG #####################
@@ -127,10 +139,10 @@ def delete_connector(id: str,
 def configure_process(id: str,
                       process_instance_name: str,
                       config_values: dict,
-                      _=Depends(AuthService.check_user_access_token)) -> None:
+                      _=Depends(AuthService.check_user_access_token)) -> dict:
 
     return ProtocolService.configure_process(
-        protocol_id=id, process_instance_name=process_instance_name, config_values=config_values)
+        protocol_id=id, process_instance_name=process_instance_name, config_values=config_values).to_json()
 
 ########################## INTERFACE / OUTERFACE #####################
 
@@ -141,7 +153,8 @@ def delete_interface(id: str,
                      interface_name: str,
                      _=Depends(AuthService.check_user_access_token)) -> None:
 
-    ProtocolService.delete_interface_of_protocol_id(id, interface_name)
+    return ProtocolService.delete_interface_of_protocol_id(
+        id, interface_name).to_json()
 
 
 @core_app.delete("/protocol/{id}/outerface/{outerface_name}", tags=["Protocol"],
@@ -150,7 +163,8 @@ def delete_outerface(id: str,
                      outerface_name: str,
                      _=Depends(AuthService.check_user_access_token)) -> None:
 
-    ProtocolService.delete_outerface_of_protocol_id(id, outerface_name)
+    return ProtocolService.delete_outerface_of_protocol_id(
+        id, outerface_name).to_json()
 
 
 ########################## SPECIFIC PROCESS #####################
@@ -172,7 +186,7 @@ def add_source_to_protocol(id: str,
                            resource_id: str,
                            _=Depends(AuthService.check_user_access_token)) -> dict:
     return ProtocolService.add_source_to_protocol_id(
-        protocol_id=id, resource_id=resource_id).to_json(deep=True)
+        protocol_id=id, resource_id=resource_id).to_json()
 
 
 @core_app.post("/protocol/{id}/add-sink/{process_name}/{output_port_name}", tags=["Protocol"],

@@ -11,6 +11,8 @@ from gws_core import (BaseTestCase, ConfigParams, Experiment,
                       TaskInputs, TaskModel, TaskOutputs, task_decorator)
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core.resource.resource_model import ResourceOrigin
+from gws_core.task.plug import Source
 from tests.protocol_examples import TestSimpleProtocol
 
 
@@ -117,3 +119,22 @@ class TestTask(BaseTestCase):
 
         with self.assertRaises(Exception):
             experiment.run()
+
+    def test_source_task(self):
+        """
+        Test that the use of a resource in a Source config is saved in the database so we can retrieve which
+        Source task uses a resource. Even if the experiment that uses the resource was not runned.
+        """
+        robot_model = ResourceModel.save_from_resource(
+            Robot.empty(), origin=ResourceOrigin.UPLOADED)
+
+        experiment: IExperiment = IExperiment()
+        task = experiment.get_protocol().add_task(
+            Source, 'source', {Source.config_name: robot_model.id})
+
+        # Check that the use of the robot in the experiment was saved
+        tasks = list(TaskModel.get_source_task_using_resource_in_another_experiment(
+            [robot_model.id], ''))
+
+        self.assertEqual(len(tasks), 1)
+        self.assertEqual(tasks[0].id, task.get_model().id)

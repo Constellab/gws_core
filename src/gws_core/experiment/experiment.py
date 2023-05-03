@@ -189,7 +189,6 @@ class Experiment(ModelWithUser, TaggableModel):
         :rtype: `bool`
         """
         from ..task.task_input_model import TaskInputModel
-        from ..task.task_model import TaskModel
 
         if not self.is_saved():
             raise BadRequestException(
@@ -205,40 +204,14 @@ class Experiment(ModelWithUser, TaggableModel):
         # Check if any resource of this experiment is used in another one
         output_resources: List[ResourceModel] = list(
             ResourceModel.get_by_experiment(self.id))
-
-        if len(output_resources) > 0:
-            output_resource_ids: List[str] = list(
-                map(lambda x: x.id, output_resources))
-
-            # check if it is used as input
-            other_experiment: TaskInputModel = TaskInputModel.get_other_experiments(
-                output_resource_ids, self.id).first()
-
-            if other_experiment is not None:
-                raise ResourceUsedInAnotherExperimentException(
-                    other_experiment.resource_model.name, other_experiment.experiment.get_short_name())
-
-            # check if it is used as source
-            other_task: TaskModel = TaskModel.get_source_task_using_resource_in_another_experiment(
-                output_resource_ids, self.id).first()
-
-            if other_task is not None:
-                # retrieve the resource model
-                resource_model: ResourceModel = [
-                    x for x in output_resources if x.id == other_task.source_config_id][0]
-                raise ResourceUsedInAnotherExperimentException(
-                    resource_model.name, other_task.experiment.get_short_name())
+        ResourceModel.check_if_any_resource_is_used_in_another_exp(
+            output_resources, self.id)
 
         if self.protocol_model:
             self.protocol_model.reset()
 
         # Delete all the resources previously generated to clear the DB
-        # sort the resources to have children resources before their parents to prevent error with
-        # foreign key constraint
-        output_resources.sort(
-            key=lambda x: 'b' if x.parent_resource_id is None else 'a')
-        for output_resource in output_resources:
-            output_resource.delete_instance()
+        ResourceModel.delete_multiple_resources(output_resources)
 
         # Delete all the TaskInput as well
         # Most of them are deleted when deleting the resource but for some constant inputs (link source)
@@ -299,10 +272,14 @@ class Experiment(ModelWithUser, TaggableModel):
     ########################### STATUS MANAGEMENT ##################################
 
     @property
+    def is_success(self) -> bool:
+        return self.status == ExperimentStatus.SUCCESS
+
+    @property
     def is_finished(self) -> bool:
         """Consider finished if the Experiment status is SUCCESS or ERROR
         """
-        return self.status == ExperimentStatus.SUCCESS or self.is_error
+        return self.is_success or self.is_error
 
     @property
     def is_running(self) -> bool:
@@ -356,6 +333,10 @@ class Experiment(ModelWithUser, TaggableModel):
         Logger.error(error_info)
         self.save()
 
+    def mark_as_partially_run(self) -> None:
+        self.status = ExperimentStatus.PARTIALLY_RUN
+        self.save()
+
     def check_is_runnable(self) -> None:
         """Throw an error if the experiment is not runnable
         """
@@ -380,6 +361,9 @@ class Experiment(ModelWithUser, TaggableModel):
     def check_is_updatable(self) -> None:
         """Throw an error if the experiment is not updatable
         """
+        if self.is_running:
+            raise BadRequestException(
+                detail="Experiment is running, you can't update it")
 
         # check experiment status
         if self.is_validated:

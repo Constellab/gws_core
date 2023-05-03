@@ -109,7 +109,6 @@ class TaskModel(ProcessModel):
         self.progress_bar.save()
         return self.save()
 
-    # -- A --
     @transaction()
     def archive(self, archive: bool, archive_resources=True) -> 'TaskModel':
         """
@@ -348,6 +347,8 @@ class TaskModel(ProcessModel):
                                           detail_args={'port_name': port_name})
 
     def mark_as_started(self):
+        if self.is_running:
+            return
         self.progress_bar.start()
         self.progress_bar.add_message(
             f"Start of task '{self.get_instance_name_context()}'")

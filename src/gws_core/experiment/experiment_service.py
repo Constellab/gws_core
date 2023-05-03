@@ -195,12 +195,6 @@ class ExperimentService(BaseService):
 
         return experiment.reset()
 
-    @classmethod
-    def get_experiment_progress(cls, id: str) -> Experiment:
-        experiment: Experiment = Experiment.get_by_id_and_check(id)
-
-        return experiment.reset()
-
     ###################################  VALIDATION  ##############################
 
     @classmethod

@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Dict, Optional, Type, final
 
 from peewee import CharField, ForeignKeyField
 
-from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.model.typing import Typing
 from gws_core.task.plug import Source
@@ -90,7 +89,6 @@ class ProcessModel(ModelWithUser):
 
     ################################# MODEL METHODS #############################
 
-    # -- A --
     @transaction()
     def archive(self, archive: bool, archive_resources=True) -> ProcessModel:
         """
@@ -141,11 +139,12 @@ class ProcessModel(ModelWithUser):
         self.ended_at = None
         self._reset_io()
         process_model = self.save()
-
-        if self.parent_protocol and self.parent_protocol.is_finished:
-            self.parent_protocol.mark_as_partially_run()
-
         return process_model
+
+    @transaction()
+    def reset_v2(self) -> 'ProcessModel':
+
+        self.reset()
 
     def _reset_io(self):
         self.inputs.reset()
@@ -157,8 +156,6 @@ class ProcessModel(ModelWithUser):
         """Method called after the task to save the process
         """
         self.save()
-
-    # -- S --
 
     def save_full(self) -> 'ProcessModel':
         """Function to run overrided by the sub classes
@@ -500,6 +497,10 @@ class ProcessModel(ModelWithUser):
         return self.status == ProcessStatus.RUNNING
 
     @property
+    def is_runnable(self) -> bool:
+        return (self.is_draft or self.is_partially_run) and self.inputs.is_ready
+
+    @property
     def is_finished(self) -> bool:
         return self.is_success or self.is_error
 
@@ -507,16 +508,12 @@ class ProcessModel(ModelWithUser):
     def is_draft(self) -> bool:
         return self.status == ProcessStatus.DRAFT
 
-    @property
-    def is_updatable(self) -> bool:
-        return not self.is_archived and (self.experiment is None or not self.experiment.is_validated) \
-            and self.is_draft
-
     def check_is_updatable(self) -> None:
-        return  # TODO TO REMOVE
-        if not self.is_updatable:
-            raise BadRequestException(GWSException.RESET_EXPERIMENT_REQUIRED.value,
-                                      GWSException.RESET_EXPERIMENT_REQUIRED.name)
+        if self.is_running:
+            raise BadRequestException(
+                "The process is running and cannot be updated")
+        if self.experiment:
+            self.experiment.check_is_updatable()
 
     @property
     def is_error(self) -> bool:
@@ -529,18 +526,6 @@ class ProcessModel(ModelWithUser):
     @property
     def is_partially_run(self) -> bool:
         return self.status == ProcessStatus.PARTIALLY_RUN
-
-    @property
-    def is_ready(self) -> bool:
-        """
-        Returns True if the process is ready (i.e. all its ports are
-        ready or it has never been run before), False otherwise.
-
-        :return: True if the process is ready, False otherwise.
-        :rtype: bool
-        """
-
-        return self.is_draft and self.inputs.is_ready
 
     @abstractmethod
     def mark_as_started(self):

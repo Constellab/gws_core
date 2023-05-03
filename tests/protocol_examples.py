@@ -14,6 +14,7 @@ from gws_core import (ConfigParams, InputSpec, OutputSpec, ProcessSpec,
 
 @protocol_decorator("TestSimpleProtocol")
 class TestSimpleProtocol(Protocol):
+
     def configure_protocol(self) -> None:
         p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
         p1: ProcessSpec = self.add_process(RobotMove, 'p1')
@@ -35,6 +36,13 @@ class TestSimpleProtocol(Protocol):
 
 @protocol_decorator("TestSubProtocol")
 class TestSubProtocol(Protocol):
+
+    # list of next tasks of p2
+    p2_direct_next = {'p_wait', 'p4'}
+    p2_next = {'p_wait', 'p4', 'p3'}
+
+    p2_direct_previous = {'p1'}
+
     def configure_protocol(self) -> None:
         p1: ProcessSpec = self.add_process(RobotMove, 'p1')
         p2: ProcessSpec = self.add_process(RobotEat, 'p2')
@@ -55,10 +63,15 @@ class TestSubProtocol(Protocol):
 
 @protocol_decorator("TestNestedProtocol")
 class TestNestedProtocol(Protocol):
+
+    # list of next tasks of p2 (in the nested protocol)
+    p2_next = {*TestSubProtocol.p2_next, 'p5'}
+
     def configure_protocol(self) -> None:
         p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
         p5: ProcessSpec = self.add_process(RobotEat, 'p5')
-        mini_proto: ProcessSpec = self.add_process(TestSubProtocol, 'mini_proto')
+        mini_proto: ProcessSpec = self.add_process(
+            TestSubProtocol, 'mini_proto')
 
         self.add_connectors([
             (p0 >> 'robot', mini_proto << 'robot'),
@@ -108,9 +121,11 @@ class TestRobotWithSugarProtocol(Protocol):
         sugar: ProcessSpec = self.add_process(RobotSugarCreate, 'sugar')
         wait_food: ProcessSpec = self.add_process(RobotWaitFood, 'wait_food')
         # Eat 1 need to wait for sugar and wait_food
-        eat_1: ProcessSpec = self.add_process(RobotEat, 'eat_1').set_param('food_weight', 2)
+        eat_1: ProcessSpec = self.add_process(
+            RobotEat, 'eat_1').set_param('food_weight', 2)
         # Eat_2 is called even if the food input is not connected
-        eat_2: ProcessSpec = self.add_process(RobotEat, 'eat_2').set_param('food_weight', 5)
+        eat_2: ProcessSpec = self.add_process(
+            RobotEat, 'eat_2').set_param('food_weight', 5)
 
         self.add_connectors([
             (p0 >> 'robot', eat_1 << 'robot'),

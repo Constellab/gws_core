@@ -306,8 +306,9 @@ class TestExperiment(BaseTestCase):
         experiment = ExperimentService.create_empty_experiment()
 
         main_protocol: ProtocolModel = experiment.protocol_model
+
         create_process: TaskModel = ProtocolService.add_process_to_protocol(
-            main_protocol, RobotCreate)
+            main_protocol, RobotCreate).process
 
         # first run
         experiment = ExperimentRunService.run_experiment(experiment)
@@ -321,7 +322,7 @@ class TestExperiment(BaseTestCase):
         # add a move process to the protocol
         main_protocol = main_protocol.refresh()
         move_process: TaskModel = ProtocolService.add_process_to_protocol(
-            main_protocol, RobotMove)
+            main_protocol, RobotMove).process
         ProtocolService.add_connector_to_protocol(main_protocol, create_process.instance_name,
                                                   'robot', move_process.instance_name, 'robot')
 

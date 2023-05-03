@@ -13,6 +13,7 @@ class ExperimentStatus(Enum):
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     ERROR = "ERROR"
+    PARTIALLY_RUN = "PARTIALLY_RUN"
 
 
 class ExperimentType(Enum):

@@ -8,6 +8,7 @@ from typing import List, Tuple, Type
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.protocol.protocol_dto import ProtocolUpdateDTO
 from gws_core.protocol.protocol_spec import ConnectorSpec
 from gws_core.task.plug import Sink, Source
 
@@ -37,6 +38,9 @@ class IProtocol(IProcess):
         super().__init__(process_model=protocol_model)
         self._process_model = protocol_model
 
+    def get_model(self) -> ProtocolModel:
+        return self._process_model
+
     ####################################### PROCESS #########################################
 
     def add_process(
@@ -62,28 +66,28 @@ class IProtocol(IProcess):
     def add_task(self, task_type: Type[Task], instance_name: str, config_params: ConfigParamsDict = None) -> ITask:
         """Add a task to this
         """
-        task_model: TaskModel = ProtocolService.add_process_to_protocol(
+        protocol_update: ProtocolUpdateDTO = ProtocolService.add_process_to_protocol(
             protocol_model=self._process_model, process_type=task_type, instance_name=instance_name,
             config_params=config_params)
 
-        return ITask(task_model)
+        return ITask(protocol_update.process)
 
     def add_empty_protocol(self, instance_name: str) -> 'IProtocol':
         """Add an empty protocol to this protocol
         """
-        protocol_model: ProcessModel = ProtocolService.add_empty_protocol_to_protocol(
+        protocol_update: ProtocolUpdateDTO = ProtocolService.add_empty_protocol_to_protocol(
             self._process_model, instance_name)
-        return IProtocol(protocol_model)
+        return IProtocol(protocol_update.process)
 
     def add_protocol(self, protocol_type: Type[Protocol],
                      instance_name: str, config_params: ConfigParamsDict = None) -> 'IProtocol':
         """Add a protocol from a protocol type
         """
-        protocol_model: ProtocolModel = ProtocolService.add_process_to_protocol(
+        protocol_update: ProtocolUpdateDTO = ProtocolService.add_process_to_protocol(
             protocol_model=self._process_model, process_type=protocol_type,
             instance_name=instance_name, config_params=config_params)
 
-        return IProtocol(protocol_model)
+        return IProtocol(protocol_update.process)
 
     def get_process(self, instance_name: str) -> IProcess:
         """retreive a protocol or a task in this protocol
@@ -197,7 +201,7 @@ class IProtocol(IProcess):
 
     ############################################### Specific processes ####################################
 
-    def add_source(self, instance_name: str, resource_model_id: str, in_port: InPort) -> ITask:
+    def add_source(self, instance_name: str, resource_model_id: str, in_port: Tuple[ProcessModel, str]) -> ITask:
         """Add a Source task to the protocol and connected it to the in_port
         :param instance_name: instance name of the task
         :type instance_name: str
@@ -213,7 +217,7 @@ class IProtocol(IProcess):
         self.add_connector(source >> Source.output_name, in_port)
         return source
 
-    def add_sink(self, instance_name: str, out_port: OutPort) -> ITask:
+    def add_sink(self, instance_name: str, out_port: Tuple[ProcessModel, str]) -> ITask:
         """Add a sink task to the protocol that receive the out_port resource
 
         :param instance_name: instance name of the task

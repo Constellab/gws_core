@@ -4,15 +4,17 @@
 # About us: https://gencovery.com
 
 import json
+from typing import Set
 
 from gws_core import (BaseTestCase, Experiment, ExperimentService,
                       ExperimentStatus, ProtocolModel, ProtocolService, Robot,
                       RobotFood, TaskModel)
 from gws_core.data_provider.data_provider import DataProvider
 from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core.process.process_model import ProcessModel
 from tests.protocol_examples import (TestNestedProtocol,
                                      TestRobotWithSugarProtocol,
-                                     TestSimpleProtocol)
+                                     TestSimpleProtocol, TestSubProtocol)
 
 
 # test_protocol
@@ -129,3 +131,31 @@ class TestProtocol(BaseTestCase):
         # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input
         self.assertEqual(robot_output_2.weight,
                          robot_output.weight + 5)  # 5 = food weight
+
+    def test_processes(self):
+        protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(
+            TestNestedProtocol)
+
+        mini_proto: ProtocolModel = protocol.get_process("mini_proto")
+        self.assertIsInstance(mini_proto, ProtocolModel)
+
+        p2 = mini_proto.get_process("p2")
+        self.assertIsInstance(p2, TaskModel)
+
+        # test get next process
+        next_processes = mini_proto.get_direct_next_processes('p2')
+        self._check_process_set(next_processes, TestSubProtocol.p2_direct_next)
+
+        # test get all next processes
+        next_processes = mini_proto.get_all_next_processes('p2')
+        self._check_process_set(next_processes, TestNestedProtocol.p2_next)
+
+        # test get previous processes
+        previous_processes = mini_proto.get_direct_previous_processes('p2')
+        self._check_process_set(
+            previous_processes, TestSubProtocol.p2_direct_previous)
+
+    def _check_process_set(self, processes: Set[ProcessModel], expected_processes: Set[str]) -> None:
+        self.assertEqual(len(processes), len(expected_processes))
+        for process in processes:
+            self.assertTrue(process.instance_name in expected_processes)

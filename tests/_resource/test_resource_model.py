@@ -1,3 +1,7 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 
 from typing import Dict
@@ -64,7 +68,8 @@ class TestResourceModel(BaseTestCase):
         search_dict.filtersCriteria = [self._get_tag_filter(str(nameTag))]
         self.search(search_dict, 2)
         # Search on both tag
-        search_dict.filtersCriteria = [self._get_tag_filter(TagHelper.tags_to_str([nameTag, otherTag]))]
+        search_dict.filtersCriteria = [self._get_tag_filter(
+            TagHelper.tags_to_str([nameTag, otherTag]))]
         self.search(search_dict, 1)
         # Search all resources that have the tag name whatever the value
         search_dict.filtersCriteria = [self._get_tag_filter('name')]
@@ -83,11 +88,13 @@ class TestResourceModel(BaseTestCase):
         self.search(search_dict, 1)
 
         # Search on Experiment
-        search_dict.filtersCriteria = [{"key": "experiment", "operator": "EQ", "value": experiment._experiment.id}]
+        search_dict.filtersCriteria = [
+            {"key": "experiment", "operator": "EQ", "value": experiment._experiment.id}]
         self.search(search_dict, 1)
 
         # Search on Task
-        search_dict.filtersCriteria = [{"key": "task_model", "operator": "EQ", "value": task._process_model.id}]
+        search_dict.filtersCriteria = [
+            {"key": "task_model", "operator": "EQ", "value": task._process_model.id}]
         self.search(search_dict, 1)
 
         # Search on Data with full text
@@ -100,12 +107,14 @@ class TestResourceModel(BaseTestCase):
 
     def search(self, search_dict: SearchParams, expected_nb_of_result: int) -> None:
         paginator = ResourceService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], expected_nb_of_result)
+        self.assertEqual(
+            paginator['total_number_of_items'], expected_nb_of_result)
 
     def test_upload_and_delete(self):
         file: File = DataProvider.get_iris_file()
 
-        resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
+        resource_model: ResourceModel = ResourceModel.save_from_resource(
+            file, origin=ResourceOrigin.UPLOADED)
         ResourceService.delete(resource_model.id)
 
         self.assertIsNone(ResourceModel.get_by_id(resource_model.id))
@@ -113,13 +122,16 @@ class TestResourceModel(BaseTestCase):
     def test_update_type(self):
         file: File = DataProvider.get_iris_file()
 
-        resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
+        resource_model: ResourceModel = ResourceModel.save_from_resource(
+            file, origin=ResourceOrigin.UPLOADED)
         self.assertIsInstance(resource_model.get_resource(), File)
         self.assertNotIsInstance(resource_model.get_resource(), SubFile)
 
-        ResourceService.update_resource_type(resource_model.id, SubFile._typing_name)
+        ResourceService.update_resource_type(
+            resource_model.id, SubFile._typing_name)
 
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
+            resource_model.id)
         self.assertIsInstance(resource_model.get_resource(), SubFile)
 
     def test_resource_tags(self):
@@ -142,7 +154,8 @@ class TestResourceModel(BaseTestCase):
             origin: ResourceOrigin, task: TaskModel = None) -> ResourceModel:
         for_search: ForSearch = ForSearch.create(text)
         for_search.tags = tags
-        resource_model = ResourceModel.from_resource(for_search, origin=ResourceOrigin.UPLOADED)
+        resource_model = ResourceModel.from_resource(
+            for_search, origin=ResourceOrigin.UPLOADED)
         resource_model.origin = origin
 
         if task:
