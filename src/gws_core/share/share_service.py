@@ -36,7 +36,8 @@ class ShareService():
         """Retrun the list of lab that downloaded the resource
         """
 
-        entity_type: Type[SharedEntityInfo] = cls._get_shared_entity_type(entity_type)
+        entity_type: Type[SharedEntityInfo] = cls._get_shared_entity_type(
+            entity_type)
 
         query = entity_type.get_sents(entity_id)
 
@@ -50,9 +51,11 @@ class ShareService():
         """Method called by an external lab after the an entity was successfully
         import in the external lab. This helps this lab to keep track of which lab downloaded the entity
         """
-        shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check(token)
+        shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check(
+            token)
 
-        entity_type: Type[SharedEntityInfo] = cls._get_shared_entity_type(entity_type)
+        entity_type: Type[SharedEntityInfo] = cls._get_shared_entity_type(
+            entity_type)
 
         # check if this resource was already downloaded by this lab
         if entity_type.already_shared_with_lab(shared_entity_link.entity_id, receiver_lab['lab_id']):
@@ -77,7 +80,8 @@ class ShareService():
         """Method that zip a resource and return the file path
         """
 
-        shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check_validity(token)
+        shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check_validity(
+            token)
 
         return cls.zip_resource(shared_entity_link.entity_id, shared_entity_link.created_by)
 
@@ -103,7 +107,7 @@ class ShareService():
 
         # Add the importer and the connector
         importer: IProcess = protocol.add_process(ResourceDownloader, 'downloader', {
-            'link': link
+            ResourceDownloader.config_name: link
         })
 
         # Add sink and connect it

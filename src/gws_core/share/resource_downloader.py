@@ -33,9 +33,12 @@ from gws_core.user.user import User
                 short_description="Download a resource from an external lab")
 class ResourceDownloader(Task):
     input_specs: InputSpecs = {}
-    output_specs: OutputSpecs = {'resource': OutputSpec(Resource, human_name='Imported resource', sub_class=True)}
+    output_specs: OutputSpecs = {'resource': OutputSpec(
+        Resource, human_name='Imported resource', sub_class=True)}
     config_specs: ConfigSpecs = {'link': StrParam(
         human_name='Resource link', short_description='Link to download the resource')}
+
+    config_name = 'link'
 
     resource_unzipper: ResourceUnzipper
     link: str
@@ -44,7 +47,8 @@ class ResourceDownloader(Task):
 
         self.link = params['link']
 
-        file_downloader = TaskFileDownloader(ResourceDownloader.get_brick_name(), self.message_dispatcher)
+        file_downloader = TaskFileDownloader(
+            ResourceDownloader.get_brick_name(), self.message_dispatcher)
 
         # create a temp dir
         temp_dir = Settings.get_instance().make_temp_dir()
@@ -64,19 +68,23 @@ class ResourceDownloader(Task):
         """Save share info and mark the resource as received in lab
         """
         if not self.resource_unzipper:
-            self.log_error_message("The resource unzipper is not set, can mark resource as received")
+            self.log_error_message(
+                "The resource unzipper is not set, can mark resource as received")
 
         # Create the shared entity info
         self.log_info_message("Storing the resource origin info")
-        resources: List[Resource] = self.resource_unzipper.get_all_generated_resources()
+        resources: List[Resource] = self.resource_unzipper.get_all_generated_resources(
+        )
         for resource in resources:
             self._create_shared_entity(SharedResource, resource._model_id, SharedEntityMode.RECEIVED,
                                        self.resource_unzipper.get_origin_info(),
                                        CurrentUserService.get_and_check_current_user())
 
-        self.log_info_message("Marking the resource as received in the origin lab")
+        self.log_info_message(
+            "Marking the resource as received in the origin lab")
         # call the origin lab to mark the resource as received
-        current_lab_info = ExternalLabService.get_current_lab_info(CurrentUserService.get_and_check_current_user())
+        current_lab_info = ExternalLabService.get_current_lab_info(
+            CurrentUserService.get_and_check_current_user())
 
         # retrieve the token which is the last part of the link
         share_token = self.link.split('/')[-1]
@@ -85,7 +93,8 @@ class ResourceDownloader(Task):
             ShareLinkType.RESOURCE, share_token, current_lab_info)
 
         if response.status_code != 200:
-            self.log_error_message("Error while marking the resource as received: " + response.text)
+            self.log_error_message(
+                "Error while marking the resource as received: " + response.text)
 
         # clear temps files
         self.log_info_message("Cleaning the temp files")
