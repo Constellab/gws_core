@@ -437,6 +437,17 @@ class ProtocolModel(ProcessModel):
 
         return error_tasks
 
+    def get_execution_time(self) -> float:
+        """Return the execution time of the process
+
+        :return: execution time in seconds
+        :rtype: float
+        """
+        execution_time = 0
+        for process in self.processes.values():
+            execution_time += process.progress_bar.elapsed_time
+        return execution_time
+
     def _check_instance_name(self, instance_name: str) -> None:
         if instance_name not in self.processes:
             raise BadRequestException(
@@ -1007,6 +1018,7 @@ class ProtocolModel(ProcessModel):
             self.progress_bar.add_message(
                 f"Start of protocol '{self.get_instance_name_context()}'")
         else:
+            self.progress_bar.trigger_second_start()
             self.progress_bar.add_message(
                 f"Restart of protocol '{self.get_instance_name_context()}'")
         self.status = ProcessStatus.RUNNING

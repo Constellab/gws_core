@@ -46,6 +46,9 @@ class ProgressBar(Model):
     started_at = DateTimeUTC(null=True)
     ended_at = DateTimeUTC(null=True)
 
+    elapsed_time = FloatField(null=True)
+    second_start = DateTimeUTC(null=True)
+
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0
 
@@ -75,6 +78,8 @@ class ProgressBar(Model):
         }
         self.started_at = None
         self.ended_at = None
+        self.elapsed_time = None
+        self.second_start = None
 
     def reset(self) -> 'ProgressBar':
         """
@@ -86,6 +91,28 @@ class ProgressBar(Model):
         self._init_data()
 
         return self.save()
+
+    def get_elapsed_time(self) -> float:
+        """
+        Calculate the elapsed time in milliseconds
+
+        :return: Returns the elapsed time in milliseconds
+        :rtype: `float`
+        """
+        # if the second start is currently running
+        if self.second_start is not None and self.ended_at is None:
+            return (DateHelper.now_utc() - self.second_start).total_seconds() * 1000
+
+        if self.elapsed_time is not None:
+            return self.elapsed_time
+
+        if self.started_at is None:
+            return 0.0
+
+        if self.ended_at is None:
+            return (DateHelper.now_utc() - self.started_at).total_seconds() * 1000
+
+        return (self.ended_at - self.started_at).total_seconds() * 1000
 
     ################################################## MESSAGE #################################################
 
@@ -109,11 +136,17 @@ class ProgressBar(Model):
 
         self.save()
 
+    def save(self, *args, **kwargs) -> 'Model':
+        Logger.info(
+            f"Save progress bar {self.process_id} - {self.elapsed_time}")
+        return super().save(*args, **kwargs)
+
     def add_messages(self, messages: List[ProgressBarMessageWithType]) -> None:
 
         for message in messages:
             if message["type"] == MessageLevel.PROGRESS:
-                self._update_progress(value=message["progress"], message=message["message"])
+                self._update_progress(
+                    value=message["progress"], message=message["message"])
             else:
                 self._add_message(message["message"], message["type"])
 
@@ -138,21 +171,23 @@ class ProgressBar(Model):
         self.started_at = DateHelper.now_utc()
         self.save()
 
-    def stop_success(self, success_message: str) -> None:
-        self._stop()
-        self.add_success_message(success_message)
-
-    def stop_error(self, error_message: str) -> None:
-        self._stop()
-        self.add_error_message(error_message)
-
-    def stop(self) -> None:
-        self._stop()
+    def trigger_second_start(self):
+        self.second_start = DateHelper.now_utc()
+        self.ended_at = None
         self.save()
 
-    def _stop(self) -> None:
+    def stop_success(self, success_message: str, elapsed_time: float) -> None:
+        self._stop(elapsed_time)
+        self.add_success_message(success_message)
+
+    def stop_error(self, error_message: str, elapsed_time: float) -> None:
+        self._stop(elapsed_time)
+        self.add_error_message(error_message)
+
+    def _stop(self, elapsed_time: float) -> None:
         self.current_value = self._MAX_VALUE
         self.ended_at = DateHelper.now_utc()
+        self.elapsed_time = elapsed_time
 
     def update_progress(self, value: float, message: str) -> None:
         """
@@ -171,7 +206,8 @@ class ProgressBar(Model):
         if message:
             # perc = value/self.get_max_value()
             perc = value
-            self._add_message("{:1.1f}%: {}".format(perc, message), MessageLevel.PROGRESS)
+            self._add_message("{:1.1f}%: {}".format(
+                perc, message), MessageLevel.PROGRESS)
 
     @property
     def messages(self) -> List[ProgressBarMessage]:
@@ -215,6 +251,7 @@ class ProgressBar(Model):
     @classmethod
     def progress_message_to_str(cls, message: ProgressBarMessage) -> str:
         return f"{message['type']} - {message['datetime']} - {message['text']}"
+
     ################################################## VALUE #################################################
 
     def _update_progress_value(self, value: float) -> float:
@@ -247,9 +284,7 @@ class ProgressBar(Model):
         """
 
         _json = super().to_json(deep=deep, **kwargs)
-
-        if deep:
-            _json["messages"] = self.messages
+        _json['elapsed_time'] = self.get_elapsed_time()
 
         return _json
 

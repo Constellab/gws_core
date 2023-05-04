@@ -336,6 +336,14 @@ class ProcessModel(ModelWithUser):
             raise UnauthorizedException(
                 f"You must be a {process_type._allowed_user} to run the process '{process_type.full_classname()}'")
 
+    def get_execution_time(self) -> float:
+        """Return the execution time of the process
+
+        :return: execution time in seconds
+        :rtype: float
+        """
+        return (DateHelper.now_utc() - self.progress_bar.started_at).total_seconds() * 1000
+
     ########################### INFO #################################
 
     @abstractmethod
@@ -533,20 +541,23 @@ class ProcessModel(ModelWithUser):
 
     def mark_as_success(self):
         self.progress_bar.stop_success(
-            f"End of process '{self.get_instance_name_context()}'")
+            f"End of process '{self.get_instance_name_context()}'",
+            self.get_execution_time())
         self.status = ProcessStatus.SUCCESS
         self.ended_at = DateHelper.now_utc()
         self.save()
 
     def mark_as_error(self, error_info: ProcessErrorInfo):
-        self.progress_bar.stop_error(error_info["detail"])
+        self.progress_bar.stop_error(error_info["detail"],
+                                     self.get_execution_time())
         self.status = ProcessStatus.ERROR
         self.error_info = error_info
         self.ended_at = DateHelper.now_utc()
         self.save()
 
     def mark_as_error_and_parent(self, error_info: ProcessErrorInfo):
-        self.progress_bar.stop_error(error_info["detail"])
+        self.progress_bar.stop_error(
+            error_info["detail"], self.get_execution_time())
         self.status = ProcessStatus.ERROR
         self.error_info = error_info
         self.ended_at = DateHelper.now_utc()

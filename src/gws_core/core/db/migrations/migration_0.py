@@ -652,3 +652,27 @@ class Migration050(BrickMigration):
             except Exception as exception:
                 Logger.error(
                     f'Error while setting project for resource id {resource_model.id} : {exception}')
+
+
+@brick_migration('0.5.2', short_description='Add elapsed time and second start to progress bar')
+class Migration052(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(ProgressBar.get_db())
+        migrator.add_column_if_not_exists(
+            ProgressBar, ProgressBar.elapsed_time)
+        migrator.add_column_if_not_exists(
+            ProgressBar, ProgressBar.second_start)
+        migrator.migrate()
+
+        progress_bars: List[ProgressBar] = list(ProgressBar.select())
+        for progress_bar in progress_bars:
+            try:
+                if progress_bar.elapsed_time is None:
+                    progress_bar.elapsed_time = progress_bar.get_elapsed_time()
+                    progress_bar.save()
+            except Exception as exception:
+                Logger.error(
+                    f'Error while setting elapsed time for progress bar id {progress_bar.id} : {exception}')
