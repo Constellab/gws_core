@@ -52,7 +52,8 @@ class IExperiment:
                 title=title, project_id=project, type_=type_)
         else:
             if not isclass(protocol_type) or not issubclass(protocol_type, Protocol):
-                raise Exception(f"The provided process_type '{str(protocol_type)}' is not a process")
+                raise Exception(
+                    f"The provided process_type '{str(protocol_type)}' is not a process")
             self._experiment = ExperimentService.create_experiment_from_protocol_type(
                 protocol_type=protocol_type, title=title, project=project, type_=type_)
 
@@ -69,11 +70,12 @@ class IExperiment:
         """
 
         # run the experiment in a sub process so it can be stopped
-        process = Process(target=ExperimentRunService.run_experiment, args=(self._experiment,))
+        process = Process(
+            target=ExperimentRunService.run_experiment, args=(self._experiment,))
         process.start()
         process.join()
 
-        self._refresh()
+        self.refresh()
 
         if self._experiment.is_error:
             raise Exception(self._experiment.error_info['detail'])
@@ -82,7 +84,7 @@ class IExperiment:
         # because the experiment status is updated after the process is stopped
         if process.exitcode is None:
             sleep(2)
-            self._refresh()
+            self.refresh()
             if self._experiment.is_error:
                 raise Exception(self._experiment.error_info['detail'])
 
@@ -106,6 +108,6 @@ class IExperiment:
     def is_running(self) -> bool:
         return self._experiment.is_running
 
-    def _refresh(self) -> None:
+    def refresh(self) -> None:
         self._experiment = self._experiment.refresh()
         self._protocol.refresh()

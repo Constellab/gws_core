@@ -7,6 +7,7 @@ import json
 from typing import Dict, List, Literal, Optional, Set, Union
 
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.process.process_exception import ProcessRunException
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 
 from ..core.decorator.transaction import transaction
@@ -192,6 +193,16 @@ class ProtocolModel(ProcessModel):
             self._run_protocol()
             self._run_after_task()
         except Exception as err:
+            if not self.is_error:
+                exception: ProcessRunException = ProcessRunException.from_exception(
+                    self, err)
+                self.mark_as_error(
+                    {
+                        "detail": exception.get_detail_with_args(),
+                        "unique_code": exception.unique_code,
+                        "context": None,
+                        "instance_id": exception.instance_id
+                    })
             raise err
 
     def _run_protocol(self) -> None:
@@ -445,7 +456,8 @@ class ProtocolModel(ProcessModel):
         """
         execution_time = 0
         for process in self.processes.values():
-            execution_time += process.progress_bar.elapsed_time
+            if process.progress_bar.elapsed_time is not None:
+                execution_time += process.progress_bar.elapsed_time
         return execution_time
 
     def _check_instance_name(self, instance_name: str) -> None:

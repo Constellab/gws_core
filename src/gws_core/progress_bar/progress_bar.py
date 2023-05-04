@@ -136,11 +136,6 @@ class ProgressBar(Model):
 
         self.save()
 
-    def save(self, *args, **kwargs) -> 'Model':
-        Logger.info(
-            f"Save progress bar {self.process_id} - {self.elapsed_time}")
-        return super().save(*args, **kwargs)
-
     def add_messages(self, messages: List[ProgressBarMessageWithType]) -> None:
 
         for message in messages:
