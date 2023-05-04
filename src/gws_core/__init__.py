@@ -106,13 +106,13 @@ from .core.utils.cryptography import Cryptography as Cryptography
 from .core.utils.http_helper import HTTPHelper as HTTPHelper
 from .core.utils.logger import Logger as Logger
 from .core.utils.numeric_helper import NumericHelper as NumericHelper
+from .core.utils.package_helper import PackageHelper as PackageHelper
 from .core.utils.requests import Requests as Requests
 from .core.utils.serializer import Serializer as Serializer
 from .core.utils.settings import Settings as Settings
 from .core.utils.string_helper import StringHelper as StringHelper
 from .core.utils.utils import Utils as Utils
 from .core.utils.zip import Zip as Zip
-from .core.utils.package_helper import PackageHelper as PackageHelper
 # Deprecated
 from .deprecated.dataset.dep_dataset import Dataset as Dataset
 from .deprecated.dataset.tasks.dep_dataset_exporter import \
@@ -159,9 +159,12 @@ from .impl.json.json_tasks import JSONImporter as JSONImporter
 from .impl.json.json_view import JSONView as JSONView
 from .impl.live.py_conda_live_task import PyCondaLiveTask as PyCondaLiveTask
 from .impl.live.py_live_task import PyLiveTask as PyLiveTask
-# Task > LiveTask
+# Impl > LiveTask
 from .impl.live.py_pipenv_live_task import PyPipenvLiveTask as PyPipenvLiveTask
 from .impl.live.r_conda_live_task import RCondaLiveTask as RCondaLiveTask
+# Impl > open ai
+from .impl.openai.open_ai_helper import GPTMessage as GPTMessage
+from .impl.openai.open_ai_helper import OpenAiHelper as OpenAiHelper
 # Impl > Robot
 from .impl.robot.robot_protocol import \
     RobotSuperTravelProto as RobotSuperTravelProto
