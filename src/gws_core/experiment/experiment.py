@@ -293,6 +293,10 @@ class Experiment(ModelWithUser, TaggableModel):
         """
         return self.status == ExperimentStatus.ERROR
 
+    @property
+    def is_draft(self) -> bool:
+        return self.status == ExperimentStatus.DRAFT
+
     def mark_as_in_queue(self):
         self.status = ExperimentStatus.IN_QUEUE
         self.save()
@@ -322,6 +326,7 @@ class Experiment(ModelWithUser, TaggableModel):
         self.pid = None
         self.score = None
         self.status = ExperimentStatus.DRAFT
+        self.lab_config = None
         self.save()
 
     def mark_as_error(self, error_info: ProcessErrorInfo) -> None:
@@ -348,6 +353,16 @@ class Experiment(ModelWithUser, TaggableModel):
             raise BadRequestException("The experiment is validated")
         if self.status == ExperimentStatus.RUNNING:
             raise BadRequestException("The experiment is already running")
+        if self.is_success:
+            raise BadRequestException("The experiment is already finished")
+
+        # if this is a start and stop, we check that the lab
+        # is in the same version as the experiment
+        if not self.is_draft and self.lab_config:
+            current_lab_config = LabConfigModel.get_current_config()
+            if not current_lab_config.is_compatible_with(self.lab_config):
+                raise BadRequestException(GWSException.EXP_CONTINUE_LAB_INCOMPATIBLE.value,
+                                          unique_code=GWSException.EXP_CONTINUE_LAB_INCOMPATIBLE.name)
 
     def check_is_stopable(self) -> None:
         """Throw an error if the experiment is not stopable

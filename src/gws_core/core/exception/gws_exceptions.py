@@ -50,3 +50,4 @@ class GWSException(Enum):
     REPORT_NO_ASSOCIATED_EXPERIMENT = "The report is not associated with an experiment. Please associate it to an experiment to access views."
     DELETE_PROJECT_WITH_EXPERIMENTS = "The project can't be deleted because it contains experiments"
     DELETE_PROJECT_WITH_REPORTS = "The project can't be deleted because it contains reports"
+    EXP_CONTINUE_LAB_INCOMPATIBLE = "The experiment cannot be continued because the lab version has changed since last execution. Please reset the experiment first."

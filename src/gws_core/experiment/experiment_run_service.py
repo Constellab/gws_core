@@ -57,24 +57,24 @@ class ExperimentRunService():
         """
         Run the experiment
         """
-        user = CurrentUserService.get_and_check_current_user()
-
-        # check user privilege
-        experiment.check_user_privilege(user)
-
-        # check experiment status
-        experiment.check_is_runnable()
-
-        Logger.info(f"Running experiment : {experiment.id}")
-
-        ActivityService.add(
-            Activity.START,
-            object_type=experiment.full_classname(),
-            object_id=experiment.id,
-            user=user
-        )
-
         try:
+            user = CurrentUserService.get_and_check_current_user()
+
+            # check user privilege
+            experiment.check_user_privilege(user)
+
+            # check experiment status
+            experiment.check_is_runnable()
+
+            Logger.info(f"Running experiment : {experiment.id}")
+
+            ActivityService.add(
+                Activity.START,
+                object_type=experiment.full_classname(),
+                object_id=experiment.id,
+                user=user
+            )
+
             experiment.mark_as_started(os.getpid())
 
             experiment.protocol_model.run()
@@ -87,10 +87,15 @@ class ExperimentRunService():
         except Exception as err:
             exception: ExperimentRunException = ExperimentRunException.from_exception(
                 experiment=experiment, exception=err)
-            experiment.mark_as_error({"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
-                                      "context": exception.context, "instance_id": exception.instance_id})
-            cls._send_experiment_finished_mail(experiment)
+            error = {"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
+                     "context": exception.context, "instance_id": exception.instance_id}
+            experiment.mark_as_error(error)
 
+            # mark the protocol as error if it is not already the case
+            if not experiment.protocol_model.is_error:
+                experiment.protocol_model.mark_as_error(error)
+
+            cls._send_experiment_finished_mail(experiment)
             raise exception
 
     @classmethod

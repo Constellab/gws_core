@@ -39,7 +39,6 @@ class RobotMove(Task):
         robot: Robot = inputs['robot']
         robot.move(direction=params.get_value('direction'),
                    moving_step=params.get_value('moving_step'))
-        raise Exception("This is a test exception")
         return {'robot': robot, 'food': None}
 
 

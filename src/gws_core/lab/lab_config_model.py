@@ -96,6 +96,16 @@ class LabConfigModel(BaseModel):
 
         return hash_obj.hexdigest()
 
+    def is_compatible_with(self, other: 'LabConfigModel') -> bool:
+        """Check if the current config is compatible with the other config
+
+        :param other: _description_
+        :type other: LabConfigModel
+        :return: _description_
+        :rtype: bool
+        """
+        return self.hash == other.hash
+
     def to_json(self) -> LabConfig:
         return {
             'version': self.version,
