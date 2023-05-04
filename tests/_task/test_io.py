@@ -8,8 +8,7 @@ from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
                       Connector, Experiment, ExperimentService, ProcessFactory,
                       ProcessSpec, Protocol, ProtocolModel, Resource,
                       ResourceModel, Task, TaskInputs, TaskModel, TaskOutputs,
-                      Wait, protocol_decorator, resource_decorator,
-                      task_decorator)
+                      protocol_decorator, resource_decorator, task_decorator)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.io.io_exception import ImcompatiblePortsException
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -211,7 +210,6 @@ class TestIO(BaseTestCase):
         self.assertEqual(port_connect.to_json(), {
             "from": {"node": "p0",  "port": "create_person_out"},
             "to": {"node": "p1",  "port": "move_person_in"},
-            'resource_id': ''
         })
 
     def test_multi(self):

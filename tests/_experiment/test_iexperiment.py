@@ -1,3 +1,8 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 from gws_core import (BaseTestCase, IExperiment, IProcess, IProtocol, ITask,
                       ProtocolModel, Robot, RobotCreate, RobotMove,
                       RobotSuperTravelProto, RobotTravelProto)
@@ -14,7 +19,7 @@ class TestIExperiment(BaseTestCase):
         create: IProcess = protocol.add_process(RobotCreate, 'create')
 
         # Verify that the process was created in the DB
-        self.assertIsNotNone(create._process_model.id)
+        self.assertIsNotNone(create.get_model().id)
 
         # create manually a sub proto
         sub_proto: IProtocol = protocol.add_empty_protocol('sub_proto')
@@ -81,15 +86,15 @@ class TestIExperiment(BaseTestCase):
         super_travel.delete_process('sub_travel')
         self.assertRaises(Exception, super_travel.get_process, 'sub_travel')
         # Test also that the process of sub_travel was delete form DB
-        self.assertRaises(Exception, ITask.get_by_id, move_1._process_model.id)
+        self.assertRaises(Exception, ITask.get_by_id, move_1.get_model().id)
 
         # Test info in protocol model
-        super_travel_model: ProtocolModel = super_travel._process_model
+        super_travel_model: ProtocolModel = super_travel.get_model()
         self._test_super_travel_after_remove(super_travel_model)
 
         # Verify that the DB was updated
         super_travel_db: ProtocolModel = IProtocol.get_by_id(
-            super_travel_model.id)._process_model
+            super_travel_model.id).get_model()
         self._test_super_travel_after_remove(super_travel_db)
 
     def _test_super_travel_after_remove(self, super_travel_model: ProtocolModel):
@@ -103,7 +108,7 @@ class TestIExperiment(BaseTestCase):
             Exception, super_travel_model.get_process, 'sub_travel')
 
         # Test that the connectors were deleted
-        self.assertEqual(len(super_travel_model.connectors), 1)
+        self.assertEqual(len(super_travel_model.connectors), 0)
 
         # Test that the interface and input are delete
         self.assertRaises(

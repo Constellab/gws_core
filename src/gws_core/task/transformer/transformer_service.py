@@ -56,8 +56,8 @@ class TransformerService():
             new_process: IProcess = protocol.add_process(
                 transformer_type, f"transformer_{index}", transformer["config_values"])
 
-            protocol.add_connector_new(last_process, last_process.get_first_outport().name,
-                                       new_process, Transformer.input_name)
+            protocol.add_connector_new(last_process.instance_name, last_process.get_first_outport().name,
+                                       new_process.instance_name, Transformer.input_name)
 
             # refresh data
             last_process = new_process

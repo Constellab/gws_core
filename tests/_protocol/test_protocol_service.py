@@ -5,14 +5,12 @@
 
 
 from gws_core import ResourceModel
-from gws_core.config.config_types import ConfigParams
 from gws_core.experiment.experiment_exception import \
     ResourceUsedInAnotherExperimentException
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.connector import Connector
-from gws_core.io.io_spec import InputSpec
 from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.protocol.protocol_model import ProtocolModel
@@ -20,21 +18,9 @@ from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
-from gws_core.task.task import Task
-from gws_core.task.task_decorator import task_decorator
-from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase
 from tests.protocol_examples import TestNestedProtocol
-
-
-@task_decorator(unique_name="RobotError")
-class RobotError(Task):
-
-    input_specs = {'robot': InputSpec(Robot)}  # just for testing
-
-    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        raise Exception('Robot error')
 
 
 # test_protocol_service
@@ -194,32 +180,3 @@ class TestProtocolService(BaseTestCase):
         with self.assertRaises(ResourceUsedInAnotherExperimentException):
             ProtocolService.reset_process_of_protocol_id(
                 sub_protocol.get_model().id, 'p2')
-
-    def test_error(self) -> None:
-        experiment = IExperiment()
-        i_protocol = experiment.get_protocol()
-        robot_create = i_protocol.add_task(RobotCreate, 'robot_create')
-        robot_error = i_protocol.add_task(RobotError, 'robot_error')
-        i_protocol.add_connector(
-            robot_create >> 'robot', robot_error << 'robot')
-
-        self.assertRaises(Exception, experiment.run)
-
-        i_protocol.refresh()
-        robot_create.refresh()
-        robot_error.refresh()
-
-        self.assertTrue(i_protocol.get_model().is_error)
-        self.assertTrue(robot_create.get_model().is_success)
-        self.assertTrue(robot_error.get_model().is_error)
-
-        # reset error tasks
-        ProtocolService.reset_error_process_of_protocol(i_protocol.get_model())
-
-        i_protocol.refresh()
-        robot_create.refresh()
-        robot_error.refresh()
-
-        self.assertTrue(i_protocol.get_model().is_partially_run)
-        self.assertTrue(robot_create.get_model().is_success)
-        self.assertTrue(robot_error.get_model().is_draft)

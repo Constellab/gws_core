@@ -188,22 +188,9 @@ class ProtocolModel(ProcessModel):
         self._load_from_graph()
         self._load_connectors()
 
-        try:
-            self._run_before_task()
-            self._run_protocol()
-            self._run_after_task()
-        except Exception as err:
-            if not self.is_error:
-                exception: ProcessRunException = ProcessRunException.from_exception(
-                    self, err)
-                self.mark_as_error(
-                    {
-                        "detail": exception.get_detail_with_args(),
-                        "unique_code": exception.unique_code,
-                        "context": None,
-                        "instance_id": exception.instance_id
-                    })
-            raise err
+        self._run_before_task()
+        self._run_protocol()
+        self._run_after_task()
 
     def _run_protocol(self) -> None:
         """
