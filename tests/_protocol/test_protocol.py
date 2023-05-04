@@ -11,7 +11,7 @@ from gws_core import (BaseTestCase, Experiment, ExperimentService,
                       RobotFood, TaskModel)
 from gws_core.data_provider.data_provider import DataProvider
 from gws_core.experiment.experiment_run_service import ExperimentRunService
-from gws_core.process.process_model import ProcessModel
+from gws_core.process.process_model import ProcessModel, ProcessStatus
 from tests.protocol_examples import (TestNestedProtocol,
                                      TestRobotWithSugarProtocol,
                                      TestSimpleProtocol, TestSubProtocol)
@@ -154,6 +154,12 @@ class TestProtocol(BaseTestCase):
         previous_processes = mini_proto.get_direct_previous_processes('p2')
         self._check_process_set(
             previous_processes, TestSubProtocol.p2_direct_previous)
+
+        # test get error process
+        p2.status = ProcessStatus.ERROR
+        error_processes = protocol.get_error_tasks()
+        self.assertEqual(len(error_processes), 1)
+        self.assertEqual(error_processes[0], p2)
 
     def _check_process_set(self, processes: Set[ProcessModel], expected_processes: Set[str]) -> None:
         self.assertEqual(len(processes), len(expected_processes))

@@ -251,6 +251,15 @@ class ProtocolService(BaseService):
 
     @classmethod
     @transaction()
+    def reset_error_process_of_protocol(cls, protocol_model: ProtocolModel) -> ProtocolUpdateDTO:
+        error_tasks = protocol_model.get_error_tasks()
+
+        for task in error_tasks:
+            cls.reset_process_of_protocol(
+                task.parent_protocol, task.instance_name)
+
+    @classmethod
+    @transaction()
     def reset_process_of_protocol_id(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdateDTO:
         protocol_model = cls.get_protocol_by_id(protocol_id)
         return cls.reset_process_of_protocol(protocol_model, process_instance_name)

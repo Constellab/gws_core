@@ -426,6 +426,17 @@ class ProtocolModel(ProcessModel):
 
         return all_next_processes
 
+    def get_error_tasks(self) -> List[ProcessModel]:
+
+        error_tasks: List[ProcessModel] = []
+        for process in self.processes.values():
+            if isinstance(process, ProtocolModel):
+                error_tasks.extend(process.get_error_tasks())
+            elif process.is_error:
+                error_tasks.append(process)
+
+        return error_tasks
+
     def _check_instance_name(self, instance_name: str) -> None:
         if instance_name not in self.processes:
             raise BadRequestException(

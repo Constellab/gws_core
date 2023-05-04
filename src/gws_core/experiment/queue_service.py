@@ -6,9 +6,8 @@
 import threading
 from typing import List
 
-from gws_core.core.exception.exceptions.base_http_exception import \
-    BaseHTTPException
 from gws_core.core.model.sys_proc import SysProc
+from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.user.user import User
 
 from ..core.exception.exceptions import NotFoundException
@@ -142,6 +141,10 @@ class QueueService(BaseService):
         if experiment.is_running or experiment.status == ExperimentStatus.IN_QUEUE:
             raise BadRequestException(
                 "The experiment is already running or in the queue")
+
+        # reset the processes that are in error
+        ProtocolService.reset_error_process_of_protocol(
+            experiment.protocol_model)
 
         user = CurrentUserService.get_and_check_current_user()
         cls._add_job(user=user, experiment=experiment, auto_start=True)
