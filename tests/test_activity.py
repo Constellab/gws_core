@@ -4,6 +4,8 @@
 # About us: https://gencovery.com
 
 
+from time import sleep
+
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.user.activity import Activity
 from gws_core.user.activity_service import ActivityService
@@ -20,6 +22,8 @@ class TestActivity(BaseTestCase):
 
         ActivityService.add(
             Activity.CREATE, object_type="test", object_id="test")
+
+        sleep(0.5)
 
         ActivityService.add(
             Activity.UPDATE, object_type="test", object_id="test")
