@@ -27,6 +27,9 @@ class CondaShellProxy(BaseEnvShell):
 {self.env_file_path} --force --prefix {self.VENV_DIR_NAME}"'
         ]
 
+        self._message_dispatcher.notify_info_message(
+            f"Installing conda env with command: {' '.join(cmd)}.")
+
         res: subprocess.CompletedProcess = subprocess.run(
             " ".join(cmd),
             cwd=self.get_env_dir_path(),
@@ -58,6 +61,9 @@ class CondaShellProxy(BaseEnvShell):
 conda remove -y --prefix {self.VENV_DIR_NAME} --all && \
 cd .. && rm -rf {self.get_env_dir_path()}"'
         ]
+
+        self._message_dispatcher.notify_info_message(
+            f"Uninstalling conda env with command: {' '.join(cmd)}.")
 
         res = subprocess.run(
             " ".join(cmd),

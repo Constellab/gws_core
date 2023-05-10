@@ -30,6 +30,9 @@ class PipShellProxy(BaseEnvShell):
 
         env = os.environ.copy()
         env["PIPENV_VENV_IN_PROJECT"] = "enabled"
+
+        self._message_dispatcher.notify_info_message(
+            f"Installing pipenv env with command: {' '.join(cmd)}.")
         res = subprocess.run(
             " ".join(cmd),
             cwd=self.get_env_dir_path(),
@@ -40,8 +43,10 @@ class PipShellProxy(BaseEnvShell):
         )
 
         if res.returncode != 0:
-            self._message_dispatcher.notify_error_message(res.stderr.decode('utf-8'))
-            raise Exception(f"Cannot install the virtual environment. Error: {res.stderr}")
+            self._message_dispatcher.notify_error_message(
+                res.stderr.decode('utf-8'))
+            raise Exception(
+                f"Cannot install the virtual environment. Error: {res.stderr}")
 
         return True
 
@@ -58,6 +63,9 @@ class PipShellProxy(BaseEnvShell):
 
         env = os.environ.copy()
         env["PIPENV_VENV_IN_PROJECT"] = "enabled"
+
+        self._message_dispatcher.notify_info_message(
+            f"Uninstalling pipenv env with command: {' '.join(cmd)}.")
         res = subprocess.run(
             " ".join(cmd),
             cwd=self.get_env_dir_path(),
