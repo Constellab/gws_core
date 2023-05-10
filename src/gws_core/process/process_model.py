@@ -342,6 +342,8 @@ class ProcessModel(ModelWithUser):
         :return: execution time in seconds
         :rtype: float
         """
+        if self.progress_bar.started_at is None:
+            return 0
         return (DateHelper.now_utc() - self.progress_bar.started_at).total_seconds() * 1000
 
     ########################### INFO #################################
