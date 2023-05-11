@@ -11,7 +11,7 @@ import requests
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.core.utils.string_helper import StringHelper
+from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
 
@@ -57,9 +57,14 @@ class FileDownloader():
             self._dispatch_message(f"File {file_path} already downloaded")
             return file_path
 
-        # If the file needs to be unzipped, we need to download it to a temporary folder
-        download_destination = file_path if not decompress_file else os.path.join(
-            self.destination_folder, StringHelper.generate_uuid())
+        if decompress_file:
+            # retrieve filename from url
+            url_filename = url.split('/')[-1]
+            temp_dir = Settings.make_temp_dir()
+            download_destination = os.path.join(temp_dir, url_filename)
+        else:
+            # If the file needs to be unzipped, we need to download it to a temporary folder
+            download_destination = file_path
         self.download_file(url, download_destination, headers, timeout)
 
         if decompress_file:
