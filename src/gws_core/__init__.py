@@ -101,6 +101,7 @@ from .core.service.external_api_service import \
     ExternalApiService as ExternalApiService
 from .core.service.mysql_service import MySQLService as MySQLService
 from .core.service.settings_service import SettingsService as SettingsService
+from .core.utils.compress.zip import Zip as Zip
 # Core > Utils
 from .core.utils.cryptography import Cryptography as Cryptography
 from .core.utils.http_helper import HTTPHelper as HTTPHelper
@@ -112,7 +113,6 @@ from .core.utils.serializer import Serializer as Serializer
 from .core.utils.settings import Settings as Settings
 from .core.utils.string_helper import StringHelper as StringHelper
 from .core.utils.utils import Utils as Utils
-from .core.utils.zip import Zip as Zip
 # Deprecated
 from .deprecated.dataset.dep_dataset import Dataset as Dataset
 from .deprecated.dataset.tasks.dep_dataset_exporter import \

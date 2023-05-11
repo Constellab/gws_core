@@ -62,7 +62,8 @@ class BrickService():
         except:
             brick_name = '__Unknown'
 
-        cls.log_brick_message(brick_name=brick_name, message=message, status=status)
+        cls.log_brick_message(brick_name=brick_name,
+                              message=message, status=status)
 
     @classmethod
     def log_brick_message(cls, brick_name: str, message: str, status: BrickMessageStatus) -> None:
@@ -79,12 +80,15 @@ class BrickService():
     def _log_brick_message(cls, brick_message: WaitingMessage) -> None:
         cls._log_message(brick_message)
 
-        brick_model: BrickModel = cls._get_brick_model(brick_message['brick_name'])
+        brick_model: BrickModel = cls._get_brick_model(
+            brick_message['brick_name'])
 
         if not brick_model:
-            Logger.error(f"Can't log brick message because brick '{brick_message['brick_name']}' was not found")
+            Logger.error(
+                f"Can't log brick message because brick '{brick_message['brick_name']}' was not found")
             return
-        brick_model.add_message(brick_message['message'], brick_message['status'], brick_message['timestamp'])
+        brick_model.add_message(
+            brick_message['message'], brick_message['status'], brick_message['timestamp'])
         brick_model.save()
 
     @classmethod

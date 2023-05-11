@@ -34,15 +34,18 @@ from ...task.task_io import TaskInputs, TaskOutputs
 class WriteToJsonFile(Task):
     input_specs: InputSpecs = {'resource': InputSpec(Resource)}
     output_specs: OutputSpecs = {'file': OutputSpec(File)}
-    config_specs: ConfigSpecs = {'filename': StrParam(short_description='Name of the file')}
+    config_specs: ConfigSpecs = {'filename': StrParam(
+        short_description='Name of the file')}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         file_store: FileStore = LocalFileStore.get_default_instance()
 
-        file: File = file_store.create_empty_file(params.get_value('filename') + '.json')
+        file: File = file_store.create_empty_file(
+            params.get_value('filename') + '.json')
 
         resource: Resource = inputs['resource']
-        file.write(json.dumps(resource.view_as_json(ConfigParams()).to_dict(ConfigParams())))
+        file.write(json.dumps(resource.view_as_json(
+            ConfigParams()).to_dict(ConfigParams())))
 
         return {"file": file}
 
@@ -62,11 +65,13 @@ class FsNodeExtractor(Task):
     output_specs = {"target": OutputSpec(FSNode)}
 
     # Override the config_spec to define custom spec for the importer
-    config_specs: ConfigSpecs = {"fs_node_path": StrParam(), "fs_node_typing_name": StrParam()}
+    config_specs: ConfigSpecs = {
+        "fs_node_path": StrParam(), "fs_node_typing_name": StrParam()}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # retrieve resource type
-        _type: Type[FSNode] = TypingManager.get_type_from_name(params.get('fs_node_typing_name'))
+        _type: Type[FSNode] = TypingManager.get_type_from_name(
+            params.get('fs_node_typing_name'))
 
         path: str = params.get('fs_node_path')
 
@@ -97,7 +102,7 @@ class FileDownloaderTask(Task):
     config_specs: ConfigSpecs = {
         "file_url": StrParam(human_name="File url"),
         "filename": StrParam(human_name="Name of the file/folder once downloaded"),
-        "unzip_file": BoolParam(human_name="Unzip downloaded file in a folder"),
+        "decompress_file": BoolParam(human_name="Unzip downloaded file in a folder"),
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -108,7 +113,7 @@ class FileDownloaderTask(Task):
         file_path = file_downloader.download_file_if_missing(
             params.get('file_url'),
             params.get('filename'),
-            unzip_file=params.get('unzip_file')
+            decompress_file=params.get('decompress_file')
         )
 
         if FileHelper.is_dir(file_path):

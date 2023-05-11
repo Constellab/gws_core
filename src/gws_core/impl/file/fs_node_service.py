@@ -5,17 +5,17 @@
 
 import os
 from pathlib import Path
-from typing import Any, List, Type
+from typing import List, Type
 
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 
 from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.core.utils.compress.zip import Zip
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
-from gws_core.core.utils.zip import Zip
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_types import CallViewResult
 
@@ -56,7 +56,7 @@ class FsNodeService(BaseService):
             temp_dir: str = Settings.get_instance().make_temp_dir()
             filename = resource.name + '.zip'
             zip_file = os.path.join(temp_dir, filename)
-            Zip.zipdir(resource.path, zip_file)
+            Zip.decompress(resource.path, zip_file)
             return FileHelper.create_file_response(zip_file,  filename=filename)
         else:
             return FileHelper.create_file_response(resource.path, filename=resource.get_default_name())

@@ -13,8 +13,8 @@ from typing_extensions import TypedDict
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.service.external_lab_service import (
     ExternalLabService, ExternalLabWithUserInfo)
+from gws_core.core.utils.compress.zip import Zip
 from gws_core.core.utils.settings import Settings
-from gws_core.core.utils.zip import Zip
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
@@ -47,7 +47,8 @@ class ZipResource(TypedDict):
 class ZipResourceInfo(TypedDict):
     """ Content of the info.json file in the zip file when a resource is zipped"""
     zip_version: int
-    resources: Optional[List[ZipResource]]  # TODO : deprecated, remove when all lab are v0.5.0
+    # TODO : deprecated, remove when all lab are v0.5.0
+    resources: Optional[List[ZipResource]]
     resource: ZipResource
     children_resources: List[ZipResource]
     origin: ExternalLabWithUserInfo
@@ -82,7 +83,8 @@ class ResourceZipper():
 
     def add_resource(self, resource_id: str, parent_resource_id: str = None) -> None:
 
-        resource_model: ResourceModel = ResourceService.get_resource_by_id(resource_id)
+        resource_model: ResourceModel = ResourceService.get_resource_by_id(
+            resource_id)
 
         resource_zip: ZipResource = {
             'id': resource_model.id,
@@ -113,7 +115,8 @@ class ResourceZipper():
             else:
                 fs_node_file_name = f'{self.FS_NODE_FILE_NAME}_{resource_index}.{FileHelper.get_extension(fs_node_model.path)}'
 
-            self.zip.add_fs_node(fs_node_model.path, fs_node_name=fs_node_file_name)
+            self.zip.add_fs_node(fs_node_model.path,
+                                 fs_node_name=fs_node_file_name)
             resource_zip['fs_node_name'] = fs_node_file_name
 
         # add the resource info
@@ -125,7 +128,8 @@ class ResourceZipper():
         # if the resource is a ResourceListBase, add all the children to the zip recursively
         resource: Resource = resource_model.get_resource()
         if isinstance(resource, ResourceListBase) and not isinstance(resource, ResourceSet):
-            raise Exception('Only ResourceSet is supported other sub class of ResourceListBase are not supported yet.')
+            raise Exception(
+                'Only ResourceSet is supported other sub class of ResourceListBase are not supported yet.')
 
         if isinstance(resource, ResourceSet):
             for child_resource in resource.get_resources_as_set():
@@ -205,27 +209,32 @@ class ResourceUnzipper():
 
     def _check_compatibility(self) -> None:
         if self.info_json['zip_version'] != 1:
-            raise Exception(f'Zip version {self.info_json["zip_version"]} is not supported.')
+            raise Exception(
+                f'Zip version {self.info_json["zip_version"]} is not supported.')
 
         for zip_resource in self.get_all_resources():
-            typing = TypingNameObj.from_typing_name(zip_resource['resource_typing_name'])
+            typing = TypingNameObj.from_typing_name(
+                zip_resource['resource_typing_name'])
 
             if not BrickHelper.brick_is_loaded(typing.brick_name):
                 raise Exception(f'Brick {typing.brick_name} is not loaded.')
 
             # check that the type exist
-            TypingManager.get_typing_from_name_and_check(zip_resource['resource_typing_name'])
+            TypingManager.get_typing_from_name_and_check(
+                zip_resource['resource_typing_name'])
 
     def _load_resource(self, zip_resource: ZipResource) -> Resource:
         # create the kvstore
         kv_store: KVStore = None
         if zip_resource.get('kvstore_dir_name') is not None:
             # build the path to the kvstore file
-            kvstore_path = os.path.join(self.temp_dir, zip_resource['kvstore_dir_name'], KVStore.FILE_NAME)
+            kvstore_path = os.path.join(
+                self.temp_dir, zip_resource['kvstore_dir_name'], KVStore.FILE_NAME)
 
             kv_store = KVStore(kvstore_path)
 
-        resource_type: Type[Resource] = TypingManager.get_type_from_name(zip_resource['resource_typing_name'])
+        resource_type: Type[Resource] = TypingManager.get_type_from_name(
+            zip_resource['resource_typing_name'])
 
         resource = ResourceFactory.create_resource(resource_type, kv_store=kv_store, data=zip_resource['data'],
                                                    name=zip_resource['name'])
@@ -236,7 +245,8 @@ class ResourceUnzipper():
                 raise Exception('Resource type is not a FSNode')
 
             # set the path of the resource node
-            resource.path = os.path.join(self.temp_dir, zip_resource['fs_node_name'])
+            resource.path = os.path.join(
+                self.temp_dir, zip_resource['fs_node_name'])
             # clear other values
             resource.file_store_id = None
             resource.is_symbolic_link = False
@@ -244,10 +254,12 @@ class ResourceUnzipper():
         return resource
 
     def _load_info_json(self) -> ZipResourceInfo:
-        info_json_path = os.path.join(self.temp_dir, ResourceZipper.INFO_JSON_FILE_NAME)
+        info_json_path = os.path.join(
+            self.temp_dir, ResourceZipper.INFO_JSON_FILE_NAME)
 
         if not FileHelper.exists_on_os(info_json_path):
-            raise Exception(f'File {info_json_path} not found in the zip file.')
+            raise Exception(
+                f'File {info_json_path} not found in the zip file.')
 
         info_json: ZipResourceInfo = None
         with open(info_json_path, 'r', encoding='UTF-8') as file:

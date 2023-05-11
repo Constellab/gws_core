@@ -9,9 +9,9 @@ from typing import Dict
 import requests
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
+from gws_core.core.utils.compress.compress import Compress
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
-from gws_core.core.utils.zip import Zip
 from gws_core.impl.file.file_helper import FileHelper
 
 
@@ -28,7 +28,7 @@ class FileDownloader():
         self.message_dispatcher = message_dispatcher
 
     def download_file_if_missing(self, url: str, filename: str, headers: Dict[str, str] = None,
-                                 timeout: float = None, unzip_file: bool = False) -> str:
+                                 timeout: float = None, decompress_file: bool = False) -> str:
         """ Download a file from a given url if the file does not already exist. This class is useful for downloading
         a file that is required for a task.
         If used within a task, it automatically logs the download progress and the time it took to download the file.
@@ -43,8 +43,8 @@ class FileDownloader():
         :type headers: Dict[str, str], optional
         :param timeout: timeout of the download request, defaults to None
         :type timeout: float, optional
-        :param unzip_file: if true the file is unzipped after the download and the zip file is deleted, defaults to False
-        :type unzip_file: bool, optional
+        :param decompress_file: if true the file is decompress (support .zip and .tar.gz) after the download and the zip file is deleted, defaults to False
+        :type decompress_file: bool, optional
         :return: the path of the downloaded file/folder
         :rtype: str
         """
@@ -58,12 +58,12 @@ class FileDownloader():
             return file_path
 
         # If the file needs to be unzipped, we need to download it to a temporary folder
-        download_destination = file_path if not unzip_file else os.path.join(
+        download_destination = file_path if not decompress_file else os.path.join(
             self.destination_folder, StringHelper.generate_uuid())
         self.download_file(url, download_destination, headers, timeout)
 
-        if unzip_file:
-            return self.unzip_file(download_destination, file_path)
+        if decompress_file:
+            return self.decompress_file(download_destination, file_path)
 
         return file_path
 
@@ -109,19 +109,23 @@ class FileDownloader():
                                 remaining_time = (
                                     time.time() - started_at) / (downloaded_size / total_size) - (time.time() - started_at)
 
-                                self._dispatch_progress(total_size, downloaded_size, remaining_time)
+                                self._dispatch_progress(
+                                    total_size, downloaded_size, remaining_time)
                                 last_progress_logged = progress
 
         except Exception as exc:
-            self._dispatch_error(f"Error downloading {url} to {destination_path}: {exc}")
+            self._dispatch_error(
+                f"Error downloading {url} to {destination_path}: {exc}")
             raise exc
 
-        duration = DateHelper.get_duration_pretty_text(time.time() - started_at)
-        self._dispatch_message(f"Downloaded {url} to {destination_path} in {duration}")
+        duration = DateHelper.get_duration_pretty_text(
+            time.time() - started_at)
+        self._dispatch_message(
+            f"Downloaded {url} to {destination_path} in {duration}")
 
         return destination_path
 
-    def unzip_file(self, zip_file_path: str, unzip_path: str) -> str:
+    def decompress_file(self, file_path: str, destination_folder: str) -> str:
         """
         Unzip a file to a given path
 
@@ -131,22 +135,26 @@ class FileDownloader():
         :type unzip_path: `str`
         """
 
-        self._dispatch_message(f"Unzipping {zip_file_path} to {unzip_path}")
+        self._dispatch_message(
+            f"Unzipping {file_path} to {destination_folder}")
         started_at = time.time()
 
         try:
-            Zip.unzip(zip_file_path, unzip_path)
+            Compress.smart_decompress(file_path, destination_folder)
         except Exception as exc:
-            self._dispatch_error(f"Error unzipping {zip_file_path} to {unzip_path}: {exc}")
+            self._dispatch_error(
+                f"Error unzipping {file_path} to {destination_folder}: {exc}")
             raise exc
 
-        duration = DateHelper.get_duration_pretty_text(time.time() - started_at)
-        self._dispatch_message(f"Unzipped {zip_file_path} to {unzip_path} in {duration}")
+        duration = DateHelper.get_duration_pretty_text(
+            time.time() - started_at)
+        self._dispatch_message(
+            f"Unzipped {file_path} to {destination_folder} in {duration}")
 
         # delete zip file
-        FileHelper.delete_file(zip_file_path)
+        FileHelper.delete_file(file_path)
 
-        return unzip_path
+        return destination_folder
 
     def _check_if_already_downloaded(self, file_path: str) -> bool:
         """
@@ -173,7 +181,8 @@ class FileDownloader():
             total_str = FileHelper.get_file_size_pretty_text(total)
             percent = round(downloaded / total * 100)
 
-            remaining_time_str = DateHelper.get_duration_pretty_text(remaining_time)
+            remaining_time_str = DateHelper.get_duration_pretty_text(
+                remaining_time)
             self.message_dispatcher.notify_info_message(
                 f"Downloaded {downloaded_str}/{total_str} ({percent}%) - {remaining_time_str} remaining"
             )

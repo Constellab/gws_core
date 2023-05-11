@@ -11,8 +11,8 @@ from pandas import DataFrame
 from gws_core import (ConfigParams, InputSpec, OutputSpec, OutputSpecs,
                       Resource, Task, TaskInputs, TaskOutputs,
                       resource_decorator, task_decorator)
+from gws_core.core.utils.compress.zip import Zip
 from gws_core.core.utils.settings import Settings
-from gws_core.core.utils.zip import Zip
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -47,7 +47,8 @@ class RobotsGenerator(Task):
 
         resource_set: ResourceSet = ResourceSet()
         # Add the input robot that was already created and saved
-        resource_set.add_resource(robot_1, unique_name="Robot 1", create_new_resource=False)
+        resource_set.add_resource(
+            robot_1, unique_name="Robot 1", create_new_resource=False)
         resource_set.add_resource(robot_2)
         return {'set': resource_set}
 
@@ -62,7 +63,8 @@ class TestResourceSet(BaseTestCase):
         protocol: IProtocol = experiment.get_protocol()
         robot_create = experiment.get_protocol().add_process(RobotCreate, 'create')
         robot_generator = protocol.add_process(RobotsGenerator, 'generator')
-        experiment.get_protocol().add_connector(robot_create >> 'robot', robot_generator << 'robot_i')
+        experiment.get_protocol().add_connector(
+            robot_create >> 'robot', robot_generator << 'robot_i')
 
         experiment.run()
 
@@ -93,9 +95,11 @@ class TestResourceSet(BaseTestCase):
         self.assertEqual(robot_2.name, 'Robot 2')
 
         # test the view, reload the resource to simulate real view
-        resource_set = ResourceModel.get_by_id_and_check(resource_set._model_id).get_resource()
+        resource_set = ResourceModel.get_by_id_and_check(
+            resource_set._model_id).get_resource()
 
-        self.assertEqual(len(resource_set.view_resources_list({}).to_dict({})['data']), 2)
+        self.assertEqual(
+            len(resource_set.view_resources_list({}).to_dict({})['data']), 2)
 
         experiment.reset()
         # check that the reset cleared the correct resources
@@ -110,7 +114,8 @@ class TestResourceSet(BaseTestCase):
         empty_resource = EmptyResource()
 
         # add a file
-        file_path = FileHelper.create_empty_file_if_not_exist(os.path.join(settings.make_temp_dir(), 'test.json'))
+        file_path = FileHelper.create_empty_file_if_not_exist(
+            os.path.join(settings.make_temp_dir(), 'test.json'))
         file = File(file_path)
 
         resource_set: ResourceSet = ResourceSet()
@@ -123,9 +128,10 @@ class TestResourceSet(BaseTestCase):
         self.assertTrue(zip_file.exists())
 
         dest_folder = settings.make_temp_dir()
-        Zip.unzip(zip_file.path, dest_folder)
+        Zip.decompress(zip_file.path, dest_folder)
 
         self.assertTrue(os.path.exists(os.path.join(dest_folder, 'table.csv')))
         self.assertTrue(os.path.exists(os.path.join(dest_folder, 'test.json')))
         # empty resource should not be exported
-        self.assertFalse(os.path.exists(os.path.join(dest_folder, 'empty_resource.json')))
+        self.assertFalse(os.path.exists(
+            os.path.join(dest_folder, 'empty_resource.json')))

@@ -9,10 +9,10 @@ from typing import Dict, List, Type
 
 from gws_core.config.config_specs_helper import ConfigSpecsHelper
 from gws_core.config.config_types import ConfigParams
+from gws_core.core.utils.compress.zip import Zip
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
-from gws_core.core.utils.zip import Zip
 from gws_core.impl.file.file import File
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.resource import Resource
@@ -51,10 +51,12 @@ class ResourceSetExporter(ResourceExporter):
             resource_typing_name = resource._typing_name
             if resource_typing_name not in exporters:
                 try:
-                    exporter_typing: TaskTyping = ConverterService.get_resource_exporter_from_name(resource_typing_name)
+                    exporter_typing: TaskTyping = ConverterService.get_resource_exporter_from_name(
+                        resource_typing_name)
                     exporters[resource_typing_name] = exporter_typing.get_type()
                 except Exception:
-                    Logger.info(f"Can't find exporter for resource {resource_typing_name}")
+                    Logger.info(
+                        f"Can't find exporter for resource {resource_typing_name}")
                     continue
 
             # store the exporter for the resource type
@@ -62,7 +64,8 @@ class ResourceSetExporter(ResourceExporter):
 
             # skip the exporter if 1 config is not optional
             if not ConfigSpecsHelper.all_config_are_optional(exporter.config_specs):
-                Logger.info(f"Skipping exporter {exporter._typing_name} because it has required config")
+                Logger.info(
+                    f"Skipping exporter {exporter._typing_name} because it has required config")
 
             # call the exporter without config
             fs_nodes.append(exporter.call(resource, params={}))
