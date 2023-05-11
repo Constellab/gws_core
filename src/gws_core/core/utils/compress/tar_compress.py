@@ -16,7 +16,7 @@ class TarCompress(Compress):
 
     tar_file: TarFile
 
-    supported_extensions = ['tar.gz']
+    supported_extensions = ['tar.gz', 'gz']
 
     def __init__(self, destination_file_path: str):
         super().__init__(destination_file_path)
