@@ -296,7 +296,8 @@ class ProtocolService(BaseService):
         # the resource is not deleted but the input must be deleted
         TaskInputModel.delete_by_task_ids(process_ids)
 
-        return ProtocolUpdateDTO(protocol=protocol_model, protocol_updated=True)
+        # refresh the protocol to get the updated graph
+        return ProtocolUpdateDTO(protocol=protocol_model.refresh(), protocol_updated=True)
 
     @classmethod
     def _on_protocol_object_updated(cls, protocol_model: ProtocolModel, process_model: ProcessModel = None,
