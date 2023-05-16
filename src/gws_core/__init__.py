@@ -163,7 +163,7 @@ from .impl.live.py_live_task import PyLiveTask as PyLiveTask
 from .impl.live.py_pipenv_live_task import PyPipenvLiveTask as PyPipenvLiveTask
 from .impl.live.r_conda_live_task import RCondaLiveTask as RCondaLiveTask
 # Impl > open ai
-from .impl.openai.open_ai_helper import GPTMessage as GPTMessage
+from .impl.openai.open_ai_helper import AiChatMessage as AiChatMessage
 from .impl.openai.open_ai_helper import OpenAiHelper as OpenAiHelper
 # Impl > Robot
 from .impl.robot.robot_protocol import \

@@ -1,0 +1,54 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
+from typing import Optional
+
+from gws_core.config.param.param_spec import ParamSpec
+from gws_core.config.param.param_types import ParamSpecVisibilty
+from gws_core.core.classes.validator import DictValidator, Validator
+
+
+class OpenAiChatParam(ParamSpec[dict]):
+    """Special param for config that create a chat with open ai similar
+    to ChatGPT
+
+    :param ParamSpec: _description_
+    :type ParamSpec: _type_
+    """
+
+    context: Optional[str]
+
+    def __init__(
+        self,
+        optional: bool = False,
+        visibility: ParamSpecVisibilty = "public",
+    ) -> None:
+        """
+        :param default_value: Default value, if None, and optional is false, the config is mandatory
+                        If a value is provided there is no need to set the optional
+                        Setting optional to True, allows default None value
+        :param optional: See default value
+        :type optional: Optional[str]
+        :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
+        :type visibility: ParamSpecVisibilty
+        :type default: Optional[ConfigParamType]
+        :param human_name: Human readable name of the param, showed in the interface
+        :type human_name: Optional[str]
+        :param short_description: Description of the param, showed in the interface
+        :type short_description: Optional[str]
+        :param unit: Measure unit of the value (ex kg)
+        :type unit: Optional[str]
+        """
+        super().__init__(
+            optional=optional,
+            visibility=visibility,
+        )
+
+    @classmethod
+    def get_str_type(cls) -> str:
+        return "open_ai_chat_param"
+
+    def _get_validator(self) -> Validator:
+        return DictValidator()

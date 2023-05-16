@@ -160,7 +160,7 @@ class TaskModel(ProcessModel):
             new_instance=True)
 
         task_runner: TaskRunner = TaskRunner(
-            self.get_process_type(), params, inputs)
+            self.get_process_type(), params, inputs, config_model_id=self.config.id)
         task_runner.set_progress_bar(self.progress_bar)
 
         check_result: CheckBeforeTaskResult

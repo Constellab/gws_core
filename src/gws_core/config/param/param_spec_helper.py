@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Type
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
 
 from ..config_exceptions import MissingConfigsException
 from ..config_types import ConfigParams, ConfigSpecs
@@ -88,11 +89,13 @@ class ParamSpecHelper():
 
         for key, item in config_specs.items():
             if not isinstance(item, ParamSpec):
-                raise Exception(f"The config spec '{key}' is invalid, it must be a ParamSpec but got {type(item)}")
+                raise Exception(
+                    f"The config spec '{key}' is invalid, it must be a ParamSpec but got {type(item)}")
 
     @staticmethod
     def create_param_spec_from_json(json_: Dict[str, Any]) -> ParamSpec:
-        param_spec_type = ParamSpecHelper._get_param_spec_type_from_str(json_.get('type'))
+        param_spec_type = ParamSpecHelper._get_param_spec_type_from_str(
+            json_.get('type'))
 
         return param_spec_type.load_from_json(json_)
 
@@ -108,4 +111,5 @@ class ParamSpecHelper():
     @staticmethod
     def _get_param_spec_types() -> List[Type[ParamSpec]]:
         return [BoolParam, IntParam, FloatParam, StrParam, TextParam, ListParam, ParamSet, TagsParam,
-                DictParam, PythonCodeParam, JsonCodeParam, JuliaCodeParam, PerlCodeParam, RCodeParam, YamlCodeParam]
+                DictParam, PythonCodeParam, JsonCodeParam, JuliaCodeParam, PerlCodeParam, RCodeParam, YamlCodeParam,
+                OpenAiChatParam]

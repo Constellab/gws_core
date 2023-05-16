@@ -43,8 +43,10 @@ class TaskRunner():
     _task: Task
     _message_dispatcher: MessageDispatcher
 
+    _config_model_id: str = None
+
     def __init__(self, task_type: Type[Task], params: ConfigParamsDict = None, inputs: Dict[str, Resource] = None,
-                 message_dispatcher: MessageDispatcher = None):
+                 message_dispatcher: MessageDispatcher = None, config_model_id: str = None):
         self._task_type = task_type
 
         if params is None:
@@ -59,6 +61,7 @@ class TaskRunner():
 
         self._task = None
         self._outputs = None
+        self._config_model_id = config_model_id
 
         if message_dispatcher is None:
             self._message_dispatcher = MessageDispatcher()
@@ -144,6 +147,7 @@ class TaskRunner():
         if self._task is None:
             self._task = self._task_type()
             self._task.__set_message_dispatcher__(self._message_dispatcher)
+            self._task._config_model_id = self._config_model_id
 
             try:
                 self._task.init()

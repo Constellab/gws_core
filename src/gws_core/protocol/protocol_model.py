@@ -7,7 +7,6 @@ import json
 from typing import Dict, List, Literal, Optional, Set, Union
 
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.process.process_exception import ProcessRunException
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 
 from ..core.decorator.transaction import transaction
@@ -614,6 +613,10 @@ class ProtocolModel(ProcessModel):
         return [
             item for item in self.connectors
             if item.is_left_connected_to(left_process_name, left_process_port_name)]
+
+    def propagate_resources(self) -> None:
+        for connector in self.connectors:
+            connector.propagate_resource()
 
     ############################### INPUTS #################################
 

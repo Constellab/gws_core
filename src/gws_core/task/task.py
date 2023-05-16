@@ -8,6 +8,7 @@ from typing import Literal, Optional, Type, final
 
 from typing_extensions import TypedDict
 
+from gws_core.config.config import Config
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.dispatched_message import DispatchedMessage
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
@@ -15,7 +16,7 @@ from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.model.typing import TypingNameObj
 from gws_core.model.typing_register_decorator import typing_registrator
 
-from ..config.config_types import ConfigParams, ConfigSpecs
+from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_spec_helper import InputSpecs, OutputSpecs
@@ -52,6 +53,9 @@ class Task(Process):
 
     # Current status of the task, do not update
     _status_: Literal['CHECK_BEFORE_RUN', 'RUN', 'RUN_AFTER_TASK']
+
+    # id of the config model object
+    _config_model_id: str = None
 
     def __init__(self):
         """
@@ -109,7 +113,8 @@ class Task(Process):
             return None
 
         if spec_name not in self.output_specs:
-            raise BadRequestException(f"The output spec does not have a spec named '{spec_name}'")
+            raise BadRequestException(
+                f"The output spec does not have a spec named '{spec_name}'")
 
         return self.output_specs[spec_name].get_default_resource_type()
 
@@ -123,9 +128,11 @@ class Task(Process):
         :type message: str
         """
         if self._status_ != 'RUN':
-            raise BadRequestException("The progress value can only be updated in run method")
+            raise BadRequestException(
+                "The progress value can only be updated in run method")
 
-        self.message_dispatcher.notify_progress_value(progress=value, message=message)
+        self.message_dispatcher.notify_progress_value(
+            progress=value, message=message)
 
     @final
     def log_message(self, message: str, type_: MessageLevel) -> None:
@@ -177,3 +184,23 @@ class Task(Process):
     def get_brick_name(cls) -> str:
         typing_name = TypingNameObj.from_typing_name(cls._typing_name)
         return typing_name.brick_name
+
+    @final
+    def update_config(self, values: ConfigParamsDict) -> OutputSpecs:
+        """Special method to update the config during the task run.
+        The update is directly saved in the database
+        /!\ To use with caution, only when you know what you are doing /!\
+
+        :param values: values to update, other values are not changed
+        :type values: ConfigParamsDict
+        :return: _description_
+        :rtype: OutputSpecs
+        """
+        if not self._config_model_id:
+            return
+
+        config: Config = Config.get_by_id_and_check(self._config_model_id)
+
+        for key, value in values.items():
+            config.set_value(key, value)
+        config.save()
