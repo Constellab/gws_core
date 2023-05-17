@@ -3,13 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
 from typing import List, Type
-
-from requests.models import Response
 
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
+from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.service.external_lab_service import (
     ExternalLabService, ExternalLabWithUserInfo)
 from gws_core.core.utils.settings import Settings
@@ -23,10 +21,10 @@ from gws_core.share.shared_entity_info import (SharedEntityInfo,
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
-from gws_core.task.task_file_downloader import TaskFileDownloader
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
+from requests.models import Response
 
 
 @task_decorator(unique_name="ImportResourceFromLab", human_name="Download resource from lab",
@@ -47,15 +45,10 @@ class ResourceDownloader(Task):
 
         self.link = params['link']
 
-        file_downloader = TaskFileDownloader(
-            ResourceDownloader.get_brick_name(), self.message_dispatcher)
-
-        # create a temp dir
-        temp_dir = Settings.get_instance().make_temp_dir()
-        zip_file = os.path.join(temp_dir, 'resource.zip')
+        file_downloader = FileDownloader(Settings.get_instance().make_temp_dir(), self.message_dispatcher)
 
         # download the resource zip
-        file_downloader.download_file(self.link, destination_path=zip_file)
+        zip_file = file_downloader.download_file(self.link, filename='resource.zip')
 
         # Convert the zip file to a resource
         self.log_info_message("Unzipping the resource")
