@@ -128,6 +128,9 @@ class BaseEnvShell(ShellProxy):
         try:
             is_install = self._install_env()
         except Exception as err:
+            # delete the env dir if an error occured
+            FileHelper.delete_dir(self.get_env_dir_path())
+
             Logger.log_exception_stack_trace(err)
             raise Exception(
                 f"Cannot install the virtual environment. Error {err}") from err
