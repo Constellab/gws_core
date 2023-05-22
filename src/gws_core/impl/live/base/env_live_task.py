@@ -79,11 +79,16 @@ class EnvLiveTask(Task):
 
         # validate user inputs, params, code
         cmd = self._format_command(code_file_path)
+        result: int = None
         try:
-            self.shell_proxy.run(cmd, shell_mode=True)
+            result = self.shell_proxy.run(cmd, shell_mode=True)
         except Exception as err:
             raise BadRequestException(
-                f"An error occured during the execution of the live code. Error: {err}") from err
+                f"An error occured during the execution of the live code. Please view the logs for more details. Error: {err}") from err
+
+        if result != 0:
+            raise BadRequestException(
+                "An error occured during the execution of the live code. Please view the logs for more details.")
 
         target = self.get_target_resources(self.target_temp_folder)
         return {'target': target}
@@ -177,7 +182,7 @@ class EnvLiveTask(Task):
         # format the param to string and include the last carry return
         # only if there are some param, this is useful to limit the line number difference
         # when error occured
-        str_params = '\n'.join(params) + '\n' if len(params) > 0 else ''
+        str_params = '\n' + ('\n'.join(params) + '\n') if len(params) > 0 else ''
         return f"""target_folder = "{target_path}"
 source_path = "{source_path}"{str_params}
 {code}

@@ -153,7 +153,7 @@ with open(result_path_2, "w", encoding="utf-8") as fp:
                 "params": ["text_start='Start'"]
             },
             inputs={"source": resource_set},
-            task_type=PyPipenvLiveTask
+            task_type=PyPipenvLiveTask,
         )
 
         outputs = tester.run()
