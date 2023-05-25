@@ -80,6 +80,7 @@ class ProgressBar(Model):
         self.ended_at = None
         self.elapsed_time = None
         self.second_start = None
+        self.current_value = self._MIN_VALUE
 
     def reset(self) -> 'ProgressBar':
         """
@@ -164,6 +165,7 @@ class ProgressBar(Model):
             raise BadRequestException("The progress bar has already started")
 
         self.started_at = DateHelper.now_utc()
+        self.current_value = self._MIN_VALUE
         self.save()
 
     def trigger_second_start(self):
