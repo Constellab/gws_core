@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, List, final
 
 from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
 
+from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo
@@ -26,8 +27,8 @@ from ..resource.resource_model import ResourceModel
 from ..tag.taggable_model import TaggableModel
 from ..user.activity import Activity
 from ..user.user import User
-from .experiment_enums import ExperimentStatus, ExperimentType
-from .experiment_exception import ResourceUsedInAnotherExperimentException
+from .experiment_enums import (ExperimentProcessStatus, ExperimentStatus,
+                               ExperimentType)
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
@@ -390,6 +391,19 @@ class Experiment(ModelWithUser, TaggableModel):
             raise BadRequestException(
                 detail="Experiment is archived, please unachived it to update it")
 
+    def get_process_status(self) -> ExperimentProcessStatus:
+        if self.pid == None:
+            return ExperimentProcessStatus.NONE
+
+        try:
+            process = SysProc.from_pid(self.pid)
+            if process.is_alive():
+                return ExperimentProcessStatus.RUNNING
+            else:
+                return ExperimentProcessStatus.UNEXPECTED_STOPPED
+        except Exception:
+            return ExperimentProcessStatus.UNEXPECTED_STOPPED
+
     ########################### TO JSON ##################################
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
@@ -413,6 +427,8 @@ class Experiment(ModelWithUser, TaggableModel):
                 "typing_name": self.protocol_model.process_typing_name
             },
         })
+
+        _json["pid_status"] = self.get_process_status()
 
         if self.project:
             _json["project"] = {

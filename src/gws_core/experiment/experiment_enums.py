@@ -29,3 +29,12 @@ class ExperimentType(Enum):
     RESOURCE_DOWNLOADER = "RESOURCE_DOWNLOADER"
     # specific experiment generated from a action task
     ACTIONS = "ACTIONS"
+
+
+class ExperimentProcessStatus(Enum):
+    # if the experiment is not running
+    NONE = "NONE"
+    # if the experiment is running
+    RUNNING = "RUNNING"
+    # if the experiment is still running but the process is stopped
+    UNEXPECTED_STOPPED = "UNEXPECTED_STOPPED"
