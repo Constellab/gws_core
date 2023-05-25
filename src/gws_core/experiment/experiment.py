@@ -327,6 +327,7 @@ class Experiment(ModelWithUser, TaggableModel):
         self.score = None
         self.status = ExperimentStatus.DRAFT
         self.lab_config = None
+        self.error_info = None
         self.save()
 
     def mark_as_error(self, error_info: ProcessErrorInfo) -> None:
@@ -340,6 +341,7 @@ class Experiment(ModelWithUser, TaggableModel):
 
     def mark_as_partially_run(self) -> None:
         self.status = ExperimentStatus.PARTIALLY_RUN
+        self.error_info = None
         self.save()
 
     def check_is_runnable(self) -> None:

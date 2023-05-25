@@ -14,6 +14,7 @@ from peewee import CharField, ForeignKeyField
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.model.typing import Typing
+from gws_core.model.typing_dict import TypingStatus
 from gws_core.task.plug import Source
 
 from ..config.config import Config
@@ -468,6 +469,9 @@ class ProcessModel(ModelWithUser):
         if process_typing:
             _json["human_name"] = process_typing.human_name
             _json["short_description"] = process_typing.short_description
+            _json["type_status"] = process_typing.get_type_status()
+        else:
+            _json["type_status"] = TypingStatus.UNAVAILABLE
 
         return _json
 
