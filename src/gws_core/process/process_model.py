@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Dict, Optional, Type, final
 
 from peewee import CharField, ForeignKeyField
 
+from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.model.typing import Typing
 from gws_core.task.plug import Source
@@ -389,7 +390,13 @@ class ProcessModel(ModelWithUser):
         return self.instance_name
 
     def get_process_type(self) -> Type[Process]:
-        return TypingManager.get_type_from_name(self.process_typing_name)
+        process_type = TypingManager.get_type_from_name(self.process_typing_name)
+
+        if process_type is None:
+            raise BadRequestException(GWSException.PROCESS_TYPE_NOT_FOUND.value,
+                                      GWSException.PROCESS_TYPE_NOT_FOUND.name,
+                                      {"process_typing_name": self.process_typing_name})
+        return process_type
 
     def get_process_typing(self) -> Typing:
         return TypingManager.get_typing_from_name(self.process_typing_name)

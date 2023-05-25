@@ -51,3 +51,4 @@ class GWSException(Enum):
     DELETE_PROJECT_WITH_EXPERIMENTS = "The project can't be deleted because it contains experiments"
     DELETE_PROJECT_WITH_REPORTS = "The project can't be deleted because it contains reports"
     EXP_CONTINUE_LAB_INCOMPATIBLE = "The experiment cannot be continued because the lab version has changed since last execution. Please reset the experiment first."
+    PROCESS_TYPE_NOT_FOUND = "The process type '{{process_typing_name}}' was not found. Please check if the brick is correctly installed in monitoring section."

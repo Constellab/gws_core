@@ -107,38 +107,38 @@ class ExperimentRunService():
         :type user: `gws.user.User`
         """
 
-        settings: Settings = Settings.get_instance()
-        cwd_dir = settings.get_cwd()
-
-        # set the user in the context to make the update works
-        CurrentUserService.set_current_user(user)
-
-        # check user privilege
-        experiment.check_user_privilege(user)
-
-        if experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS:
-            raise BadRequestException(
-                f"A CLI process was already created to run the experiment {experiment.id}")
-
-        cmd = [
-            "python3",
-            os.path.join(cwd_dir, "manage.py"),
-            "--cli",
-            "gws_core.cli.run_experiment",
-            "--experiment-id", experiment.id,
-            "--user-id", user.id
-        ]
-
-        if settings.is_test:
-            cmd.append("--test")
-
-        cmd.append("--runmode")
-        if settings.is_prod:
-            cmd.append("prod")
-        else:
-            cmd.append("dev")
-
         try:
+            settings: Settings = Settings.get_instance()
+            cwd_dir = settings.get_cwd()
+
+            # set the user in the context to make the update works
+            CurrentUserService.set_current_user(user)
+
+            # check user privilege
+            experiment.check_user_privilege(user)
+
+            if experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS:
+                raise BadRequestException(
+                    f"A CLI process was already created to run the experiment {experiment.id}")
+
+            cmd = [
+                "python3",
+                os.path.join(cwd_dir, "manage.py"),
+                "--cli",
+                "gws_core.cli.run_experiment",
+                "--experiment-id", experiment.id,
+                "--user-id", user.id
+            ]
+
+            if settings.is_test:
+                cmd.append("--test")
+
+            cmd.append("--runmode")
+            if settings.is_prod:
+                cmd.append("prod")
+            else:
+                cmd.append("dev")
+
             sproc = SysProc.popen(
                 cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
 
