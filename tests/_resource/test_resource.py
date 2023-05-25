@@ -4,10 +4,10 @@
 # About us: https://gencovery.com
 from typing import List
 
-from gws_core import (BaseTestCase, Experiment, ExperimentService, File,
-                      IntRField, ListRField, ProcessFactory, ResourceModel,
-                      Robot, RobotCreate, StrRField, TaskModel)
-from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core import (BaseTestCase, File, IntRField, ListRField, ResourceModel,
+                      Robot, RobotCreate, StrRField)
+from gws_core.experiment.experiment_interface import IExperiment
+from gws_core.process.process_interface import IProcess
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_model import ResourceOrigin
@@ -37,16 +37,14 @@ class TestResource(BaseTestCase):
 
     def test_resource(self):
 
-        task_model: TaskModel = ProcessFactory.create_task_model_from_type(
-            task_type=RobotCreate, instance_name="create")
-        experiment = ExperimentService.create_experiment_from_task_model(task_model)
+        i_experiment = IExperiment()
+        i_experiment.get_protocol().add_process(RobotCreate, instance_name="create")
+        i_experiment.run()
 
-        experiment: Experiment = ExperimentRunService.run_experiment(experiment)
-
-        create: TaskModel = experiment.protocol_model.get_process('create')
+        create: IProcess = i_experiment.get_protocol().get_process('create')
 
         # Check that the resource model was generated
-        resource_model: ResourceModel = create.out_port('robot').resource_model
+        resource_model: ResourceModel = create.get_output_resource_model('robot')
         self.assertIsNotNone(resource_model.id)
         self.assertTrue(isinstance(resource_model, ResourceModel))
         self.assertEqual(resource_model.origin, ResourceOrigin.GENERATED)

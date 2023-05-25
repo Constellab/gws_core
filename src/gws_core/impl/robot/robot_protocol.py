@@ -88,7 +88,7 @@ class RobotSuperTravelProto(Protocol):
         self.add_outerface('robot', sub_travel, 'robot')
 
 
-@protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro", hide=True)
+@protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro", hide=False)
 class RobotWorldTravelProto(Protocol):
 
     tasks_count = 3 + RobotSuperTravelProto.tasks_count

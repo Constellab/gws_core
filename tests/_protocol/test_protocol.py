@@ -3,13 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
 from typing import Set
 
 from gws_core import (BaseTestCase, Experiment, ExperimentService,
                       ExperimentStatus, ProtocolModel, ProtocolService, Robot,
                       RobotFood, TaskModel)
-from gws_core.data_provider.data_provider import DataProvider
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.process.process_model import ProcessModel, ProcessStatus
 from tests.protocol_examples import (TestNestedProtocol,
@@ -75,25 +73,6 @@ class TestProtocol(BaseTestCase):
 
         query = ProtocolModel.select()
         self.assertEqual(len(query), count+2)
-
-    def test_graph_load(self):
-
-        super_proto: ProtocolModel
-        with open(DataProvider.get_test_data_path("super_proto_update.json"), "r") as file:
-            s1 = json.load(file)
-            super_proto = ProtocolService.create_protocol_model_from_graph(s1)
-
-        self.assertEqual(len(super_proto.processes), 4)
-        self.assertEqual(len(super_proto.connectors), 3)
-        self.assertTrue("mini_travel" in super_proto.processes)
-
-        mini_travel: ProtocolModel = super_proto.processes["mini_travel"]
-        # check mini travel
-        sub_p1 = mini_travel.get_process("p1")
-        self.assertTrue(mini_travel.is_interfaced_with(sub_p1.instance_name))
-
-        sub_p2 = mini_travel.get_process("p2")
-        self.assertTrue(mini_travel.is_outerfaced_with(sub_p2.instance_name))
 
     def test_optional_input(self):
         """Test the optional input if different scenarios

@@ -15,6 +15,7 @@ from gws_core.progress_bar.progress_bar import ProgressBarMessage
 class ExperimentDTO(BaseModel):
     project_id: Optional[str] = None
     title: str = None
+    protocol_template_id: Optional[str] = None
 
 
 class RunningProcessInfo(BaseModel):

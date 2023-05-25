@@ -7,6 +7,7 @@
 from typing import final
 
 from gws_core.process.process_model import ProcessModel
+from gws_core.protocol.protocol_types import InterfaceDict
 
 from ..resource.resource_model import ResourceModel
 from .port import InPort, OutPort, Port
@@ -45,16 +46,7 @@ class IOface:
         if self.target_port:
             self.target_port.reset()
 
-    def to_json(self, deep: bool = False) -> dict:
-        json_ = self.export_config()
-        if self.source_port.resource_model:
-            json_["resource_id"] = self.source_port.resource_model.id
-        else:
-            json_["resource_id"] = None
-
-        return json_
-
-    def export_config(self) -> dict:
+    def to_json(self, deep: bool = False) -> InterfaceDict:
         return {
             "name": self.name,
             "from": {
@@ -85,8 +77,8 @@ class Interface(IOface):
         self.source_port.resource_model = resource_model
         self.target_port.resource_model = resource_model
 
-    def export_config(self) -> dict:
-        _json = super().export_config()
+    def to_json(self) -> InterfaceDict:
+        _json = super().to_json()
         _json["from"]["node"] = ":parent:"
         return _json
 
@@ -107,7 +99,7 @@ class Outerface(IOface):
     def get_resource(self) -> ResourceModel:
         return self.source_port.resource_model
 
-    def export_config(self) -> dict:
-        _json = super().export_config()
+    def to_json(self) -> InterfaceDict:
+        _json = super().to_json()
         _json["to"]["node"] = ":parent:"
         return _json

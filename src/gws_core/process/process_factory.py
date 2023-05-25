@@ -5,7 +5,9 @@
 
 from typing import Dict, List, Type
 
+from gws_core.protocol.protocol_layout import ProtocolLayout
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
+from gws_core.protocol.protocol_types import ProtocolConfigDict
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 
@@ -196,7 +198,7 @@ class ProcessFactory():
         return protocol_model
 
     @classmethod
-    def create_protocol_model_from_graph(cls, graph: dict) -> ProtocolModel:
+    def create_protocol_model_from_graph(cls, graph: ProtocolConfigDict) -> ProtocolModel:
         """
         Create a new instance from a existing graph
 
@@ -213,7 +215,8 @@ class ProcessFactory():
         return protocol
 
     @classmethod
-    def _create_protocol_model_from_graph_recur(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:
+    def _create_protocol_model_from_graph_recur(cls, protocol: ProtocolModel,
+                                                graph: ProtocolConfigDict) -> ProtocolModel:
         """
         Create a new instance from a existing graph
 
@@ -227,10 +230,14 @@ class ProcessFactory():
         for key, process in protocol.processes.items():
             if isinstance(process, ProtocolModel):
                 cls._create_protocol_model_from_graph_recur(
-                    protocol=process, graph=graph["nodes"][key]["data"]["graph"])
+                    protocol=process, graph=graph["nodes"][key]["graph"])
 
         # Init the connector afterward because its needs the child to init correctly
         protocol.init_connectors_from_graph(graph["links"])
+
+        # set layout
+        if graph.get("layout") is not None:
+            protocol.layout = ProtocolLayout(graph["layout"])
 
         return protocol
 

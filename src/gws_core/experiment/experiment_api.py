@@ -46,23 +46,6 @@ def get_an_experiment(id: str,
     return ExperimentService.get_experiment_by_id(id=id).to_json(deep=True)
 
 
-@core_app.get("/experiment", tags=["Experiment"], summary="Get the list of experiments")
-def get_the_list_of_experiments(page: Optional[int] = 1,
-                                number_of_items_per_page: Optional[int] = 20,
-                                _=Depends(AuthService.check_user_access_token)) -> PaginatorDict:
-    """
-    Retrieve a list of experiments. The list is paginated.
-
-    - **search_text**: text used to filter the results. The text is matched against to the `title` and the `description` using full-text search.
-    - **page**: the page number
-    - **number_of_items_per_page**: the number of items per page (limited to 50)
-    """
-    return ExperimentService.fetch_experiment_list(
-        page=page,
-        number_of_items_per_page=number_of_items_per_page,
-    ).to_json()
-
-
 @core_app.post("/experiment/advanced-search", tags=["Experiment"], summary="Advanced search for experiment")
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
@@ -100,7 +83,7 @@ def create_an_experiment(experiment: ExperimentDTO,
     Create an experiment.
     """
 
-    return ExperimentService.create_empty_experiment_from_dto(
+    return ExperimentService.create_experiment_from_dto(
         experiment).to_json(deep=True)
 
 ###################################### UPDATE  ################################

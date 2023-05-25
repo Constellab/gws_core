@@ -82,7 +82,7 @@ class TestTag(BaseTestCase):
 
         TagService.add_tag_to_entity(ResourceModel, resource_model.id, tag.key, tag.value)
 
-        experiment: Experiment = ExperimentService.create_empty_experiment()
+        experiment: Experiment = ExperimentService.create_experiment()
         TagService.add_tag_to_entity(Experiment, experiment.id, tag.key, tag.value)
 
         # test update the tag

@@ -71,7 +71,7 @@ class TestProject(BaseTestCase):
         self.assertEqual(Project.select().count(), all_projects_count)
 
         # Test deletion
-        experiment = ExperimentService.create_empty_experiment('caf61803-70e5-4ac3-9adb-53a35f65a2f3')
+        experiment = ExperimentService.create_experiment('caf61803-70e5-4ac3-9adb-53a35f65a2f3')
 
         # Should not be able to delete a project with experiments
         with self.assertRaises(Exception):

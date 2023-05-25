@@ -3,11 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
-from typing import Dict, List, Literal, Optional, Set, Union
+from typing import Dict, List, Literal, Optional, Set
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
+from gws_core.protocol.protocol_types import ConnectorDict
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -141,7 +141,7 @@ class ProtocolModel(ProcessModel):
             graph=self.data["graph"], sub_process_factory=SubProcessBuilderReadFromDb())
         self._is_loaded = True
 
-    def build_from_graph(self, graph: Union[str, dict],
+    def build_from_graph(self, graph: dict,
                          sub_process_factory: ProtocolSubProcessBuilder) -> None:
         """
         Construct a Protocol instance using a setting dump.
@@ -149,8 +149,6 @@ class ProtocolModel(ProcessModel):
         :return: The protocol
         :rtype: Protocol
         """
-        if isinstance(graph, str):
-            graph = json.loads(graph)
         if not isinstance(graph, dict):
             return
         if not isinstance(graph.get("nodes"), dict) or not graph["nodes"]:
@@ -166,7 +164,7 @@ class ProtocolModel(ProcessModel):
     def refresh_graph_from_dump(self) -> None:
         """Refresh the graph json obnject inside the data from the dump method
         """
-        self.data["graph"] = self.dumps_graph(mode='minimize')
+        self.data["graph"] = self.dumps_graph(process_mode='minimize')
 
     @property
     def graph(self):
@@ -535,7 +533,7 @@ class ProtocolModel(ProcessModel):
             # this checks the port
             process.out_port(port_name)
 
-    def init_connectors_from_graph(self, links, check_compatiblity: bool = True) -> None:
+    def init_connectors_from_graph(self, links: ConnectorDict, check_compatiblity: bool = True) -> None:
         self._connectors = []
         # create links
         for link in links:
@@ -913,10 +911,16 @@ class ProtocolModel(ProcessModel):
 
     ############################### JSON #################################
 
-    def dumps_graph(self, mode: Literal['full', 'minimize', 'config']) -> dict:
-        """
-        Dumps the JSON graph representing the protocol.
+    def dumps_graph(self, process_mode: Literal['full', 'minimize', 'config']) -> dict:
+        """ Dumps the JSON graph representing the protocol.
 
+        :param process_mode: mode for the json process:
+            - full: full json process (not recursive for the sub-protocol)
+            - minimize: minimized json process (only id and typing name)
+            - config: json process for config
+        :type process_mode: Literal[full, minimize, config]
+        :return: _description_
+        :rtype: dict
         """
 
         graph = {
@@ -930,9 +934,9 @@ class ProtocolModel(ProcessModel):
             graph['links'].append(conn.to_json())
         for key, process in self.processes.items():
             process_json: dict
-            if mode == 'minimize':
+            if process_mode == 'minimize':
                 process_json = process.get_minimum_json()
-            elif mode == 'full':
+            elif process_mode == 'full':
                 process_json = process.to_json(deep=False)
             else:
                 process_json = process.export_config()
@@ -956,7 +960,7 @@ class ProtocolModel(ProcessModel):
         _json: dict = super().data_to_json(deep=deep)
 
         if deep:
-            _json["graph"] = self.dumps_graph(mode='full')
+            _json["graph"] = self.dumps_graph(process_mode='full')
             _json["layout"] = self.layout.to_json() if self.layout else {}
 
         return _json

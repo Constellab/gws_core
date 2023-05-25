@@ -2,9 +2,9 @@
 
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.experiment.experiment_enums import (ExperimentStatus,
                                                   ExperimentType)
+from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.project.project import Project
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.test.gtest import GTest
@@ -13,11 +13,11 @@ from gws_core.test.gtest import GTest
 class TestExperimentSearch(BaseTestCase):
 
     def test_search(self):
-        experiment_1 = ExperimentService.create_empty_experiment(
+        experiment_1 = ExperimentService.create_experiment(
             title="My first experiment title world",
             type_=ExperimentType.TRANSFORMER)
 
-        experiment_2: Experiment = ExperimentService.create_empty_experiment(
+        experiment_2: Experiment = ExperimentService.create_experiment(
             title="The second one world")
         experiment_2.mark_as_success()
 

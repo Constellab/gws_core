@@ -3,12 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, final
+from typing import Any, final
 
 from ..core.model.model_with_user import ModelWithUser
 from .config_exceptions import InvalidParamValueException, UnkownParamException
 from .config_specs_helper import ConfigSpecsHelper
-from .config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
+from .config_types import (ConfigDict, ConfigParams, ConfigParamsDict,
+                           ConfigSpecs)
 from .param.param_spec import ParamSpec
 from .param.param_spec_helper import ParamSpecHelper
 from .param.param_types import ParamValue
@@ -162,7 +163,7 @@ class Config(ModelWithUser):
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         return {}
 
-    def export_config(self) -> dict:
+    def export_config(self) -> ConfigDict:
         """
         Export the config to a dict
         """

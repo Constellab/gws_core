@@ -5,6 +5,8 @@
 
 from typing import final
 
+from gws_core.protocol.protocol_types import ConnectorDict
+
 from ..process.process_model import ProcessModel
 from .io_exception import ImcompatiblePortsException
 from .port import InPort, OutPort
@@ -48,7 +50,7 @@ class Connector:
         if left_port.resource_provided:
             self.propagate_resource()
 
-    def to_json(self) -> dict:
+    def to_json(self) -> ConnectorDict:
         """
         Returns a dictionnary describing the Connector.
 
@@ -58,7 +60,7 @@ class Connector:
 
         return self.export_config()
 
-    def export_config(self) -> dict:
+    def export_config(self) -> ConnectorDict:
         return {
             "from": {
                 "node": self.left_process.instance_name,

@@ -5,8 +5,10 @@
 
 from typing import Any, Dict
 
+from typing_extensions import TypedDict
+
 from .param.param_spec import ParamSpec
-from .param.param_types import ParamValue
+from .param.param_types import ParamSpecDict, ParamValue
 
 ConfigParamsDict = Dict[str, ParamValue]
 ConfigSpecs = Dict[str, ParamSpec]
@@ -36,8 +38,6 @@ class ConfigParams(ConfigParamsDict):
 
         return self[param_name]
 
-    # -- P --
-
     def value_is_set(self, param_name: str) -> bool:
         """
         Test if a parameter exists and is not none
@@ -52,3 +52,14 @@ class ConfigParams(ConfigParamsDict):
         if __k not in self:
             raise KeyError(f"The config does not have the parameter '{__k}'")
         return super().__getitem__(__k)
+
+
+class ConfigDict(TypedDict):
+    """Config values send to the task
+    """
+
+    # specification of the config
+    specs: Dict[str, ParamSpecDict]
+
+    # values of the config
+    values: ConfigParamsDict

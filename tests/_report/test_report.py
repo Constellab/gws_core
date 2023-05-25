@@ -43,10 +43,10 @@ class TestReport(BaseTestCase):
         report = ReportService.update_content(report.id, content)
         self.assert_json(report.content, content)
 
-        experiment: Experiment = ExperimentService.create_empty_experiment()
+        experiment: Experiment = ExperimentService.create_experiment()
 
         # Create a second experiment with a report
-        experiment_2: Experiment = ExperimentService.create_empty_experiment()
+        experiment_2: Experiment = ExperimentService.create_experiment()
         report_2 = ReportService.create(ReportDTO(title='Report 2'), [experiment_2.id])
 
         # Add exp 1 on report 1

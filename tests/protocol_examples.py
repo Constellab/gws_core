@@ -66,6 +66,7 @@ class TestNestedProtocol(Protocol):
 
     # list of next tasks of p2 (in the nested protocol)
     p2_next = {*TestSubProtocol.p2_next, 'p5'}
+    connector_count = 2
 
     def configure_protocol(self) -> None:
         p0: ProcessSpec = self.add_process(RobotCreate, 'p0')

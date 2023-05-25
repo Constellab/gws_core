@@ -9,6 +9,10 @@ from gws_core.protocol.protocol_dto import ProtocolUpdateDTO
 from gws_core.protocol.protocol_layout import (ProcessLayout, ProtocolLayout,
                                                ProtocolLayoutDict)
 from gws_core.protocol.protocol_spec import ConnectorSpec
+from gws_core.protocol.protocol_types import ProtocolConfigDict
+from gws_core.protocol_template.protocol_template import ProtocolTemplate
+from gws_core.protocol_template.protocol_template_service import \
+    ProtocolTemplateService
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
@@ -49,39 +53,9 @@ class ProtocolService(BaseService):
         return protocol
 
     @classmethod
-    def create_protocol_model_from_data(cls, processes: dict = None,
-                                        connectors: list = None,
-                                        instance_name: str = None) -> ProtocolModel:
-        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_data(
-            processes=processes,
-            connectors=connectors,
-            instance_name=instance_name)
-
-        protocol.save_full()
-        return protocol
-
-    @classmethod
     def create_empty_protocol(cls, instance_name: str = None) -> ProtocolModel:
         protocol: ProtocolModel = ProcessFactory.create_protocol_empty(
             instance_name=instance_name)
-
-        protocol.save_full()
-        return protocol
-
-    @classmethod
-    def create_protocol_model_from_graph(cls, graph: dict) -> ProtocolModel:
-        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_graph(
-            graph=graph)
-
-        protocol.save_full()
-        return protocol
-
-    @classmethod
-    def create_protocol_model_from_task_model(cls, task_model: TaskModel) -> ProtocolModel:
-        if not isinstance(task_model, TaskModel):
-            raise BadRequestException("A ProcessModel is required")
-        protocol: ProtocolModel = ProtocolService.create_protocol_model_from_data(
-            processes={task_model.instance_name: task_model}, connectors=[])
 
         protocol.save_full()
         return protocol
@@ -103,7 +77,8 @@ class ProtocolService(BaseService):
 
     @classmethod
     @transaction()
-    def add_empty_protocol_to_protocol(cls, protocol_model: ProtocolModel, instance_name: str = None) -> ProtocolUpdateDTO:
+    def add_empty_protocol_to_protocol(
+            cls, protocol_model: ProtocolModel, instance_name: str = None) -> ProtocolUpdateDTO:
         child_protocol_model: ProtocolModel = ProcessFactory.create_protocol_empty()
 
         return cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=child_protocol_model,
@@ -152,8 +127,8 @@ class ProtocolService(BaseService):
         new_process_type: Type[Process] = TypingManager.get_type_from_name(
             process_typing_name)
 
-        return cls._add_process_connected_to_output(protocol_model, new_process_type, existing_process, output_port_name,
-                                                    config_params)
+        return cls._add_process_connected_to_output(
+            protocol_model, new_process_type, existing_process, output_port_name, config_params)
 
     @classmethod
     @transaction()
@@ -435,7 +410,8 @@ class ProtocolService(BaseService):
 
     @classmethod
     @transaction()
-    def configure_process(cls, protocol_id: str, process_instance_name: str, config_values: ConfigParamsDict) -> ProtocolUpdateDTO:
+    def configure_process(
+            cls, protocol_id: str, process_instance_name: str, config_values: ConfigParamsDict) -> ProtocolUpdateDTO:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
@@ -562,3 +538,26 @@ class ProtocolService(BaseService):
 
         protocol_model.layout.set_outerface(outerface_name, layout)
         protocol_model.save()
+
+    ########################## PROTOCOL TEMPLATE #####################
+
+    @classmethod
+    def create_protocol_template_from_id(cls, protocol_id: str, name: str) -> ProtocolTemplate:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
+            protocol_id)
+        return ProtocolTemplateService.create_from_protocol(protocol=protocol_model,
+                                                            name=name)
+
+    @classmethod
+    def create_protocol_model_from_template(cls, protocol_template_id: str) -> ProtocolModel:
+        protocol_template: ProtocolTemplate = ProtocolTemplateService.get_by_id_and_check(protocol_template_id)
+
+        return cls.create_protocol_model_from_graph(protocol_template.get_template())
+
+    @classmethod
+    def create_protocol_model_from_graph(cls, graph: ProtocolConfigDict) -> ProtocolModel:
+        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_graph(
+            graph=graph)
+
+        protocol.save_full()
+        return protocol

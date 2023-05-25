@@ -8,6 +8,7 @@ from gws_core import (BaseTestCase, Experiment, ExperimentService, Paginator,
                       PaginatorDict, ProtocolModel, RobotService)
 
 
+# test_paginator
 class TestPaginator(BaseTestCase):
 
     def test_paginator(self):
@@ -16,7 +17,10 @@ class TestPaginator(BaseTestCase):
         ExperimentService.create_experiment_from_protocol_model(
             protocol_model=protocol, title="My title")
 
-        paginator: Paginator[Experiment] = ExperimentService.fetch_experiment_list(page=0, number_of_items_per_page=20)
+        query = Experiment.select().order_by(Experiment.created_at.desc())
+
+        paginator: Paginator[Experiment] = Paginator(
+            query, page=0, nb_of_items_per_page=20)
 
         # Test the paginator values
         paginator_dict: PaginatorDict = paginator.to_json()

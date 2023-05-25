@@ -35,7 +35,7 @@ class TestExperiment(BaseTestCase):
         project.save()
         experiment_dto: ExperimentDTO = ExperimentDTO(
             title="Experiment title", project_id=project.id)
-        experiment = ExperimentService.create_empty_experiment_from_dto(
+        experiment = ExperimentService.create_experiment_from_dto(
             experiment_dto)
 
         self.assertIsNotNone(experiment.id)
@@ -303,7 +303,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(paginator.results[0].id, experiment_2._experiment.id)
 
     def test_start_and_stop(self):
-        experiment = ExperimentService.create_empty_experiment()
+        experiment = ExperimentService.create_experiment()
 
         main_protocol: ProtocolModel = experiment.protocol_model
 

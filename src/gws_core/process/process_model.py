@@ -35,7 +35,7 @@ from ..progress_bar.progress_bar import ProgressBar, ProgressBarMessage
 from ..user.user import User
 from .process import Process
 from .process_exception import ProcessRunException
-from .process_types import ProcessErrorInfo
+from .process_types import ProcessErrorInfo, ProcessMinimumDict
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
@@ -425,7 +425,7 @@ class ProcessModel(ModelWithUser):
 
     ########################### JSON #################################
 
-    def get_minimum_json(self) -> dict:
+    def get_minimum_json(self) -> ProcessMinimumDict:
         """
         Return the minium json to recognize this process
 

@@ -5,6 +5,7 @@
 
 
 from fastapi import Depends
+from pydantic import BaseModel
 
 from gws_core.protocol.protocol_dto import AddConnectorDTO
 
@@ -243,3 +244,16 @@ def save_outerface_layout(id: str,
                           layout_dict: dict,
                           _=Depends(AuthService.check_user_access_token)) -> None:
     ProtocolService.save_outerface_layout(id, outerface_name, layout_dict)
+
+
+########################## TEMPLATE #####################
+class CreateProtocolTemplate(BaseModel):
+    name: str = None
+
+
+@core_app.post("/protocol/{id}/template", tags=["Protocol"],
+               summary="Create a template from a protocol")
+def create_template(id: str,
+                    template: CreateProtocolTemplate,
+                    _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.create_protocol_template_from_id(id, template.name).to_json()

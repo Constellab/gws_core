@@ -27,9 +27,7 @@ from ..protocol.protocol_model import ProtocolModel
 from ..protocol.protocol_service import ProtocolService
 from ..space.space_dto import SaveExperimentToSpaceDTO
 from ..space.space_service import SpaceService
-from ..task.task import Task
 from ..task.task_model import TaskModel
-from ..task.task_service import TaskService
 from ..user.activity import Activity
 from ..user.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
@@ -45,36 +43,34 @@ class ExperimentService(BaseService):
     ################################### CREATE ##############################
 
     @classmethod
-    def create_empty_experiment_from_dto(cls, experimentDTO: ExperimentDTO) -> Experiment:
+    @transaction()
+    def create_experiment_from_dto(cls, experimentDTO: ExperimentDTO) -> Experiment:
 
-        return cls.create_empty_experiment(
+        return cls.create_experiment(
             project_id=experimentDTO.project_id,
             title=experimentDTO.title,
-        )
-
-    @classmethod
-    def create_empty_experiment(cls, project_id: str = None, title: str = "",
-                                type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
-
-        return cls.create_experiment_from_protocol_model(
-            protocol_model=ProcessFactory.create_protocol_empty(),
-            project=Project.get_by_id_and_check(
-                project_id) if project_id else None,
-            title=title,
-            type_=type_
+            protocol_template_id=experimentDTO.protocol_template_id,
         )
 
     @classmethod
     @transaction()
-    def create_experiment_from_task_model(
-            cls, task_model: TaskModel, project: Project = None, title: str = "",
-            type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
-        if not isinstance(task_model, TaskModel, ):
-            raise BadRequestException("An instance of TaskModel is required")
-        proto = ProtocolService.create_protocol_model_from_task_model(
-            task_model=task_model)
+    def create_experiment(cls, project_id: str = None, title: str = "",
+                          protocol_template_id: str = None,
+                          type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
+        protocol_model: ProtocolModel = None
+
+        if protocol_template_id is not None:
+            protocol_model = ProtocolService.create_protocol_model_from_template(protocol_template_id)
+        else:
+            protocol_model = ProcessFactory.create_protocol_empty()
+
+        project = Project.get_by_id_and_check(project_id) if project_id else None
         return cls.create_experiment_from_protocol_model(
-            protocol_model=proto, project=project, title=title, type_=type_)
+            protocol_model=protocol_model,
+            project=project,
+            title=title,
+            type_=type_
+        )
 
     @classmethod
     @transaction()
@@ -106,16 +102,6 @@ class ExperimentService(BaseService):
             protocol_type=protocol_type)
         return cls.create_experiment_from_protocol_model(
             protocol_model=protocol_model, project=project, title=title, type_=type_)
-
-    @classmethod
-    def create_experiment_from_task_type(
-            cls, task_type: Type[Task], project: Project = None, title: str = "",
-            type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
-
-        task_model: TaskModel = TaskService.create_task_model_from_type(
-            task_type=task_type)
-        return cls.create_experiment_from_task_model(
-            task_model=task_model, project=project, title=title, type_=type_)
 
     ################################### UPDATE ##############################
 
@@ -280,20 +266,6 @@ class ExperimentService(BaseService):
     @classmethod
     def get_experiment_by_id(cls, id: str) -> Experiment:
         return Experiment.get_by_id_and_check(id)
-
-    @classmethod
-    def fetch_experiment_list(cls,
-                              page: int = 0,
-                              number_of_items_per_page: int = 20) -> Paginator[Experiment]:
-
-        number_of_items_per_page = cls.get_number_of_item_per_page(
-            number_of_items_per_page)
-
-        query = Experiment.select().order_by(Experiment.created_at.desc())
-
-        paginator: Paginator[Experiment] = Paginator(
-            query, page=page, nb_of_items_per_page=number_of_items_per_page)
-        return paginator
 
     @classmethod
     def search(cls,
