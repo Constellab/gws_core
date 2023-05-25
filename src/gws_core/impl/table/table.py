@@ -533,12 +533,17 @@ class Table(Resource):
         return self._column_tags.get_available_tags()
 
     def get_columns_info(self, from_index: int = None, to_index: int = None) -> List[TableHeaderInfo]:
-        column_infos: List[TableHeaderInfo] = []
-        for column in self._data:
-            column_infos.append(self.get_column_info(column))
 
+        # reduce the number of columns to retrieve
+        data: DataFrame = None
         if from_index is not None or to_index is not None:
-            column_infos = column_infos[from_index:to_index]
+            data = self._data.iloc[:, from_index:to_index]
+        else:
+            data = self._data
+
+        column_infos: List[TableHeaderInfo] = []
+        for column in data:
+            column_infos.append(self.get_column_info(column))
         return column_infos
 
     def get_column_info(self, column_name: str) -> TableHeaderInfo:
@@ -564,12 +569,18 @@ class Table(Resource):
         return self._row_tags.get_available_tags()
 
     def get_rows_info(self, from_index: int = None, to_index: int = None) -> List[TableHeaderInfo]:
+
+        # reduce the data to the requested rows
+        data: DataFrame = None
+        if from_index is not None or to_index is not None:
+            data = self._data.iloc[from_index:to_index, :]
+        else:
+            data = self._data
+
         rows_info: List[TableHeaderInfo] = []
-        for _, row in self._data.iterrows():
+        for _, row in data.iterrows():
             rows_info.append(self.get_row_info(row.name))
 
-        if from_index is not None or to_index is not None:
-            rows_info = rows_info[from_index:to_index]
         return rows_info
 
     def get_row_info(self, row_name: str) -> TableHeaderInfo:
