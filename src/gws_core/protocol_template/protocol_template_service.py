@@ -20,10 +20,7 @@ class ProtocolTemplateService(BaseService):
     def create_from_protocol(cls, protocol: ProtocolModel,
                              name: str, description: dict = None) -> ProtocolTemplate:
 
-        protocol_template = ProtocolTemplate()
-        protocol_template.name = name
-        protocol_template.description = description
-        protocol_template.set_template(protocol.dumps_graph('config'))
+        protocol_template = ProtocolTemplate.from_protocol_model(protocol, name, description)
         return protocol_template.save()
 
     @classmethod

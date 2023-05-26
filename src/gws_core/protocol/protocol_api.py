@@ -7,8 +7,10 @@
 from typing import Optional
 
 from fastapi import Depends
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.protocol.protocol_dto import AddConnectorDTO
 
 from ..core_app import core_app
@@ -260,3 +262,11 @@ def create_template(id: str,
                     template: CreateProtocolTemplate,
                     _=Depends(AuthService.check_user_access_token)) -> dict:
     return ProtocolService.create_protocol_template_from_id(id, template.name, template.description).to_json()
+
+
+@core_app.get("/protocol/{id}/template/download", tags=["Protocol"],
+              summary="Download a template from a protocol")
+def download_template(id: str,
+                      _=Depends(AuthService.check_user_access_token)) -> FileResponse:
+    template = ProtocolService.generate_protocol_template(id)
+    return ResponseHelper.create_file_response_from_json(template.to_json(deep=True), template.name + '.json')

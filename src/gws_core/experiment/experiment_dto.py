@@ -16,6 +16,7 @@ class ExperimentDTO(BaseModel):
     project_id: Optional[str] = None
     title: str = None
     protocol_template_id: Optional[str] = None
+    protocol_template_json: Optional[dict] = None
 
 
 class RunningProcessInfo(BaseModel):

@@ -11,6 +11,7 @@ from peewee import ModelSelect
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.task_input_model import TaskInputModel
 
@@ -44,23 +45,33 @@ class ExperimentService(BaseService):
 
     @classmethod
     @transaction()
-    def create_experiment_from_dto(cls, experimentDTO: ExperimentDTO) -> Experiment:
+    def create_experiment_from_dto(cls, experiment_DTO: ExperimentDTO) -> Experiment:
+
+        protocol_template: ProtocolTemplate = None
+        if experiment_DTO.protocol_template_id:
+            protocol_template = ProtocolTemplate.get_by_id_and_check(
+                experiment_DTO.protocol_template_id)
+        elif experiment_DTO.protocol_template_json and isinstance(experiment_DTO.protocol_template_json, dict):
+            protocol_template = ProtocolTemplate.from_json(
+                experiment_DTO.protocol_template_json)
 
         return cls.create_experiment(
-            project_id=experimentDTO.project_id,
-            title=experimentDTO.title,
-            protocol_template_id=experimentDTO.protocol_template_id,
+            project_id=experiment_DTO.project_id,
+            title=experiment_DTO.title,
+            protocol_template=protocol_template,
         )
 
     @classmethod
     @transaction()
     def create_experiment(cls, project_id: str = None, title: str = "",
-                          protocol_template_id: str = None,
+                          protocol_template: ProtocolTemplate = None,
                           type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
         protocol_model: ProtocolModel = None
 
-        if protocol_template_id is not None:
-            protocol_model = ProtocolService.create_protocol_model_from_template(protocol_template_id)
+        description: Dict = None
+        if protocol_template is not None:
+            description = protocol_template.description
+            protocol_model = ProtocolService.create_protocol_model_from_template(protocol_template)
         else:
             protocol_model = ProcessFactory.create_protocol_empty()
 
@@ -69,6 +80,7 @@ class ExperimentService(BaseService):
             protocol_model=protocol_model,
             project=project,
             title=title,
+            description=description,
             type_=type_
         )
 
@@ -76,12 +88,14 @@ class ExperimentService(BaseService):
     @transaction()
     def create_experiment_from_protocol_model(
             cls, protocol_model: ProtocolModel, project: Project = None, title: str = "",
+            description: Dict = None,
             type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
         if not isinstance(protocol_model, ProtocolModel):
             raise BadRequestException(
                 "An instance of ProtocolModel is required")
         experiment = Experiment()
         experiment.title = title
+        experiment.description = description
         experiment.project = project
         experiment.type = type_
 

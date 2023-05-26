@@ -550,9 +550,7 @@ class ProtocolService(BaseService):
                                                             name=name, description=description)
 
     @classmethod
-    def create_protocol_model_from_template(cls, protocol_template_id: str) -> ProtocolModel:
-        protocol_template: ProtocolTemplate = ProtocolTemplateService.get_by_id_and_check(protocol_template_id)
-
+    def create_protocol_model_from_template(cls, protocol_template: ProtocolTemplate) -> ProtocolModel:
         return cls.create_protocol_model_from_graph(protocol_template.get_template())
 
     @classmethod
@@ -562,3 +560,15 @@ class ProtocolService(BaseService):
 
         protocol.save_full()
         return protocol
+
+    @classmethod
+    def generate_protocol_template(cls, protocol_id: str) -> ProtocolTemplate:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
+            protocol_id)
+
+        if not protocol_model.experiment:
+            raise BadRequestException("Cannot download a protocol without experiment")
+
+        return ProtocolTemplate.from_protocol_model(protocol_model,
+                                                    protocol_model.experiment.title,
+                                                    protocol_model.experiment.description)

@@ -6,6 +6,7 @@ from peewee import CharField, IntegerField
 
 from gws_core.core.model.db_field import JSONField
 from gws_core.process.process_factory import ProcessFactory
+from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_types import ProtocolConfigDict
 from gws_core.tag.taggable_model import TaggableModel
 
@@ -35,5 +36,25 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
         self.data = template
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
+        # create a new protocol to refresh the template info ()
         protocol_model = ProcessFactory.create_protocol_model_from_graph(self.get_template())
         return protocol_model.dumps_graph('config')
+
+    @classmethod
+    def from_protocol_model(
+            cls, protocol_model: ProtocolModel, name: str, description: str = None) -> 'ProtocolTemplate':
+        protocol_template = ProtocolTemplate()
+        protocol_template.set_template(protocol_model.dumps_graph('config'))
+        protocol_template.name = name
+        protocol_template.description = description
+        return protocol_template
+
+    @classmethod
+    def from_json(cls, json_: dict) -> 'ProtocolTemplate':
+        protocol_template = ProtocolTemplate()
+        protocol_template.name = json_['name']
+        protocol_template.description = json_.get('description')
+        protocol_template.version = json_.get('version')
+        protocol_template.set_template(json_['data'])
+
+        return protocol_template

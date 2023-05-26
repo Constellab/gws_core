@@ -7,9 +7,11 @@
 from typing import Optional
 
 from fastapi import Depends
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.core_app import core_app
 from gws_core.user.auth_service import AuthService
 
@@ -61,3 +63,11 @@ def search_by_name(name: str,
                    number_of_items_per_page: Optional[int] = 20,
                    _=Depends(AuthService.check_user_access_token)) -> dict:
     return ProtocolTemplateService.search_by_name(name, page, number_of_items_per_page).to_json()
+
+
+@core_app.get("/protocol-template/{id}/download", tags=["Protocol template"],
+              summary="Download a protocol template json")
+def download_template(id: str,
+                      _=Depends(AuthService.check_user_access_token)) -> FileResponse:
+    template = ProtocolTemplateService.get_by_id_and_check(id)
+    return ResponseHelper.create_file_response_from_json(template.to_json(deep=True), template.name + '.json')
