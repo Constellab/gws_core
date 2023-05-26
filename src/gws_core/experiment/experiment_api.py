@@ -57,6 +57,17 @@ def advanced_search(search_dict: SearchParams,
     return ExperimentService.search(search_dict, page, number_of_items_per_page).to_json()
 
 
+@core_app.get("/experiment/search-title/{title}", tags=["Experiment"], summary="Search experiment by title")
+def search_by_title(title: str,
+                    page: Optional[int] = 1,
+                    number_of_items_per_page: Optional[int] = 20,
+                    _=Depends(AuthService.check_user_access_token)) -> Dict:
+    """
+    Advanced search on experiment
+    """
+    return ExperimentService.search_by_title(title, page, number_of_items_per_page).to_json()
+
+
 @core_app.get("/experiment/input-resource/{resource_id}", tags=["Experiment"],
               summary="Get the list of experiments by input resource")
 def get_by_input_resource(resource_id: str,

@@ -294,6 +294,16 @@ class ExperimentService(BaseService):
             model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
+    def search_by_title(cls,
+                        title: str,
+                        page: int = 0,
+                        number_of_items_per_page: int = 20) -> Paginator[Experiment]:
+
+        model_select: ModelSelect = Experiment.select().where(Experiment.title.contains(title))
+        return Paginator(
+            model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
     def get_by_input_resource(cls, resource_id: str,
                               page: int = 0,
                               number_of_items_per_page: int = 20) -> Paginator[Experiment]:
