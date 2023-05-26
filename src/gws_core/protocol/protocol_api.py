@@ -4,6 +4,8 @@
 # About us: https://gencovery.com
 
 
+from typing import Optional
+
 from fastapi import Depends
 from pydantic import BaseModel
 
@@ -249,6 +251,7 @@ def save_outerface_layout(id: str,
 ########################## TEMPLATE #####################
 class CreateProtocolTemplate(BaseModel):
     name: str = None
+    description: Optional[dict] = None
 
 
 @core_app.post("/protocol/{id}/template", tags=["Protocol"],
@@ -256,4 +259,4 @@ class CreateProtocolTemplate(BaseModel):
 def create_template(id: str,
                     template: CreateProtocolTemplate,
                     _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.create_protocol_template_from_id(id, template.name).to_json()
+    return ProtocolService.create_protocol_template_from_id(id, template.name, template.description).to_json()

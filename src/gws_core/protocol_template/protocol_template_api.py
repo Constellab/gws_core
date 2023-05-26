@@ -7,6 +7,7 @@
 from typing import Optional
 
 from fastapi import Depends
+from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core_app import core_app
@@ -20,6 +21,19 @@ def get_by_id(id: str,
               _=Depends(AuthService.check_user_access_token)) -> dict:
 
     return ProtocolTemplateService.get_by_id_and_check(id=id).to_json(deep=True)
+
+
+class UpdateProtocolTemplate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[dict] = None
+
+
+@core_app.put("/protocol-template/{id}", tags=["Protocol template"], summary="Update protocol template")
+def update(id: str,
+           update_protocol_template: UpdateProtocolTemplate,
+           _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolTemplateService.update(id=id, name=update_protocol_template.name,
+                                          description=update_protocol_template.description).to_json(deep=True)
 
 
 @core_app.delete("/protocol-template/{id}", tags=["Protocol template"], summary="Delete an protocol template")

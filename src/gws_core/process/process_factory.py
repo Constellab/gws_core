@@ -310,34 +310,7 @@ class ProcessFactory():
         :return: [description]
         :rtype: ProtocolModel
         """
-        new_protocol_model: ProtocolModel = cls.create_protocol_empty()
-        new_protocol_model.set_process_type(
-            protocol_model.get_process_type()._typing_name)
-
-        # If the instance name is the same as the id, don't set it
-        instance_name = protocol_model.instance_name if protocol_model.instance_name != protocol_model.id else None
-        cls._init_process_model(
-            process_model=protocol_model, config=protocol_model.config.copy(),
-            instance_name=instance_name)
-
-        # copy all the sub process
-        for key, process in protocol_model.processes.items():
-            new_protocol_model.add_process_model(
-                cls.copy_process(process), key)
-
-        # copy the data and then refresh it to update information
-        new_protocol_model._init_interfaces_from_graph(
-            protocol_model.data["graph"]["interfaces"])
-        new_protocol_model._init_outerfaces_from_graph(
-            protocol_model.data["graph"]["outerfaces"])
-        new_protocol_model.init_connectors_from_graph(
-            protocol_model.data["graph"]["links"])
-        new_protocol_model.refresh_graph_from_dump()
-
-        # copy the layout
-        new_protocol_model.layout = protocol_model.layout
-
-        return new_protocol_model
+        return cls.create_protocol_model_from_graph(protocol_model.dumps_graph('config'))
 
       ############################################### SPECIFIC #################################################
 

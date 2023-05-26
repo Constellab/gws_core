@@ -18,17 +18,18 @@ class ProtocolTemplateService(BaseService):
 
     @classmethod
     def create_from_protocol(cls, protocol: ProtocolModel,
-                             name: str) -> ProtocolTemplate:
+                             name: str, description: dict = None) -> ProtocolTemplate:
 
         protocol_template = ProtocolTemplate()
         protocol_template.name = name
+        protocol_template.description = description
         protocol_template.set_template(protocol.dumps_graph('config'))
         return protocol_template.save()
 
     @classmethod
     def update(cls, id: str,
                protocol: ProtocolModel = None,
-               name: str = None) -> ProtocolTemplate:
+               name: str = None, description: dict = None) -> ProtocolTemplate:
 
         protocol_template = cls.get_by_id_and_check(id)
 
@@ -36,6 +37,8 @@ class ProtocolTemplateService(BaseService):
             protocol_template.set_template(protocol.dumps_graph('config'))
         if name:
             protocol_template.name = name
+        if description:
+            protocol_template.description = description
 
         return protocol_template.save()
 

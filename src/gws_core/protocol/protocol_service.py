@@ -542,11 +542,12 @@ class ProtocolService(BaseService):
     ########################## PROTOCOL TEMPLATE #####################
 
     @classmethod
-    def create_protocol_template_from_id(cls, protocol_id: str, name: str) -> ProtocolTemplate:
+    def create_protocol_template_from_id(
+            cls, protocol_id: str, name: str, description: dict = None) -> ProtocolTemplate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
         return ProtocolTemplateService.create_from_protocol(protocol=protocol_model,
-                                                            name=name)
+                                                            name=name, description=description)
 
     @classmethod
     def create_protocol_model_from_template(cls, protocol_template_id: str) -> ProtocolModel:
