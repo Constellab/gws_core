@@ -5,7 +5,7 @@
 
 from typing import final
 
-from peewee import BooleanField, CharField
+from peewee import BooleanField, CharField, ModelSelect
 from typing_extensions import NotRequired, TypedDict
 
 from ..core.classes.enum_field import EnumField
@@ -63,13 +63,6 @@ class User(Model):
 
     _table_name = 'gws_user'
 
-    def archive(self, archive: bool) -> None:
-        """
-        Archive method. This method is deactivated. Always returns False.
-        """
-
-        return None
-
     @classmethod
     def get_admin(cls) -> 'User':
         return User.get(User.group == UserGroup.ADMIN)
@@ -85,6 +78,28 @@ class User(Model):
     @classmethod
     def get_by_email(cls, email: str) -> 'User':
         return User.get(User.email == email)
+
+    @classmethod
+    def search_by_firstname_or_lastname(cls, search: str) -> ModelSelect:
+        return User.select().where(
+            (User.group != UserGroup.SYSUSER) &
+            ((User.first_name.contains(search)) | (User.last_name.contains(search)))
+        ).order_by(User.first_name, User.last_name)
+
+    @classmethod
+    def search_by_firstname_and_lastname(cls, name1: str, name2: str) -> ModelSelect:
+        return User.select().where(
+            (User.group != UserGroup.SYSUSER) &
+            (((User.first_name.contains(name1)) & (User.last_name.contains(name2))) |
+             ((User.first_name.contains(name2)) & (User.last_name.contains(name1))))
+        ).order_by(User.first_name, User.last_name)
+
+    def archive(self, archive: bool) -> None:
+        """
+        Archive method. This method is deactivated. Always returns False.
+        """
+
+        return None
 
     @property
     def full_name(self):

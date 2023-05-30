@@ -3,8 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import List, Union
 
-from typing import List
+from peewee import ModelSelect
 
 from gws_core.core.utils.logger import Logger
 from gws_core.space.space_service import SpaceService
@@ -66,8 +67,12 @@ class UserService(BaseService):
             query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def get_by_id_or_none(cls, id: str) -> User:
+    def get_by_id_or_none(cls, id: str) -> Union[User, None]:
         return User.get_by_id(id)
+
+    @classmethod
+    def get_by_id_and_check(cls, id: str) -> User:
+        return User.get_by_id_and_check(id)
 
     @classmethod
     def fetch_user_list(cls,
@@ -147,3 +152,26 @@ class UserService(BaseService):
         except Exception as err:
             Logger.error(f"Error while synchronizing users: {err}")
             raise err
+
+    @classmethod
+    def smart_search_by_name(cls, name: str, page: int = 0,
+                             number_of_items_per_page: int = 20) -> Paginator[User]:
+        name_parts = name.split(" ")
+        # if name does not contain space, search by first name or last name
+        if len(name_parts) == 1:
+            model_select = User.search_by_firstname_or_lastname(name)
+
+            return Paginator(model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+        # if there are 2 words, search by lastname and firstname
+        elif len(name_parts) == 2:
+            model_select = User.search_by_firstname_and_lastname(name_parts[0], name_parts[1])
+
+            paginator = Paginator(model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+            # if nothing is found, search by lastname or firstname
+            if paginator.page_info.total_number_of_items > 0:
+                return paginator
+
+        model_select = User.search_by_firstname_or_lastname(name)
+        return Paginator(model_select, page=page, nb_of_items_per_page=number_of_items_per_page)

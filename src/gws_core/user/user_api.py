@@ -157,3 +157,20 @@ def synchronize_users(_=Depends(AuthService.check_user_access_token)) -> None:
     """
 
     return UserService.synchronize_all_space_users()
+
+
+@core_app.get("/user/{id}", tags=["User"])
+def get_by_id_and_check(id: str,
+                        _=Depends(AuthService.check_user_access_token)) -> dict:
+    return UserService.get_by_id_and_check(id).to_json()
+
+
+@core_app.get("/user/name-search/{name}", tags=["User"])
+def search_user_by_name(name: str,
+                        page: int = 0,
+                        number_of_items_per_page: int = 20,
+                        _=Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Search users by name
+    """
+    return UserService.smart_search_by_name(name, page, number_of_items_per_page).to_json()

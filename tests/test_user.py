@@ -63,3 +63,52 @@ class TestUser(BaseTestCase):
 
         user_data: User = AuthService.check_user_access_token(token)
         self.assertEqual(user_data.id, "06866542-f089-46dc-b57f-a11e25a23aa6")
+
+    def test_user_search(self):
+        """
+        Test the user search
+        """
+        user: User = User()
+        user.email = "test@gencovery.com"
+        user.first_name = "Michel"
+        user.last_name = "Dupont"
+        user.group = UserGroup.ADMIN
+        user.save()
+
+        user2: User = User()
+        user2.email = "test2@gencovery.com"
+        user2.first_name = "Jacques"
+        user2.last_name = "Brel"
+        user2.group = UserGroup.ADMIN
+        user2.save()
+
+        # Firstname or lastname
+        users = list(User.search_by_firstname_or_lastname("che"))
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0].id, user.id)
+
+        users = list(User.search_by_firstname_or_lastname("pon"))
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0].id, user.id)
+
+        # Firstname and lastname
+        users = list(User.search_by_firstname_and_lastname("mich", "Dupo"))
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0].id, user.id)
+
+        users = list(User.search_by_firstname_and_lastname("dup", "mich"))
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0].id, user.id)
+
+        # test smart search
+        users = UserService.smart_search_by_name("mich dup")
+        self.assertEqual(users.page_info.total_number_of_items, 1)
+        self.assertEqual(users.results[0].id, user.id)
+
+        users = UserService.smart_search_by_name("dup mich")
+        self.assertEqual(users.page_info.total_number_of_items, 1)
+        self.assertEqual(users.results[0].id, user.id)
+
+        users = UserService.smart_search_by_name("mich")
+        self.assertEqual(users.page_info.total_number_of_items, 1)
+        self.assertEqual(users.results[0].id, user.id)
