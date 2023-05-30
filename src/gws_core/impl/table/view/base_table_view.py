@@ -44,6 +44,10 @@ class BaseTableView(View):
 
     def _check_and_set_data(self, table: Table):
         from ..table import Table
+
+        if table is None:
+            raise BadRequestException("The provided table cannot be None")
+
         if not isinstance(table, Table):
             raise BadRequestException("The data must be a Table resource")
         self._table = table
