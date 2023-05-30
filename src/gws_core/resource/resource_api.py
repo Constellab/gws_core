@@ -204,14 +204,6 @@ def get_resource_type_views(resource_typing_name: str,
     return ListJsonable(ResourceService.get_views_of_resource(resource_typing_name)).to_json()
 
 
-@core_app.get("/resource-type", tags=["Resource type"], summary="Get the list of resource types")
-def get_the_list_of_resource_types(_=Depends(AuthService.check_user_access_token)) -> list:
-    """
-    Retrieve a the complete list of resources types. The list is not paginated.
-    """
-    return ListJsonable(ResourceService.fetch_resource_type_list()).to_json()
-
-
 @core_app.get("/resource-type/{resource_type}/views/{view_name}/specs", tags=["Resource type"],
               summary="Get the specs for a view of a resource type")
 def get_view_specs_from_type(resource_type: str, view_name: str,

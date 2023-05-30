@@ -9,6 +9,7 @@ from fastapi.param_functions import Depends
 from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
+from gws_core.model.typing_dict import TypingObjectType
 from gws_core.model.typing_service import TypingService
 from gws_core.user.auth_service import AuthService
 
@@ -19,6 +20,24 @@ from ..core_app import core_app
 def get_typing(typing_name: str,
                _=Depends(AuthService.check_user_access_token)) -> dict:
     return TypingService.get_typing(typing_name).to_json(deep=True)
+
+
+@core_app.get("/typing/{object_type}/id/{id}", tags=["Typing"], summary="Get a typing")
+def get_typing_by_id(object_type: TypingObjectType,
+                     id: str,
+                     _=Depends(AuthService.check_user_access_token)) -> dict:
+    return TypingService.get_typing_by_id(object_type, id).to_json()
+
+
+@core_app.get("/typing/{object_type}/name-search/{name}", tags=["Resource"],
+              summary="Search for a type by name")
+def search_type_by_name(object_type: TypingObjectType,
+                        name: str,
+                        page: Optional[int] = 1,
+                        number_of_items_per_page: Optional[int] = 20,
+                        _=Depends(AuthService.check_user_access_token)) -> None:
+
+    return TypingService.search_type_by_name(object_type, name, page, number_of_items_per_page).to_json()
 
 
 @core_app.post("/typing/advanced-search", tags=["Typing"], summary="Search typings")

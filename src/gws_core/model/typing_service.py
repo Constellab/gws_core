@@ -2,6 +2,8 @@
 
 from typing import Callable, Dict, List, Literal, Type
 
+from peewee import ModelSelect
+
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -9,7 +11,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_spec import IOSpec
 from gws_core.model.typing import Typing, TypingNameObj
-from gws_core.model.typing_dict import TypingStatus
+from gws_core.model.typing_dict import TypingObjectType, TypingStatus
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_search_builder import TypingSearchBuilder
 from gws_core.process.process import Process
@@ -17,7 +19,6 @@ from gws_core.protocol.protocol_typing import ProtocolTyping
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_typing import ResourceTyping
 from gws_core.task.task_typing import TaskSubType, TaskTyping
-from peewee import ModelSelect
 
 
 def filter_typing_by_specs(typing: Typing, resource_types: List[Type[Resource]],
@@ -51,20 +52,21 @@ class TypingService():
     def get_typing(cls, typing_name: str) -> Typing:
         typing_name_obj: TypingNameObj = TypingNameObj.from_typing_name(typing_name)
 
-        typing: Typing
-        if typing_name_obj.object_type == 'TASK':
-            typing = TaskTyping.get_by_typing_name(typing_name)
-        elif typing_name_obj.object_type == 'PROTOCOL':
-            typing = ProtocolTyping.get_by_typing_name(typing_name)
-        elif typing_name_obj.object_type == 'RESOURCE':
-            typing = ResourceTyping.get_by_typing_name(typing_name)
-        else:
-            typing = Typing.get_by_typing_name(typing_name)
+        typing_type: Type[Typing] = cls._get_typing_type_from_obj_type(typing_name_obj.object_type)
+
+        typing: Typing = typing_type.get_by_typing_name(typing_name)
 
         if typing is None:
             raise BadRequestException(
                 f"Can't find the typing with name '{typing_name}', did you register the name with corresponding decorator ?")
         return typing
+
+    @classmethod
+    def get_typing_by_id(cls, object_type: TypingObjectType, id: str) -> Typing:
+
+        typing_type: Type[Typing] = cls._get_typing_type_from_obj_type(object_type)
+
+        return typing_type.get_by_id_and_check(id)
 
     @classmethod
     def search(cls, search: SearchParams,
@@ -171,3 +173,21 @@ class TypingService():
 
         for typing in unavailable_types:
             typing.delete_instance()
+
+    @classmethod
+    def search_type_by_name(cls, object_type: TypingObjectType,  name: str,
+                            page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceTyping]:
+        typing_type: Type[Typing] = cls._get_typing_type_from_obj_type(object_type)
+        return Paginator(typing_type.get_by_object_type_and_name(object_type, name),
+                         page=page, nb_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
+    def _get_typing_type_from_obj_type(cls, object_type: TypingObjectType) -> Type[Typing]:
+        if object_type == 'TASK':
+            return TaskTyping
+        elif object_type == 'PROTOCOL':
+            return ProtocolTyping
+        elif object_type == 'RESOURCE':
+            return ResourceTyping
+        else:
+            return Typing

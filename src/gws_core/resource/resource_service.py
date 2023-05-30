@@ -37,7 +37,6 @@ from ..task.transformer.transformer_service import TransformerService
 from ..task.transformer.transformer_type import TransformerDict
 from .resource_model import Resource, ResourceModel, ResourceOrigin
 from .resource_model_search_builder import ResourceModelSearchBuilder
-from .resource_typing import ResourceTyping
 from .view.view_helper import ViewHelper
 from .view.view_meta_data import ResourceViewMetaData
 
@@ -187,12 +186,6 @@ class ResourceService(BaseService):
             project_id) if project_id else None
         resource_model.project = project
         return resource_model.save()
-
-    ############################# RESOURCE TYPE ###########################
-
-    @classmethod
-    def fetch_resource_type_list(cls) -> List[ResourceTyping]:
-        return list(ResourceTyping.get_types())
 
     ################################# VIEW ###############################
 

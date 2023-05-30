@@ -3,9 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Literal, Type
+from typing import List, Literal
 
-from gws_core.core.model.base import Base
 from peewee import ModelSelect
 
 from ..model.typing import Typing
@@ -22,10 +21,6 @@ class ResourceTyping(Typing):
     """
 
     _object_type: TypingObjectType = "RESOURCE"
-
-    @classmethod
-    def get_types(cls) -> ModelSelect:
-        return cls.get_by_object_type(cls._object_type)
 
     @classmethod
     def get_folder_types(cls) -> List['ResourceTyping']:

@@ -194,3 +194,8 @@ class TestTyping(BaseTestCase):
         # Test that it found the FileTransformer
         self.assertTrue(len([x for x in paginator.results
                         if x.unique_name == 'CreateSimpleRobot2Deprecated']) > 0)
+
+    def test_typing_search_by_name(self):
+        typings = list(Typing.get_by_object_type_and_name('PROTOCOL', 'SimpleRobot2Deprecated'))
+        self.assertEqual(len(typings), 1)
+        self.assertEqual(typings[0].unique_name, 'CreateSimpleRobot2Deprecated')

@@ -208,6 +208,15 @@ class Typing(Model):
             .order_by(cls.human_name)
 
     @classmethod
+    def get_by_object_type_and_name(cls, object_type: TypingObjectType, name: str) -> ModelSelect:
+        """ Return all the visible typing name of a type searched by name.
+        """
+        return cls.select()\
+            .where((cls.object_type == object_type) & (cls.hide == False) &
+                   (cls.unique_name.contains(name) | cls.human_name.contains(name)))\
+            .order_by(cls.human_name)
+
+    @classmethod
     def get_by_type_and_brick(cls, object_type: TypingObjectType, brick_name: str) -> ModelSelect:
         """ Return all the visible typing name of a type.
         """
