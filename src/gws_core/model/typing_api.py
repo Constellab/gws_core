@@ -22,14 +22,17 @@ def get_typing(typing_name: str,
     return TypingService.get_typing(typing_name).to_json(deep=True)
 
 
-@core_app.get("/typing/{object_type}/id/{id}", tags=["Typing"], summary="Get a typing")
-def get_typing_by_id(object_type: TypingObjectType,
-                     id: str,
-                     _=Depends(AuthService.check_user_access_token)) -> dict:
-    return TypingService.get_typing_by_id(object_type, id).to_json()
+@core_app.get("/typing/object-type/{object_type}", tags=["Resource"],
+              summary="Get by object type")
+def get_by_object_type(object_type: TypingObjectType,
+                       page: Optional[int] = 1,
+                       number_of_items_per_page: Optional[int] = 20,
+                       _=Depends(AuthService.check_user_access_token)) -> None:
+
+    return TypingService.get_typing_by_object_type(object_type, page, number_of_items_per_page).to_json()
 
 
-@core_app.get("/typing/{object_type}/name-search/{name}", tags=["Resource"],
+@core_app.get("/typing/object-type/{object_type}/name-search/{name}", tags=["Resource"],
               summary="Search for a type by name")
 def search_type_by_name(object_type: TypingObjectType,
                         name: str,

@@ -62,13 +62,6 @@ class TypingService():
         return typing
 
     @classmethod
-    def get_typing_by_id(cls, object_type: TypingObjectType, id: str) -> Typing:
-
-        typing_type: Type[Typing] = cls._get_typing_type_from_obj_type(object_type)
-
-        return typing_type.get_by_id_and_check(id)
-
-    @classmethod
     def search(cls, search: SearchParams,
                page: int = 0, number_of_items_per_page: int = 20,
                search_builder: TypingSearchBuilder = None) -> Paginator[Typing]:
@@ -179,6 +172,13 @@ class TypingService():
                             page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceTyping]:
         typing_type: Type[Typing] = cls._get_typing_type_from_obj_type(object_type)
         return Paginator(typing_type.get_by_object_type_and_name(object_type, name),
+                         page=page, nb_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
+    def get_typing_by_object_type(cls, object_type: TypingObjectType,
+                                  page: int = 0, number_of_items_per_page: int = 20) -> Paginator[Typing]:
+        typing_type: Type[Typing] = cls._get_typing_type_from_obj_type(object_type)
+        return Paginator(typing_type.get_by_object_type(object_type),
                          page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
