@@ -167,8 +167,11 @@ class FileHelper():
         shutil.rmtree(path=path, ignore_errors=ignore_errors)
 
     @classmethod
-    def delete_file(cls, file_path: PathType) -> None:
+    def delete_file(cls, file_path: PathType, ignore_errors: bool = True) -> None:
         path = cls.get_path(file_path)
+
+        if ignore_errors and not cls.exists_on_os(path):
+            return
         os.remove(path)
 
     @classmethod

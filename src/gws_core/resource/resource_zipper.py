@@ -61,6 +61,7 @@ class ResourceZipper():
     KV_STORE_FILE_NAME = 'kvstore'
     FS_NODE_FILE_NAME = 'filestore'
     INFO_JSON_FILE_NAME = 'info.json'
+    COMPRESS_EXTENSION = 'zip'
 
     temp_dir: str
 
@@ -81,7 +82,10 @@ class ResourceZipper():
             'origin': ExternalLabService.get_current_lab_info(self.shared_by)
         }
 
-    def add_resource(self, resource_id: str, parent_resource_id: str = None) -> None:
+    def add_resource(self, resource: Resource) -> None:
+        self.add_resource_model(resource._model_id)
+
+    def add_resource_model(self, resource_id: str, parent_resource_id: str = None) -> None:
 
         resource_model: ResourceModel = ResourceService.get_resource_by_id(
             resource_id)
@@ -133,7 +137,7 @@ class ResourceZipper():
 
         if isinstance(resource, ResourceSet):
             for child_resource in resource.get_resources_as_set():
-                self.add_resource(child_resource._model_id, resource_id)
+                self.add_resource_model(child_resource._model_id, resource_id)
 
     def _get_next_resource_index(self) -> int:
         return len(self.resource_info['children_resources'])\
@@ -142,7 +146,7 @@ class ResourceZipper():
     def get_zip_file_path(self):
         return os.path.join(self.temp_dir, self.ZIP_FILE_NAME)
 
-    def close_zip(self):
+    def close_zip(self) -> str:
         # add the info.json file
         info_json = os.path.join(self.temp_dir, self.INFO_JSON_FILE_NAME)
         with open(info_json, 'w', encoding='UTF-8') as file:
@@ -151,6 +155,8 @@ class ResourceZipper():
         self.zip.add_file(info_json, file_name=self.INFO_JSON_FILE_NAME)
 
         self.zip.close()
+
+        return self.get_zip_file_path()
 
 
 class ResourceUnzipper():

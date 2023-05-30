@@ -92,7 +92,7 @@ class ShareService():
 
         resource_zipper = ResourceZipper(shared_by)
 
-        resource_zipper.add_resource(id)
+        resource_zipper.add_resource_model(id)
 
         resource_zipper.close_zip()
 
