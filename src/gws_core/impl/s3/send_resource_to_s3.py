@@ -1,5 +1,3 @@
-
-
 # LICENSE
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
@@ -9,12 +7,13 @@ import time
 
 import boto3
 
-from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.io.io_spec import InputSpec
 from gws_core.resource.resource_zipper import ResourceZipper
+from gws_core.space.mail_service import MailService
 from gws_core.user.current_user_service import CurrentUserService
 
 from ...config.config_types import ConfigParams, ConfigSpecs
@@ -36,6 +35,8 @@ class SendResourceToS3(Task):
         's3_access_key_id': StrParam(human_name="S3 access key id"),
         's3_secret_access_key': StrParam(human_name="S3 secret access key"),
         's3_bucket': StrParam(human_name="S3 bucket name"),
+        's3_object_prefix': StrParam(human_name="Prefix for the S3 object"),
+        'send_me_an_email': BoolParam(human_name="Send me an email when the task is finished", default_value=False)
     }
 
     zip_file_path: str = None
@@ -43,6 +44,8 @@ class SendResourceToS3(Task):
     last_progress: int = 0
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+
+        bucket_name = params.get_value('s3_bucket')
 
         self.log_info_message('Zipping resource')
         resource: Resource = inputs['resource']
@@ -55,9 +58,18 @@ class SendResourceToS3(Task):
                             region_name=params.get_value('s3_region'),
                             aws_access_key_id=params.get_value('s3_access_key_id'),
                             aws_secret_access_key=params.get_value('s3_secret_access_key'))
-        bucket = s3.Bucket(params.get_value('s3_bucket'))
+        bucket = s3.Bucket(bucket_name)
 
+        # Build filename
         file_name = StringHelper.generate_uuid() + "." + ResourceZipper.COMPRESS_EXTENSION
+        prefix = params.get_value('s3_object_prefix')
+        if prefix is not None:
+            # check if the prefix ends with a slash
+            if prefix[-1] == "/":
+                file_name = prefix + file_name
+            else:
+                file_name = prefix + "/" + file_name
+
         mime_type = FileHelper.get_mime(self.zip_file_path)
         total_size = FileHelper.get_size(self.zip_file_path)
 
@@ -65,7 +77,7 @@ class SendResourceToS3(Task):
         self.last_progress = 0
         start_time = time.time()
 
-        self.log_info_message(f"Uploading resource to S3 bucket '{params.get_value('s3_bucket')}'")
+        self.log_info_message(f"Uploading resource to S3 bucket '{bucket_name}'")
 
         with open(self.zip_file_path, 'rb') as data:
             bucket.upload_fileobj(data, file_name,
@@ -76,7 +88,10 @@ class SendResourceToS3(Task):
         duration = DateHelper.get_duration_pretty_text(
             time.time() - start_time)
         self.log_success_message(
-            f"Uploaded resource to bucket '{params.get_value('s3_bucket')}' in {duration}")
+            f"Uploaded resource to bucket '{bucket_name}' in {duration}")
+
+        if params.get_value('send_me_an_email'):
+            self.send_email(bucket_name, file_name)
         return {}
 
     def progress_callback(self, transfered_bytes: int, total_size: int, start_time: float) -> None:
@@ -97,6 +112,15 @@ class SendResourceToS3(Task):
 
             self.update_progress_value(
                 progress, f"Uploaded {transfered_str}/{total_str} ({progress}%) - {remaining_time_str} remaining")
+
+    def send_email(self, bucket_name: str, file_name: str) -> None:
+        self.log_info_message("Sending email")
+        MailService.send_mail_to_current_user(f"""
+<p>Hello,</p>
+
+<p>Your resource has been successfully uploaded to S3 bucket '{bucket_name}'.</p>
+
+<p>It was zipped into the following file: <strong>{file_name}</strong></p>""", "Resource uploaded to S3")
 
     def run_after_task(self) -> None:
         if self.zip_file_path is not None:

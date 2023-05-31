@@ -1,0 +1,87 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
+from typing import Any, Dict, List
+
+from gws_core.space.space_dto import (SendExperimentFinishMailData,
+                                      SpaceSendMailDTO)
+from gws_core.space.space_service import SpaceService
+from gws_core.user.current_user_service import CurrentUserService
+
+
+class MailService:
+
+    @classmethod
+    def send_mail_to_current_user(cls, mail_content: str, subject: str) -> bool:
+        """Send a email to the current connected user (or user that is running the experiment)
+
+        :param mail_content: content of the mail (supports HTML)
+        :type mail_content: str
+        :param subject: subject of the mail, defaults to None
+        :type subject: str, optional
+        :return: _description_
+        :rtype: bool
+        """
+        data = {
+            'content': mail_content
+        }
+
+        user_id = CurrentUserService.get_and_check_current_user().id
+
+        return cls._send_mail([user_id], subject, "generic", data)
+
+    @classmethod
+    def send_mail(cls, receivers_ids: List[str],
+                  mail_content: str, subject: str = None) -> bool:
+        """Send a email to 1 or multiple users
+
+        :param mail_content: content of the mail (supports HTML)
+        :type mail_content: str
+        :param subject: subject of the mail, defaults to None
+        :type subject: str, optional
+        :return: _description_
+        :rtype: bool
+        """
+        data = {
+            'content': mail_content
+        }
+
+        subject = f"Constellab - {subject}"
+
+        return cls._send_mail(receivers_ids, subject, "generic", data)
+
+    @classmethod
+    def _send_mail(
+            cls, receivers_ids: List[str],
+            mail_template: str, subject: str = None, data: Dict[str, Any] = None) -> bool:
+        """Send an email using Space API. If success, return True, else raise an exception
+
+        :param receivers_ids: list of user ids to send the email to
+        :type receivers_ids: List[str]
+        :param mail_template: the mail template to use
+        :type mail_template: str
+        :param data: _description_, defaults to None
+        :type data: Dict[str, Any], optional
+        :param data: dynamic data for the template, defaults to None
+        :type data: Dict[str, Any], optional
+        :return: _description_
+        :rtype: bool
+        """
+        mail_dto: SpaceSendMailDTO = {
+            "receiver_ids": receivers_ids,
+            "mail_template": mail_template,
+            "data": data,
+            "subject": subject
+        }
+
+        SpaceService.send_mail(mail_dto)
+
+        return True
+
+    @classmethod
+    def send_experiment_finished_mail(cls, user_id: str, experiment: SendExperimentFinishMailData) -> bool:
+        return cls._send_mail(receivers_ids=[user_id], mail_template="experiment-finished", data={
+            "experiment": experiment
+        })

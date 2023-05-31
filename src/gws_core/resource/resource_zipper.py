@@ -13,9 +13,12 @@ from typing_extensions import TypedDict
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.service.external_lab_service import (
     ExternalLabService, ExternalLabWithUserInfo)
+from gws_core.core.utils.compress.compress import Compress
 from gws_core.core.utils.compress.zip import Zip
 from gws_core.core.utils.settings import Settings
+from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.model.typing import TypingNameObj
@@ -159,31 +162,34 @@ class ResourceZipper():
         return self.get_zip_file_path()
 
 
-class ResourceUnzipper():
-    """ Class to unzip a resource zip file and create the resource in the database"""
+class ResourceLoader():
+    """ Class to load a resource from a folder"""
 
     info_json: ZipResourceInfo
 
-    zip_file_path: str
-    temp_dir: str
+    resource_folder: str
 
     resource: Resource
     children_resources: List[Resource]
 
-    def __init__(self, zip_file_path: str) -> None:
+    def __init__(self, resource_folder: str) -> None:
         self.info_json = None
-        self.zip_file_path = zip_file_path
-        self.temp_dir = Settings.get_instance().make_temp_dir()
+        self.resource_folder = resource_folder
         self.children_resources = []
-        self._unzip()
 
-    def _unzip(self) -> None:
-        with ZipFile(self.zip_file_path, 'r') as zip_ref:
-            zip_ref.extractall(self.temp_dir)
+    def is_resource_zip(self) -> bool:
+        """Return true if the zip file is a resource zip file
+        """
+        try:
+            self._load_info_json()
+            return True
+        except Exception:
+            return False
 
     def load_resource(self) -> Resource:
 
-        self._load_info_json()
+        if not self.is_resource_zip():
+            return self._load_fs_node_resource()
 
         self._check_compatibility()
 
@@ -235,7 +241,7 @@ class ResourceUnzipper():
         if zip_resource.get('kvstore_dir_name') is not None:
             # build the path to the kvstore file
             kvstore_path = os.path.join(
-                self.temp_dir, zip_resource['kvstore_dir_name'], KVStore.FILE_NAME)
+                self.resource_folder, zip_resource['kvstore_dir_name'], KVStore.FILE_NAME)
 
             kv_store = KVStore(kvstore_path)
 
@@ -252,7 +258,7 @@ class ResourceUnzipper():
 
             # set the path of the resource node
             resource.path = os.path.join(
-                self.temp_dir, zip_resource['fs_node_name'])
+                self.resource_folder, zip_resource['fs_node_name'])
             # clear other values
             resource.file_store_id = None
             resource.is_symbolic_link = False
@@ -260,8 +266,11 @@ class ResourceUnzipper():
         return resource
 
     def _load_info_json(self) -> ZipResourceInfo:
+        if self.info_json is not None:
+            return self.info_json
+
         info_json_path = os.path.join(
-            self.temp_dir, ResourceZipper.INFO_JSON_FILE_NAME)
+            self.resource_folder, ResourceZipper.INFO_JSON_FILE_NAME)
 
         if not FileHelper.exists_on_os(info_json_path):
             raise Exception(
@@ -290,6 +299,32 @@ class ResourceUnzipper():
 
         self.info_json = info_json
 
+        return self.info_json
+
+    def _load_fs_node_resource(self) -> FSNode:
+        """Load the File or Folder resource from folder if the folder
+        is not a resource export but only files.
+        If there is 1 file or folder in the folder, return it.
+        If there is more than 1 file in the folder, return the folder.
+        """
+        # count the files and folders directly in the result folder
+        count = len(os.listdir(self.resource_folder))
+
+        if count == 0:
+            raise Exception(
+                "The zipped file does not contains any resource.")
+
+        if count == 1:
+            node_name = os.listdir(self.resource_folder)[0]
+            sub_path = os.path.join(self.resource_folder, node_name)
+            if os.path.isdir(sub_path):
+                return Folder(sub_path)
+            else:
+                return File(sub_path)
+        else:
+            # if there is more than 1 file or folder, return a Folder
+            return Folder(self.resource_folder)
+
     def get_origin_info(self) -> ExternalLabWithUserInfo:
         return self.info_json['origin']
 
@@ -313,6 +348,13 @@ class ResourceUnzipper():
     def get_all_generated_resources(self) -> List[Resource]:
         return [self.resource] + self.children_resources
 
-    def delete_temp_dir_and_files(self) -> None:
-        FileHelper.delete_dir(self.temp_dir)
-        FileHelper.delete_file(self.zip_file_path)
+    def delete_resource_folder(self) -> None:
+        FileHelper.delete_dir(self.resource_folder)
+
+    @classmethod
+    def from_compress_file(cls, compress_file_path: str) -> 'ResourceLoader':
+        """Uncompress a file and create a ResourceLoader
+        """
+        temp_dir = Settings.get_instance().make_temp_dir()
+        Compress.smart_decompress(compress_file_path, temp_dir)
+        return ResourceLoader(temp_dir)

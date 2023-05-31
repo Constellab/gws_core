@@ -10,8 +10,8 @@ from typing import List
 
 from gws_core.core.service.front_service import FrontService
 from gws_core.process.process_types import ProcessErrorInfo
+from gws_core.space.mail_service import MailService
 from gws_core.space.space_dto import SendExperimentFinishMailData
-from gws_core.space.space_service import SpaceService
 from gws_core.task.task_model import TaskModel
 
 from ..core.exception.exceptions import BadRequestException
@@ -245,9 +245,9 @@ class ExperimentRunService():
         if not Settings.is_prod or experiment.type != ExperimentType.EXPERIMENT:
             return
         try:
-            elapsed_time = experiment.protocol_model.progress_bar.get_total_duration()
+            elapsed_time = experiment.protocol_model.progress_bar.get_last_execution_time()
 
-            # if the experiment runned in under 5 minutes, don't send an email
+            # if the last execution was runned in under 5 minutes, don't send an email
             if elapsed_time < 60 * 5:
                 return
 
@@ -258,7 +258,7 @@ class ExperimentRunService():
                 "experiment_link": FrontService.get_experiment_url(experiment_id=experiment.id)
             }
 
-            SpaceService.send_experiment_finished_mail(user.id, experiment_dto)
+            MailService.send_experiment_finished_mail(user.id, experiment_dto)
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             Logger.error(

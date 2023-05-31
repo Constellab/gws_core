@@ -129,7 +129,7 @@ class SpaceService(BaseService):
                                              raise_exception_if_error=True)
 
         except BaseHTTPException as err:
-            err.detail = f"t delete the experiment in space. Error : {err.detail}"
+            err.detail = f"Can't delete the experiment in space. Error : {err.detail}"
             raise err
 
     @classmethod
@@ -168,23 +168,13 @@ class SpaceService(BaseService):
             raise err
 
     @classmethod
-    def send_experiment_finished_mail(cls, user_id: str, experiment: SendExperimentFinishMailData) -> None:
-        data: SpaceSendMailDTO = {
-            "receiver_ids": [user_id],
-            "mail_template": "experiment-finished",
-            "data": {
-                "experiment": experiment
-            }
-        }
-        cls._send_mail(data)
-
-    @classmethod
-    def _send_mail(cls, send_mail_dto: SpaceSendMailDTO) -> Response:
+    def send_mail(cls, send_mail_dto: SpaceSendMailDTO) -> Response:
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/send-mail")
-        return ExternalApiService.post(space_api_url, send_mail_dto, cls._get_request_header())
+        return ExternalApiService.post(space_api_url, send_mail_dto, cls._get_request_header(),
+                                       raise_exception_if_error=True)
 
-    #################################### SYNCRONIZATION ####################################
+    #################################### SYNCHRONIZATION ####################################
 
     @classmethod
     def get_all_lab_projects(cls) -> List[SpaceProject]:

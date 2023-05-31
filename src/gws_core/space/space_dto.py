@@ -6,8 +6,9 @@
 
 from typing import Any, List, Literal, Optional
 
-from gws_core.lab.lab_config_model import LabConfig
 from typing_extensions import TypedDict
+
+from gws_core.lab.lab_config_model import LabConfig
 
 
 class LabStartDTO(TypedDict):
@@ -28,8 +29,9 @@ class SaveReportToSpaceDTO(TypedDict):
 
 class SpaceSendMailDTO(TypedDict):
     receiver_ids: List[str]
-    mail_template: Literal['experiment-finished']
+    mail_template: Literal['experiment-finished', 'generic']
     data: Optional[Any]
+    subject: Optional[str]  # if provided, it override the template subject
 
 
 class SendExperimentFinishMailData(TypedDict):

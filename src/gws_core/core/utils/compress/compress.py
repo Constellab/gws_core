@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 from abc import abstractmethod
-from typing import List
+from typing import List, Optional, Type
 
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -17,7 +17,7 @@ class Compress:
     # list of the fs node name added to the zip
     _fs_node_names: List[str]
 
-    supported_extensions = []
+    supported_extensions: List[str] = []
 
     def __init__(self, destination_file_path: str):
         self.destination_file_path = destination_file_path
@@ -80,16 +80,40 @@ class Compress:
         compress.close()
 
     @staticmethod
-    def smart_decompress(file_path: str, destination_folder: str):
+    def smart_decompress(file_path: str, destination_folder: str) -> None:
         """Detect the extension of the compressed file and use the right decompress method.
+        """
+        file_extension: str = FileHelper.get_extension(file_path)
+        compress: Type[Compress] = Compress._get_compress_class_from_extension(file_extension)
+
+        if compress is None:
+            raise Exception(f"Unsupported file extension: {file_extension}")
+
+        compress.decompress(file_path, destination_folder)
+
+    @staticmethod
+    def is_compressed_file(file_path: str) -> bool:
+        """Check if the file is a compressed file.
+        """
+        compress: Type[Compress] = Compress._get_compress_class_from_extension(FileHelper.get_extension(file_path))
+        return compress is not None
+
+    @staticmethod
+    def _get_compress_class_from_extension(extension: str) -> Optional[Type['Compress']]:
+        """Get the compress class from the file extension.
+        """
+        compress: List[Type[Compress]] = Compress._get_child_classes()
+
+        for compress_class in compress:
+            if extension in compress_class.supported_extensions:
+                return compress_class
+
+        return None
+
+    @staticmethod
+    def _get_child_classes() -> List[Type['Compress']]:
+        """Get the child classes of the compress class.
         """
         from .tar_compress import TarCompress
         from .zip import Zip
-        file_extension = FileHelper.get_extension(file_path)
-
-        if file_extension in Zip.supported_extensions:
-            Zip.decompress(file_path, destination_folder)
-        elif file_extension in TarCompress.supported_extensions:
-            TarCompress.decompress(file_path, destination_folder)
-        else:
-            raise Exception(f"Unsupported file extension: {file_extension}")
+        return [TarCompress, Zip]

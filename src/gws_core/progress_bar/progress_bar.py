@@ -115,6 +115,22 @@ class ProgressBar(Model):
 
         return (self.ended_at - self.started_at).total_seconds() * 1000
 
+    def get_last_execution_time(self) -> float:
+        """
+        Must be called only when the progress bar is finished
+        Get the last execution time. If no second start, return the execution duration, else return the second start duration
+
+        :return: Returns the last execution time
+        :rtype: `datetime`
+        """
+        if self.ended_at is None:
+            return 0
+
+        if self.second_start is not None:
+            return (self.ended_at - self.second_start).total_seconds() * 1000
+
+        return (self.ended_at - self.started_at).total_seconds() * 1000
+
     ################################################## MESSAGE #################################################
 
     def add_debug_message(self, message: str):

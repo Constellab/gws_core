@@ -382,6 +382,8 @@ from .resource.view.view import View as View
 from .resource.view.view_decorator import view as view
 from .resource.view.view_types import ViewSpecs as ViewSpecs
 from .resource.view.view_types import ViewType as ViewType
+# Space
+from .space.mail_service import MailService as MailService
 # Tag
 from .tag.tag import Tag as Tag
 from .tag.tag_helper import TagHelper as TagHelper

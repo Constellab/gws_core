@@ -12,7 +12,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, IExperiment,
                       Task, TaskInputs, TaskOutputs, task_decorator)
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.resource_zipper import ResourceUnzipper
+from gws_core.resource.resource_zipper import ResourceLoader
 from gws_core.share.share_service import ShareService
 from gws_core.user.current_user_service import CurrentUserService
 
@@ -68,7 +68,7 @@ class TestShareResource(BaseTestCase):
         zip_path = ShareService.zip_resource(
             original_resource_model.id, CurrentUserService.get_and_check_current_user())
 
-        resource_unzipper: ResourceUnzipper = ResourceUnzipper(zip_path)
+        resource_unzipper: ResourceLoader = ResourceLoader.from_compress_file(zip_path)
         new_table: Table = resource_unzipper.load_resource()
         # new_resource_model: ResourceModel = resource_unzipper.resource_models[0].refresh()
 
@@ -90,7 +90,7 @@ class TestShareResource(BaseTestCase):
         zip_path = ShareService.zip_resource(
             original_resource_model.id, CurrentUserService.get_and_check_current_user())
 
-        resource_unzipper: ResourceUnzipper = ResourceUnzipper(zip_path)
+        resource_unzipper: ResourceLoader = ResourceLoader.from_compress_file(zip_path)
         resource: File = resource_unzipper.load_resource()
 
         self.assertEqual(resource.name, 'test.txt')
@@ -111,7 +111,7 @@ class TestShareResource(BaseTestCase):
         zip_path = ShareService.zip_resource(
             resource_model_id, CurrentUserService.get_and_check_current_user())
 
-        resource_unzipper: ResourceUnzipper = ResourceUnzipper(zip_path)
+        resource_unzipper: ResourceLoader = ResourceLoader.from_compress_file(zip_path)
         resource_set: ResourceSet = resource_unzipper.load_resource()
 
         self.assertEqual(3, len(resource_unzipper.get_all_generated_resources()))
