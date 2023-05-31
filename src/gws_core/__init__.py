@@ -184,13 +184,14 @@ from .impl.robot.robot_tasks import RobotEat as RobotEat
 from .impl.robot.robot_tasks import RobotMove as RobotMove
 from .impl.robot.robot_tasks import RobotSugarCreate as RobotSugarCreate
 from .impl.robot.robot_tasks import RobotWait as RobotWait
-from .impl.s3.base import BaseS3 as BaseS3
-from .impl.s3.ovh import OVHS3 as OVHS3
-from .impl.s3.swift import Swift as Swift
+# Impl > s3
+from .impl.s3.s3_bucket import S3Bucket as S3Bucket
+# Impl > Shell
 from .impl.shell.base_env_shell import BaseEnvShell as BaseEnvShell
 from .impl.shell.conda_env_task import CondaEnvTask as CondaEnvTask
 from .impl.shell.conda_shell_proxy import CondaShellProxy as CondaShellProxy
-from .impl.shell.helper.env_shell_proxy_helper import EnvShellProxyHelper
+from .impl.shell.helper.env_shell_proxy_helper import \
+    EnvShellProxyHelper as EnvShellProxyHelper
 from .impl.shell.pip_env_task import PipEnvTask as PipEnvTask
 from .impl.shell.pip_shell_proxy import PipShellProxy as PipShellProxy
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy

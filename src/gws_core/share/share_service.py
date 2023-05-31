@@ -14,7 +14,7 @@ from gws_core.process.process_interface import IProcess
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_zipper import ResourceZipper
-from gws_core.share.resource_downloader import ResourceDownloader
+from gws_core.share.resource_downloader_http import ResourceDownloaderHttp
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_entity_info import (SharedEntityInfo,
                                                SharedEntityMode)
@@ -106,8 +106,8 @@ class ShareService():
         protocol: IProtocol = experiment.get_protocol()
 
         # Add the importer and the connector
-        importer: IProcess = protocol.add_process(ResourceDownloader, 'downloader', {
-            ResourceDownloader.config_name: link
+        importer: IProcess = protocol.add_process(ResourceDownloaderHttp, 'downloader', {
+            ResourceDownloaderHttp.config_name: link
         })
 
         # Add sink and connect it
