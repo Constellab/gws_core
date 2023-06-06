@@ -66,7 +66,7 @@ class SpaceService(BaseService):
         Check the credential of an email/password by calling space, with 2Fa if needed
         """
         space_api_url: str = cls._get_space_api_url(
-            'auth/external/check-credentials/false')
+            'auth/external/check-credentials')
         response = ExternalApiService.post(
             space_api_url, credentials.dict(), raise_exception_if_error=True)
 
