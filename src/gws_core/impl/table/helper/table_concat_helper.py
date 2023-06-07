@@ -117,7 +117,7 @@ class TableConcatHelper:
         tag_list: List[dict] = []
         for column_name in concat_df:
             if table.column_exists(column_name):
-                tag_list.append(table.get_column_tag_by_name(column_name))
+                tag_list.append(table.get_column_tags_by_name(column_name))
             else:
                 tag_list.append({})
         return tag_list
@@ -135,11 +135,11 @@ class TableConcatHelper:
 
             # get the tags from the second table
             if second_table.column_exists(column_name):
-                tags = second_table.get_column_tag_by_name(column_name)
+                tags = second_table.get_column_tags_by_name(column_name)
 
             # update the tags with the main table
             if main_table.column_exists(column_name):
-                tags.update(main_table.get_column_tag_by_name(column_name))
+                tags.update(main_table.get_column_tags_by_name(column_name))
 
             tag_list.append(tags)
         return tag_list

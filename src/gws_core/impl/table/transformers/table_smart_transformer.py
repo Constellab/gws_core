@@ -7,7 +7,7 @@
 from pandas import DataFrame
 
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
-from gws_core.config.param.param_spec import TextParam
+from gws_core.config.param.param_spec import BoolParam, TextParam
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
@@ -39,18 +39,23 @@ The data of the table is not transferered to OpenAI, only the provided text.
     }
     output_specs: OutputSpecs = {
         'target': OutputSpec(Table),
-        'generated_code': OutputSpec(Text),
+        'generated_code': OutputSpec(Text, human_name='Generated code',
+                                     short_description='Modified Generated code that can be used in a python live task directly.'),
     }
     config_specs: ConfigSpecs = {
-        'prompt': OpenAiChatParam()
+        'prompt': OpenAiChatParam(),
+        "keep_columns_tags": BoolParam(default_value=False, human_name="Keep columns tags",
+                                       short_description="If true, the columns tags are kept in the output table for columns that have the same names."),
+        "keep_rows_tags": BoolParam(default_value=False, human_name="Keep rows tags",
+                                    short_description="If true, the rows tags are kept in the output table for rows that have the same names."),
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         # get the table
-        table: Table = inputs["source"]
+        source: Table = inputs["source"]
 
-        context = f"Your are a developer assistant that generate code in python to transform a dataframe.The variable named 'input' contains the dataframe. The transformed dataframe must be assigned to a variable named 'output'. {OpenAiHelper.generate_code_rules} The dataframe has {table.nb_rows} rows and {table.nb_columns} columns."
+        context = f"Your are a developer assistant that generate code in python to transform a dataframe. The variable named 'source' contains the dataframe. The transformed dataframe must be assigned to a variable named 'target'. {OpenAiHelper.generate_code_rules} The dataframe has {source.nb_rows} rows and {source.nb_columns} columns."
 
         chat: OpenAiChat = OpenAiChat.from_json(
             params.get_value("prompt"), context=context)
@@ -74,12 +79,35 @@ The data of the table is not transferered to OpenAI, only the provided text.
 
         # execute the live code
         self.log_info_message('Executing the code snippet...')
-        init_globals = {'self': self, "input": table.get_data(), **globals()}
+        init_globals = {'self': self, "source": source.get_data(), **globals()}
         outputs = LiveCodeHelper.run_python_code(code, init_globals)
-        output = outputs.get("output", None)
+        output = outputs.get("target", None)
+
+        if output is None:
+            raise Exception("The code did not generate any output")
 
         if not isinstance(output, DataFrame):
             raise Exception("The output must be a pandas DataFrame")
 
+        # make the output code compatible with the live task
+        live_task_code = f"""
+from gws_core import Table
+# keep the original table
+source_table = source
+# retrieve the dataframe for the generated code
+source = source.get_data()
+{code}
+# convert the dataframe to a table
+target = Table(target)"""
+
         result = Table(output)
-        return {'target': result, 'generated_code': Text(code)}
+
+        if params.get_value("keep_columns_tags"):
+            result.copy_column_tags_by_name(source)
+            live_task_code += "\ntarget.copy_column_tags_by_name(source_table)"
+
+        if params.get_value("keep_rows_tags"):
+            result.copy_row_tags_by_name(source)
+            live_task_code += "\ntarget.copy_row_tags_by_name(source_table)"
+
+        return {'target': result, 'generated_code': Text(live_task_code)}

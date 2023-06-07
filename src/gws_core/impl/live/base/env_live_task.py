@@ -207,4 +207,4 @@ source_path = "{source_path}"{str_params}
         return ListParam(
             optional=True, default_value=[],
             human_name="Parameter definitions",
-            short_description="Please give one parameter definition per line (https://constellab.community/tech-doc/doc/developer-guide/live-task/getting-started#parameters)")
+            short_description="Please give one parameter definition per line (https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/getting-started#parameters)")

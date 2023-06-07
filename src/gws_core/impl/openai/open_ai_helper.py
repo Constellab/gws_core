@@ -19,7 +19,7 @@ class AiChatMessage(TypedDict):
 
 class OpenAiHelper():
 
-    generate_code_rules = "Don't prompt the method signature.\nGenerate the code between ``` characters."
+    generate_code_rules = "Don't prompt the method signature.\nGenerate only 1 block of code between ``` characters."
 
     @classmethod
     def call_gpt(cls, chat: OpenAiChat) -> OpenAiChat:

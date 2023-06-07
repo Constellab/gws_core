@@ -1,7 +1,8 @@
 
+from pandas import DataFrame
+
 from gws_core import (ConfigParams, InputSpec, IntParam, OutputSpec, Table,
                       Task, TaskInputs, TaskOutputs, task_decorator)
-from pandas import DataFrame
 
 
 @task_decorator("TableFactor", human_name="Table factor",
@@ -9,7 +10,7 @@ from pandas import DataFrame
 class TableFactor(Task):
     """
     Apply a factor to a table. This is the solution for the tutorial on 'Create your first task' :
-    https://constellab.community/bricks/gws_core/latest/doc/tutorials/create-your-first-task
+    https://constellab.community/bricks/gws_core/latest/latest/doc/tutorials/create-your-first-task
 
     """
 

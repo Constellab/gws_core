@@ -1,12 +1,13 @@
 
 from brick_skeleton.table_factor import TableFactor
-from gws_core import BaseTestCase, Table, TaskRunner
 from pandas import DataFrame
+
+from gws_core import BaseTestCase, Table, TaskRunner
 
 
 class TestTableFactor(BaseTestCase):
     """This is the solution for the test of the tutorial 'Create your first task' :
-      https://constellab.community/bricks/gws_core/latest/doc/tutorials/create-your-first-task
+      https://constellab.community/bricks/gws_core/latest/latest/doc/tutorials/create-your-first-task
 
       This test needs to be run to check that your task was correctly implemented
     """

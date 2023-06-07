@@ -42,7 +42,7 @@ class TableColumnAggregator(Transformer):
             skip_nan=params["skip_nan"]
         )
         table = Table(data=data, column_names=source.column_names)
-        table.copy_column_tags(source)
+        table.copy_column_tags_by_index(source)
         return table
 
 
@@ -75,5 +75,5 @@ class TableRowAggregator(Transformer):
             skip_nan=params["skip_nan"]
         )
         table = Table(data=data, row_names=source.row_names)
-        table.copy_row_tags(source)
+        table.copy_row_tags_by_index(source)
         return table

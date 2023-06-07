@@ -35,5 +35,11 @@
   "python.linting.mypyArgs": [
       "--config-file=${workspaceFolder}/.mypy.ini"
   ],
-  "autoDocstring.docstringFormat": "sphinx"
+  "python.autoComplete.extraPaths": [
+    "/lab/user/bricks/gws_core/src",
+  ],
+  "autoDocstring.docstringFormat": "sphinx",
+  "python.analysis.extraPaths": [
+    "/lab/user/bricks/gws_core/src"
+  ]
 }

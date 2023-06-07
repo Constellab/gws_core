@@ -69,7 +69,7 @@ class TableOperationHelper():
             # set the row names as the table was created empty
             result_table.set_all_row_names(source.row_names)
 
-        result_table.copy_row_tags(source)
+        result_table.copy_row_tags_by_index(source)
         return result_table
 
     @staticmethod

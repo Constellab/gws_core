@@ -18,6 +18,15 @@ class OpenAiChatMessage(TypedDict):
     content: str
 
 
+class OpenAiChatDict(TypedDict):
+    """Format of the chat for OpenAI chat
+
+    :param TypedDict: _description_
+    :type TypedDict: _type_
+    """
+    messages: List[OpenAiChatMessage]
+
+
 class AiChatMessage(OpenAiChatMessage):
     """Overload of OpenAiChatMessage to add custom info (not sent to OpenAI)
     but stored in the chat object
@@ -82,13 +91,13 @@ class OpenAiChat():
     def has_context(self) -> bool:
         return len(self._messages) > 0 and self._messages[0]['role'] == 'system'
 
-    def to_json(self) -> dict:
+    def to_json(self) -> OpenAiChatDict:
         return {
             'messages': self._messages
         }
 
     @classmethod
-    def from_json(cls, json: dict, context: str = None) -> 'OpenAiChat':
+    def from_json(cls, json: OpenAiChatDict, context: str = None) -> 'OpenAiChat':
         return cls(messages=json['messages'], context=context)
 
     @classmethod

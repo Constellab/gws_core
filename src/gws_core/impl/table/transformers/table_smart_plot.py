@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core.config.config import Config
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
@@ -39,7 +38,8 @@ The data of the table is not transferered to OpenAI, only the provided text.
     }
     output_specs: OutputSpecs = {
         'target': OutputSpec(File, human_name='Plot', short_description='Generated plot file by the AI.'),
-        'generated_code': OutputSpec(Text),
+        'generated_code': OutputSpec(Text, human_name='Generated code',
+                                     short_description='Modified generated code that can be used in a python live task directly.'),
     }
     config_specs: ConfigSpecs = {
         'prompt': OpenAiChatParam()
@@ -49,7 +49,7 @@ The data of the table is not transferered to OpenAI, only the provided text.
         # prepare the input
         table: Table = inputs["source"]
 
-        context = f"""Your are a developer assistant that generate code in python to generate charts from dataframes. In python, generate a code that takes a Dataframe as input and generate a png graph using matplotlib. The variable named 'input' contains the dataframe. The variable named 'output_path' contains the complete path of the output png file destination. {OpenAiHelper.generate_code_rules} The dataframe has {table.nb_rows} rows and {table.nb_columns} columns."""
+        context = f"""Your are a developer assistant that generate code in python to generate charts from dataframes. In python, generate a code that takes a Dataframe as input and generate a png graph using matplotlib. The variable named 'source' contains the dataframe. The variable named 'output_path' contains the complete path of the output png file destination. {OpenAiHelper.generate_code_rules} The dataframe has {table.nb_rows} rows and {table.nb_columns} columns."""
 
         chat: OpenAiChat = OpenAiChat.from_json(
             params.get_value('prompt'), context=context)
@@ -76,11 +76,21 @@ The data of the table is not transferered to OpenAI, only the provided text.
         self.log_info_message('Executing the code snippet...')
 
         # all variable accessible in the generated code
-        variables = {"input": table.get_data(), 'output_path': output_path}
+        variables = {"source": table.get_data(), 'output_path': output_path}
 
         LiveCodeHelper.run_python_code(code, variables)
 
         if not FileHelper.exists_on_os(output_path) or not FileHelper.is_file(output_path):
             raise Exception("The output must be a file")
 
-        return {'target': File(output_path), 'generated_code': Text(code)}
+        # make the output code compatible with the live task
+        live_task_code = f"""
+from gws_core import File
+import os
+source = source.get_data()
+# generate the output file path
+output_path = os.path.join(working_dir, 'output.png')
+{code}
+target = File(output_path)"""
+
+        return {'target': File(output_path), 'generated_code': Text(live_task_code)}

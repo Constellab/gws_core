@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -10,7 +11,7 @@ from pydantic import BaseModel
 class CredentialsDTO(BaseModel):
     email: str
     password: str
-    captcha: str
+    captcha: Optional[str]
 
 
 class Credentials2Fa(BaseModel):

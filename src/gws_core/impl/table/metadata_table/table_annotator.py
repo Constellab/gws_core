@@ -40,11 +40,11 @@ class TableRowAnnotator(Task):
         "reference_column":
         StrParam(
             default_value="", human_name="Reference column in sample table",
-            short_description="Column in the sample table whose values are used for annotation. If empty, is uses the row names."),
+            short_description="Column in the sample table whose values are used for annotation. If empty, it uses the first column."),
         "metadata_ref_column":
         StrParam(
             default_value="", human_name="Reference column in metadata table",
-            short_description="Column in the metadata table whose values are used for annotation. If empty, is uses the row names."),
+            short_description="Column in the metadata table whose values are used for annotation. If empty, it uses the first column."),
         "use_table_row_names_as_ref":  BoolParam(
             default_value=False, human_name="Use sample table row names as reference", visibility="protected",
             short_description="If checked, the row names of the sample table are used as reference for annotation and the reference column param is ignored."),
@@ -110,11 +110,11 @@ class TableColumnAnnotator(Task):
         "reference_row":
         StrParam(
             default_value="", human_name="Reference row in sample table",
-            short_description="Row in the sample table whose data are used as reference for annotation. If empty, it uses the column names."),
+            short_description="Row in the sample table whose data are used as reference for annotation. If empty, it uses the first row."),
         "metadata_ref_column":
         StrParam(
             default_value="", human_name="Reference column in metadata table",
-            short_description="Column in the metadata table whose values are used for annotation. If empty, is uses the row names."),
+            short_description="Column in the metadata table whose values are used for annotation. If empty, it uses the first column."),
         "use_table_column_names_as_ref":  BoolParam(
             default_value=False, human_name="Use sample table column names as reference", visibility="protected",
             short_description="If checked, the column names of the sample table are used as reference for annotation and the reference row param is ignored."),
