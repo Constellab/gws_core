@@ -10,6 +10,7 @@ from gws_core.test.base_test_case import BaseTestCase
 from gws_core.test.gtest import GTest
 
 
+# test_experiment_search
 class TestExperimentSearch(BaseTestCase):
 
     def test_search(self):
@@ -28,12 +29,9 @@ class TestExperimentSearch(BaseTestCase):
 
         search_dict: SearchParams = SearchParams()
 
-        # Test full text search
-        search_dict.filtersCriteria = [{"key": "text", "operator": "MATCH", "value": "title"}]
+        # Test title search
+        search_dict.filtersCriteria = [{"key": "title", "operator": "CONTAINS", "value": "eriment"}]
         self.search(search_dict, 1)
-
-        search_dict.filtersCriteria = [{"key": "text", "operator": "MATCH", "value": "world"}]
-        self.search(search_dict, 2)
 
         # Test status search
         search_dict.filtersCriteria = [

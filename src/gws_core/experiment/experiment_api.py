@@ -57,6 +57,12 @@ def advanced_search(search_dict: SearchParams,
     return ExperimentService.search(search_dict, page, number_of_items_per_page).to_json()
 
 
+@core_app.get("/experiment/title/{title}/count", tags=["Experiment"], summary="Count experiment by title")
+def count_by_title(title: str,
+                   _=Depends(AuthService.check_user_access_token)) -> Dict:
+    return {"count": ExperimentService.count_by_title(title)}
+
+
 @core_app.get("/experiment/search-title/{title}", tags=["Experiment"], summary="Search experiment by title")
 def search_by_title(title: str,
                     page: Optional[int] = 1,

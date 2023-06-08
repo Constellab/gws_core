@@ -4,7 +4,6 @@
 # About us: https://gencovery.com
 
 from peewee import Expression
-from playhouse.mysql_ext import Match
 
 from ..core.classes.search_builder import SearchBuilder, SearchFilterCriteria
 from ..tag.tag_helper import TagHelper
@@ -16,13 +15,10 @@ class ExperimentSearchBuilder(SearchBuilder):
     def __init__(self) -> None:
         super().__init__(Experiment, default_orders=[Experiment.last_modified_at.desc()])
 
-    def convert_filter_to_expression(self, filter: SearchFilterCriteria) -> Expression:
+    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags
-        if filter['key'] == 'tags':
-            tags = TagHelper.tags_to_list(filter['value'])
+        if filter_['key'] == 'tags':
+            tags = TagHelper.tags_to_list(filter_['value'])
             return Experiment.get_search_tag_expression(tags)
-        elif filter['key'] == 'text':
-            # on text key, full text search on title and description
-            return Match((Experiment.title, Experiment.description), filter['value'], modifier='IN BOOLEAN MODE')
 
-        return super().convert_filter_to_expression(filter)
+        return super().convert_filter_to_expression(filter_)

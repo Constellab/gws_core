@@ -94,7 +94,7 @@ class ExperimentService(BaseService):
             raise BadRequestException(
                 "An instance of ProtocolModel is required")
         experiment = Experiment()
-        experiment.title = title
+        experiment.title = title.strip()
         experiment.description = description
         experiment.project = project
         experiment.type = type_
@@ -125,7 +125,7 @@ class ExperimentService(BaseService):
 
         experiment.check_is_updatable()
 
-        experiment.title = experiment_dto.title
+        experiment.title = experiment_dto.title.strip()
 
         return cls._update_experiment_project(experiment, experiment_dto.project_id)
 
@@ -292,6 +292,12 @@ class ExperimentService(BaseService):
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
             model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
+    def count_by_title(cls,
+                       title: str) -> int:
+
+        return Experiment.select().where(Experiment.title == title.strip()).count()
 
     @classmethod
     def search_by_title(cls,
