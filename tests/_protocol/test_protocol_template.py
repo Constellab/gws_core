@@ -62,7 +62,7 @@ class TestProtocolTemplate(BaseTestCase):
         self.assertEqual(paginator.results[0].id, template_db.id)
 
         # Test create an experiment from a template
-        experiment = ExperimentService.create_experiment(protocol_template_id=template_db.id)
+        experiment = ExperimentService.create_experiment(protocol_template=template_db)
 
         # check that protocol and task are created
         self.assertEqual(ProtocolModel.select().count(), count_protocol * 2)

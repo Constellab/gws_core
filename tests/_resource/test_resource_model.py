@@ -41,11 +41,12 @@ class ForSearchCreate(Task):
         return {'search': ForSearch.create('empty')}
 
 
-@ resource_decorator(unique_name="SubFile")
+@resource_decorator(unique_name="SubFile")
 class SubFile(File):
     pass
 
 
+# test_resource_model
 class TestResourceModel(BaseTestCase):
 
     def test_search(self):
@@ -78,7 +79,7 @@ class TestResourceModel(BaseTestCase):
         # Search on name tag & resource typing name
         search_dict.filtersCriteria = [
             self._get_tag_filter(str(nameTag)),
-            {"key": "resource_typing_name", "operator": "IN", "value": [ForSearch._typing_name]}]
+            {"key": "resource_typing_name", "operator": "EQ", "value": ForSearch._typing_name}]
         self.search(search_dict, 2)
 
         # Search on name tag & ResourceOrigin
