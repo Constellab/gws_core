@@ -10,11 +10,12 @@ from copy import deepcopy
 from json import JSONDecodeError, dump, load
 from typing import Any, Dict, List, Literal, Optional, Union
 
+from typing_extensions import TypedDict
+
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.user.user_dto import SpaceDict
-from typing_extensions import TypedDict
 
 from .date_helper import DateHelper
 from .string_helper import StringHelper
@@ -143,6 +144,12 @@ class Settings():
         :rtype: [type]
         """
         return os.environ.get("VIRTUAL_HOST")
+
+    @classmethod
+    def gpu_is_available(cls) -> bool:
+        """return true if the gpu is available
+        """
+        return os.environ.get("GPU", "") != ""
 
     @classmethod
     def get_gws_core_brick_name(cls) -> str:

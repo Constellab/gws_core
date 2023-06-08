@@ -678,7 +678,7 @@ class Migration052(BrickMigration):
                     f'Error while setting elapsed time for progress bar id {progress_bar.id} : {exception}')
 
 
-@brick_migration('0.5.5', short_description='Remove transformer from view config')
+@brick_migration('0.5.5', short_description='Remove transformer from view config, add GPU to monitor')
 class Migration055(BrickMigration):
 
     @classmethod
@@ -686,4 +686,10 @@ class Migration055(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
         migrator.drop_column_if_exists(ViewConfig, "transformers")
+        migrator.add_column_if_not_exists(Monitor, Monitor.gpu_percent)
+        migrator.add_column_if_not_exists(Monitor, Monitor.gpu_temperature)
+        migrator.add_column_if_not_exists(Monitor, Monitor.gpu_memory_total)
+        migrator.add_column_if_not_exists(Monitor, Monitor.gpu_memory_free)
+        migrator.add_column_if_not_exists(Monitor, Monitor.gpu_memory_used)
+        migrator.add_column_if_not_exists(Monitor, Monitor.gpu_memory_percent)
         migrator.migrate()
