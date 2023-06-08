@@ -4,11 +4,9 @@
 # About us: https://gencovery.com
 
 from enum import Enum
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Union
 
 from typing_extensions import TypedDict
-
-from gws_core.task.transformer.transformer_type import TransformerDict
 
 from ...config.param.param_spec import ParamSpec
 from .lazy_view_param import LazyViewParam
@@ -51,7 +49,6 @@ exluded_views_in_historic = [
 
 class CallViewParams(TypedDict):
     values: Dict[str, Any]
-    transformers: List[TransformerDict]
     save_view_config: bool
 
 

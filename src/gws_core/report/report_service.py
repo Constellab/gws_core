@@ -8,6 +8,8 @@ from typing import Callable, List, Set
 
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from peewee import ModelSelect
+
 from gws_core.core.classes.rich_text_content import (RichText, RichTextI,
                                                      RichTextResourceView)
 from gws_core.core.utils.date_helper import DateHelper
@@ -28,7 +30,6 @@ from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.space.space_dto import SaveReportToSpaceDTO
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.current_user_service import CurrentUserService
-from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
@@ -142,7 +143,6 @@ class ReportService():
             "experiment_id": view_config.experiment.id if view_config.experiment else None,
             "view_method_name": view_config.view_name,
             "view_config": view_config.config_values,
-            "transformers": view_config.transformers,
             "title": view_config.title,
             "caption": ""
         }
@@ -288,13 +288,11 @@ class ReportService():
         for resource_view in rich_text.get_resource_views():
             # set the json view in the resource_views object
             # with the view id as key
-            save_report_dto["resource_views"][
-                resource_view["id"]] = ResourceService.get_and_call_view_on_resource_model(
+            view_result = ResourceService.get_and_call_view_on_resource_model(
                 resource_view["resource_id"],
                 resource_view["view_method_name"],
-                resource_view["view_config"],
-                resource_view["transformers"])
-
+                resource_view["view_config"])
+            save_report_dto["resource_views"][resource_view["id"]] = view_result
         # Save the experiment in space
         SpaceService.save_report(report.project.id, save_report_dto, file_paths)
 

@@ -33,8 +33,6 @@ from ..core.exception.gws_exceptions import GWSException
 from ..core.service.base_service import BaseService
 from ..model.typing_manager import TypingManager
 from ..task.task_input_model import TaskInputModel
-from ..task.transformer.transformer_service import TransformerService
-from ..task.transformer.transformer_type import TransformerDict
 from .resource_model import Resource, ResourceModel, ResourceOrigin
 from .resource_model_search_builder import ResourceModelSearchBuilder
 from .view.view_helper import ViewHelper
@@ -230,24 +228,22 @@ class ResourceService(BaseService):
     @classmethod
     def get_and_call_view_on_resource_model(cls, resource_model_id: str,
                                             view_name: str, config_values: Dict[str, Any],
-                                            transformers: List[TransformerDict],
                                             save_view_config: bool = False) -> CallViewResult:
 
         resource_model: ResourceModel = cls.get_resource_by_id(
             resource_model_id)
-        return cls.call_view_on_resource_model(resource_model, view_name, config_values, transformers, save_view_config)
+        return cls.call_view_on_resource_model(resource_model, view_name, config_values, save_view_config)
 
     @classmethod
     def call_view_on_resource_model(cls, resource_model: ResourceModel,
                                     view_name: str, config_values: Dict[str, Any],
-                                    transformers: List[TransformerDict],
                                     save_view_config: bool = False,
                                     view_config: ViewConfig = None) -> CallViewResult:
 
         resource: Resource = resource_model.get_resource()
 
         view = cls.get_view_on_resource(
-            resource, view_name, config_values, transformers)
+            resource, view_name, config_values)
 
         # call the view to dict
         view_dict = ViewHelper.call_view_to_dict(view, config_values)
@@ -256,7 +252,7 @@ class ResourceService(BaseService):
         view_config: ViewConfig = view_config
         if save_view_config and not view_config:
             view_config = ViewConfigService.save_view_config(
-                resource_model, view, view_name, config_values, transformers)
+                resource_model, view, view_name, config_values)
 
         return {
             "view": view_dict,
@@ -270,17 +266,11 @@ class ResourceService(BaseService):
 
         return cls.call_view_on_resource_model(
             view_config.resource_model, view_name=view_config.view_name, config_values=view_config.config_values,
-            transformers=view_config.transformers, save_view_config=False, view_config=view_config)
+            save_view_config=False, view_config=view_config)
 
     @classmethod
     def get_view_on_resource(cls, resource: Resource,
-                             view_name: str, config_values: Dict[str, Any],
-                             transformers: List[TransformerDict] = None) -> View:
-
-        # if there is a transformer, call it before calling the view
-        if transformers is not None and len(transformers) > 0:
-            resource = TransformerService.call_transformers(
-                resource, transformers)
+                             view_name: str, config_values: Dict[str, Any]) -> View:
 
         return ViewHelper.generate_view_on_resource(resource, view_name, config_values)
 

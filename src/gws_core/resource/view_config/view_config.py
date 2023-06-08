@@ -4,12 +4,13 @@
 # About us: https://gencovery.com
 from typing import List, Optional
 
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
+
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.view.view_types import ViewType
 from gws_core.tag.taggable_model import TaggableModel
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from ...core.model.db_field import JSONField
 from ...experiment.experiment import Experiment
@@ -22,7 +23,6 @@ class ViewConfig(ModelWithUser, TaggableModel):
     view_type = EnumField(choices=ViewType)
     view_name = CharField()
     config_values = JSONField(null=False)
-    transformers = JSONField(null=False)
 
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, on_delete='CASCADE')
     resource_model: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
@@ -64,8 +64,7 @@ class ViewConfig(ModelWithUser, TaggableModel):
         ))
 
         for view_config_db in view_configs_db:
-            if Utils.json_equals(view_config_db.config_values, view_config.config_values) and \
-                    Utils.json_equals(view_config_db.transformers, view_config.transformers):
+            if Utils.json_equals(view_config_db.config_values, view_config.config_values):
                 return view_config_db
 
         return None

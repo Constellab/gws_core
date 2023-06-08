@@ -138,7 +138,7 @@ class TestReport(BaseTestCase):
         robot_model = i_process.get_output_resource_model('robot')
 
         # create a view config
-        result = ResourceService.call_view_on_resource_model(robot_model, "view_as_string", {}, [], True)
+        result = ResourceService.call_view_on_resource_model(robot_model, "view_as_string", {}, True)
 
         report = ReportService.create(ReportDTO(title='Test report'))
         # add the view to the report

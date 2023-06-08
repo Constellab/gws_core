@@ -9,7 +9,6 @@ from gws_core import (BaseTestCase, ConfigParams, IntParam, JSONView, Resource,
                       ResourceService, StrParam, TextView, resource_decorator,
                       view)
 from gws_core.config.config_types import ConfigSpecs
-from gws_core.config.param.param_spec import ParamSpec
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.view.any_view import AnyView
@@ -85,6 +84,7 @@ class ResourceLazySpecs(Resource):
         return StrParam(allowed_values=self.allowed_value)
 
 
+# test_view
 class TestView(BaseTestCase):
 
     def test_view_def(self):
@@ -185,7 +185,7 @@ class TestView(BaseTestCase):
         resource_model: ResourceModel = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.UPLOADED)
 
         view_result = ResourceService.get_and_call_view_on_resource_model(
-            resource_model.id, 'a_view_test', {"page": 1, "page_size": 5000}, [], True)
+            resource_model.id, 'a_view_test', {"page": 1, "page_size": 5000}, True)
 
         self.assertIsNotNone(view_result["view_config"])
 
@@ -198,7 +198,6 @@ class TestView(BaseTestCase):
         self.assertEqual(view_config.view_type, ViewType.TEXT)
         self.assertEqual(view_config.title, 'Sub view title')
         self.assert_json(view_config.config_values, {"page": 1, "page_size": 5000})
-        self.assertEqual(view_config.transformers, [])
 
         # re-call the view from the view config
         view_result_2 = ResourceService.call_view_from_view_config(view_config.id)
@@ -215,7 +214,7 @@ class TestView(BaseTestCase):
         i_protocol = i_experiment.get_protocol()
 
         view_config = {'view_method_name': 'a_view_test', 'config_values': {
-            "page": 1, "page_size": 5000}, 'transformers': []}
+            "page": 1, "page_size": 5000}, }
         viewer = i_protocol.add_process(Viewer, 'viewer', {
             Viewer.resource_config_name: resource._typing_name, 'view_config': view_config})
 

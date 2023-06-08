@@ -19,7 +19,6 @@ from ...core.classes.paginator import Paginator
 from ...core.classes.search_builder import (SearchBuilder,
                                             SearchFilterCriteria, SearchParams)
 from ...core.utils.logger import Logger
-from ...task.transformer.transformer_type import TransformerDict
 from ...user.user import User
 from ..resource_model import ResourceModel
 from ..view.view import View
@@ -37,18 +36,16 @@ class ViewConfigService():
 
     @classmethod
     def save_view_config_in_async(cls, resource_model: ResourceModel, view: View,
-                                  view_name: str, config_values: Dict[str, Any],
-                                  transformers: List[TransformerDict] = None) -> None:
+                                  view_name: str, config_values: Dict[str, Any]) -> None:
         """Save a view config in the db asynchronously (it doesn't block current thread)
         """
         thread = Thread(target=cls.save_view_config, args=(resource_model, view, view_name,
-                                                           config_values, transformers, CurrentUserService.get_and_check_current_user()))
+                                                           config_values, CurrentUserService.get_and_check_current_user()))
         thread.start()
 
     @classmethod
     def save_view_config(cls, resource_model: ResourceModel, view: View,
                          view_name: str, config_values: Dict[str, Any],
-                         transformers: List[TransformerDict] = None,
                          flagged: bool = False,
                          user: User = None) -> ViewConfig:
         try:
@@ -70,7 +67,6 @@ class ViewConfigService():
                 view_name=view_meta_data.method_name,
                 view_type=view.get_type(),
                 config_values=config,
-                transformers=transformers,
                 flagged=flagged
             )
 

@@ -50,9 +50,8 @@ class Viewer(Task):
         view_config = params.get('view_config')
         view_method_name = view_config['view_method_name']
         config_values = view_config['config_values']
-        transformers = view_config['transformers']
 
-        view = ResourceService.get_view_on_resource(resource, view_method_name, config_values, transformers)
+        view = ResourceService.get_view_on_resource(resource, view_method_name, config_values)
 
         # save the view config as flagged
         ViewConfigService.save_view_config(
@@ -60,7 +59,6 @@ class Viewer(Task):
             view=view,
             view_name=view_method_name,
             config_values=config_values,
-            transformers=transformers,
             flagged=True)
 
         return {}

@@ -9,8 +9,6 @@ from typing import Any, Dict, List, Optional, Set
 
 from typing_extensions import TypedDict
 
-from gws_core.task.transformer.transformer_type import TransformerDict
-
 
 class RichTextI(TypedDict):
 
@@ -45,7 +43,6 @@ class RichTextResourceView(TypedDict):
     experiment_id: str
     view_method_name: str
     view_config: Dict[str, Any]
-    transformers: List[TransformerDict]
     title: Optional[str]
     caption: Optional[str]
     # technical_info: List[Dict]

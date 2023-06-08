@@ -676,3 +676,14 @@ class Migration052(BrickMigration):
             except Exception as exception:
                 Logger.error(
                     f'Error while setting elapsed time for progress bar id {progress_bar.id} : {exception}')
+
+
+@brick_migration('0.5.5', short_description='Remove transformer from view config')
+class Migration055(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
+        migrator.drop_column_if_exists(ViewConfig, "transformers")
+        migrator.migrate()

@@ -177,8 +177,7 @@ class FsNodeService(BaseService):
 
         return ResourceService.call_view_on_resource_model(
             resource_model=resource_model, view_name=view_name, config_values={
-                'sub_file_path': sub_file_path},
-            transformers=[], save_view_config=True)
+                'sub_file_path': sub_file_path}, save_view_config=True)
 
 
 ############################# FILE TYPE ###########################
