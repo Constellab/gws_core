@@ -242,13 +242,13 @@ class ExperimentRunService():
 
     @classmethod
     def _send_experiment_finished_mail(cls, experiment: Experiment) -> None:
-        if not Settings.is_prod or experiment.type != ExperimentType.EXPERIMENT:
+        if not Settings.get_instance().is_prod or experiment.type != ExperimentType.EXPERIMENT:
             return
         try:
             elapsed_time = experiment.protocol_model.progress_bar.get_last_execution_time()
 
             # if the last execution was runned in under 5 minutes, don't send an email
-            if elapsed_time < 60 * 5:
+            if elapsed_time < 1000 * 60 * 5:
                 return
 
             user: User = CurrentUserService.get_and_check_current_user()

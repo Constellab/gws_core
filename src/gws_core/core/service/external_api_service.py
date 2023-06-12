@@ -30,7 +30,7 @@ class ExternalApiService:
         """
         if headers is None:
             headers = {}
-        response = requests.post(url, json=body, headers=headers, timeout=timeout)
+        response = requests.post(url, json=jsonable_encoder(body), headers=headers, timeout=timeout)
         return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
@@ -41,7 +41,7 @@ class ExternalApiService:
         """
         if headers is None:
             headers = {}
-        response = requests.put(url, json=body, headers=headers, files=files, timeout=timeout)
+        response = requests.put(url, json=jsonable_encoder(body), headers=headers, files=files, timeout=timeout)
         return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod

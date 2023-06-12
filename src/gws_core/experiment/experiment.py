@@ -428,7 +428,7 @@ class Experiment(ModelWithUser, TaggableModel):
             },
         })
 
-        _json["pid_status"] = self.get_process_status()
+        _json["pid_status"] = self.get_process_status().value
 
         if self.project:
             _json["project"] = {

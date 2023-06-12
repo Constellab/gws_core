@@ -120,7 +120,7 @@ class ProgressBar(Model):
         Must be called only when the progress bar is finished
         Get the last execution time. If no second start, return the execution duration, else return the second start duration
 
-        :return: Returns the last execution time
+        :return: Returns the last execution time in milliseconds
         :rtype: `datetime`
         """
         if self.ended_at is None:

@@ -14,9 +14,7 @@ from gws_core.core.exception.exceptions.base_http_exception import \
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_model import LabConfig
 from gws_core.space.space_dto import (LabStartDTO, SaveExperimentToSpaceDTO,
-                                      SaveReportToSpaceDTO,
-                                      SendExperimentFinishMailData,
-                                      SpaceSendMailDTO)
+                                      SaveReportToSpaceDTO, SpaceSendMailDTO)
 from gws_core.user.user_dto import UserSpace
 
 from ..core.exception.exceptions import BadRequestException
