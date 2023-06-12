@@ -95,8 +95,7 @@ class SystemService:
         """
         Drops tables
         """
-        settings: Settings = Settings.get_instance()
-        if settings.is_prod:
+        if Settings.is_prod_mode():
             raise Exception('Cannot drop all table in prod env')
 
         BaseModelService.drop_tables()
@@ -108,16 +107,15 @@ class SystemService:
         """
         settings: Settings = Settings.get_instance()
 
-        if settings.is_prod:
+        if settings.is_prod_mode():
             raise Exception(
                 'Cannot delete the temp folder in prod environment')
         FileHelper.delete_dir(settings.get_root_temp_dir())
 
     @classmethod
     def reset_dev_envionment(cls, check_user=True) -> None:
-        settings: Settings = Settings.get_instance()
 
-        if not settings.is_dev:
+        if not Settings.is_dev_mode():
             raise UnauthorizedException(
                 'The reset method can only be called in dev environment')
 
@@ -141,9 +139,7 @@ class SystemService:
 
     @classmethod
     def kill_process(cls) -> None:
-        settings: Settings = Settings.get_instance()
-
-        if not settings.is_dev:
+        if not Settings.is_dev_mode():
             raise UnauthorizedException(
                 'The kill method can only be called in dev environment')
 
@@ -155,9 +151,8 @@ class SystemService:
     def register_lab_start(cls) -> None:
         """Method to call space after start to mark the lab as started in space
         """
-        settings: Settings = Settings.get_instance()
 
-        if settings.is_dev:
+        if Settings.is_dev_mode():
             return
 
         try:

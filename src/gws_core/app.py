@@ -10,8 +10,6 @@ from fastapi import FastAPI
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
 from .core.classes.cors_config import CorsConfig
-from .core.utils.logger import Logger
-from .core.utils.settings import Settings
 from .core_app import core_app
 from .lab.system_service import SystemService
 from .space.space_app import space_app
@@ -79,9 +77,6 @@ class App:
 
         SystemService.migrate_db()
         SystemService.init()
-        settings: Settings = Settings.get_instance()
-        Logger.info(
-            f"Starting server in {('prod' if settings.is_prod else 'dev')} mode ...")
 
         # Configure the CORS
         CorsConfig.configure_app_cors(app)

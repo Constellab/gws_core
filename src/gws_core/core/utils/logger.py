@@ -13,7 +13,6 @@ from typing import Any, Literal
 from gws_core.core.utils.date_helper import DateHelper
 
 from ..exception.exceptions.bad_request_exception import BadRequestException
-from .settings import Settings
 
 LOGGER_NAME = "gws"
 LOGGER_FILE_NAME = "log"
@@ -40,7 +39,8 @@ class Logger:
 
     _waiting_messages: list = []
 
-    def __init__(self, level: Literal["ERROR", "INFO", "DEBUG"] = "INFO", _is_experiment_process: bool = False):
+    def __init__(self, log_dir: str = None,
+                 level: Literal["ERROR", "INFO", "DEBUG"] = "INFO", _is_experiment_process: bool = False) -> None:
         """Create the Gencovery logger, it logs into the console and into a file
 
         :param level: level of the logs to show, defaults to "info"
@@ -77,9 +77,6 @@ class Logger:
         Logger._logger.addHandler(console_logger)
 
         # Configure the logs into the log files
-        settings = Settings.get_instance()
-
-        log_dir = settings.get_log_dir()
         if not path.exists(log_dir):
             makedirs(log_dir)
         Logger._file_path = path.join(log_dir, LOGGER_FILE_NAME)
@@ -92,10 +89,9 @@ class Logger:
         Logger._logger.addHandler(file_handler)
 
         if _is_experiment_process:
-            Logger.info("Sub process started")
+            Logger.info(f"Logger configured for experiment process with log level: {level}")
         else:
-            Logger.info(
-                f"START APPLICATION : {settings.name} version {settings.version}, log level: {level}")
+            Logger.info(f"Logger configured with log level: {level}")
 
         self._log_waiting_message()
 

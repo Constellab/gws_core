@@ -45,13 +45,11 @@ class SpaceService(BaseService):
     @classmethod
     def check_api_key(cls, api_key: str) -> bool:
 
-        settings: Settings = Settings.get_instance()
-
         # In local env, we don't check the api key
-        if settings.get_lab_environment() == 'LOCAL':
+        if Settings.get_lab_environment() == 'LOCAL':
             return True
 
-        if settings.is_dev:
+        if Settings.is_dev_mode():
             raise BadRequestException(
                 "The space routes are desactivated in dev environment")
 
@@ -217,7 +215,7 @@ class SpaceService(BaseService):
 
         space_api_url = Settings.get_space_api_url()
         if space_api_url is None:
-            if Settings.is_dev:
+            if Settings.is_dev_mode():
                 raise BadRequestException(
                     "The space routes are desactivated in dev and test environment")
             else:

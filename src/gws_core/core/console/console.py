@@ -31,8 +31,7 @@ class Console:
         This function initializes objects for unit testing
         """
 
-        settings = Settings.get_instance()
-        if not settings.is_dev:
+        if not Settings.is_dev_mode():
             raise BadRequestException(
                 "The unit tests can only be initialized in dev mode")
 
@@ -52,8 +51,7 @@ class Console:
         This function initializes objects for unit testing
         """
 
-        settings = Settings.get_instance()
-        if not settings.is_dev:
+        if not Settings.is_dev_mode():
             raise BadRequestException(
                 "The unit tests can only be initialized in dev mode")
 

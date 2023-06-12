@@ -11,7 +11,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from ..utils.settings import Settings
+from ..utils.settings import LabEnvironment, Settings
 
 
 class CorsConfig():
@@ -83,9 +83,9 @@ class CorsConfig():
     @classmethod
     def _get_allow_origin_regex(cls) -> str:
         # in local enviornment we allow all origins
-        lab_env: Literal["PROD", "LOCAL"] = Settings.get_lab_environment()
+        lab_env: LabEnvironment = Settings.get_lab_environment()
 
-        if lab_env == "LOCAL":
+        if lab_env != "ON_CLOUD":
             return "." + cls._ALLOW_ANY_ORIGIN
 
         # In prod env we allow origin only from the virtual host (like tokyo.gencovery.io)

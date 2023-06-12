@@ -40,7 +40,7 @@ class DbManagerService():
         if unique_name in cls._db_managers:
             Logger.warning(f"The db manager with the name '{unique_name}' was already initialized")
             return
-            #raise Exception(f"The db manager with the name '{unique_name}' was already initialized")
+            # raise Exception(f"The db manager with the name '{unique_name}' was already initialized")
 
         db_manager_type.init(mode)
 
@@ -66,7 +66,7 @@ class DbManagerService():
         settings = Settings.get_instance()
         if settings.is_test:
             return 'test'
-        elif settings.is_prod:
+        elif settings.is_prod_mode():
             return 'prod'
         else:
             return 'dev'

@@ -46,7 +46,7 @@ class AuthService(BaseService):
             raise WrongCredentialsException()
 
         # skip the check with space in local dev env
-        if Settings.is_local_env() and Settings.get_instance().is_dev:
+        if Settings.get_instance().is_local_dev_env():
             return cls.log_user(user)
 
         # Check the user credentials
@@ -213,7 +213,7 @@ class AuthService(BaseService):
         settings: Settings = Settings.get_instance()
 
         # Allow only this method on dev environment
-        if settings.is_prod:
+        if settings.is_prod_mode():
             raise BadRequestException(detail=GWSException.FUNCTIONALITY_UNAVAILBLE_IN_PROD.value,
                                       unique_code=GWSException.FUNCTIONALITY_UNAVAILBLE_IN_PROD.name)
 

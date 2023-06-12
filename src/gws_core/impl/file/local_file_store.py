@@ -214,7 +214,7 @@ class LocalFileStore(FileStore):
         """
 
         settings = Settings.get_instance()
-        if not settings.is_dev and not settings.is_test:
+        if not settings.is_dev_mode() and not settings.is_test:
             raise BadRequestException("Only allowed in dev and test mode")
         file_store_list: List[FileStore] = cls.select()
         for file_store in file_store_list:

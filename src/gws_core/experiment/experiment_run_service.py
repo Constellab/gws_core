@@ -133,12 +133,6 @@ class ExperimentRunService():
             if settings.is_test:
                 cmd.append("--test")
 
-            cmd.append("--runmode")
-            if settings.is_prod:
-                cmd.append("prod")
-            else:
-                cmd.append("dev")
-
             sproc = SysProc.popen(
                 cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
 
@@ -242,7 +236,7 @@ class ExperimentRunService():
 
     @classmethod
     def _send_experiment_finished_mail(cls, experiment: Experiment) -> None:
-        if not Settings.get_instance().is_prod or experiment.type != ExperimentType.EXPERIMENT:
+        if not Settings.get_instance().is_prod_mode() or experiment.type != ExperimentType.EXPERIMENT:
             return
         try:
             elapsed_time = experiment.protocol_model.progress_bar.get_last_execution_time()

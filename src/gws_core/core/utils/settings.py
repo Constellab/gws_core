@@ -30,6 +30,8 @@ __DEFAULT_SETTINGS__ = {
     "app_port": 3000,
 }
 
+LabEnvironment = Literal["ON_CLOUD", "DESKTOP", "LOCAL"]
+
 
 class ModuleInfo(TypedDict):
     path: str
@@ -115,6 +117,14 @@ class Settings():
         return FileHelper.exists_on_os(cls._get_setting_file_path())
 
     @classmethod
+    def is_prod_mode(cls) -> bool:
+        return os.environ.get("LAB_MODE", "dev") == "prod"
+
+    @classmethod
+    def is_dev_mode(cls) -> bool:
+        return not cls.is_prod_mode()
+
+    @classmethod
     def get_lab_prod_api_url(cls) -> str:
         return os.environ.get("LAB_PROD_API_URL")
 
@@ -123,14 +133,21 @@ class Settings():
         return os.environ.get("LAB_DEV_API_URL")
 
     @classmethod
-    def get_lab_environment(cls) -> Literal["PROD", "LOCAL"]:
+    def get_lab_environment(cls) -> LabEnvironment:
         """Return the environment where the lab run
-        PROD by default but it can also be local (when running on a local machine)
+        ON_CLOUD : the lab is running on the cloud
+        DESKTOP : the lab is running on a desktop
+        LOCAL : the lab is running locally (for development purpose)
 
         :return: [description]
         :rtype: [type]
         """
-        return os.environ.get("LAB_ENVIRONMENT", 'PROD')
+        env = os.environ.get("LAB_ENVIRONMENT", 'ON_CLOUD')
+
+        # TODO to remove once all lab_manager are update to v1.0.3
+        if env == 'PROD':
+            return 'ON_CLOUD'
+        return env
 
     @classmethod
     def is_local_env(cls) -> bool:
@@ -267,6 +284,14 @@ class Settings():
             os.makedirs(dir)
         return tempfile.mkdtemp(dir=dir)
 
+    @classmethod
+    def build_log_dir(cls, is_test: bool) -> str:
+        """ Return the log dir """
+        if is_test:
+            return "/logs-test"
+        else:
+            return "/logs"
+
     def get_gws_core_db_name(self) -> str:
         return 'gws_core'
 
@@ -293,10 +318,7 @@ class Settings():
         :return: The log directory
         :rtype: `str`
         """
-        if self.is_test:
-            return "/logs-test"
-        else:
-            return "/logs"
+        return self.build_log_dir(self.is_test)
 
     def get_data_dir(self) -> str:
         """
@@ -370,7 +392,7 @@ class Settings():
         self.data["pip_freeze"] = pip_freeze
 
     def get_lab_api_url(self) -> str:
-        return self.get_lab_prod_api_url() if self.is_prod else self.get_lab_dev_api_url()
+        return self.get_lab_prod_api_url() if self.is_prod_mode() else self.get_lab_dev_api_url()
 
     # BRICK MIGRATION
 
@@ -444,17 +466,21 @@ class Settings():
                 variable = re.sub(r"\$\{?"+token+r"\}?", value, variable)
         return variable
 
-    @property
-    def is_prod(self) -> bool:
-        return self.data.get("is_prod", False)
+    def is_local_dev_env(self) -> bool:
+        """True when lab is running locally in dev mode
 
-    @property
-    def is_dev(self) -> bool:
-        return not self.is_prod
+        :return: _description_
+        :rtype: bool
+        """
+        return self.is_local_env() and self.is_dev_mode()
 
-    @property
-    def is_debug(self) -> bool:
-        return self.data.get("is_debug", False)
+    def is_desktop_lab(self) -> bool:
+        """True when lab is running on a desktop in prod mode
+
+        :return: _description_
+        :rtype: bool
+        """
+        return self.is_local_env() and self.is_prod_mode()
 
     @property
     def is_test(self) -> bool:
@@ -475,13 +501,13 @@ class Settings():
 
             # try to read the settings file
             if cls._setting_file_exists():
-                with open(cls._get_setting_file_path(), encoding='UTF-8') as f:
+                with open(cls._get_setting_file_path(), encoding='UTF-8') as file:
                     try:
-                        settings_json = load(f)
+                        settings_json = load(file)
                     except JSONDecodeError as err:
                         print(
                             f"Error while reading settings file at '{cls._get_setting_file_path()}'. Please check the syntax of the file. Here is the file content")
-                        print(f.read())
+                        print(file.read())
                         raise err
             # use default settings if no file exists
             else:
