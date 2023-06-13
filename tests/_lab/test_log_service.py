@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from time import sleep
 from unittest import TestCase
 
 from gws_core.core.utils.date_helper import DateHelper
@@ -73,7 +72,7 @@ INFO - 2022-12-01 09:30:46.947581 - [EXPERIMENT] - second_log
     def setUp(self) -> None:
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
         Logger._logger = None
-        Logger(level='INFO', _is_experiment_process=False)
+        Logger(Settings.build_log_dir(True), level='INFO', _is_experiment_process=False)
 
     def tearDown(self) -> None:
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())

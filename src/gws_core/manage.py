@@ -96,8 +96,8 @@ class AppManager:
         test_runner.run(test_suite)
 
     @classmethod
-    def run_cli(cls, cli: str, log_level: str, show_sql: bool) -> None:
-        cls._init(log_level=log_level, _is_experiment_process=True, show_sql=show_sql)
+    def run_cli(cls, cli: str, log_level: str, show_sql: bool, is_test: bool) -> None:
+        cls._init(log_level=log_level, _is_experiment_process=True, show_sql=show_sql, is_test=is_test)
 
         tab = cli.split(".")
         n = len(tab)
@@ -151,12 +151,12 @@ def start_notebook(cwd: str, log_level: str = 'INFO') -> None:
 @click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
 @click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
 @click.option('--reset_env', is_flag=True, help='Reset environment')
-def _start_app_console(ctx, test: bool, cli: str, runserver: bool,
+def _start_app_console(ctx, test: str, cli: str, runserver: bool,
                        port: str, log_level: str, show_sql: bool, reset_env: bool):
     if runserver:
         AppManager.start_app(port=port, log_level=log_level, show_sql=show_sql)
     elif cli:
-        AppManager.run_cli(cli=cli, log_level=log_level, show_sql=show_sql)
+        AppManager.run_cli(cli=cli, log_level=log_level, show_sql=show_sql, is_test=bool(test))
     elif test:
         AppManager.run_test(test=test, log_level=log_level, show_sql=show_sql)
     elif reset_env:

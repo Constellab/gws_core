@@ -35,7 +35,7 @@ class TestProcessService(BaseTestCase):
         # force init the logger
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
         Logger._logger = None
-        Logger(level='INFO', _is_experiment_process=False)
+        Logger(Settings.build_log_dir(True), level='INFO', _is_experiment_process=False)
 
     def tearDown(self) -> None:
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())

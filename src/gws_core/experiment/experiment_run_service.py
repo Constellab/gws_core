@@ -131,7 +131,8 @@ class ExperimentRunService():
             ]
 
             if settings.is_test:
-                cmd.append("--test")
+                # add test option to tell the sub process is a test
+                cmd.extend(["--test", "a"])
 
             sproc = SysProc.popen(
                 cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
