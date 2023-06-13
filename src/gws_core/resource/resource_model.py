@@ -354,7 +354,9 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         resource_model: ResourceModel = ResourceModel()
         resource_model.set_resource_typing_name(resource._typing_name)
         resource_model.origin = origin
-        resource_model.experiment = experiment
+        if experiment:
+            resource_model.experiment = experiment
+            resource_model.project = experiment.project
         resource_model.task_model = task_model
         resource_model.generated_by_port_name = port_name
         # by default only the uploaded resource are showed in databox

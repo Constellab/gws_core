@@ -49,6 +49,9 @@ class TestExperiment(BaseTestCase):
         self.assert_json(experiment.description, {"test": "ok"})
 
     def test_run(self):
+        # test setting the project to the experiment
+        project: Project = Project(title="First project")
+        project.save()
 
         experiment_count = Experiment.select().count()
         task_count = TaskModel.select().count()
@@ -60,13 +63,12 @@ class TestExperiment(BaseTestCase):
         proto1: ProtocolModel = RobotService.create_robot_simple_travel()
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
-            protocol_model=proto1, title="My exp title")
+            protocol_model=proto1, title="My exp title", project=project)
 
         self.assertEqual(Experiment.select().count(), experiment_count + 1)
 
         # Refresh experiment to be sure it was saved
-        experiment = Experiment.get_by_id_and_check(
-            experiment.id)
+        experiment = Experiment.get_by_id_and_check(experiment.id)
 
         self.assertEqual(Experiment.select().count(), experiment_count + 1)
         self.assertEqual(len(experiment.task_models),
@@ -98,16 +100,31 @@ class TestExperiment(BaseTestCase):
 
         # Test the configuration on fly_1 process (west 2000)
         move_1: ProcessModel = experiment.protocol_model.get_process('move_1')
-        robot1: Robot = move_1.inputs.get_resource_model(
-            'robot').get_resource()
-        robot2: Robot = move_1.outputs.get_resource_model(
-            'robot').get_resource()
+        # check that the resource was associated to the project
+        robot1_model: ResourceModel = move_1.inputs.get_resource_model('robot')
+        self.assertEqual(robot1_model.project.id, project.id)
+        robot1: Robot = robot1_model.get_resource()
+
+        robot2: Robot = move_1.outputs.get_resource_model('robot').get_resource()
         self.assertEqual(robot1.position[0], robot2.position[0] + 2000)
 
         # Check if the port resource spec was correctly loaded
         spec: IOSpec = move_1.inputs.get_port('robot').resource_spec
         self.assertIsInstance(spec, IOSpec)
         self.assertEqual(spec.resource_types, [Robot])
+
+        # Test update the project of the experiment
+        project2: Project = Project(title="Second project")
+        project2.save()
+
+        ExperimentService.update_experiment_project(experiment.id, project2.id)
+        robot1_model = robot1_model.refresh()
+        self.assertEqual(robot1_model.project.id, project2.id)
+
+        # Test remove the project
+        ExperimentService.update_experiment_project(experiment.id, None)
+        robot1_model = robot1_model.refresh()
+        self.assertIsNone(robot1_model.project)
 
     def test_run_through_cli(self):
 
