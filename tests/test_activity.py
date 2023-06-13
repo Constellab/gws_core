@@ -23,7 +23,7 @@ class TestActivity(BaseTestCase):
         ActivityService.add(
             Activity.CREATE, object_type="test", object_id="test")
 
-        sleep(0.5)
+        sleep(1.5)
 
         ActivityService.add(
             Activity.UPDATE, object_type="test", object_id="test")
