@@ -3,11 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from numpy import nan
+from pandas import DataFrame
+
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_types import TableHeaderInfo
 from gws_core.resource.view.view_types import ViewType
-from numpy import nan
-from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -55,7 +56,7 @@ class HeatmapView(View):
         if self._data is None:
             raise BadRequestException("No data found")
 
-        data: DataFrame = DataframeHelper.replace_nan_and_inf(self._data, None)
+        data: DataFrame = DataframeHelper.prepare_to_json(self._data, None)
 
         return {
             "table": data.values.tolist(),

@@ -121,7 +121,7 @@ class TabularView(View):
         replace_nan_by: str = self.replace_nan_by
         if replace_nan_by == "empty":
             replace_nan_by = ""
-        data = DataframeHelper.replace_nan_and_inf(sub_dataframe, replace_nan_by)
+        data = DataframeHelper.prepare_to_json(sub_dataframe, replace_nan_by)
 
         return {
             "table": data.to_dict('split')["data"],

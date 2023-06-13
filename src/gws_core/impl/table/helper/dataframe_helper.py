@@ -3,11 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from cmath import inf
 from re import sub
 from typing import Any, List
 
 from numpy import NaN, inf
+from numpy.ma import masked
 from pandas import DataFrame
 
 from gws_core.core.utils.numeric_helper import NumericHelper
@@ -66,8 +66,13 @@ class DataframeHelper:
         return data.replace([inf, -inf], value)
 
     @classmethod
-    def replace_nan_and_inf(cls, dataframe: DataFrame, value: Any) -> DataFrame:
+    def prepare_to_json(cls, dataframe: DataFrame, value: Any) -> DataFrame:
+        """
+        Convert all weird values (like NaN, inf, masked) to value to be able to convert to json
+        """
         data: DataFrame = dataframe.replace({NaN: value})
+        # replace masked value by value
+        data = data.applymap(lambda x: value if x is masked else x, na_action='ignore')
         return cls.replace_inf(data, value)
 
     @classmethod
