@@ -36,9 +36,13 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
         self.data = template
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        # create a new protocol to refresh the template info ()
-        protocol_model = ProcessFactory.create_protocol_model_from_graph(self.get_template())
-        return protocol_model.dumps_graph('config')
+
+        if deep:
+            # create a new protocol to refresh the template info ()
+            protocol_model = ProcessFactory.create_protocol_model_from_graph(self.get_template())
+            return protocol_model.dumps_graph('config')
+        else:
+            return None
 
     @classmethod
     def from_protocol_model(

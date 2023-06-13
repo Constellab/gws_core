@@ -551,7 +551,11 @@ class ProtocolService(BaseService):
 
     @classmethod
     def create_protocol_model_from_template(cls, protocol_template: ProtocolTemplate) -> ProtocolModel:
-        return cls.create_protocol_model_from_graph(protocol_template.get_template())
+        try:
+            return cls.create_protocol_model_from_graph(protocol_template.get_template())
+        except Exception as e:
+            raise BadRequestException(
+                f"The template is not compatible with the current version. {e}")
 
     @classmethod
     def create_protocol_model_from_graph(cls, graph: ProtocolConfigDict) -> ProtocolModel:
