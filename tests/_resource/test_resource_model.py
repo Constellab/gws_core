@@ -12,7 +12,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, IExperiment, ITask,
                       resource_decorator, task_decorator)
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
                                                   SearchParams)
-from gws_core.data_provider.data_provider import DataProvider
+from gws_core.test.data_provider import DataProvider
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.tag.tag_model import TagModel

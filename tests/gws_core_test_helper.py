@@ -1,7 +1,7 @@
 
 from gws_core import (EncodingTableImporter, File, MetadataTable,
                       MetadataTableImporter, Table, TableImporter)
-from gws_core.data_provider.data_provider import DataProvider
+from gws_core.test.data_provider import DataProvider
 
 
 class GWSCoreTestHelper():

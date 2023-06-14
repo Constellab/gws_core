@@ -6,7 +6,7 @@
 from pandas import DataFrame
 
 from gws_core.config.config_types import ConfigParams
-from gws_core.data_provider.data_provider import DataProvider
+from gws_core.test.data_provider import DataProvider
 from gws_core.impl.file.file import File
 from gws_core.impl.table.table import Table
 from gws_core.impl.table.tasks.table_importer import TableImporter

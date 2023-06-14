@@ -1,5 +1,5 @@
 from .core.model.base_model_service import BaseModelService as BaseModelService
-from .data_provider.data_provider import DataProvider
+from .test.data_provider import DataProvider
 # TableView
 from .impl.table.view.table_barplot_view import \
     TableBarPlotView as TableBarPlotView
