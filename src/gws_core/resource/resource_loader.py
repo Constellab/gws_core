@@ -114,6 +114,9 @@ class ResourceLoader():
         resource = ResourceFactory.create_resource(resource_type, kv_store=kv_store, data=zip_resource['data'],
                                                    name=zip_resource['name'])
 
+        # generate a new uid for the resource
+        resource.uid = Resource.uid.get_default_value()
+
         # if the resource is an fs_node_name
         if zip_resource.get('fs_node_name') is not None:
             if not isinstance(resource, FSNode):
