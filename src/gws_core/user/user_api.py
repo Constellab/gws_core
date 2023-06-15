@@ -17,7 +17,7 @@ from gws_core.user.user import User, UserDataDict
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
-from .credentials_dto import Credentials2Fa, CredentialsDTO
+from .user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
 from .user_service import UserService
 
 
@@ -65,7 +65,7 @@ def get_user_activity(user_id: Optional[str] = None,
 
 
 @core_app.post("/login", tags=["User"], summary="Login to the lab by requesting space")
-def login(credentials: CredentialsDTO) -> JSONResponse:
+def login(credentials: UserCredentialsDTO) -> JSONResponse:
     """
     Log the user using space
     """
@@ -74,7 +74,7 @@ def login(credentials: CredentialsDTO) -> JSONResponse:
 
 
 @core_app.post("/login-2fa", tags=["User"], summary="Login 2FA to the lab by requesting space")
-def login_2_fa(credentials: Credentials2Fa) -> JSONResponse:
+def login_2_fa(credentials: UserCredentials2Fa) -> JSONResponse:
     """
     Login 2FA to the lab by requesting space
     """

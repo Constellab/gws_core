@@ -8,7 +8,7 @@ from typing import Any, final
 from ..core.model.model_with_user import ModelWithUser
 from .config_exceptions import InvalidParamValueException, UnkownParamException
 from .config_specs_helper import ConfigSpecsHelper
-from .config_types import (ConfigDict, ConfigParams, ConfigParamsDict,
+from .config_types import (ConfigDict, ConfigParamsDict,
                            ConfigSpecs)
 from .param.param_spec import ParamSpec
 from .param.param_spec_helper import ParamSpecHelper
@@ -88,7 +88,7 @@ class Config(ModelWithUser):
         default = self.get_spec(param_name).default_value
         return self.data.get("values", {}).get(param_name, default)
 
-    def get_and_check_values(self) -> ConfigParams:
+    def get_and_check_values(self) -> ConfigParamsDict:
         """
         Returns all the parameters including default value if not provided
 
@@ -101,7 +101,7 @@ class Config(ModelWithUser):
         values: ConfigParamsDict = self.get_values()
         specs: ConfigSpecs = self.get_specs()
 
-        return ParamSpecHelper.get_config_params(specs, values)
+        return ParamSpecHelper.get_and_check_values(specs, values)
 
     def set_value(self, param_name: str, value: ParamValue):
         """

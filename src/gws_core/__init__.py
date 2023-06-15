@@ -113,6 +113,15 @@ from .core.utils.serializer import Serializer as Serializer
 from .core.utils.settings import Settings as Settings
 from .core.utils.string_helper import StringHelper as StringHelper
 from .core.utils.utils import Utils as Utils
+from .credentials.credentials_param import CredentialsParam as CredentialsParam
+# Credentials
+from .credentials.credentials_type import \
+    CredentialsDataBasic as CredentialsDataBasic
+from .credentials.credentials_type import \
+    CredentialsDataOther as CredentialsDataOther
+from .credentials.credentials_type import \
+    CredentialsDataS3 as CredentialsDataS3
+from .credentials.credentials_type import CredentialsType as CredentialsType
 # Deprecated
 from .deprecated.dataset.dep_dataset import Dataset as Dataset
 from .deprecated.dataset.tasks.dep_dataset_exporter import \
@@ -428,8 +437,8 @@ from .test.view_tester import ViewTester as ViewTester
 from .user.activity import Activity as Activity
 from .user.activity_service import ActivityService as ActivityService
 from .user.auth_service import AuthService as AuthService
-from .user.credentials_dto import CredentialsDTO as CredentialsDTO
 from .user.current_user_service import CurrentUserService as CurrentUserService
 from .user.user import User as User
+from .user.user_credentials_dto import UserCredentialsDTO as UserCredentialsDTO
 from .user.user_group import UserGroup as UserGroup
 from .user.user_service import UserService as UserService

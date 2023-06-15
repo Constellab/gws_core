@@ -5,6 +5,8 @@
 
 from typing import Any, Dict, List, Optional
 
+from gws_core.config.config_types import ConfigSpecs
+
 from ...core.classes.validator import DictValidator, ListValidator, Validator
 from .param_spec import ParamSpec, ParamSpecType
 from .param_types import ParamSpecDict, ParamSpecVisibilty
@@ -16,12 +18,12 @@ class ParamSet(ParamSpec[list]):
 
     """
 
-    param_set: Dict[str, ParamSpec] = None
+    param_set: ConfigSpecs = None
     max_number_of_occurrences: int
 
     def __init__(
         self,
-        param_set: Dict[str, ParamSpec] = None,
+        param_set: ConfigSpecs = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,

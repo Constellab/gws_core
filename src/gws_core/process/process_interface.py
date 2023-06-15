@@ -71,9 +71,6 @@ class IProcess:
     def get_param(self, name: str) -> Any:
         return self._process_model.config.get_value(name)
 
-    def get_config_params(self) -> ConfigParams:
-        return self._process_model.config.get_and_check_values()
-
     def reset_config(self) -> None:
         self.set_config_params({})
 

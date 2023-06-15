@@ -10,6 +10,9 @@ import boto3
 from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.credentials.credentials_param import CredentialsParam
+from gws_core.credentials.credentials_type import (CredentialsDataS3,
+                                                   CredentialsType)
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.s3_bucket import S3Bucket
 from gws_core.io.io_spec import InputSpec
@@ -31,12 +34,9 @@ class ResourceUploaderS3(Task):
     input_specs: InputSpecs = {'resource': InputSpec(Resource)}
     output_specs: OutputSpecs = {}
     config_specs: ConfigSpecs = {
-        's3_endpoint': StrParam(human_name="S3 endpoint"),
-        's3_region': StrParam(human_name="S3 region"),
-        's3_access_key_id': StrParam(human_name="S3 access key id"),
-        's3_secret_access_key': StrParam(human_name="S3 secret access key"),
-        's3_bucket': StrParam(human_name="S3 bucket name"),
+        'credentials': CredentialsParam(credentials_type=CredentialsType.S3),
         's3_object_prefix': StrParam(human_name="Prefix for the S3 object", default_value=""),
+        's3_bucket': StrParam(human_name="S3 bucket name"),
         'send_me_an_email': BoolParam(human_name="Send me an email when the task is finished", default_value=False)
     }
 
@@ -52,10 +52,15 @@ class ResourceUploaderS3(Task):
         resource_zipper.add_resource(resource)
         self.zip_file_path = resource_zipper.close_zip()
 
-        s3_bucket = S3Bucket(endpoint=params.get_value('s3_endpoint'),
-                             region=params.get_value('s3_region'),
-                             access_key_id=params.get_value('s3_access_key_id'),
-                             secret_access_key=params.get_value('s3_secret_access_key'),
+        credentials: CredentialsDataS3 = params.get_value('credentials')
+        bucket_name = credentials['bucket'] or params.get_value('s3_bucket')
+        if not bucket_name:
+            raise ValueError("Bucket name is not provided")
+
+        s3_bucket = S3Bucket(endpoint=credentials['endpoint_url'],
+                             region=credentials['region'],
+                             access_key_id=credentials['access_key_id'],
+                             secret_access_key=credentials['secret_access_key'],
                              bucket_name=bucket_name,
                              message_dispatcher=self.message_dispatcher)
 
@@ -63,7 +68,7 @@ class ResourceUploaderS3(Task):
         file_name = StringHelper.generate_uuid() + "." + ResourceZipper.COMPRESS_EXTENSION
 
         # add prefix
-        prefix = params.get_value('s3_object_prefix')
+        prefix: str = params.get_value('s3_object_prefix')
         if prefix:
             # if prefix does not end with a slash, add it
             if not prefix.endswith('/'):

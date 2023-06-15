@@ -34,7 +34,7 @@ class ResourceDownloaderBase(Task):
         Resource, human_name='Imported resource', sub_class=True)}
     config_specs: ConfigSpecs = {}
 
-    resource_loader: ResourceLoader
+    resource_loader: ResourceLoader = None
 
     @abstractmethod
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

@@ -59,7 +59,8 @@ class MixedViews(View):
         if not isinstance(view, self._allowed_view_types):
             raise Exception(f'[MixedViews] can only mix {self._allowed_view_types}')
 
-        config_params: ConfigParams = ParamSpecHelper.get_config_params(view._specs, params)
+        # TODO error if LazyViewParam is used
+        config_params: ConfigParams = ParamSpecHelper.get_and_check_values(view._specs, params)
 
         self._sub_views.append(
             {

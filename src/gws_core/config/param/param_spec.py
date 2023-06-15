@@ -6,6 +6,7 @@
 from abc import abstractmethod
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
+from fastapi.encoders import jsonable_encoder
 from typing_extensions import TypedDict
 
 from gws_core.core.utils.logger import Logger
@@ -96,10 +97,6 @@ class ParamSpec(Generic[ParamSpecType]):
     def get_default_value(self) -> ParamSpecType:
         return self.default_value
 
-    @abstractmethod
-    def _get_validator(self) -> Validator:
-        pass
-
     def to_json(self) -> ParamSpecDict:
         _json: ParamSpecDict = {
             "type": self.get_str_type(),
@@ -120,11 +117,20 @@ class ParamSpec(Generic[ParamSpecType]):
             _json["allowed_values"] = self.allowed_values
         return _json
 
+    @abstractmethod
+    def _get_validator(self) -> Validator:
+        pass
+
     def validate(self, value: Any) -> ParamSpecType:
         if value is None:
             return None
 
         return self._get_validator().validate(value)
+
+    def transform(self, value: Any) -> Any:
+        """Method call before the value is used to apply some transformation if needed by the ParamSpec
+        """
+        return value
 
     def _check_visibility(self, visibility: ParamSpecVisibilty) -> None:
         allowed_visibility: List[ParamSpecVisibilty] = [

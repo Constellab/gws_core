@@ -22,7 +22,7 @@ from ..core.service.base_service import BaseService
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings
 from ..project.project_dto import SpaceProject
-from ..user.credentials_dto import Credentials2Fa, CredentialsDTO
+from ..user.user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User, UserDataDict
 
@@ -57,12 +57,14 @@ class SpaceService(BaseService):
         return space_api_key == api_key
 
     @classmethod
-    def check_credentials(cls, credentials: CredentialsDTO) -> ExternalCheckCredentialResponse:
+    def check_credentials(
+            cls, credentials: UserCredentialsDTO, for_login: bool = True) -> ExternalCheckCredentialResponse:
         """
         Check the credential of an email/password by calling space, with 2Fa if needed
         """
+        route = 'check-credentials' if for_login else 'check-credentials-simple'
         space_api_url: str = cls._get_space_api_url(
-            f'{cls._external_labs_route}/check-credentials')
+            f'{cls._external_labs_route}/{route}')
         response = ExternalApiService.post(
             space_api_url, credentials.dict(), headers=cls._get_request_header(),
             raise_exception_if_error=True)
@@ -70,7 +72,7 @@ class SpaceService(BaseService):
         return parse_obj_as(ExternalCheckCredentialResponse, response.json())
 
     @classmethod
-    def check_2_fa(cls, credentials: Credentials2Fa) -> UserSpace:
+    def check_2_fa(cls, credentials: UserCredentials2Fa) -> UserSpace:
         """
         Check the credential of an email/password by calling space
         and return true if ok

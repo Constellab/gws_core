@@ -16,7 +16,7 @@ from .view import View
 
 class ViewGrid(TypedDict):
     view: View
-    config_params: ConfigParams
+    config_params: ConfigParamsDict
     colspan: int
     rowspan: int
 
@@ -80,7 +80,8 @@ class MultiViews(View):
         if isinstance(view, MultiViews):
             raise Exception('[MultiViews] cannot create nested MultiViews')
 
-        config_params: ConfigParams = ParamSpecHelper.get_config_params(view._specs, params)
+        # TODO error if LazyViewParam is used
+        config_params: ConfigParamsDict = ParamSpecHelper.get_and_check_values(view._specs, params)
 
         self._check_number(colspan, 'Colums span')
         self._check_number(rowspan, 'Rows span')
@@ -108,7 +109,7 @@ class MultiViews(View):
         self._sub_views.append(
             {
                 "view": EmptyView(),
-                "config_params": ConfigParams(),
+                "config_params": {},
                 "colspan": colspan,
                 "rowspan": rowspan,
             }

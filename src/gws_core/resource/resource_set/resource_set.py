@@ -103,7 +103,7 @@ class ResourceSet(ResourceListBase):
         resources = self.get_resources()
 
         if not resource_name in resources:
-            raise Exception('Resource name is not set')
+            raise Exception(f'Resource with name {resource_name} not found')
 
         return resources[resource_name]
 

@@ -5,6 +5,7 @@
 
 from typing import Dict, List, Type
 
+from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import \
     BasicMessageObserver
@@ -45,6 +46,8 @@ class TaskRunner():
 
     _config_model_id: str = None
 
+    _config_params: ConfigParams = None
+
     def __init__(self, task_type: Type[Task], params: ConfigParamsDict = None, inputs: Dict[str, Resource] = None,
                  message_dispatcher: MessageDispatcher = None, config_model_id: str = None):
         self._task_type = task_type
@@ -74,7 +77,7 @@ class TaskRunner():
         :return: [description]
         :rtype: CheckBeforeTaskResult
         """
-        config_params: ConfigParams = self._get_and_check_config()
+        config_params: ConfigParams = self._build_config()
 
         # get the input without checking them
         inputs: TaskInputs = self._get_and_check_input()
@@ -100,7 +103,7 @@ class TaskRunner():
         :return: [description]
         :rtype: TaskOutputs
         """
-        config_params: ConfigParams = self._get_and_check_config()
+        config_params: ConfigParams = self._build_config()
         inputs: TaskInputs = self._get_and_check_input()
         task: Task = self._get_task_instance()
         task._status_ = 'RUN'
@@ -195,16 +198,16 @@ class TaskRunner():
     def _get_task_outputs_specs(self) -> OutputSpecs:
         return self._task_type.output_specs
 
-    def _get_and_check_config(self) -> ConfigParams:
+    def _build_config(self) -> ConfigParams:
         """Check and convert the config to ConfigParams
 
         :return: [description]
         :rtype: ConfigParams
         """
-        config: Config = Config()
-        config.set_specs(self._task_type.config_specs)
-        config.set_values(self._params)
-        return config.get_and_check_values()
+        if self._config_params is None:
+            self._config_params = ParamSpecHelper.build_config_params(self._task_type.config_specs,
+                                                                      self._params)
+        return self._config_params
 
     def _check_outputs(self, task_outputs: TaskOutputs) -> TaskOutputs:
         """Method that check if the task outputs

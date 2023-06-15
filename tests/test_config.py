@@ -7,6 +7,7 @@ from gws_core import (BaseTestCase, Config, FloatParam, ProcessFactory,
                       RobotMove, TaskModel)
 from gws_core.config.config_exceptions import MissingConfigsException
 from gws_core.config.config_types import ConfigParams
+from gws_core.config.param.param_spec_helper import ParamSpecHelper
 
 
 # test_config
@@ -20,7 +21,8 @@ class TestConfig(BaseTestCase):
         config: Config = Config()
         config.set_specs(specs)
 
-        config_params = config.get_and_check_values()
+        config_params = ParamSpecHelper.build_config_params(
+            config.get_specs(), config.get_values())
         self.assertIsInstance(config_params, ConfigParams)
         self.assertEqual(config_params["moving_step"], 0.1)
 

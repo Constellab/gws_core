@@ -4,6 +4,9 @@
 # About us: https://gencovery.com
 
 from gws_core.config.param.param_spec import StrParam
+from gws_core.credentials.credentials_param import CredentialsParam
+from gws_core.credentials.credentials_type import (CredentialsDataS3,
+                                                   CredentialsType)
 from gws_core.impl.s3.s3_bucket import S3Bucket
 from gws_core.share.resource_downloader_base import ResourceDownloaderBase
 
@@ -27,20 +30,25 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
     """
 
     config_specs: ConfigSpecs = {
-        's3_endpoint': StrParam(human_name="S3 endpoint"),
-        's3_region': StrParam(human_name="S3 region"),
-        's3_access_key_id': StrParam(human_name="S3 access key id"),
-        's3_secret_access_key': StrParam(human_name="S3 secret access key"),
-        's3_bucket': StrParam(human_name="S3 bucket name"),
+        'credentials': CredentialsParam(credentials_type=CredentialsType.S3),
         'object_key': StrParam(human_name="Key of the S3 object in bucket"),
+        's3_bucket': StrParam(human_name="S3 bucket name",
+                              short_description="If provided, override the bucket name in credentials",
+                              optional=True),
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        s3_bucket = S3Bucket(endpoint=params.get_value('s3_endpoint'),
-                             region=params.get_value('s3_region'),
-                             access_key_id=params.get_value('s3_access_key_id'),
-                             secret_access_key=params.get_value('s3_secret_access_key'),
-                             bucket_name=params.get_value('s3_bucket'),
+        credentials: CredentialsDataS3 = params.get_value('credentials')
+
+        bucket_name = credentials['bucket'] or params.get_value('s3_bucket')
+        if not bucket_name:
+            raise ValueError("Bucket name is not provided")
+
+        s3_bucket = S3Bucket(endpoint=credentials['endpoint_url'],
+                             region=credentials['region'],
+                             access_key_id=credentials['access_key_id'],
+                             secret_access_key=credentials['secret_access_key'],
+                             bucket_name=bucket_name,
                              message_dispatcher=self.message_dispatcher)
 
         # download the file

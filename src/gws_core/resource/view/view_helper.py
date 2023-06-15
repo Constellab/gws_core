@@ -37,7 +37,7 @@ class ViewHelper():
     @classmethod
     def call_view_to_dict(cls, view: View, config: ConfigParamsDict) -> Dict:
         # check the view config and set default values
-        config_params: ConfigParams = ParamSpecHelper.get_config_params(view._specs, config)
+        config_params: ConfigParams = ParamSpecHelper.build_config_params(view._specs, config)
 
         return view.to_dict(config_params)
 
@@ -48,7 +48,7 @@ class ViewHelper():
         # check the method config and set the default values
         if config is None:
             config = {}
-        config_params: ConfigParams = ParamSpecHelper.get_config_params(view_metadata.specs, config)
+        config_params: ConfigParams = ParamSpecHelper.build_config_params(view_metadata.specs, config)
 
         # Get view method
         view_method: Callable = getattr(resource, view_metadata.method_name)

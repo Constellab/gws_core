@@ -26,9 +26,6 @@ class OpenAiChatParam(ParamSpec[dict]):
         visibility: ParamSpecVisibilty = "public",
     ) -> None:
         """
-        :param default_value: Default value, if None, and optional is false, the config is mandatory
-                        If a value is provided there is no need to set the optional
-                        Setting optional to True, allows default None value
         :param optional: See default value
         :type optional: Optional[str]
         :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
@@ -38,8 +35,6 @@ class OpenAiChatParam(ParamSpec[dict]):
         :type human_name: Optional[str]
         :param short_description: Description of the param, showed in the interface
         :type short_description: Optional[str]
-        :param unit: Measure unit of the value (ex kg)
-        :type unit: Optional[str]
         """
         super().__init__(
             optional=optional,

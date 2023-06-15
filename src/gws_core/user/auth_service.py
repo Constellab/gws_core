@@ -20,7 +20,7 @@ from ..core.utils.settings import Settings
 from ..space.space_service import ExternalCheckCredentialResponse, SpaceService
 from .activity import Activity
 from .activity_service import ActivityService
-from .credentials_dto import Credentials2Fa, CredentialsDTO
+from .user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
 from .current_user_service import CurrentUserService
 from .jwt_service import JWTService
 from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
@@ -35,7 +35,7 @@ from .user_service import UserService
 class AuthService(BaseService):
 
     @classmethod
-    def login(cls, credentials: CredentialsDTO) -> JSONResponse:
+    def login(cls, credentials: UserCredentialsDTO) -> JSONResponse:
 
         # Check if user exist in the lab
         user: User
@@ -63,7 +63,7 @@ class AuthService(BaseService):
             return JSONResponse(content=content)
 
     @classmethod
-    def login_with_2fa(cls, credentials: Credentials2Fa) -> JSONResponse:
+    def login_with_2fa(cls, credentials: UserCredentials2Fa) -> JSONResponse:
 
         # Check if the code is valid
         user_space: UserSpace = SpaceService.check_2_fa(credentials)
