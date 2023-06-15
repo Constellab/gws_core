@@ -25,6 +25,8 @@ from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.resource_set.resource_set_exporter import \
     ResourceSetExporter
+from gws_core.resource.resource_set.resource_set_tasks import ResourceStacker
+from gws_core.task.task_runner import TaskRunner
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -135,3 +137,35 @@ class TestResourceSet(BaseTestCase):
         # empty resource should not be exported
         self.assertFalse(os.path.exists(
             os.path.join(dest_folder, 'empty_resource.json')))
+
+    def test_resource_stacker(self):
+        robot_1 = Robot.empty()
+        ResourceModel.save_from_resource(robot_1, ResourceOrigin.UPLOADED)
+        robot_2 = Robot.empty()
+        robot_2.name = 'robot_2'
+        ResourceModel.save_from_resource(robot_2, ResourceOrigin.UPLOADED)
+
+        robot_3 = Robot.empty()
+        robot_3.name = 'robot_3'
+        ResourceModel.save_from_resource(robot_3, ResourceOrigin.UPLOADED)
+        resource_set: ResourceSet = ResourceSet()
+        resource_set.add_resource(robot_3, create_new_resource=False)
+        ResourceModel.save_from_resource(resource_set, ResourceOrigin.UPLOADED)
+
+        task_runner = TaskRunner(ResourceStacker,
+                                 params={'resource_1_key': 'robot_1',
+                                         'resource_5_key': 'unused'},
+                                 inputs={'resource_1': robot_1,
+                                         'resource_2': robot_2,
+                                         'resource_4': resource_set})
+
+        outputs = task_runner.run()
+
+        resource_set: ResourceSet = outputs.get('resource_set')
+
+        self.assertIsInstance(resource_set, ResourceSet)
+        self.assertEqual(len(resource_set.get_resources()), 3)
+        self.assertEqual(resource_set.get_resource('robot_1').uid, robot_1.uid)
+        self.assertEqual(resource_set.get_resource('robot_2').uid, robot_2.uid)
+        # check that the sub resource set was flatten
+        self.assertEqual(resource_set.get_resource('robot_3').uid, robot_3.uid)

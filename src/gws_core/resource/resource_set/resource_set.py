@@ -77,7 +77,7 @@ class ResourceSet(ResourceListBase):
 
         if not create_new_resource and resource._model_id is None:
             raise Exception(
-                "The resource must be saved before, if you use the create_new_resource option")
+                "The resource must be saved before, if create_new_resource is False")
 
         if self._resources is None:
             self._resources = {}
