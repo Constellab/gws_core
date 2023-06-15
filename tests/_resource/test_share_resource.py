@@ -10,9 +10,9 @@ from pandas import DataFrame
 from gws_core import (BaseTestCase, ConfigParams, File, IExperiment,
                       OutputSpec, ResourceModel, ResourceSet, Settings, Table,
                       Task, TaskInputs, TaskOutputs, task_decorator)
+from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.resource_zipper import ResourceLoader
 from gws_core.share.share_service import ShareService
 from gws_core.user.current_user_service import CurrentUserService
 

@@ -14,7 +14,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
-from gws_core.resource.resource_zipper import ResourceLoader
+from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.share.shared_entity_info import (SharedEntityInfo,
                                                SharedEntityMode)
 from gws_core.share.shared_resource import SharedResource
