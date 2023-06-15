@@ -6,10 +6,10 @@
 
 from gws_core.core.classes.validator import StrValidator, Validator
 
-from ..param_spec import ParamSpec
+from ..param_spec import TextParam
 
 
-class BashCodeParam(ParamSpec[str]):
+class BashCodeParam(TextParam):
     """Param for bash code. It shows a simple bash IDE
       in the interface to provide code for bash.
       The value of this param is a string containing the bash code
@@ -22,6 +22,3 @@ class BashCodeParam(ParamSpec[str]):
     @classmethod
     def get_str_type(cls) -> str:
         return "bash_code_param"
-
-    def _get_validator(self) -> Validator:
-        return StrValidator()

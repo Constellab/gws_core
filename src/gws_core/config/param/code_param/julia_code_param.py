@@ -4,12 +4,10 @@
 # About us: https://gencovery.com
 
 
-from gws_core.core.classes.validator import StrValidator, Validator
-
-from ..param_spec import ParamSpec
+from ..param_spec import TextParam
 
 
-class JuliaCodeParam(ParamSpec[str]):
+class JuliaCodeParam(TextParam):
     """Param for julia code. It shows a simple julia IDE
       in the interface to provide code for julia.
       The value of this param is a string containing the julia code
@@ -22,6 +20,3 @@ class JuliaCodeParam(ParamSpec[str]):
     @classmethod
     def get_str_type(cls) -> str:
         return "julia_code_param"
-
-    def _get_validator(self) -> Validator:
-        return StrValidator()

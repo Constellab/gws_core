@@ -84,7 +84,7 @@ class ParamSpecHelper():
 
         # apply transform function of specs if needed
         for key, spec in param_specs.items():
-            values[key] = spec.transform(values[key])
+            values[key] = spec.build(values[key])
 
         return ConfigParams(values)
 

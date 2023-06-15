@@ -4,12 +4,10 @@
 # About us: https://gencovery.com
 
 
-from gws_core.core.classes.validator import StrValidator, Validator
-
-from ..param_spec import ParamSpec
+from gws_core.config.param.param_spec import TextParam
 
 
-class JsonCodeParam(ParamSpec[str]):
+class JsonCodeParam(TextParam):
     """Param for json code. It shows a simple json IDE
       in the interface to provide code for json.
       The value of this param is a string containing the json code
@@ -22,6 +20,3 @@ class JsonCodeParam(ParamSpec[str]):
     @classmethod
     def get_str_type(cls) -> str:
         return "json_code_param"
-
-    def _get_validator(self) -> Validator:
-        return StrValidator()

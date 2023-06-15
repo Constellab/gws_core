@@ -67,7 +67,7 @@ class CredentialsParam(ParamSpec[str]):
     def get_str_type(cls) -> str:
         return "credentials_param"
 
-    def transform(self, value: Any) -> dict:
+    def build(self, value: Any) -> dict:
         # retrieve the credentials and return it
 
         credentials: Credentials = Credentials.find_by_name(value)
@@ -84,11 +84,9 @@ class CredentialsParam(ParamSpec[str]):
         return json_
 
     def validate(self, value: Any) -> str:
-        # if this is the credentials object
+        # if this is the credentials object, retrieve the name
         if isinstance(value, dict) and 'name' in value:
             value = value['name']
 
-        return super().validate(value)
-
-    def _get_validator(self) -> Validator:
-        return StrValidator()
+        validator = StrValidator()
+        return validator.validate(value)

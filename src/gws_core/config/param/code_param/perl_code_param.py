@@ -4,12 +4,10 @@
 # About us: https://gencovery.com
 
 
-from gws_core.core.classes.validator import StrValidator, Validator
-
-from ..param_spec import ParamSpec
+from ..param_spec import TextParam
 
 
-class PerlCodeParam(ParamSpec[str]):
+class PerlCodeParam(TextParam):
     """Param for perl code. It shows a simple perl IDE
       in the interface to provide code for perl.
       The value of this param is a string containing the perl code
@@ -22,6 +20,3 @@ class PerlCodeParam(ParamSpec[str]):
     @classmethod
     def get_str_type(cls) -> str:
         return "perl_code_param"
-
-    def _get_validator(self) -> Validator:
-        return StrValidator()

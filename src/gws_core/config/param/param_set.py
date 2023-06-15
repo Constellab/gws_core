@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from gws_core.config.config_types import ConfigSpecs
 
-from ...core.classes.validator import DictValidator, ListValidator, Validator
+from ...core.classes.validator import DictValidator, ListValidator
 from .param_spec import ParamSpec, ParamSpecType
 from .param_types import ParamSpecDict, ParamSpecVisibilty
 
@@ -66,11 +66,6 @@ class ParamSet(ParamSpec[list]):
         for key, spec in self.param_set.items():
             default_value[key] = spec.get_default_value()
         return [default_value]
-
-    def _get_validator(self) -> Validator:
-        """ There is not assigne validator, instead the validate method has been overrided
-        """
-        return None
 
     def validate(self, value: List[Dict[str, Any]]) -> ParamSpecType:
         if value is None:

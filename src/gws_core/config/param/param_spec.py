@@ -6,7 +6,6 @@
 from abc import abstractmethod
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
-from fastapi.encoders import jsonable_encoder
 from typing_extensions import TypedDict
 
 from gws_core.core.utils.logger import Logger
@@ -117,18 +116,17 @@ class ParamSpec(Generic[ParamSpecType]):
             _json["allowed_values"] = self.allowed_values
         return _json
 
-    @abstractmethod
-    def _get_validator(self) -> Validator:
-        pass
-
     def validate(self, value: Any) -> ParamSpecType:
-        if value is None:
-            return None
+        """
+        Validate the value of the param and return the modified value if needed.
+        This method is called when the param is set in the config before saving it in the database.
+        """
+        return value
 
-        return self._get_validator().validate(value)
-
-    def transform(self, value: Any) -> Any:
-        """Method call before the value is used to apply some transformation if needed by the ParamSpec
+    def build(self, value: Any) -> Any:
+        """
+        Method call before the value is used (in task or view) to apply some transformation if needed by the ParamSpec.
+        This does not affect the value in the database.
         """
         return value
 
@@ -244,12 +242,16 @@ class StrParam(ParamSpec[str]):
             unit=unit,
         )
 
-    def _get_validator(self) -> Validator:
-        return StrValidator(
+    def validate(self, value: Any) -> str:
+        if value is None:
+            return value
+
+        str_validator = StrValidator(
             allowed_values=self.allowed_values,
             min_length=self.additional_info.get("min_length"),
             max_length=self.additional_info.get("max_length"),
         )
+        return str_validator.validate(value)
 
     @classmethod
     def get_str_type(cls) -> str:
@@ -291,8 +293,12 @@ class TextParam(ParamSpec[str]):
             short_description=short_description,
         )
 
-    def _get_validator(self) -> Validator:
-        return StrValidator()
+    def validate(self, value: Any) -> str:
+        if value is None:
+            return value
+
+        str_validator = StrValidator()
+        return str_validator.validate(value)
 
     @classmethod
     def get_str_type(cls) -> str:
@@ -335,8 +341,12 @@ class BoolParam(ParamSpec[bool]):
             unit=None,
         )
 
-    def _get_validator(self) -> Validator:
-        return BoolValidator()
+    def validate(self, value: Any) -> bool:
+        if value is None:
+            return value
+
+        bool_validator = BoolValidator()
+        return bool_validator.validate(value)
 
     @classmethod
     def get_str_type(cls) -> str:
@@ -346,8 +356,12 @@ class BoolParam(ParamSpec[bool]):
 class DictParam(ParamSpec[dict]):
     """Any json dict param"""
 
-    def _get_validator(self) -> Validator:
-        return DictValidator()
+    def validate(self, value: Any) -> dict:
+        if value is None:
+            return value
+
+        dict_validator = DictValidator()
+        return dict_validator.validate(value)
 
     @classmethod
     def get_str_type(cls) -> str:
@@ -357,8 +371,12 @@ class DictParam(ParamSpec[dict]):
 class ListParam(ParamSpec[list]):
     """Any list param"""
 
-    def _get_validator(self) -> Validator:
-        return ListValidator()
+    def validate(self, value: Any) -> list:
+        if value is None:
+            return value
+
+        list_validator = ListValidator()
+        return list_validator.validate(value)
 
     @classmethod
     def get_str_type(cls) -> str:
@@ -427,10 +445,6 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
             unit=unit,
         )
 
-    @abstractmethod
-    def _get_validator(self) -> Validator:
-        pass
-
     @classmethod
     @abstractmethod
     def get_str_type(cls) -> str:
@@ -440,12 +454,16 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
 class IntParam(NumericParam[int]):
     """int param"""
 
-    def _get_validator(self) -> Validator:
-        return IntValidator(
+    def validate(self, value: Any) -> int:
+        if value is None:
+            return value
+
+        int_validator = IntValidator(
             allowed_values=self.allowed_values,
             min_value=self.additional_info.get("min_value"),
             max_value=self.additional_info.get("max_value"),
         )
+        return int_validator.validate(value)
 
     @classmethod
     def get_str_type(cls) -> str:
@@ -455,12 +473,16 @@ class IntParam(NumericParam[int]):
 class FloatParam(NumericParam[float]):
     """float param"""
 
-    def _get_validator(self) -> Validator:
-        return FloatValidator(
+    def validate(self, value: Any) -> float:
+        if value is None:
+            return value
+
+        float_validator = FloatValidator(
             allowed_values=self.allowed_values,
             min_value=self.additional_info.get("min_value"),
             max_value=self.additional_info.get("max_value"),
         )
+        return float_validator.validate(value)
 
     @classmethod
     def get_str_type(cls) -> str:

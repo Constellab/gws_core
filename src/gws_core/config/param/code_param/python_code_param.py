@@ -4,12 +4,10 @@
 # About us: https://gencovery.com
 
 
-from gws_core.core.classes.validator import StrValidator, Validator
-
-from ..param_spec import ParamSpec
+from ..param_spec import TextParam
 
 
-class PythonCodeParam(ParamSpec[str]):
+class PythonCodeParam(TextParam):
     """Param for python code. It shows a simple python IDE
       in the interface to provide code for python.
       The value of this param is a string containing the python code
@@ -22,6 +20,3 @@ class PythonCodeParam(ParamSpec[str]):
     @classmethod
     def get_str_type(cls) -> str:
         return "python_code_param"
-
-    def _get_validator(self) -> Validator:
-        return StrValidator()
