@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 
-from gws_core.config.config_types import ConfigParams
+from typing import List
+
+from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
@@ -19,10 +21,20 @@ from .resource_set import ResourceSet
 @task_decorator(unique_name="ResourceStacker", short_description="Stack a set of resource in a resource set",
                 hide=False)
 class ResourceStacker(Task):
+
+    config_specs: ConfigSpecs = {
+        'resource_1_key': StrParam(optional=True, human_name='Key of resource 1 in the resource set'),
+        'resource_2_key': StrParam(optional=True, human_name='Key of resource 2 in the resource set'),
+        'resource_3_key': StrParam(optional=True, human_name='Key of resource 3 in the resource set'),
+        'resource_4_key': StrParam(optional=True, human_name='Key of resource 4 in the resource set'),
+        'resource_5_key': StrParam(optional=True, human_name='Key of resource 5 in the resource set'),
+    }
     input_specs: InputSpecs = {
         "resource_1": InputSpec(Resource),
         "resource_2": InputSpec(Resource, is_optional=True),
         "resource_3": InputSpec(Resource, is_optional=True),
+        "resource_4": InputSpec(Resource, is_optional=True),
+        "resource_5": InputSpec(Resource, is_optional=True),
     }
     output_specs: OutputSpecs = {'resource_set': OutputSpec(ResourceSet)}
 
@@ -31,36 +43,31 @@ class ResourceStacker(Task):
 
         if resource_1 is None:
             raise Exception('The first input must be provided')
-        resource_2 = inputs.get('resource_2')
-        resource_3 = inputs.get('resource_3')
+
+        resources: List[Resource] = [
+            resource_1, inputs.get('resource_2'),
+            inputs.get('resource_3'),
+            inputs.get('resource_4'),
+            inputs.get('resource_5')]
+        configs: List[str] = [params.get('resource_1_key'), params.get('resource_2_key'), params.get(
+            'resource_3_key'), params.get('resource_4_key'), params.get('resource_5_key')]
 
         resource_set: ResourceSet = ResourceSet()
 
-        self.log_info_message('Adding resource 1')
-        if isinstance(resource_1, ResourceSet):
-            # prevent nesting resource sets
-            for _, sub_resource in resource_1.get_resources().items():
-                resource_set.add_resource(sub_resource, create_new_resource=False)
-        else:
-            resource_set.add_resource(resource_1, create_new_resource=False)
+        i = 0
+        for resource in resources:
+            if resource is not None:
 
-        if resource_2 is not None:
-            self.log_info_message('Adding resource 2')
-            if isinstance(resource_2, ResourceSet):
-                # prevent nesting resource sets
-                for _, sub_resource in resource_2.get_resources().items():
-                    resource_set.add_resource(sub_resource, create_new_resource=False)
-            else:
-                resource_set.add_resource(resource_2, create_new_resource=False)
-
-        if resource_3 is not None:
-            self.log_info_message('Adding resource 3')
-            if isinstance(resource_3, ResourceSet):
-                # prevent nesting resource sets
-                for _, sub_resource in resource_3.get_resources().items():
-                    resource_set.add_resource(sub_resource, create_new_resource=False)
-            else:
-                resource_set.add_resource(resource_3, create_new_resource=False)
+                if isinstance(resource, ResourceSet):
+                    # prevent nesting resource sets
+                    self.log_info_message(f'Adding sub resource set for resource {str(i + 1)}')
+                    for _, sub_resource in resource.get_resources().items():
+                        resource_set.add_resource(sub_resource, create_new_resource=False)
+                else:
+                    resource_key = configs[i] if configs[i] is not None else resource.name
+                    self.log_info_message(f"Adding resource {str(i + 1)} with key '{resource_key}'")
+                    resource_set.add_resource(resource, resource_key, create_new_resource=False)
+            i += 1
 
         return {'resource_set': resource_set}
 
