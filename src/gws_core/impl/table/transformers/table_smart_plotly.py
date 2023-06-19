@@ -2,24 +2,24 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+import plotly.graph_objs as go
 
 from gws_core.config.config_types import ConfigParams
-from gws_core.core.utils.settings import Settings
-from gws_core.impl.file.file import File
-from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.json.json_dict import JSONDict
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
 from gws_core.impl.openai.smart_task_base import SmartTaskBase
 from gws_core.impl.table.table import Table
 from gws_core.impl.text.text import Text
+from gws_core.impl.view.plotly_view import PlotlyView
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs
 
 
-@task_decorator("SmartPlot", human_name="Smart plot generator",
+@task_decorator("SmartPlotly", human_name="Smart plotly generator",
                 short_description="Generate a plot using an AI (OpenAI).")
-class SmartPlot(SmartTaskBase):
+class SmartPlotly(SmartTaskBase):
     """
 This task is still in beta version.
 
@@ -34,52 +34,50 @@ The data of the table is not transferered to OpenAI, only the provided text.
         'source': InputSpec(Table),
     }
     output_specs: OutputSpecs = {
-        'target': OutputSpec(File, human_name='Plot', short_description='Generated plot file by the AI.'),
+        'target': OutputSpec(JSONDict, human_name='Plot', short_description='Generated plot file by the AI.'),
         'generated_code': SmartTaskBase.generated_code_output
     }
-
-    temp_dir: str
-    ouput_path: str
 
     def get_context(self, params: ConfigParams, inputs: TaskInputs) -> str:
         # prepare the input
         table: Table = inputs["source"]
 
-        context = "Your are a developer assistant that generate code in python to generate charts from dataframes."
-        context += "In python, generate a code that takes a Dataframe as input and generate a png graph using matplotlib."
+        context = "Your are a developer assistant that generate code in python to generate plotly express figure from dataframe."
         context += "The variable named 'source' contains the dataframe."
-        context += "The variable named 'output_path' contains the complete path of the output png file destination."
+        context += "The generated plotly express figure must be assigned to variable named 'target'."
+        context += "Only build the figure object, do not display the figure using 'show' method."
         context += f"{OpenAiHelper.generate_code_rules}"
         context += f"The dataframe has {table.nb_rows} rows and {table.nb_columns} columns."
+
         return context
 
     def build_openai_code_inputs(self, params: ConfigParams, inputs: TaskInputs) -> dict:
         # prepare the input
         table: Table = inputs["source"]
 
-        # execute the live code
-        self.temp_dir = Settings.make_temp_dir()
-        self.ouput_path = self.temp_dir + "/output.png"
+        return {"source": table.get_data()}
 
-        # all variable accessible in the generated code
-        return {"source": table.get_data(), 'output_path': self.ouput_path}
+    def build_task_outputs(self, params: ConfigParams, inputs: TaskInputs,
+                           code_outputs: dict, generated_code: str) -> dict:
+        target = code_outputs.get("target", None)
 
-    def build_task_outputs(
-            self, params: ConfigParams, inputs: TaskInputs, code_outputs: dict, generated_code: str) -> dict:
-        if not FileHelper.exists_on_os(self.ouput_path) or not FileHelper.is_file(self.ouput_path):
-            raise Exception("The output must be a file")
+        if target is None:
+            raise Exception("The code did not generate any output")
+
+        if not isinstance(target, go.Figure):
+            raise Exception("The output must be a plotly figure")
+
+        # convert the plotly figure to a json dict
+        view = PlotlyView(target)
+        json_dict = JSONDict(view.to_dict(ConfigParams()))
 
         # make the output code compatible with the live task
         live_task_code = f"""
-from gws_core import File
+from gws_core import File, PlotlyView, JSONDict
 import os
 source = source.get_data()
-# generate the output file path
-output_path = os.path.join(working_dir, 'output.png')
 {generated_code}
-target = File(output_path)"""
+view = PlotlyView(target)
+target = JSONDict(view.to_dict(ConfigParams()))"""
 
-        return {'target': File(self.ouput_path), 'generated_code': Text(live_task_code)}
-
-    def run_after_task(self) -> None:
-        FileHelper.delete_dir(self.temp_dir)
+        return {'target': json_dict, 'generated_code': Text(live_task_code)}

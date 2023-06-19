@@ -172,7 +172,9 @@ from .impl.live.py_live_task import PyLiveTask as PyLiveTask
 from .impl.live.py_pipenv_live_task import PyPipenvLiveTask as PyPipenvLiveTask
 from .impl.live.r_conda_live_task import RCondaLiveTask as RCondaLiveTask
 # Impl > open ai
-from .impl.openai.open_ai_helper import AiChatMessage as AiChatMessage
+from .impl.openai.open_ai_chat import AiChatMessage as AiChatMessage
+from .impl.openai.open_ai_chat import OpenAiChat as OpenAiChat
+from .impl.openai.open_ai_chat_param import OpenAiChatParam as OpenAiChatParam
 from .impl.openai.open_ai_helper import OpenAiHelper as OpenAiHelper
 # Impl > Robot
 from .impl.robot.robot_protocol import \
@@ -306,6 +308,7 @@ from .impl.view.histogram_view import HistogramView as HistogramView
 from .impl.view.image_view import ImageView as ImageView
 from .impl.view.lineplot_2d_view import LinePlot2DView as LinePlot2DView
 from .impl.view.lineplot_3d_view import LinePlot3DView as LinePlot3DView
+from .impl.view.plotly_view import PlotlyView as PlotlyView
 from .impl.view.scatterplot_2d_view import \
     ScatterPlot2DView as ScatterPlot2DView
 from .impl.view.scatterplot_3d_view import \

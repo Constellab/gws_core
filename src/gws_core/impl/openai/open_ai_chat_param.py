@@ -3,15 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional
+from typing import Any, Optional
 
 from gws_core.config.param.param_spec import DictParam
 from gws_core.config.param.param_types import ParamSpecVisibilty
+from gws_core.impl.openai.open_ai_chat import OpenAiChat
 
 
 class OpenAiChatParam(DictParam):
     """Special param for config that create a chat with open ai similar
-    to ChatGPT
+    to ChatGPT.
+
+    The value of this param will be a OpenAiChat object.
 
     :param ParamSpec: _description_
     :type ParamSpec: _type_
@@ -21,10 +24,13 @@ class OpenAiChatParam(DictParam):
 
     def __init__(
         self,
+        context: Optional[str] = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
     ) -> None:
         """
+        :param context: Context of the chat, can also be provided during run
+        :type context: str
         :param optional: See default value
         :type optional: Optional[str]
         :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
@@ -39,6 +45,10 @@ class OpenAiChatParam(DictParam):
             optional=optional,
             visibility=visibility,
         )
+        self.context = context
+
+    def build(self, value: Any) -> Any:
+        return OpenAiChat.from_json(value, context=self.context)
 
     @classmethod
     def get_str_type(cls) -> str:

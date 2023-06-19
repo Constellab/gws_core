@@ -18,6 +18,13 @@ class OpenAiChatMessage(TypedDict):
     content: str
 
 
+class AiChatMessage(OpenAiChatMessage):
+    """Overload of OpenAiChatMessage to add custom info (not sent to OpenAI)
+    but stored in the chat object
+    """
+    user_id: NotRequired[str]
+
+
 class OpenAiChatDict(TypedDict):
     """Format of the chat for OpenAI chat
 
@@ -25,13 +32,6 @@ class OpenAiChatDict(TypedDict):
     :type TypedDict: _type_
     """
     messages: List[OpenAiChatMessage]
-
-
-class AiChatMessage(OpenAiChatMessage):
-    """Overload of OpenAiChatMessage to add custom info (not sent to OpenAI)
-    but stored in the chat object
-    """
-    user_id: NotRequired[str]
 
 
 class OpenAiChat():
@@ -109,6 +109,9 @@ class OpenAiChat():
         :return: _description_
         :rtype: str
         """
-        generated_prompt = gpt_response.replace(
-            "```python", "```").replace("```R", "")
+        generated_prompt = gpt_response \
+            .replace("```python", "```") \
+            .replace("``` python", "```") \
+            .replace("```R", "") \
+            .replace("``` R", "")
         return generated_prompt.split("```")[1].strip()

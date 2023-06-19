@@ -12,11 +12,6 @@ from gws_core.impl.openai.open_ai_chat import OpenAiChat
 openai.api_key = "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"
 
 
-class AiChatMessage(TypedDict):
-    role: Literal['system', 'user', 'assistant']
-    content: str
-
-
 class OpenAiHelper():
 
     generate_code_rules = "Don't prompt the method signature.\nGenerate only 1 block of code between ``` characters."

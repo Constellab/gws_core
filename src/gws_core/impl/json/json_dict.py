@@ -4,6 +4,10 @@
 # About us: https://gencovery.com
 
 
+from gws_core.core.utils.utils import Utils
+from gws_core.resource.view.any_view import AnyView
+from gws_core.resource.view.view import View
+
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -42,6 +46,18 @@ class JSONDict(Resource):
             "Dictionnary:\n" + \
             self.data.__str__()
 
-    @view(view_type=JSONView, human_name="Default view", short_description="View the file content", default_view=True)
-    def default_view(self, _: ConfigParams) -> JSONView:
+    def get_data(self) -> dict:
+        return self.data
+
+    def equals(self, other: object) -> bool:
+        if not isinstance(other, JSONDict):
+            return False
+
+        return Utils.json_are_equals(self.data, other.data)
+
+    @view(view_type=View, human_name="Default view", short_description="View the file content", default_view=True)
+    def default_view(self, _: ConfigParams) -> View:
+        # If the json, is a json of a view
+        if View.json_is_from_view(self.data):
+            return AnyView(self.data)
         return JSONView(self.data)
