@@ -392,9 +392,8 @@ class Experiment(ModelWithUser, TaggableModel):
                 detail="Experiment is archived, please unachived it to update it")
 
     def get_process_status(self) -> ExperimentProcessStatus:
-        if self.pid == None:
+        if self.pid == None or not self.is_running:
             return ExperimentProcessStatus.NONE
-
         try:
             process = SysProc.from_pid(self.pid)
             if process.is_alive():
