@@ -420,12 +420,9 @@ class Experiment(ModelWithUser, TaggableModel):
         _json = super().to_json(deep=deep, **kwargs)
 
         _json["tags"] = self.get_tags_json()
-        _json.update({
-            "protocol": {
-                "id": self.protocol_model.id,
-                "typing_name": self.protocol_model.process_typing_name
-            },
-        })
+        _json["protocol"] = {
+            "id": self.protocol_model.id
+        }
 
         _json["pid_status"] = self.get_process_status().value
 
