@@ -13,6 +13,10 @@ class FrontService():
         return FrontService.get_app_url() + '/biox/experiment/' + experiment_id
 
     @staticmethod
+    def get_resource_url(resource_id: str) -> str:
+        return FrontService.get_app_url() + '/databox/resource/' + resource_id
+
+    @staticmethod
     def get_auto_login_url(expires_in: int) -> str:
         return Settings.get_front_url() + '/auto-login?expiresIn=' + str(expires_in)
 

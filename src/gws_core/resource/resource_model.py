@@ -281,7 +281,10 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
             if other_experiment is not None:
                 raise ResourceUsedInAnotherExperimentException(
-                    other_experiment.resource_model.name, other_experiment.experiment.get_short_name())
+                    other_experiment.resource_model.name,
+                    other_experiment.resource_model.id,
+                    other_experiment.experiment.get_short_name(),
+                    other_experiment.experiment.id)
 
             # check if it is used as source
             other_task: TaskModel = TaskModel.get_source_task_using_resource_in_another_experiment(
@@ -292,7 +295,10 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
                 resource_model: ResourceModel = [
                     x for x in resources if x.id == other_task.source_config_id][0]
                 raise ResourceUsedInAnotherExperimentException(
-                    resource_model.name, other_task.experiment.get_short_name())
+                    resource_model.name,
+                    resource_model.id,
+                    other_task.experiment.get_short_name(),
+                    other_task.experiment.id)
 
     ########################################## RESOURCE ######################################
 

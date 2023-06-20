@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict
 
+from gws_core.core.service.front_service import FrontService
+
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
@@ -66,8 +68,14 @@ class ExperimentRunException(BadRequestException):
 
 
 class ResourceUsedInAnotherExperimentException(BadRequestException):
-    def __init__(self, resource_model_name: str, experiment: str) -> None:
+    def __init__(self, resource_model_name: str, resource_id: str,
+                 experiment_name: str, experiment_id: str) -> None:
         super().__init__(
             GWSException.RESET_ERROR_RESOURCE_USED_IN_ANOTHER_EXPERIMENT.value,
             unique_code=GWSException.RESET_ERROR_RESOURCE_USED_IN_ANOTHER_EXPERIMENT.name,
-            detail_args={"resource_model_name": resource_model_name, "experiment": experiment})
+            detail_args={
+                "resource_model_name": resource_model_name,
+                "resource_url": FrontService.get_resource_url(resource_id),
+                "experiment": experiment_name,
+                "experiment_url": FrontService.get_experiment_url(experiment_id)
+            })
