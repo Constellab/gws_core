@@ -5,25 +5,25 @@
 import plotly.graph_objs as go
 
 from gws_core.config.config_types import ConfigParams
-from gws_core.impl.json.json_dict import JSONDict
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
 from gws_core.impl.openai.smart_task_base import SmartTaskBase
 from gws_core.impl.table.table import Table
 from gws_core.impl.text.text import Text
-from gws_core.impl.view.plotly_view import PlotlyView
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs
 
+from .plotly_resource import PlotlyResource
 
-@task_decorator("SmartPlotly", human_name="Smart plotly generator",
-                short_description="Generate a plot using an AI (OpenAI).")
+
+@task_decorator("SmartPlotly", human_name="Smart interactive plot generator",
+                short_description="Generate an interactive plot using an AI (OpenAI).")
 class SmartPlotly(SmartTaskBase):
     """
 This task is still in beta version.
 
-This task uses openAI API to generate python code that generate a chart using matplotlib library. This code is then automaticaaly executed.
+This task uses openAI API to generate python code that generate an interactive chart using plotly library. This code is then automatically executed.
 
 /!\ This task does not support table tags.
 
@@ -34,7 +34,7 @@ The data of the table is not transferered to OpenAI, only the provided text.
         'source': InputSpec(Table),
     }
     output_specs: OutputSpecs = {
-        'target': OutputSpec(JSONDict, human_name='Plot', short_description='Generated plot file by the AI.'),
+        'target': OutputSpec(PlotlyResource, human_name='Plot', short_description='Generated plot file by the AI.'),
         'generated_code': SmartTaskBase.generated_code_output
     }
 
@@ -68,16 +68,14 @@ The data of the table is not transferered to OpenAI, only the provided text.
             raise Exception("The output must be a plotly figure")
 
         # convert the plotly figure to a json dict
-        view = PlotlyView(target)
-        json_dict = JSONDict(view.to_dict(ConfigParams()))
+        plotly_resource = PlotlyResource(target)
 
         # make the output code compatible with the live task
         live_task_code = f"""
-from gws_core import File, PlotlyView, JSONDict
+from gws_core import File, PlotlyResource
 import os
 source = source.get_data()
 {generated_code}
-view = PlotlyView(target)
-target = JSONDict(view.to_dict(ConfigParams()))"""
+target = PlotlyResource(target)"""
 
-        return {'target': json_dict, 'generated_code': Text(live_task_code)}
+        return {'target': plotly_resource, 'generated_code': Text(live_task_code)}

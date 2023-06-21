@@ -176,6 +176,10 @@ from .impl.openai.open_ai_chat import AiChatMessage as AiChatMessage
 from .impl.openai.open_ai_chat import OpenAiChat as OpenAiChat
 from .impl.openai.open_ai_chat_param import OpenAiChatParam as OpenAiChatParam
 from .impl.openai.open_ai_helper import OpenAiHelper as OpenAiHelper
+# Impl > Plotly
+from .impl.plotly.plotly_r_field import PlotlyRField as PlotlyRField
+from .impl.plotly.plotly_resource import PlotlyResource as PlotlyResource
+from .impl.plotly.plotly_view import PlotlyView as PlotlyView
 # Impl > Robot
 from .impl.robot.robot_protocol import \
     RobotSuperTravelProto as RobotSuperTravelProto
@@ -308,7 +312,6 @@ from .impl.view.histogram_view import HistogramView as HistogramView
 from .impl.view.image_view import ImageView as ImageView
 from .impl.view.lineplot_2d_view import LinePlot2DView as LinePlot2DView
 from .impl.view.lineplot_3d_view import LinePlot3DView as LinePlot3DView
-from .impl.view.plotly_view import PlotlyView as PlotlyView
 from .impl.view.scatterplot_2d_view import \
     ScatterPlot2DView as ScatterPlot2DView
 from .impl.view.scatterplot_3d_view import \

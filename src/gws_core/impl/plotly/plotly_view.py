@@ -3,11 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from json import loads
-
 import plotly.graph_objs as go
 
 from gws_core.config.config_types import ConfigParams
+from gws_core.impl.plotly.plotly_r_field import PlotlyRField
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import ViewType
 
@@ -42,5 +41,4 @@ class PlotlyView(View):
     def data_to_dict(self, params: ConfigParams) -> dict:
         # convert the figure to json
         # the to_dict was not serializable
-        json_str = self.figure.to_json()
-        return loads(json_str)
+        return PlotlyRField.figure_to_dict(self.figure)
