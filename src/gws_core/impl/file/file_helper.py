@@ -231,6 +231,19 @@ class FileHelper():
         shutil.copyfile(source_path, destination_path)
 
     @classmethod
+    def copy_dir(cls, source_path: PathType, destination_path: PathType) -> None:
+        """Copy a directory from source to destination"""
+        shutil.copytree(source_path, destination_path)
+
+    @classmethod
+    def copy_node(cls, source_path: PathType, destination_path: PathType) -> None:
+        """Copy a file or a directory from source to destination"""
+        if cls.is_dir(source_path):
+            cls.copy_dir(source_path, destination_path)
+        else:
+            cls.copy_file(source_path, destination_path)
+
+    @classmethod
     def move_file_or_dir(cls, source_path: PathType, destination_path: PathType) -> None:
         """Move a file or a directory from source to destination"""
         shutil.move(str(source_path), str(destination_path))

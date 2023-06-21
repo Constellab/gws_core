@@ -66,10 +66,6 @@ class Converter(Task):
         if target is None:
             raise Exception('The target resource is None')
 
-        if target.name is None:
-            # set the target name source name
-            target.name = resource.name
-
         return {Converter.output_name: target}
 
     @abstractmethod

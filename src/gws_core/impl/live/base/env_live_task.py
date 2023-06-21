@@ -10,6 +10,7 @@ from typing import List, Optional
 
 from gws_core.config.param.param_spec import ListParam, ParamSpec
 from gws_core.core.utils.settings import Settings
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.resource import Resource
@@ -121,17 +122,28 @@ class EnvLiveTask(Task):
         elif isinstance(source, ResourceSet):
             source_folder = Settings.make_temp_dir()
 
-            count = 0
-            for sub_resources in source.get_resources().values():
-                if isinstance(sub_resources, FSNode):
-                    temp_file_path = os.path.join(
-                        source_folder, sub_resources.get_default_name())
-                    shutil.copyfile(sub_resources.path, temp_file_path)
-                    count += 1
+            added_fs_nodes: List[str] = []
+            skipped_resources: List[str] = []
 
-            if count == 0:
+            for sub_resource in source.get_resources().values():
+                if isinstance(sub_resource, FSNode):
+                    temp_file_path = os.path.join(
+                        source_folder, sub_resource.get_default_name())
+
+                    FileHelper.copy_node(sub_resource.path, temp_file_path)
+                    added_fs_nodes.append(sub_resource.get_default_name())
+                else:
+                    skipped_resources.append(sub_resource.name)
+
+            if len(skipped_resources) > 0:
+                self.log_warning_message(
+                    f"The resources {skipped_resources} are not a file or folder. They were skipped and not added to source_path. To include them you must convert theses resources to file or folder (using exporter).")
+
+            if len(added_fs_nodes) == 0:
                 raise BadRequestException(
                     "ResourceSet input does not contain any file or folder.")
+
+            self.log_info_message(f"Added {added_fs_nodes} to source_path.")
 
             return source_folder
         else:
