@@ -68,7 +68,7 @@ class Transformer(Converter):
             # set the target name source name
             target.name = source.name
 
-        return target_type
+        return target
 
     @abstractmethod
     def transform(self, source: Resource, params: ConfigParams) -> Resource:

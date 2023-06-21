@@ -118,7 +118,7 @@ class MultiViews(View):
     def data_to_dict(self, params: ConfigParams) -> dict:
         views_dict: List[dict] = []
         for sub_view in self._sub_views:
-            view_dict = sub_view["view"].to_dict(sub_view["config_params"])
+            view_dict = sub_view["view"].to_dict(ConfigParams(sub_view["config_params"]))
             views_dict.append({
                 "view": view_dict,
                 "colspan": sub_view["colspan"],
