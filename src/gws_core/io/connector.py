@@ -118,6 +118,11 @@ class Connector:
         """
         return self.left_process.instance_name == process_model_name and self.left_port_name == port_name
 
+    def reset_right_port(self) -> None:
+        """ reset the right port
+        """
+        self.right_port.reset()
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Connector):
             return False

@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Optional, Set, Type
+from typing import List, Literal, Optional, Set, Type
 
 from gws_core.protocol.protocol_dto import ProtocolUpdateDTO
 from gws_core.protocol.protocol_layout import (ProcessLayout, ProtocolLayout,
@@ -105,6 +105,9 @@ class ProtocolService(BaseService):
             process_model=process_model, instance_name=instance_name)
         # save the new process
         process_model.save_full()
+
+        if process_model.is_source_task():
+            process_model.run()
 
         # Refresh the protocol graph and save
         protocol_model.save_graph()
@@ -279,11 +282,11 @@ class ProtocolService(BaseService):
 
     @classmethod
     def _on_protocol_object_updated(cls, protocol_model: ProtocolModel, process_model: ProcessModel = None,
-                                    connector: Connector = None) -> ProtocolUpdateDTO:
+                                    connector: Connector = None, protocol_updated: bool = False) -> ProtocolUpdateDTO:
         """Called when a process or connector is updated.
         """
         protocol_update = ProtocolUpdateDTO(protocol=protocol_model, process=process_model,
-                                            connector=connector)
+                                            connector=connector, protocol_updated=protocol_updated)
         if protocol_model.is_finished:
             protocol_model.mark_as_partially_run()
             protocol_update.protocol_updated = True
@@ -319,7 +322,7 @@ class ProtocolService(BaseService):
                                                  to_process_name, to_port_name)
         protocol_model.save_graph()
 
-        return cls._on_connector_updated(protocol_model, connector)
+        return cls._on_connector_updated(protocol_model, connector, 'create')
 
     @classmethod
     def delete_connector_of_protocol(
@@ -333,10 +336,11 @@ class ProtocolService(BaseService):
             dest_process_name, dest_process_port_name)
         protocol_model.save_graph()
 
-        return cls._on_connector_updated(protocol_model, connector)
+        return cls._on_connector_updated(protocol_model, connector, 'delete')
 
     @classmethod
-    def _on_connector_updated(cls, protocol: ProtocolModel, connector: Optional[Connector]) -> ProtocolUpdateDTO:
+    def _on_connector_updated(cls, protocol: ProtocolModel, connector: Optional[Connector],
+                              mode: Literal['create', 'delete']) -> ProtocolUpdateDTO:
         if connector is None:
             return ProtocolUpdateDTO(protocol=protocol)
 
@@ -348,7 +352,21 @@ class ProtocolService(BaseService):
             update_protocol.protocol_updated = True
             return update_protocol
 
-        return cls._on_protocol_object_updated(protocol_model=protocol, connector=connector)
+        protocol_updated = False
+
+        if mode == 'create':
+            # automatically propagate the resource if the left port has a resource
+            if connector.left_port.resource_model:
+                # left_process.run()
+                connector.propagate_resource()
+                protocol_updated = True
+        else:
+            # in delete mode we always consider the protocol as updated
+            # because the next port is resetted
+            protocol_updated = True
+
+        return cls._on_protocol_object_updated(
+            protocol_model=protocol, connector=connector, protocol_updated=protocol_updated)
 
     ########################## INTERFACE & OUTERFACE #####################
 
@@ -471,8 +489,8 @@ class ProtocolService(BaseService):
         """ Add a source task to the protocol. Configure it with the resource. And add connector
             from source to process
         """
-        return cls.add_process_connected_to_input(protocol_id, Source._typing_name, process_name, input_port_name,
-                                                  {Source.config_name: resource_id})
+        return cls.add_process_connected_to_input(
+            protocol_id, Source._typing_name, process_name, input_port_name, {Source.config_name: resource_id})
 
     @classmethod
     def add_sink_to_process_ouput(

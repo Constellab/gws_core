@@ -93,8 +93,11 @@ class ProtocolModel(ProcessModel):
 
         super().reset()
         for process in self.processes.values():
-            process.reset()
+            # reset all process execpt the source
+            if not process.is_source_task():
+                process.reset()
         self._reset_iofaces()
+
         return self.save_graph()
 
     @transaction()
@@ -590,6 +593,8 @@ class ProtocolModel(ProcessModel):
     def _delete_connector_from_list(self, connectors_to_delete: List[Connector]) -> None:
         """remove all the connectors in the list
         """
+        for connector in connectors_to_delete:
+            connector.reset_right_port()
         self._connectors = [
             item for item in self.connectors if item not in connectors_to_delete]
 
