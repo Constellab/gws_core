@@ -237,8 +237,7 @@ class ResourceService(BaseService):
     @classmethod
     def call_view_on_resource_model(cls, resource_model: ResourceModel,
                                     view_name: str, config_values: Dict[str, Any],
-                                    save_view_config: bool = False,
-                                    view_config: ViewConfig = None) -> CallViewResult:
+                                    save_view_config: bool = False) -> CallViewResult:
 
         resource: Resource = resource_model.get_resource()
 
@@ -249,8 +248,8 @@ class ResourceService(BaseService):
         view_dict = ViewHelper.call_view_to_dict(view, config_values)
 
         # Save the view config
-        view_config: ViewConfig = view_config
-        if save_view_config and not view_config:
+        view_config: ViewConfig = None
+        if save_view_config:
             view_config = ViewConfigService.save_view_config(
                 resource_model, view, view_name, config_values)
 
@@ -266,7 +265,7 @@ class ResourceService(BaseService):
 
         return cls.call_view_on_resource_model(
             view_config.resource_model, view_name=view_config.view_name, config_values=view_config.config_values,
-            save_view_config=False, view_config=view_config)
+            save_view_config=True)
 
     @classmethod
     def get_view_on_resource(cls, resource: Resource,
