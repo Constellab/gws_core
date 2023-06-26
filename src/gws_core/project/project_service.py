@@ -82,10 +82,12 @@ class ProjectService(BaseService):
 
         # check if one of the experiment is attached to the project
         if Experiment.select().where(Experiment.project.in_(projects)).count() > 0:
-            raise BadRequestException(GWSException.DELETE_PROJECT_WITH_EXPERIMENTS)
+            raise BadRequestException(detail=GWSException.DELETE_PROJECT_WITH_EXPERIMENTS.value,
+                                      unique_code=GWSException.DELETE_PROJECT_WITH_EXPERIMENTS.name)
 
         # check if one of the report is attached to the project
         if Report.select().where(Report.project.in_(projects)).count() > 0:
-            raise BadRequestException(GWSException.DELETE_PROJECT_WITH_REPORTS)
+            raise BadRequestException(detail=GWSException.DELETE_PROJECT_WITH_REPORTS.value,
+                                      unique_code=GWSException.DELETE_PROJECT_WITH_REPORTS.name)
 
         project.delete_instance()

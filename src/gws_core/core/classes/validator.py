@@ -95,13 +95,13 @@ class Validator:
 
             if type(value) != self._type:
                 raise BadRequestException(
-                    f"The value {value} is of type {type(value)} but it expected a {self._type}"
+                    f"The value {value} is of type {type(value).__name__} but it expected a {self._type.__name__}"
                 )
 
             return value
         else:
             raise BadRequestException(
-                f"The value {value} is of type {type(value)} but it expected a {self._type}"
+                f"The value {value} is of type {type(value).__name__} but it expected a {self._type.__name__}"
             )
 
     def _check_allowed_values(self, value: Any) -> None:
