@@ -52,17 +52,6 @@ class TaskModel(ProcessModel):
 
     _table_name = 'gws_task'
 
-    def _init_io_from_data(self):
-        """Method used when instantiating a TaskModel from the DB, it init the input and output from the
-          data object and it does not use the task specs
-        """
-
-        # init the inputs from the data object
-        self._init_inputs_from_data()
-
-        # init the outputs from the data object
-        self._init_outputs_from_data()
-
     def create_source_zip(self):
         """
         Returns the zipped code source of the task

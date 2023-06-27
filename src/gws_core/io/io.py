@@ -213,7 +213,7 @@ class IO(Base, Generic[PortType]):
             port: PortType = port_type.load_from_json(port_dict, key)
 
             if port_dict["resource_id"]:
-                resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
+                resource_model: ResourceModel = ResourceModel.get_by_id(
                     port_dict["resource_id"])
                 port.resource_model = resource_model
 
