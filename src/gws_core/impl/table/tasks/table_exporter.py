@@ -25,7 +25,7 @@ class TableExporter(ResourceExporter):
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, short_description="Delimiter character. Only for CSV files"),
         # 'write_metadata': BoolParam(default_value=True, short_description="Set True to write metadata"),
         'write_header': BoolParam(default_value=True, visibility=BoolParam.PROTECTED_VISIBILITY, short_description="Set True to write column names (header), False otherwise"),
-        'write_index': BoolParam(default_value=True, visibility=BoolParam.PROTECTED_VISIBILITY, short_description="Set True to write row names (index), False otherwise"),
+        'write_index': BoolParam(default_value=False, visibility=BoolParam.PROTECTED_VISIBILITY, short_description="Set True to write row names (index), False otherwise"),
     }
 
     def export_to_path(self, source: Table, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
@@ -46,8 +46,9 @@ class TableExporter(ResourceExporter):
             source.get_data().to_csv(
                 file_path,
                 sep=sep,
-                header=params.get_value('write_header', True),
-                index=params.get_value('write_index', True)
+                header=params.get_value('write_header'),
+                index=params.get_value('write_index'),
+                index_label="index"
             )
 
             comments = source.comments
