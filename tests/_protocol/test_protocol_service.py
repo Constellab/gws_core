@@ -50,6 +50,12 @@ class TestProtocolService(BaseTestCase):
             Source.config_name), resource_model.id)
         # check that the source_config_id is set for the task model
         self.assertEqual(source_model.source_config_id, resource_model.id)
+        # Check that the source was automatically run
+        self.assertTrue(source_model.is_finished)
+
+        # check that the robot_move received the resource because Source was run
+        process_model = process_model.refresh()
+        self.assertEqual(process_model.in_port('robot').resource_model.id, resource_model.id)
 
         # Check that the connector was created
         self.assertEqual(len(protocol_model.connectors), 1)

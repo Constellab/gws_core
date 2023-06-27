@@ -357,8 +357,9 @@ class ProtocolService(BaseService):
         if mode == 'create':
             # automatically propagate the resource if the left port has a resource
             if connector.left_port.resource_model:
-                # left_process.run()
                 connector.propagate_resource()
+                # save the right process to save its inputs
+                connector.right_process.save()
                 protocol_updated = True
         else:
             # in delete mode we always consider the protocol as updated

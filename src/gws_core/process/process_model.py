@@ -143,11 +143,6 @@ class ProcessModel(ModelWithUser):
         process_model = self.save()
         return process_model
 
-    @transaction()
-    def reset_v2(self) -> 'ProcessModel':
-
-        self.reset()
-
     def _reset_io(self):
         self.inputs.reset()
         self.outputs.reset()
@@ -158,6 +153,19 @@ class ProcessModel(ModelWithUser):
         """Method called after the task to save the process
         """
         self.save()
+
+    def save(self, *args, **kwargs) -> 'ProcessModel':
+        """Override save to save the inputs and outputs
+        """
+
+        # if inputs were loaded, save them
+        if self._inputs:
+            self.data["inputs"] = self.inputs.to_json()
+
+        # if outputs were loaded, save them
+        if self._outputs:
+            self.data["outputs"] = self.outputs.to_json()
+        return super().save(*args, **kwargs)
 
     def save_full(self) -> 'ProcessModel':
         """Function to run overrided by the sub classes

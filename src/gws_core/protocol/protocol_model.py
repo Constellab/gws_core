@@ -93,10 +93,19 @@ class ProtocolModel(ProcessModel):
 
         super().reset()
         for process in self.processes.values():
-            # reset all process execpt the source
-            if not process.is_source_task():
-                process.reset()
+            # # reset all process except the source
+            # if not process.is_source_task():
+            process.reset()
         self._reset_iofaces()
+
+        # auto execute the source task
+        for process in self.processes.values():
+            if process.is_source_task():
+                process.run()
+
+        # re-propagate the resources (because source task has been executed)
+        # and save processes
+        self.propagate_resources()
 
         return self.save_graph()
 
@@ -620,6 +629,10 @@ class ProtocolModel(ProcessModel):
     def propagate_resources(self) -> None:
         for connector in self.connectors:
             connector.propagate_resource()
+
+        # save processes to update inputs and outputs
+        for process in self.processes.values():
+            process.save()
 
     ############################### INPUTS #################################
 
