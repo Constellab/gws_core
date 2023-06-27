@@ -440,8 +440,6 @@ from .test.base_test_case import BaseTestCase as BaseTestCase
 from .test.gtest import GTest as GTest
 from .test.view_tester import ViewTester as ViewTester
 # User
-from .user.activity import Activity as Activity
-from .user.activity_service import ActivityService as ActivityService
 from .user.auth_service import AuthService as AuthService
 from .user.current_user_service import CurrentUserService as CurrentUserService
 from .user.user import User as User

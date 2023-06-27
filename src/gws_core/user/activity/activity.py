@@ -2,13 +2,33 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+
+from enum import Enum
 from typing import final
 
 from peewee import CharField, ForeignKeyField
 
-from ..core.model.model import Model
-from .current_user_service import CurrentUserService
-from .user import User
+from gws_core.core.classes.enum_field import EnumField
+
+from ...core.model.model import Model
+from ..current_user_service import CurrentUserService
+from ..user import User
+
+
+class ActivityType(Enum):
+    CREATE = "CREATE"
+    DELETE = "DELETE"
+    ARCHIVE = "ARCHIVE"
+    UNARCHIVE = "UNARCHIVE"
+    VALIDATE = "VALIDATE"
+    HTTP_AUTHENTICATION = "HTTP_AUTHENTICATION"
+    RUN_EXPERIMENT = "RUN_EXPERIMENT"
+
+
+class ActivityObjectType(Enum):
+    EXPERIMENT = "EXPERIMENT"
+    USER = "USER"
+    REPORT = "REPORT"
 
 
 @final
@@ -17,25 +37,12 @@ class Activity(Model):
     (User) Activity class
     """
 
-    user: User = ForeignKeyField(User, null=False, index=True)
-    activity_type = CharField(null=False, index=True)
-    object_type = CharField(null=True, index=True)
-    object_id = CharField(null=True, index=True)
+    user: User = ForeignKeyField(User, null=False)
+    activity_type = EnumField(choices=ActivityType, null=False)
+    object_type = EnumField(choices=ActivityObjectType, null=False)
+    object_id = CharField(null=False, max_length=36)
 
     _table_name = "gws_user_activity"
-
-    CREATE = "CREATE"
-    UPDATE = "UPDATE"
-    SAVE = "SAVE"
-    START = "START"
-    STOP = "STOP"
-    DELETE = "DELETE"
-    ARCHIVE = "ARCHIVE"
-    VALIDATE_EXPERIMENT = "VALIDATE_EXPERIMENT"
-    HTTP_AUTHENTICATION = "HTTP_AUTHENTICATION"
-    HTTP_UNAUTHENTICATION = "HTTP_UNAUTHENTICATION"
-    CONSOLE_AUTHENTICATION = "CONSOLE_AUTHENTICATION"
-    CONSOLE_UNAUTHENTICATION = "CONSOLE_UNAUTHENTICATION"
 
     def archive(self, archive: bool) -> None:
         """
@@ -45,7 +52,8 @@ class Activity(Model):
         return None
 
     @classmethod
-    def add(cls, activity_type: str, object_type: str = None, object_id: str = None, user: User = None):
+    def add(cls, activity_type: ActivityType, object_type: ActivityObjectType,
+            object_id: str, user: User = None):
         if user is None:
             user = CurrentUserService.get_and_check_current_user()
         activity = Activity(

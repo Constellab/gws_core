@@ -7,8 +7,9 @@
 from time import sleep
 
 from gws_core.test.base_test_case import BaseTestCase
-from gws_core.user.activity import Activity
-from gws_core.user.activity_service import ActivityService
+from gws_core.user.activity.activity import (Activity, ActivityObjectType,
+                                             ActivityType)
+from gws_core.user.activity.activity_service import ActivityService
 
 
 # test_activity
@@ -21,18 +22,18 @@ class TestActivity(BaseTestCase):
         self.assertIsNone(last_activity)
 
         ActivityService.add(
-            Activity.CREATE, object_type="test", object_id="test")
+            ActivityType.CREATE, object_type=ActivityObjectType.EXPERIMENT, object_id="test")
 
         sleep(1.5)
 
         ActivityService.add(
-            Activity.UPDATE, object_type="test", object_id="test")
+            ActivityType.DELETE, object_type=ActivityObjectType.EXPERIMENT, object_id="test")
 
         last_activity = ActivityService.get_last_activity()
 
         self.assertIsNotNone(last_activity)
-        self.assertEqual(last_activity.activity_type, Activity.UPDATE)
-        self.assertEqual(last_activity.object_type, "test")
+        self.assertEqual(last_activity.activity_type, ActivityType.DELETE)
+        self.assertEqual(last_activity.object_type, ActivityObjectType.EXPERIMENT)
         self.assertEqual(last_activity.object_id, "test")
         self.assertIsNotNone(last_activity.user)
         self.assertIsNotNone(last_activity.to_json())

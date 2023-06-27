@@ -18,15 +18,15 @@ from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..space.space_service import ExternalCheckCredentialResponse, SpaceService
-from .activity import Activity
-from .activity_service import ActivityService
-from .user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
+from .activity.activity import Activity, ActivityObjectType, ActivityType
+from .activity.activity_service import ActivityService
 from .current_user_service import CurrentUserService
 from .jwt_service import JWTService
 from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .unique_code_service import (CodeObject, InvalidUniqueCodeException,
                                   UniqueCodeService)
 from .user import User, UserDataDict
+from .user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
 from .user_dto import UserLoginInfo, UserSpace
 from .user_exception import InvalidTokenException, WrongCredentialsException
 from .user_service import UserService
@@ -77,7 +77,8 @@ class AuthService(BaseService):
     @classmethod
     def log_user(cls, user: User) -> JSONResponse:
         # now save user activity
-        ActivityService.add(Activity.HTTP_AUTHENTICATION, object_type=User._typing_name, object_id=user.id, user=user)
+        ActivityService.add(ActivityType.HTTP_AUTHENTICATION,
+                            object_type=ActivityObjectType.USER, object_id=user.id, user=user)
 
         access_token = cls.generate_user_access_token(user.id)
 

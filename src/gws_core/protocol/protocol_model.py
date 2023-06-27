@@ -19,7 +19,7 @@ from ..io.port import InPort, OutPort, Port
 from ..process.process_model import ProcessModel, ProcessStatus
 from ..process.protocol_sub_process_builder import (
     ProtocolSubProcessBuilder, SubProcessBuilderReadFromDb)
-from ..user.activity import Activity
+from ..user.activity.activity import Activity
 from ..user.user import User
 from .protocol_layout import ProtocolLayout
 
@@ -108,17 +108,6 @@ class ProtocolModel(ProcessModel):
         self.propagate_resources()
 
         return self.save_graph()
-
-    @transaction()
-    def save(self, *args, **kwargs) -> 'ProtocolModel':
-        if not self.is_saved():
-            Activity.add(
-                Activity.CREATE,
-                object_type=self.full_classname(),
-                object_id=self.id
-            )
-
-        return super().save(*args, **kwargs)
 
     @transaction()
     def save_graph(self) -> 'ProtocolModel':

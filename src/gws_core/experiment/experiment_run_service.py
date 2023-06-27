@@ -20,8 +20,8 @@ from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..experiment.experiment_exception import ExperimentRunException
-from ..user.activity import Activity
-from ..user.activity_service import ActivityService
+from ..user.activity.activity import Activity, ActivityObjectType, ActivityType
+from ..user.activity.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from .experiment import Experiment
@@ -69,8 +69,8 @@ class ExperimentRunService():
             Logger.info(f"Running experiment : {experiment.id}")
 
             ActivityService.add(
-                Activity.START,
-                object_type=experiment.full_classname(),
+                ActivityType.RUN_EXPERIMENT,
+                object_type=ActivityObjectType.EXPERIMENT,
                 object_id=experiment.id,
                 user=user
             )

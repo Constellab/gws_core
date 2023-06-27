@@ -29,8 +29,8 @@ from ..protocol.protocol_service import ProtocolService
 from ..space.space_dto import SaveExperimentToSpaceDTO
 from ..space.space_service import SpaceService
 from ..task.task_model import TaskModel
-from ..user.activity import Activity
-from ..user.activity_service import ActivityService
+from ..user.activity.activity import Activity, ActivityObjectType, ActivityType
+from ..user.activity.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from .experiment import Experiment
@@ -214,8 +214,8 @@ class ExperimentService(BaseService):
         experiment.validate()
 
         user: User = CurrentUserService.get_and_check_current_user()
-        ActivityService.add(Activity.VALIDATE_EXPERIMENT,
-                            object_type=Experiment.full_classname(),
+        ActivityService.add(ActivityType.VALIDATE,
+                            object_type=ActivityObjectType.EXPERIMENT,
                             object_id=experiment.id,
                             user=user)
 

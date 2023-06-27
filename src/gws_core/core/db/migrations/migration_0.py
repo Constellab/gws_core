@@ -12,6 +12,7 @@ from peewee import BigIntegerField, CharField
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
 from gws_core.config.param.param_types import ParamSpecDict
+from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.experiment.experiment import Experiment
@@ -40,6 +41,8 @@ from gws_core.tag.taggable_model import TaggableModel
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
+from gws_core.user.activity.activity import (Activity, ActivityObjectType,
+                                             ActivityType)
 from gws_core.user.user import User
 
 from ...utils.logger import Logger
@@ -692,4 +695,37 @@ class Migration055(BrickMigration):
         migrator.add_column_if_not_exists(Monitor, Monitor.gpu_memory_free)
         migrator.add_column_if_not_exists(Monitor, Monitor.gpu_memory_used)
         migrator.add_column_if_not_exists(Monitor, Monitor.gpu_memory_percent)
+        migrator.migrate()
+
+
+@brick_migration('0.5.7', short_description='Clean activity table')
+class Migration057(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        # remove all activities related to protocol model
+        Activity.delete().where(
+            (Activity.object_type == "gws_core.protocol.protocol_model.ProtocolModel") &
+            (Activity.activity_type == "CREATE")).execute()
+
+        Activity.update(object_type=ActivityObjectType.EXPERIMENT.value).where(
+            Activity.object_type == "gws_core.experiment.experiment.Experiment").execute()
+
+        Activity.update(object_type=ActivityType.VALIDATE.value).where(
+            Activity.activity_type == "VALIDATE_EXPERIMENT").execute()
+
+        Activity.update(activity_type=ActivityType.RUN_EXPERIMENT.value).where(
+            Activity.activity_type == "START").execute()
+
+        Activity.update(object_type=ActivityObjectType.USER.value).where(
+            Activity.object_type.is_null()).execute()
+
+        migrator: SqlMigrator = SqlMigrator(Activity.get_db())
+        migrator.drop_index_if_exists(Activity, "activity_activity_type")
+        migrator.drop_index_if_exists(Activity, "activity_object_type")
+        migrator.drop_index_if_exists(Activity, "activity_object_id")
+        migrator.alter_column_type(Activity, Activity.object_type.column_name,
+                                   EnumField(choices=ActivityType, null=False))
+        migrator.alter_column_type(Activity, Activity.object_id.column_name, CharField(null=False, max_length=36))
         migrator.migrate()

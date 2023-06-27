@@ -5,15 +5,13 @@
 
 from typing import List, Union
 
-from peewee import ModelSelect
-
 from gws_core.core.utils.logger import Logger
 from gws_core.space.space_service import SpaceService
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
-from .activity import Activity
+from .activity.activity import Activity
 from .user import User, UserDataDict
 from .user_group import UserGroup
 

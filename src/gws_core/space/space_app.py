@@ -14,7 +14,7 @@ from starlette.exceptions import HTTPException
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.project.project_dto import SpaceProject
 from gws_core.project.project_service import ProjectService
-from gws_core.user.activity_service import ActivityService
+from gws_core.user.activity.activity_service import ActivityService
 
 from ..core.exception.exception_handler import ExceptionHandler
 from ..core.service.settings_service import SettingsService
