@@ -89,10 +89,7 @@ class Model(BaseModel, PeeweeModel):
         if self.is_archived == archive:
             return self
         self.is_archived = archive
-        cls = type(self)
-        return self.save(only=[cls.is_archived])
-
-    # -- C --
+        return self.save()
 
     def _create_hash_object(self):
         hash_obj = hashlib.blake2b()

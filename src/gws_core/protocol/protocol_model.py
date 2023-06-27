@@ -73,7 +73,7 @@ class ProtocolModel(ProcessModel):
         return self
 
     @transaction()
-    def archive(self, archive: bool, archive_resources=True) -> 'ProtocolModel':
+    def archive(self, archive: bool) -> 'ProtocolModel':
         """
         Archive the protocol
         """
@@ -82,7 +82,7 @@ class ProtocolModel(ProcessModel):
             return self
 
         for process in self.processes.values():
-            process.archive(archive, archive_resources=archive_resources)
+            process.archive(archive)
         return super().archive(archive)
 
     @transaction()

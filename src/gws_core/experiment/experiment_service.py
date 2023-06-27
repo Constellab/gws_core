@@ -258,6 +258,29 @@ class ExperimentService(BaseService):
             experiment.project.id, save_experiment_dto)
         return experiment
 
+    ################################### ARCHIVE  ##############################
+
+    @classmethod
+    def archive_experiment_by_id(cls, id: str) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id)
+
+        if experiment.is_archived:
+            raise BadRequestException("The experiment is already archived")
+
+        if experiment.is_running:
+            raise BadRequestException("You can't archive an experiment that is running")
+
+        return experiment.archive(archive=True)
+
+    @classmethod
+    def unarchive_experiment_by_id(cls, id: str) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id)
+
+        if not experiment.is_archived:
+            raise BadRequestException("The experiment is not archived")
+
+        return experiment.archive(archive=False)
+
     ################################### GET  ##############################
 
     @classmethod

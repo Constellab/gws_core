@@ -144,7 +144,7 @@ class Experiment(ModelWithUser, TaggableModel):
     ########################################## MODEL METHODS ######################################
 
     @transaction()
-    def archive(self, archive: bool, archive_resources=True) -> 'Experiment':
+    def archive(self, archive: bool) -> 'Experiment':
         """
         Archive the experiment
         """
@@ -156,8 +156,7 @@ class Experiment(ModelWithUser, TaggableModel):
             object_type=self.full_classname(),
             object_id=self.id
         )
-        self.protocol_model.archive(
-            archive, archive_resources=archive_resources)
+        self.protocol_model.archive(archive)
 
         return super().archive(archive)
 

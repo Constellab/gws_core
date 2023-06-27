@@ -110,7 +110,7 @@ class TaskModel(ProcessModel):
         return self.save()
 
     @transaction()
-    def archive(self, archive: bool, archive_resources=True) -> 'TaskModel':
+    def archive(self, archive: bool) -> 'TaskModel':
         """
         Archive the process
         """
@@ -122,9 +122,8 @@ class TaskModel(ProcessModel):
 
         # -> try to archive the config if possible!
         self.config.archive(archive)
-        if archive_resources:
-            for resource in self.resources:
-                resource.archive(archive)
+        for resource in self.resources:
+            resource.archive(archive)
 
         return self
 

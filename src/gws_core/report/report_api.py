@@ -147,3 +147,14 @@ def get_by_resource(resource_id: str,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
     ).to_json()
+
+
+################################################# ARCHIVE ########################################
+@core_app.put("/report/{id}/archive", tags=["Report"], summary="Archive a report")
+def archive(id: str, _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ReportService.archive_report(id).to_json()
+
+
+@core_app.put("/report/{id}/unarchive", tags=["Report"], summary="Unarchive a report")
+def unarchive(id: str, _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ReportService.unarchive_report(id).to_json()

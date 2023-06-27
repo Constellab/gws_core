@@ -223,3 +223,16 @@ def clone_experiment(id: str,
 def delete_experiment(id: str,
                       _=Depends(AuthService.check_user_access_token)) -> None:
     return ExperimentService.delete_experiment(id)
+
+
+################################### ARCHIVE ##############################
+@core_app.put("/experiment/{id}/archive", tags=["Experiment"], summary="Archive an experiment")
+def archive(id: str,
+            _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ExperimentService.archive_experiment_by_id(id).to_json()
+
+
+@core_app.put("/experiment/{id}/unarchive", tags=["Experiment"], summary="Unarchive an experiment")
+def unarchive(id: str,
+              _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ExperimentService.unarchive_experiment_by_id(id).to_json()

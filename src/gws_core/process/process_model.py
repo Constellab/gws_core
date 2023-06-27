@@ -92,7 +92,7 @@ class ProcessModel(ModelWithUser):
     ################################# MODEL METHODS #############################
 
     @transaction()
-    def archive(self, archive: bool, archive_resources=True) -> ProcessModel:
+    def archive(self, archive: bool) -> ProcessModel:
         """
         Archive the process
         """

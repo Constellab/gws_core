@@ -462,3 +462,21 @@ class ReportService():
                 # create the link in DB
                 ReportResource(report=report,
                                resource=ResourceModel(id=content_resource)).save()
+
+    ################################################# ARCHIVE ########################################
+
+    @classmethod
+    def archive_report(cls, report_id: str) -> Report:
+        report: Report = Report.get_by_id_and_check(report_id)
+
+        if report.is_archived:
+            raise BadRequestException('The report is already archived')
+        return report.archive(True)
+
+    @classmethod
+    def unarchive_report(cls, report_id: str) -> Report:
+        report: Report = Report.get_by_id_and_check(report_id)
+
+        if not report.is_archived:
+            raise BadRequestException('The report is not archived')
+        return report.archive(False)
