@@ -25,7 +25,6 @@ from ..core.utils.logger import Logger
 from ..project.project import Project
 from ..resource.resource_model import ResourceModel
 from ..tag.taggable_model import TaggableModel
-from ..user.activity.activity import Activity, ActivityObjectType, ActivityType
 from ..user.user import User
 from .experiment_enums import (ExperimentProcessStatus, ExperimentStatus,
                                ExperimentType)
@@ -151,11 +150,6 @@ class Experiment(ModelWithUser, TaggableModel):
 
         if self.is_archived == archive:
             return self
-        Activity.add(
-            ActivityType.ARCHIVE if archive else ActivityType.UNARCHIVE,
-            object_type=ActivityObjectType.EXPERIMENT,
-            object_id=self.id
-        )
         self.protocol_model.archive(archive)
 
         return super().archive(archive)
@@ -220,16 +214,6 @@ class Experiment(ModelWithUser, TaggableModel):
 
         self.mark_as_draft()
         return self
-
-    @transaction()
-    def save(self, *args, **kwargs) -> 'Experiment':
-        if not self.is_saved():
-            Activity.add(
-                ActivityType.CREATE,
-                object_type=ActivityObjectType.EXPERIMENT,
-                object_id=self.id
-            )
-        return super().save(*args, **kwargs)
 
     @transaction()
     def validate(self) -> None:

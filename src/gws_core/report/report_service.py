@@ -29,6 +29,8 @@ from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.space.space_dto import SaveReportToSpaceDTO
 from gws_core.task.task_input_model import TaskInputModel
+from gws_core.user.activity.activity import ActivityObjectType, ActivityType
+from gws_core.user.activity.activity_service import ActivityService
 from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.classes.paginator import Paginator
@@ -79,6 +81,10 @@ class ReportService():
             # Create the ReportExperiment
             for experiment_id in experiment_ids:
                 cls.add_experiment(report.id, experiment_id)
+
+        ActivityService.add(ActivityType.CREATE,
+                            object_type=ActivityObjectType.REPORT,
+                            object_id=report.id)
 
         return report
 
@@ -160,6 +166,7 @@ class ReportService():
         return report
 
     @classmethod
+    @transaction()
     def delete(cls, report_id: str) -> None:
         report: Report = cls._get_and_check_before_update(report_id)
 
@@ -169,7 +176,12 @@ class ReportService():
         if report.last_sync_at is not None and report.project is not None:
             SpaceService.delete_report(report.project.id, report.id)
 
+        ActivityService.add(ActivityType.DELETE,
+                            object_type=ActivityObjectType.REPORT,
+                            object_id=report_id)
+
     @classmethod
+    @transaction()
     def validate(cls, report_id: str, project_id: str = None) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
 
@@ -225,6 +237,10 @@ class ReportService():
                 ExperimentService.validate_experiment(experiment)
 
         report.validate()
+
+        ActivityService.add(ActivityType.VALIDATE,
+                            object_type=ActivityObjectType.REPORT,
+                            object_id=report.id)
 
         return report.save()
 
@@ -466,17 +482,31 @@ class ReportService():
     ################################################# ARCHIVE ########################################
 
     @classmethod
+    @transaction()
     def archive_report(cls, report_id: str) -> Report:
         report: Report = Report.get_by_id_and_check(report_id)
 
         if report.is_archived:
             raise BadRequestException('The report is already archived')
+
+        ActivityService.add(
+            ActivityType.ARCHIVE,
+            object_type=ActivityObjectType.REPORT,
+            object_id=report_id
+        )
         return report.archive(True)
 
     @classmethod
+    @transaction()
     def unarchive_report(cls, report_id: str) -> Report:
         report: Report = Report.get_by_id_and_check(report_id)
 
         if not report.is_archived:
             raise BadRequestException('The report is not archived')
+
+        ActivityService.add(
+            ActivityType.UNARCHIVE,
+            object_type=ActivityObjectType.REPORT,
+            object_id=report_id
+        )
         return report.archive(False)

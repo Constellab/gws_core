@@ -9,13 +9,12 @@ import uuid
 from typing import Any, Dict, List, Type
 
 from fastapi.encoders import jsonable_encoder
+from gws_core.core.model.base_model import BaseModel
+from gws_core.core.utils.date_helper import DateHelper
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     CharField, DoesNotExist, Field, ForeignKeyField,
                     ManyToManyField)
 from peewee import Model as PeeweeModel
-
-from gws_core.core.model.base_model import BaseModel
-from gws_core.core.utils.date_helper import DateHelper
 
 from ..decorator.json_ignore import json_ignore
 from ..decorator.transaction import transaction
@@ -144,17 +143,6 @@ class Model(BaseModel, PeeweeModel):
         hash_object = self._create_hash_object()
         return hash_object.hexdigest()
 
-    def clear_data(self, save: bool = False):
-        """
-        Clears the :param:`data`
-
-        :param save: If True, save the model the :param:`data` is cleared
-        :type save: bool
-        """
-        self.data = {}
-        if save:
-            self.save()
-
     def __eq__(self, other: object) -> bool:
         """
         Compares the model with another model. The models are equal if they are
@@ -180,14 +168,6 @@ class Model(BaseModel, PeeweeModel):
 
         return hash(self.id)
 
-    def get_related_model(self, relation_name: str) -> 'Model':
-        if ("__relations" not in self.data) or (relation_name not in self.data["__relations"]):
-            raise BadRequestException(
-                f"The relation {relation_name} does not exists")
-        rel: dict = self.data["__relations"][relation_name]
-        model_type: Type[Model] = Utils.get_model_type(rel["type"])
-        return model_type.get(model_type.id == rel["id"])
-
     @classmethod
     def get_by_id(cls, id: str) -> 'Model':
         return cls.get_or_none(cls.id == id)
@@ -207,22 +187,6 @@ class Model(BaseModel, PeeweeModel):
             raise NotFoundException(detail=GWSException.OBJECT_ID_NOT_FOUND.value,
                                     unique_code=GWSException.OBJECT_ID_NOT_FOUND.name,
                                     detail_args={"objectName": cls.classname(), "id": id})
-
-    # -- H --
-
-    def hydrate_with(self, data):
-        """
-        Hydrate the model with data
-        """
-
-        col_names = self.property_names(Field)
-        for prop in data:
-            if prop == "id":
-                continue
-            if prop in col_names:
-                setattr(self, prop, data[prop])
-            else:
-                self.data[prop] = data[prop]
 
     def is_saved(self):
         """
@@ -354,23 +318,6 @@ class Model(BaseModel, PeeweeModel):
         _json = jsonable_encoder(val)
 
         return _json
-
-    # -- U --
-
-    @property
-    def user_data(self) -> dict:
-        """
-        Get user data
-
-        :return: User data
-        :rtype: `dict`
-        """
-
-        if not "__user_data" in self.data:
-            self.data["__user_data"] = {}
-        return self.data["__user_data"]
-
-    # -- V --
 
     def verify_hash(self) -> bool:
         """

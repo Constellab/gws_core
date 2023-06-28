@@ -29,10 +29,9 @@ from ..protocol.protocol_service import ProtocolService
 from ..space.space_dto import SaveExperimentToSpaceDTO
 from ..space.space_service import SpaceService
 from ..task.task_model import TaskModel
-from ..user.activity.activity import Activity, ActivityObjectType, ActivityType
+from ..user.activity.activity import ActivityObjectType, ActivityType
 from ..user.activity.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
-from ..user.user import User
 from .experiment import Experiment
 from .experiment_dto import (ExperimentDTO, RunningExperimentInfo,
                              RunningProcessInfo)
@@ -76,13 +75,22 @@ class ExperimentService(BaseService):
             protocol_model = ProcessFactory.create_protocol_empty()
 
         project = Project.get_by_id_and_check(project_id) if project_id else None
-        return cls.create_experiment_from_protocol_model(
+
+        experiment = cls.create_experiment_from_protocol_model(
             protocol_model=protocol_model,
             project=project,
             title=title,
             description=description,
             type_=type_
         )
+
+        ActivityService.add(
+            ActivityType.CREATE,
+            object_type=ActivityObjectType.EXPERIMENT,
+            object_id=experiment.id
+        )
+
+        return experiment
 
     @classmethod
     @transaction()
@@ -213,11 +221,9 @@ class ExperimentService(BaseService):
     def validate_experiment(cls, experiment: Experiment) -> Experiment:
         experiment.validate()
 
-        user: User = CurrentUserService.get_and_check_current_user()
         ActivityService.add(ActivityType.VALIDATE,
                             object_type=ActivityObjectType.EXPERIMENT,
-                            object_id=experiment.id,
-                            user=user)
+                            object_id=experiment.id)
 
         # send the experiment to the space
         cls._synchronize_with_space(experiment)
@@ -261,6 +267,7 @@ class ExperimentService(BaseService):
     ################################### ARCHIVE  ##############################
 
     @classmethod
+    @transaction()
     def archive_experiment_by_id(cls, id: str) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
 
@@ -270,6 +277,12 @@ class ExperimentService(BaseService):
         if experiment.is_running:
             raise BadRequestException("You can't archive an experiment that is running")
 
+        ActivityService.add(
+            ActivityType.ARCHIVE,
+            object_type=ActivityObjectType.EXPERIMENT,
+            object_id=id
+        )
+
         return experiment.archive(archive=True)
 
     @classmethod
@@ -278,6 +291,12 @@ class ExperimentService(BaseService):
 
         if not experiment.is_archived:
             raise BadRequestException("The experiment is not archived")
+
+        ActivityService.add(
+            ActivityType.UNARCHIVE,
+            object_type=ActivityObjectType.EXPERIMENT,
+            object_id=id
+        )
 
         return experiment.archive(archive=False)
 
@@ -416,3 +435,7 @@ class ExperimentService(BaseService):
         if experiment.last_sync_at is not None and experiment.project is not None:
             SpaceService.delete_experiment(
                 experiment.project.id, experiment.id)
+
+        ActivityService.add(activity_type=ActivityType.DELETE,
+                            object_type=ActivityObjectType.EXPERIMENT,
+                            object_id=experiment.id)

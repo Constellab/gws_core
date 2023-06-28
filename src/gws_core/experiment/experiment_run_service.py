@@ -44,8 +44,7 @@ class ExperimentRunService():
                     f"Cannot run the experiment {experiment.id} as its status was changed before process could run it")
 
         except Exception as err:
-            error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + \
-                str(err)
+            error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + str(err)
             Logger.error(error_text)
             experiment.mark_as_error({"detail": error_text,
                                       "unique_code": GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,

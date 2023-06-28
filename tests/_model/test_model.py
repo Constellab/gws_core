@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws_core import BaseTestCase, GTest, JSONDict, Model
+from gws_core import BaseTestCase, JSONDict, Model
 from gws_core.model.typing_manager import TypingManager
 from peewee import CharField
 
@@ -45,9 +45,7 @@ class TestModel(BaseTestCase):
         john2: Person = Person.get_by_id(john.id)
         self.assertEqual(john2.data, john.data)
 
-        john.clear_data()
         john.save()
-        self.assertEqual(john.data, {})
         self.assertTrue(john.verify_hash())
 
         # check that john2 has not changed until refresh
