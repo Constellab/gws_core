@@ -8,7 +8,7 @@ from pandas import DataFrame
 from gws_core.io.io_spec import InputSpec, OutputSpec
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....io.io_spec_helper import InputSpecs, OutputSpecs
+from ....io.io_specs import InputSpecs, OutputSpecs
 from ....task.task import Task
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
@@ -24,8 +24,10 @@ from .encoding_table import EncodingTable
 
 @task_decorator(unique_name="TableDecoder", short_description="Table decoder")
 class TableDecoder(Task):
-    input_specs: InputSpecs = {"encoded_table": InputSpec(Table), "encoding_table": InputSpec(EncodingTable)}
-    output_specs: OutputSpecs = {"decoded_table": OutputSpec(Table)}
+    input_specs: InputSpecs = InputSpecs(
+        {"encoded_table": InputSpec(Table),
+         "encoding_table": InputSpec(EncodingTable)})
+    output_specs: OutputSpecs = OutputSpecs({"decoded_table": OutputSpec(Table)})
     config_specs: ConfigSpecs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

@@ -8,8 +8,9 @@ import os
 from pandas import DataFrame
 
 from gws_core import (BaseTestCase, ConfigParams, File, IExperiment,
-                      OutputSpec, ResourceModel, ResourceSet, Settings, Table,
-                      Task, TaskInputs, TaskOutputs, task_decorator)
+                      OutputSpec, OutputSpecs, ResourceModel, ResourceSet,
+                      Settings, Table, Task, TaskInputs, TaskOutputs,
+                      task_decorator)
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
@@ -33,10 +34,9 @@ def get_file() -> File:
 @task_decorator(unique_name='GenerateResourceSet')
 class GenerateResourceSet(Task):
 
-    input_specs = {}
-    output_specs = {
+    output_specs = OutputSpecs({
         'resource_set': OutputSpec(ResourceSet)
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # create a simple resource

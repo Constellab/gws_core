@@ -181,8 +181,8 @@ class ExperimentRunService():
             task_model.mark_as_error_and_parent(error)
 
         ActivityService.add(
-            Activity.STOP,
-            object_type=experiment.full_classname(),
+            ActivityType.STOP_EXPERIMENT,
+            object_type=ActivityObjectType.EXPERIMENT,
             object_id=experiment.id
         )
 

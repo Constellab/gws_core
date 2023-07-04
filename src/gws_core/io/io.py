@@ -5,7 +5,7 @@
 
 
 from abc import abstractmethod
-from typing import Dict, Generic, List, Type, TypeVar, final
+from typing import Dict, Generic, List, Type, TypedDict, TypeVar, final
 
 from gws_core.io.io_spec import IOSpec, IOSpecDict
 
@@ -17,7 +17,13 @@ from ..resource.resource_model import ResourceModel
 from .io_exception import ResourceNotCompatibleException
 from .port import InPort, OutPort, Port, PortDict
 
-IODict = Dict[str, PortDict]
+
+class IODict(TypedDict):
+    """IODict type
+    """
+    is_dynamic: bool
+    ports: Dict[str, PortDict]
+
 
 # For generic Port type
 PortType = TypeVar('PortType', bound=Port)
@@ -35,10 +41,14 @@ class IO(Base, Generic[PortType]):
     """
 
     _ports: Dict[str, PortType] = {}
-    _counter = 0
+    _is_dynamic = False
 
-    def __init__(self):
+    DYNAMIC_INPUT_PREFIX = "source_"
+    DYNAMIC_OUTPUT_PREFIX = "target_"
+
+    def __init__(self, is_dynamic: bool = False) -> None:
         self._ports = dict()
+        self._is_dynamic = is_dynamic
 
     @property
     def is_ready(self) -> bool:
@@ -56,11 +66,8 @@ class IO(Base, Generic[PortType]):
         return True
 
     @property
-    def is_empty(self) -> bool:
-        for port in self._ports.values():
-            if not port.is_empty:
-                return False
-        return True
+    def is_dynamic(self) -> bool:
+        return self._is_dynamic
 
     def reset(self) -> None:
         for port in self._ports.values():
@@ -124,6 +131,18 @@ class IO(Base, Generic[PortType]):
         self._check_port_name(port_name)
         return self._ports[port_name]
 
+    def get_port_from_resource_key(self, port_name: str) -> None:
+        # if the IO is dynamic, the port name is target_1, so we need to find the port based on index
+        if self.is_dynamic:
+            # for dynamic IO, the key is a number, so we need to find the port with the prefix
+            prefix = self.get_dynamic_key_prefix()
+            # extract the number from the key after the prefix
+            number = int(port_name[len(prefix):])
+            # get the port with the number
+            return self.ports.values()[number - 1]
+        else:
+            return self.get_port(port_name)
+
     def port_exists(self, name: str) -> bool:
         return name in self._ports
 
@@ -142,19 +161,6 @@ class IO(Base, Generic[PortType]):
                 f"{self.classname()} port '{name}' not found")
 
     ################################################### RESOURCE ########################################
-
-    def get_resource_models(self) -> Dict[str, ResourceModel]:
-        """
-        Returns the resource models of all the ports.
-
-        :return: List of resources
-        :rtype: list
-        """
-
-        resource_models: Dict[str, ResourceModel] = {}
-        for key, port in self._ports.items():
-            resource_models[key] = port.resource_model
-        return resource_models
 
     def set_resource_model(self, port_name: str, resource_model: ResourceModel) -> None:
         """Set the resource_model of a port
@@ -183,12 +189,28 @@ class IO(Base, Generic[PortType]):
         """
 
         resources: Dict[str, Resource] = {}
+
+        dynamic_counter = 1
+
+        # for normal IO, add the resource with key = port name
         for key, port in self._ports.items():
+
+            resource_key = key
+
+            # for dynamic IO, the key is source_1, so we need to find the port based on index
+            if self.is_dynamic:
+                resource_key = f"{self.get_dynamic_key_prefix()}{dynamic_counter}"
+                dynamic_counter += 1
+
             if port.is_empty:
-                resources[key] = None
+                resources[resource_key] = None
             else:
-                resources[key] = port.get_resource(new_instance)
+                resources[resource_key] = port.get_resource(new_instance)
         return resources
+
+    # TODO check if this is the best way to do it
+    def get_dynamic_key_prefix(self) -> str:
+        return self.DYNAMIC_INPUT_PREFIX if isinstance(self, Inputs) else self.DYNAMIC_OUTPUT_PREFIX
 
     def has_resource_model(self, resource_model_id: str) -> bool:
         """return true if one of the ports contain the resource model
@@ -202,13 +224,12 @@ class IO(Base, Generic[PortType]):
 
     @classmethod
     def load_from_json(cls, io_json: IODict) -> 'IO':
-        io: IO = cls()
-        if io_json is None:
-            return io
+        io: IO = cls(is_dynamic=io_json.get('is_dynamic', False))
+        port_dict = io_json.get('ports', {})
 
         # To create an InPort or OutPort
         port_type: Type[PortType] = io._get_port_type()
-        for key, port_dict in io_json.items():
+        for key, port_dict in port_dict.items():
 
             port: PortType = port_type.load_from_json(port_dict, key)
 
@@ -222,17 +243,45 @@ class IO(Base, Generic[PortType]):
         return io
 
     def to_json(self) -> IODict:
-        _json = {}
+        _json: IODict = {
+            "ports": {},
+            "is_dynamic": self._is_dynamic
+        }
 
         for key, port in self._ports.items():
-            _json[key] = port.to_json()
+            _json["ports"][key] = port.to_json()
+
         return _json
 
+    # TODO think about this, do we include the is_dynamic in the specs ?
     def export_specs(self) -> Dict[str, IOSpecDict]:
         config: Dict[str, IOSpecDict] = {}
         for key, port in self._ports.items():
             config[key] = port.export_specs()
         return config
+
+    def get_specs(self) -> Dict[str, IOSpec]:
+        """
+        Returns the specs of all the ports.
+
+        :return: List of specs
+        :rtype: list
+        """
+
+        specs: Dict[str, IOSpec] = {}
+
+        dynamic_counter = 1
+
+        for key, port in self._ports.items():
+            resource_key = key
+
+            # for dynamic IO, the key is source_1, so we need to find the port based on index
+            if self.is_dynamic:
+                resource_key = f"{self.get_dynamic_key_prefix()}{dynamic_counter}"
+                dynamic_counter += 1
+            specs[resource_key] = port.resource_spec
+        return specs
+
 
 # ####################################################################
 #

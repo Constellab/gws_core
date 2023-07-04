@@ -21,7 +21,7 @@ from gws_core.space.mail_service import MailService
 from gws_core.user.current_user_service import CurrentUserService
 
 from ...config.config_types import ConfigParams, ConfigSpecs
-from ...io.io_spec_helper import InputSpecs, OutputSpecs
+from ...io.io_specs import InputSpecs, OutputSpecs
 from ...resource.resource import Resource
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
@@ -31,8 +31,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 @task_decorator(unique_name="ResourceUploaderS3", human_name="Upload resource to S3",
                 short_description="Simple task to send the input resource to a S3 bucket")
 class ResourceUploaderS3(Task):
-    input_specs: InputSpecs = {'resource': InputSpec(Resource)}
-    output_specs: OutputSpecs = {}
+    input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
     config_specs: ConfigSpecs = {
         'credentials': CredentialsParam(credentials_type=CredentialsType.S3),
         's3_object_prefix': StrParam(human_name="Prefix for the S3 object", default_value=""),

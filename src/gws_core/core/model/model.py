@@ -9,12 +9,13 @@ import uuid
 from typing import Any, Dict, List, Type
 
 from fastapi.encoders import jsonable_encoder
-from gws_core.core.model.base_model import BaseModel
-from gws_core.core.utils.date_helper import DateHelper
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     CharField, DoesNotExist, Field, ForeignKeyField,
                     ManyToManyField)
 from peewee import Model as PeeweeModel
+
+from gws_core.core.model.base_model import BaseModel
+from gws_core.core.utils.date_helper import DateHelper
 
 from ..decorator.json_ignore import json_ignore
 from ..decorator.transaction import transaction
@@ -225,6 +226,8 @@ class Model(BaseModel, PeeweeModel):
     def save(self, *args, **kwargs) -> 'Model':
         """
         Sets the `data`
+        set force_insert to True to force creation of the object
+        set skip_hook to True to skip the before insert or update hook
 
         :param data: The input data
         :type data: dict
@@ -236,10 +239,12 @@ class Model(BaseModel, PeeweeModel):
         force_insert: bool = kwargs.get('force_insert') if kwargs.get(
             'force_insert') is not None else not self.is_saved()
 
-        if force_insert:
-            self._before_insert()
-        else:
-            self._before_update()
+        # if skip_hook is set to true, do not call the before insert or update
+        if not kwargs.pop('skip_hook', False):
+            if force_insert:
+                self._before_insert()
+            else:
+                self._before_update()
 
         self.hash = self.__compute_hash()
 

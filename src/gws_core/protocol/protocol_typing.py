@@ -6,10 +6,10 @@
 
 from typing import Literal, Type, final
 
-from gws_core.core.utils.date_helper import DateHelper
-from gws_core.io.io_spec_helper import IOSpecsHelper
-from gws_core.protocol.protocol_types import ProtocolSpecDict
 from peewee import CharField, ModelSelect
+
+from gws_core.core.utils.date_helper import DateHelper
+from gws_core.protocol.protocol_types import ProtocolSpecDict
 
 from ..model.typing import Typing
 from ..model.typing_dict import TypingObjectType
@@ -67,8 +67,8 @@ class ProtocolTyping(Typing):
                 if self.object_sub_type == "PROTOCOL":
                     protocol: Protocol = model_t.instantiate_protocol()
                     # json_["graph"] = protocol.dumps_data(minimize=False)
-                    json_["input_specs"] = IOSpecsHelper.io_specs_to_json(protocol.get_input_specs_self())
-                    json_["output_specs"] = IOSpecsHelper.io_specs_to_json(protocol.get_output_specs_self())
+                    json_["input_specs"] = protocol.get_input_specs_self().to_json()
+                    json_["output_specs"] = protocol.get_output_specs_self().to_json()
                     json_['config_specs'] = {}
 
                 else:

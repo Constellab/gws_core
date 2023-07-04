@@ -327,8 +327,8 @@ from .io.io import Inputs as Inputs
 from .io.io import Outputs as Outputs
 from .io.io_spec import InputSpec as InputSpec
 from .io.io_spec import OutputSpec as OutputSpec
-from .io.io_spec_helper import InputSpecs as InputSpecs
-from .io.io_spec_helper import OutputSpecs as OutputSpecs
+from .io.io_specs import InputSpecs as InputSpecs
+from .io.io_specs import OutputSpecs as OutputSpecs
 from .io.ioface import Interface as Interface
 from .io.ioface import IOface as IOface
 from .io.ioface import Outerface as Outerface

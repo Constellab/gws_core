@@ -26,7 +26,7 @@ class IOSpecDict(TypedDict):
     human_name: Optional[str]
     short_description: Optional[str]
     is_optional: bool
-    sub_classsub_class: Optional[bool]
+    sub_class: Optional[bool]
     is_constant: Optional[bool]
 
 
@@ -79,8 +79,7 @@ class IOSpec:
     def check_resource_types(self):
         for resource_type in self.resource_types:
             if resource_type is None:
-                raise Exception(
-                    f"Resource type can't be None, please set optional parameter to True instead")
+                raise Exception("Resource type can't be None, please set optional parameter to True instead")
 
             if not Utils.issubclass(resource_type, Resource):
                 raise Exception(

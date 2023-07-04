@@ -9,7 +9,7 @@ from typing import List
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
@@ -29,14 +29,14 @@ class ResourceStacker(Task):
         'resource_4_key': StrParam(optional=True, human_name='Key of resource 4 in the resource set'),
         'resource_5_key': StrParam(optional=True, human_name='Key of resource 5 in the resource set'),
     }
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         "resource_1": InputSpec(Resource),
         "resource_2": InputSpec(Resource, is_optional=True),
         "resource_3": InputSpec(Resource, is_optional=True),
         "resource_4": InputSpec(Resource, is_optional=True),
         "resource_5": InputSpec(Resource, is_optional=True),
-    }
-    output_specs: OutputSpecs = {'resource_set': OutputSpec(ResourceSet)}
+    })
+    output_specs: OutputSpecs = OutputSpecs({'resource_set': OutputSpec(ResourceSet)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         resource_1 = inputs.get('resource_1')
@@ -75,10 +75,10 @@ class ResourceStacker(Task):
 @task_decorator(unique_name="ResourcePicker", short_description="Pick a resource from a resource set",
                 hide=False)
 class ResourcePicker(Task):
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         "resource_set": InputSpec(ResourceSet),
-    }
-    output_specs: OutputSpecs = {'resource': OutputSpec(Resource, sub_class=True, is_constant=True)}
+    })
+    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(Resource, sub_class=True, is_constant=True)})
 
     config_specs = {
         'resource_name': StrParam(human_name="Resource name", short_description="The name of the resource to pick")

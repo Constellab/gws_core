@@ -70,18 +70,18 @@ class TaskModel(ProcessModel):
 
         task_type: Type[Task] = self.get_process_type()
 
-        self._inputs = Inputs()
+        self._inputs = Inputs(task_type.input_specs.is_dynamic())
         # create the input ports from the Task input specs
-        for k in task_type.input_specs:
-            self._inputs.create_port(k, task_type.input_specs[k])
+        for k in task_type.input_specs.get_specs():
+            self._inputs.create_port(k, task_type.input_specs.get_spec(k))
 
         # Set the data inputs dict
         self.data["inputs"] = self.inputs.to_json()
 
-        self._outputs = Outputs()
+        self._outputs = Outputs(task_type.input_specs.is_dynamic())
         # create the output ports from the Task output specs
-        for k in task_type.output_specs:
-            self._outputs.create_port(k, task_type.output_specs[k])
+        for k in task_type.output_specs.get_specs():
+            self._outputs.create_port(k, task_type.output_specs.get_spec(k))
 
         # Set the data inputs dict
         self.data["outputs"] = self.outputs.to_json()
@@ -148,7 +148,12 @@ class TaskModel(ProcessModel):
             new_instance=True)
 
         task_runner: TaskRunner = TaskRunner(
-            self.get_process_type(), params, inputs, config_model_id=self.config.id)
+            task_type=self.get_process_type(),
+            params=params,
+            inputs=inputs,
+            config_model_id=self.config.id,
+            input_specs=self.inputs.get_specs(),
+            output_specs=self.outputs.get_specs())
         task_runner.set_progress_bar(self.progress_bar)
 
         check_result: CheckBeforeTaskResult
@@ -187,7 +192,7 @@ class TaskModel(ProcessModel):
         self.save_input_resources()
 
     def save_input_resources(self) -> None:
-        """Method run juste before the task run to save the input resource for this task.
+        """Method run just before the task run to save the input resource for this task.
           this will allow to know what resource this task uses as input
         """
         from .task_input_model import TaskInputModel
@@ -245,7 +250,7 @@ class TaskModel(ProcessModel):
 
             resource_model: ResourceModel
 
-            port: Port = self.outputs.get_port(key)
+            port: Port = self.outputs.get_port_from_resource_key(key)
 
             if port.is_constant_out:
                 # If the port is mark as is_constant_out, we don't create a new resource

@@ -8,7 +8,7 @@ from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.config.param.param_spec import DictParam, StrParam
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_spec import InputSpec
-from gws_core.io.io_spec_helper import InputSpecs
+from gws_core.io.io_specs import InputSpecs
 from gws_core.model.typing_manager import TypingManager
 from gws_core.resource.resource import Resource
 from gws_core.task.task import Task
@@ -24,9 +24,9 @@ class Viewer(Task):
     input_name: str = 'resource'
     resource_config_name: str = 'resource_typing_name'
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         "resource": InputSpec(Resource)
-    }
+    })
 
     config_specs: ConfigSpecs = {
         "resource_typing_name": StrParam(),

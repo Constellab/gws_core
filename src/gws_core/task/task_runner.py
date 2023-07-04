@@ -10,14 +10,14 @@ from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import \
     BasicMessageObserver
 from gws_core.core.utils.logger import Logger
-from gws_core.io.io_spec import OutputSpec
+from gws_core.io.io_spec import IOSpec, OutputSpec
 
 from ..config.config import Config
 from ..config.config_types import ConfigParams, ConfigParamsDict
 from ..config.param.param_types import ParamValue
 from ..io.io_exception import (InvalidInputsException, InvalidOutputsException,
                                MissingInputResourcesException)
-from ..io.io_spec_helper import InputSpecs, OutputSpecs
+from ..io.io_specs import InputSpecs, OutputSpecs
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.resource import Resource
 from ..task.task import CheckBeforeTaskResult, Task
@@ -37,6 +37,8 @@ class TaskRunner():
     """
 
     _task_type: Type[Task]
+    _input_specs: Dict[str, IOSpec]
+    _output_specs: Dict[str, IOSpec]
     _params: ConfigParamsDict
     _inputs: Dict[str, Resource]
     _outputs: TaskOutputs
@@ -48,8 +50,12 @@ class TaskRunner():
 
     _config_params: ConfigParams = None
 
-    def __init__(self, task_type: Type[Task], params: ConfigParamsDict = None, inputs: Dict[str, Resource] = None,
-                 message_dispatcher: MessageDispatcher = None, config_model_id: str = None):
+    def __init__(self, task_type: Type[Task], params: ConfigParamsDict = None,
+                 inputs: Dict[str, Resource] = None,
+                 message_dispatcher: MessageDispatcher = None,
+                 config_model_id: str = None,
+                 input_specs: Dict[str, IOSpec] = None,
+                 output_specs: Dict[str, IOSpec] = None):
         self._task_type = task_type
 
         if params is None:
@@ -70,6 +76,9 @@ class TaskRunner():
             self._message_dispatcher = MessageDispatcher()
         else:
             self._message_dispatcher = message_dispatcher
+
+        self._input_specs = input_specs or self._task_type.input_specs.get_specs()
+        self._output_specs = output_specs or self._task_type.output_specs.get_specs()
 
     def check_before_run(self) -> CheckBeforeTaskResult:
         """This method check the config and inputs and then execute the check before run of the task
@@ -161,7 +170,7 @@ class TaskRunner():
         return self._task
 
     def _get_and_check_input(self) -> TaskInputs:
-        """Check and convert input to TaskInputs]
+        """Check and convert input to TaskInputs
         :rtype: TaskInputs
         """
         missing_resource: List[str] = []
@@ -169,7 +178,7 @@ class TaskRunner():
 
         task_io: TaskInputs = TaskInputs()
 
-        for key, spec in self._get_task_inputs_specs().items():
+        for key, spec in self._input_specs.items():
             # If the resource is None
             if key not in self._inputs or self._inputs[key] is None:
                 # If the resource is empty and the spec not optional, add an error
@@ -191,12 +200,6 @@ class TaskRunner():
             raise InvalidInputsException(invalid_input_text)
 
         return task_io
-
-    def _get_task_inputs_specs(self) -> InputSpecs:
-        return self._task_type.input_specs
-
-    def _get_task_outputs_specs(self) -> OutputSpecs:
-        return self._task_type.output_specs
 
     def _build_config(self) -> ConfigParams:
         """Check and convert the config to ConfigParams
@@ -227,7 +230,7 @@ class TaskRunner():
 
         verified_outputs: TaskOutputs = {}
 
-        for key, spec in self._get_task_outputs_specs().items():
+        for key, spec in self._output_specs.items():
 
             # handle the case where the output is None
             if key not in task_outputs or task_outputs[key] is None:

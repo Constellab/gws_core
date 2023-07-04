@@ -12,7 +12,7 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..impl.shell.shell_proxy import ShellProxy
 from ..io.io_spec import InputSpec, OutputSpec
-from ..io.io_spec_helper import InputSpecs, OutputSpecs
+from ..io.io_specs import InputSpecs, OutputSpecs
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from ..task.task_io import TaskInputs, TaskOutputs
@@ -31,9 +31,9 @@ class Source(Task):
     output_name: str = 'resource'
     config_name: str = 'resource_id'
 
-    input_specs: InputSpecs = {}
-    output_specs: OutputSpecs = {'resource': OutputSpec(Resource, sub_class=True, is_constant=True,
-                                                        human_name="Resource", short_description="Loaded resource")}
+    input_specs: InputSpecs = InputSpecs({})
+    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
+        Resource, sub_class=True, is_constant=True, human_name="Resource", short_description="Loaded resource")})
     config_specs: ConfigSpecs = {
         'resource_id': StrParam(optional=True, short_description="The id of the resource"),
     }
@@ -64,8 +64,7 @@ class Sink(Task):
 
     input_name: str = 'resource'
 
-    input_specs: InputSpecs = {'resource': InputSpec(Resource)}
-    output_specs: OutputSpecs = {}
+    input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
     config_specs: ConfigSpecs = {
         'flag_resource': BoolParam(default_value=True, human_name="Check to flag the resource provided in the output")
     }
@@ -90,10 +89,10 @@ class FIFO2(Task):
     The FIFO2 (First-In-First-Out) task sends to the output port the first resource received in an input port
     """
 
-    input_specs: InputSpecs = {'resource_1': InputSpec(Resource, is_optional=True),
-                               'resource_2': InputSpec(Resource, is_optional=True)}
-    output_specs: OutputSpecs = {'resource': OutputSpec(
-        resource_types=Resource, sub_class=True, is_constant=True)}
+    input_specs: InputSpecs = InputSpecs({'resource_1': InputSpec(Resource, is_optional=True),
+                                          'resource_2': InputSpec(Resource, is_optional=True)})
+    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
+        resource_types=Resource, sub_class=True, is_constant=True)})
     config_specs: ConfigSpecs = {}
 
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
@@ -124,10 +123,10 @@ class Switch2(Task):
     The Switch2 proccess sends to the output port the resource corresponding to the parameter `index`
     """
 
-    input_specs: InputSpecs = {'resource_1': InputSpec(Resource, is_optional=True),
-                               'resource_2': InputSpec(Resource, is_optional=True)}
-    output_specs: OutputSpecs = {'resource': OutputSpec(
-        resource_types=Resource, sub_class=True, is_constant=True)}
+    input_specs: InputSpecs = InputSpecs({'resource_1': InputSpec(Resource, is_optional=True),
+                                          'resource_2': InputSpec(Resource, is_optional=True)})
+    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
+        resource_types=Resource, sub_class=True, is_constant=True)})
     config_specs: ConfigSpecs = {"index": IntParam(
         default_value=1, min_value=1, max_value=2, short_description="The index of the input resource to switch on. Defaults to 1.")}
 
@@ -152,9 +151,9 @@ class Wait(Task):
     This proccess waits during a given time before continuing.
     """
 
-    input_specs: InputSpecs = {'resource': InputSpec(Resource)}
-    output_specs: OutputSpecs = {'resource': OutputSpec(
-        resource_types=Resource, sub_class=True, is_constant=True)}
+    input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
+    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
+        resource_types=Resource, sub_class=True, is_constant=True)})
     config_specs: ConfigSpecs = {"waiting_time": FloatParam(
         default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
 
@@ -180,9 +179,9 @@ class ShellWait(Task):
     This proccess waits during a given time before continuing.
     """
 
-    input_specs: InputSpecs = {'resource': InputSpec(Resource)}
-    output_specs: OutputSpecs = {'resource': OutputSpec(
-        resource_types=Resource, sub_class=True, is_constant=True)}
+    input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
+    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
+        resource_types=Resource, sub_class=True, is_constant=True)})
     config_specs: ConfigSpecs = {"waiting_time": FloatParam(
         default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
 
@@ -210,11 +209,11 @@ class Dispatch2(Task):
     The Dispatch2 proccess dispatch the input data to the 2 outputs
     """
 
-    input_specs: InputSpecs = {'resource': InputSpec(Resource)}
-    output_specs: OutputSpecs = {
+    input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
+    output_specs: OutputSpecs = OutputSpecs({
         'resource_1': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True),
         'resource_2': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)
-    }
+    })
     config_specs: ConfigSpecs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

@@ -250,6 +250,43 @@ def save_outerface_layout(id: str,
     ProtocolService.save_outerface_layout(id, outerface_name, layout_dict)
 
 
+########################## DYNAMIC PORTS #####################
+@core_app.post("/protocol/{id}/process/{process_name}/dynamic-input", tags=["Protocol"],
+               summary="Add a dynamic port to a process")
+def add_dynamic_input_port_to_process(id: str,
+                                      process_name: str,
+                                      _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.add_dynamic_input_port_to_process(
+        id, process_name).to_json()
+
+
+@core_app.post("/protocol/{id}/process/{process_name}/dynamic-output", tags=["Protocol"],
+               summary="Add a dynamic port to a process")
+def add_dynamic_output_port_to_process(id: str,
+                                       process_name: str,
+                                       _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.add_dynamic_output_port_to_process(
+        id, process_name).to_json()
+
+
+@core_app.delete("/protocol/{id}/process/{process_name}/dynamic-input/{port_name}", tags=["Protocol"],
+                 summary="Delete a dynamic port of a process")
+def delete_dynamic_input_port_of_process(id: str,
+                                         process_name: str,
+                                         port_name: str,
+                                         _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.delete_dynamic_input_port_of_process(id, process_name, port_name).to_json()
+
+
+@core_app.delete("/protocol/{id}/process/{process_name}/dynamic-output/{port_name}", tags=["Protocol"],
+                 summary="Delete a dynamic port of a process")
+def delete_dynamic_output_port_of_process(id: str,
+                                          process_name: str,
+                                          port_name: str,
+                                          _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.delete_dynamic_output_port_of_process(id, process_name, port_name).to_json()
+
+
 ########################## TEMPLATE #####################
 class CreateProtocolTemplate(BaseModel):
     name: str = None

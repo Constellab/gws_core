@@ -7,8 +7,9 @@ import json
 import os
 
 from gws_core import (BaseTestCase, ConfigParams, File, FsNodeService,
-                      LocalFileStore, OutputSpec, Robot, RobotCreate, Task,
-                      TaskInputs, TaskOutputs, WriteToJsonFile, task_decorator)
+                      LocalFileStore, OutputSpec, OutputSpecs, Robot,
+                      RobotCreate, Task, TaskInputs, TaskOutputs,
+                      WriteToJsonFile, task_decorator)
 from gws_core.core.utils.settings import Settings
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.file.file_store import FileStore
@@ -22,8 +23,7 @@ from gws_core.task.task_interface import ITask
 class CreateFileTest(Task):
     """ Simple process that create a file anywhere on the server
     """
-    input_specs = {}
-    output_specs = {'file': OutputSpec(File)}
+    output_specs = OutputSpecs({'file': OutputSpec(File)})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

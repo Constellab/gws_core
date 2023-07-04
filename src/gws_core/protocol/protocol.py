@@ -12,7 +12,7 @@ from typing_extensions import TypedDict
 
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.io.io_spec import OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -266,7 +266,7 @@ class Protocol(Process):
 
     @final
     def get_input_specs_self(self) -> InputSpecs:
-        input_specs: InputSpecs = {}
+        input_specs = {}
 
         for name, interface in self._interfaces.items():
             # retreive the process spec
@@ -277,11 +277,11 @@ class Protocol(Process):
             input_specs[name] = process_spec.process_type.get_input_specs()[
                 interface["port_name"]]
 
-        return input_specs
+        return InputSpecs(input_specs)
 
     @final
     def get_output_specs_self(self) -> OutputSpecs:
-        output_specs: OutputSpecs = {}
+        output_specs = {}
 
         for name, outerface in self._outerfaces.items():
             # retreive the process spec
@@ -292,4 +292,4 @@ class Protocol(Process):
             output_specs[name] = process_spec.process_type.get_output_specs()[
                 outerface["port_name"]]
 
-        return output_specs
+        return OutputSpecs(output_specs)

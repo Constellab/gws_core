@@ -12,7 +12,7 @@ from gws_core.core.utils.compress.compress import Compress
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.io.io_spec import OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.share.shared_entity_info import (SharedEntityInfo,
@@ -29,9 +29,9 @@ class ResourceDownloaderBase(Task):
     Abstract class to aggregate common methods for resource downloader tasks
 
     """
-    input_specs: InputSpecs = {}
-    output_specs: OutputSpecs = {'resource': OutputSpec(
-        Resource, human_name='Imported resource', sub_class=True)}
+    input_specs: InputSpecs = InputSpecs({})
+    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
+        Resource, human_name='Imported resource', sub_class=True)})
     config_specs: ConfigSpecs = {}
 
     resource_loader: ResourceLoader = None

@@ -4,10 +4,11 @@
 # About us: https://gencovery.com
 import time
 
-from gws_core import (ConfigParams, InputSpec, OutputSpec, ProcessSpec,
-                      Protocol, RobotCreate, RobotEat, RobotFood, RobotMove,
-                      RobotSugarCreate, RobotWait, Task, TaskInputs,
-                      TaskOutputs, protocol_decorator, task_decorator)
+from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
+                      OutputSpecs, ProcessSpec, Protocol, RobotCreate,
+                      RobotEat, RobotFood, RobotMove, RobotSugarCreate,
+                      RobotWait, Task, TaskInputs, TaskOutputs,
+                      protocol_decorator, task_decorator)
 
 # File for Tests containing examples of protocols
 
@@ -85,8 +86,8 @@ class TestNestedProtocol(Protocol):
 class RobotWaitFood(Task):
     """Wait 3
     """
-    input_specs = {'food': InputSpec(RobotFood)}
-    output_specs = {'food': OutputSpec(RobotFood)}
+    input_specs = InputSpecs({'food': InputSpec(RobotFood)})
+    output_specs = OutputSpecs({'food': OutputSpec(RobotFood)})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -100,8 +101,7 @@ class RobotWaitFood(Task):
 class RobotEmptyFood(Task):
     """Wait 3
     """
-    input_specs = {}
-    output_specs = {'food': OutputSpec(RobotFood)}
+    output_specs = OutputSpecs({'food': OutputSpec(RobotFood)})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

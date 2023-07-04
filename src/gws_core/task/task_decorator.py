@@ -84,8 +84,8 @@ def decorate_task(
     # Check the input, output and config specs
     try:
 
-        IOSpecsHelper.check_input_specs(task_class.input_specs, task_class)
-        IOSpecsHelper.check_output_specs(task_class.output_specs, task_class)
+        task_class.input_specs = IOSpecsHelper.check_input_specs(task_class.input_specs, task_class)
+        task_class.output_specs = IOSpecsHelper.check_output_specs(task_class.output_specs, task_class)
         ParamSpecHelper.check_config_specs(task_class.config_specs)
 
     except Exception as err:

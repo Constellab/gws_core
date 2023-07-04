@@ -11,7 +11,7 @@ from gws_core.impl.json.json_dict import JSONDict
 from gws_core.io.io_exception import (InvalidInputsException,
                                       InvalidOutputsException,
                                       MissingInputResourcesException)
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 
@@ -26,7 +26,7 @@ class TaskRunnerProgress(Task):
 @ task_decorator("TaskRunnerOutputError")
 class TaskRunnerOutputError(Task):
 
-    output_specs: OutputSpecs = {'test': Table}
+    output_specs: OutputSpecs = OutputSpecs({'test': Table})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'test': JSONDict()}
@@ -35,7 +35,7 @@ class TaskRunnerOutputError(Task):
 @ task_decorator("TaskRunnerOutputMissing")
 class TaskRunnerOutputMissing(Task):
 
-    output_specs: OutputSpecs = {'test': Table}
+    output_specs: OutputSpecs = OutputSpecs({'test': Table})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}
@@ -51,7 +51,7 @@ class ResourceCheckError(Resource):
 @ task_decorator("TaskRunnerInvalidResource")
 class TaskRunnerInvalidResource(Task):
 
-    output_specs: OutputSpecs = {'test': ResourceCheckError}
+    output_specs: OutputSpecs = OutputSpecs({'test': ResourceCheckError})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'test': ResourceCheckError()}

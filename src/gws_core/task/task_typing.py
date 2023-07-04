@@ -5,13 +5,13 @@
 
 from typing import List, Literal, Set, Type, Union, final
 
+from peewee import CharField, Expression, ModelSelect
+
 from gws_core.core.utils.utils import Utils
 from gws_core.process.process_types import ProcessSpecDict
 from gws_core.resource.resource import Resource
-from peewee import CharField, Expression, ModelSelect
 
 from ..config.config_specs_helper import ConfigSpecsHelper
-from ..io.io_spec_helper import IOSpecsHelper
 from ..model.typing import Typing
 from ..model.typing_dict import TypingObjectType
 from ..task.task import Task
@@ -96,14 +96,15 @@ class TaskTyping(Typing):
             model_t: Type[Task] = self.get_type()
 
             if model_t:
-                json_["input_specs"] = IOSpecsHelper.io_specs_to_json(model_t.input_specs)
-                json_["output_specs"] = IOSpecsHelper.io_specs_to_json(model_t.output_specs)
+                json_["input_specs"] = model_t.input_specs.to_json()
+                json_["output_specs"] = model_t.output_specs.to_json()
                 json_["config_specs"] = ConfigSpecsHelper.config_specs_to_json(model_t.config_specs)
 
                 json_["additional_info"] = {}
 
                 from ..task.converter.importer import ResourceImporter
                 if Utils.issubclass(model_t, ResourceImporter):
-                    json_["additional_info"]["supported_extensions"] = model_t._supported_extensions
+                    importer_t: Type[ResourceImporter] = model_t
+                    json_["additional_info"]["supported_extensions"] = importer_t._supported_extensions
 
         return json_

@@ -8,6 +8,7 @@ from abc import abstractmethod
 from typing import Tuple, Type, final
 
 from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
 from ...brick.brick_service import BrickService
 from ...config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
@@ -34,8 +35,8 @@ def decorate_converter(task_class: Type['Converter'], unique_name: str, task_typ
         return
 
     # force the input and output specs
-    task_class.input_specs = {Converter.input_name: InputSpec(source_type)}
-    task_class.output_specs = {Converter.output_name: OutputSpec(target_type)}
+    task_class.input_specs = InputSpecs({Converter.input_name: InputSpec(source_type)})
+    task_class.output_specs = OutputSpecs({Converter.output_name: OutputSpec(target_type)})
 
     # register the task and set the human_name and short_description dynamically based on resource
     decorate_task(task_class, unique_name, human_name=human_name, related_resource=related_resource,
@@ -49,8 +50,8 @@ class Converter(Task):
     input_name: str = 'source'
     output_name: str = 'target'
 
-    input_specs = {"source": InputSpec(Resource)}
-    output_specs = {"target": OutputSpec(Resource)}
+    input_specs = InputSpecs({"source": InputSpec(Resource)})
+    output_specs = OutputSpecs({"target": OutputSpec(Resource)})
 
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {}

@@ -5,6 +5,7 @@
 
 
 from gws_core.io.io_spec import OutputSpec
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param.param_spec import ListParam, StrParam
@@ -23,8 +24,8 @@ from ..dep_dataset import Dataset
 class TableToDataset(Task):
     """ Convert a Table to Dataset """
 
-    input_specs = {'table': OutputSpec(Table)}
-    output_specs = {'dataset': OutputSpec(Dataset)}
+    input_specs = InputSpecs({'table': OutputSpec(Table)})
+    output_specs = OutputSpecs({'dataset': OutputSpec(Dataset)})
 
     config_specs: ConfigSpecs = {
         "target_columns":

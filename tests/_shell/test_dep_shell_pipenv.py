@@ -6,8 +6,8 @@
 import os
 
 from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec,
-                      PipEnvShell, TaskInputs, TaskOutputs, TaskRunner,
-                      task_decorator)
+                      OutputSpecs, PipEnvShell, TaskInputs, TaskOutputs,
+                      TaskRunner, task_decorator)
 
 __cdir__ = os.path.dirname(os.path.realpath(__file__))
 
@@ -15,8 +15,7 @@ __cdir__ = os.path.dirname(os.path.realpath(__file__))
 # test_dep_shell_pipenv
 @task_decorator("PipEnvTester")
 class PipEnvTester(PipEnvShell):
-    input_specs = {}
-    output_specs = {'file': OutputSpec(File)}
+    output_specs = OutputSpecs({'file': OutputSpec(File)})
     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_pip.txt")
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:

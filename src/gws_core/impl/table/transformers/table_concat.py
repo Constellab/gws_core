@@ -13,7 +13,7 @@ from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.table.helper.table_concat_helper import TableConcatHelper
 from gws_core.impl.table.table import Table
 from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs
+from gws_core.io.io_specs import InputSpecs
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -87,14 +87,14 @@ class TableRowConcat(Task):
     - ```merge from second```: tags of the first and second table are merged (the second table tags override the first table tags)
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'table_1': InputSpec(Table, human_name='First table'),
         'table_2': InputSpec(Table, human_name='Second table'),
-    }
+    })
 
-    output_specs: InputSpecs = {
+    output_specs: InputSpecs = InputSpecs({
         'table': OutputSpec(Table, human_name='Concatenated table'),
-    }
+    })
 
     config_specs: ConfigSpecs = {
         'column_tags_options': StrParam(human_name='Column tags options',
@@ -172,14 +172,14 @@ class TableColumnConcat(Task):
     - ```merge from second```: tags of the first
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'table_1': InputSpec(Table, human_name='First table'),
         'table_2': InputSpec(Table, human_name='Second table'),
-    }
+    })
 
-    output_specs: InputSpecs = {
+    output_specs: InputSpecs = InputSpecs({
         'table': OutputSpec(Table, human_name='Concatenated table'),
-    }
+    })
 
     config_specs: ConfigSpecs = {
         'row_tags_options': StrParam(human_name='Row tags options',

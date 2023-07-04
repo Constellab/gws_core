@@ -15,6 +15,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_manager import TypingManager
 
 from ...config.config_types import ConfigParams, ConfigSpecs
@@ -22,7 +23,7 @@ from ...config.param.param_spec import BoolParam, StrParam
 from ...impl.file.file import File
 from ...impl.file.file_store import FileStore
 from ...impl.file.local_file_store import LocalFileStore
-from ...io.io_spec_helper import InputSpecs, OutputSpecs
+from ...io.io_specs import InputSpecs, OutputSpecs
 from ...resource.resource import Resource
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
@@ -32,8 +33,8 @@ from ...task.task_io import TaskInputs, TaskOutputs
 @task_decorator(unique_name="WriteToJsonFile", human_name="Write to file",
                 short_description="Simple task to write a resource json data to a file in local store")
 class WriteToJsonFile(Task):
-    input_specs: InputSpecs = {'resource': InputSpec(Resource)}
-    output_specs: OutputSpecs = {'file': OutputSpec(File)}
+    input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
+    output_specs: OutputSpecs = OutputSpecs({'file': OutputSpec(File)})
     config_specs: ConfigSpecs = {'filename': StrParam(
         short_description='Name of the file')}
 
@@ -50,8 +51,8 @@ class WriteToJsonFile(Task):
         return {"file": file}
 
 
-@ task_decorator(unique_name="FsNodeExtractor", human_name="Fs node extractor",
-                 short_description="Extract a sub file or folder from a folder to generated a new resource")
+@task_decorator(unique_name="FsNodeExtractor", human_name="Fs node extractor",
+                short_description="Extract a sub file or folder from a folder to generated a new resource")
 class FsNodeExtractor(Task):
     """Task to extract a file from a folder to create a resource
 
@@ -61,8 +62,8 @@ class FsNodeExtractor(Task):
     :rtype: _type_
     """
 
-    input_specs = {"source": InputSpec(Folder)}
-    output_specs = {"target": OutputSpec(FSNode)}
+    input_specs = InputSpecs({"source": InputSpec(Folder)})
+    output_specs = OutputSpecs({"target": OutputSpec(FSNode)})
 
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {
@@ -96,8 +97,8 @@ class FsNodeExtractor(Task):
                 short_description="Download a file from a remote url to the lab and create a resource with the file")
 class FileDownloaderTask(Task):
 
-    input_specs = {}
-    output_specs = {"fs_node": OutputSpec(FSNode)}
+    input_specs = InputSpecs({})
+    output_specs = OutputSpecs({"fs_node": OutputSpec(FSNode)})
 
     config_specs: ConfigSpecs = {
         "file_url": StrParam(human_name="File url"),

@@ -5,10 +5,11 @@
 
 
 from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
-                      Connector, Experiment, ExperimentService, ProcessFactory,
-                      ProcessSpec, Protocol, ProtocolModel, Resource,
-                      ResourceModel, Task, TaskInputs, TaskModel, TaskOutputs,
-                      protocol_decorator, resource_decorator, task_decorator)
+                      Connector, Experiment, ExperimentService, InputSpecs,
+                      OutputSpecs, ProcessFactory, ProcessSpec, Protocol,
+                      ProtocolModel, Resource, ResourceModel, Task, TaskInputs,
+                      TaskModel, TaskOutputs, protocol_decorator,
+                      resource_decorator, task_decorator)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.io.io_exception import ImcompatiblePortsException
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -36,8 +37,7 @@ class Car(Resource):
 
 @task_decorator("Create")
 class Create(Task):
-    input_specs = {}
-    output_specs = {'create_person_out': OutputSpec(Person)}
+    output_specs = OutputSpecs({'create_person_out': OutputSpec(Person)})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -46,8 +46,8 @@ class Create(Task):
 
 @task_decorator("Move")
 class Move(Task):
-    input_specs = {'move_person_in': InputSpec(Person)}
-    output_specs = {'move_person_out': OutputSpec(Person)}
+    input_specs = InputSpecs({'move_person_in': InputSpec(Person)})
+    output_specs = OutputSpecs({'move_person_out': OutputSpec(Person)})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -56,8 +56,8 @@ class Move(Task):
 
 @task_decorator("Drive")
 class Drive(Task):
-    input_specs = {'move_drive_in': InputSpec(Car)}
-    output_specs = {'move_drive_out': OutputSpec(Car)}
+    input_specs = InputSpecs({'move_drive_in': InputSpec(Car)})
+    output_specs = OutputSpecs({'move_drive_out': OutputSpec(Car)})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -66,10 +66,10 @@ class Drive(Task):
 
 @task_decorator("Jump")
 class Jump(Task):
-    input_specs = {'jump_person_in_1': InputSpec(Person),
-                   'jump_person_in_2': InputSpec(Person)}
-    output_specs = {'jump_person_out': OutputSpec(Person),
-                    'jump_person_out_any': OutputSpec(resource_types=Person, sub_class=True)}
+    input_specs = InputSpecs({'jump_person_in_1': InputSpec(Person),
+                              'jump_person_in_2': InputSpec(Person)})
+    output_specs = OutputSpecs({'jump_person_out': OutputSpec(Person),
+                                'jump_person_out_any': OutputSpec(resource_types=Person, sub_class=True)})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -78,10 +78,10 @@ class Jump(Task):
 
 @task_decorator("Multi")
 class Multi(Task):
-    input_specs = {'resource_1': InputSpec((Car, Person)),
-                   'resource_2': InputSpec([Car, Person])}
-    output_specs = {'resource_1': OutputSpec((Car, Person)),
-                    'resource_2': OutputSpec([Car, Person])}
+    input_specs = InputSpecs({'resource_1': InputSpec((Car, Person)),
+                              'resource_2': InputSpec([Car, Person])})
+    output_specs = OutputSpecs({'resource_1': OutputSpec((Car, Person)),
+                                'resource_2': OutputSpec([Car, Person])})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -90,8 +90,8 @@ class Multi(Task):
 
 @task_decorator("Fly")
 class Fly(Task):
-    input_specs = {'superman': InputSpec(SuperMan)}
-    output_specs = {}
+    input_specs = InputSpecs({'superman': InputSpec(SuperMan)})
+    output_specs = OutputSpecs({})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -100,10 +100,10 @@ class Fly(Task):
 
 @task_decorator("OptionalTask")
 class OptionalTask(Task):
-    input_specs = {'first': InputSpec([Person], is_optional=True),
-                   'second': InputSpec(Person, is_optional=True),
-                   'third': InputSpec(Person)}
-    output_specs = {}
+    input_specs = InputSpecs({'first': InputSpec([Person], is_optional=True),
+                              'second': InputSpec(Person, is_optional=True),
+                              'third': InputSpec(Person)})
+    output_specs = OutputSpecs({})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -114,8 +114,7 @@ class OptionalTask(Task):
 
 @task_decorator("OptionalTaskOut")
 class OptionalTaskOut(Task):
-    input_specs = {}
-    output_specs = {'out': OutputSpec(Car)}
+    output_specs = OutputSpecs({'out': OutputSpec(Car)})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -125,9 +124,9 @@ class OptionalTaskOut(Task):
 # This is to test the ConstantOut type
 @task_decorator("Log")
 class Log(Task):
-    input_specs = {'person': InputSpec(Person)}
-    output_specs = {'samePerson': OutputSpec(Person, is_constant=True),
-                    'otherPerson': OutputSpec(Person)}
+    input_specs = InputSpecs({'person': InputSpec(Person)})
+    output_specs = OutputSpecs({'samePerson': OutputSpec(Person, is_constant=True),
+                                'otherPerson': OutputSpec(Person)})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

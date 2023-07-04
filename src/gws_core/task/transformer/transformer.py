@@ -9,6 +9,7 @@ from typing import Type, final
 from gws_core.brick.brick_service import BrickService
 from gws_core.config.config_types import ConfigParams
 from gws_core.core.utils.utils import Utils
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.task.converter.converter import Converter, decorate_converter
 
 from ...resource.resource import Resource
@@ -43,8 +44,8 @@ def transformer_decorator(unique_name: str, resource_type: Type[Resource],
             return task_class
 
         # Force the input and output specs
-        task_class.input_specs = {'resource': resource_type}
-        task_class.output_specs = {'resource': resource_type}
+        task_class.input_specs = InputSpecs({'resource': resource_type})
+        task_class.output_specs = OutputSpecs({'resource': resource_type})
 
         decorate_converter(task_class=task_class, unique_name=unique_name, task_type='TRANSFORMER',
                            source_type=resource_type, target_type=resource_type, related_resource=resource_type,

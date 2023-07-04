@@ -698,7 +698,7 @@ class Migration055(BrickMigration):
         migrator.migrate()
 
 
-@brick_migration('0.5.7', short_description='Clean activity table')
+@brick_migration('0.5.7', short_description='Clean activity table, refactor io_specs')
 class Migration057(BrickMigration):
 
     @classmethod
@@ -729,3 +729,33 @@ class Migration057(BrickMigration):
                                    EnumField(choices=ActivityType, null=False))
         migrator.alter_column_type(Activity, Activity.object_id.column_name, CharField(null=False, max_length=36))
         migrator.migrate()
+
+        # refactor io specs
+        process_models: List[TaskModel] = list(TaskModel.select())
+        for process_model in process_models:
+            try:
+                modified: bool = False
+                inputs = process_model.data["inputs"]
+                if not 'is_dynamic' in inputs and not 'ports' in inputs:
+                    # wrap the current inputs in ports
+                    process_model.data["inputs"] = {
+                        "is_dynamic": False,
+                        "ports": inputs
+                    }
+                    modified = True
+
+                outputs = process_model.data["outputs"]
+                if not 'is_dynamic' in outputs and not 'ports' in outputs:
+                    # wrap the current outputs in ports
+                    process_model.data["outputs"] = {
+                        "is_dynamic": False,
+                        "ports": outputs
+                    }
+                    modified = True
+
+                if modified:
+                    process_model.save(skip_hook=True)
+
+            except Exception as exception:
+                Logger.error(
+                    f'Error while setting process type for process id {process_model.id} : {exception}')

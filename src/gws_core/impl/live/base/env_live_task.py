@@ -19,7 +19,7 @@ from ....config.config_types import ConfigParams, ConfigSpecs
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....io.io_spec import InputSpec, OutputSpec
-from ....io.io_spec_helper import InputSpecs, OutputSpecs
+from ....io.io_specs import InputSpecs, OutputSpecs
 from ....resource.resource_set.resource_set import ResourceSet
 from ....task.task import Task
 from ....task.task_decorator import task_decorator
@@ -47,10 +47,10 @@ class EnvLiveTask(Task):
     > **Warning**: It is recommended to use code snippets comming from trusted sources.
     """
 
-    input_specs: InputSpecs = {'source': InputSpec(
-        (File, Folder, ResourceSet), is_optional=True, human_name="File or file set", short_description="File or file set"), }
-    output_specs: OutputSpecs = {'target': OutputSpec(
-        (File, Folder, ResourceSet), sub_class=True, human_name="File set", short_description="File set")}
+    input_specs: InputSpecs = InputSpecs({'source': InputSpec(
+        (File, Folder, ResourceSet), is_optional=True, human_name="File or file set", short_description="File or file set"), })
+    output_specs: OutputSpecs = OutputSpecs({'target': OutputSpec(
+        (File, Folder, ResourceSet), sub_class=True, human_name="File set", short_description="File set")})
 
     # override this in subclasses
     config_specs: ConfigSpecs = {}

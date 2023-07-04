@@ -10,6 +10,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_spec import IOSpec
+from gws_core.io.io_specs import IOSpecs
 from gws_core.model.typing import Typing, TypingNameObj
 from gws_core.model.typing_dict import TypingObjectType, TypingStatus
 from gws_core.model.typing_manager import TypingManager
@@ -34,10 +35,10 @@ def filter_typing_by_specs(typing: Typing, resource_types: List[Type[Resource]],
         return False
 
     # get the corresponding io spec
-    io_specs: Dict[str, IOSpec] = process_type.get_input_specs(
+    io_specs: IOSpecs = process_type.get_input_specs(
     ) if check_io == 'inputs' else process_type.get_output_specs()
 
-    for spec in io_specs.values():
+    for spec in io_specs.get_specs().values():
         io_resource_types = spec.resource_types
         # return true only if one of the resource type is equals one of resource types in specs
         for resource_type in resource_types:

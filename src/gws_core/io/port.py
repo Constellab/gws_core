@@ -5,7 +5,7 @@
 
 
 from abc import abstractmethod
-from typing import List, Type, final
+from typing import Type, final
 
 from typing_extensions import TypedDict
 

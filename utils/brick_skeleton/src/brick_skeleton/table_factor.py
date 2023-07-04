@@ -1,8 +1,13 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from pandas import DataFrame
 
 from gws_core import (ConfigParams, InputSpec, IntParam, OutputSpec, Table,
                       Task, TaskInputs, TaskOutputs, task_decorator)
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
 
 @task_decorator("TableFactor", human_name="Table factor",
@@ -14,10 +19,10 @@ class TableFactor(Task):
 
     """
 
-    input_specs = {'input_table': InputSpec(Table, human_name="Table",
-                                            short_description="The input table")}
-    output_specs = {'output_table': OutputSpec(Table, human_name="Result",
-                                               short_description="The output table")}
+    input_specs = InputSpecs({'input_table': InputSpec(Table, human_name="Table",
+                                                       short_description="The input table")})
+    output_specs = OutputSpecs({'output_table': OutputSpec(Table, human_name="Result",
+                                                           short_description="The output table")})
 
     config_specs = {"factor": IntParam(human_name='Factor',
                                        short_description="Factor to apply to the table")}

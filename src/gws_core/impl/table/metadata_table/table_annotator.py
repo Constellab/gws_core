@@ -7,7 +7,7 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param.param_spec import BoolParam, StrParam
-from ....io.io_spec_helper import InputSpecs, OutputSpecs
+from ....io.io_specs import InputSpecs, OutputSpecs
 from ....task.task import Task
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
@@ -32,10 +32,10 @@ class TableRowAnnotator(Task):
     * if an `id` matches against a reference value of the `sample_table`, the corresponding row of the `sample_table` is taggeg with the metadata given by the `id`.
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         "sample_table": InputSpec(Table, human_name="Sample table", short_description="Table to annotate"),
-        "metadata_table": InputSpec(Table, human_name="Metadata table", short_description="Table containing the metadata")}
-    output_specs: OutputSpecs = {"sample_table": OutputSpec(Table)}
+        "metadata_table": InputSpec(Table, human_name="Metadata table", short_description="Table containing the metadata")})
+    output_specs: OutputSpecs = OutputSpecs({"sample_table": OutputSpec(Table)})
     config_specs: ConfigSpecs = {
         "reference_column":
         StrParam(
@@ -101,11 +101,11 @@ class TableColumnAnnotator(Task):
     * if an `id` matches against a reference value of the `sample_table`, the corresponding column of the `sample_table` is taggeg with the metadata given by the `id`.
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         "sample_table": InputSpec(Table, human_name="Sample table", short_description="Table to annotate"),
         "metadata_table": InputSpec(Table, human_name="Metadata table", short_description="Table containing the metadata")
-    }
-    output_specs: OutputSpecs = {"sample_table": OutputSpec(Table)}
+    })
+    output_specs: OutputSpecs = OutputSpecs({"sample_table": OutputSpec(Table)})
     config_specs: ConfigSpecs = {
         "reference_row":
         StrParam(

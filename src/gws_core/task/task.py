@@ -19,7 +19,7 @@ from gws_core.model.typing_register_decorator import typing_registrator
 from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..io.io_spec_helper import InputSpecs, OutputSpecs
+from ..io.io_specs import InputSpecs, OutputSpecs
 from ..process.process import Process
 from ..resource.resource import Resource
 from ..task.task_io import TaskInputs, TaskOutputs
@@ -41,8 +41,8 @@ class CheckBeforeTaskResult(TypedDict, total=False):
 @typing_registrator(unique_name="Task", object_type="TASK", hide=True)
 class Task(Process):
 
-    input_specs: InputSpecs = {}
-    output_specs: OutputSpecs = {}
+    input_specs: InputSpecs = InputSpecs({})
+    output_specs: OutputSpecs = OutputSpecs({})
     config_specs: ConfigSpecs = {}
 
     # Message dispatcher used to log messages of the task

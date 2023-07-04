@@ -7,6 +7,8 @@ import shlex
 from abc import abstractmethod
 from typing import final
 
+from gws_core.io.io_specs import OutputSpecs
+
 from ...config.config_types import ConfigParams
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
@@ -22,8 +24,7 @@ class ShellTask(Task):
     This class is a proxy to run user shell commands through the Python method `subprocess.run`.
     """
 
-    input_specs = {}
-    output_specs = {}
+    output_specs = OutputSpecs({})
     config_specs = {}
 
     shell_proxy: ShellProxy = None

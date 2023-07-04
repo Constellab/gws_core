@@ -4,19 +4,16 @@
 # About us: https://gencovery.com
 
 import os
-from typing import List
 
-from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec, Shell,
-                      StrParam, TaskInputs, TaskOutputs, TaskRunner,
-                      task_decorator)
-from gws_core.progress_bar.progress_bar import ProgressBar, ProgressBarMessage
+from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec,
+                      OutputSpecs, Shell, StrParam, TaskInputs, TaskOutputs,
+                      TaskRunner, task_decorator)
 
 
 # test_dep_shell
 @task_decorator("EchoInFile")
 class EchoInFile(Shell):
-    input_specs = {}
-    output_specs = {'file': OutputSpec(File)}
+    output_specs = OutputSpecs({'file': OutputSpec(File)})
     config_specs = {
         'name': StrParam(optional=True, short_description="The name to echo"),
     }
@@ -34,8 +31,7 @@ class EchoInFile(Shell):
 
 @task_decorator("Echo")
 class Echo(Shell):
-    input_specs = {}
-    output_specs = {}
+    output_specs = OutputSpecs({})
     config_specs = {
         'name': StrParam(optional=True, short_description="The name to echo"),
     }

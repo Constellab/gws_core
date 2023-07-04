@@ -8,8 +8,8 @@ import os
 
 from pandas import DataFrame
 
-from gws_core import (ConfigParams, InputSpec, OutputSpec, OutputSpecs,
-                      Resource, Task, TaskInputs, TaskOutputs,
+from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
+                      OutputSpecs, Resource, Task, TaskInputs, TaskOutputs,
                       resource_decorator, task_decorator)
 from gws_core.core.utils.compress.zip import Zip
 from gws_core.core.utils.settings import Settings
@@ -19,7 +19,6 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.impl.table.table import Table
-from gws_core.io.io_spec_helper import InputSpecs
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_set.resource_set import ResourceSet
@@ -38,8 +37,8 @@ class EmptyResource(Resource):
 @task_decorator(unique_name="RobotsGenerator")
 class RobotsGenerator(Task):
 
-    input_specs: InputSpecs = {"robot_i": InputSpec(Robot)}
-    output_specs: OutputSpecs = {'set': OutputSpec(ResourceSet)}
+    input_specs: InputSpecs = InputSpecs({"robot_i": InputSpec(Robot)})
+    output_specs: OutputSpecs = OutputSpecs({'set': OutputSpec(ResourceSet)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         robot_1 = inputs.get('robot_i')

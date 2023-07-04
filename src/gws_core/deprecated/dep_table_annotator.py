@@ -8,7 +8,7 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from ..config.config_types import ConfigParams, ConfigSpecs
 from ..config.param.param_spec import StrParam
 from ..impl.table.table import Table
-from ..io.io_spec_helper import InputSpecs, OutputSpecs
+from ..io.io_specs import InputSpecs, OutputSpecs
 from ..task.task import Task
 from ..task.task_decorator import task_decorator
 from ..task.task_io import TaskInputs, TaskOutputs
@@ -30,8 +30,8 @@ class TableAnnotator(Task):
     Similarly for `column` annotation.
     """
 
-    input_specs: InputSpecs = {"sample_table": InputSpec(Table), "metadata_table": InputSpec(MetadataTable)}
-    output_specs: OutputSpecs = {"annotated_sample_table": OutputSpec(Table)}
+    input_specs: InputSpecs = InputSpecs({"sample_table": InputSpec(Table), "metadata_table": InputSpec(MetadataTable)})
+    output_specs: OutputSpecs = OutputSpecs({"annotated_sample_table": OutputSpec(Table)})
     config_specs: ConfigSpecs = {
         "direction":
         StrParam(

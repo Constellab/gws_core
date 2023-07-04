@@ -6,7 +6,7 @@
 import os
 
 from gws_core import (BaseTestCase, ConfigParams, FileHelper, Folder,
-                      IExperiment, IProcess, LocalFileStore, OutputSpec,
+                      IExperiment, LocalFileStore, OutputSpec, OutputSpecs,
                       Settings, Task, TaskInputs, TaskOutputs, task_decorator)
 from gws_core.impl.file.file import File
 from gws_core.impl.text.view.text_view import TextView
@@ -18,8 +18,7 @@ from gws_core.task.converter.converter_service import ConverterService
 class CreateFolderTest(Task):
     """ Simple process that create a file anywhere on the server
     """
-    input_specs = {}
-    output_specs = {'folder': OutputSpec(Folder)}
+    output_specs = OutputSpecs({'folder': OutputSpec(Folder)})
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

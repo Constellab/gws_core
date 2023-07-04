@@ -6,7 +6,7 @@
 from abc import abstractmethod
 from typing import List, Type, final
 
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
 
 from ..core.model.base import Base
@@ -39,7 +39,7 @@ class Process(Base):
         Returns the name of the first compatible input for the given resource types
         Returns None if no compatible input is found
         """
-        for input_name, input in cls.get_input_specs().items():
+        for input_name, input in cls.get_input_specs().get_specs().items():
             if input.is_compatible_with_resource_types(resource_types):
                 return input_name
 
@@ -52,7 +52,7 @@ class Process(Base):
         Returns the name of the first compatible output for the given resource types
         Returns None if no compatible output is found
         """
-        for output_name, output in cls.get_output_specs().items():
+        for output_name, output in cls.get_output_specs().get_specs().items():
             if output.is_compatible_with_resource_types(resource_types):
                 return output_name
 

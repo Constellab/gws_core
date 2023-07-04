@@ -48,7 +48,7 @@ class TypingManager:
         return typing
 
     @classmethod
-    def get_type_from_name(cls, typing_name: str) -> Type[Any]:
+    def get_type_from_name(cls, typing_name: str) -> Type:
         return cls.get_typing_from_name_and_check(typing_name).get_type()
 
     @classmethod

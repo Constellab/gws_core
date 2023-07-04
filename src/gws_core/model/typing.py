@@ -119,7 +119,7 @@ class Typing(Model):
     def get_ancestors(self) -> List[str]:
         return self.data["ancestors"]
 
-    def get_type(self) -> Type[Any]:
+    def get_type(self) -> Type:
         return Utils.get_model_type(self.model_type)
 
     def get_typing_ref(self) -> TypingRef:

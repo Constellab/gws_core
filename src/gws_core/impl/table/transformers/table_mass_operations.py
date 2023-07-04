@@ -8,7 +8,7 @@ from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.impl.table.helper.table_operation_helper import \
     TableOperationHelper
 from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -71,7 +71,7 @@ class TableColumnMassOperations(Task):
     If ```Error on unknown column``` is checked, the operation will fail on unknow columns (raise an exception) but it supports all operations.
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'table':
         InputSpec(
             Table, human_name='Input table',
@@ -79,8 +79,8 @@ class TableColumnMassOperations(Task):
         'operation_table':
         InputSpec(
             Table, human_name='Operation table',
-            short_description='Table that contains the operation\'s name and operations\'s calculations')}
-    output_specs: OutputSpecs = {'target': OutputSpec(Table)}
+            short_description='Table that contains the operation\'s name and operations\'s calculations')})
+    output_specs: OutputSpecs = OutputSpecs({'target': OutputSpec(Table)})
 
     config_specs: ConfigSpecs = {
         'name_column':

@@ -12,7 +12,7 @@ from gws_core.impl.openai.smart_task_base import SmartTaskBase
 from gws_core.impl.table.table import Table
 from gws_core.impl.text.text import Text
 from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs
 
@@ -30,13 +30,13 @@ This task uses openAI API to generate python code that generate a chart using ma
 The data of the table is not transferered to OpenAI, only the provided text.
     """
 
-    input_specs: InputSpecs = {
+    input_specs: InputSpecs = InputSpecs({
         'source': InputSpec(Table),
-    }
-    output_specs: OutputSpecs = {
+    })
+    output_specs: OutputSpecs = OutputSpecs({
         'target': OutputSpec(File, human_name='Plot', short_description='Generated plot file by the AI.'),
         'generated_code': SmartTaskBase.generated_code_output
-    }
+    })
 
     temp_dir: str
     ouput_path: str

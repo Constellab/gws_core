@@ -10,6 +10,7 @@ from typing import Callable, List, Type, final
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
 from ...brick.brick_service import BrickService
 from ...config.config_types import ConfigParams, ConfigSpecs
@@ -100,10 +101,10 @@ class ResourceImporter(Converter):
 
     # /!\ The input specs can be overrided, BUT the RessourceImporter task must
     # have 1 input called source that extend FsNode (like File or Folder)
-    input_specs = {'source': InputSpec(FSNode)}
+    input_specs = InputSpecs({'source': InputSpec(FSNode)})
 
     # The output spec can't be overrided, it will be automatically define with the correct resource type
-    output_specs = {"target": OutputSpec(Resource)}
+    output_specs = OutputSpecs({"target": OutputSpec(Resource)})
 
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {}

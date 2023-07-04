@@ -9,11 +9,11 @@ from gws_core.impl.table.helper.dataframe_aggregator_helper import \
 from gws_core.impl.table.helper.dataframe_data_filter_helper import \
     DataframeDataFilterHelper
 from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
 from ..config.config_types import ConfigParams, ConfigSpecs
 from ..config.param.param_set import ParamSet
 from ..config.param.param_spec import BoolParam, FloatParam, StrParam
-from ..impl.table.helper.dataframe_filter_helper import DataframeFilterHelper
 from ..impl.table.table import Table
 from ..task.task import Task
 from ..task.task_decorator import task_decorator
@@ -31,8 +31,8 @@ from ..task.task_io import TaskInputs, TaskOutputs
                 hide=True, deprecated_since='0.2.2',
                 deprecated_message='Please use TableDataFilter or TableAggregatorFilter instead')
 class TableFilter(Task):
-    input_specs = {'source': InputSpec(Table)}
-    output_specs = {'target': OutputSpec(Table)}
+    input_specs = InputSpecs({'source': InputSpec(Table)})
+    output_specs = OutputSpecs({'target': OutputSpec(Table)})
 
     config_specs: ConfigSpecs = {
         "axis_name_filter": ParamSet(

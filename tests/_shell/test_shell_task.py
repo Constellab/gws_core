@@ -6,7 +6,7 @@
 import os
 from unittest import TestCase
 
-from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec, ShellTask,
+from gws_core import (ConfigParams, File, OutputSpec, OutputSpecs, ShellTask,
                       StrParam, TaskInputs, TaskOutputs, TaskRunner,
                       task_decorator)
 from gws_core.impl.shell.shell_proxy import ShellProxy
@@ -15,8 +15,7 @@ from gws_core.impl.shell.shell_proxy import ShellProxy
 # test_shell_task
 @task_decorator("EchoInFileTask")
 class EchoInFileTask(ShellTask):
-    input_specs = {}
-    output_specs = {'file': OutputSpec(File)}
+    output_specs = OutputSpecs({'file': OutputSpec(File)})
     config_specs = {
         'name': StrParam(optional=True, short_description="The name to echo"),
     }
@@ -33,8 +32,7 @@ class EchoInFileTask(ShellTask):
 
 @task_decorator("EchoTask")
 class EchoTask(ShellTask):
-    input_specs = {}
-    output_specs = {}
+    output_specs = OutputSpecs({})
     config_specs = {
         'name': StrParam(optional=True, short_description="The name to echo"),
     }

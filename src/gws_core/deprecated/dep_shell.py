@@ -14,6 +14,7 @@ from gws_core.impl.shell.shell_proxy import ShellProxy
 from ..config.config_types import ConfigParams
 from ..core.exception.exceptions import BadRequestException
 from ..core.utils.settings import Settings
+from ..io.io_specs import InputSpecs, OutputSpecs
 from ..task.task import Task
 from ..task.task_decorator import task_decorator
 from ..task.task_io import TaskInputs, TaskOutputs
@@ -27,8 +28,8 @@ class Shell(Task):
     This class is a proxy to run user shell commands through the Python method `subprocess.run`.
     """
 
-    input_specs = {}
-    output_specs = {}
+    input_specs = InputSpecs({})
+    output_specs = OutputSpecs({})
     config_specs = {}
 
     _tmp_dir: str = None

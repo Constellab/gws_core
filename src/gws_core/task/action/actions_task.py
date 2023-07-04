@@ -8,6 +8,7 @@ from typing import final
 
 from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
 from gws_core.task.action.actions_manager import ActionsManager
 from gws_core.task.task import Task
@@ -22,10 +23,10 @@ class ActionsTask(Task):
     source_input_name: str = 'source'
     target_output_name: str = 'target'
 
-    input_specs = {"actions_manager": InputSpec(ActionsManager, human_name="Actions",
-                                                short_description="List of actions to modify the source resource"),
-                   "source": InputSpec(Resource, human_name="Source")}
-    output_specs = {"target": OutputSpec(Resource)}
+    input_specs = InputSpecs({"actions_manager": InputSpec(ActionsManager, human_name="Actions",
+                                                           short_description="List of actions to modify the source resource"),
+                              "source": InputSpec(Resource, human_name="Source")})
+    output_specs = OutputSpecs({"target": OutputSpec(Resource)})
 
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {}

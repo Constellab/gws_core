@@ -12,7 +12,7 @@ from gws_core.core.utils.logger import Logger
 
 from ...core.classes.validator import (BoolValidator, DictValidator,
                                        FloatValidator, IntValidator,
-                                       ListValidator, StrValidator, Validator)
+                                       ListValidator, StrValidator)
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from .param_types import ParamSpecDict, ParamSpecVisibilty
