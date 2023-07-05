@@ -144,8 +144,7 @@ class TaskModel(ProcessModel):
 
         # build the task tester
         params: ConfigParamsDict = self.config.get_values()
-        inputs: Dict[str, Resource] = self.inputs.get_resources(
-            new_instance=True)
+        inputs: Dict[str, Resource] = self.inputs.get_resources(new_instance=True)
 
         task_runner: TaskRunner = TaskRunner(
             task_type=self.get_process_type(),
@@ -242,6 +241,7 @@ class TaskModel(ProcessModel):
         self._save_outputs(task_runner.get_outputs())
 
     def _save_outputs(self, task_outputs: TaskOutputs) -> None:
+
         for key, resource in task_outputs.items():
 
             if not self.outputs.port_exists(key):
@@ -250,7 +250,7 @@ class TaskModel(ProcessModel):
 
             resource_model: ResourceModel
 
-            port: Port = self.outputs.get_port_from_resource_key(key)
+            port: Port = self.outputs.get_port(key)
 
             if port.is_constant_out:
                 # If the port is mark as is_constant_out, we don't create a new resource

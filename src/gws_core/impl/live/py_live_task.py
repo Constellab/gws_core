@@ -10,12 +10,10 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.live.base.env_live_task import EnvLiveTask
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
-from gws_core.resource.resource_factory import ResourceFactory
+from gws_core.resource.resource_set.resource_list import ResourceList
 
 from ...config.config_types import ConfigParams, ConfigSpecs
-from ...io.io_spec import InputSpec, OutputSpec
 from ...io.io_specs import InputSpecs, OutputSpecs
-from ...resource.resource import Resource
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
@@ -63,34 +61,25 @@ class PyLiveTask(Task):
 
         self.working_dir = Settings.make_temp_dir()
 
+        resource_list: ResourceList = inputs.get('source')
+
         # execute the live code
-        init_globals = {'self': self, **inputs,
+        init_globals = {'self': self, 'source': resource_list.get_resources(),
                         "working_dir": self.working_dir, **globals()}
 
         try:
-            result = LiveCodeHelper.run_python_code(
-                code_with_params, init_globals)
+            result = LiveCodeHelper.run_python_code(code_with_params, init_globals)
         except Exception as err:
-            self.log_error_message(
-                'Error during the execution of the live task, here is the detail')
+            self.log_error_message('Error during the execution of the live task, here is the detail')
             self.log_error_message(traceback.format_exc())
-            raise (err)
-        result = LiveCodeHelper.run_python_code(code_with_params, init_globals)
+            raise err
 
-        task_outputs = {}
-        # output = result.get("target", None)
-        count = 1
-        while "target_" + str(count) in result:
-            output = result["target_" + str(count)]
-            if not isinstance(output, Resource):
-                self.log_info_message(
-                    'The output is not a Resource. Trying to convert it to a Resource...')
-                output = ResourceFactory.create_from_object(output)
+        target = result.get("target", None)
 
-            task_outputs["target_" + str(count)] = output
-            count += 1
+        if target is None:
+            raise Exception("the target variable is None")
 
-        return task_outputs
+        return {'target': ResourceList(target)}
 
     def run_after_task(self) -> None:
         FileHelper.delete_dir(self.working_dir)

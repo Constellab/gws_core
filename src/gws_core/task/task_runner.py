@@ -3,20 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List, Type
+from typing import Dict, Type
 
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import \
     BasicMessageObserver
-from gws_core.core.utils.logger import Logger
-from gws_core.io.io_spec import IOSpec, OutputSpec
 
-from ..config.config import Config
 from ..config.config_types import ConfigParams, ConfigParamsDict
 from ..config.param.param_types import ParamValue
-from ..io.io_exception import (InvalidInputsException, InvalidOutputsException,
-                               MissingInputResourcesException)
+from ..io.io_exception import InvalidOutputsException
 from ..io.io_specs import InputSpecs, OutputSpecs
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.resource import Resource
@@ -37,8 +33,8 @@ class TaskRunner():
     """
 
     _task_type: Type[Task]
-    _input_specs: Dict[str, IOSpec]
-    _output_specs: Dict[str, IOSpec]
+    _input_specs: InputSpecs
+    _output_specs: OutputSpecs
     _params: ConfigParamsDict
     _inputs: Dict[str, Resource]
     _outputs: TaskOutputs
@@ -54,8 +50,8 @@ class TaskRunner():
                  inputs: Dict[str, Resource] = None,
                  message_dispatcher: MessageDispatcher = None,
                  config_model_id: str = None,
-                 input_specs: Dict[str, IOSpec] = None,
-                 output_specs: Dict[str, IOSpec] = None):
+                 input_specs: InputSpecs = None,
+                 output_specs: OutputSpecs = None):
         self._task_type = task_type
 
         if params is None:
@@ -77,8 +73,8 @@ class TaskRunner():
         else:
             self._message_dispatcher = message_dispatcher
 
-        self._input_specs = input_specs or self._task_type.input_specs.get_specs()
-        self._output_specs = output_specs or self._task_type.output_specs.get_specs()
+        self._input_specs = input_specs or self._task_type.input_specs
+        self._output_specs = output_specs or self._task_type.output_specs
 
     def check_before_run(self) -> CheckBeforeTaskResult:
         """This method check the config and inputs and then execute the check before run of the task
@@ -173,33 +169,7 @@ class TaskRunner():
         """Check and convert input to TaskInputs
         :rtype: TaskInputs
         """
-        missing_resource: List[str] = []
-        invalid_input_text: str = ''
-
-        task_io: TaskInputs = TaskInputs()
-
-        for key, spec in self._input_specs.items():
-            # If the resource is None
-            if key not in self._inputs or self._inputs[key] is None:
-                # If the resource is empty and the spec not optional, add an error
-                if not spec.is_optional:
-                    missing_resource.append(key)
-                continue
-
-            resource: Resource = self._inputs[key]
-            if not spec.is_compatible_with_resource_type(type(resource)):
-                invalid_input_text = invalid_input_text + \
-                    f"The input '{key}' of type '{resource._typing_name}' is not a compatible with the corresponding input spec."
-
-            task_io[key] = resource
-
-        if len(missing_resource) > 0:
-            raise MissingInputResourcesException(port_names=missing_resource)
-
-        if invalid_input_text and len(invalid_input_text) > 0:
-            raise InvalidInputsException(invalid_input_text)
-
-        return task_io
+        return self._input_specs.check_and_build_inputs(self._inputs)
 
     def _build_config(self) -> ConfigParams:
         """Check and convert the config to ConfigParams
@@ -220,69 +190,14 @@ class TaskRunner():
         :raises InvalidOutputException: raised if the output are invalid
         """
 
-        if task_outputs is None:
-            task_outputs = {}
+        result = self._output_specs.check_and_build_outputs(task_outputs)
 
-        if not isinstance(task_outputs, dict):
-            raise Exception('The task output is not a dictionary')
+        self._outputs = result['outputs']
 
-        error_text: str = ''
-
-        verified_outputs: TaskOutputs = {}
-
-        for key, spec in self._output_specs.items():
-
-            # handle the case where the output is None
-            if key not in task_outputs or task_outputs[key] is None:
-                if not spec.is_optional:
-                    text = "was not provided" if key not in task_outputs else "is None"
-                    error_text = error_text + \
-                        f"The output '{key}' {text}."
-                continue
-
-            # If the resource for the output port was provided
-            if key in task_outputs:
-                resource: Resource = task_outputs[key]
-
-                error = self._check_output(resource, spec, key)
-                if error is not None and len(error) > 0:
-                    error_text = error_text + error
-
-                # save the resource event if there is an error
-                if isinstance(resource, Resource):
-                    verified_outputs[key] = resource
-
-        # save the verified outputs before thowing an error
-        self._outputs = verified_outputs
-
-        if error_text and len(error_text) > 0:
-            raise InvalidOutputsException(error_text)
+        if result['error'] and len(result['error']) > 0:
+            raise InvalidOutputsException(result['error'])
 
         return self._outputs
-
-    def _check_output(self, output_resource: Resource, spec: OutputSpec, key: str) -> str:
-        """Method to check a output resource, return str if there is an error with the resource
-        """
-
-        if not isinstance(output_resource, Resource):
-            return f"The output '{key}' of type '{type(output_resource)}' is not a resource. It must extend the Resource class"
-
-        # Check resource is compatible with specs
-        if not spec.is_compatible_with_resource_type(type(output_resource)):
-            return f"The output '{key}' of type '{type(output_resource)}' is not a compatble with the corresponding output spec."
-
-        # Check that the resource is well formed
-        try:
-            error = output_resource.check_resource()
-
-            if error is not None and len(error) > 0:
-                return error
-
-        except Exception as err:
-            Logger.log_exception_stack_trace(err)
-            return f"Error during the key of the output resource '{key}'. Error : {str(err)}"
-
-        return None
 
     def set_progress_bar(self, progress_bar: ProgressBar) -> None:
         self._message_dispatcher.attach_progress_bar(progress_bar)

@@ -143,6 +143,8 @@ class Port(Base):
         return self._resource_spec.is_compatible_with_resource_type(resource_type)
 
     def get_resource(self, new_instance: bool = False) -> Resource:
+        if self.is_empty:
+            return None
         return self.resource_model.get_resource(new_instance=new_instance)
 
     def to_json(self) -> PortDict:

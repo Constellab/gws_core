@@ -15,6 +15,7 @@ from gws_core.impl.text.text import Text
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_set.resource_list import ResourceList
 
 
 class ResourceFactory():
@@ -72,12 +73,15 @@ class ResourceFactory():
         """Create a resource based on object type.
         For example a Dataframe will be converted to a Table
         String to Text
+        return None if the object could not be converted to a resource
 
         :param resource: _description_
         :type resource: Any
         :return: _description_
         :rtype: Resource
         """
+        if resource is None:
+            return None
 
         if isinstance(resource, Resource):
             return resource
@@ -86,7 +90,9 @@ class ResourceFactory():
             return Text(resource)
         if isinstance(resource, dict):
             return JSONDict(resource)
+        if isinstance(resource, list):
+            return ResourceList([cls.create_from_object(r) for r in resource])
         if isinstance(resource, DataFrame):
             return Table(resource)
 
-        raise Exception(f"Resource type {type(resource)} not supported")
+        return None
