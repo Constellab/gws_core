@@ -100,6 +100,19 @@ class IO(Base, Generic[PortType]):
         self.add_port(name, port)
         return port
 
+    def update_port(self, name: str, resource_spec: IOSpec) -> PortType:
+        """
+        Update a port.
+
+        :param name: Name of the port
+        :type name: str
+        :param resource_types: The expected type of the resource of the port
+        :type resource_types: type
+        """
+        self._check_port_name(name)
+
+        return self.create_port(name, resource_spec)
+
     def add_port(self, name: str, port: PortType) -> None:
         if not isinstance(name, str):
             raise BadRequestException(

@@ -5,6 +5,7 @@
 
 from typing import Dict, List
 
+from gws_core.core.utils.string_helper import StringHelper
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.task.task_io import TaskOutputs
@@ -15,12 +16,13 @@ from .io_specs import InputSpecs, OutputSpecs
 
 class DynamicInputs(InputSpecs):
 
+    # name of the spec passed to the task
     SPEC_NAME = 'source'
 
     def __init__(self, default_specs: Dict[str, InputSpec] = None) -> None:
         if default_specs is None:
             # set 1 input spec by default
-            default_specs = {'source': InputSpec(Resource)}
+            default_specs = {StringHelper.generate_uuid(): self.get_default_spec()}
         super().__init__(default_specs)
 
     def is_dynamic(self) -> bool:
@@ -36,15 +38,20 @@ class DynamicInputs(InputSpecs):
         resources: List[Resource] = list(resources.values())
         return {self.SPEC_NAME: ResourceList(resources)}
 
+    @classmethod
+    def get_default_spec(cls) -> InputSpec:
+        return InputSpec(Resource)
+
 
 class DynamicOutputs(OutputSpecs):
 
+    # name of the spec passed to the task
     SPEC_NAME = 'target'
 
     def __init__(self, default_specs: Dict[str, OutputSpec] = None) -> None:
         if default_specs is None:
             # set 1 output spec by default
-            default_specs = {'target': OutputSpec(Resource)}
+            default_specs = {StringHelper.generate_uuid(): self.get_default_spec()}
         super().__init__(default_specs)
 
     def is_dynamic(self) -> bool:
@@ -88,3 +95,7 @@ class DynamicOutputs(OutputSpecs):
         # retrieve the index of the spec key
         index = list(self._specs.keys()).index(key)
         return f"n°{index + 1}"
+
+    @classmethod
+    def get_default_spec(cls) -> OutputSpec:
+        return OutputSpec(Resource, sub_class=True)

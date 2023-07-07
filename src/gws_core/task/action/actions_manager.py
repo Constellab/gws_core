@@ -13,7 +13,7 @@ from gws_core.resource.resource_decorator import resource_decorator
 from .action import Action, ActionDict
 
 
-@resource_decorator("ActionsManager", hide=False, human_name="ActionsManager",
+@resource_decorator("ActionsManager", hide=True, human_name="ActionsManager",
                     short_description="List of actions to modify a resource")
 class ActionsManager(Resource):
 

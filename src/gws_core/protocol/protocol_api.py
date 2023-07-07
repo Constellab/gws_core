@@ -287,7 +287,29 @@ def delete_dynamic_output_port_of_process(id: str,
     return ProtocolService.delete_dynamic_output_port_of_process(id, process_name, port_name).to_json()
 
 
+@core_app.put("/protocol/{id}/process/{process_name}/dynamic-input/{port_name}", tags=["Protocol"],
+              summary="Update a dynamic port of a process")
+def update_dynamic_input_port_of_process(id: str,
+                                         process_name: str,
+                                         port_name: str,
+                                         io_spec: dict,
+                                         _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.update_dynamic_input_port_of_process(id, process_name, port_name, io_spec).to_json()
+
+
+@core_app.put("/protocol/{id}/process/{process_name}/dynamic-output/{port_name}", tags=["Protocol"],
+              summary="Update a dynamic port of a process")
+def update_dynamic_output_port_of_process(id: str,
+                                          process_name: str,
+                                          port_name: str,
+                                          io_spec: dict,
+                                          _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.update_dynamic_output_port_of_process(id, process_name, port_name, io_spec).to_json()
+
+
 ########################## TEMPLATE #####################
+
+
 class CreateProtocolTemplate(BaseModel):
     name: str = None
     description: Optional[dict] = None
