@@ -5,7 +5,6 @@
 
 from typing import Dict, List
 
-from gws_core.core.utils.string_helper import StringHelper
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.task.task_io import TaskOutputs
@@ -40,7 +39,7 @@ class DynamicInputs(InputSpecs):
 
     @classmethod
     def get_default_spec(cls) -> InputSpec:
-        return InputSpec(Resource)
+        return InputSpec(Resource, is_optional=True)
 
 
 class DynamicOutputs(OutputSpecs):

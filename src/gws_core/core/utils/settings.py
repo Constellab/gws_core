@@ -10,6 +10,7 @@ from copy import deepcopy
 from json import JSONDecodeError, dump, load
 from typing import Any, Dict, List, Literal, Optional, Union
 
+from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from gws_core.brick.brick_dto import BrickInfo
@@ -55,6 +56,11 @@ class BrickMigrationLog(TypedDict):
     version: str
     last_date_check: str
     history: List[BrickMigrationLogHistory]
+
+
+class PipPackage(BaseModel):
+    name: str
+    version: str
 
 
 class Settings():
@@ -551,3 +557,29 @@ class Settings():
             "kv_store_dir": self.get_kv_store_base_dir(),
             "data": data
         }
+
+    ############################ PIP PACKAGES ############################
+    def get_all_pip_packages(self) -> List[PipPackage]:
+        pip_freeze = self.data.get("pip_freeze", [])
+        pip_packages: List[PipPackage] = []
+        for pip_package in pip_freeze:
+            if not pip_package or "==" not in pip_package:
+                continue
+
+            pip_packages.append(PipPackage(
+                name=pip_package.split("==")[0],
+                version=pip_package.split("==")[1]
+            ))
+
+        return pip_packages
+
+    def get_pip_packages(self, names: List[str]) -> List[PipPackage]:
+        pip_packages = self.get_all_pip_packages()
+        return [pip_package for pip_package in pip_packages if pip_package.name in names]
+
+    def get_pip_package(self, name: str) -> Optional[PipPackage]:
+        pip_packages = self.get_all_pip_packages()
+        for pip_package in pip_packages:
+            if pip_package.name == name:
+                return pip_package
+        return None

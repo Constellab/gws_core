@@ -3,10 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Literal, TypedDict
+from typing import List
 
 import openai
 
+from gws_core.core.utils.settings import Settings
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 
 openai.api_key = "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"
@@ -14,7 +15,7 @@ openai.api_key = "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"
 
 class OpenAiHelper():
 
-    generate_code_rules = "Don't prompt the method signature.\nGenerate only 1 block of code between ``` characters."
+    generate_code_rules = "Don't prompt the method signature. Write comments for the code. Generate only 1 block of code between ``` characters."
 
     @classmethod
     def call_gpt(cls, chat: OpenAiChat) -> OpenAiChat:
@@ -34,3 +35,27 @@ class OpenAiHelper():
         chat.add_assistant_message(completion.choices[0].message.content)
 
         return chat
+
+    @classmethod
+    def get_code_context(cls, pip_package_names: List[str] = None) -> str:
+        packages_context = OpenAiHelper.get_package_version_context(pip_package_names)
+        return f"{packages_context}\n{OpenAiHelper.generate_code_rules}"
+
+    @classmethod
+    def get_package_version_context(cls, pip_package_names: List[str]) -> str:
+        """
+        Method to improve the context by giving the version of the provided pip packages
+        installed in the lab.
+        """
+        if pip_package_names is None:
+            return ""
+        packages = Settings.get_instance().get_pip_packages(pip_package_names)
+
+        if len(packages) == 0:
+            return ""
+
+        packages_text: List[str] = []
+        for package in packages:
+            packages_text.append(f"{package.name}=={package.version}")
+
+        return f"The following packages with versions are installed : {', '.join(packages_text)}. The packages must be imported if needed."

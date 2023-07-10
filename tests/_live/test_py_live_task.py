@@ -20,10 +20,10 @@ from gws_core import Table
 
 
 df = Table(DataFrame({'col1': [1,a], 'col2': [0,b]}))
-df = df.get_data() + source.get_data()
+df = df.get_data() + source[0].get_data()
 
 # return Dataframe (it should be converted to table)
-target = df
+target = [df]
 
             """,
                 "params": ["a=1", "b=2"],
@@ -50,7 +50,7 @@ from gws_core import Text
 import subprocess
 import sys
 result = subprocess.run([sys.executable, '-c', 'print(\"gencovery\")'], capture_output=True, text=True)
-target = Text(data=result.stdout)
+target = [Text(data=result.stdout)]
                 """,
                 "params": []
             },
@@ -73,7 +73,7 @@ result_file_path = os.path.join(shell_proxy.working_dir, 'echo.txt')
 with open(result_file_path, 'r+t') as fp:
     data = fp.read()
 shell_proxy.clean_working_dir()
-target = Text(data=data)
+target = [Text(data=data)]
                 """,
                 "params": []
             },

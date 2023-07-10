@@ -35,13 +35,13 @@ class EnvLiveTask(Task):
     """
     This task executes code snippets on the fly in shell environments.
 
-    # If a File is passed as input, we should create a temporary folder and copy the file in it. Pass the file path to the snippet.
-    # If a Folder is passed as input, we should create a temporary folder and copy the folder in it. Pass the folder path to the snippet.
-    # If a ResourceSet is passed as input, we should create a temporary folder and copy the files in it. Pass the temps folder path to the snippet.
+    # If a File is passed as input, it creates a temporary folder and copy the file in it. Pass the file path to the snippet.
+    # If a Folder is passed as input, it creates a temporary folder and copy the folder in it. Pass the folder path to the snippet.
+    # If a ResourceSet is passed as input, it creates a temporary folder and copy the files in it. Pass the temps folder path to the snippet.
 
     # Path a result folder to the snippet. The snippet should write the outputs files in this folder.
-    # If the folder contains only 1 file or folder, we should return this file or folder as output.
-    # If the folder contains more than 1 file or folder, we should return the ResourceSet as output.
+    # If the folder contains only 1 file or folder, it returns this file or folder as output.
+    # If the folder contains more than 1 file or folder, it returns the ResourceSet as output.
 
 
     > **Warning**: It is recommended to use code snippets comming from trusted sources.

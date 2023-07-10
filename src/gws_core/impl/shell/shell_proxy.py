@@ -70,6 +70,16 @@ class ShellProxy():
 
     def run(self, cmd: Union[list, str], env: dict = None,
             shell_mode: bool = False) -> int:
+        """
+        Run a command in a shell.
+
+        :param cmd: command to run
+        :type cmd: Union[list, str]
+        :param env: environment variables to pass to the shell, defaults to None
+        :type env: dict, optional
+        :param shell_mode: if True, the command is run in a shell, defaults to False
+        :type shell_mode: bool, optional
+        """
 
         if env is not None and not isinstance(env, dict):
             raise BadRequestException(
