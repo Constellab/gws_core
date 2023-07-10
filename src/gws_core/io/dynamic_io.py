@@ -22,7 +22,7 @@ class DynamicInputs(InputSpecs):
     def __init__(self, default_specs: Dict[str, InputSpec] = None) -> None:
         if default_specs is None:
             # set 1 input spec by default
-            default_specs = {StringHelper.generate_uuid(): self.get_default_spec()}
+            default_specs = {"source": self.get_default_spec()}
         super().__init__(default_specs)
 
     def is_dynamic(self) -> bool:
@@ -51,7 +51,7 @@ class DynamicOutputs(OutputSpecs):
     def __init__(self, default_specs: Dict[str, OutputSpec] = None) -> None:
         if default_specs is None:
             # set 1 output spec by default
-            default_specs = {StringHelper.generate_uuid(): self.get_default_spec()}
+            default_specs = {"target": self.get_default_spec()}
         super().__init__(default_specs)
 
     def is_dynamic(self) -> bool:

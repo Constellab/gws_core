@@ -21,7 +21,6 @@ ResourceTypes = Union[ResourceType, Iterable[ResourceType]]
 
 
 class IOSpecDict(TypedDict):
-    io_spec: str
     resource_types: List[TypingRef]
     human_name: Optional[str]
     short_description: Optional[str]
@@ -238,11 +237,6 @@ class InputSpec(IOSpec):
         json_ = super().to_json()
 
         return json_
-
-    @classmethod
-    def from_json(cls, json_: IOSpecDict) -> 'OutputSpec':
-        input_spec: InputSpec = super().from_json(json_)
-        return input_spec
 
 
 class OutputSpec(IOSpec):
