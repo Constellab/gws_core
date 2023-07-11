@@ -97,7 +97,7 @@ class Converter(Task):
         if not isinstance(source, cls.get_source_type()):
             raise Exception(f"The {cls.__name__} task requires a {cls.get_source_type().__name__} resource")
 
-        converter_runner: ConverterRunner = ConverterRunner(cls, params=params, input=source)
+        converter_runner: ConverterRunner = ConverterRunner(cls, params=params, input_=source)
 
         result = converter_runner.run()
         converter_runner.run_after_task()
@@ -111,7 +111,7 @@ class Converter(Task):
         :return: [description]
         :rtype: Type[Resource]
         """
-        return cls.input_specs[Converter.input_name].get_resource_type_tuples()
+        return cls.input_specs.get_spec(Converter.input_name).get_resource_type_tuples()
 
     @final
     @classmethod
@@ -121,7 +121,7 @@ class Converter(Task):
         :return: [description]
         :rtype: Type[Resource]
         """
-        return cls.output_specs[Converter.output_name].get_default_resource_type()
+        return cls.output_specs.get_spec(Converter.output_name).get_default_resource_type()
 
 
 class ConverterRunner():
@@ -135,17 +135,17 @@ class ConverterRunner():
     _task_runner: TaskRunner
 
     def __init__(self, converter_type: Type[Converter], params: ConfigParamsDict = None,
-                 input: Resource = None) -> None:
+                 input_: Resource = None) -> None:
         if not Utils.issubclass(converter_type, Converter):
             raise Exception('The ConverterRunner must have a Converter')
 
         self._task_runner = TaskRunner(converter_type, params)
 
-        if input is not None:
-            self.set_input(input)
+        if input_ is not None:
+            self.set_input(input_)
 
     def check_before_run(self) -> CheckBeforeTaskResult:
-        self._task_runner.check_before_run()
+        return self._task_runner.check_before_run()
 
     def run(self) -> Resource:
         self._task_runner.run()

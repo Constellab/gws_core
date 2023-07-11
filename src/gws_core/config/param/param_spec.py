@@ -47,9 +47,9 @@ class ParamSpec(Generic[ParamSpecType]):
     # additional info specific for the param
     additional_info: Optional[dict]
 
-    PUBLIC_VISIBILITY = "public"
-    PROTECTED_VISIBILITY = "protected"
-    PRIVATE_VISIBILITY = "private"
+    PUBLIC_VISIBILITY: ParamSpecVisibilty = "public"
+    PROTECTED_VISIBILITY: ParamSpecVisibilty = "protected"
+    PRIVATE_VISIBILITY: ParamSpecVisibilty = "private"
     MAX_ALLOWED_VALUES_COUNT = 50
 
     def __init__(

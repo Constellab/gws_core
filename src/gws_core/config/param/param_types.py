@@ -3,11 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List, Literal, Optional, Type, Union
+from typing import Any, Dict, List, Literal, Optional, Type
 
 from typing_extensions import TypedDict
 
-ParamValue = Union[str, int, float, bool, list, dict]
+ParamValue = Any
 ParamValueType = Type[ParamValue]
 
 

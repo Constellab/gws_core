@@ -24,7 +24,7 @@ from ..table import Table
 @importer_decorator(unique_name="TableImporter", target_type=Table, supported_extensions=Table.ALLOWED_FILE_FORMATS)
 class TableImporter(ResourceImporter):
     config_specs: ConfigSpecs = {
-        'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, human_name="File format", short_description="File format"),
+        'file_format': StrParam(allowed_values=['auto', *Table.ALLOWED_FILE_FORMATS], default_value='auto', human_name="File format", short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, human_name="Delimiter", short_description="Delimiter character. Only for parsing CSV files"),
         'header': IntParam(default_value=0, min_value=-1, human_name="Header", short_description="Row to use as the column names. By default the first row is used (i.e. header=0). Set header=-1 to not read column names."),
         'format_header_names': BoolParam(default_value=False, optional=True, human_name="Format header names", short_description="If true, the column and row names are formatted to remove special characters and spaces (only '_' are allowed)."),
@@ -44,8 +44,7 @@ class TableImporter(ResourceImporter):
             raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
                                       detail_args={'filename': source.path})
 
-        file_format: str = FileHelper.clean_extension(
-            params.get_value('file_format', Table.DEFAULT_FILE_FORMAT))
+        file_format: str = self.get_file_format(source, params.get_value('file_format'))
 
         encoding = params.get('encoding')
         if encoding == 'auto' or encoding is None or len(encoding) == 0:
@@ -98,6 +97,19 @@ class TableImporter(ResourceImporter):
 
         table.set_comments(self._read_comments(source, comment_char, encoding))
         return table
+
+    def get_file_format(self, source: File, file_format: str) -> str:
+        clean_file_format: str = FileHelper.clean_extension(file_format)
+
+        if clean_file_format == "auto":
+            extension = source.extension
+
+            if not extension in Table.ALLOWED_FILE_FORMATS:
+                raise Exception(f"File format {extension} not supported.")
+
+            return source.extension
+
+        return clean_file_format
 
     def _import_excel(self, source: File) -> DataFrame:
         return read_excel(source.path)
