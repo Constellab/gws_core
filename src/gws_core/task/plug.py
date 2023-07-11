@@ -80,6 +80,8 @@ class Sink(Task):
             resource_model.flagged = True
             resource_model.save()
 
+        return None
+
 
 @task_decorator(unique_name="FIFO2")
 class FIFO2(Task):

@@ -8,8 +8,11 @@ from typing import List, Literal
 
 from typing_extensions import TypedDict
 
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
+from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.base_env_shell import BaseEnvShell, VEnvCreationInfo
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
@@ -133,6 +136,8 @@ class VEnvService():
         """
         Delete a virtual environment.
         """
+        if ExperimentService.count_of_running_experiments() > 0:
+            raise BadRequestException('Cannot delete a venv while an experiment is running.')
         venv_folder = os.path.join(Settings.get_global_env_dir(), venv_name)
         FileHelper.delete_dir(venv_folder)
 
@@ -141,4 +146,6 @@ class VEnvService():
         """
         Delete all virtual environments.
         """
+        if ExperimentService.count_of_running_experiments() > 0:
+            raise BadRequestException('Cannot delete a venv while an experiment is running.')
         FileHelper.delete_dir_content(Settings.get_global_env_dir())
