@@ -81,11 +81,7 @@ class EnvLiveTask(Task):
         # validate user inputs, params, code
         cmd = self._format_command(code_file_path)
         result: int = None
-        try:
-            result = self.shell_proxy.run(cmd, shell_mode=True)
-        except Exception as err:
-            raise BadRequestException(
-                f"An error occured during the execution of the live code. Please view the logs for more details. Error: {err}") from err
+        result = self.shell_proxy.run(cmd, shell_mode=True)
 
         if result != 0:
             raise BadRequestException(

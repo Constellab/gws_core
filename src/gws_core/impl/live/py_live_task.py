@@ -67,12 +67,7 @@ class PyLiveTask(Task):
         init_globals = {'self': self, 'source': resource_list.get_resources(),
                         "working_dir": self.working_dir, **globals()}
 
-        try:
-            result = LiveCodeHelper.run_python_code(code_with_params, init_globals)
-        except Exception as err:
-            self.log_error_message('Error during the execution of the live task, here is the detail')
-            self.log_error_message(traceback.format_exc())
-            raise err
+        result = LiveCodeHelper.run_python_code(code_with_params, init_globals)
 
         target = result.get("target", None)
 

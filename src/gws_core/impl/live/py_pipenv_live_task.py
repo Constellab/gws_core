@@ -13,8 +13,8 @@ from ...task.task_decorator import task_decorator
 
 
 @task_decorator(
-    "PyPipenvLiveTask", human_name="Python live task for pipenv shell",
-    short_description="Live task to run Python snippets in a pipenv shell environment. The inputs files are passed to the snippet through the arguments.")
+    "PyPipenvLiveTask", human_name="Pip env live task",
+    short_description="Live task to run Python snippets in a pipenv shell environment.")
 class PyPipenvLiveTask(EnvLiveTask):
     """
     Pipenv-based Python live tasks allow to execute Python snippets on the fly in isolated Pipenv environments.
