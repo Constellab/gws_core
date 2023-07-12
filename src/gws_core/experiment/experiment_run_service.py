@@ -123,8 +123,7 @@ class ExperimentRunService():
             cmd = [
                 "python3",
                 os.path.join(cwd_dir, "manage.py"),
-                "--cli",
-                "gws_core.cli.run_experiment",
+                "--run-experiment",
                 "--experiment-id", experiment.id,
                 "--user-id", user.id
             ]

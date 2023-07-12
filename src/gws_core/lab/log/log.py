@@ -4,12 +4,13 @@
 # About us: https://gencovery.com
 
 from datetime import date, datetime
+from json import loads
 from typing import List
 
 from typing_extensions import TypedDict
 
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.core.utils.logger import Logger, MessageType
+from gws_core.core.utils.logger import LogFileLine, Logger, MessageType
 
 
 class LogInfo(TypedDict):
@@ -41,52 +42,96 @@ class LogLine():
     level: MessageType
     date_time: datetime
     is_from_experiment: bool
-    content: str
+    experiment_id: str
+    message: str
+
+    OLD_DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
     def __init__(self, line_str: str) -> None:
         if line_str is None or len(line_str) == 0:
             raise ValueError("line_str is empty")
         self.full_line = line_str
 
+        self.level = None
+        self.date_time = None
+        self.message = None
+        self.is_from_experiment = False
+        self.experiment_id = None
+
+        if line_str[0] == '{':
+            self._init_new(line_str)
+        else:
+            self._init_old(line_str)
+
+    def _init_new(self, line_str: str) -> None:
+        """
+        Read the line as json and extract the level, date, content and if it is from an experiment
+        """
+        try:
+            line_json: LogFileLine = loads(line_str)
+            self.level = line_json.get('level')
+            self.init_new_date(line_json.get('timestamp'))
+            self.message = line_json.get('message')
+            self.is_from_experiment = line_json.get('experiment_id') is not None
+            self.experiment_id = line_json.get('experiment_id')
+        except ValueError:
+            pass
+
+    def _init_old(self, line_str: str) -> None:
+        """Read the line and extract the level, date, content and if it is from an experiment
+        Line example : INFO - 2023-07-12 14:10:09,676 - Logger configured with log level: INFO
+        The log system was changed on v0.5.7
+
+        :param line_str: _description_
+        :type line_str: str
+        """
         separator = Logger.SEPARATOR
         logs_parts = line_str.split(separator)
 
         if len(logs_parts) >= 3:
             self.level = logs_parts[0]
 
-            try:
-                date_time = DateHelper.from_str(logs_parts[1], Logger.DATE_FORMAT)
-                self.date_time = DateHelper.convert_datetime_to_utc(date_time)
-            except ValueError:
-                self.date_time = None
+            self.init_old_date(logs_parts[1])
 
             # if the log also contains the text ' - [EXPERIMENT] - '
             # it is from an experiment
             if len(logs_parts) >= 4 and logs_parts[2] == Logger.SUB_PROCESS_TEXT:
                 # use a join because the log can contains ' - '
-                self.content = separator.join(logs_parts[3:])
+                self.message = separator.join(logs_parts[3:])
                 self.is_from_experiment = True
             else:
                 # use a join because the log can contains ' - '
-                self.content = separator.join(logs_parts[2:])
+                self.message = separator.join(logs_parts[2:])
                 self.is_from_experiment = False
 
-        else:
-            self.level = None
-            self.date_time = None
-            self.content = None
+    def init_old_date(self, date_str: str) -> None:
+        try:
+            date_time = DateHelper.from_str(date_str, LogLine.OLD_DATE_FORMAT)
+            self.date_time = DateHelper.convert_datetime_to_utc(date_time)
+        except ValueError:
+            pass
+
+    def init_new_date(self, date_str: str) -> None:
+        try:
+            date_time = DateHelper.from_iso_str(date_str)
+            self.date_time = DateHelper.convert_datetime_to_utc(date_time)
+        except ValueError:
+            pass
 
     def is_valid(self) -> bool:
         return self.level is not None and \
             self.date_time is not None and \
-            self.content is not None
+            self.message is not None
+
+    def get_datetime_without_microseconds(self) -> datetime:
+        return self.date_time.replace(microsecond=self.date_time.microsecond // 1000 * 1000)
 
     def to_json(self) -> dict:
         return {"level": self.level, "date_time": self.date_time,
-                "content": self.content, "is_from_experiment": self.is_from_experiment}
+                "message": self.message, "experiment_id": self.experiment_id}
 
     def to_str(self) -> str:
-        return f"{self.level} - {self.date_time} - {self.content}"
+        return f"{self.level} - {self.date_time} - {self.message}"
 
 
 class LogCompleteInfo():
@@ -103,7 +148,8 @@ class LogCompleteInfo():
         return Logger.file_name_to_date(name).date()
 
     def get_log_lines_by_time(self, start_time: datetime, end_time: datetime,
-                              from_experiment: bool = None) -> List[LogLine]:
+                              from_experiment_id: str = None,
+                              nb_of_lines: int = None) -> List[LogLine]:
         """Filter the log lines by time and if it is from an experiment
 
         :param start_time: start time of the filter
@@ -116,6 +162,8 @@ class LogCompleteInfo():
         :rtype: List[LogLine]
         """
         log_lines: List[LogLine] = []
+        stop_date: datetime = None
+
         for line in self.content.splitlines():
             if len(line) == 0:
                 continue
@@ -124,11 +172,26 @@ class LogCompleteInfo():
             if not log_line.is_valid():
                 continue
 
-            if from_experiment is not None and log_line.is_from_experiment != from_experiment:
+            # if the page date is provided, stop the loop when the nb is reached
+            # if the next line is the exact same date ignoring the microseconds add it to the list
+            if stop_date is not None and log_line.get_datetime_without_microseconds() != stop_date:
+                break
+
+            # if the experiment id is provided, filter the log lines
+            # skip lines that are not from the experiment
+            # also skip lines that are from another experiment
+            # if the experiment id is not provided, don't skip this is old format
+            if from_experiment_id is not None and (
+                    not log_line.is_from_experiment
+                    or (log_line.experiment_id is not None and log_line.experiment_id != from_experiment_id)):
                 continue
 
             if start_time <= log_line.date_time <= end_time:
                 log_lines.append(log_line)
+
+            if nb_of_lines is not None and len(log_lines) >= nb_of_lines:
+                stop_date = log_line.get_datetime_without_microseconds()
+
         return log_lines
 
     def to_json(self) -> dict:
@@ -141,19 +204,25 @@ class LogsBetweenDatesDTO():
     from_date: datetime
     to_date: datetime
     from_experiment: bool
+    is_last_page: bool
 
     def __init__(self, logs: List[LogLine], from_date: datetime, to_date: datetime,
-                 from_experiment: bool) -> None:
+                 from_experiment: bool, is_last_page: bool) -> None:
         self.logs = logs
         self.from_date = from_date
         self.to_date = to_date
         self.from_experiment = from_experiment
+        self.is_last_page = is_last_page
 
     def to_json(self) -> dict:
-        return {"logs": [log.to_json() for log in self.logs],
-                "from_date": self.from_date,
-                "to_date": self.to_date,
-                "from_experiment": self.from_experiment}
+        return {
+            "logs": [log.to_json() for log in self.logs],
+            "from_date": self.from_date,
+            "to_date": self.to_date,
+            "from_experiment": self.from_experiment,
+            "is_last_page": self.is_last_page,
+            "last_log_date": self.logs[-1].date_time if len(self.logs) > 0 else None
+        }
 
     def to_str(self) -> str:
         return "\n".join([log.to_str() for log in self.logs])

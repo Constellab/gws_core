@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from datetime import datetime
+
 from fastapi import Depends
 
 from gws_core.core.utils.response_helper import ResponseHelper
@@ -18,12 +20,13 @@ from .process_service import ProcessService, ProcessType
               summary="Get the log of a process", response_model=None)
 def get_process_logs(process_type: ProcessType,
                      id: str,
-                     _=Depends(AuthService.check_user_access_token)) -> LogsBetweenDatesDTO:
+                     from_page_date: datetime = None,
+                     _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a list of running experiments.
     """
 
-    return ProcessService.get_logs_of_process(process_type, id).to_json()
+    return ProcessService.get_logs_of_process(process_type, id, from_page_date).to_json()
 
 
 @core_app.get("/process/{process_type}/{id}/logs/download", tags=["Process"],

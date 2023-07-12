@@ -56,23 +56,23 @@ INFO - 2022-12-01 09:30:46.947581 - [EXPERIMENT] - second_log
 
         log_lines = log_complete_info.get_log_lines_by_time(from_date, to_date)
         self.assertEqual(len(log_lines), 2)
-        self.assertEqual(log_lines[0].content, 'first - log')
+        self.assertEqual(log_lines[0].message, 'first - log')
 
         first_log_date = DateHelper.from_iso_str('2022-12-01T09:26:46.906581+00:00')
         self.assertEqual(log_lines[0].date_time, first_log_date)
         self.assertEqual(log_lines[0].level, 'INFO')
         self.assertFalse(log_lines[0].is_from_experiment)
 
-        self.assertEqual(log_lines[1].content, 'second_log')
+        self.assertEqual(log_lines[1].message, 'second_log')
         self.assertTrue(log_lines[1].is_from_experiment)
 
-        log_lines = log_complete_info.get_log_lines_by_time(from_date, to_date, from_experiment=True)
+        log_lines = log_complete_info.get_log_lines_by_time(from_date, to_date, from_experiment_id=True)
         self.assertEqual(len(log_lines), 1)
 
     def setUp(self) -> None:
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
         Logger._logger = None
-        Logger(Settings.build_log_dir(True), level='INFO', _is_experiment_process=False)
+        Logger(Settings.build_log_dir(True), level='INFO')
 
     def tearDown(self) -> None:
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())

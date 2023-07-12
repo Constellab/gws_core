@@ -72,7 +72,7 @@ class LogService:
 
     @classmethod
     def get_logs_between_dates(cls, from_date: datetime, to_date: datetime,
-                               from_experiment: bool = None) -> LogsBetweenDatesDTO:
+                               from_experiment_id: str = None, nb_of_lines: int = 100) -> LogsBetweenDatesDTO:
 
         log_lines: List[LogLine] = []
 
@@ -99,17 +99,22 @@ class LogService:
                         hour=23, minute=59, second=59))
 
             try:
-                log_lines.extend(cls.get_logs_between_dates_same_day(one_day_from, one_day_to, from_experiment))
+                log_lines.extend(cls.get_logs_between_dates_same_day(
+                    one_day_from, one_day_to, from_experiment_id, nb_of_lines))
             # skip error : file is not log file
             except BadRequestException:
                 continue
 
+            # if we have enough lines, we stop
+            if len(log_lines) >= nb_of_lines:
+                break
+
         return LogsBetweenDatesDTO(logs=log_lines, from_date=from_date, to_date=to_date,
-                                   from_experiment=from_experiment)
+                                   from_experiment=from_experiment_id, is_last_page=len(log_lines) < nb_of_lines)
 
     @classmethod
     def get_logs_between_dates_same_day(cls, from_date: datetime, to_date: datetime,
-                                        from_experiment: bool = None) -> List[LogLine]:
+                                        from_experiment_id: str = None, nb_of_lines: int = 100) -> List[LogLine]:
 
         if not DateHelper.are_same_day(from_date, to_date):
             raise BadRequestException("The dates must be on the same day")
@@ -117,7 +122,8 @@ class LogService:
         log_file_name = Logger.date_to_file_name(from_date)
 
         log_complete_info = cls.get_log_complete_info(log_file_name)
-        return log_complete_info.get_log_lines_by_time(from_date, to_date, from_experiment)
+        return log_complete_info.get_log_lines_by_time(
+            from_date, to_date, from_experiment_id, nb_of_lines)
 
     @classmethod
     def get_log_file_path(cls, node_name: str) -> str:

@@ -18,6 +18,13 @@ class TestProcessService(BaseTestCase):
 
         # create a simple waiting experiment to let the log be created
         experiment = IExperiment()
+
+        # force init the logger
+        FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
+        Logger._logger = None
+        # initialize the logger associated to the experiment
+        Logger(Settings.build_log_dir(True), level='INFO', experiment_id=experiment.get_experiment_model().id)
+
         protocol: IProtocol = experiment.get_protocol()
 
         create_robot: IProcess = protocol.add_task(RobotCreate, 'create_robot')
@@ -26,16 +33,10 @@ class TestProcessService(BaseTestCase):
 
         experiment.run()
 
-        logs = ProcessService.get_logs_of_process('TASK', wait.refresh()._process_model.id, is_sub_process=False)
+        logs = ProcessService.get_logs_of_process('TASK', wait.refresh()._process_model.id)
         self.assertTrue(len(logs.logs) > 0)
         # search log with content : Waiting 1 seconds
-        self.assertTrue(len([log for log in logs.logs if 'Waiting 1 sec' in log.content]) > 0)
-
-    def setUp(self) -> None:
-        # force init the logger
-        FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
-        Logger._logger = None
-        Logger(Settings.build_log_dir(True), level='INFO', _is_experiment_process=False)
+        self.assertTrue(len([log for log in logs.logs if 'Waiting 1 sec' in log.message]) > 0)
 
     def tearDown(self) -> None:
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())

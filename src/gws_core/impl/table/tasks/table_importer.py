@@ -8,6 +8,7 @@ from typing import Type
 from pandas import DataFrame, read_excel, read_table
 
 from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file_helper import FileHelper
 
 from ....config.config_types import ConfigParams, ConfigSpecs
@@ -40,6 +41,9 @@ class TableImporter(ResourceImporter):
     }
 
     def import_from_path(self, source: File, params: ConfigParams, target_type: Type[Table]) -> Table:
+        Logger.error('NOOOOOOOOOOOOOOOOOOOOOOOOOOO nullll \n deuxieme ligne eeeeeee')
+        a = {}
+        b = a.super()
         if source.is_empty():
             raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
                                       detail_args={'filename': source.path})

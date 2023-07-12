@@ -3,12 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import json
 import logging
 from datetime import datetime
 from logging import Logger as PythonLogger
 from logging.handlers import TimedRotatingFileHandler
 from os import makedirs, path
-from typing import Any, Literal
+from typing import Any, Literal, Optional, TypedDict
 
 from gws_core.core.utils.date_helper import DateHelper
 
@@ -21,6 +22,33 @@ RESET_COLOR = "\x1b[0m"
 MessageType = Literal['ERROR', 'WARNING', 'INFO', 'DEBUG', 'PROGRESS', 'EXCEPTION']
 
 
+class LogFileLine(TypedDict):
+    level: MessageType
+    timestamp: str
+    message: str
+    experiment_id: Optional[str]
+
+
+class JSONFormatter(logging.Formatter):
+
+    experiment_id: str = None
+
+    def __init__(self, experiment_id: str = None):
+        super().__init__()
+        self.experiment_id = experiment_id
+
+    def format(self, record):
+        log_data: LogFileLine = {
+            'level': record.levelname,
+            'timestamp': Logger.get_date(),
+            'message': record.getMessage()
+        }
+
+        if self.experiment_id:
+            log_data['experiment_id'] = self.experiment_id
+        return json.dumps(log_data)
+
+
 class Logger:
     """
     Logger class
@@ -30,30 +58,28 @@ class Logger:
 
     SUB_PROCESS_TEXT = "[EXPERIMENT]"
     SEPARATOR = " - "
-    DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
     FILE_NAME_DATE_FORMAT = "%Y-%m-%d"
 
     _logger: PythonLogger = None
     _file_path: str = None
-    _is_experiment_process: bool = None
+    _experiment_id: str = None
 
     _waiting_messages: list = []
 
     def __init__(self, log_dir: str = None,
-                 level: Literal["ERROR", "INFO", "DEBUG"] = "INFO", _is_experiment_process: bool = False) -> None:
+                 level: Literal["ERROR", "INFO", "DEBUG"] = "INFO", experiment_id: str = None) -> None:
         """Create the Gencovery logger, it logs into the console and into a file
 
         :param level: level of the logs to show, defaults to "info"
         :type level: error | info | debug, optional
-        :param _is_experiment_process: set to true when the gws is runned inside a subprocess
-        (like when running a experiment in another process), defaults to False
-        :type _is_experiment_process: bool, optional
+        :param _experiment_id: set when  gws is runned inside a subprocess to run an experiment, defaults to False
+        :type _experiment_id: bool, optional
         """
         if Logger._logger is not None:
             return
             # raise BadRequestException("The logger already exists")
 
-        Logger._is_experiment_process = _is_experiment_process
+        Logger._experiment_id = experiment_id
 
         if level is None:
             level = "INFO"
@@ -69,7 +95,7 @@ class Logger:
         Logger._logger.setLevel(level)
 
         # Format of the logs
-        formatter = logging.Formatter("%(message)s")
+        formatter = logging.Formatter(f"%(levelname)s - {self.get_date()} - %(message)s")
 
         # Configure the console logger
         console_logger = logging.StreamHandler()
@@ -83,12 +109,13 @@ class Logger:
         # file_handler = logging.FileHandler(Logger._file_path)
 
         # define a TimeRotating file to create a new file each day à 00:00
+        # this write the log in a file with a json format
         file_handler = TimedRotatingFileHandler(
             Logger._file_path, when="midnight")
-        file_handler.setFormatter(formatter)
+        file_handler.setFormatter(JSONFormatter(Logger._experiment_id))
         Logger._logger.addHandler(file_handler)
 
-        if _is_experiment_process:
+        if experiment_id:
             Logger.info(f"Logger configured for experiment process with log level: {level}")
         else:
             Logger.info(f"Logger configured with log level: {level}")
@@ -138,15 +165,14 @@ class Logger:
                 cls._logger.exception(obj, exc_info=True)
                 return
 
-            complete_message = cls._get_message(level_name, obj)
             if level_name == "ERROR":
-                cls._logger.error(complete_message)
+                cls._logger.error(obj)
             elif level_name == "WARNING":
-                cls._logger.warning(complete_message)
+                cls._logger.warning(obj)
             elif level_name == "INFO" or level_name == "PROGRESS":
-                cls._logger.info(complete_message)
+                cls._logger.info(obj)
             elif level_name == "DEBUG":
-                cls._logger.debug(complete_message)
+                cls._logger.debug(obj)
 
         else:
             # add the message in the waiting list to be logged later
@@ -160,18 +186,12 @@ class Logger:
             cls._log_message(message['level_name'], message['obj'])
         cls._waiting_messages = []
 
-    @classmethod
-    def _get_message(cls, level_name: str, message: str) -> str:
-        # get the annoted text for Sub process logs
-        sub_process_text: str = f"{cls.SEPARATOR}{cls.SUB_PROCESS_TEXT}" if cls._is_experiment_process else ""
-
-        return f"{level_name}{cls.SEPARATOR}{cls._get_date()}{sub_process_text}{cls.SEPARATOR}{message}"
-
     # Get the current date in Human readable format
+
     @classmethod
-    def _get_date(cls) -> str:
+    def get_date(cls) -> str:
         current_date: datetime = DateHelper.now_utc()
-        return current_date.strftime(cls.DATE_FORMAT)
+        return current_date.isoformat()
 
     @classmethod
     def print_sql_queries(cls) -> None:

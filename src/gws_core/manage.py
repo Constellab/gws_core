@@ -13,7 +13,10 @@ from unittest.suite import BaseTestSuite
 import click
 
 from gws_core.core.utils.logger import Logger
+from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.settings_loader import SettingsLoader
+from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.user import User
 
 from .app import App
 from .core.db.db_manager_service import DbManagerService
@@ -29,11 +32,11 @@ class AppManager:
     root_cwd: str = None
 
     @classmethod
-    def _init(cls, log_level: str, _is_experiment_process: bool = False,
+    def _init(cls, log_level: str, experiment_id: str = None,
               show_sql: bool = False, is_test: bool = False) -> Settings:
 
         log_dir = Settings.build_log_dir(is_test=is_test)
-        Logger(log_dir=log_dir, level=log_level, _is_experiment_process=_is_experiment_process)
+        Logger(log_dir=log_dir, level=log_level, experiment_id=experiment_id)
 
         if show_sql:
             Logger.print_sql_queries()
@@ -96,20 +99,19 @@ class AppManager:
         test_runner.run(test_suite)
 
     @classmethod
-    def run_cli(cls, cli: str, log_level: str, show_sql: bool, is_test: bool) -> None:
-        cls._init(log_level=log_level, _is_experiment_process=True, show_sql=show_sql, is_test=is_test)
+    def run_experiment(cls, experiment_id: str, user_id: str, log_level: str, show_sql: bool, is_test: bool) -> None:
+        cls._init(log_level=log_level, experiment_id=experiment_id, show_sql=show_sql, is_test=is_test)
 
-        tab = cli.split(".")
-        n = len(tab)
-        module_name = ".".join(tab[0:n-1])
-        function_name = tab[n-1]
-        module = importlib.import_module(module_name)
-        func = getattr(module, function_name, None)
-        if func is None:
-            raise BadRequestException(
-                f"Please check that method {cli} is defined")
-        else:
-            func()
+        if experiment_id is None:
+            raise BadRequestException("Please provide an experiment id to run the experiment")
+        if user_id is None:
+            raise BadRequestException("Please provide a user id to run the experiment")
+
+        # Authenticate the user
+        user: User = User.get_by_id_and_check(user_id)
+        CurrentUserService.set_current_user(user)
+
+        ExperimentRunService.run_experiment_in_cli(experiment_id)
 
     @classmethod
     def run_notebook(cls, log_level: str) -> None:
@@ -145,18 +147,23 @@ def start_notebook(cwd: str, log_level: str = 'INFO') -> None:
 @click.pass_context
 @click.option('--test', default="",
               help='The name test file to launch (regular expression). Enter "all" to launch all the tests')
-@click.option('--cli', default="", help='Command to run using the command line interface')
+@click.option('--run-experiment', is_flag=True, default=False,
+              help='When set, this start a new process to run the experiment')
 @click.option('--runserver', is_flag=True, help='Starts the server')
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
 @click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
 @click.option('--reset_env', is_flag=True, help='Reset environment')
-def _start_app_console(ctx, test: str, cli: str, runserver: bool,
-                       port: str, log_level: str, show_sql: bool, reset_env: bool):
+@click.option('--experiment-id', help='Experiment id')
+@click.option('--user-id', help='User id')
+def _start_app_console(ctx, test: str, run_experiment: bool, runserver: bool,
+                       port: str, log_level: str, show_sql: bool, reset_env: bool,
+                       experiment_id: str, user_id: str) -> None:
     if runserver:
         AppManager.start_app(port=port, log_level=log_level, show_sql=show_sql)
-    elif cli:
-        AppManager.run_cli(cli=cli, log_level=log_level, show_sql=show_sql, is_test=bool(test))
+    elif run_experiment:
+        AppManager.run_experiment(experiment_id=experiment_id, user_id=user_id,
+                                  log_level=log_level, show_sql=show_sql, is_test=bool(test))
     elif test:
         AppManager.run_test(test=test, log_level=log_level, show_sql=show_sql)
     elif reset_env:
