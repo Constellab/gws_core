@@ -3,14 +3,19 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List
+from typing import Dict, List, TypedDict
 
+from gws_core.io.io_specs import IOSpecsType
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.task.task_io import TaskOutputs
 
-from .io_spec import InputSpec, OutputSpec
+from .io_spec import InputSpec, IOSpecDict, OutputSpec
 from .io_specs import InputSpecs, OutputSpecs
+
+
+class AdditionalInfo(TypedDict):
+    additionnal_port_spec: IOSpecDict
 
 
 class DynamicInputs(InputSpecs):
@@ -18,14 +23,36 @@ class DynamicInputs(InputSpecs):
     # name of the spec passed to the task
     SPEC_NAME = 'source'
 
-    def __init__(self, default_specs: Dict[str, InputSpec] = None) -> None:
+    additionnal_port_spec: InputSpec = None
+
+    def __init__(self, default_specs: Dict[str, InputSpec] = None,
+                 additionnal_port_spec: InputSpec = None) -> None:
+        """
+        :param default_specs: default specs used when creating the inputs, defaults to None
+        :type default_specs: Dict[str, InputSpec], optional
+        :param additionnal_port_spec: force the type of newly created port, defaults to Resource
+        :type additionnal_port_spec: Type[Resource], optional
+        """
+        self.additionnal_port_spec = additionnal_port_spec
         if default_specs is None:
             # set 1 input spec by default
             default_specs = {"source": self.get_default_spec()}
         super().__init__(default_specs)
 
-    def is_dynamic(self) -> bool:
-        return True
+    def get_type(self) -> IOSpecsType:
+        return 'dynamic'
+
+    def get_additional_info(self) -> AdditionalInfo:
+        return {
+            'additionnal_port_spec': self.additionnal_port_spec.to_json() if self.additionnal_port_spec else None
+        }
+
+    def set_additional_info(self, additional_info: AdditionalInfo) -> None:
+        if not additional_info:
+            return
+
+        if 'additionnal_port_spec' in additional_info:
+            self.additionnal_port_spec = InputSpec.from_json(additional_info['additionnal_port_spec'])
 
     def _transform_input_resources(self, resources: Dict[str, Resource]) -> Dict[str, Resource]:
         """
@@ -34,11 +61,13 @@ class DynamicInputs(InputSpecs):
         as this is dynamic, we return only the resources of the 'source' port which is a ResourceList
         """
 
-        resources: List[Resource] = list(resources.values())
-        return {self.SPEC_NAME: ResourceList(resources)}
+        resources_list: List[Resource] = list(resources.values())
+        return {self.SPEC_NAME: ResourceList(resources_list)}
 
-    @classmethod
-    def get_default_spec(cls) -> InputSpec:
+    def get_default_spec(self) -> InputSpec:
+        if self.additionnal_port_spec:
+            return self.additionnal_port_spec
+
         return InputSpec(Resource, is_optional=True)
 
 
@@ -47,14 +76,38 @@ class DynamicOutputs(OutputSpecs):
     # name of the spec passed to the task
     SPEC_NAME = 'target'
 
-    def __init__(self, default_specs: Dict[str, OutputSpec] = None) -> None:
+    additionnal_port_spec: OutputSpec = None
+
+    def __init__(self, default_specs: Dict[str, OutputSpec] = None,
+                 additionnal_port_spec: OutputSpec = None) -> None:
+        """
+        :param default_specs: default specs used when creating the outputs, defaults to None
+        :type default_specs: Dict[str, OutputSpec], optional
+        :param additionnal_port_spec: force the type of newly created port, defaults to Resource
+        :type additionnal_port_spec: Type[Resource], optional
+        """
+
         if default_specs is None:
             # set 1 output spec by default
             default_specs = {"target": self.get_default_spec()}
         super().__init__(default_specs)
 
-    def is_dynamic(self) -> bool:
-        return True
+        self.additionnal_port_spec = additionnal_port_spec
+
+    def get_type(self) -> IOSpecsType:
+        return 'dynamic'
+
+    def get_additional_info(self) -> AdditionalInfo:
+        return {
+            'additionnal_port_spec': self.additionnal_port_spec.to_json() if self.additionnal_port_spec else None
+        }
+
+    def set_additional_info(self, additional_info: AdditionalInfo) -> None:
+        if not additional_info:
+            return
+
+        if 'additionnal_port_spec' in additional_info:
+            self.additionnal_port_spec = OutputSpec.from_json(additional_info['additionnal_port_spec'])
 
     def _transform_output_resources(self, task_outputs: TaskOutputs) -> TaskOutputs:
         """ Method to convert the task output to be saved in the outputs.
@@ -95,6 +148,8 @@ class DynamicOutputs(OutputSpecs):
         index = list(self._specs.keys()).index(key)
         return f"n°{index + 1}"
 
-    @classmethod
-    def get_default_spec(cls) -> OutputSpec:
+    def get_default_spec(self) -> OutputSpec:
+        if self.additionnal_port_spec:
+            return self.additionnal_port_spec
+
         return OutputSpec(Resource, sub_class=True)

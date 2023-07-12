@@ -153,9 +153,6 @@ class Port(Base):
             'specs': self.resource_spec.to_json()
         }
 
-    def export_specs(self) -> IOSpecDict:
-        return self.resource_spec.to_json()
-
     @classmethod
     def load_from_json(cls, json_: PortDict, name: str) -> 'Port':
         spec_type: Type[IOSpec] = cls._get_io_spec_type()

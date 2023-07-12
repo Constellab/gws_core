@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Literal, Optional, Set, Type
+from typing import List, Literal, Optional, Set, Type, Union
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.utils.string_helper import StringHelper
@@ -591,7 +591,8 @@ class ProtocolService(BaseService):
             raise BadRequestException(f"The process does not support dynamic {port_type} ports")
 
         # generate the default spec and add port
-        io_spec = DynamicInputs.get_default_spec() if port_type == 'input' else DynamicOutputs.get_default_spec()
+        io_specs: Union[DynamicInputs, DynamicOutputs] = io.get_specs()
+        io_spec = io_specs.get_default_spec()
         io.create_port(StringHelper.generate_uuid(), io_spec)
 
         process_model.save()

@@ -84,8 +84,6 @@ class Typing(Model):
             raise BadRequestException(
                 f"The type {self.object_type} is not authorized in Typing, possible values: {Utils.get_literal_values(TypingObjectType)}")
 
-    # -- G --
-
     def get_model_types_array(self) -> List[str]:
         """
         Return the model_type as an array by splitting with .

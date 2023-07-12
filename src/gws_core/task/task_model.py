@@ -71,19 +71,11 @@ class TaskModel(ProcessModel):
 
         task_type: Type[Task] = self.get_process_type()
 
-        self._inputs = Inputs(task_type.input_specs.is_dynamic())
-        # create the input ports from the Task input specs
-        for k in task_type.input_specs.get_specs():
-            self._inputs.create_port(k, task_type.input_specs.get_spec(k))
-
+        self._inputs = Inputs.load_from_specs(task_type.input_specs)
         # Set the data inputs dict
         self.data["inputs"] = self.inputs.to_json()
 
-        self._outputs = Outputs(task_type.input_specs.is_dynamic())
-        # create the output ports from the Task output specs
-        for k in task_type.output_specs.get_specs():
-            self._outputs.create_port(k, task_type.output_specs.get_spec(k))
-
+        self._outputs = Outputs.load_from_specs(task_type.output_specs)
         # Set the data inputs dict
         self.data["outputs"] = self.outputs.to_json()
 

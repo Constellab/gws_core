@@ -3,24 +3,23 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import json
 import os
 import shutil
 from abc import abstractmethod
-from typing import List, Optional
+from typing import List
 
 from gws_core.config.param.param_spec import ListParam, ParamSpec
-from gws_core.core.utils.settings import Settings
-from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
-from gws_core.resource.resource import Resource
+from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
+from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.resource.resource_set.resource_list import ResourceList
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ....io.io_spec import InputSpec, OutputSpec
 from ....io.io_specs import InputSpecs, OutputSpecs
-from ....resource.resource_set.resource_set import ResourceSet
 from ....task.task import Task
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
@@ -35,22 +34,16 @@ class EnvLiveTask(Task):
     """
     This task executes code snippets on the fly in shell environments.
 
-    # If a File is passed as input, it creates a temporary folder and copy the file in it. Pass the file path to the snippet.
-    # If a Folder is passed as input, it creates a temporary folder and copy the folder in it. Pass the folder path to the snippet.
-    # If a ResourceSet is passed as input, it creates a temporary folder and copy the files in it. Pass the temps folder path to the snippet.
-
-    # Path a result folder to the snippet. The snippet should write the outputs files in this folder.
-    # If the folder contains only 1 file or folder, it returns this file or folder as output.
-    # If the folder contains more than 1 file or folder, it returns the ResourceSet as output.
-
+    # source_paths variable contains the list of input files and folders.
+    # Each file or folder in the target_path folder are exported as output resources.
 
     > **Warning**: It is recommended to use code snippets comming from trusted sources.
     """
 
-    input_specs: InputSpecs = InputSpecs({'source': InputSpec(
-        (File, Folder, ResourceSet), is_optional=True, human_name="File or file set", short_description="File or file set"), })
-    output_specs: OutputSpecs = OutputSpecs({'target': OutputSpec(
-        (File, Folder, ResourceSet), sub_class=True, human_name="File set", short_description="File set")})
+    input_specs: InputSpecs = DynamicInputs(
+        additionnal_port_spec=InputSpec(FSNode, human_name="File or folder", is_optional=True))
+    output_specs: OutputSpecs = DynamicOutputs(
+        additionnal_port_spec=OutputSpec(FSNode, human_name="File or folder", sub_class=True))
 
     # override this in subclasses
     config_specs: ConfigSpecs = {}
@@ -58,25 +51,24 @@ class EnvLiveTask(Task):
 
     shell_proxy: ShellProxy = None
 
-    source_temp_folder: str = None
     target_temp_folder: str = None
+
+    SOURCE_PATHS_VAR_NAME = 'source_paths'
+    TARGET_PATHS_VAR_NAME = 'target_paths'
+    TARGET_PATHS_FILENAME = '__target_paths__.json'
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
         env = params.get_value('env')
 
-        # build the target path
-        self.target_temp_folder = Settings.make_temp_dir()
-
         # build the source path
-        self.source_temp_folder = self.get_source_path(inputs.get("source"))
+        source_paths = self.get_source_path(inputs.get("source"))
 
         self.shell_proxy = self._create_shell_proxy(env)
 
         # create the executable code file
         code_file_path = self.generate_code_file(code, params.get_value('params'),
-                                                 self.target_temp_folder,
-                                                 self.source_temp_folder)
+                                                 source_paths)
 
         # validate user inputs, params, code
         cmd = self._format_command(code_file_path)
@@ -87,17 +79,16 @@ class EnvLiveTask(Task):
             raise BadRequestException(
                 "An error occured during the execution of the live code. Please view the logs for more details.")
 
-        target = self.get_target_resources(self.target_temp_folder)
+        target = self.get_target_resources()
         return {'target': target}
 
-    def generate_code_file(self, code: str, params: List[str], target_path: str, source_path: str) -> str:
+    def generate_code_file(self, code: str, params: List[str], source_paths: List[str]) -> str:
         # create the executable code file
         if self.SNIPPET_FILE_EXTENSION is None:
             raise BadRequestException("No SNIPPET_FILE_EXTENSION defined")
 
         # format code to add inputs
-        formatted_code = self._format_code(
-            code, params, target_path, source_path)
+        formatted_code = self._format_code(code, params, source_paths)
         code_file_path = os.path.join(
             self.shell_proxy.working_dir, f"code.{self.SNIPPET_FILE_EXTENSION}")
 
@@ -107,72 +98,67 @@ class EnvLiveTask(Task):
 
         return code_file_path
 
-    def get_source_path(self, source: Resource) -> str:
-        if source is None:
-            return ''
+    def get_source_path(self, source: ResourceList) -> List[str]:
+        if source is None or len(source) == 0:
+            return []
 
-        if isinstance(source, FSNode):
-            return source.path
+        nodes: List[FSNode] = []
+        skipped_resources: List[str] = []
 
-        # for ResourceSet, add all the file and folder in a temp folder
-        elif isinstance(source, ResourceSet):
-            source_folder = Settings.make_temp_dir()
-
-            added_fs_nodes: List[str] = []
-            skipped_resources: List[str] = []
-
-            for sub_resource in source.get_resources().values():
-                if isinstance(sub_resource, FSNode):
-                    temp_file_path = os.path.join(
-                        source_folder, sub_resource.get_default_name())
-
-                    FileHelper.copy_node(sub_resource.path, temp_file_path)
-                    added_fs_nodes.append(sub_resource.get_default_name())
-                else:
-                    skipped_resources.append(sub_resource.name)
-
-            if len(skipped_resources) > 0:
-                self.log_warning_message(
-                    f"The resources {skipped_resources} are not a file or folder. They were skipped and not added to source_path. To include them you must convert theses resources to file or folder (using exporter).")
-
-            if len(added_fs_nodes) == 0:
-                raise BadRequestException(
-                    "ResourceSet input does not contain any file or folder.")
-
-            self.log_info_message(f"Added {added_fs_nodes} to source_path.")
-
-            return source_folder
-        else:
-            raise BadRequestException(
-                f"Source type {source._human_name} is not supported. Only File, Folder and ResourceSet containing Files or Folders are supported.")
-
-    def get_target_resources(self, target_path: str) -> Resource:
-        # count the files and folders directly in the result folder
-        count = len(os.listdir(target_path))
-
-        if count == 0:
-            raise BadRequestException(
-                "The code snippet did not generate any output file or folder. Did you forget to write the output files in the target folder?")
-
-        if count == 1:
-            # if there is only 1 file or folder, return it
-            for name in os.listdir(target_path):
-                path = os.path.join(target_path, name)
-                if os.path.isdir(path):
-                    return Folder(path)
-                else:
-                    return File(path)
-
-        # if there is more than 1 file or folder, return a ResourceSet
-        resource_set = ResourceSet()
-        for name in os.listdir(target_path):
-            path = os.path.join(target_path, name)
-            if os.path.isdir(path):
-                resource_set.add_resource(Folder(path), name)
+        for resource in source:
+            if isinstance(resource, FSNode):
+                nodes.append(resource)
             else:
-                resource_set.add_resource(File(path), name)
+                skipped_resources.append(resource.name)
 
-        return resource_set
+        if len(skipped_resources) > 0:
+            raise Exception(
+                f"The resources {skipped_resources} are not a file or folder. To include them you must convert theses resources to file or folder (using exporter).")
+
+        return [x.path for x in nodes]
+
+    def get_target_resources(self) -> ResourceList:
+        # read the target paths json file
+        target_path_file = os.path.join(self.shell_proxy.working_dir,
+                                        self.TARGET_PATHS_FILENAME)
+
+        if not os.path.exists(target_path_file):
+            raise BadRequestException(
+                "the target file path was not generated. Did you write paths in the targets_paths variable ?")
+
+        target_paths: List[str] = None
+        try:
+            with open(target_path_file, 'r', encoding='utf-8') as file_path:
+                target_paths = json.load(file_path)
+        except Exception as err:
+            raise BadRequestException(f"Cannot parse the target paths file : {err}") from err
+
+        # check if the target paths are valid
+        if not isinstance(target_paths, list):
+            raise BadRequestException("The target_paths variable does not contain a list of paths.")
+
+        if len(target_path_file) == 0:
+            raise BadRequestException(
+                "The code snippet did not generate any output file or folder. Did you forget to write path result in target_paths variable ?")
+
+        resource_list = ResourceList()
+        for path in target_paths:
+            if not isinstance(path, str):
+                raise Exception(f"The path {path} in target_path variable is not a string. It will be ignored.")
+
+            # check if path is absolute
+            if not os.path.isabs(path):
+                path = os.path.join(self.shell_proxy.working_dir, path)
+
+            if not os.path.exists(path):
+                raise Exception(f"The path {path} in target_path variable does not exist. It will be ignored.")
+
+            if os.path.isdir(path):
+                resource_list.append(Folder(path))
+            else:
+                resource_list.append(File(path))
+
+        return resource_list
 
     @abstractmethod
     def _format_command(self, code_file_path: str) -> list:
@@ -182,7 +168,7 @@ class EnvLiveTask(Task):
     def _create_shell_proxy(self, env: str) -> ShellProxy:
         pass
 
-    def _format_code(self, code: str, params: List[str], target_path: str, source_path: Optional[str]) -> str:
+    def _format_code(self, code: str, params: List[str], source_paths: List[str]) -> str:
         """
         Format the code to add parameters and input/output paths
         """
@@ -191,9 +177,35 @@ class EnvLiveTask(Task):
         # only if there are some param, this is useful to limit the line number difference
         # when error occured
         str_params = '\n' + ('\n'.join(params) + '\n') if len(params) > 0 else ''
-        return f"""target_folder = "{target_path}"
-source_path = "{source_path}"{str_params}
+
+        init_code = self._get_init_code(self.SOURCE_PATHS_VAR_NAME, source_paths,
+                                        self.TARGET_PATHS_VAR_NAME)
+        write_target_code = self._get_write_target_paths_code(self.TARGET_PATHS_VAR_NAME,
+                                                              self.TARGET_PATHS_FILENAME)
+        return f"""{init_code}{str_params}
 {code}
+# Generated section to write the target paths file
+{write_target_code}
+"""
+
+    def _get_init_code(self, source_paths_var_name: str,
+                       source_paths: List[str], target_paths_var_name: str) -> str:
+        """
+        Generate the code to initialize the source and target paths variables
+        """
+
+        return f"""{source_paths_var_name} = {source_paths}
+{target_paths_var_name} = []"""
+
+    def _get_write_target_paths_code(self, target_paths_var_name: str,
+                                     target_paths_filename: str) -> str:
+        """
+        Generate the code to write the target paths to a file
+        """
+        return f"""
+import json
+with open('{target_paths_filename}', 'w') as f:
+    json.dump({target_paths_var_name}, f)
 """
 
     def run_after_task(self) -> None:
@@ -203,9 +215,6 @@ source_path = "{source_path}"{str_params}
         """
 
         self.shell_proxy.clean_working_dir()
-
-        if self.source_temp_folder:
-            shutil.rmtree(self.source_temp_folder, ignore_errors=True)
 
         if self.target_temp_folder:
             shutil.rmtree(self.target_temp_folder, ignore_errors=True)

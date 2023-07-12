@@ -8,8 +8,8 @@ from abc import abstractmethod
 from typing import Dict, Generic, List, Type, TypedDict, TypeVar, final
 
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
-from gws_core.io.io_spec import IOSpec, IOSpecDict
-from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.io.io_spec import IOSpec
+from gws_core.io.io_specs import InputSpecs, IOSpecs, IOSpecsType, OutputSpecs
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -23,8 +23,9 @@ from .port import InPort, OutPort, Port, PortDict
 class IODict(TypedDict):
     """IODict type
     """
-    is_dynamic: bool
     ports: Dict[str, PortDict]
+    type: IOSpecsType
+    additional_info: dict
 
 
 # For generic Port type
@@ -43,11 +44,15 @@ class IO(Base, Generic[PortType]):
     """
 
     _ports: Dict[str, PortType] = {}
-    _is_dynamic = False
+    _type: IOSpecsType = None
+    _additional_info: dict = {}
 
-    def __init__(self, is_dynamic: bool = False) -> None:
+    def __init__(self, type_: IOSpecsType = 'normal', additional_info: dict = None) -> None:
         self._ports = dict()
-        self._is_dynamic = is_dynamic
+        self._type = type_
+        if additional_info is None:
+            additional_info = {}
+        self._additional_info = additional_info
 
     @property
     def is_ready(self) -> bool:
@@ -66,7 +71,7 @@ class IO(Base, Generic[PortType]):
 
     @property
     def is_dynamic(self) -> bool:
-        return self._is_dynamic
+        return self._type == 'dynamic'
 
     def reset(self) -> None:
         for port in self._ports.values():
@@ -124,7 +129,7 @@ class IO(Base, Generic[PortType]):
         pass
 
     @abstractmethod
-    def build_specs(self, specs: Dict[str, IOSpec]) -> IOSpec:
+    def _build_specs(self, specs: Dict[str, IOSpec]) -> IOSpecs:
         pass
 
     def get_port_names(self) -> List[str]:
@@ -206,8 +211,8 @@ class IO(Base, Generic[PortType]):
 
     @classmethod
     def load_from_json(cls, io_json: IODict) -> 'IO':
-        io: IO = cls(is_dynamic=io_json.get('is_dynamic', False))
-        port_dict = io_json.get('ports', {})
+        io: IO = cls(type_=io_json.get('type', 'normal'), additional_info=io_json.get('additional_info', {}))
+        port_dict: dict = io_json.get('ports', {})
 
         # To create an InPort or OutPort
         port_type: Type[PortType] = io._get_port_type()
@@ -216,18 +221,28 @@ class IO(Base, Generic[PortType]):
             port: PortType = port_type.load_from_json(port_dict, key)
 
             if port_dict["resource_id"]:
-                resource_model: ResourceModel = ResourceModel.get_by_id(
-                    port_dict["resource_id"])
+                resource_model: ResourceModel = ResourceModel.get_by_id(port_dict["resource_id"])
                 port.resource_model = resource_model
 
             io.add_port(key, port)
 
         return io
 
+    @classmethod
+    def load_from_specs(cls, specs: IOSpecs) -> 'IO':
+        io: IO = cls(type_=specs.get_type(), additional_info=specs.get_additional_info())
+
+        # create the input ports from the Task input specs
+        for key, value in specs.get_specs().items():
+            io.create_port(key,  value)
+
+        return io
+
     def to_json(self) -> IODict:
         _json: IODict = {
             "ports": {},
-            "is_dynamic": self._is_dynamic
+            "type": self._type,
+            "additional_info": self._additional_info
         }
 
         for key, port in self._ports.items():
@@ -235,14 +250,7 @@ class IO(Base, Generic[PortType]):
 
         return _json
 
-    # TODO think about this, do we include the is_dynamic in the specs ?
-    def export_specs(self) -> Dict[str, IOSpecDict]:
-        config: Dict[str, IOSpecDict] = {}
-        for key, port in self._ports.items():
-            config[key] = port.export_specs()
-        return config
-
-    def get_specs(self) -> IOSpec:
+    def get_specs(self) -> IOSpecs:
         """
         Returns the specs of all the ports.
 
@@ -254,7 +262,10 @@ class IO(Base, Generic[PortType]):
 
         for key, port in self._ports.items():
             specs[key] = port.resource_spec
-        return self.build_specs(specs)
+
+        io_specs = self._build_specs(specs)
+        io_specs.set_additional_info(self._additional_info)
+        return io_specs
 
 
 # ####################################################################
@@ -273,7 +284,7 @@ class Inputs(IO[InPort]):
     def _get_port_type(self) -> Type[InPort]:
         return InPort
 
-    def build_specs(self, specs: Dict[str, IOSpec]) -> IOSpec:
+    def _build_specs(self, specs: Dict[str, IOSpec]) -> IOSpecs:
         if self.is_dynamic:
             return DynamicInputs(specs)
         return InputSpecs(specs)
@@ -295,7 +306,7 @@ class Outputs(IO[OutPort]):
     def _get_port_type(self) -> Type[OutPort]:
         return OutPort
 
-    def build_specs(self, specs: Dict[str, IOSpec]) -> IOSpec:
+    def _build_specs(self, specs: Dict[str, IOSpec]) -> IOSpecs:
         if self.is_dynamic:
             return DynamicOutputs(specs)
         return OutputSpecs(specs)

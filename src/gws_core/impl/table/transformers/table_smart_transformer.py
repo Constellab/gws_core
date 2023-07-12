@@ -80,10 +80,10 @@ from gws_core import Table
 # keep the original table
 source_table = source
 # retrieve the dataframe for the generated code
-source = source.get_data()
+source = source[0].get_data()
 {generated_code}
 # convert the dataframe to a table
-target = Table(target)"""
+target = [Table(target)]"""
 
         result = Table(output)
         # get the table

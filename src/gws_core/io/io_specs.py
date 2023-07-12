@@ -2,7 +2,7 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from typing import Dict, List, TypedDict
+from typing import Dict, List, Literal, TypedDict
 
 from gws_core.core.utils.logger import Logger
 from gws_core.io.io_exception import (InvalidInputsException,
@@ -12,12 +12,15 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_factory import ResourceFactory
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
+IOSpecsType = Literal['normal', 'dynamic']
+
 
 class IOSpecsDict(TypedDict):
     """IOSpecsDict type
     """
     specs: Dict[str, IOSpecDict]
-    is_dynamic: bool
+    type: IOSpecsType
+    additional_info: dict
 
 
 class OutputsCheckResult(TypedDict):
@@ -51,8 +54,14 @@ class IOSpecs():
     def get_spec(self, name: str) -> IOSpec:
         return self._specs[name]
 
-    def is_dynamic(self) -> bool:
-        return False
+    def get_type(self) -> IOSpecsType:
+        return 'normal'
+
+    def get_additional_info(self) -> dict:
+        return {}
+
+    def set_additional_info(self, additional_info: dict) -> None:
+        pass
 
     def to_json(self) -> IOSpecsDict:
         """to_json method for IOSpecs
@@ -60,7 +69,8 @@ class IOSpecs():
 
         json_:  IOSpecsDict = {
             "specs": {},
-            "is_dynamic": self.is_dynamic()
+            "type": self.get_type(),
+            "additional_info": self.get_additional_info()
         }
         for key, spec in self.get_specs().items():
             json_["specs"][key] = spec.to_json()
@@ -179,13 +189,15 @@ class OutputSpecs(IOSpecs):
             output_resource = ResourceFactory.create_from_object(output_resource)
             if output_resource is None:
                 return {
-                    "error": f"The output '{pretty_key_name}' of type '{resource_type.__name__}' is not a resource and could not be converted dynamically. It must extend the Resource class"
+                    "error": f"The output '{pretty_key_name}' of type '{resource_type.__name__}' is not a resource and could not be converted dynamically. It must extend the Resource class",
+                    "resource": None
                 }
 
         # Check resource is compatible with specs
         if not spec.is_compatible_with_resource_type(type(output_resource)):
             return {
-                "error": f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' is not a compatble with the corresponding output spec."
+                "error": f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' is not a compatble with the corresponding output spec.",
+                "resource": None
             }
 
         # Check that the resource is well formed
@@ -193,11 +205,11 @@ class OutputSpecs(IOSpecs):
             error = output_resource.check_resource()
 
             if error is not None and len(error) > 0:
-                return {"error": error}
+                return {"error": error, "resource": None}
 
         except Exception as err:
             Logger.log_exception_stack_trace(err)
-            return {"error": f"Error during the key of the output resource '{pretty_key_name}'. Error : {str(err)}"}
+            return {"error": f"Error during the key of the output resource '{pretty_key_name}'. Error : {str(err)}", "resource": None}
 
         return {
             "resource": output_resource,

@@ -4,6 +4,8 @@
 # About us: https://gencovery.com
 
 
+from typing import List
+
 from gws_core.config.param.code_param.r_code_param import RCodeParam
 from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
 from gws_core.impl.live.base.env_live_task import EnvLiveTask
@@ -45,6 +47,21 @@ class RCondaLiveTask(EnvLiveTask):
 
     def _format_command(self, code_file_path: str) -> list:
         return ["Rscript", code_file_path]
+
+    def _get_init_code(self, source_paths_var_name: str,
+                       source_paths: List[str], target_paths_var_name: str) -> str:
+        source_value = [f"\'{p}\'" for p in source_paths]
+        source_value_str = f'c({",".join(source_value)})'
+        # using python and json package, write the target paths to a file
+        return f"""{source_paths_var_name} <- {source_value_str}
+{target_paths_var_name} <- list()"""
+
+    def _get_write_target_paths_code(self, target_paths_var_name: str, target_paths_filename: str) -> str:
+        # convert the above to R code
+        return f"""# convert the target paths to a json string
+json_data <- paste0("[", paste0('"', {target_paths_var_name}, '"', collapse = ","), "]")
+# write the json string to a file
+write(json_data, file = "{target_paths_filename}")"""
 
     def _create_shell_proxy(self, env: str) -> CondaShellProxy:
         return CondaShellProxy.from_env_str(env, message_dispatcher=self.message_dispatcher)

@@ -74,11 +74,11 @@ The data of the table is not transferered to OpenAI, only the provided text.
         live_task_code = f"""
 from gws_core import File
 import os
-source = source.get_data()
+source = source[0].get_data()
 # generate the output file path
 output_path = os.path.join(working_dir, 'output.png')
 {generated_code}
-target = File(output_path)"""
+target = [File(output_path)]"""
 
         return {'target': File(self.ouput_path), 'generated_code': Text(live_task_code)}
 

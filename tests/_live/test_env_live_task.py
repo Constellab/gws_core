@@ -9,9 +9,7 @@ from unittest import TestCase
 from gws_core import File, PyCondaLiveTask, TaskRunner
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.utils.settings import Settings
-from gws_core.impl.file.folder import Folder
 from gws_core.impl.live.py_pipenv_live_task import PyPipenvLiveTask
-from gws_core.resource.resource_set.resource_set import ResourceSet
 
 
 # test_env_live_task
@@ -20,16 +18,17 @@ class TestEnvLiveTask(TestCase):
     jwt_encoder_code = """
 import jwt
 import os
-# read source_path file
-with open(source_path, "r", encoding="utf-8") as fp:
+# read source_paths file
+with open(source_paths[0], "r", encoding="utf-8") as fp:
     data = fp.read()
 
 encoded_jwt = jwt.encode({"text": data}, "secret", algorithm="HS256")
 
 # write result
-result_path = os.path.join(target_folder, "result.txt")
+result_path = "result.txt"
 with open(result_path, "w", encoding="utf-8") as fp:
     fp.write(encoded_jwt)
+target_paths.append(result_path)
 """
 
     conda_env_str = """
@@ -108,72 +107,6 @@ pyjwt = '==2.3.0'"""
         value = target.read().strip()
         self.assertIsNotNone(value)
         self.assertTrue(len(value) > 0)
-
-    def test_resource_set_live_task(self):
-        """
-        Test a live task that takes multiple files as input and return a resource set
-
-        Test a code that concatenate two files into a single file.
-        It duplicate the result in 2 files"""
-        file = self._create_file()
-        file_2 = self._create_file(
-            file_name='source_2.txt', content="Micheal !")
-
-        resource_set = ResourceSet()
-        resource_set.add_resource(file, file.get_default_name())
-        resource_set.add_resource(file_2, file_2.get_default_name())
-
-        tester = TaskRunner(
-            params={
-                # CODE
-                "code":
-                """
-import os
-
-# loop over source_path files and concatenate them into a single string
-data = text_start
-for file in os.listdir(source_path):
-    with open(os.path.join(source_path, file), "r", encoding="utf-8") as fp:
-        data += fp.read()
-
-# write result
-result_path = os.path.join(target_folder, "result.txt")
-with open(result_path, "w", encoding="utf-8") as fp:
-    fp.write(data)
-
-# create subfolder 'subfolder'
-subfolder = os.path.join(target_folder, "subfolder")
-os.mkdir(subfolder)
-result_path_2 = os.path.join(subfolder, "result_2.txt")
-with open(result_path_2, "w", encoding="utf-8") as fp:
-    fp.write("Hello world")
-                """,
-                # SET ENVIRONMENT
-                "env": self.pip_env_str,
-                "params": ["text_start='Start'"]
-            },
-            inputs={"source": resource_set},
-            task_type=PyPipenvLiveTask,
-        )
-
-        outputs = tester.run()
-        target: ResourceSet = outputs["target"]
-
-        self.assertTrue(isinstance(target, ResourceSet))
-        self.assertEqual(len(target.get_resources()), 2)
-
-        result_1: File = target.get_resource("result.txt")
-        result_2: Folder = target.get_resource("subfolder")
-
-        self.assertTrue(isinstance(result_1, File))
-        self.assertTrue(isinstance(result_2, Folder))
-
-        self.assertTrue('Micheal !' in result_1.read().strip())
-        self.assertTrue('Hello world' in result_1.read().strip())
-        # check that the param was correctly set
-        self.assertTrue('Start' in result_1.read().strip())
-
-        tester.run_after_task()
 
     def test_live_task_with_exception(self):
         tester = TaskRunner(

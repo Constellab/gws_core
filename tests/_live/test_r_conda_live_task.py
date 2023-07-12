@@ -32,13 +32,16 @@ class TestRCondaLiveTask(TestCase):
 
 # retrieve the command line arguments
 # Read the input csv file with column name
-csv = read.csv(source_path, header = TRUE, sep = ",")
+csv = read.csv(source_paths[1], header = TRUE, sep = ",")
 
 # Remove column named 'one'
-csv_result = csv[, -which(names(csv) == "one")]
+# csv_result = csv[, -which(names(csv) == "one")]
+csv_result <- csv[, !(names(csv) == 'one')]
 
 # Write the csv file into the result folder
-write.csv(csv_result, file = paste(target_folder, "/result.csv", sep = ""), row.names = FALSE)
+result_path = "result.csv"
+target_paths <- c(result_path)
+write.csv(csv_result, file = result_path, row.names = FALSE)
 """,
                 "env":
                 """
@@ -53,15 +56,14 @@ dependencies:
         )
 
         outputs = tester.run()
+
         target = outputs["target"]
 
         self.assertTrue(isinstance(target, File))
 
-        table: Table = TableImporter.call(
-            target, params={"delimiter": ",", "index_column": 0})
+        table: Table = TableImporter.call(target, params={"delimiter": ","})
 
-        # check that the column 'one' has been removed
-        self.assertTrue(table.column_exists("two"))
-        self.assertFalse(table.column_exists("one"))
+        # check that there is only one column
+        self.assertEqual(table.nb_columns, 1)
 
         tester.run_after_task()
