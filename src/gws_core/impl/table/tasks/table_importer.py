@@ -41,9 +41,6 @@ class TableImporter(ResourceImporter):
     }
 
     def import_from_path(self, source: File, params: ConfigParams, target_type: Type[Table]) -> Table:
-        Logger.error('NOOOOOOOOOOOOOOOOOOOOOOOOOOO nullll \n deuxieme ligne eeeeeee')
-        a = {}
-        b = a.super()
         if source.is_empty():
             raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
                                       detail_args={'filename': source.path})
