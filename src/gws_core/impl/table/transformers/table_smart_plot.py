@@ -80,7 +80,10 @@ output_path = os.path.join(working_dir, 'output.png')
 {generated_code}
 target = [File(output_path)]"""
 
-        return {'target': File(self.ouput_path), 'generated_code': Text(live_task_code)}
+        generated_text = Text(live_task_code)
+        generated_text.name = "Plot code"
+
+        return {'target': File(self.ouput_path), 'generated_code': generated_text}
 
     def run_after_task(self) -> None:
         FileHelper.delete_dir(self.temp_dir)

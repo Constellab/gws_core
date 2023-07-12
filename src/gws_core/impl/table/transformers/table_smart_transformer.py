@@ -97,4 +97,7 @@ target = [Table(target)]"""
             result.copy_row_tags_by_name(source)
             live_task_code += "\ntarget.copy_row_tags_by_name(source_table)"
 
-        return {'target': result, 'generated_code': Text(live_task_code)}
+        generated_text = Text(live_task_code)
+        generated_text.name = "Table transformation code"
+
+        return {'target': result, 'generated_code': generated_text}

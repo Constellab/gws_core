@@ -79,4 +79,7 @@ source = source[0].get_data()
 {generated_code}
 target = [PlotlyResource(target)]"""
 
-        return {'target': plotly_resource, 'generated_code': Text(live_task_code)}
+        generated_text = Text(live_task_code)
+        generated_text.name = "Interactive plot code"
+
+        return {'target': plotly_resource, 'generated_code': generated_text}
