@@ -93,8 +93,6 @@ class ProtocolModel(ProcessModel):
 
         super().reset()
         for process in self.processes.values():
-            # # reset all process except the source
-            # if not process.is_source_task():
             process.reset()
         self._reset_iofaces()
 

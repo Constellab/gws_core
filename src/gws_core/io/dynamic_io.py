@@ -51,7 +51,7 @@ class DynamicInputs(InputSpecs):
         if not additional_info:
             return
 
-        if 'additionnal_port_spec' in additional_info:
+        if additional_info.get('additionnal_port_spec'):
             self.additionnal_port_spec = InputSpec.from_json(additional_info['additionnal_port_spec'])
 
     def _transform_input_resources(self, resources: Dict[str, Resource]) -> Dict[str, Resource]:
@@ -106,7 +106,7 @@ class DynamicOutputs(OutputSpecs):
         if not additional_info:
             return
 
-        if 'additionnal_port_spec' in additional_info:
+        if additional_info.get('additionnal_port_spec'):
             self.additionnal_port_spec = OutputSpec.from_json(additional_info['additionnal_port_spec'])
 
     def _transform_output_resources(self, task_outputs: TaskOutputs) -> TaskOutputs:

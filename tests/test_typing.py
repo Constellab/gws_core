@@ -68,8 +68,9 @@ class TestTyping(BaseTestCase):
         eat_json: Dict = eat_type.to_json(deep=True)
 
         self.assertIsNotNone(eat_json['input_specs'])
-        self.assertIsNotNone(eat_json['input_specs']['robot'])
-        self.assertIsNotNone(eat_json['input_specs']['food'])
+        self.assertIsNotNone(eat_json['input_specs']['specs'])
+        self.assertIsNotNone(eat_json['input_specs']['specs']['robot'])
+        self.assertIsNotNone(eat_json['input_specs']['specs']['food'])
 
     def test_protocol_type(self):
         world_travel: ProtocolTyping = ProtocolTyping.get_by_model_type(
@@ -79,8 +80,8 @@ class TestTyping(BaseTestCase):
 
         world_travel_json: Dict = world_travel.to_json(deep=True)
 
-        self.assertIsNotNone(world_travel_json['input_specs']['robot'])
-        self.assertIsNotNone(world_travel_json['output_specs']['robot'])
+        self.assertIsNotNone(world_travel_json['input_specs']['specs']['robot'])
+        self.assertIsNotNone(world_travel_json['output_specs']['specs']['robot'])
 
     def test_resource_type(self):
         robot: ResourceTyping = ResourceTyping.get_by_model_type(Robot)

@@ -4,16 +4,14 @@
 # About us: https://gencovery.com
 from unittest import TestCase
 
-from gws_core import (BadRequestException, ConfigParams, Robot, RobotMove,
-                      Table, Task, TaskInputs, TaskOutputs, TaskRunner,
+from gws_core import (BadRequestException, ConfigParams, JSONDict, OutputSpecs,
+                      Resource, Robot, RobotMove, Table, Task, TaskInputs,
+                      TaskOutputs, TaskRunner, resource_decorator,
                       task_decorator)
-from gws_core.impl.json.json_dict import JSONDict
 from gws_core.io.io_exception import (InvalidInputsException,
                                       InvalidOutputsException,
                                       MissingInputResourcesException)
-from gws_core.io.io_specs import InputSpecs, OutputSpecs
-from gws_core.resource.resource import Resource
-from gws_core.resource.resource_decorator import resource_decorator
+from gws_core.io.io_spec import InputSpec, OutputSpec
 
 
 @task_decorator("TaskRunnerProgress")
@@ -23,35 +21,35 @@ class TaskRunnerProgress(Task):
         self.update_progress_value(50, 'Hello 50%')
 
 
-@ task_decorator("TaskRunnerOutputError")
+@task_decorator("TaskRunnerOutputError")
 class TaskRunnerOutputError(Task):
 
-    output_specs: OutputSpecs = OutputSpecs({'test': Table})
+    output_specs: OutputSpecs = OutputSpecs({'test': InputSpec(Table)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'test': JSONDict()}
 
 
-@ task_decorator("TaskRunnerOutputMissing")
+@task_decorator("TaskRunnerOutputMissing")
 class TaskRunnerOutputMissing(Task):
 
-    output_specs: OutputSpecs = OutputSpecs({'test': Table})
+    output_specs: OutputSpecs = OutputSpecs({'test': OutputSpec(Table)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}
 
 
-@ resource_decorator("ResourceCheckError")
+@resource_decorator("ResourceCheckError")
 class ResourceCheckError(Resource):
 
     def check_resource(self) -> str:
         return 'Invalid resource'
 
 
-@ task_decorator("TaskRunnerInvalidResource")
+@task_decorator("TaskRunnerInvalidResource")
 class TaskRunnerInvalidResource(Task):
 
-    output_specs: OutputSpecs = OutputSpecs({'test': ResourceCheckError})
+    output_specs: OutputSpecs = OutputSpecs({'test': OutputSpec(ResourceCheckError)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'test': ResourceCheckError()}

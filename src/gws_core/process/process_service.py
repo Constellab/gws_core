@@ -37,9 +37,9 @@ class ProcessService:
             raise BadRequestException("Can't get logs of a process in draft status")
 
         start_date: datetime = None
-        # if a page date is given, use the next micro second as start date
+        # if a page date is given, use it (it is when we load a new page)
         if from_page_date:
-            start_date = from_page_date + timedelta(milliseconds=1)
+            start_date = from_page_date
         else:
             # add a margin of 2 seconds to avoid missing the first log lines and the last log lines
             start_date = process_model.started_at - timedelta(seconds=cls.LOG_SECOND_MARGIN)

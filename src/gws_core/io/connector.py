@@ -77,6 +77,9 @@ class Connector:
         Propagate the resource from the output port to the input port.
         """
 
+        if not self.left_port.resource_provided:
+            return
+
         # Get the resource from the output port
         resource = self.left_port.resource_model
 

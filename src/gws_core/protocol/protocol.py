@@ -11,7 +11,7 @@ from peewee import Tuple
 from typing_extensions import TypedDict
 
 from gws_core.config.config_types import ConfigParamsDict
-from gws_core.io.io_spec import OutputSpec
+from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
 from ..core.exception.exceptions.bad_request_exception import \
@@ -266,7 +266,7 @@ class Protocol(Process):
 
     @final
     def get_input_specs_self(self) -> InputSpecs:
-        input_specs = {}
+        input_specs: Dict[str, InputSpec] = {}
 
         for name, interface in self._interfaces.items():
             # retreive the process spec
@@ -274,14 +274,13 @@ class Protocol(Process):
                 interface["process_instance_name"])
 
             # retrieve the corresponding input spec
-            input_specs[name] = process_spec.process_type.get_input_specs()[
-                interface["port_name"]]
+            input_specs[name] = process_spec.process_type.get_input_specs().get_spec(interface["port_name"])
 
         return InputSpecs(input_specs)
 
     @final
     def get_output_specs_self(self) -> OutputSpecs:
-        output_specs = {}
+        output_specs: Dict[str, OutputSpec] = {}
 
         for name, outerface in self._outerfaces.items():
             # retreive the process spec
@@ -289,7 +288,6 @@ class Protocol(Process):
                 outerface["process_instance_name"])
 
             # retrieve the corresponding input spec
-            output_specs[name] = process_spec.process_type.get_output_specs()[
-                outerface["port_name"]]
+            output_specs[name] = process_spec.process_type.get_output_specs().get_spec(outerface["port_name"])
 
         return OutputSpecs(output_specs)

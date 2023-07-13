@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from json import loads
 from typing import List
 
@@ -203,15 +203,15 @@ class LogsBetweenDatesDTO():
     logs: List[LogLine]
     from_date: datetime
     to_date: datetime
-    from_experiment: bool
+    from_experiment_id: str
     is_last_page: bool
 
     def __init__(self, logs: List[LogLine], from_date: datetime, to_date: datetime,
-                 from_experiment: bool, is_last_page: bool) -> None:
+                 from_experiment_id: str, is_last_page: bool) -> None:
         self.logs = logs
         self.from_date = from_date
         self.to_date = to_date
-        self.from_experiment = from_experiment
+        self.from_experiment_id = from_experiment_id
         self.is_last_page = is_last_page
 
     def to_json(self) -> dict:
@@ -219,10 +219,19 @@ class LogsBetweenDatesDTO():
             "logs": [log.to_json() for log in self.logs],
             "from_date": self.from_date,
             "to_date": self.to_date,
-            "from_experiment": self.from_experiment,
+            "from_experiment_id": self.from_experiment_id,
             "is_last_page": self.is_last_page,
-            "last_log_date": self.logs[-1].date_time if len(self.logs) > 0 else None
+            "next_page_date": self.get_next_page_date()
         }
+
+    def get_next_page_date(self) -> datetime:
+        """return the start date for the next page
+        Add 1 millisecond to the last log date to avoid duplicate logs
+
+        :return: _description_
+        :rtype: datetime
+        """
+        return self.logs[-1].date_time + timedelta(milliseconds=1) if len(self.logs) > 0 else None
 
     def to_str(self) -> str:
         return "\n".join([log.to_str() for log in self.logs])

@@ -100,7 +100,7 @@ class LogService:
 
             try:
                 log_lines.extend(cls.get_logs_between_dates_same_day(
-                    one_day_from, one_day_to, from_experiment_id, nb_of_lines))
+                    one_day_from, one_day_to, from_experiment_id, nb_of_lines - len(log_lines)))
             # skip error : file is not log file
             except BadRequestException:
                 continue
@@ -110,7 +110,7 @@ class LogService:
                 break
 
         return LogsBetweenDatesDTO(logs=log_lines, from_date=from_date, to_date=to_date,
-                                   from_experiment=from_experiment_id, is_last_page=len(log_lines) < nb_of_lines)
+                                   from_experiment_id=from_experiment_id, is_last_page=len(log_lines) < nb_of_lines)
 
     @classmethod
     def get_logs_between_dates_same_day(cls, from_date: datetime, to_date: datetime,

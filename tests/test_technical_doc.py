@@ -7,6 +7,7 @@ from gws_core import BaseTestCase
 from gws_core.brick.technical_doc_service import TechnicalDocService
 
 
+# test_technical_doc
 class TestTechnicalDoc(BaseTestCase):
 
     def test_technical_doc(self):
