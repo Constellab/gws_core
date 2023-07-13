@@ -11,6 +11,23 @@ from gws_core import BaseTestCase, PyLiveTask, Table, TaskRunner, Text
 # test_py_live_task
 class TestLiveTask(BaseTestCase):
 
+    def test_default_config(self):
+        """Test the default py live task config template to be sure it is valid
+        """
+        data = DataFrame({'col1': [0, 1], 'col2': [0, 2]})
+        tester = TaskRunner(
+            inputs={'source': Table(data)},
+            task_type=PyLiveTask
+        )
+
+        outputs = tester.run()
+        table: Table = outputs["target"]
+
+        self.assertTrue(isinstance(table, Table))
+
+        expected_table = Table(data.T)
+        self.assertTrue(table.equals(expected_table))
+
     def test_live_task(self):
         tester = TaskRunner(
             params={

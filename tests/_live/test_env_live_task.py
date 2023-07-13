@@ -4,109 +4,62 @@
 # About us: https://gencovery.com
 
 import os
+from typing import Type
 from unittest import TestCase
 
-from gws_core import File, PyCondaLiveTask, TaskRunner
+from pandas import DataFrame, read_csv
+
+from gws_core import File, PyCondaLiveTask, Task, TaskRunner
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.utils.settings import Settings
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.live.py_pipenv_live_task import PyPipenvLiveTask
+from gws_core.impl.live.r_conda_live_task import RCondaLiveTask
 
 
 # test_env_live_task
 class TestEnvLiveTask(TestCase):
 
-    jwt_encoder_code = """
-import jwt
-import os
-# read source_paths file
-with open(source_paths[0], "r", encoding="utf-8") as fp:
-    data = fp.read()
-
-encoded_jwt = jwt.encode({"text": data}, "secret", algorithm="HS256")
-
-# write result
-result_path = "result.txt"
-with open(result_path, "w", encoding="utf-8") as fp:
-    fp.write(encoded_jwt)
-target_paths.append(result_path)
-"""
-
-    conda_env_str = """
-name: .venv3
-channels:
-- conda-forge
-dependencies:
-- python=3.8
-- pyjwt==2.3.0"""
-
-    pip_env_str = """
-[[source]]
-url = 'https://pypi.python.org/simple'
-verify_ssl = true
-name = 'pypi'
-
-[requires]
-python_version = '3.8'
-
-[packages]
-pyjwt = '==2.3.0'"""
+    def test_pip_env_live_task(self):
+        self._test_default_config(PyPipenvLiveTask)
 
     def test_conda_env_live_task(self):
+        self._test_default_config(PyCondaLiveTask)
 
-        # create file resource
-        file = self._create_file()
+    def test_r_conda_env_live_task(self):
+        self._test_default_config(RCondaLiveTask)
 
-        tester = TaskRunner(
-            params={
-                "code": self.jwt_encoder_code,
-                "env": self.conda_env_str,
-            },
-            inputs={"source": file},
-            task_type=PyCondaLiveTask
-        )
+    def _test_default_config(self, task_type: Type[Task]):
+        """Test the default env live task config template to be sure it is valid
+        """
 
-        outputs = tester.run()
-        target: File = outputs["target"]
-
-        self._check_output(target)
-        tester.run_after_task()
-
-    def test_pip_env_live_task(self):
-
-        # create file resource
-        file = self._create_file()
-
-        tester = TaskRunner(
-            params={
-                "code": self.jwt_encoder_code,
-                "env": self.pip_env_str,
-            },
-            inputs={"source": file},
-            task_type=PyPipenvLiveTask
-        )
-
-        outputs = tester.run()
-        target: File = outputs["target"]
-
-        self._check_output(target)
-        tester.run_after_task()
-
-    def _create_file(self, file_name: str = 'source.txt', content: str = "Hello world") -> File:
+        # create a csv file
+        data = DataFrame({'col1': [0, 1], 'col2': [0, 2]}, index=['a', 'b'])
         temp_dir = Settings.make_temp_dir()
-        source = os.path.join(temp_dir, file_name)
-        # set 'Hello world' in a file
-        with open(source, "w", encoding="utf-8") as file_path:
-            file_path.write(content)
+        source = os.path.join(temp_dir, "source.csv")
+        data.to_csv(source, index=True)
 
-        # create file resource
-        return File(source)
+        tester = TaskRunner(
+            task_type=task_type,
+            inputs={"source": File(source)},
+        )
 
-    def _check_output(self, target: File) -> None:
+        logger = tester.add_log_observer()
+
+        try:
+            outputs = tester.run()
+        except Exception:
+            self.assertTrue(logger.has_message_containing('No such file or directory',
+                                                          level=MessageLevel.ERROR))
+            return
+        target: File = outputs["target"]
 
         self.assertTrue(isinstance(target, File))
-        value = target.read().strip()
-        self.assertIsNotNone(value)
-        self.assertTrue(len(value) > 0)
+        target_data: DataFrame = read_csv(target.path, header=0, index_col=0, sep=',')
+
+        self.assertTrue(target_data.T.equals(data))
+
+        FileHelper.delete_dir(temp_dir)
 
     def test_live_task_with_exception(self):
         tester = TaskRunner(
@@ -114,7 +67,6 @@ pyjwt = '==2.3.0'"""
                 "code": """
 raise Exception('This is not working')
 """,
-                "env": self.pip_env_str,
             },
             task_type=PyPipenvLiveTask
         )

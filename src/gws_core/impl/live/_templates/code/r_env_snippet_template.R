@@ -1,10 +1,12 @@
 # This is a snippet template for a R live task.
 
-# Read the source csv file
-csv <- read.csv(source_path, header = TRUE, sep = ",")
+# Read the source csv file with header, row names and comma separator
+csv <- read.csv(source_paths[1], header = TRUE, sep = ",", row.names = 1)
 
-# Transpose the table
+# Transpose the table, keep the header
 csv_result <- t(csv)
 
 # Write the csv file into the result folder
-write.csv(csv_result, file = paste(target_folder, "/result.csv", sep = ""), row.names = FALSE)
+result_path <- "result.csv"
+write.csv(csv_result, file = result_path, row.names = TRUE, col.names = TRUE)
+target_paths <- c(result_path)
