@@ -94,10 +94,11 @@ class PipShellProxy(BaseEnvShell):
         """
 
         if isinstance(user_cmd, list):
-            user_cmd = [str(c) for c in user_cmd]
-        user_cmd = ["pipenv", "run", *user_cmd]
-        cmd = " ".join(user_cmd)
-        return cmd
+            cmd = [str(c) for c in user_cmd]
+            cmd = ["pipenv", "run", *cmd]
+            return " ".join(cmd)
+        else:
+            return f"pipenv run {user_cmd}"
 
     def build_os_env(self) -> dict:
         env = os.environ.copy()
