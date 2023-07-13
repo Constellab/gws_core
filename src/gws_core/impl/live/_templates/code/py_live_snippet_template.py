@@ -14,7 +14,7 @@ from gws_core import Table
 # access task method to log a messages
 self.log_info_message('Transposing table')
 # Transpose the input table
-table: Table = source[0].transpose()
+table: Table = sources[0].transpose()
 
 # set the new table a output or the live task
-target = [table]
+targets = [table]

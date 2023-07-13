@@ -64,12 +64,12 @@ class PyLiveTask(Task):
         resource_list: ResourceList = inputs.get('source')
 
         # execute the live code
-        init_globals = {'self': self, 'source': resource_list.get_resources(),
+        init_globals = {'self': self, 'sources': resource_list.get_resources(),
                         "working_dir": self.working_dir, **globals()}
 
         result = LiveCodeHelper.run_python_code(code_with_params, init_globals)
 
-        target = result.get("target", None)
+        target = result.get("targets", None)
 
         if target is None:
             raise Exception("the target variable is None")
