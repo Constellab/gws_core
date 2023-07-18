@@ -10,7 +10,8 @@ from gws_core.config.param.param_spec import FloatParam, StrParam
 from gws_core.impl.table.helper.dataframe_data_filter_helper import \
     DataframeDataFilterHelper
 
-from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 

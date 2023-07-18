@@ -8,7 +8,8 @@ from gws_core.impl.table.helper.dataframe_scaler_helper import \
     DataframeScalerHelper
 from gws_core.impl.table.helper.table_scaler_helper import TableScalerHelper
 
-from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ..table import Table
 

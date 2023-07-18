@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
-from gws_core.config.config_types import ConfigParams
+from gws_core.config.config_params import ConfigParams
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import ViewType
 

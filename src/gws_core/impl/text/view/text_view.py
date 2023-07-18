@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Union
 
-from ....config.config_types import ConfigParams
+from ....config.config_params import ConfigParams
 from ....config.param.param_spec import IntParam
 from ....core.classes.paginator import PageInfo
 from ....core.exception.exceptions.bad_request_exception import \

@@ -6,7 +6,6 @@
 
 from requests.models import Response
 
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.service.external_lab_service import ExternalLabService
@@ -16,6 +15,9 @@ from gws_core.share.share_link import ShareLinkType
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
+
+from ..config.config_params import ConfigParams
+from ..config.config_types import ConfigSpecs
 
 
 @task_decorator(unique_name="ResourceDownloaderHttp", human_name="Download resource from external source",

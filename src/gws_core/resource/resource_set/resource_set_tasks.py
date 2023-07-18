@@ -6,7 +6,8 @@
 
 from typing import List
 
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs

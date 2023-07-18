@@ -8,7 +8,7 @@ from typing import Dict, Union
 
 from gws_core.resource.view.view_types import ViewType
 
-from ...config.config_types import ConfigParams
+from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...resource.view.view import View
 

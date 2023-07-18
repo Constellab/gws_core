@@ -7,7 +7,7 @@
 import os
 from typing import TYPE_CHECKING, Any, List, Union
 
-from gws_core.config.config_types import ConfigParams
+from gws_core.config.config_params import ConfigParams
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import ViewType

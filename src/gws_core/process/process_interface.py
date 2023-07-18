@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Optional, Tuple, Type
 from gws_core.config.config_service import ConfigService
 from gws_core.process.process import Process
 
-from ..config.config_types import ConfigParams, ConfigParamsDict
+from ..config.config_types import ConfigParamsDict
 from ..config.param.param_types import ParamValue
 from ..io.port import InPort, OutPort
 from ..resource.resource import Resource

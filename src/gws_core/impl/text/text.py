@@ -6,7 +6,7 @@
 
 from gws_core.resource.r_field.primitive_r_field import StrRField
 
-from ...config.config_types import ConfigParams
+from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator

@@ -5,12 +5,13 @@
 
 from typing import Any, Optional
 
-from gws_core.config.param.param_spec import DictParam
+from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_types import ParamSpecVisibilty
+from gws_core.core.classes.validator import DictValidator
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 
 
-class OpenAiChatParam(DictParam):
+class OpenAiChatParam(ParamSpec[dict]):
     """Special param for config that create a chat with open ai similar
     to ChatGPT.
 
@@ -47,7 +48,22 @@ class OpenAiChatParam(DictParam):
         )
         self.context = context
 
+    def validate(self, value: Any) -> Any:
+        if value is None:
+            return value
+
+        if isinstance(value, OpenAiChat):
+            return value.to_json()
+
+        dict_validator = DictValidator()
+        return dict_validator.validate(value)
+
     def build(self, value: Any) -> Any:
+        if value is None:
+            return None
+
+        if isinstance(value, OpenAiChat):
+            return value
         return OpenAiChat.from_json(value, context=self.context)
 
     @classmethod

@@ -6,7 +6,7 @@
 from gws_core import (BaseTestCase, Config, FloatParam, ProcessFactory,
                       RobotMove, TaskModel)
 from gws_core.config.config_exceptions import MissingConfigsException
-from gws_core.config.config_types import ConfigParams
+from gws_core.config.config_params import ConfigParams
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 
 

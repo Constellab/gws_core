@@ -7,7 +7,7 @@ from abc import abstractmethod
 from typing import Type, final
 
 from gws_core.brick.brick_service import BrickService
-from gws_core.config.config_types import ConfigParams
+from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.task.converter.converter import Converter, decorate_converter

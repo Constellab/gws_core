@@ -3,12 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import time
-
-import boto3
-
 from gws_core.config.param.param_spec import BoolParam, StrParam
-from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.credentials.credentials_param import CredentialsParam
 from gws_core.credentials.credentials_type import (CredentialsDataS3,
@@ -20,8 +15,9 @@ from gws_core.resource.resource_zipper import ResourceZipper
 from gws_core.space.mail_service import MailService
 from gws_core.user.current_user_service import CurrentUserService
 
-from ...config.config_types import ConfigParams, ConfigSpecs
-from ...io.io_specs import InputSpecs, OutputSpecs
+from ...config.config_params import ConfigParams
+from ...config.config_types import ConfigSpecs
+from ...io.io_specs import InputSpecs
 from ...resource.resource import Resource
 from ...task.task import Task
 from ...task.task_decorator import task_decorator

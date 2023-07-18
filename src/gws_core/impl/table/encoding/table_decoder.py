@@ -7,7 +7,8 @@ from pandas import DataFrame
 
 from gws_core.io.io_spec import InputSpec, OutputSpec
 
-from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....io.io_specs import InputSpecs, OutputSpecs
 from ....task.task import Task
 from ....task.task_decorator import task_decorator

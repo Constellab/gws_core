@@ -6,7 +6,8 @@
 
 from typing import List
 
-from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ..helper.dataframe_filter_helper import DataframeFilterHelper
 from ..table import Table

@@ -4,13 +4,15 @@
 # About us: https://gencovery.com
 from typing import Type
 
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import DictParam, StrParam
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
 from gws_core.model.typing_manager import TypingManager
 from gws_core.resource.resource import Resource
+from gws_core.resource.view.view_runner import ViewRunner
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -51,14 +53,15 @@ class Viewer(Task):
         view_method_name = view_config['view_method_name']
         config_values = view_config['config_values']
 
-        view = ResourceService.get_view_on_resource(resource, view_method_name, config_values)
+        view_runner: ViewRunner = ViewRunner(resource, view_method_name, config_values)
+        view = view_runner.generate_view()
 
         # save the view config as flagged
         ViewConfigService.save_view_config(
             resource_model=resource_model,
             view=view,
             view_name=view_method_name,
-            config_values=config_values,
+            config=view_runner.get_config(),
             flagged=True)
 
         return {}

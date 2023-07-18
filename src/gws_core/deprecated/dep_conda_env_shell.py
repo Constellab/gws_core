@@ -7,7 +7,7 @@ from abc import abstractmethod
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 
-from ..config.config_types import ConfigParams
+from ..config.config_params import ConfigParams
 from ..impl.shell.conda_shell_proxy import CondaShellProxy
 from ..task.task_decorator import task_decorator
 from ..task.task_io import TaskInputs, TaskOutputs

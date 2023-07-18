@@ -7,7 +7,7 @@ from base64 import b64encode
 from unittest import TestCase
 
 from gws_core import ImageView, Settings
-from gws_core.config.config_types import ConfigParams
+from gws_core.config.config_params import ConfigParams
 
 
 # test_image_view

@@ -6,7 +6,8 @@
 
 from pandas import DataFrame
 
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
@@ -51,7 +52,7 @@ The data of the table is not transferered to OpenAI, only the provided text.
         # get the table
         source: Table = inputs["source"]
 
-        context = "Your are a developer assistant that generate code in python to transform a dataframe."
+        context = "You are a developer assistant that generate code in python to transform a dataframe."
         context += "\nThe variable named 'source' contains the dataframe."
         context += "The transformed dataframe must be assigned to a variable named 'target'."
         context += f"\n{OpenAiHelper.get_code_context([GwsCorePackages.PANDAS, GwsCorePackages.NUMPY])}"

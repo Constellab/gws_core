@@ -6,7 +6,6 @@
 from abc import abstractmethod
 from typing import List, Type
 
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
 from gws_core.core.service.external_lab_service import ExternalLabWithUserInfo
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.impl.file.file import File
@@ -22,6 +21,9 @@ from gws_core.task.task import Task
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
+
+from ..config.config_params import ConfigParams
+from ..config.config_types import ConfigSpecs
 
 
 class ResourceDownloaderBase(Task):

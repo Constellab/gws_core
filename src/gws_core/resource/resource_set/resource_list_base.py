@@ -7,7 +7,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, List, Set
 
-from gws_core.config.config_types import ConfigParams
+from gws_core.config.config_params import ConfigParams
 from gws_core.impl.view.resources_list_view import ResourcesListView
 from gws_core.resource.view.view_decorator import view
 

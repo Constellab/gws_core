@@ -7,7 +7,7 @@ from abc import abstractmethod
 
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
 
-from ..config.config_types import ConfigParams
+from ..config.config_params import ConfigParams
 from ..task.task_decorator import task_decorator
 from ..task.task_io import TaskInputs, TaskOutputs
 from .dep_base_env_task import DepBaseEnvShell

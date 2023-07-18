@@ -18,7 +18,8 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_manager import TypingManager
 
-from ...config.config_types import ConfigParams, ConfigSpecs
+from ...config.config_params import ConfigParams
+from ...config.config_types import ConfigSpecs
 from ...config.param.param_spec import BoolParam, StrParam
 from ...impl.file.file import File
 from ...impl.file.file_store import FileStore

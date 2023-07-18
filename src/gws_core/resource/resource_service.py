@@ -3,12 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, List, Optional, Type
+from typing import Dict, List, Optional, Type
 
 from fastapi.responses import FileResponse
 from peewee import ModelSelect
 
-from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
+from gws_core.config.config import Config
+from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
@@ -17,6 +18,7 @@ from gws_core.impl.file.fs_node import FSNode
 from gws_core.project.project import Project
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.view.view import View
+from gws_core.resource.view.view_runner import ViewRunner
 from gws_core.resource.view.view_types import CallViewResult
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
@@ -205,7 +207,7 @@ class ResourceService(BaseService):
         return ViewHelper.get_views_of_resource_type(resource_type)
 
     @classmethod
-    def get_view_specs_from_resource(cls, resource_model_id: str, view_name: str) -> ConfigSpecs:
+    def get_view_specs_from_resource(cls, resource_model_id: str, view_name: str) -> dict:
         resource_model: ResourceModel = cls.get_resource_by_id(
             resource_model_id)
 
@@ -227,7 +229,7 @@ class ResourceService(BaseService):
 
     @classmethod
     def get_and_call_view_on_resource_model(cls, resource_model_id: str,
-                                            view_name: str, config_values: Dict[str, Any],
+                                            view_name: str, config_values: ConfigParamsDict,
                                             save_view_config: bool = False) -> CallViewResult:
 
         resource_model: ResourceModel = cls.get_resource_by_id(
@@ -236,22 +238,23 @@ class ResourceService(BaseService):
 
     @classmethod
     def call_view_on_resource_model(cls, resource_model: ResourceModel,
-                                    view_name: str, config_values: Dict[str, Any],
+                                    view_name: str, config_values: ConfigParamsDict,
                                     save_view_config: bool = False) -> CallViewResult:
 
         resource: Resource = resource_model.get_resource()
 
-        view = cls.get_view_on_resource(
-            resource, view_name, config_values)
+        view_runner: ViewRunner = ViewRunner(resource, view_name, config_values)
+
+        view = view_runner.generate_view()
 
         # call the view to dict
-        view_dict = ViewHelper.call_view_to_dict(view, config_values)
+        view_dict = view_runner.call_view_to_dict()
 
         # Save the view config
         view_config: ViewConfig = None
         if save_view_config:
             view_config = ViewConfigService.save_view_config(
-                resource_model, view, view_name, config_values)
+                resource_model, view, view_name, view_runner.get_config())
 
         return {
             "view": view_dict,
@@ -264,14 +267,8 @@ class ResourceService(BaseService):
         view_config = ViewConfigService.get_by_id(view_config_id)
 
         return cls.call_view_on_resource_model(
-            view_config.resource_model, view_name=view_config.view_name, config_values=view_config.config_values,
+            view_config.resource_model, view_name=view_config.view_name, config_values=view_config.get_config_values(),
             save_view_config=True)
-
-    @classmethod
-    def get_view_on_resource(cls, resource: Resource,
-                             view_name: str, config_values: Dict[str, Any]) -> View:
-
-        return ViewHelper.generate_view_on_resource(resource, view_name, config_values)
 
     ############################# SEARCH ###########################
 

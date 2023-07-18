@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Type
 
-from ....config.config_types import ConfigParams
+from ....config.config_params import ConfigParams
 from ....config.param.param_set import ParamSet
 from ....config.param.param_spec import ListParam, StrParam
 from ....core.exception.exceptions import BadRequestException

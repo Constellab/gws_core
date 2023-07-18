@@ -13,12 +13,17 @@ from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
 
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
+from gws_core.impl.openai.open_ai_chat import OpenAiChat
+from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
+from gws_core.impl.plotly.plotly_resource import PlotlyResource
+from gws_core.impl.plotly.plotly_view import PlotlyView
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_axis_tags import TableAxisTags
 from gws_core.impl.table.view.table_vulcano_plot_view import \
     TableVulcanoPlotView
+from gws_core.task.task_io import TaskInputs
 
-from ...config.config_types import ConfigParams
+from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...resource.r_field.primitive_r_field import StrRField
 from ...resource.r_field.serializable_r_field import SerializableRField
@@ -1028,12 +1033,33 @@ class Table(Resource):
         return TableHeatmapView(self)
 
     @view(view_type=TableVennDiagramView, human_name='VennDiagram', short_description='View table as Venn diagram', specs={}, hide=True)
-    def view_as_venn_diagram(self, params: ConfigParams) -> TableHeatmapView:
+    def view_as_venn_diagram(self, params: ConfigParams) -> TableVennDiagramView:
         """
         View the table as Venn diagram
         """
 
         return TableVennDiagramView(self)
+
+    @view(view_type=PlotlyView, specs={'prompt': OpenAiChatParam()}, human_name="Smart plot")
+    def smart_view(self, params: ConfigParams) -> PlotlyView:
+        """
+        View one or several columns as 2D-line plots
+        TODO to improve
+        """
+        from gws_core.impl.plotly.table_smart_plotly import SmartPlotly
+        from gws_core.task.task_runner import TaskRunner
+
+        pompt: OpenAiChat = params['prompt']
+        task_runner = TaskRunner(SmartPlotly,
+                                 inputs={'source': self},
+                                 params=params)
+
+        # task = SmartPlotly()
+        # output = task.run(params, TaskInputs({'source': self}))
+
+        output = task_runner.run()
+        plotly_resource: PlotlyResource = output['target']
+        return plotly_resource.default_view(ConfigParams())
 
     # @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
     # def view_as_line_plot_3d(self, params: ConfigParams) -> LinePlot3DView:
@@ -1052,6 +1078,7 @@ class Table(Resource):
     #     return TableScatterPlot3DView(self)
 
     ############################## CLASS METHODS ###########################
+
     @classmethod
     def from_dict(cls, data: dict, orient='index', dtype=None, columns=None) -> 'Table':
         dataframe = DataFrame.from_dict(data, orient, dtype, columns)

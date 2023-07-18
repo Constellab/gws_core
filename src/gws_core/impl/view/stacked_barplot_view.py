@@ -5,11 +5,12 @@
 
 from typing import Dict, List, Union
 
-from gws_core.core.utils.numeric_helper import NumericHelper
-from gws_core.resource.view.view_types import ViewType
 from pandas import DataFrame
 
-from ...config.config_types import ConfigParams
+from gws_core.core.utils.numeric_helper import NumericHelper
+from gws_core.resource.view.view_types import ViewType
+
+from ...config.config_params import ConfigParams
 from .barplot_view import BarPlotView
 
 

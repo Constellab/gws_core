@@ -11,7 +11,8 @@ from gws_core.impl.table.helper.dataframe_data_filter_helper import \
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
-from ..config.config_types import ConfigParams, ConfigSpecs
+from ..config.config_params import ConfigParams
+from ..config.config_types import ConfigSpecs
 from ..config.param.param_set import ParamSet
 from ..config.param.param_spec import BoolParam, FloatParam, StrParam
 from ..impl.table.table import Table

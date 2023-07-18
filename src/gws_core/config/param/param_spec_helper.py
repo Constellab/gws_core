@@ -11,7 +11,8 @@ from gws_core.credentials.credentials_param import CredentialsParam
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
 
 from ..config_exceptions import MissingConfigsException
-from ..config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
+from ..config_params import ConfigParams
+from ..config_types import ConfigParamsDict, ConfigSpecs
 from .code_param.json_code_param import JsonCodeParam
 from .code_param.julia_code_param import JuliaCodeParam
 from .code_param.perl_code_param import PerlCodeParam

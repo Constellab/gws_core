@@ -8,7 +8,8 @@ from typing import Any
 
 from numpy import NaN
 
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.table.helper.table_concat_helper import TableConcatHelper
 from gws_core.impl.table.table import Table

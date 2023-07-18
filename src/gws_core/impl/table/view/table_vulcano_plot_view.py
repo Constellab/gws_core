@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
-from gws_core.config.config_types import ConfigParams
+from gws_core.config.config_params import ConfigParams
 from gws_core.config.param.param_spec import FloatParam, ListParam
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException

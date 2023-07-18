@@ -7,8 +7,8 @@
 import os
 from typing import Dict, List, Type
 
+from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs_helper import ConfigSpecsHelper
-from gws_core.config.config_types import ConfigParams
 from gws_core.core.utils.compress.zip import Zip
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings

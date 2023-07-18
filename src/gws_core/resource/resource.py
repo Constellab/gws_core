@@ -11,7 +11,7 @@ from gws_core.impl.file.file_r_field import FileRField
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
 
-from ..config.config_types import ConfigParams
+from ..config.config_params import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base

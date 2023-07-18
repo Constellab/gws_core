@@ -10,7 +10,8 @@ from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import \
     BasicMessageObserver
 
-from ..config.config_types import ConfigParams, ConfigParamsDict
+from ..config.config_params import ConfigParams
+from ..config.config_types import ConfigParamsDict
 from ..config.param.param_types import ParamValue
 from ..io.io_exception import InvalidOutputsException
 from ..io.io_specs import InputSpecs, OutputSpecs
@@ -35,7 +36,6 @@ class TaskRunner():
     _task_type: Type[Task]
     _input_specs: InputSpecs
     _output_specs: OutputSpecs
-    _params: ConfigParamsDict
     _inputs: Dict[str, Resource]
     _outputs: TaskOutputs
 
@@ -54,11 +54,6 @@ class TaskRunner():
                  output_specs: OutputSpecs = None):
         self._task_type = task_type
 
-        if params is None:
-            self._params = {}
-        else:
-            self._params = params
-
         if inputs is None:
             self._inputs = {}
         else:
@@ -76,14 +71,14 @@ class TaskRunner():
         self._input_specs = input_specs or self._task_type.input_specs
         self._output_specs = output_specs or self._task_type.output_specs
 
+        self._build_config(params)
+
     def check_before_run(self) -> CheckBeforeTaskResult:
         """This method check the config and inputs and then execute the check before run of the task
 
         :return: [description]
         :rtype: CheckBeforeTaskResult
         """
-        config_params: ConfigParams = self._build_config()
-
         # get the input without checking them
         inputs: TaskInputs = self._get_and_check_input()
 
@@ -92,7 +87,7 @@ class TaskRunner():
 
         result = None
         try:
-            result = task.check_before_run(config_params, inputs)
+            result = task.check_before_run(self._config_params, inputs)
         except KeyError as exception:
             raise Exception(f"KeyError : {str(exception)}")
         except Exception as exception:
@@ -108,13 +103,12 @@ class TaskRunner():
         :return: [description]
         :rtype: TaskOutputs
         """
-        config_params: ConfigParams = self._build_config()
         inputs: TaskInputs = self._get_and_check_input()
         task: Task = self._get_task_instance()
         task._status_ = 'RUN'
 
         try:
-            task_outputs: TaskOutputs = task.run(config_params, inputs)
+            task_outputs: TaskOutputs = task.run(self._config_params, inputs)
         except KeyError as exception:
             raise Exception(f"KeyError : {str(exception)}")
         except Exception as exception:
@@ -138,9 +132,6 @@ class TaskRunner():
 
         self.force_dispatch_waiting_messages()
 
-    def set_param(self, param_name: str, config_param: ParamValue) -> None:
-        self._params[param_name] = config_param
-
     def set_input(self, input_name: str, resource: Resource) -> None:
         self._inputs[input_name] = resource
 
@@ -155,7 +146,6 @@ class TaskRunner():
         if self._task is None:
             self._task = self._task_type()
             self._task.__set_message_dispatcher__(self._message_dispatcher)
-            self._task._config_model_id = self._config_model_id
 
             try:
                 self._task.init()
@@ -171,15 +161,23 @@ class TaskRunner():
         """
         return self._input_specs.check_and_build_inputs(self._inputs)
 
-    def _build_config(self) -> ConfigParams:
+    def _build_config(self, config) -> ConfigParams:
         """Check and convert the config to ConfigParams
 
         :return: [description]
         :rtype: ConfigParams
         """
+        if isinstance(config, ConfigParams):
+            self._config_params = config
+            return config
+
+        if config is None:
+            config = {}
+
         if self._config_params is None:
             self._config_params = ParamSpecHelper.build_config_params(self._task_type.config_specs,
-                                                                      self._params)
+                                                                      config)
+            self._config_params.set_config_model_id(self._config_model_id)
         return self._config_params
 
     def _check_outputs(self, task_outputs: TaskOutputs) -> TaskOutputs:

@@ -4,7 +4,8 @@
 # About us: https://gencovery.com
 
 
-from ..config.config_types import ConfigParams, ConfigSpecs
+from ..config.config_params import ConfigParams
+from ..config.config_types import ConfigSpecs
 from ..impl.table.table import Table
 from ..task.transformer.transformer import Transformer, transformer_decorator
 

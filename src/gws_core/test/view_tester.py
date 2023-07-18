@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
-from ..config.config_types import ConfigParams, ConfigParamsDict
+
+from ..config.config_params import ConfigParams
+from ..config.config_types import ConfigParamsDict
 from ..resource.view.view import View
 
 

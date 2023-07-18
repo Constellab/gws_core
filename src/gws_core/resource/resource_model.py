@@ -126,7 +126,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         if self.fs_node_model:
             self.fs_node_model.delete_instance(delete_file=False)
 
-        self.delete_object()
+        self._delete_object()
 
         return result
 
@@ -139,7 +139,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         for output_resource in resources:
             output_resource.delete_instance()
 
-    def delete_object(self):
+    def _delete_object(self):
         """Delete the kv_store and the file if they exist does not delete model in DB
         """
         if self.fs_node_model:

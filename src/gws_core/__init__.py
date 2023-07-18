@@ -12,8 +12,8 @@ from .comment.comment import Comment as Comment
 from .comment.comment_service import CommentService as CommentService
 # Config
 from .config.config import Config as Config
+from .config.config_params import ConfigParams as ConfigParams
 from .config.config_service import ConfigService as ConfigService
-from .config.config_types import ConfigParams as ConfigParams
 from .config.config_types import ConfigParamsDict as ConfigParamsDict
 from .config.config_types import ConfigSpecs as ConfigSpecs
 from .config.param.code_param.bash_code_param import \

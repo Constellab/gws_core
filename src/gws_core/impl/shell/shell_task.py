@@ -9,7 +9,7 @@ from typing import final
 
 from gws_core.io.io_specs import OutputSpecs
 
-from ...config.config_types import ConfigParams
+from ...config.config_params import ConfigParams
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs

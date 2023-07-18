@@ -6,7 +6,7 @@
 from abc import abstractmethod
 from typing import Union
 
-from ..config.config_types import ConfigParams
+from ..config.config_params import ConfigParams
 from ..impl.shell.base_env_shell import BaseEnvShell
 from ..task.task_decorator import task_decorator
 from ..task.task_io import TaskInputs, TaskOutputs

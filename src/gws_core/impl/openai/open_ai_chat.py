@@ -57,7 +57,7 @@ class OpenAiChat():
     def add_assistant_message(self, content: str):
         self._add_message('assistant', content)
 
-    def get_last_assistant_message(self, extract_code: str) -> Optional[str]:
+    def get_last_assistant_message(self, extract_code: bool) -> Optional[str]:
         for message in reversed(self._messages):
             if message['role'] == 'assistant':
                 response = message['content']

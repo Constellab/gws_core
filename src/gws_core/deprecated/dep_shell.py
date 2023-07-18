@@ -11,7 +11,7 @@ from typing import Union
 
 from gws_core.impl.shell.shell_proxy import ShellProxy
 
-from ..config.config_types import ConfigParams
+from ..config.config_params import ConfigParams
 from ..core.exception.exceptions import BadRequestException
 from ..core.utils.settings import Settings
 from ..io.io_specs import InputSpecs, OutputSpecs

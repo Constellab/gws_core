@@ -10,7 +10,7 @@ from gws_core.config.param.param_spec import FloatParam, StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
-from ...config.config_types import ConfigParams
+from ...config.config_params import ConfigParams
 from ...impl.robot.robot_resource import (MegaRobot, Robot, RobotAddOn,
                                           RobotFood)
 from ...task.task import Task

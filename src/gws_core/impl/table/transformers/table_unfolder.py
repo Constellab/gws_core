@@ -4,7 +4,8 @@
 # About us: https://gencovery.com
 
 
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import ListParam, StrParam
 from gws_core.impl.table.helper.dataframe_filter_helper import \
     DataframeFilterHelper

@@ -15,7 +15,7 @@ from gws_core.impl.file.file import File
 from gws_core.impl.file.folder_view import LocalFolderView
 from gws_core.resource.view.view import View
 
-from ...config.config_types import ConfigParams
+from ...config.config_params import ConfigParams
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view.view_decorator import view
 from .file_helper import FileHelper

@@ -9,8 +9,8 @@ from typing import Type
 
 from gws_core.impl.file.file_helper import FileHelper
 
-from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param.param_set import ParamSet
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....core.exception.exceptions import BadRequestException
 from ....impl.file.file import File
 from ....impl.table.table import Table

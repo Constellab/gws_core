@@ -6,7 +6,7 @@
 
 from typing import Dict, List
 
-from gws_core.config.config_types import ConfigParams
+from gws_core.config.config_params import ConfigParams
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.impl.view.scatterplot_2d_view import ScatterPlot2DView

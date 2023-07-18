@@ -13,7 +13,8 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
 from ...brick.brick_service import BrickService
-from ...config.config_types import ConfigParams, ConfigSpecs
+from ...config.config_params import ConfigParams
+from ...config.config_types import ConfigSpecs
 from ...core.utils.utils import Utils
 from ...impl.file.fs_node import FSNode
 from ...resource.resource import Resource

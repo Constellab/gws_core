@@ -9,7 +9,8 @@ from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_data_filter_helper import \
     DataframeDataFilterHelper
 
-from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....config.param.param_set import ParamSet
 from ....config.param.param_spec import FloatParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator

@@ -6,7 +6,7 @@
 
 from abc import abstractmethod
 
-from ...config.config_types import ConfigParams
+from ...config.config_params import ConfigParams
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 from .base_env_shell_task import BaseEnvShellTask

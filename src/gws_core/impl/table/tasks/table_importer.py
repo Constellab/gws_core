@@ -11,7 +11,8 @@ from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file_helper import FileHelper
 
-from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....config.param.param_set import ParamSet
 from ....config.param.param_spec import BoolParam, IntParam, StrParam
 from ....core.exception.exceptions.bad_request_exception import \

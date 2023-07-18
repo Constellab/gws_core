@@ -16,7 +16,8 @@ from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.resource.resource_set.resource_list import ResourceList
 
-from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....io.io_specs import InputSpecs, OutputSpecs

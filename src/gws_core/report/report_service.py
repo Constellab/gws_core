@@ -148,7 +148,7 @@ class ReportService():
             "resource_id": view_config.resource_model.id,
             "experiment_id": view_config.experiment.id if view_config.experiment else None,
             "view_method_name": view_config.view_name,
-            "view_config": view_config.config_values,
+            "view_config": view_config.get_config_values(),
             "title": view_config.title,
             "caption": ""
         }

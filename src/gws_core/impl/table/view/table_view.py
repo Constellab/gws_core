@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....config.config_types import ConfigParams
+from ....config.config_params import ConfigParams
 from ....config.param.param_spec import IntParam, StrParam
 from ....resource.view.view_types import ViewSpecs, ViewType
 from ...view.tabular_view import TabularView

@@ -3,7 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....config.param.param_spec import ListParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ..helper.table_tag_aggregator_helper import TableTagAggregatorHelper

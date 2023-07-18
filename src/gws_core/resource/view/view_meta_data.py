@@ -26,24 +26,24 @@ class ResourceViewMetaData():
     view_type: Type[View]
     human_name: str
     short_description: str
-    specs: ViewSpecs
+    method_specs: ViewSpecs
     default_view: bool
     hide: bool
 
     def __init__(self, method_name: str, view_type: Type[View],
                  human_name: str, short_description: str,
-                 specs: ViewSpecs, default_view: bool, hide: bool) -> None:
+                 method_specs: ViewSpecs, default_view: bool, hide: bool) -> None:
         self.method_name = method_name
         self.view_type = view_type
         self.human_name = human_name
         self.short_description = short_description
-        self.specs = specs
+        self.method_specs = method_specs
         self.default_view = default_view
         self.hide = hide
 
     def clone(self) -> 'ResourceViewMetaData':
         return ResourceViewMetaData(
-            self.method_name, self.view_type, self.human_name, self.short_description, self.specs, self.default_view,
+            self.method_name, self.view_type, self.human_name, self.short_description, self.method_specs, self.default_view,
             self.hide)
 
     def to_json(self) -> dict:
@@ -78,7 +78,7 @@ class ResourceViewMetaData():
         param spec of the LazyViewParam is used
 
         """
-        specs = {**self.view_type._specs, **self.specs}
+        specs = {**self.view_type._specs, **self.method_specs}
         config_specs: ConfigSpecs = {}
 
         for key, value in specs.items():
@@ -104,4 +104,4 @@ class ResourceViewMetaData():
         return config_specs
 
     def has_config_specs(self) -> bool:
-        return len(self.specs) > 0 or len(self.view_type._specs) > 0
+        return len(self.method_specs) > 0 or len(self.view_type._specs) > 0

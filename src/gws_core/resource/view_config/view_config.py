@@ -6,7 +6,11 @@ from typing import List, Optional
 
 from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
+from gws_core.config.config import Config
+from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.classes.enum_field import EnumField
+from gws_core.core.decorator.transaction import transaction
+from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.view.view_types import ViewType
@@ -23,6 +27,8 @@ class ViewConfig(ModelWithUser, TaggableModel):
     view_type = EnumField(choices=ViewType)
     view_name = CharField()
     config_values = JSONField(null=False)
+    # TODO set null=False after update 0.5.8 and delete config_values
+    config: Config = ForeignKeyField(Config, null=True, backref='+')
 
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, on_delete='CASCADE')
     resource_model: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
@@ -35,6 +41,7 @@ class ViewConfig(ModelWithUser, TaggableModel):
         json_ = super().to_json(deep, **kwargs)
 
         json_["tags"] = self.get_tags_json()
+        json_['config_values'] = self.get_config_values()
 
         if self.experiment is not None:
             json_["experiment"] = {
@@ -48,6 +55,19 @@ class ViewConfig(ModelWithUser, TaggableModel):
                 'name': self.resource_model.name
             }
         return json_
+
+    def get_config_values(self) -> ConfigParamsDict:
+        return self.config.get_values()
+
+    @transaction()
+    def save(self, *args, **kwargs) -> Model:
+        self.config.save()
+        return super().save(*args, **kwargs)
+
+    def delete_instance(self, *args, **kwargs) -> int:
+        if self.config is not None:
+            self.config.delete_instance()
+        return super().delete_instance(*args, **kwargs)
 
     @classmethod
     def get_same_view_config(cls, view_config: 'ViewConfig') -> Optional['ViewConfig']:
@@ -64,7 +84,7 @@ class ViewConfig(ModelWithUser, TaggableModel):
         ))
 
         for view_config_db in view_configs_db:
-            if Utils.json_equals(view_config_db.config_values, view_config.config_values):
+            if Utils.json_equals(view_config_db.config.get_values(), view_config.config.get_values()):
                 return view_config_db
 
         return None
@@ -72,3 +92,9 @@ class ViewConfig(ModelWithUser, TaggableModel):
     @classmethod
     def get_by_resource(cls, resource_model_id: str) -> ModelSelect:
         return ViewConfig.select().where(ViewConfig.resource_model == resource_model_id)
+
+    @classmethod
+    def delete_by_resource(cls, resource_model_id: str) -> None:
+        view_configs: List[ViewConfig] = list(ViewConfig.get_by_resource(resource_model_id))
+        for view_config in view_configs:
+            view_config.delete_instance()

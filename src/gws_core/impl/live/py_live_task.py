@@ -2,7 +2,6 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-import traceback
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.core.utils.settings import Settings
@@ -12,7 +11,8 @@ from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.resource.resource_set.resource_list import ResourceList
 
-from ...config.config_types import ConfigParams, ConfigSpecs
+from ...config.config_params import ConfigParams
+from ...config.config_types import ConfigSpecs
 from ...io.io_specs import InputSpecs, OutputSpecs
 from ...task.task import Task
 from ...task.task_decorator import task_decorator

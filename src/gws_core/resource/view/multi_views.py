@@ -9,7 +9,7 @@ from typing_extensions import TypedDict
 
 from gws_core.resource.view.view_types import ViewType
 
-from ...config.config_types import ConfigParams, ConfigParamsDict
+from ...config.config_params import ConfigParams, ConfigParamsDict
 from ...config.param.param_spec_helper import ParamSpecHelper
 from .view import View
 

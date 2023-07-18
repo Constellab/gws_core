@@ -5,7 +5,8 @@
 
 from gws_core.io.io_spec import InputSpec, OutputSpec
 
-from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....config.param.param_spec import BoolParam, StrParam
 from ....io.io_specs import InputSpecs, OutputSpecs
 from ....task.task import Task

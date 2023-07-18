@@ -7,7 +7,7 @@ from typing import Dict
 
 from gws_core.core.utils.string_helper import StringHelper
 
-from ...config.config_types import ConfigParams
+from ...config.config_params import ConfigParams
 from .view import View
 from .view_types import ViewType
 

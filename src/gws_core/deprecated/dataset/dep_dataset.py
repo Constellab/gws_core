@@ -9,7 +9,7 @@ import numpy as np
 from pandas import DataFrame
 from pandas.api.types import is_string_dtype
 
-from ...config.config_types import ConfigParams
+from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...impl.table.data_frame_r_field import DataFrameRField
 from ...impl.table.table import Table

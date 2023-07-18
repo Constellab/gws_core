@@ -5,15 +5,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
-from ....config.config_types import ConfigParams
+from ....config.config_params import ConfigParams
 from ....config.param.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
 from ....resource.view.view_types import ViewSpecs, ViewType
 from ...view.barplot_view import BarPlotView
 from .base_table_view import BaseTableView
-from .table_selection import CellRange, Serie1d, Serie1dList
+from .table_selection import Serie1dList
 
 if TYPE_CHECKING:
     from ..table import Table

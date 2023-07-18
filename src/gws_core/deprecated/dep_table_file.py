@@ -7,7 +7,7 @@ from typing import List
 
 from gws_core.config.param.param_spec import IntParam, StrParam
 
-from ..config.config_types import ConfigParams
+from ..config.config_params import ConfigParams
 from ..config.param.param_spec import IntParam, StrParam
 from ..impl.file.file import File
 from ..impl.table.table import Table

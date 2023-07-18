@@ -5,7 +5,7 @@
 
 import plotly.graph_objs as go
 
-from gws_core.config.config_types import ConfigParams
+from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator

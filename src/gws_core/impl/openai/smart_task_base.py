@@ -4,7 +4,8 @@
 # About us: https://gencovery.com
 from abc import abstractmethod
 
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_types import ConfigSpecs
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
@@ -49,7 +50,8 @@ class SmartTaskBase(Task):
             chat = OpenAiHelper.call_gpt(chat)
 
         # save the new config with the new prompt
-        self.update_config({'prompt': chat.to_json()})
+        params.set_value('prompt', chat)
+        params.save_params()
 
         code = chat.get_last_assistant_message(extract_code=True)
         if code is None:

@@ -7,7 +7,8 @@
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
-from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....config.param.param_spec import ListParam, StrParam
 from ....impl.table.table import Table
 from ....task.task import Task

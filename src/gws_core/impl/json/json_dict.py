@@ -8,7 +8,7 @@ from gws_core.core.utils.utils import Utils
 from gws_core.resource.view.any_view import AnyView
 from gws_core.resource.view.view import View
 
-from ...config.config_types import ConfigParams
+from ...config.config_params import ConfigParams
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...resource.r_field.dict_r_field import DictRField

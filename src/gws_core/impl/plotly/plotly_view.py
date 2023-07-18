@@ -5,7 +5,7 @@
 
 import plotly.graph_objs as go
 
-from gws_core.config.config_types import ConfigParams
+from gws_core.config.config_params import ConfigParams
 from gws_core.impl.plotly.plotly_r_field import PlotlyRField
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import ViewType

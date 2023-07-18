@@ -6,7 +6,8 @@
 import time
 from typing import Optional
 
-from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
+from ..config.config_params import ConfigParams
+from ..config.config_types import ConfigParamsDict, ConfigSpecs
 from ..config.param.param_spec import BoolParam, FloatParam, IntParam, StrParam
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException

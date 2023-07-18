@@ -6,7 +6,8 @@
 
 from typing import Type
 
-from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....config.param.param_set import ParamSet
 from ....config.param.param_spec import BoolParam, IntParam, StrParam
 from ....impl.file.file import File

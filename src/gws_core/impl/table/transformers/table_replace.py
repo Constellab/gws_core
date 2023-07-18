@@ -7,7 +7,8 @@ from typing import Any, List
 from numpy import NaN
 from pandas import DataFrame
 
-from gws_core.config.config_types import ConfigParams, ConfigSpecs
+from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.core.utils.numeric_helper import NumericHelper

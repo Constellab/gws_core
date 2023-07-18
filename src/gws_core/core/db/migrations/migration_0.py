@@ -7,7 +7,7 @@ import os
 from copy import deepcopy
 from typing import Dict, List
 
-from peewee import BigIntegerField, CharField
+from peewee import BigIntegerField, CharField, ForeignKeyField
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
@@ -35,6 +35,7 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
+from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.tag.tag_model import TagModel
 from gws_core.tag.taggable_model import TaggableModel
@@ -759,3 +760,31 @@ class Migration057(BrickMigration):
             except Exception as exception:
                 Logger.error(
                     f'Error while setting process type for process id {process_model.id} : {exception}')
+
+
+@brick_migration('0.5.8', short_description='Add config foreign key to view config')
+class Migration058(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
+        migrator.add_column_if_not_exists(ViewConfig, ViewConfig.config)
+        migrator.migrate()
+
+        view_configs: List[ViewConfig] = list(ViewConfig.select())
+        for view_config in view_configs:
+            try:
+                if view_config.config is None:
+
+                    view_meta = ViewHelper.get_and_check_view_meta(view_config.resource_model.get_resource_type(),
+                                                                   view_config.view_name)
+
+                    specs = view_meta.get_view_specs_from_type(skip_private=False)
+                    config = Config()
+                    config.set_specs(specs)
+                    config.set_values(view_config.config_values)
+                    view_config.config = config
+                    view_config.save()
+            except Exception:
+                view_config.delete_instance()

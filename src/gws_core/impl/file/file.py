@@ -9,7 +9,7 @@ from typing import Any, AnyStr, Type
 from gws_core.impl.view.html_view import HTMLView
 from gws_core.impl.view.image_view import ImageView
 
-from ...config.config_types import ConfigParams
+from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
 from ...impl.json.json_view import JSONView

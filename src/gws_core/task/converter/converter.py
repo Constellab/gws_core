@@ -11,7 +11,8 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
 from ...brick.brick_service import BrickService
-from ...config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
+from ...config.config_params import ConfigParams
+from ...config.config_types import ConfigParamsDict, ConfigSpecs
 from ...core.utils.utils import Utils
 from ...resource.resource import Resource
 from ...task.task import CheckBeforeTaskResult, Task

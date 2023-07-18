@@ -5,11 +5,11 @@
 
 
 from threading import Thread
-from typing import Any, Dict, List
+from typing import List
 
 from peewee import ModelSelect
 
-from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.config.config import Config
 from gws_core.experiment.experiment import Experiment
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_types import exluded_views_in_historic
@@ -35,17 +35,8 @@ class ViewConfigService():
         return ViewConfig.get_by_id_and_check(id)
 
     @classmethod
-    def save_view_config_in_async(cls, resource_model: ResourceModel, view: View,
-                                  view_name: str, config_values: Dict[str, Any]) -> None:
-        """Save a view config in the db asynchronously (it doesn't block current thread)
-        """
-        thread = Thread(target=cls.save_view_config, args=(resource_model, view, view_name,
-                                                           config_values, CurrentUserService.get_and_check_current_user()))
-        thread.start()
-
-    @classmethod
     def save_view_config(cls, resource_model: ResourceModel, view: View,
-                         view_name: str, config_values: Dict[str, Any],
+                         view_name: str, config: Config,
                          flagged: bool = False,
                          user: User = None) -> ViewConfig:
         try:
@@ -55,19 +46,15 @@ class ViewConfigService():
 
             view_meta_data = ViewHelper.get_and_check_view_meta(resource_model.get_resource_type(), view_name)
 
-            # merge config with specs of the view method and the view
-            config = {
-                **ParamSpecHelper.get_and_check_values(view_meta_data.specs, config_values),
-                **ParamSpecHelper.get_and_check_values(view._specs, config_values)}
-
             view_config: ViewConfig = ViewConfig(
                 resource_model=resource_model,
                 experiment=resource_model.experiment,
                 title=view.get_title() or resource_model.name,
                 view_name=view_meta_data.method_name,
                 view_type=view.get_type(),
-                config_values=config,
-                flagged=flagged
+                config_values={},
+                flagged=flagged,
+                config=config
             )
 
             # check is the view config already exists

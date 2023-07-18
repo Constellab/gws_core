@@ -15,6 +15,7 @@ from gws_core.resource.view.any_view import AnyView
 from gws_core.resource.view.lazy_view_param import LazyViewParam
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_meta_data import ResourceViewMetaData
+from gws_core.resource.view.view_runner import ViewRunner
 from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view.viewer import Viewer
 from gws_core.resource.view_config.view_config import ViewConfig
@@ -123,9 +124,11 @@ class TestView(BaseTestCase):
 
     def test_complete_call_view(self):
         resource = ResourceViewTestSub()
-        view: TextView = ViewHelper.generate_view_on_resource(
+
+        view_runner: ViewRunner = ViewRunner(
             resource, 'sub_view_test',
             {"test_str_param": "Bonjour ", "test_any_param": '12', "page": 1, "page_size": 5000})
+        view: TextView = view_runner.generate_view()
 
         self.assertEqual(view._type, TextView._type)
         self.assertEqual(view._data, "Bonjour 12")
@@ -139,7 +142,7 @@ class TestView(BaseTestCase):
 
         view_test: ResourceViewMetaData = [x for x in views if x.method_name == 'a_view_test'][0]
         # the child class should have overwritten the page parameter to make is visible
-        self.assertEqual(view_test.specs['page'].visibility, 'public')
+        self.assertEqual(view_test.method_specs['page'].visibility, 'public')
 
         # the view as json should be hidden and not returned by the list view
         self.assertEqual(len([x for x in views if x.method_name == 'view_as_json']), 0)
@@ -197,7 +200,7 @@ class TestView(BaseTestCase):
         self.assertEqual(view_config.view_name, 'a_view_test')
         self.assertEqual(view_config.view_type, ViewType.TEXT)
         self.assertEqual(view_config.title, 'Sub view title')
-        self.assert_json(view_config.config_values, {"page": 1, "page_size": 5000})
+        self.assert_json(view_config.get_config_values(), {"page": 1, "page_size": 5000})
 
         # re-call the view from the view config
         view_result_2 = ResourceService.call_view_from_view_config(view_config.id)

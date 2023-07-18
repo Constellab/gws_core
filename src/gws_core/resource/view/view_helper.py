@@ -4,71 +4,19 @@
 # About us: https://gencovery.com
 
 import inspect
-from typing import Any, Callable, Dict, List, Tuple, Type
+from typing import Callable, Dict, List, Tuple, Type
 
 from gws_core.core.utils.utils import Utils
 
-from ...config.config_types import ConfigParams, ConfigParamsDict
-from ...config.param.param_spec_helper import ParamSpecHelper
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...core.utils.reflector_helper import ReflectorHelper
 from ..resource import Resource
-from .view import View
 from .view_decorator import VIEW_META_DATA_ATTRIBUTE
 from .view_meta_data import ResourceViewMetaData
 
 
 class ViewHelper():
-
-    @classmethod
-    def generate_view_on_resource(cls, resource: Resource,
-                                  view_name: str, config: ConfigParamsDict) -> View:
-
-        # check if the view exists
-        view_metadata: ResourceViewMetaData = ViewHelper.get_and_check_view_meta(type(resource), view_name)
-
-        # Get the view object from the view method
-        view: View = cls._call_view_method(resource, view_metadata, config)
-
-        # convert the view to dict using the config
-        return view
-
-    @classmethod
-    def call_view_to_dict(cls, view: View, config: ConfigParamsDict) -> Dict:
-        # check the view config and set default values
-        config_params: ConfigParams = ParamSpecHelper.build_config_params(view._specs, config)
-
-        return view.to_dict(config_params)
-
-    @classmethod
-    def _call_view_method(cls, resource: Resource,
-                          view_metadata: ResourceViewMetaData, config:  Dict[str, Any]) -> View:
-
-        # check the method config and set the default values
-        if config is None:
-            config = {}
-        config_params: ConfigParams = ParamSpecHelper.build_config_params(view_metadata.specs, config)
-
-        # Get view method
-        view_method: Callable = getattr(resource, view_metadata.method_name)
-
-        # Get the view object from the view method
-        view: View = view_method(config_params)
-
-        if view is None or not isinstance(view, View):
-            raise Exception(f"The view method '{view_metadata.method_name}' didn't returned a View object")
-
-        # set view name if not defined
-        if view.get_title() is None:
-            view.set_title(resource.name)
-
-        # set the resource technical infos
-        if resource.technical_info:
-            for value in resource.technical_info.get_all().values():
-                view.add_technical_info(value)
-
-        return view
 
     @classmethod
     def get_and_check_view_meta(cls, resource_type: Type[Resource], view_name: str) -> ResourceViewMetaData:

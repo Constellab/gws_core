@@ -5,7 +5,7 @@
 
 from base64 import b64encode
 
-from gws_core.config.config_types import ConfigParams
+from gws_core.config.config_params import ConfigParams
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import ViewType

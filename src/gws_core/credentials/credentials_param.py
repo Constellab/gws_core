@@ -6,7 +6,7 @@ from typing import Any, Optional, TypedDict
 
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_types import ParamSpecVisibilty
-from gws_core.core.classes.validator import StrValidator, Validator
+from gws_core.core.classes.validator import StrValidator
 
 from .credentials import Credentials
 from .credentials_type import CredentialsDataBase, CredentialsType
@@ -84,6 +84,9 @@ class CredentialsParam(ParamSpec[str]):
         return json_
 
     def validate(self, value: Any) -> str:
+
+        if isinstance(value, Credentials):
+            return value.name
         # if this is the credentials object, retrieve the name
         if isinstance(value, dict) and 'name' in value:
             value = value['name']

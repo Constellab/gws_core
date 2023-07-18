@@ -6,7 +6,8 @@
 
 from gws_core.core.utils.utils import Utils
 
-from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.config_params import ConfigParams
+from ....config.config_types import ConfigSpecs
 from ....config.param.param_spec import BoolParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table

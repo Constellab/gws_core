@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 import plotly.graph_objs as go
 
-from gws_core.config.config_types import ConfigParams
+from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
 from gws_core.impl.openai.smart_task_base import SmartTaskBase
@@ -43,7 +43,7 @@ The data of the table is not transferered to OpenAI, only the provided text.
         # prepare the input
         table: Table = inputs["source"]
 
-        context = "Your are a developer assistant that generate code in python to generate plotly express figure from dataframe."
+        context = "You are a developer assistant that generate code in python to generate plotly express figure from dataframe."
         context += "\nThe variable named 'source' contains the dataframe."
         context += "The generated plotly express figure must be assigned to variable named 'target'."
         context += " Only build the figure object, do not display the figure using 'show' method."

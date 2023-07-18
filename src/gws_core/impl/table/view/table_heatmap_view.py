@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import TypedDict
 
-from ....config.config_types import ConfigParams
+from ....config.config_params import ConfigParams
 from ....config.param.param_spec import DictParam
 from ....resource.view.view_types import ViewSpecs, ViewType
 from ...view.heatmap_view import HeatmapView
