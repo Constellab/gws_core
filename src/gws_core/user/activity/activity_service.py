@@ -9,6 +9,7 @@ from peewee import ModelSelect
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
+from gws_core.core.utils.logger import Logger
 
 from ..user import User
 from .activity import Activity, ActivityObjectType, ActivityType
@@ -26,6 +27,16 @@ class ActivityService:
             object_id=object_id,
             user=user,
         )
+
+    @classmethod
+    def add_with_catch(cls, activity_type: ActivityType,
+                       object_type: ActivityObjectType, object_id: str,
+                       user: User = None):
+        try:
+            cls.add(activity_type, object_type, object_id, user)
+        except Exception as err:
+            Logger.error(f"Error while adding activity {activity_type.value} {object_type.value}. Error : {err}")
+            pass
 
     @classmethod
     def get_last_activity(cls) -> Optional[Activity]:

@@ -75,15 +75,16 @@ class AuthService(BaseService):
         return cls.log_user(user)
 
     @classmethod
-    def log_user(cls, user: User) -> JSONResponse:
+    def log_user(cls, user: User, response: Response = None) -> Response:
         # now save user activity
         ActivityService.add(ActivityType.HTTP_AUTHENTICATION,
                             object_type=ActivityObjectType.USER, object_id=user.id, user=user)
 
         access_token = cls.generate_user_access_token(user.id)
 
-        content = {"status": "LOGGED_IN", "expiresIn": JWTService.get_token_duration_in_seconds() * 1000}
-        response = JSONResponse(content=content)
+        if response is None:
+            content = {"status": "LOGGED_IN", "expiresIn": JWTService.get_token_duration_in_seconds() * 1000}
+            response = JSONResponse(content=content)
 
         # Add the token is the cookies
         cls.set_token_in_response(access_token, JWTService.get_token_duration_in_seconds(), response)

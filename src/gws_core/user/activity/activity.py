@@ -24,6 +24,7 @@ class ActivityType(Enum):
     HTTP_AUTHENTICATION = "HTTP_AUTHENTICATION"
     RUN_EXPERIMENT = "RUN_EXPERIMENT"
     STOP_EXPERIMENT = "STOP_EXPERIMENT"
+    LAB_START = "LAB_START"
 
 
 class ActivityObjectType(Enum):

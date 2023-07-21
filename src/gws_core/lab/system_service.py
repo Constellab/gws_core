@@ -4,7 +4,6 @@
 # About us: https://gencovery.com
 
 import os
-import sys
 from threading import Thread
 
 from gws_core.core.db.db_migration import DbMigrationService
@@ -23,6 +22,8 @@ from gws_core.project.project_service import ProjectService
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.space.space_service import SpaceService
+from gws_core.user.activity.activity import ActivityObjectType, ActivityType
+from gws_core.user.activity.activity_service import ActivityService
 from gws_core.user.user_dto import Space
 
 from ..brick.brick_service import BrickService
@@ -63,6 +64,15 @@ class SystemService:
 
         # Init data folder
         cls.init_data_folder()
+
+        # Register lab start activity
+        cls.register_start_activity()
+
+    @classmethod
+    def register_start_activity(cls):
+        sys_user = User.get_sysuser()
+        ActivityService.add_with_catch(activity_type=ActivityType.LAB_START, object_type=ActivityObjectType.USER,
+                                       object_id=sys_user.id, user=sys_user)
 
     @classmethod
     def init_data_folder(cls):
