@@ -1040,7 +1040,8 @@ class Table(Resource):
 
         return TableVennDiagramView(self)
 
-    @view(view_type=PlotlyView, specs={'prompt': OpenAiChatParam()}, human_name="Smart plot")
+    @view(view_type=PlotlyView, specs={'prompt': OpenAiChatParam()},
+          human_name="Smart interactive plot", short_description="Generate an interactive plot using an AI (OpenAI).")
     def smart_view(self, params: ConfigParams) -> PlotlyView:
         """
         View one or several columns as 2D-line plots
@@ -1049,13 +1050,9 @@ class Table(Resource):
         from gws_core.impl.plotly.table_smart_plotly import SmartPlotly
         from gws_core.task.task_runner import TaskRunner
 
-        pompt: OpenAiChat = params['prompt']
         task_runner = TaskRunner(SmartPlotly,
                                  inputs={'source': self},
                                  params=params)
-
-        # task = SmartPlotly()
-        # output = task.run(params, TaskInputs({'source': self}))
 
         output = task_runner.run()
         plotly_resource: PlotlyResource = output['target']

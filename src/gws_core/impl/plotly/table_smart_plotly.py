@@ -75,8 +75,10 @@ The data of the table is not transferered to OpenAI, only the provided text.
         live_task_code = f"""
 from gws_core import File, PlotlyResource
 import os
+# get DataFrame from the source
 source = source[0].get_data()
 {generated_code}
+# save the figure as resource
 target = [PlotlyResource(target)]"""
 
         generated_text = Text(live_task_code)

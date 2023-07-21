@@ -99,7 +99,7 @@ class FsNodeExtractor(Task):
 class FileDownloaderTask(Task):
 
     input_specs = InputSpecs({})
-    output_specs = OutputSpecs({"fs_node": OutputSpec(FSNode)})
+    output_specs = OutputSpecs({"fs_node": OutputSpec([File, Folder])})
 
     config_specs: ConfigSpecs = {
         "file_url": StrParam(human_name="File url"),
