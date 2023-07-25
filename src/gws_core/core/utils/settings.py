@@ -540,7 +540,6 @@ class Settings():
 
         # get data and remove sensitive informations
         data = deepcopy(self.data)
-        del data["environment"]["variables"]
         del data["secret_key"]
         return {
             "lab_id": self.get_lab_id(),

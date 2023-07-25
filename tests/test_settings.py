@@ -25,3 +25,6 @@ class TestSettings(TestCase):
 
         multiple_packages = settings.get_pip_packages(["pandas", "numpy"])
         self.assertEqual(len(multiple_packages), 2)
+
+    def test_to_json(self):
+        self.assertIsInstance(Settings.get_instance().to_json(), dict)
