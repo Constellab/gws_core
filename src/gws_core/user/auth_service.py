@@ -10,22 +10,19 @@ from starlette.responses import JSONResponse, Response
 
 from gws_core.lab.system_service import SystemService
 
-from ..core.exception.exceptions import (BadRequestException,
-                                         UnauthorizedException)
+from ..core.exception.exceptions import UnauthorizedException
 from ..core.exception.gws_exceptions import GWSException
 from ..core.service.base_service import BaseService
-from ..core.service.external_api_service import ExternalApiService
-from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..space.space_service import ExternalCheckCredentialResponse, SpaceService
-from .activity.activity import Activity, ActivityObjectType, ActivityType
+from .activity.activity import ActivityObjectType, ActivityType
 from .activity.activity_service import ActivityService
 from .current_user_service import CurrentUserService
 from .jwt_service import JWTService
 from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .unique_code_service import (CodeObject, InvalidUniqueCodeException,
                                   UniqueCodeService)
-from .user import User, UserDataDict
+from .user import User
 from .user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
 from .user_dto import UserLoginInfo, UserSpace
 from .user_exception import InvalidTokenException, WrongCredentialsException
@@ -195,69 +192,6 @@ class AuthService(BaseService):
         return user
 
     @classmethod
-    def dev_get_check_user(cls, unique_code: str) -> Response:
-        """[summary]
-        Log the user on the dev lab by calling the prod api
-        Only allowed for the dev service
-
-        It check the user's prod token by calling the prod api. If the token is valie,
-        it create the user in the BD if not already there and return the user
-
-        The dev environment uses the same token as the prod environment
-
-        :param credentials: [description]
-        :type credentials: CredentialsDTO
-        :raises WrongCredentialsException: [description]
-        :raises WrongCredentialsException: [description]
-        :return: [description]
-        """
-
-        settings: Settings = Settings.get_instance()
-
-        # Allow only this method on dev environment
-        if settings.is_prod_mode():
-            raise BadRequestException(detail=GWSException.FUNCTIONALITY_UNAVAILBLE_IN_PROD.value,
-                                      unique_code=GWSException.FUNCTIONALITY_UNAVAILBLE_IN_PROD.name)
-
-        # retrieve the prod api url
-        prod_api_url: str = settings.get_lab_prod_api_url()
-
-        if prod_api_url is None:
-            raise BadRequestException(detail=GWSException.MISSING_PROD_API_URL.value,
-                                      unique_code=GWSException.MISSING_PROD_API_URL.name)
-
-        # Check if the user's token is valid in prod environment and retrieve user's information
-        try:
-            response: Response = ExternalApiService.post(
-                url=f"{prod_api_url}/core-api/dev-login-unique-code/check/{unique_code}", body=None)
-        except Exception as err:
-            Logger.error(
-                f"Error during authentication to the prod api : {err}")
-            raise BadRequestException(detail=GWSException.ERROR_DURING_DEV_LOGIN.value,
-                                      unique_code=GWSException.ERROR_DURING_DEV_LOGIN.name)
-
-        if response.status_code != 200:
-            raise BadRequestException(detail=GWSException.ERROR_DURING_DEV_LOGIN.value,
-                                      unique_code=GWSException.ERROR_DURING_DEV_LOGIN.name)
-        # retrieve the user from the response
-        user: UserDataDict = response.json()
-
-        if not user["is_active"]:
-            raise BadRequestException(detail=GWSException.USER_NOT_ACTIVATED.value,
-                                      unique_code=GWSException.USER_NOT_ACTIVATED.name)
-
-        user: User = UserService.create_or_update_user(user)
-
-        access_token = cls.generate_user_access_token(user.id)
-
-        response = Response()
-
-        # Add the token is the cookies
-        cls.set_token_in_response(access_token, JWTService.get_token_duration_in_seconds(), response)
-
-        return response
-
-    @classmethod
     def logout(cls) -> JSONResponse:
         response = JSONResponse(content={})
         cls.set_token_in_response('', 0, response)
@@ -275,16 +209,3 @@ class AuthService(BaseService):
             secure=not Settings.is_local_env(),
             samesite='strict'
         )
-
-    @classmethod
-    def generate_dev_login_unique_code(cls, user_id: str) -> str:
-        # generate a code available for 60 seconds
-        return UniqueCodeService.generate_code(user_id, {}, 60)
-
-    @classmethod
-    def check_dev_login_unique_code(cls, unique_code: str) -> User:
-        # check the unique code
-        code_obj = UniqueCodeService.check_code(unique_code)
-
-        # return the user associated with the code
-        return User.get_by_id_and_check(code_obj["user_id"])

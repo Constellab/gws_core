@@ -13,7 +13,6 @@ from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
 
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
-from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
 from gws_core.impl.plotly.plotly_view import PlotlyView
@@ -21,7 +20,6 @@ from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_axis_tags import TableAxisTags
 from gws_core.impl.table.view.table_vulcano_plot_view import \
     TableVulcanoPlotView
-from gws_core.task.task_io import TaskInputs
 
 from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException

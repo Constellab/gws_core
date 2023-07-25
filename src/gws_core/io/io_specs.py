@@ -106,6 +106,9 @@ class InputSpecs(IOSpecs):
                 invalid_input_text = invalid_input_text + \
                     f"The input '{key}' of type '{resource._typing_name}' is not a compatible with the corresponding input spec."
 
+            # validate the resource through the spec
+            spec.validate_resource(resource)
+
             input_dict[key] = resource
 
         if len(missing_resource) > 0:

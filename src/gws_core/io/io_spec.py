@@ -11,10 +11,13 @@ from typing_extensions import TypedDict
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
+from gws_core.impl.table.validator.table_number_validator import \
+    TableNumberValidator
 from gws_core.model.typing_dict import TypingRef
 
 from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
+from .io_validator import IOValidator
 
 ResourceType = Type[Resource]
 ResourceTypes = Union[ResourceType, Iterable[ResourceType]]
@@ -40,10 +43,13 @@ class IOSpec:
 
     is_optional: bool = False
 
+    validators: List[IOValidator] = []
+
     _name: str = "IOSpec"   # unique name to distinguish the types, do not modify
 
     def __init__(self, resource_types: ResourceTypes, is_optional: bool = False, human_name: Optional[str] = None,
-                 short_description: Optional[str] = None) -> None:
+                 short_description: Optional[str] = None,
+                 validators: List[IOValidator] = None) -> None:
         """[summary]
 
         :param resource_types: type of supported resource or resources
@@ -74,6 +80,8 @@ class IOSpec:
             self.short_description = short_description
         else:
             self.short_description = default_type._short_description
+
+        self.validators = validators or [TableNumberValidator()]
 
     def check_resource_types(self):
         for resource_type in self.resource_types:
@@ -128,6 +136,15 @@ class IOSpec:
             return list_str[0]
         else:
             return ', '.join(list_str)
+
+    def validate_resource(self, resource: Resource) -> None:
+        """Validate a resource with the validators
+        """
+        if resource is None:
+            return
+        for validator in self.validators:
+            validator.check_type(resource)
+            validator.validate(resource)
 
     @classmethod
     def _resource_types_are_compatible(cls, resource_types: Iterable[Type[Resource]],
@@ -200,7 +217,8 @@ class InputSpec(IOSpec):
                  is_optional: bool = False,
                  is_skippable: bool = False,
                  human_name: Optional[str] = None,
-                 short_description: Optional[str] = None) -> None:
+                 short_description: Optional[str] = None,
+                 validators: List[IOValidator] = None) -> None:
         """_summary_
 
         :param resource_types: _description_
@@ -223,7 +241,8 @@ class InputSpec(IOSpec):
             is_optional = True
 
         super().__init__(resource_types=resource_types, is_optional=is_optional,
-                         human_name=human_name, short_description=short_description)
+                         human_name=human_name, short_description=short_description,
+                         validators=validators)
 
     def is_constant_out(self) -> bool:
         return False
@@ -252,7 +271,8 @@ class OutputSpec(IOSpec):
                  sub_class: bool = False,
                  is_constant: bool = False,
                  human_name: Optional[str] = None,
-                 short_description: Optional[str] = None) -> None:
+                 short_description: Optional[str] = None,
+                 validators: List[IOValidator] = None) -> None:
         """_summary_
 
         :param resource_types: _description_
@@ -270,7 +290,8 @@ class OutputSpec(IOSpec):
         """
 
         super().__init__(resource_types=resource_types, is_optional=is_optional,
-                         human_name=human_name, short_description=short_description)
+                         human_name=human_name, short_description=short_description,
+                         validators=validators)
         self._sub_class = sub_class
         self._is_constant = is_constant
 

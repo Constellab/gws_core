@@ -12,7 +12,6 @@ from gws_core.core.classes.observer.message_observer import \
 
 from ..config.config_params import ConfigParams
 from ..config.config_types import ConfigParamsDict
-from ..config.param.param_types import ParamValue
 from ..io.io_exception import InvalidOutputsException
 from ..io.io_specs import InputSpecs, OutputSpecs
 from ..progress_bar.progress_bar import ProgressBar

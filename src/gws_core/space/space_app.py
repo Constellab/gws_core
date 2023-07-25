@@ -12,13 +12,13 @@ from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.project.project_dto import SpaceProject
 from gws_core.project.project_service import ProjectService
 from gws_core.user.activity.activity_service import ActivityService
 
 from ..core.exception.exception_handler import ExceptionHandler
 from ..core.service.settings_service import SettingsService
-from ..core.utils.http_helper import HTTPHelper
 from ..user.auth_service import AuthService
 from ..user.user import User, UserDataDict
 from ..user.user_dto import UserLoginInfo
@@ -136,7 +136,6 @@ def get_users(_=Depends(AuthSpace.check_space_api_key_and_user)):
     """
     Get the all the users. Require space privilege.
     """
-    HTTPHelper.is_http_context()
     return _convert_users_to_dto(UserService.get_all_users())
 
 
@@ -193,5 +192,6 @@ def lab_activity(_=Depends(AuthSpace.check_space_api_key)):
     return {
         "running_experiments": ExperimentService.count_running_or_queued_experiments(),
         "queued_experiments": ExperimentService.count_queued_experiments(),
-        "last_activity": last_activity.to_json() if last_activity is not None else None
+        "last_activity": last_activity.to_json() if last_activity is not None else None,
+        'dev_env_running': DevEnvService.dev_env_is_running()
     }

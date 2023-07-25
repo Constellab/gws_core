@@ -5,7 +5,6 @@
 
 import select
 import subprocess
-import time
 from typing import Any, List, Union
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
