@@ -34,7 +34,7 @@ The data of the table is not transferered to OpenAI, only the provided text.
     """
 
     input_specs: InputSpecs = InputSpecs({
-        'source': InputSpec(Table, validators=[TableNumberValidator]),
+        'source': InputSpec(Table, validators=[TableNumberValidator()]),
     })
     output_specs: OutputSpecs = OutputSpecs({
         'target': OutputSpec(PlotlyResource, human_name='Plot', short_description='Generated plot file by the AI.'),
@@ -78,10 +78,10 @@ The data of the table is not transferered to OpenAI, only the provided text.
 from gws_core import File, PlotlyResource
 import os
 # get DataFrame from the source
-source = source[0].get_data()
+source = sources[0].get_data()
 {generated_code}
 # save the figure as resource
-target = [PlotlyResource(target)]"""
+targets = [PlotlyResource(target)]"""
 
         generated_text = Text(live_task_code)
         generated_text.name = "Interactive plot code"

@@ -79,12 +79,13 @@ The data of the table is not transferered to OpenAI, only the provided text.
         live_task_code = f"""
 from gws_core import Table
 # keep the original table
-source_table = source[0]
+source_table = sources[0]
 # retrieve the dataframe for the generated code
-source = source[0].get_data()
+source = sources[0].get_data()
 {generated_code}
 # convert the dataframe to a table
-target = Table(target)"""
+table_target = Table(target)
+"""
 
         result = Table(output)
         # get the table
@@ -92,14 +93,14 @@ target = Table(target)"""
 
         if params.get_value("keep_columns_tags"):
             result.copy_column_tags_by_name(source)
-            live_task_code += "\ntarget.copy_column_tags_by_name(source_table)"
+            live_task_code += "\ntable_target.copy_column_tags_by_name(source_table)"
 
         if params.get_value("keep_rows_tags"):
             result.copy_row_tags_by_name(source)
-            live_task_code += "\ntarget.copy_row_tags_by_name(source_table)"
+            live_task_code += "\ntable_target.copy_row_tags_by_name(source_table)"
 
         # set an the output as array
-        live_task_code += "\ntarget = [target]"
+        live_task_code += "\ntargets = [table_target]"
 
         generated_text = Text(live_task_code)
         generated_text.name = "Table transformation code"
