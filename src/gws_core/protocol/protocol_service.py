@@ -5,12 +5,11 @@
 
 from typing import List, Literal, Optional, Set, Type, Union
 
-from gws_core.brick.brick_helper import BrickHelper
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
 from gws_core.io.io_spec import InputSpec, IOSpecDict, OutputSpec, ResourceType
-from gws_core.model.typing_dict import TypingRef
 from gws_core.protocol.protocol_dto import ProtocolUpdateDTO
 from gws_core.protocol.protocol_layout import (ProcessLayout, ProtocolLayout,
                                                ProtocolLayoutDict)
@@ -19,7 +18,6 @@ from gws_core.protocol.protocol_types import ProtocolConfigDict
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.protocol_template.protocol_template_service import \
     ProtocolTemplateService
-from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
@@ -691,9 +689,11 @@ class ProtocolService(BaseService):
     def create_protocol_model_from_template(cls, protocol_template: ProtocolTemplate) -> ProtocolModel:
         try:
             return cls.create_protocol_model_from_graph(protocol_template.get_template())
-        except Exception as e:
+        except Exception as err:
+            # log stacktrace
+            Logger.log_exception_stack_trace(err)
             raise BadRequestException(
-                f"The template is not compatible with the current version. {e}")
+                f"The template is not compatible with the current version. {err}")
 
     @classmethod
     def create_protocol_model_from_graph(cls, graph: ProtocolConfigDict) -> ProtocolModel:

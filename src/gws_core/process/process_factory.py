@@ -8,6 +8,7 @@ from typing import Dict, List, Type
 from gws_core.protocol.protocol_layout import ProtocolLayout
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 from gws_core.protocol.protocol_types import ProtocolConfigDict
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 
@@ -55,12 +56,18 @@ class ProcessFactory():
         config: Config = Config()
         config.set_specs(task_type.config_specs)
         if config_params:
-            config.set_values(config_params)
-
             # Specific case for the source, to set the source_config id is provided
             if task_type == Source and config_params.get(Source.config_name):
-                task_model.source_config_id = config_params.get(
-                    Source.config_name)
+                # check if the resource exists
+                resource_id: str = config_params.get(Source.config_name)
+                if ResourceModel.get_by_id(resource_id):
+                    task_model.source_config_id = config_params.get(
+                        Source.config_name)
+                else:
+                    # clear the resource_id
+                    config_params[Source.config_name] = None
+
+            config.set_values(config_params)
 
         cls._init_process_model(process_model=task_model,
                                 config=config, instance_name=instance_name)
