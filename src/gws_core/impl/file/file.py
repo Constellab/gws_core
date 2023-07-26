@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 import json
 import os
-from typing import Any, AnyStr, Type
+from typing import Any, AnyStr, List
 
 from gws_core.impl.view.html_view import HTMLView
 from gws_core.impl.view.image_view import ImageView
@@ -32,9 +32,11 @@ class File(FSNode):
 
     _mode = "t"
 
-    # Provided at the Class level automatically by the @importable_resource_decorator
-    # //!\\ Do not modify theses values
-    _resource_importer: Type
+    """
+    Override to define the default extensions of the file
+    When upoading a file, if the file extension matches this list, this type will be used as default
+    """
+    __default_extensions__: List[str] = []
 
     @property
     def dir(self):
@@ -77,8 +79,6 @@ class File(FSNode):
 
     def get_default_name(self) -> str:
         return FileHelper.get_name_with_extension(self.path)
-
-    # -- O --
 
     def open(self, mode: str, encoding: str = None) -> Any:
         """

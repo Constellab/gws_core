@@ -40,3 +40,5 @@ class TypingDict(TypedDict):
     # only provided on deep dict
     doc: Optional[str]
     parent: TypingRef
+
+    additional_info: Optional[dict]
