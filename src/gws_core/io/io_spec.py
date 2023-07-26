@@ -81,7 +81,7 @@ class IOSpec:
         else:
             self.short_description = default_type._short_description
 
-        self.validators = validators or [TableNumberValidator()]
+        self.validators = validators or []
 
     def check_resource_types(self):
         for resource_type in self.resource_types:

@@ -7,6 +7,7 @@ from abc import abstractmethod
 from typing import List
 
 from gws_core.core.classes.observer.message_level import MessageLevel
+from gws_core.core.utils.logger import Logger
 from gws_core.progress_bar.progress_bar import (ProgressBar,
                                                 ProgressBarMessageWithType)
 
@@ -46,6 +47,7 @@ class ProgressBarMessageObserver(MessageObserver):
 
 
 class BasicMessageObserver(MessageObserver):
+    """Observer to log dispatched message to a list"""
 
     messages: List[DispatchedMessage]
 
@@ -63,3 +65,22 @@ class BasicMessageObserver(MessageObserver):
             if sub_text in message.message:
                 return True
         return False
+
+
+class LoggerMessageObserver(MessageObserver):
+    """Observer to log dispatched message to the logger"""
+
+    def update(self, messages: List[DispatchedMessage]) -> None:
+        for message in messages:
+            if message.status == MessageLevel.ERROR:
+                Logger.error(message.message)
+            elif message.status == MessageLevel.WARNING:
+                Logger.warning(message.message)
+            elif message.status == MessageLevel.INFO:
+                Logger.info(message.message)
+            elif message.status == MessageLevel.DEBUG:
+                Logger.debug(message.message)
+            elif message.status == MessageLevel.PROGRESS:
+                Logger.progress(message.message)
+            else:
+                Logger.info(message.message)

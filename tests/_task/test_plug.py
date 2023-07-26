@@ -9,7 +9,6 @@ from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.process.process_interface import IProcess
 from gws_core.protocol.protocol_interface import IProtocol
-from gws_core.resource import resource_model
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.task.plug import Sink
 from gws_core.test.base_test_case import BaseTestCase
