@@ -2,7 +2,7 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from typing import Dict, List, Optional
+from typing import Optional
 
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
@@ -15,39 +15,45 @@ from gws_core.report.report_file_service import ReportImage
 from ..core.classes.jsonable import ListJsonable
 from ..core.classes.search_builder import SearchParams
 from ..core_app import core_app
-from ..experiment.experiment import Experiment
-from ..report.report import Report
 from ..report.report_dto import ReportDTO
 from ..report.report_service import ReportService
 from ..user.auth_service import AuthService
 
 
 @core_app.post("/report", tags=["Report"], summary="Create a report for an experiment")
-def create(report_dto: ReportDTO, _=Depends(AuthService.check_user_access_token)) -> Dict:
+def create(report_dto: ReportDTO, _=Depends(AuthService.check_user_access_token)) -> dict:
     return ReportService.create(report_dto).to_json()
 
 
 @core_app.post("/report/experiment/{experiment_id}", tags=["Report"], summary="Create a report for an experiment")
 def create_for_experiment(experiment_id: str,
                           report_dto: ReportDTO,
-                          _=Depends(AuthService.check_user_access_token)) -> Dict:
+                          _=Depends(AuthService.check_user_access_token)) -> dict:
     return ReportService.create(report_dto, [experiment_id]).to_json()
 
 
 @core_app.put("/report/{report_id}", tags=["Report"], summary="Update a report information")
-def update(report_id: str, report_dto: ReportDTO, _=Depends(AuthService.check_user_access_token)) -> Dict:
+def update(report_id: str, report_dto: ReportDTO, _=Depends(AuthService.check_user_access_token)) -> dict:
     return ReportService.update(report_id, report_dto).to_json()
 
 
+@core_app.put("/report/{report_id}/title", tags=["Report"],
+              summary="Update the title of a report")
+def update_title(report_id: str,
+                 body: dict,
+                 _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ReportService.update_title(report_id, body["title"]).to_json()
+
+
 @core_app.put("/report/{report_id}/content", tags=["Report"], summary="Update a report content")
-def update_content(report_id: str, content: Dict, _=Depends(AuthService.check_user_access_token)) -> Dict:
+def update_content(report_id: str, content: dict, _=Depends(AuthService.check_user_access_token)) -> dict:
     return ReportService.update_content(report_id, content).to_json()
 
 
 @core_app.put("/report/{report_id}/content/add-view/{view_config_id}", tags=["Report"],
               summary="Add a view to the report")
 def add_view_to_content(report_id: str, view_config_id: str,
-                        _=Depends(AuthService.check_user_access_token)) -> Dict:
+                        _=Depends(AuthService.check_user_access_token)) -> dict:
     return ReportService.add_view_to_content(report_id, view_config_id).to_json()
 
 
@@ -59,7 +65,7 @@ def delete(report_id: str, _=Depends(AuthService.check_user_access_token)) -> No
 @core_app.put(
     "/report/{report_id}/add-experiment/{experiment_id}", tags=["Report"],
     summary="Add an experiment to the report")
-def add_experiment(report_id: str, experiment_id: str, _=Depends(AuthService.check_user_access_token)) -> Dict:
+def add_experiment(report_id: str, experiment_id: str, _=Depends(AuthService.check_user_access_token)) -> dict:
     return ReportService.add_experiment(report_id, experiment_id).to_json()
 
 
@@ -73,7 +79,7 @@ def remove_experiment(
 
 @core_app.put("/report/{report_id}/validate/{project_id}", tags=["Report"], summary="Validate the report")
 def validate(report_id: str, project_id: Optional[str] = None,
-             _=Depends(AuthService.check_user_access_token)) -> Dict:
+             _=Depends(AuthService.check_user_access_token)) -> dict:
     return ReportService.validate_and_send_to_space(report_id, project_id).to_json(deep=True)
 
 
@@ -106,20 +112,20 @@ def delete_image(filename: str,
 
 
 @core_app.get("/report/{id}", tags=["Report"], summary="Get a report", response_model=None)
-def get_by_id(id: str, _=Depends(AuthService.check_user_access_token)) -> List[Report]:
+def get_by_id(id: str, _=Depends(AuthService.check_user_access_token)) -> dict:
     return ReportService.get_by_id_and_check(id).to_json(deep=True)
 
 
 @core_app.get("/report/experiment/{experiment_id}", tags=["Report"],
               summary="Find reports of an experiment", response_model=None)
-def get_by_experiment(experiment_id: str, _=Depends(AuthService.check_user_access_token)) -> List[Report]:
+def get_by_experiment(experiment_id: str, _=Depends(AuthService.check_user_access_token)) -> list:
     return ListJsonable(ReportService.get_by_experiment(experiment_id)).to_json()
 
 
 @core_app.get("/report/{report_id}/experiments", tags=["Report"],
               summary="Find experiments of a report", response_model=None)
 def get_experiment_by_report(
-        report_id: str, _=Depends(AuthService.check_user_access_token)) -> List[Experiment]:
+        report_id: str, _=Depends(AuthService.check_user_access_token)) -> list:
     return ListJsonable(ReportService.get_experiments_by_report(report_id)).to_json()
 
 
@@ -127,7 +133,7 @@ def get_experiment_by_report(
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token)) -> Dict:
+                    _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Advanced search on experiment
     """

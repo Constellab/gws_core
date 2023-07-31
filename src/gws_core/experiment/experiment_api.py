@@ -134,6 +134,14 @@ def update_experiment(id: str,
     return ExperimentService.update_experiment(id, experiment).to_json(deep=True)
 
 
+@core_app.put("/experiment/{id}/title", tags=["Experiment"],
+              summary="Update the title of an experiment")
+def update_title(id: str,
+                 body: dict,
+                 _=Depends(AuthService.check_user_access_token)) -> Dict:
+    return ExperimentService.update_experiment_title(id, body["title"]).to_json(deep=True)
+
+
 class UpdateProject(BaseModel):
     project_id: Optional[str]
 

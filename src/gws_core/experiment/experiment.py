@@ -320,7 +320,6 @@ class Experiment(ModelWithUser, TaggableModel):
         self.pid = None
         self.status = ExperimentStatus.ERROR
         self.error_info = error_info
-        Logger.error(error_info)
         self.save()
 
     def mark_as_partially_run(self) -> None:
@@ -364,15 +363,15 @@ class Experiment(ModelWithUser, TaggableModel):
         """
         if self.is_running:
             raise BadRequestException(
-                detail="Experiment is running, you can't update it")
+                detail="The experiment is running, you can't update it")
 
         # check experiment status
         if self.is_validated:
             raise BadRequestException(
-                detail="Experiment is validated, you can't update it")
+                detail="The experiment is validated, you can't update it")
         if self.is_archived:
             raise BadRequestException(
-                detail="Experiment is archived, please unachived it to update it")
+                detail="The experiment is archived, please unachived it to update it")
 
     def get_process_status(self) -> ExperimentProcessStatus:
         if self.pid == None or not self.is_running:

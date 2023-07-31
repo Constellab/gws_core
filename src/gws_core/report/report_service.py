@@ -92,7 +92,7 @@ class ReportService():
     def update(cls, report_id: str, report_dto: ReportDTO) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
 
-        report.title = report_dto.title
+        report.title = report_dto.title.strip()
 
         # update project
         if report_dto.project_id:
@@ -121,6 +121,14 @@ class ReportService():
                 raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.value,
                                           GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.name, {'title': experiment.title},
                                           )
+
+        return report.save()
+
+    @classmethod
+    def update_title(cls, report_id: str, title: str) -> Report:
+        report: Report = cls._get_and_check_before_update(report_id)
+
+        report.title = title.strip()
 
         return report.save()
 
@@ -182,7 +190,7 @@ class ReportService():
 
     @classmethod
     @transaction()
-    def validate(cls, report_id: str, project_id: str = None) -> Report:
+    def _validate(cls, report_id: str, project_id: str = None) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
 
         rich_text = RichText(report.content)
@@ -247,7 +255,7 @@ class ReportService():
     @classmethod
     @transaction()
     def validate_and_send_to_space(cls, report_id: str, project_id: str = None) -> Report:
-        report = cls.validate(report_id, project_id)
+        report = cls._validate(report_id, project_id)
 
         report = cls._synchronize_with_space(report)
 
@@ -368,8 +376,7 @@ class ReportService():
         """
         report: Report = Report.get_by_id_and_check(report_id)
 
-        if report.is_validated:
-            raise BadRequestException(GWSException.REPORT_VALIDATED.value, GWSException.REPORT_VALIDATED.name)
+        report.check_is_updatable()
 
         return report
 

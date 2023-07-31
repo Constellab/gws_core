@@ -71,12 +71,12 @@ class TestReport(BaseTestCase):
         self.assertEqual(len(reports), 0)
 
         # Try to validate report_2, but there should be an error because the experiment is not validated
-        self.assertRaises(Exception, ReportService.validate, report_2.id)
+        self.assertRaises(Exception, ReportService._validate, report_2.id)
         experiment_2.is_validated = True
         experiment_2.project = project
         experiment_2.save()
 
-        report_2 = ReportService.validate(report_2.id, project.id)
+        report_2 = ReportService._validate(report_2.id, project.id)
         self.assertTrue(report_2.is_validated)
 
         # Try to update report_2

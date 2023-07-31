@@ -138,6 +138,16 @@ class ExperimentService(BaseService):
         return cls._update_experiment_project(experiment, experiment_dto.project_id)
 
     @classmethod
+    def update_experiment_title(cls, experiment_id: str, title: str) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
+
+        experiment.check_is_updatable()
+
+        experiment.title = title.strip()
+
+        return experiment.save()
+
+    @classmethod
     def update_experiment_project(cls, experiment_id: str, project_id: Optional[str]) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 

@@ -53,7 +53,7 @@ class SqliteResource(File):
 
     def _get_select_table_view(self, table_name: str) -> TableView:
         table_view = TableView(self.select_table(table_name))
-        table_view.set_title(table_name)
+        table_view.set_title('Table - ' + table_name)
         return table_view
 
     @view(view_type=View, hide=True)
