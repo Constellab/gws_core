@@ -34,7 +34,7 @@ The data of the table is not transferered to OpenAI, only the provided text.
     """
 
     input_specs: InputSpecs = InputSpecs({
-        'source': InputSpec(Table, validators=[TableNumberValidator()]),
+        'source': InputSpec(Table),
     })
     output_specs: OutputSpecs = OutputSpecs({
         'target': OutputSpec(PlotlyResource, human_name='Plot', short_description='Generated plot file by the AI.'),

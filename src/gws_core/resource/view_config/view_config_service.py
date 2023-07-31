@@ -10,6 +10,7 @@ from typing import List
 from peewee import ModelSelect
 
 from gws_core.config.config import Config
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.experiment.experiment import Experiment
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_types import exluded_views_in_historic
@@ -64,12 +65,8 @@ class ViewConfigService():
             if view_config_db is None:
                 view_config_db = view_config.save()
             else:
-                # otherwise, refresh title, flagged and last modified date
-                view_config_db.title = view_config.title
-
-                # update the flagged status only if the view config is flagged
-                if view_config.flagged:
-                    view_config_db.flagged = view_config.flagged
+                # refresh the last modified date
+                view_config_db.last_modified_at = DateHelper.now_utc()
                 view_config_db = view_config_db.save()
 
             # limit the length without blocking the thread
@@ -152,10 +149,15 @@ class ViewConfigService():
 
     @classmethod
     def get_by_resource(cls, resource_id: str,
+                        flagged: bool = False,
                         page: int = 0,
                         number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
 
-        query = ViewConfig.get_by_resource(resource_id).order_by(ViewConfig.last_modified_at.desc())
+        query: ModelSelect = None
+        if flagged:
+            query = ViewConfig.get_by_resource_and_flagged(resource_id).order_by(ViewConfig.last_modified_at.desc())
+        else:
+            query = ViewConfig.get_by_resource(resource_id).order_by(ViewConfig.last_modified_at.desc())
 
         paginator: Paginator[ViewConfig] = Paginator(
             query, page=page, nb_of_items_per_page=number_of_items_per_page)

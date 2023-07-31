@@ -57,3 +57,5 @@ class CallViewResult(TypedDict):
     view: Dict
     resource_id: str
     view_config: Dict
+    title: str
+    view_type: str

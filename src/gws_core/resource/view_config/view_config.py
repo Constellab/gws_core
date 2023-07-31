@@ -94,6 +94,10 @@ class ViewConfig(ModelWithUser, TaggableModel):
         return ViewConfig.select().where(ViewConfig.resource_model == resource_model_id)
 
     @classmethod
+    def get_by_resource_and_flagged(cls, resource_model_id: str) -> ModelSelect:
+        return ViewConfig.select().where((ViewConfig.resource_model == resource_model_id) & (ViewConfig.flagged == True))
+
+    @classmethod
     def delete_by_resource(cls, resource_model_id: str) -> None:
         view_configs: List[ViewConfig] = list(ViewConfig.get_by_resource(resource_model_id))
         for view_config in view_configs:

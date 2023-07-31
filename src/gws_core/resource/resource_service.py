@@ -8,8 +8,8 @@ from typing import Dict, List, Optional, Type
 from fastapi.responses import FileResponse
 from peewee import ModelSelect
 
-from gws_core.config.config import Config
 from gws_core.config.config_types import ConfigParamsDict
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
@@ -17,7 +17,6 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.project.project import Project
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
-from gws_core.resource.view.view import View
 from gws_core.resource.view.view_runner import ViewRunner
 from gws_core.resource.view.view_types import CallViewResult
 from gws_core.resource.view_config.view_config import ViewConfig
@@ -250,25 +249,46 @@ class ResourceService(BaseService):
         # call the view to dict
         view_dict = view_runner.call_view_to_dict()
 
+        view_title = view.get_title() or resource.name
         # Save the view config
         view_config: ViewConfig = None
         if save_view_config:
             view_config = ViewConfigService.save_view_config(
                 resource_model, view, view_name, view_runner.get_config())
+            view_title = view_config.title
 
         return {
             "view": view_dict,
             "resource_id": resource_model.id,
-            "view_config": view_config.to_json() if view_config else None
+            "view_config": view_config.to_json() if view_config else None,
+            "title": view_title,
+            "view_type": view.get_type(),
         }
 
     @classmethod
     def call_view_from_view_config(cls, view_config_id: str) -> CallViewResult:
         view_config = ViewConfigService.get_by_id(view_config_id)
 
-        return cls.call_view_on_resource_model(
-            view_config.resource_model, view_name=view_config.view_name, config_values=view_config.get_config_values(),
-            save_view_config=True)
+        resource: Resource = view_config.resource_model.get_resource()
+
+        view_runner: ViewRunner = ViewRunner(resource, view_config.view_name, view_config.get_config_values())
+
+        view = view_runner.generate_view()
+
+        # call the view to dict
+        view_dict = view_runner.call_view_to_dict()
+
+        # Update view config last call date
+        view_config.last_modified_at = DateHelper.now_utc()
+        view_config.save()
+
+        return {
+            "view": view_dict,
+            "resource_id": view_config.resource_model.id,
+            "view_config": view_config.to_json(),
+            "title": view_config.title,
+            "view_type": view.get_type(),
+        }
 
     ############################# SEARCH ###########################
 

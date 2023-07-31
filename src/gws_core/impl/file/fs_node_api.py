@@ -12,7 +12,6 @@ from fastapi.responses import FileResponse
 from typing_extensions import TypedDict
 
 from gws_core.core.classes.jsonable import ListJsonable
-from gws_core.resource.view.view_types import CallViewResult
 from gws_core.task.converter.converter_service import ConverterService
 
 from ...core_app import core_app
@@ -65,7 +64,8 @@ class SubFilePath(TypedDict):
     sub_file_path: str
 
 
-@core_app.post("/fs-node/{id}/folder/sub-file-view", tags=["Files"], summary="Call the default view of a folder sub file")
+@core_app.post("/fs-node/{id}/folder/sub-file-view", tags=["Files"],
+               summary="Call the default view of a folder sub file")
 def call_folder_sub_file_view(id: str,
                               data: SubFilePath,
                               _=Depends(AuthService.check_user_access_token)):

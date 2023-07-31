@@ -50,18 +50,16 @@ def update_flagged(id: str,
     return ViewConfigService.update_flagged(id, body["flagged"]).to_json(deep=True)
 
 
-@core_app.get("/view-config/resource/{resource_id}", tags=["View config"],
+@core_app.get("/view-config/resource/{resource_id}/flag/{flagged}", tags=["View config"],
               summary="Get the list of view config by resource")
-def get_by_input_resource(resource_id: str,
-                          page: Optional[int] = 1,
-                          number_of_items_per_page: Optional[int] = 20,
-                          _=Depends(AuthService.check_user_access_token)) -> PaginatorDict:
-    """
-    Retrieve a list of experiments by the input resource
-    """
-
+def get_by_resource(resource_id: str,
+                    flagged: bool,
+                    page: Optional[int] = 1,
+                    number_of_items_per_page: Optional[int] = 20,
+                    _=Depends(AuthService.check_user_access_token)) -> PaginatorDict:
     return ViewConfigService.get_by_resource(
         resource_id=resource_id,
+        flagged=flagged,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
     ).to_json()

@@ -71,4 +71,6 @@ class Folder(FSNode):
             raise BadRequestException("The path is not a file")
 
         sub_file = File(complete_path)
-        return sub_file.default_view(ConfigParams({}))
+        view = sub_file.get_default_view()
+        view.set_title(sub_file.get_default_name())
+        return view

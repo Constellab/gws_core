@@ -50,13 +50,15 @@ class ResourceTableService:
         table: Table = cls._get_table(resource, table_view_name, table_config_values)
 
         view_runner: ViewRunner = ViewRunner(table, view_name, chart_config_values)
-        view_runner.generate_view()
+        view = view_runner.generate_view()
 
         return {
             # call the view to dict
             "view": view_runner.call_view_to_dict(),
             "resource_id": resource_model.id,
-            "view_config": None
+            "view_config": None,
+            "title": view.get_title(),
+            "view_type": view.get_type(),
         }
 
     @classmethod

@@ -159,7 +159,9 @@ class File(FSNode):
 
     @view(view_type=View, human_name="Default view", short_description="View the file with automatic view", default_view=True)
     def default_view(self, params: ConfigParams) -> View:
+        return self.get_default_view()
 
+    def get_default_view(self) -> View:
         # specific extension
         if self.is_image():
             return ImageView.from_local_file(self.path)

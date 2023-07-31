@@ -87,7 +87,7 @@ def delete_file(id: str,
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token)) -> None:
+                    _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Advanced search on resources
     """
@@ -97,7 +97,7 @@ def advanced_search(search_dict: SearchParams,
 
 @core_app.put("/resource/{id}/name/{name}", tags=["Resource"], summary="Update the resource name")
 def update_name(id: str, name: str,
-                _=Depends(AuthService.check_user_access_token)) -> None:
+                _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Advanced search on resources
     """
