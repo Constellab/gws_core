@@ -45,6 +45,14 @@ def update_title(report_id: str,
     return ReportService.update_title(report_id, body["title"]).to_json()
 
 
+@core_app.put("/report/{report_id}/project", tags=["Report"],
+              summary="Update the project of a report")
+def update_project(report_id: str,
+                   body: dict,
+                   _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ReportService.update_project(report_id, body["project_id"]).to_json()
+
+
 @core_app.put("/report/{report_id}/content", tags=["Report"], summary="Update a report content")
 def update_content(report_id: str, content: dict, _=Depends(AuthService.check_user_access_token)) -> dict:
     return ReportService.update_content(report_id, content).to_json()

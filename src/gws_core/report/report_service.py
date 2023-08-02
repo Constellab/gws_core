@@ -94,33 +94,7 @@ class ReportService():
 
         report.title = report_dto.title.strip()
 
-        # update project
-        if report_dto.project_id:
-            project = Project.get_by_id_and_check(report_dto.project_id)
-            if report.last_sync_at is not None and project != report.project:
-                raise BadRequestException("You can't change the project of an experiment that has been synced")
-            report.project = project
-
-        # if the project was removed
-        if report_dto.project_id is None and report.project is not None:
-            report.project = None
-
-            if report.last_sync_at is not None:
-                # delete the report in space
-                SpaceService.delete_report(project_id=report.project.id, report_id=report.id)
-
-        # check that all associated experiment are in same project
-        experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
-
-        for experiment in experiments:
-            if experiment.project is None:
-                raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_NO_PROJECT.value,
-                                          GWSException.REPORT_VALIDATION_EXP_NO_PROJECT.name, {'title': experiment.title})
-
-            if experiment.project.id != report.project.id:
-                raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.value,
-                                          GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.name, {'title': experiment.title},
-                                          )
+        cls._update_report_project(report, report_dto.project_id)
 
         return report.save()
 
@@ -131,6 +105,43 @@ class ReportService():
         report.title = title.strip()
 
         return report.save()
+
+    @classmethod
+    def update_project(cls, report_id: str, project_id: str) -> Report:
+        report: Report = cls._get_and_check_before_update(report_id)
+
+        cls._update_report_project(report, project_id)
+
+        return report.save()
+
+    @classmethod
+    def _update_report_project(cls, report: Report, project_id: str) -> Report:
+        # update project
+        if project_id:
+            project = Project.get_by_id_and_check(project_id)
+            if report.last_sync_at is not None and project != report.project:
+                raise BadRequestException("You can't change the project of an experiment that has been synced")
+            report.project = project
+
+        # if the project was removed
+        if project_id is None and report.project is not None:
+            report.project = None
+
+            if report.last_sync_at is not None:
+                # delete the report in space
+                SpaceService.delete_report(project_id=report.project.id, report_id=report.id)
+
+        # check that all associated experiment are in same project
+        experiments: List[Experiment] = cls.get_experiments_by_report(report.id)
+
+        for experiment in experiments:
+            if experiment.project is None:
+                raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_NO_PROJECT.value,
+                                          GWSException.REPORT_VALIDATION_EXP_NO_PROJECT.name, {'title': experiment.title})
+
+            if experiment.project.id != report.project.id:
+                raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.value,
+                                          GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.name, {'title': experiment.title})
 
     @classmethod
     @transaction()
