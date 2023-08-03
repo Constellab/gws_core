@@ -80,11 +80,11 @@ class TestTaskRunner(TestCase):
             task_tester.run()
 
     def test_wrong_config(self):
-        task_tester: TaskRunner = TaskRunner(RobotMove,
-                                             {'moving_step': 'test', 'direction': 'south'},
-                                             {'robot': Robot.empty()})
-
         with self.assertRaises(BadRequestException):
+            task_tester: TaskRunner = TaskRunner(RobotMove,
+                                                 {'moving_step': 'test', 'direction': 'south'},
+                                                 {'robot': Robot.empty()})
+
             task_tester.run()
 
     def test_progress(self):

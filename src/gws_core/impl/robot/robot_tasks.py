@@ -25,7 +25,6 @@ class RobotCreate(Task):
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        print("Create", flush=True)
         robot: Robot = Robot.empty()
 
         return {'robot': robot}
@@ -42,7 +41,6 @@ class RobotMove(Task):
         default_value="north", allowed_values=["north", "south", "east", "west"], short_description="The moving direction")}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        print(f"Moving {params.get_value('moving_step')}", flush=True)
         robot: Robot = inputs['robot']
         robot.move(direction=params.get_value('direction'),
                    moving_step=params.get_value('moving_step'))
@@ -82,7 +80,6 @@ class RobotWait(Task):
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        print(f"Waiting {params.get_value('waiting_time')}", flush=True)
         time.sleep(params.get_value('waiting_time'))
         return {'robot': inputs['robot']}
 
@@ -94,7 +91,6 @@ class RobotFly(RobotMove):
         default_value="west", allowed_values=["north", "south", "east", "west"], short_description="The flying direction")}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        print("Start flying ...")
         return super().run(params, inputs)
 
 
@@ -105,7 +101,6 @@ class RobotAdd(Task):
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        print("Add robot addon...")
 
         robot: Robot = inputs['robot']
         mega = MegaRobot.from_robot(robot)
@@ -119,7 +114,6 @@ class RobotAddOnCreate(Task):
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        print("AddOn Create", flush=True)
         return {'addon': RobotAddOn()}
 
 
@@ -133,7 +127,6 @@ class RobotSugarCreate(Task):
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        print("Create sugar", flush=True)
         food: RobotFood = RobotFood()
         food.multiplicator = 10
         return {'sugar': food}

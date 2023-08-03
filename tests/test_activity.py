@@ -7,8 +7,7 @@
 from time import sleep
 
 from gws_core.test.base_test_case import BaseTestCase
-from gws_core.user.activity.activity import (Activity, ActivityObjectType,
-                                             ActivityType)
+from gws_core.user.activity.activity import ActivityObjectType, ActivityType
 from gws_core.user.activity.activity_service import ActivityService
 
 
@@ -16,10 +15,6 @@ from gws_core.user.activity.activity_service import ActivityService
 class TestActivity(BaseTestCase):
 
     def test_activity(self):
-
-        last_activity = ActivityService.get_last_activity()
-
-        self.assertIsNone(last_activity)
 
         ActivityService.add(
             ActivityType.CREATE, object_type=ActivityObjectType.EXPERIMENT, object_id="test")

@@ -45,7 +45,7 @@ class TableOperationHelper():
 
         dataframe = source.get_data()
 
-        eval_dataframe: DataFrame = dataframe.eval(str_operation)
+        eval_dataframe: DataFrame = dataframe.eval(str_operation, engine='python')
         eval_dataframe = eval_dataframe.replace(TableOperationHelper._NaN_str, NaN)
         result_table: Table
 
