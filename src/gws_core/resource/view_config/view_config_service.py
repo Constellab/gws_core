@@ -86,7 +86,9 @@ class ViewConfigService():
             last_view_config: ViewConfig = ViewConfig.select(
                 ViewConfig.flagged == False).order_by(
                 ViewConfig.last_modified_at.asc()).first()
-            last_view_config.delete_instance()
+
+            if last_view_config is not None:
+                last_view_config.delete_instance()
 
     @classmethod
     def update_title(cls, view_config_id: str, title: str) -> ViewConfig:
