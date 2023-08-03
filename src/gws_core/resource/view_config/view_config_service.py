@@ -83,7 +83,9 @@ class ViewConfigService():
     def _limit_length_history(cls) -> None:
         # limit the length of the history
         if (ViewConfig.select().count() > cls.MAX_HISTORY_SIZE):
-            last_view_config: ViewConfig = ViewConfig.select().order_by(ViewConfig.last_modified_at.asc()).first()
+            last_view_config: ViewConfig = ViewConfig.select(
+                ViewConfig.flagged == False).order_by(
+                ViewConfig.last_modified_at.asc()).first()
             last_view_config.delete_instance()
 
     @classmethod
