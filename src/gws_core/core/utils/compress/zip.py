@@ -16,8 +16,6 @@ class Zip(Compress):
 
     zipf: ZipFile
 
-    supported_extensions = ['zip']
-
     def __init__(self, destination_file_path: str):
         super().__init__(destination_file_path)
         self.zipf = ZipFile(destination_file_path, 'w', ZIP_DEFLATED)
@@ -51,3 +49,9 @@ class Zip(Compress):
 
         with ZipFile(file_path, 'r') as zip_obj:
             zip_obj.extractall(destination_folder)
+
+    @classmethod
+    def can_uncompress_file(cls, file_path: str) -> bool:
+        """Return true if the file can be uncompressed by this class
+        """
+        return file_path.endswith('.zip')

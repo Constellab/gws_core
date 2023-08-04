@@ -101,6 +101,9 @@ from .core.service.external_api_service import \
     ExternalApiService as ExternalApiService
 from .core.service.mysql_service import MySQLService as MySQLService
 from .core.service.settings_service import SettingsService as SettingsService
+from .core.utils.compress.compress import Compress as Compress
+from .core.utils.compress.gzip_compress import GzipCompress as GzipCompress
+from .core.utils.compress.tar_compress import TarCompress as TarCompress
 from .core.utils.compress.zip import Zip as Zip
 # Core > Utils
 from .core.utils.cryptography import Cryptography as Cryptography
@@ -153,7 +156,6 @@ from .impl.file.file import File as File
 from .impl.file.file_helper import FileHelper as FileHelper
 from .impl.file.file_r_field import FileRField as FileRField
 from .impl.file.file_store import FileStore as FileStore
-from .impl.file.file_tasks import FileDownloaderTask as FileDownloaderTask
 from .impl.file.file_tasks import FsNodeExtractor as FsNodeExtractor
 from .impl.file.file_tasks import WriteToJsonFile as WriteToJsonFile
 from .impl.file.folder import Folder as Folder

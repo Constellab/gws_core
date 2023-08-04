@@ -2,7 +2,8 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from tarfile import TarFile, open
+from tarfile import TarFile
+from tarfile import open as tar_open
 
 from .compress import Compress
 
@@ -16,11 +17,9 @@ class TarCompress(Compress):
 
     tar_file: TarFile
 
-    supported_extensions = ['tar.gz', 'gz']
-
     def __init__(self, destination_file_path: str):
         super().__init__(destination_file_path)
-        self.tar_file = open(destination_file_path, "w:gz")
+        self.tar_file = tar_open(destination_file_path, "w:gz")
 
     def add_dir(self, dir_path: str, dir_name: str = None) -> None:
         dir_name = self._generate_node_name(dir_path, dir_name)
@@ -44,6 +43,11 @@ class TarCompress(Compress):
         :param tar_gz_file_path: `str`
         """
 
-        tar = open(file_path, "r:gz")
-        tar.extractall(destination_folder)
-        tar.close()
+        with tar_open(file_path, "r:gz") as tar:
+            tar.extractall(destination_folder)
+
+    @classmethod
+    def can_uncompress_file(cls, file_path: str) -> bool:
+        """Return true if the file can be uncompressed by this class
+        """
+        return file_path.endswith('.tar.gz')

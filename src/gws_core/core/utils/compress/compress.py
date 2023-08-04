@@ -17,8 +17,6 @@ class Compress:
     # list of the fs node name added to the zip
     _fs_node_names: List[str]
 
-    supported_extensions: List[str] = []
-
     def __init__(self, destination_file_path: str):
         self.destination_file_path = destination_file_path
         self._fs_node_names = []
@@ -55,8 +53,14 @@ class Compress:
         return fs_node_name
 
     @classmethod
+    def can_uncompress_file(cls, file_path: str) -> bool:
+        """Return true if the file can be uncompressed by this class
+        """
+        return False
+
+    @classmethod
     @abstractmethod
-    def decompress(cls, file_path: str, destination_folder: str):
+    def decompress(cls, file_path: str, destination_folder: str) -> None:
         """
         Uncompress a tar.gz file.
 
@@ -83,11 +87,10 @@ class Compress:
     def smart_decompress(file_path: str, destination_folder: str) -> None:
         """Detect the extension of the compressed file and use the right decompress method.
         """
-        file_extension: str = FileHelper.get_extension(file_path)
-        compress: Type[Compress] = Compress._get_compress_class_from_extension(file_extension)
+        compress: Type[Compress] = Compress._get_compress_class_from_extension(file_path)
 
         if compress is None:
-            raise Exception(f"Unsupported file extension: {file_extension}")
+            raise Exception(f"Unsupported file extension: {FileHelper.get_extension(file_path)}")
 
         compress.decompress(file_path, destination_folder)
 
@@ -95,17 +98,17 @@ class Compress:
     def is_compressed_file(file_path: str) -> bool:
         """Check if the file is a compressed file.
         """
-        compress: Type[Compress] = Compress._get_compress_class_from_extension(FileHelper.get_extension(file_path))
+        compress: Type[Compress] = Compress._get_compress_class_from_extension(file_path)
         return compress is not None
 
     @staticmethod
-    def _get_compress_class_from_extension(extension: str) -> Optional[Type['Compress']]:
+    def _get_compress_class_from_extension(file_path: str) -> Optional[Type['Compress']]:
         """Get the compress class from the file extension.
         """
         compress: List[Type[Compress]] = Compress._get_child_classes()
 
         for compress_class in compress:
-            if extension in compress_class.supported_extensions:
+            if compress_class.can_uncompress_file(file_path):
                 return compress_class
 
         return None
@@ -114,6 +117,7 @@ class Compress:
     def _get_child_classes() -> List[Type['Compress']]:
         """Get the child classes of the compress class.
         """
+        from .gzip_compress import GzipCompress
         from .tar_compress import TarCompress
         from .zip import Zip
-        return [TarCompress, Zip]
+        return [TarCompress, Zip, GzipCompress]
