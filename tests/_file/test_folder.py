@@ -9,7 +9,7 @@ from gws_core import (BaseTestCase, ConfigParams, FileHelper, Folder,
                       IExperiment, LocalFileStore, OutputSpec, OutputSpecs,
                       Settings, Task, TaskInputs, TaskOutputs, task_decorator)
 from gws_core.impl.file.file import File
-from gws_core.impl.text.view.text_view import TextView
+from gws_core.impl.text.text_view import TextView
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.task.converter.converter_service import ConverterService
 

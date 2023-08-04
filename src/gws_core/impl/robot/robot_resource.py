@@ -12,7 +12,7 @@ from ...resource.resource_decorator import resource_decorator
 from ...resource.view.view_decorator import view
 from ..json.json_view import JSONView
 from ..table.view.table_view import TableView
-from ..text.view.text_view import TextView
+from ..text.text_view import TextView
 
 
 @resource_decorator(unique_name="Robot", human_name="Robot", hide=True)

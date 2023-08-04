@@ -83,3 +83,6 @@ class ResourceListBase(Resource):
         view = ResourcesListView()
         view.add_resources(self._get_all_resource_models())
         return view
+
+    def __len__(self) -> int:
+        return len(self.get_resources_as_set())

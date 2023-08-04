@@ -6,6 +6,7 @@ import json
 import os
 from typing import Any, AnyStr, List
 
+from gws_core.config.param.param_spec import IntParam
 from gws_core.impl.view.html_view import HTMLView
 from gws_core.impl.view.image_view import ImageView
 
@@ -17,7 +18,7 @@ from ...resource.resource_decorator import resource_decorator
 from ...resource.view.any_view import AnyView
 from ...resource.view.view import View
 from ...resource.view.view_decorator import view
-from ..text.view.text_view import TextView
+from ..text.text_view import TextView, TextViewData, TextViewSimple
 from .fs_node import FSNode
 
 
@@ -37,6 +38,9 @@ class File(FSNode):
     When upoading a file, if the file extension matches this list, this type will be used as default
     """
     __default_extensions__: List[str] = []
+
+    TEXT_VIEW_NB_LINES = 100
+    PAGE_PARAM_NAME = 'line_number'
 
     @property
     def dir(self):
@@ -71,7 +75,8 @@ class File(FSNode):
         return self.get_size() == 0
 
     def is_readable(self) -> bool:
-        return self.extension not in ["exe", "dll", "so", "pyc", "pyo", "xlsx", "xls", "doc", "docx", "pdf"]
+        return self.extension not in [
+            "exe", "dll", "so", "pyc", "pyo", "xlsx", "xls", "doc", "docx", "pdf", "zip", "gz"]
 
     @property
     def mime(self):
@@ -98,43 +103,25 @@ class File(FSNode):
                         f"Cannot create directory {self.dir}")
             return open(self.path, mode="w+", encoding=encoding)
 
-    def read_part(self, from_line: int = 1, to_line: int = 10) -> AnyStr:
+    def read_part(self, from_line: int = 0, to_line: int = 10) -> str:
         text = ""
-        mode = "r+"+self._mode
-        with self.open(mode) as fp:
-            for index, line in enumerate(fp):
-                if index >= from_line-1 and index <= to_line-1:
+        mode = "r+" + self._mode
+        with self.open(mode) as file:
+            for index, line in enumerate(file):
+                if index >= from_line and index < to_line:
                     text += line
-                if to_line > to_line-1:
+                if index >= to_line:
                     break
         return text
 
-    def _read_all(self, size: int = -1) -> AnyStr:
-        mode = "r+"+self._mode
-        with self.open(mode) as fp:
-            data = fp.read(size)
-        return data
-
     def read(self, size: int = -1) -> AnyStr:
-        if self.is_large() and size == -1:
-            return self.read_part()
-        else:
-            return self._read_all(size=-1)
+        mode = "r+"+self._mode
+        with self.open(mode) as file:
+            data = file.read(size)
+        return data
 
     def detect_file_encoding(self, default_encoding: str = 'utf-8') -> str:
         return FileHelper.detect_file_encoding(self.path, default_encoding)
-
-    # def readline(self) -> AnyStr:
-    #     mode = "r+"+self._mode
-    #     with self.open(mode) as file:
-    #         data = file.readline()
-    #     return data
-
-    # def readlines(self, hint=-1) -> List[AnyStr]:
-    #     mode = "r+"+self._mode
-    #     with self.open(mode) as file:
-    #         data = file.readlines(hint)
-    #     return data
 
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json")
     def view_as_json(self, params: ConfigParams) -> JSONView:
@@ -152,16 +139,17 @@ class File(FSNode):
         # rollback to string view if not convertible to json
         return self.view_content_as_str(params)
 
-    @view(view_type=View, human_name="View file content", short_description="View the file content as string")
-    def view_content_as_str(self, params: ConfigParams) -> TextView:
-        content = self.read()
-        return TextView(content)
+    @view(view_type=TextViewSimple, human_name="View file content", short_description="View the file content as string",
+          specs={"line_number": IntParam(default_value=1, min_value=1, human_name="From line")})
+    def view_content_as_str(self, params: ConfigParams) -> TextViewSimple:
+        return self.get_view_by_lines(params.get('line_number'))
 
-    @view(view_type=View, human_name="Default view", short_description="View the file with automatic view", default_view=True)
+    @view(view_type=View, human_name="Default view", short_description="View the file with automatic view",
+          default_view=True, specs={"line_number": IntParam(default_value=1, min_value=1, human_name="From line")})
     def default_view(self, params: ConfigParams) -> View:
-        return self.get_default_view()
+        return self.get_default_view(params.get('line_number'))
 
-    def get_default_view(self) -> View:
+    def get_default_view(self, page: int = 1) -> View:
         # specific extension
         if self.is_image():
             return ImageView.from_local_file(self.path)
@@ -172,12 +160,10 @@ class File(FSNode):
         if not self.is_readable():
             return TextView("This file is not readable, please import it to view it")
 
-        content = self.read()
-
         if self.is_json():
             try:
                 # try to load the json
-                json_: Any = json.loads(content)
+                json_: Any = json.loads(self.read())
 
                 # If the json, is a json of a view
                 if View.json_is_from_view(json_):
@@ -189,7 +175,20 @@ class File(FSNode):
                 pass
 
         # In the worse case, return the file content as string
-        return TextView(content)
+        return self.get_view_by_lines(page)
+
+    def get_view_by_lines(self, start_line: int = 1) -> TextViewSimple:
+        end_line = start_line + self.TEXT_VIEW_NB_LINES - 1
+        text = self.read_part(start_line - 1, end_line)
+        lines_count = len(text.splitlines())
+        return TextViewSimple(TextViewData(
+            text=text,
+            is_first_page=start_line <= 1,
+            is_last_page=lines_count < self.TEXT_VIEW_NB_LINES,
+            next_page=start_line + self.TEXT_VIEW_NB_LINES,
+            previous_page=max(start_line - self.TEXT_VIEW_NB_LINES, 1),
+            page_param_name=self.PAGE_PARAM_NAME
+        ))
 
     def write(self, data: str):
         """

@@ -52,8 +52,12 @@ class ResourceDownloaderBase(Task):
             return {'resource': File(resource_file)}
 
         # Convert the zip file to a resource
-        self.log_info_message("Unzipping the file")
-        self.resource_loader = ResourceLoader.from_compress_file(resource_file)
+        try:
+            self.log_info_message("Unzipping the file")
+            self.resource_loader = ResourceLoader.from_compress_file(resource_file)
+        except Exception as err:
+            self.log_error_message(f"Error while unzipping the file. Saving the file without decompress. Error: {err}.")
+            return {'resource': File(resource_file)}
 
         self.log_info_message("Loading the resource")
         resource = self.resource_loader.load_resource()

@@ -8,10 +8,13 @@ from typing import List
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import StrParam
+from gws_core.io.dynamic_io import DynamicInputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -23,40 +26,23 @@ from .resource_set import ResourceSet
                 hide=False)
 class ResourceStacker(Task):
 
-    config_specs: ConfigSpecs = {
-        'resource_1_key': StrParam(optional=True, human_name='Key of resource 1 in the resource set'),
-        'resource_2_key': StrParam(optional=True, human_name='Key of resource 2 in the resource set'),
-        'resource_3_key': StrParam(optional=True, human_name='Key of resource 3 in the resource set'),
-        'resource_4_key': StrParam(optional=True, human_name='Key of resource 4 in the resource set'),
-        'resource_5_key': StrParam(optional=True, human_name='Key of resource 5 in the resource set'),
-    }
-    input_specs: InputSpecs = InputSpecs({
-        "resource_1": InputSpec(Resource),
-        "resource_2": InputSpec(Resource, is_optional=True),
-        "resource_3": InputSpec(Resource, is_optional=True),
-        "resource_4": InputSpec(Resource, is_optional=True),
-        "resource_5": InputSpec(Resource, is_optional=True),
-    })
+    config_specs: ConfigSpecs = {'keys': ParamSet(
+        {'key': StrParam(human_name="Resource key", short_description="The key of the resource to stack", optional=True)},
+        optional=True
+    )}
+    input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = OutputSpecs({'resource_set': OutputSpec(ResourceSet)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        resource_1 = inputs.get('resource_1')
 
-        if resource_1 is None:
-            raise Exception('The first input must be provided')
+        resource_list: ResourceList = inputs.get('source')
 
-        resources: List[Resource] = [
-            resource_1, inputs.get('resource_2'),
-            inputs.get('resource_3'),
-            inputs.get('resource_4'),
-            inputs.get('resource_5')]
-        configs: List[str] = [params.get('resource_1_key'), params.get('resource_2_key'), params.get(
-            'resource_3_key'), params.get('resource_4_key'), params.get('resource_5_key')]
+        configs: List[dict] = params.get_value('keys')
 
         resource_set: ResourceSet = ResourceSet()
 
         i = 0
-        for resource in resources:
+        for resource in resource_list:
             if resource is not None:
 
                 if isinstance(resource, ResourceSet):
@@ -65,10 +51,13 @@ class ResourceStacker(Task):
                     for _, sub_resource in resource.get_resources().items():
                         resource_set.add_resource(sub_resource, create_new_resource=False)
                 else:
-                    resource_key = configs[i] if configs[i] is not None else resource.name
+                    resource_key = configs[i]['key'] if i in configs and configs[i] and configs[i]['key'] else resource.name
                     self.log_info_message(f"Adding resource {str(i + 1)} with key '{resource_key}'")
                     resource_set.add_resource(resource, resource_key, create_new_resource=False)
             i += 1
+
+        if len(resource_set) == 0:
+            raise Exception("No resource found in the input")
 
         return {'resource_set': resource_set}
 

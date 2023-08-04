@@ -11,7 +11,7 @@ from ...core.exception.exceptions import BadRequestException
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view.view_decorator import view
-from .view.text_view import TextView
+from .text_view import TextView
 
 
 @resource_decorator("Text")

@@ -99,6 +99,8 @@ class InputSpecs(IOSpecs):
                 # If the resource is empty and the spec not optional, add an error
                 if not spec.is_optional:
                     missing_resource.append(key)
+                else:
+                    input_dict[key] = None
                 continue
 
             resource: Resource = inputs[key]

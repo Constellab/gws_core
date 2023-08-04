@@ -19,6 +19,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.impl.table.table import Table
+from gws_core.io.dynamic_io import DynamicInputs
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_set.resource_set import ResourceSet
@@ -152,11 +153,22 @@ class TestResourceSet(BaseTestCase):
         ResourceModel.save_from_resource(resource_set, ResourceOrigin.UPLOADED)
 
         task_runner = TaskRunner(ResourceStacker,
-                                 params={'resource_1_key': 'robot_1',
-                                         'resource_5_key': 'unused'},
+                                 params={'keys': [
+                                        {'key': 'robot_1'},
+                                        {'key': ''},
+                                        {'key': 'robot_3'},
+                                        {'key': 'robot_4'}
+                                 ]},
                                  inputs={'resource_1': robot_1,
                                          'resource_2': robot_2,
-                                         'resource_4': resource_set})
+                                         'resource_3': None},
+                                 input_specs=DynamicInputs({
+                                     'resource_1': InputSpec(Robot),
+                                     'resource_2': InputSpec(Robot),
+                                     'resource_3': InputSpec(Robot, is_optional=True),
+                                     'resource_4': InputSpec(ResourceSet)
+                                 })
+                                 )
 
         outputs = task_runner.run()
 

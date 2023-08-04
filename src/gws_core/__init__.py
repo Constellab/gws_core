@@ -304,7 +304,7 @@ from .impl.table.transformers.table_unfolder import \
 from .impl.table.view.table_view import TableView as TableView
 # Impl > Text
 from .impl.text.text import Text as Text
-from .impl.text.view.text_view import TextView as TextView
+from .impl.text.text_view import TextView as TextView
 # View
 from .impl.view.barplot_view import BarPlotView as BarPlotView
 from .impl.view.boxplot_view import BoxPlotView as BoxPlotView

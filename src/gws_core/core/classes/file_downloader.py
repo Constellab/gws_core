@@ -2,12 +2,14 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+import mimetypes
 import os
 import time
 from email.header import decode_header
 from typing import Dict
 
 import requests
+
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.core.utils.date_helper import DateHelper
@@ -104,7 +106,7 @@ class FileDownloader():
                 # try to extract filename from response headers
                 if filename is None:
                     filename = self._extract_filename_from_header(
-                        response.headers.get("Content-Disposition"), url)
+                        response.headers.get("Content-Disposition"), url, response.headers.get("Content-Type"))
 
                     if filename is None:
                         raise Exception(
@@ -232,7 +234,7 @@ class FileDownloader():
         if self.message_dispatcher is not None:
             self.message_dispatcher.notify_error_message(message)
 
-    def _extract_filename_from_header(self, header: str, url: str) -> str:
+    def _extract_filename_from_header(self, content_disposition: str, url: str, content_type: str) -> str:
         """
         Extract the filename from a header
 
@@ -242,8 +244,8 @@ class FileDownloader():
         :rtype: `str`
         """
 
-        if header:
-            _, params = header.split(";", 1)
+        if content_disposition:
+            _, params = content_disposition.split(";", 1)
             filename = None
 
             for param in params.split(";"):
@@ -258,4 +260,12 @@ class FileDownloader():
                     return filename
 
         # If the filename couldn't be extracted from the header, fall back to extracting it from the URL
-        return url.split("/")[-1]
+        filename = url.split("/")[-1]
+
+        # check if there is an extension in the filename
+        if "." not in filename and content_type:
+            extension = mimetypes.guess_extension(content_type)
+            if extension:
+                filename += extension
+
+        return filename
