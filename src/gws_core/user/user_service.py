@@ -114,8 +114,8 @@ class UserService(BaseService):
         except:
             user = User(
                 email="admin@gencovery.com",
-                first_name="sysuser",
-                last_name="sysuser",
+                first_name="System",
+                last_name="User",
                 data={},
                 is_active=True,
                 group=UserGroup.SYSUSER

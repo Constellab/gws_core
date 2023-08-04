@@ -785,6 +785,6 @@ class Migration058(BrickMigration):
                     config.set_specs(specs)
                     config.set_values(view_config.config_values)
                     view_config.config = config
-                    view_config.save()
+                    view_config.save(skip_hook=True)
             except Exception:
                 view_config.delete_instance()
