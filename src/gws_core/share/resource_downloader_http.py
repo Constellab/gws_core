@@ -34,10 +34,14 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
     If the link refers to a file, the file will be imported as a resource.
 
     """
-    config_specs: ConfigSpecs = {'link': StrParam(
-        human_name='Resource link', short_description='Link to download the resource')}
+    config_specs: ConfigSpecs = {
+        'link': StrParam(human_name='Resource link', short_description='Link to download the resource'),
+        'uncompress': ResourceDownloaderBase.uncompressConfig
+    }
 
-    config_name = 'link'
+    LINK_PARAM_NAME = 'link'
+    UNCOMPRESS_PARAM_NAME = 'uncompress'
+
     link: str
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -49,7 +53,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         # download the resource file
         resource_file = file_downloader.download_file(self.link)
 
-        return self.create_resource_from_file(resource_file)
+        return self.create_resource_from_file(resource_file, params['uncompress'])
 
     def run_after_task(self) -> None:
         """Save share info and mark the resource as received in lab

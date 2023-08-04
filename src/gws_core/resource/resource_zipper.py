@@ -22,7 +22,6 @@ from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.user.user import User
 
 from .resource_model import ResourceModel
-from .resource_service import ResourceService
 
 
 class ZipResource(TypedDict):
@@ -79,8 +78,7 @@ class ResourceZipper():
 
     def add_resource_model(self, resource_id: str, parent_resource_id: str = None) -> None:
 
-        resource_model: ResourceModel = ResourceService.get_resource_by_id(
-            resource_id)
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
 
         resource_zip: ZipResource = {
             'id': resource_model.id,

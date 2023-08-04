@@ -229,5 +229,18 @@ def add_action_to_resource(id: str, action_typing_name: str,
 @core_app.get("/resource/{id}/shared-origin", tags=["Resource"],
               summary="Get origin of this imported resource", response_model=None)
 def get_shared_resource_origin_info(id: str,
-                                    _=Depends(AuthService.check_user_access_token)) -> SharedResource:
+                                    _=Depends(AuthService.check_user_access_token)) -> dict:
     return ResourceService.get_shared_resource_origin_info(id).to_json()
+
+
+################################ RESOURCE ################################
+
+class ImportDto(BaseModel):
+    url: str
+    uncompress_option: str
+
+
+@core_app.post("/resource/upload-from-link", tags=["Share"], summary="Download a resource", response_model=None)
+def upload_resource_from_link(import_dto: ImportDto,
+                              _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ResourceService.upload_resource_from_link(import_dto.url, import_dto.uncompress_option).to_json()

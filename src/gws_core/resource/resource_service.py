@@ -12,17 +12,23 @@ from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment import Experiment
+from gws_core.experiment.experiment_enums import ExperimentType
+from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node import FSNode
+from gws_core.process.process_interface import IProcess
 from gws_core.project.project import Project
+from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.view.view_runner import ViewRunner
 from gws_core.resource.view.view_types import CallViewResult
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
+from gws_core.share.resource_downloader_http import ResourceDownloaderHttp
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.converter.converter_service import ConverterService
+from gws_core.task.plug import Sink
 from gws_core.task.task_model import TaskModel
 
 from ..core.classes.paginator import Paginator
@@ -336,3 +342,35 @@ class ResourceService(BaseService):
     @classmethod
     def get_shared_resource_origin_info(cls, resource_model_id: str) -> SharedResource:
         return SharedResource.get_and_check_entity_origin(resource_model_id)
+
+    ############################# DOWNLOAD RESOURCE ###########################
+
+    @classmethod
+    def upload_resource_from_link(cls, link: str, uncompress_options: str) -> ResourceModel:
+
+        file_name = link.split('/')[-1]
+        # Create an experiment containing 1 resource downloader , 1 sink
+        experiment: IExperiment = IExperiment(
+            None, title=f"Download {file_name}", type_=ExperimentType.RESOURCE_DOWNLOADER)
+        protocol: IProtocol = experiment.get_protocol()
+
+        # Add the importer and the connector
+        importer: IProcess = protocol.add_process(ResourceDownloaderHttp, 'downloader', {
+            ResourceDownloaderHttp.LINK_PARAM_NAME: link,
+            ResourceDownloaderHttp.UNCOMPRESS_PARAM_NAME: uncompress_options
+        })
+
+        # Add sink and connect it
+        protocol.add_sink('sink', importer >> 'resource')
+
+        # run the experiment
+        try:
+            experiment.run()
+        except Exception as exception:
+            if not experiment.is_running():
+                # delete experiment if there was an error
+                experiment.delete()
+            raise exception
+
+        # return the resource model of the sink process
+        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)

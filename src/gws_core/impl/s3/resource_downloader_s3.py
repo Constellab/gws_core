@@ -36,6 +36,7 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
         's3_bucket': StrParam(human_name="S3 bucket name",
                               short_description="If provided, override the bucket name in credentials",
                               optional=True),
+        'uncompress': ResourceDownloaderBase.uncompressConfig
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -55,4 +56,4 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
         # download the file
         resource_file = s3_bucket.get_object(params.get_value('object_key'))
 
-        return self.create_resource_from_file(resource_file)
+        return self.create_resource_from_file(resource_file, params['uncompress'])

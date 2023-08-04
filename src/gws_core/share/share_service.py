@@ -8,18 +8,11 @@ from typing import Type
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.service.external_lab_service import ExternalLabWithUserInfo
-from gws_core.experiment.experiment_enums import ExperimentType
-from gws_core.experiment.experiment_interface import IExperiment
-from gws_core.process.process_interface import IProcess
-from gws_core.protocol.protocol_interface import IProtocol
-from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_zipper import ResourceZipper
-from gws_core.share.resource_downloader_http import ResourceDownloaderHttp
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_entity_info import (SharedEntityInfo,
                                                SharedEntityMode)
 from gws_core.share.shared_resource import SharedResource
-from gws_core.task.plug import Sink
 from gws_core.user.user import User
 
 from .share_link import ShareLink, ShareLinkType
@@ -51,11 +44,9 @@ class ShareService():
         """Method called by an external lab after the an entity was successfully
         import in the external lab. This helps this lab to keep track of which lab downloaded the entity
         """
-        shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check(
-            token)
+        shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check(token)
 
-        entity_type: Type[SharedEntityInfo] = cls._get_shared_entity_type(
-            entity_type)
+        entity_type: Type[SharedEntityInfo] = cls._get_shared_entity_type(entity_type)
 
         # check if this resource was already downloaded by this lab
         if entity_type.already_shared_with_lab(shared_entity_link.entity_id, receiver_lab['lab_id']):
@@ -97,33 +88,6 @@ class ShareService():
         resource_zipper.close_zip()
 
         return resource_zipper.get_zip_file_path()
-
-    @classmethod
-    def download_resource_from_external_lab(cls, link: str) -> ResourceModel:
-        # Create an experiment containing 1 resource downloader , 1 sink
-        experiment: IExperiment = IExperiment(
-            None, title="Resource downloader", type_=ExperimentType.RESOURCE_DOWNLOADER)
-        protocol: IProtocol = experiment.get_protocol()
-
-        # Add the importer and the connector
-        importer: IProcess = protocol.add_process(ResourceDownloaderHttp, 'downloader', {
-            ResourceDownloaderHttp.config_name: link
-        })
-
-        # Add sink and connect it
-        protocol.add_sink('sink', importer >> 'resource')
-
-        # run the experiment
-        try:
-            experiment.run()
-        except Exception as exception:
-            if not experiment.is_running():
-                # delete experiment if there was an error
-                experiment.delete()
-            raise exception
-
-        # return the resource model of the sink process
-        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
 
     @classmethod
     def _create_shared_entity(cls, shared_entity_type: Type[SharedEntityInfo], entity_id: str,

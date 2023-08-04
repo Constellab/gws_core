@@ -4,8 +4,9 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import List, Type
+from typing import List, Literal, Type
 
+from gws_core.config.param.param_spec import StrParam
 from gws_core.core.service.external_lab_service import ExternalLabWithUserInfo
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.impl.file.file import File
@@ -36,26 +37,41 @@ class ResourceDownloaderBase(Task):
         Resource, human_name='Imported resource', sub_class=True)})
     config_specs: ConfigSpecs = {}
 
+    uncompressConfig = StrParam(human_name="Uncompress file", allowed_values=['auto', 'yes', 'no'],
+                                default_value='auto',
+                                short_description="Option to uncompress the file if it is compresses.")
+
     resource_loader: ResourceLoader = None
 
     @abstractmethod
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         pass
 
-    def create_resource_from_file(self, resource_file: str) -> TaskOutputs:
+    def create_resource_from_file(
+            self, resource_file: str, uncompress_option: Literal['auto', 'yes', 'no']) -> TaskOutputs:
         """Methode to create the resource from a file (once downloaded) and return it as a task output
         """
 
         # case of a file that is not a zip, we directly save it as a resource
         if not Compress.is_compressed_file(resource_file):
+            if uncompress_option == 'yes':
+                raise Exception("The file is not a compress file. Please disbale compress option.")
             self.log_info_message("Saving file as a resource")
+            return {'resource': File(resource_file)}
+
+        if uncompress_option == 'no':
+            self.log_info_message("Saving file compressed file")
             return {'resource': File(resource_file)}
 
         # Convert the zip file to a resource
         try:
-            self.log_info_message("Unzipping the file")
+            self.log_info_message("Uncompressing the file")
             self.resource_loader = ResourceLoader.from_compress_file(resource_file)
         except Exception as err:
+            if uncompress_option == 'yes':
+                raise Exception("Error while unzipping the file. Error: {err}.")
+
+            # skip if the option is auto
             self.log_error_message(f"Error while unzipping the file. Saving the file without decompress. Error: {err}.")
             return {'resource': File(resource_file)}
 
