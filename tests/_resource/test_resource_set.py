@@ -157,11 +157,12 @@ class TestResourceSet(BaseTestCase):
                                         {'key': 'robot_1'},
                                         {'key': ''},
                                         {'key': 'robot_3'},
-                                        {'key': 'robot_4'}
+                                        {'key': 'resource_set'}
                                  ]},
                                  inputs={'resource_1': robot_1,
                                          'resource_2': robot_2,
-                                         'resource_3': None},
+                                         'resource_3': None,
+                                         'resource_4': resource_set},
                                  input_specs=DynamicInputs({
                                      'resource_1': InputSpec(Robot),
                                      'resource_2': InputSpec(Robot),

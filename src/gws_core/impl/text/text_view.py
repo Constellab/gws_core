@@ -101,7 +101,7 @@ class TextView(View):
         ).to_json()
 
 
-class TextViewSimple(View):
+class SimpleTextView(View):
     """
     Class text view that does not include pagination config
 

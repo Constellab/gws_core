@@ -306,6 +306,7 @@ from .impl.table.transformers.table_unfolder import \
 from .impl.table.view.table_view import TableView as TableView
 # Impl > Text
 from .impl.text.text import Text as Text
+from .impl.text.text_view import SimpleTextView as SimpleTextView
 from .impl.text.text_view import TextView as TextView
 # View
 from .impl.view.barplot_view import BarPlotView as BarPlotView

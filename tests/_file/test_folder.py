@@ -9,7 +9,7 @@ from gws_core import (BaseTestCase, ConfigParams, FileHelper, Folder,
                       IExperiment, LocalFileStore, OutputSpec, OutputSpecs,
                       Settings, Task, TaskInputs, TaskOutputs, task_decorator)
 from gws_core.impl.file.file import File
-from gws_core.impl.text.text_view import TextView
+from gws_core.impl.text.text_view import SimpleTextView
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.task.converter.converter_service import ConverterService
 
@@ -54,10 +54,10 @@ class TestFolder(BaseTestCase):
         self.assertIsNotNone(dic_["data"])
 
         # Test sub file view
-        result: TextView = folder.view_sub_file(
+        result: SimpleTextView = folder.view_sub_file(
             ConfigParams({'sub_file_path': 'test.txt'}))
-        self.assertTrue(isinstance(result, TextView))
-        self.assertEqual(result._data, 'test')
+        self.assertTrue(isinstance(result, SimpleTextView))
+        self.assertEqual(result._data.text, 'test')
 
     def test_folder_process(self):
         experiment: IExperiment = IExperiment()

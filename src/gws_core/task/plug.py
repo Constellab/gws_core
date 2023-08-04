@@ -137,7 +137,8 @@ class Switch2(Task):
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         index = params.get_value("index")
 
-        is_ready: bool = f"resource_{index}" in inputs
+        name = f"resource_{index}"
+        is_ready: bool = inputs.get(name) is not None
         # The switch is ready to execute if the correct input was set
         return {"result": is_ready}
 

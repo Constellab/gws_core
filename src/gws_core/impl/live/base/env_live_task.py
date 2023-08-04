@@ -107,6 +107,8 @@ class EnvLiveTask(Task):
         skipped_resources: List[str] = []
 
         for resource in source:
+            if resource is None:
+                continue
             if isinstance(resource, FSNode):
                 nodes.append(resource)
             else:

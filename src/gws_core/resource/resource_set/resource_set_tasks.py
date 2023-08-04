@@ -51,7 +51,8 @@ class ResourceStacker(Task):
                     for _, sub_resource in resource.get_resources().items():
                         resource_set.add_resource(sub_resource, create_new_resource=False)
                 else:
-                    resource_key = configs[i]['key'] if i in configs and configs[i] and configs[i]['key'] else resource.name
+                    resource_key = configs[i]['key'] if len(
+                        configs) > i and configs[i] and configs[i]['key'] else resource.name
                     self.log_info_message(f"Adding resource {str(i + 1)} with key '{resource_key}'")
                     resource_set.add_resource(resource, resource_key, create_new_resource=False)
             i += 1

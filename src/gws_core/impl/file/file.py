@@ -18,7 +18,7 @@ from ...resource.resource_decorator import resource_decorator
 from ...resource.view.any_view import AnyView
 from ...resource.view.view import View
 from ...resource.view.view_decorator import view
-from ..text.text_view import TextView, TextViewData, TextViewSimple
+from ..text.text_view import SimpleTextView, TextView, TextViewData
 from .fs_node import FSNode
 
 
@@ -139,9 +139,9 @@ class File(FSNode):
         # rollback to string view if not convertible to json
         return self.view_content_as_str(params)
 
-    @view(view_type=TextViewSimple, human_name="View file content", short_description="View the file content as string",
+    @view(view_type=SimpleTextView, human_name="View file content", short_description="View the file content as string",
           specs={"line_number": IntParam(default_value=1, min_value=1, human_name="From line")})
-    def view_content_as_str(self, params: ConfigParams) -> TextViewSimple:
+    def view_content_as_str(self, params: ConfigParams) -> SimpleTextView:
         return self.get_view_by_lines(params.get('line_number'))
 
     @view(view_type=View, human_name="Default view", short_description="View the file with automatic view",
@@ -177,11 +177,11 @@ class File(FSNode):
         # In the worse case, return the file content as string
         return self.get_view_by_lines(page)
 
-    def get_view_by_lines(self, start_line: int = 1) -> TextViewSimple:
+    def get_view_by_lines(self, start_line: int = 1) -> SimpleTextView:
         end_line = start_line + self.TEXT_VIEW_NB_LINES - 1
         text = self.read_part(start_line - 1, end_line)
         lines_count = len(text.splitlines())
-        return TextViewSimple(TextViewData(
+        return SimpleTextView(TextViewData(
             text=text,
             is_first_page=start_line <= 1,
             is_last_page=lines_count < self.TEXT_VIEW_NB_LINES,
