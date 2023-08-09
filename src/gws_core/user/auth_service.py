@@ -5,7 +5,6 @@
 
 
 from fastapi.param_functions import Depends
-from requests.models import Response
 from starlette.responses import JSONResponse, Response
 
 from gws_core.lab.system_service import SystemService

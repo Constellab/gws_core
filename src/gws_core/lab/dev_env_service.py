@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from requests.models import Response
+from starlette.responses import Response
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
