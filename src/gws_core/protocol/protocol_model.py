@@ -966,7 +966,6 @@ class ProtocolModel(ProcessModel):
 
         if deep:
             _json["graph"] = self.dumps_graph(process_mode='full')
-            _json["layout"] = self.layout.to_json() if self.layout else {}
 
         return _json
 

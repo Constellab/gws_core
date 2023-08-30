@@ -28,6 +28,8 @@ class OpenAiChatParam(ParamSpec[dict]):
         context: Optional[str] = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
+        human_name: Optional[str] = "Enter your prompt/message",
+        short_description: Optional[str] = None,
     ) -> None:
         """
         :param context: Context of the chat, can also be provided during run
@@ -45,6 +47,8 @@ class OpenAiChatParam(ParamSpec[dict]):
         super().__init__(
             optional=optional,
             visibility=visibility,
+            human_name=human_name,
+            short_description=short_description,
         )
         self.context = context
 

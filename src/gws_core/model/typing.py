@@ -3,11 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import enum
 import inspect
 from typing import Any, Dict, List, Optional, Type
 
 from peewee import BooleanField, CharField, ModelSelect
+
+from gws_core.brick.brick_helper import BrickHelper
 
 from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions.bad_request_exception import \
@@ -155,6 +156,10 @@ class Typing(Model):
             else:
                 parent = None
             _json["parent"] = parent
+
+        brick_info = BrickHelper.get_brick_info(self.brick)
+        if brick_info:
+            _json["brick_version"] = brick_info["version"]
 
         return _json
 
