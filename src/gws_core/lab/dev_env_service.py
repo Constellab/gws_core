@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from requests.models import Response as ApiResponse
 from starlette.responses import Response
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -53,7 +54,7 @@ class DevEnvService:
 
         # Check if the user's token is valid in prod environment and retrieve user's information
         try:
-            response: Response = ExternalApiService.post(
+            response: ApiResponse = ExternalApiService.post(
                 url=f"{prod_api_url}/core-api/dev-login-unique-code/check/{unique_code}", body=None)
         except Exception as err:
             Logger.error(
@@ -65,13 +66,13 @@ class DevEnvService:
             raise BadRequestException(detail=GWSException.ERROR_DURING_DEV_LOGIN.value,
                                       unique_code=GWSException.ERROR_DURING_DEV_LOGIN.name)
         # retrieve the user from the response
-        user: UserDataDict = response.json()
+        user_data: UserDataDict = response.json()
 
-        if not user["is_active"]:
+        if not user_data["is_active"]:
             raise BadRequestException(detail=GWSException.USER_NOT_ACTIVATED.value,
                                       unique_code=GWSException.USER_NOT_ACTIVATED.name)
 
-        user: User = UserService.create_or_update_user(user)
+        user: User = UserService.create_or_update_user(user_data)
 
         return AuthService.log_user(user, Response())
 
