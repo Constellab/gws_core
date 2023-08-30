@@ -54,6 +54,9 @@ class IOSpecs():
     def get_spec(self, name: str) -> IOSpec:
         return self._specs[name]
 
+    def has_spec(self, name: str) -> bool:
+        return name in self._specs
+
     def get_type(self) -> IOSpecsType:
         return 'normal'
 

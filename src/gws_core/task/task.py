@@ -109,11 +109,11 @@ class Task(Process):
         if not self.output_specs:
             return None
 
-        if spec_name not in self.output_specs:
+        if not self.output_specs.has_spec(spec_name):
             raise BadRequestException(
                 f"The output spec does not have a spec named '{spec_name}'")
 
-        return self.output_specs[spec_name].get_default_resource_type()
+        return self.output_specs.get_spec(spec_name).get_default_resource_type()
 
     @final
     def update_progress_value(self, value: float, message: str = None) -> None:

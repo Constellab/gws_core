@@ -11,8 +11,6 @@ from typing_extensions import TypedDict
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
-from gws_core.impl.table.validator.table_number_validator import \
-    TableNumberValidator
 from gws_core.model.typing_dict import TypingRef
 
 from ..model.typing_manager import TypingManager
