@@ -173,6 +173,7 @@ class DataframeHelper:
     def format_header_name(cls, name: str, strict: bool = False) -> str:
         """Format the names of a row or a column with the following rules:
           - convert to string
+          - trim
 
           If strict is True, the following rules are applied:
           - replace ' ', '-', '.' with underscores
@@ -183,6 +184,7 @@ class DataframeHelper:
             return ''
 
         str_name = str(name)
+        str_name = str_name.strip()
 
         if strict:
             # with regex replace all spaces, dashes and dots with underscores
