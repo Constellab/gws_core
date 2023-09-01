@@ -83,7 +83,7 @@ class ExperimentRunService():
             exception: ExperimentRunException = ExperimentRunException.from_exception(
                 experiment=experiment, exception=err)
             error: ProcessErrorInfo = {"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
-                                       "context": exception.context, "instance_id": exception.instance_id}
+                                       "context": None, "instance_id": exception.instance_id}
             experiment.mark_as_error(error)
 
             cls._send_experiment_finished_mail(experiment)
@@ -130,7 +130,7 @@ class ExperimentRunService():
             exception: ExperimentRunException = ExperimentRunException.from_exception(
                 experiment=experiment, exception=err)
             error: ProcessErrorInfo = {"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
-                                       "context": exception.context, "instance_id": exception.instance_id}
+                                       "context": None, "instance_id": exception.instance_id}
             experiment.mark_as_error(error)
 
             raise exception
@@ -197,7 +197,7 @@ class ExperimentRunService():
             exception: ExperimentRunException = ExperimentRunException.from_exception(
                 experiment=experiment, exception=err)
             experiment.mark_as_error({"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
-                                      "context": exception.context, "instance_id": exception.instance_id})
+                                      "context": None, "instance_id": exception.instance_id})
             raise exception
 
     @classmethod

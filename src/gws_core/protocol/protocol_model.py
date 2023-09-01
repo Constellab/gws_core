@@ -940,7 +940,7 @@ class ProtocolModel(ProcessModel):
         :param process_mode: mode for the json process:
             - full: full json process (not recursive for the sub-protocol)
             - minimize: minimized json process (only id and typing name)
-            - config: json process for config
+            - config: json process for config including the layout
         :type process_mode: Literal[full, minimize, config]
         :return: _description_
         :rtype: dict
@@ -969,6 +969,9 @@ class ProtocolModel(ProcessModel):
             graph['interfaces'][key] = interface.to_json()
         for key, outerface in self.outerfaces.items():
             graph['outerfaces'][key] = outerface.to_json()
+
+        if process_mode == 'config':
+            graph["layout"] = self.layout.to_json() if self.layout else {}
 
         return graph
 

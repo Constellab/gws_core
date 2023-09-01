@@ -90,9 +90,8 @@ class TestProtocolBuildError(Protocol):
     def configure_protocol(self) -> None:
         self.add_process(TestSubProtocolBuildError, 'sub_proto')
 
+
 # test_protocol_error
-
-
 class TestProtocolError(BaseTestCase):
 
     def test_error_on_task(self):

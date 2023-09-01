@@ -23,7 +23,7 @@ class GWSException(Enum):
     MISSING_CONFIG_PARAMS = "The mandatory configs '{{param_names}}' are missing."
     UNKNOWN_CONFIG_PARAMS = "The parameter '{{param_name}}' does not exist in the config."
     INVALID_PARAM_VALUE = "Invalid value '{{param_value}}' for the parameter '{{param_name}}'. Error : {{error}}"
-    EXPERIMENT_RUN_EXCEPTION = "{{error}} {{context}} | Experiment : '{{experiment}}'"
+    EXPERIMENT_RUN_EXCEPTION = "{{error}} | Experiment : '{{experiment}}'"
     TASK_BUILD_EXCEPTION = "{{error}} | Task : '{{instance_name}}'"
     PROTOCOL_BUILD_EXCEPTION = "{{error}} | Protocol : '{{instance_name}}'"
     MISSING_INPUT_RESOURCES = "The inputs '{{port_names}}' were not provided but are mandatory"

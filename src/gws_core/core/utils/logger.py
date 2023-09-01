@@ -233,3 +233,12 @@ class Logger:
             return DateHelper.now_utc()
 
         return DateHelper.from_str(file_name.split(".")[1], "%Y-%m-%d")
+
+    @classmethod
+    def clear_logger(cls) -> None:
+        """Clear the logger
+        """
+        Logger._file_path = None
+        Logger._experiment_id = None
+        Logger._logger.handlers.clear()
+        Logger._logger = None

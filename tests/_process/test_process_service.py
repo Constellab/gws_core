@@ -21,7 +21,7 @@ class TestProcessService(BaseTestCase):
 
         # force init the logger
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
-        Logger._logger = None
+        Logger.clear_logger()
         # initialize the logger associated to the experiment
         Logger(Settings.build_log_dir(True), level='INFO', experiment_id=experiment.get_experiment_model().id)
 
