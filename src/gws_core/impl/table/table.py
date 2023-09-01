@@ -286,6 +286,7 @@ class Table(Resource):
         return self._data.columns.tolist()[from_index:to_index]
 
     def get_column_type(self, column_name) -> TableColumnType:
+        self.check_column_exists(column_name)
         # get the type of the column
         column = self._data[column_name]
         if is_integer_dtype(column):
