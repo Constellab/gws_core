@@ -25,7 +25,7 @@ from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase
-from tests.protocol_examples import TestNestedProtocol
+from tests.protocol_examples import TestNestedProtocol, TestSimpleProtocol
 
 
 # test_protocol_service
@@ -266,3 +266,21 @@ class TestProtocolService(BaseTestCase):
                                                                               port_name).process
         process_model = process_model.refresh()
         protocol = protocol.refresh()
+
+    def test_run_protocol_process(self):
+        experiment = IExperiment(TestSimpleProtocol)
+
+        # Run process p0
+        ProtocolService.run_process(experiment.get_protocol().get_model().id, 'p0')
+        experiment.refresh()
+        self.assertTrue(experiment.get_protocol().get_process('p0').get_model().is_success)
+        self.assertTrue(experiment.get_protocol().get_process('p1').get_model().is_draft)
+
+        # Test run process p1
+        ProtocolService.run_process(experiment.get_protocol().get_model().id, 'p1')
+        experiment.refresh()
+        self.assertTrue(experiment.get_protocol().get_process('p1').get_model().is_success)
+
+        # Test ru nprocess p4 which shoud not be runable
+        with self.assertRaises(Exception):
+            ProtocolService.run_process(experiment.get_protocol().get_model().id, 'p4')
