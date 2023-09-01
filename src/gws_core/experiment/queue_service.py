@@ -143,7 +143,7 @@ class QueueService(BaseService):
                 "The experiment is already running or in the queue")
 
         # reset the processes that are in error
-        ProtocolService.reset_error_process_of_protocol(
+        ProtocolService.reset_error_processes_of_protocol(
             experiment.protocol_model)
 
         user = CurrentUserService.get_and_check_current_user()

@@ -24,26 +24,25 @@ class ProcessRunException(BadRequestException):
     :type BadRequestException: [type]
     """
 
-    context: str
-
     original_exception: Exception
     process_model: ProcessModel
+    error_prefix: str
 
     def __init__(self, process_model: ProcessModel, exception_detail: str,
-                 unique_code: str, exception: Exception) -> None:
+                 unique_code: str, error_prefix: str,
+                 exception: Exception) -> None:
         super().__init__(
             detail=exception_detail,
             unique_code=unique_code)
 
-        self.context = None
+        self.error_prefix = error_prefix
         self.original_exception = exception
         self.process_model = process_model
 
     @staticmethod
     def from_exception(process_model: ProcessModel, exception: Exception,
-                       error_prefix: str = None) -> ProcessRunException:
+                       error_prefix: str) -> ProcessRunException:
 
-        prefix_text: str = f"{error_prefix} | " if error_prefix is not None else ""
         unique_code: str
 
         # create from a know exception
@@ -54,15 +53,17 @@ class ProcessRunException(BadRequestException):
             unique_code = None
 
         return ProcessRunException(
-            process_model=process_model, exception_detail=prefix_text + str(exception),
-            unique_code=unique_code, exception=exception)
+            process_model=process_model, exception_detail=str(exception),
+            unique_code=unique_code, error_prefix=error_prefix, exception=exception)
 
-    def update_context(self, context: str) -> None:
-        if self.context is None:
-            self.context = context
-            return
-
-        self.context = context + ' > ' + self.context
+    def get_error_message(self, context: str = None) -> str:
+        error = ""
+        if context is not None:
+            error = f"{self.error_prefix} '{context}' : "
+        else:
+            error = f"{self.error_prefix} : "
+        error += f"{self.get_detail_with_args()}"
+        return error
 
 
 class CheckBeforeTaskStopException(BadRequestException):

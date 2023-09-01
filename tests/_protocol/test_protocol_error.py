@@ -155,7 +155,7 @@ class TestProtocolError(BaseTestCase):
             error_process.error_info['unique_code'], exception.unique_code)
 
         # reset error tasks
-        ProtocolService.reset_error_process_of_protocol(protocol)
+        ProtocolService.reset_error_processes_of_protocol(protocol)
 
         protocol = protocol.refresh()
         self.assertTrue(protocol.is_partially_run)

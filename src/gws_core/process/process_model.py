@@ -283,32 +283,14 @@ class ProcessModel(ModelWithUser):
                 raise err
 
             # When catching an error from a child process
-            self.mark_as_error(
-                {
-                    "detail": err.get_detail_with_args(),
-                    "unique_code": err.unique_code,
-                    "context": err.context,
-                    "instance_id": err.instance_id
-                })
-
-            # update the context to add this process
-            err.update_context(self.get_instance_name_context())
+            self.mark_as_error_and_parent(err)
             raise err
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             # Create a new processRunException with correct info
             exception: ProcessRunException = ProcessRunException.from_exception(
-                self, err)
-            self.mark_as_error(
-                {
-                    "detail": exception.get_detail_with_args(),
-                    "unique_code": exception.unique_code,
-                    "context": None,
-                    "instance_id": exception.instance_id
-                })
-            # update the context to add this process
-            exception.update_context(self.get_instance_name_context())
-
+                self, err, 'Error during task')
+            self.mark_as_error_and_parent(exception)
             raise exception
 
     @abstractmethod
@@ -569,6 +551,8 @@ class ProcessModel(ModelWithUser):
         self.save()
 
     def mark_as_error(self, error_info: ProcessErrorInfo):
+        if self.is_error:
+            return
         self.progress_bar.stop_error(error_info["detail"],
                                      self.get_execution_time())
         self.status = ProcessStatus.ERROR
@@ -576,13 +560,25 @@ class ProcessModel(ModelWithUser):
         self.ended_at = DateHelper.now_utc()
         self.save()
 
-    def mark_as_error_and_parent(self, error_info: ProcessErrorInfo):
-        self.progress_bar.stop_error(
-            error_info["detail"], self.get_execution_time())
-        self.status = ProcessStatus.ERROR
-        self.error_info = error_info
-        self.ended_at = DateHelper.now_utc()
-        self.save()
+    def mark_as_error_and_parent(self, process_error: ProcessRunException, context: str = None):
+        self.mark_as_error({
+            "detail": process_error.get_error_message(context),
+            "unique_code": process_error.unique_code,
+            "context": context,
+            "instance_id": process_error.instance_id
+        })
 
-        if self.parent_protocol and not self.parent_protocol.is_error:
-            self.parent_protocol.mark_as_error_and_parent(error_info)
+        new_context: str = f"{self.get_instance_name_context()}"
+        if context:
+            new_context += f" > {context}"
+
+        if self.parent_protocol:
+            self.parent_protocol.mark_as_error_and_parent(process_error, new_context)
+        # once we reach the main protocol, we mark the experiment as error
+        elif self.experiment:
+            self.experiment.mark_as_error({
+                "detail": process_error.get_error_message(new_context),
+                "unique_code": process_error.unique_code,
+                "context": new_context,
+                "instance_id": process_error.instance_id
+            })

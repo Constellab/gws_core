@@ -47,7 +47,6 @@ class Source(Task):
 
         # retrieve the resource model based and id and resource type
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(r_id)
-        self.log_info_message('WAOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOW')
 
         return {"resource": resource_model.get_resource()}
 

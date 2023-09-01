@@ -46,7 +46,7 @@ class IOface:
         if self.target_port:
             self.target_port.reset()
 
-    def to_json(self, deep: bool = False) -> InterfaceDict:
+    def to_json(self) -> InterfaceDict:
         return {
             "name": self.name,
             "from": {
@@ -72,10 +72,6 @@ class Interface(IOface):
     @property
     def target_port(self) -> InPort:
         return self.target_process.in_port(self.target_port_name)
-
-    def set_resource(self, resource_model: ResourceModel):
-        self.source_port.resource_model = resource_model
-        self.target_port.resource_model = resource_model
 
     def to_json(self) -> InterfaceDict:
         _json = super().to_json()

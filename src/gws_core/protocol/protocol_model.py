@@ -19,20 +19,11 @@ from ..io.port import InPort, OutPort, Port
 from ..process.process_model import ProcessModel, ProcessStatus
 from ..process.protocol_sub_process_builder import (
     ProtocolSubProcessBuilder, SubProcessBuilderReadFromDb)
-from ..user.activity.activity import Activity
 from ..user.user import User
 from .protocol_layout import ProtocolLayout
 
 
 class ProtocolModel(ProcessModel):
-    """
-    Protocol class.
-
-    :property is_template: True if it is a template. False otherwise.
-    A template is used to maintained a unique representation of a protocol flow in database.
-    It cannot be executed and is used to efficiently instanciate new similar protocols instance.
-    :type is_template: `bool`
-    """
 
     layout: ProtocolLayout = SerializableDBField(
         object_type=ProtocolLayout, null=True)
@@ -186,6 +177,33 @@ class ProtocolModel(ProcessModel):
 
         self._run_before_task()
         self._run_protocol()
+        self._run_after_task()
+
+    def run_process(self, process_instance_name: str) -> None:
+        """ Method to run a single process of the protocol
+
+        :param process_instance_name: process to run
+        :type process_instance_name: str
+        """
+
+        # completely load the protocol before running it
+        self._load_from_graph()
+        self._load_connectors()
+
+        process = self.get_process(process_instance_name)
+        if process.is_success:
+            raise BadRequestException("The process is already finished")
+
+        if process.is_error:
+            process.reset()
+
+        if not self.process_is_ready(process):
+            raise BadRequestException(
+                "The process cannot be run because it is not ready. Where the previous process run and are the inputs provided ?")
+
+        self._run_before_task()
+        self.mark_as_started()
+        self._run_process(process)
         self._run_after_task()
 
     def _run_protocol(self) -> None:
@@ -952,8 +970,6 @@ class ProtocolModel(ProcessModel):
         for key, outerface in self.outerfaces.items():
             graph['outerfaces'][key] = outerface.to_json()
 
-        graph["layout"] = self.layout.to_json() if self.layout else {}
-
         return graph
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
@@ -966,6 +982,7 @@ class ProtocolModel(ProcessModel):
 
         if deep:
             _json["graph"] = self.dumps_graph(process_mode='full')
+            _json["graph"]["layout"] = self.layout.to_json() if self.layout else {}
 
         return _json
 
@@ -1045,7 +1062,7 @@ class ProtocolModel(ProcessModel):
         if self.parent_protocol and self.parent_protocol.is_finished:
             self.parent_protocol.mark_as_partially_run()
 
-        if self.experiment and self.experiment.is_finished:
+        if self.experiment and (self.experiment.is_finished or self.experiment.is_draft):
             self.experiment.mark_as_partially_run()
 
     def mark_as_draft(self):

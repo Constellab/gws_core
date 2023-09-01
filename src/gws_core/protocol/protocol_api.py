@@ -108,6 +108,17 @@ def reset_process(id: str,
     ).to_json()
 
 
+@core_app.put("/protocol/{id}/process/{process_instance_name}/run", tags=["Protocol"],
+              summary="Run a process of a protocol")
+def run_process(id: str,
+                process_instance_name: str,
+                _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ProtocolService.run_process(
+        protocol_id=id,
+        process_instance_name=process_instance_name
+    ).to_json()
+
+
 ########################## CONNECTORS #####################
 
 

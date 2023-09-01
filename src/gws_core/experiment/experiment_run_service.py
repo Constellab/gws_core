@@ -6,10 +6,13 @@
 import os
 import subprocess
 import traceback
+from multiprocessing import Process
 from typing import List
 
 from gws_core.core.service.front_service import FrontService
+from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_types import ProcessErrorInfo
+from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.space.mail_service import MailService
 from gws_core.space.space_dto import SendExperimentFinishMailData
 from gws_core.task.task_model import TaskModel
@@ -20,7 +23,7 @@ from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..experiment.experiment_exception import ExperimentRunException
-from ..user.activity.activity import Activity, ActivityObjectType, ActivityType
+from ..user.activity.activity import ActivityObjectType, ActivityType
 from ..user.activity.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
@@ -57,13 +60,9 @@ class ExperimentRunService():
         Run the experiment
         """
         try:
-            user = CurrentUserService.get_and_check_current_user()
+            cls._check_experiment_before_start(experiment)
 
-            # check user privilege
-            experiment.check_user_privilege(user)
-
-            # check experiment status
-            experiment.check_is_runnable()
+            experiment.mark_as_started(os.getpid())
 
             Logger.info(f"Running experiment : {experiment.id}")
 
@@ -71,10 +70,7 @@ class ExperimentRunService():
                 ActivityType.RUN_EXPERIMENT,
                 object_type=ActivityObjectType.EXPERIMENT,
                 object_id=experiment.id,
-                user=user
             )
-
-            experiment.mark_as_started(os.getpid())
 
             experiment.protocol_model.run()
 
@@ -86,16 +82,68 @@ class ExperimentRunService():
         except Exception as err:
             exception: ExperimentRunException = ExperimentRunException.from_exception(
                 experiment=experiment, exception=err)
-            error = {"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
-                     "context": exception.context, "instance_id": exception.instance_id}
+            error: ProcessErrorInfo = {"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
+                                       "context": exception.context, "instance_id": exception.instance_id}
             experiment.mark_as_error(error)
-
-            # mark the protocol as error if it is not already the case
-            if not experiment.protocol_model.is_error:
-                experiment.protocol_model.mark_as_error(error)
 
             cls._send_experiment_finished_mail(experiment)
             raise exception
+
+    @classmethod
+    def run_experiment_process(cls, experiment: Experiment, protocol_model: ProtocolModel,
+                               process_instance_name: str) -> Experiment:
+
+        process_model = protocol_model.get_process(process_instance_name)
+
+        cls._check_experiment_before_start(experiment)
+
+        if not protocol_model.process_is_ready(process_model):
+            raise BadRequestException(
+                "The process cannot be run because it is not ready. Where the previous process run and are the inputs provided ?")
+
+        Logger.info(
+            f"Running experiment process : {experiment.id}, protocol: {protocol_model.id}, process: {process_instance_name}")
+
+        ActivityService.add(
+            ActivityType.RUN_PROCESS,
+            object_type=ActivityObjectType.PROCESS,
+            object_id=process_model.id,
+        )
+
+        process = Process(target=cls._run_experiment_process, args=(
+            protocol_model.experiment, protocol_model, process_instance_name))
+        process.start()
+
+        return experiment
+
+    @classmethod
+    def _run_experiment_process(cls, experiment: Experiment, protocol_model: ProtocolModel,
+                                process_instance_name: str) -> None:
+        try:
+            experiment.mark_as_started(os.getpid())
+
+            protocol_model.run_process(process_instance_name)
+            protocol_model.mark_as_partially_run()
+            experiment.mark_as_partially_run()
+
+        except Exception as err:
+            exception: ExperimentRunException = ExperimentRunException.from_exception(
+                experiment=experiment, exception=err)
+            error: ProcessErrorInfo = {"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
+                                       "context": exception.context, "instance_id": exception.instance_id}
+            experiment.mark_as_error(error)
+
+            raise exception
+
+    @classmethod
+    def _check_experiment_before_start(cls, experiment: Experiment) -> None:
+        user = CurrentUserService.get_and_check_current_user()
+
+        # check user privilege
+        experiment.check_user_privilege(user)
+
+        # check experiment status
+        experiment.check_is_runnable()
 
     @classmethod
     def create_cli_process_for_experiment(cls, experiment: Experiment, user: User) -> SysProc:
@@ -160,7 +208,7 @@ class ExperimentRunService():
 
         # try to kill the pid if possible
         try:
-            if experiment.pid != None:
+            if experiment.pid is not None:
                 cls._kill_experiment_pid(experiment.pid)
         except Exception as err:
             Logger.error(str(err))
@@ -177,7 +225,9 @@ class ExperimentRunService():
         # mark all the running tasks as error
         task_models: List[TaskModel] = experiment.get_running_tasks()
         for task_model in task_models:
-            task_model.mark_as_error_and_parent(error)
+            exception = ProcessRunException(task_model, error["detail"],
+                                            error["unique_code"], "Task error", None)
+            task_model.mark_as_error_and_parent(exception)
 
         ActivityService.add(
             ActivityType.STOP_EXPERIMENT,

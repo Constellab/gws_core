@@ -3,13 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from time import sleep
 from typing import List, Literal, Optional, Set, Type, Union
 
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
-from gws_core.io.io_spec import InputSpec, IOSpecDict, OutputSpec, ResourceType
+from gws_core.io.io_spec import InputSpec, IOSpecDict, OutputSpec
 from gws_core.protocol.protocol_dto import ProtocolUpdateDTO
 from gws_core.protocol.protocol_layout import (ProcessLayout, ProtocolLayout,
                                                ProtocolLayoutDict)
@@ -234,7 +236,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     @transaction()
-    def reset_error_process_of_protocol(cls, protocol_model: ProtocolModel) -> ProtocolUpdateDTO:
+    def reset_error_processes_of_protocol(cls, protocol_model: ProtocolModel) -> None:
         error_tasks = protocol_model.get_error_tasks()
 
         for task in error_tasks:
@@ -284,6 +286,19 @@ class ProtocolService(BaseService):
 
         # refresh the protocol to get the updated graph because the connection and inputs might not be exact
         return ProtocolUpdateDTO(protocol=protocol_model, protocol_updated=True)
+
+    @classmethod
+    def run_process(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdateDTO:
+
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
+            protocol_id)
+
+        ExperimentRunService.run_experiment_process(protocol_model.experiment, protocol_model, process_instance_name)
+
+        # if the process is fast, this is useful to return the finished process
+        sleep(4)
+
+        return ProtocolUpdateDTO(protocol=protocol_model.refresh(), protocol_updated=True)
 
     @classmethod
     def _on_protocol_object_updated(cls, protocol_model: ProtocolModel, process_model: ProcessModel = None,
