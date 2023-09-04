@@ -19,7 +19,7 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.exception.gws_exceptions import GWSException
 from ..core.utils.logger import Logger
 from ..core.utils.reflector_helper import ReflectorHelper
-from ..io.io import Inputs, Outputs
+from ..io.io import Inputs, IODict, Outputs
 from ..io.io_exception import InvalidOutputsException
 from ..io.port import Port
 from ..model.typing_manager import TypingManager
@@ -64,18 +64,39 @@ class TaskModel(ProcessModel):
         source = inspect.getsource(model_t)
         return zlib.compress(source.encode())
 
-    def set_process_type(self, typing_name: str) -> None:
+    def set_process_type(self, typing_name: str,
+                         inputs_dict: IODict = None,
+                         outputs_dict: IODict = None) -> None:
         """Method used when creating a new task model, it init the input and output from task specs
+
+        :param typing_name: typine name of the task
+        :type typing_name: str
+        :param inputs_dict: If provided, override the input spec of the task (useful for dynamic IO), defaults to None
+        :type inputs_dict: IODict, optional
+        :param outputs_dict: If provided, override the output spec of the task (useful for dynamic IO), defaults to None
+        :type outputs_dict: IODict, optional
         """
         super().set_process_type(typing_name)
 
         task_type: Type[Task] = self.get_process_type()
 
-        self._inputs = Inputs.load_from_specs(task_type.input_specs)
+        # specific case for dynamic IO to init input from json and not task spec
+        if inputs_dict is not None and inputs_dict.get('type') == 'dynamic':
+            self._inputs = Inputs.load_from_json(inputs_dict)
+            self._inputs.reset()
+        else:
+            self._inputs = Inputs.load_from_specs(task_type.input_specs)
+
         # Set the data inputs dict
         self.data["inputs"] = self.inputs.to_json()
 
-        self._outputs = Outputs.load_from_specs(task_type.output_specs)
+        # specific case for dynamic IO to init output from json and not task spec
+        if outputs_dict is not None and outputs_dict.get('type') == 'dynamic':
+            self._outputs = Outputs.load_from_json(outputs_dict)
+            self._outputs.reset()
+        else:
+            self._outputs = Outputs.load_from_specs(task_type.output_specs)
+
         # Set the data inputs dict
         self.data["outputs"] = self.outputs.to_json()
 

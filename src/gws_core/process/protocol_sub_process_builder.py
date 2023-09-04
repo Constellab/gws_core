@@ -9,6 +9,8 @@ from typing import Optional, Type
 from gws_core.model.typing import Typing
 from gws_core.process.process_types import (ProcessConfigDict,
                                             ProcessMinimumDict)
+from gws_core.protocol.protocol import Protocol
+from gws_core.task.task import Task
 
 from ..config.config_types import ConfigParamsDict
 from ..core.exception.exceptions.bad_request_exception import \
@@ -80,5 +82,14 @@ class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
         if node_json.get('config'):
             config_params = node_json.get('config').get("values", {})
 
-        return ProcessFactory.create_process_model_from_type(
-            process_type=process_type, config_params=config_params, instance_name=instance_name)
+        if issubclass(process_type, Task):
+            return ProcessFactory.create_task_model_from_type(process_type, config_params, instance_name,
+                                                              node_json.get('inputs'),
+                                                              node_json.get('outputs'))
+        elif issubclass(process_type, Protocol):
+            return ProcessFactory.create_protocol_model_from_type(process_type, config_params, instance_name)
+        else:
+            name = process_type.__name__ if process_type.__name__ is not None else str(
+                process_type)
+            raise BadRequestException(
+                f"The type {name} is not a Process nor a Protocol. It must extend the on of the classes")

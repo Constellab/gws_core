@@ -5,6 +5,7 @@
 
 from typing import Dict, List, Type
 
+from gws_core.io.io import Inputs, IODict, Outputs
 from gws_core.protocol.protocol_layout import ProtocolLayout
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 from gws_core.protocol.protocol_types import ProtocolConfigDict
@@ -39,7 +40,9 @@ class ProcessFactory():
     def create_task_model_from_type(
             cls, task_type: Type[Task],
             config_params: ConfigParamsDict = None,
-            instance_name: str = None) -> TaskModel:
+            instance_name: str = None,
+            inputs_dict: IODict = None,
+            outputs_dict: IODict = None) -> TaskModel:
         if not issubclass(task_type, Task):
             name = task_type.__name__ if task_type.__name__ is not None else str(
                 task_type)
@@ -51,7 +54,7 @@ class ProcessFactory():
                 f"The task {task_type.full_classname()} is not register. Did you add the @task_decorator decorator on your task class ?")
 
         task_model: TaskModel = TaskModel()
-        task_model.set_process_type(task_type._typing_name)
+        task_model.set_process_type(task_type._typing_name, inputs_dict, outputs_dict)
 
         config: Config = Config()
         config.set_specs(task_type.config_specs)

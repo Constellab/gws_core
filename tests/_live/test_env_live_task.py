@@ -20,14 +20,14 @@ from gws_core.impl.live.r_conda_live_task import RCondaLiveTask
 # test_env_live_task
 class TestEnvLiveTask(TestCase):
 
-    # def test_pip_env_live_task(self):
-    #     self._test_default_config(PyPipenvLiveTask)
+    def test_pip_env_live_task(self):
+        self._test_default_config(PyPipenvLiveTask)
 
-    # def test_conda_env_live_task(self):
-    #     self._test_default_config(PyCondaLiveTask)
+    def test_conda_env_live_task(self):
+        self._test_default_config(PyCondaLiveTask)
 
-    # def test_r_conda_env_live_task(self):
-    #     self._test_default_config(RCondaLiveTask)
+    def test_r_conda_env_live_task(self):
+        self._test_default_config(RCondaLiveTask)
 
     def _test_default_config(self, task_type: Type[Task]):
         """Test the default env live task config template to be sure it is valid
