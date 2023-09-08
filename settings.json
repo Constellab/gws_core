@@ -40,7 +40,8 @@
                   {"name": "openai", "version": "0.27.2"},
                   {"name": "typing_extensions", "version": "4.5.0"},
                   {"name": "boto3", "version": "1.26.142"},
-                  {"name": "plotly", "version": "5.15.0"}
+                  {"name": "plotly", "version": "5.15.0"},
+                  {"name": "simplejson", "version": "3.19.1"}
                 ]
             },
             {

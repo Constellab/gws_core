@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from numpy import NaN
 from pandas.core.frame import DataFrame
 
 from gws_core import (BaseTestCase, BoolRField, DataFrameRField, DictRField,
@@ -26,6 +27,7 @@ class TestJsonableObject(SerializableObjectJson):
         return TestJsonableObject(json_data["name"])
 
 
+# test_r_field
 class TestRField(BaseTestCase):
 
     def test_int_r_field(self):
@@ -94,6 +96,7 @@ class TestRField(BaseTestCase):
         self.assertEqual(r_field.get_default_value(), {"test": 12})
         self.assertEqual(r_field.serialize({"test": 12}), {"test": 12})
         self.assertEqual(r_field.serialize(None), {"test": 12})
+        self.assertEqual(r_field.serialize({"test": NaN}), {"test": None})
 
         self.assertEqual(r_field.deserialize({"test": 12}), {"test": 12})
         self.assertEqual(r_field.deserialize(None), {"test": 12})

@@ -6,12 +6,15 @@
 import math
 import unittest
 
-from gws_core import GTest, Validator
+from numpy import NaN
+
+from gws_core import Validator
 from gws_core.core.classes.validator import (BoolValidator, DictValidator,
                                              FloatValidator, IntValidator,
                                              ListValidator, StrValidator)
 
 
+# test_validator
 class TestValidator(unittest.TestCase):
 
     def test_int_validator(self):
@@ -96,3 +99,4 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Exception, validator.validate, '5.5')
         self.assertRaises(Exception, validator.validate, [5.5, 3])
         self.assertRaises(Exception, validator.validate, '[5.5,3]')
+        self.assertRaises(Exception, validator.validate, {'hello': NaN})

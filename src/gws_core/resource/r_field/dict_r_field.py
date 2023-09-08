@@ -3,11 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from copy import deepcopy
 from typing import Any, Dict
 
 from gws_core.core.classes.validator import DictValidator
-from gws_core.core.utils.utils import Utils
+from gws_core.core.utils.json_helper import JSONHelper
 
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -19,7 +18,7 @@ class DictRField(PrimitiveRField):
     def __init__(self, default_value: Dict = None, include_in_dict_view: bool = False) -> None:
         """
         RField to save a json like dictionary. The DictRField only supports element that are either primitives python object or dictionary or lists.
-        It does not support python classes.
+        It Stringifies all python object to json using str method and replace NaN, inf by None.
         :param default_value: default value of the resource attribute
                               Support primitive value, Type of Callable function
                               If type or callable, it will be called without parameter to initialise the default value, defaults to {}
@@ -35,7 +34,10 @@ class DictRField(PrimitiveRField):
         if self._default_value is None:
             return {}
         try:
-            return deepcopy(self._default_value)
+            return JSONHelper.convert_dict_to_json(self._default_value)
         except:
             raise BadRequestException(
-                "Incorrect default value for DictRField. The default value must supports deepcopy")
+                "Incorrect default value for DictRField. The default value must be a json like dictionary")
+
+    def serialize(self, r_field_value: Any) -> Any:
+        return super().serialize(JSONHelper.convert_dict_to_json(r_field_value))

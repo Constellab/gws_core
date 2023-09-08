@@ -151,6 +151,7 @@ class TestProtocolTemplate(BaseTestCase):
             ProtocolTemplateService.get_by_id_and_check(template.id)
 
     def test_dynamic_io(self):
+        """ Test that the protocol template supports dynamic io"""
         experiment = IExperiment()
 
         protocol = experiment.get_protocol()

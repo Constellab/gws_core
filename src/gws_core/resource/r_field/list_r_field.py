@@ -3,10 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from copy import deepcopy
 from typing import Any, List
 
-from gws_core.core.utils.utils import Utils
+from gws_core.core.utils.json_helper import JSONHelper
 
 from ...core.classes.validator import ListValidator
 from ...core.exception.exceptions.bad_request_exception import \
@@ -19,7 +18,7 @@ class ListRField(PrimitiveRField):
     def __init__(self, default_value: List = None, include_in_dict_view: bool = False) -> None:
         """
         RField to save a json like list. The ListRField only supports element that are either primitives python object or dictionary or lists.
-        It does not support python classes.
+        It Stringifies all python object to json using str method and replace NaN, inf by None.
         :param default_value: default value of the resource attribute
                               Support primitive value, Type of Callable function
                               If type or callable, it will be called without parameter to initialise the default value, defaults to []
@@ -36,6 +35,10 @@ class ListRField(PrimitiveRField):
             return []
 
         try:
-            return deepcopy(self._default_value)
+            return JSONHelper.convert_dict_to_json(self._default_value)
         except:
-            raise BadRequestException("Incorrect default value for LstRField. The default value must supports deepcopy")
+            raise BadRequestException(
+                "Incorrect default value for LstRField. The default value must be a json like list")
+
+    def serialize(self, r_field_value: Any) -> Any:
+        return super().serialize(JSONHelper.convert_dict_to_json(r_field_value))

@@ -31,6 +31,13 @@ class FSNode(Resource):
 
     def __init__(self, path: str = ""):
         super().__init__()
+
+        if path is None:
+            raise ValueError("The path cannot be None")
+
+        if not isinstance(path, str):
+            raise ValueError("The path must be a string")
+
         self.path = path
         self.file_store_id = None
 
