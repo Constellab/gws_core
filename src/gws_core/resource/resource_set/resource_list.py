@@ -95,3 +95,7 @@ class ResourceList(ResourceListBase):
 
     def copy(self):
         return self.get_resources().copy()
+
+    # convert to list
+    def to_list(self) -> List[Resource]:
+        return self.get_resources()

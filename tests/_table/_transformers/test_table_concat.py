@@ -27,7 +27,7 @@ class TestTableConcat(TestCase):
         column_tags_2 = [{'id': 'F1', 'other': 'top'}, {'id': 'F3'}, {'id': 'F4'}]
         table_2 = Table(df_2, row_tags=row_tags_2, column_tags=column_tags_2)
 
-        result: Table = TableConcatHelper.concat_table_rows(table_1, table_2,
+        result: Table = TableConcatHelper.concat_table_rows([table_1, table_2],
                                                             column_tags_option='ignore', fill_nan=NaN)
 
         expected_df = DataFrame(
@@ -42,12 +42,12 @@ class TestTableConcat(TestCase):
         BaseTestCase.assert_json(result.get_column_tags(), [{}, {}, {}, {}])
 
         # Test with opposite tag option = 'keep first'
-        result = TableConcatHelper.concat_table_rows(table_1, table_2, column_tags_option='keep first')
+        result = TableConcatHelper.concat_table_rows([table_1, table_2], column_tags_option='keep first')
         expected_column_tags = [{'id': 'F1'}, {'id': 'F2'}, {}, {}]
         BaseTestCase.assert_json(result.get_column_tags(), expected_column_tags)
 
-        # Test with opposite tag option = 'merge from first'
-        result = TableConcatHelper.concat_table_rows(table_1, table_2, column_tags_option='merge from first')
+        # Test with opposite tag option = 'merge from first table'
+        result = TableConcatHelper.concat_table_rows([table_1, table_2], column_tags_option='merge from first table')
         expected_column_tags = [{'id': 'F1', 'other': 'top'}, {'id': 'F2'}, {'id': 'F3'}, {'id': 'F4'}]
         BaseTestCase.assert_json(result.get_column_tags(), expected_column_tags)
 
@@ -59,7 +59,7 @@ class TestTableConcat(TestCase):
         table_2 = Table(df_2)
 
         result: Table = TableConcatHelper.concat_table_columns(
-            table_1, table_2, row_tags_option='ignore', fill_nan=NaN)
+            [table_1, table_2], row_tags_option='ignore', fill_nan=NaN)
 
         expected_df = DataFrame(
             {'1': [1, 2, NaN],

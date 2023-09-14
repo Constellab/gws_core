@@ -13,8 +13,10 @@ from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.table.helper.table_concat_helper import TableConcatHelper
 from gws_core.impl.table.table import Table
+from gws_core.io.dynamic_io import DynamicInputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs
+from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -88,10 +90,10 @@ class TableRowConcat(Task):
     - ```merge from second```: tags of the first and second table are merged (the second table tags override the first table tags)
     """
 
-    input_specs: InputSpecs = InputSpecs({
+    input_specs: InputSpecs = DynamicInputs({
         'table_1': InputSpec(Table, human_name='First table'),
         'table_2': InputSpec(Table, human_name='Second table'),
-    })
+    }, additionnal_port_spec=InputSpec(Table, human_name='Table'))
 
     output_specs: InputSpecs = InputSpecs({
         'table': OutputSpec(Table, human_name='Concatenated table'),
@@ -107,17 +109,17 @@ class TableRowConcat(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
+        resource_list: ResourceList = inputs['source']
         fill_nan_value = get_fill_nan_value(params['fill_nan'])
 
-        result = TableConcatHelper.concat_table_rows(inputs['table_1'],
-                                                     inputs['table_2'],
+        result = TableConcatHelper.concat_table_rows(resource_list.to_list(),
                                                      params['column_tags_options'],
                                                      fill_nan_value)
 
         return {'table': result}
 
 
-@ task_decorator(
+@task_decorator(
     unique_name="TableColumnConcat",
     short_description="Concatenate two tables along the columns by merging rows",
 
@@ -173,10 +175,10 @@ class TableColumnConcat(Task):
     - ```merge from second```: tags of the first
     """
 
-    input_specs: InputSpecs = InputSpecs({
+    input_specs: InputSpecs = DynamicInputs({
         'table_1': InputSpec(Table, human_name='First table'),
         'table_2': InputSpec(Table, human_name='Second table'),
-    })
+    }, additionnal_port_spec=InputSpec(Table, human_name='Table'))
 
     output_specs: InputSpecs = InputSpecs({
         'table': OutputSpec(Table, human_name='Concatenated table'),
@@ -192,10 +194,10 @@ class TableColumnConcat(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
+        resource_list: ResourceList = inputs['source']
         fill_nan_value = get_fill_nan_value(params['fill_nan'])
 
-        result = TableConcatHelper.concat_table_columns(inputs['table_1'],
-                                                        inputs['table_2'],
+        result = TableConcatHelper.concat_table_columns(resource_list.to_list(),
                                                         params['row_tags_options'],
                                                         fill_nan_value)
 
