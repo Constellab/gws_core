@@ -10,9 +10,14 @@ from typing import Any, Dict, List, Optional, Set
 from typing_extensions import TypedDict
 
 
+class RichTextOps(TypedDict):
+    insert: Any
+    attributes: Optional[Dict[str, Any]]
+
+
 class RichTextI(TypedDict):
 
-    ops: List[Any]
+    ops: List[RichTextOps]
 
 
 class RichTextSpecialOps(Enum):
@@ -99,3 +104,33 @@ class RichText():
 
     def get_content(self) -> RichTextI:
         return self._content
+
+    def replace_variable(self, variable_name: str, value: str) -> None:
+        """Replace the variable in the rich text content
+        """
+        variable_name = f'${variable_name}$'
+        for op in self._content['ops']:
+            if 'insert' in op and isinstance(op['insert'], str) and variable_name in op['insert']:
+                op['insert'] = op['insert'].replace(variable_name, value)
+
+    def add_paragraph(self, paragraph: str) -> None:
+        """Add a paragraph to the rich text content
+        """
+        self._append_element(paragraph)
+
+    def replace_resource_views_with_variables(self):
+        """Method to remove the resource view from the rich text content
+         and replace it when variables
+        """
+
+        op_index = 0
+        view_index = 1
+        for op in self._content['ops']:
+            if 'insert' in op and isinstance(op['insert'], dict) \
+                    and RichTextSpecialOps.RESOURCE_VIEW.value in op['insert'] \
+                    and isinstance(op['insert'][RichTextSpecialOps.RESOURCE_VIEW.value], dict):
+                variable = f"$figure_{view_index}$"
+                ops: RichTextOps = {'insert': variable}
+                self._content['ops'][op_index] = ops
+                view_index += 1
+            op_index += 1

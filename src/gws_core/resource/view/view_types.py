@@ -51,11 +51,3 @@ exluded_views_in_historic = [
 class CallViewParams(TypedDict):
     values: Dict[str, Any]
     save_view_config: bool
-
-
-class CallViewResult(TypedDict):
-    view: Dict
-    resource_id: str
-    view_config: Dict
-    title: str
-    view_type: str

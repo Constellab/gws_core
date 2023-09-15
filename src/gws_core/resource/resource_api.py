@@ -44,7 +44,7 @@ def call_view_on_resource(id: str,
 
     return ResourceService.get_and_call_view_on_resource_model(
         id, view_name, call_view_params["values"],
-        call_view_params["save_view_config"])
+        call_view_params["save_view_config"]).to_json()
 
 
 ####################################### Resource Model ###################################

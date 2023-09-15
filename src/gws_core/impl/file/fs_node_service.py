@@ -17,7 +17,7 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view.view_types import CallViewResult
+from gws_core.resource.view.view_dto import CallViewResult
 
 from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions.bad_request_exception import \

@@ -12,6 +12,7 @@ from pydantic import BaseModel
 class ReportDTO(BaseModel):
     title: str = None
     project_id: Optional[str] = None
+    template_id: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True

@@ -137,7 +137,7 @@ def get_experiment_by_report(
     return ListJsonable(ReportService.get_experiments_by_report(report_id)).to_json()
 
 
-@core_app.post("/report/advanced-search", tags=["Report"], summary="Advanced search for reports")
+@core_app.post("/report/search", tags=["Report"], summary="Advanced search for reports")
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
@@ -147,6 +147,15 @@ def advanced_search(search_dict: SearchParams,
     """
 
     return ReportService.search(search_dict, page, number_of_items_per_page).to_json()
+
+
+@core_app.get("/report/search-name/{name}", tags=["Report"],
+              summary="Search for report by name")
+def search_by_name(name: str,
+                   page: Optional[int] = 1,
+                   number_of_items_per_page: Optional[int] = 20,
+                   _=Depends(AuthService.check_user_access_token)) -> dict:
+    return ReportService.search_by_name(name, page, number_of_items_per_page).to_json()
 
 
 @core_app.get("/report/resource/{resource_id}", tags=["Report"],

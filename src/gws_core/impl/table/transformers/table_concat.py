@@ -15,7 +15,7 @@ from gws_core.impl.table.helper.table_concat_helper import TableConcatHelper
 from gws_core.impl.table.table import Table
 from gws_core.io.dynamic_io import DynamicInputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
-from gws_core.io.io_specs import InputSpecs
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
@@ -85,9 +85,7 @@ class TableRowConcat(Task):
     This parameter allows you to define what to do with the column tags. Here is the different options:
     - ```ignore```: the tags are ignored and left empty
     - ```keep first```: only the tags of the first table are keept
-    - ```keep second```: only the tags of the second table are keept
-    - ```merge from first```: tags of the first and second table are merged (the first table tags override the second table tags)
-    - ```merge from second```: tags of the first and second table are merged (the second table tags override the first table tags)
+    - ```merge from first table```: tags of the first and second table are merged (the first table tags override the second table tags)
     """
 
     input_specs: InputSpecs = DynamicInputs({
@@ -95,7 +93,7 @@ class TableRowConcat(Task):
         'table_2': InputSpec(Table, human_name='Second table'),
     }, additionnal_port_spec=InputSpec(Table, human_name='Table'))
 
-    output_specs: InputSpecs = InputSpecs({
+    output_specs: OutputSpecs = OutputSpecs({
         'table': OutputSpec(Table, human_name='Concatenated table'),
     })
 
@@ -170,9 +168,7 @@ class TableColumnConcat(Task):
     This parameter allows you to define what to do with the column tags. Here is the different options:
     - ```ignore```: the tags are ignored and left empty
     - ```keep first```: only the tags of the first table are keept
-    - ```keep second```: only the tags of the second table are keept
-    - ```merge from first```: tags of the first and second table are merged (the first table tags override the second table tags)
-    - ```merge from second```: tags of the first
+    - ```merge from first table```: tags of the first and second table are merged (the first table tags override the second table tags)
     """
 
     input_specs: InputSpecs = DynamicInputs({
@@ -180,7 +176,7 @@ class TableColumnConcat(Task):
         'table_2': InputSpec(Table, human_name='Second table'),
     }, additionnal_port_spec=InputSpec(Table, human_name='Table'))
 
-    output_specs: InputSpecs = InputSpecs({
+    output_specs: OutputSpecs = OutputSpecs({
         'table': OutputSpec(Table, human_name='Concatenated table'),
     })
 

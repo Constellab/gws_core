@@ -21,8 +21,8 @@ from gws_core.process.process_interface import IProcess
 from gws_core.project.project import Project
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
+from gws_core.resource.view.view_dto import CallViewResult
 from gws_core.resource.view.view_runner import ViewRunner
-from gws_core.resource.view.view_types import CallViewResult
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.share.resource_downloader_http import ResourceDownloaderHttp
@@ -263,13 +263,7 @@ class ResourceService(BaseService):
                 resource_model, view, view_name, view_runner.get_config())
             view_title = view_config.title
 
-        return {
-            "view": view_dict,
-            "resource_id": resource_model.id,
-            "view_config": view_config.to_json() if view_config else None,
-            "title": view_title,
-            "view_type": view.get_type(),
-        }
+        return CallViewResult(view_dict, resource_model.id, view_config, view_title, view.get_type())
 
     @classmethod
     def call_view_from_view_config(cls, view_config_id: str) -> CallViewResult:

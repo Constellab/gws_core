@@ -9,9 +9,11 @@ from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 from gws_core.config.config import Config
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.classes.enum_field import EnumField
+from gws_core.core.classes.rich_text_content import RichTextResourceView
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.view.view_types import ViewType
 from gws_core.tag.taggable_model import TaggableModel
@@ -102,3 +104,14 @@ class ViewConfig(ModelWithUser, TaggableModel):
         view_configs: List[ViewConfig] = list(ViewConfig.get_by_resource(resource_model_id))
         for view_config in view_configs:
             view_config.delete_instance()
+
+    def to_rich_text_resource_view(self, title: str = None, caption: str = None) -> RichTextResourceView:
+        return {
+            "id": self.id + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
+            "resource_id": self.resource_model.id,
+            "experiment_id": self.experiment.id if self.experiment else None,
+            "view_method_name": self.view_name,
+            "view_config": self.get_config_values(),
+            "title": title or self.title,
+            "caption": caption or "",
+        }

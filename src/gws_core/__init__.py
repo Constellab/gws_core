@@ -372,6 +372,8 @@ from .protocol.protocol_spec import ConnectorSpec as ConnectorSpec
 from .protocol.protocol_spec import InterfaceSpec as InterfaceSpec
 from .protocol.protocol_spec import ProcessSpec as ProcessSpec
 from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
+# Report task
+from .report.task.report_resource import ReportResource as ReportResource
 # Resource
 from .resource.kv_store import KVStore as KVStore
 from .resource.r_field.dict_r_field import DictRField as DictRField

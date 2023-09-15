@@ -35,4 +35,4 @@ def call_chart_on_table(id: str,
                                                  table_view_name=call_chart_table["table_view_name"],
                                                  table_config_values=call_chart_table["table_config_values"],
                                                  chart_type=call_chart_table["chart_type"],
-                                                 chart_config_values=call_chart_table["chart_config_values"])
+                                                 chart_config_values=call_chart_table["chart_config_values"]).to_json()

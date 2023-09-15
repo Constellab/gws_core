@@ -33,6 +33,7 @@ class ActivityObjectType(Enum):
     PROCESS = "PROCESS"
     USER = "USER"
     REPORT = "REPORT"
+    REPORT_TEMPLATE = "REPORT_TEMPLATE"
 
 
 @final

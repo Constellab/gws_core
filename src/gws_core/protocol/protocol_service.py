@@ -24,6 +24,7 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
+from gws_core.user.current_user_service import CurrentUserService
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
@@ -293,7 +294,9 @@ class ProtocolService(BaseService):
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
-        ExperimentRunService.run_experiment_process(protocol_model.experiment, protocol_model, process_instance_name)
+        ExperimentRunService.create_cli_for_experiment_process(protocol_model.experiment,
+                                                               CurrentUserService.get_and_check_current_user(),
+                                                               protocol_model.id, process_instance_name)
 
         # if the process is fast, this is useful to return the finished process
         sleep(4)

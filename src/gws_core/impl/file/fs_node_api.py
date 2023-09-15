@@ -72,7 +72,8 @@ def call_folder_sub_file_view(id: str,
     """
     Download a file. The access is made with a unique  code generated with get_download_file_url
     """
-    return FsNodeService.call_folder_sub_file_view(resource_id=id, sub_file_path=data['sub_file_path'])
+    return FsNodeService.call_folder_sub_file_view(resource_id=id, sub_file_path=data['sub_file_path']).to_json()
+
 
 ############################# FILE EXTRACTOR ###########################
 
@@ -85,7 +86,7 @@ class ExtractFileDTO(TypedDict):
 @core_app.put("/fs-node/{id}/extract-file", tags=["Files"], summary="Extract a file from a folder")
 def extract_file(id: str,
                  extract: ExtractFileDTO,
-                 _=Depends(AuthService.check_user_access_token)) -> FileResponse:
+                 _=Depends(AuthService.check_user_access_token)) -> dict:
     """
     Download a file. The access is made with a unique  code generated with get_download_file_url
     """

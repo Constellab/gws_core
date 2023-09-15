@@ -12,7 +12,7 @@ from ..resource.resource_model import ResourceModel
 from .report import Report
 
 
-class ReportResource(BaseModel):
+class ReportResourceModel(BaseModel):
     """Model to store which resources are used in reports"""
 
     report: Report = ForeignKeyField(Report, null=False, index=True, on_delete='CASCADE')
@@ -21,12 +21,12 @@ class ReportResource(BaseModel):
     _table_name = 'gws_report_resource'
 
     @classmethod
-    def get_by_report(cls, report_id: str) -> List['ReportResource']:
-        return list(ReportResource.select().where(ReportResource.report == report_id))
+    def get_by_report(cls, report_id: str) -> List['ReportResourceModel']:
+        return list(ReportResourceModel.select().where(ReportResourceModel.report == report_id))
 
     @classmethod
     def get_by_resource(cls, resource_id: str) -> ModelSelect:
-        return ReportResource.select().where(ReportResource.resource == resource_id)
+        return ReportResourceModel.select().where(ReportResourceModel.resource == resource_id)
 
     def save(self, *args, **kwargs) -> 'BaseModel':
         """Use force insert because it is a composite key

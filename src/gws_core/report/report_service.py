@@ -13,16 +13,13 @@ from peewee import ModelSelect
 from gws_core.core.classes.rich_text_content import (RichText, RichTextI,
                                                      RichTextResourceView)
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.settings import Settings
-from gws_core.core.utils.string_helper import StringHelper
-from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.project.project import Project
 from gws_core.report.report_file_service import ReportFileService, ReportImage
-from gws_core.report.report_resource import ReportResource
+from gws_core.report.report_resource_model import ReportResourceModel
+from gws_core.report.template.report_template import ReportTemplate
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view_config.view_config import ViewConfig
@@ -55,25 +52,30 @@ class ReportService():
         report.title = report_dto.title
         report.project = Project.get_by_id_and_check(report_dto.project_id) if report_dto.project_id else None
 
-        # Set default content for report
-        report.content = {
-            "ops":
-            [{"insert": "Introduction"},
-             {"attributes": {"header": 1},
-              "insert": "\n"},
-             {"insert": "\n\nMethods"},
-             {"attributes": {"header": 1},
-              "insert": "\n"},
-             {"insert": "\n\nResults"},
-             {"attributes": {"header": 1},
-              "insert": "\n"},
-             {"insert": "\n\nConclusion"},
-             {"attributes": {"header": 1},
-              "insert": "\n"},
-             {"insert": "\n\nReferences"},
-             {"attributes": {"header": 1},
-              "insert": "\n"},
-             {"insert": "\n"}]}
+        if report_dto.template_id:
+            template: ReportTemplate = ReportTemplate.get_by_id_and_check(report_dto.template_id)
+            report.content = template.content
+        else:
+            # Set default content for report
+            report.content = {
+                "ops":
+                [{"insert": "Introduction"},
+                 {"attributes": {"header": 1},
+                 "insert": "\n"},
+                 {"insert": "\n\nMethods"},
+                 {"attributes": {"header": 1},
+                 "insert": "\n"},
+                 {"insert": "\n\nResults"},
+                 {"attributes": {"header": 1},
+                 "insert": "\n"},
+                 {"insert": "\n\nConclusion"},
+                 {"attributes": {"header": 1},
+                 "insert": "\n"},
+                 {"insert": "\n\nReferences"},
+                 {"attributes": {"header": 1},
+                 "insert": "\n"},
+                 {"insert": "Variable : $test$"},
+                 {"insert": "\n"}]}
 
         report.save()
 
@@ -162,15 +164,7 @@ class ReportService():
         view_config: ViewConfig = ViewConfigService.get_by_id(view_config_id)
 
         # create the json object for the rich text
-        view_content: RichTextResourceView = {
-            "id": view_config.id + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
-            "resource_id": view_config.resource_model.id,
-            "experiment_id": view_config.experiment.id if view_config.experiment else None,
-            "view_method_name": view_config.view_name,
-            "view_config": view_config.get_config_values(),
-            "title": view_config.title,
-            "caption": ""
-        }
+        view_content: RichTextResourceView = view_config.to_rich_text_resource_view()
 
         # get the rich text and add the resource view
         rich_text = report.get_content_as_rich_text()
@@ -327,7 +321,7 @@ class ReportService():
                 resource_view["resource_id"],
                 resource_view["view_method_name"],
                 resource_view["view_config"])
-            save_report_dto["resource_views"][resource_view["id"]] = view_result
+            save_report_dto["resource_views"][resource_view["id"]] = view_result.to_json()
         # Save the experiment in space
         SpaceService.save_report(report.project.id, save_report_dto, file_paths)
 
@@ -422,16 +416,25 @@ class ReportService():
             model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
+    def search_by_name(cls, name: str,
+                       page: int = 0,
+                       number_of_items_per_page: int = 20) -> Paginator[Report]:
+        model_select = Report.select().where(Report.title.contains(name))
+
+        return Paginator(
+            model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
     def get_by_resource(cls, resource_id: str,
                         page: int = 0,
                         number_of_items_per_page: int = 20) -> Paginator[Report]:
-        query = ReportResource.get_by_resource(resource_id).join(
-            Report).order_by(ReportResource.report.last_modified_at.desc())
+        query = ReportResourceModel.get_by_resource(resource_id).join(
+            Report).order_by(ReportResourceModel.report.last_modified_at.desc())
 
-        paginator: Paginator[ReportResource] = Paginator(
+        paginator: Paginator[ReportResourceModel] = Paginator(
             query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
-        map_function: Callable[[ReportResource], Experiment] = lambda x: x.report
+        map_function: Callable[[ReportResourceModel], Experiment] = lambda x: x.report
         paginator.map_result(map_function)
         return paginator
 
@@ -479,7 +482,7 @@ class ReportService():
         add the new ones.
         """
 
-        report_resources: List[ReportResource] = ReportResource.get_by_report(report.id)
+        report_resources: List[ReportResourceModel] = ReportResourceModel.get_by_report(report.id)
 
         # extract resources ids form report_resources
         content_resources: Set[str] = RichText(report.content).get_associated_resources()
@@ -494,8 +497,8 @@ class ReportService():
         for content_resource in content_resources:
             if content_resource not in db_resources:
                 # create the link in DB
-                ReportResource(report=report,
-                               resource=ResourceModel(id=content_resource)).save()
+                ReportResourceModel(report=report,
+                                    resource=ResourceModel(id=content_resource)).save()
 
     ################################################# ARCHIVE ########################################
 

@@ -15,7 +15,7 @@ from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.project.project import Project
 from gws_core.report.report import Report, ReportExperiment
 from gws_core.report.report_dto import ReportDTO
-from gws_core.report.report_resource import ReportResource
+from gws_core.report.report_resource_model import ReportResourceModel
 from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
@@ -106,7 +106,7 @@ class TestReport(BaseTestCase):
         ReportService.update_content(report.id, new_content)
 
         # check that the associated resource is created
-        report_resources = ReportResource.get_by_report(report.id)
+        report_resources = ReportResourceModel.get_by_report(report.id)
         self.assertEqual(len(report_resources), 1)
 
         # test get report by resource
@@ -118,13 +118,13 @@ class TestReport(BaseTestCase):
         # test adding the same resource a second time it shouldn't create a new associated resource
         new_content = {"ops": [operation, operation]}
         ReportService.update_content(report.id, new_content)
-        report_resources = ReportResource.get_by_report(report.id)
+        report_resources = ReportResourceModel.get_by_report(report.id)
         self.assertEqual(len(report_resources), 1)
 
         # test removing the resource
         new_content = {"ops": []}
         ReportService.update_content(report.id, new_content)
-        report_resources = ReportResource.get_by_report(report.id)
+        report_resources = ReportResourceModel.get_by_report(report.id)
         self.assertEqual(len(report_resources), 0)
 
     # test to have a view config to a report
@@ -142,7 +142,7 @@ class TestReport(BaseTestCase):
 
         report = ReportService.create(ReportDTO(title='Test report'))
         # add the view to the report
-        ReportService.add_view_to_content(report.id, result["view_config"]["id"])
+        ReportService.add_view_to_content(report.id, result.view_config.id)
 
         # Retrieve the report rich text
         report_db = ReportService.get_by_id_and_check(report.id)
