@@ -13,7 +13,6 @@ from gws_core.report.report_dto import ReportDTO
 from gws_core.report.report_service import ReportService
 from gws_core.report.template.report_template import ReportTemplate
 from gws_core.report.template.report_template_param import ReportTemplateParam
-from gws_core.resource.resource import Resource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -27,6 +26,11 @@ from .report_resource import ReportResource
 )
 class CreateReport(Task):
     """
+    Task to create a report. The report is directly create and accessible in the reports sections.
+    The report is updatable and a ReportResource is returned by this task to access and modify the report.
+
+    It is recommended to place this task at the end of a workflow to create a report with the results of the workflow.
+    To assure the report is not created if the workflow fails.
     """
 
     input_specs: InputSpecs = InputSpecs()

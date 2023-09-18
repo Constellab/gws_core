@@ -9,6 +9,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.credentials.credentials_param import CredentialsParam
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
+from gws_core.report.report_param import ReportParam
 from gws_core.report.template.report_template_param import ReportTemplateParam
 
 from ..config_exceptions import MissingConfigsException
@@ -125,4 +126,4 @@ class ParamSpecHelper():
     def _get_param_spec_types() -> List[Type[ParamSpec]]:
         return [BoolParam, IntParam, FloatParam, StrParam, TextParam, ListParam, ParamSet, TagsParam,
                 DictParam, PythonCodeParam, JsonCodeParam, JuliaCodeParam, PerlCodeParam, RCodeParam, YamlCodeParam,
-                OpenAiChatParam, CredentialsParam, ReportTemplateParam]
+                OpenAiChatParam, CredentialsParam, ReportTemplateParam, ReportParam]

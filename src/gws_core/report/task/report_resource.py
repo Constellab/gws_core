@@ -8,10 +8,12 @@ from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.classes.rich_text_content import RichText
 from gws_core.report.report import Report
 from gws_core.report.report_service import ReportService
+from gws_core.report.rich_text_view import RichTextView
 from gws_core.resource.r_field.primitive_r_field import StrRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_service import ResourceService
+from gws_core.resource.view.view_decorator import view
 from gws_core.resource.view.view_dto import CallViewResult
 
 
@@ -27,7 +29,7 @@ class ReportResource(Resource):
         super().__init__()
         self.report_id = report_id
 
-    def _get_content(self) -> RichText:
+    def get_content(self) -> RichText:
         if self._content is None:
             self._content = self._get_report().get_content_as_rich_text()
         return self._content
@@ -38,27 +40,31 @@ class ReportResource(Resource):
         return self._report
 
     def replace_variable(self, variable_name: str, value: str) -> None:
-        rich_text: RichText = self._get_content()
+        rich_text: RichText = self.get_content()
         rich_text.replace_variable(variable_name, value)
         self._content = rich_text
 
     def add_paragraph(self, paragraph: str) -> None:
-        rich_text: RichText = self._get_content()
+        rich_text: RichText = self.get_content()
         rich_text.add_paragraph(paragraph)
         self._content = rich_text
 
     def add_view(self, resource: Resource, view_method_name: str, view_params: ConfigParamsDict = None,
-                 title: str = None, caption: str = None) -> None:
+                 title: str = None, caption: str = None, variable_name: str = None) -> None:
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
             resource._model_id, view_method_name, view_params, True)
 
-        rich_text: RichText = self._get_content()
-        rich_text.append_resource_views(view_result.view_config.to_rich_text_resource_view(title, caption))
+        rich_text: RichText = self.get_content()
+        rich_text.add_resource_views(view_result.view_config.to_rich_text_resource_view(title, caption), variable_name)
         self._content = rich_text
 
     def update_title(self, title: str) -> None:
         self._report = ReportService.update_title(self.report_id, title)
 
     def save(self):
-        report = ReportService.update_content(self.report_id, self._get_content().get_content())
+        report = ReportService.update_content(self.report_id, self.get_content().get_content())
         self._content = report.get_content_as_rich_text()
+
+    @view(view_type=RichTextView, human_name="View report", short_description="View report content", default_view=True)
+    def view_report(self, config: ConfigParamsDict = None) -> RichTextView:
+        return RichTextView(self.get_content())

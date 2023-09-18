@@ -41,11 +41,13 @@ class ViewType(Enum):
     IMAGE = "image-view"
     HTML = "html-view"
     PLOTLY = "plotly-view"
+    RICH_TEXT = "rich-text-view"
 
 
 # List of view type that cannot be used in a report
 exluded_views_in_historic = [
-    ViewType.VIEW, ViewType.FOLDER, ViewType.RESOURCES_LIST_VIEW, ViewType.EMPTY]
+    ViewType.VIEW, ViewType.FOLDER, ViewType.RESOURCES_LIST_VIEW, ViewType.EMPTY,
+    ViewType.RICH_TEXT]
 
 
 class CallViewParams(TypedDict):

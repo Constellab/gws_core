@@ -294,9 +294,7 @@ class ProtocolService(BaseService):
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
-        ExperimentRunService.create_cli_for_experiment_process(protocol_model.experiment,
-                                                               CurrentUserService.get_and_check_current_user(),
-                                                               protocol_model.id, process_instance_name)
+        ExperimentRunService.run_experiment_process(protocol_model.experiment, protocol_model, process_instance_name)
 
         # if the process is fast, this is useful to return the finished process
         sleep(4)

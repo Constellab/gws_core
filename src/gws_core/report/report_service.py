@@ -22,6 +22,7 @@ from gws_core.report.report_resource_model import ReportResourceModel
 from gws_core.report.template.report_template import ReportTemplate
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
+from gws_core.resource.view.view_types import exluded_views_in_historic
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.space.space_dto import SaveReportToSpaceDTO
@@ -163,12 +164,15 @@ class ReportService():
 
         view_config: ViewConfig = ViewConfigService.get_by_id(view_config_id)
 
+        if view_config.view_type in exluded_views_in_historic:
+            raise BadRequestException("You can't add this type of view to a report")
+
         # create the json object for the rich text
         view_content: RichTextResourceView = view_config.to_rich_text_resource_view()
 
         # get the rich text and add the resource view
         rich_text = report.get_content_as_rich_text()
-        rich_text.append_resource_views(view_content)
+        rich_text.add_resource_views(view_content)
 
         report = cls.update_content(report_id, rich_text.get_content())
 

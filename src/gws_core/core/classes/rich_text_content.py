@@ -92,8 +92,13 @@ class RichText():
 
         return special_ops
 
-    def append_resource_views(self, resource_view: RichTextResourceView) -> None:
-        self._append_element({RichTextSpecialOps.RESOURCE_VIEW.value: resource_view})
+    def add_resource_views(self, resource_view: RichTextResourceView, variable_name: str = None) -> None:
+
+        insert = {RichTextSpecialOps.RESOURCE_VIEW.value: resource_view}
+        if variable_name is None:
+            self._append_element(insert)
+        else:
+            self._insert_element(variable_name, insert)
 
     def _append_element(self, insert: Any, attributes: dict = None) -> None:
         element = {"insert": insert}
@@ -102,13 +107,49 @@ class RichText():
             element["attributes"] = attributes
         self._content['ops'].append(element)
 
+    def _insert_element(self, variable_name: str, insert: Any, attributes: dict = None) -> None:
+        element = {"insert": insert}
+
+        if attributes:
+            element["attributes"] = attributes
+
+        op_index = 0
+        variable_name = self._format_variable_name(variable_name)
+        while op_index < len(self._content['ops']):
+            current_op = self._content['ops'][op_index]
+
+            # if the op contains the variable name, split the string
+            if 'insert' in current_op and isinstance(
+                    current_op['insert'],
+                    str) and variable_name in current_op['insert']:
+                # split the string
+                splitted = current_op['insert'].split(variable_name)
+
+                # remove current op
+                self._content['ops'].pop(op_index)
+
+                # replace the current op by 3 ops (before, variable, after)
+                if splitted[0]:
+                    # add a \n at the end to finish the previous op
+                    self._content['ops'].insert(op_index, {'insert': splitted[0] + '\n'})
+                    op_index += 1
+
+                self._content['ops'].insert(op_index, element)
+                op_index += 1
+
+                if splitted[1]:
+                    self._content['ops'].insert(op_index, {'insert': splitted[1]})
+                    op_index += 1
+            else:
+                op_index += 1
+
     def get_content(self) -> RichTextI:
         return self._content
 
     def replace_variable(self, variable_name: str, value: str) -> None:
         """Replace the variable in the rich text content
         """
-        variable_name = f'${variable_name}$'
+        variable_name = self._format_variable_name(variable_name)
         for op in self._content['ops']:
             if 'insert' in op and isinstance(op['insert'], str) and variable_name in op['insert']:
                 op['insert'] = op['insert'].replace(variable_name, value)
@@ -125,12 +166,15 @@ class RichText():
 
         op_index = 0
         view_index = 1
-        for op in self._content['ops']:
-            if 'insert' in op and isinstance(op['insert'], dict) \
-                    and RichTextSpecialOps.RESOURCE_VIEW.value in op['insert'] \
-                    and isinstance(op['insert'][RichTextSpecialOps.RESOURCE_VIEW.value], dict):
-                variable = f"$figure_{view_index}$"
+        for ope in self._content['ops']:
+            if 'insert' in ope and isinstance(ope['insert'], dict) \
+                    and RichTextSpecialOps.RESOURCE_VIEW.value in ope['insert'] \
+                    and isinstance(ope['insert'][RichTextSpecialOps.RESOURCE_VIEW.value], dict):
+                variable = self._format_variable_name(f"figure_{view_index}")
                 ops: RichTextOps = {'insert': variable}
                 self._content['ops'][op_index] = ops
                 view_index += 1
             op_index += 1
+
+    def _format_variable_name(self, variable_name: str) -> str:
+        return f'${variable_name}$'
