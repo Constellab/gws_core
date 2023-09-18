@@ -46,6 +46,9 @@ class PyLiveTask(Task):
 
     working_dir: str = None
 
+    CONFIG_PARAMS_NAME = 'params'
+    CONFIG_CODE_NAME = 'code'
+
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
         params = params.get_value('params')

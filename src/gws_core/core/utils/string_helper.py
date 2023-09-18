@@ -74,6 +74,21 @@ class StringHelper():
         return name.capitalize()
 
     @staticmethod
+    def to_pascal_case(text: str) -> str:
+        """Convert a text to pascal case
+        Ex 'test_class2_build' -> 'TestClass2Build'
+        """
+        if text is None:
+            return None
+        # Split the input string into words based on spaces or underscores
+        words = re.split(r'[ _]', text)
+
+        # Capitalize the first letter of each word and join them
+        pascal_case_string = ''.join(word.capitalize() for word in words if word)
+
+        return pascal_case_string
+
+    @staticmethod
     def to_enum(enum_class: Type, str_value: str) -> Any:
         """Convert a string to an enum value
         """

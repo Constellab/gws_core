@@ -76,3 +76,23 @@ class NumericHelper():
             return result
         except:
             return default_value
+
+    @staticmethod
+    def is_int(value: Any) -> bool:
+        """Check if value is int
+        """
+        try:
+            int(value)
+            return True
+        except:
+            return False
+
+    @staticmethod
+    def is_float(value: Any) -> bool:
+        """Check if value is float
+        """
+        try:
+            float(value)
+            return True
+        except:
+            return False
