@@ -9,7 +9,8 @@ from gws_core import (BaseTestCase, Experiment, ExperimentService,
                       ExperimentStatus, ProtocolModel, ProtocolService, Robot,
                       RobotFood, TaskModel)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
-from gws_core.process.process_model import ProcessModel, ProcessStatus
+from gws_core.process.process_model import ProcessModel
+from gws_core.process.process_types import ProcessStatus
 from tests.protocol_examples import (TestNestedProtocol,
                                      TestRobotWithSugarProtocol,
                                      TestSimpleProtocol, TestSubProtocol)

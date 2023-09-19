@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from enum import Enum
 from typing import Dict, Optional
 
 from typing_extensions import TypedDict
@@ -12,6 +13,16 @@ from gws_core.config.param.param_types import ParamSpecDict
 from gws_core.io.io import IODict
 from gws_core.io.io_spec import IOSpecDict
 from gws_core.model.typing_dict import TypingDict
+
+
+class ProcessStatus(Enum):
+    DRAFT = "DRAFT"
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
+    # For protocol, it means that some process of protocol were not run (or added after run)
+    PARTIALLY_RUN = "PARTIALLY_RUN"
+    WAITING_FOR_CLI_PROCESS = "WAITING_FOR_CLI_PROCESS"
 
 
 class ProcessSpecDict(TypingDict):

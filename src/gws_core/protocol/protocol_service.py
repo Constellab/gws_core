@@ -294,10 +294,13 @@ class ProtocolService(BaseService):
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
-        ExperimentRunService.run_experiment_process(protocol_model.experiment, protocol_model, process_instance_name)
+        # ExperimentRunService.run_experiment_process(protocol_model.experiment, protocol_model, process_instance_name)
+        ExperimentRunService.create_cli_experiment_process(
+            protocol_model.experiment, protocol_model, process_instance_name,
+            CurrentUserService.get_and_check_current_user())
 
         # if the process is fast, this is useful to return the finished process
-        sleep(4)
+        # sleep(4)
 
         return ProtocolUpdateDTO(protocol=protocol_model.refresh(), protocol_updated=True)
 

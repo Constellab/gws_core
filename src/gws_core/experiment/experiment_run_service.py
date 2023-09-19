@@ -11,7 +11,8 @@ from typing import List
 
 from gws_core.core.service.front_service import FrontService
 from gws_core.process.process_exception import ProcessRunException
-from gws_core.process.process_types import ProcessErrorInfo
+from gws_core.process.process_model import ProcessModel
+from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.space.mail_service import MailService
 from gws_core.space.space_dto import SendExperimentFinishMailData
@@ -90,31 +91,68 @@ class ExperimentRunService():
             raise exception
 
     @classmethod
+    def run_experiment_process_in_cli(cls, experiment_id: str, protocol_model_id: str, process_name: str) -> None:
+        """Method called by the cli sub process to run the experiment
+        """
+        try:
+            experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
+
+            protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
+                protocol_model_id)
+
+            process_model = protocol_model.get_process(process_name)
+
+            if experiment.status != ExperimentStatus.WAITING_FOR_CLI_PROCESS:
+                raise Exception(
+                    f"Cannot run the experiment {experiment.id} as its status was changed before process could run it")
+
+            if process_model.status != ProcessStatus.WAITING_FOR_CLI_PROCESS:
+                raise Exception(
+                    f"Cannot run the process {process_model.id} as its status was changed before process could run it")
+
+        except Exception as err:
+            error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + str(err)
+            Logger.error(error_text)
+            experiment.mark_as_error({"detail": error_text,
+                                      "unique_code": GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
+                                      "context": None, "instance_id": None})
+        cls.run_experiment_process(experiment, protocol_model, process_name)
+
+    @classmethod
     def run_experiment_process(cls, experiment: Experiment, protocol_model: ProtocolModel,
                                process_instance_name: str) -> Experiment:
+        try:
 
-        process_model = protocol_model.get_process(process_instance_name)
+            process_model = protocol_model.get_process(process_instance_name)
 
-        cls._check_experiment_before_start(experiment)
+            cls._check_experiment_before_start(experiment)
 
-        if not protocol_model.process_is_ready(process_model):
-            raise BadRequestException(
-                "The process cannot be run because it is not ready. Where the previous process run and are the inputs provided ?")
+            if not protocol_model.process_is_ready(process_model):
+                raise BadRequestException(
+                    "The process cannot be run because it is not ready. Where the previous process run and are the inputs provided ?")
 
-        Logger.info(
-            f"Running experiment process : {experiment.id}, protocol: {protocol_model.id}, process: {process_instance_name}")
+            Logger.info(
+                f"Running experiment process : {experiment.id}, protocol: {protocol_model.id}, process: {process_instance_name}")
 
-        ActivityService.add(
-            ActivityType.RUN_PROCESS,
-            object_type=ActivityObjectType.PROCESS,
-            object_id=process_model.id,
-        )
+            ActivityService.add(
+                ActivityType.RUN_PROCESS,
+                object_type=ActivityObjectType.PROCESS,
+                object_id=process_model.id,
+            )
 
-        process = Process(target=cls._run_experiment_process, args=(
-            protocol_model.experiment, protocol_model, process_instance_name))
-        process.start()
+            process = Process(target=cls._run_experiment_process, args=(
+                protocol_model.experiment, protocol_model, process_instance_name))
+            process.start()
 
-        return experiment
+            return experiment
+
+        except Exception as err:
+            exception: ProcessRunException = ProcessRunException.from_exception(
+                process_model=process_model, exception=err)
+
+            process_model.mark_as_error_and_parent(exception)
+
+            raise exception
 
     @classmethod
     def _run_experiment_process(cls, experiment: Experiment, protocol_model: ProtocolModel,
@@ -155,43 +193,7 @@ class ExperimentRunService():
         """
 
         try:
-            settings: Settings = Settings.get_instance()
-            cwd_dir = settings.get_cwd()
-
-            # set the user in the context to make the update works
-            CurrentUserService.set_current_user(user)
-
-            # check user privilege
-            experiment.check_user_privilege(user)
-
-            if experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS:
-                raise BadRequestException(
-                    f"A CLI process was already created to run the experiment {experiment.id}")
-
-            cmd = [
-                "python3",
-                os.path.join(cwd_dir, "manage.py"),
-                "--run-experiment",
-                "--experiment-id", experiment.id,
-                "--user-id", user.id
-            ]
-
-            if settings.is_test:
-                # add test option to tell the sub process is a test
-                cmd.extend(["--test", "a"])
-
-            sproc = SysProc.popen(
-                cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-
-            # Mark that a process is created for the experiment, but it is not started yet
-            experiment.mark_as_waiting_for_cli_process(sproc.pid)
-
-            Logger.info(
-                f"gws.experiment.Experiment run_through_cli {str(cmd)}")
-            Logger.info(
-                f"""The experiment logs are not shown in the console, because it is run in another linux process ({experiment.pid}).
-                To view them check the logs marked as {Logger.SUB_PROCESS_TEXT} in the today's log file : {Logger.get_file_path()}""")
-            return sproc
+            return cls._create_cli(experiment, user)
         except Exception as err:
             traceback.print_exc()
             exception: ExperimentRunException = ExperimentRunException.from_exception(
@@ -199,6 +201,85 @@ class ExperimentRunService():
             experiment.mark_as_error({"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
                                       "context": None, "instance_id": exception.instance_id})
             raise exception
+
+    @classmethod
+    def create_cli_experiment_process(cls, experiment: Experiment,
+                                      protocol_model: ProtocolModel,
+                                      process_instance_name: str,
+                                      user: User) -> SysProc:
+        """
+        Run an experiment in a non-blocking way through the cli.
+
+        :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
+        :type user: `gws.user.User`
+        """
+
+        process_model = protocol_model.get_process(process_instance_name)
+
+        try:
+            return cls._create_cli(experiment, user, process_model)
+        except Exception as err:
+            traceback.print_exc()
+            exception: ExperimentRunException = ExperimentRunException.from_exception(
+                experiment=experiment, exception=err)
+            experiment.mark_as_error({"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
+                                      "context": None, "instance_id": exception.instance_id})
+            raise exception
+
+    @classmethod
+    def _create_cli(cls, experiment: Experiment, user: User,
+                    process_model: ProcessModel = None) -> SysProc:
+        settings: Settings = Settings.get_instance()
+        cwd_dir = settings.get_cwd()
+
+        # set the user in the context to make the update works
+        CurrentUserService.set_current_user(user)
+
+        # check user privilege
+        experiment.check_user_privilege(user)
+
+        if experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS:
+            raise BadRequestException(
+                f"A CLI process was already created to run the experiment {experiment.id}")
+
+        if process_model and process_model.status == ProcessStatus.WAITING_FOR_CLI_PROCESS:
+            raise BadRequestException(
+                f"A CLI process was already created to run the process {process_model.id}")
+
+        cmd = [
+            "python3",
+            os.path.join(cwd_dir, "manage.py"),
+            "--run-experiment",
+            "--experiment-id", experiment.id,
+            "--user-id", user.id
+        ]
+
+        if process_model:
+            cmd.extend([
+                "--protocol-model-id", process_model.parent_protocol_id,
+                "--process-instance-name", process_model.instance_name
+            ])
+
+        if settings.is_test:
+            # add test option to tell the sub process is a test
+            cmd.extend(["--test", "a"])
+
+        sproc = SysProc.popen(
+            cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+
+        # Mark that a process is created for the experiment, but it is not started yet
+        experiment.mark_as_waiting_for_cli_process(sproc.pid)
+
+        if process_model:
+            # Mark also the process as waiting for cli process
+            process_model.mark_as_waiting_for_cli_process()
+
+        Logger.info(
+            f"Experiment process run_through_cli {str(cmd)}")
+        Logger.info(
+            f"""The experiment logs are not shown in the console, because it is run in another linux process ({experiment.pid}).
+            To view them check the logs marked as {Logger.SUB_PROCESS_TEXT} in the today's log file : {Logger.get_file_path()}""")
+        return sproc
 
     @classmethod
     def stop_experiment(cls, id: str) -> Experiment:

@@ -99,8 +99,11 @@ class AppManager:
         test_runner.run(test_suite)
 
     @classmethod
-    def run_experiment(cls, experiment_id: str, user_id: str, log_level: str, show_sql: bool, is_test: bool) -> None:
-        cls._init(log_level=log_level, experiment_id=experiment_id, show_sql=show_sql, is_test=is_test)
+    def run_experiment(cls, experiment_id: str,
+                       protocol_model_id: str, process_instance_name: str,
+                       user_id: str, log_level: str, show_sql: bool, is_test: bool) -> None:
+        cls._init(log_level=log_level, experiment_id=experiment_id,
+                  show_sql=show_sql, is_test=is_test)
 
         if experiment_id is None:
             raise BadRequestException("Please provide an experiment id to run the experiment")
@@ -111,7 +114,10 @@ class AppManager:
         user: User = User.get_by_id_and_check(user_id)
         CurrentUserService.set_current_user(user)
 
-        ExperimentRunService.run_experiment_in_cli(experiment_id)
+        if protocol_model_id and process_instance_name:
+            ExperimentRunService.run_experiment_process_in_cli(experiment_id, protocol_model_id, process_instance_name)
+        else:
+            ExperimentRunService.run_experiment_in_cli(experiment_id)
 
     @classmethod
     def run_notebook(cls, log_level: str) -> None:
@@ -156,13 +162,19 @@ def start_notebook(cwd: str, log_level: str = 'INFO') -> None:
 @click.option('--reset_env', is_flag=True, help='Reset environment')
 @click.option('--experiment-id', help='Experiment id')
 @click.option('--user-id', help='User id')
+@click.option('--user-id', help='User id')
+@click.option('--protocol-model-id', help='Protocol model id')
+@click.option('--process-instance-name', help='Process instance name')
 def _start_app_console(ctx, test: str, run_experiment: bool, runserver: bool,
                        port: str, log_level: str, show_sql: bool, reset_env: bool,
-                       experiment_id: str, user_id: str) -> None:
+                       experiment_id: str, user_id: str,
+                       protocol_model_id: str, process_instance_name: str) -> None:
     if runserver:
         AppManager.start_app(port=port, log_level=log_level, show_sql=show_sql)
     elif run_experiment:
-        AppManager.run_experiment(experiment_id=experiment_id, user_id=user_id,
+        AppManager.run_experiment(experiment_id=experiment_id,
+                                  protocol_model_id=protocol_model_id, process_instance_name=process_instance_name,
+                                  user_id=user_id,
                                   log_level=log_level, show_sql=show_sql, is_test=bool(test))
     elif test:
         AppManager.run_test(test=test, log_level=log_level, show_sql=show_sql)

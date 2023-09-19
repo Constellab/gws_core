@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from enum import Enum
 from typing import TYPE_CHECKING, Dict, Optional, Type, final
 
 from peewee import CharField, ForeignKeyField
@@ -35,19 +34,10 @@ from ..progress_bar.progress_bar import ProgressBar, ProgressBarMessage
 from ..user.user import User
 from .process import Process
 from .process_exception import ProcessRunException
-from .process_types import ProcessErrorInfo, ProcessMinimumDict
+from .process_types import ProcessErrorInfo, ProcessMinimumDict, ProcessStatus
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
-
-
-class ProcessStatus(Enum):
-    DRAFT = "DRAFT"
-    RUNNING = "RUNNING"
-    SUCCESS = "SUCCESS"
-    ERROR = "ERROR"
-    # For protocol, it means that some process of protocol were not run (or added after run)
-    PARTIALLY_RUN = "PARTIALLY_RUN"
 
 
 @json_ignore(["parent_protocol_id"])
@@ -289,7 +279,7 @@ class ProcessModel(ModelWithUser):
             Logger.log_exception_stack_trace(err)
             # Create a new processRunException with correct info
             exception: ProcessRunException = ProcessRunException.from_exception(
-                self, err, 'Error during task')
+                self, err)
             self.mark_as_error_and_parent(exception)
             raise exception
 
@@ -509,7 +499,8 @@ class ProcessModel(ModelWithUser):
 
     @property
     def is_runnable(self) -> bool:
-        return (self.is_draft or self.is_partially_run) and self.inputs.is_ready
+        return (self.is_draft or self.is_partially_run or
+                self.status == ProcessStatus.WAITING_FOR_CLI_PROCESS) and self.inputs.is_ready
 
     @property
     def is_finished(self) -> bool:
@@ -582,3 +573,7 @@ class ProcessModel(ModelWithUser):
                 "context": new_context,
                 "instance_id": process_error.instance_id
             })
+
+    def mark_as_waiting_for_cli_process(self):
+        self.status = ProcessStatus.WAITING_FOR_CLI_PROCESS
+        self.save()

@@ -41,7 +41,7 @@ class ProcessRunException(BadRequestException):
 
     @staticmethod
     def from_exception(process_model: ProcessModel, exception: Exception,
-                       error_prefix: str) -> ProcessRunException:
+                       error_prefix: str = 'Error during task') -> ProcessRunException:
 
         unique_code: str
 

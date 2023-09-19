@@ -12,7 +12,7 @@ from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.lab.lab_config_model import LabConfigModel
-from gws_core.process.process_types import ProcessErrorInfo
+from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.classes.enum_field import EnumField
@@ -21,7 +21,6 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
-from ..core.utils.logger import Logger
 from ..project.project import Project
 from ..resource.resource_model import ResourceModel
 from ..tag.taggable_model import TaggableModel
@@ -138,7 +137,7 @@ class Experiment(ModelWithUser, TaggableModel):
         from ..task.task_model import TaskModel
         return list(TaskModel.select().where(
             (TaskModel.experiment == self) &
-            (TaskModel.status == ExperimentStatus.RUNNING)))
+            (TaskModel.status.in_([ProcessStatus.RUNNING, ProcessStatus.WAITING_FOR_CLI_PROCESS]))))
 
     ########################################## MODEL METHODS ######################################
 

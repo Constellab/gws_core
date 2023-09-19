@@ -14,7 +14,8 @@ from gws_core.lab.log.log import LogsBetweenDatesDTO
 from gws_core.lab.log.log_service import LogService
 from gws_core.lab.monitor.monitor_dto import MonitorBetweenDateDTO
 from gws_core.lab.monitor.monitor_service import MonitorService
-from gws_core.process.process_model import ProcessModel, ProcessStatus
+from gws_core.process.process_model import ProcessModel
+from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.task.task_model import TaskModel
 

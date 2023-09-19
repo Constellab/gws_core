@@ -25,7 +25,8 @@ from ..io.port import Port
 from ..model.typing_manager import TypingManager
 from ..process.process_exception import (CheckBeforeTaskStopException,
                                          ProcessRunException)
-from ..process.process_model import ProcessModel, ProcessStatus
+from ..process.process_model import ProcessModel
+from ..process.process_types import ProcessStatus
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel, ResourceOrigin
 from ..resource.resource_r_field import ResourceRField
@@ -252,8 +253,7 @@ class TaskModel(ProcessModel):
             exception_detail = ExceptionHelper.sub_traceback_to_str(err, inspect.getmodule(TaskRunner))
             # log trace error
             self.progress_bar.add_error_message("Here is the error detail :\n" + exception_detail)
-            raise ProcessRunException.from_exception(process_model=self, exception=err,
-                                                     error_prefix='Error during task') from err
+            raise ProcessRunException.from_exception(process_model=self, exception=err) from err
 
         # If success, save the outputs
         self._save_outputs(task_runner.get_outputs())

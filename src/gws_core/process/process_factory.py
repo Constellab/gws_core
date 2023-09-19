@@ -25,7 +25,8 @@ from ..protocol.protocol_model import ProtocolModel
 from ..task.task import Task
 from ..task.task_model import TaskModel
 from .process import Process
-from .process_model import ProcessModel, ProcessStatus
+from .process_model import ProcessModel
+from .process_types import ProcessStatus
 from .protocol_sub_process_builder import SubProcessBuilderCreate
 
 

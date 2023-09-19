@@ -16,7 +16,8 @@ from ..io.connector import Connector
 from ..io.io import Inputs, Outputs
 from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort, Port
-from ..process.process_model import ProcessModel, ProcessStatus
+from ..process.process_model import ProcessModel
+from ..process.process_types import ProcessStatus
 from ..process.protocol_sub_process_builder import (
     ProtocolSubProcessBuilder, SubProcessBuilderReadFromDb)
 from ..user.user import User
