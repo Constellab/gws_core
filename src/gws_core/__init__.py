@@ -445,6 +445,7 @@ from .task.transformer.transformer import \
     transformer_decorator as transformer_decorator
 # Core > Test
 from .test.base_test_case import BaseTestCase as BaseTestCase
+from .test.base_test_case import BaseTestCaseLight as BaseTestCaseLight
 from .test.gtest import GTest as GTest
 from .test.view_tester import ViewTester as ViewTester
 # User
