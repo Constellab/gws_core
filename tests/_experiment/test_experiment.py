@@ -132,7 +132,7 @@ class TestExperiment(BaseTestCase):
         experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=proto)
 
-        ExperimentRunService.create_cli_process_for_experiment(
+        ExperimentRunService.create_cli_for_experiment(
             experiment=experiment, user=GTest.user)
         self.assertEqual(experiment.status,
                          ExperimentStatus.WAITING_FOR_CLI_PROCESS)

@@ -190,7 +190,7 @@ class TestView(BaseTestCase):
         view_result = ResourceService.get_and_call_view_on_resource_model(
             resource_model.id, 'a_view_test', {"page": 1, "page_size": 5000}, True)
 
-        self.assertIsNotNone(view_result["view_config"])
+        self.assertIsNotNone(view_result.view_config)
 
         paginator = ViewConfigService.get_by_resource(resource_model.id)
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
@@ -204,7 +204,7 @@ class TestView(BaseTestCase):
 
         # re-call the view from the view config
         view_result_2 = ResourceService.call_view_from_view_config(view_config.id)
-        self.assert_json(view_result['view'], view_result_2['view'])
+        self.assert_json(view_result.view, view_result_2['view'])
 
     def test_viewer(self):
         """ Test that a view config is save when executing the view task

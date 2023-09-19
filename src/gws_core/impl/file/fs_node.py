@@ -5,6 +5,7 @@
 
 
 import os
+from pathlib import PosixPath
 
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.resource.r_field.primitive_r_field import BoolRField, StrRField
@@ -35,7 +36,7 @@ class FSNode(Resource):
         if path is None:
             raise ValueError("The path cannot be None")
 
-        if not isinstance(path, str):
+        if not isinstance(path, str) and not isinstance(path, PosixPath):
             raise ValueError("The path must be a string")
 
         self.path = path

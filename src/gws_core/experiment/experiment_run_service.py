@@ -184,7 +184,7 @@ class ExperimentRunService():
         experiment.check_is_runnable()
 
     @classmethod
-    def create_cli_process_for_experiment(cls, experiment: Experiment, user: User) -> SysProc:
+    def create_cli_for_experiment(cls, experiment: Experiment, user: User) -> SysProc:
         """
         Run an experiment in a non-blocking way through the cli.
 
@@ -203,10 +203,10 @@ class ExperimentRunService():
             raise exception
 
     @classmethod
-    def create_cli_experiment_process(cls, experiment: Experiment,
-                                      protocol_model: ProtocolModel,
-                                      process_instance_name: str,
-                                      user: User) -> SysProc:
+    def create_cli_for_experiment_process(cls, experiment: Experiment,
+                                          protocol_model: ProtocolModel,
+                                          process_instance_name: str,
+                                          user: User) -> SysProc:
         """
         Run an experiment in a non-blocking way through the cli.
 
@@ -215,6 +215,10 @@ class ExperimentRunService():
         """
 
         process_model = protocol_model.get_process(process_instance_name)
+
+        if not protocol_model.process_is_ready(process_model):
+            raise BadRequestException(
+                "The process cannot be run because it is not ready. Where the previous process run and are the inputs provided ?")
 
         try:
             return cls._create_cli(experiment, user, process_model)

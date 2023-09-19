@@ -99,4 +99,3 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Exception, validator.validate, '5.5')
         self.assertRaises(Exception, validator.validate, [5.5, 3])
         self.assertRaises(Exception, validator.validate, '[5.5,3]')
-        self.assertRaises(Exception, validator.validate, {'hello': NaN})

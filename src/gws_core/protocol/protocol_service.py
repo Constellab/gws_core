@@ -295,7 +295,7 @@ class ProtocolService(BaseService):
             protocol_id)
 
         # ExperimentRunService.run_experiment_process(protocol_model.experiment, protocol_model, process_instance_name)
-        ExperimentRunService.create_cli_experiment_process(
+        ExperimentRunService.create_cli_for_experiment_process(
             protocol_model.experiment, protocol_model, process_instance_name,
             CurrentUserService.get_and_check_current_user())
 

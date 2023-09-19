@@ -4,6 +4,8 @@
 # About us: https://gencovery.com
 
 
+from time import sleep
+
 from gws_core import ResourceModel
 from gws_core.experiment.experiment_exception import \
     ResourceUsedInAnotherExperimentException
@@ -273,12 +275,29 @@ class TestProtocolService(BaseTestCase):
         # Run process p0
         ProtocolService.run_process(experiment.get_protocol().get_model().id, 'p0')
         experiment.refresh()
+
+        count = 0
+        while count < 30:
+            experiment.refresh()
+            if experiment.get_protocol().get_process('p0').get_model().is_finished:
+                break
+            sleep(1)
+            count += 1
+
         self.assertTrue(experiment.get_protocol().get_process('p0').get_model().is_success)
         self.assertTrue(experiment.get_protocol().get_process('p1').get_model().is_draft)
 
         # Test run process p1
         ProtocolService.run_process(experiment.get_protocol().get_model().id, 'p1')
-        experiment.refresh()
+
+        count = 0
+        while count < 30:
+            experiment.refresh()
+            if experiment.get_protocol().get_process('p1').get_model().is_finished:
+                break
+            sleep(1)
+            count += 1
+
         self.assertTrue(experiment.get_protocol().get_process('p1').get_model().is_success)
 
         # Test ru nprocess p4 which shoud not be runable

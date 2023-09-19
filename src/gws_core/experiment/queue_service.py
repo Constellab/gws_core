@@ -99,7 +99,7 @@ class QueueService(BaseService):
             f"Experiment {experiment.id}, is_running = {experiment.is_running}")
 
         try:
-            sproc = ExperimentRunService.create_cli_process_for_experiment(
+            sproc = ExperimentRunService.create_cli_for_experiment(
                 experiment=experiment, user=job.user)
 
             if sproc:
