@@ -13,11 +13,19 @@ from gws_core.config.param.param_spec import (BoolParam, FloatParam, IntParam,
                                               StrParam)
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.impl.live.py_live_task import PyLiveTask
-from gws_core.resource.resource import Resource
 from gws_core.task.task_model import TaskModel
 
 
 class TaskGeneratorService:
+
+    @classmethod
+    def generate_task_code_from_live_task_id(cls, task_id: str) -> str:
+        task: TaskModel = TaskModel.get_by_id_and_check(task_id)
+
+        if task.get_process_type() != PyLiveTask:
+            raise Exception(f"The task {task_id} is not a python live task")
+
+        return cls.generate_task_code_from_live_task(task)
 
     @classmethod
     def generate_task_code_from_live_task(cls, task: TaskModel) -> str:
@@ -37,15 +45,16 @@ class TaskGeneratorService:
         task_generator.set_run_method_content(cleaned_code)
 
         count = 1
-        for _ in task.inputs.get_specs().get_specs():
+        for spec in task.inputs.get_specs().get_specs().values():
             key = f"resource_{count}"
-            task_generator.add_input_spec(key, Resource)
+            spec.get_default_resource_type
+            task_generator.add_input_spec(key, spec.get_default_resource_type())
             count = count + 1
 
         count = 1
-        for _ in task.outputs.get_specs().get_specs():
+        for spec in task.outputs.get_specs().get_specs().values():
             key = f"resource_{count}"
-            task_generator.add_output_spec(key, Resource)
+            task_generator.add_output_spec(key, spec.get_default_resource_type())
             count = count + 1
 
         params: List[str] = task.config.get_value(PyLiveTask.CONFIG_PARAMS_NAME)

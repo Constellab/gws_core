@@ -75,7 +75,6 @@ class ReportService():
                  {"insert": "\n\nReferences"},
                  {"attributes": {"header": 1},
                  "insert": "\n"},
-                 {"insert": "Variable : $test$"},
                  {"insert": "\n"}]}
 
         report.save()

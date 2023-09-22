@@ -80,7 +80,7 @@ class TaskGenerator:
         self.inputs_specs[key] = resource_type
 
         # add required imports, by default the type is Resource
-        self.gws_core_additional_imports.add(Resource.__name__)
+        self.gws_core_additional_imports.add(resource_type.__name__)
         self.gws_core_additional_imports.add(InputSpec.__name__)
 
     def add_output_spec(self, key: str, resource_type: Type[Resource]) -> None:
@@ -97,7 +97,7 @@ class TaskGenerator:
         self.outputs_specs[key] = resource_type
 
         # add required imports, by default the type is Resource
-        self.gws_core_additional_imports.add(Resource.__name__)
+        self.gws_core_additional_imports.add(resource_type.__name__)
         self.gws_core_additional_imports.add(OutputSpec.__name__)
 
     def add_config_spec(self, key: str, param_spec: ParamSpec) -> None:
