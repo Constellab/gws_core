@@ -170,7 +170,7 @@ class RichText():
             if 'insert' in ope and isinstance(ope['insert'], dict) \
                     and RichTextSpecialOps.RESOURCE_VIEW.value in ope['insert'] \
                     and isinstance(ope['insert'][RichTextSpecialOps.RESOURCE_VIEW.value], dict):
-                variable = self._format_variable_name(f"figure_{view_index}")
+                variable = self._format_variable_name(f"figure_{view_index}") + '\n'
                 ops: RichTextOps = {'insert': variable}
                 self._content['ops'][op_index] = ops
                 view_index += 1
