@@ -404,6 +404,7 @@ from .resource.view.lazy_view_param import LazyViewParam as LazyViewParam
 from .resource.view.multi_views import MultiViews as MultiViews
 from .resource.view.view import View as View
 from .resource.view.view_decorator import view as view
+from .resource.view.view_resource import ViewResource as ViewResource
 from .resource.view.view_types import ViewSpecs as ViewSpecs
 from .resource.view.view_types import ViewType as ViewType
 # Space
