@@ -9,7 +9,6 @@ from email.header import decode_header
 from typing import Dict
 
 import requests
-
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.core.utils.date_helper import DateHelper
@@ -142,7 +141,7 @@ class FileDownloader():
 
         except Exception as exc:
             self._dispatch_error(
-                f"Error downloading {url} to {destination_path}: {exc}")
+                f"Error downloading from {url} : {exc}")
             raise exc
 
         duration = DateHelper.get_duration_pretty_text(

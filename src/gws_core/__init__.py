@@ -271,6 +271,10 @@ from .impl.table.transformers.table_data_filter_text import \
     TableColumnDataTextFilter as TableColumnDataTextFilter
 from .impl.table.transformers.table_data_filter_text import \
     TableRowDataTextFilter as TableRowDataTextFilter
+from .impl.table.transformers.table_deleter import \
+    TableColumnsDeleter as TableColumnsDeleter
+from .impl.table.transformers.table_deleter import \
+    TableRowsDeleter as TableRowsDeleter
 from .impl.table.transformers.table_mass_operations import \
     TableColumnMassOperations as TableColumnMassOperations
 from .impl.table.transformers.table_operations import \
@@ -407,6 +411,9 @@ from .resource.view.view_decorator import view as view
 from .resource.view.view_resource import ViewResource as ViewResource
 from .resource.view.view_types import ViewSpecs as ViewSpecs
 from .resource.view.view_types import ViewType as ViewType
+# Share
+from .share.resource_downloader_http import \
+    ResourceDownloaderHttp as ResourceDownloaderHttp
 # Space
 from .space.mail_service import MailService as MailService
 # Tag

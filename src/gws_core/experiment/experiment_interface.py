@@ -111,6 +111,9 @@ class IExperiment:
     def is_finished(self) -> bool:
         return self._experiment.is_finished
 
+    def is_success(self) -> bool:
+        return self._experiment.is_success
+
     def refresh(self) -> None:
         self._experiment = self._experiment.refresh()
         self._protocol.refresh()
