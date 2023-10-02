@@ -10,13 +10,12 @@ from json import dump, load
 from pathlib import Path
 from typing import Any, Union, final
 
-from typing_extensions import TypedDict
-
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
+from typing_extensions import TypedDict
 
 from .shell_proxy import ShellProxy
 
@@ -72,8 +71,7 @@ class BaseEnvShell(ShellProxy):
             raise Exception("Invalid env file path")
         self.env_file_path = str(env_file_path)
 
-    def run(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = False) -> int:
-
+    def run(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = True) -> int:
         formatted_cmd = self.format_command(cmd)
 
         # compute env

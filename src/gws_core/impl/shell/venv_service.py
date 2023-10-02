@@ -132,11 +132,11 @@ class VEnvService():
         }
 
     @classmethod
-    def delete_venv(cls, venv_name: str) -> None:
+    def delete_venv(cls, venv_name: str, check_running_experiment: bool = False) -> None:
         """
         Delete a virtual environment.
         """
-        if ExperimentService.count_of_running_experiments() > 0:
+        if check_running_experiment and ExperimentService.count_of_running_experiments() > 0:
             raise BadRequestException('Cannot delete a venv while an experiment is running.')
         venv_folder = os.path.join(Settings.get_global_env_dir(), venv_name)
         FileHelper.delete_dir(venv_folder)

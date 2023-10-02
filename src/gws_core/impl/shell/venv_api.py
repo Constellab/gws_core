@@ -45,7 +45,7 @@ def delete_venv(venv_name: VenvNameRequest,
     Delete a virtual environment
     Use body to retrieve the name because the name can be weird
     """
-    return VEnvService.delete_venv(venv_name.venv_name)
+    return VEnvService.delete_venv(venv_name.venv_name, check_running_experiment=True)
 
 
 @core_app.delete("/venv", tags=["VEnv"],

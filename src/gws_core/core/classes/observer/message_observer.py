@@ -66,6 +66,14 @@ class BasicMessageObserver(MessageObserver):
                 return True
         return False
 
+    def has_message(self, message: str, level: MessageLevel = None) -> bool:
+        for mes in self.messages:
+            if level is not None and mes.status != level:
+                continue
+            if message == mes.message:
+                return True
+        return False
+
 
 class LoggerMessageObserver(MessageObserver):
     """Observer to log dispatched message to the logger"""

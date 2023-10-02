@@ -5,7 +5,7 @@
 
 import os
 import subprocess
-from typing import Union, final
+from typing import Union
 
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -97,10 +97,6 @@ cd .. && rm -rf {self.get_env_dir_path()}"'
 
     def get_venv_dir_path(self) -> str:
         return os.path.join(self.get_env_dir_path(), self.VENV_DIR_NAME)
-
-    @final
-    def run(self, cmd: Union[list, str], env: dict = None, shell_mode=True) -> None:
-        return super().run(cmd, env, shell_mode=shell_mode)
 
     @classmethod
     def folder_is_env(cls, folder_path: str) -> bool:
