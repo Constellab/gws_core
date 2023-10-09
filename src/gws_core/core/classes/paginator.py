@@ -5,11 +5,10 @@
 
 from typing import Any, Callable, Dict, Generic, List, TypeVar
 
+from gws_core.core.classes.jsonable import ListJsonable
 from numpy.core.numeric import Infinity
 from peewee import ModelSelect
 from typing_extensions import TypedDict
-
-from gws_core.core.classes.jsonable import ListJsonable
 
 from ..model.model import Model
 
@@ -104,12 +103,7 @@ class Paginator(Generic[PaginatorType]):
     def __init__(self, query: ModelSelect,
                  page: int = 0,
                  nb_of_items_per_page: int = 20,
-                 nb_max_of_items_per_page: int = 100,
-                 view_params: dict = None):
-        if not view_params:
-            self.view_params = {}
-        else:
-            self.view_params = view_params
+                 nb_max_of_items_per_page: int = 100):
 
         self._query = query
         self._nb_of_items_per_page = nb_of_items_per_page

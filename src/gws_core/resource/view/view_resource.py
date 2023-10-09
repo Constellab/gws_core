@@ -33,8 +33,8 @@ class ViewResource(Resource):
 
     @staticmethod
     def from_resource(resource: Resource, view_method_name: str,
-                      view_params: ConfigParamsDict = None) -> 'ViewResource':
-        view_runner: ViewRunner = ViewRunner(resource, view_method_name, view_params)
+                      config_values: ConfigParamsDict = None) -> 'ViewResource':
+        view_runner: ViewRunner = ViewRunner(resource, view_method_name, config_values)
 
         view_runner.generate_view()
 

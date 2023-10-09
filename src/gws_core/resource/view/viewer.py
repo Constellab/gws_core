@@ -25,6 +25,7 @@ class Viewer(Task):
 
     input_name: str = 'resource'
     resource_config_name: str = 'resource_typing_name'
+    view_config_name: str = 'view_config'
 
     input_specs: InputSpecs = InputSpecs({
         "resource": InputSpec(Resource)
