@@ -391,8 +391,8 @@ class Table(Resource):
 
     def remove_row(self, row_name: str) -> None:
         """ Remove a row from the Dataframe.
-        :param row_index: index of the row to remove
-        :type row_index: int
+        :param row_name: name of the row to remove
+        :type row_name: str
         """
         self.check_row_exists(row_name)
 

@@ -251,3 +251,15 @@ class Utils:
             return f"Values differents for key '{cumulated_key}'. First: '{json_1}'. Second: '{json_2}'"
 
         return None
+
+    @classmethod
+    def stringify_type(cls, type):
+        if type is None:
+            return None
+        if hasattr(type, "__name__") and type is not None:
+            type = type.__name__
+        elif hasattr(type, "_name") and type._name is not None:
+            type = type._name
+        else:
+            type = str(type)
+        return type
