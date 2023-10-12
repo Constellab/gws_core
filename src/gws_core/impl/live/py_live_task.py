@@ -72,12 +72,12 @@ class PyLiveTask(Task):
 
         result = LiveCodeHelper.run_python_code(code_with_params, init_globals)
 
-        target = result.get("targets", None)
+        targets = result.get("targets", None)
 
-        if target is None:
-            raise Exception("the target variable is None")
+        if targets is None:
+            raise Exception("The 'targets' variable is None")
 
-        return {'target': ResourceList(target)}
+        return {'target': ResourceList(targets)}
 
     def run_after_task(self) -> None:
         FileHelper.delete_dir(self.working_dir)

@@ -5,7 +5,6 @@
 
 import json
 import os
-from unittest import TestCase
 
 from numpy import NaN, inf
 
@@ -15,6 +14,7 @@ from gws_core.core.utils.json_helper import JSONHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.impl.json.json_tasks import JSONExporter, JSONImporter
+from gws_core.test.base_test_case_light import BaseTestCaseLight
 from gws_core.test.data_provider import DataProvider
 
 
@@ -30,7 +30,7 @@ class ATest():
 
 
 # test_json
-class TestJson(TestCase):
+class TestJson(BaseTestCaseLight):
 
     def test_importer(self):
         file_path = DataProvider.get_test_data_path("mini_travel_graph.json")
@@ -67,3 +67,39 @@ class TestJson(TestCase):
         dict_ = JSONDict({'hello': 123, 'numpy': NaN, 'inf': inf, 'a': ATest(a_test="hello")})
         self.assertEqual(dict_.default_view(ConfigParams()).data_to_dict(ConfigParams()), {
                          'hello': 123, 'numpy': None, 'inf': None, 'a': 'hello'})
+
+    def test_extract_json_structure(self):
+        # Sample JSON data
+        json_data = {
+            "name": "John",
+            "age": 30,
+            "float": 1.2,
+            "none": None,
+            "address": {
+                "street": "123 Main St",
+                "city": "New York"
+            },
+            "scores": [{
+                "street": "123 Main St",
+                "city": "New York"
+            }]
+        }
+
+        # Extract the JSON structure
+        json_structure = JSONHelper.extract_json_structure(json_data)
+
+        result = {
+            "name": "str",
+            "age": "int",
+            "float": "float",
+            "none": "any",
+            "address": {
+                "street": "str",
+                "city": "str"
+            },
+            "scores": [{
+                "street": "str",
+                "city": "str"
+            }]
+        }
+        self.assert_json(json_structure, result)

@@ -49,7 +49,7 @@ The data of the table is not transferered to OpenAI, only the provided text.
         context = "You are a developer assistant that generate code in python to generate charts from dataframes."
         context += " In python, generate a code that takes a Dataframe as input and generate a png graph using matplotlib."
         context += "\nThe variable named 'source' contains the dataframe."
-        context += " The variable named 'output_path' contains the complete path of the output png file destination."
+        context += " The variable named 'output_path' contains the complete path of the output png file destination. Don't use the show method."
         context += f"\n{OpenAiHelper.get_code_context([GwsCorePackages.PANDAS, GwsCorePackages.NUMPY, GwsCorePackages.MATPLOTLIB])}"
         context += f"\nThe dataframe has {table.nb_rows} rows and {table.nb_columns} columns."
         return context
