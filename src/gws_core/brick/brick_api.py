@@ -32,7 +32,8 @@ def get_brick_info(brick_name: str, _=Depends(AuthService.check_user_access_toke
 @core_app.get("/brick/{brick_name}/technical-doc", tags=["Bricks"], summary="Generate technical doc for a brick")
 def export_technical_doc(brick_name: str,
                          _=Depends(AuthService.check_user_access_token)) -> dict:
-    return TechnicalDocService.generate_technical_doc(brick_name)
+    res = TechnicalDocService.generate_technical_doc(brick_name)
+    return res
 
 
 @core_app.post("/brick/{brick_name}/call-migration/{version}",  tags=["Bricks"], summary="Call a specific migration")

@@ -2,6 +2,10 @@ import inspect
 from typing import Any, Callable, Dict, List, Tuple
 
 from ..classes.func_meta_data import FuncArgMetaData, FuncArgsMetaData
+from ..utils.utils import Utils
+
+# TODO: En double dans view_decorator.py
+VIEW_META_DATA_ATTRIBUTE = '_view_mata_data'
 
 
 class ReflectorHelper():
@@ -83,3 +87,45 @@ class ReflectorHelper():
         """
         # Check if the method is annotated with view
         return setattr(object_, meta_data_name, value)
+
+    # TODO: gérer les views
+
+    @classmethod
+    def get_methode_named_args_json(cls, method: Any) -> List[Dict[str, Any]]:
+        arguments: Dict[str, FuncArgMetaData] = cls.get_function_arguments(method).get_named_args()
+        arguments_json: List[Dict[str, Any]] = []
+        for arg in arguments.items():
+            arg_name: str = arg[0]
+            arg_type: Any = arg[1].type_
+            arg_default_value: Any = arg[1].default_value.__name__ if not '_empty' else None
+
+            arg_type = Utils.stringify_type(arg_type)
+
+            if not isinstance(arg_name, str):
+                print(arg_name)
+            if not isinstance(arg_type, str):
+                print(arg_type)
+            if not isinstance(arg_default_value, str):
+                arg_default_value = str(arg_default_value)
+
+            arguments_json.append({
+                'arg_name': arg_name,
+                'arg_type': arg_type,
+                'arg_default_value': arg_default_value
+            })
+        return arguments_json
+
+    @classmethod
+    def is_decorated_with_view(cls, func: Any) -> bool:
+        source_lines = inspect.getsource(func[1]).splitlines()
+        return any(('@view' in line)for line in source_lines)
+
+    @classmethod
+    def get_methods_doc(cls, methods: Any) -> List[Dict[str, Any]]:
+        res: List[Dict[str, Any]] = []
+        for name, method in methods:
+            signature: inspect.Signature = inspect.signature(method)
+            arguments: List = cls.get_methode_named_args_json(method)
+            res.append({"name": name, "doc": inspect.getdoc(method), "args": arguments, "return_type": (Utils.stringify_type(
+                signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None)})
+        return res
