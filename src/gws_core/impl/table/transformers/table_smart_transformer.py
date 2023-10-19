@@ -41,7 +41,9 @@ The data of the table is not transferered to OpenAI, only the provided text.
         'generated_code': SmartTaskBase.generated_code_output
     })
     config_specs: ConfigSpecs = {
+        # get the openAI config specs
         **SmartTaskBase.config_specs,
+        # add custom config specs
         "keep_columns_tags": BoolParam(default_value=False, human_name="Keep columns tags",
                                        short_description="If true, the columns tags are kept in the output table for columns that have the same names."),
         "keep_rows_tags": BoolParam(default_value=False, human_name="Keep rows tags",
@@ -53,16 +55,15 @@ The data of the table is not transferered to OpenAI, only the provided text.
         source: Table = inputs["source"]
 
         context = "You are a developer assistant that generate code in python to transform a dataframe."
-        context += "\nThe variable named 'source' contains the dataframe."
-        context += "The transformed dataframe must be assigned to a variable named 'target'."
         context += f"\n{OpenAiHelper.get_code_context([GwsCorePackages.PANDAS, GwsCorePackages.NUMPY])}"
         context += f"\nThe dataframe has {source.nb_rows} rows and {source.nb_columns} columns."
-
+        context += "The transformed dataframe must be assigned to a variable named 'target'."
         return context
 
     def build_openai_code_inputs(self, params: ConfigParams, inputs: TaskInputs) -> dict:
         # get the table
         source: Table = inputs["source"]
+        # pass the dataframe as input
         return {"source": source.get_data()}
 
     def build_task_outputs(self, params: ConfigParams, inputs: TaskInputs,
@@ -91,8 +92,11 @@ table_target = Table(target)
         # get the table
         source: Table = inputs["source"]
 
+        # manager the tags options
         if params.get_value("keep_columns_tags"):
+            # copy the tags from the source table to the target table
             result.copy_column_tags_by_name(source)
+            # update the live task code to copy the tags
             live_task_code += "\ntable_target.copy_column_tags_by_name(source_table)"
 
         if params.get_value("keep_rows_tags"):

@@ -101,12 +101,13 @@ from .core.service.external_api_service import \
     ExternalApiService as ExternalApiService
 from .core.service.mysql_service import MySQLService as MySQLService
 from .core.service.settings_service import SettingsService as SettingsService
+# Core > Utils
 from .core.utils.compress.compress import Compress as Compress
 from .core.utils.compress.gzip_compress import GzipCompress as GzipCompress
 from .core.utils.compress.tar_compress import TarCompress as TarCompress
 from .core.utils.compress.zip import Zip as Zip
-# Core > Utils
 from .core.utils.cryptography import Cryptography as Cryptography
+from .core.utils.gws_core_packages import GwsCorePackages as GwsCorePackages
 from .core.utils.logger import Logger as Logger
 from .core.utils.numeric_helper import NumericHelper as NumericHelper
 from .core.utils.package_helper import PackageHelper as PackageHelper
@@ -115,8 +116,8 @@ from .core.utils.serializer import Serializer as Serializer
 from .core.utils.settings import Settings as Settings
 from .core.utils.string_helper import StringHelper as StringHelper
 from .core.utils.utils import Utils as Utils
-from .credentials.credentials_param import CredentialsParam as CredentialsParam
 # Credentials
+from .credentials.credentials_param import CredentialsParam as CredentialsParam
 from .credentials.credentials_type import \
     CredentialsDataBasic as CredentialsDataBasic
 from .credentials.credentials_type import \
