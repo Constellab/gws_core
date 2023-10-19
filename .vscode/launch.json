@@ -48,7 +48,15 @@
           "request": "launch",
           "program": "${workspaceFolder}/manage.py ",
           "console": "integratedTerminal",
-      }
+      },
+      {
+        "name": "Client s3",
+        "type": "python",
+        "request": "launch",
+        "program": "/lab/user/bricks/gws_core/test_s3/test_s3_client.py",
+        "console": "integratedTerminal",
+        "justMyCode": false
+    },
     ],
 
     "inputs": [
