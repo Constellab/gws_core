@@ -16,6 +16,8 @@ class CondaShellProxy(BaseEnvShell):
 
     CONFIG_FILE_NAME = "environment.yml"
 
+    conda_command = "conda"
+
     def _install_env(self) -> bool:
         """
         Install an environment from a conda environment file.
@@ -23,12 +25,12 @@ class CondaShellProxy(BaseEnvShell):
         """
 
         cmd = [
-            f'bash -c "source /opt/conda/etc/profile.d/conda.sh && conda env create -f \
-{self.env_file_path} --force --prefix {self.VENV_DIR_NAME}"'
+            self._build_conda_command(self.conda_command,
+                                      f'env create -f {self.env_file_path} --force --prefix {self.VENV_DIR_NAME}')
         ]
 
         self._message_dispatcher.notify_info_message(
-            f"Installing conda env with command: {' '.join(cmd)}.")
+            f"Installing {self.conda_command} env with command: {' '.join(cmd)}.")
 
         res: subprocess.CompletedProcess = subprocess.run(
             " ".join(cmd),
@@ -57,13 +59,12 @@ class CondaShellProxy(BaseEnvShell):
         """
 
         cmd = [
-            f'bash -c "source /opt/conda/etc/profile.d/conda.sh && \
-conda remove -y --prefix {self.VENV_DIR_NAME} --all && \
-cd .. && rm -rf {self.get_env_dir_path()}"'
-        ]
+            self._build_conda_command(
+                self.conda_command,
+                f'remove -y --prefix {self.VENV_DIR_NAME} --all && cd .. && rm -rf {self.get_env_dir_path()}')]
 
         self._message_dispatcher.notify_info_message(
-            f"Uninstalling conda env with command: {' '.join(cmd)}.")
+            f"Uninstalling {self.conda_command} env with command: {' '.join(cmd)}.")
 
         res = subprocess.run(
             " ".join(cmd),
@@ -89,7 +90,8 @@ cd .. && rm -rf {self.get_env_dir_path()}"'
             user_cmd = [str(c) for c in user_cmd]
             user_cmd = " ".join(user_cmd)
         venv_dir = self.get_venv_dir_path()
-        cmd = f'bash -c "source /opt/conda/etc/profile.d/conda.sh && conda activate {venv_dir} && {user_cmd}"'
+        # the run command must use conda, not mamba
+        cmd = self._build_conda_command(CondaShellProxy.conda_command, f'run -p {venv_dir} {user_cmd}')
         return cmd
 
     def get_config_file_path(self) -> str:
@@ -97,6 +99,9 @@ cd .. && rm -rf {self.get_env_dir_path()}"'
 
     def get_venv_dir_path(self) -> str:
         return os.path.join(self.get_env_dir_path(), self.VENV_DIR_NAME)
+
+    def _build_conda_command(self, conda_cmd: str, cmd: str, ) -> str:
+        return f'bash -c "source /opt/conda/etc/profile.d/{conda_cmd}.sh && {conda_cmd} {cmd}"'
 
     @classmethod
     def folder_is_env(cls, folder_path: str) -> bool:

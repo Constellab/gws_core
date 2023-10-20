@@ -13,6 +13,7 @@ from gws_core.core.classes.observer.message_observer import \
     BasicMessageObserver
 from gws_core.impl.shell.base_env_shell import BaseEnvShell, VEnvCreationInfo
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
+from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy                                                  MambaShellProxy)
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
 from gws_core.impl.shell.venv_service import (VEnsStatus, VEnvBasicInfo,
                                               VEnvService)
@@ -25,13 +26,25 @@ class TestEnvShellProxy(TestCase):
         pip_env_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                     "penv", "env_jwt_pip.txt")
 
+        print('--------------------------------PIP ENV FILE----------------------------')
         self._test_env_shell_proxy(PipShellProxy, 'MyPipTestEnvironment', pip_env_file)
+        print('--------------------------------END PIP ENV FILE--------------------------------')
 
     def test_conda_shell_proxy(self):
         conda_env_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                       "penv", "env_jwt_conda.yml")
 
+        print('--------------------------------CONDA ENV FILE--------------------------------')
         self._test_env_shell_proxy(CondaShellProxy, 'MyCondaTestEnvironment', conda_env_file)
+        print('--------------------------------END CONDA ENV FILE--------------------------------')
+
+    def test_mamba_shell_proxy(self):
+        conda_env_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                      "penv", "env_jwt_conda.yml")
+
+        print('--------------------------------MAMBA ENV FILE--------------------------------')
+        self._test_env_shell_proxy(MambaShellProxy, 'MyMambaTestEnvironment', conda_env_file)
+        print('--------------------------------END MAMBA ENV FILE--------------------------------')
 
     def _test_env_shell_proxy(self, shell_proxy_type: Type[BaseEnvShell], env_name: str, env_file_path: str):
 

@@ -173,8 +173,10 @@ from .impl.json.json_view import JSONView as JSONView
 from .impl.live.py_conda_live_task import PyCondaLiveTask as PyCondaLiveTask
 from .impl.live.py_live_task import PyLiveTask as PyLiveTask
 # Impl > LiveTask
+from .impl.live.py_mamba_live_task import PyMambaLiveTask as PyMambaLiveTask
 from .impl.live.py_pipenv_live_task import PyPipenvLiveTask as PyPipenvLiveTask
 from .impl.live.r_conda_live_task import RCondaLiveTask as RCondaLiveTask
+from .impl.live.r_mamba_live_task import RMambaLiveTask as RMambaLiveTask
 # Impl > open ai
 from .impl.openai.open_ai_chat import AiChatMessage as AiChatMessage
 from .impl.openai.open_ai_chat import OpenAiChat as OpenAiChat
@@ -211,6 +213,8 @@ from .impl.shell.conda_env_task import CondaEnvTask as CondaEnvTask
 from .impl.shell.conda_shell_proxy import CondaShellProxy as CondaShellProxy
 from .impl.shell.helper.env_shell_proxy_helper import \
     EnvShellProxyHelper as EnvShellProxyHelper
+from .impl.shell.mamba_env_task import MambaEnvTask as MambaEnvTask
+from .impl.shell.mamba_shell_proxy import MambaShellProxy as MambaShellProxy
 from .impl.shell.pip_env_task import PipEnvTask as PipEnvTask
 from .impl.shell.pip_shell_proxy import PipShellProxy as PipShellProxy
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy

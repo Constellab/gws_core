@@ -13,8 +13,10 @@ from gws_core import File, PyCondaLiveTask, Task, TaskRunner
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.live.py_mamba_live_task import PyMambaLiveTask
 from gws_core.impl.live.py_pipenv_live_task import PyPipenvLiveTask
 from gws_core.impl.live.r_conda_live_task import RCondaLiveTask
+from gws_core.impl.live.r_mamba_live_task import RMambaLiveTask
 
 
 # test_env_live_task
@@ -28,6 +30,12 @@ class TestEnvLiveTask(TestCase):
 
     def test_r_conda_env_live_task(self):
         self._test_default_config(RCondaLiveTask)
+
+    def test_mamba_env_live_task(self):
+        self._test_default_config(PyMambaLiveTask)
+
+    def test_r_mamba_env_live_task(self):
+        self._test_default_config(RMambaLiveTask)
 
     def _test_default_config(self, task_type: Type[Task]):
         """Test the default env live task config template to be sure it is valid
