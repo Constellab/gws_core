@@ -27,6 +27,7 @@ from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.share.resource_downloader_http import ResourceDownloaderHttp
 from gws_core.share.shared_resource import SharedResource
+from gws_core.tag.tag import Tag
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.plug import Sink
 from gws_core.task.task_model import TaskModel
@@ -191,7 +192,6 @@ class ResourceService(BaseService):
             project_id) if project_id else None
         resource_model.project = project
         return resource_model.save()
-
     ################################# VIEW ###############################
 
     @classmethod

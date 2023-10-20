@@ -4,6 +4,8 @@
 # About us: https://gencovery.com
 
 
+from typing import List, Optional
+
 from peewee import ModelSelect
 
 from gws_core.core.classes.paginator import Paginator
@@ -11,6 +13,8 @@ from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
 from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials_search_builder import \
     CredentialsSearchBuilder
+from gws_core.credentials.credentials_type import (CredentialsDataS3,
+                                                   CredentialsType)
 from gws_core.space.space_service import (ExternalCheckCredentialResponse,
                                           SpaceService)
 from gws_core.user.user_credentials_dto import UserCredentialsDTO
@@ -98,3 +102,17 @@ class CredentialsService():
     @classmethod
     def find_by_name(cls, name: str) -> Credentials:
         return Credentials.find_by_name(name)
+
+    @classmethod
+    def get_s3_credentials_data_by_access_key(cls, access_key_id: str) -> Optional[CredentialsDataS3]:
+        """Return the S3 credentials that match the access key id
+        """
+
+        s3_credentials: List[Credentials] = Credentials.search_by_type(CredentialsType.S3)
+
+        for credentials in s3_credentials:
+            data: CredentialsDataS3 = credentials.data
+            if data.get('access_key_id') == access_key_id:
+                return data
+
+        return None

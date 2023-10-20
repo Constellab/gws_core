@@ -28,3 +28,5 @@ class GwsCorePackages():
     TYPING_EXTENSIONS = "typing_extensions"
     BOTO3 = "boto3"
     PLOTLY = "plotly"
+    SIMPLE_JSON = "simplejson"
+    XML_TO_DICT = "xmltodict"

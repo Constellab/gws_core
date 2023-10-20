@@ -7,6 +7,7 @@ import time
 from typing import TypedDict
 
 import boto3
+from mypy_boto3_s3.client import S3Client
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.date_helper import DateHelper
@@ -122,7 +123,7 @@ class S3Bucket():
             self.message_dispatcher.notify_progress_value(
                 progress, f"{action_name} {transfered_str}/{total_str} ({progress}%) - {remaining_time_str} remaining")
 
-    def _get_s3_bucket(self):
+    def _get_s3_bucket(self) -> S3Client:
         return boto3.client('s3',
                             endpoint_url=self.endpoint,
                             region_name=self.region,

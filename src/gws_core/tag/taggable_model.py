@@ -6,9 +6,10 @@
 
 from typing import Dict, List, Optional
 
-from gws_core.core.classes.expression_builder import ExpressionBuilder
 from peewee import CharField, Expression
 from peewee import Model as PeeweeModel
+
+from gws_core.core.classes.expression_builder import ExpressionBuilder
 
 from .tag import KEY_VALUE_SEPARATOR, TAGS_SEPARATOR, Tag
 from .tag_helper import TagHelper

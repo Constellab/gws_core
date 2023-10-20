@@ -5,8 +5,10 @@
 
 import json
 from io import StringIO
+from typing import Any
 
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
+from xmltodict import unparse
 
 
 class ResponseHelper():
@@ -47,3 +49,11 @@ class ResponseHelper():
         response.headers["Content-Disposition"] = f"attachment; filename={file_name}"
 
         return response
+
+    @staticmethod
+    def create_xml_response(xml_text: str) -> Response:
+        return Response(content=xml_text, media_type='application/xml')
+
+    @staticmethod
+    def create_xml_response_from_json(json_: Any) -> Response:
+        return ResponseHelper.create_xml_response(unparse(json_))

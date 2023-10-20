@@ -31,6 +31,10 @@ class Credentials(ModelWithUser):
         return cls.select().where(Credentials.name == name).first()
 
     @classmethod
+    def search_by_type(cls, type_: CredentialsType) -> ModelSelect:
+        return cls.select().where(Credentials.type == type_)
+
+    @classmethod
     def search_by_name(cls, name: str) -> ModelSelect:
         return cls.select().where(Credentials.name.contains(name))
 

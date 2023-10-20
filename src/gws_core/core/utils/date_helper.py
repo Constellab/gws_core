@@ -29,6 +29,10 @@ class DateHelper:
         return datetime.fromisoformat(date_str)
 
     @staticmethod
+    def to_iso_str(date: datetime) -> str:
+        return date.isoformat()
+
+    @staticmethod
     def are_same_day(date1: datetime, date2: datetime) -> bool:
         return date1.date() == date2.date()
 
