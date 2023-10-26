@@ -11,7 +11,8 @@ from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.openai.open_ai_types import OpenAiChatMessage
 
-openai.api_key = "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"
+# TODO to remove once all the lab manager are updated to 1.0.5
+old_api_key = "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"
 
 
 class OpenAiHelper():
@@ -27,6 +28,8 @@ class OpenAiHelper():
         :return: _description_
         :rtype: OpenAiChat
         """
+
+        openai.api_key = Settings.get_open_ai_api_key() or old_api_key
 
         completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",

@@ -238,6 +238,15 @@ class Settings():
         return os.environ.get("FRONT_URL", '')
 
     @classmethod
+    def get_open_ai_api_key(cls) -> str:
+        """Return the open ai api key
+
+        :return: [description]
+        :rtype: [type]
+        """
+        return os.environ.get("OPENAI_API_KEY")
+
+    @classmethod
     def get_lab_folder(cls) -> str:
         return '/lab'
 
