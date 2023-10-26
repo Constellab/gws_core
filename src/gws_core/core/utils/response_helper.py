@@ -51,8 +51,9 @@ class ResponseHelper():
         return response
 
     @staticmethod
-    def create_xml_response(xml_text: str) -> Response:
-        return Response(content=xml_text, media_type='application/xml')
+    def create_xml_response(xml_text: str, status_code: int = 200) -> Response:
+        return Response(content=xml_text, media_type='application/xml',
+                        status_code=status_code)
 
     @staticmethod
     def create_xml_response_from_json(json_: Any) -> Response:

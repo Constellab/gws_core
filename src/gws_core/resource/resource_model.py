@@ -65,6 +65,8 @@ class ResourceOrigin(Enum):
     ACTIONS = "ACTIONS"
     # If the resource was imported manually by the user from another lab
     IMPORTED_FROM_LAB = "IMPORTED_FROM_LAB"
+    # For project DOCUMENT where this lab work as a S3 server
+    S3_PROJECT_STORAGE = "S3_PROJECT_STORAGE"
 
 
 # Use the typing decorator to avoid circular dependency
@@ -342,7 +344,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         """
 
         # If the origin is not uploaded, then the experiment and the task must be provided
-        if origin != ResourceOrigin.UPLOADED and origin != ResourceOrigin.ACTIONS:
+        if origin not in [ResourceOrigin.UPLOADED, ResourceOrigin.ACTIONS, ResourceOrigin.S3_PROJECT_STORAGE]:
             if experiment is None or task_model is None:
                 raise Exception(
                     "To create a GENERATED resource, you must provide the experiment and the task")

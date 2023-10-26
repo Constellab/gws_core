@@ -10,7 +10,7 @@ from ...task.task_decorator import task_decorator
 
 
 @task_decorator(
-    "RMambaLiveTask", human_name="R env live task",
+    "RMambaLiveTask", human_name="R mamba env live task",
     short_description="Live task to run R snippets in mamba a shell environment.")
 class RMambaLiveTask(RCondaLiveTask):
     """

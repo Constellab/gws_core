@@ -17,7 +17,7 @@ from ...task.task_decorator import task_decorator
 
 
 @task_decorator(
-    "RCondaLiveTask", human_name="R env live task",
+    "RCondaLiveTask", human_name="R conda env live task",
     short_description="Live task to run R snippets in conda a shell environment.")
 class RCondaLiveTask(EnvLiveTask):
     """

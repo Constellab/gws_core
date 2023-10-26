@@ -2,7 +2,7 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from typing import TypedDict
+from typing import List, TypedDict
 
 import botocore.auth
 import botocore.credentials
@@ -21,6 +21,7 @@ class S3AuthHeader(TypedDict):
     request_date: str
     region_name: str
     service_name: str
+    sign_headers: List[str]  # list of the header keys that are included in the signature
     signature: str
 
 
@@ -75,12 +76,16 @@ class S3ServerAuth:
         region = parts[0].split("Credential=")[1].split("/")[2]
         service = parts[0].split("Credential=")[1].split("/")[3]
         signature = parts[2].split("Signature=")[1]
+
+        # get the list of the headers that are included in the signature
+        sign_headers = parts[1].split("SignedHeaders=")[1].split(";")
         return {
             'access_key_id': access_key,
             'request_date': request_date,
             'region_name': region,
             'service_name': service,
-            'signature': signature
+            'signature': signature,
+            'sign_headers': sign_headers
         }
 
     @classmethod
@@ -92,12 +97,11 @@ class S3ServerAuth:
         credentials = botocore.credentials.Credentials(header['access_key_id'], secret_key)
         auth = botocore.auth.SigV4Auth(credentials, header['service_name'], header['region_name'])
 
-        # build the simulated header with the required fields for the signature
-        simulated_headers = {'x-amz-date': request.headers.get('x-amz-date'),
-                             'x-amz-content-sha256': request.headers.get('x-amz-content-sha256'),
-                             'host': request.headers.get('host')}
-        if request.headers.get('content-md5'):
-            simulated_headers['content-md5'] = request.headers.get('content-md5')
+        # Create a simulated request with the headers that are included in the signature
+        simulated_headers = {}
+        for header_key in header['sign_headers']:
+            if header_key in request.headers:
+                simulated_headers[header_key] = request.headers.get(header_key)
 
         # simulate a request to generate the signature
         simulated_request = AWSRequest(method=request.method, url=str(request.url), headers=simulated_headers, data=b'')

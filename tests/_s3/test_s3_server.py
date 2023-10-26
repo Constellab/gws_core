@@ -6,6 +6,7 @@
 import os
 from multiprocessing import Process
 from time import sleep
+from typing import List
 
 import boto3
 import requests
@@ -20,6 +21,9 @@ from gws_core.credentials.credentials_type import (CredentialsDataS3,
                                                    CredentialsType)
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
+from gws_core.impl.s3.s3_server_service import S3ServerService
+from gws_core.project.project import Project
+from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -32,6 +36,10 @@ class TestS3Server(BaseTestCase):
     current_file_abspath = os.path.abspath(__file__)
 
     def test_s3(self):
+        project: Project = Project()
+        project.code = 'S3'
+        project.title = 'S3'
+        project.save()
 
         proc = self._start_s3_server()
 
@@ -41,47 +49,71 @@ class TestS3Server(BaseTestCase):
             # Test auth, access key and secret key are correct
             self._test_auth()
 
-            # Test upload file
-            self._test_operations()
+            # Test CRUD
+            self._test_project_storage(project_id=project.id)
+
         finally:
             # stop the server
             proc.terminate()  # send
 
     def _test_auth(self):
         s3_client = self._create_client()
-        s3_client.list_objects_v2(Bucket='project')
+        s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
 
         # test wrong access key
         s3_client = self._create_client(access_key_id='wrong_access_key')
         with self.assertRaises(Exception):
-            s3_client.list_objects_v2(Bucket='project')
+            s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
 
         # test wrong secret key
         s3_client = self._create_client(secret_key='wrong_secret_key')
         with self.assertRaises(Exception):
-            s3_client.list_objects_v2(Bucket='project')
+            s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
 
-    def _test_operations(self):
+    def _test_project_storage(self, project_id: str):
         s3_client = self._create_client()
-        s3_client.upload_file(self.current_file_abspath, Bucket='super', Key='test.py')
+
+        key = f'space-id/root-project-id/{project_id}/documents/test.py'
+        s3_client.upload_file(self.current_file_abspath, Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Key=key)
+
+        # check resources
+        resources: List[ResourceModel] = list(ResourceModel.select())
+        self.assertEqual(len(resources), 1)
+        self.assertEqual(resources[0].origin, ResourceOrigin.S3_PROJECT_STORAGE)
+        self.assertEqual(resources[0].name, key)
 
         # test list objects
-        result = s3_client.list_objects_v2(Bucket='super')
+        result = s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
         self.assertEqual(len(result['Contents']), 1)
-        key = result['Contents'][0]['Key']
+        self.assertEqual(result['Contents'][0]['Key'], key)
+
+        # test list with prefix
+        prefix = f'space-id/root-project-id/{project_id}'
+        result = s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Prefix=prefix)
+        self.assertEqual(len(result['Contents']), 1)
+        self.assertEqual(result['Contents'][0]['Key'], key)
+
+        # test list with wrong prefix
+        prefix = 'space-id/root-project-id2/tt'
+        result = s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Prefix=prefix)
+        self.assertTrue('Contents' not in result)
 
         # test download file
         destination_folder = Settings.make_temp_dir()
         file_path = os.path.join(destination_folder, 'test.py')
-        s3_client.download_file(Bucket='super', Key=key, Filename=file_path)
+        s3_client.download_file(Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Key=key, Filename=file_path)
         self.assertTrue(FileHelper.exists_on_os(file_path))
         self.assertTrue(FileHelper.get_size(file_path) > 0)
 
         # test delete file
-        s3_client.delete_object(Bucket='super', Key=key)
+        s3_client.delete_object(Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Key=key)
+
+        # check resources
+        resources: List[ResourceModel] = list(ResourceModel.select())
+        self.assertEqual(len(resources), 0)
 
         # test list objects
-        result = s3_client.list_objects_v2(Bucket='super')
+        result = s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
         self.assertTrue('Contents' not in result)
 
     def _create_client(self, access_key_id: str = None, secret_key: str = None) -> S3Client:
@@ -93,6 +125,15 @@ class TestS3Server(BaseTestCase):
             aws_access_key_id=access_key_id or self.access_key_id,
             aws_secret_access_key=secret_key or self.secret_access_key,
         )
+
+        # test with local minio
+        # return boto3.client(
+        #     's3',
+        #     region_name='us-east-1',
+        #     endpoint_url='http://host.docker.internal:9000/',
+        #     aws_access_key_id='dfoombSNxhD4iE1BqEUr',
+        #     aws_secret_access_key='oXtEbbn8bpIj189wtOajc9NfFvzwbr6V386y6SAL',
+        # )
 
     def _create_credentials(self) -> Credentials:
         name = 'Test s3 server'
@@ -129,7 +170,7 @@ class TestS3Server(BaseTestCase):
 
             # make an http request to the server
             try:
-                response = requests.get('http://localhost:3000/v1/health-check')
+                response = requests.get('http://localhost:3000/health-check', timeout=1000)
                 if response.status_code == 200:
                     break
             except Exception as err:
