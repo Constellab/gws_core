@@ -5,6 +5,7 @@
 
 import os
 from threading import Thread
+from typing import List
 
 from gws_core.core.db.db_migration import DbMigrationService
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -12,6 +13,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment import Experiment
+from gws_core.experiment.experiment_enums import ExperimentStatus
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.fs_node_model import FSNodeModel
@@ -84,8 +86,33 @@ class SystemService:
 
     @classmethod
     def init_queue_and_monitor(cls) -> None:
+        cls._check_running_experiments()
         MonitorService.init()
         QueueService.init(daemon=True)
+
+    @classmethod
+    def _check_running_experiments(cls):
+        # check for all running status experiment, if the process is still running
+        # if not we consider that the experiment is not running
+
+        try:
+            CurrentUserService.set_current_user(User.get_sysuser())
+            experiments: List[Experiment] = list(Experiment.get_running_experiments())
+
+            for experiment in experiments:
+                if experiment.get_process_status() != ExperimentStatus.RUNNING:
+                    experiment.mark_as_error({
+                        "detail": "The experiment process was not found.",
+                        "unique_code": "PROCESS_NOT_FOUND",
+                        "context": None,
+                        "instance_id": None
+                    })
+        except Exception as err:
+            Logger.error(
+                f'[SystemService] Error while checking running experiments: {err}')
+            Logger.log_exception_stack_trace(err)
+        finally:
+            CurrentUserService.set_current_user(None)
 
     @classmethod
     def deinit_queue_and_monitor(cls) -> None:

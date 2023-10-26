@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, final
 
-from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
+from peewee import (BooleanField, CharField, DoubleField, ForeignKeyField,
+                    ModelSelect)
 
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
@@ -160,8 +161,17 @@ class Experiment(ModelWithUser, TaggableModel):
         :rtype: `int`
         """
 
+        return cls.get_running_experiments().count()
+
+    @classmethod
+    def get_running_experiments(cls) -> ModelSelect:
+        """
+        :return: the count of experiment in progress or waiting for a cli process
+        :rtype: `int`
+        """
+
         return Experiment.select().where((Experiment.status == ExperimentStatus.RUNNING) |
-                                         (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS)).count()
+                                         (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS))
 
     @classmethod
     def count_running_or_queued_experiments(cls) -> int:
