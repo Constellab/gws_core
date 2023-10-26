@@ -49,7 +49,7 @@ The structure of the json is transfered to OpenAI, not the json itself.
         json_structure = JSONHelper.extract_json_structure(code_inputs)
         str_json_structure = JSONHelper.safe_dumps(json_structure)
 
-        return f"""{self.PY_INTRO}
+        return f"""{self.VAR_PY_INTRO}
 The code purpose is to modify a json dict object.
 {self.VAR_INPUTS}
 The 'source' dict has the following schema :

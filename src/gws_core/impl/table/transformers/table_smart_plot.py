@@ -10,7 +10,6 @@ from gws_core.core.utils.gws_core_packages import GwsCorePackages
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.openai.open_ai_helper import OpenAiHelper
 from gws_core.impl.openai.smart_task_base import SmartTaskBase
 from gws_core.impl.table.table import Table
 from gws_core.impl.text.text import Text
@@ -48,7 +47,7 @@ The data of the table is not transferered to OpenAI, only the provided text.
                            code_inputs: Dict[str, Any]) -> str:
         table: Table = task_inputs["source"]
 
-        return f"""{self.PY_INTRO}
+        return f"""{self.VAR_PY_INTRO}
 The code purpose is to modify generate a plot file from a DataFrame using matplotlib.
 {self.VAR_INPUTS}
 The dataframe has {table.nb_rows} rows and {table.nb_columns} columns.
