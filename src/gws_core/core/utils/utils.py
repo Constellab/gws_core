@@ -253,13 +253,15 @@ class Utils:
         return None
 
     @classmethod
-    def stringify_type(cls, type):
-        if type is None:
+    def stringify_type(cls, type_: Type, include_module: bool = False):
+        if type_ is None:
             return None
-        if hasattr(type, "__name__") and type is not None:
-            type = type.__name__
-        elif hasattr(type, "_name") and type._name is not None:
-            type = type._name
+        if hasattr(type_, "__name__") and type_ is not None:
+            if include_module:
+                return f"{type_.__module__}.{type_.__name__}"
+            else:
+                return type_.__name__
+        elif hasattr(type_, "_name") and type_._name is not None:
+            return type_._name
         else:
-            type = str(type)
-        return type
+            return str(type_)

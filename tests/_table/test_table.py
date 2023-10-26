@@ -243,7 +243,7 @@ class TestTable(TestCase):
         table.add_column('A', [1, 2, 3])
 
         expected_table = Table(DataFrame({'A': [1, 2, 3]}))
-        self.assertEqual(table, expected_table)
+        self.assertTrue(table.equals(expected_table))
 
         # adding an empty column
         table.add_column('B')

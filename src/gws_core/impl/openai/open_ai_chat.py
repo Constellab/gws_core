@@ -5,33 +5,9 @@
 
 from typing import List, Literal, Optional
 
-from typing_extensions import NotRequired, TypedDict
-
-
-class OpenAiChatMessage(TypedDict):
-    """Format of the message for OpenAI chat
-
-    :param TypedDict: _description_
-    :type TypedDict: _type_
-    """
-    role: Literal['system', 'user', 'assistant']
-    content: str
-
-
-class AiChatMessage(OpenAiChatMessage):
-    """Overload of OpenAiChatMessage to add custom info (not sent to OpenAI)
-    but stored in the chat object
-    """
-    user_id: NotRequired[str]
-
-
-class OpenAiChatDict(TypedDict):
-    """Format of the chat for OpenAI chat
-
-    :param TypedDict: _description_
-    :type TypedDict: _type_
-    """
-    messages: List[OpenAiChatMessage]
+from gws_core.impl.openai.open_ai_helper import OpenAiHelper
+from gws_core.impl.openai.open_ai_types import (AiChatMessage, OpenAiChatDict,
+                                                OpenAiChatMessage)
 
 
 class OpenAiChat():
@@ -50,6 +26,13 @@ class OpenAiChat():
 
         if context:
             self.set_context(context)
+
+    def call_gpt(self) -> str:
+        response = OpenAiHelper.call_gpt(self.export_gpt_messages())
+
+        self.add_assistant_message(response)
+
+        return response
 
     def _add_message(self, role: Literal['system', 'user', 'assistant'], content: str):
         self._messages.append({'role': role, 'content': content})

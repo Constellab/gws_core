@@ -5,12 +5,10 @@
 
 from unittest import TestCase
 
-from pandas import DataFrame
-
 from gws_core.impl.json.json_dict import JSONDict
+from gws_core.impl.json.json_smart_transformer import JsonSmartTransformer
 from gws_core.impl.live.py_live_task import PyLiveTask
-from gws_core.impl.openai.open_ai_chat import OpenAiChatDict
-from gws_core.impl.plotly.table_smart_plotly import SmartPlotly
+from gws_core.impl.openai.open_ai_types import OpenAiChatDict
 from gws_core.impl.text.text import Text
 from gws_core.task.task_runner import TaskRunner
 
@@ -40,7 +38,7 @@ target['scores'] = filtered_scores```"""
             }]
         }
         tester = TaskRunner(
-            task_type=SmartPlotly,
+            task_type=JsonSmartTransformer,
             inputs={
                 "source": json_dict,
             },

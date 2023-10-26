@@ -8,7 +8,8 @@ from typing import Dict, List
 import openai
 
 from gws_core.core.utils.settings import Settings
-from gws_core.impl.openai.open_ai_chat import OpenAiChat
+from gws_core.core.utils.utils import Utils
+from gws_core.impl.openai.open_ai_types import OpenAiChatMessage
 
 openai.api_key = "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"
 
@@ -18,23 +19,21 @@ class OpenAiHelper():
     generate_code_rules = "Don't prompt the method signature. Write comments for the code. Generate only 1 block of code between ``` characters."
 
     @classmethod
-    def call_gpt(cls, chat: OpenAiChat) -> OpenAiChat:
+    def call_gpt(cls, chat_messages: List[OpenAiChatMessage]) -> str:
         """Call gpt chat, and add the response to the chat object as an assistant message
 
-        :param chat: _description_
-        :type chat: OpenAiChat
+        :param chat_messages: list of messages and context to send to the AI
+        :type chat_messages: OpenAiChat
         :return: _description_
         :rtype: OpenAiChat
         """
 
         completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=chat.export_gpt_messages()
+            messages=chat_messages
         )
 
-        chat.add_assistant_message(completion.choices[0].message.content)
-
-        return chat
+        return completion.choices[0].message.content
 
     @classmethod
     def get_code_context(cls, pip_package_names: List[str] = None) -> str:
@@ -71,8 +70,7 @@ class OpenAiHelper():
     def describe_inputs_for_context(cls, inputs: dict) -> str:
         inputs_texts: List[str] = []
         for key, value in inputs.items():
-            # TODO use the type to string in UTILS
-            inputs_texts.append(f"'{key}' (type '{value.__class__.__name__}')")
+            inputs_texts.append(f"'{key}' (type '{Utils.stringify_type(type(value), True)}')")
 
         return f"You have access to the following input variables : {', '.join(inputs_texts)}. The input variables are already initialized, do not create them."
 
@@ -80,7 +78,6 @@ class OpenAiHelper():
     def describe_outputs_for_context(cls, outputs_specs: Dict[str, type]) -> str:
         outputs_texts: List[str] = []
         for key, value in outputs_specs.items():
-            # TODO use the type to string in UTILS
-            outputs_texts.append(f"'{key}' (type '{value.__name__}')")
+            outputs_texts.append(f"'{key}' (type '{Utils.stringify_type(value, True)}')")
 
         return f"You must assigne the result to the following output variables : {', '.join(outputs_texts)}."

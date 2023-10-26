@@ -8,7 +8,7 @@ from unittest import TestCase
 from pandas import DataFrame
 
 from gws_core.impl.live.py_live_task import PyLiveTask
-from gws_core.impl.openai.open_ai_chat import OpenAiChatDict
+from gws_core.impl.openai.open_ai_types import OpenAiChatDict
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
 from gws_core.impl.plotly.table_smart_plotly import SmartPlotly
 from gws_core.impl.table.table import Table

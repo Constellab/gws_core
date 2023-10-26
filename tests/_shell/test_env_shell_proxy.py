@@ -13,7 +13,7 @@ from gws_core.core.classes.observer.message_observer import \
     BasicMessageObserver
 from gws_core.impl.shell.base_env_shell import BaseEnvShell, VEnvCreationInfo
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
-from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy                                                  MambaShellProxy)
+from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
 from gws_core.impl.shell.venv_service import (VEnsStatus, VEnvBasicInfo,
                                               VEnvService)

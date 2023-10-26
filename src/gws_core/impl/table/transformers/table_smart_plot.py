@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Any, Dict, List
+
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
 from gws_core.core.utils.settings import Settings
@@ -42,21 +44,26 @@ The data of the table is not transferered to OpenAI, only the provided text.
     temp_dir: str
     ouput_path: str
 
-    def get_context(self, params: ConfigParams, inputs: TaskInputs) -> str:
-        # prepare the input
-        table: Table = inputs["source"]
+    def build_main_context(self, params: ConfigParams, task_inputs: TaskInputs,
+                           code_inputs: Dict[str, Any]) -> str:
+        table: Table = task_inputs["source"]
 
-        context = "You are a developer assistant that generate code in python to generate charts from dataframes."
-        context += " In python, generate a code that takes a Dataframe as input and generate a png graph using matplotlib."
-        # context += "\nThe variable named 'source' contains the dataframe."
-        context += f"\n{OpenAiHelper.get_code_context([GwsCorePackages.PANDAS, GwsCorePackages.NUMPY, GwsCorePackages.MATPLOTLIB])}"
-        context += f"\nThe dataframe has {table.nb_rows} rows and {table.nb_columns} columns."
-        context += " The variable named 'output_path' contains the complete path of the output png file destination. Don't use the show method."
-        return context
+        return f"""{self.PY_INTRO}
+The code purpose is to modify generate a plot file from a DataFrame using matplotlib.
+{self.VAR_INPUTS}
+The dataframe has {table.nb_rows} rows and {table.nb_columns} columns.
+The variable named 'output_path' contains the absolute path of the output png file destination. Don't use the show method.
+{self.VAR_CODE_RULES}"""
 
-    def build_openai_code_inputs(self, params: ConfigParams, inputs: TaskInputs) -> dict:
+    def get_code_expected_output_types(self) -> Dict[str, Any]:
+        return {}
+
+    def get_available_package_names(self) -> List[str]:
+        return [GwsCorePackages.PANDAS, GwsCorePackages.NUMPY, GwsCorePackages.MATPLOTLIB]
+
+    def build_code_inputs(self, params: ConfigParams, task_inputs: TaskInputs) -> dict:
         # prepare the input
-        table: Table = inputs["source"]
+        table: Table = task_inputs["source"]
 
         # execute the live code
         self.temp_dir = Settings.make_temp_dir()
@@ -65,8 +72,8 @@ The data of the table is not transferered to OpenAI, only the provided text.
         # all variable accessible in the generated code
         return {"source": table.get_data(), 'output_path': self.ouput_path}
 
-    def build_task_outputs(
-            self, params: ConfigParams, inputs: TaskInputs, code_outputs: dict, generated_code: str) -> dict:
+    def build_task_outputs(self, code_outputs: dict, generated_code: str,
+                           params: ConfigParams, task_inputs: TaskInputs) -> dict:
         if not FileHelper.exists_on_os(self.ouput_path) or not FileHelper.is_file(self.ouput_path):
             raise Exception("The output must be a file")
 

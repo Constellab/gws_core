@@ -50,7 +50,7 @@ The data of the table is not transferered to OpenAI, only the provided text.
                                     short_description="If true, the rows tags are kept in the output table for rows that have the same names."),
     }
 
-    def get_context(self, params: ConfigParams, inputs: TaskInputs) -> str:
+    def build_main_context(self, params: ConfigParams, inputs: TaskInputs) -> str:
         # get the table
         source: Table = inputs["source"]
 
@@ -60,7 +60,7 @@ The data of the table is not transferered to OpenAI, only the provided text.
         context += "The transformed dataframe must be assigned to a variable named 'target'."
         return context
 
-    def build_openai_code_inputs(self, params: ConfigParams, inputs: TaskInputs) -> dict:
+    def build_code_inputs(self, params: ConfigParams, inputs: TaskInputs) -> dict:
         # get the table
         source: Table = inputs["source"]
         # pass the dataframe as input

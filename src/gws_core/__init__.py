@@ -178,10 +178,10 @@ from .impl.live.py_pipenv_live_task import PyPipenvLiveTask as PyPipenvLiveTask
 from .impl.live.r_conda_live_task import RCondaLiveTask as RCondaLiveTask
 from .impl.live.r_mamba_live_task import RMambaLiveTask as RMambaLiveTask
 # Impl > open ai
-from .impl.openai.open_ai_chat import AiChatMessage as AiChatMessage
 from .impl.openai.open_ai_chat import OpenAiChat as OpenAiChat
 from .impl.openai.open_ai_chat_param import OpenAiChatParam as OpenAiChatParam
 from .impl.openai.open_ai_helper import OpenAiHelper as OpenAiHelper
+from .impl.openai.open_ai_types import OpenAiChatMessage as OpenAiChatMessage
 # Impl > Plotly
 from .impl.plotly.plotly_r_field import PlotlyRField as PlotlyRField
 from .impl.plotly.plotly_resource import PlotlyResource as PlotlyResource

@@ -2,6 +2,8 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+from typing import Any, Dict, List, Type
+
 import plotly.graph_objs as go
 
 from gws_core.config.config_params import ConfigParams
@@ -9,8 +11,6 @@ from gws_core.core.utils.gws_core_packages import GwsCorePackages
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
 from gws_core.impl.openai.smart_task_base import SmartTaskBase
 from gws_core.impl.table.table import Table
-from gws_core.impl.table.validator.table_number_validator import \
-    TableNumberValidator
 from gws_core.impl.text.text import Text
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
@@ -41,27 +41,34 @@ The data of the table is not transferered to OpenAI, only the provided text.
         'generated_code': SmartTaskBase.generated_code_output
     })
 
-    def get_context(self, params: ConfigParams, inputs: TaskInputs) -> str:
+    def build_main_context(self, params: ConfigParams, task_inputs: TaskInputs,
+                           code_inputs: Dict[str, Any]) -> str:
         # prepare the input
-        table: Table = inputs["source"]
+        table: Table = task_inputs["source"]
 
-        context = "You are a developer assistant that generate code in python to generate plotly express figure from dataframe."
-        context += "\nThe variable named 'source' contains the dataframe."
-        context += "The generated plotly express figure must be assigned to variable named 'target'."
-        context += " Only build the figure object, do not display the figure using 'show' method."
-        context += f"\n{OpenAiHelper.get_code_context([GwsCorePackages.PANDAS, GwsCorePackages.NUMPY, GwsCorePackages.PLOTLY])}"
-        context += f"\nThe dataframe has {table.nb_rows} rows and {table.nb_columns} columns."
+        return f"""{self.PY_INTRO}
+The code purpose is to generate a plotly express figure from a DataFrame..
+{self.VAR_INPUTS}
+The dataframe has {table.nb_rows} rows and {table.nb_columns} columns.
+{self.VAR_OUTPUTS}
+Only build the figure object, do not display the figure using 'show' method.
+The variable named 'output_path' contains the absolute path of the output png file destination. Don't use the show method.
+{self.VAR_CODE_RULES}"""
 
-        return context
-
-    def build_openai_code_inputs(self, params: ConfigParams, inputs: TaskInputs) -> dict:
+    def build_code_inputs(self, params: ConfigParams, task_inputs: TaskInputs) -> dict:
         # prepare the input
-        table: Table = inputs["source"]
+        table: Table = task_inputs["source"]
 
         return {"source": table.get_data()}
 
-    def build_task_outputs(self, params: ConfigParams, inputs: TaskInputs,
-                           code_outputs: dict, generated_code: str) -> dict:
+    def get_code_expected_output_types(self) -> Dict[str, Any]:
+        return {"target": go.Figure}
+
+    def get_available_package_names(self) -> List[str]:
+        return [GwsCorePackages.PANDAS, GwsCorePackages.NUMPY, GwsCorePackages.PLOTLY]
+
+    def build_task_outputs(self, code_outputs: dict, generated_code: str,
+                           params: ConfigParams, task_inputs: TaskInputs) -> dict:
         target = code_outputs.get("target", None)
 
         if target is None:

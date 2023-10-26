@@ -9,7 +9,7 @@ from pandas import DataFrame
 
 from gws_core.impl.file.file import File
 from gws_core.impl.live.py_live_task import PyLiveTask
-from gws_core.impl.openai.open_ai_chat import OpenAiChatDict
+from gws_core.impl.openai.open_ai_types import OpenAiChatDict
 from gws_core.impl.table.table import Table
 from gws_core.impl.table.transformers.table_smart_plot import SmartPlot
 from gws_core.impl.text.text import Text

@@ -4,12 +4,13 @@
 # About us: https://gencovery.com
 
 
+from typing import Any, Dict, List, Type
+
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
 from gws_core.core.utils.json_helper import JSONHelper
 from gws_core.impl.json.json_dict import JSONDict
-from gws_core.impl.openai.open_ai_helper import OpenAiHelper
 from gws_core.impl.openai.smart_task_base import SmartTaskBase
 from gws_core.impl.text.text import Text
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -40,30 +41,35 @@ The structure of the json is transfered to OpenAI, not the json itself.
         **SmartTaskBase.config_specs,
     }
 
-    def get_context(self, params: ConfigParams, inputs: TaskInputs) -> str:
-        # get the table
-        source: JSONDict = inputs["source"]
+    def build_main_context(self, params: ConfigParams, task_inputs: TaskInputs,
+                           code_inputs: Dict[str, Any]) -> str:
+        # return "The code purpose is to modify a json dict object."
 
-        json_structure = JSONHelper.extract_json_structure(source.get_data())
+        # get the structure of the json
+        json_structure = JSONHelper.extract_json_structure(code_inputs)
         str_json_structure = JSONHelper.safe_dumps(json_structure)
 
-        context = "You are a developer assistant that generate code in python to modify a json dict object."
-        # context = "You are a developer assistant tasked with modifying a Python dictionary (variable named 'source') that adheres to the following JSON schema:"
-        context += "\nUse variable named 'source' as input. Do not create it. The 'source' variable is a dictionary with the following schema : "
-        context += f"\n```{str_json_structure}```\n"
-        context += "\nThe transformed json object must be assigned to a variable named 'target' and be a python dictionary."
-        context += f"\n{OpenAiHelper.get_code_context([GwsCorePackages.NUMPY])}"
-        # context += f"\nHere is the json schema of the source json object : ```{str_json_structure}```"
-  # You are a developer assistant tasked with modifying a Python dictionary (named 'source') that adheres to the following JSON schema:
-        return context
+        return f"""{self.PY_INTRO}
+The code purpose is to modify a json dict object.
+{self.VAR_INPUTS}
+The 'source' dict has the following schema :
+```{str_json_structure}```.
+{self.VAR_OUTPUTS}
+{self.VAR_CODE_RULES}"""
 
-    def build_openai_code_inputs(self, params: ConfigParams, inputs: TaskInputs) -> dict:
-        # get the table
-        source: JSONDict = inputs["source"]
+    def build_code_inputs(self, params: ConfigParams, task_inputs: TaskInputs) -> dict:
+        # get the dict as source
+        source: JSONDict = task_inputs["source"]
         return {"source": source.get_data()}
 
-    def build_task_outputs(self, params: ConfigParams, inputs: TaskInputs,
-                           code_outputs: dict, generated_code: str) -> dict:
+    def get_code_expected_output_types(self) -> Dict[str, Type]:
+        return {'target': dict}
+
+    def get_available_package_names(self) -> List[str]:
+        return [GwsCorePackages.NUMPY]
+
+    def build_task_outputs(self, code_outputs: dict, generated_code: str,
+                           params: ConfigParams, task_inputs: TaskInputs) -> dict:
         output = code_outputs.get("target", None)
 
         if output is None:
