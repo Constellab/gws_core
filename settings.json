@@ -3,7 +3,7 @@
     "author"        : "Gencovery",
     "author_email"  : "admin@gencovery.com",
     "description"   : "Core Gencovery Web Services",
-    "version"       : "0.5.13",
+    "version"       : "0.5.14",
     "app_dir"       : "./",
     "app_host"      : "0.0.0.0",
     "app_port"      : 3000,
@@ -11,7 +11,7 @@
         "gws_core:testdata_dir" : "${CURRENT_DIR}/tests/testdata"
     },
     "technical_info": {
-      "FRONT_VERSION": "1.0.16",
+      "FRONT_VERSION": "1.0.17",
       "GLAB_VERSION": "1.0.5"
     },
     "environment":{
