@@ -187,7 +187,7 @@ class S3ServerService:
 
         if project is None:
             raise S3ServerException(status_code=400, code='invalid_project_id',
-                                    message='Project not found in lab',
+                                    message='Project not found in lab, try to sync the lab projects',
                                     bucket_name=bucket_name, key=key_or_prefix)
 
         return project
