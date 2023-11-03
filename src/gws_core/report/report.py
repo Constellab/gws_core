@@ -13,6 +13,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.project.model_with_project import ModelWithProject
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
@@ -25,7 +26,7 @@ from ..project.project import Project
 
 
 @final
-class Report(ModelWithUser):
+class Report(ModelWithUser, ModelWithProject):
     title = CharField()
 
     content = JSONField(null=True)

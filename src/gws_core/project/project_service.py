@@ -10,7 +10,9 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment import Experiment
+from gws_core.project.model_with_project import ModelWithProject
 from gws_core.report.report import Report
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.space.space_service import SpaceService
 
 from ..core.service.base_service import BaseService
@@ -19,6 +21,8 @@ from .project_dto import SpaceProject
 
 
 class ProjectService(BaseService):
+
+    entity_with_projects: List[ModelWithProject] = [Experiment, Report, ResourceModel]
 
     @classmethod
     def get_project_trees(cls) -> List[Project]:
@@ -65,6 +69,12 @@ class ProjectService(BaseService):
         lab_project.parent = parent
         lab_project.save()
 
+        # delete children that are not in the space project
+        if lab_project.children:
+            for child in lab_project.children:
+                if child.id not in [otherChild.id for otherChild in project.children]:
+                    cls.delete_project(child.id)
+
         if project.children is not None:
             for child in project.children:
                 cls._synchronize_space_project(child, lab_project)
@@ -80,14 +90,19 @@ class ProjectService(BaseService):
 
         projects = project.get_hierarchy_as_list()
 
-        # check if one of the experiment is attached to the project
-        if Experiment.select().where(Experiment.project.in_(projects)).count() > 0:
+        # check if one of the sync experiment is attached to the project
+        if Experiment.select().where((Experiment.project.in_(projects)) & (Experiment.last_sync_at.is_null(False))).count() > 0:
             raise BadRequestException(detail=GWSException.DELETE_PROJECT_WITH_EXPERIMENTS.value,
                                       unique_code=GWSException.DELETE_PROJECT_WITH_EXPERIMENTS.name)
 
         # check if one of the report is attached to the project
-        if Report.select().where(Report.project.in_(projects)).count() > 0:
+        if Report.select().where((Report.project.in_(projects)) & (Report.last_sync_at.is_null(False))).count() > 0:
             raise BadRequestException(detail=GWSException.DELETE_PROJECT_WITH_REPORTS.value,
                                       unique_code=GWSException.DELETE_PROJECT_WITH_REPORTS.name)
 
+        # Clear all objects that are using the project
+        for entity in cls.entity_with_projects:
+            entity.clear_project(projects)
+
         project.delete_instance()
+        return None

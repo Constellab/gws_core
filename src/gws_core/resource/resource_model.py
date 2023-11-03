@@ -18,6 +18,7 @@ from gws_core.experiment.experiment_exception import \
     ResourceUsedInAnotherExperimentException
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dict import TypingStatus
+from gws_core.project.model_with_project import ModelWithProject
 from gws_core.project.project import Project
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
@@ -70,7 +71,7 @@ class ResourceOrigin(Enum):
 
 
 # Use the typing decorator to avoid circular dependency
-class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
+class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[ResourceType]):
 
     """
     ResourceModel class.

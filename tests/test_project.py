@@ -5,6 +5,8 @@
 
 
 from gws_core import BaseTestCase
+from gws_core.core.utils.date_helper import DateHelper
+from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.project.project import Project
 from gws_core.project.project_dto import SpaceProject
@@ -66,17 +68,36 @@ class TestProject(BaseTestCase):
         self.assertTrue(any(project_tree.code == 'Root' for project_tree in project_trees))
         self.assertFalse(any(project_tree.code == 'WP1' for project_tree in project_trees))
 
-        # Test another synchronization to check that the project is not duplicated
+        # Test another synchronization to delete the WP2 project and verify that the other project were not changed
+        space_project.children = space_project.children[:1]
         ProjectService.synchronize_space_project(space_project)
-        self.assertEqual(Project.select().count(), all_projects_count)
+        self.assertEqual(Project.select().count(), all_projects_count - 1)
 
-        # Test deletion
-        experiment = ExperimentService.create_experiment('caf61803-70e5-4ac3-9adb-53a35f65a2f3')
+        # test get
+        project: Project = Project.get_by_id_and_check("caf61803-70e5-4ac3-9adb-53a35f65a2f1")
+        self.assertEqual(project.code, 'Root')
+        self.assertEqual(len(project.children), 1)
+        self.assertEqual(project.children[0].code, 'WP1')
+
+        # Test deletion, create a sync experiment
+        experiment: Experiment = ExperimentService.create_experiment(project_id='caf61803-70e5-4ac3-9adb-53a35f65a2f3')
+        experiment.last_sync_at = DateHelper.now_utc()
+        experiment.last_sync_by = experiment.created_by
+        experiment.save()
 
         # Should not be able to delete a project with experiments
         with self.assertRaises(Exception):
             ProjectService.delete_project(project.id)
 
-        ExperimentService.delete_experiment(experiment.id)
+        # un-sync the experiment
+        experiment.last_sync_at = None
+        experiment.last_sync_by = None
+        experiment.save()
+
+        # Now we should be able to delete the project
         ProjectService.delete_project(project.id)
         self.assertEqual(Project.select().count(), 0)
+
+        # check that the project was removed from experiment
+        experiment = experiment.refresh()
+        self.assertIsNone(experiment.project)

@@ -14,6 +14,7 @@ from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
+from gws_core.project.model_with_project import ModelWithProject
 from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.classes.enum_field import EnumField
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
 
 
 @final
-class Experiment(ModelWithUser, TaggableModel):
+class Experiment(ModelWithUser, TaggableModel, ModelWithProject):
     """
     Experiment class.
 
