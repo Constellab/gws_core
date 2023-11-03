@@ -56,7 +56,7 @@ class FsNodeService(BaseService):
             temp_dir: str = Settings.get_instance().make_temp_dir()
             filename = resource.name + '.zip'
             zip_file = os.path.join(temp_dir, filename)
-            Zip.decompress(resource.path, zip_file)
+            Zip.compress_dir(resource.path, zip_file)
             return FileHelper.create_file_response(zip_file,  filename=filename)
         else:
             return FileHelper.create_file_response(resource.path, filename=resource.get_default_name())

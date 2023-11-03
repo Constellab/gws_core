@@ -76,7 +76,7 @@ class LocalFileStore(FileStore):
 
         self._init_dir(file.dir)
 
-        open(file.path, 'a').close()
+        open(file.path, 'a', encoding='utf-8').close()
         return file
 
     def create_empty_folder(self, folder_name: str, folder_type: Type[Folder] = Folder) -> Folder:
