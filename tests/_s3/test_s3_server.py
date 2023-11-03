@@ -80,7 +80,7 @@ class TestS3Server(BaseTestCase):
         resources: List[ResourceModel] = list(ResourceModel.select())
         self.assertEqual(len(resources), 1)
         self.assertEqual(resources[0].origin, ResourceOrigin.S3_PROJECT_STORAGE)
-        self.assertEqual(resources[0].name, key)
+        self.assertEqual(resources[0].name, 'test.py')
 
         # test list objects
         result = s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)

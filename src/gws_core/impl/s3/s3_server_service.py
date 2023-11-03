@@ -99,8 +99,8 @@ class S3ServerService:
                 bucket_name) else ResourceOrigin.UPLOADED
 
             resource_model = ResourceModel.from_resource(file, resource_origin)
-            resource_model.name = key
-            resource_model.set_tags([Tag('storage', 's3'), Tag('bucket', bucket_name)])
+            resource_model.name = FileHelper.get_name_with_extension(key)
+            resource_model.set_tags([Tag('storage', 's3'), Tag('bucket', bucket_name), Tag('key', key)])
             resource_model.project = project
 
             # Authenticate sys user because in S3 server we don't have a user
@@ -187,15 +187,18 @@ class S3ServerService:
 
         if project is None:
             raise S3ServerException(status_code=400, code='invalid_project_id',
-                                    message='Project not found in storage',
+                                    message='Project not found in lab',
                                     bucket_name=bucket_name, key=key_or_prefix)
 
         return project
 
     @classmethod
     def _resource_to_s3_object(cls, resource: ResourceModel) -> ObjectTypeDef:
+        if not resource.has_tag_key('key'):
+            raise S3ServerException(status_code=500, code='invalid_resource',
+                                    message='Resource has no key tag', bucket_name='')
         return {
-            'Key': resource.name,
+            'Key': resource.get_tag_value('key'),
             'LastModified': DateHelper.to_iso_str(resource.last_modified_at),
             'ETag': '',
             'Size': resource.fs_node_model.size,
@@ -221,11 +224,13 @@ class S3ServerService:
             expression_builder.add_expression(ResourceModel.origin == ResourceOrigin.UPLOADED)
 
         if key:
-            expression_builder.add_expression(ResourceModel.name == key)
+            expression_builder.add_expression(ResourceModel.get_search_tag_expression([Tag('key', key)]))
+            # expression_builder.add_expression(ResourceModel.name == key)
 
         if prefix:
             if not prefix.endswith('/'):
                 prefix += '/'
-            expression_builder.add_expression(ResourceModel.name.startswith(prefix))
+            # expression_builder.add_expression(ResourceModel.name.startswith(prefix))
+            expression_builder.add_expression(ResourceModel.get_tag_valie_start_with_expression([Tag('key', prefix)]))
 
         return expression_builder

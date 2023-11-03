@@ -11,7 +11,7 @@ from pydantic.main import BaseModel
 KEY_VALUE_SEPARATOR: str = ':'
 TAGS_SEPARATOR = ','
 
-MAX_TAG_LENGTH = 30
+MAX_TAG_LENGTH = 1000
 
 
 class Tag(BaseModel):
@@ -39,7 +39,7 @@ class Tag(BaseModel):
         return value
 
     def __str__(self) -> str:
-        return self.key + ':' + self.value
+        return self.key + KEY_VALUE_SEPARATOR + self.value
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, Tag):
@@ -66,9 +66,9 @@ class Tag(BaseModel):
         if len(tag_str) > MAX_TAG_LENGTH:
             tag_str = tag_str[0: MAX_TAG_LENGTH]
 
-        # check if string is only alphanumeric, with '-', '_' or ' ' allowed with regex
-        if not match(r"^[\w\-_ ]+$", tag_str):
-            raise ValueError('The tag only support alphanumeric characters, with "-", "_" and space allowed')
+        # check if string is only alphanumeric, with '-', '_', '/', '.' or ' ' allowed with regex
+        if not match(r"^[\w\-_/. ]+$", tag_str):
+            raise ValueError('The tag only support alphanumeric characters, with "-", "_", "/", "." and space allowed')
 
         return tag_str.lower()
 

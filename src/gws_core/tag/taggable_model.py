@@ -58,6 +58,11 @@ class TaggableModel(PeeweeModel):
         """
         return tag in self.get_tags()
 
+    def has_tag_key(self, tag_key: str) -> bool:
+        """return true if the tag key already exist in the model
+        """
+        return any(tag.key == tag_key for tag in self.get_tags())
+
     @classmethod
     def find_by_tags(cls, tags: List[Tag]) -> List["TaggableModel"]:
         """return a list of model that have the tag
@@ -80,4 +85,17 @@ class TaggableModel(PeeweeModel):
 
             # use a contains with ',' around to match exacty the tag key/value
             query_builder.add_expression(cls.tags.contains(str_search))
+        return query_builder.build()
+
+    @classmethod
+    def get_tag_valie_start_with_expression(cls, tags: List[Tag]) -> Expression:
+        """Get the filter expresion for a search in tags column
+        """
+        query_builder: ExpressionBuilder = ExpressionBuilder()
+        for tag in tags:
+            if not tag.value:
+                raise Exception("The tag value must be set")
+
+            # use a contains with ',' around to match exacty the tag key/value
+            query_builder.add_expression(cls.tags.contains(TAGS_SEPARATOR + str(tag)))
         return query_builder.build()

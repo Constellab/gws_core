@@ -73,6 +73,7 @@ class FileHelper():
 
     @classmethod
     def get_name_with_extension(cls, path: PathType):
+        """ Return the name of the file or folder with the extension"""
         return cls.get_path(path).name
 
     @classmethod
