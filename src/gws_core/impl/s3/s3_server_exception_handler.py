@@ -3,8 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from fastapi import HTTPException
 from fastapi.responses import Response
+from starlette.exceptions import HTTPException
 from starlette.requests import Request
 
 from gws_core.core.utils.logger import Logger
