@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.search_builder import SearchParams
+from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
@@ -22,7 +23,17 @@ from .experiment_service import ExperimentService
 from .queue_service import QueueService
 
 
+@core_app.get("/experiment/tests", tags=["Experiment"],
+              summary="Get the list of running experiments")
+def get_the_list_of_running_experimentss(
+        _=Depends(AuthService.check_user_access_token)) -> list:
+    list_ = list(Experiment.select().join(ResourceModel).where(
+        ResourceModel.id == '011f2637-e073-41b7-bd42-236def8ea0ae'))
+    return ListJsonable(list_).to_json()
+
 ###################################### GET ###############################
+
+
 @core_app.get("/experiment/running", tags=["Experiment"],
               summary="Get the list of running experiments")
 def get_the_list_of_running_experiments(

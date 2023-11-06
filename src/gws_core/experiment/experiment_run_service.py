@@ -75,6 +75,7 @@ class ExperimentRunService():
 
             experiment.protocol_model.run()
 
+            experiment = experiment.refresh()
             experiment.mark_as_success()
 
             cls._send_experiment_finished_mail(experiment)
@@ -85,6 +86,7 @@ class ExperimentRunService():
                 experiment=experiment, exception=err)
             error: ProcessErrorInfo = {"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
                                        "context": None, "instance_id": exception.instance_id}
+            experiment = experiment.refresh()
             experiment.mark_as_error(error)
 
             cls._send_experiment_finished_mail(experiment)
@@ -161,14 +163,15 @@ class ExperimentRunService():
             experiment.mark_as_started(os.getpid())
 
             protocol_model.run_process(process_instance_name)
+            protocol_model = protocol_model.refresh()
             protocol_model.mark_as_partially_run()
-            experiment.mark_as_partially_run()
 
         except Exception as err:
             exception: ExperimentRunException = ExperimentRunException.from_exception(
                 experiment=experiment, exception=err)
             error: ProcessErrorInfo = {"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
                                        "context": None, "instance_id": exception.instance_id}
+            experiment = experiment.refresh()
             experiment.mark_as_error(error)
 
             raise exception

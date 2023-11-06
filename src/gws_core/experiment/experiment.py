@@ -371,9 +371,6 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject):
     def check_is_updatable(self) -> None:
         """Throw an error if the experiment is not updatable
         """
-        if self.is_running:
-            raise BadRequestException(
-                detail="The experiment is running, you can't update it")
 
         # check experiment status
         if self.is_validated:

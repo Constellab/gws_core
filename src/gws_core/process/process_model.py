@@ -517,6 +517,10 @@ class ProcessModel(ModelWithUser):
         if self.experiment:
             self.experiment.check_is_updatable()
 
+            if self.experiment.is_running:
+                raise BadRequestException(
+                    detail="The experiment is running, you can't update it")
+
     @property
     def is_error(self) -> bool:
         return self.status == ProcessStatus.ERROR
