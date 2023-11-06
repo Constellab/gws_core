@@ -7,9 +7,11 @@ import os
 import subprocess
 from typing import Union
 
+from typing_extensions import Literal
+
 from gws_core.impl.file.file_helper import FileHelper
 
-from .base_env_shell import BaseEnvShell
+from .base_env_shell import BaseEnvShell, VEnvCreationInfo
 
 
 class CondaShellProxy(BaseEnvShell):
@@ -110,6 +112,21 @@ class CondaShellProxy(BaseEnvShell):
         pipfile_path = os.path.join(folder_path, cls.CONFIG_FILE_NAME)
         sub_venv_path = os.path.join(folder_path, cls.VENV_DIR_NAME)
 
-        return super().folder_is_env(folder_path) and \
-            FileHelper.exists_on_os(pipfile_path) and \
-            FileHelper.exists_on_os(sub_venv_path)
+        if not super().folder_is_env(folder_path) or \
+           not FileHelper.exists_on_os(pipfile_path) or \
+           not FileHelper.exists_on_os(sub_venv_path):
+            return False
+
+        try:
+            env_creation_info: VEnvCreationInfo = cls.get_creation_info(folder_path)
+
+            if 'env_type' in env_creation_info and env_creation_info['env_type'] != cls.get_env_type():
+                return False
+
+            return True
+        except:
+            return False
+
+    @classmethod
+    def get_env_type(cls) -> Literal['conda', 'mamba', 'pip']:
+        return 'conda'

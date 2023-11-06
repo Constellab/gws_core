@@ -10,12 +10,13 @@ from json import dump, load
 from pathlib import Path
 from typing import Any, Union, final
 
+from typing_extensions import Literal, TypedDict
+
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
-from typing_extensions import TypedDict
 
 from .shell_proxy import ShellProxy
 
@@ -26,6 +27,7 @@ class VEnvCreationInfo(TypedDict):
     created_at: str
     # path of the file that was used to create the env
     origin_env_config_file_path: str
+    env_type: Literal['conda', 'mamba', 'pip']
 
 
 class BaseEnvShell(ShellProxy):
@@ -234,10 +236,11 @@ class BaseEnvShell(ShellProxy):
         Create the READY file
         """
         env_info: VEnvCreationInfo = {
-            'file_version': 1,
+            'file_version': 2,
             'name': self.env_dir_name,
             'created_at': DateHelper.now_utc().isoformat(),
-            'origin_env_config_file_path': self.env_file_path
+            'origin_env_config_file_path': self.env_file_path,
+            'env_type': self.get_env_type()
         }
 
         with open(self._get_json_info_file_path(), "w", encoding="UTF-8") as outfile:
@@ -293,7 +296,7 @@ class BaseEnvShell(ShellProxy):
         """
         Returns the json info file content
         """
-        if not cls.folder_is_env(folder_path):
+        if not FileHelper.exists_on_os(folder_path):
             raise Exception("The virtual environment is not installed")
 
         with open(os.path.join(folder_path, cls.CREATION_INFO_FILE_NAME), encoding="UTF-8") as json_file:
@@ -316,3 +319,10 @@ class BaseEnvShell(ShellProxy):
 
         return cls(env_dir_name=unique_env_dir_name,
                    env_file_path=env_file_path, message_dispatcher=message_dispatcher)
+
+    @classmethod
+    @abstractmethod
+    def get_env_type(cls) -> Literal['conda', 'mamba', 'pip']:
+        """
+        Returns the type of the env
+        """

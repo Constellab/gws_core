@@ -6,6 +6,8 @@ import os
 import subprocess
 from typing import Union
 
+from typing_extensions import Literal
+
 from gws_core.impl.file.file_helper import FileHelper
 
 from .base_env_shell import BaseEnvShell
@@ -125,3 +127,7 @@ class PipShellProxy(BaseEnvShell):
             FileHelper.exists_on_os(pipfile_path) and \
             FileHelper.exists_on_os(pipfile_lock_path) and \
             FileHelper.exists_on_os(sub_venv_path)
+
+    @classmethod
+    def get_env_type(cls) -> Literal['conda', 'mamba', 'pip']:
+        return 'pip'

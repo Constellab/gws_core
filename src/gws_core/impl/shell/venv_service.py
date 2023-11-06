@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import os
-from typing import List, Literal
+from typing import List
 
 from typing_extensions import TypedDict
 
@@ -16,13 +16,13 @@ from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.base_env_shell import BaseEnvShell, VEnvCreationInfo
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
+from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
 
 
 class VEnvBasicInfo(TypedDict):
     folder: str
     name: str
-    type: Literal['conda', 'pip']
     creation_info: VEnvCreationInfo
 
 
@@ -87,6 +87,8 @@ class VEnvService():
 
         if PipShellProxy.folder_is_env(venv_path):
             config_file_path = os.path.join(venv_path, PipShellProxy.CONFIG_FILE_NAME)
+        elif MambaShellProxy.folder_is_env(venv_path):
+            config_file_path = os.path.join(venv_path, CondaShellProxy.CONFIG_FILE_NAME)
         elif CondaShellProxy.folder_is_env(venv_path):
             config_file_path = os.path.join(venv_path, CondaShellProxy.CONFIG_FILE_NAME)
         else:
@@ -113,20 +115,10 @@ class VEnvService():
         if not FileHelper.is_dir(venv_path):
             raise ValueError(f'Venv {venv_name} does not exist.')
 
-        venv_type: Literal['conda', 'pip']
-
-        if PipShellProxy.folder_is_env(venv_path):
-            venv_type = 'pip'
-        elif CondaShellProxy.folder_is_env(venv_path):
-            venv_type = 'conda'
-        else:
-            raise ValueError(f'Venv {venv_name} is not a valid venv.')
-
         env_creation_info: VEnvCreationInfo = BaseEnvShell.get_creation_info(venv_path)
 
         return {
             'name': venv_name,
-            'type': venv_type,
             'folder': venv_path,
             'creation_info': env_creation_info,
         }

@@ -5,6 +5,7 @@
 
 import os
 from copy import deepcopy
+from json import dump
 from typing import Dict, List
 
 from peewee import BigIntegerField, CharField, ForeignKeyField
@@ -21,6 +22,9 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
+from gws_core.impl.shell.base_env_shell import VEnvCreationInfo
+from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
+from gws_core.impl.shell.venv_service import VEnsStatus, VEnvService
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor import Monitor
 from gws_core.model.typing import Typing
@@ -788,3 +792,36 @@ class Migration058(BrickMigration):
                     view_config.save(skip_hook=True)
             except Exception:
                 view_config.delete_instance()
+
+
+@brick_migration('0.5.15', short_description='Migrate env creation info file to v2')
+class Migration0515(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        envs: VEnsStatus = VEnvService.get_vens_status()
+
+        for env in envs['envs']:
+            try:
+                if env['creation_info']['file_version'] == 1:
+                    env_path = os.path.join(envs['venv_folder'], env['name'])
+                    env_type: str
+                    if PipShellProxy.folder_is_env(env_path):
+                        env_type = 'pip'
+                    else:
+                        env_type = 'conda'
+
+                    env_creation: VEnvCreationInfo = {
+                        'file_version': 2,
+                        'created_at': env['creation_info']['created_at'],
+                        'env_type': env_type,
+                        'name': env['creation_info']['name'],
+                        'origin_env_config_file_path': env['creation_info']['origin_env_config_file_path'],
+                    }
+                    with open(os.path.join(env_path, PipShellProxy.CREATION_INFO_FILE_NAME), "w", encoding="UTF-8") as outfile:
+                        dump(env_creation, outfile)
+
+            except Exception as exception:
+                Logger.error(
+                    f'Error while migrating env creation info for env {env["name"]} : {exception}')
