@@ -412,12 +412,20 @@ class ProtocolModel(ProcessModel):
         self._check_instance_name(process_name)
         return {connector.right_process for connector in self.connectors if connector.left_process.instance_name == process_name}
 
-    def get_all_next_processes(self, process_name: str, check_parent_protocol: bool = True) -> Set[ProcessModel]:
+    def get_all_next_processes(
+            self, process_name: str, check_parent_protocol: bool = True, skip_processes: Set[str] = None,
+            check_circular_connexion: bool = False) -> Set[ProcessModel]:
         """
         Returns all the next processes of a process in this protocol and parent protocols.
 
         :param process: The process
         :type process: Process
+        :param check_parent_protocol: If True, the next processes of the parent protocol are also returned
+        :type check_parent_protocol: bool
+        :param skip_processes: The processes to skip
+        :type skip_processes: Set[Process]
+        :param check_circular_connexion: If True, check if there is a circular connexion and raise an exception
+        :type check_circular_connexion: bool
         :return: The next processes
         :rtype: List[Process]
         """
@@ -427,10 +435,23 @@ class ProtocolModel(ProcessModel):
             process_name)
         all_next_processes: Set[ProcessModel] = set(next_processes)
 
+        if skip_processes is None:
+            skip_processes = set()
+
         # recursively get the next processes of the next processes
         for process in next_processes:
+
+            if process.instance_name in skip_processes:
+                if check_circular_connexion:
+                    raise BadRequestException(
+                        f"Circular connexion detected with process '{process.get_instance_name_context()}'")
+                continue
+
+            # add the process to the skip list so it will not be processed again
+            skip_processes.update([process.instance_name])
+
             all_next_processes.update(
-                self.get_all_next_processes(process.instance_name, False))
+                self.get_all_next_processes(process.instance_name, False, skip_processes, check_circular_connexion))
 
         # get the next processes of the parent protocol
         if check_parent_protocol and self.parent_protocol:
@@ -515,8 +536,13 @@ class ProtocolModel(ProcessModel):
 
         self._load_connectors()
 
-        return self._add_connector(from_process_name, from_port_name,
-                                   to_process_name, to_port_name)
+        connector = self._add_connector(from_process_name, from_port_name,
+                                        to_process_name, to_port_name)
+
+        # check if there is a circular connexion
+        self.get_all_next_processes(from_process_name, check_circular_connexion=True)
+
+        return connector
 
     def _add_connector(self, from_process_name: str, from_port_name: str,
                        to_process_name: str, to_port_name: str, check_compatiblity: bool = True) -> Connector:
