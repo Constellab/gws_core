@@ -214,3 +214,12 @@ class ShellProxy():
     def log_warning_message(self, message: str):
         """ Log a warining message using the dispatcher """
         self._message_dispatcher.notify_warning_message(message)
+
+    def __enter__(self):
+        # add support for with statement
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # add support for with statement
+        self.clean_working_dir()
+        return True

@@ -16,19 +16,20 @@ from gws_core.core.classes.observer.message_observer import \
 class TestShellProxy(TestCase):
 
     def test_echo_in_file(self):
-        shell_proxy = ShellProxy()
+        with ShellProxy() as shell_proxy:
 
-        result = shell_proxy.run(
-            [f"echo \"John Doe\" > echo.txt"], shell_mode=True)
-        self.assertEqual(result, 0)
+            result = shell_proxy.run(
+                ["echo \"John Doe\" > echo.txt"], shell_mode=True)
+            self.assertEqual(result, 0)
 
-        # Check that the file was created with the content
-        result_file_path = path.join(shell_proxy.working_dir, "echo.txt")
-        with open(result_file_path, "r+t") as fp:
-            data = fp.read()
-        self.assertEqual(data.strip(), "John Doe")
+            # Check that the file was created with the content
+            result_file_path = path.join(shell_proxy.working_dir, "echo.txt")
+            with open(result_file_path, "r+t", encoding='utf-8') as fp:
+                data = fp.read()
+            self.assertEqual(data.strip(), "John Doe")
 
-        shell_proxy.clean_working_dir()
+        # check that the working dir was deleted
+        self.assertFalse(path.exists(shell_proxy.working_dir))
 
     def test_notified(self):
         # disable the time buffer for message so they are sent immediately
@@ -38,7 +39,7 @@ class TestShellProxy(TestCase):
         message_observer = BasicMessageObserver()
         shell_proxy.attach_observer(message_observer)
 
-        result = shell_proxy.run([f'echo "AA" && ui'], shell_mode=True)
+        result = shell_proxy.run(['echo "AA" && ui'], shell_mode=True)
         self.assertNotEqual(result, 0)
 
         # Check that the message observer received echo AA info message
@@ -62,7 +63,7 @@ class TestShellProxy(TestCase):
         message_observer = BasicMessageObserver()
         shell_proxy.attach_observer(message_observer)
 
-        result = shell_proxy.run([f'echo "AA\nBB"'], shell_mode=True)
+        result = shell_proxy.run(['echo "AA\nBB"'], shell_mode=True)
         self.assertEqual(result, 0)
 
         # Check that the message observer received echo AA info message
