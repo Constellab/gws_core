@@ -1,5 +1,4 @@
 {
-  "python.pythonPath": "/usr/bin/python3",
   "workbench.editor.enablePreview": false,
   // custom config for python
   "[python]": {
@@ -14,27 +13,6 @@
       "files.trimTrailingWhitespace": true,
       "editor.defaultFormatter": "ms-python.autopep8",
   },
-
-  
-  // python formatting (indentation)
-  "python.formatting.provider": "none",
-  "python.formatting.autopep8Path": "/usr/local/bin/autopep8",
-  "python.formatting.autopep8Args": ["--max-line-length", "120", "--experimental"],
-
-
-  // linting rules it takes the rules of .pylintrc file
-  "python.linting.pylintPath": "/usr/local/bin/pylint",
-  "python.linting.enabled": true,
-  "python.linting.pylintEnabled": true,
-  "python.linting.pylintUseMinimalCheckers": false,
-  "python.linting.lintOnSave": true,
-
-  // activate mypy to have type hint checking
-  "python.linting.mypyEnabled": true,
-  "python.linting.mypyPath": "/usr/local/bin/mypy",
-  "python.linting.mypyArgs": [
-      "--config-file=${workspaceFolder}/.mypy.ini"
-  ],
   "python.autoComplete.extraPaths": [
     "/lab/user/bricks/gws_core/src",
   ],
