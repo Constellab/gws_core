@@ -14,7 +14,7 @@ from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.model.typing import Typing
 from gws_core.model.typing_dict import TypingStatus
-from gws_core.task.plug import Source
+from gws_core.task.plug import Sink, Source
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField
@@ -387,6 +387,11 @@ class ProcessModel(ModelWithUser):
         """
         return self.process_typing_name == Source._typing_name
 
+    def is_sink_task(self) -> bool:
+        """return true if the process is of type Sink
+        """
+        return self.process_typing_name == Sink._typing_name
+
     def get_last_message(self) -> Optional[ProgressBarMessage]:
         """Return the last message of the process
         """
@@ -538,6 +543,8 @@ class ProcessModel(ModelWithUser):
         pass
 
     def mark_as_success(self):
+        if self.is_success:
+            return
         self.progress_bar.stop_success(
             f"End of process '{self.get_instance_name_context()}'",
             self.get_execution_time())

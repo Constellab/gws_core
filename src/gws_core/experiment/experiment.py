@@ -291,6 +291,10 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject):
     def is_draft(self) -> bool:
         return self.status == ExperimentStatus.DRAFT
 
+    @property
+    def is_partially_run(self) -> bool:
+        return self.status == ExperimentStatus.PARTIALLY_RUN
+
     def mark_as_in_queue(self):
         self.status = ExperimentStatus.IN_QUEUE
         self.save()

@@ -11,7 +11,7 @@ from gws_core.core.utils.string_helper import StringHelper
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
-from gws_core.io.io_spec import InputSpec, IOSpecDict, OutputSpec
+from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDict, OutputSpec
 from gws_core.protocol.protocol_dto import ProtocolUpdateDTO
 from gws_core.protocol.protocol_layout import (ProcessLayout, ProtocolLayout,
                                                ProtocolLayoutDict)
@@ -229,6 +229,9 @@ class ProtocolService(BaseService):
         # delete the process from the parent protocol
         protocol_model.remove_process(process_instance_name)
         protocol_model.save_graph()
+
+        # update the protocol model status
+        protocol_model.mark_as_partially_run()
 
         # delete the process form the DB
         process_model.delete_instance()
@@ -597,15 +600,18 @@ class ProtocolService(BaseService):
     @classmethod
     def _add_dynamic_port_to_process(cls, protocol_id: str, process_name: str,
                                      port_type: Literal['input', 'output']) -> ProtocolUpdateDTO:
-        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
+            protocol_id)
 
         # reset the process
-        update_protocol = cls.reset_process_of_protocol(protocol_model, process_name)
+        update_protocol = cls.reset_process_of_protocol(
+            protocol_model, process_name)
 
         process_model: ProcessModel = protocol_model.get_process(process_name)
         io: IO = process_model.inputs if port_type == 'input' else process_model.outputs
         if not io.is_dynamic:
-            raise BadRequestException(f"The process does not support dynamic {port_type} ports")
+            raise BadRequestException(
+                f"The process does not support dynamic {port_type} ports")
 
         # generate the default spec and add port
         io_specs: Union[DynamicInputs, DynamicOutputs] = io.get_specs()
@@ -635,14 +641,16 @@ class ProtocolService(BaseService):
             protocol_id)
 
         # reset the process
-        update_protocol = cls.reset_process_of_protocol(protocol_model, process_name)
+        update_protocol = cls.reset_process_of_protocol(
+            protocol_model, process_name)
 
         process_model: ProcessModel = protocol_model.get_process(process_name)
 
         io: IO = process_model.inputs if port_type == 'input' else process_model.outputs
 
         if not io.is_dynamic:
-            raise BadRequestException(f"The process does not support dynamic {port_type} ports")
+            raise BadRequestException(
+                f"The process does not support dynamic {port_type} ports")
 
         if port_type == 'input':
             protocol_model.delete_connector_from_right(process_name, port_name)
@@ -658,34 +666,36 @@ class ProtocolService(BaseService):
 
     @classmethod
     def update_dynamic_input_port_of_process(
-            cls, protocol_id: str, process_name: str, port_name: str, io_spec: IOSpecDict) -> ProtocolUpdateDTO:
-        return cls._update_dynamic_port_of_process(protocol_id, process_name, port_name, io_spec, 'input')
+            cls, protocol_id: str, process_name: str, port_name: str, io_spec_dict: IOSpecDict) -> ProtocolUpdateDTO:
+        return cls._update_dynamic_port_of_process(protocol_id, process_name, port_name, io_spec_dict, 'input')
 
     @classmethod
     def update_dynamic_output_port_of_process(
-            cls, protocol_id: str, process_name: str, port_name: str, io_spec: IOSpecDict) -> ProtocolUpdateDTO:
-        return cls._update_dynamic_port_of_process(protocol_id, process_name, port_name, io_spec, 'output')
+            cls, protocol_id: str, process_name: str, port_name: str, io_spec_dict: IOSpecDict) -> ProtocolUpdateDTO:
+        return cls._update_dynamic_port_of_process(protocol_id, process_name, port_name, io_spec_dict, 'output')
 
     @classmethod
     @transaction()
     def _update_dynamic_port_of_process(
-            cls, protocol_id: str, process_name: str, port_name: str, io_spec: IOSpecDict,
+            cls, protocol_id: str, process_name: str, port_name: str, io_spec_dict: IOSpecDict,
             port_type: Literal['input', 'output']) -> ProtocolUpdateDTO:
 
-        io_spec_class = InputSpec if port_type == 'input' else OutputSpec
-        io_spec = io_spec_class.from_json(io_spec)
+        io_spec_class: Type[IOSpec] = InputSpec if port_type == 'input' else OutputSpec
+        io_spec: IOSpec = io_spec_class.from_json(io_spec_dict)
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
         # reset the process
-        update_protocol = cls.reset_process_of_protocol(protocol_model, process_name)
+        update_protocol = cls.reset_process_of_protocol(
+            protocol_model, process_name)
 
         process_model: ProcessModel = protocol_model.get_process(process_name)
         io: IO = process_model.inputs if port_type == 'input' else process_model.outputs
 
         if not io.is_dynamic:
-            raise BadRequestException(f"The process does not support dynamic {port_type} ports")
+            raise BadRequestException(
+                f"The process does not support dynamic {port_type} ports")
 
         io.update_port(port_name, io_spec)
         process_model.save()
@@ -728,7 +738,8 @@ class ProtocolService(BaseService):
             protocol_id)
 
         if not protocol_model.experiment:
-            raise BadRequestException("Cannot download a protocol without experiment")
+            raise BadRequestException(
+                "Cannot download a protocol without experiment")
 
         return ProtocolTemplate.from_protocol_model(protocol_model,
                                                     protocol_model.experiment.title,
