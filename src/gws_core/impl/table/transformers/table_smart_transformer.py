@@ -4,13 +4,14 @@
 # About us: https://gencovery.com
 
 
+from typing import Any, Dict, List
+
 from pandas import DataFrame
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
-from gws_core.impl.openai.open_ai_helper import OpenAiHelper
 from gws_core.impl.openai.smart_task_base import SmartTaskBase
 from gws_core.impl.table.table import Table
 from gws_core.impl.text.text import Text
@@ -50,24 +51,32 @@ The data of the table is not transferered to OpenAI, only the provided text.
                                     short_description="If true, the rows tags are kept in the output table for rows that have the same names."),
     }
 
-    def build_main_context(self, params: ConfigParams, inputs: TaskInputs) -> str:
-        # get the table
-        source: Table = inputs["source"]
+    def build_main_context(self, params: ConfigParams, task_inputs: TaskInputs,
+                           code_inputs: Dict[str, Any]) -> str:
+        # prepare the input
+        table: Table = task_inputs["source"]
 
-        context = "You are a developer assistant that generate code in python to transform a dataframe."
-        context += f"\n{OpenAiHelper.get_code_context([GwsCorePackages.PANDAS, GwsCorePackages.NUMPY])}"
-        context += f"\nThe dataframe has {source.nb_rows} rows and {source.nb_columns} columns."
-        context += "The transformed dataframe must be assigned to a variable named 'target'."
-        return context
+        return f"""{self.VAR_PY_INTRO}
+The code purpose is to generate modify a dataframe.
+{self.VAR_INPUTS}
+The dataframe has {table.nb_rows} rows and {table.nb_columns} columns.
+{self.VAR_OUTPUTS}
+{self.VAR_CODE_RULES}"""
 
-    def build_code_inputs(self, params: ConfigParams, inputs: TaskInputs) -> dict:
+    def build_code_inputs(self, params: ConfigParams, task_inputs: TaskInputs) -> dict:
         # get the table
-        source: Table = inputs["source"]
+        source: Table = task_inputs["source"]
         # pass the dataframe as input
         return {"source": source.get_data()}
 
-    def build_task_outputs(self, params: ConfigParams, inputs: TaskInputs,
-                           code_outputs: dict, generated_code: str) -> dict:
+    def get_code_expected_output_types(self) -> Dict[str, Any]:
+        return {"target": DataFrame}
+
+    def get_available_package_names(self) -> List[str]:
+        return [GwsCorePackages.PANDAS, GwsCorePackages.NUMPY, GwsCorePackages.PLOTLY]
+
+    def build_task_outputs(self, code_outputs: dict, generated_code: str,
+                           params: ConfigParams, task_inputs: TaskInputs) -> dict:
         output = code_outputs.get("target", None)
 
         if output is None:
@@ -90,7 +99,7 @@ table_target = Table(target)
 
         result = Table(output)
         # get the table
-        source: Table = inputs["source"]
+        source: Table = task_inputs["source"]
 
         # manager the tags options
         if params.get_value("keep_columns_tags"):

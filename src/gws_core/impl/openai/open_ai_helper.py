@@ -5,7 +5,7 @@
 
 from typing import Dict, List
 
-import openai
+from openai import OpenAI
 
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
@@ -28,15 +28,14 @@ class OpenAiHelper():
         :return: _description_
         :rtype: OpenAiChat
         """
+        client = OpenAI(api_key=Settings.get_open_ai_api_key() or old_api_key)
 
-        openai.api_key = Settings.get_open_ai_api_key() or old_api_key
-
-        completion = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=chat_messages
         )
 
-        return completion.choices[0].message.content
+        return response.choices[0].message.content
 
     @classmethod
     def get_code_context(cls, pip_package_names: List[str] = None) -> str:
@@ -47,7 +46,8 @@ class OpenAiHelper():
         :return: the context
         :rtype: str
         """
-        packages_context = OpenAiHelper.get_package_version_context(pip_package_names)
+        packages_context = OpenAiHelper.get_package_version_context(
+            pip_package_names)
         return f"{packages_context}\n{OpenAiHelper.generate_code_rules}"
 
     @classmethod
@@ -73,7 +73,8 @@ class OpenAiHelper():
     def describe_inputs_for_context(cls, inputs: dict) -> str:
         inputs_texts: List[str] = []
         for key, value in inputs.items():
-            inputs_texts.append(f"'{key}' (type '{Utils.stringify_type(type(value), True)}')")
+            inputs_texts.append(
+                f"'{key}' (type '{Utils.stringify_type(type(value), True)}')")
 
         return f"You have access to the following input variables : {', '.join(inputs_texts)}. The input variables are already initialized, do not create them."
 
@@ -81,6 +82,7 @@ class OpenAiHelper():
     def describe_outputs_for_context(cls, outputs_specs: Dict[str, type]) -> str:
         outputs_texts: List[str] = []
         for key, value in outputs_specs.items():
-            outputs_texts.append(f"'{key}' (type '{Utils.stringify_type(value, True)}')")
+            outputs_texts.append(
+                f"'{key}' (type '{Utils.stringify_type(value, True)}')")
 
         return f"You must assigne the result to the following output variables : {', '.join(outputs_texts)}."

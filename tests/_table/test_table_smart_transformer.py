@@ -21,17 +21,20 @@ class TestTableSmartTransformer(TestCase):
 
     def test_table_smart_transformer(self):
         initial_df = DataFrame({'A': [1, 2, 3, 4], 'B': [8, 6, 4, 9]})
-        table: Table = Table(initial_df, column_tags=[{"name": "A"}, {"name": "B"}])
+        table: Table = Table(initial_df, column_tags=[
+                             {"name": "A"}, {"name": "B"}])
 
-        # Simulate a chat with openAI
+        # Simulate a real chat with openAI, this expects a response from the assistant
         prompt: OpenAiChatDict = {
             "messages":  [{
                 "role": "user",
                 "content": "Remove column where average value is lower than 5",
-            }, {
-                "role": "assistant",
-                "content": "Here is the result : ```target = source.loc[:, source.mean() >= 5]```"
-            }]
+            },
+                #     {
+                #     "role": "assistant",
+                #     "content": "Here is the result : ```target = source.loc[:, source.mean() >= 5]```"
+                # }
+            ]
         }
         tester = TaskRunner(
             task_type=TableSmartTransformer,

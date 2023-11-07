@@ -47,7 +47,7 @@ The data of the table is not transferered to OpenAI, only the provided text.
         table: Table = task_inputs["source"]
 
         return f"""{self.VAR_PY_INTRO}
-The code purpose is to generate a plotly express figure from a DataFrame..
+The code purpose is to generate a plotly express figure from a DataFrame.
 {self.VAR_INPUTS}
 The dataframe has {table.nb_rows} rows and {table.nb_columns} columns.
 {self.VAR_OUTPUTS}
