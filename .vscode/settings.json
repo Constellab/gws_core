@@ -19,5 +19,22 @@
   "autoDocstring.docstringFormat": "sphinx",
   "python.analysis.extraPaths": [
     "/lab/user/bricks/gws_core/src"
-  ]
+  ],
+  
+  
+  // python formatting (indentation)
+  "autopep8.path": ["/usr/local/bin/autopep8"],
+  "autopep8.args": ["--max-line-length", "120", "--experimental"],
+
+
+  // activate pylint
+  "pylint.path": ["/usr/local/bin/pylint"],
+  "pylint.args":["--rcfile=${workspaceFolder}/.pylintrc"],
+
+
+  // activate mypy to have type hint checking
+  "mypy-type-checker.path": ["/usr/local/bin/mypy"],
+  "mypy-type-checker.args": [
+      "--config-file=${workspaceFolder}/.mypy.ini"]
+
 }

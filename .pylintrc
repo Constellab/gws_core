@@ -17,7 +17,8 @@ disable=
 
     bare-except,
     raise-missing-from,
-    broad-exception-raised
+    broad-exception-raised,
+    broad-exception-caught
 
 # White list pydantic to prevent warnings on imports 
 # https://github.com/samuelcolvin/pydantic/issues/1961#issuecomment-759522422
