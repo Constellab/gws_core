@@ -13,7 +13,8 @@ from .experiment import Experiment
 class ExperimentSearchBuilder(SearchBuilder):
 
     def __init__(self) -> None:
-        super().__init__(Experiment, default_orders=[Experiment.last_modified_at.desc()])
+        super().__init__(Experiment, default_orders=[
+            Experiment.last_modified_at.desc()])
 
     def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags
