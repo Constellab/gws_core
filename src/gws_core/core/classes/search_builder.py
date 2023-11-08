@@ -38,6 +38,11 @@ class SearchSortCriteria(TypedDict):
     nullOption: Optional[SearchOrderNullOption]
 
 
+class SearchJoin(TypedDict):
+    table: Type[Model]
+    on: Expression
+
+
 class SearchParams(BaseModel):
     """Dictionnary containing information to filter and order a search
 
@@ -90,6 +95,8 @@ class SearchBuilder:
     _default_orders: List[Ordering]
     _query_builder: ExpressionBuilder
 
+    _joins: List[SearchJoin]
+
     def __init__(self, model_type: Type[Model], default_orders: List[Ordering] = None) -> None:
         """Create a search build to make dynamic search
 
@@ -105,6 +112,7 @@ class SearchBuilder:
             default_orders = []
         self._default_orders = default_orders
         self._query_builder = ExpressionBuilder()
+        self._joins = []
 
     def build_search(self, search: SearchParams) -> ModelSelect:
         filter_expression = self._build_search_filter_query(search.filtersCriteria)
@@ -112,6 +120,9 @@ class SearchBuilder:
         orders: List[Ordering] = self._build_search_ordering(search.sortsCriteria)
 
         model_select = self._model_type.select()
+
+        for join in self._joins:
+            model_select = model_select.join(join['table'], on=join['on'])
 
         if filter_expression is not None:
             model_select = model_select.where(filter_expression)
@@ -235,3 +246,6 @@ class SearchBuilder:
             return Match((field), value, modifier='IN BOOLEAN MODE')
         elif operator == 'BETWEEN':
             return field.between(value[0], value[1])
+
+    def add_join(self, table: Type[Model], on: Expression = None) -> None:
+        self._joins.append({'table': table, 'on': on})

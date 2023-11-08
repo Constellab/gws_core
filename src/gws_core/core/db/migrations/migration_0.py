@@ -41,6 +41,8 @@ from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view_config.view_config import ViewConfig
+from gws_core.tag.entity_tag import (EntityTag, EntityTagOriginType,
+                                     EntityTagType)
 from gws_core.tag.tag_model import TagModel
 from gws_core.tag.taggable_model import TaggableModel
 from gws_core.task.plug import Sink, Source
@@ -48,6 +50,7 @@ from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.user.activity.activity import (Activity, ActivityObjectType,
                                              ActivityType)
+from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
 from ...utils.logger import Logger
@@ -732,7 +735,8 @@ class Migration057(BrickMigration):
         migrator.drop_index_if_exists(Activity, "activity_object_id")
         migrator.alter_column_type(Activity, Activity.object_type.column_name,
                                    EnumField(choices=ActivityType, null=False))
-        migrator.alter_column_type(Activity, Activity.object_id.column_name, CharField(null=False, max_length=36))
+        migrator.alter_column_type(
+            Activity, Activity.object_id.column_name, CharField(null=False, max_length=36))
         migrator.migrate()
 
         # refactor io specs
@@ -779,12 +783,13 @@ class Migration058(BrickMigration):
         view_configs: List[ViewConfig] = list(ViewConfig.select())
         for view_config in view_configs:
             try:
-                if view_config.config is None:
+                if not view_config.config:
 
                     view_meta = ViewHelper.get_and_check_view_meta(view_config.resource_model.get_resource_type(),
                                                                    view_config.view_name)
 
-                    specs = view_meta.get_view_specs_from_type(skip_private=False)
+                    specs = view_meta.get_view_specs_from_type(
+                        skip_private=False)
                     config = Config()
                     config.set_specs(specs)
                     config.set_values(view_config.config_values)
@@ -825,3 +830,40 @@ class Migration0515(BrickMigration):
             except Exception as exception:
                 Logger.error(
                     f'Error while migrating env creation info for env {env["name"]} : {exception}')
+
+
+@brick_migration('0.5.16', short_description='Migrate tags')
+class Migration0516(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
+        migrator.add_column_if_not_exists(TagModel, TagModel.value_format)
+        migrator.migrate()
+
+        entities: List[TaggableModel] = list(
+            ResourceModel.select()) + list(Experiment.select()) + list(ViewConfig.select())
+
+        for entity in entities:
+            try:
+                tags = entity.get_tags()
+
+                for tag in tags:
+                    entity_type: EntityTagType
+                    if isinstance(entity, ResourceModel):
+                        entity_type = EntityTagType.RESOURCE
+                    elif isinstance(entity, Experiment):
+                        entity_type = EntityTagType.EXPERIMENT
+                    elif isinstance(entity, ViewConfig):
+                        entity_type = EntityTagType.VIEW
+                    entity_tag = EntityTag.find_by_tag_and_entity(tag, entity, entity_type)
+
+                    if entity_tag is None:
+                        entity_tag = EntityTag.create_entity_tag(
+                            tag=tag, entity_id=entity.id, entity_type=entity_type,
+                            origin_type=EntityTagOriginType.HUMAN,
+                            origin_id=CurrentUserService.get_and_check_current_user().id)
+            except Exception as exception:
+                Logger.error(
+                    f'Error while migrating tags for entity {entity.id} : {exception}')

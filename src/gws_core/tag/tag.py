@@ -3,10 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from datetime import datetime
 from re import match
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from pydantic.main import BaseModel
+
+from gws_core.core.utils.date_helper import DateHelper
 
 KEY_VALUE_SEPARATOR: str = ':'
 TAGS_SEPARATOR = ','
@@ -16,7 +19,7 @@ MAX_TAG_LENGTH = 1000
 
 class Tag(BaseModel):
     key: str = None
-    value: str = None
+    value: Any = None
 
     def __init__(self, key: str, value: str) -> None:
         super().__init__(key=self._check_parse_key(key), value=self._check_parse_value(value))
@@ -39,12 +42,21 @@ class Tag(BaseModel):
         return value
 
     def __str__(self) -> str:
-        return self.key + KEY_VALUE_SEPARATOR + self.value
+        str_value: str
+        if isinstance(self.value, datetime):
+            str_value = DateHelper.to_iso_str(self.value)
+        else:
+            str_value = str(self.value)
+        # TOdO check to to string of value
+        return self.key + KEY_VALUE_SEPARATOR + str_value
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, Tag):
             return False
         return (self is o) or (self.key == o.key and self.value == o.value)
+
+    def to_json(self) -> Dict:
+        return {"key": self.key, "value": self.value}
 
     @staticmethod
     def from_string(tag_str: str) -> 'Tag':
@@ -60,17 +72,20 @@ class Tag(BaseModel):
             return Tag(tag_info[0], tag_info[1])
 
     @staticmethod
+    def from_json(json: Dict) -> 'Tag':
+        return Tag(key=json["key"], value=json["value"])
+
+    @staticmethod
     def check_parse_tag_str(tag_str: str) -> str:
         """Method that check the length of the tag str (key or value) and that the tag str is valid
         """
-        if len(tag_str) > MAX_TAG_LENGTH:
-            tag_str = tag_str[0: MAX_TAG_LENGTH]
+        # TODO TO check, do this support int value ?
+        return tag_str
+        # if len(tag_str) > MAX_TAG_LENGTH:
+        #     tag_str = tag_str[0: MAX_TAG_LENGTH]
 
-        # check if string is only alphanumeric, with '-', '_', '/', '.' or ' ' allowed with regex
-        if not match(r"^[\w\-_/. ]+$", tag_str):
-            raise ValueError('The tag only support alphanumeric characters, with "-", "_", "/", "." and space allowed')
+        # # check if string is only alphanumeric, with '-', '_', '/', '.' or ' ' allowed with regex
+        # if not match(r"^[\w\-_/. ]+$", tag_str):
+        #     raise ValueError('The tag only support alphanumeric characters, with "-", "_", "/", "." and space allowed')
 
-        return tag_str.lower()
-
-    def to_json(self) -> Dict:
-        return {"key": self.key, "value": self.value}
+        # return tag_str.lower()

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING, List, final
 
 from peewee import (BooleanField, CharField, DoubleField, ForeignKeyField,
@@ -66,7 +67,7 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject):
     lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
 
     is_validated: bool = BooleanField(default=False)
-    validated_at = DateTimeUTC(null=True)
+    validated_at: datetime = DateTimeUTC(null=True)
     validated_by = ForeignKeyField(User, null=True, backref='+')
 
     # Date of the last synchronisation with space, null if never synchronised

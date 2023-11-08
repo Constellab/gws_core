@@ -4,11 +4,25 @@
 # About us: https://gencovery.com
 
 
-from typing import List, Optional
+from datetime import datetime
+from enum import Enum
+from typing import List, Optional, Union
 
 from peewee import CharField, IntegerField
 
+from gws_core.core.classes.enum_field import EnumField
+from gws_core.core.utils.date_helper import DateHelper
+
 from ..core.model.model import Model
+
+TagValueType = Union[str, int, float, datetime]
+
+
+class EntityTagValueFormat(Enum):
+    STRING = "STRING"
+    INTEGER = "INTEGER"
+    FLOAT = "FLOAT"
+    DATETIME = "DATETIME"
 
 
 class TagModel(Model):
@@ -17,24 +31,28 @@ class TagModel(Model):
     key = CharField(null=False, unique=True)
     order = IntegerField(default=0)
 
+    value_format: EntityTagValueFormat = EnumField(
+        choices=EntityTagValueFormat, null=False, default=EntityTagValueFormat.STRING)
+
     _table_name = "gws_tag"
 
     @property
-    def values(self) -> List[str]:
+    def values(self) -> List[TagValueType]:
         if 'values' not in self.data:
             return []
 
-        tag_values: List[List] = self.data['values']
+        tag_values: List[str] = self.data['values']
 
         if not tag_values:
             return []
 
-        return tag_values
+        return [self.convert_str_value_to_type(value) for value in tag_values]
 
-    def has_value(self, value: str) -> bool:
-        return value in self.values
+    def has_value(self, value: TagValueType) -> bool:
+        check_value = self.check_and_convert_value(value)
+        return check_value in self.values
 
-    def add_value(self, value: str) -> None:
+    def add_value(self, value: TagValueType) -> None:
         """Add the value if not present
 
         :return: [description]
@@ -42,15 +60,18 @@ class TagModel(Model):
         """
         if not value:
             return
-        value = value.lower()
-        if self.has_value(value):
+
+        checked_value: TagValueType = self.check_and_convert_value(value)
+        if self.has_value(checked_value):
             return
 
-        values = self.values
-        values.append(value)
-        self.data['values'] = values
+        if not self.data.get('values'):
+            self.data['values'] = []
 
-    def remove_value(self, value: str) -> None:
+        # store the values as string
+        self.data['values'].append(self.convert_value_to_str(checked_value))
+
+    def remove_value(self, value: TagValueType) -> None:
         """Remove the value if present
 
         :return: [description]
@@ -64,29 +85,29 @@ class TagModel(Model):
             values.remove(value)
             self.data['values'] = values
 
-    def update_value(self, old_value: str, new_value: str) -> None:
+    def update_value(self, old_value: TagValueType, new_value: TagValueType) -> None:
         """Update the value if present """
         self.remove_value(old_value)
         self.add_value(new_value)
 
-    def set_values(self, values: List[str]) -> None:
-        self.data['values'] = values
+    def set_values(self, values: List[TagValueType]) -> None:
+        for value in values:
+            self.add_value(value)
 
     def count_values(self) -> int:
         return len(self.values)
 
     @classmethod
-    def create(cls, key: str, values: List[str] = []) -> 'TagModel':
+    def create_tag(cls, key: str, values: List[TagValueType] = None,
+                   value_format: EntityTagValueFormat = EntityTagValueFormat.STRING) -> 'TagModel':
         """create a new empty tag
-
-        :param key: [description]
-        :type key: str
-        :return: [description]
-        :rtype: Tag
         """
+        if not values:
+            values = []
         tag = TagModel()
-        tag.key = key.lower()
-        tag.data = {'values': values}
+        tag.key = key
+        tag.value_format = value_format
+        tag.set_values(values)
         return tag
 
     @classmethod
@@ -111,3 +132,42 @@ class TagModel(Model):
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         return None
+
+    def check_and_convert_value(self, value: TagValueType) -> TagValueType:
+        if value is None:
+            raise Exception("The tag value cannot be None")
+        try:
+            if self._check_value(value):
+                return value
+
+            return self.convert_str_value_to_type(value)
+        except:
+            raise Exception(f"Invalid value type for tag {self.key}, expected {self.value_format.value}")
+
+    def _check_value(self, value: TagValueType) -> bool:
+        if value is None:
+            return False
+        if self.value_format == EntityTagValueFormat.INTEGER:
+            return isinstance(value, int)
+        elif self.value_format == EntityTagValueFormat.FLOAT:
+            return isinstance(value, float)
+        elif self.value_format == EntityTagValueFormat.DATETIME:
+            return isinstance(value, datetime)
+        else:
+            return isinstance(value, str)
+
+    def convert_str_value_to_type(self, value: str) -> TagValueType:
+        if self.value_format == EntityTagValueFormat.INTEGER:
+            return int(value)
+        elif self.value_format == EntityTagValueFormat.FLOAT:
+            return float(value)
+        elif self.value_format == EntityTagValueFormat.DATETIME:
+            return DateHelper.from_iso_str(value)
+        else:
+            return value
+
+    def convert_value_to_str(self, value: TagValueType) -> str:
+        if self.value_format == EntityTagValueFormat.DATETIME:
+            return DateHelper.to_iso_str(value)
+        else:
+            return str(value)

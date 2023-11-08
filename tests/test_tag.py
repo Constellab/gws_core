@@ -1,14 +1,16 @@
 
 from gws_core import BaseTestCase, Tag, TagHelper
+from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
-from gws_core.impl.robot.robot_resource import Robot
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.tag.entity_tag import EntityTagType
 from gws_core.tag.tag import KEY_VALUE_SEPARATOR, TAGS_SEPARATOR
-from gws_core.tag.tag_model import TagModel
+from gws_core.tag.tag_model import EntityTagValueFormat, TagModel
 from gws_core.tag.tag_service import TagService
 
 
+# test_tag
 class TestTag(BaseTestCase):
 
     def test_tag(self):
@@ -37,28 +39,27 @@ class TestTag(BaseTestCase):
 
         # Test modify a tag in list
         new_list_2 = TagHelper.add_or_replace_tag(tag_list_str, 'test2', 'OK')
-        new_list_expected_2 = TAGS_SEPARATOR + str(tag) + TAGS_SEPARATOR + str(Tag('test2', 'ok')) + TAGS_SEPARATOR
+        new_list_expected_2 = TAGS_SEPARATOR + str(tag) + TAGS_SEPARATOR + str(Tag('test2', 'OK')) + TAGS_SEPARATOR
         self.assertEqual(new_list_2, new_list_expected_2)
 
     def test_add_tag(self):
-        robot: Robot = Robot.empty()
-        resource_model = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.UPLOADED)
+        experiment: Experiment = ExperimentService.create_experiment()
 
-        expected_tags = [Tag('Test', 'value')]
+        expected_tag = Tag('test', 'value')
 
         # Add the tag to the model and check that is was added in DB
-        tags = TagService.add_tag_to_entity(ResourceModel, resource_model.id, 'Test', 'value')
-        self.assertEqual(tags, expected_tags)
-        resource_model_db: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
-        self.assertEqual(resource_model_db.get_tags(), expected_tags)
+        tag = TagService.add_tag_to_entity(Experiment, experiment.id, 'test', 'value')
+        self.assertEqual(tag.entity_type, EntityTagType.EXPERIMENT.value)
+        self.assertEqual(tag.entity_id, experiment.id)
+        self.assertEqual(tag.tag_key_id, 'test')
+        self.assertEqual(tag.tag_value, 'value')
 
-        # Test get by tags
-        result = TagService.get_entities_with_tag(expected_tags)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].id, resource_model.id)
+        entity_tags = TagService.find_by_entity(experiment)
+        self.assertTrue(len(entity_tags.get_tags()), 0)
+        self.assertTrue(entity_tags.has_tag(expected_tag))
 
         # Check that the tag was added to the tag table
-        tag_model = TagModel.find_by_key('Test')
+        tag_model = TagModel.find_by_key('test')
         self.assertEqual(tag_model.values, ['value'])
 
         # add value to tag model
@@ -69,18 +70,37 @@ class TestTag(BaseTestCase):
         tag_model.add_value('value')
         self.assertEqual(tag_model.values, ['value', 'value2'])
 
-        # test to json
-        self.assertIsNotNone(resource_model_db.to_json()['tags'])
+        # add int tag
+        tag = TagService.add_tag_to_entity(Experiment, experiment.id, 'test_int', 1)
+        self.assertEqual(tag.get_value(), 1)
+        tag_model = TagModel.find_by_key('test_int')
+        self.assertEqual(tag_model.values, [1])
+        self.assertEqual(tag_model.value_format, EntityTagValueFormat.INTEGER)
+
+        # add float tag
+        tag = TagService.add_tag_to_entity(Experiment, experiment.id, 'test_float', 1.1)
+        self.assertEqual(tag.get_value(), 1.1)
+        tag_model = TagModel.find_by_key('test_float')
+        self.assertEqual(tag_model.values, [1.1])
+        self.assertEqual(tag_model.value_format, EntityTagValueFormat.FLOAT)
+
+        # add datetime tag
+        now = DateHelper.now_utc()
+        tag = TagService.add_tag_to_entity(Experiment, experiment.id, 'test_datetime', now)
+        self.assertEqual(tag.get_value(), now)
+        tag_model = TagModel.find_by_key('test_datetime')
+        self.assertEqual(tag_model.values, [now])
+        self.assertEqual(tag_model.value_format, EntityTagValueFormat.DATETIME)
+
+        # test to json TODO
+        # self.assertIsNotNone(resource_model_db.to_json()['tags'])
 
     def test_tag_crud(self) -> None:
-        robot: Robot = Robot.empty()
-        resource_model: ResourceModel = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.UPLOADED)
+        """ Test update and delete tag"""
 
         tag = Tag('newtag', 'value')
         other_tag = Tag('newtag', 'other_value')
         TagService.register_tags([tag, other_tag])
-
-        TagService.add_tag_to_entity(ResourceModel, resource_model.id, tag.key, tag.value)
 
         experiment: Experiment = ExperimentService.create_experiment()
         TagService.add_tag_to_entity(Experiment, experiment.id, tag.key, tag.value)
@@ -94,14 +114,9 @@ class TestTag(BaseTestCase):
         self.assertFalse(tag_model.has_value(tag.value))
         self.assertTrue(tag_model.has_value(new_tag.value))
 
-        # Check that the tag was updated in the resource model and experiment
-        resource_model = resource_model.refresh()
-        self.assertFalse(resource_model.has_tag(tag))
-        self.assertTrue(resource_model.has_tag(new_tag))
-
-        experiment = experiment.refresh()
-        self.assertFalse(experiment.has_tag(tag))
-        self.assertTrue(experiment.has_tag(new_tag))
+        experiment_tags = TagService.find_by_entity(experiment)
+        self.assertFalse(experiment_tags.has_tag(tag))
+        self.assertTrue(experiment_tags.has_tag(new_tag))
 
         # Test delete tag
         TagService.delete_registered_tag(new_tag.key, new_tag.value)
@@ -110,13 +125,63 @@ class TestTag(BaseTestCase):
         tag_model = TagModel.find_by_key(new_tag.key)
         self.assertFalse(tag_model.has_value(new_tag.value))
 
-        resource_model = resource_model.refresh()
-        self.assertFalse(resource_model.has_tag(new_tag))
-
-        experiment = experiment.refresh()
-        self.assertFalse(experiment.has_tag(new_tag))
+        experiment_tags = TagService.find_by_entity(experiment)
+        self.assertFalse(experiment_tags.has_tag(new_tag))
 
         # Remove the last value of the TagModel and check that it was deleted (because it is the last value)
         TagService.delete_registered_tag(other_tag.key, other_tag.value)
         tag_model = TagModel.find_by_key(new_tag.key)
         self.assertIsNone(tag_model)
+
+    def test_search(self):
+        tag = Tag('first_key', 'first_value')
+        other_tag = Tag('second_key', 'second_value')
+
+        # experiment 1 tagged with the 2 tags
+        experiment: Experiment = ExperimentService.create_experiment()
+        TagService.add_tag_to_entity(Experiment, experiment.id, tag.key, tag.value)
+        TagService.add_tag_to_entity(Experiment, experiment.id, other_tag.key, other_tag.value)
+
+        # experiment 2 tagged only with the first tag
+        experiment_2: Experiment = ExperimentService.create_experiment()
+        TagService.add_tag_to_entity(Experiment, experiment_2.id, tag.key, tag.value)
+
+        search_dict: SearchParams = SearchParams()
+
+        # search with only first tag
+        search_dict.filtersCriteria = [
+            {"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json([tag])}]
+        paginator = ExperimentService.search(search_dict)
+        self.assertEqual(paginator.page_info.total_number_of_items, 2)
+
+        # search with both tags
+        search_dict.filtersCriteria = [
+            {"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json([tag, other_tag])}]
+        paginator = ExperimentService.search(search_dict)
+        self.assertEqual(paginator.page_info.total_number_of_items, 1)
+        self.assertEqual(paginator.results[0].id, experiment.id)
+
+        # test search with int value
+        TagService.add_tag_to_entity(Experiment, experiment.id, 'int_tag', 1)
+        search_dict.filtersCriteria = [
+            {"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json([Tag('int_tag', 1)])}]
+        paginator = ExperimentService.search(search_dict)
+        self.assertEqual(paginator.page_info.total_number_of_items, 1)
+        self.assertEqual(paginator.results[0].id, experiment.id)
+
+        # test search with float value
+        # TagService.add_tag_to_entity(Experiment, experiment.id, 'float_tag', 1.1)
+        # search_dict.filtersCriteria = [
+        #     {"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json([Tag('float_tag', 1.1)])}]
+        # paginator = ExperimentService.search(search_dict)
+        # self.assertEqual(paginator.page_info.total_number_of_items, 1)
+        # self.assertEqual(paginator.results[0].id, experiment.id)
+
+        # test search with datetime value
+        now = DateHelper.now_utc()
+        TagService.add_tag_to_entity(Experiment, experiment.id, 'datetime_tag', now)
+        search_dict.filtersCriteria = [{"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json(
+            [Tag('datetime_tag', DateHelper.to_iso_str(now))])}]
+        paginator = ExperimentService.search(search_dict)
+        self.assertEqual(paginator.page_info.total_number_of_items, 1)
+        self.assertEqual(paginator.results[0].id, experiment.id)

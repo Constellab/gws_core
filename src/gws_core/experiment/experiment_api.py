@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.tag.entity_tag import EntityTag, EntityTagType
 
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
@@ -23,13 +23,27 @@ from .experiment_service import ExperimentService
 from .queue_service import QueueService
 
 
-@core_app.get("/experiment/tests", tags=["Experiment"],
+@core_app.get("/experiment/tests/{key}", tags=["Experiment"],
               summary="Get the list of running experiments")
-def get_the_list_of_running_experimentss(
-        _=Depends(AuthService.check_user_access_token)) -> list:
-    list_ = list(Experiment.select().join(ResourceModel).where(
-        ResourceModel.id == '011f2637-e073-41b7-bd42-236def8ea0ae'))
-    return ListJsonable(list_).to_json()
+def get_the_list_of_running_experimentss(key: str,
+                                         _=Depends(AuthService.check_user_access_token)) -> list:
+    # list_ = list(Experiment.select().join(ExperimentTag).where(
+    #     ExperimentTag.tag_key == key))
+
+    list_ = list(Experiment.select().join(EntityTag, on=(Experiment.id == EntityTag.entity_id)).where(
+        (EntityTag.tag_key == key) & (EntityTag.entity_type == EntityTagType.EXPERIMENT)))
+
+    return [e.title for e in list_]
+
+
+@core_app.get("/experiment/tests/{key}/{value}", tags=["Experiment"],
+              summary="Get the list of running experiments")
+def get_the_list_of_running_experimentss_va(key: str,
+                                            value: str,
+                                            _=Depends(AuthService.check_user_access_token)) -> list:
+    # list_ = list(Experiment.select().join(ExperimentTag).where(
+    #     ExperimentTag.tag_key == key).where(ExperimentTag.tag_value == value))
+    return [e.title for e in list_]
 
 ###################################### GET ###############################
 

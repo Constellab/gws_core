@@ -53,6 +53,12 @@ class TagHelper():
         return TAGS_SEPARATOR + TAGS_SEPARATOR.join([str(tag) for tag in tags]) + TAGS_SEPARATOR
 
     @classmethod
+    def tags_to_json(cls, tags: List[Tag]) -> dict:
+        if not tags:
+            return []
+        return [tag.to_json() for tag in tags]
+
+    @classmethod
     def tags_to_list(cls, tags: str) -> List[Tag]:
         if not tags:
             return []
@@ -77,10 +83,21 @@ class TagHelper():
         return tags_list
 
     @classmethod
+    def tags_json_to_list(cls, tags: List[dict]) -> List[Tag]:
+        if not tags:
+            return []
+
+        tags_list: List[Tag] = []
+
+        for tag_json in tags:
+            tags_list.append(Tag.from_json(tag_json))
+        return tags_list
+
+    @classmethod
     def get_distinct_values(cls, tags: List[Dict[str, str]]) -> Dict[str, List[str]]:
         """Return a dictionary of tags key with the list of values for each key from a list of tags
         """
-        all_tags = {}
+        all_tags: Dict[str, List[str]] = {}
         for tag in tags:
             for k, v in tag.items():
                 if k not in all_tags:

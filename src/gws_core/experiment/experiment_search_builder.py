@@ -3,23 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from peewee import Expression
 
-from ..core.classes.search_builder import SearchBuilder, SearchFilterCriteria
-from ..tag.tag_helper import TagHelper
+from gws_core.tag.entity_tag import EntityTagType
+from gws_core.tag.entity_with_tag_search_builder import \
+    EntityWithTagSearchBuilder
+
 from .experiment import Experiment
 
 
-class ExperimentSearchBuilder(SearchBuilder):
+class ExperimentSearchBuilder(EntityWithTagSearchBuilder):
 
     def __init__(self) -> None:
-        super().__init__(Experiment, default_orders=[
-            Experiment.last_modified_at.desc()])
-
-    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
-        # Special case for the tags to filter on all tags
-        if filter_['key'] == 'tags':
-            tags = TagHelper.tags_to_list(filter_['value'])
-            return Experiment.get_search_tag_expression(tags)
-
-        return super().convert_filter_to_expression(filter_)
+        super().__init__(Experiment, EntityTagType.EXPERIMENT,
+                         default_orders=[Experiment.last_modified_at.desc()])
