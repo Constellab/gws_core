@@ -7,13 +7,12 @@ from typing import Dict, List, Optional
 
 from fastapi.param_functions import Depends
 
-from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.paginator import PaginatorDict
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
-from gws_core.tag.tag import Tag
+from gws_core.tag.entity_tag import EntityTagType
+from gws_core.tag.tag import TagDict
 from gws_core.tag.tag_service import TagService
 from gws_core.user.auth_service import AuthService
 
@@ -94,6 +93,6 @@ def search_for_report(report_id: str,
 
 @core_app.put("/view-config/{id}/tags", tags=["View config"], summary="Update view config tags")
 def save_tags(id: str,
-              tags: List[Tag],
+              tags: List[TagDict],
               _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ListJsonable(TagService.save_tags_to_entity(ViewConfig, id, tags)).to_json()
+    return TagService.save_tags_dict_to_entity(EntityTagType.VIEW, id, tags).to_json()

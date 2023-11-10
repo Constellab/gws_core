@@ -62,15 +62,15 @@ class Robot(Resource):
         return {"age": self.age, "position": self.position, "weight": self.weight}
 
 
-@ resource_decorator("RobotAddOn", hide=True)
+@resource_decorator("RobotAddOn", hide=True)
 class RobotAddOn(Resource):
     pass
 
 
-@ resource_decorator("MegaRobot", hide=True)
+@resource_decorator("MegaRobot", hide=True)
 class MegaRobot(Robot):
 
-    @ classmethod
+    @classmethod
     def from_robot(cls, robot: Robot) -> 'MegaRobot':
         mega = MegaRobot()
         mega.position = robot.position
@@ -79,7 +79,13 @@ class MegaRobot(Robot):
         return mega
 
 
-@ resource_decorator("RobotFood", hide=True)
+@resource_decorator("RobotFood", hide=True)
 class RobotFood(Resource):
 
     multiplicator: int = IntRField()
+
+    @classmethod
+    def empty(cls) -> 'RobotFood':
+        food = RobotFood()
+        food.multiplicator = 1
+        return food

@@ -58,17 +58,17 @@ class TestS3Server(BaseTestCase):
 
     def _test_auth(self):
         s3_client = self._create_client()
-        s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
+        s3_client.create_bucket(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
 
         # test wrong access key
         s3_client = self._create_client(access_key_id='wrong_access_key')
         with self.assertRaises(Exception):
-            s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
+            s3_client.create_bucket(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
 
         # test wrong secret key
         s3_client = self._create_client(secret_key='wrong_secret_key')
         with self.assertRaises(Exception):
-            s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
+            s3_client.create_bucket(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
 
     def _test_project_storage(self, project_id: str):
         s3_client = self._create_client()
@@ -109,7 +109,7 @@ class TestS3Server(BaseTestCase):
         s3_client.delete_object(Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Key=key)
 
         # check resources
-        resources: List[ResourceModel] = list(ResourceModel.select())
+        resources = list(ResourceModel.select())
         self.assertEqual(len(resources), 0)
 
         # test list objects

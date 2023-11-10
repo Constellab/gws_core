@@ -413,7 +413,6 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject):
 
         _json = super().to_json(deep=deep, **kwargs)
 
-        _json["tags"] = self.get_tags_json()
         _json["protocol"] = {
             "id": self.protocol_model.id
         }

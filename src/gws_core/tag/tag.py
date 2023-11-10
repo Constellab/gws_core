@@ -4,10 +4,9 @@
 # About us: https://gencovery.com
 
 from datetime import datetime
-from re import match
-from typing import Any, Dict, List
+from typing import List, Union
 
-from pydantic.main import BaseModel
+from typing_extensions import TypedDict
 
 from gws_core.core.utils.date_helper import DateHelper
 
@@ -16,47 +15,57 @@ TAGS_SEPARATOR = ','
 
 MAX_TAG_LENGTH = 1000
 
+# the order in the Union is important for pydantic
+TagValueType = Union[str, int, float, datetime]
 
-class Tag(BaseModel):
+
+class TagDict(TypedDict):
+    key: str
+    value: str
+
+
+class Tag():
     key: str = None
-    value: Any = None
+    value: TagValueType = None
 
-    def __init__(self, key: str, value: str) -> None:
-        super().__init__(key=self._check_parse_key(key), value=self._check_parse_value(value))
+    def __init__(self, key: str, value: TagValueType) -> None:
+        self.key = self._check_parse_key(key)
+        self.value = self._check_parse_value(value)
 
     def set_key(self, key: str) -> None:
         self.key = self._check_parse_key(key)
 
-    def set_value(self, value: str) -> None:
+    def set_value(self, value: TagValueType) -> None:
         self.value = self._check_parse_value(value)
+
+    def get_str_value(self) -> str:
+        if isinstance(self.value, datetime):
+            return DateHelper.to_iso_str(self.value)
+        else:
+            return str(self.value)
 
     def _check_parse_key(self, key: str) -> str:
         if key is None:
             raise ValueError('The tag key must be defined')
 
-        return Tag.check_parse_tag_str(key)
+        return Tag.check_parse_tag_key(key)
 
-    def _check_parse_value(self, value: str) -> str:
-        if value:
-            value = Tag.check_parse_tag_str(value)
+    def _check_parse_value(self, value: TagValueType) -> TagValueType:
+        # if value:
+        #     value = Tag.check_parse_tag_str(value)
         return value
 
     def __str__(self) -> str:
-        str_value: str
-        if isinstance(self.value, datetime):
-            str_value = DateHelper.to_iso_str(self.value)
-        else:
-            str_value = str(self.value)
-        # TOdO check to to string of value
-        return self.key + KEY_VALUE_SEPARATOR + str_value
+        # TODO check to to string of value
+        return self.key + KEY_VALUE_SEPARATOR + self.get_str_value()
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, Tag):
             return False
         return (self is o) or (self.key == o.key and self.value == o.value)
 
-    def to_json(self) -> Dict:
-        return {"key": self.key, "value": self.value}
+    def to_json(self) -> TagDict:
+        return {"key": self.key, "value": self.get_str_value()}
 
     @staticmethod
     def from_string(tag_str: str) -> 'Tag':
@@ -72,11 +81,16 @@ class Tag(BaseModel):
             return Tag(tag_info[0], tag_info[1])
 
     @staticmethod
-    def from_json(json: Dict) -> 'Tag':
-        return Tag(key=json["key"], value=json["value"])
+    def from_json(json: TagDict) -> 'Tag':
+        return Tag(key=json["key"], value=json.get("value"))
 
     @staticmethod
-    def check_parse_tag_str(tag_str: str) -> str:
+    def check_parse_tag_key(tag_key: str) -> str:
+        # TODO check what to do
+        return tag_key
+
+    @staticmethod
+    def check_parse_tag_str(tag_str: TagValueType) -> TagValueType:
         """Method that check the length of the tag str (key or value) and that the tag str is valid
         """
         # TODO TO check, do this support int value ?

@@ -5,11 +5,14 @@
 
 import os
 from copy import deepcopy
-from typing import Dict, Union, final
+from typing import Dict, List, Union, final
 
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
+from gws_core.tag.tag import Tag
+from gws_core.tag.tag_list import TagList
+from gws_core.tag.tag_list_field import TagListField
 
 from ..config.config_params import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
@@ -35,7 +38,7 @@ class Resource(Base):
     technical_info: TechnicalInfoDict = SerializableRField(TechnicalInfoDict)
 
     # provide tags to this attribute to save them on resource generation
-    tags: Dict[str, str] = {}
+    tags: TagList = TagListField()
 
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values
@@ -140,15 +143,15 @@ class Resource(Base):
 
         return clone
 
-    @ final
-    @ classmethod
+    @final
+    @classmethod
     def __get_resource_r_fields__(cls) -> Dict[str, BaseRField]:
         """Get the list of resource's r_fields,
         the key is the property name, the value is the BaseRField object
         """
         return ReflectorHelper.get_property_names_of_type(cls, BaseRField)
 
-    @ final
+    @final
     def __getattribute__(self, name):
         """Override get attribute to lazy load kvstore Rfields
 
@@ -171,5 +174,11 @@ class Resource(Base):
                 # if the key is not in the kv_store return the default
                 # this can happend when the RField is new
                 return attr.get_default_value()
+
+        # lazy load the tags
+        elif isinstance(attr, TagListField):
+            tag_list = attr.load_tags(self._model_id)
+            setattr(self, name, tag_list)
+            return tag_list
 
         return attr

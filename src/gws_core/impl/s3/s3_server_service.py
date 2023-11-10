@@ -9,8 +9,7 @@ from typing import ByteString, Optional
 from fastapi.responses import FileResponse
 from mypy_boto3_s3.type_defs import ListObjectsV2OutputTypeDef, ObjectTypeDef
 
-from gws_core.core.classes.expression_builder import ExpressionBuilder
-from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -19,8 +18,12 @@ from gws_core.impl.s3.s3_server_exception import (S3ServerContext,
                                                   S3ServerNoSuchKey)
 from gws_core.project.project import Project
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_model_search_builder import \
+    ResourceModelSearchBuilder
 from gws_core.resource.resource_service import ResourceService
+from gws_core.tag.entity_tag import EntityTag, EntityTagType
 from gws_core.tag.tag import Tag
+from gws_core.tag.tag_service import TagService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
@@ -46,9 +49,10 @@ class S3ServerService:
         """
 
         with S3ServerContext(bucket_name):
-            expression_builder = cls._get_s3_expression_builder(bucket_name, prefix=prefix)
+            search_builder = cls._get_s3_expression_builder(bucket_name, prefix=prefix)
+            search_builder.add_ordering(ResourceModel.name)
 
-            resources = ResourceModel.select().where(expression_builder.build()).order_by(ResourceModel.name)
+            resources = search_builder.build_search()
 
             bucket_objects = [cls._resource_to_s3_object(resource) for resource in resources]
 
@@ -62,6 +66,7 @@ class S3ServerService:
             }
 
     @classmethod
+    @transaction()
     def upload_object(cls, bucket_name: str,
                       key: str, data: ByteString) -> None:
         """Upload an object to the bucket
@@ -100,13 +105,17 @@ class S3ServerService:
 
             resource_model = ResourceModel.from_resource(file, resource_origin)
             resource_model.name = FileHelper.get_name_with_extension(key)
-            resource_model.set_tags([Tag('storage', 's3'), Tag('bucket', bucket_name), Tag('key', key)])
             resource_model.project = project
 
             # Authenticate sys user because in S3 server we don't have a user
             CurrentUserService.set_current_user(User.get_sysuser())
             try:
-                resource_model.save_full()
+                resource_model = resource_model.save_full()
+                TagService.save_tags_to_entity(
+                    EntityTagType.RESOURCE, resource_model.id,
+                    [Tag('storage', 's3'),
+                     Tag('bucket', bucket_name),
+                     Tag('key', key)])
             finally:
                 CurrentUserService.set_current_user(None)
 
@@ -142,8 +151,8 @@ class S3ServerService:
     def _get_object(cls, bucket_name: str, key: str) -> Optional[ResourceModel]:
         """Get an object from the bucket
         """
-        expression_builder = cls._get_s3_expression_builder(bucket_name=bucket_name, key=key)
-        return ResourceModel.select().where(expression_builder.build()).first()
+        search_builder = cls._get_s3_expression_builder(bucket_name=bucket_name, key=key)
+        return search_builder.build_search().first()
 
     @classmethod
     def _get_object_and_check(cls, bucket_name: str, key: str) -> ResourceModel:
@@ -194,12 +203,13 @@ class S3ServerService:
 
     @classmethod
     def _resource_to_s3_object(cls, resource: ResourceModel) -> ObjectTypeDef:
-        if not resource.has_tag_key('key'):
+        entity_tag: EntityTag = EntityTag.find_by_tag_key_and_entity('key', resource.id, EntityTagType.RESOURCE).first()
+        if not entity_tag:
             raise S3ServerException(status_code=500, code='invalid_resource',
                                     message='Resource has no key tag', bucket_name='')
         return {
-            'Key': resource.get_tag_value('key'),
-            'LastModified': DateHelper.to_iso_str(resource.last_modified_at),
+            'Key': entity_tag.tag_value,
+            'LastModified': resource.last_modified_at,
             'ETag': '',
             'Size': resource.fs_node_model.size,
             'Owner': {
@@ -211,26 +221,27 @@ class S3ServerService:
 
     @classmethod
     def _get_s3_expression_builder(cls, bucket_name: str,
-                                   key: str = None, prefix: str = None) -> ExpressionBuilder:
+                                   key: str = None, prefix: str = None) -> ResourceModelSearchBuilder:
         """Method to get the expression builder to filter resource model by bucket, key...
         """
-        tags = [Tag('storage', 's3'), Tag('bucket', bucket_name)]
-        expression_builder = ExpressionBuilder(ResourceModel.get_search_tag_expression(tags))
-        expression_builder.add_expression(ResourceModel.fs_node_model.is_null(False))
+        search_builder = ResourceModelSearchBuilder()
+
+        search_builder.add_tag_filter(Tag('storage', 's3'))
+        search_builder.add_tag_filter(Tag('bucket', bucket_name))
+
+        search_builder.add_expression(ResourceModel.fs_node_model.is_null(False))
 
         if cls._is_project_doc_bucket(bucket_name):
-            expression_builder.add_expression(ResourceModel.origin == ResourceOrigin.S3_PROJECT_STORAGE)
+            search_builder.add_expression(ResourceModel.origin == ResourceOrigin.S3_PROJECT_STORAGE)
         else:
-            expression_builder.add_expression(ResourceModel.origin == ResourceOrigin.UPLOADED)
+            search_builder.add_expression(ResourceModel.origin == ResourceOrigin.UPLOADED)
 
         if key:
-            expression_builder.add_expression(ResourceModel.get_search_tag_expression([Tag('key', key)]))
-            # expression_builder.add_expression(ResourceModel.name == key)
+            search_builder.add_tag_filter(Tag('key', key))
 
         if prefix:
             if not prefix.endswith('/'):
                 prefix += '/'
-            # expression_builder.add_expression(ResourceModel.name.startswith(prefix))
-            expression_builder.add_expression(ResourceModel.get_tag_valie_start_with_expression([Tag('key', prefix)]))
+            search_builder.add_tag_filter(Tag('key', prefix), 'START_WITH')
 
-        return expression_builder
+        return search_builder

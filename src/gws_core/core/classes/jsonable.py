@@ -10,7 +10,7 @@ class Jsonable():
     :type List: [type]
     """
     @abstractmethod
-    def to_json(self, **kwargs) -> dict:
+    def to_json(self, **kwargs) -> Any:
         pass
 
 

@@ -20,6 +20,15 @@ async def health_check() -> bool:
     return True
 
 
+@s3_server_app.put("/v1/{bucket}")
+async def create_bucket(bucket: str,
+                        _=Depends(S3ServerAuth.check_s3_server_auth)):
+
+    S3ServerService.create_bucket(bucket)
+
+    return ResponseHelper.create_xml_response('')
+
+
 @s3_server_app.put("/v1/{bucket}/{key:path}")
 async def upload_object(request: Request,
                         bucket: str, key: str,

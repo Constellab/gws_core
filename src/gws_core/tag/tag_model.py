@@ -6,16 +6,15 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from peewee import CharField, IntegerField
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.tag.tag import TagValueType
 
 from ..core.model.model import Model
-
-TagValueType = Union[str, int, float, datetime]
 
 
 class EntityTagValueFormat(Enum):
@@ -97,9 +96,29 @@ class TagModel(Model):
     def count_values(self) -> int:
         return len(self.values)
 
+    ############################################## CLASS METHODS ##############################################
+
     @classmethod
-    def create_tag(cls, key: str, values: List[TagValueType] = None,
-                   value_format: EntityTagValueFormat = EntityTagValueFormat.STRING) -> 'TagModel':
+    def register_tag(cls, tag_key: str, tag_value: TagValueType) -> 'TagModel':
+        tag: TagModel = cls.find_by_key(tag_key)
+
+        if tag is None:
+            value_format: EntityTagValueFormat = EntityTagValueFormat.STRING
+            if isinstance(tag_value, int):
+                value_format = EntityTagValueFormat.INTEGER
+            elif isinstance(tag_value, float):
+                value_format = EntityTagValueFormat.FLOAT
+            elif isinstance(tag_value, datetime):
+                value_format = EntityTagValueFormat.DATETIME
+            tag = cls._create_tag(tag_key, [tag_value], value_format)
+        else:
+            tag.add_value(tag_value)
+
+        return tag.save()
+
+    @classmethod
+    def _create_tag(cls, key: str, values: List[TagValueType] = None,
+                    value_format: EntityTagValueFormat = EntityTagValueFormat.STRING) -> 'TagModel':
         """create a new empty tag
         """
         if not values:
@@ -107,6 +126,8 @@ class TagModel(Model):
         tag = TagModel()
         tag.key = key
         tag.value_format = value_format
+        tag.order = TagModel.get_highest_order() + 1
+
         tag.set_values(values)
         return tag
 

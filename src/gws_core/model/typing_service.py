@@ -73,7 +73,7 @@ class TypingService():
         # force to add a filter hide to False
         search.override_filter_criteria('hide', 'EQ', False)
 
-        model_select: ModelSelect = search_builder.build_search(search)
+        model_select: ModelSelect = search_builder.add_search_params(search).build_search()
         return Paginator(
             model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 

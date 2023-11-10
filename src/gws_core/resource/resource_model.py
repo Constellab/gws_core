@@ -22,6 +22,11 @@ from gws_core.project.model_with_project import ModelWithProject
 from gws_core.project.project import Project
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
+from gws_core.tag.entity_tag import EntityTagOriginType, EntityTagType
+from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag_helper import TagHelper
+from gws_core.tag.tag_list import TagList
+from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -50,8 +55,6 @@ if TYPE_CHECKING:
 # Typing names generated for the class Resource
 CONST_RESOURCE_MODEL_TYPING_NAME = "MODEL.gws_core.ResourceModel"
 
-ResourceType = TypeVar('ResourceType', bound=Resource)
-
 
 class ResourceOrigin(Enum):
     # If the resource was imported manually by the user
@@ -71,7 +74,7 @@ class ResourceOrigin(Enum):
 
 
 # Use the typing decorator to avoid circular dependency
-class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[ResourceType]):
+class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject):
 
     """
     ResourceModel class.
@@ -111,7 +114,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[Reso
     brick_version = CharField(null=False, max_length=50, default="")
 
     _table_name = 'gws_resource'
-    _resource: ResourceType = None
+    _resource: Resource = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -310,7 +313,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[Reso
         return self._typing_name
 
     @final
-    def get_resource(self, new_instance: bool = False) -> ResourceType:
+    def get_resource(self, new_instance: bool = False) -> Resource:
         """
         Returns the resource created from the data and resource_typing_name
         if new_instance, it forces to rebuild the resource
@@ -324,7 +327,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[Reso
 
         return self._resource
 
-    def _instantiate_resource(self) -> ResourceType:
+    def _instantiate_resource(self) -> Resource:
         """
         Create the Resource object from the resource_typing_name
         """
@@ -334,7 +337,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[Reso
                                                resource_model_id=self.id, name=self.name)
 
     @classmethod
-    def from_resource(cls, resource: ResourceType, origin: ResourceOrigin = ResourceOrigin.GENERATED,
+    def from_resource(cls, resource: Resource, origin: ResourceOrigin = ResourceOrigin.GENERATED,
                       experiment: Experiment = None, task_model: TaskModel = None, port_name: str = None) -> ResourceModel:
         """Create a new ResourceModel from a resource
 
@@ -384,18 +387,6 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[Reso
             name = resource._human_name
         resource_model.name = name
 
-        # handle tags
-        tags = resource.tags
-        if tags is not None:
-            if not isinstance(tags, dict):
-                Logger.error(
-                    f"The 'tags' attribute of the resource {type(resource)} is not a dict.")
-            else:
-                resource_model.set_tags_dict(tags)
-                # register the tags globally
-                from ..tag.tag_service import TagService
-                TagService.register_tags(resource_model.get_tags())
-
         if isinstance(resource, FSNode):
             resource_model.init_fs_node_model(resource, name)
 
@@ -435,12 +426,21 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[Reso
 
     @classmethod
     def save_from_resource(
-            cls, resource: ResourceType, origin: ResourceOrigin = ResourceOrigin.GENERATED, experiment: Experiment = None,
+            cls, resource: Resource, origin: ResourceOrigin = ResourceOrigin.GENERATED, experiment: Experiment = None,
             task_model: TaskModel = None, port_name: str = None) -> ResourceModel:
         """Create the ResourceModel from the Resource and save it
         """
-        return cls.from_resource(
+        resource_model = cls.from_resource(
             resource, origin=origin, experiment=experiment, task_model=task_model, port_name=port_name).save_full()
+
+        if resource.tags and isinstance(resource.tags, TagList):
+            # Add tags
+            entity_tags: EntityTagList = EntityTagList(EntityTagType.RESOURCE, resource_model.id)
+
+            # TODO fix origin
+            entity_tags.save_tags_to_entity(resource.tags.get_tags(), origin_type=EntityTagOriginType.HUMAN,
+                                            origin_id=CurrentUserService.get_and_check_current_user().id)
+        return resource_model
 
     def set_resource_typing_name(self, typing_name: str) -> None:
         typing: Typing = TypingManager.get_typing_from_name_and_check(
@@ -448,43 +448,11 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[Reso
         self.resource_typing_name = typing_name
         self.brick_version = typing.brick_version
 
-    def send_fields_to_resource(self, resource: ResourceType):
-        """for each BaseRField of the resource, set the value form the data or kvstore
-
-        :param resource: [description]
-        :type resource: ResourceType
-        """
-        # set the name
-        resource.name = self.name
-
-        properties: Dict[str,
-                         BaseRField] = resource.__get_resource_r_fields__()
-
-        kv_store: KVStore = self.get_kv_store()
-        resource._kv_store = kv_store
-
-        # for each BaseRField of the resource, set the value form the data or kvstore
-        for key, r_field in properties.items():
-            # If the property is searchable, it is stored in the DB
-            if r_field.searchable:
-                loaded_value = copy.deepcopy(
-                    r_field.deserialize(self.data.get(key)))
-                setattr(resource, key, loaded_value)
-
-            # if it comes from the kvstore, lazy load it
-            elif kv_store is not None:
-                # delete the RField default value so the lazy load can be called
-                delattr(resource, key)
-
-        if isinstance(resource, FSNode):
-            resource.path = self.fs_node_model.path
-            resource.file_store_id = self.fs_node_model.file_store_id
-
-    def receive_fields_from_resource(self, resource: ResourceType):
+    def receive_fields_from_resource(self, resource: Resource):
         """for each BaseRField of the resource, store its value to the data or kvstore
 
         :param resource: [description]
-        :type resource: ResourceType
+        :type resource: Resource
         """
         self.data = {}
         # init the kvstore, the directory is not created until we write on the kvstore
@@ -517,13 +485,13 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[Reso
             else:
                 kv_store[key] = value
 
-    def _get_resource_r_fields(self, resource_type: Type[ResourceType]) -> Dict[str, BaseRField]:
+    def _get_resource_r_fields(self, resource_type: Type[Resource]) -> Dict[str, BaseRField]:
         """Get the list of resource's r_fields,
         the key is the property name, the value is the BaseRField object
         """
         return ReflectorHelper.get_property_names_of_type(resource_type, BaseRField)
 
-    def get_resource_type(self) -> Type[ResourceType]:
+    def get_resource_type(self) -> Type[Resource]:
         return TypingManager.get_type_from_name(self.resource_typing_name)
 
     ########################################## KV STORE ######################################
@@ -573,8 +541,6 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[Reso
 
         _json = super().to_json(deep=deep, **kwargs)
 
-        _json["tags"] = self.get_tags_json()
-
         if self.fs_node_model:
             _json["fs_node"] = self.fs_node_model.to_json()
 
@@ -599,7 +565,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[Reso
             _json["is_downloadable"] = self.is_downloadable
             _json["type_status"] = resource_typing.get_type_status()
 
-            resource_type: ResourceType = resource_typing.get_type()
+            resource_type: Resource = resource_typing.get_type()
 
             # check if the resource has children resources
             if resource_type is not None and Utils.issubclass(resource_type, ResourceListBase):
@@ -637,7 +603,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, Generic[Reso
     @property
     def is_downloadable(self) -> bool:
         # the resource is downloadable if it's a file or if the export_to_path is defined
-        resource_type: ResourceType = self.get_resource_type()
+        resource_type: Resource = self.get_resource_type()
         return self.fs_node_model is not None or (resource_type is not None and resource_type._is_exportable)
 
     def is_manually_generated(self) -> bool:

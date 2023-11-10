@@ -145,7 +145,7 @@ class ViewConfigService():
             search_builder.add_expression(ViewConfig.experiment.in_(experiments))
             search.remove_filter_criteria('project')
 
-        model_select: ModelSelect = search_builder.build_search(search)
+        model_select: ModelSelect = search_builder.add_search_params(search).build_search()
         return Paginator(
             model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 

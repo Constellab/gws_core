@@ -3,19 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
-from typing import Dict
-
 from gws_core import (BaseTestCase, ConfigParams, File, IExperiment, ITask,
                       OutputSpec, OutputSpecs, Resource, ResourceModel, RField,
-                      Tag, TagHelper, Task, TaskInputs, TaskModel, TaskOutputs,
+                      Task, TaskInputs, TaskModel, TaskOutputs,
                       resource_decorator, task_decorator)
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
                                                   SearchParams)
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
-from gws_core.tag.tag_model import TagModel
-from gws_core.tag.tag_service import TagService
 from gws_core.test.data_provider import DataProvider
 
 
@@ -54,36 +49,20 @@ class TestResourceModel(BaseTestCase):
         experiment.get_protocol().add_process(ForSearchCreate, 'facto')
         task: ITask = experiment.get_protocol().get_process('facto')
 
-        nameTag = Tag('name', 'test')
-        otherTag = Tag('other', 'super')
-        self._create_resource_with_tag(
-            'this is information about a great banana', {'name': 'test'},
+        self._create_resource(
+            'this is information about a great banana',
             ResourceOrigin.GENERATED, task._process_model)
-        self._create_resource_with_tag('the weather is not so great today',
-                                       {'name': 'test', 'other': 'super'}, ResourceOrigin.UPLOADED)
+        self._create_resource('the weather is not so great today', ResourceOrigin.UPLOADED)
 
         search_dict: SearchParams = SearchParams()
 
-        # Search on name tag
-        search_dict.filtersCriteria = [self._get_tag_filter(str(nameTag))]
-        self.search(search_dict, 2)
-        # Search on both tag
-        search_dict.filtersCriteria = [self._get_tag_filter(
-            TagHelper.tags_to_str([nameTag, otherTag]))]
-        self.search(search_dict, 1)
-        # Search all resources that have the tag name whatever the value
-        search_dict.filtersCriteria = [self._get_tag_filter('name')]
-        self.search(search_dict, 2)
-
-        # Search on name tag & resource typing name
+        # Search on name resource typing name
         search_dict.filtersCriteria = [
-            self._get_tag_filter(str(nameTag)),
             {"key": "resource_typing_name", "operator": "EQ", "value": ForSearch._typing_name}]
         self.search(search_dict, 2)
 
-        # Search on name tag & ResourceOrigin
+        # Search on name ResourceOrigin
         search_dict.filtersCriteria = [
-            self._get_tag_filter(str(nameTag)),
             {"key": "origin", "operator": "EQ", "value": ResourceOrigin.GENERATED.value}]
         self.search(search_dict, 1)
 
@@ -134,26 +113,16 @@ class TestResourceModel(BaseTestCase):
             resource_model.id)
         self.assertIsInstance(resource_model.get_resource(), SubFile)
 
-    def test_resource_tags(self):
-        resource_model: ResourceModel = self._create_resource_with_tag('',
-                                                                       {'aaaaa': 'bbbbb'}, ResourceOrigin.UPLOADED)
-        resource_model = resource_model.refresh()
-        self.assertEqual(resource_model.get_tag_value('aaaaa'), 'bbbbb')
-
-        tag_model: TagModel = TagService.get_by_key('aaaaa')
-        self.assertTrue(tag_model.has_value('bbbbb'))
-
     def _get_tag_filter(self, value: str) -> SearchFilterCriteria:
         return {'key': 'tags', 'operator': 'CONTAINS', 'value': value}
 
     def _get_data_filter(self, value: str) -> SearchFilterCriteria:
         return {'key': 'data', 'operator': 'MATCH', 'value': value}
 
-    def _create_resource_with_tag(
-            self, text: str,  tags: Dict[str, str],
+    def _create_resource(
+            self, text: str,
             origin: ResourceOrigin, task: TaskModel = None) -> ResourceModel:
         for_search: ForSearch = ForSearch.create(text)
-        for_search.tags = tags
         resource_model = ResourceModel.from_resource(
             for_search, origin=ResourceOrigin.UPLOADED)
         resource_model.origin = origin

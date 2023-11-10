@@ -11,6 +11,10 @@ from peewee import ForeignKeyField, ModelSelect
 from gws_core.core.exception.exception_helper import ExceptionHelper
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
+from gws_core.tag.entity_tag import EntityTagType
+from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag import Tag
+from gws_core.tag.tag_list import TagList
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
@@ -53,6 +57,9 @@ class TaskModel(ProcessModel):
         ResourceModel, null=True, index=True, lazy_load=False)
 
     _table_name = 'gws_task'
+
+    # cache to store the list of tags of all inputs
+    _input_resource_tags: List[Tag] = None
 
     def create_source_zip(self):
         """
@@ -294,6 +301,12 @@ class TaskModel(ProcessModel):
         # check the resource r field before saving
         self._check_resource_r_fields(resource, port_name)
 
+        # Add the tag of the input resources to the new resource (tag propagation)
+        tags: List[Tag] = self._get_input_resource_tags()
+        if not resource.tags or not isinstance(resource.tags, TagList):
+            resource.tags = TagList()
+        resource.tags.add_tags(tags)
+
         # create and save the resource model from the resource
         resource_model = ResourceModel.save_from_resource(
             resource, origin=ResourceOrigin.GENERATED, experiment=self.experiment, task_model=self, port_name=port_name)
@@ -356,6 +369,20 @@ class TaskModel(ProcessModel):
                                           unique_code=GWSException.INVALID_LINKED_RESOURCE.name,
 
                                           detail_args={'port_name': port_name})
+
+    def _get_input_resource_tags(self) -> List[Tag]:
+        """Return all the tags of all the input resources
+        """
+
+        if self._input_resource_tags is None:
+            tags: List[Tag] = []
+            for input_resource in self.inputs.get_resource_models().values():
+                entity_tags = EntityTagList.find_by_entity(EntityTagType.RESOURCE, input_resource.id)
+                tags += [entity_tag.to_simple_tag() for entity_tag in entity_tags.get_tags()]
+
+            self._input_resource_tags = tags
+
+        return self._input_resource_tags
 
     def mark_as_started(self):
         if self.is_running:

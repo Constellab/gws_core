@@ -42,7 +42,6 @@ class ViewConfig(ModelWithUser, TaggableModel):
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         json_ = super().to_json(deep, **kwargs)
 
-        json_["tags"] = self.get_tags_json()
         json_['config_values'] = self.get_config_values()
 
         if self.experiment is not None:

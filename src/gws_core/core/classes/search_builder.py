@@ -92,10 +92,12 @@ class SearchBuilder:
     """
 
     _model_type: Type[Model]
-    _default_orders: List[Ordering]
-    _query_builder: ExpressionBuilder
 
+    _query_builder: ExpressionBuilder
     _joins: List[SearchJoin]
+    _orderings: List[Ordering]
+
+    _default_orders: List[Ordering]
 
     def __init__(self, model_type: Type[Model], default_orders: List[Ordering] = None) -> None:
         """Create a search build to make dynamic search
@@ -111,15 +113,18 @@ class SearchBuilder:
         if default_orders is None:
             default_orders = []
         self._default_orders = default_orders
+        self._orderings = []
         self._query_builder = ExpressionBuilder()
         self._joins = []
 
-    def build_search(self, search: SearchParams) -> ModelSelect:
-        filter_expression = self._build_search_filter_query(search.filtersCriteria)
+    def build_search(self) -> ModelSelect:
+        # retrieve the filter expression
+        filter_expression = self._query_builder.build()
 
-        orders: List[Ordering] = self._build_search_ordering(search.sortsCriteria)
+        # retrieve the order expression
+        orders: List[Ordering] = self._orderings if len(self._orderings) > 0 else self._default_orders
 
-        model_select = self._model_type.select()
+        model_select: ModelSelect = self._model_type.select()
 
         for join in self._joins:
             model_select = model_select.join(join['table'], on=join['on'])
@@ -132,16 +137,34 @@ class SearchBuilder:
 
         return model_select
 
-    def _build_search_filter_query(self, filters: List[SearchFilterCriteria]) -> Expression:
+    def add_search_params(self, search: SearchParams) -> 'SearchBuilder':
+        self._add_search_filter_query(search.filtersCriteria)
+
+        self._add_search_ordering(search.sortsCriteria)
+
+        return self
+
+    def add_expression(self, expression: Expression) -> 'SearchBuilder':
+        self._query_builder.add_expression(expression)
+        return self
+
+    def add_ordering(self, order: Ordering) -> 'SearchBuilder':
+        self._orderings.append(order)
+        return self
+
+    def set_ordering(self, orders: List[Ordering]) -> 'SearchBuilder':
+        self._orderings = orders
+        return self
+
+    def add_join(self, table: Type[Model], on: Expression = None) -> 'SearchBuilder':
+        self._joins.append({'table': table, 'on': on})
+        return self
+
+    def _add_search_filter_query(self, filters: List[SearchFilterCriteria]) -> None:
         for filter_ in filters:
             expression = self.convert_filter_to_expression(filter_)
             if expression:
                 self.add_expression(expression)
-
-        return self._query_builder.build()
-
-    def add_expression(self, expression: Expression) -> None:
-        self._query_builder.add_expression(expression)
 
     def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
         field: Field = self._get_model_field(filter_["key"])
@@ -151,16 +174,16 @@ class SearchBuilder:
 
         return self._get_expression(filter_["operator"], field, value)
 
-    def _build_search_ordering(self, orders: List[SearchSortCriteria]) -> List[Ordering]:
+    def _add_search_ordering(self, orders: List[SearchSortCriteria]) -> None:
         if not orders:
-            return self._default_orders
+            return
 
         ordering: List[Ordering] = []
 
         for order in orders:
             ordering.append(self.convert_order_to_peewee_ordering(order))
 
-        return ordering
+        self._orderings = ordering
 
     def convert_order_to_peewee_ordering(self, order: SearchSortCriteria) -> Ordering:
         """Convert a search order criteria to a peewee ordering"""
@@ -246,6 +269,3 @@ class SearchBuilder:
             return Match((field), value, modifier='IN BOOLEAN MODE')
         elif operator == 'BETWEEN':
             return field.between(value[0], value[1])
-
-    def add_join(self, table: Type[Model], on: Expression = None) -> None:
-        self._joins.append({'table': table, 'on': on})

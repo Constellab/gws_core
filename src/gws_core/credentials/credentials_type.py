@@ -6,7 +6,7 @@
 from enum import Enum
 from typing import Any, Dict, Optional
 
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 
 class CredentialsType(Enum):
@@ -20,7 +20,7 @@ class CredentialsType(Enum):
 
 class CredentialsDataBase(TypedDict):
     # this field contains meta info about the credentials
-    __meta__: Dict[str, Any]
+    __meta__: NotRequired[Dict[str, Any]]
 
 
 class CredentialsDataS3(CredentialsDataBase):

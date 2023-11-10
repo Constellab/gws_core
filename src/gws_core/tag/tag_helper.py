@@ -7,7 +7,7 @@ from typing import Dict, List
 
 from numpy import array, meshgrid
 
-from .tag import TAGS_SEPARATOR, Tag
+from .tag import TAGS_SEPARATOR, Tag, TagDict
 
 
 class TagHelper():
@@ -53,7 +53,7 @@ class TagHelper():
         return TAGS_SEPARATOR + TAGS_SEPARATOR.join([str(tag) for tag in tags]) + TAGS_SEPARATOR
 
     @classmethod
-    def tags_to_json(cls, tags: List[Tag]) -> dict:
+    def tags_to_json(cls, tags: List[Tag]) -> List[TagDict]:
         if not tags:
             return []
         return [tag.to_json() for tag in tags]
@@ -72,25 +72,14 @@ class TagHelper():
         return tags_list
 
     @classmethod
-    def tags_dict_to_list(cls, tags: Dict[str, str]) -> List[Tag]:
-        if not tags:
+    def tags_dict_to_list(cls, tags_dict: List[TagDict]) -> List[Tag]:
+        if not tags_dict:
             return []
 
         tags_list: List[Tag] = []
 
-        for tag_key, tag_value in tags.items():
-            tags_list.append(Tag(tag_key, tag_value))
-        return tags_list
-
-    @classmethod
-    def tags_json_to_list(cls, tags: List[dict]) -> List[Tag]:
-        if not tags:
-            return []
-
-        tags_list: List[Tag] = []
-
-        for tag_json in tags:
-            tags_list.append(Tag.from_json(tag_json))
+        for tag_dict in tags_dict:
+            tags_list.append(Tag.from_json(tag_dict))
         return tags_list
 
     @classmethod

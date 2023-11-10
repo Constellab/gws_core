@@ -193,6 +193,15 @@ class IO(Base, Generic[PortType]):
 
         port.resource_model = resource_model
 
+    def get_resource_models(self) -> Dict[str, ResourceModel]:
+        """Get the resource_model of a port
+        """
+        resource_models: Dict[str, ResourceModel] = {}
+        for port_name, port in self._ports.items():
+            if port.resource_model:
+                resource_models[port_name] = port.resource_model
+        return resource_models
+
     def get_resource_model(self, port_name: str) -> ResourceModel:
         """Get the resource_model of a port
         """

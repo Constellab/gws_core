@@ -9,6 +9,9 @@ from typing import List
 from fastapi.param_functions import Depends
 from pydantic.main import BaseModel
 
+from gws_core.tag.entity_tag import EntityTagType
+from gws_core.tag.tag import TagDict
+
 from ..core.classes.jsonable import ListJsonable
 from ..core_app import core_app
 from ..user.auth_service import AuthService
@@ -72,3 +75,19 @@ def delete_registered_tag(key: str,
                           value: str,
                           _=Depends(AuthService.check_user_access_token)):
     return TagService.delete_registered_tag(key, value)
+
+################################# ENTITY TAG #################################
+
+
+@core_app.get("/tag/entity/{entity_type}/{entity_id}", tags=["Tag"], summary='Get tags of an entity')
+def get_tags_of_entity(entity_type: EntityTagType,
+                       entity_id: str,
+                       _=Depends(AuthService.check_user_access_token)):
+    return TagService.find_by_entity_id(entity_type, entity_id).to_json()
+
+
+@core_app.put("/tag/entity/{entity_type}/{entity_id}", tags=["Tag"], summary="Save entity tags")
+def save_tags(id: str,
+              tags: List[TagDict],
+              _=Depends(AuthService.check_user_access_token)) -> list:
+    return TagService.save_tags_dict_to_entity(EntityTagType.EXPERIMENT, id, tags).to_json()

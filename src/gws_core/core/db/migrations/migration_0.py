@@ -43,7 +43,7 @@ from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.tag.entity_tag import (EntityTag, EntityTagOriginType,
                                      EntityTagType)
-from gws_core.tag.tag_model import TagModel
+from gws_core.tag.tag_model import EntityTagValueFormat, TagModel
 from gws_core.tag.taggable_model import TaggableModel
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
@@ -210,13 +210,6 @@ class Migration0310(BrickMigration):
 
                 tag_model.data['values'] = list(values)
                 tag_model.save()
-
-        # update taggableModel to wrap str tag with ','
-        taggable_models: List[TaggableModel] = list(
-            ResourceModel.select()) + list(Experiment.select())
-        for taggable_model in taggable_models:
-            taggable_model.set_tags(taggable_model.get_tags())
-            taggable_model.save()
 
 
 @brick_migration('0.3.12', short_description='Add parent resource to resource model')
@@ -841,6 +834,9 @@ class Migration0516(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
         migrator.add_column_if_not_exists(TagModel, TagModel.value_format)
         migrator.migrate()
+
+        TagModel.update(value_format=EntityTagValueFormat.STRING).where(
+            TagModel.value_format.is_null()).execute()
 
         entities: List[TaggableModel] = list(
             ResourceModel.select()) + list(Experiment.select()) + list(ViewConfig.select())
