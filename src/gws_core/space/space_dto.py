@@ -25,6 +25,7 @@ class SaveReportToSpaceDTO(TypedDict):
     report: dict
     experiment_ids: List[str]
     lab_config: dict
+    resource_views: dict
 
 
 class SpaceSendMailDTO(TypedDict):

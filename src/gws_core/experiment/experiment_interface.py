@@ -6,7 +6,11 @@
 from inspect import isclass
 from multiprocessing import Process
 from time import sleep
-from typing import Type
+from typing import List, Type
+
+from gws_core.tag.entity_tag import EntityTagType
+from gws_core.tag.tag import Tag
+from gws_core.tag.tag_service import TagService
 
 from ..experiment.experiment_run_service import ExperimentRunService
 from ..project.project import Project
@@ -89,7 +93,7 @@ class IExperiment:
                 raise Exception(self._experiment.error_info['detail'])
 
         if process.exitcode != 0:
-            raise Exception(f"Error in during the execution of the experiment")
+            raise Exception("Error in during the execution of the experiment")
 
     def reset(self) -> None:
         """Reset the status and the resources of the experiment, its protocols and tasks
@@ -113,6 +117,14 @@ class IExperiment:
 
     def is_success(self) -> bool:
         return self._experiment.is_success
+
+    def add_tag(self, tag: Tag) -> None:
+        TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, self._experiment.id,
+                                     tag)
+
+    def add_tags(self, tags: List[Tag]) -> None:
+        TagService.add_tags_to_entity(EntityTagType.EXPERIMENT, self._experiment.id,
+                                      tags)
 
     def refresh(self) -> None:
         self._experiment = self._experiment.refresh()

@@ -25,8 +25,17 @@ class ReportResourceModel(BaseModel):
         return list(ReportResourceModel.select().where(ReportResourceModel.report == report_id))
 
     @classmethod
+    def get_by_reports(cls, report_ids: List[str]) -> ModelSelect:
+        return ReportResourceModel.select().where(ReportResourceModel.report.in_(report_ids))
+
+    @classmethod
     def get_by_resource(cls, resource_id: str) -> ModelSelect:
         return ReportResourceModel.select().where(ReportResourceModel.resource == resource_id)
+
+    @classmethod
+    def get_by_resources(cls, resource_id: List[str]) -> ModelSelect:
+        return ReportResourceModel.select().where(
+            ReportResourceModel.resource.in_(resource_id))
 
     def save(self, *args, **kwargs) -> 'BaseModel':
         """Use force insert because it is a composite key

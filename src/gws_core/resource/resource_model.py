@@ -5,10 +5,8 @@
 
 from __future__ import annotations
 
-import copy
 from enum import Enum
-from typing import (TYPE_CHECKING, Any, Dict, Generic, List, Optional, Set,
-                    Type, TypeVar, final)
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, final
 
 from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
                     ForeignKeyField, ModelDelete, ModelSelect)
@@ -22,9 +20,8 @@ from gws_core.project.model_with_project import ModelWithProject
 from gws_core.project.project import Project
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
-from gws_core.tag.entity_tag import EntityTagOriginType, EntityTagType
+from gws_core.tag.entity_tag import EntityTagType
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_list import TagList
 from gws_core.user.current_user_service import CurrentUserService
 
@@ -437,9 +434,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject):
             # Add tags
             entity_tags: EntityTagList = EntityTagList(EntityTagType.RESOURCE, resource_model.id)
 
-            # TODO fix origin
-            entity_tags.save_tags_to_entity(resource.tags.get_tags(), origin_type=EntityTagOriginType.HUMAN,
-                                            origin_id=CurrentUserService.get_and_check_current_user().id)
+            entity_tags.add_tags_to_entity(resource.tags.get_tags())
         return resource_model
 
     def set_resource_typing_name(self, typing_name: str) -> None:

@@ -111,7 +111,7 @@ class S3ServerService:
             CurrentUserService.set_current_user(User.get_sysuser())
             try:
                 resource_model = resource_model.save_full()
-                TagService.save_tags_to_entity(
+                TagService.add_tags_to_entity(
                     EntityTagType.RESOURCE, resource_model.id,
                     [Tag('storage', 's3'),
                      Tag('bucket', bucket_name),

@@ -3,9 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
+from typing import List, Optional
 
-from gws_core.tag.tag import Tag
+from gws_core.tag.tag import Tag, TagValueType
 
 
 class TagList():
@@ -22,6 +22,16 @@ class TagList():
         """return true if the tag key and value already exist in the model
         """
         return tag in self._tags
+
+    def get_tag(self, key: str, value: TagValueType) -> Optional[Tag]:
+        """return the tag if it exists
+        """
+        tags = [tag for tag in self._tags if tag.key == key and tag.value == value]
+
+        if len(tags) > 0:
+            return tags[0]
+
+        return None
 
     def get_by_key(self, tag_key: str) -> List[Tag]:
         """return the tag if it exists
@@ -52,3 +62,8 @@ class TagList():
         """
         for tag in tags:
             self.add_tag(tag)
+
+    def remove_loaded_tags(self) -> None:
+        """Remove tags that are loaded from the database
+        """
+        self._tags = [tag for tag in self._tags if not tag.__is_field_loaded__]

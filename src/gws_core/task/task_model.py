@@ -8,12 +8,13 @@ from typing import Any, Dict, List, Type
 
 from peewee import ForeignKeyField, ModelSelect
 
+from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.exception.exception_helper import ExceptionHelper
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.tag.entity_tag import EntityTagType
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag import Tag
+from gws_core.tag.tag import Tag, TagOriginType
 from gws_core.tag.tag_list import TagList
 
 from ..config.config_types import ConfigParamsDict
@@ -147,15 +148,22 @@ class TaskModel(ProcessModel):
 
     @classmethod
     def get_source_task_using_resource_in_another_experiment(
-            cls, resource_model_ids: List[str], exclude_experimence_id: str) -> ModelSelect:
+            cls, resource_model_ids: List[str], exclude_experimence_id: str = None) -> ModelSelect:
         """
         Returns the source task models configured with one of the provided resource that are not the the provided experiment
         """
+        builder = ExpressionBuilder(cls.source_config_id.in_(resource_model_ids))
 
-        return cls.select().where(
-            (cls.source_config_id.in_(resource_model_ids)) &
-            (cls.experiment != exclude_experimence_id)
-        )
+        if exclude_experimence_id is not None:
+            builder.add_expression(cls.experiment != exclude_experimence_id)
+
+        return cls.select().where(builder.build())
+
+    @classmethod
+    def get_experiment_source_tasks(cls, experiment_ids: List[str]) -> ModelSelect:
+        """Return all the Source task Model of the experiment
+        """
+        return cls.select().where((cls.experiment.in_(experiment_ids)) & (cls.source_config_id.is_null(False)))
 
     ################################# RUN #############################
 
@@ -302,10 +310,21 @@ class TaskModel(ProcessModel):
         self._check_resource_r_fields(resource, port_name)
 
         # Add the tag of the input resources to the new resource (tag propagation)
-        tags: List[Tag] = self._get_input_resource_tags()
         if not resource.tags or not isinstance(resource.tags, TagList):
             resource.tags = TagList()
-        resource.tags.add_tags(tags)
+        else:
+            # Specific case when the output resource is the same instance as an input resource
+            # this is to remove the tags of the input resource
+            resource.tags.remove_loaded_tags()
+
+            # For all tag created by the task, mark the origin as created by the task.
+            for tag in resource.tags.get_tags():
+                tag.origin_type = TagOriginType.TASK
+                tag.origin_id = self.id
+
+        # propagate the tag from input resources and experiment
+        resource.tags.add_tags(self._get_input_resource_tags())
+        resource.tags.add_tags(self._get_experiment_tags())
 
         # create and save the resource model from the resource
         resource_model = ResourceModel.save_from_resource(
@@ -378,11 +397,29 @@ class TaskModel(ProcessModel):
             tags: List[Tag] = []
             for input_resource in self.inputs.get_resource_models().values():
                 entity_tags = EntityTagList.find_by_entity(EntityTagType.RESOURCE, input_resource.id)
-                tags += [entity_tag.to_simple_tag() for entity_tag in entity_tags.get_tags()]
+                tags += [entity_tag.to_simple_tag() for entity_tag in entity_tags.get_propagable_tags()]
+
+            # set the tag origin to be task propagated by this task
+            for tag in tags:
+                tag.origin_type = TagOriginType.TASK_PROPAGATED
+                tag.origin_id = self.id
 
             self._input_resource_tags = tags
 
         return self._input_resource_tags
+
+    def _get_experiment_tags(self) -> List[Tag]:
+        """Return all the tags of the experiment
+        """
+        entity_tags = EntityTagList.find_by_entity(EntityTagType.EXPERIMENT, self.experiment.id)
+        tags = [entity_tag.to_simple_tag() for entity_tag in entity_tags.get_propagable_tags()]
+
+        # set the tag origin to be exp propagated by this experiment
+        for tag in tags:
+            tag.origin_type = TagOriginType.EXPERIMENT_PROPAGATED
+            tag.origin_id = self.experiment.id
+
+        return tags
 
     def mark_as_started(self):
         if self.is_running:

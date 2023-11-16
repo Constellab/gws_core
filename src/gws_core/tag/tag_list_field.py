@@ -19,4 +19,8 @@ class TagListField():
             return TagList()
         entity_tag_list = EntityTagList.find_by_entity(EntityTagType.RESOURCE, resource_model_id)
         tag_list = [entity_tag.to_simple_tag() for entity_tag in entity_tag_list.get_tags()]
+
+        # set the flag to know if the tag is loaded from the database
+        for tag in tag_list:
+            tag.__is_field_loaded__ = True
         return TagList(tag_list)

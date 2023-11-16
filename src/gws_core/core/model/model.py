@@ -6,7 +6,7 @@
 import hashlib
 import json
 import uuid
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List
 
 from fastapi.encoders import jsonable_encoder
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
@@ -22,7 +22,6 @@ from ..decorator.transaction import transaction
 from ..exception.exceptions import BadRequestException, NotFoundException
 from ..exception.gws_exceptions import GWSException
 from ..utils.logger import Logger
-from ..utils.utils import Utils
 from .db_field import DateTimeUTC, JSONField
 
 
@@ -167,11 +166,15 @@ class Model(BaseModel, PeeweeModel):
         :rtype: int
         """
 
-        return hash(self.id)
+        return hash(type(self).__name__ + self.id)
 
     @classmethod
     def get_by_id(cls, id: str) -> 'Model':
         return cls.get_or_none(cls.id == id)
+
+    @classmethod
+    def get_by_ids(cls, ids: List[str]) -> List['Model']:
+        return list(cls.select().where(cls.id.in_(ids)))
 
     @classmethod
     def get_by_id_and_check(cls, id: str) -> 'Model':

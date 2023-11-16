@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import final
+from typing import List, final
 
 from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
                     ModelSelect)
@@ -119,6 +119,18 @@ class ReportExperiment(BaseModel):
     @classmethod
     def find_by_pk(cls, experiment_id: str, report_id: str) -> ModelSelect:
         return cls.select().where((cls.experiment == experiment_id) & (cls.report == report_id))
+
+    @classmethod
+    def find_reports_by_experiments(cls, experiment_ids: List[str]) -> List[Report]:
+        list_: List[ReportExperiment] = list(cls.select().where(cls.experiment.in_(experiment_ids)))
+
+        return [x.report for x in list_]
+
+    @classmethod
+    def find_experiments_by_report(cls, report_id: str) -> List[Experiment]:
+        list_: List[ReportExperiment] = list(cls.select().where(cls.report == report_id))
+
+        return [x.experiment for x in list_]
 
     def save(self, *args, **kwargs) -> 'BaseModel':
         """Use force insert because it is a composite key

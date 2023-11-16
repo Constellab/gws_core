@@ -137,7 +137,7 @@ def update_project(id: str,
 def save_tags(id: str,
               tags: List[TagDict],
               _=Depends(AuthService.check_user_access_token)) -> list:
-    return TagService.save_tags_dict_to_entity(EntityTagType.RESOURCE, id, tags).to_json()
+    return TagService.add_tags_dict_to_entity(EntityTagType.RESOURCE, id, tags).to_json()
 
 
 ############################# TRANSFORMER ###########################

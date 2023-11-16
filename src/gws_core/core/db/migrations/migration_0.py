@@ -41,8 +41,8 @@ from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view_config.view_config import ViewConfig
-from gws_core.tag.entity_tag import (EntityTag, EntityTagOriginType,
-                                     EntityTagType)
+from gws_core.tag.entity_tag import EntityTag, EntityTagType
+from gws_core.tag.tag import TagOriginType
 from gws_core.tag.tag_model import EntityTagValueFormat, TagModel
 from gws_core.tag.taggable_model import TaggableModel
 from gws_core.task.plug import Sink, Source
@@ -205,7 +205,7 @@ class Migration0310(BrickMigration):
             values = set()
             # if the migration was not already done
             if not isinstance(tag_model.data['values'], list):
-                for value in tag_model.data['values'].split(TagModel.TAG_VALUES_SEPARATOR):
+                for value in tag_model.data['values'].split(','):
                     values.add(value.lower())
 
                 tag_model.data['values'] = list(values)
@@ -856,10 +856,10 @@ class Migration0516(BrickMigration):
                     entity_tag = EntityTag.find_by_tag_and_entity(tag, entity, entity_type)
 
                     if entity_tag is None:
+                        tag.origin_type = TagOriginType.USER
+                        tag.origin_id = CurrentUserService.get_and_check_current_user().id
                         entity_tag = EntityTag.create_entity_tag(
-                            tag=tag, entity_id=entity.id, entity_type=entity_type,
-                            origin_type=EntityTagOriginType.HUMAN,
-                            origin_id=CurrentUserService.get_and_check_current_user().id)
+                            tag=tag, entity_id=entity.id, entity_type=entity_type)
             except Exception as exception:
                 Logger.error(
                     f'Error while migrating tags for entity {entity.id} : {exception}')

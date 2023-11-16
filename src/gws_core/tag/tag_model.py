@@ -8,7 +8,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from peewee import CharField, IntegerField
+from peewee import BooleanField, CharField, IntegerField
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.utils.date_helper import DateHelper
@@ -25,13 +25,13 @@ class EntityTagValueFormat(Enum):
 
 
 class TagModel(Model):
-    TAG_VALUES_SEPARATOR = ','
-
     key = CharField(null=False, unique=True)
     order = IntegerField(default=0)
 
     value_format: EntityTagValueFormat = EnumField(
         choices=EntityTagValueFormat, null=False, default=EntityTagValueFormat.STRING)
+
+    is_propagable = BooleanField(default=False)
 
     _table_name = "gws_tag"
 
@@ -130,6 +130,20 @@ class TagModel(Model):
 
         tag.set_values(values)
         return tag
+
+    @classmethod
+    def delete_tag(cls, key: str, value: TagValueType) -> None:
+        tag_model: TagModel = cls.find_by_key(key)
+
+        if tag_model is None:
+            return
+
+        tag_model.remove_value(value)
+
+        if tag_model.count_values() == 0:
+            tag_model.delete_instance()
+        else:
+            tag_model.save()
 
     @classmethod
     def find_by_key(cls, key: str) -> Optional['TagModel']:

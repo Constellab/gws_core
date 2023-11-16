@@ -117,7 +117,7 @@ class ReportService():
         return report.save()
 
     @classmethod
-    def _update_report_project(cls, report: Report, project_id: str) -> Report:
+    def _update_report_project(cls, report: Report, project_id: str) -> None:
         # update project
         if project_id:
             project = Project.get_by_id_and_check(project_id)

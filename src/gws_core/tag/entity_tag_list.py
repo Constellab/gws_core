@@ -5,9 +5,8 @@
 from typing import List, Optional
 
 from gws_core.core.decorator.transaction import transaction
-from gws_core.tag.entity_tag import (EntityTag, EntityTagOriginType,
-                                     EntityTagType)
-from gws_core.tag.tag import Tag, TagDict
+from gws_core.tag.entity_tag import EntityTag, EntityTagType
+from gws_core.tag.tag import Tag, TagDict, TagOriginType
 from gws_core.tag.tag_model import TagModel
 
 
@@ -47,8 +46,11 @@ class EntityTagList():
     def get_tags(self) -> List[EntityTag]:
         return self._tags
 
+    def get_propagable_tags(self) -> List[EntityTag]:
+        return [tag for tag in self._tags if tag.is_propagable]
+
     @transaction()
-    def add_tag_if_not_exist(self, tag: Tag, origin_type: EntityTagOriginType, origin_id: str) -> EntityTag:
+    def add_tag_if_not_exist(self, tag: Tag) -> EntityTag:
         """Add a tag to the list if it does not exist
         """
         existing_tag = self.get_tag(tag)
@@ -58,20 +60,36 @@ class EntityTagList():
          # add tag to the list of tags
         TagModel.register_tag(tag.key, tag.value)
 
-        new_tag = EntityTag.create_entity_tag(tag, self._entity_id, self._entity_type,
-                                              origin_type=origin_type, origin_id=origin_id)
+        new_tag = EntityTag.create_entity_tag(tag, self._entity_id, self._entity_type)
         self._tags.append(new_tag)
         return new_tag
 
     @transaction()
-    def save_tags_to_entity(self, tags: List[Tag], origin_type: EntityTagOriginType, origin_id: str) -> None:
+    def add_tags_to_entity(self, tags: List[Tag]) -> None:
 
         for tag in tags:
 
             # add tag to entity
-            self.add_tag_if_not_exist(tag,
-                                      origin_type=origin_type,
-                                      origin_id=origin_id)
+            self.add_tag_if_not_exist(tag)
+
+    @transaction()
+    def delete_tag(self, tag: Tag) -> None:
+        """Delete a tag from the list
+        """
+        existing_tag = self.get_tag(tag)
+        if existing_tag is None:
+            return
+
+        existing_tag.delete()
+
+        # check if the tag is still used by other entities
+        count = EntityTag.count_by_tag(existing_tag.get_tag_key(), existing_tag.get_str_tag_value())
+
+        # if not, delete the tag
+        if count == 0:
+            TagModel.delete_tag(tag.key, tag.value)
+
+        self._tags.remove(existing_tag)
 
     def to_json(self) -> List[TagDict]:
         return [tag.to_simple_tag().to_json() for tag in self._tags]

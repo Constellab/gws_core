@@ -95,4 +95,4 @@ def search_for_report(report_id: str,
 def save_tags(id: str,
               tags: List[TagDict],
               _=Depends(AuthService.check_user_access_token)) -> dict:
-    return TagService.save_tags_dict_to_entity(EntityTagType.VIEW, id, tags).to_json()
+    return TagService.add_tags_dict_to_entity(EntityTagType.VIEW, id, tags).to_json()

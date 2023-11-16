@@ -5,14 +5,15 @@
 
 
 from enum import Enum
-from typing import List, Optional
+from typing import List
 
-from peewee import CharField, Expression, ForeignKeyField, ModelSelect
+from peewee import (BooleanField, CharField, Expression, ForeignKeyField,
+                    ModelSelect)
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.model.model import Model
-from gws_core.tag.tag import Tag, TagValueType
+from gws_core.tag.tag import Tag, TagOriginType, TagValueType
 from gws_core.tag.tag_model import TagModel
 
 
@@ -24,17 +25,12 @@ class EntityTagType(Enum):
     PROTOCOL_TEMPLATE = 'PROTOCOL_TEMPLATE'
 
 
-class EntityTagOriginType(Enum):
-    HUMAN = 'HUMAN'
-    MACHINE = 'MACHINE'
-
-
 class EntityTag(Model):
     """ Table to store the tags of all entities"""
 
     id = CharField(primary_key=True, max_length=36)
 
-    tag_key: TagModel = ForeignKeyField(TagModel, lazy_load=True, null=False, index=True,
+    tag_key: TagModel = ForeignKeyField(TagModel, null=False, index=True,
                                         on_delete='CASCADE', on_update='CASCADE',
                                         field='key', column_name='tag_key')
 
@@ -46,9 +42,10 @@ class EntityTag(Model):
     entity_type: EntityTagType = EnumField(choices=EntityTagType,
                                            null=False, index=True)
 
-    origin_type: EntityTagOriginType = EnumField(choices=EntityTagOriginType, null=False)
-
+    origin_type: TagOriginType = EnumField(choices=TagOriginType, null=False, max_length=30)
     origin_id: str = CharField(null=False, max_length=36)
+
+    is_propagable = BooleanField(default=False)
 
     # contains the tag key str value
     tag_key_id: str
@@ -61,34 +58,33 @@ class EntityTag(Model):
     def get_tag_value(self) -> TagValueType:
         return self.tag_key.convert_str_value_to_type(self.tag_value)
 
+    def get_str_tag_value(self) -> str:
+        return self.tag_value
+
     def set_value(self, value: TagValueType) -> None:
         checked_value = self.tag_key.check_and_convert_value(value)
         self.tag_value = self.tag_key.convert_value_to_str(checked_value)
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        key = self.get_tag_key()
-        value = self.get_tag_value()
-        if deep:
-            json_ = super().to_json(deep=deep, **kwargs)
-
-            json_['tag_key'] = key
-            json_['tag_value'] = value
-
-            return json_
-        else:
-            return {'key': key, 'value': value}
+        return self.to_simple_tag().to_json()
 
     def to_simple_tag(self) -> Tag:
-        return Tag(key=self.get_tag_key(), value=self.get_tag_value())
+        return Tag(key=self.get_tag_key(), value=self.get_tag_value(),
+                   is_propagable=self.is_propagable, origin_type=self.origin_type,
+                   origin_id=self.origin_id)
 
     ###################################### EDITION ######################################
 
     @classmethod
-    def create_entity_tag(cls, tag: Tag, entity_id: str, entity_type: EntityTagType,
-                          origin_type: EntityTagOriginType, origin_id: str) -> 'EntityTag':
+    def create_entity_tag(cls, tag: Tag, entity_id: str,
+                          entity_type: EntityTagType) -> 'EntityTag':
+        if not tag.origin_is_defined():
+            raise ValueError('The tag origin must be defined to save it')
+
         entity_tag: EntityTag = EntityTag(
             tag_key=tag.key, entity_id=entity_id, entity_type=entity_type.value,
-            origin_type=origin_type.value, origin_id=origin_id)
+            origin_type=tag.origin_type, origin_id=tag.origin_id,
+            is_propagable=tag.is_propagable)
         entity_tag.set_value(tag.value)
         return entity_tag.save()
 
@@ -142,6 +138,13 @@ class EntityTag(Model):
             (cls.entity_id == entity_id) &
             (cls.entity_type == entity_type.value)
         ))
+
+    @classmethod
+    def count_by_tag(cls, tag_key: str, tag_value: str) -> int:
+        return cls.select().where(
+            (cls.tag_key == tag_key) &
+            (cls.tag_value == tag_value)
+        ).count()
 
     class Meta:
         indexes = (

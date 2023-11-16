@@ -13,46 +13,6 @@ from .tag import TAGS_SEPARATOR, Tag, TagDict
 class TagHelper():
 
     @classmethod
-    def add_or_replace_tag(cls, tags_str: str, tag_key: str, tag_value: str) -> str:
-        """Add of replace a tag key/value into a string
-        """
-
-        tags: List[Tag] = cls.tags_to_list(tags_str)
-
-        if not tags:
-            tags = []
-
-        same_key: List[Tag] = [x for x in tags if x.key == tag_key]
-
-        if same_key:
-            same_key[0].set_value(tag_value)
-        else:
-            tags.append(Tag(tag_key, tag_value))
-
-        return cls.tags_to_str(tags)
-
-    @classmethod
-    def remove_tag(cls, tags_str: str, tag_key: str, tag_value: str) -> str:
-        """Remove a tag from a string
-        """
-
-        tags: List[Tag] = cls.tags_to_list(tags_str)
-
-        if not tags:
-            tags = []
-
-        tags.remove(Tag(tag_key, tag_value))
-
-        return cls.tags_to_str(tags)
-
-    @classmethod
-    def tags_to_str(cls, tags: List[Tag]) -> str:
-        if not tags:
-            return ''
-        # tags seperated with ',' with ',' around
-        return TAGS_SEPARATOR + TAGS_SEPARATOR.join([str(tag) for tag in tags]) + TAGS_SEPARATOR
-
-    @classmethod
     def tags_to_json(cls, tags: List[Tag]) -> List[TagDict]:
         if not tags:
             return []
@@ -97,7 +57,7 @@ class TagHelper():
         return all_tags
 
     @classmethod
-    def get_distince_values_for_key(cls, tags: List[Dict[str, str]], key: str) -> List[str]:
+    def get_distinct_values_for_key(cls, tags: List[Dict[str, str]], key: str) -> List[str]:
         """Return a list of distinct values for a key from a list of tags
         """
         distinct_tags = cls.get_distinct_values(tags)

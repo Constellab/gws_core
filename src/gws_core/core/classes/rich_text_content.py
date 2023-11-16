@@ -77,6 +77,12 @@ class RichText():
     def get_resource_views(self) -> List[RichTextResourceView]:
         return self.get_special_ops(RichTextSpecialOps.RESOURCE_VIEW)
 
+    def has_resource_view(self, view_config_id: str) -> bool:
+        """Check if the rich text contains a resource view with the given view_config_id
+        """
+        resource_views: List[RichTextResourceView] = self.get_resource_views()
+        return any(rv['view_config']['id'] == view_config_id for rv in resource_views)
+
     def get_associated_resources(self) -> Set[str]:
         resource_views: List[RichTextResourceView] = self.get_resource_views()
         return {rv['resource_id'] for rv in resource_views}
