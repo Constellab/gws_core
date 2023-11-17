@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List, Optional, Type
+from typing import List, Optional, Type
 
 from fastapi.responses import FileResponse
 from peewee import ModelSelect
@@ -183,20 +183,15 @@ class ResourceService(BaseService):
         :return: _description_
         :rtype: List[ResourceModel]
         """
-        generated_resources = cls.get_experiment_output_resources(
+        generated_resources = cls.get_experiment_generated_resources(
             experiment_ids)
 
         task_inputs = cls.get_experiment_input_resources(experiment_ids)
 
-        resources: Dict[str, ResourceModel] = {}
-
-        for resource in generated_resources + task_inputs:
-            resources[resource.id] = resource
-
-        return list(resources.values())
+        return list(set(generated_resources + task_inputs))
 
     @classmethod
-    def get_experiment_output_resources(cls, experiment_ids: List[str]) -> List[ResourceModel]:
+    def get_experiment_generated_resources(cls, experiment_ids: List[str]) -> List[ResourceModel]:
         return list(ResourceModel.get_by_experiments(experiment_ids))
 
     @classmethod

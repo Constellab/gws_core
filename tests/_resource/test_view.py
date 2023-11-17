@@ -10,6 +10,8 @@ from gws_core import (BaseTestCase, ConfigParams, IntParam, JSONView, Resource,
                       view)
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.experiment.experiment_interface import IExperiment
+from gws_core.report.report_dto import ReportDTO
+from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.view.any_view import AnyView
 from gws_core.resource.view.lazy_view_param import LazyViewParam
@@ -205,6 +207,22 @@ class TestView(BaseTestCase):
         # re-call the view from the view config
         view_result_2 = ResourceService.call_view_from_view_config(view_config.id)
         self.assert_json(view_result.view, view_result_2['view'])
+
+        # Check that the view is listed in the views to delete
+        views_to_delete = ViewConfigService.get_old_views_to_delete()
+        self.assertEqual(len([x for x in views_to_delete if x.id == view_config.id]), 1)
+
+        # Flag the view and check that it is not listed in the views to delete
+        ViewConfigService.update_flagged(view_config.id, True)
+        views_to_delete = ViewConfigService.get_old_views_to_delete()
+        self.assertEqual(len([x for x in views_to_delete if x.id == view_config.id]), 0)
+
+        # unflag the view and associate it to a report and check that it is not listed in the views to delete
+        ViewConfigService.update_flagged(view_config.id, False)
+        report_1 = ReportService.create(ReportDTO(title='test_report'))
+        ReportService.add_view_to_content(report_1.id, view_config.id)
+        views_to_delete = ViewConfigService.get_old_views_to_delete()
+        self.assertEqual(len([x for x in views_to_delete if x.id == view_config.id]), 0)
 
     def test_viewer(self):
         """ Test that a view config is save when executing the view task

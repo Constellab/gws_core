@@ -15,8 +15,8 @@ from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.project.project import Project
 from gws_core.report.report import Report, ReportExperiment
 from gws_core.report.report_dto import ReportDTO
-from gws_core.report.report_resource_model import ReportResourceModel
 from gws_core.report.report_service import ReportService
+from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.test.base_test_case import BaseTestCase
@@ -88,26 +88,26 @@ class TestReport(BaseTestCase):
         self.assertIsNone(Report.get_by_id(report.id))
         self.assertEqual(len(ReportService.get_experiments_by_report(report.id)), 0)
 
-    def test_associated_resource(self):
+    def test_associated_views(self):
         """ Test when we add a resource view, it created an associated resource for the report
         """
         # create report and resource
         report = ReportService.create(ReportDTO(title='Test report'))
         resource_model = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)
 
+        view_result = ResourceService.call_view_on_resource_model(resource_model, "view_as_json", {}, True)
+
         # simulate the rich text with resource id
-        rich_text_resource_view: RichTextResourceView = {
-            "resource_id": resource_model.id,
-        }
+        rich_text_resource_view: RichTextResourceView = view_result.view_config.to_rich_text_resource_view()
         operation = {"insert": {RichTextSpecialOps.RESOURCE_VIEW.value: rich_text_resource_view}}
 
         # update report content
         new_content = {"ops": [operation]}
         ReportService.update_content(report.id, new_content)
 
-        # check that the associated resource is created
-        report_resources = ReportResourceModel.get_by_report(report.id)
-        self.assertEqual(len(report_resources), 1)
+        # check that the associated ReportViewModel is created
+        report_views = ReportViewModel.get_by_report(report.id)
+        self.assertEqual(len(report_views), 1)
 
         # test get report by resource
         paginator = ReportService.get_by_resource(resource_model.id)
@@ -115,17 +115,17 @@ class TestReport(BaseTestCase):
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, report.id)
 
-        # test adding the same resource a second time it shouldn't create a new associated resource
+        # test adding the same resource a second time it shouldn't create a new associated view
         new_content = {"ops": [operation, operation]}
         ReportService.update_content(report.id, new_content)
-        report_resources = ReportResourceModel.get_by_report(report.id)
-        self.assertEqual(len(report_resources), 1)
+        report_views = ReportViewModel.get_by_report(report.id)
+        self.assertEqual(len(report_views), 1)
 
         # test removing the resource
         new_content = {"ops": []}
         ReportService.update_content(report.id, new_content)
-        report_resources = ReportResourceModel.get_by_report(report.id)
-        self.assertEqual(len(report_resources), 0)
+        report_views = ReportViewModel.get_by_report(report.id)
+        self.assertEqual(len(report_views), 0)
 
     # test to have a view config to a report
     def test_add_view_config_to_report(self):
@@ -148,7 +148,7 @@ class TestReport(BaseTestCase):
         report_db = ReportService.get_by_id_and_check(report.id)
         rich_text = report_db.get_content_as_rich_text()
 
-        # check that a resource view exist in the rich text
+        # check that a view exist in the rich text
         resource_views: List[RichTextResourceView] = rich_text.get_resource_views()
         self.assertEqual(len(resource_views), 1)
         self.assertEqual(resource_views[0]['view_method_name'], "view_as_string")
@@ -156,3 +156,13 @@ class TestReport(BaseTestCase):
 
         # verify that the report was automatically associated with the experiment
         self.assertEqual(ReportExperiment.find_by_pk(experiment._experiment.id, report.id).count(), 1)
+
+        with self.assertRaises(Exception):
+            # Check that we cannot remove the experiment because of the view
+            ReportService.remove_experiment(report.id, experiment._experiment.id)
+
+        # remove the view from the report
+        ReportService.update_content(report.id, {"ops": []})
+
+        # Check that we cannot remove the experiment because of the view
+        ReportService.remove_experiment(report.id, experiment._experiment.id)

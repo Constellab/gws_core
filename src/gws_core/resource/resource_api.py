@@ -12,9 +12,6 @@ from pydantic import BaseModel
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.view_types import CallViewParams
-from gws_core.tag.entity_tag import EntityTagType
-from gws_core.tag.tag import TagDict
-from gws_core.tag.tag_service import TagService
 from gws_core.task.action.action_service import ActionService
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.transformer.transformer_service import TransformerService
@@ -130,15 +127,6 @@ def update_project(id: str,
                    project: UpdateProject,
                    _=Depends(AuthService.check_user_access_token)) -> Dict:
     return ResourceService.update_project(id, project.project_id).to_json(deep=True)
-############################# TAGS ###########################
-
-
-@core_app.put("/resource/{id}/tags", tags=["Resource"], summary="Update resource tags")
-def save_tags(id: str,
-              tags: List[TagDict],
-              _=Depends(AuthService.check_user_access_token)) -> list:
-    return TagService.add_tags_dict_to_entity(EntityTagType.RESOURCE, id, tags).to_json()
-
 
 ############################# TRANSFORMER ###########################
 

@@ -16,6 +16,8 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.project.model_with_project import ModelWithProject
+from gws_core.tag.entity_tag import EntityTagType
+from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.classes.enum_field import EnumField
@@ -251,13 +253,14 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject):
         self.validated_by = CurrentUserService.get_and_check_current_user()
 
     @transaction()
-    def delete_instance(self):
+    def delete_instance(self, *args, **kwargs):
         self.reset()
 
         if self.protocol_model:
             self.protocol_model.delete_instance()
 
-        return super().delete_instance()
+        super().delete_instance(*args, **kwargs)
+        EntityTagList.delete_by_entity(EntityTagType.EXPERIMENT, self.id)
 
     @classmethod
     def after_table_creation(cls) -> None:

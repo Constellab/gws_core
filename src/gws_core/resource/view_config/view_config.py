@@ -16,9 +16,10 @@ from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.view.view_types import ViewType
+from gws_core.tag.entity_tag import EntityTagType
+from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.taggable_model import TaggableModel
 
-from ...core.model.db_field import JSONField
 from ...experiment.experiment import Experiment
 from ..resource_model import ResourceModel
 
@@ -28,8 +29,6 @@ class ViewConfig(ModelWithUser, TaggableModel):
     title = CharField()
     view_type = EnumField(choices=ViewType)
     view_name = CharField()
-    config_values = JSONField(null=False)
-    # TODO set null=False after update 0.5.8 and delete config_values
     config: Config = ForeignKeyField(Config, null=True, backref='+')
 
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, on_delete='CASCADE')
@@ -68,7 +67,8 @@ class ViewConfig(ModelWithUser, TaggableModel):
     def delete_instance(self, *args, **kwargs) -> int:
         if self.config is not None:
             self.config.delete_instance()
-        return super().delete_instance(*args, **kwargs)
+        super().delete_instance(*args, **kwargs)
+        EntityTagList.delete_by_entity(EntityTagType.VIEW, self.id)
 
     @classmethod
     def get_same_view_config(cls, view_config: 'ViewConfig') -> Optional['ViewConfig']:
@@ -111,6 +111,7 @@ class ViewConfig(ModelWithUser, TaggableModel):
     def to_rich_text_resource_view(self, title: str = None, caption: str = None) -> RichTextResourceView:
         return {
             "id": self.id + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
+            "view_config_id": self.id,
             "resource_id": self.resource_model.id,
             "experiment_id": self.experiment.id if self.experiment else None,
             "view_method_name": self.view_name,

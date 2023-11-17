@@ -319,8 +319,7 @@ class TaskModel(ProcessModel):
 
             # For all tag created by the task, mark the origin as created by the task.
             for tag in resource.tags.get_tags():
-                tag.origin_type = TagOriginType.TASK
-                tag.origin_id = self.id
+                tag.origins.set_origins(TagOriginType.TASK, self.id)
 
         # propagate the tag from input resources and experiment
         resource.tags.add_tags(self._get_input_resource_tags())
@@ -395,14 +394,10 @@ class TaskModel(ProcessModel):
 
         if self._input_resource_tags is None:
             tags: List[Tag] = []
+
             for input_resource in self.inputs.get_resource_models().values():
                 entity_tags = EntityTagList.find_by_entity(EntityTagType.RESOURCE, input_resource.id)
-                tags += [entity_tag.to_simple_tag() for entity_tag in entity_tags.get_propagable_tags()]
-
-            # set the tag origin to be task propagated by this task
-            for tag in tags:
-                tag.origin_type = TagOriginType.TASK_PROPAGATED
-                tag.origin_id = self.id
+                tags += entity_tags.build_tags_propagated(TagOriginType.TASK_PROPAGATED, self.id)
 
             self._input_resource_tags = tags
 
@@ -412,14 +407,7 @@ class TaskModel(ProcessModel):
         """Return all the tags of the experiment
         """
         entity_tags = EntityTagList.find_by_entity(EntityTagType.EXPERIMENT, self.experiment.id)
-        tags = [entity_tag.to_simple_tag() for entity_tag in entity_tags.get_propagable_tags()]
-
-        # set the tag origin to be exp propagated by this experiment
-        for tag in tags:
-            tag.origin_type = TagOriginType.EXPERIMENT_PROPAGATED
-            tag.origin_id = self.experiment.id
-
-        return tags
+        return entity_tags.build_tags_propagated(TagOriginType.EXPERIMENT_PROPAGATED, self.experiment.id)
 
     def mark_as_started(self):
         if self.is_running:

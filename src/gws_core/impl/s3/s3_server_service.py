@@ -22,8 +22,8 @@ from gws_core.resource.resource_model_search_builder import \
     ResourceModelSearchBuilder
 from gws_core.resource.resource_service import ResourceService
 from gws_core.tag.entity_tag import EntityTag, EntityTagType
-from gws_core.tag.tag import Tag
-from gws_core.tag.tag_service import TagService
+from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag import Tag, TagOrigins, TagOriginType
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
@@ -111,11 +111,15 @@ class S3ServerService:
             CurrentUserService.set_current_user(User.get_sysuser())
             try:
                 resource_model = resource_model.save_full()
-                TagService.add_tags_to_entity(
-                    EntityTagType.RESOURCE, resource_model.id,
-                    [Tag('storage', 's3'),
-                     Tag('bucket', bucket_name),
-                     Tag('key', key)])
+
+                resource_tags = EntityTagList.find_by_entity(EntityTagType.RESOURCE, resource_model.id)
+
+                # Add the tags, make sure they are not propagable
+                origins = TagOrigins(TagOriginType.S3, 's3')
+                resource_tags.add_tag_if_not_exist(Tag('storage', 's3', is_propagable=False, origins=origins))
+                resource_tags.add_tag_if_not_exist(Tag('bucket', bucket_name, is_propagable=False, origins=origins))
+                resource_tags.add_tag_if_not_exist(Tag('key', key, is_propagable=False, origins=origins))
+
             finally:
                 CurrentUserService.set_current_user(None)
 
@@ -203,7 +207,7 @@ class S3ServerService:
 
     @classmethod
     def _resource_to_s3_object(cls, resource: ResourceModel) -> ObjectTypeDef:
-        entity_tag: EntityTag = EntityTag.find_by_tag_key_and_entity('key', resource.id, EntityTagType.RESOURCE).first()
+        entity_tag: EntityTag = EntityTag.find_by_tag_key_and_entity('key', EntityTagType.RESOURCE, resource.id).first()
         if not entity_tag:
             raise S3ServerException(status_code=500, code='invalid_resource',
                                     message='Resource has no key tag', bucket_name='')

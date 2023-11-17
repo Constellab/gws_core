@@ -23,7 +23,6 @@ from gws_core.resource.technical_info import TechnicalInfoDict
 from gws_core.tag.entity_tag import EntityTagType
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_list import TagList
-from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -70,7 +69,6 @@ class ResourceOrigin(Enum):
     S3_PROJECT_STORAGE = "S3_PROJECT_STORAGE"
 
 
-# Use the typing decorator to avoid circular dependency
 class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject):
 
     """
@@ -130,6 +128,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject):
             self.fs_node_model.delete_instance(delete_file=False)
 
         self._delete_object()
+        EntityTagList.delete_by_entity(EntityTagType.RESOURCE, self.id)
 
         return result
 

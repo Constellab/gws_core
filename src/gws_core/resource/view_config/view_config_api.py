@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from fastapi.param_functions import Depends
 
@@ -11,9 +11,6 @@ from gws_core.core.classes.paginator import PaginatorDict
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view_config.view_config_service import ViewConfigService
-from gws_core.tag.entity_tag import EntityTagType
-from gws_core.tag.tag import TagDict
-from gws_core.tag.tag_service import TagService
 from gws_core.user.auth_service import AuthService
 
 from ...core_app import core_app
@@ -84,15 +81,5 @@ def search_for_report(report_id: str,
                       page: Optional[int] = 1,
                       number_of_items_per_page: Optional[int] = 20,
                       _=Depends(AuthService.check_user_access_token)) -> Dict:
-    return ViewConfigService.search_for_report(report_id, search_dict,
-                                               page, number_of_items_per_page).to_json()
-
-
-############################# TAGS ###########################
-
-
-@core_app.put("/view-config/{id}/tags", tags=["View config"], summary="Update view config tags")
-def save_tags(id: str,
-              tags: List[TagDict],
-              _=Depends(AuthService.check_user_access_token)) -> dict:
-    return TagService.add_tags_dict_to_entity(EntityTagType.VIEW, id, tags).to_json()
+    return ViewConfigService.search_by_report(report_id, search_dict,
+                                              page, number_of_items_per_page).to_json()

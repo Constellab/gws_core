@@ -104,10 +104,12 @@ class TestEntityNavigator(BaseTestCase):
         self.exp_1_resource_1_view_1 = view_result.view_config
 
     def _create_report(self):
-        self.report_1 = ReportService.create(ReportDTO(title='test_report'))
+        report_1 = ReportService.create(ReportDTO(title='test_report'))
 
-        ReportService.add_experiment(self.report_1.id, self.exp_1.id)
-        ReportService.add_view_to_content(self.report_1.id, self.exp_1_resource_1_view_1.id)
+        ReportService.add_experiment(report_1.id, self.exp_1.id)
+        ReportService.add_view_to_content(report_1.id, self.exp_1_resource_1_view_1.id)
+
+        self.report_1 = report_1.refresh()
 
     def _test_experiment_navigation(self):
         # Test get next experiment of experiment 1
@@ -239,9 +241,9 @@ class TestEntityNavigator(BaseTestCase):
         view_nav = EntityNavigatorView(self.exp_1_resource_1_view_1)
 
         # Test next report of view 1
-        # next_reports = view_nav.get_next_reports().get_entities_list()
-        # self.assertEqual(len(next_reports), 1)
-        # self.assertIsNotNone(len([x for x in next_reports if x.id == self.report_1.id]))
+        next_reports = view_nav.get_next_reports().get_entities_list()
+        self.assertEqual(len(next_reports), 1)
+        self.assertIsNotNone(len([x for x in next_reports if x.id == self.report_1.id]))
 
         # Test get previous resources of view 1
         prev_resources = view_nav.get_previous_resources().get_entities_list()
@@ -263,9 +265,9 @@ class TestEntityNavigator(BaseTestCase):
         self.assertIsNotNone(len([x for x in prev_exps if x.id == self.exp_1.id]))
 
         # Test get previous view of report 1
-        # prev_views = report_nav.get_previous_views().get_entities_list()
-        # self.assertEqual(len(prev_views), 1)
-        # self.assertIsNotNone(len([x for x in prev_views if x.id == self.exp_1_resource_1_view_1.id]))
+        prev_views = report_nav.get_previous_views().get_entities_list()
+        self.assertEqual(len(prev_views), 1)
+        self.assertIsNotNone(len([x for x in prev_views if x.id == self.exp_1_resource_1_view_1.id]))
 
         # Test get previous resource of report 1
         prev_resources = report_nav.get_previous_resources().get_entities_list()

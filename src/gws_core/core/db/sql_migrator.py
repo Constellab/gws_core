@@ -60,6 +60,10 @@ class SqlMigrator:
         self._operations.append(self.migrator.add_index(model_type.get_table_name(), columns, unique))
         return True
 
+    def drop_table_if_exists(self, model_type: Type[BaseModel]) -> bool:
+        self.migrator.database.drop_tables(model_type)
+        return True
+
     def migrate(self) -> None:
         for operation in self._operations:
             operation.run()

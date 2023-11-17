@@ -9,12 +9,11 @@ from typing import List
 from fastapi.param_functions import Depends
 
 from gws_core.tag.entity_tag import EntityTagType
-from gws_core.tag.tag import TagDict
 
 from ..core.classes.jsonable import ListJsonable
 from ..core_app import core_app
 from ..user.auth_service import AuthService
-from .tag_service import TagService
+from .tag_service import NewTagDTO, TagService
 
 
 @core_app.get("/tag/{key}", tags=["Tag"], summary='Search tag by key')
@@ -80,10 +79,11 @@ def get_tags_of_entity(entity_type: EntityTagType,
 
 
 @core_app.post("/tag/entity/{entity_type}/{entity_id}", tags=["Tag"], summary="Save entity tags")
-def add_tag(id: str,
-            tag: TagDict,
+def add_tag(entity_type: EntityTagType,
+            entity_id: str,
+            tag: NewTagDTO,
             _=Depends(AuthService.check_user_access_token)) -> list:
-    return TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, id, tag).to_json()
+    return TagService.add_tag_dict_to_entity(entity_type, entity_id, tag).to_json()
 
 
 @core_app.delete(

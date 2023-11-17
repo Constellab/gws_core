@@ -7,12 +7,12 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 
 class RichTextOps(TypedDict):
     insert: Any
-    attributes: Optional[Dict[str, Any]]
+    attributes: NotRequired[Dict[str, Any]]
 
 
 class RichTextI(TypedDict):
@@ -44,6 +44,7 @@ class RichTextFigure(TypedDict):
 class RichTextResourceView(TypedDict):
     """Object representing a resource view in a rich text"""
     id: str
+    view_config_id: str
     resource_id: str
     experiment_id: str
     view_method_name: str
@@ -77,11 +78,11 @@ class RichText():
     def get_resource_views(self) -> List[RichTextResourceView]:
         return self.get_special_ops(RichTextSpecialOps.RESOURCE_VIEW)
 
-    def has_resource_view(self, view_config_id: str) -> bool:
+    def has_view_config(self, view_config_id: str) -> bool:
         """Check if the rich text contains a resource view with the given view_config_id
         """
         resource_views: List[RichTextResourceView] = self.get_resource_views()
-        return any(rv['view_config']['id'] == view_config_id for rv in resource_views)
+        return any(rv.get('view_config_id') == view_config_id for rv in resource_views)
 
     def get_associated_resources(self) -> Set[str]:
         resource_views: List[RichTextResourceView] = self.get_resource_views()
@@ -107,14 +108,14 @@ class RichText():
             self._insert_element(variable_name, insert)
 
     def _append_element(self, insert: Any, attributes: dict = None) -> None:
-        element = {"insert": insert}
+        element: RichTextOps = {"insert": insert}
 
         if attributes:
             element["attributes"] = attributes
         self._content['ops'].append(element)
 
     def _insert_element(self, variable_name: str, insert: Any, attributes: dict = None) -> None:
-        element = {"insert": insert}
+        element: RichTextOps = {"insert": insert}
 
         if attributes:
             element["attributes"] = attributes

@@ -15,8 +15,12 @@ from gws_core.impl.robot.robot_tasks import RobotEat
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.protocol.protocol_interface import IProtocol
+from gws_core.report.report_dto import ReportDTO
+from gws_core.report.report_service import ReportService
+from gws_core.resource.resource_service import ResourceService
 from gws_core.tag.entity_tag import EntityTagType
-from gws_core.tag.tag import TagOriginType
+from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag import TagOrigins, TagOriginType
 from gws_core.tag.tag_model import EntityTagValueFormat, TagModel
 from gws_core.tag.tag_service import TagService
 from gws_core.task.task import Task
@@ -41,6 +45,37 @@ class TagRobot(Task):
 # test_tag
 class TestTag(BaseTestCase):
 
+    def test_origin(self):
+        tag = Tag('tag', 'value')
+        self.assertFalse(tag.origin_is_defined())
+        self.assertTrue(tag.origins.add_origin(TagOriginType.USER, 'user_id'))
+        self.assertTrue(tag.origin_is_defined())
+        self.assertEqual(tag.origins.count_origins(), 1)
+        self.assertTrue(tag.origins.has_origin(TagOriginType.USER, 'user_id'))
+        self.assertTrue(tag.origins.is_user_origin())
+
+        # add an automatic origin, this should overide the user origin
+        self.assertTrue(tag.origins.add_origin(TagOriginType.EXPERIMENT_PROPAGATED, 'exp_id'))
+        self.assertEqual(tag.origins.count_origins(), 1)
+        self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, 'exp_id'))
+
+        # add a second origin
+        self.assertTrue(tag.origins.add_origin(TagOriginType.TASK_PROPAGATED, 'task_id'))
+        self.assertEqual(tag.origins.count_origins(), 2)
+        self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, 'exp_id'))
+        self.assertTrue(tag.origins.has_origin(TagOriginType.TASK_PROPAGATED, 'task_id'))
+
+        # add a user origin (should not be added because there is already an automatic origin)
+        self.assertFalse(tag.origins.add_origin(TagOriginType.USER, 'user_id'))
+        self.assertEqual(tag.origins.count_origins(), 2)
+        self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, 'exp_id'))
+        self.assertTrue(tag.origins.has_origin(TagOriginType.TASK_PROPAGATED, 'task_id'))
+
+        # remove an origin
+        tag.origins.remove_origin(TagOriginType.EXPERIMENT_PROPAGATED, 'exp_id')
+        self.assertEqual(tag.origins.count_origins(), 1)
+        self.assertFalse(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, 'exp_id'))
+
     def test_add_tag(self):
         experiment: Experiment = ExperimentService.create_experiment()
 
@@ -48,7 +83,7 @@ class TestTag(BaseTestCase):
 
         # Add the tag to the model and check that is was added in DB
         tag = TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, experiment.id, expected_tag)
-        self.assertEqual(tag.entity_type, EntityTagType.EXPERIMENT.value)
+        self.assertEqual(tag.entity_type, EntityTagType.EXPERIMENT)
         self.assertEqual(tag.entity_id, experiment.id)
         self.assertEqual(tag.tag_key_id, 'test')
         self.assertEqual(tag.tag_value, 'value')
@@ -194,23 +229,19 @@ class TestTag(BaseTestCase):
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, experiment.id)
 
-    def test_tag_propagation(self):
+    def test_tag_propagation_exp(self):
+
+        user_id = CurrentUserService.get_and_check_current_user().id
 
         # Create all the required tags
-        tag_a = Tag('tag_a', 'value_a', is_propagable=True, origin_type=TagOriginType.USER,
-                    origin_id=CurrentUserService.get_and_check_current_user().id)
-        tag_a_1 = Tag('tag_a', 'value_a_1', is_propagable=True, origin_type=TagOriginType.USER,
-                      origin_id=CurrentUserService.get_and_check_current_user().id)
-        tag_b = Tag('tag_b', 'value_b', is_propagable=True, origin_type=TagOriginType.USER,
-                    origin_id=CurrentUserService.get_and_check_current_user().id)
-        tag_exp = Tag('tag_exp', 'value_exp', is_propagable=True, origin_type=TagOriginType.USER,
-                      origin_id=CurrentUserService.get_and_check_current_user().id)
+        tag_a = Tag('tag_a', 'value_a', is_propagable=True, origins=TagOrigins(TagOriginType.USER, user_id))
+        tag_a_1 = Tag('tag_a', 'value_a_1', is_propagable=True, origins=TagOrigins(TagOriginType.USER, user_id))
+        tag_b = Tag('tag_b', 'value_b', is_propagable=True, origins=TagOrigins(TagOriginType.USER, user_id))
+        tag_exp = Tag('tag_exp', 'value_exp', is_propagable=True, origins=TagOrigins(TagOriginType.USER, user_id))
         tag_r_not_propagable = Tag(
-            'tag_r_not', 'value_exp', is_propagable=False, origin_type=TagOriginType.USER,
-            origin_id=CurrentUserService.get_and_check_current_user().id)
+            'tag_r_not', 'value_exp', is_propagable=False, origins=TagOrigins(TagOriginType.USER, user_id))
         tag_exp_not_propagable = Tag(
-            'tag_exp_not', 'value_exp', is_propagable=False, origin_type=TagOriginType.USER,
-            origin_id=CurrentUserService.get_and_check_current_user().id)
+            'tag_exp_not', 'value_exp', is_propagable=False, origins=TagOrigins(TagOriginType.USER, user_id))
 
         # Tags created by the TagRobot task
         task_tag_propagable = Tag('robot_tag_propagable', 'robot_value', is_propagable=True)
@@ -251,29 +282,31 @@ class TestTag(BaseTestCase):
         output_tag_a = first_output.tags.get_tag(tag_a.key, tag_a.value)
         self.assertIsNotNone(output_tag_a)
         self.assertTrue(output_tag_a.is_propagable)
-        self.assertEqual(output_tag_a.origin_type, TagOriginType.TASK_PROPAGATED)
-        self.assertEqual(output_tag_a.origin_id, tag_robot._process_model.id)
+        self.assertEqual(output_tag_a.origins.count_origins(), 1)
+        self.assertTrue(output_tag_a.origins.has_origin(TagOriginType.TASK_PROPAGATED, tag_robot._process_model.id))
 
         # Check tag experiment is propagated and values
         output_tag_exp = first_output.tags.get_tag(tag_exp.key, tag_exp.value)
         self.assertIsNotNone(output_tag_exp)
         self.assertTrue(output_tag_exp.is_propagable)
-        self.assertEqual(output_tag_exp.origin_type, TagOriginType.EXPERIMENT_PROPAGATED)
-        self.assertEqual(output_tag_exp.origin_id, i_experiment.get_experiment_model().id)
+        self.assertEqual(output_tag_exp.origins.count_origins(), 1)
+        self.assertTrue(output_tag_exp.origins.has_origin(
+            TagOriginType.EXPERIMENT_PROPAGATED, i_experiment.get_experiment_model().id))
 
         # Check task tags
         ouput_tag_task_propagable = first_output.tags.get_tag(task_tag_propagable.key, task_tag_propagable.value)
         self.assertIsNotNone(ouput_tag_task_propagable)
         self.assertTrue(ouput_tag_task_propagable.is_propagable)
-        self.assertEqual(ouput_tag_task_propagable.origin_type, TagOriginType.TASK)
-        self.assertEqual(ouput_tag_task_propagable.origin_id, tag_robot._process_model.id)
+        self.assertEqual(ouput_tag_task_propagable.origins.count_origins(), 1)
+        self.assertTrue(ouput_tag_task_propagable.origins.has_origin(TagOriginType.TASK, tag_robot._process_model.id))
 
         ouput_tag_task_not_propagable = first_output.tags.get_tag(task_tag_not_propagable.key,
                                                                   task_tag_not_propagable.value)
         self.assertIsNotNone(ouput_tag_task_not_propagable)
         self.assertFalse(ouput_tag_task_not_propagable.is_propagable)
-        self.assertEqual(ouput_tag_task_not_propagable.origin_type, TagOriginType.TASK)
-        self.assertEqual(ouput_tag_task_not_propagable.origin_id, tag_robot._process_model.id)
+        self.assertEqual(ouput_tag_task_not_propagable.origins.count_origins(), 1)
+        self.assertTrue(ouput_tag_task_not_propagable.origins.has_origin(
+            TagOriginType.TASK, tag_robot._process_model.id))
 
         # Check that the second output has the tag of all the inputs + exp
         second_output = eat.get_output('robot')
@@ -285,3 +318,65 @@ class TestTag(BaseTestCase):
 
         # Check tag experiment is propagated
         self.assertTrue(second_output.tags.has_tag(tag_exp))
+
+    def test_tag_propagation_view_report(self):
+        propagable_tag = Tag('robot_tag_propagable', 'robot_value', is_propagable=True)
+
+        i_experiment: IExperiment = IExperiment()
+        i_experiment.add_tags([propagable_tag])
+        i_protocol: IProtocol = i_experiment.get_protocol()
+
+        tag_robot = i_protocol.add_process(RobotEat, 'tag')
+        first_robot = Robot.empty()
+        tag_robot.set_input('robot', first_robot)
+
+        i_experiment.run()
+        tag_robot.refresh()
+
+        experiment_id = i_experiment.get_experiment_model().id
+
+        # Check that the first output has the tag of first input + exp + 2 tag from task
+        resource_model = tag_robot.get_output_resource_model('robot')
+
+        # generate a view from this resource
+        view_result = ResourceService.get_and_call_view_on_resource_model(resource_model.id, 'view_as_json', {}, True)
+
+        # Check that the tags are propagated
+        view_tags = EntityTagList.find_by_entity(EntityTagType.VIEW, view_result.view_config.id)
+        self.assertEqual(len(view_tags.get_tags()), 1)
+        self.assertTrue(view_tags.has_tag(propagable_tag))
+        tag = view_tags.get_tag(propagable_tag).to_simple_tag()
+        self.assertTrue(tag.is_propagable)
+        self.assertEqual(tag.origins.count_origins(), 1)
+        self.assertTrue(tag.origins.has_origin(TagOriginType.RESOURCE_PROPAGATED, resource_model.id))
+
+        # generate a report and add the view
+        report = ReportService.create(ReportDTO(title='test_report'))
+
+        ReportService.add_view_to_content(report.id, view_result.view_config.id)
+
+        # Check that the tags are propagated
+        report_tags = EntityTagList.find_by_entity(EntityTagType.REPORT, report.id)
+        self.assertEqual(len(report_tags.get_tags()), 1)
+        self.assertTrue(report_tags.has_tag(propagable_tag))
+        tag = report_tags.get_tag(propagable_tag).to_simple_tag()
+        self.assertTrue(tag.is_propagable)
+
+        # it should have 2 origin, the view and the experiment
+        self.assertEqual(tag.origins.count_origins(), 2)
+        self.assertTrue(tag.origins.has_origin(TagOriginType.VIEW_PROPAGATED, view_result.view_config.id))
+        self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, experiment_id))
+
+        # if we remove the view from the report, the tag should be kept with 1 origin
+        ReportService.update_content(report.id, {"ops": []})
+
+        report_tags = EntityTagList.find_by_entity(EntityTagType.REPORT, report.id)
+        self.assertEqual(len(report_tags.get_tags()), 1)
+        tag = report_tags.get_tag(propagable_tag).to_simple_tag()
+        self.assertEqual(tag.origins.count_origins(), 1)
+        self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, experiment_id))
+
+        # Unassociate the experiment from the report, it should delete the tag
+        ReportService.remove_experiment(report.id, experiment_id)
+        report_tags = EntityTagList.find_by_entity(EntityTagType.REPORT, report.id)
+        self.assertEqual(len(report_tags.get_tags()), 0)

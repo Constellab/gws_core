@@ -73,7 +73,7 @@ class SearchParams(BaseModel):
     def has_filter_criteria(self, key: str) -> bool:
         return self.get_filter_criteria(key) is not None
 
-    def get_filter_criteria_value(self, key: str) -> None:
+    def get_filter_criteria_value(self, key: str) -> Any:
         criteria: SearchFilterCriteria = self.get_filter_criteria(key)
 
         if criteria is None:

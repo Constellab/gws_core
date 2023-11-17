@@ -8,13 +8,14 @@ from copy import deepcopy
 from json import dump
 from typing import Dict, List
 
-from peewee import BigIntegerField, CharField, ForeignKeyField
+from peewee import BigIntegerField, CharField, CompositeKey, ForeignKeyField
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
 from gws_core.config.param.param_types import ParamSpecDict
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.sql_migrator import SqlMigrator
+from gws_core.core.model.base_model import BaseModel
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_enums import ExperimentType
@@ -34,9 +35,11 @@ from gws_core.progress_bar.progress_bar import ProgressBar, ProgressBarMessage
 from gws_core.project.project import Project
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.report.report import Report
+from gws_core.report.report_service import ReportService
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view.view_helper import ViewHelper
@@ -763,35 +766,6 @@ class Migration057(BrickMigration):
                     f'Error while setting process type for process id {process_model.id} : {exception}')
 
 
-@brick_migration('0.5.8', short_description='Add config foreign key to view config')
-class Migration058(BrickMigration):
-
-    @classmethod
-    def migrate(cls, from_version: Version, to_version: Version) -> None:
-
-        migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
-        migrator.add_column_if_not_exists(ViewConfig, ViewConfig.config)
-        migrator.migrate()
-
-        view_configs: List[ViewConfig] = list(ViewConfig.select())
-        for view_config in view_configs:
-            try:
-                if not view_config.config:
-
-                    view_meta = ViewHelper.get_and_check_view_meta(view_config.resource_model.get_resource_type(),
-                                                                   view_config.view_name)
-
-                    specs = view_meta.get_view_specs_from_type(
-                        skip_private=False)
-                    config = Config()
-                    config.set_specs(specs)
-                    config.set_values(view_config.config_values)
-                    view_config.config = config
-                    view_config.save(skip_hook=True)
-            except Exception:
-                view_config.delete_instance()
-
-
 @brick_migration('0.5.15', short_description='Migrate env creation info file to v2')
 class Migration0515(BrickMigration):
 
@@ -825,7 +799,19 @@ class Migration0515(BrickMigration):
                     f'Error while migrating env creation info for env {env["name"]} : {exception}')
 
 
-@brick_migration('0.5.16', short_description='Migrate tags')
+class ReportResourceModel(BaseModel):
+    """Model to store which resources are used in reports"""
+
+    report: Report = ForeignKeyField(Report, null=False, index=True, on_delete='CASCADE')
+    resource: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
+
+    _table_name = 'gws_report_resource'
+
+    class Meta:
+        primary_key = CompositeKey("report", "resource")
+
+
+@brick_migration('0.5.16', short_description='Migrate tags, new table ReportViewModel')
 class Migration0516(BrickMigration):
 
     @classmethod
@@ -833,6 +819,11 @@ class Migration0516(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
         migrator.add_column_if_not_exists(TagModel, TagModel.value_format)
+        migrator.drop_table_if_exists(ReportResourceModel)
+        migrator.drop_column_if_exists(ViewConfig, 'config_values')
+        migrator.alter_column_type(
+            ViewConfig, ViewConfig.config.column_name,
+            CharField(max_length=36, null=False, index=True))
         migrator.migrate()
 
         TagModel.update(value_format=EntityTagValueFormat.STRING).where(
@@ -853,13 +844,40 @@ class Migration0516(BrickMigration):
                         entity_type = EntityTagType.EXPERIMENT
                     elif isinstance(entity, ViewConfig):
                         entity_type = EntityTagType.VIEW
-                    entity_tag = EntityTag.find_by_tag_and_entity(tag, entity, entity_type)
+                    entity_tag = EntityTag.find_by_tag_and_entity(tag, entity_type, entity.id)
 
                     if entity_tag is None:
-                        tag.origin_type = TagOriginType.USER
-                        tag.origin_id = CurrentUserService.get_and_check_current_user().id
+                        tag.origins.add_origin(TagOriginType.USER, CurrentUserService.get_and_check_current_user().id)
+
+                        tag_model = TagModel.register_tag(tag.key, tag.value)
                         entity_tag = EntityTag.create_entity_tag(
-                            tag=tag, entity_id=entity.id, entity_type=entity_type)
+                            tag=tag, tag_model=tag_model, entity_id=entity.id, entity_type=entity_type)
             except Exception as exception:
                 Logger.error(
-                    f'Error while migrating tags for entity {entity.id} : {exception}')
+                    f'Error while migrating tags for entity {type(entity).__name__} {entity.id} : {exception}')
+
+        # fill ReportViewModel table
+        report_models: List[Report] = list(Report.select())
+
+        for report in report_models:
+            try:
+                rich_text = report.get_content_as_rich_text()
+
+                report_updated = False
+
+                for report_view in rich_text.get_resource_views():
+                    if report_view.get('view_config_id') is None:
+                        view_result = ResourceService.get_and_call_view_on_resource_model(report_view.get(
+                            'resource_id'), report_view.get('view_method_name'), report_view.get('view_config'), True)
+
+                        report_view['view_config_id'] = view_result.view_config.id
+                        report_updated = True
+
+                if report_updated:
+                    report.content = rich_text.get_content()
+                    report.save()
+                    ReportService._refresh_report_associated_views(report)
+
+            except Exception as exception:
+                Logger.error(
+                    f'Error while migrating report view for report {report.id} : {exception}')

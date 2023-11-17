@@ -10,15 +10,18 @@ from typing import List
 from peewee import ModelSelect
 
 from gws_core.config.config import Config
+from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.experiment.experiment import Experiment
+from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_types import exluded_views_in_historic
+from gws_core.tag.entity_tag import EntityTagType
+from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag import TagOriginType
 from gws_core.user.current_user_service import CurrentUserService
 
 from ...core.classes.paginator import Paginator
-from ...core.classes.search_builder import (SearchBuilder,
-                                            SearchFilterCriteria, SearchParams)
+from ...core.classes.search_builder import SearchBuilder, SearchParams
 from ...core.utils.logger import Logger
 from ...user.user import User
 from ..resource_model import ResourceModel
@@ -36,6 +39,7 @@ class ViewConfigService():
         return ViewConfig.get_by_id_and_check(id)
 
     @classmethod
+    @transaction()
     def save_view_config(cls, resource_model: ResourceModel, view: View,
                          view_name: str, config: Config,
                          flagged: bool = False,
@@ -69,6 +73,12 @@ class ViewConfigService():
                 view_config_db.last_modified_at = DateHelper.now_utc()
                 view_config_db = view_config_db.save()
 
+            # Copy the resource tags to the view config
+            resource_tags = EntityTagList.find_by_entity(EntityTagType.RESOURCE, resource_model.id)
+            tag_propagated = resource_tags.build_tags_propagated(TagOriginType.RESOURCE_PROPAGATED, resource_model.id)
+            view_config_tags = EntityTagList.find_by_entity(EntityTagType.VIEW, view_config_db.id)
+            view_config_tags.add_tags_to_entity(tag_propagated)
+
             # limit the length without blocking the thread
             thread = Thread(target=cls._limit_length_history)
             thread.start()
@@ -83,12 +93,17 @@ class ViewConfigService():
     def _limit_length_history(cls) -> None:
         # limit the length of the history
         if (ViewConfig.select().count() > cls.MAX_HISTORY_SIZE):
-            last_view_config: ViewConfig = ViewConfig.select(
-                ViewConfig.flagged == False).order_by(
-                ViewConfig.last_modified_at.asc()).first()
+            to_delete: List[ViewConfig] = cls.get_old_views_to_delete()
 
-            if last_view_config is not None:
-                last_view_config.delete_instance()
+            for view_config in to_delete:
+                view_config.delete_instance()
+
+    @classmethod
+    def get_old_views_to_delete(cls) -> List[ViewConfig]:
+        """ return the 100 oldest view config that are not flagged and not used in a report"""
+        return list(ViewConfig.select().left_outer_join(ReportViewModel).where(
+            (ViewConfig.flagged == False) & (ReportViewModel.report.is_null(True))).order_by(
+            ViewConfig.last_modified_at.asc()).limit(100))
 
     @classmethod
     def update_title(cls, view_config_id: str, title: str) -> ViewConfig:
@@ -113,8 +128,8 @@ class ViewConfigService():
         return cls._search(search_builder, search, page, number_of_items_per_page)
 
     @classmethod
-    def search_for_report(cls, report_id: str, search: SearchParams,
-                          page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+    def search_by_report(cls, report_id: str, search: SearchParams,
+                         page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
         from ...report.report_service import ReportService
 
         search_builder: SearchBuilder = ViewConfigSearchBuilder()
@@ -132,18 +147,10 @@ class ViewConfigService():
         # exclude the type of view that are not useful in historic
         search_builder.add_expression(ViewConfig.view_type.not_in(exluded_views_in_historic))
 
-        # if the include not flagged is not checked, filter flagged
+        # # if the include not flagged is not checked, filter flagged
         if not search.get_filter_criteria_value("include_not_flagged"):
             search_builder.add_expression(ViewConfig.flagged == True)
         search.remove_filter_criteria("include_not_flagged")
-
-        # Handle the project filters, get all experiment of this project and filter by experiment
-        projects_criteria: SearchFilterCriteria = search.get_filter_criteria('project')
-        if projects_criteria is not None:
-            experiments: List[Experiment] = list(Experiment.select().where(
-                Experiment.project.in_(projects_criteria['value'])))
-            search_builder.add_expression(ViewConfig.experiment.in_(experiments))
-            search.remove_filter_criteria('project')
 
         model_select: ModelSelect = search_builder.add_search_params(search).build_search()
         return Paginator(

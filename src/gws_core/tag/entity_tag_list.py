@@ -49,38 +49,89 @@ class EntityTagList():
     def get_propagable_tags(self) -> List[EntityTag]:
         return [tag for tag in self._tags if tag.is_propagable]
 
+    def build_tags_propagated(self, origin_type: TagOriginType, origin_id: str) -> List[Tag]:
+        """Propagate the tags to the entity
+        """
+        return [tag.propagate_tag(origin_type, origin_id) for tag in self.get_propagable_tags()]
+
+    def is_empty(self) -> bool:
+        return len(self._tags) == 0
+
     @transaction()
-    def add_tag_if_not_exist(self, tag: Tag) -> EntityTag:
+    def add_tag_if_not_exist(self, tag: Tag, update_origin: bool = False) -> EntityTag:
         """Add a tag to the list if it does not exist
+
+        :param tag: tag to add
+        :type tag: Tag
+        :param update_origin: if True and the tag exist, the origin is added to the tag, defaults to False
+        :type update_origin: bool, optional
+        :return: _description_
+        :rtype: EntityTag
         """
         existing_tag = self.get_tag(tag)
         if existing_tag is not None:
-            return existing_tag
+            if update_origin:
+                return existing_tag.merge_tag(tag)
+            else:
+                return existing_tag
 
          # add tag to the list of tags
-        TagModel.register_tag(tag.key, tag.value)
+        tag_model = TagModel.register_tag(tag.key, tag.value)
 
-        new_tag = EntityTag.create_entity_tag(tag, self._entity_id, self._entity_type)
+        new_tag = EntityTag.create_entity_tag(tag, tag_model, self._entity_id, self._entity_type)
         self._tags.append(new_tag)
         return new_tag
 
     @transaction()
-    def add_tags_to_entity(self, tags: List[Tag]) -> None:
+    def add_tags_to_entity(self, tags: List[Tag], update_origin: bool = False) -> None:
+        """Add a list of tags to the list if it does not exist
 
+        :param tags: list of tags to add
+        :type tags: List[Tag]
+        :param update_origin: if True and the tag exist, the origin is added to the tag, defaults to False
+        :type update_origin: bool, optional
+        """
         for tag in tags:
 
             # add tag to entity
-            self.add_tag_if_not_exist(tag)
+            self.add_tag_if_not_exist(tag, update_origin)
 
     @transaction()
-    def delete_tag(self, tag: Tag) -> None:
-        """Delete a tag from the list
+    def delete_tag_origins(self, tags: List[Tag]) -> None:
+        """Delete a tag origin from the list
+        """
+        for tag in tags:
+            self.delete_tag_origin(tag)
+
+    @transaction()
+    def delete_tag_origin(self, tag: Tag) -> None:
+        """Delete a tag origin from the list, if there is no more origins, delete the tag
         """
         existing_tag = self.get_tag(tag)
         if existing_tag is None:
             return
 
-        existing_tag.delete()
+        current_origins = existing_tag.get_origins()
+        current_origins.remove_origins(tag.origins)
+
+        # if there is not more origins, delete the tag
+        if current_origins.is_empty():
+            # if the tag was deleted
+            self.delete_tag(tag)
+        else:
+            # if there is still origins, update the tag
+            existing_tag.set_origins(current_origins)
+            existing_tag.save()
+
+    @transaction()
+    def delete_tag(self, tag: Tag) -> None:
+        """Delete a tag from the entity tags. Check if the tag is still used by other entities
+        """
+        existing_tag = self.get_tag(tag)
+        if existing_tag is None:
+            return
+
+        existing_tag.delete_instance()
 
         # check if the tag is still used by other entities
         count = EntityTag.count_by_tag(existing_tag.get_tag_key(), existing_tag.get_str_tag_value())
@@ -98,4 +149,8 @@ class EntityTagList():
 
     @classmethod
     def find_by_entity(cls, entity_type: EntityTagType, entity_id: str) -> 'EntityTagList':
-        return EntityTagList(entity_type, entity_id, EntityTag.find_by_entity(entity_id, entity_type))
+        return EntityTagList(entity_type, entity_id, EntityTag.find_by_entity(entity_type, entity_id))
+
+    @classmethod
+    def delete_by_entity(cls, entity_type: EntityTagType, entity_id: str) -> None:
+        EntityTag.delete_by_entity(entity_id, entity_type)

@@ -2,19 +2,16 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from fastapi import Depends
 from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.tag.entity_tag import EntityTagType
-from gws_core.tag.tag import TagDict
 
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
 from ..experiment.experiment_run_service import ExperimentRunService
-from ..tag.tag_service import TagService
 from ..user.auth_service import AuthService
 from .experiment_dto import ExperimentDTO
 from .experiment_service import ExperimentService
@@ -208,14 +205,6 @@ def stop_an_experiment(id: str,
     """
 
     return ExperimentRunService.stop_experiment(id=id).to_json(deep=True)
-
-
-@core_app.put("/experiment/{id}/tags", tags=["Experiment"], summary="Update experiment tags")
-def save_tags(id: str,
-              tags: List[TagDict],
-              _=Depends(AuthService.check_user_access_token)) -> list:
-    return TagService.add_tags_dict_to_entity(EntityTagType.EXPERIMENT, id, tags).to_json()
-
 
 ################################### COPY ##############################
 

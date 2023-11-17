@@ -10,7 +10,7 @@ from typing import List, Set, Type, Union
 from gws_core.core.model.model import Model
 from gws_core.experiment.experiment import Experiment
 from gws_core.report.report import Report, ReportExperiment
-from gws_core.report.report_resource_model import ReportResourceModel
+from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.task.task_input_model import TaskInputModel
@@ -35,6 +35,39 @@ class EntityNavigator:
             self._entities = entities
         else:
             self._entities = set([entities])
+
+    def has_next_entities(self, requested_entities: List[EntityType] = None) -> bool:
+        if requested_entities is None:
+            requested_entities = [EntityType.EXPERIMENT, EntityType.RESOURCE,
+                                  EntityType.REPORT, EntityType.VIEW]
+        return len(self.get_next_entities(requested_entities)) > 0
+
+    def get_next_entities(self, requested_entities: List[EntityType]) -> Set[Model]:
+        """Return all the entities that are linked to the current entities
+
+        :param requested_entities: [description]
+        :type requested_entities: List[EntityType]
+        :return: [description]
+        :rtype: List[Model]
+        """
+        if self.is_empty():
+            return set()
+
+        next_entities = set()
+
+        if EntityType.EXPERIMENT in requested_entities:
+            next_entities.update(self.get_next_experiments().get_entities())
+
+        if EntityType.RESOURCE in requested_entities:
+            next_entities.update(self.get_next_resources().get_entities())
+
+        if EntityType.REPORT in requested_entities:
+            next_entities.update(self.get_next_reports().get_entities())
+
+        if EntityType.VIEW in requested_entities:
+            next_entities.update(self.get_next_views().get_entities())
+
+        return next_entities
 
     def get_next_entities_recursive(self, requested_entities: List[EntityType]) -> Set[Model]:
         """Return all the entities that are linked to the current entities
@@ -235,11 +268,7 @@ class EntityNavigatorResource(EntityNavigator):
     _entities: Set[ResourceModel]
 
     def get_next_reports(self) -> 'EntityNavigatorReport':
-        report_resource: List[ReportResourceModel] = list(
-            ReportResourceModel.get_by_resources(self._get_entities_ids()))
-
-        reports = {rr.report for rr in report_resource}
-        return EntityNavigatorReport(reports)
+        return self.get_next_views().get_next_reports()
 
     def get_next_views(self) -> 'EntityNavigatorView':
         views = set(ViewConfig.get_by_resources(self._get_entities_ids()))
@@ -297,8 +326,12 @@ class EntityNavigatorView(EntityNavigator):
     _entities: Set[ViewConfig]
 
     def get_next_reports(self) -> 'EntityNavigatorReport':
-        # TODO to fix, find a way to get reports that use this view
-        return EntityNavigatorReport(set())
+
+        report_views: List[ReportViewModel] = list(ReportViewModel.get_by_views(self._get_entities_ids()))
+
+        reports = set([report_view.report for report_view in report_views])
+
+        return EntityNavigatorReport(reports)
 
     def get_previous_resources(self) -> 'EntityNavigatorResource':
         resource_ids: List[str] = [view.resource_model.id for view in self._entities if view.resource_model is not None]
@@ -319,15 +352,12 @@ class EntityNavigatorReport(EntityNavigator):
     _entities: Set[Report]
 
     def get_previous_views(self) -> 'EntityNavigatorView':
-        # TODO to fix, find a way to get views that use this report
-        return EntityNavigatorView(set())
+        report_views: List[ReportViewModel] = list(ReportViewModel.get_by_reports(self._get_entities_ids()))
+
+        return EntityNavigatorView({report_view.view for report_view in report_views})
 
     def get_previous_resources(self) -> 'EntityNavigatorResource':
-        report_resources: List[ReportResourceModel] = list(ReportResourceModel.get_by_reports(self._get_entities_ids()))
-
-        resources = {rr.resource for rr in report_resources}
-
-        return EntityNavigatorResource(resources)
+        return self.get_previous_views().get_previous_resources()
 
     def get_previous_experiments(self) -> 'EntityNavigatorExperiment':
         return self.get_previous_resources().get_previous_experiments()
