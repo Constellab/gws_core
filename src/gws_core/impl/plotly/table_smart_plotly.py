@@ -52,7 +52,6 @@ The code purpose is to generate a plotly express figure from a DataFrame.
 The dataframe has {table.nb_rows} rows and {table.nb_columns} columns.
 {self.VAR_OUTPUTS}
 Only build the figure object, do not display the figure using 'show' method.
-The variable named 'output_path' contains the absolute path of the output png file destination. Don't use the show method.
 {self.VAR_CODE_RULES}"""
 
     def build_code_inputs(self, params: ConfigParams, task_inputs: TaskInputs) -> dict:
