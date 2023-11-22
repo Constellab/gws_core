@@ -5,7 +5,7 @@
 
 from peewee import Expression
 
-from gws_core.tag.entity_tag import EntityTagType
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_with_tag_search_builder import \
     EntityWithTagSearchBuilder
 
@@ -21,7 +21,7 @@ class ResourceModelSearchBuilder(EntityWithTagSearchBuilder):
     """
 
     def __init__(self) -> None:
-        super().__init__(ResourceModel, EntityTagType.RESOURCE,
+        super().__init__(ResourceModel, EntityType.RESOURCE,
                          default_orders=[ResourceModel.created_at.desc()])
 
     def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:

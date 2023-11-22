@@ -8,12 +8,13 @@ from typing import List
 
 from fastapi.param_functions import Depends
 
-from gws_core.tag.entity_tag import EntityTagType
+from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.tag.tag_dto import NewTagDTO
 
 from ..core.classes.jsonable import ListJsonable
 from ..core_app import core_app
 from ..user.auth_service import AuthService
-from .tag_service import NewTagDTO, TagService
+from .tag_service import TagService
 
 
 @core_app.get("/tag/{key}", tags=["Tag"], summary='Search tag by key')
@@ -72,26 +73,50 @@ def delete_registered_tag(key: str,
 
 
 @core_app.get("/tag/entity/{entity_type}/{entity_id}", tags=["Tag"], summary='Get tags of an entity')
-def get_tags_of_entity(entity_type: EntityTagType,
+def get_tags_of_entity(entity_type: EntityType,
                        entity_id: str,
                        _=Depends(AuthService.check_user_access_token)):
     return TagService.find_by_entity_id(entity_type, entity_id).to_json()
 
 
-@core_app.post("/tag/entity/{entity_type}/{entity_id}", tags=["Tag"], summary="Save entity tags")
-def add_tag(entity_type: EntityTagType,
+@core_app.post(
+    "/tag/entity/{entity_type}/{entity_id}/{propagate}", tags=["Tag"],
+    summary="Save entity tags")
+def add_tag(entity_type: EntityType,
             entity_id: str,
-            tag: NewTagDTO,
+            propagate: bool,
+            tags: List[NewTagDTO],
             _=Depends(AuthService.check_user_access_token)) -> list:
-    return TagService.add_tag_dict_to_entity(entity_type, entity_id, tag).to_json()
+    return TagService.add_tag_dict_to_entity(entity_type, entity_id, tags, propagate)
 
 
 @core_app.delete(
     "/tag/entity/{entity_type}/{entity_id}/{tag_key}/{tag_value}", tags=["Tag"],
     summary="Delete entity tag")
-def delete_tag(entity_type: EntityTagType,
+def delete_tag(entity_type: EntityType,
                entity_id: str,
                tag_key: str,
                tag_value: str,
                _=Depends(AuthService.check_user_access_token)) -> None:
     TagService.delete_tag_from_entity(entity_type, entity_id, tag_key, tag_value)
+
+
+################################### CHECK PROPAGATION ####################################
+@core_app.post(
+    "/tag/check-propagation-add/{entity_type}/{entity_id}", tags=["Tag"],
+    summary="Check tag propagation impact for tags addition")
+def check_propagation_add_tags(entity_type: EntityType,
+                               entity_id: str,
+                               tags: List[NewTagDTO],
+                               _=Depends(AuthService.check_user_access_token)) -> dict:
+    return TagService.check_propagation_add_tags(entity_type, entity_id, tags).to_json()
+
+
+@core_app.post(
+    "/tag/check-propagation-delete/{entity_type}/{entity_id}", tags=["Tag"],
+    summary="Check tag propagation impact for tag deletion")
+def check_propagation_delete_tag(entity_type: EntityType,
+                                 entity_id: str,
+                                 tag: NewTagDTO,
+                                 _=Depends(AuthService.check_user_access_token)) -> dict:
+    return TagService.check_propagation_delete_tag(entity_type, entity_id, tag).to_json()

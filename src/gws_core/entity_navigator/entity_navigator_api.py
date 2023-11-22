@@ -8,8 +8,8 @@ from fastapi import Depends
 
 from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core_app import core_app
-from gws_core.entity_navigator.entity_navigator import (EntityNavigator,
-                                                        EntityType)
+from gws_core.entity_navigator.entity_navigator import EntityNavigator
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.user.auth_service import AuthService
 
 

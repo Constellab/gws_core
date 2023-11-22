@@ -11,8 +11,8 @@ from peewee import ForeignKeyField, ModelSelect
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.exception.exception_helper import ExceptionHelper
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
-from gws_core.tag.entity_tag import EntityTagType
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOriginType
 from gws_core.tag.tag_list import TagList
@@ -396,7 +396,7 @@ class TaskModel(ProcessModel):
             tags: List[Tag] = []
 
             for input_resource in self.inputs.get_resource_models().values():
-                entity_tags = EntityTagList.find_by_entity(EntityTagType.RESOURCE, input_resource.id)
+                entity_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, input_resource.id)
                 tags += entity_tags.build_tags_propagated(TagOriginType.TASK_PROPAGATED, self.id)
 
             self._input_resource_tags = tags
@@ -406,7 +406,7 @@ class TaskModel(ProcessModel):
     def _get_experiment_tags(self) -> List[Tag]:
         """Return all the tags of the experiment
         """
-        entity_tags = EntityTagList.find_by_entity(EntityTagType.EXPERIMENT, self.experiment.id)
+        entity_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, self.experiment.id)
         return entity_tags.build_tags_propagated(TagOriginType.EXPERIMENT_PROPAGATED, self.experiment.id)
 
     def mark_as_started(self):

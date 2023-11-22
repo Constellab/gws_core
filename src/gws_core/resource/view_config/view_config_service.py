@@ -12,10 +12,10 @@ from peewee import ModelSelect
 from gws_core.config.config import Config
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_types import exluded_views_in_historic
-from gws_core.tag.entity_tag import EntityTagType
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOriginType
 from gws_core.user.current_user_service import CurrentUserService
@@ -74,10 +74,10 @@ class ViewConfigService():
                 view_config_db = view_config_db.save()
 
             # Copy the resource tags to the view config
-            resource_tags = EntityTagList.find_by_entity(EntityTagType.RESOURCE, resource_model.id)
+            resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource_model.id)
             tag_propagated = resource_tags.build_tags_propagated(TagOriginType.RESOURCE_PROPAGATED, resource_model.id)
-            view_config_tags = EntityTagList.find_by_entity(EntityTagType.VIEW, view_config_db.id)
-            view_config_tags.add_tags_to_entity(tag_propagated)
+            view_config_tags = EntityTagList.find_by_entity(EntityType.VIEW, view_config_db.id)
+            view_config_tags.add_tags(tag_propagated)
 
             # limit the length without blocking the thread
             thread = Thread(target=cls._limit_length_history)

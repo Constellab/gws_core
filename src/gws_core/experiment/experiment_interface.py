@@ -8,7 +8,7 @@ from multiprocessing import Process
 from time import sleep
 from typing import List, Type
 
-from gws_core.tag.entity_tag import EntityTagType
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_service import TagService
 
@@ -119,11 +119,11 @@ class IExperiment:
         return self._experiment.is_success
 
     def add_tag(self, tag: Tag) -> None:
-        TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, self._experiment.id,
+        TagService.add_tag_to_entity(EntityType.EXPERIMENT, self._experiment.id,
                                      tag)
 
     def add_tags(self, tags: List[Tag]) -> None:
-        TagService.add_tags_to_entity(EntityTagType.EXPERIMENT, self._experiment.id,
+        TagService.add_tags_to_entity(EntityType.EXPERIMENT, self._experiment.id,
                                       tags)
 
     def refresh(self) -> None:

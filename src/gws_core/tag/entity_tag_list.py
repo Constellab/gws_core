@@ -5,7 +5,8 @@
 from typing import List, Optional
 
 from gws_core.core.decorator.transaction import transaction
-from gws_core.tag.entity_tag import EntityTag, EntityTagType
+from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag, TagDict, TagOriginType
 from gws_core.tag.tag_model import TagModel
 
@@ -15,11 +16,11 @@ class EntityTagList():
     """
 
     _entity_id: str
-    _entity_type: EntityTagType
+    _entity_type: EntityType
 
     _tags: List[EntityTag]
 
-    def __init__(self, entity_type: EntityTagType, entity_id: str, tags: List[EntityTag] = None) -> None:
+    def __init__(self, entity_type: EntityType, entity_id: str, tags: List[EntityTag] = None) -> None:
         self._entity_type = entity_type
         self._entity_id = entity_id
 
@@ -58,19 +59,17 @@ class EntityTagList():
         return len(self._tags) == 0
 
     @transaction()
-    def add_tag_if_not_exist(self, tag: Tag, update_origin: bool = False) -> EntityTag:
+    def add_tag(self, tag: Tag) -> EntityTag:
         """Add a tag to the list if it does not exist
 
         :param tag: tag to add
         :type tag: Tag
-        :param update_origin: if True and the tag exist, the origin is added to the tag, defaults to False
-        :type update_origin: bool, optional
         :return: _description_
         :rtype: EntityTag
         """
         existing_tag = self.get_tag(tag)
         if existing_tag is not None:
-            if update_origin:
+            if self.support_multiple_origins():
                 return existing_tag.merge_tag(tag)
             else:
                 return existing_tag
@@ -83,29 +82,39 @@ class EntityTagList():
         return new_tag
 
     @transaction()
-    def add_tags_to_entity(self, tags: List[Tag], update_origin: bool = False) -> None:
+    def add_tags(self, tags: List[Tag]) -> None:
         """Add a list of tags to the list if it does not exist
 
         :param tags: list of tags to add
         :type tags: List[Tag]
-        :param update_origin: if True and the tag exist, the origin is added to the tag, defaults to False
-        :type update_origin: bool, optional
         """
         for tag in tags:
 
             # add tag to entity
-            self.add_tag_if_not_exist(tag, update_origin)
+            self.add_tag(tag)
 
     @transaction()
-    def delete_tag_origins(self, tags: List[Tag]) -> None:
-        """Delete a tag origin from the list
+    def delete_tags(self, tags: List[Tag]) -> None:
+        """Delete a tag from the entity tags. Check if the tag is still used by other entities
         """
         for tag in tags:
-            self.delete_tag_origin(tag)
+            self.delete_tag(tag)
 
     @transaction()
-    def delete_tag_origin(self, tag: Tag) -> None:
-        """Delete a tag origin from the list, if there is no more origins, delete the tag
+    def delete_tag(self, tag: Tag) -> None:
+        """Delete a tag from the entity tags.
+        If the entity support multiple origins, and the tag origin is defined, delete only the origin
+        """
+
+        # if the entity support multiple origins, delete only the origin
+        if self.support_multiple_origins() and tag.origin_is_defined():
+            self._delete_tag_origin(tag)
+        else:
+            self._delete_tag(tag)
+
+    @transaction()
+    def _delete_tag_origin(self, tag: Tag) -> None:
+        """Delete a tag ovgfrigin from the list, if there is no more origins, delete the tag
         """
         existing_tag = self.get_tag(tag)
         if existing_tag is None:
@@ -117,14 +126,14 @@ class EntityTagList():
         # if there is not more origins, delete the tag
         if current_origins.is_empty():
             # if the tag was deleted
-            self.delete_tag(tag)
+            self._delete_tag(tag)
         else:
             # if there is still origins, update the tag
             existing_tag.set_origins(current_origins)
             existing_tag.save()
 
     @transaction()
-    def delete_tag(self, tag: Tag) -> None:
+    def _delete_tag(self, tag: Tag) -> None:
         """Delete a tag from the entity tags. Check if the tag is still used by other entities
         """
         existing_tag = self.get_tag(tag)
@@ -145,12 +154,17 @@ class EntityTagList():
     def to_json(self) -> List[TagDict]:
         return [tag.to_simple_tag().to_json() for tag in self._tags]
 
+    def support_multiple_origins(self) -> bool:
+        """Return true if the entity support multiple origins for a tag
+        """
+        return self._entity_type in [EntityType.REPORT]
+
     #################################### CLASS METHODS ####################################
 
     @classmethod
-    def find_by_entity(cls, entity_type: EntityTagType, entity_id: str) -> 'EntityTagList':
+    def find_by_entity(cls, entity_type: EntityType, entity_id: str) -> 'EntityTagList':
         return EntityTagList(entity_type, entity_id, EntityTag.find_by_entity(entity_type, entity_id))
 
     @classmethod
-    def delete_by_entity(cls, entity_type: EntityTagType, entity_id: str) -> None:
+    def delete_by_entity(cls, entity_type: EntityType, entity_id: str) -> None:
         EntityTag.delete_by_entity(entity_id, entity_type)

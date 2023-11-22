@@ -12,6 +12,9 @@ from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
                     ForeignKeyField, ModelDelete, ModelSelect)
 
 from gws_core.core.utils.utils import Utils
+from gws_core.entity_navigator.entity_navigator_type import (EntityNav,
+                                                             EntityType,
+                                                             NavigableEntity)
 from gws_core.experiment.experiment_exception import \
     ResourceUsedInAnotherExperimentException
 from gws_core.impl.file.file_helper import FileHelper
@@ -20,7 +23,6 @@ from gws_core.project.model_with_project import ModelWithProject
 from gws_core.project.project import Project
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
-from gws_core.tag.entity_tag import EntityTagType
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_list import TagList
 
@@ -69,7 +71,7 @@ class ResourceOrigin(Enum):
     S3_PROJECT_STORAGE = "S3_PROJECT_STORAGE"
 
 
-class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject):
+class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity):
 
     """
     ResourceModel class.
@@ -128,7 +130,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject):
             self.fs_node_model.delete_instance(delete_file=False)
 
         self._delete_object()
-        EntityTagList.delete_by_entity(EntityTagType.RESOURCE, self.id)
+        EntityTagList.delete_by_entity(EntityType.RESOURCE, self.id)
 
         return result
 
@@ -431,9 +433,9 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject):
 
         if resource.tags and isinstance(resource.tags, TagList):
             # Add tags
-            entity_tags: EntityTagList = EntityTagList(EntityTagType.RESOURCE, resource_model.id)
+            entity_tags: EntityTagList = EntityTagList(EntityType.RESOURCE, resource_model.id)
 
-            entity_tags.add_tags_to_entity(resource.tags.get_tags())
+            entity_tags.add_tags(resource.tags.get_tags())
         return resource_model
 
     def set_resource_typing_name(self, typing_name: str) -> None:
@@ -602,3 +604,9 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject):
 
     def is_manually_generated(self) -> bool:
         return self.origin == ResourceOrigin.UPLOADED
+
+    def get_entity_name(self) -> str:
+        return self.name
+
+    def get_entity_type(self) -> EntityType:
+        return EntityType.RESOURCE

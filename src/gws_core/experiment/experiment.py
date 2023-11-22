@@ -13,10 +13,12 @@ from peewee import (BooleanField, CharField, DoubleField, ForeignKeyField,
 
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.entity_navigator.entity_navigator_type import (EntityNav,
+                                                             EntityType,
+                                                             NavigableEntity)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.project.model_with_project import ModelWithProject
-from gws_core.tag.entity_tag import EntityTagType
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.user.current_user_service import CurrentUserService
 
@@ -39,7 +41,7 @@ if TYPE_CHECKING:
 
 
 @final
-class Experiment(ModelWithUser, TaggableModel, ModelWithProject):
+class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity):
     """
     Experiment class.
 
@@ -143,6 +145,12 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject):
         return list(TaskModel.select().where(
             (TaskModel.experiment == self) &
             (TaskModel.status.in_([ProcessStatus.RUNNING, ProcessStatus.WAITING_FOR_CLI_PROCESS]))))
+
+    def get_entity_name(self) -> str:
+        return self.title
+
+    def get_entity_type(self) -> EntityType:
+        return EntityType.EXPERIMENT
 
     ########################################## MODEL METHODS ######################################
 
@@ -260,7 +268,7 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject):
             self.protocol_model.delete_instance()
 
         super().delete_instance(*args, **kwargs)
-        EntityTagList.delete_by_entity(EntityTagType.EXPERIMENT, self.id)
+        EntityTagList.delete_by_entity(EntityType.EXPERIMENT, self.id)
 
     @classmethod
     def after_table_creation(cls) -> None:

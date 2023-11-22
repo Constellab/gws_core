@@ -7,18 +7,18 @@ from gws_core import BaseTestCase, Tag, TagHelper
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.robot.robot_resource import Robot, RobotFood
-from gws_core.impl.robot.robot_tasks import RobotEat
+from gws_core.impl.robot.robot_tasks import RobotCreate, RobotEat, RobotMove
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.report.report_dto import ReportDTO
 from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_service import ResourceService
-from gws_core.tag.entity_tag import EntityTagType
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOrigins, TagOriginType
 from gws_core.tag.tag_model import EntityTagValueFormat, TagModel
@@ -82,13 +82,13 @@ class TestTag(BaseTestCase):
         expected_tag = Tag('test', 'value')
 
         # Add the tag to the model and check that is was added in DB
-        tag = TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, experiment.id, expected_tag)
-        self.assertEqual(tag.entity_type, EntityTagType.EXPERIMENT)
+        tag = TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, expected_tag)
+        self.assertEqual(tag.entity_type, EntityType.EXPERIMENT)
         self.assertEqual(tag.entity_id, experiment.id)
         self.assertEqual(tag.tag_key_id, 'test')
         self.assertEqual(tag.tag_value, 'value')
 
-        entity_tags = TagService.find_by_entity_id(EntityTagType.EXPERIMENT, experiment.id)
+        entity_tags = TagService.find_by_entity_id(EntityType.EXPERIMENT, experiment.id)
         self.assertTrue(len(entity_tags.get_tags()), 0)
         self.assertTrue(entity_tags.has_tag(expected_tag))
 
@@ -105,14 +105,14 @@ class TestTag(BaseTestCase):
         self.assertEqual(tag_model.values, ['value', 'value2'])
 
         # add int tag
-        tag = TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, experiment.id, Tag('test_int', 1))
+        tag = TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('test_int', 1))
         self.assertEqual(tag.get_tag_value(), 1)
         tag_model = TagModel.find_by_key('test_int')
         self.assertEqual(tag_model.values, [1])
         self.assertEqual(tag_model.value_format, EntityTagValueFormat.INTEGER)
 
         # add float tag
-        tag = TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, experiment.id, Tag('test_float', 1.1))
+        tag = TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('test_float', 1.1))
         self.assertEqual(tag.get_tag_value(), 1.1)
         tag_model = TagModel.find_by_key('test_float')
         self.assertEqual(tag_model.values, [1.1])
@@ -120,7 +120,7 @@ class TestTag(BaseTestCase):
 
         # add datetime tag
         now = DateHelper.now_utc()
-        tag = TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, experiment.id, Tag('test_datetime', now))
+        tag = TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('test_datetime', now))
         self.assertEqual(tag.get_tag_value(), now)
         tag_model = TagModel.find_by_key('test_datetime')
         self.assertEqual(tag_model.values, [now])
@@ -138,7 +138,7 @@ class TestTag(BaseTestCase):
         TagService.register_tag(other_tag.key, other_tag.value)
 
         experiment: Experiment = ExperimentService.create_experiment()
-        TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, experiment.id, tag)
+        TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, tag)
 
         # test update the tag
         new_tag = Tag('newtag', 'newvalue')
@@ -149,7 +149,7 @@ class TestTag(BaseTestCase):
         self.assertFalse(tag_model.has_value(tag.value))
         self.assertTrue(tag_model.has_value(new_tag.value))
 
-        experiment_tags = TagService.find_by_entity_id(EntityTagType.EXPERIMENT, experiment.id)
+        experiment_tags = TagService.find_by_entity_id(EntityType.EXPERIMENT, experiment.id)
         self.assertFalse(experiment_tags.has_tag(tag))
         self.assertTrue(experiment_tags.has_tag(new_tag))
 
@@ -160,7 +160,7 @@ class TestTag(BaseTestCase):
         tag_model = TagModel.find_by_key(new_tag.key)
         self.assertFalse(tag_model.has_value(new_tag.value))
 
-        experiment_tags = TagService.find_by_entity_id(EntityTagType.EXPERIMENT, experiment.id)
+        experiment_tags = TagService.find_by_entity_id(EntityType.EXPERIMENT, experiment.id)
         self.assertFalse(experiment_tags.has_tag(new_tag))
 
         # Remove the last value of the TagModel and check that it was deleted (because it is the last value)
@@ -174,12 +174,12 @@ class TestTag(BaseTestCase):
 
         # experiment 1 tagged with the 2 tags
         experiment: Experiment = ExperimentService.create_experiment()
-        TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, experiment.id, tag)
-        TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, experiment.id, other_tag)
+        TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, tag)
+        TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, other_tag)
 
         # experiment 2 tagged only with the first tag
         experiment_2: Experiment = ExperimentService.create_experiment()
-        TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, experiment_2.id, tag)
+        TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment_2.id, tag)
 
         search_dict: SearchParams = SearchParams()
 
@@ -205,7 +205,7 @@ class TestTag(BaseTestCase):
         self.assertEqual(paginator.results[0].id, experiment.id)
 
         # test search with int value
-        TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, experiment.id, Tag('int_tag', 1))
+        TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('int_tag', 1))
         search_dict.filtersCriteria = [
             {"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json([Tag('int_tag', 1)])}]
         paginator = ExperimentService.search(search_dict)
@@ -213,7 +213,7 @@ class TestTag(BaseTestCase):
         self.assertEqual(paginator.results[0].id, experiment.id)
 
         # test search with float value
-        # TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, experiment.id, Tag('float_tag', 1.1))
+        # TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('float_tag', 1.1))
         # search_dict.filtersCriteria = [
         #     {"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json([Tag('float_tag', 1.1)])}]
         # paginator = ExperimentService.search(search_dict)
@@ -222,7 +222,7 @@ class TestTag(BaseTestCase):
 
         # test search with datetime value
         now = DateHelper.now_utc()
-        TagService.add_tag_to_entity(EntityTagType.EXPERIMENT, experiment.id, Tag('datetime_tag', now))
+        TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('datetime_tag', now))
         search_dict.filtersCriteria = [{"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json(
             [Tag('datetime_tag', DateHelper.to_iso_str(now))])}]
         paginator = ExperimentService.search(search_dict)
@@ -342,7 +342,7 @@ class TestTag(BaseTestCase):
         view_result = ResourceService.get_and_call_view_on_resource_model(resource_model.id, 'view_as_json', {}, True)
 
         # Check that the tags are propagated
-        view_tags = EntityTagList.find_by_entity(EntityTagType.VIEW, view_result.view_config.id)
+        view_tags = EntityTagList.find_by_entity(EntityType.VIEW, view_result.view_config.id)
         self.assertEqual(len(view_tags.get_tags()), 1)
         self.assertTrue(view_tags.has_tag(propagable_tag))
         tag = view_tags.get_tag(propagable_tag).to_simple_tag()
@@ -356,7 +356,7 @@ class TestTag(BaseTestCase):
         ReportService.add_view_to_content(report.id, view_result.view_config.id)
 
         # Check that the tags are propagated
-        report_tags = EntityTagList.find_by_entity(EntityTagType.REPORT, report.id)
+        report_tags = EntityTagList.find_by_entity(EntityType.REPORT, report.id)
         self.assertEqual(len(report_tags.get_tags()), 1)
         self.assertTrue(report_tags.has_tag(propagable_tag))
         tag = report_tags.get_tag(propagable_tag).to_simple_tag()
@@ -370,7 +370,7 @@ class TestTag(BaseTestCase):
         # if we remove the view from the report, the tag should be kept with 1 origin
         ReportService.update_content(report.id, {"ops": []})
 
-        report_tags = EntityTagList.find_by_entity(EntityTagType.REPORT, report.id)
+        report_tags = EntityTagList.find_by_entity(EntityType.REPORT, report.id)
         self.assertEqual(len(report_tags.get_tags()), 1)
         tag = report_tags.get_tag(propagable_tag).to_simple_tag()
         self.assertEqual(tag.origins.count_origins(), 1)
@@ -378,5 +378,97 @@ class TestTag(BaseTestCase):
 
         # Unassociate the experiment from the report, it should delete the tag
         ReportService.remove_experiment(report.id, experiment_id)
-        report_tags = EntityTagList.find_by_entity(EntityTagType.REPORT, report.id)
+        report_tags = EntityTagList.find_by_entity(EntityType.REPORT, report.id)
         self.assertEqual(len(report_tags.get_tags()), 0)
+
+    def test_tag_propagation_after(self):
+        i_experiment: IExperiment = IExperiment()
+        i_protocol: IProtocol = i_experiment.get_protocol()
+
+        create_robot = i_protocol.add_process(RobotCreate, 'create')
+        i_experiment.run()
+        exp_1_output = create_robot.refresh().get_output_resource_model('robot')
+        exp_1 = i_experiment.get_experiment_model()
+
+        i_experiment_2: IExperiment = IExperiment()
+        i_protocol_2: IProtocol = i_experiment_2.get_protocol()
+        move_robot = i_protocol_2.add_process(RobotMove, 'move')
+        i_protocol_2.add_source('source', exp_1_output.id, move_robot << 'robot')
+        i_experiment_2.run()
+        exp_2_output = move_robot.refresh().get_output_resource_model('robot')
+        exp_2 = i_experiment_2.get_experiment_model()
+
+        # generate a view from this resource
+        view_result = ResourceService.get_and_call_view_on_resource_model(exp_2_output.id, 'view_as_json', {}, True)
+        exp_2_output_view = view_result.view_config
+
+        # generate a report and add the view
+        exp_2_report = ReportService.create(ReportDTO(title='test_report'))
+        ReportService.add_view_to_content(exp_2_report.id, exp_2_output_view.id)
+
+        # Now add a tag to the first experiment and check that it is propagated
+        new_tag = Tag('manual_tag', 'new_value', is_propagable=True, origins=TagOrigins(TagOriginType.USER, 'user_id'))
+        TagService.add_tags_to_entity_and_propagate(EntityType.EXPERIMENT, exp_1.id, [new_tag])
+
+        self._check_propagation_exp_1(exp_1.id, exp_1_output.id, exp_2_output.id, exp_2.id, exp_2_report.id,
+                                      exp_2_output_view.id, 1, new_tag, True)
+
+        # add a tag to exp2
+        new_tag_2 = Tag('manual_tag_2', 'new_value', is_propagable=True,
+                        origins=TagOrigins(TagOriginType.USER, 'user_id'))
+        TagService.add_tags_to_entity_and_propagate(EntityType.EXPERIMENT, exp_2.id, [new_tag_2])
+
+        # check that exp1 does not have the tag
+        exp_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, exp_1)
+        self.assertEqual(exp_tags.has_tag(new_tag_2), False)
+
+        # check that the report has the tag with 2 origins (view and exp2)
+        report_tags = EntityTagList.find_by_entity(EntityType.REPORT, exp_2_report.id)
+        self.assertEqual(report_tags.has_tag(new_tag_2), True)
+        tag = report_tags.get_tag(new_tag_2).to_simple_tag()
+        self.assertEqual(tag.origins.count_origins(), 2)
+
+        # Delete propagated tag 1
+        TagService.delete_tag_from_entity(EntityType.EXPERIMENT, exp_1.id, new_tag.key, new_tag.value)
+
+        self._check_propagation_exp_1(exp_1.id, exp_1_output.id, exp_2_output.id, exp_2.id, exp_2_report.id,
+                                      exp_2_output_view.id, 0, new_tag, False)
+
+        # Delete propagated tag 2
+        TagService.delete_tag_from_entity(EntityType.EXPERIMENT, exp_2.id, new_tag_2.key, new_tag_2.value)
+
+        # check that the report does not have the tag
+        report_tags = EntityTagList.find_by_entity(EntityType.REPORT, exp_2_report.id)
+        self.assertEqual(report_tags.has_tag(new_tag_2), False)
+
+    def _check_propagation_exp_1(self, exp_1: str, exp_1_output: str, exp_2_output: str,
+                                 exp_2: str, exp_2_report: str, exp_2_output_view: str,
+                                 report_origin_count: int,
+                                 tag: Tag, should_exist: bool):
+        # Check that the tags are propagated
+        exp_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, exp_1)
+        self.assertEqual(exp_tags.has_tag(tag), should_exist)
+
+        # check that resource 1 has the tag
+        resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, exp_1_output)
+        self.assertEqual(resource_tags.has_tag(tag), should_exist)
+
+        # check that resource 2 has the tag
+        resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, exp_2_output)
+        self.assertEqual(resource_tags.has_tag(tag), should_exist)
+
+        # check that exp2 does not have the tag
+        exp_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, exp_2)
+        self.assertEqual(exp_tags.has_tag(tag), False)
+
+        # check that view has the tag
+        view_tags = EntityTagList.find_by_entity(EntityType.VIEW, exp_2_output_view)
+        self.assertEqual(view_tags.has_tag(tag), should_exist)
+
+        # check that report has the tag with 1 origins (view)
+        report_tags = EntityTagList.find_by_entity(EntityType.REPORT, exp_2_report)
+        self.assertEqual(report_tags.has_tag(tag), should_exist)
+
+        if should_exist:
+            tag = report_tags.get_tag(tag).to_simple_tag()
+            self.assertEqual(tag.origins.count_origins(), report_origin_count)

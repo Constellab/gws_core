@@ -9,8 +9,8 @@ from typing import List
 from peewee import Expression
 
 from gws_core.core.classes.search_builder import SearchFilterCriteria
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
-from gws_core.tag.entity_tag import EntityTagType
 from gws_core.tag.entity_with_tag_search_builder import \
     EntityWithTagSearchBuilder
 
@@ -25,7 +25,7 @@ class ViewConfigSearchBuilder(EntityWithTagSearchBuilder):
     """
 
     def __init__(self) -> None:
-        super().__init__(ViewConfig, EntityTagType.VIEW,
+        super().__init__(ViewConfig, EntityType.VIEW,
                          default_orders=[ViewConfig.last_modified_at.desc()])
 
     def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:

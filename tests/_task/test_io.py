@@ -95,7 +95,7 @@ class Fly(Task):
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        return
+        return {}
 
 
 @task_decorator("OptionalTask")
@@ -107,7 +107,7 @@ class OptionalTask(Task):
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        return
+        return {}
 
 # Use to check that 2 optional task can"t plug if types are not correct (even if both have None)
 

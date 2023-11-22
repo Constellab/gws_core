@@ -14,16 +14,9 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model import Model
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.tag import Tag, TagOrigins, TagOriginType, TagValueType
 from gws_core.tag.tag_model import TagModel
-
-
-class EntityTagType(Enum):
-    EXPERIMENT = 'EXPERIMENT'
-    RESOURCE = 'RESOURCE'
-    REPORT = 'REPORT'
-    VIEW = 'VIEW'
-    PROTOCOL_TEMPLATE = 'PROTOCOL_TEMPLATE'
 
 
 class EntityTag(Model):
@@ -40,8 +33,8 @@ class EntityTag(Model):
     # to override in child classes
     entity_id: str = CharField(null=False, max_length=36, index=True)
 
-    entity_type: EntityTagType = EnumField(choices=EntityTagType,
-                                           null=False, index=True)
+    entity_type: EntityType = EnumField(choices=EntityType,
+                                        null=False, index=True)
 
     origins = JSONField(null=False)
 
@@ -107,7 +100,7 @@ class EntityTag(Model):
 
     @classmethod
     def create_entity_tag(cls, tag: Tag, tag_model: TagModel, entity_id: str,
-                          entity_type: EntityTagType) -> 'EntityTag':
+                          entity_type: EntityType) -> 'EntityTag':
         if not tag.origin_is_defined():
             raise ValueError('The tag origin must be defined to save it')
 
@@ -134,7 +127,7 @@ class EntityTag(Model):
         cls.delete().where(cls.tag_key == tag_key).execute()
 
     @classmethod
-    def delete_by_entity(cls, entity_id: str, entity_type: EntityTagType) -> None:
+    def delete_by_entity(cls, entity_id: str, entity_type: EntityType) -> None:
         cls.delete().where((cls.entity_id == entity_id) & (cls.entity_type == entity_type.value)).execute()
 
     ###################################### SELECT ######################################
@@ -153,7 +146,7 @@ class EntityTag(Model):
         return query_builder.build()
 
     @classmethod
-    def find_by_tag_and_entity(cls, tag: Tag, entity_type: EntityTagType, entity_id: str) -> 'EntityTag':
+    def find_by_tag_and_entity(cls, tag: Tag, entity_type: EntityType, entity_id: str) -> 'EntityTag':
         return cls.select().where(
             (cls.tag_key == tag.key) &
             (cls.tag_value == tag.value) &
@@ -162,7 +155,7 @@ class EntityTag(Model):
         ).first()
 
     @classmethod
-    def find_by_tag_key_and_entity(cls, tag_key: str, entity_type: EntityTagType, entity_id: str) -> ModelSelect:
+    def find_by_tag_key_and_entity(cls, tag_key: str, entity_type: EntityType, entity_id: str) -> ModelSelect:
         return cls.select().where(
             (cls.tag_key == tag_key) &
             (cls.entity_type == entity_type.value) &
@@ -170,7 +163,7 @@ class EntityTag(Model):
         )
 
     @classmethod
-    def find_by_entity(cls, entity_type: EntityTagType, entity_id: str) -> List['EntityTag']:
+    def find_by_entity(cls, entity_type: EntityType, entity_id: str) -> List['EntityTag']:
         return list(cls.select().where(
             (cls.entity_type == entity_type.value) &
             (cls.entity_id == entity_id)
@@ -184,7 +177,7 @@ class EntityTag(Model):
         ).count()
 
     @classmethod
-    def find_by_entities(cls, entity_type: EntityTagType, entity_ids: List[str], ) -> List['EntityTag']:
+    def find_by_entities(cls, entity_type: EntityType, entity_ids: List[str], ) -> List['EntityTag']:
         return list(cls.select().where(
             (cls.entity_type == entity_type.value) &
             (cls.entity_id.in_(entity_ids))

@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Union
 
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
@@ -46,8 +46,7 @@ class TagOriginDict(TypedDict):
 class TagDict(TypedDict):
     key: str
     value: str
-    # TODO remove NotRequired when routes on entities are removed
-    is_propagable: NotRequired[bool]
+    is_propagable: bool
     origins: List[TagOriginDict]
 
 
@@ -169,9 +168,11 @@ class TagOrigins():
     @classmethod
     def from_json(cls, json: List[TagOriginDict]) -> 'TagOrigins':
         tag_origins = TagOrigins()
-        for origin in json:
-            origin_obj = TagOrigin.from_json(origin)
-            tag_origins.add_origin(origin_obj.origin_type, origin_obj.origin_id)
+
+        if json:
+            for origin in json:
+                origin_obj = TagOrigin.from_json(origin)
+                tag_origins.add_origin(origin_obj.origin_type, origin_obj.origin_id)
         return tag_origins
 
 

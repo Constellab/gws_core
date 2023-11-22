@@ -2,7 +2,7 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
@@ -15,8 +15,10 @@ from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
+from gws_core.entity_navigator.entity_navigator_type import (EntityNav,
+                                                             EntityType,
+                                                             NavigableEntity)
 from gws_core.resource.view.view_types import ViewType
-from gws_core.tag.entity_tag import EntityTagType
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.taggable_model import TaggableModel
 
@@ -24,7 +26,7 @@ from ...experiment.experiment import Experiment
 from ..resource_model import ResourceModel
 
 
-class ViewConfig(ModelWithUser, TaggableModel):
+class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
 
     title = CharField()
     view_type = EnumField(choices=ViewType)
@@ -59,16 +61,23 @@ class ViewConfig(ModelWithUser, TaggableModel):
     def get_config_values(self) -> ConfigParamsDict:
         return self.config.get_values()
 
+    def get_entity_name(self) -> str:
+        return self.title
+
+    def get_entity_type(self) -> EntityType:
+        return EntityType.VIEW
+
     @transaction()
     def save(self, *args, **kwargs) -> Model:
         self.config.save()
         return super().save(*args, **kwargs)
 
-    def delete_instance(self, *args, **kwargs) -> int:
+    def delete_instance(self, *args, **kwargs) -> Any:
         if self.config is not None:
             self.config.delete_instance()
-        super().delete_instance(*args, **kwargs)
-        EntityTagList.delete_by_entity(EntityTagType.VIEW, self.id)
+        result = super().delete_instance(*args, **kwargs)
+        EntityTagList.delete_by_entity(EntityType.VIEW, self.id)
+        return result
 
     @classmethod
     def get_same_view_config(cls, view_config: 'ViewConfig') -> Optional['ViewConfig']:

@@ -13,6 +13,9 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.entity_navigator.entity_navigator_type import (EntityNav,
+                                                             EntityType,
+                                                             NavigableEntity)
 from gws_core.project.model_with_project import ModelWithProject
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
@@ -26,7 +29,7 @@ from ..project.project import Project
 
 
 @final
-class Report(ModelWithUser, ModelWithProject):
+class Report(ModelWithUser, ModelWithProject, NavigableEntity):
     title = CharField()
 
     content = JSONField(null=True)
@@ -87,6 +90,12 @@ class Report(ModelWithUser, ModelWithProject):
         self.validated_at = DateHelper.now_utc()
         self.validated_by = CurrentUserService.get_and_check_current_user()
         self.lab_config = LabConfigModel.get_current_config()
+
+    def get_entity_name(self) -> str:
+        return self.title
+
+    def get_entity_type(self) -> EntityType:
+        return EntityType.REPORT
 
 
 class ReportExperiment(BaseModel):

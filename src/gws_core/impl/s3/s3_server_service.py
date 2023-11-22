@@ -11,6 +11,7 @@ from mypy_boto3_s3.type_defs import ListObjectsV2OutputTypeDef, ObjectTypeDef
 
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.settings import Settings
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.s3_server_exception import (S3ServerContext,
@@ -21,7 +22,7 @@ from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_model_search_builder import \
     ResourceModelSearchBuilder
 from gws_core.resource.resource_service import ResourceService
-from gws_core.tag.entity_tag import EntityTag, EntityTagType
+from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins, TagOriginType
 from gws_core.user.current_user_service import CurrentUserService
@@ -112,13 +113,13 @@ class S3ServerService:
             try:
                 resource_model = resource_model.save_full()
 
-                resource_tags = EntityTagList.find_by_entity(EntityTagType.RESOURCE, resource_model.id)
+                resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource_model.id)
 
                 # Add the tags, make sure they are not propagable
                 origins = TagOrigins(TagOriginType.S3, 's3')
-                resource_tags.add_tag_if_not_exist(Tag('storage', 's3', is_propagable=False, origins=origins))
-                resource_tags.add_tag_if_not_exist(Tag('bucket', bucket_name, is_propagable=False, origins=origins))
-                resource_tags.add_tag_if_not_exist(Tag('key', key, is_propagable=False, origins=origins))
+                resource_tags.add_tag(Tag('storage', 's3', is_propagable=False, origins=origins))
+                resource_tags.add_tag(Tag('bucket', bucket_name, is_propagable=False, origins=origins))
+                resource_tags.add_tag(Tag('key', key, is_propagable=False, origins=origins))
 
             finally:
                 CurrentUserService.set_current_user(None)
@@ -207,7 +208,7 @@ class S3ServerService:
 
     @classmethod
     def _resource_to_s3_object(cls, resource: ResourceModel) -> ObjectTypeDef:
-        entity_tag: EntityTag = EntityTag.find_by_tag_key_and_entity('key', EntityTagType.RESOURCE, resource.id).first()
+        entity_tag: EntityTag = EntityTag.find_by_tag_key_and_entity('key', EntityType.RESOURCE, resource.id).first()
         if not entity_tag:
             raise S3ServerException(status_code=500, code='invalid_resource',
                                     message='Resource has no key tag', bucket_name='')

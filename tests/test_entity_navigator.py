@@ -6,7 +6,7 @@
 
 from gws_core.entity_navigator.entity_navigator import (
     EntityNavigatorExperiment, EntityNavigatorReport, EntityNavigatorResource,
-    EntityNavigatorView, EntityType)
+    EntityNavigatorView)
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
@@ -279,26 +279,22 @@ class TestEntityNavigator(BaseTestCase):
         exp = EntityNavigatorExperiment(self.exp_1)
 
         # Test get next entities of experiment 1
-        next_exps = list(exp.get_next_entities_recursive(
-            [EntityType.EXPERIMENT, EntityType.RESOURCE, EntityType.VIEW, EntityType.REPORT]))
+        next_exps = list(exp.get_next_entities_recursive())
 
         # return everything
         self.assertEqual(len(next_exps), 9)
 
         # Test get next entities of experiment 2
         exp = EntityNavigatorExperiment(self.exp_2)
-        next_exps = list(exp.get_next_entities_recursive(
-            [EntityType.EXPERIMENT, EntityType.RESOURCE, EntityType.VIEW, EntityType.REPORT]))
+        next_exps = list(exp.get_next_entities_recursive())
         self.assertEqual(len(next_exps), 4)
 
         # Test previous entities of experiment 3
         exp = EntityNavigatorExperiment(self.exp_3)
-        prev_exps = list(exp.get_previous_entities_recursive(
-            [EntityType.EXPERIMENT, EntityType.RESOURCE, EntityType.VIEW, EntityType.REPORT]))
+        prev_exps = list(exp.get_previous_entities_recursive())
         self.assertEqual(len(prev_exps), 5)
 
         # Test previous entities of experiment 2
         exp = EntityNavigatorExperiment(self.exp_2)
-        prev_exps = list(exp.get_previous_entities_recursive(
-            [EntityType.EXPERIMENT, EntityType.RESOURCE, EntityType.VIEW, EntityType.REPORT]))
+        prev_exps = list(exp.get_previous_entities_recursive())
         self.assertEqual(len(prev_exps), 3)

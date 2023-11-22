@@ -4,90 +4,95 @@
 # About us: https://gencovery.com
 
 
-from enum import Enum
-from typing import List, Set, Type, Union
+from typing import Dict, Generic, List, Set, Type, Union
 
-from gws_core.core.model.model import Model
+from gws_core.entity_navigator.entity_navigator_type import (
+    EntityType, GenericNavigableEntity, NavigableEntity, NavigableEntitySet,
+    all_entity_types)
 from gws_core.experiment.experiment import Experiment
 from gws_core.report.report import Report, ReportExperiment
 from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_config.view_config import ViewConfig
+from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag import Tag, TagOriginType
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 
 
-class EntityType(Enum):
-    EXPERIMENT = "EXPERIMENT"
-    RESOURCE = "RESOURCE"
-    VIEW = "VIEW"
-    REPORT = "REPORT"
+class EntityNavigator(Generic[GenericNavigableEntity]):
 
+    _entities: NavigableEntitySet[GenericNavigableEntity]
 
-class EntityNavigator:
+    _all_entity_types = all_entity_types
 
-    _entities: Set[Model]
-
-    def __init__(self, entities:  Union[Model, List[Model], Set[Model]]):
-        if isinstance(entities, list):
-            self._entities = set(entities)
-        elif isinstance(entities, set):
+    def __init__(
+            self, entities: Union[GenericNavigableEntity, List[GenericNavigableEntity],
+                                  Set[GenericNavigableEntity],
+                                  NavigableEntitySet]):
+        if isinstance(entities, NavigableEntitySet):
             self._entities = entities
         else:
-            self._entities = set([entities])
+            self._entities = NavigableEntitySet(entities)
 
     def has_next_entities(self, requested_entities: List[EntityType] = None) -> bool:
         if requested_entities is None:
-            requested_entities = [EntityType.EXPERIMENT, EntityType.RESOURCE,
-                                  EntityType.REPORT, EntityType.VIEW]
+            requested_entities = self._all_entity_types
         return len(self.get_next_entities(requested_entities)) > 0
 
-    def get_next_entities(self, requested_entities: List[EntityType]) -> Set[Model]:
+    def get_next_entities(self, requested_entities: List[EntityType]) -> NavigableEntitySet:
         """Return all the entities that are linked to the current entities
 
         :param requested_entities: [description]
         :type requested_entities: List[EntityType]
         :return: [description]
-        :rtype: List[Model]
+        :rtype: NavigableEntitySet
         """
         if self.is_empty():
-            return set()
+            return NavigableEntitySet()
 
         next_entities = set()
 
         if EntityType.EXPERIMENT in requested_entities:
-            next_entities.update(self.get_next_experiments().get_entities())
+            next_entities.update(self.get_next_experiments().get_entities_as_set())
 
         if EntityType.RESOURCE in requested_entities:
-            next_entities.update(self.get_next_resources().get_entities())
+            next_entities.update(self.get_next_resources().get_entities_as_set())
 
         if EntityType.REPORT in requested_entities:
-            next_entities.update(self.get_next_reports().get_entities())
+            next_entities.update(self.get_next_reports().get_entities_as_set())
 
         if EntityType.VIEW in requested_entities:
-            next_entities.update(self.get_next_views().get_entities())
+            next_entities.update(self.get_next_views().get_entities_as_set())
 
-        return next_entities
+        return NavigableEntitySet(next_entities)
 
-    def get_next_entities_recursive(self, requested_entities: List[EntityType]) -> Set[Model]:
+    def get_next_entities_recursive(self, requested_entities: List[EntityType] = None,
+                                    include_current_entities: bool = False) -> NavigableEntitySet:
         """Return all the entities that are linked to the current entities
 
         :param requested_entities: [description]
         :type requested_entities: List[EntityType]
         :return: [description]
-        :rtype: List[Model]
+        :rtype: NavigableEntitySet
         """
         if self.is_empty():
-            return set()
+            return NavigableEntitySet()
 
-        loaded_entities = set(self._entities)
+        if requested_entities is None:
+            requested_entities = self._all_entity_types
+
+        loaded_entities = self._entities.get_as_set()
         self._get_next_entities_recursive(requested_entities, loaded_entities)
 
-        return loaded_entities - set(self._entities)
+        if not include_current_entities:
+            loaded_entities = loaded_entities - self._entities.get_as_set()
+
+        return NavigableEntitySet(loaded_entities)
 
     def _get_next_entities_recursive(
             self, requested_entities: List[EntityType],
-            loaded_entities: Set[Model]) -> Set[Model]:
+            loaded_entities: Set[GenericNavigableEntity]) -> Set[GenericNavigableEntity]:
 
         if self.is_empty():
             return loaded_entities
@@ -112,11 +117,11 @@ class EntityNavigator:
 
     def _get_next_entities_type_recursive(
             self, requested_entities: List[EntityType],
-            loaded_entities: Set[Model],
+            loaded_entities: Set[GenericNavigableEntity],
             entity_nav: 'EntityNavigator',
-            nav_class: Type['EntityNavigator']) -> Set[Model]:
+            nav_class: Type['EntityNavigator']) -> Set[GenericNavigableEntity]:
 
-        new_entities: Set[Experiment] = set(entity_nav.get_entities()) - set(loaded_entities)
+        new_entities: Set[GenericNavigableEntity] = entity_nav.get_entities_as_set() - loaded_entities
 
         if len(new_entities) > 0:
             loaded_entities.update(new_entities)
@@ -126,25 +131,32 @@ class EntityNavigator:
 
         return loaded_entities
 
-    def get_previous_entities_recursive(self, requested_entities: List[EntityType]) -> Set[Model]:
+    def get_previous_entities_recursive(self, requested_entities: List[EntityType] = None,
+                                        include_current_entities: bool = False) -> NavigableEntitySet:
         """Return all the entities that are linked to the current entities
 
         :param requested_entities: [description]
         :type requested_entities: List[EntityType]
         :return: [description]
-        :rtype: List[Model]
+        :rtype: List[NavigableEntity]
         """
         if self.is_empty():
-            return set()
+            return NavigableEntitySet()
 
-        loaded_entities = set(self._entities)
+        if requested_entities is None:
+            requested_entities = self._all_entity_types
+
+        loaded_entities = self._entities.get_as_set()
         self._get_previous_entities_recursive(requested_entities, loaded_entities)
 
-        return loaded_entities - set(self._entities)
+        if not include_current_entities:
+            loaded_entities = loaded_entities - self._entities.get_as_set()
+
+        return NavigableEntitySet(loaded_entities)
 
     def _get_previous_entities_recursive(
             self, requested_entities: List[EntityType],
-            loaded_entities: Set[Model]) -> Set[Model]:
+            loaded_entities: Set[GenericNavigableEntity]) -> Set[GenericNavigableEntity]:
 
         if self.is_empty():
             return loaded_entities
@@ -169,11 +181,11 @@ class EntityNavigator:
 
     def _get_previous_entities_type_recursive(
             self, requested_entities: List[EntityType],
-            loaded_entities: Set[Model],
+            loaded_entities: Set[GenericNavigableEntity],
             entity_nav: 'EntityNavigator',
-            nav_class: Type['EntityNavigator']) -> Set[Model]:
+            nav_class: Type['EntityNavigator']) -> Set[GenericNavigableEntity]:
 
-        new_entities: Set[Experiment] = set(entity_nav.get_entities()) - set(loaded_entities)
+        new_entities: Set[GenericNavigableEntity] = entity_nav.get_entities_as_set() - loaded_entities
 
         if len(new_entities) > 0:
             loaded_entities.update(new_entities)
@@ -207,17 +219,56 @@ class EntityNavigator:
     def get_previous_experiments(self) -> 'EntityNavigatorExperiment':
         return EntityNavigatorExperiment(set())
 
-    def get_entities(self) -> Set[Model]:
+    def get_entities(self) -> NavigableEntitySet:
         return self._entities
 
-    def get_entities_list(self) -> List[Model]:
-        return list(self._entities)
+    def get_entities_as_set(self) -> Set[GenericNavigableEntity]:
+        return self._entities.get_as_set()
+
+    def get_entities_list(self) -> List[GenericNavigableEntity]:
+        return self._entities.get_as_list()
+
+    def propagate_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None) -> None:
+        pass
+
+    def _propagate_tags(self, tags: List[Tag], entity: GenericNavigableEntity,
+                        new_origin_type: TagOriginType, new_origin_id: str,
+                        entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None):
+
+        if entity_tags_cache is None:
+            entity_tags_cache = {}
+
+        if entity not in entity_tags_cache:
+            entity_tags_cache[entity] = EntityTagList.find_by_entity(entity.get_entity_type(), entity.id)
+
+        entity_tags = entity_tags_cache[entity]
+
+        new_tags = [tag.propagate(new_origin_type, new_origin_id) for tag in tags]
+        entity_tags.add_tags(new_tags)
+
+    def delete_propagated_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None):
+        pass
+
+    def _delete_propagated_tags(self, tags: List[Tag], entity: GenericNavigableEntity,
+                                origin_type: TagOriginType, origin_id: str,
+                                entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None):
+
+        if entity_tags_cache is None:
+            entity_tags_cache = {}
+
+        if entity not in entity_tags_cache:
+            entity_tags_cache[entity] = EntityTagList.find_by_entity(entity.get_entity_type(), entity.id)
+
+        entity_tags = entity_tags_cache[entity]
+
+        new_tags = [tag.propagate(origin_type, origin_id) for tag in tags]
+        entity_tags.delete_tags(new_tags)
 
     def is_empty(self) -> bool:
-        return len(self._entities) == 0
+        return self._entities.is_empty()
 
     def _get_entities_ids(self) -> List[str]:
-        return [entity.id for entity in self._entities]
+        return self._entities.get_entity_ids()
 
     @classmethod
     def from_entity_id(cls, entity_type: EntityType, entity_id: str) -> 'EntityNavigator':
@@ -233,9 +284,7 @@ class EntityNavigator:
         raise Exception(f"Entity type {entity_type} not supported")
 
 
-class EntityNavigatorExperiment(EntityNavigator):
-
-    _entities: Set[Experiment]
+class EntityNavigatorExperiment(EntityNavigator[Experiment]):
 
     def get_next_reports(self) -> 'EntityNavigatorReport':
         reports = set(ReportExperiment.find_reports_by_experiments(self._get_entities_ids()))
@@ -262,10 +311,48 @@ class EntityNavigatorExperiment(EntityNavigator):
     def get_previous_experiments(self) -> 'EntityNavigatorExperiment':
         return self.get_previous_resources().get_previous_experiments()
 
+    def propagate_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None) -> None:
 
-class EntityNavigatorResource(EntityNavigator):
+        for experiment in self._entities:
 
-    _entities: Set[ResourceModel]
+            # Propagate to resources
+            next_resources = self.get_next_resources()
+            for resource in next_resources.get_entities_list():
+                self._propagate_tags(tags=tags, entity=resource,
+                                     new_origin_type=TagOriginType.EXPERIMENT_PROPAGATED, new_origin_id=experiment.id,
+                                     entity_tags_cache=entity_tags_cache)
+            next_resources.propagate_tags(tags, entity_tags_cache)
+
+            # Propagate to reports
+            next_reports = self.get_next_reports()
+            for report in next_reports.get_entities_list():
+                self._propagate_tags(tags=tags, entity=report,
+                                     new_origin_type=TagOriginType.EXPERIMENT_PROPAGATED, new_origin_id=experiment.id,
+                                     entity_tags_cache=entity_tags_cache)
+            next_reports.propagate_tags(tags, entity_tags_cache)
+
+    def delete_propagated_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None):
+
+        for experiment in self._entities:
+
+            # Propagate to resources
+            next_resources = self.get_next_resources()
+            for resource in next_resources.get_entities_list():
+                self._delete_propagated_tags(
+                    tags=tags, entity=resource, origin_type=TagOriginType.EXPERIMENT_PROPAGATED,
+                    origin_id=experiment.id, entity_tags_cache=entity_tags_cache)
+            next_resources.delete_propagated_tags(tags, entity_tags_cache)
+
+            # Propagate to reports
+            next_reports = self.get_next_reports()
+            for report in next_reports.get_entities_list():
+                self._delete_propagated_tags(
+                    tags=tags, entity=report, origin_type=TagOriginType.EXPERIMENT_PROPAGATED,
+                    origin_id=experiment.id, entity_tags_cache=entity_tags_cache)
+            next_reports.delete_propagated_tags(tags, entity_tags_cache)
+
+
+class EntityNavigatorResource(EntityNavigator[ResourceModel]):
 
     def get_next_reports(self) -> 'EntityNavigatorReport':
         return self.get_next_views().get_next_reports()
@@ -287,7 +374,7 @@ class EntityNavigatorResource(EntityNavigator):
         # retrieve all the tasks that uses the resource as input
         # Don't retrieve the Source task that uses this resource as Config because the output of the Source task
         # is the resource itself
-        task_input_models: List[TaskInputModel] = set(TaskInputModel.get_by_resource_models(self._get_entities_ids()))
+        task_input_models: Set[TaskInputModel] = set(TaskInputModel.get_by_resource_models(self._get_entities_ids()))
         return {task_input.task_model for task_input in task_input_models}
 
     def get_next_experiments(self) -> 'EntityNavigatorExperiment':
@@ -316,14 +403,55 @@ class EntityNavigatorResource(EntityNavigator):
         experiment_ids: List[str] = [resource.experiment.id for resource in self._entities
                                      if resource.experiment is not None]
 
-        experiments = set(Experiment.get_by_ids(experiment_ids))
+        experiments: Set[Experiment] = set(Experiment.get_by_ids(experiment_ids))
 
         return EntityNavigatorExperiment(experiments)
 
+    def propagate_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None) -> None:
 
-class EntityNavigatorView(EntityNavigator):
+        for resource in self._entities:
 
-    _entities: Set[ViewConfig]
+            # Propagate to next views
+            next_views = self.get_next_views()
+            for view in next_views.get_entities_list():
+                self._propagate_tags(tags=tags, entity=view,
+                                     new_origin_type=TagOriginType.RESOURCE_PROPAGATED, new_origin_id=resource.id,
+                                     entity_tags_cache=entity_tags_cache)
+            next_views.propagate_tags(tags, entity_tags_cache)
+
+            # Propagate to next resources
+            next_resources = self.get_next_resources()
+            for next_resource in next_resources.get_entities_list():
+                if next_resource.task_model:
+                    self._propagate_tags(
+                        tags=tags, entity=next_resource,
+                        new_origin_type=TagOriginType.TASK_PROPAGATED, new_origin_id=resource.task_model.id,
+                        entity_tags_cache=entity_tags_cache)
+            next_resources.propagate_tags(tags, entity_tags_cache)
+
+    def delete_propagated_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None):
+
+        for resource in self._entities:
+
+            # Propagate to next views
+            next_views = self.get_next_views()
+            for view in next_views.get_entities_list():
+                self._delete_propagated_tags(
+                    tags=tags, entity=view, origin_type=TagOriginType.RESOURCE_PROPAGATED,
+                    origin_id=resource.id, entity_tags_cache=entity_tags_cache)
+            next_views.delete_propagated_tags(tags, entity_tags_cache)
+
+            # Propagate to next resources
+            next_resources = self.get_next_resources()
+            for next_resource in next_resources.get_entities_list():
+                if next_resource.task_model:
+                    self._delete_propagated_tags(
+                        tags=tags, entity=next_resource, origin_type=TagOriginType.TASK_PROPAGATED,
+                        origin_id=resource.task_model.id, entity_tags_cache=entity_tags_cache)
+            next_resources.delete_propagated_tags(tags, entity_tags_cache)
+
+
+class EntityNavigatorView(EntityNavigator[ViewConfig]):
 
     def get_next_reports(self) -> 'EntityNavigatorReport':
 
@@ -346,10 +474,30 @@ class EntityNavigatorView(EntityNavigator):
     def _get_resources(self) -> List[ResourceModel]:
         return [view.resource_model for view in self._entities]
 
+    def propagate_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None) -> None:
 
-class EntityNavigatorReport(EntityNavigator):
+        for view in self._entities:
+            # Propagate to next reports
+            next_reports = self.get_next_reports()
+            for report in next_reports.get_entities_list():
+                self._propagate_tags(tags=tags, entity=report,
+                                     new_origin_type=TagOriginType.VIEW_PROPAGATED, new_origin_id=view.id,
+                                     entity_tags_cache=entity_tags_cache)
+            next_reports.propagate_tags(tags, entity_tags_cache)
 
-    _entities: Set[Report]
+    def delete_propagated_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None):
+
+        for view in self._entities:
+            # Propagate to next reports
+            next_reports = self.get_next_reports()
+            for report in next_reports.get_entities_list():
+                self._delete_propagated_tags(
+                    tags=tags, entity=report, origin_type=TagOriginType.VIEW_PROPAGATED,
+                    origin_id=view.id, entity_tags_cache=entity_tags_cache)
+            next_reports.delete_propagated_tags(tags, entity_tags_cache)
+
+
+class EntityNavigatorReport(EntityNavigator[Report]):
 
     def get_previous_views(self) -> 'EntityNavigatorView':
         report_views: List[ReportViewModel] = list(ReportViewModel.get_by_reports(self._get_entities_ids()))

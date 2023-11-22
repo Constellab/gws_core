@@ -17,6 +17,7 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.model.base_model import BaseModel
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.impl.file.file_helper import FileHelper
@@ -42,9 +43,8 @@ from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
-from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view_config.view_config import ViewConfig
-from gws_core.tag.entity_tag import EntityTag, EntityTagType
+from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import TagOriginType
 from gws_core.tag.tag_model import EntityTagValueFormat, TagModel
 from gws_core.tag.taggable_model import TaggableModel
@@ -837,13 +837,13 @@ class Migration0516(BrickMigration):
                 tags = entity.get_tags()
 
                 for tag in tags:
-                    entity_type: EntityTagType
+                    entity_type: EntityType
                     if isinstance(entity, ResourceModel):
-                        entity_type = EntityTagType.RESOURCE
+                        entity_type = EntityType.RESOURCE
                     elif isinstance(entity, Experiment):
-                        entity_type = EntityTagType.EXPERIMENT
+                        entity_type = EntityType.EXPERIMENT
                     elif isinstance(entity, ViewConfig):
-                        entity_type = EntityTagType.VIEW
+                        entity_type = EntityType.VIEW
                     entity_tag = EntityTag.find_by_tag_and_entity(tag, entity_type, entity.id)
 
                     if entity_tag is None:
@@ -876,7 +876,7 @@ class Migration0516(BrickMigration):
                 if report_updated:
                     report.content = rich_text.get_content()
                     report.save()
-                    ReportService._refresh_report_associated_views(report)
+                    ReportService._refresh_report_views_and_tags(report)
 
             except Exception as exception:
                 Logger.error(
