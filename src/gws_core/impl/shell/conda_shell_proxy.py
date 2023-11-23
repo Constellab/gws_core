@@ -18,6 +18,8 @@ class CondaShellProxy(BaseEnvShell):
 
     CONFIG_FILE_NAME = "environment.yml"
 
+    # can be overridden by the child class to use mamba instead of conda
+    # the mamba command is only used for install and uninstall the env
     conda_command = "conda"
 
     def _install_env(self) -> bool:
@@ -103,7 +105,7 @@ class CondaShellProxy(BaseEnvShell):
         return os.path.join(self.get_env_dir_path(), self.VENV_DIR_NAME)
 
     def _build_conda_command(self, conda_cmd: str, cmd: str, ) -> str:
-        return f'bash -c "source /opt/conda/etc/profile.d/{conda_cmd}.sh && {conda_cmd} {cmd}"'
+        return f'bash -c "source /opt/conda/etc/profile.d/{CondaShellProxy.conda_command}.sh && {conda_cmd} {cmd}"'
 
     @classmethod
     def folder_is_env(cls, folder_path: str) -> bool:

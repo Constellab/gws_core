@@ -46,7 +46,8 @@ class TestEnvShellProxy(TestCase):
         self._test_env_shell_proxy(MambaShellProxy, 'MyMambaTestEnvironment', conda_env_file)
         print('--------------------------------END MAMBA ENV FILE--------------------------------')
 
-    def _test_env_shell_proxy(self, shell_proxy_type: Type[BaseEnvShell], env_name: str, env_file_path: str):
+    def _test_env_shell_proxy(self, shell_proxy_type: Type[BaseEnvShell], env_name: str,
+                              env_file_path: str):
 
         python_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                    "penv", "jwt_encode.py")
@@ -82,8 +83,8 @@ class TestEnvShellProxy(TestCase):
 
             self.assertEqual(basic_info['name'], env_name)
             self.assertEqual(basic_info['folder'], shell_proxy.get_env_dir_path())
-            self.assertEqual(basic_info['type'], 'pip' if shell_proxy_type == PipShellProxy else 'conda')
             self.assertIsNotNone(basic_info['creation_info'])
+            self.assertEqual(basic_info['creation_info']['env_type'], shell_proxy.get_env_type())
 
             venv_info = VEnvService.get_venv_complete_info(env_name)
 
