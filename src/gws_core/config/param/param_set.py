@@ -58,7 +58,7 @@ class ParamSet(ParamSpec[list]):
 
     def get_default_value(self) -> ParamSpecType:
         if self.optional:
-            return None
+            return []
 
         # if this is not option, return an array of 1 element with the
         # default value of each param_spec
@@ -69,7 +69,7 @@ class ParamSet(ParamSpec[list]):
 
     def validate(self, value: List[Dict[str, Any]]) -> ParamSpecType:
         if value is None:
-            return None
+            return []
         list_validator = ListValidator(max_number_of_occurrences=self.max_number_of_occurrences)
         dict_validator = DictValidator()
 
