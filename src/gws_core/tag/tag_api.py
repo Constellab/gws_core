@@ -72,6 +72,12 @@ def delete_registered_tag(key: str,
 ################################# ENTITY TAG #################################
 
 
+@core_app.get("/tag/entity/{entity_tag_id}", tags=["Tag"], summary='Get 1 tag detail')
+def get_tag_detail(entity_tag_id: str,
+                   _=Depends(AuthService.check_user_access_token)):
+    return TagService.get_and_check_entity_tag(entity_tag_id).to_json(deep=True)
+
+
 @core_app.get("/tag/entity/{entity_type}/{entity_id}", tags=["Tag"], summary='Get tags of an entity')
 def get_tags_of_entity(entity_type: EntityType,
                        entity_id: str,

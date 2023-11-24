@@ -68,7 +68,17 @@ class EntityTag(Model):
         self.origins = origins.to_json()
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return self.to_simple_tag().to_json()
+        if deep:
+            return {
+                "id": self.id,
+                'key': self.tag_key.to_json(),
+                'value': self.get_tag_value(),
+                'is_propagable': self.is_propagable,
+                'origins': self.get_origins().to_json(),
+                'created_at': self.created_at,
+            }
+        else:
+            return self.to_simple_tag().to_json()
 
     def to_simple_tag(self) -> Tag:
         return Tag(key=self.get_tag_key(), value=self.get_tag_value(),

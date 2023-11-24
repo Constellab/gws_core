@@ -46,8 +46,7 @@ class TagOriginDict(TypedDict):
 class TagDict(TypedDict):
     key: str
     value: str
-    is_propagable: bool
-    origins: List[TagOriginDict]
+    is_user_origin: bool
 
 
 class TagOrigin():
@@ -240,8 +239,7 @@ class Tag():
         return {
             "key": self.key,
             "value": self.get_str_value(),
-            "is_propagable": self.is_propagable,
-            "origins": self.origins.to_json()
+            "is_user_origin": self.origins.is_user_origin(),
         }
 
     # TODO to remove once old tags are not supported

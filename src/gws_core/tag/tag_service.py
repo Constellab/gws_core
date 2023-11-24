@@ -257,3 +257,7 @@ class TagService():
             [EntityType.RESOURCE, EntityType.VIEW, EntityType.REPORT], include_current_entities=True)
 
         return TagPropagationImpactDTO(tags, next_entities.get_entity_dict_nav_group())
+
+    @classmethod
+    def get_and_check_entity_tag(cls, entity_tag_id: str) -> EntityTag:
+        return EntityTag.get_by_id_and_check(entity_tag_id)
