@@ -167,8 +167,7 @@ class TaskRunner():
         :rtype: ConfigParams
         """
         if isinstance(config, ConfigParams):
-            self._config_params = config
-            return config
+            config = dict(config)
 
         if config is None:
             config = {}
