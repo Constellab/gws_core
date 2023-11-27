@@ -57,7 +57,40 @@ def download_a_file(id: str,
     """
     Download a file. The access is made with a unique  code generated with get_download_file_url
     """
-    return FsNodeService.download_file(id=id)
+    return FsNodeService.download_file(fs_node_id=id)
+
+
+############################# FOLDER ROUTES ###########################
+
+
+class ExtractFileDTO(TypedDict):
+    path: str
+    fs_node_typing_name: str
+
+
+@core_app.put("/fs-node/{id}/folder/extract-node", tags=["Files"], summary="Extract a node from a folder")
+def extract_node_from_folder(id: str,
+                             extract: ExtractFileDTO,
+                             _=Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Extract a node from a folder to make it a new Resource
+    """
+    result = ConverterService.call_file_extractor(
+        folder_model_id=id, sub_path=extract["path"],
+        fs_node_typing_name=extract["fs_node_typing_name"])
+    return result.to_json()
+
+
+# make the node_path variable supports slashes and dots
+@core_app.get("/fs-node/{id}/folder/download/{node_path:path}", tags=["Files"],
+              summary="Download the node from a folder")
+def download_fsnode_from_folder(id: str,
+                                node_path: str,
+                                _=Depends(AuthService.check_user_access_token)) -> FileResponse:
+    """
+    Download the node in a folder
+    """
+    return FsNodeService.download_fsnode_from_folder(folder_id=id, file_path=node_path)
 
 
 class SubFilePath(TypedDict):
@@ -70,30 +103,9 @@ def call_folder_sub_file_view(id: str,
                               data: SubFilePath,
                               _=Depends(AuthService.check_user_access_token)):
     """
-    Download a file. The access is made with a unique  code generated with get_download_file_url
+    Call the default view of a sub file in a folder
     """
     return FsNodeService.call_folder_sub_file_view(resource_id=id, sub_file_path=data['sub_file_path']).to_json()
-
-
-############################# FILE EXTRACTOR ###########################
-
-
-class ExtractFileDTO(TypedDict):
-    path: str
-    fs_node_typing_name: str
-
-
-@core_app.put("/fs-node/{id}/extract-file", tags=["Files"], summary="Extract a file from a folder")
-def extract_file(id: str,
-                 extract: ExtractFileDTO,
-                 _=Depends(AuthService.check_user_access_token)) -> dict:
-    """
-    Download a file. The access is made with a unique  code generated with get_download_file_url
-    """
-    result = ConverterService.call_file_extractor(
-        folder_model_id=id, sub_path=extract["path"],
-        fs_node_typing_name=extract["fs_node_typing_name"])
-    return result.to_json()
 
 
 ############################# FILE TYPE ###########################

@@ -44,13 +44,26 @@ class Folder(FSNode):
         """
         return list(map(self.get_sub_path,  self.list_dir()))
 
-    def get_sub_path(self, node_name: str) -> str:
+    def get_sub_path(self, sub_node_path: str) -> str:
         """Get the path of a sub node, in the folder
         """
-        return os.path.join(self.path, node_name)
+        return os.path.join(self.path, sub_node_path)
 
     def get_default_name(self) -> str:
         return FileHelper.get_dir_name(self.path)
+
+    def get_sub_node(self, sub_node_path: str) -> FSNode:
+        """Get the sub node of this folder, with the given path
+        """
+        sub_node_path = self.get_sub_path(sub_node_path)
+
+        if not FileHelper.exists_on_os(sub_node_path):
+            raise BadRequestException("The sub node does not exist")
+
+        if FileHelper.is_file(sub_node_path):
+            return File(sub_node_path)
+        else:
+            return Folder(sub_node_path)
 
     @view(view_type=LocalFolderView, human_name="View folder content",
           short_description="View the sub files and folders", default_view=True)

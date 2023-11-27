@@ -14,6 +14,7 @@ from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     ManyToManyField)
 from peewee import Model as PeeweeModel
 
+from gws_core.core.classes.jsonable import Jsonable
 from gws_core.core.model.base_model import BaseModel
 from gws_core.core.utils.date_helper import DateHelper
 
@@ -26,7 +27,7 @@ from .db_field import DateTimeUTC, JSONField
 
 
 @json_ignore(["hash"])
-class Model(BaseModel, PeeweeModel):
+class Model(BaseModel, PeeweeModel, Jsonable):
     """
     Model class
 
