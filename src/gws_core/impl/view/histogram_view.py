@@ -86,9 +86,13 @@ class HistogramView(View):
         if data is None or not isinstance(data, list):
             raise BadRequestException("The data is required and must be a list of float or a DataFrame")
 
+        nbins = self.nbins
+        if nbins is None or nbins <= 0:
+            nbins = 10
+
         data = NumericHelper.list_to_float(data, remove_none=True)
 
-        hist, bin_edges = numpy.histogram(data, bins=self.nbins, density=self.density)
+        hist, bin_edges = numpy.histogram(data, bins=nbins, density=self.density)
         bin_centers = (bin_edges[:-1] + bin_edges[1:])/2
         self.add_series(
             x=bin_centers.tolist(),
