@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from time import sleep
 from typing import List, Literal, Optional, Set, Type, Union
 
 from gws_core.core.utils.logger import Logger
@@ -74,6 +73,7 @@ class ProtocolService(BaseService):
     @transaction()
     def add_process_to_protocol_id(cls, protocol_id: str, process_typing_name: str,
                                    instance_name: str = None) -> ProtocolUpdateDTO:
+
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
@@ -321,6 +321,14 @@ class ProtocolService(BaseService):
         return protocol_update
 
     ########################## CONNECTORS #####################
+    @classmethod
+    def add_connector_to_protocol_id(cls, protocol_id: str, from_process_name: str, from_port_name: str,
+                                     to_process_name: str, to_port_name: str) -> ProtocolUpdateDTO:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
+            protocol_id)
+
+        return cls.add_connector_to_protocol(protocol_model, from_process_name, from_port_name,
+                                             to_process_name, to_port_name)
 
     @classmethod
     def add_connectors_to_protocol(
@@ -330,15 +338,6 @@ class ProtocolService(BaseService):
         protocol_model.save_graph()
 
         return cls._on_protocol_object_updated(protocol_model)
-
-    @classmethod
-    def add_connector_to_protocol_id(cls, protocol_id: str, from_process_name: str, from_port_name: str,
-                                     to_process_name: str, to_port_name: str) -> ProtocolUpdateDTO:
-        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
-            protocol_id)
-
-        return cls.add_connector_to_protocol(protocol_model, from_process_name, from_port_name,
-                                             to_process_name, to_port_name)
 
     @classmethod
     def add_connector_to_protocol(

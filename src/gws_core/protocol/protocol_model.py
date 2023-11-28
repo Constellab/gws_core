@@ -99,7 +99,6 @@ class ProtocolModel(ProcessModel):
 
         return self.save_graph()
 
-    @transaction()
     def save_graph(self) -> 'ProtocolModel':
         self.refresh_graph_from_dump()
         return self.save()

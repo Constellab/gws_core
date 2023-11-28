@@ -4,10 +4,11 @@
 # About us: https://gencovery.com
 
 
+import threading
 from typing import Optional
 
 from fastapi import Depends
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from gws_core.core.utils.response_helper import ResponseHelper
@@ -16,6 +17,12 @@ from gws_core.protocol.protocol_dto import AddConnectorDTO
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from .protocol_service import ProtocolService
+
+# use to prevent multiple request to modify a protocol at the same time, they will be queued
+# this is because protocol load can be long if there is a lot of process so second request can start
+# before the first one is finished so this will break the protocol processes.
+# this is not the best solution but it's a quick fix
+update_lock = threading.Lock()
 
 
 @core_app.get("/protocol/{id}", tags=["Protocol"], summary="Get a protocol")
@@ -40,10 +47,11 @@ def add_process(id: str,
     Add a process to a protocol
     """
 
-    return ProtocolService.add_process_to_protocol_id(
-        protocol_id=id,
-        process_typing_name=process_typing_name
-    ).to_json()
+    with update_lock:
+        return ProtocolService.add_process_to_protocol_id(
+            protocol_id=id,
+            process_typing_name=process_typing_name
+        ).to_json()
 
 
 @core_app.post("/protocol/{id}/add-process/{process_typing_name}/connected-to-output/{process_name}/{port_name}",
@@ -57,13 +65,13 @@ def add_process_connected_to_output(id: str,
     """
     Add a process to a protocol
     """
-
-    return ProtocolService.add_process_connected_to_output(
-        protocol_id=id,
-        process_typing_name=process_typing_name,
-        output_process_name=process_name,
-        output_port_name=port_name
-    ).to_json()
+    with update_lock:
+        return ProtocolService.add_process_connected_to_output(
+            protocol_id=id,
+            process_typing_name=process_typing_name,
+            output_process_name=process_name,
+            output_port_name=port_name
+        ).to_json()
 
 
 @core_app.post("/protocol/{id}/add-process/{process_typing_name}/connected-to-input/{process_name}/{port_name}",
@@ -77,13 +85,13 @@ def add_process_connected_to_input(id: str,
     """
     Add a process to a protocol
     """
-
-    return ProtocolService.add_process_connected_to_input(
-        protocol_id=id,
-        process_typing_name=process_typing_name,
-        input_process_name=process_name,
-        input_port_name=port_name
-    ).to_json()
+    with update_lock:
+        return ProtocolService.add_process_connected_to_input(
+            protocol_id=id,
+            process_typing_name=process_typing_name,
+            input_process_name=process_name,
+            input_port_name=port_name
+        ).to_json()
 
 
 @core_app.delete("/protocol/{id}/process/{process_instance_name}", tags=["Protocol"],
@@ -91,10 +99,11 @@ def add_process_connected_to_input(id: str,
 def delete_process(id: str,
                    process_instance_name: str,
                    _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.delete_process_of_protocol_id(
-        protocol_id=id,
-        process_instance_name=process_instance_name
-    ).to_json()
+    with update_lock:
+        return ProtocolService.delete_process_of_protocol_id(
+            protocol_id=id,
+            process_instance_name=process_instance_name
+        ).to_json()
 
 
 @core_app.put("/protocol/{id}/process/{process_instance_name}/reset", tags=["Protocol"],
@@ -102,10 +111,11 @@ def delete_process(id: str,
 def reset_process(id: str,
                   process_instance_name: str,
                   _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.reset_process_of_protocol_id(
-        protocol_id=id,
-        process_instance_name=process_instance_name
-    ).to_json()
+    with update_lock:
+        return ProtocolService.reset_process_of_protocol_id(
+            protocol_id=id,
+            process_instance_name=process_instance_name
+        ).to_json()
 
 
 @core_app.put("/protocol/{id}/process/{process_instance_name}/run", tags=["Protocol"],
@@ -127,13 +137,14 @@ def run_process(id: str,
 def add_connector(id: str,
                   add_connector: AddConnectorDTO,
                   _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.add_connector_to_protocol_id(
-        protocol_id=id,
-        from_process_name=add_connector.output_process_name,
-        from_port_name=add_connector.output_port_name,
-        to_process_name=add_connector.input_process_name,
-        to_port_name=add_connector.input_port_name,
-    ).to_json()
+    with update_lock:
+        return ProtocolService.add_connector_to_protocol_id(
+            protocol_id=id,
+            from_process_name=add_connector.output_process_name,
+            from_port_name=add_connector.output_port_name,
+            to_process_name=add_connector.input_process_name,
+            to_port_name=add_connector.input_port_name,
+        ).to_json()
 
 
 @core_app.delete("/protocol/{id}/connector/{dest_process_name}/{dest_process_port_name}", tags=["Protocol"],
@@ -142,11 +153,12 @@ def delete_connector(id: str,
                      dest_process_name: str,
                      dest_process_port_name: str,
                      _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.delete_connector_of_protocol(
-        protocol_id=id,
-        dest_process_name=dest_process_name,
-        dest_process_port_name=dest_process_port_name
-    ).to_json()
+    with update_lock:
+        return ProtocolService.delete_connector_of_protocol(
+            protocol_id=id,
+            dest_process_name=dest_process_name,
+            dest_process_port_name=dest_process_port_name
+        ).to_json()
 
 
 ########################## CONFIG #####################
@@ -156,9 +168,9 @@ def configure_process(id: str,
                       process_instance_name: str,
                       config_values: dict,
                       _=Depends(AuthService.check_user_access_token)) -> dict:
-
-    return ProtocolService.configure_process(
-        protocol_id=id, process_instance_name=process_instance_name, config_values=config_values).to_json()
+    with update_lock:
+        return ProtocolService.configure_process(
+            protocol_id=id, process_instance_name=process_instance_name, config_values=config_values).to_json()
 
 ########################## INTERFACE / OUTERFACE #####################
 
@@ -167,20 +179,20 @@ def configure_process(id: str,
                  summary="Delete an interface")
 def delete_interface(id: str,
                      interface_name: str,
-                     _=Depends(AuthService.check_user_access_token)) -> None:
-
-    return ProtocolService.delete_interface_of_protocol_id(
-        id, interface_name).to_json()
+                     _=Depends(AuthService.check_user_access_token)) -> dict:
+    with update_lock:
+        return ProtocolService.delete_interface_of_protocol_id(
+            id, interface_name).to_json()
 
 
 @core_app.delete("/protocol/{id}/outerface/{outerface_name}", tags=["Protocol"],
                  summary="Delete an outerface")
 def delete_outerface(id: str,
                      outerface_name: str,
-                     _=Depends(AuthService.check_user_access_token)) -> None:
-
-    return ProtocolService.delete_outerface_of_protocol_id(
-        id, outerface_name).to_json()
+                     _=Depends(AuthService.check_user_access_token)) -> dict:
+    with update_lock:
+        return ProtocolService.delete_outerface_of_protocol_id(
+            id, outerface_name).to_json()
 
 
 ########################## SPECIFIC PROCESS #####################
@@ -192,8 +204,9 @@ def add_source_to_process_input(id: str,
                                 process_name: str,
                                 input_port_name: str,
                                 _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.add_source_to_process_input(
-        protocol_id=id, resource_id=resource_id, process_name=process_name, input_port_name=input_port_name).to_json()
+    with update_lock:
+        return ProtocolService.add_source_to_process_input(
+            protocol_id=id, resource_id=resource_id, process_name=process_name, input_port_name=input_port_name).to_json()
 
 
 @core_app.post("/protocol/{id}/add-source/{resource_id}", tags=["Protocol"],
@@ -201,8 +214,9 @@ def add_source_to_process_input(id: str,
 def add_source_to_protocol(id: str,
                            resource_id: str,
                            _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.add_source_to_protocol_id(
-        protocol_id=id, resource_id=resource_id).to_json()
+    with update_lock:
+        return ProtocolService.add_source_to_protocol_id(
+            protocol_id=id, resource_id=resource_id).to_json()
 
 
 @core_app.post("/protocol/{id}/add-sink/{process_name}/{output_port_name}", tags=["Protocol"],
@@ -211,8 +225,9 @@ def add_sink_to_process_ouput(id: str,
                               process_name: str,
                               output_port_name: str,
                               _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.add_sink_to_process_ouput(
-        protocol_id=id, process_name=process_name, output_port_name=output_port_name).to_json()
+    with update_lock:
+        return ProtocolService.add_sink_to_process_ouput(
+            protocol_id=id, process_name=process_name, output_port_name=output_port_name).to_json()
 
 
 @core_app.post("/protocol/{id}/add-viewer/{process_name}/{output_port_name}", tags=["Protocol"],
@@ -221,8 +236,9 @@ def add_viewer_to_process_ouput(id: str,
                                 process_name: str,
                                 output_port_name: str,
                                 _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.add_viewer_to_process_output(
-        protocol_id=id, process_name=process_name, output_port_name=output_port_name).to_json()
+    with update_lock:
+        return ProtocolService.add_viewer_to_process_output(
+            protocol_id=id, process_name=process_name, output_port_name=output_port_name).to_json()
 
 
 ########################## LAYOUT #####################
@@ -267,8 +283,9 @@ def save_outerface_layout(id: str,
 def add_dynamic_input_port_to_process(id: str,
                                       process_name: str,
                                       _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.add_dynamic_input_port_to_process(
-        id, process_name).to_json()
+    with update_lock:
+        return ProtocolService.add_dynamic_input_port_to_process(
+            id, process_name).to_json()
 
 
 @core_app.post("/protocol/{id}/process/{process_name}/dynamic-output", tags=["Protocol"],
@@ -276,8 +293,9 @@ def add_dynamic_input_port_to_process(id: str,
 def add_dynamic_output_port_to_process(id: str,
                                        process_name: str,
                                        _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.add_dynamic_output_port_to_process(
-        id, process_name).to_json()
+    with update_lock:
+        return ProtocolService.add_dynamic_output_port_to_process(
+            id, process_name).to_json()
 
 
 @core_app.delete("/protocol/{id}/process/{process_name}/dynamic-input/{port_name}", tags=["Protocol"],
@@ -286,7 +304,8 @@ def delete_dynamic_input_port_of_process(id: str,
                                          process_name: str,
                                          port_name: str,
                                          _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.delete_dynamic_input_port_of_process(id, process_name, port_name).to_json()
+    with update_lock:
+        return ProtocolService.delete_dynamic_input_port_of_process(id, process_name, port_name).to_json()
 
 
 @core_app.delete("/protocol/{id}/process/{process_name}/dynamic-output/{port_name}", tags=["Protocol"],
@@ -295,7 +314,8 @@ def delete_dynamic_output_port_of_process(id: str,
                                           process_name: str,
                                           port_name: str,
                                           _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.delete_dynamic_output_port_of_process(id, process_name, port_name).to_json()
+    with update_lock:
+        return ProtocolService.delete_dynamic_output_port_of_process(id, process_name, port_name).to_json()
 
 
 @core_app.put("/protocol/{id}/process/{process_name}/dynamic-input/{port_name}", tags=["Protocol"],
@@ -305,7 +325,8 @@ def update_dynamic_input_port_of_process(id: str,
                                          port_name: str,
                                          io_spec: dict,
                                          _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.update_dynamic_input_port_of_process(id, process_name, port_name, io_spec).to_json()
+    with update_lock:
+        return ProtocolService.update_dynamic_input_port_of_process(id, process_name, port_name, io_spec).to_json()
 
 
 @core_app.put("/protocol/{id}/process/{process_name}/dynamic-output/{port_name}", tags=["Protocol"],
@@ -315,7 +336,8 @@ def update_dynamic_output_port_of_process(id: str,
                                           port_name: str,
                                           io_spec: dict,
                                           _=Depends(AuthService.check_user_access_token)) -> dict:
-    return ProtocolService.update_dynamic_output_port_of_process(id, process_name, port_name, io_spec).to_json()
+    with update_lock:
+        return ProtocolService.update_dynamic_output_port_of_process(id, process_name, port_name, io_spec).to_json()
 
 
 ########################## TEMPLATE #####################
@@ -337,6 +359,6 @@ def create_template(id: str,
 @core_app.get("/protocol/{id}/template/download", tags=["Protocol"],
               summary="Download a template from a protocol")
 def download_template(id: str,
-                      _=Depends(AuthService.check_user_access_token)) -> FileResponse:
+                      _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
     template = ProtocolService.generate_protocol_template(id)
     return ResponseHelper.create_file_response_from_json(template.to_json(deep=True), template.name + '.json')
