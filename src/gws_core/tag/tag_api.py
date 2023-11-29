@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import List
+from typing import List, Optional
 
 from fastapi.param_functions import Depends
 
@@ -17,15 +17,52 @@ from ..user.auth_service import AuthService
 from .tag_service import TagService
 
 
-@core_app.get("/tag/{key}", tags=["Tag"], summary='Search tag by key')
-def search_by_key(key: str,
+@core_app.get("/tag/search/key", tags=["Tag"], summary='Search tags by key')
+def search_all_keys(page: Optional[int] = 1,
+                    number_of_items_per_page: Optional[int] = 20,
+                    _=Depends(AuthService.check_user_access_token)):
+    """
+    Search tags by key.
+    """
+
+    return TagService.search_keys(None, page, number_of_items_per_page).to_json()
+
+
+@core_app.get("/tag/search/key/{key}", tags=["Tag"], summary='Search tags by key')
+def search_keys(key: Optional[str],
+                page: Optional[int] = 1,
+                number_of_items_per_page: Optional[int] = 20,
+                _=Depends(AuthService.check_user_access_token)):
+    """
+    Search tags by key.
+    """
+
+    return TagService.search_keys(key, page, number_of_items_per_page).to_json()
+
+
+@core_app.get("/tag/search/key/{key}/value", tags=["Tag"], summary='Search tags by value')
+def search_all_values(key: str,
+                      page: Optional[int] = 1,
+                      number_of_items_per_page: Optional[int] = 20,
+                      _=Depends(AuthService.check_user_access_token)):
+    """
+    Search tags by key.
+    """
+
+    return TagService.search_values(key, None, page, number_of_items_per_page).to_json()
+
+
+@core_app.get("/tag/search/key/{key}/value/{value}", tags=["Tag"], summary='Search tags by value')
+def search_values(key: str,
+                  value: Optional[str],
+                  page: Optional[int] = 1,
+                  number_of_items_per_page: Optional[int] = 20,
                   _=Depends(AuthService.check_user_access_token)):
     """
     Search tags by key.
     """
 
-    tags = TagService.search_by_key(key)
-    return ListJsonable(tags).to_json()
+    return TagService.search_values(key, value, page, number_of_items_per_page).to_json()
 
 
 @core_app.get("/tag", tags=["Tag"], summary='Get all tags')
@@ -36,17 +73,14 @@ def get_all(_=Depends(AuthService.check_user_access_token)):
 
 
 @core_app.post("/tag/{key}/{value}", tags=["Tag"], summary='Register a new tag')
-def register_tag(key: str,
-                 value: str,
-                 _=Depends(AuthService.check_user_access_token)):
-    return TagService.register_tag(key, value).to_json()
-
-
-@core_app.put("/tag/{tag_key}/reorder", tags=["Tag"], summary='Reoarder tags')
-def reorder_tag_values(tag_key: str,
-                       tags_values: List[str],
-                       _=Depends(AuthService.check_user_access_token)):
-    return TagService.reorder_tag_values(tag_key, tags_values).to_json()
+def create_tag(key: str,
+               value: str,
+               _=Depends(AuthService.check_user_access_token)):
+    tag_value_model = TagService.create_tag(key, value)
+    return {
+        'key_model': tag_value_model.tag_key.to_json(),
+        'value_model': tag_value_model.to_json()
+    }
 
 
 @core_app.put("/tag/reorder", tags=["Tag"], summary='Reoarder tags')
@@ -60,7 +94,11 @@ def update_registered_tag_value(key: str,
                                 old_value: str,
                                 new_value: str,
                                 _=Depends(AuthService.check_user_access_token)):
-    return TagService.update_registered_tag_value(key, old_value, new_value).to_json()
+    tag_value_model = TagService.update_registered_tag_value(key, old_value, new_value)
+    return {
+        'key_model': tag_value_model.tag_key.to_json(),
+        'value_model': tag_value_model.to_json()
+    }
 
 
 @core_app.delete("/tag/{key}/{value}", tags=["Tag"], summary='Delete registered tag')

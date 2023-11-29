@@ -12,6 +12,14 @@ from typing_extensions import TypedDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
 
+
+class EntityTagValueFormat(Enum):
+    STRING = "STRING"
+    INTEGER = "INTEGER"
+    FLOAT = "FLOAT"
+    DATETIME = "DATETIME"
+
+
 KEY_VALUE_SEPARATOR: str = ':'
 TAGS_SEPARATOR = ','
 
@@ -258,20 +266,22 @@ class Tag():
 
     @staticmethod
     def from_json(json: TagDict) -> 'Tag':
-        return Tag(key=json.get("key"), value=json.get("value"),
-                   is_propagable=json.get("is_propagable"),
-                   origins=TagOrigins.from_json(json.get("origins")))
+        return Tag(key=json.get("key"), value=json.get("value"))
 
     @staticmethod
     def check_parse_tag_key(tag_key: str) -> str:
-        # TODO check what to do
+        # check that the key doesn't contains '/'
+        if '/' in tag_key:
+            raise ValueError('The tag key must not contains "/"')
         return tag_key
 
     @staticmethod
     def check_parse_tag_str(tag_str: TagValueType) -> TagValueType:
         """Method that check the length of the tag str (key or value) and that the tag str is valid
         """
-        # TODO TO check, do this support int value ?
+        # check that the value doesn't contains '/'
+        if isinstance(tag_str, str) and '/' in tag_str:
+            raise ValueError('The tag value must not contains "/"')
         return tag_str
         # if len(tag_str) > MAX_TAG_LENGTH:
         #     tag_str = tag_str[0: MAX_TAG_LENGTH]

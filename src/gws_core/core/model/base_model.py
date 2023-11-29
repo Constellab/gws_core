@@ -1,4 +1,7 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from typing import List, Type
 
@@ -56,7 +59,7 @@ class BaseModel(Base, PeeweeModel):
         :param field: [description]
         :type field: ForeignKeyField
         """
-        if not cls.foreign_key_exists(field):
+        if not cls.foreign_key_exists(field.column_name):
             cls._schema.create_foreign_key(field)
 
     @classmethod
@@ -72,12 +75,9 @@ class BaseModel(Base, PeeweeModel):
             f"CREATE FULLTEXT INDEX {index_name} ON {cls.get_table_name()}({','.join(columns)})")
 
     @classmethod
-    def foreign_key_exists(cls, field: ForeignKeyField) -> bool:
+    def foreign_key_exists(cls, column_name: str) -> bool:
         foreign_keys: List[ForeignKeyMetadata] = cls._schema.database.get_foreign_keys(cls._table_name)
-        column_name = field.column_name
         return len([x for x in foreign_keys if x.column == column_name]) > 0
-
-    # -- D --
 
     @classmethod
     def drop_table(cls, *args, **kwargs):

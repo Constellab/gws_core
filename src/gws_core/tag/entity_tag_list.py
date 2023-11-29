@@ -8,7 +8,8 @@ from gws_core.core.decorator.transaction import transaction
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag, TagDict, TagOriginType
-from gws_core.tag.tag_model import TagModel
+from gws_core.tag.tag_key_model import TagKeyModel
+from gws_core.tag.tag_value_model import TagValueModel
 
 
 class EntityTagList():
@@ -36,7 +37,7 @@ class EntityTagList():
     def get_tag(self, tag: Tag) -> Optional[EntityTag]:
         """return the tag if it exists
         """
-        tags = [entity_tag for entity_tag in self._tags if entity_tag.get_tag_key() ==
+        tags = [entity_tag for entity_tag in self._tags if entity_tag.tag_key ==
                 tag.key and entity_tag.get_tag_value() == tag.value]
 
         if len(tags) > 0:
@@ -75,9 +76,9 @@ class EntityTagList():
                 return existing_tag
 
          # add tag to the list of tags
-        tag_model = TagModel.register_tag(tag.key, tag.value)
+        tag_model = TagValueModel.create_tag_value_if_not_exists(tag.key, tag.value)
 
-        new_tag = EntityTag.create_entity_tag(tag, tag_model, self._entity_id, self._entity_type)
+        new_tag = EntityTag.create_entity_tag(tag, tag_model.tag_key.value_format, self._entity_id, self._entity_type)
         self._tags.append(new_tag)
         return new_tag
 
@@ -143,16 +144,16 @@ class EntityTagList():
         existing_tag.delete_instance()
 
         # check if the tag is still used by other entities
-        count = EntityTag.count_by_tag(existing_tag.get_tag_key(), existing_tag.get_str_tag_value())
+        count = EntityTag.count_by_tag(existing_tag.tag_key, existing_tag.tag_value)
 
         # if not, delete the tag
         if count == 0:
-            TagModel.delete_tag(tag.key, tag.value)
+            TagValueModel.delete_tag_value(tag.key, tag.value)
 
         self._tags.remove(existing_tag)
 
-    def to_json(self) -> List[TagDict]:
-        return [tag.to_simple_tag().to_json() for tag in self._tags]
+    def to_json(self) -> List[dict]:
+        return [tag.to_json() for tag in self._tags]
 
     def support_multiple_origins(self) -> bool:
         """Return true if the entity support multiple origins for a tag

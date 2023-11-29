@@ -9,8 +9,8 @@ from peewee import Expression, Field
 
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
-from gws_core.tag.tag import Tag
-from gws_core.tag.tag_model import EntityTagValueFormat, TagModel
+from gws_core.tag.tag import EntityTagValueFormat, Tag
+from gws_core.tag.tag_key_model import TagKeyModel
 
 from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
                                            SearchOperatorStr)
@@ -54,7 +54,7 @@ class EntityWithTagSearchBuilder(SearchBuilder):
                        error_if_key_not_exists: bool = False) -> None:
 
         if error_if_key_not_exists:
-            tag_model: TagModel = TagModel.find_by_key(tag.key)
+            tag_model: TagKeyModel = TagKeyModel.find_by_key(tag.key)
 
             if tag_model is None:
                 raise Exception(f"Tag with key {tag.key} does not exist")

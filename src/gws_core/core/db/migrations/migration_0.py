@@ -45,8 +45,10 @@ from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.tag.entity_tag import EntityTag
-from gws_core.tag.tag import TagOriginType
-from gws_core.tag.tag_model import EntityTagValueFormat, TagModel
+from gws_core.tag.tag import EntityTagValueFormat, TagOriginType
+from gws_core.tag.tag_helper import TagHelper
+from gws_core.tag.tag_key_model import TagKeyModel
+from gws_core.tag.tag_value_model import TagValueModel
 from gws_core.tag.taggable_model import TaggableModel
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
@@ -180,7 +182,7 @@ class Migration0310(BrickMigration):
 
         migrator.add_column_if_not_exists(
             TaskModel, TaskModel.source_config_id)
-        migrator.add_column_if_not_exists(TagModel, TagModel.order)
+        migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.order)
         migrator.migrate()
 
         task_models: List[TaskModel] = list(TaskModel.select().where(
@@ -197,7 +199,7 @@ class Migration0310(BrickMigration):
                 task_model.save()
 
         # Update orders in tag models and set lowercase tag names
-        tag_models: List[TagModel] = list(TagModel.select())
+        tag_models: List[TagKeyModel] = list(TagKeyModel.select())
 
         order = 0
         for tag_model in tag_models:
@@ -820,7 +822,7 @@ class Migration0518(BrickMigration):
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
         migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
-        migrator.add_column_if_not_exists(TagModel, TagModel.value_format)
+        migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.value_format)
         migrator.drop_table_if_exists(ReportResourceModel)
         migrator.drop_column_if_exists(ViewConfig, 'config_values')
         migrator.alter_column_type(
@@ -828,15 +830,15 @@ class Migration0518(BrickMigration):
             CharField(max_length=36, null=False, index=True))
         migrator.migrate()
 
-        TagModel.update(value_format=EntityTagValueFormat.STRING).where(
-            TagModel.value_format.is_null()).execute()
+        TagKeyModel.update(value_format=EntityTagValueFormat.STRING).where(
+            TagKeyModel.value_format.is_null()).execute()
 
         entities: List[TaggableModel] = list(
             ResourceModel.select()) + list(Experiment.select()) + list(ViewConfig.select())
 
         for entity in entities:
             try:
-                tags = entity.get_tags()
+                tags = TagHelper.tags_to_list(entity.tags)
 
                 for tag in tags:
                     entity_type: EntityType
@@ -851,9 +853,10 @@ class Migration0518(BrickMigration):
                     if entity_tag is None:
                         tag.origins.add_origin(TagOriginType.USER, CurrentUserService.get_and_check_current_user().id)
 
-                        tag_model = TagModel.register_tag(tag.key, tag.value)
+                        tag_model = TagValueModel.create_tag_value_if_not_exists(tag.key, tag.value)
                         entity_tag = EntityTag.create_entity_tag(
-                            tag=tag, tag_model=tag_model, entity_id=entity.id, entity_type=entity_type)
+                            tag=tag, value_format=tag_model.tag_key.value_format, entity_id=entity.id,
+                            entity_type=entity_type)
             except Exception as exception:
                 Logger.error(
                     f'Error while migrating tags for entity {type(entity).__name__} {entity.id} : {exception}')
