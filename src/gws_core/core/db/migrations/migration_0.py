@@ -812,8 +812,6 @@ class ReportResourceModel(BaseModel):
     class Meta:
         primary_key = CompositeKey("report", "resource")
 
-# TODO check this version
-
 
 @brick_migration('0.5.18', short_description='Migrate tags, new table ReportViewModel')
 class Migration0518(BrickMigration):
