@@ -466,12 +466,15 @@ class ProtocolModel(ProcessModel):
                         f"Circular connexion detected with process '{process.get_instance_name_context()}'")
                 continue
 
-            self._get_all_next_processes_recur(process.instance_name, root_process_name, skip_processes, False,
-                                               check_circular_connexion)
+            if process.instance_name in skip_processes:
+                continue
+
+            all_next_processes.update(self._get_all_next_processes_recur(
+                process.instance_name, root_process_name, skip_processes, False, check_circular_connexion))
 
         # get the next processes of the parent protocol
         if check_parent_protocol and self.parent_protocol:
-            self.parent_protocol.get_all_next_processes(self.instance_name)
+            all_next_processes.update(self.parent_protocol.get_all_next_processes(self.instance_name))
 
         return all_next_processes
 
@@ -517,6 +520,17 @@ class ProtocolModel(ProcessModel):
         """
         for process in self.processes.values():
             if not process.is_success and not process.is_source_task() and not process.is_sink_task():
+                return False
+        return True
+
+    def all_processes_are_draft(self) -> bool:
+        """Return True if all the processes are in draft (except the source and sink task)
+
+        :return: True if all the processes are in draft
+        :rtype: bool
+        """
+        for process in self.processes.values():
+            if not process.is_draft and not process.is_source_task() and not process.is_sink_task():
                 return False
         return True
 
@@ -964,7 +978,7 @@ class ProtocolModel(ProcessModel):
         for outerface in to_delete:
             self.remove_outerface(outerface.name)
 
-    def remove_outerface(self, name: str) -> Set['ProtocolModel']:
+    def remove_outerface(self, name: str) -> None:
         if not name in self.outerfaces:
             raise BadRequestException(
                 f"The protocol '{self.get_instance_name_context()}' does not have an outerface named '{name}'")
@@ -1121,14 +1135,12 @@ class ProtocolModel(ProcessModel):
     def mark_as_partially_run(self):
 
         # check if there is any process that is finished
-        if self.has_finished_processes():
-            if self.all_processes_are_success():
-                self.mark_as_success()
-            else:
-                self._mark_as_partially_run()
-        else:
-            # if there is no finished process, mark as draft
+        if self.all_processes_are_draft():
             self.mark_as_draft()
+        elif self.all_processes_are_success():
+            self.mark_as_success()
+        else:
+            self._mark_as_partially_run()
 
         if self.parent_protocol and (self.parent_protocol.is_finished or self.parent_protocol.is_partially_run):
             self.parent_protocol.mark_as_partially_run()
