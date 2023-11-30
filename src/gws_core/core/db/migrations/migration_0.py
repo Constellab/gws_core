@@ -821,6 +821,7 @@ class Migration060(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
         migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.value_format)
+        migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.is_propagable)
         migrator.drop_table_if_exists(ReportResourceModel)
         migrator.drop_column_if_exists(ViewConfig, 'config_values')
         migrator.alter_column_type(
