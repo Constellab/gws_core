@@ -813,8 +813,8 @@ class ReportResourceModel(BaseModel):
         primary_key = CompositeKey("report", "resource")
 
 
-@brick_migration('0.5.18', short_description='Migrate tags, new table ReportViewModel')
-class Migration0518(BrickMigration):
+@brick_migration('0.6.0', short_description='Migrate tags, new table ReportViewModel')
+class Migration060(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
