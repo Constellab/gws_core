@@ -81,18 +81,6 @@ def extract_node_from_folder(id: str,
     return result.to_json()
 
 
-# make the node_path variable supports slashes and dots
-@core_app.get("/fs-node/{id}/folder/download/{node_path:path}", tags=["Files"],
-              summary="Download the node from a folder")
-def download_fsnode_from_folder(id: str,
-                                node_path: str,
-                                _=Depends(AuthService.check_user_access_token)) -> FileResponse:
-    """
-    Download the node in a folder
-    """
-    return FsNodeService.download_fsnode_from_folder(folder_id=id, file_path=node_path)
-
-
 class SubFilePath(TypedDict):
     sub_file_path: str
 

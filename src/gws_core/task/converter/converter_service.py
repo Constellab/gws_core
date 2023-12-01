@@ -8,7 +8,6 @@ from typing import List, Type
 
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_tasks import FsNodeExtractor
-from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.resource import Resource
 from gws_core.task.converter.exporter import ResourceExporter
 from gws_core.task.plug import Sink
@@ -52,7 +51,7 @@ class ConverterService:
         protocol.add_source('source', resource_model_id, importer << ResourceImporter.input_name)
 
         # Add sink and connect it
-        protocol.add_sink('sink', importer >> ResourceImporter.output_name)
+        sink = protocol.add_sink('sink', importer >> ResourceImporter.output_name)
 
         # run the experiment
         try:
@@ -64,7 +63,8 @@ class ConverterService:
             raise exception
 
         # return the resource model of the sink process
-        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
+        sink.refresh()
+        return sink.get_input_resource_model(Sink.input_name)
 
     ################################################ EXPORTER ################################################
 
@@ -97,18 +97,38 @@ class ConverterService:
         return task_typings[0]
 
     @classmethod
-    def call_exporter_directly(
-            cls, resource_model_id: str, exporter_typing_name: str, params: ConfigParamsDict) -> FSNode:
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
+    def call_exporter(
+            cls, resource_model_id: str, exporter_typing_name: str, params: ConfigParamsDict) -> ResourceModel:
+        # Check that the resource exists
+        resource_model = ResourceModel.get_by_id_and_check(resource_model_id)
 
-        resource: Resource = resource_model.get_resource()
+        # Create an experiment containing 1 source, 1 extractor , 1 sink
+        experiment: IExperiment = IExperiment(
+            None, title=f"{resource_model.name} exporter", type_=ExperimentType.EXPORTER)
+        protocol: IProtocol = experiment.get_protocol()
 
-        if isinstance(resource, FSNode):
-            return resource
-
+        # Add the importer and the connector
         exporter_type: Type[ResourceExporter] = TypingManager.get_type_from_name(exporter_typing_name)
+        extractor: IProcess = protocol.add_process(exporter_type, 'exporter', params)
 
-        return exporter_type.call(resource, params)
+        # Add source and connect it,
+        protocol.add_source('source', resource_model_id, extractor << 'source')
+
+        # Add sink and connect it, don't flag the resource
+        sink = protocol.add_sink('sink', extractor >> 'target', False)
+
+        # run the experiment
+        try:
+            experiment.run()
+        except Exception as exception:
+            if not experiment.is_running():
+                # delete experiment if there was an error
+                experiment.delete()
+            raise exception
+
+        # return the resource model of the sink process
+        sink.refresh()
+        return sink.get_input_resource_model(Sink.input_name)
 
     ################################################ FILE EXTRACTOR ################################################
 
@@ -130,7 +150,7 @@ class ConverterService:
         protocol.add_source('source', folder_model_id, extractor << 'source')
 
         # Add sink and connect it
-        protocol.add_sink('sink', extractor >> 'target')
+        sink = protocol.add_sink('sink', extractor >> 'target')
 
         #  run the experiment
         try:
@@ -142,4 +162,5 @@ class ConverterService:
             raise exception
 
         # return the resource model of the sink process
-        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
+        sink.refresh()
+        return sink.get_input_resource_model(Sink.input_name)

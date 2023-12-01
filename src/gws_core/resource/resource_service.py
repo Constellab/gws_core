@@ -5,7 +5,6 @@
 
 from typing import List, Optional, Type
 
-from fastapi.responses import FileResponse
 from peewee import ModelSelect
 
 from gws_core.config.config_types import ConfigParamsDict
@@ -15,8 +14,6 @@ from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
-from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.file.fs_node import FSNode
 from gws_core.process.process_interface import IProcess
 from gws_core.project.project import Project
 from gws_core.protocol.protocol_interface import IProtocol
@@ -27,7 +24,6 @@ from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.share.resource_downloader_http import ResourceDownloaderHttp
 from gws_core.share.shared_resource import SharedResource
-from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.plug import Sink
 from gws_core.task.task_model import TaskModel
 
@@ -290,13 +286,7 @@ class ResourceService(BaseService):
         view_config.last_modified_at = DateHelper.now_utc()
         view_config.save()
 
-        return {
-            "view": view_dict,
-            "resource_id": view_config.resource_model.id,
-            "view_config": view_config.to_json(),
-            "title": view_config.title,
-            "view_type": view.get_type(),
-        }
+        return CallViewResult(view_dict, view_config.resource_model.id, view_config, view_config.title, view.get_type())
 
     ############################# SEARCH ###########################
 
@@ -329,23 +319,13 @@ class ResourceService(BaseService):
         return Paginator(
             model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 
-    ############################# DOWNLOAD ###########################
-
-    @classmethod
-    def download_resource(cls, id: str, exporter_typing_name: str, params: ConfigParamsDict) -> FileResponse:
-
-        fs_node: FSNode = ConverterService.call_exporter_directly(
-            id, exporter_typing_name, params)
-
-        return FileHelper.create_file_response(fs_node.path, fs_node.get_default_name())
-
     ############################# SHARED RESOURCE ###########################
 
     @classmethod
     def get_shared_resource_origin_info(cls, resource_model_id: str) -> SharedResource:
         return SharedResource.get_and_check_entity_origin(resource_model_id)
 
-    ############################# DOWNLOAD RESOURCE ###########################
+    ############################# UPLOAD RESOURCE ###########################
 
     @classmethod
     def upload_resource_from_link(cls, link: str, uncompress_options: str) -> ResourceModel:

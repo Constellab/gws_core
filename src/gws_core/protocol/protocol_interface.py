@@ -217,17 +217,19 @@ class IProtocol(IProcess):
         self.add_connector(source >> Source.output_name, in_port)
         return source
 
-    def add_sink(self, instance_name: str, out_port: Tuple[ProcessModel, str]) -> ITask:
+    def add_sink(self, instance_name: str, out_port: Tuple[ProcessModel, str], flag_resource: bool = True) -> ITask:
         """Add a sink task to the protocol that receive the out_port resource
 
         :param instance_name: instance name of the task
         :type instance_name: str
         :param out_port: out_port connect to connect to the sink
         :type out_port: OutPort
+        :param flag_resource: flag the resource, defaults to True
+        :type flag_resource: bool, optional
         :return: [description]
         :rtype: ITask
         """
-        sink = self.add_process(Sink, instance_name)
+        sink = self.add_process(Sink, instance_name, {Sink.flag_config_name: flag_resource})
         self.add_connector(out_port, sink << Sink.input_name)
         return sink
 

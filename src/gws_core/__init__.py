@@ -160,6 +160,7 @@ from .impl.file.file_store import FileStore as FileStore
 from .impl.file.file_tasks import FsNodeExtractor as FsNodeExtractor
 from .impl.file.file_tasks import WriteToJsonFile as WriteToJsonFile
 from .impl.file.folder import Folder as Folder
+from .impl.file.folder_task import FolderExporter as FolderExporter
 from .impl.file.fs_node import FSNode as FSNode
 from .impl.file.fs_node_model import FSNodeModel as FSNodeModel
 from .impl.file.fs_node_service import FsNodeService as FsNodeService

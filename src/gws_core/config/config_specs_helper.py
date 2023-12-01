@@ -27,6 +27,9 @@ class ConfigSpecsHelper():
         """
         json_: Dict[str, Any] = {}
         for key, spec in specs.items():
+            # skip private params
+            if spec.visibility == "private":
+                continue
             json_[key] = spec.to_json()
 
         return json_

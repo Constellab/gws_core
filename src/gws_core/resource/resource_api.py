@@ -167,19 +167,18 @@ def get_exporter_config(
     return ConverterService.get_resource_exporter_from_name(resource_typing_name).to_json(deep=True)
 
 
-@core_app.get(
-    "/resource/{id}/download/{exporter_typing_name}", tags=["Resources"],
-    summary="Download a resource")
-def download_a_resource(
+@core_app.post("/resource/{id}/export/{exporter_typing_name}", tags=["Resources"],
+               summary="Export a resource")
+def export_resource(
+        id: str,
         exporter_typing_name: str,
-        request: Request,
-        id=str,
-        _=Depends(AuthService.check_user_access_token)) -> FileResponse:
+        params: dict,
+        _=Depends(AuthService.check_user_access_token)) -> dict:
     """
-    Download a file. The access is made with a unique  code generated with get_download_file_url
+    Export a resource.
     """
-    return ResourceService.download_resource(
-        id=id, exporter_typing_name=exporter_typing_name, params=request.query_params)
+    return ConverterService.call_exporter(
+        resource_model_id=id, exporter_typing_name=exporter_typing_name, params=params).to_json()
 
 ############################# RESOURCE TYPE ###########################
 

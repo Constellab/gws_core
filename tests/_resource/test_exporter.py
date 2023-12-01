@@ -15,6 +15,7 @@ from gws_core.task.task_typing import TaskTyping
 from gws_core.test.base_test_case import BaseTestCase
 
 
+# test_exporter
 class TestExporter(BaseTestCase):
 
     def test_get_resource_exporter(self):
@@ -27,8 +28,9 @@ class TestExporter(BaseTestCase):
 
         resource_model: ResourceModel = ResourceModel.save_from_resource(json_, origin=ResourceOrigin.UPLOADED)
 
-        result: File = ConverterService.call_exporter_directly(
+        file_model: ResourceModel = ConverterService.call_exporter(
             resource_model.id, JSONExporter._typing_name, {})
 
-        self.assertTrue(FileHelper.exists_on_os(result.path))
-        self.assertEqual(result.read(), '{"hello": "nice"}')
+        file: File = file_model.get_resource()
+        self.assertTrue(FileHelper.exists_on_os(file.path))
+        self.assertEqual(file.read(), '{"hello": "nice"}')

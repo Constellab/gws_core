@@ -64,6 +64,7 @@ class Sink(Task):
     """
 
     input_name: str = 'resource'
+    flag_config_name: str = 'flag_resource'
 
     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
     config_specs: ConfigSpecs = {

@@ -9,9 +9,11 @@ from gws_core import (BaseTestCase, ConfigParams, FileHelper, Folder,
                       IExperiment, LocalFileStore, OutputSpec, OutputSpecs,
                       Settings, Task, TaskInputs, TaskOutputs, task_decorator)
 from gws_core.impl.file.file import File
+from gws_core.impl.file.folder_task import FolderExporter
 from gws_core.impl.text.text_view import SimpleTextView
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.task.converter.converter_service import ConverterService
+from gws_core.task.task_runner import TaskRunner
 
 
 @task_decorator("CreateFolderTest")
@@ -103,3 +105,24 @@ class TestFolder(BaseTestCase):
         sub_file: File = sub_file_model.get_resource()
         self.assertTrue(isinstance(sub_file, File))
         self.assertEqual(sub_file.read(), 'test')
+
+    def test_folder_exporter(self):
+        temp = Settings.make_temp_dir()
+        folder: Folder = Folder(temp)
+        sub_file_path = folder.create_empty_file_if_not_exist('test.txt')
+        # write test to sub file
+        open(sub_file_path, 'w', encoding='UTF-8').write('test')
+
+        # Call exporter to zip
+        task_runner = TaskRunner(FolderExporter, inputs={'source': folder})
+        result = task_runner.run()
+        target: File = result['target']
+        self.assertTrue(isinstance(target, File))
+        self.assertEqual(target.extension, 'zip')
+
+        # Call exporter to tar.gz
+        task_runner = TaskRunner(FolderExporter, inputs={'source': folder}, params={'compression': 'tar.gz'})
+        result = task_runner.run()
+        target: File = result['target']
+        self.assertTrue(isinstance(target, File))
+        self.assertEqual(target.extension, 'gz')

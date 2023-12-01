@@ -102,16 +102,6 @@ class TestFileService(BaseTestCase):
             file_response = FsNodeService.download_file(fs_node_id=folder_model.id)
             # Check that the file is the same
             self.assertEqual(file_response.filename, 'hello.zip')
-
-            # Download a file in the folder
-            file_response = FsNodeService.download_fsnode_from_folder(folder_model.id, 'test.txt')
-            # Check that the file is the same
-            self.assertEqual(file_response.filename, 'test.txt')
-
-            # Downlaod a sub folder in the folder
-            file_response = FsNodeService.download_fsnode_from_folder(folder_model.id, 'subHello')
-            # Check that the file is the same
-            self.assertEqual(file_response.filename, 'subHello.zip')
         finally:
             for uploaded_file in uploaded_files:
                 uploaded_file.file.close()

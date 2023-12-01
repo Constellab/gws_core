@@ -23,6 +23,8 @@ class ExperimentType(Enum):
     TRANSFORMER = "TRANSFORMER"
     # specific experiment generated from a importer task
     IMPORTER = "IMPORTER"
+    # specific experiment generated from a exporter task
+    EXPORTER = "EXPORTER"
     # specific experiment generated from a fs node extractor
     FS_NODE_EXTRACTOR = "FS_NODE_EXTRACTOR"
     # specific experiment generated from resource downloader

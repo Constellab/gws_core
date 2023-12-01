@@ -12,9 +12,7 @@ from fastapi import UploadFile
 from fastapi.responses import FileResponse
 
 from gws_core.core.exception.gws_exceptions import GWSException
-from gws_core.core.utils.compress.zip import Zip
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_dto import CallViewResult
@@ -25,7 +23,6 @@ from ...core.exception.exceptions.bad_request_exception import \
 from ...core.exception.exceptions.not_found_exception import NotFoundException
 from ...core.service.base_service import BaseService
 from ...model.typing_manager import TypingManager
-from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel, ResourceOrigin
 from ...resource.resource_typing import FileTyping, ResourceTyping
 from .file import File
@@ -41,42 +38,18 @@ class FsNodeService(BaseService):
     @classmethod
     def download_file(cls, fs_node_id: str) -> FileResponse:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(fs_node_id)
-        resource: Resource = resource_model.get_resource()
+        resource: File = resource_model.get_resource()
 
-        if not isinstance(resource, FSNode):
+        if not isinstance(resource, File):
             raise BadRequestException(
-                "Can't download resource because it is not an FsNode")
+                "Can't download resource because it is not an File")
 
-        return cls._download_node(resource)
-
-    @classmethod
-    def download_fsnode_from_folder(cls, folder_id: str, file_path: str) -> FileResponse:
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(folder_id)
-        resource: Resource = resource_model.get_resource()
-
-        if not isinstance(resource, Folder):
-            raise BadRequestException(
-                "Can't download resource because it is not a folder")
-
-        sub_node = resource.get_sub_node(file_path)
-
-        return cls._download_node(sub_node)
-
-    @classmethod
-    def _download_node(cls, node_resource: FSNode) -> FileResponse:
         file_store: FileStore = LocalFileStore.get_default_instance()
-        if not file_store.node_path_exists(node_resource.path):
+        if not file_store.node_path_exists(resource.path):
             raise NotFoundException(
-                f"The file '{node_resource.name}' does not exists on the server. It has been deleted")
+                f"The file does not exists on the server. It has been deleted")
 
-        if isinstance(node_resource, Folder):
-            temp_dir: str = Settings.get_instance().make_temp_dir()
-            filename = node_resource.get_default_name() + '.zip'
-            zip_file = os.path.join(temp_dir, filename)
-            Zip.compress_dir(node_resource.path, zip_file)
-            return FileHelper.create_file_response(zip_file,  filename=filename)
-        else:
-            return FileHelper.create_file_response(node_resource.path, filename=node_resource.get_default_name())
+        return FileHelper.create_file_response(resource.path, filename=resource.get_default_name())
 
     ############################# UPLOAD / CREATION  ###########################
 
