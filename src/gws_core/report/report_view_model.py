@@ -47,6 +47,14 @@ class ReportViewModel(BaseModel):
             ReportViewModel.view.resource_model == resource_id).order_by(
             ReportViewModel.report.last_modified_at.desc())
 
+    @classmethod
+    def get_by_resources(cls, resource_ids: List[str]) -> ModelSelect:
+        return ReportViewModel.select().join(
+            ViewConfig, on=(ReportViewModel.view == ViewConfig.id)).join(
+            Report, on=(ReportViewModel.report == Report.id)).where(
+            ReportViewModel.view.resource_model.in_(resource_ids)).order_by(
+            ReportViewModel.report.last_modified_at.desc())
+
     def save(self, *args, **kwargs) -> 'BaseModel':
         """Use force insert because it is a composite key
         https://stackoverflow.com/questions/30038185/python-peewee-save-doesnt-work-as-expected

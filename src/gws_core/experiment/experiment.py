@@ -13,8 +13,7 @@ from peewee import (BooleanField, CharField, DoubleField, ForeignKeyField,
 
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.entity_navigator.entity_navigator_type import (EntityNav,
-                                                             EntityType,
+from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
@@ -203,6 +202,8 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
         :return: True if it is reset, False otherwise
         :rtype: `bool`
         """
+        from gws_core.report.report_view_model import ReportViewModel
+
         from ..task.task_input_model import TaskInputModel
 
         if not self.is_saved():
@@ -221,6 +222,14 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
             ResourceModel.get_by_experiment(self.id))
         ResourceModel.check_if_any_resource_is_used_in_another_exp(
             output_resources, self.id)
+
+        # check if any resource of this experiment is used in a report
+        resource_ids = [r.id for r in output_resources]
+        report_view_models: List[ReportViewModel] = list(ReportViewModel.get_by_resources(resource_ids))
+        if len(report_view_models) > 0:
+            report_names = list({r.report.title for r in report_view_models})
+            raise BadRequestException(
+                f"Can't reset an experiment because the report(s) {report_names} are using some resource(s) of this experiment")
 
         if self.protocol_model:
             self.protocol_model.reset()
