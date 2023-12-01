@@ -14,6 +14,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.model.db_field import DateTimeUTC
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.core.utils.settings import Settings
 from gws_core.resource.resource_model import ResourceModel
 
 
@@ -95,6 +96,8 @@ class ShareLink(ModelWithUser):
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         json_ = super().to_json(deep, **kwargs)
+
+        json_['link'] = f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/info/{self.token}"
 
         # add the info of the associated entity if it exists
         entity = self.get_model(self.entity_id, self.entity_type)

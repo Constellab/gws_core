@@ -28,8 +28,6 @@ class ExternalLabWithUserInfo(TypedDict):
 
 class ExternalLabService():
 
-    _core_api = 'core-api'
-
     """Class that contains method to communicate with external lab API"""
 
     @classmethod
@@ -38,11 +36,17 @@ class ExternalLabService():
         return ExternalApiService.get(link, raise_exception_if_error=True, timeout=60 * 30)
 
     @classmethod
+    def get_shared_resource_info(cls, lab_api_url: str, token: str) -> Response:
+        """Method that get information about a shared resource"""
+        return ExternalApiService.get(f"{lab_api_url}/{Settings.core_api_route_path()}/share/resource/info/{token}")
+
+    @classmethod
     def mark_shared_object_as_received(cls, lab_api_url: str, entity_type: ShareLinkType,
                                        token: str, current_lab_info: ExternalLabWithUserInfo) -> Response:
         """Method that mark a shared object as received"""
         return ExternalApiService.post(
-            f"{lab_api_url}/{cls._core_api}/share/{entity_type.value}/mark-as-shared/{token}", current_lab_info)
+            f"{lab_api_url}/{Settings.core_api_route_path()}/share/{entity_type.value}/mark-as-shared/{token}",
+            current_lab_info)
 
     @classmethod
     def get_current_lab_info(cls, user: User) -> ExternalLabWithUserInfo:
@@ -59,3 +63,8 @@ class ExternalLabService():
             'space_id': space['id'] if space is not None else None,
             'space_name': space['name'] if space is not None else None
         }
+
+    @classmethod
+    def get_current_lab_route(cls, route: str) -> str:
+        """Get the current lab route"""
+        return f"{Settings.get_instance().get_lab_api_url()}/{Settings.core_api_route_path()}/{route}"

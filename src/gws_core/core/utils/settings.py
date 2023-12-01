@@ -139,6 +139,14 @@ class Settings():
         return os.environ.get("LAB_DEV_API_URL")
 
     @classmethod
+    def get_lab_api_url(cls) -> str:
+        return cls.get_lab_prod_api_url() if cls.is_prod_mode() else cls.get_lab_dev_api_url()
+
+    @classmethod
+    def core_api_route_path(cls) -> str:
+        return "core-api"
+
+    @classmethod
     def get_lab_environment(cls) -> LabEnvironment:
         """Return the environment where the lab run
         ON_CLOUD : the lab is running on the cloud
@@ -405,9 +413,6 @@ class Settings():
 
     def set_pip_freeze(self, pip_freeze: List[str]):
         self.data["pip_freeze"] = pip_freeze
-
-    def get_lab_api_url(self) -> str:
-        return self.get_lab_prod_api_url() if self.is_prod_mode() else self.get_lab_dev_api_url()
 
     # BRICK MIGRATION
 

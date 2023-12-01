@@ -21,6 +21,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dict import TypingStatus
 from gws_core.project.model_with_project import ModelWithProject
 from gws_core.project.project import Project
+from gws_core.resource.resource_dto import ResourceDictDTO
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -539,7 +540,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
         :rtype: dict, str
         """
 
-        _json = super().to_json(deep=deep, **kwargs)
+        _json: ResourceDictDTO = super().to_json(deep=deep, **kwargs)
 
         if self.fs_node_model:
             _json["fs_node"] = self.fs_node_model.to_json()

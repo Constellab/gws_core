@@ -60,7 +60,7 @@ class ResourceDownloaderBase(Task):
             return {'resource': File(resource_file)}
 
         if uncompress_option == 'no':
-            self.log_info_message("Saving file compressed file")
+            self.log_info_message("Saving compressed file")
             return {'resource': File(resource_file)}
 
         # Convert the zip file to a resource

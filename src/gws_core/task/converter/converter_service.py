@@ -54,13 +54,7 @@ class ConverterService:
         sink = protocol.add_sink('sink', importer >> ResourceImporter.output_name)
 
         # run the experiment
-        try:
-            experiment.run()
-        except Exception as exception:
-            if not experiment.is_running():
-                # delete experiment if there was an error
-                experiment.delete()
-            raise exception
+        experiment.run(auto_delete_if_error=True)
 
         # return the resource model of the sink process
         sink.refresh()
@@ -118,13 +112,7 @@ class ConverterService:
         sink = protocol.add_sink('sink', extractor >> 'target', False)
 
         # run the experiment
-        try:
-            experiment.run()
-        except Exception as exception:
-            if not experiment.is_running():
-                # delete experiment if there was an error
-                experiment.delete()
-            raise exception
+        experiment.run(auto_delete_if_error=True)
 
         # return the resource model of the sink process
         sink.refresh()
@@ -153,13 +141,7 @@ class ConverterService:
         sink = protocol.add_sink('sink', extractor >> 'target')
 
         #  run the experiment
-        try:
-            experiment.run()
-        except Exception as exception:
-            if not experiment.is_running():
-                # delete experiment if there was an error
-                experiment.delete()
-            raise exception
+        experiment.run(auto_delete_if_error=True)
 
         # return the resource model of the sink process
         sink.refresh()

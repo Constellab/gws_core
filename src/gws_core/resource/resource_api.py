@@ -227,7 +227,8 @@ class ImportDto(BaseModel):
     uncompress_option: str
 
 
-@core_app.post("/resource/upload-from-link", tags=["Share"], summary="Download a resource", response_model=None)
+@core_app.post("/resource/upload-from-link", tags=["Share"],
+               summary="Download a resource from an external link", response_model=None)
 def upload_resource_from_link(import_dto: ImportDto,
                               _=Depends(AuthService.check_user_access_token)) -> dict:
     return ResourceService.upload_resource_from_link(import_dto.url, import_dto.uncompress_option).to_json()

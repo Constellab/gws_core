@@ -1,6 +1,10 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 
-from typing import Any, Dict, Optional, Type
+from typing import Dict, Optional, Type
 
 from peewee import ModelSelect
 
@@ -10,7 +14,7 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.model.base import Base
 from ..core.model.model import Model
 from ..core.utils.logger import Logger
-from ..model.typing import Typing
+from ..model.typing import Typing, TypingNameObj
 
 
 class TypingManager:
@@ -155,3 +159,17 @@ class TypingManager:
     @classmethod
     def get_typings(cls) -> Dict[str, Typing]:
         return cls._typings_before_save
+
+    @classmethod
+    def check_typing_name_compatibility(cls, typing_name: str) -> None:
+        """Method to check if the typing name is compatible with the current lab
+        """
+        if not typing_name:
+            raise Exception(f'The typing name is empty.')
+        typing = TypingNameObj.from_typing_name(typing_name)
+
+        if not BrickHelper.brick_is_loaded(typing.brick_name):
+            raise Exception(f'Brick {typing.brick_name} is not loaded.')
+
+        # check that the type exist
+        TypingManager.get_typing_from_name_and_check(typing_name)

@@ -5,7 +5,7 @@
 
 
 import copy
-from typing import Any, Dict, Type
+from typing import Any, Dict, List, Type
 
 from pandas import DataFrame
 
@@ -16,6 +16,7 @@ from gws_core.resource.kv_store import KVStore
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
+from gws_core.tag.tag import Tag
 
 
 class ResourceFactory():
@@ -28,7 +29,8 @@ class ResourceFactory():
     @classmethod
     def create_resource(cls, resource_type: Type[Resource],
                         kv_store: KVStore, data: Dict[str, Any],
-                        resource_model_id: str = None, name: str = None) -> Resource:
+                        resource_model_id: str = None, name: str = None,
+                        tags: List[Tag] = None) -> Resource:
         resource: Resource = resource_type()
 
         if resource_model_id:
@@ -37,6 +39,9 @@ class ResourceFactory():
 
         if name:
             resource.name = name
+
+        if tags:
+            resource.tags.add_tags(tags)
 
         cls._send_fields_to_resource(resource, kv_store=kv_store, data=data)
         return resource

@@ -13,12 +13,15 @@ from gws_core.core.service.external_lab_service import (
     ExternalLabService, ExternalLabWithUserInfo)
 from gws_core.core.utils.compress.zip import Zip
 from gws_core.core.utils.settings import Settings
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
+from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag import TagDict
 from gws_core.user.user import User
 
 from .resource_model import ResourceModel
@@ -32,6 +35,7 @@ class ZipResource(TypedDict):
     data: dict
     parent_resource_id: str
     kvstore_dir_name: Optional[str]
+    tags: TagDict
 
     # Name of the file or directory if the resource is a FsNode
     fs_node_name: Optional[str]
@@ -80,6 +84,9 @@ class ResourceZipper():
 
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
 
+        resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource_id)
+        tags_dict = [tag.to_simple_tag().to_json() for tag in resource_tags.get_tags()]
+
         resource_zip: ZipResource = {
             'id': resource_model.id,
             'name': resource_model.name,
@@ -88,7 +95,8 @@ class ResourceZipper():
             'data': resource_model.data,
             'parent_resource_id': parent_resource_id,
             'kvstore_dir_name': None,
-            'fs_node_name': None
+            'fs_node_name': None,
+            'tags': tags_dict
         }
 
         resource_index = self._get_next_resource_index()
@@ -126,8 +134,8 @@ class ResourceZipper():
                 'Only ResourceSet is supported other sub class of ResourceListBase are not supported yet.')
 
         if isinstance(resource, ResourceSet):
-            for child_resource in resource.get_resources_as_set():
-                self.add_resource_model(child_resource._model_id, resource_id)
+            for child_id in resource.get_resource_ids():
+                self.add_resource_model(child_id, resource_id)
 
     def _get_next_resource_index(self) -> int:
         return len(self.resource_info['children_resources'])\

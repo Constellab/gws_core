@@ -343,16 +343,10 @@ class ResourceService(BaseService):
         })
 
         # Add sink and connect it
-        protocol.add_sink('sink', importer >> 'resource')
+        sink = protocol.add_sink('sink', importer >> 'resource')
 
-        # run the experiment
-        try:
-            experiment.run()
-        except Exception as exception:
-            if not experiment.is_running():
-                # delete experiment if there was an error
-                experiment.delete()
-            raise exception
+        experiment.run()
 
         # return the resource model of the sink process
-        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
+        sink.refresh()
+        return sink.get_input_resource_model(Sink.input_name)

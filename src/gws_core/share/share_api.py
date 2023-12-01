@@ -10,6 +10,8 @@ from fastapi.responses import FileResponse
 from gws_core.core_app import core_app
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.share.share_link import ShareLinkType
+from gws_core.share.shared_dto import (ShareEntityInfoDTO,
+                                       ShareEntityZippedResponseDTO)
 from gws_core.user.auth_service import AuthService
 
 from .share_service import ShareService
@@ -30,11 +32,29 @@ def get_shared_to_list(entity_type: ShareLinkType,
     return ShareService.get_shared_to_list(entity_type, entity_id).to_json()
 
 
+# Open route to get info about a shared entity
+@core_app.get("/share/info/{token}", tags=["Share"],
+              summary="Get info about a shared entity")
+def get_share_entity_info(token: str) -> ShareEntityInfoDTO:
+    return ShareService.get_share_entity_info(token)
+
+
+# Open zip the shared entity
+@core_app.post("/share/zip-entity/{token}", tags=["Share"], summary="Zip the shared entity")
+def zip_entity(token: str) -> ShareEntityZippedResponseDTO:
+    return ShareService.zip_shared_entity(token)
+
+
+# Open route to download a resource
+@core_app.get("/share/download/{token}/{zipped_entity_id}", tags=["Share"], summary="Download a zipped entity")
+def download_resource(token: str, zipped_entity_id: str) -> FileResponse:
+    file_path = ShareService.download_zipped_entity(token, zipped_entity_id)
+    return FileHelper.create_file_response(file_path)
+
 ################################ RESOURCE ################################
 
 
 # Open route to download a resource
 @core_app.get("/share/resource/download/{token}", tags=["Share"], summary="Download a resource")
-def download_resource(token: str) -> FileResponse:
-    zip_path = ShareService.zip_resource_from_token(token)
-    return FileHelper.create_file_response(zip_path)
+def old_download_resource(token: str) -> FileResponse:
+    raise Exception("The shared link is deprecated, please regenerate it in the new gws_core v0.6.1 vor more ersion")

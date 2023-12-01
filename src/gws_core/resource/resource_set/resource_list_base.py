@@ -30,7 +30,7 @@ class ResourceListBase(Resource):
     __constant_resource_ids__: Set[str] = None
 
     @abstractmethod
-    def _get_resource_ids(self) -> Set[str]:
+    def get_resource_ids(self) -> Set[str]:
         raise NotImplementedError()
 
     @abstractmethod
@@ -44,7 +44,7 @@ class ResourceListBase(Resource):
         return self.__constant_resource_ids__ is not None and resource_uid in self.__constant_resource_ids__
 
     def _get_resource_by_model_id(self, resource_model_id: str) -> Resource:
-        if not resource_model_id in self._get_resource_ids():
+        if not resource_model_id in self.get_resource_ids():
             raise Exception(f"The resource with id {resource_model_id} is not in the resource list")
 
         from ..resource_model import ResourceModel
@@ -69,7 +69,7 @@ class ResourceListBase(Resource):
 
     def _get_all_resource_models(self) -> List[ResourceModel]:
         from ..resource_model import ResourceModel
-        resource_ids = list(self._get_resource_ids())
+        resource_ids = list(self.get_resource_ids())
 
         if not resource_ids:
             return list()

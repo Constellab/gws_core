@@ -37,7 +37,7 @@ class ResourceList(ResourceListBase):
 
         return self._resources
 
-    def _get_resource_ids(self) -> Set[str]:
+    def get_resource_ids(self) -> Set[str]:
         return set(self._resource_ids)
 
     def get_resources_as_set(self) -> Set[Resource]:

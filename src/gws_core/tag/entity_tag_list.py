@@ -7,8 +7,7 @@ from typing import List, Optional
 from gws_core.core.decorator.transaction import transaction
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
-from gws_core.tag.tag import Tag, TagDict, TagOriginType
-from gws_core.tag.tag_key_model import TagKeyModel
+from gws_core.tag.tag import Tag, TagOriginType
 from gws_core.tag.tag_value_model import TagValueModel
 
 

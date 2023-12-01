@@ -55,6 +55,7 @@ class TagDict(TypedDict):
     key: str
     value: str
     is_user_origin: bool
+    is_propagable: bool
 
 
 class TagOrigin():
@@ -248,6 +249,7 @@ class Tag():
             "key": self.key,
             "value": self.get_str_value(),
             "is_user_origin": self.origins.is_user_origin(),
+            "is_propagable": self.is_propagable
         }
 
     # TODO to remove once old tags are not supported
@@ -266,7 +268,7 @@ class Tag():
 
     @staticmethod
     def from_json(json: TagDict) -> 'Tag':
-        return Tag(key=json.get("key"), value=json.get("value"))
+        return Tag(key=json.get("key"), value=json.get("value"), is_propagable=json.get("is_propagable"))
 
     @staticmethod
     def check_parse_tag_key(tag_key: str) -> str:

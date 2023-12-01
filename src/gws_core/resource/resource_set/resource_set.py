@@ -3,9 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, Set
+from typing import Dict, List, Set
 
 from gws_core.resource.r_field.dict_r_field import DictRField
+from gws_core.resource.resource_model import ResourceModel
 
 from ..resource import Resource
 from ..resource_decorator import resource_decorator
@@ -38,8 +39,11 @@ class ResourceSet(ResourceListBase):
 
         return self._resources
 
-    def _get_resource_ids(self) -> Set[str]:
+    def get_resource_ids(self) -> Set[str]:
         return set(self._resource_ids.values())
+
+    def get_resource_models(self) -> List[ResourceModel]:
+        return [ResourceModel.get_by_id_and_check(resource_id) for resource_id in self.get_resource_ids()]
 
     def get_resources_as_set(self) -> Set[Resource]:
         return set(self.get_resources().values())

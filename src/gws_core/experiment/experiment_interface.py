@@ -69,7 +69,7 @@ class IExperiment:
         """
         return self._protocol
 
-    def run(self) -> None:
+    def run(self, auto_delete_if_error: bool = False) -> None:
         """execute the experiment, after that the resource should be generated and can be retrieve by process
         """
 
@@ -82,6 +82,8 @@ class IExperiment:
         self.refresh()
 
         if self._experiment.is_error:
+            if auto_delete_if_error:
+                self.delete()
             raise Exception(self._experiment.error_info['detail'])
 
         # when stop manually the experiment, wait a bit for the status to be updated

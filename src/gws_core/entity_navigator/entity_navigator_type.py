@@ -92,6 +92,9 @@ class NavigableEntitySet(Generic[GenericNavigableEntity]):
     def get_as_list(self) -> List[GenericNavigableEntity]:
         return list(self._entities)
 
+    def has_entity(self, entity_id: str) -> bool:
+        return entity_id in self.get_entity_ids()
+
     def __len__(self):
         return len(self._entities)
 

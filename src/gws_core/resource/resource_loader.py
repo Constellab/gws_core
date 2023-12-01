@@ -21,6 +21,7 @@ from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_factory import ResourceFactory
 from gws_core.resource.resource_set.resource_set import ResourceSet
+from gws_core.tag.tag_helper import TagHelper
 
 from .resource_zipper import ResourceZipper, ZipResource, ZipResourceInfo
 
@@ -88,15 +89,7 @@ class ResourceLoader():
                 f'Zip version {self.info_json["zip_version"]} is not supported.')
 
         for zip_resource in self.get_all_resources():
-            typing = TypingNameObj.from_typing_name(
-                zip_resource['resource_typing_name'])
-
-            if not BrickHelper.brick_is_loaded(typing.brick_name):
-                raise Exception(f'Brick {typing.brick_name} is not loaded.')
-
-            # check that the type exist
-            TypingManager.get_typing_from_name_and_check(
-                zip_resource['resource_typing_name'])
+            TypingManager.check_typing_name_compatibility(zip_resource['resource_typing_name'])
 
     def _load_resource(self, zip_resource: ZipResource) -> Resource:
         # create the kvstore
@@ -111,8 +104,11 @@ class ResourceLoader():
         resource_type: Type[Resource] = TypingManager.get_type_from_name(
             zip_resource['resource_typing_name'])
 
+        tags_dict = zip_resource.get('tags', [])
+        tags = TagHelper.tags_dict_to_list(tags_dict)
+
         resource = ResourceFactory.create_resource(resource_type, kv_store=kv_store, data=zip_resource['data'],
-                                                   name=zip_resource['name'])
+                                                   name=zip_resource['name'], tags=tags)
 
         # generate a new uid for the resource
         resource.uid = Resource.uid.get_default_value()
