@@ -25,6 +25,7 @@ from gws_core.share.shared_entity_info import (SharedEntityInfo,
                                                SharedEntityMode)
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Sink
+from gws_core.user.current_user_service import AuthenticateUser
 from gws_core.user.user import User
 
 from .share_link import ShareLink, ShareLinkType
@@ -99,7 +100,7 @@ class ShareService():
         else:
             raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
 
-        zip_url: str = ExternalLabService.get_current_lab_route(f"/share/zip-entity/{token}")
+        zip_url: str = ExternalLabService.get_current_lab_route(f"share/zip-entity/{token}")
         return ShareEntityInfoDTO(version=cls.VERSION, entity_type=shared_entity_link.entity_type,
                                   entity_id=shared_entity_link.entity_id, entity_object=entity_object,
                                   zip_entity_route=zip_url)
@@ -110,12 +111,13 @@ class ShareService():
 
         zipped_resource: ResourceModel
         if shared_entity_link.entity_type == ShareLinkType.RESOURCE:
-            zipped_resource = cls.zip_resource(shared_entity_link.entity_id, shared_entity_link.created_by)
+            with AuthenticateUser(shared_entity_link.created_by):
+                zipped_resource = cls.zip_resource(shared_entity_link.entity_id, shared_entity_link.created_by)
         else:
             raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
 
         # generate the link to download the zipped resource
-        download_url: str = ExternalLabService.get_current_lab_route(f"/share/download/{token}/{zipped_resource.id}")
+        download_url: str = ExternalLabService.get_current_lab_route(f"share/download/{token}/{zipped_resource.id}")
         return ShareEntityZippedResponseDTO(
             version=cls.VERSION, entity_type=shared_entity_link.entity_type, entity_id=shared_entity_link.entity_id,
             zipped_entity_resource_id=zipped_resource.id, download_entity_route=download_url)
@@ -138,7 +140,7 @@ class ShareService():
             raise Exception('Zip file is not a file')
 
         # check that the generated zip resource was generated from the shared entity of the token
-        if zip_file.get_technical_info('origin_entity_id') != shared_entity.id:
+        if zip_file.get_technical_info('origin_entity_id').value != shared_entity.id:
             raise Exception('Zip file does not contain the shared entity')
 
         return zip_file.path

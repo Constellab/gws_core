@@ -57,4 +57,4 @@ def download_resource(token: str, zipped_entity_id: str) -> FileResponse:
 # Open route to download a resource
 @core_app.get("/share/resource/download/{token}", tags=["Share"], summary="Download a resource")
 def old_download_resource(token: str) -> FileResponse:
-    raise Exception("The shared link is deprecated, please regenerate it in the new gws_core v0.6.1 vor more ersion")
+    raise Exception("The shared link is deprecated, please regenerate it in the new gws_core v0.6.1 or more")

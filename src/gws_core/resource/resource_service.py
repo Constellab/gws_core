@@ -337,13 +337,13 @@ class ResourceService(BaseService):
         protocol: IProtocol = experiment.get_protocol()
 
         # Add the importer and the connector
-        importer: IProcess = protocol.add_process(ResourceDownloaderHttp, 'downloader', {
+        downloader: IProcess = protocol.add_process(ResourceDownloaderHttp, 'downloader', {
             ResourceDownloaderHttp.LINK_PARAM_NAME: link,
             ResourceDownloaderHttp.UNCOMPRESS_PARAM_NAME: uncompress_options
         })
 
         # Add sink and connect it
-        sink = protocol.add_sink('sink', importer >> 'resource')
+        sink = protocol.add_sink('sink', downloader >> ResourceDownloaderHttp.OUTPUT_NAME)
 
         experiment.run()
 

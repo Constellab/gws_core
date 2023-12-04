@@ -14,7 +14,7 @@ from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.settings import Settings
 from gws_core.model.typing_manager import TypingManager
-from gws_core.resource.resource_data import ResourceDict
+from gws_core.resource.resource_dto import ResourceDictDTO
 from gws_core.share.resource_downloader_base import ResourceDownloaderBase
 from gws_core.share.share_link import ShareLinkType
 from gws_core.share.shared_dto import (ShareEntityInfoDTO,
@@ -55,15 +55,14 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
 
         self.link = params['link']
 
-        download_url = self.link
-
-        if self.is_share_resource_link(download_url):
-            download_url = self.prepare_download_from_lab(download_url)
+        download_url: str = self.link
+        if self.is_share_resource_link(self.link):
+            download_url = self.prepare_download_from_lab(self.link)
 
         file_downloader = FileDownloader(Settings.get_instance().make_temp_dir(), self.message_dispatcher)
 
         # download the resource file
-        resource_file = file_downloader.download_file(self.link)
+        resource_file = file_downloader.download_file(download_url)
 
         return self.create_resource_from_file(resource_file, params['uncompress'])
 
@@ -84,11 +83,11 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         if not isinstance(shared_entity_info.entity_object, list):
             raise Exception("The resource is not compatible with the current lab")
 
-        resources: List[ResourceDict] = shared_entity_info.entity_object
+        resources: List[ResourceDictDTO] = shared_entity_info.entity_object
 
         # check if the resources are compatible with the current lab
         for resource in resources:
-            TypingManager.check_typing_name_compatibility(resource['typing_name'])
+            TypingManager.check_typing_name_compatibility(resource['resource_typing_name'])
 
         # Zipping the resource
         self.log_info_message("The resource is compatible with the lab, zipping the resource")
@@ -109,7 +108,9 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         super().run_after_task()
 
         # check if the link is a share link from a lab
-        if self.is_old_share_resource_link(self.link):
+        if self.is_old_share_resource_link(
+                self.link) or self.is_share_resource_link(
+                self.link) and self.resource_loader:
             self.log_info_message(
                 "Marking the resource as received in the origin lab")
             # call the origin lab to mark the resource as received

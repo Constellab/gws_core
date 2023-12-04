@@ -109,3 +109,31 @@ class CurrentUserService:
 
         if not user.is_admin:
             raise UnauthorizedException(detail="Unauthorized: admin required")
+
+
+class AuthenticateUser:
+    """ Context to support with statement to catch exceptions and convert
+    them to S3ServerException"""
+
+    user: User
+
+    was_already_authenticated: bool = False
+
+    def __init__(self, user: User) -> None:
+        self.user = user
+
+    def __enter__(self):
+        if CurrentUserService.get_current_user() is None:
+            CurrentUserService.set_current_user(self.user)
+        else:
+            self.was_already_authenticated = True
+        # Code to set up and acquire resources
+        return self  # You can return an object that you want to use in the with block
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if not self.was_already_authenticated:
+            CurrentUserService.set_current_user(None)
+
+        # raise the exception if exists
+        if exc_value:
+            raise exc_value

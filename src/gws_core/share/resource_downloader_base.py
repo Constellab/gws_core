@@ -32,6 +32,8 @@ class ResourceDownloaderBase(Task):
     Abstract class to aggregate common methods for resource downloader tasks
 
     """
+    OUTPUT_NAME = 'resource'
+
     input_specs: InputSpecs = InputSpecs({})
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
         Resource, human_name='Imported resource', sub_class=True)})
