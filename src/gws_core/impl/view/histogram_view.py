@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Union
+from typing import List, Literal, Union
 
 import numpy
 from pandas import DataFrame
@@ -15,6 +15,8 @@ from gws_core.resource.view.view_types import ViewType
 from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...resource.view.view import View
+
+HistogramMode = Literal["FREQUENCY", "DENSITY", "PROBABILITY"]
 
 
 class HistogramView(View):
@@ -62,15 +64,21 @@ class HistogramView(View):
 
     x_label: str = None
     y_label: str = None
-    nbins: int = 10
-    density: bool = False
+    nbins: int = None
+    mode: HistogramMode = None
     x_tick_labels: List[str] = None
 
     _series: List = None
     _type: ViewType = ViewType.HISTOGRAM
     _title: str = "Histogram"
 
-    def add_data(self, data: List[float] = None, name: str = None):
+    def __init__(self,
+                 nbins: int = 10, mode: HistogramMode = "FREQUENCY"):
+        super().__init__()
+        self.nbins = nbins
+        self.mode = mode
+
+    def add_data(self, data: List[float] = None, name: str = None) -> None:
         """
         Add series of raw data.
 
@@ -92,10 +100,16 @@ class HistogramView(View):
 
         data = NumericHelper.list_to_float(data, remove_none=True)
 
-        hist, bin_edges = numpy.histogram(data, bins=nbins, density=self.density)
-        bin_centers = (bin_edges[:-1] + bin_edges[1:])/2
+        density = self.mode == "DENSITY"
+
+        hist, bin_edges = numpy.histogram(data, bins=nbins, density=density)
+
+        # normalize the histogram
+        if self.mode == "PROBABILITY":
+            hist = hist / hist.sum()
+
         self.add_series(
-            x=bin_centers.tolist(),
+            x=bin_edges.tolist(),
             y=hist.tolist(),
             name=name
         )
@@ -108,7 +122,7 @@ class HistogramView(View):
             raise BadRequestException("The data must be row or column vector")
         return self.add_data(DataframeHelper.flatten_dataframe_by_column(dataframe), name=name)
 
-    def add_series(self, *, x: Union[List[float], List[str]] = None, y: List[float] = None, name: str = None):
+    def add_series(self, x: Union[List[float], List[str]] = None, y: List[float] = None, name: str = None):
         """
         Add series of pre-computed x and y histogram values.
         Vector x is the vector of bin centers and y contains the magnitudes at corresponding x positions.
@@ -142,4 +156,5 @@ class HistogramView(View):
             "x_label": self.x_label,
             "y_label": self.y_label,
             "series": self._series,
+            "mode": self.mode,
         }

@@ -9,11 +9,12 @@ from typing import TYPE_CHECKING, List
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.utils.utils import Utils
 
 from ....config.config_params import ConfigParams
-from ....config.param.param_spec import BoolParam, IntParam, ListParam
+from ....config.param.param_spec import IntParam, ListParam, StrParam
 from ....resource.view.view_types import ViewSpecs, ViewType
-from ...view.histogram_view import HistogramView
+from ...view.histogram_view import HistogramMode, HistogramView
 from .base_table_view import BaseTableView
 from .table_selection import Serie1d
 
@@ -61,24 +62,20 @@ class TableHistogramView(BaseTableView):
         **BaseTableView._specs,
         "series": ListParam(default_value=[]),
         "nbins": IntParam(default_value=10, min_value=0, optional=True, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
-        "density": BoolParam(default_value=False, optional=True, human_name="Density", short_description="True to plot density"),
+        "mode": StrParam(default_value="FREQUENCY", optional=True, human_name="Mode",
+                         allowed_values=Utils.get_literal_values(HistogramMode)),
         **BaseTableView._2d_axis_labels_specs
     }
     _type: ViewType = ViewType.HISTOGRAM
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        nbins = params.get_value("nbins")
-        density = params.get_value("density")
-
         series: List[Serie1d] = Serie1d.from_list(params.get_value("series"))
 
         if len(series) == 0:
             raise BadRequestException('There must be at least one serie')
 
         # create view
-        view = HistogramView()
-        view.nbins = nbins
-        view.density = density
+        view = HistogramView(nbins=params.get_value("nbins"), mode=params.get_value("mode"))
         view.x_label = params.get_value("x_axis_label")
         view.y_label = params.get_value("y_axis_label")
 
