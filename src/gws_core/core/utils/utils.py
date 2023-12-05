@@ -89,7 +89,7 @@ class Utils:
         return value in Utils.get_literal_values(literal_type)
 
     @staticmethod
-    def get_literal_values(literal_type: Any) -> Tuple[Any]:
+    def get_literal_values(literal_type: Any) -> List[Any]:
         """Return the list of literal values
         """
         return list(get_args(literal_type))

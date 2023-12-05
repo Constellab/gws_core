@@ -125,20 +125,6 @@ from .credentials.credentials_type import \
 from .credentials.credentials_type import \
     CredentialsDataS3 as CredentialsDataS3
 from .credentials.credentials_type import CredentialsType as CredentialsType
-# Deprecated
-from .deprecated.dataset.dep_dataset import Dataset as Dataset
-from .deprecated.dataset.tasks.dep_dataset_exporter import \
-    DatasetExporter as DatasetExporter
-from .deprecated.dataset.tasks.dep_dataset_importer import \
-    DatasetImporter as DatasetImporter
-from .deprecated.dep_conda_env_shell import CondaEnvShell as CondaEnvShell
-from .deprecated.dep_metadata_table import MetadataTable as MetadataTable
-from .deprecated.dep_metadata_table_task import \
-    MetadataTableExporter as MetadataTableExporter
-from .deprecated.dep_metadata_table_task import \
-    MetadataTableImporter as MetadataTableImporter
-from .deprecated.dep_pip_env_shell import PipEnvShell as PipEnvShell
-from .deprecated.dep_shell import Shell as Shell
 # Experiment
 from .experiment.experiment import Experiment as Experiment
 from .experiment.experiment_dto import ExperimentDTO as ExperimentDTO

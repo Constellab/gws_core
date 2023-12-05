@@ -18,7 +18,7 @@ from .shell_proxy import ShellProxy
 @task_decorator("PipEnvTask", hide=True)
 class PipEnvTask(BaseEnvShellTask):
     """
-    PipEnvShell task.
+    PipEnvTask task.
 
     This class allows to run python scripts in pipenv virtual environments. It rely on the awesome
     Pipenv module to efficiently automate the management of your venvs.

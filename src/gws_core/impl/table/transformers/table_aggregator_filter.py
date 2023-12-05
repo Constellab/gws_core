@@ -3,11 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from pandas import DataFrame
-
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_data_filter_helper import \
     DataframeDataFilterHelper
+from pandas import DataFrame
 
 from ....config.config_params import ConfigParams
 from ....config.config_types import ConfigSpecs
@@ -18,11 +17,6 @@ from ...table.table import Table
 from ..helper.dataframe_aggregator_helper import DataframeAggregatorHelper
 
 
-# ####################################################################
-#
-# TableAggregatorFilter class
-#
-# ####################################################################
 def get_function_param(axis_name: str) -> StrParam:
     return StrParam(
         human_name="Aggregation function",

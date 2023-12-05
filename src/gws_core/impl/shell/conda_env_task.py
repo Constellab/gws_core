@@ -17,7 +17,7 @@ from .shell_proxy import ShellProxy
 @task_decorator("CondaEnvTask", hide=True)
 class CondaEnvTask(BaseEnvShellTask):
     """
-    CondaEnvShell task.
+    CondaEnvTask task.
 
     This class allows to run python scripts in conda virtual environments. It rely on the awesome
     Conda containerization system to efficiently automate the management of your venvs.
