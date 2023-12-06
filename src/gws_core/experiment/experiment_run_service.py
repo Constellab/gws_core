@@ -118,11 +118,11 @@ class ExperimentRunService():
             experiment.mark_as_error({"detail": error_text,
                                       "unique_code": GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
                                       "context": None, "instance_id": None})
-        cls.run_experiment_process(experiment, protocol_model, process_name)
+        cls._run_experiment_process(experiment, protocol_model, process_name)
 
     @classmethod
-    def run_experiment_process(cls, experiment: Experiment, protocol_model: ProtocolModel,
-                               process_instance_name: str) -> Experiment:
+    def _run_experiment_process(cls, experiment: Experiment, protocol_model: ProtocolModel,
+                                process_instance_name: str) -> Experiment:
         try:
 
             process_model = protocol_model.get_process(process_instance_name)
@@ -142,9 +142,11 @@ class ExperimentRunService():
                 object_id=process_model.id,
             )
 
-            process = Process(target=cls._run_experiment_process, args=(
-                protocol_model.experiment, protocol_model, process_instance_name))
-            process.start()
+            experiment.mark_as_started(os.getpid())
+
+            protocol_model.run_process(process_instance_name)
+            protocol_model = protocol_model.refresh()
+            protocol_model.mark_as_partially_run()
 
             return experiment
 
@@ -153,27 +155,6 @@ class ExperimentRunService():
                 process_model=process_model, exception=err)
 
             process_model.mark_as_error_and_parent(exception)
-
-            raise exception
-
-    @classmethod
-    def _run_experiment_process(cls, experiment: Experiment, protocol_model: ProtocolModel,
-                                process_instance_name: str) -> None:
-        try:
-            experiment.mark_as_started(os.getpid())
-
-            protocol_model.run_process(process_instance_name)
-            protocol_model = protocol_model.refresh()
-            protocol_model.mark_as_partially_run()
-
-        except Exception as err:
-            exception: ExperimentRunException = ExperimentRunException.from_exception(
-                experiment=experiment, exception=err)
-            error: ProcessErrorInfo = {"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
-                                       "context": None, "instance_id": exception.instance_id}
-            experiment = experiment.refresh()
-            experiment.mark_as_error(error)
-
             raise exception
 
     @classmethod
