@@ -4,12 +4,12 @@
 # About us: https://gencovery.com
 import inspect
 import zlib
+from traceback import format_exc
 from typing import Any, Dict, List, Type
 
 from peewee import ForeignKeyField, ModelSelect
 
 from gws_core.core.classes.expression_builder import ExpressionBuilder
-from gws_core.core.exception.exception_helper import ExceptionHelper
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
@@ -265,7 +265,9 @@ class TaskModel(ProcessModel):
         except Exception as err:
 
             # only keep the section inside the task runner to have a clean trace
-            exception_detail = ExceptionHelper.sub_traceback_to_str(err, inspect.getmodule(TaskRunner))
+            # not working when the raised exception is catched and re-raised
+            # exception_detail = ExceptionHelper.sub_traceback_to_str(err, inspect.getmodule(TaskRunner))
+            exception_detail = str(format_exc())
             # log trace error
             self.progress_bar.add_error_message("Here is the error detail :\n" + exception_detail)
             raise ProcessRunException.from_exception(process_model=self, exception=err) from err

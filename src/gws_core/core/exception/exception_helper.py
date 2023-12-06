@@ -32,6 +32,7 @@ class ExceptionHelper():
     @staticmethod
     def sub_traceback_to_str(exception: Exception, module_type: ModuleType) -> str:
         """Method convert a sub section of the stack trace to a string
+        This is not working correctly when the exception is catched and rethrowed
         """
         filtered_stack_trace = ExceptionHelper.filter_traceback(exception.__traceback__, module_type)
 
