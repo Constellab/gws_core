@@ -8,9 +8,6 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, final
 
-from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
-                    ForeignKeyField, ModelDelete, ModelSelect)
-
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (EntityNav,
                                                              EntityType,
@@ -26,6 +23,8 @@ from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_list import TagList
+from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
+                    ForeignKeyField, ModelDelete, ModelSelect)
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -306,6 +305,13 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
                     resource_model.id,
                     other_task.experiment.get_short_name(),
                     other_task.experiment.id)
+
+    @classmethod
+    def replace_resource_typing_name(cls, old_typing_name: str, new_typing_name: str) -> None:
+        """Replace the typing name of all the resource models
+        """
+        ResourceModel.update(resource_typing_name=new_typing_name).where(
+            ResourceModel.resource_typing_name == old_typing_name).execute()
 
     ########################################## RESOURCE ######################################
 

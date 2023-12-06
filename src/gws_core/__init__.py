@@ -78,6 +78,7 @@ from .core.db.db_migration import brick_migration as brick_migration
 from .core.db.mysql import MySQLBase as MySQLBase
 from .core.db.mysql import MySQLDump as MySQLDump
 from .core.db.mysql import MySQLLoad as MySQLLoad
+from .core.db.version import Version as Version
 # Transction
 from .core.decorator.transaction import transaction as transaction
 # Core > DTO
