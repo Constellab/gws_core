@@ -10,7 +10,6 @@ from numpy import NaN
 from pandas import DataFrame, concat, isna
 
 from gws_core.core.utils.utils import Utils
-from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table import Table
 
 # Option to handle the opposite tags during concat. Ex column tags during row contat
@@ -62,11 +61,11 @@ class TableConcatHelper:
                 if column_tags_option == 'merge from first table' or column_tags_option == 'keep first':
                     column_tags = cls._get_column_tags(concat_df, table)
             else:
-                current_table = Table(concat_df, column_tags=column_tags)
                 concat_df = concat([concat_df, table.get_data()])
                 row_tags = row_tags + table.get_row_tags()
 
                 if column_tags_option == 'merge from first table':
+                    current_table = Table(concat_df, column_tags=column_tags)
                     column_tags = cls._merge_column_tags(concat_df, current_table, table)
 
         # add empty tag for each new column
@@ -85,10 +84,6 @@ class TableConcatHelper:
             pass
         else:
             concat_df.fillna(fill_nan, inplace=True)
-
-        # the concatenation might produce duplicate row names in the result, rename them
-        # rename after getting the tags
-        concat_df = DataframeHelper.rename_duplicate_row_names(concat_df)
 
         return Table(concat_df, row_tags=row_tags, column_tags=column_tags)
 

@@ -35,7 +35,7 @@ class TestUtils(TestCase):
 
     def test_uniquify_str_list(self):
         self.assertEqual(Utils.rename_duplicate_in_str_list(['A', 'B', 'A', 'B', 'A', 'A_1']),
-                         ['A', 'B', 'A_1', 'B_1', 'A_2', 'A_1_1'])
+                         ['A', 'B', 'A_1', 'B_1', 'A_2', 'A_3'])
 
     def test_is_primitive(self):
         self.assertTrue(Utils.is_primitive(1))

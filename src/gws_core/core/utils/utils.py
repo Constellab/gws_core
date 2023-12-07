@@ -8,7 +8,7 @@ import re
 from importlib import import_module
 from importlib.util import find_spec
 from json import dumps
-from typing import Any, List, Optional, Set, Tuple, Type, Union, get_args
+from typing import Any, Dict, List, Optional, Set, Tuple, Type, Union, get_args
 
 from numpy import double
 
@@ -134,12 +134,28 @@ class Utils:
     def rename_duplicate_in_str_list(list_: List[str]) -> List[str]:
         """Rename all duplicated element in a list of str with _1, _2... at the end
         """
-        new_list = []
+
+        seen: Dict[str, int] = {}
+        result: List[str] = []
+
+        # store the transformed item with the original item as value
+        # so i we have A, A, A_1, this will store A_1: A and the final result will be A, A_1, A_2
+        new_items: Dict[str, str] = {}
 
         for item in list_:
-            new_list.append(Utils.generate_unique_str_for_list(new_list, item))
+            # if the item is equal to an already transformed item, we use the original item
+            if item in new_items:
+                item = new_items[item]
 
-        return new_list
+            if item in seen:
+                seen[item] += 1
+                new_item = f'{item}_{seen[item]}'
+                result.append(new_item)
+                new_items[new_item] = item
+            else:
+                seen[item] = 0
+                result.append(item)
+        return result
 
     @staticmethod
     def generate_unique_str_for_list(list_: List[str], str_: str) -> str:
