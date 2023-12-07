@@ -12,7 +12,7 @@ from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.dispatched_message import DispatchedMessage
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_level import MessageLevel
-from gws_core.model.typing import TypingNameObj
+from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_register_decorator import typing_registrator
 
 from ..config.config_params import ConfigParams

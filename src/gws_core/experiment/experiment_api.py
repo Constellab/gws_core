@@ -208,6 +208,7 @@ def stop_an_experiment(id: str,
 
 ################################### COPY ##############################
 
+
 @core_app.put("/experiment/{id}/clone", tags=["Experiment"], summary="Clone an experiment")
 def clone_experiment(id: str,
                      _=Depends(AuthService.check_user_access_token)) -> dict:

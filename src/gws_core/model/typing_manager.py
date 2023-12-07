@@ -8,13 +8,15 @@ from typing import Dict, Optional, Type
 
 from peewee import ModelSelect
 
+from gws_core.model.typing_name import TypingNameObj
+
 from ..brick.brick_helper import BrickHelper
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
 from ..core.model.model import Model
 from ..core.utils.logger import Logger
-from ..model.typing import Typing, TypingNameObj
+from ..model.typing import Typing
 
 
 class TypingManager:

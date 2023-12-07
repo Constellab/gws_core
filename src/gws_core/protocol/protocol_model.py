@@ -43,7 +43,7 @@ class ProtocolModel(ProcessModel):
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
-        self._is_loaded = not self.is_saved() or not "graph" in self.data
+        self._is_loaded = not self.is_saved() or not self.data or not "graph" in self.data
         self._processes = {}
         self._interfaces = {}
         self._outerfaces = {}

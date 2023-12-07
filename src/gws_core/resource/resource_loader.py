@@ -7,7 +7,6 @@ import os
 from json import load
 from typing import Dict, List, Type
 
-from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.service.external_lab_service import ExternalLabWithUserInfo
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.core.utils.settings import Settings
@@ -15,7 +14,6 @@ from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
-from gws_core.model.typing import TypingNameObj
 from gws_core.model.typing_manager import TypingManager
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource import Resource

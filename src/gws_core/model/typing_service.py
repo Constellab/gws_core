@@ -1,6 +1,9 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
-
-from typing import Callable, Dict, List, Literal, Type
+from typing import Callable, List, Literal, Type
 
 from peewee import ModelSelect
 
@@ -9,11 +12,11 @@ from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.utils import Utils
-from gws_core.io.io_spec import IOSpec
 from gws_core.io.io_specs import IOSpecs
-from gws_core.model.typing import Typing, TypingNameObj
+from gws_core.model.typing import Typing
 from gws_core.model.typing_dict import TypingObjectType, TypingStatus
 from gws_core.model.typing_manager import TypingManager
+from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_search_builder import TypingSearchBuilder
 from gws_core.process.process import Process
 from gws_core.protocol.protocol_typing import ProtocolTyping
@@ -167,13 +170,6 @@ class TypingService():
 
         for typing in unavailable_types:
             typing.delete_instance()
-
-    @classmethod
-    def search_type_by_name(cls, object_type: TypingObjectType,  name: str,
-                            page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceTyping]:
-        typing_type: Type[Typing] = cls._get_typing_type_from_obj_type(object_type)
-        return Paginator(typing_type.get_by_object_type_and_name(object_type, name),
-                         page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
     def get_typing_by_object_type(cls, object_type: TypingObjectType,

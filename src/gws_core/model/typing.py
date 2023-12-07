@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Type
 from peewee import BooleanField, CharField, ModelSelect
 
 from gws_core.brick.brick_helper import BrickHelper
+from gws_core.model.typing_name import TypingNameObj
 
 from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions.bad_request_exception import \
@@ -24,25 +25,6 @@ from .typing_dict import TypingDict, TypingObjectType, TypingRef, TypingStatus
 #
 # ####################################################################
 SEPARATOR: str = "."
-
-
-class TypingNameObj():
-    object_type: TypingObjectType
-    brick_name: str
-    unique_name: str
-
-    def __init__(self, object_type: TypingObjectType, brick_name: str, unique_name: str) -> None:
-        self.object_type = object_type
-        self.brick_name = brick_name
-        self.unique_name = unique_name
-
-    @staticmethod
-    def from_typing_name(typing_name: str) -> 'TypingNameObj':
-        try:
-            parts: List[str] = typing_name.split(SEPARATOR)
-            return TypingNameObj(object_type=parts[0], brick_name=parts[1], unique_name=parts[2])
-        except:
-            raise BadRequestException(f"The typing name '{typing_name}' is invalid")
 
 
 @json_ignore(["model_type", "related_model_typing_name", "data", "brick", "brick_version", "is_archived"])
@@ -130,7 +112,7 @@ class Typing(Model):
 
     @property
     def typing_name(self) -> str:
-        return Typing.typing_obj_to_str(self.object_type, self.brick, self.unique_name)
+        return TypingNameObj.typing_obj_to_str(self.object_type, self.brick, self.unique_name)
 
     def get_type_status(self) -> TypingStatus:
         # retrieve the task python type
@@ -261,11 +243,6 @@ class Typing(Model):
         super().after_table_creation()
         cls.create_full_text_index(['human_name', 'short_description', 'model_name'], 'I_F_TYP_TXT')
     ############################################# STATIC METHODS #########################################
-
-    # Simple method to build the typing name  = object_type.brick.unique_name
-    @staticmethod
-    def typing_obj_to_str(object_type: str, brick_name: str, unique_name: str) -> str:
-        return object_type + SEPARATOR + brick_name + SEPARATOR + unique_name
 
     @staticmethod
     def typing_name_is_protocol(typing_name: str) -> bool:

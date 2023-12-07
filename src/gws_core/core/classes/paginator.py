@@ -5,10 +5,11 @@
 
 from typing import Any, Callable, Dict, Generic, List, TypeVar
 
-from gws_core.core.classes.jsonable import ListJsonable
 from numpy.core.numeric import Infinity
 from peewee import ModelSelect
 from typing_extensions import TypedDict
+
+from gws_core.core.classes.jsonable import ListJsonable
 
 from ..model.model import Model
 

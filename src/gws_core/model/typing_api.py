@@ -32,17 +32,6 @@ def get_by_object_type(object_type: TypingObjectType,
     return TypingService.get_typing_by_object_type(object_type, page, number_of_items_per_page).to_json()
 
 
-@core_app.get("/typing/object-type/{object_type}/name-search/{name}", tags=["Resource"],
-              summary="Search for a type by name")
-def search_type_by_name(object_type: TypingObjectType,
-                        name: str,
-                        page: Optional[int] = 1,
-                        number_of_items_per_page: Optional[int] = 20,
-                        _=Depends(AuthService.check_user_access_token)) -> dict:
-
-    return TypingService.search_type_by_name(object_type, name, page, number_of_items_per_page).to_json()
-
-
 @core_app.post("/typing/advanced-search", tags=["Typing"], summary="Search typings")
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
