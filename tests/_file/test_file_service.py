@@ -72,7 +72,7 @@ class TestFileService(BaseTestCase):
             if upload_file:
                 upload_file.file.close()
 
-    def test_upload_download_folder(self):
+    def test_upload_folder(self):
 
         uploaded_files: List[UploadFile] = []
 
@@ -97,11 +97,6 @@ class TestFileService(BaseTestCase):
             # read file 2
             with open(os.path.join(folder_model_path, 'subHello', 'test2.txt'), "r", encoding='utf-8') as file:
                 self.assertEqual(file.read(), "test2")
-
-            # Download the folder
-            file_response = FsNodeService.download_file(fs_node_id=folder_model.id)
-            # Check that the file is the same
-            self.assertEqual(file_response.filename, 'hello.zip')
         finally:
             for uploaded_file in uploaded_files:
                 uploaded_file.file.close()

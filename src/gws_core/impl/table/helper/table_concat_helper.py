@@ -61,12 +61,14 @@ class TableConcatHelper:
                 if column_tags_option == 'merge from first table' or column_tags_option == 'keep first':
                     column_tags = cls._get_column_tags(concat_df, table)
             else:
-                concat_df = concat([concat_df, table.get_data()])
+                temp_df = concat([concat_df, table.get_data()])
                 row_tags = row_tags + table.get_row_tags()
 
                 if column_tags_option == 'merge from first table':
                     current_table = Table(concat_df, column_tags=column_tags)
-                    column_tags = cls._merge_column_tags(concat_df, current_table, table)
+                    column_tags = cls._merge_column_tags(temp_df, current_table, table)
+
+                concat_df = temp_df
 
         # add empty tag for each new column
         if column_tags_option == 'keep first':

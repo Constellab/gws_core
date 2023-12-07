@@ -151,7 +151,7 @@ class TypingService():
         return pagination
 
     @classmethod
-    def delete_unavailable_typings(cls, brick_name: str = None) -> List[str]:
+    def delete_unavailable_typings(cls, brick_name: str = None) -> None:
         """
         Remove typing names that are not available in the database
         """

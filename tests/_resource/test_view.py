@@ -206,7 +206,7 @@ class TestView(BaseTestCase):
 
         # re-call the view from the view config
         view_result_2 = ResourceService.call_view_from_view_config(view_config.id)
-        self.assert_json(view_result.view, view_result_2['view'])
+        self.assert_json(view_result.view, view_result_2.view)
 
         # Check that the view is listed in the views to delete
         views_to_delete = ViewConfigService.get_old_views_to_delete()

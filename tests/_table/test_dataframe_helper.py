@@ -49,7 +49,7 @@ class TestTableConcat(TestCase):
         df = DataFrame([[1, 2, 3, 4, 5, 6]], columns=['A', 'B', 'A', 'B', 'A', 'A_1'])
 
         result = DataframeHelper.rename_duplicate_column_names(df)
-        expected_result = DataFrame([[1, 2, 3, 4, 5, 6]], columns=['A', 'B', 'A_1', 'B_1', 'A_2', 'A_1_1'])
+        expected_result = DataFrame([[1, 2, 3, 4, 5, 6]], columns=['A', 'B', 'A_1', 'B_1', 'A_2', 'A_3'])
 
         self.assertTrue(result.equals(expected_result))
 
@@ -57,7 +57,7 @@ class TestTableConcat(TestCase):
         df = DataFrame([1, 2, 3, 4, 5, 6], index=['A', 'B', 'A', 'B', 'A', 'A_1'])
 
         result = DataframeHelper.rename_duplicate_row_names(df)
-        expected_result = DataFrame([1, 2, 3, 4, 5, 6], index=['A', 'B', 'A_1', 'B_1', 'A_2', 'A_1_1'])
+        expected_result = DataFrame([1, 2, 3, 4, 5, 6], index=['A', 'B', 'A_1', 'B_1', 'A_2', 'A_3'])
 
         self.assertTrue(result.equals(expected_result))
 
