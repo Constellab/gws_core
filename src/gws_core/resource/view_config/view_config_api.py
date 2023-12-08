@@ -27,7 +27,7 @@ def get_by_id(id: str,
                summary="Call a view from a config")
 def call_view_config(id: str,
                      _=Depends(AuthService.check_user_access_token)) -> Dict:
-    return ResourceService.call_view_from_view_config(id)
+    return ResourceService.call_view_from_view_config(id).to_json()
 
 
 @core_app.put("/view-config/{id}/title", tags=["View config"],
