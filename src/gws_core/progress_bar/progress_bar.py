@@ -17,7 +17,6 @@ from gws_core.core.utils.date_helper import DateHelper
 from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
-from ..core.utils.logger import Logger
 
 
 class ProgressBarMessageWithType(TypedDict):
@@ -174,7 +173,6 @@ class ProgressBar(Model):
             "datetime": dtime
         }
         self.data["messages"].append(progress_bar_message)
-        self._log_message(message, type_)
 
     def start(self):
         if self.is_started:
@@ -303,15 +301,3 @@ class ProgressBar(Model):
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         return {}
-    ################################################## CLASS METHODS #################################################
-
-    @classmethod
-    def _log_message(cls, message: str, type_: MessageLevel) -> None:
-        if type_ == MessageLevel.INFO or type_ == MessageLevel.SUCCESS:
-            Logger.info(message)
-        elif type_ == MessageLevel.ERROR:
-            Logger.error(message)
-        elif type_ == MessageLevel.WARNING:
-            Logger.warning(message)
-        elif type_ == MessageLevel.PROGRESS:
-            Logger.progress(message)

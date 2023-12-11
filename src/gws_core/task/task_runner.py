@@ -7,8 +7,8 @@ from typing import Dict, Type
 
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
-from gws_core.core.classes.observer.message_observer import \
-    BasicMessageObserver
+from gws_core.core.classes.observer.message_observer import (
+    BasicMessageObserver, LoggerMessageObserver, MessageObserver)
 
 from ..config.config_params import ConfigParams
 from ..config.config_types import ConfigParamsDict
@@ -47,7 +47,6 @@ class TaskRunner():
 
     def __init__(self, task_type: Type[Task], params: ConfigParamsDict = None,
                  inputs: Dict[str, Resource] = None,
-                 message_dispatcher: MessageDispatcher = None,
                  config_model_id: str = None,
                  input_specs: InputSpecs = None,
                  output_specs: OutputSpecs = None):
@@ -62,10 +61,8 @@ class TaskRunner():
         self._outputs = None
         self._config_model_id = config_model_id
 
-        if message_dispatcher is None:
-            self._message_dispatcher = MessageDispatcher()
-        else:
-            self._message_dispatcher = message_dispatcher
+        self._message_dispatcher = MessageDispatcher()
+        self.add_observer(LoggerMessageObserver())
 
         self._input_specs = input_specs or self._task_type.input_specs
         self._output_specs = output_specs or self._task_type.output_specs
@@ -209,6 +206,16 @@ class TaskRunner():
         observer = BasicMessageObserver()
         self._message_dispatcher.attach(observer)
         return observer
+
+    def add_observer(self, observer: MessageObserver) -> None:
+        """Method to create an observer and attached it to the task.
+        The log will be available in the retuned BasicMessageObserver.
+        This can be useful for testings
+
+        :return: _description_
+        :rtype: BasicMessageObserver
+        """
+        self._message_dispatcher.attach(observer)
 
     def force_dispatch_waiting_messages(self) -> None:
         self._message_dispatcher.force_dispatch_waiting_messages()
