@@ -7,7 +7,9 @@ from typing import List
 
 from peewee import CharField, ForeignKeyField, ModelSelect
 
+from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.model import Model
+from gws_core.project.project_dto import EnumProjectLevelStatus, ProjectDTO
 
 
 class Project(Model):
@@ -17,6 +19,7 @@ class Project(Model):
     code: str = CharField(null=False, max_length=20, default='')
     title: str = CharField(null=False, max_length=50)
     parent = ForeignKeyField('self', null=True, backref='children', on_delete='CASCADE')
+    level_status = EnumField(choices=EnumProjectLevelStatus, max_length=20)
 
     children: List['Project']
 
@@ -29,9 +32,18 @@ class Project(Model):
 
         return None
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> ProjectDTO:
         children = [child.to_json(deep=deep) for child in self.children] if deep else []
 
+        return ProjectDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            code=self.code,
+            title=self.title,
+            children=children,
+            levelStatus=self.level_status
+        )
         json_ = super().to_json(deep, **kwargs)
         json_['children'] = children
 

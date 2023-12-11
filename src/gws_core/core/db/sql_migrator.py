@@ -25,10 +25,14 @@ class SqlMigrator:
     def add_migration(self, operation) -> None:
         self._operations.append(operation)
 
-    def add_column_if_not_exists(self, model_type: Type[BaseModel], field: Field) -> bool:
-        if model_type.column_exists(field.column_name):
+    def add_column_if_not_exists(self, model_type: Type[BaseModel], field: Field,
+                                 column_name: str = None) -> bool:
+        new_column_name = column_name or field.column_name
+        if not new_column_name:
+            raise Exception("Column name must be provided")
+        if model_type.column_exists(new_column_name):
             return False
-        self._operations.append(self.migrator.add_column(model_type.get_table_name(), field.column_name, field))
+        self._operations.append(self.migrator.add_column(model_type.get_table_name(), new_column_name, field))
         return True
 
     def drop_column_if_exists(self, model_type: Type[BaseModel], column_name: str) -> bool:

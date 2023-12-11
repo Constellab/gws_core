@@ -34,6 +34,7 @@ from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar, ProgressBarMessage
 from gws_core.project.project import Project
+from gws_core.project.project_dto import EnumProjectLevelStatus
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.report.report import Report
 from gws_core.report.report_service import ReportService
@@ -885,3 +886,19 @@ class Migration060(BrickMigration):
             except Exception as exception:
                 Logger.error(
                     f'Error while migrating report view for report {report.id} : {exception}')
+
+
+@brick_migration('0.6.2', short_description='Add level status in project')
+class Migration062(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
+        # migrator.add_column_if_not_exists(Project, Project.level_status)
+        migrator.add_column_if_not_exists(Project, EnumField(
+            choices=EnumProjectLevelStatus, default=EnumProjectLevelStatus.LEAF), Project.level_status.column_name)
+        # remove default
+        migrator.alter_column_type(Project, Project.level_status.column_name, EnumField(
+            choices=EnumProjectLevelStatus, max_length=20))
+        migrator.migrate()

@@ -67,6 +67,7 @@ class ProjectService(BaseService):
         lab_project.code = project.code
         lab_project.title = project.title
         lab_project.parent = parent
+        lab_project.level_status = project.levelStatus
         lab_project.save()
 
         # delete children that are not in the space project
