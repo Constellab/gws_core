@@ -4,11 +4,12 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import Dict, List, Type
+from typing import Set, Type
 
-from gws_core.core.utils.utils import Utils
 from peewee import DatabaseProxy, MySQLDatabase
 from playhouse.shortcuts import ReconnectMixin
+
+from gws_core.core.utils.utils import Utils
 
 from .db_config import DbConfig, DbMode, SupportedDbEngine
 
@@ -49,7 +50,7 @@ class AbstractDbManager:
 
     @classmethod
     @abstractmethod
-    def get_config(self, mode: DbMode) -> DbConfig:
+    def get_config(cls, mode: DbMode) -> DbConfig:
         pass
 
     @classmethod
@@ -85,7 +86,7 @@ class AbstractDbManager:
         cls.db.initialize(_db)
 
     @classmethod
-    def inheritors(cls) -> List[Type['AbstractDbManager']]:
+    def inheritors(cls) -> Set[Type['AbstractDbManager']]:
         """ Get all the classes that inherit this class """
         return set(cls.__subclasses__()).union(
             [s for c in cls.__subclasses__() for s in c.inheritors()])
@@ -107,6 +108,20 @@ class AbstractDbManager:
         """ Test if the mysql engine is active """
 
         return cls.get_engine() in ["mariadb", "mysql"]
+
+    @classmethod
+    def close_db(cls):
+        """ Close the db connection """
+
+        if not cls.db.is_closed():
+            cls.db.close()
+
+    @classmethod
+    def connect_db(cls):
+        """ Open the db connection """
+
+        if cls.db.is_closed():
+            cls.db.connect()
 
     # -- C --
 
