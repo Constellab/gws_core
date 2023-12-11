@@ -9,7 +9,7 @@ from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
-from gws_core.report.report_dto import ReportDTO
+from gws_core.report.report_dto import ReportSaveDTO
 from gws_core.report.report_service import ReportService
 from gws_core.report.template.report_template import ReportTemplate
 from gws_core.report.template.report_template_param import ReportTemplateParam
@@ -53,7 +53,7 @@ class CreateReport(Task):
                 title = template.title
             else:
                 title = 'New generated report'
-        report_dto = ReportDTO(title=title, template_id=template.id if template else None)
+        report_dto = ReportSaveDTO(title=title, template_id=template.id if template else None)
 
         report = ReportService.create(report_dto)
 

@@ -4,15 +4,16 @@
 # About us: https://gencovery.com
 
 from datetime import datetime
-from typing import List, Optional, final
+from typing import Any, Dict, List, Optional, final
 
 from fastapi.encoders import jsonable_encoder
 from peewee import CharField, FloatField
 from typing_extensions import TypedDict
 
 from gws_core.core.classes.observer.message_level import MessageLevel
-from gws_core.core.model.db_field import DateTimeUTC
+from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.progress_bar.progress_bar_dto import ProgressBarDTO
 
 from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions import BadRequestException
@@ -47,6 +48,8 @@ class ProgressBar(Model):
 
     elapsed_time = FloatField(null=True)
     second_start = DateTimeUTC(null=True)
+
+    data: Dict[str, Any] = JSONField(null=True)
 
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0
@@ -282,6 +285,7 @@ class ProgressBar(Model):
 
     ################################################## TO JSON #################################################
 
+    # TODO TO REMOVE
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.
@@ -294,10 +298,17 @@ class ProgressBar(Model):
         :rtype: dict, str
         """
 
-        _json = super().to_json(deep=deep, **kwargs)
-        _json['elapsed_time'] = self.get_elapsed_time()
+        return self.to_dto()
 
-        return _json
+    def to_dto(self) -> ProgressBarDTO:
+        return ProgressBarDTO(
+            id=self.id,
+            started_at=self.started_at,
+            ended_at=self.ended_at,
+            current_value=self.current_value,
+            elapsed_time=self.get_elapsed_time(),
+            second_start=self.second_start,
+        )
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         return {}

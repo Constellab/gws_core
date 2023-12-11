@@ -4,8 +4,11 @@
 # About us: https://gencovery.com
 
 
+from typing import List, Optional
+
 from fastapi import Depends
 
+from gws_core.brick.brick_dto import BrickDTO
 from gws_core.brick.technical_doc_service import TechnicalDocService
 from gws_core.core.db.db_migration import DbMigrationService
 
@@ -16,17 +19,17 @@ from .brick_service import BrickService
 
 
 @core_app.get("/brick", tags=["Bricks"], summary="Get all brick with status")
-def get_bricks_status(_=Depends(AuthService.check_user_access_token)) -> list:
+def get_bricks_status(_=Depends(AuthService.check_user_access_token)) -> List[BrickDTO]:
     bricks = BrickService.get_all_brick_models()
-    return ListJsonable(bricks).to_json()
+    return [brick.to_dto() for brick in bricks]
 
 
 @core_app.get("/brick/{brick_name}", tags=["Bricks"], summary="Get info of a brick")
-def get_brick_info(brick_name: str, _=Depends(AuthService.check_user_access_token)):
+def get_brick_info(brick_name: str, _=Depends(AuthService.check_user_access_token)) -> Optional[BrickDTO]:
     brick = BrickService.get_brick_model(brick_name)
     if brick is None:
         return None
-    return brick.to_json()
+    return brick.to_dto()
 
 
 @core_app.get("/brick/{brick_name}/technical-doc", tags=["Bricks"], summary="Generate technical doc for a brick")

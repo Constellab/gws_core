@@ -8,12 +8,14 @@ from copy import deepcopy
 from json import dump
 from typing import Dict, List
 
-from peewee import BigIntegerField, CharField, CompositeKey, ForeignKeyField
+from peewee import (BigIntegerField, CharField, CompositeKey, ForeignKeyField,
+                    Model)
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
 from gws_core.config.param.param_types import ParamSpecDict
 from gws_core.core.classes.enum_field import EnumField
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.model.base_model import BaseModel
 from gws_core.core.utils.date_helper import DateHelper
@@ -802,16 +804,10 @@ class Migration0515(BrickMigration):
                     f'Error while migrating env creation info for env {env["name"]} : {exception}')
 
 
-class ReportResourceModel(BaseModel):
-    """Model to store which resources are used in reports"""
-
-    report: Report = ForeignKeyField(Report, null=False, index=True, on_delete='CASCADE')
-    resource: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
-
-    _table_name = 'gws_report_resource'
-
+class ReportResourceModel(Model):
     class Meta:
-        primary_key = CompositeKey("report", "resource")
+        table_name = 'gws_report_resource'
+        database = GwsCoreDbManager.get_db()
 
 
 @brick_migration('0.6.0', short_description='Migrate tags, new table ReportViewModel')
@@ -823,11 +819,11 @@ class Migration060(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
         migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.value_format)
         migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.is_propagable)
-        migrator.drop_table_if_exists(ReportResourceModel)
         migrator.drop_column_if_exists(ViewConfig, 'config_values')
         migrator.alter_column_type(
             ViewConfig, ViewConfig.config.column_name,
             CharField(max_length=36, null=False, index=True))
+        migrator.drop_table_if_exists(ReportResourceModel)
         migrator.migrate()
 
         TagKeyModel.update(value_format=EntityTagValueFormat.STRING).where(
@@ -888,17 +884,27 @@ class Migration060(BrickMigration):
                     f'Error while migrating report view for report {report.id} : {exception}')
 
 
+class Comment(Model):
+
+    class Meta:
+        table_name = "gws_comment"
+        database = GwsCoreDbManager.get_db()
+
+
 @brick_migration('0.6.2', short_description='Add level status in project')
 class Migration062(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
+        migrator: SqlMigrator = SqlMigrator(Project.get_db())
         # migrator.add_column_if_not_exists(Project, Project.level_status)
         migrator.add_column_if_not_exists(Project, EnumField(
             choices=EnumProjectLevelStatus, default=EnumProjectLevelStatus.LEAF), Project.level_status.column_name)
         # remove default
         migrator.alter_column_type(Project, Project.level_status.column_name, EnumField(
             choices=EnumProjectLevelStatus, max_length=20))
+
+        migrator.drop_table_if_exists(Comment)
+        migrator.drop_table_if_exists(ReportResourceModel)
         migrator.migrate()

@@ -2,12 +2,16 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+from typing import Any, Dict
+
 from peewee import CharField, IntegerField
 
 from gws_core.core.model.db_field import JSONField
 from gws_core.process.process_factory import ProcessFactory
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_types import ProtocolConfigDict
+from gws_core.protocol_template.protocol_template_dto import (
+    ProtocolTemplateDTO, ProtocolTemplateFullDTO)
 from gws_core.tag.taggable_model import TaggableModel
 
 from ..core.model.model_with_user import ModelWithUser
@@ -26,6 +30,7 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
 
     # version number of the protocol template
     version = IntegerField(null=False, default=1)
+    data: Dict[str, Any] = JSONField(null=True)
 
     _table_name = "gws_protocol_template"
 
@@ -43,6 +48,34 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
             return protocol_model.dumps_graph('config')
         else:
             return None
+
+    # TODO TO REMOVE
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        return self.to_dto()
+
+    def to_dto(self) -> ProtocolTemplateDTO:
+        return ProtocolTemplateDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_by=self.last_modified_by.to_dto(),
+            name=self.name,
+            version=self.version,
+        )
+
+    def to_full_dto(self) -> ProtocolTemplateFullDTO:
+        return ProtocolTemplateFullDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_by=self.last_modified_by.to_dto(),
+            name=self.name,
+            version=self.version,
+            data=self.data,
+            description=self.description
+        )
 
     @classmethod
     def from_protocol_model(

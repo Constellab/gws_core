@@ -11,12 +11,14 @@ from typing import Any, Dict, List
 
 from typing_extensions import TypedDict
 
+from gws_core.brick.brick_dto import BrickMessageStatus
+
 from ..core.utils.logger import Logger
 from ..core.utils.settings import ModuleInfo
 from ..core.utils.utils import Utils
 from ..lab.system_status import SystemStatus
 from .brick_helper import BrickHelper
-from .brick_model import BrickMessageStatus, BrickModel
+from .brick_model import BrickModel
 
 
 class WaitingMessage(TypedDict):

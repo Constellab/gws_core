@@ -6,8 +6,7 @@
       "editor.formatOnSave": true,
       // actions run on save
       "editor.codeActionsOnSave": {
-          // reoaganize imports on save
-          "source.organizeImports": true
+        "source.organizeImports": "explicit"
       },
       // remove trailling whitespace on save
       "files.trimTrailingWhitespace": true,

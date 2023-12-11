@@ -10,10 +10,12 @@ from peewee import ModelSelect
 from typing_extensions import TypedDict
 
 from gws_core.core.classes.jsonable import ListJsonable
+from gws_core.core.model.model_dto import PageDTO
 
 from ..model.model import Model
 
 
+# TODO SUREMENT A SUPPRIMER
 class PaginatorDict(TypedDict):
     objects: List[dict]
     page: int
@@ -113,7 +115,7 @@ class Paginator(Generic[PaginatorType]):
 
     def _call_query(self, page: int) -> None:
         # add 1 to page because peewee starts with 1
-        self.results = (self._query.paginate(page + 1, self._nb_of_items_per_page))
+        self.results = list(self._query.paginate(page + 1, self._nb_of_items_per_page))
         self.page_info = PageInfo(
             int(page),
             self._nb_of_items_per_page, self._query.count(),
@@ -155,3 +157,18 @@ class Paginator(Generic[PaginatorType]):
             "objects": ListJsonable(self.results).to_json(deep=deep),
             **self.page_info.to_json(),
         }
+
+    def to_dto(self) -> PageDTO:
+        return PageDTO(
+            page=self.page_info.page,
+            prev_page=self.page_info.prev_page,
+            next_page=self.page_info.next_page,
+            last_page=self.page_info.last_page,
+            total_number_of_items=self.page_info.total_number_of_items,
+            total_number_of_pages=self.page_info.total_number_of_pages,
+            number_of_items_per_page=self.page_info.number_of_items_per_page,
+            is_first_page=self.page_info.is_first_page,
+            is_last_page=self.page_info.is_last_page,
+            total_is_approximate=self.page_info.total_is_approximate,
+            objects=[x.to_dto() for x in self.results]
+        )

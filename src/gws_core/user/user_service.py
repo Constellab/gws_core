@@ -7,12 +7,13 @@ from typing import List, Union
 
 from gws_core.core.utils.logger import Logger
 from gws_core.space.space_service import SpaceService
+from gws_core.user.user_dto import UserFullDTO
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from .activity.activity import Activity
-from .user import User, UserDataDict
+from .user import User
 from .user_group import UserGroup
 
 
@@ -23,24 +24,23 @@ class UserService(BaseService):
         return cls.set_user_active(id, True)
 
     @classmethod
-    def create_or_update_user(cls, user: UserDataDict) -> User:
-        db_user: User = cls.get_user_by_id(user["id"])
+    def create_or_update_user_dto(cls, user_dto: UserFullDTO) -> User:
+        db_user: User = cls.get_user_by_id(user_dto.id)
         if db_user is not None:
-            db_user.from_user_data_dict(user)
+            db_user.from_user_dto(user_dto)
             return db_user.save()
 
-        return cls._create_user(user)
+        return cls._create_user(user_dto)
 
     @classmethod
-    def _create_user(cls, data: UserDataDict) -> User:
-        group: UserGroup = UserGroup(data['group'])
-        if group == UserGroup.SYSUSER:
+    def _create_user(cls, user_dto: UserFullDTO) -> User:
+        if user_dto.group == UserGroup.SYSUSER:
             raise BadRequestException("Cannot create sysuser")
 
         user = User(data={})
         # set the id later to mark the user as not saved
-        user.id = data["id"]
-        user.from_user_data_dict(data)
+        user.id = user_dto.id
+        user.from_user_dto(user_dto)
         user.save()
         return User.get_by_id(user.id)
 
@@ -144,7 +144,7 @@ class UserService(BaseService):
         try:
             users = SpaceService.get_all_lab_users()
             for user in users:
-                cls.create_or_update_user(user)
+                cls.create_or_update_user_dto(user)
 
             Logger.info(f"{len(users)} synchronized users from space")
         except Exception as err:

@@ -12,6 +12,7 @@ from typing_extensions import TypedDict
 
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
+from gws_core.lab.monitor.monitor_dto import MonitorDTO
 
 from ...core.model.model import Model
 
@@ -165,9 +166,43 @@ class Monitor(Model):
     def get_all_cpu_percent(self) -> List[float]:
         return self.data.get("all_cpu_percent", [])
 
+    # TODO TO REMOVE
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        json_ = super().to_json(deep=deep, **kwargs)
+        return self.to_dto()
 
-        json_['gpu_enabled'] = Settings.gpu_is_available()
+    def to_dto(self) -> MonitorDTO:
+        return MonitorDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            cpu_count=self.cpu_count,
+            cpu_percent=self.cpu_percent,
+            disk_total=self.disk_total,
+            disk_usage_used=self.disk_usage_used,
+            disk_usage_free=self.disk_usage_free,
+            disk_usage_percent=self.disk_usage_percent,
+            external_disk_total=self.external_disk_total,
+            external_disk_usage_used=self.external_disk_usage_used,
+            external_disk_usage_free=self.external_disk_usage_free,
+            external_disk_usage_percent=self.external_disk_usage_percent,
+            swap_memory_total=self.swap_memory_total,
+            swap_memory_used=self.swap_memory_used,
+            swap_memory_free=self.swap_memory_free,
+            swap_memory_percent=self.swap_memory_percent,
+            net_io_bytes_sent=self.net_io_bytes_sent,
+            net_io_bytes_recv=self.net_io_bytes_recv,
+            ram_usage_total=self.ram_usage_total,
+            ram_usage_used=self.ram_usage_used,
+            ram_usage_free=self.ram_usage_free,
+            ram_usage_percent=self.ram_usage_percent,
+            gpu_enabled=Settings.gpu_is_available(),
+            gpu_percent=self.gpu_percent,
+            gpu_temperature=self.gpu_temperature,
+            gpu_memory_total=self.gpu_memory_total,
+            gpu_memory_used=self.gpu_memory_used,
+            gpu_memory_free=self.gpu_memory_free,
+            gpu_memory_percent=self.gpu_memory_percent
+        )
 
-        return json_
+    class Meta:
+        table_name = 'gws_lab_monitor'

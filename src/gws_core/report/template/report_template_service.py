@@ -11,7 +11,8 @@ from peewee import ModelSelect
 from gws_core.core.classes.rich_text_content import RichText, RichTextI
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.report.report import Report
-from gws_core.report.report_file_service import ReportFileService, ReportImage
+from gws_core.report.report_dto import ReportImageDTO
+from gws_core.report.report_file_service import ReportFileService
 from gws_core.report.template.report_template import ReportTemplate
 from gws_core.report.template.report_template_search_builder import \
     ReportTemplateSearchBuilder
@@ -114,7 +115,7 @@ class ReportTemplateService():
     ################################################# Image ########################################
 
     @classmethod
-    def upload_image(cls, file: UploadFile) -> ReportImage:
+    def upload_image(cls, file: UploadFile) -> ReportImageDTO:
         return ReportFileService.upload_file(file)
 
     @classmethod

@@ -7,7 +7,10 @@ from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
+
+from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.user.user_group import UserGroup
 
 
 class UserTheme(Enum):
@@ -19,20 +22,9 @@ class UserLanguage(Enum):
     EN = 'en'
     FR = 'fr'
 
-
-class UserDataDict(TypedDict):
-    id: str
-    email: str
-    first_name: str
-    last_name: str
-    group: str
-    is_active: bool
-    theme: NotRequired[str]
-    lang: NotRequired[str]
-    photo: NotRequired[str]
-
-
 # object that represent the user in the Space
+
+
 class UserSpace(BaseModel):
     id: str
     firstname: str
@@ -60,4 +52,24 @@ class SpaceDict(TypedDict):
     id: str
     name: str
     domain: str
+    photo: Optional[str]
+
+
+class UserDTO(BaseModelDTO):
+    id: str
+    email: str
+    first_name: str
+    last_name: str
+    photo: Optional[str]
+
+
+class UserFullDTO(UserDTO):
+    id: str
+    email: str
+    first_name: str
+    last_name: str
+    group: UserGroup
+    is_active: bool
+    theme: Optional[UserTheme]
+    lang: Optional[UserLanguage]
     photo: Optional[str]

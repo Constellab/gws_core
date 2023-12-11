@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, List, final
+from typing import TYPE_CHECKING, Any, Dict, List, final
 
 from peewee import (BooleanField, CharField, DoubleField, ForeignKeyField,
                     ModelSelect)
@@ -15,6 +15,7 @@ from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
+from gws_core.experiment.experiment_dto import ExperimentDTO
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.project.model_with_project import ModelWithProject
@@ -76,6 +77,9 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
     # Date of the last synchronisation with space, null if never synchronised
     last_sync_at = DateTimeUTC(null=True)
     last_sync_by = ForeignKeyField(User, null=True, backref='+')
+
+    is_archived = BooleanField(default=False, index=True)
+    data: Dict[str, Any] = JSONField(null=True)
 
     _table_name = 'gws_experiment'
 
@@ -420,39 +424,31 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
     ########################### TO JSON ##################################
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns JSON string or dictionnary representation of the experiment.
+        return self.to_dto()
 
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-
-        _json = super().to_json(deep=deep, **kwargs)
-
-        _json["protocol"] = {
-            "id": self.protocol_model.id
-        }
-
-        _json["pid_status"] = self.get_process_status().value
-
-        if self.project:
-            _json["project"] = {
-                'id': self.project.id,
-                'code': self.project.code,
-                'title': self.project.title
-            }
-
-        if self.validated_by:
-            _json["validated_by"] = self.validated_by.to_json()
-
-        if self.last_sync_by:
-            _json["last_sync_by"] = self.last_sync_by.to_json()
-
-        return _json
+    def to_dto(self) -> ExperimentDTO:
+        return ExperimentDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_by=self.last_modified_by.to_dto(),
+            title=self.title,
+            description=self.description,
+            type=self.type,
+            protocol={
+                "id": self.protocol_model.id
+            },
+            status=self.status,
+            is_validated=self.is_validated,
+            validated_by=self.validated_by.to_dto() if self.validated_by else None,
+            validated_at=self.validated_at,
+            last_sync_by=self.last_sync_by.to_dto() if self.last_sync_by else None,
+            last_sync_at=self.last_sync_at,
+            is_archived=self.is_archived,
+            project=self.project.to_dto() if self.project else None,
+            pid_status=self.get_process_status()
+        )
 
     def export_protocol(self) -> dict:
         json_ = self.protocol_model.export_config()
@@ -462,3 +458,6 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
             "version": 1,  # version of the protocol json format
             "data": json_
         }
+
+    class Meta:
+        table_name = 'gws_experiment'

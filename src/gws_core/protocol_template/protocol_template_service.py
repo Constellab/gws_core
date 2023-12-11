@@ -64,7 +64,7 @@ class ProtocolTemplateService(BaseService):
     @classmethod
     def search_by_name(cls, name: str,
                        page: int = 0,
-                       number_of_items_per_page: int = 20) -> ProtocolTemplate:
+                       number_of_items_per_page: int = 20) -> Paginator[ProtocolTemplate]:
         model_select = ProtocolTemplate.select().where(ProtocolTemplate.name.contains(name))
 
         return Paginator(

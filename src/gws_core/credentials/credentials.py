@@ -9,6 +9,7 @@ from peewee import CharField, ModelSelect, TextField
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.credentials.credentials_dto import CredentialDTO
 
 from .credentials_type import CredentialsType
 
@@ -25,6 +26,18 @@ class Credentials(ModelWithUser):
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         return None
+
+    def to_dto(self) -> CredentialDTO:
+        return CredentialDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_by=self.last_modified_by.to_dto(),
+            name=self.name,
+            type=self.type,
+            description=self.description,
+        )
 
     @classmethod
     def find_by_name(cls, name: str) -> Optional['Credentials']:
@@ -43,3 +56,6 @@ class Credentials(ModelWithUser):
         if not name:
             return cls.select().where(Credentials.type == type_)
         return cls.select().where(Credentials.name.contains(name), Credentials.type == type_)
+
+    class Meta:
+        table_name = "gws_credentials"

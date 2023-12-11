@@ -7,7 +7,7 @@
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.core.classes.paginator import Paginator
-from gws_core.experiment.experiment_dto import ExperimentDTO
+from gws_core.experiment.experiment_dto import ExperimentSaveDTO
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
@@ -182,7 +182,7 @@ class TestProtocolTemplate(BaseTestCase):
             protocol_id=protocol.get_model().id, name='test_dynamic')
 
         # Test create an experiment from a template
-        experiment_dto = ExperimentDTO(protocol_template_id=template.id, title='')
+        experiment_dto = ExperimentSaveDTO(protocol_template_id=template.id, title='')
         experiment = ExperimentService.create_experiment_from_dto(experiment_dto)
 
         # check that protocol and task are created

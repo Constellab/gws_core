@@ -7,7 +7,8 @@
 from gws_core import BaseTestCase, UserService
 from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.user.auth_service import AuthService
-from gws_core.user.user import UserDataDict
+from gws_core.user.user_dto import UserFullDTO, UserLanguage, UserTheme
+from gws_core.user.user_group import UserGroup
 
 
 # test_dev_env_service
@@ -15,20 +16,19 @@ class TestDevEnvService(BaseTestCase):
 
     def test_dev_login(self):
 
-        # create the user
-        user_data: UserDataDict = {
-            "id": "06866542-f089-46dc-b57f-a11e25a23aa5",
-            "email": "test_mail@gencovery.com",
-            "first_name": "Firstname test",
-            "last_name": "Lastname test",
-            "group": "ADMIN",
-            "is_active": True,
-            "theme": "light-theme",
-            "lang": "en",
-            "photo": None
-        }
+        user_dto = UserFullDTO(
+            id="06866542-f089-46dc-b57f-a11e25a23aa5",
+            email="test_mail@gencovery.com",
+            first_name="Firstname test",
+            last_name="Lastname test",
+            group=UserGroup.ADMIN,
+            is_active=True,
+            theme=UserTheme.LIGHT_THEME,
+            lang=UserLanguage.EN,
+            photo=None
+        )
 
-        user = UserService.create_or_update_user(user_data)
+        user = UserService.create_or_update_user_dto(user_dto)
 
         # Generate the unique code
         unique_code = DevEnvService.generate_dev_login_unique_code(user.id)
@@ -37,7 +37,7 @@ class TestDevEnvService(BaseTestCase):
         user_data_db = DevEnvService.check_dev_login_unique_code(unique_code)
 
         # check that the user is the same
-        self.assert_json(user_data, user_data_db.to_user_data_dict())
+        self.assertEqual(user_dto, user_data_db.to_user_dto())
 
         # check that we can generate the response containing token
         response = AuthService.log_user(user_data_db)

@@ -7,9 +7,6 @@
 
 # pylint: disable=useless-import-alias
 
-# Comments
-from .comment.comment import Comment as Comment
-from .comment.comment_service import CommentService as CommentService
 # Config
 from .config.config import Config as Config
 from .config.config_params import ConfigParams as ConfigParams
@@ -129,7 +126,7 @@ from .credentials.credentials_type import \
 from .credentials.credentials_type import CredentialsType as CredentialsType
 # Experiment
 from .experiment.experiment import Experiment as Experiment
-from .experiment.experiment_dto import ExperimentDTO as ExperimentDTO
+from .experiment.experiment_dto import ExperimentSaveDTO as ExperimentSaveDTO
 from .experiment.experiment_enums import ExperimentStatus as ExperimentStatus
 from .experiment.experiment_interface import IExperiment as IExperiment
 from .experiment.experiment_run_service import \

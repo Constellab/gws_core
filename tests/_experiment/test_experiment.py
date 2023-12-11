@@ -6,7 +6,7 @@
 import time
 from typing import List
 
-from gws_core import (BaseTestCase, Experiment, ExperimentDTO,
+from gws_core import (BaseTestCase, Experiment, ExperimentSaveDTO,
                       ExperimentService, ExperimentStatus, GTest, ProcessModel,
                       ProtocolModel, ResourceModel, Robot, RobotService,
                       RobotWorldTravelProto, TaskModel)
@@ -33,7 +33,7 @@ class TestExperiment(BaseTestCase):
 
         project: Project = Project(title="Project")
         project.save()
-        experiment_dto: ExperimentDTO = ExperimentDTO(
+        experiment_dto: ExperimentSaveDTO = ExperimentSaveDTO(
             title="Experiment title", project_id=project.id)
         experiment = ExperimentService.create_experiment_from_dto(
             experiment_dto)

@@ -8,6 +8,7 @@ from gws_core.core.decorator.transaction import transaction
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag, TagOriginType
+from gws_core.tag.tag_dto import EntityTagDTO
 from gws_core.tag.tag_value_model import TagValueModel
 
 
@@ -82,16 +83,20 @@ class EntityTagList():
         return new_tag
 
     @transaction()
-    def add_tags(self, tags: List[Tag]) -> None:
+    def add_tags(self, tags: List[Tag]) -> List[EntityTag]:
         """Add a list of tags to the list if it does not exist
 
         :param tags: list of tags to add
         :type tags: List[Tag]
         """
+
+        new_tags: List[EntityTag] = []
         for tag in tags:
 
             # add tag to entity
-            self.add_tag(tag)
+            new_tags.append(self.add_tag(tag))
+
+        return new_tags
 
     @transaction()
     def delete_tags(self, tags: List[Tag]) -> None:
@@ -153,6 +158,9 @@ class EntityTagList():
 
     def to_json(self) -> List[dict]:
         return [tag.to_json() for tag in self._tags]
+
+    def to_dto(self) -> List[EntityTagDTO]:
+        return [tag.to_dto() for tag in self._tags]
 
     def support_multiple_origins(self) -> bool:
         """Return true if the entity support multiple origins for a tag

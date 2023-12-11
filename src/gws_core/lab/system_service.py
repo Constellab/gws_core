@@ -172,7 +172,7 @@ class SystemService:
         cls.init_queue_and_monitor()
 
         if check_user:
-            UserService.create_or_update_user(user.to_user_data_dict())
+            UserService.create_or_update_user_dto(user.to_user_dto())
 
     @classmethod
     def kill_process(cls) -> None:

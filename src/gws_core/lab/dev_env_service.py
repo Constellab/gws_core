@@ -14,7 +14,8 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.user.auth_service import AuthService
 from gws_core.user.unique_code_service import UniqueCodeService
-from gws_core.user.user import User, UserDataDict
+from gws_core.user.user import User
+from gws_core.user.user_dto import UserFullDTO
 from gws_core.user.user_service import UserService
 
 
@@ -66,13 +67,13 @@ class DevEnvService:
             raise BadRequestException(detail=GWSException.ERROR_DURING_DEV_LOGIN.value,
                                       unique_code=GWSException.ERROR_DURING_DEV_LOGIN.name)
         # retrieve the user from the response
-        user_data: UserDataDict = response.json()
+        user_dto = UserFullDTO.from_json(response.json())
 
-        if not user_data["is_active"]:
+        if not user_dto.is_active:
             raise BadRequestException(detail=GWSException.USER_NOT_ACTIVATED.value,
                                       unique_code=GWSException.USER_NOT_ACTIVATED.name)
 
-        user: User = UserService.create_or_update_user(user_data)
+        user: User = UserService.create_or_update_user_dto(user_dto)
 
         return AuthService.log_user(user, Response())
 

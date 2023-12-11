@@ -3,13 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, final
+from typing import Any, Dict, final
+
+from gws_core.config.config_dto import ConfigDTO
+from gws_core.core.model.db_field import JSONField
 
 from ..core.model.model_with_user import ModelWithUser
 from .config_exceptions import InvalidParamValueException, UnkownParamException
 from .config_specs_helper import ConfigSpecsHelper
-from .config_types import (ConfigDict, ConfigParamsDict,
-                           ConfigSpecs)
+from .config_types import ConfigDict, ConfigParamsDict, ConfigSpecs
 from .param.param_spec import ParamSpec
 from .param.param_spec_helper import ParamSpecHelper
 from .param.param_types import ParamValue
@@ -21,6 +23,8 @@ class Config(ModelWithUser):
     Config class that represents the configuration of a process. A configuration is
     a collection of parameters
     """
+
+    data: Dict[str, Any] = JSONField(null=True)
 
     _table_name = 'gws_config'
 
@@ -145,9 +149,11 @@ class Config(ModelWithUser):
     def _clear_values(self):
         self.data["values"] = {}
 
+    # TODO REMOVE
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        json_ = super().to_json(deep=deep, **kwargs)
+        return self.to_dto()
 
+    def to_dto(self) -> ConfigDTO:
         # return all the spec but the private specs
         specs: ConfigSpecs = self.get_specs()
         json_specs: dict = {}
@@ -156,9 +162,15 @@ class Config(ModelWithUser):
                 continue
             json_specs[key] = spec.to_json()
 
-        json_["specs"] = json_specs
-        json_["values"] = self.get_values()
-        return json_
+        return ConfigDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_by=self.last_modified_by.to_dto(),
+            specs=json_specs,
+            values=self.get_values()
+        )
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         return {}
@@ -180,3 +192,6 @@ class Config(ModelWithUser):
         new_config: Config = Config()
         new_config.data = self.data
         return new_config
+
+    class Meta:
+        table_name = 'gws_config'

@@ -8,7 +8,9 @@ from typing import TYPE_CHECKING, List, Union, final
 
 from peewee import BigIntegerField, BooleanField, CharField
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
 
 from ...core.model.model import Model
 from ...impl.file.file_store import FileStore
@@ -66,11 +68,18 @@ class FSNodeModel(Model):
         from gws_core.resource.resource_model import ResourceModel
         return ResourceModel.get(ResourceModel.fs_node_model == self)
 
+    # TODO TO REMOVE
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return {
-            "id": self.id,
-            "size": self.size,
-            "is_file": FileHelper.is_file(self.path),
-            "name": FileHelper.get_name_with_extension(self.path),
-            "path": self.path,
-        }
+        return self.to_dto()
+
+    def to_dto(self) -> BaseModelDTO:
+        return FsNodeModelDTO(
+            id=self.id,
+            size=self.size,
+            is_file=FileHelper.is_file(self.path),
+            name=FileHelper.get_name_with_extension(self.path),
+            path=self.path,
+        )
+
+    class Meta:
+        table_name =  "gws_fs_node"

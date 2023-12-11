@@ -5,8 +5,9 @@
 
 from typing import Dict, List, Optional, Union
 
-from gws_core.core.decorator.transaction import transaction
 from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
+
+from gws_core.core.decorator.transaction import transaction
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
@@ -117,6 +118,9 @@ class Queue(Model):
 
         return Job.get_queue_jobs(queue.id)
 
+    class Meta:
+        table_name = 'gws_queue'
+
 
 class Job(Model):
     """
@@ -166,9 +170,13 @@ class Job(Model):
     def remove_experiment_from_queue(cls, experiment_id: str) -> None:
         return Job.delete().where(cls.experiment == experiment_id).execute()
 
+    # TODO TO REMOVE
     def to_json(self, deep: bool = False) -> Dict:
 
         json_ = super().to_json(deep=deep)
         json_["user"] = self.user.to_json()
         json_["experiment"] = self.experiment.to_json()
         return json_
+
+    class Meta:
+        table_name = 'gws_queue_job'

@@ -14,7 +14,7 @@ from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.project.project import Project
 from gws_core.report.report import Report, ReportExperiment
-from gws_core.report.report_dto import ReportDTO
+from gws_core.report.report_dto import ReportSaveDTO
 from gws_core.report.report_service import ReportService
 from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
@@ -31,12 +31,12 @@ class TestReport(BaseTestCase):
         project = project.save()
         # test create an empty report
 
-        report = ReportService.create(ReportDTO(title='Test report'))
+        report = ReportService.create(ReportSaveDTO(title='Test report'))
 
         self.assertIsInstance(report, Report)
         self.assertEqual(report.title, 'Test report')
 
-        report = ReportService.update(report.id, ReportDTO(title='New title'))
+        report = ReportService.update(report.id, ReportSaveDTO(title='New title'))
         self.assertEqual(report.title, 'New title')
 
         content: RichTextI = {'ops': [{'insert': 'Hello'}]}
@@ -47,7 +47,7 @@ class TestReport(BaseTestCase):
 
         # Create a second experiment with a report
         experiment_2: Experiment = ExperimentService.create_experiment()
-        report_2 = ReportService.create(ReportDTO(title='Report 2'), [experiment_2.id])
+        report_2 = ReportService.create(ReportSaveDTO(title='Report 2'), [experiment_2.id])
 
         # Add exp 1 on report 1
         ReportService.add_experiment(report.id, experiment.id)
@@ -92,7 +92,7 @@ class TestReport(BaseTestCase):
         """ Test when we add a resource view, it created an associated resource for the report
         """
         # create report and resource
-        report = ReportService.create(ReportDTO(title='Test report'))
+        report = ReportService.create(ReportSaveDTO(title='Test report'))
         resource_model = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)
 
         view_result = ResourceService.call_view_on_resource_model(resource_model, "view_as_json", {}, True)
@@ -140,7 +140,7 @@ class TestReport(BaseTestCase):
         # create a view config
         result = ResourceService.call_view_on_resource_model(robot_model, "view_as_string", {}, True)
 
-        report = ReportService.create(ReportDTO(title='Test report'))
+        report = ReportService.create(ReportSaveDTO(title='Test report'))
         # add the view to the report
         ReportService.add_view_to_content(report.id, result.view_config.id)
 

@@ -13,10 +13,10 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.entity_navigator.entity_navigator_type import (EntityNav,
-                                                             EntityType,
+from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
 from gws_core.project.model_with_project import ModelWithProject
+from gws_core.report.report_dto import ReportDTO, ReportFullDTO
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
@@ -46,6 +46,8 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
     last_sync_at = DateTimeUTC(null=True)
     last_sync_by = ForeignKeyField(User, null=True, backref='+')
 
+    is_archived = BooleanField(default=False, index=True)
+
     _table_name = 'gws_report'
 
     def get_content_as_rich_text(self) -> RichText:
@@ -65,25 +67,43 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
                 detail="The report is archived, please unachived it to update it")
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        json_ = super().to_json(deep=deep, **kwargs)
+        return self.to_dto()
 
-        if self.project:
-            json_["project"] = {
-                'id': self.project.id,
-                'code': self.project.code,
-                'title': self.project.title
-            }
+    def to_dto(self) -> ReportDTO:
+        return ReportDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_by=self.last_modified_by.to_dto(),
+            title=self.title,
+            project=self.project.to_dto() if self.project else None,
+            is_validated=self.is_validated,
+            validated_at=self.validated_at,
+            validated_by=self.validated_by.to_dto() if self.validated_by else None,
+            last_sync_at=self.last_sync_at,
+            last_sync_by=self.last_sync_by.to_dto() if self.last_sync_by else None,
+            is_archived=self.is_archived
+        )
 
-        if self.validated_by:
-            json_["validated_by"] = self.validated_by.to_json()
-
-        if self.last_sync_by:
-            json_["last_sync_by"] = self.last_sync_by.to_json()
-
-        if not deep:
-            del json_["content"]
-
-        return json_
+    # TODO make a separate route to get content
+    def to_full_dto(self) -> ReportFullDTO:
+        return ReportFullDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_by=self.last_modified_by.to_dto(),
+            title=self.title,
+            project=self.project.to_dto() if self.project else None,
+            is_validated=self.is_validated,
+            validated_at=self.validated_at,
+            validated_by=self.validated_by.to_dto() if self.validated_by else None,
+            last_sync_at=self.last_sync_at,
+            last_sync_by=self.last_sync_by.to_dto() if self.last_sync_by else None,
+            is_archived=self.is_archived,
+            content=self.content
+        )
 
     def validate(self) -> None:
         self.is_validated = True
@@ -96,6 +116,9 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
 
     def get_entity_type(self) -> EntityType:
         return EntityType.REPORT
+
+    class Meta:
+        table_name = 'gws_report'
 
 
 class ReportExperiment(BaseModel):
@@ -151,4 +174,5 @@ class ReportExperiment(BaseModel):
         return super().save(*args, force_insert=True, **kwargs)
 
     class Meta:
+        table_name = 'gws_report_experiment'
         primary_key = CompositeKey("experiment", "report")

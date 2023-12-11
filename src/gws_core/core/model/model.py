@@ -16,6 +16,7 @@ from peewee import Model as PeeweeModel
 
 from gws_core.core.classes.jsonable import Jsonable
 from gws_core.core.model.base_model import BaseModel
+from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.utils.date_helper import DateHelper
 
 from ..decorator.json_ignore import json_ignore
@@ -327,6 +328,13 @@ class Model(BaseModel, PeeweeModel, Jsonable):
         _json = jsonable_encoder(val)
 
         return _json
+
+    def to_dto(self) -> BaseModelDTO:
+        return ModelDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+        )
 
     def verify_hash(self) -> bool:
         """

@@ -15,12 +15,6 @@ from ...core.model.model import Model
 from .file import File
 from .fs_node import FSNode
 
-# ####################################################################
-#
-# FileStore class
-#
-# ####################################################################
-
 
 class FileStore(Model):
     """
@@ -30,7 +24,6 @@ class FileStore(Model):
     description = ""
     _table_name = "gws_file_store"
 
-    # -- A --
     @abstractmethod
     def add_node_from_path(self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = FSNode) -> FSNode:
         """Copy a node (file or directory) from the path to the store.
@@ -122,8 +115,6 @@ class FileStore(Model):
         """
         raise BadRequestException('Not implemented')
 
-    # -- O --
-
     @classmethod
     @abstractclassmethod
     def open(cls, file, mode):
@@ -140,8 +131,6 @@ class FileStore(Model):
 
         raise BadRequestException('Not implemented')
 
-    # -- P --
-
     @property
     def path(self) -> str:
         """
@@ -149,8 +138,6 @@ class FileStore(Model):
         """
 
         return self.data.get("path", "")
-
-    # -- F --
 
     @path.setter
     def path(self, path: str) -> None:
@@ -164,3 +151,6 @@ class FileStore(Model):
     def get_default_instance(cls) -> 'FileStore':
         from .local_file_store import LocalFileStore
         return LocalFileStore.get_default_instance()
+
+    class Meta:
+        table_name = 'gws_file_store'

@@ -6,32 +6,12 @@
 from typing import final
 
 from peewee import BooleanField, CharField, ModelSelect
-from typing_extensions import NotRequired, TypedDict
 
 from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
-from .user_dto import UserLanguage, UserTheme
+from .user_dto import UserDTO, UserFullDTO, UserLanguage, UserTheme
 from .user_group import UserGroup
-
-
-class UserDataDict(TypedDict):
-    id: str
-    email: str
-    first_name: str
-    last_name: str
-    group: str
-    is_active: bool
-    theme: NotRequired[str]
-    lang: NotRequired[str]
-    photo: NotRequired[str]
-
-
-# ####################################################################
-#
-# User class
-#
-# ####################################################################
 
 
 @final
@@ -131,34 +111,34 @@ class User(Model):
                     "Cannot deactivate the {owner, admin, system} users")
         return super().save(*arg, **kwargs)
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return {
-            "id": self.id,
-            "email": self.email,
-            "first_name": self.first_name,
-            "last_name": self.last_name,
-            "photo": self.photo
-        }
+    def to_dto(self) -> UserDTO:
+        return UserDTO(
+            id=self.id,
+            email=self.email,
+            first_name=self.first_name,
+            last_name=self.last_name,
+            photo=self.photo
+        )
 
-    def to_user_data_dict(self) -> UserDataDict:
-        return {
-            "id": self.id,
-            "email": self.email,
-            "first_name": self.first_name,
-            "last_name": self.last_name,
-            "group": self.group.value,
-            "is_active": self.is_active,
-            "theme": self.theme.value,
-            "lang": self.lang.value,
-            "photo": self.photo
-        }
+    def to_user_dto(self) -> UserFullDTO:
+        return UserFullDTO(
+            id=self.id,
+            email=self.email,
+            first_name=self.first_name,
+            last_name=self.last_name,
+            group=self.group,
+            is_active=self.is_active,
+            theme=self.theme,
+            lang=self.lang,
+            photo=self.photo
+        )
 
-    def from_user_data_dict(self, data: UserDataDict) -> None:
-        self.email = data['email']
-        self.first_name = data['first_name']
-        self.last_name = data['last_name']
-        self.group = UserGroup(data['group'])
-        self.is_active = data['is_active']
-        self.theme = UserTheme(data.get('theme', UserTheme.LIGHT_THEME.value))
-        self.lang = UserLanguage(data.get('lang', UserLanguage.EN.value))
-        self.photo = data.get('photo', None)
+    def from_user_dto(self, data: UserFullDTO) -> None:
+        self.email = data.email
+        self.first_name = data.first_name
+        self.last_name = data.last_name
+        self.group = data.group or UserGroup.USER
+        self.is_active = data.is_active
+        self.theme = data.theme or UserTheme.LIGHT_THEME
+        self.lang = data.lang or UserLanguage.EN
+        self.photo = data.photo

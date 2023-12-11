@@ -11,6 +11,8 @@ from typing import Generic, List, TypeVar, Union
 from pyparsing import Set
 from typing_extensions import TypedDict
 
+from gws_core.core.model.model_dto import BaseModelDTO
+
 
 class EntityType(Enum):
     EXPERIMENT = "EXPERIMENT"
@@ -24,27 +26,27 @@ all_entity_types = [EntityType.EXPERIMENT, EntityType.RESOURCE,
                     EntityType.VIEW, EntityType.REPORT]
 
 
-class EntityNav(TypedDict):
+class EntityNavDTO(BaseModelDTO):
     id: str
     type: EntityType
     name: str
 
 
-class EntityNavGroup(TypedDict):
+class EntityNavGroupDTO(BaseModelDTO):
     type: EntityType
-    entities: List[EntityNav]
+    entities: List[EntityNavDTO]
 
 
 class NavigableEntity():
 
     id: str
 
-    def get_entity_nav(self) -> EntityNav:
-        return {
-            'id': self.id,
-            'type': self.get_entity_type(),
-            'name': self.get_entity_name()
-        }
+    def get_entity_nav(self) -> EntityNavDTO:
+        return EntityNavDTO(
+            id=self.id,
+            type=self.get_entity_type(),
+            name=self.get_entity_name()
+        )
 
     @abstractmethod
     def get_entity_type(self) -> EntityType:
@@ -73,14 +75,17 @@ class NavigableEntitySet(Generic[GenericNavigableEntity]):
         else:
             self._entities = set([entities])
 
-    def get_entity_navs(self) -> List[EntityNav]:
+    def get_entity_navs(self) -> List[EntityNavDTO]:
         return [entity.get_entity_nav() for entity in self._entities]
 
-    def get_entity_dict_nav_group(self) -> List[EntityNavGroup]:
-        entity_nav_group: List[EntityNavGroup] = []
+    def get_entity_dict_nav_group(self) -> List[EntityNavGroupDTO]:
+        entity_nav_group: List[EntityNavGroupDTO] = []
         for entity_type in EntityType:
-            entity_nav_group.append({'type': entity_type, 'entities': [entity.get_entity_nav(
-            ) for entity in self._entities if entity.get_entity_type() == entity_type]})
+            group_dto = EntityNavGroupDTO(
+                type=entity_type,
+                entities=[entity.get_entity_nav() for entity in self._entities
+                          if entity.get_entity_type() == entity_type])
+            entity_nav_group.append(group_dto)
         return entity_nav_group
 
     def get_entity_ids(self) -> List[str]:

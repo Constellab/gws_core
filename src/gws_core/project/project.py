@@ -9,6 +9,7 @@ from peewee import CharField, ForeignKeyField, ModelSelect
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.model import Model
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.project.project_dto import EnumProjectLevelStatus, ProjectDTO
 
 
@@ -25,15 +26,12 @@ class Project(Model):
 
     _table_name = 'gws_project'
 
-    def archive(self, archive: bool) -> 'Project':
-        """
-        Deactivated method.
-        """
-
-        return None
-
+    # TODO TO REMOVE
     def to_json(self, deep: bool = False, **kwargs) -> ProjectDTO:
-        children = [child.to_json(deep=deep) for child in self.children] if deep else []
+        return self.to_dto()
+
+    def to_dto(self) -> ProjectDTO:
+        children = [child.to_json() for child in self.children]
 
         return ProjectDTO(
             id=self.id,
@@ -44,10 +42,6 @@ class Project(Model):
             children=children,
             levelStatus=self.level_status
         )
-        json_ = super().to_json(deep, **kwargs)
-        json_['children'] = children
-
-        return json_
 
     @classmethod
     def get_roots(cls) -> ModelSelect:

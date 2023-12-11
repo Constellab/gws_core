@@ -6,7 +6,7 @@
 
 from gws_core import BaseTestCase, User, UserGroup, UserService
 from gws_core.user.auth_service import AuthService
-from gws_core.user.user import UserDataDict
+from gws_core.user.user_dto import UserFullDTO, UserTheme
 
 
 # test_user
@@ -23,18 +23,16 @@ class TestUser(BaseTestCase):
         """
         Test the user creation from a json
         """
-
-        user_data: UserDataDict = {
-            "id": "06866542-f089-46dc-b57f-a11e25a23aa5",
-            "email": "test_mail@gencovery.com",
-            "first_name": "Firstname test",
-            "last_name": "Lastname test",
-            "group": "ADMIN",
-            "is_active": True,
-            "theme": "light-theme",
-            "lang": "en"
-        }
-        UserService.create_or_update_user(user_data)
+        user_dto = UserFullDTO(
+            id="06866542-f089-46dc-b57f-a11e25a23aa5",
+            email="test_mail@gencovery.com",
+            first_name="Firstname test",
+            last_name="Lastname test",
+            group=UserGroup.ADMIN,
+            is_active=True,
+            theme=UserTheme.LIGHT_THEME,
+        )
+        UserService.create_or_update_user_dto(user_dto)
 
         user_db: User = UserService.get_user_by_id("06866542-f089-46dc-b57f-a11e25a23aa5")
 
@@ -47,22 +45,21 @@ class TestUser(BaseTestCase):
         """
         Test that a user can authenticate
         """
-        user_data: UserDataDict = {
-            "id": "06866542-f089-46dc-b57f-a11e25a23aa6",
-            "email": "test_mail@gencovery.com",
-            "first_name": "Firstname test",
-            "last_name": "Lastname test",
-            "group": "ADMIN",
-            "is_active": True,
-            "theme": "light-theme",
-            "lang": "en"
-        }
-        UserService.create_or_update_user(user_data)
+        user_dto = UserFullDTO(
+            id="06866542-f089-46dc-b57f-a11e25a23aa5",
+            email="test_mail@gencovery.com",
+            first_name="Firstname test",
+            last_name="Lastname test",
+            group=UserGroup.ADMIN,
+            is_active=True,
+            theme=UserTheme.LIGHT_THEME,
+        )
+        UserService.create_or_update_user_dto(user_dto)
 
-        token = AuthService.generate_user_access_token("06866542-f089-46dc-b57f-a11e25a23aa6")
+        token = AuthService.generate_user_access_token(user_dto.id)
 
         user_data: User = AuthService.check_user_access_token(token)
-        self.assertEqual(user_data.id, "06866542-f089-46dc-b57f-a11e25a23aa6")
+        self.assertEqual(user_data.id, user_dto.id)
 
     def test_user_search(self):
         """

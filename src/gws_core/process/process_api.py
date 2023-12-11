@@ -6,6 +6,7 @@
 from datetime import datetime
 
 from fastapi import Depends
+from fastapi.responses import StreamingResponse
 
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.core_app import core_app
@@ -33,7 +34,7 @@ def get_process_logs(process_type: ProcessType,
               summary="Download the log of a process", response_model=None)
 def download_process_logs(process_type: ProcessType,
                           id: str,
-                          _=Depends(AuthService.check_user_access_token)):
+                          _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
     """
     Retrieve a list of running experiments.
     """
@@ -52,4 +53,4 @@ def get_process_monitors(process_type: ProcessType,
     Retrieve a list of running experiments.
     """
 
-    return ProcessService.get_monitor_of_process(process_type, id).to_json()
+    return ProcessService.get_monitor_of_process(process_type, id)

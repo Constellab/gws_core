@@ -16,7 +16,7 @@ from gws_core.impl.robot.robot_tasks import RobotCreate, RobotEat, RobotMove
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.protocol.protocol_interface import IProtocol
-from gws_core.report.report_dto import ReportDTO
+from gws_core.report.report_dto import ReportSaveDTO
 from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_service import ResourceService
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -338,7 +338,7 @@ class TestTag(BaseTestCase):
         self.assertTrue(tag.origins.has_origin(TagOriginType.RESOURCE_PROPAGATED, resource_model.id))
 
         # generate a report and add the view
-        report = ReportService.create(ReportDTO(title='test_report'))
+        report = ReportService.create(ReportSaveDTO(title='test_report'))
 
         ReportService.add_view_to_content(report.id, view_result.view_config.id)
 
@@ -390,7 +390,7 @@ class TestTag(BaseTestCase):
         exp_2_output_view = view_result.view_config
 
         # generate a report and add the view
-        exp_2_report = ReportService.create(ReportDTO(title='test_report'))
+        exp_2_report = ReportService.create(ReportSaveDTO(title='test_report'))
         ReportService.add_view_to_content(exp_2_report.id, exp_2_output_view.id)
 
         # Now add a tag to the first experiment and check that it is propagated

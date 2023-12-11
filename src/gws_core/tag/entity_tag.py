@@ -15,6 +15,7 @@ from gws_core.core.model.model import Model
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.tag import (EntityTagValueFormat, Tag, TagOrigins,
                               TagOriginType, TagValueType)
+from gws_core.tag.tag_dto import EntityTagDTO, EntityTagFullDTO
 from gws_core.tag.tag_helper import TagHelper
 
 
@@ -56,24 +57,25 @@ class EntityTag(Model):
     def set_origins(self, origins: TagOrigins) -> None:
         self.origins = origins.to_json()
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        if deep:
-            return {
-                "id": self.id,
-                'key': self.tag_key,
-                'value': self.get_tag_value(),
-                'is_propagable': self.is_propagable,
-                'origins': self.get_origins().to_json(),
-                'created_at': self.created_at,
-                'last_modified_at': self.last_modified_at,
-            }
-        else:
-            return {
-                "id": self.id,
-                'key': self.tag_key,
-                'value': self.get_tag_value(),
-                'is_user_origin': self.origin_is_user(),
-            }
+    def to_dto(self) -> EntityTagDTO:
+        return EntityTagDTO(
+            id=self.id,
+            key=self.tag_key,
+            value=self.get_tag_value(),
+            is_user_origin=self.origin_is_user(),
+        )
+
+    def to_full_dto(self) -> EntityTagFullDTO:
+        return EntityTagFullDTO(
+            id=self.id,
+            key=self.tag_key,
+            value=self.get_tag_value(),
+            is_user_origin=self.origin_is_user(),
+            is_propagable=self.is_propagable,
+            origins=self.get_origins().to_dto(),
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+        )
 
     def to_simple_tag(self) -> Tag:
         return Tag(key=self.tag_key, value=self.get_tag_value(),
@@ -185,6 +187,7 @@ class EntityTag(Model):
                 f"alter table {cls.get_table_name()} add constraint entity_tag_foreign_key_value foreign key (tag_key, tag_value) references gws_tag_value (tag_key, tag_value) on delete cascade on update cascade")
 
     class Meta:
+        table_name = 'gws_entity_tag'
         indexes = (
             (("tag_key", "tag_value"), False),
             (("entity_id", "entity_type"), False),

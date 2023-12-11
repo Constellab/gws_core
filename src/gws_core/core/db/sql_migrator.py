@@ -65,7 +65,7 @@ class SqlMigrator:
         return True
 
     def drop_table_if_exists(self, model_type: Type[BaseModel]) -> bool:
-        self.migrator.database.drop_tables(model_type)
+        self.migrator.database.drop_tables([model_type])
         return True
 
     def migrate(self) -> None:

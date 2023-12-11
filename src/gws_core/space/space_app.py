@@ -20,8 +20,8 @@ from gws_core.user.activity.activity_service import ActivityService
 from ..core.exception.exception_handler import ExceptionHandler
 from ..core.service.settings_service import SettingsService
 from ..user.auth_service import AuthService
-from ..user.user import User, UserDataDict
-from ..user.user_dto import UserLoginInfo
+from ..user.user import User
+from ..user.user_dto import UserFullDTO, UserLoginInfo
 from ..user.user_service import UserService
 from ._auth_space import AuthSpace
 
@@ -123,12 +123,12 @@ def get_user(id: str, _=Depends(AuthSpace.check_space_api_key_and_user)):
 
 
 @space_app.post("/user", tags=["User management"])
-def create_user(user: UserDataDict, _=Depends(AuthSpace.check_space_api_key)):
+def create_user(user: UserFullDTO, _=Depends(AuthSpace.check_space_api_key)):
     """
     Create a new user.
     """
 
-    return _convert_user_to_dto(UserService.create_or_update_user(user))
+    return _convert_user_to_dto(UserService.create_or_update_user_dto(user))
 
 
 @space_app.get("/user", tags=["User management"])

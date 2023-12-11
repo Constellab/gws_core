@@ -41,4 +41,4 @@ class TestBrick(BaseTestCase):
 
         brick_model = BrickService.get_brick_model('gws_core')
         self.assertEqual(brick_model.status, 'ERROR')
-        self.assertTrue(len(brick_model.messages) > 0)
+        self.assertTrue(len(brick_model.get_messages()) > 0)

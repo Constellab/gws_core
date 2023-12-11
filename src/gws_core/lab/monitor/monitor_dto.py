@@ -7,23 +7,47 @@
 from datetime import datetime
 from typing import List
 
-from .monitor import Monitor
+from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 
 
-class MonitorBetweenDateDTO():
+class MonitorDTO(ModelDTO):
+    cpu_count: float
+    cpu_percent: float
+
+    disk_total: float
+    disk_usage_used: float
+    disk_usage_free: float
+    disk_usage_percent: float
+
+    external_disk_total: float
+    external_disk_usage_used: float
+    external_disk_usage_free: float
+    external_disk_usage_percent: float
+
+    swap_memory_total: float
+    swap_memory_used: float
+    swap_memory_free: float
+    swap_memory_percent: float
+
+    net_io_bytes_sent: float
+    net_io_bytes_recv: float
+
+    ram_usage_total: float
+    ram_usage_used: float
+    ram_usage_free: float
+    ram_usage_percent: float
+
+    gpu_enabled: bool
+    gpu_percent: float
+    gpu_temperature: float
+    gpu_memory_total: float
+    gpu_memory_used: float
+    gpu_memory_free: float
+    gpu_memory_percent: float
+
+
+class MonitorBetweenDateDTO(BaseModelDTO):
 
     from_date: datetime
     to_date: datetime
-    monitors: List[Monitor]
-
-    def __init__(self, from_date: datetime, to_date: datetime, monitors: List[Monitor]):
-        self.from_date = from_date
-        self.to_date = to_date
-        self.monitors = monitors
-
-    def to_json(self):
-        return {
-            "from_date": self.from_date,
-            "to_date": self.to_date,
-            "monitors": [monitor.to_json() for monitor in self.monitors]
-        }
+    monitors: List[MonitorDTO]

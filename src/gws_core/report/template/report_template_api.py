@@ -9,7 +9,7 @@ from fastapi import UploadFile
 from fastapi.param_functions import Depends
 from fastapi.responses import FileResponse
 
-from gws_core.report.report_file_service import ReportImage
+from gws_core.report.report_dto import ReportImageDTO
 from gws_core.report.template.report_template_service import \
     ReportTemplateService
 
@@ -51,7 +51,7 @@ def delete(report_id: str, _=Depends(AuthService.check_user_access_token)) -> No
 
 @core_app.post("/report-template/image", tags=["Report template"], summary="Upload an object")
 def upload_image(image: UploadFile = FastAPIFile(...),
-                 _=Depends(AuthService.check_user_access_token)) -> ReportImage:
+                 _=Depends(AuthService.check_user_access_token)) -> ReportImageDTO:
     return ReportTemplateService.upload_image(image)
 
 

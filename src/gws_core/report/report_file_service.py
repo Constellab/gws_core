@@ -15,12 +15,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file_helper import FileHelper
-
-
-class ReportImage(TypedDict):
-    filename: str
-    width: int
-    height: int
+from gws_core.report.report_dto import ReportImageDTO
 
 
 class ReportFileService():
@@ -33,7 +28,7 @@ class ReportFileService():
     _dir_name = 'report'
 
     @classmethod
-    def upload_file(cls, file: UploadFile) -> ReportImage:
+    def upload_file(cls, file: UploadFile) -> ReportImageDTO:
         image = None
         try:
             image = Image.open(file.file)
@@ -56,11 +51,11 @@ class ReportFileService():
         image.save(file_path)
         image.close()
 
-        return {
-            "filename": filename,
-            'width': image_size[0],
-            'height': image_size[1]
-        }
+        return ReportImageDTO(
+            filename=filename,
+            width=image_size[0],
+            height=image_size[1]
+        )
 
     @classmethod
     def delete_file(cls, file_name: str) -> None:

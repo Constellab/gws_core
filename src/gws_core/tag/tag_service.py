@@ -122,7 +122,7 @@ class TagService():
     @classmethod
     @transaction()
     def add_tags_to_entity(cls, entity_type: EntityType, entity_id: str,
-                           tags: List[Tag]) -> EntityTagList:
+                           tags: List[Tag]) -> List[EntityTag]:
 
         entity_tags = EntityTagList.find_by_entity(entity_type, entity_id)
 
@@ -130,35 +130,31 @@ class TagService():
             if not tag.origin_is_defined():
                 tag.origins.add_origin(TagOriginType.USER, CurrentUserService.get_and_check_current_user().id)
 
-        entity_tags.add_tags(tags)
-
-        return entity_tags
+        return entity_tags.add_tags(tags)
 
     @classmethod
     @transaction()
     def add_tag_dict_to_entity(cls, entity_type: EntityType, entity_id: str,
-                               tag_dicts: List[NewTagDTO], propagate: bool):
+                               tag_dicts: List[NewTagDTO], propagate: bool) -> List[EntityTag]:
 
         tags = [Tag(key=tag_dict['key'], value=tag_dict['value'], is_propagable=propagate) for tag_dict in tag_dicts]
 
         if propagate:
-            cls.add_tags_to_entity_and_propagate(entity_type, entity_id, tags)
+            return cls.add_tags_to_entity_and_propagate(entity_type, entity_id, tags)
         else:
-            cls.add_tags_to_entity(entity_type, entity_id, tags)
-
-        return [tag.to_json() for tag in tags]
+            return cls.add_tags_to_entity(entity_type, entity_id, tags)
 
     @classmethod
     @transaction()
     def add_tags_to_entity_and_propagate(cls, entity_type: EntityType, entity_id: str,
-                                         tags: List[Tag]) -> EntityTagList:
-        entity_tag_list = cls.add_tags_to_entity(entity_type, entity_id, tags)
+                                         tags: List[Tag]) -> List[EntityTag]:
+        entity_tags = cls.add_tags_to_entity(entity_type, entity_id, tags)
 
         # propagate the tag to the next entities
         entity_nav = EntityNavigator.from_entity_id(entity_type, entity_id)
         entity_nav.propagate_tags(tags)
 
-        return entity_tag_list
+        return entity_tags
 
     @classmethod
     def find_by_entity_id(cls, entity_type: EntityType, entity_id: str) -> EntityTagList:
@@ -225,7 +221,10 @@ class TagService():
         # return only the current entity if the tag is not propagable
         if not existing_tag.is_propagable:
             entity_nav = EntityNavigator.from_entity_id(entity_type, entity_id)
-            return TagPropagationImpactDTO([tag_to_delete], entity_nav.get_entities().get_entity_dict_nav_group())
+            return TagPropagationImpactDTO(
+                tags=[tag_to_delete.to_dto()],
+                impacted_entities=entity_nav.get_entities().get_entity_dict_nav_group()
+            )
 
         return cls._check_tag_propagation_impact(entity_type, entity_id, [tag_to_delete])
 
@@ -239,7 +238,10 @@ class TagService():
         next_entities = entity_nav.get_next_entities_recursive(
             [EntityType.RESOURCE, EntityType.VIEW, EntityType.REPORT], include_current_entities=True)
 
-        return TagPropagationImpactDTO(tags, next_entities.get_entity_dict_nav_group())
+        return TagPropagationImpactDTO(
+            tags=[tag.to_dto() for tag in tags],
+            impacted_entities=next_entities.get_entity_dict_nav_group()
+        )
 
     @classmethod
     def get_and_check_entity_tag(cls, entity_tag_id: str) -> EntityTag:

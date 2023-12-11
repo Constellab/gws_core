@@ -15,8 +15,7 @@ from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
-from gws_core.entity_navigator.entity_navigator_type import (EntityNav,
-                                                             EntityType,
+from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
 from gws_core.resource.view.view_types import ViewType
 from gws_core.tag.entity_tag_list import EntityTagList

@@ -18,7 +18,7 @@ from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.project.project import Project
-from gws_core.report.report_file_service import ReportFileService, ReportImage
+from gws_core.report.report_file_service import ReportFileService
 from gws_core.report.report_view_model import ReportViewModel
 from gws_core.report.template.report_template import ReportTemplate
 from gws_core.resource.resource_model import ResourceModel
@@ -41,7 +41,7 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..experiment.experiment import Experiment
-from ..report.report_dto import ReportDTO
+from ..report.report_dto import ReportImageDTO, ReportSaveDTO
 from ..report.report_search_builder import ReportSearchBuilder
 from ..space.space_service import SpaceService
 from .report import Report, ReportExperiment
@@ -51,7 +51,7 @@ class ReportService():
 
     @classmethod
     @transaction()
-    def create(cls, report_dto: ReportDTO, experiment_ids: List[str] = None) -> Report:
+    def create(cls, report_dto: ReportSaveDTO, experiment_ids: List[str] = None) -> Report:
         report = Report()
         report.title = report_dto.title
         report.project = Project.get_by_id_and_check(report_dto.project_id) if report_dto.project_id else None
@@ -94,7 +94,7 @@ class ReportService():
         return report
 
     @classmethod
-    def update(cls, report_id: str, report_dto: ReportDTO) -> Report:
+    def update(cls, report_id: str, report_dto: ReportSaveDTO) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
 
         report.title = report_dto.title.strip()
@@ -470,7 +470,7 @@ class ReportService():
     ################################################# Image ########################################
 
     @classmethod
-    def upload_image(cls, file: UploadFile) -> ReportImage:
+    def upload_image(cls, file: UploadFile) -> ReportImageDTO:
         return ReportFileService.upload_file(file)
 
     @classmethod

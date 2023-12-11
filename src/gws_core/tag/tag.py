@@ -11,6 +11,7 @@ from typing_extensions import TypedDict
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.tag.tag_dto import TagDTO, TagOriginDTO
 
 
 class EntityTagValueFormat(Enum):
@@ -73,6 +74,12 @@ class TagOrigin():
 
     def to_json(self) -> TagOriginDict:
         return {"origin_type": self.origin_type.value, "origin_id": self.origin_id}
+
+    def to_dto(self) -> TagOriginDTO:
+        return TagOriginDTO(
+            origin_type=self.origin_type.value,
+            origin_id=self.origin_id
+        )
 
     @staticmethod
     def from_json(json: TagOriginDict) -> 'TagOrigin':
@@ -159,6 +166,9 @@ class TagOrigins():
 
     def to_json(self) -> List[TagOriginDict]:
         return [origin.to_json() for origin in self._origins]
+
+    def to_dto(self) -> List[TagOriginDTO]:
+        return [origin.to_dto() for origin in self._origins]
 
     def merge_origins(self, origins: 'TagOrigins') -> bool:
         """Merge the origins of the tag with the origins of the other tag
@@ -251,6 +261,14 @@ class Tag():
             "is_user_origin": self.origins.is_user_origin(),
             "is_propagable": self.is_propagable
         }
+
+    def to_dto(self) -> TagDTO:
+        return TagDTO(
+            key=self.key,
+            value=self.get_str_value(),
+            is_user_origin=self.origins.is_user_origin(),
+            is_propagable=self.is_propagable
+        )
 
     # TODO to remove once old tags are not supported
     @staticmethod

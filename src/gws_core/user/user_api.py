@@ -14,7 +14,8 @@ from gws_core.core.service.front_service import FrontService
 from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
-from gws_core.user.user import User, UserDataDict
+from gws_core.user.user import User
+from gws_core.user.user_dto import UserFullDTO
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
@@ -28,7 +29,7 @@ def read_user_me(_=Depends(AuthService.check_user_access_token)):
     Get current user details.
     """
 
-    return CurrentUserService.get_and_check_current_user().to_user_data_dict()
+    return CurrentUserService.get_and_check_current_user().to_user_dto()
 
 
 @core_app.get("/user/activity", tags=["User"], summary="Get user activities")
@@ -124,11 +125,11 @@ def generate_dev_login_unique_code(current_user: User = Depends(AuthService.chec
 
 @core_app.post("/dev-login-unique-code/check/{unique_code}", tags=["User"],
                summary="Check the temp unique code to login to the dev lab")
-def check_dev_login_unique_code(unique_code: str) -> UserDataDict:
+def check_dev_login_unique_code(unique_code: str) -> UserFullDTO:
     """
     Check the temp unique code to login to the dev lab
     """
-    return DevEnvService.check_dev_login_unique_code(unique_code).to_user_data_dict()
+    return DevEnvService.check_dev_login_unique_code(unique_code).to_user_dto()
 
 
 @core_app.post("/logout", tags=["User"], summary="Logout the user")

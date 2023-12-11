@@ -33,7 +33,7 @@ from ..user.activity.activity import ActivityObjectType, ActivityType
 from ..user.activity.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from .experiment import Experiment
-from .experiment_dto import (ExperimentDTO, RunningExperimentInfo,
+from .experiment_dto import (ExperimentSaveDTO, RunningExperimentInfoDTO,
                              RunningProcessInfo)
 from .experiment_enums import ExperimentStatus, ExperimentType
 
@@ -44,7 +44,7 @@ class ExperimentService(BaseService):
 
     @classmethod
     @transaction()
-    def create_experiment_from_dto(cls, experiment_DTO: ExperimentDTO) -> Experiment:
+    def create_experiment_from_dto(cls, experiment_DTO: ExperimentSaveDTO) -> Experiment:
 
         protocol_template: ProtocolTemplate = None
         if experiment_DTO.protocol_template_id:
@@ -128,7 +128,7 @@ class ExperimentService(BaseService):
     ################################### UPDATE ##############################
 
     @classmethod
-    def update_experiment(cls, experiment_id: str, experiment_dto: ExperimentDTO) -> Experiment:
+    def update_experiment(cls, experiment_id: str, experiment_dto: ExperimentSaveDTO) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         experiment.check_is_updatable()
@@ -391,7 +391,7 @@ class ExperimentService(BaseService):
             query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def get_running_experiments(cls) -> List[RunningExperimentInfo]:
+    def get_running_experiments(cls) -> List[RunningExperimentInfoDTO]:
         experiments: List[Experiment] = list(
             Experiment.select().where(Experiment.status == ExperimentStatus.RUNNING).order_by(
                 Experiment.last_modified_at.desc()))
@@ -399,18 +399,23 @@ class ExperimentService(BaseService):
         return [cls.get_running_experiment_info(experiment) for experiment in experiments]
 
     @classmethod
-    def get_running_experiment_info(cls, experiment: Experiment) -> RunningExperimentInfo:
+    def get_running_experiment_info(cls, experiment: Experiment) -> RunningExperimentInfoDTO:
         tasks: List[TaskModel] = experiment.get_running_tasks()
 
-        running_experiment = RunningExperimentInfo.from_experiment(experiment)
+        running_tasks: List[RunningProcessInfo] = []
         for task in tasks:
             running_task = RunningProcessInfo(id=task.id,
                                               title=task.get_name(),
                                               last_message=task.get_last_message(),
                                               progression=task.get_progress_value())
-            running_experiment.add_running_task(running_task)
+            running_tasks.append(running_task)
 
-        return running_experiment
+        return RunningExperimentInfoDTO(
+            id=experiment.id,
+            title=experiment.title,
+            project=experiment.project.to_dto() if experiment.project else None,
+            running_tasks=running_tasks,
+        )
 
         ################################### COPY  ##############################
 

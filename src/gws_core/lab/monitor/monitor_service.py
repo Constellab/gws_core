@@ -96,7 +96,7 @@ class MonitorService(BaseService):
         return MonitorBetweenDateDTO(
             from_date=from_date,
             to_date=to_date,
-            monitors=monitors
+            monitors=[monitor.to_dto() for monitor in monitors]
         )
 
     @classmethod

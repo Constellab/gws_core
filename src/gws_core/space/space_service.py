@@ -15,16 +15,16 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_model import LabConfig
 from gws_core.space.space_dto import (LabStartDTO, SaveExperimentToSpaceDTO,
                                       SaveReportToSpaceDTO, SpaceSendMailDTO)
-from gws_core.user.user_dto import UserSpace
+from gws_core.user.user_dto import UserFullDTO, UserSpace
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings
 from ..project.project_dto import SpaceProject
-from ..user.user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
 from ..user.current_user_service import CurrentUserService
-from ..user.user import User, UserDataDict
+from ..user.user import User
+from ..user.user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
 
 
 class ExternalCheckCredentialResponse(BaseModel):
@@ -194,7 +194,7 @@ class SpaceService(BaseService):
         return parse_obj_as(List[SpaceProject], response.json())
 
     @classmethod
-    def get_all_lab_users(cls) -> List[UserDataDict]:
+    def get_all_lab_users(cls) -> List[UserFullDTO]:
         """
         Call the space api to get the list of users for this lab
         """
@@ -208,7 +208,7 @@ class SpaceService(BaseService):
             err.detail = f"Can't retrieve users for the lab. Error : {err.detail}"
             raise err
 
-        return response.json()
+        return UserFullDTO.from_json_list(response.json())
 
     @classmethod
     def _get_space_api_url(cls, route: str) -> str:

@@ -111,3 +111,6 @@ class LabConfigModel(BaseModel):
             'version': self.version,
             'brick_versions': self.brick_versions
         }
+
+    class Meta:
+        table_name = 'gws_lab_config'
