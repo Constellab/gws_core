@@ -8,12 +8,13 @@ from gws_core import (File, Paginator, Resource, ResourceImporter, Table,
                       TableImporter, importer_decorator)
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.test.data_provider import DataProvider
 from gws_core.model.typing_service import TypingService
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_typing import TaskTyping
 from gws_core.test.base_test_case import BaseTestCase
+from gws_core.test.data_provider import DataProvider
 
 
 @importer_decorator(unique_name="TestImporterUnsued", target_type=Resource,

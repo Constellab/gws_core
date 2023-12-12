@@ -65,4 +65,5 @@ class ReportViewModel(BaseModel):
         return super().save(*args, force_insert=True, **kwargs)
 
     class Meta:
+        table_name = 'gws_report_view'
         primary_key = CompositeKey("report", "view")

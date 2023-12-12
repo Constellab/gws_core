@@ -30,7 +30,8 @@ from gws_core.space.space_dto import SaveReportToSpaceDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOriginType
 from gws_core.task.task_input_model import TaskInputModel
-from gws_core.user.activity.activity import ActivityObjectType, ActivityType
+from gws_core.user.activity.activity_dto import (ActivityObjectType,
+                                                 ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
 from gws_core.user.current_user_service import CurrentUserService
 

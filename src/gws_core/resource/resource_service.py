@@ -17,8 +17,10 @@ from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.process.process_interface import IProcess
 from gws_core.project.project import Project
 from gws_core.protocol.protocol_interface import IProtocol
+from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
-from gws_core.resource.view.view_dto import CallViewResult
+from gws_core.resource.view.view_dto import ResourceViewMetadatalDTO
+from gws_core.resource.view.view_result import CallViewResult
 from gws_core.resource.view.view_runner import ViewRunner
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
@@ -36,7 +38,7 @@ from ..core.exception.gws_exceptions import GWSException
 from ..core.service.base_service import BaseService
 from ..model.typing_manager import TypingManager
 from ..task.task_input_model import TaskInputModel
-from .resource_model import Resource, ResourceModel, ResourceOrigin
+from .resource_model import Resource, ResourceModel
 from .resource_model_search_builder import ResourceModelSearchBuilder
 from .view.view_helper import ViewHelper
 from .view.view_meta_data import ResourceViewMetaData
@@ -216,7 +218,7 @@ class ResourceService(BaseService):
         return ViewHelper.get_views_of_resource_type(resource_type)
 
     @classmethod
-    def get_view_specs_from_resource(cls, resource_model_id: str, view_name: str) -> dict:
+    def get_view_specs_from_resource(cls, resource_model_id: str, view_name: str) -> ResourceViewMetadatalDTO:
         resource_model: ResourceModel = cls.get_resource_by_id(
             resource_model_id)
 
@@ -224,17 +226,17 @@ class ResourceService(BaseService):
         view_meta = ViewHelper.get_and_check_view_meta(
             type(resource), view_name)
 
-        return view_meta.to_complete_json(resource)
+        return view_meta.to_dto(resource)
 
     @classmethod
-    def get_view_specs_from_type(cls, resource_typing_name: str, view_name: str) -> dict:
+    def get_view_specs_from_type(cls, resource_typing_name: str, view_name: str) -> ResourceViewMetadatalDTO:
         resource_type: Type[Resource] = TypingManager.get_type_from_name(
             resource_typing_name)
 
         view_meta = ViewHelper.get_and_check_view_meta(
             resource_type, view_name)
 
-        return view_meta.to_complete_json()
+        return view_meta.to_dto()
 
     @classmethod
     def get_and_call_view_on_resource_model(cls, resource_model_id: str,

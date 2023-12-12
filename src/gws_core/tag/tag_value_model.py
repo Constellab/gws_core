@@ -11,6 +11,7 @@ from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.model.model import Model
 from gws_core.tag.tag import EntityTagValueFormat, TagValueType
+from gws_core.tag.tag_dto import TagValueModelDTO
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
 
@@ -33,14 +34,17 @@ class TagValueModel(Model):
         return self.tag_value
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return {
-            'id': self.id,
-            'created_at': self.created_at,
-            'last_modified_at': self.last_modified_at,
-            'key': self.tag_key.key,
-            'value': self.get_tag_value(),
-            'value_format': self.tag_key.value_format,
-        }
+        return self.to_dto()
+
+    def to_dto(self) -> TagValueModelDTO:
+        return TagValueModelDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            key=self.tag_key.key,
+            value=self.get_tag_value(),
+            value_format=self.tag_key.value_format,
+        )
     ######################################### CLASS METHODS #########################################
 
     @classmethod
@@ -122,6 +126,7 @@ class TagValueModel(Model):
         return cls.select().where(expression_builder.build()).order_by(TagValueModel.tag_value)
 
     class Meta:
+        table_name = 'gws_tag_value'
         indexes = (
             (("tag_key", "tag_value"), True),
         )

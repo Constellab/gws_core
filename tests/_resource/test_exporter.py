@@ -9,7 +9,8 @@ from gws_core.impl.json.json_dict import JSONDict
 from gws_core.impl.json.json_tasks import JSONExporter
 from gws_core.impl.table.table import Table
 from gws_core.impl.table.tasks.table_exporter import TableExporter
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_typing import TaskTyping
 from gws_core.test.base_test_case import BaseTestCase

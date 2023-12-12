@@ -19,16 +19,17 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.resource_zipper_task import ResourceZipperTask
 from gws_core.share.share_link_service import ShareLinkService
-from gws_core.share.shared_dto import (ShareEntityInfoDTO,
-                                       ShareEntityZippedResponseDTO)
-from gws_core.share.shared_entity_info import (SharedEntityInfo,
-                                               SharedEntityMode)
+from gws_core.share.shared_dto import (SharedEntityMode,
+                                       ShareEntityInfoReponseDTO,
+                                       ShareEntityZippedResponseDTO,
+                                       ShareLinkType)
+from gws_core.share.shared_entity_info import SharedEntityInfo
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Sink
 from gws_core.user.current_user_service import AuthenticateUser
 from gws_core.user.user import User
 
-from .share_link import ShareLink, ShareLinkType
+from .share_link import ShareLink
 
 
 class ShareService():
@@ -80,7 +81,7 @@ class ShareService():
             raise Exception(f'Entity type {entity_type} is not supported')
 
     @classmethod
-    def get_share_entity_info(cls, token: str) -> ShareEntityInfoDTO:
+    def get_share_entity_info(cls, token: str) -> ShareEntityInfoReponseDTO:
         shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check_validity(
             token)
 
@@ -101,9 +102,9 @@ class ShareService():
             raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
 
         zip_url: str = ExternalLabService.get_current_lab_route(f"share/zip-entity/{token}")
-        return ShareEntityInfoDTO(version=cls.VERSION, entity_type=shared_entity_link.entity_type,
-                                  entity_id=shared_entity_link.entity_id, entity_object=entity_object,
-                                  zip_entity_route=zip_url)
+        return ShareEntityInfoReponseDTO(version=cls.VERSION, entity_type=shared_entity_link.entity_type,
+                                         entity_id=shared_entity_link.entity_id, entity_object=entity_object,
+                                         zip_entity_route=zip_url)
 
     @classmethod
     def zip_shared_entity(cls, token: str) -> ShareEntityZippedResponseDTO:

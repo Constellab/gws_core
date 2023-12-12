@@ -9,7 +9,8 @@ from typing import List
 from gws_core import Action, Resource
 from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.impl.text.text import Text
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.action.action import action_decorator
 from gws_core.task.action.action_service import ActionService
 from gws_core.task.action.actions_manager import ActionsManager

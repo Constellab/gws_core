@@ -11,6 +11,7 @@ from gws_core.process.process_types import ProcessConfigDict, ProcessSpecDict
 from gws_core.protocol.protocol_layout import ProtocolLayoutDict
 
 
+# TODO TO REMOVE
 class ProtocolSpecDict(ProcessSpecDict):
     graph: Any
 

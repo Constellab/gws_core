@@ -14,8 +14,9 @@ from fastapi.responses import FileResponse
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
+from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view.view_dto import CallViewResult
+from gws_core.resource.view.view_result import CallViewResult
 
 from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions.bad_request_exception import \
@@ -23,7 +24,7 @@ from ...core.exception.exceptions.bad_request_exception import \
 from ...core.exception.exceptions.not_found_exception import NotFoundException
 from ...core.service.base_service import BaseService
 from ...model.typing_manager import TypingManager
-from ...resource.resource_model import ResourceModel, ResourceOrigin
+from ...resource.resource_model import ResourceModel
 from ...resource.resource_typing import FileTyping, ResourceTyping
 from .file import File
 from .file_helper import FileHelper

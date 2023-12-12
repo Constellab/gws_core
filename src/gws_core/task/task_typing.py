@@ -10,6 +10,7 @@ from peewee import CharField, Expression, ModelSelect
 from gws_core.core.utils.utils import Utils
 from gws_core.process.process_types import ProcessSpecDict
 from gws_core.resource.resource import Resource
+from gws_core.task.task_dto import TaskTypingDTO
 
 from ..config.config_specs_helper import ConfigSpecsHelper
 from ..model.typing import Typing
@@ -88,23 +89,25 @@ class TaskTyping(Typing):
 
         return extension in type_._supported_extensions
 
-    def to_json(self, deep: bool = False, **kwargs) -> ProcessSpecDict:
-        json_: ProcessSpecDict = super().to_json(deep=deep, **kwargs)
+    def to_full_dto(self) -> TaskTypingDTO:
+        typing_dto = super().to_full_dto()
 
-        if deep:
-            # retrieve the task python type
-            model_t: Type[Task] = self.get_type()
+        task_typing = TaskTypingDTO(
+            **typing_dto.dict(),
+            additional_data={}
+        )
 
-            if model_t:
-                json_["input_specs"] = model_t.input_specs.to_json()
-                json_["output_specs"] = model_t.output_specs.to_json()
-                json_["config_specs"] = ConfigSpecsHelper.config_specs_to_json(model_t.config_specs)
+        # retrieve the task python type
+        model_t: Type[Task] = self.get_type()
 
-                json_["additional_info"] = {}
+        if model_t:
+            task_typing.input_specs = model_t.input_specs.to_dto()
+            task_typing.output_specs = model_t.output_specs.to_dto()
+            task_typing.config_specs = ConfigSpecsHelper.config_specs_to_json(model_t.config_specs)
 
-                from ..task.converter.importer import ResourceImporter
-                if Utils.issubclass(model_t, ResourceImporter):
-                    importer_t: Type[ResourceImporter] = model_t
-                    json_["additional_info"]["supported_extensions"] = importer_t._supported_extensions
+            from ..task.converter.importer import ResourceImporter
+            if Utils.issubclass(model_t, ResourceImporter):
+                importer_t: Type[ResourceImporter] = model_t
+                task_typing.additional_data["supported_extensions"] = importer_t._supported_extensions
 
-        return json_
+        return task_typing

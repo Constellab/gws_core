@@ -12,7 +12,6 @@ from gws_core.user.user_dto import UserFullDTO
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
-from .activity.activity import Activity
 from .user import User
 from .user_group import UserGroup
 
@@ -27,7 +26,7 @@ class UserService(BaseService):
     def create_or_update_user_dto(cls, user_dto: UserFullDTO) -> User:
         db_user: User = cls.get_user_by_id(user_dto.id)
         if db_user is not None:
-            db_user.from_user_dto(user_dto)
+            db_user.from_full_dto(user_dto)
             return db_user.save()
 
         return cls._create_user(user_dto)
@@ -40,29 +39,13 @@ class UserService(BaseService):
         user = User(data={})
         # set the id later to mark the user as not saved
         user.id = user_dto.id
-        user.from_user_dto(user_dto)
+        user.from_full_dto(user_dto)
         user.save()
         return User.get_by_id(user.id)
 
     @classmethod
     def deactivate_user(cls, id) -> User:
         return cls.set_user_active(id, False)
-
-    @classmethod
-    def fecth_activity_list(cls,
-                            user_id: str = None,
-                            activity_type: str = None,
-                            page: int = 0,
-                            number_of_items_per_page: int = 20) -> Paginator[User]:
-
-        query = Activity.select().order_by(Activity.created_at.desc())
-        if user_id:
-            query = query.join(User).where(User.id == user_id)
-        if activity_type:
-            query = query.where(Activity.activity_type ==
-                                activity_type.upper())
-        return Paginator(
-            query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
     def get_by_id_or_none(cls, id: str) -> Union[User, None]:

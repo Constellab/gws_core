@@ -3,20 +3,19 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Type
+import inspect
+from typing import Any, Dict, List, Type
 
 from gws_core.protocol.protocol_typing import ProtocolTyping
 
+from ..core.utils.reflector_helper import ReflectorHelper
 from ..model.typing import Typing
 from ..resource.resource import Resource
 from ..resource.resource_typing import ResourceTyping
-from ..task.task_typing import TaskTyping
-from .brick_helper import BrickHelper
-from ..core.utils.reflector_helper import ReflectorHelper
-from typing import Any, Dict, List
-import inspect
 from ..resource.view.view_helper import ViewHelper
 from ..resource.view.view_meta_data import ResourceViewMetaData
+from ..task.task_typing import TaskTyping
+from .brick_helper import BrickHelper
 
 
 class TechnicalDocService():
@@ -51,6 +50,7 @@ class TechnicalDocService():
             json_list.append(json_)
         return json_list
 
+    # TODO TO FIX
     @classmethod
     def _get_typing_technical_doc(cls, typing: Typing) -> dict:
         type_: Type[Resource] = typing.get_type()
@@ -67,7 +67,7 @@ class TechnicalDocService():
             return None
         methods: Any = inspect.getmembers(type_, predicate=inspect.isfunction)
         views_methods: List[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(type_)
-        views_methods_json: List[dict] = [m.to_complete_json()for m in views_methods]
+        views_methods_json: List[dict] = [m.to_complete_json() for m in views_methods]
         func_methods: Any = [method for method in methods if not ReflectorHelper.is_decorated_with_view(method)]
         public_func_methods: Any = [(m[0], m[1])
                                     for m in func_methods if not m[0].startswith('_') or m[0] == '__init__']

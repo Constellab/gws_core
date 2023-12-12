@@ -8,11 +8,12 @@ from typing import List, Optional
 
 from fastapi.param_functions import Depends
 
+from gws_core.core.model.model_dto import PageDTO
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, NewTagDTO,
-                                  TagPropagationImpactDTO)
+                                  SaveTagModelResonseDTO, TagKeyModelDTO,
+                                  TagPropagationImpactDTO, TagValueModelDTO)
 
-from ..core.classes.jsonable import ListJsonable
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from .tag_service import TagService
@@ -21,36 +22,36 @@ from .tag_service import TagService
 @core_app.get("/tag/search/key", tags=["Tag"], summary='Search tags by key')
 def search_all_keys(page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token)):
+                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[TagKeyModelDTO]:
     """
     Search tags by key.
     """
 
-    return TagService.search_keys(None, page, number_of_items_per_page).to_json()
+    return TagService.search_keys(None, page, number_of_items_per_page).to_dto()
 
 
 @core_app.get("/tag/search/key/{key}", tags=["Tag"], summary='Search tags by key')
 def search_keys(key: Optional[str],
                 page: Optional[int] = 1,
                 number_of_items_per_page: Optional[int] = 20,
-                _=Depends(AuthService.check_user_access_token)):
+                _=Depends(AuthService.check_user_access_token)) -> PageDTO[TagKeyModelDTO]:
     """
     Search tags by key.
     """
 
-    return TagService.search_keys(key, page, number_of_items_per_page).to_json()
+    return TagService.search_keys(key, page, number_of_items_per_page).to_dto()
 
 
 @core_app.get("/tag/search/key/{key}/value", tags=["Tag"], summary='Search tags by value')
 def search_all_values(key: str,
                       page: Optional[int] = 1,
                       number_of_items_per_page: Optional[int] = 20,
-                      _=Depends(AuthService.check_user_access_token)):
+                      _=Depends(AuthService.check_user_access_token)) -> PageDTO[TagValueModelDTO]:
     """
     Search tags by key.
     """
 
-    return TagService.search_values(key, None, page, number_of_items_per_page).to_json()
+    return TagService.search_values(key, None, page, number_of_items_per_page).to_dto()
 
 
 @core_app.get("/tag/search/key/{key}/value/{value}", tags=["Tag"], summary='Search tags by value')
@@ -58,55 +59,49 @@ def search_values(key: str,
                   value: Optional[str],
                   page: Optional[int] = 1,
                   number_of_items_per_page: Optional[int] = 20,
-                  _=Depends(AuthService.check_user_access_token)):
+                  _=Depends(AuthService.check_user_access_token)) -> PageDTO[TagValueModelDTO]:
     """
     Search tags by key.
     """
 
-    return TagService.search_values(key, value, page, number_of_items_per_page).to_json()
-
-
-@core_app.get("/tag", tags=["Tag"], summary='Get all tags')
-def get_all(_=Depends(AuthService.check_user_access_token)):
-
-    tags = TagService.get_all_tags()
-    return ListJsonable(tags).to_json()
+    return TagService.search_values(key, value, page, number_of_items_per_page).to_dto()
 
 
 @core_app.post("/tag/{key}/{value}", tags=["Tag"], summary='Register a new tag')
 def create_tag(key: str,
                value: str,
-               _=Depends(AuthService.check_user_access_token)):
+               _=Depends(AuthService.check_user_access_token)) -> SaveTagModelResonseDTO:
     tag_value_model = TagService.create_tag(key, value)
-    return {
-        'key_model': tag_value_model.tag_key.to_json(),
-        'value_model': tag_value_model.to_json()
-    }
+    return SaveTagModelResonseDTO(
+        key_model=tag_value_model.tag_key.to_dto(),
+        value_model=tag_value_model.to_dto()
+    )
 
 
 @core_app.put("/tag/reorder", tags=["Tag"], summary='Reoarder tags')
 def reorder_tags(tags_keys: List[str],
-                 _=Depends(AuthService.check_user_access_token)):
-    return ListJsonable(TagService.reorder_tags(tags_keys)).to_json()
+                 _=Depends(AuthService.check_user_access_token)) -> List[TagKeyModelDTO]:
+    tag_keys = TagService.reorder_tags(tags_keys)
+    return [tag_key.to_dto() for tag_key in tag_keys]
 
 
 @core_app.put("/tag/{key}/{old_value}/{new_value}", tags=["Tag"], summary='Update registered tag value')
 def update_registered_tag_value(key: str,
                                 old_value: str,
                                 new_value: str,
-                                _=Depends(AuthService.check_user_access_token)):
+                                _=Depends(AuthService.check_user_access_token)) -> SaveTagModelResonseDTO:
     tag_value_model = TagService.update_registered_tag_value(key, old_value, new_value)
-    return {
-        'key_model': tag_value_model.tag_key.to_json(),
-        'value_model': tag_value_model.to_json()
-    }
+    return SaveTagModelResonseDTO(
+        key_model=tag_value_model.tag_key.to_dto(),
+        value_model=tag_value_model.to_dto()
+    )
 
 
 @core_app.delete("/tag/{key}/{value}", tags=["Tag"], summary='Delete registered tag')
 def delete_registered_tag(key: str,
                           value: str,
-                          _=Depends(AuthService.check_user_access_token)):
-    return TagService.delete_registered_tag(key, value)
+                          _=Depends(AuthService.check_user_access_token)) -> None:
+    TagService.delete_registered_tag(key, value)
 
 ################################# ENTITY TAG #################################
 

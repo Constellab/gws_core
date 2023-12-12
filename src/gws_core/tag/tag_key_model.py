@@ -9,6 +9,7 @@ from peewee import BooleanField, CharField, IntegerField, ModelSelect
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.tag.tag import EntityTagValueFormat, TagValueType
+from gws_core.tag.tag_dto import TagKeyModelDTO
 from gws_core.tag.tag_helper import TagHelper
 
 from ..core.model.model import Model
@@ -28,8 +29,15 @@ class TagKeyModel(Model):
     def convert_str_value_to_type(self, value: str) -> TagValueType:
         return TagHelper.convert_str_value_to_type(value, self.value_format)
 
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        return None
+    def to_dto(self) -> TagKeyModelDTO:
+        return TagKeyModelDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            key=self.key,
+            value_format=self.value_format,
+            is_propagable=self.is_propagable,
+        )
 
     ############################################## CLASS METHODS ##############################################
 
@@ -78,3 +86,6 @@ class TagKeyModel(Model):
         if tag_model:
             return tag_model.order
         return -1
+
+    class Meta:
+        table_name = "gws_tag"

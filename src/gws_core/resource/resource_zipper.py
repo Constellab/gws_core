@@ -7,8 +7,7 @@ import os
 from json import dump
 from typing import List, Optional
 
-from typing_extensions import TypedDict
-
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.service.external_lab_service import (
     ExternalLabService, ExternalLabWithUserInfo)
 from gws_core.core.utils.compress.zip import Zip
@@ -21,13 +20,13 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag import TagDict
+from gws_core.tag.tag_dto import TagDTO
 from gws_core.user.user import User
 
 from .resource_model import ResourceModel
 
 
-class ZipResource(TypedDict):
+class ZipResource(BaseModelDTO):
     id: str
     name: str
     resource_typing_name: str
@@ -35,13 +34,13 @@ class ZipResource(TypedDict):
     data: dict
     parent_resource_id: str
     kvstore_dir_name: Optional[str]
-    tags: TagDict
+    tags: List[TagDTO]
 
     # Name of the file or directory if the resource is a FsNode
     fs_node_name: Optional[str]
 
 
-class ZipResourceInfo(TypedDict):
+class ZipResourceInfo(BaseModelDTO):
     """ Content of the info.json file in the zip file when a resource is zipped"""
     zip_version: int
     resource: ZipResource
@@ -70,12 +69,12 @@ class ResourceZipper():
         self.shared_by = shared_by
         self.temp_dir = Settings.get_instance().make_temp_dir()
         self.zip = Zip(self.get_zip_file_path())
-        self.resource_info = {
-            'zip_version': 1,
-            'resource': None,
-            'children_resources': [],
-            'origin': ExternalLabService.get_current_lab_info(self.shared_by)
-        }
+        self.resource_info = ZipResourceInfo(
+            zip_version=1,
+            resource=None,
+            children_resources=[],
+            origin=ExternalLabService.get_current_lab_info(self.shared_by)
+        )
 
     def add_resource(self, resource: Resource) -> None:
         self.add_resource_model(resource._model_id)
@@ -85,19 +84,19 @@ class ResourceZipper():
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
 
         resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource_id)
-        tags_dict = [tag.to_simple_tag().to_json() for tag in resource_tags.get_tags()]
+        tags_dict = [tag.to_simple_tag().to_dto() for tag in resource_tags.get_tags()]
 
-        resource_zip: ZipResource = {
-            'id': resource_model.id,
-            'name': resource_model.name,
-            'resource_typing_name': resource_model.resource_typing_name,
-            'brick_version': resource_model.brick_version,
-            'data': resource_model.data,
-            'parent_resource_id': parent_resource_id,
-            'kvstore_dir_name': None,
-            'fs_node_name': None,
-            'tags': tags_dict
-        }
+        resource_zip = ZipResource(
+            id=resource_model.id,
+            name=resource_model.name,
+            resource_typing_name=resource_model.resource_typing_name,
+            brick_version=resource_model.brick_version,
+            data=resource_model.data,
+            parent_resource_id=parent_resource_id,
+            kvstore_dir_name=None,
+            fs_node_name=None,
+            tags=tags_dict
+        )
 
         resource_index = self._get_next_resource_index()
 
@@ -107,7 +106,7 @@ class ResourceZipper():
             kvstore_file_name = f'{self.KV_STORE_FILE_NAME}_{resource_index}'
             # add the kvstore folder in the zip and name this folder kvstore
             self.zip.add_dir(kvstore.full_file_dir, dir_name=kvstore_file_name)
-            resource_zip['kvstore_dir_name'] = kvstore_file_name
+            resource_zip.kvstore_dir_name = kvstore_file_name
 
         # add the fs_node
         fs_node_model: FSNodeModel = resource_model.fs_node_model
@@ -119,13 +118,13 @@ class ResourceZipper():
 
             self.zip.add_fs_node(fs_node_model.path,
                                  fs_node_name=fs_node_file_name)
-            resource_zip['fs_node_name'] = fs_node_file_name
+            resource_zip.fs_node_name = fs_node_file_name
 
         # add the resource info
         if parent_resource_id is None:
-            self.resource_info['resource'] = resource_zip
+            self.resource_info.resource = resource_zip
         else:
-            self.resource_info['children_resources'].append(resource_zip)
+            self.resource_info.children_resources.append(resource_zip)
 
         # if the resource is a ResourceListBase, add all the children to the zip recursively
         resource: Resource = resource_model.get_resource()
@@ -138,8 +137,8 @@ class ResourceZipper():
                 self.add_resource_model(child_id, resource_id)
 
     def _get_next_resource_index(self) -> int:
-        return len(self.resource_info['children_resources'])\
-            + (0 if self.resource_info['resource'] is None else 1)
+        return len(self.resource_info.children_resources)\
+            + (0 if self.resource_info.resource is None else 1)
 
     def get_zip_file_path(self):
         return os.path.join(self.temp_dir, self.ZIP_FILE_NAME)

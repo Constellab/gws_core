@@ -12,6 +12,7 @@ from peewee import ForeignKeyField, ModelSelect
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOriginType
@@ -33,7 +34,7 @@ from ..process.process_exception import (CheckBeforeTaskStopException,
 from ..process.process_model import ProcessModel
 from ..process.process_types import ProcessStatus
 from ..resource.resource import Resource
-from ..resource.resource_model import ResourceModel, ResourceOrigin
+from ..resource.resource_model import ResourceModel
 from ..resource.resource_r_field import ResourceRField
 from ..task.task_io import TaskOutputs
 from .task import CheckBeforeTaskResult, Task

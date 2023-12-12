@@ -15,7 +15,8 @@ from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
-from gws_core.experiment.experiment_dto import ExperimentDTO
+from gws_core.experiment.experiment_dto import (ExperimentDTO,
+                                                ExperimentSimpleDTO)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.project.model_with_project import ModelWithProject
@@ -448,6 +449,12 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
             is_archived=self.is_archived,
             project=self.project.to_dto() if self.project else None,
             pid_status=self.get_process_status()
+        )
+
+    def to_simple_dto(self) -> ExperimentSimpleDTO:
+        return ExperimentSimpleDTO(
+            id=self.id,
+            title=self.title
         )
 
     def export_protocol(self) -> dict:

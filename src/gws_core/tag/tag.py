@@ -46,6 +46,8 @@ class TagOriginType(Enum):
     RESOURCE_PROPAGATED = 'RESOURCE_PROPAGATED'
     VIEW_PROPAGATED = 'VIEW_PROPAGATED'
 
+# TODO check if useful
+
 
 class TagOriginDict(TypedDict):
     origin_type: str
@@ -287,6 +289,10 @@ class Tag():
     @staticmethod
     def from_json(json: TagDict) -> 'Tag':
         return Tag(key=json.get("key"), value=json.get("value"), is_propagable=json.get("is_propagable"))
+
+    @staticmethod
+    def from_dto(dto: TagDTO) -> 'Tag':
+        return Tag(key=dto.key, value=dto.value, is_propagable=dto.is_propagable)
 
     @staticmethod
     def check_parse_tag_key(tag_key: str) -> str:

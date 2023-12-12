@@ -10,7 +10,7 @@ from gws_core import (BaseTestCase, BoolRField, DataFrameRField, DictRField,
                       FloatRField, IntRField, KVStore, ListRField,
                       ResourceModel, ResourceRField, Robot,
                       SerializableObjectJson, SerializableRField, StrRField)
-from gws_core.resource.resource_model import ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
 
 
 class TestJsonableObject(SerializableObjectJson):

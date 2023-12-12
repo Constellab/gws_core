@@ -58,3 +58,8 @@ class ExperimentDTO(ModelWithUserDTO):
 
 class ExperimentCountByTitleResultDTO(BaseModelDTO):
     count: int
+
+
+class ExperimentSimpleDTO(BaseModelDTO):
+    id: str
+    title: str

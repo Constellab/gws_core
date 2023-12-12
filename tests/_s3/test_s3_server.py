@@ -23,7 +23,8 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
 from gws_core.impl.s3.s3_server_service import S3ServerService
 from gws_core.project.project import Project
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.test.base_test_case import BaseTestCase
 
 

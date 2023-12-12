@@ -3,16 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from requests.models import Response
-from typing_extensions import TypedDict
+from typing import Optional
 
+from requests.models import Response
+
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.settings import Settings
-from gws_core.share.share_link import ShareLinkType
+from gws_core.share.shared_dto import ShareLinkType
 from gws_core.user.user import User
 
 
-class ExternalLabWithUserInfo(TypedDict):
+class ExternalLabWithUserInfo(BaseModelDTO):
     """Class that contains information a lab when 2 labs communicate with each other"""
     lab_id: str
     lab_name: str
@@ -22,8 +24,8 @@ class ExternalLabWithUserInfo(TypedDict):
     user_firstname: str
     user_lastname: str
 
-    space_id: str
-    space_name: str
+    space_id: Optional[str]
+    space_name: Optional[str]
 
 
 class ExternalLabService():
@@ -46,23 +48,23 @@ class ExternalLabService():
         """Method that mark a shared object as received"""
         return ExternalApiService.post(
             f"{lab_api_url}/{Settings.core_api_route_path()}/share/{entity_type.value}/mark-as-shared/{token}",
-            current_lab_info)
+            current_lab_info.dict())
 
     @classmethod
     def get_current_lab_info(cls, user: User) -> ExternalLabWithUserInfo:
         """Get information about the current lab. Usefule when 2 labs communicate with each other"""
         settings = Settings.get_instance()
         space = settings.get_space()
-        return {
-            'lab_id': settings.get_lab_id(),
-            'lab_name': settings.get_lab_name(),
-            'lab_api_url': settings.get_lab_api_url(),
-            'user_id': user.id,
-            'user_firstname': user.first_name,
-            'user_lastname': user.last_name,
-            'space_id': space['id'] if space is not None else None,
-            'space_name': space['name'] if space is not None else None
-        }
+        return ExternalLabWithUserInfo(
+            lab_id=settings.get_lab_id(),
+            lab_name=settings.get_lab_name(),
+            lab_api_url=settings.get_lab_api_url(),
+            user_id=user.id,
+            user_firstname=user.first_name,
+            user_lastname=user.last_name,
+            space_id=space['id'] if space is not None else None,
+            space_name=space['name'] if space is not None else None
+        )
 
     @classmethod
     def get_current_lab_route(cls, route: str) -> str:

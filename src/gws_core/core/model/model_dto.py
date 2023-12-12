@@ -22,7 +22,7 @@ class BaseModelDTO(BaseModel):
         """
         Create a ModelDTO from a json.
         """
-        return cls(**json_)
+        return cls.parse_obj(json_)
 
     @classmethod
     def from_json_list(cls, json_list: list) -> List[BaseModelDTOType]:

@@ -9,6 +9,8 @@ from typing import Type, final
 
 from typing_extensions import TypedDict
 
+from gws_core.io.io_dto import PortDTO
+
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
@@ -151,6 +153,12 @@ class Port(Base):
         return {
             'resource_id': self.resource_model.id if self.resource_model else None,
             'specs': self.resource_spec.to_json()
+        }
+
+    def to_dto(self) -> PortDTO:
+        return {
+            'resource_id': self.resource_model.id if self.resource_model else None,
+            'specs': self.resource_spec.to_dto()
         }
 
     @classmethod

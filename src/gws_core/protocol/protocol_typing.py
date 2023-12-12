@@ -9,6 +9,7 @@ from typing import Literal, Type, final
 from peewee import CharField, ModelSelect
 
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
 from gws_core.protocol.protocol_types import ProtocolSpecDict
 
 from ..model.typing import Typing
@@ -55,24 +56,21 @@ class ProtocolTyping(Typing):
         typing.data['graph'] = graph
         return typing
 
-    def to_json(self, deep: bool = False, **kwargs) -> ProtocolSpecDict:
-        json_: ProtocolSpecDict = super().to_json(deep=deep, **kwargs)
+    def to_full_dto(self) -> ProtocolTypingFullDTO:
+        typing_dto = super().to_full_dto()
 
-        if deep:
-            # retrieve the task python type
-            model_t: Type[Protocol] = self.get_type()
+        protocol_typing = ProtocolTypingFullDTO(
+            **typing_dto.dict(),
+        )
 
-            if model_t:
+        # retrieve the task python type
+        model_t: Type[Protocol] = self.get_type()
 
-                if self.object_sub_type == "PROTOCOL":
-                    protocol: Protocol = model_t.instantiate_protocol()
-                    # json_["graph"] = protocol.dumps_data(minimize=False)
-                    json_["input_specs"] = protocol.get_input_specs_self().to_json()
-                    json_["output_specs"] = protocol.get_output_specs_self().to_json()
-                    json_['config_specs'] = {}
+        if self.object_sub_type == "PROTOCOL" and model_t:
+            protocol: Protocol = model_t.instantiate_protocol()
+            # json_["graph"] = protocol.dumps_data(minimize=False)
+            protocol_typing.input_specs = protocol.get_input_specs_self().to_dto()
+            protocol_typing.output_specs = protocol.get_output_specs_self().to_dto()
+            protocol_typing.config_specs = {}
 
-                else:
-                    # json_["graph"] = self.data.get('graph', None)
-                    pass
-
-        return json_
+        return protocol_typing

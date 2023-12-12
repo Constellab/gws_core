@@ -8,8 +8,7 @@ from copy import deepcopy
 from json import dump
 from typing import Dict, List
 
-from peewee import (BigIntegerField, CharField, CompositeKey, ForeignKeyField,
-                    Model)
+from peewee import BigIntegerField, CharField, Model
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
@@ -17,7 +16,6 @@ from gws_core.config.param.param_types import ParamSpecDict
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.db.sql_migrator import SqlMigrator
-from gws_core.core.model.base_model import BaseModel
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
@@ -42,7 +40,8 @@ from gws_core.report.report import Report
 from gws_core.report.report_service import ReportService
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
@@ -56,8 +55,9 @@ from gws_core.tag.taggable_model import TaggableModel
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
-from gws_core.user.activity.activity import (Activity, ActivityObjectType,
-                                             ActivityType)
+from gws_core.user.activity.activity import Activity
+from gws_core.user.activity.activity_dto import (ActivityObjectType,
+                                                 ActivityType)
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 

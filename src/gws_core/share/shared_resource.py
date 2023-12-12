@@ -15,3 +15,6 @@ class SharedResource(SharedEntityInfo):
     _table_name = 'gws_shared_resource'
 
     entity: ResourceModel = ForeignKeyField(ResourceModel, backref="+", on_delete='CASCADE')
+
+    class Meta:
+        table_name = 'gws_shared_resource'

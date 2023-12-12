@@ -7,7 +7,8 @@
 from time import sleep
 
 from gws_core.test.base_test_case import BaseTestCase
-from gws_core.user.activity.activity import ActivityObjectType, ActivityType
+from gws_core.user.activity.activity_dto import (ActivityObjectType,
+                                                 ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
 
 

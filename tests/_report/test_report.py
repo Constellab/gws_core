@@ -17,7 +17,8 @@ from gws_core.report.report import Report, ReportExperiment
 from gws_core.report.report_dto import ReportSaveDTO
 from gws_core.report.report_service import ReportService
 from gws_core.report.report_view_model import ReportViewModel
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.test.base_test_case import BaseTestCase
 

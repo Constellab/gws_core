@@ -10,7 +10,7 @@ from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.process.process_interface import IProcess
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
-from gws_core.resource.resource_model import ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.technical_info import TechnicalInfo
 
 

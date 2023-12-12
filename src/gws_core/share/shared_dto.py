@@ -4,27 +4,53 @@
 # About us: https://gencovery.com
 
 from datetime import datetime
-from typing import Any
+from enum import Enum
+from typing import Any, Literal, Optional
 
-from pydantic import BaseModel
+from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
+from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
+from gws_core.user.user_dto import UserDTO
 
-from gws_core.resource.resource_model import ResourceModel
-from gws_core.share.share_link import ShareLinkType
+
+class ShareLinkType(Enum):
+    RESOURCE = "RESOURCE"
+
+# Define if the resource is shared as a sender or a receiver
 
 
-class GenerateShareLinkDTO(BaseModel):
+class SharedEntityMode(Enum):
+    SENT = "SENT"
+    RECEIVED = "RECEIVED"
 
+
+class ShareLinkDTO(ModelWithUserDTO):
+    entity_id: str
+    entity_type: ShareLinkType
+    valid_until: datetime
+    link: str
+    status: Literal["SUCCESS", "ERROR"]
+    entity_name: Optional[str] = None
+
+
+class GenerateShareLinkDTO(BaseModelDTO):
     entity_id: str
     entity_type: ShareLinkType
     valid_until: datetime
 
 
-class DownloadResourceDTO():
+class ShareEntityInfoDTO(ModelDTO):
+    share_mode: SharedEntityMode
+    lab_id: str
+    lab_name: str
+    user_id: str
+    user_firstname: str
+    user_lastname: str
+    space_id: Optional[str] = None
+    space_name: Optional[str] = None
+    created_by: UserDTO
 
-    resource_model: ResourceModel
 
-
-class ShareEntityInfoDTO(BaseModel):
+class ShareEntityInfoReponseDTO(BaseModelDTO):
     version: int
     entity_type: ShareLinkType
     entity_id: str
@@ -33,7 +59,7 @@ class ShareEntityInfoDTO(BaseModel):
     zip_entity_route: str
 
 
-class ShareEntityZippedResponseDTO(BaseModel):
+class ShareEntityZippedResponseDTO(BaseModelDTO):
     version: int
     entity_type: ShareLinkType
     entity_id: str

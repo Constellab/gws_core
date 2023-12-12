@@ -11,11 +11,11 @@ from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
 from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDict, OutputSpec
-from gws_core.protocol.protocol_dto import ProtocolUpdateDTO
 from gws_core.protocol.protocol_layout import (ProcessLayout, ProtocolLayout,
                                                ProtocolLayoutDict)
 from gws_core.protocol.protocol_spec import ConnectorSpec
 from gws_core.protocol.protocol_types import ProtocolConfigDict
+from gws_core.protocol.protocol_update import ProtocolUpdate
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.protocol_template.protocol_template_service import \
     ProtocolTemplateService
@@ -72,7 +72,7 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_process_to_protocol_id(cls, protocol_id: str, process_typing_name: str,
-                                   instance_name: str = None) -> ProtocolUpdateDTO:
+                                   instance_name: str = None) -> ProtocolUpdate:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
@@ -86,7 +86,7 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_empty_protocol_to_protocol(
-            cls, protocol_model: ProtocolModel, instance_name: str = None) -> ProtocolUpdateDTO:
+            cls, protocol_model: ProtocolModel, instance_name: str = None) -> ProtocolUpdate:
         child_protocol_model: ProtocolModel = ProcessFactory.create_protocol_empty()
 
         return cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=child_protocol_model,
@@ -95,7 +95,7 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_process_to_protocol(cls, protocol_model: ProtocolModel, process_type: Type[Process],
-                                instance_name: str = None, config_params: ConfigParamsDict = None) -> ProtocolUpdateDTO:
+                                instance_name: str = None, config_params: ConfigParamsDict = None) -> ProtocolUpdate:
         # create the process
         process_model: ProcessModel = ProcessFactory.create_process_model_from_type(
             process_type=process_type, config_params=config_params)
@@ -106,7 +106,7 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_process_model_to_protocol(cls, protocol_model: ProtocolModel, process_model: ProcessModel,
-                                      instance_name: str = None) -> ProtocolUpdateDTO:
+                                      instance_name: str = None) -> ProtocolUpdate:
 
         protocol_model.check_is_updatable()
         protocol_model.add_process_model(
@@ -126,7 +126,7 @@ class ProtocolService(BaseService):
     @transaction()
     def add_process_connected_to_output(
             cls, protocol_id: str, process_typing_name: str, output_process_name: str, output_port_name: str,
-            config_params: ConfigParamsDict = None) -> ProtocolUpdateDTO:
+            config_params: ConfigParamsDict = None) -> ProtocolUpdate:
         """Add a process to the protocol and connect it to an output port of a previous process.
         """
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
@@ -145,7 +145,7 @@ class ProtocolService(BaseService):
     @transaction()
     def _add_process_connected_to_output(
             cls, protocol_model: ProtocolModel, new_process_type: Type[Process],
-            out_process: ProcessModel, out_port_name: str, config_params: ConfigParamsDict = None) -> ProtocolUpdateDTO:
+            out_process: ProcessModel, out_port_name: str, config_params: ConfigParamsDict = None) -> ProtocolUpdate:
 
         input_name: str
         out_port = out_process.out_port(out_port_name)
@@ -160,7 +160,7 @@ class ProtocolService(BaseService):
                 "The process has no input port compatible with selected output port")
 
         # create the process
-        protocol_update: ProtocolUpdateDTO = ProtocolService.add_process_to_protocol(
+        protocol_update: ProtocolUpdate = ProtocolService.add_process_to_protocol(
             protocol_model, process_type=new_process_type, config_params=config_params)
 
         # Create the connector between the provided output port and the new process input port
@@ -174,7 +174,7 @@ class ProtocolService(BaseService):
     @transaction()
     def add_process_connected_to_input(
             cls, protocol_id: str, process_typing_name: str, input_process_name: str, input_port_name: str,
-            config_params: ConfigParamsDict = None) -> ProtocolUpdateDTO:
+            config_params: ConfigParamsDict = None) -> ProtocolUpdate:
         """Add a process to the protocol and connect it to an input port of a process.
         """
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
@@ -199,7 +199,7 @@ class ProtocolService(BaseService):
                 "The process has no output port compatible with selected input port")
 
         # create the process
-        protocol_update: ProtocolUpdateDTO = ProtocolService.add_process_to_protocol(
+        protocol_update: ProtocolUpdate = ProtocolService.add_process_to_protocol(
             protocol_model, process_type=new_process_type, config_params=config_params)
 
         # Create the connector between the provided input port and the new process output port
@@ -210,14 +210,14 @@ class ProtocolService(BaseService):
         return protocol_update.merge(protocol_update_2)
 
     @classmethod
-    def delete_process_of_protocol_id(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdateDTO:
+    def delete_process_of_protocol_id(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdate:
         protocol_model = cls.get_protocol_by_id(protocol_id)
         return cls.delete_process_of_protocol(
             protocol_model=protocol_model, process_instance_name=process_instance_name)
 
     @classmethod
     @transaction()
-    def delete_process_of_protocol(cls, protocol_model: ProtocolModel, process_instance_name: str) -> ProtocolUpdateDTO:
+    def delete_process_of_protocol(cls, protocol_model: ProtocolModel, process_instance_name: str) -> ProtocolUpdate:
         protocol_model.check_is_updatable()
         process_model: ProcessModel = protocol_model.get_process(
             process_instance_name)
@@ -249,13 +249,13 @@ class ProtocolService(BaseService):
 
     @classmethod
     @transaction()
-    def reset_process_of_protocol_id(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdateDTO:
+    def reset_process_of_protocol_id(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdate:
         protocol_model = cls.get_protocol_by_id(protocol_id)
         return cls.reset_process_of_protocol(protocol_model, process_instance_name)
 
     @classmethod
     @transaction()
-    def reset_process_of_protocol(cls, protocol_model: ProtocolModel, process_instance_name: str) -> ProtocolUpdateDTO:
+    def reset_process_of_protocol(cls, protocol_model: ProtocolModel, process_instance_name: str) -> ProtocolUpdate:
         protocol_model.check_is_updatable()
         process_model: ProcessModel = protocol_model.get_process(
             process_instance_name)
@@ -289,10 +289,10 @@ class ProtocolService(BaseService):
         protocol_model.propagate_resources()
 
         # refresh the protocol to get the updated graph because the connection and inputs might not be exact
-        return ProtocolUpdateDTO(protocol=protocol_model, protocol_updated=True)
+        return ProtocolUpdate(protocol=protocol_model, protocol_updated=True)
 
     @classmethod
-    def run_process(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdateDTO:
+    def run_process(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdate:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
@@ -305,15 +305,15 @@ class ProtocolService(BaseService):
         # if the process is fast, this is useful to return the finished process
         # sleep(4)
 
-        return ProtocolUpdateDTO(protocol=protocol_model.refresh(), protocol_updated=True)
+        return ProtocolUpdate(protocol=protocol_model.refresh(), protocol_updated=True)
 
     @classmethod
     def _on_protocol_object_updated(cls, protocol_model: ProtocolModel, process_model: ProcessModel = None,
-                                    connector: Connector = None, protocol_updated: bool = False) -> ProtocolUpdateDTO:
+                                    connector: Connector = None, protocol_updated: bool = False) -> ProtocolUpdate:
         """Called when a process or connector is updated.
         """
-        protocol_update = ProtocolUpdateDTO(protocol=protocol_model, process=process_model,
-                                            connector=connector, protocol_updated=protocol_updated)
+        protocol_update = ProtocolUpdate(protocol=protocol_model, process=process_model,
+                                         connector=connector, protocol_updated=protocol_updated)
         if protocol_model.is_finished:
             protocol_model.mark_as_partially_run()
             protocol_update.protocol_updated = True
@@ -323,7 +323,7 @@ class ProtocolService(BaseService):
     ########################## CONNECTORS #####################
     @classmethod
     def add_connector_to_protocol_id(cls, protocol_id: str, from_process_name: str, from_port_name: str,
-                                     to_process_name: str, to_port_name: str) -> ProtocolUpdateDTO:
+                                     to_process_name: str, to_port_name: str) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
@@ -332,7 +332,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def add_connectors_to_protocol(
-            cls, protocol_model: ProtocolModel, connectors: List[ConnectorSpec]) -> ProtocolUpdateDTO:
+            cls, protocol_model: ProtocolModel, connectors: List[ConnectorSpec]) -> ProtocolUpdate:
         protocol_model.check_is_updatable()
         protocol_model.add_connectors(connectors)
         protocol_model.save_graph()
@@ -342,7 +342,7 @@ class ProtocolService(BaseService):
     @classmethod
     def add_connector_to_protocol(
         cls, protocol_model: ProtocolModel, from_process_name: str, from_port_name: str,
-            to_process_name: str, to_port_name: str) -> ProtocolUpdateDTO:
+            to_process_name: str, to_port_name: str) -> ProtocolUpdate:
         protocol_model.check_is_updatable()
         connector = protocol_model.add_connector(from_process_name, from_port_name,
                                                  to_process_name, to_port_name)
@@ -352,7 +352,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def delete_connector_of_protocol(
-            cls, protocol_id: str, dest_process_name: str, dest_process_port_name: str) -> ProtocolUpdateDTO:
+            cls, protocol_id: str, dest_process_name: str, dest_process_port_name: str) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
@@ -366,9 +366,9 @@ class ProtocolService(BaseService):
 
     @classmethod
     def _on_connector_updated(cls, protocol: ProtocolModel, connector: Optional[Connector],
-                              mode: Literal['create', 'delete']) -> ProtocolUpdateDTO:
+                              mode: Literal['create', 'delete']) -> ProtocolUpdate:
         if connector is None:
-            return ProtocolUpdateDTO(protocol=protocol)
+            return ProtocolUpdate(protocol=protocol)
 
         # reset the right process of the connector if it is finished
         if connector.right_process.is_finished:
@@ -399,7 +399,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def add_interface_to_protocol(
-            cls, protocol_model: ProtocolModel, name: str, target_process_name: str, target_port_name: str) -> ProtocolUpdateDTO:
+            cls, protocol_model: ProtocolModel, name: str, target_process_name: str, target_port_name: str) -> ProtocolUpdate:
         protocol_model.check_is_updatable()
         protocol_model.add_interface(
             name, target_process_name, target_port_name)
@@ -408,7 +408,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def add_outerface_to_protocol(
-            cls, protocol_model: ProtocolModel, name: str, source_process_name: str, source_port_name: str) -> ProtocolUpdateDTO:
+            cls, protocol_model: ProtocolModel, name: str, source_process_name: str, source_port_name: str) -> ProtocolUpdate:
         protocol_model.check_is_updatable()
         protocol_model.add_outerface(
             name, source_process_name, source_port_name)
@@ -417,12 +417,12 @@ class ProtocolService(BaseService):
         return cls._on_protocol_object_updated(protocol_model=protocol_model)
 
     @classmethod
-    def delete_interface_of_protocol_id(cls, protocol_id: str, interface_name: str) -> ProtocolUpdateDTO:
+    def delete_interface_of_protocol_id(cls, protocol_id: str, interface_name: str) -> ProtocolUpdate:
         protocol_model = cls.get_protocol_by_id(protocol_id)
         return cls.delete_interface_of_protocol(protocol_model, interface_name)
 
     @classmethod
-    def delete_interface_of_protocol(cls, protocol_model: ProtocolModel, interface_name: str) -> ProtocolUpdateDTO:
+    def delete_interface_of_protocol(cls, protocol_model: ProtocolModel, interface_name: str) -> ProtocolUpdate:
         protocol_model.check_is_updatable()
         protocol_model.remove_interface(interface_name)
         protocol_model.save_graph()
@@ -430,12 +430,12 @@ class ProtocolService(BaseService):
         return cls._on_protocol_object_updated(protocol_model=protocol_model)
 
     @classmethod
-    def delete_outerface_of_protocol_id(cls, protocol_id: str, outerface_name: str) -> ProtocolUpdateDTO:
+    def delete_outerface_of_protocol_id(cls, protocol_id: str, outerface_name: str) -> ProtocolUpdate:
         protocol_model = cls.get_protocol_by_id(protocol_id)
         return cls.delete_outerface_of_protocol(protocol_model, outerface_name)
 
     @classmethod
-    def delete_outerface_of_protocol(cls, protocol_model: ProtocolModel, outerface_name: str) -> ProtocolUpdateDTO:
+    def delete_outerface_of_protocol(cls, protocol_model: ProtocolModel, outerface_name: str) -> ProtocolUpdate:
         protocol_model.check_is_updatable()
         protocol_model.remove_outerface(outerface_name)
         protocol_model.save_graph()
@@ -456,7 +456,7 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def configure_process(
-            cls, protocol_id: str, process_instance_name: str, config_values: ConfigParamsDict) -> ProtocolUpdateDTO:
+            cls, protocol_id: str, process_instance_name: str, config_values: ConfigParamsDict) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
@@ -464,7 +464,7 @@ class ProtocolService(BaseService):
         process_model: ProcessModel = protocol_model.get_process(
             process_instance_name)
 
-        update_dto: ProtocolUpdateDTO = ProtocolUpdateDTO(
+        update_dto: ProtocolUpdate = ProtocolUpdate(
             protocol=protocol_model, process=process_model)
 
         # reset the process and next processes if required
@@ -497,7 +497,7 @@ class ProtocolService(BaseService):
     ########################## SPECIFIC PROCESS #####################
     @classmethod
     def add_source_to_protocol_id(
-            cls, protocol_id: str, resource_id: str) -> ProtocolUpdateDTO:
+            cls, protocol_id: str, resource_id: str) -> ProtocolUpdate:
         """ Add a source task to the protocol. Configure it with the resource.
         """
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
@@ -512,7 +512,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def add_source_to_process_input(
-            cls, protocol_id: str, resource_id: str, process_name: str, input_port_name: str) -> ProtocolUpdateDTO:
+            cls, protocol_id: str, resource_id: str, process_name: str, input_port_name: str) -> ProtocolUpdate:
         """ Add a source task to the protocol. Configure it with the resource. And add connector
             from source to process
         """
@@ -521,7 +521,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def add_sink_to_process_ouput(
-            cls, protocol_id: str, process_name: str, output_port_name: str) -> ProtocolUpdateDTO:
+            cls, protocol_id: str, process_name: str, output_port_name: str) -> ProtocolUpdate:
         """ Add a sink task to the protocol. And add connector from process to sink
         """
 
@@ -530,7 +530,7 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_viewer_to_process_output(
-            cls, protocol_id: str, process_name: str, output_port_name: str) -> ProtocolUpdateDTO:
+            cls, protocol_id: str, process_name: str, output_port_name: str) -> ProtocolUpdate:
         """ Add a view task to the protocol. And add connector from process to view task
         """
 
@@ -588,17 +588,17 @@ class ProtocolService(BaseService):
 
     @classmethod
     def add_dynamic_input_port_to_process(
-            cls, protocol_id: str, process_name: str) -> ProtocolUpdateDTO:
+            cls, protocol_id: str, process_name: str) -> ProtocolUpdate:
         return cls._add_dynamic_port_to_process(protocol_id, process_name, 'input')
 
     @classmethod
     def add_dynamic_output_port_to_process(
-            cls, protocol_id: str, process_name: str) -> ProtocolUpdateDTO:
+            cls, protocol_id: str, process_name: str) -> ProtocolUpdate:
         return cls._add_dynamic_port_to_process(protocol_id, process_name, 'output')
 
     @classmethod
     def _add_dynamic_port_to_process(cls, protocol_id: str, process_name: str,
-                                     port_type: Literal['input', 'output']) -> ProtocolUpdateDTO:
+                                     port_type: Literal['input', 'output']) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
@@ -618,24 +618,24 @@ class ProtocolService(BaseService):
         io.create_port(StringHelper.generate_uuid(), io_spec)
 
         process_model.save()
-        new_update = ProtocolUpdateDTO(protocol=protocol_model, protocol_updated=False,
-                                       process=process_model)
+        new_update = ProtocolUpdate(protocol=protocol_model, protocol_updated=False,
+                                    process=process_model)
         return update_protocol.merge(new_update)
 
     @classmethod
     def delete_dynamic_input_port_of_process(
-            cls, protocol_id: str, process_name: str, port_name: str) -> ProtocolUpdateDTO:
+            cls, protocol_id: str, process_name: str, port_name: str) -> ProtocolUpdate:
         return cls._delete_dynamic_port_of_process(protocol_id, process_name, port_name, 'input')
 
     @classmethod
     def delete_dynamic_output_port_of_process(
-            cls, protocol_id: str, process_name: str, port_name: str) -> ProtocolUpdateDTO:
+            cls, protocol_id: str, process_name: str, port_name: str) -> ProtocolUpdate:
         return cls._delete_dynamic_port_of_process(protocol_id, process_name, port_name, 'output')
 
     @classmethod
     @transaction()
     def _delete_dynamic_port_of_process(cls, protocol_id: str, process_name: str,
-                                        port_name: str, port_type: Literal['input', 'output']) -> ProtocolUpdateDTO:
+                                        port_name: str, port_type: Literal['input', 'output']) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
@@ -659,25 +659,25 @@ class ProtocolService(BaseService):
 
         io.remove_port(port_name)
         process_model.save()
-        new_update = ProtocolUpdateDTO(protocol=protocol_model, protocol_updated=True,
-                                       process=process_model)
+        new_update = ProtocolUpdate(protocol=protocol_model, protocol_updated=True,
+                                    process=process_model)
         return update_protocol.merge(new_update)
 
     @classmethod
     def update_dynamic_input_port_of_process(
-            cls, protocol_id: str, process_name: str, port_name: str, io_spec_dict: IOSpecDict) -> ProtocolUpdateDTO:
+            cls, protocol_id: str, process_name: str, port_name: str, io_spec_dict: IOSpecDict) -> ProtocolUpdate:
         return cls._update_dynamic_port_of_process(protocol_id, process_name, port_name, io_spec_dict, 'input')
 
     @classmethod
     def update_dynamic_output_port_of_process(
-            cls, protocol_id: str, process_name: str, port_name: str, io_spec_dict: IOSpecDict) -> ProtocolUpdateDTO:
+            cls, protocol_id: str, process_name: str, port_name: str, io_spec_dict: IOSpecDict) -> ProtocolUpdate:
         return cls._update_dynamic_port_of_process(protocol_id, process_name, port_name, io_spec_dict, 'output')
 
     @classmethod
     @transaction()
     def _update_dynamic_port_of_process(
             cls, protocol_id: str, process_name: str, port_name: str, io_spec_dict: IOSpecDict,
-            port_type: Literal['input', 'output']) -> ProtocolUpdateDTO:
+            port_type: Literal['input', 'output']) -> ProtocolUpdate:
 
         io_spec_class: Type[IOSpec] = InputSpec if port_type == 'input' else OutputSpec
         io_spec: IOSpec = io_spec_class.from_json(io_spec_dict)
@@ -699,8 +699,8 @@ class ProtocolService(BaseService):
         io.update_port(port_name, io_spec)
         process_model.save()
 
-        new_update = ProtocolUpdateDTO(protocol=protocol_model, protocol_updated=False,
-                                       process=process_model)
+        new_update = ProtocolUpdate(protocol=protocol_model, protocol_updated=False,
+                                    process=process_model)
         return update_protocol.merge(new_update)
 
     ########################## PROTOCOL TEMPLATE #####################

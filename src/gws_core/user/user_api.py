@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import Depends
 from fastapi.responses import RedirectResponse
@@ -15,7 +15,7 @@ from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
 from gws_core.user.user import User
-from gws_core.user.user_dto import UserFullDTO
+from gws_core.user.user_dto import UserDTO, UserFullDTO
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
@@ -24,46 +24,12 @@ from .user_service import UserService
 
 
 @core_app.get("/user/me", tags=["User"])
-def read_user_me(_=Depends(AuthService.check_user_access_token)):
+def read_user_me(_=Depends(AuthService.check_user_access_token)) -> UserFullDTO:
     """
     Get current user details.
     """
 
-    return CurrentUserService.get_and_check_current_user().to_user_dto()
-
-
-@core_app.get("/user/activity", tags=["User"], summary="Get user activities")
-def get_user_activity(user_id: Optional[str] = None,
-                      activity_type: Optional[str] = None,
-                      page: int = 0,
-                      number_of_items_per_page: int = 20,
-                      _=Depends(AuthService.check_user_access_token)):
-    """
-    Get the list of user activities on the lab
-
-    - **user_id**: the id the user [optional]
-    - **activity_type**: the type of the activity to retrieve [optional]. The valid types of activities are:
-      - **CREATE** : the creation of an object
-      - **SAVE**   : the saving of an object
-      - **START**  : the start of an experiment
-      - **STOP**   : the stop of an experiment
-      - **DELETE** : the deletion of an experiment
-      - **ARCHIVE** : the archive of an object
-      - **VALIDATE** : the valdaition of an experiment
-      - **HTTP_AUTHENTICATION** : HTTP authentication
-      - **HTTP_UNAUTHENTICATION** : HTTP unauthentication
-      - **CONSOLE_AUTHENTICATION** : console authentication (through CLI or notebook)
-      - **CONSOLE_UNAUTHENTICATION** : console unauthentication
-    - **page**: the page number
-    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
-    """
-
-    return UserService.fecth_activity_list(
-        user_id=user_id,
-        activity_type=activity_type,
-        page=page,
-        number_of_items_per_page=number_of_items_per_page,
-    ).to_json()
+    return CurrentUserService.get_and_check_current_user().to_full_dto()
 
 
 @core_app.post("/login", tags=["User"], summary="Login to the lab by requesting space")
@@ -129,7 +95,7 @@ def check_dev_login_unique_code(unique_code: str) -> UserFullDTO:
     """
     Check the temp unique code to login to the dev lab
     """
-    return DevEnvService.check_dev_login_unique_code(unique_code).to_user_dto()
+    return DevEnvService.check_dev_login_unique_code(unique_code).to_dto()
 
 
 @core_app.post("/logout", tags=["User"], summary="Logout the user")
@@ -142,12 +108,13 @@ def logout() -> JSONResponse:
 
 
 @core_app.get("/user", tags=["User"])
-def get_all_users(_=Depends(AuthService.check_user_access_token)):
+def get_all_users(_=Depends(AuthService.check_user_access_token)) -> List[UserDTO]:
     """
     List the users.
     """
 
-    return ListJsonable(UserService.get_all_real_users()).to_json()
+    users = UserService.get_all_real_users()
+    return [user.to_dto() for user in users]
 
 
 @core_app.post("/user/synchronize", tags=["User"])

@@ -6,9 +6,7 @@
 from datetime import datetime
 from typing import Any, List
 
-from typing_extensions import TypedDict
-
-from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.entity_navigator.entity_navigator_type import EntityNavGroupDTO
 
 
@@ -38,7 +36,7 @@ class EntityTagFullDTO(EntityTagDTO):
     last_modified_at: datetime
 
 
-class NewTagDTO(TypedDict):
+class NewTagDTO(BaseModelDTO):
     key: str
     value: str
 
@@ -52,3 +50,22 @@ class TagPropagationImpactDTO(BaseModelDTO):
     """
     tags: List[TagDTO]
     impacted_entities: List[EntityNavGroupDTO]
+
+
+class TagKeyModelDTO(ModelDTO):
+    key: str
+    # TODO type with EntityTagValueFormat
+    value_format: Any
+    is_propagable: bool
+
+
+class TagValueModelDTO(ModelDTO):
+    key: str
+    value: Any
+    # TODO type with EntityTagValueFormat
+    value_format: Any
+
+
+class SaveTagModelResonseDTO(BaseModelDTO):
+    key_model: TagKeyModelDTO
+    value_model: TagValueModelDTO

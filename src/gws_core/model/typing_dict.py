@@ -9,6 +9,8 @@ from typing import Literal, Optional
 
 from typing_extensions import TypedDict
 
+from gws_core.core.model.model_dto import BaseModelDTO
+
 
 class TypingStatus(Enum):
     OK = 'OK'
@@ -21,6 +23,14 @@ TypingObjectType = Literal["TASK", "RESOURCE", "PROTOCOL", "MODEL", "ACTION"]
 
 # Minimum object to reference another type
 class TypingRef(TypedDict):
+    typing_name: str
+    brick_version: str
+    human_name: str
+
+# Minimum object to reference another type
+
+
+class TypingRefDTO(BaseModelDTO):
     typing_name: str
     brick_version: str
     human_name: str

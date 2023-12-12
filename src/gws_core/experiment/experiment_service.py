@@ -14,6 +14,8 @@ from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.task_input_model import TaskInputModel
+from gws_core.user.activity.activity_dto import (ActivityObjectType,
+                                                 ActivityType)
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
@@ -29,8 +31,6 @@ from ..protocol.protocol_service import ProtocolService
 from ..space.space_dto import SaveExperimentToSpaceDTO
 from ..space.space_service import SpaceService
 from ..task.task_model import TaskModel
-from ..user.activity.activity import ActivityObjectType, ActivityType
-from ..user.activity.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from .experiment import Experiment
 from .experiment_dto import (ExperimentSaveDTO, RunningExperimentInfoDTO,

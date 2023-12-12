@@ -11,7 +11,8 @@ from gws_core import (BaseTestCase, ConfigParams, FileHelper, Folder,
 from gws_core.impl.file.file import File
 from gws_core.impl.file.folder_task import FolderExporter
 from gws_core.impl.text.text_view import SimpleTextView
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_runner import TaskRunner
 

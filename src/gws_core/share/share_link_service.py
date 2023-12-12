@@ -12,15 +12,15 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.model.model import Model
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
-from gws_core.share.share_link import ShareLink, ShareLinkType
-from gws_core.share.shared_dto import GenerateShareLinkDTO
+from gws_core.share.share_link import ShareLink
+from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
 
 
 class ShareLinkService:
 
     @classmethod
     def find_by_entity_id_and_type(
-            cls, entity_type: ShareLinkType, entity_id: ShareLinkType) -> Optional[ShareLink]:
+            cls, entity_type: ShareLinkType, entity_id: str) -> Optional[ShareLink]:
         """Method that find a shared entity link by its entity id and type
         """
 

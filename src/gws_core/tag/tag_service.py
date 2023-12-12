@@ -137,7 +137,7 @@ class TagService():
     def add_tag_dict_to_entity(cls, entity_type: EntityType, entity_id: str,
                                tag_dicts: List[NewTagDTO], propagate: bool) -> List[EntityTag]:
 
-        tags = [Tag(key=tag_dict['key'], value=tag_dict['value'], is_propagable=propagate) for tag_dict in tag_dicts]
+        tags = [Tag(key=tag_dict.key, value=tag_dict.value, is_propagable=propagate) for tag_dict in tag_dicts]
 
         if propagate:
             return cls.add_tags_to_entity_and_propagate(entity_type, entity_id, tags)
@@ -194,7 +194,7 @@ class TagService():
         new_tags: List[Tag] = []
 
         for tag in tags:
-            new_tag = Tag(tag['key'], tag['value'])
+            new_tag = Tag(tag.key, tag.value)
             if not entity_tags.has_tag(new_tag):
                 new_tags.append(new_tag)
 
@@ -211,7 +211,7 @@ class TagService():
 
         entity_tags = EntityTagList.find_by_entity(entity_type, entity_id)
 
-        tag_to_delete = Tag(tag['key'], tag['value'])
+        tag_to_delete = Tag(tag.key, tag.value)
 
         existing_tag: EntityTag = entity_tags.get_tag(tag_to_delete)
 

@@ -22,7 +22,7 @@ from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource import Resource
-from gws_core.resource.resource_model import ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_model import TaskModel

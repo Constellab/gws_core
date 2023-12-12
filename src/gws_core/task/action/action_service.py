@@ -12,7 +12,8 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.process.process_interface import IProcess
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.action.action import Action
 from gws_core.task.action.actions_manager import ActionsManager
 from gws_core.task.action.actions_task import ActionsTask

@@ -18,6 +18,7 @@ from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
 from gws_core.resource.view.view_types import ViewType
+from gws_core.resource.view_config.view_config_dto import ViewConfigDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.taggable_model import TaggableModel
 
@@ -40,22 +41,23 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
     _table_name = 'gws_view_config'
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        json_ = super().to_json(deep, **kwargs)
+        return self.to_dto()
 
-        json_['config_values'] = self.get_config_values()
-
-        if self.experiment is not None:
-            json_["experiment"] = {
-                'id': self.experiment.id,
-                'title': self.experiment.title
-            }
-
-        if self.resource_model is not None:
-            json_["resource"] = {
-                'id': self.resource_model.id,
-                'name': self.resource_model.name
-            }
-        return json_
+    def to_dto(self) -> ViewConfigDTO:
+        return ViewConfigDTO(
+            id=self.id,
+            created_at=self.created_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_at=self.last_modified_at,
+            last_modified_by=self.last_modified_by.to_dto(),
+            title=self.title,
+            view_type=self.view_type,
+            view_name=self.view_name,
+            flagged=self.flagged,
+            config_values=self.get_config_values(),
+            experiment=self.experiment.to_dto() if self.experiment else None,
+            resource=self.resource_model.to_dto() if self.resource_model else None,
+        )
 
     def get_config_values(self) -> ConfigParamsDict:
         return self.config.get_values()
@@ -127,3 +129,6 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
             "title": title or self.title,
             "caption": caption or "",
         }
+
+    class Meta:
+        table_name = 'gws_view_config'

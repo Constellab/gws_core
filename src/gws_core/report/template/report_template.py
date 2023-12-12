@@ -8,6 +8,9 @@ from typing import final
 from peewee import CharField
 
 from gws_core.core.classes.rich_text_content import RichText
+from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.report.template.report_template_dto import (
+    ReportTemplateDTO, ReportTemplateFullDTO)
 
 from ...core.model.db_field import JSONField
 from ...core.model.model_with_user import ModelWithUser
@@ -27,10 +30,30 @@ class ReportTemplate(ModelWithUser):
     def update_content_rich_text(self, rich_text: RichText) -> None:
         self.content = rich_text.get_content()
 
+    # TODO TO REMOVE
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        json_ = super().to_json(deep=deep, **kwargs)
+        return self.to_dto()
 
-        if not deep:
-            del json_["content"]
+    def to_dto(self) -> ReportTemplateDTO:
+        return ReportTemplateDTO(
+            id=self.id,
+            created_at=self.created_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_at=self.last_modified_at,
+            last_modified_by=self.last_modified_by.to_dto(),
+            title=self.title,
+        )
 
-        return json_
+    def to_full_dto(self) -> ReportTemplateFullDTO:
+        return ReportTemplateFullDTO(
+            id=self.id,
+            created_at=self.created_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_at=self.last_modified_at,
+            last_modified_by=self.last_modified_by.to_dto(),
+            title=self.title,
+            content=self.content,
+        )
+
+    class Meta:
+        table_name = 'gws_report_template'

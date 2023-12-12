@@ -120,7 +120,7 @@ class User(Model):
             photo=self.photo
         )
 
-    def to_user_dto(self) -> UserFullDTO:
+    def to_full_dto(self) -> UserFullDTO:
         return UserFullDTO(
             id=self.id,
             email=self.email,
@@ -133,7 +133,7 @@ class User(Model):
             photo=self.photo
         )
 
-    def from_user_dto(self, data: UserFullDTO) -> None:
+    def from_full_dto(self, data: UserFullDTO) -> None:
         self.email = data.email
         self.first_name = data.first_name
         self.last_name = data.last_name

@@ -4,21 +4,33 @@
 # About us: https://gencovery.com
 from typing import Dict, List, Literal, TypedDict
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.io.io_exception import (InvalidInputsException,
                                       MissingInputResourcesException)
-from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDict, OutputSpec
+from gws_core.io.io_spec import (InputSpec, IOSpec, IOSpecDict, IOSpecDTO,
+                                 OutputSpec)
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_factory import ResourceFactory
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 IOSpecsType = Literal['normal', 'dynamic']
 
+# TODO TO REMOVE
+
 
 class IOSpecsDict(TypedDict):
     """IOSpecsDict type
     """
     specs: Dict[str, IOSpecDict]
+    type: IOSpecsType
+    additional_info: dict
+
+
+class IOSpecsDTO(BaseModelDTO):
+    """IOSpecsDTO type
+    """
+    specs: Dict[str, IOSpecDTO]
     type: IOSpecsType
     additional_info: dict
 
@@ -78,6 +90,18 @@ class IOSpecs():
         for key, spec in self.get_specs().items():
             json_["specs"][key] = spec.to_json()
         return json_
+
+    def to_dto(self) -> IOSpecsDTO:
+        spec_dto = IOSpecsDTO(
+            specs={},
+            type=self.get_type(),
+            additional_info=self.get_additional_info()
+        )
+
+        for key, spec in self.get_specs().items():
+            spec_dto.specs[key] = spec.to_dto()
+
+        return spec_dto
 
 
 class InputSpecs(IOSpecs):

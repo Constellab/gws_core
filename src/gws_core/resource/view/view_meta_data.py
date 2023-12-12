@@ -10,6 +10,7 @@ from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.core.classes.jsonable import DictJsonable
 from gws_core.resource.view.lazy_view_param import LazyViewParam
+from gws_core.resource.view.view_dto import ResourceViewMetadatalDTO
 
 from .view import View
 from .view_types import ViewSpecs
@@ -47,22 +48,23 @@ class ResourceViewMetaData():
             self.hide)
 
     def to_json(self) -> dict:
-        return {
-            "method_name": self.method_name,
-            "view_type": self.view_type._type,
-            "human_name": self.human_name,
-            "short_description": self.short_description,
-            "default_view": self.default_view,
-            "has_config_specs": self.has_config_specs(),
-        }
+        return self.to_dto()
 
+    # TODO TO FIX
     def to_complete_json(self, resource: Resource = None) -> dict:
-        json_ = self.to_json()
+        return self.to_dto(resource)
 
+    def to_dto(self, resource: Resource = None) -> ResourceViewMetadatalDTO:
         jsonable_dict = DictJsonable(self._get_view_specs(resource, skip_private=True))
-        json_["config_specs"] = jsonable_dict.to_json()
-
-        return json_
+        return ResourceViewMetadatalDTO(
+            method_name=self.method_name,
+            view_type=self.view_type._type,
+            human_name=self.human_name,
+            short_description=self.short_description,
+            default_view=self.default_view,
+            has_config_specs=self.has_config_specs(),
+            config_specs=jsonable_dict.to_json(),
+        )
 
     def get_view_specs_from_resource(self, resource: Resource, skip_private: bool = False) -> ConfigSpecs:
         return self._get_view_specs(resource, skip_private=skip_private)

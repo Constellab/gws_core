@@ -8,6 +8,7 @@ from abc import abstractmethod
 from typing import Dict, Generic, List, Type, TypedDict, TypeVar, final
 
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
+from gws_core.io.io_dto import IODTO
 from gws_core.io.io_spec import IOSpec
 from gws_core.io.io_specs import InputSpecs, IOSpecs, IOSpecsType, OutputSpecs
 
@@ -258,6 +259,18 @@ class IO(Base, Generic[PortType]):
             _json["ports"][key] = port.to_json()
 
         return _json
+
+    def to_dto(self) -> IODTO:
+        io_dto = IODTO(
+            ports={},
+            type=self._type,
+            additional_info=self._additional_info
+        )
+
+        for key, port in self._ports.items():
+            io_dto.ports[key] = port.to_dto()
+
+        return io_dto
 
     def get_specs(self) -> IOSpecs:
         """

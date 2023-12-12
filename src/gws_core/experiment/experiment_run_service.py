@@ -17,6 +17,8 @@ from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.space.mail_service import MailService
 from gws_core.space.space_dto import SendExperimentFinishMailData
 from gws_core.task.task_model import TaskModel
+from gws_core.user.activity.activity_dto import (ActivityObjectType,
+                                                 ActivityType)
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
@@ -24,7 +26,6 @@ from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..experiment.experiment_exception import ExperimentRunException
-from ..user.activity.activity import ActivityObjectType, ActivityType
 from ..user.activity.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User

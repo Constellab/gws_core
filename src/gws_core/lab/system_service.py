@@ -24,7 +24,8 @@ from gws_core.project.project_service import ProjectService
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.space.space_service import SpaceService
-from gws_core.user.activity.activity import ActivityObjectType, ActivityType
+from gws_core.user.activity.activity_dto import (ActivityObjectType,
+                                                 ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
 from gws_core.user.user_dto import Space
 
@@ -172,7 +173,7 @@ class SystemService:
         cls.init_queue_and_monitor()
 
         if check_user:
-            UserService.create_or_update_user_dto(user.to_user_dto())
+            UserService.create_or_update_user_dto(user.to_full_dto())
 
     @classmethod
     def kill_process(cls) -> None:

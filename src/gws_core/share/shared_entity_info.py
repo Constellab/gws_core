@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from enum import Enum
 
 from peewee import CharField, ForeignKeyField
 
@@ -11,13 +10,8 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.model.model import Model
+from gws_core.share.shared_dto import SharedEntityMode, ShareEntityInfoDTO
 from gws_core.user.user import User
-
-
-# Define if the resource is shared as a sender or a receiver
-class SharedEntityMode(Enum):
-    SENT = "SENT"
-    RECEIVED = "RECEIVED"
 
 
 class SharedEntityInfo(Model):
@@ -51,7 +45,7 @@ class SharedEntityInfo(Model):
     # current lab user that
     # In SENT mode is the one who created the share link
     # In RECEIVED mode, is the one that imported the entity
-    created_by = ForeignKeyField(User, null=True, backref='+')
+    created_by: User = ForeignKeyField(User, null=True, backref='+')
 
     # override on children classes
     entity: Model = None
@@ -86,10 +80,20 @@ class SharedEntityInfo(Model):
             cls.created_at.desc())
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        json_ = super().to_json(deep, **kwargs)
+        return self.to_dto()
 
-        # add the created by and last_modified_by
-        if self.created_by:
-            json_["created_by"] = self.created_by.to_json()
-
-        return json_
+    def to_dto(self) -> ShareEntityInfoDTO:
+        return ShareEntityInfoDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            share_mode=self.share_mode,
+            lab_id=self.lab_id,
+            lab_name=self.lab_name,
+            user_id=self.user_id,
+            user_firstname=self.user_firstname,
+            user_lastname=self.user_lastname,
+            space_id=self.space_id,
+            space_name=self.space_name,
+            created_by=self.created_by.to_dto() if self.created_by else None,
+        )

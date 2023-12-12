@@ -6,14 +6,15 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Dict, Optional, Type, final
+from typing import TYPE_CHECKING, Any, Dict, Optional, Type, final
 
-from peewee import CharField, ForeignKeyField
+from peewee import BooleanField, CharField, ForeignKeyField
 
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.model.typing import Typing
 from gws_core.model.typing_dict import TypingStatus
+from gws_core.process.process_dto import ProcessDTO
 from gws_core.task.plug import Sink, Source
 
 from ..config.config import Config
@@ -63,6 +64,9 @@ class ProcessModel(ModelWithUser):
 
     started_at = DateTimeUTC(null=True)
     ended_at = DateTimeUTC(null=True)
+
+    data: Dict[str, Any] = JSONField(null=True)
+    is_archived = BooleanField(default=False, index=True)
 
     _experiment: Experiment = None
     _parent_protocol: ProtocolModel = None
@@ -437,8 +441,6 @@ class ProcessModel(ModelWithUser):
 
         _json["experiment_id"] = self.experiment.id if self.experiment else None
         _json["parent_protocol_id"] = self.parent_protocol.id if self.parent_protocol_id else None
-        _json["is_running"] = self.progress_bar.is_running
-        _json["is_finished"] = self.progress_bar.is_finished
         _json["is_protocol"] = self.is_protocol()
 
         _json["config"] = self.config.to_json(
@@ -447,8 +449,6 @@ class ProcessModel(ModelWithUser):
 
         _json["inputs"] = self.inputs.to_json()
         _json["outputs"] = self.outputs.to_json()
-
-        _json["typing_name"] = self._typing_name
 
         process_typing: Typing = self.get_process_typing()
         if process_typing:
@@ -459,6 +459,41 @@ class ProcessModel(ModelWithUser):
             _json["type_status"] = TypingStatus.UNAVAILABLE
 
         return _json
+
+    def to_dto(self) -> ProcessDTO:
+        process_dto = ProcessDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_by=self.last_modified_by.to_dto(),
+            parent_protocol_id=self.parent_protocol.id if self.parent_protocol_id else None,
+            experiment_id=self.experiment.id if self.experiment else None,
+            instance_name=self.instance_name,
+            config=self.config.to_dto(),
+            progress_bar=self.progress_bar.to_dto(),
+            process_typing_name=self.process_typing_name,
+            brick_version=self.brick_version,
+            status=self.status,
+            error_info=self.error_info,
+            started_at=self.started_at,
+            ended_at=self.ended_at,
+            is_archived=self.is_archived,
+            is_protocol=self.is_protocol(),
+            inputs=self.inputs.to_dto(),
+            outputs=self.outputs.to_dto(),
+            type_status=TypingStatus.OK
+        )
+
+        process_typing: Typing = self.get_process_typing()
+        if process_typing:
+            process_dto.human_name = process_typing.human_name
+            process_dto.short_description = process_typing.short_description
+            process_dto.type_status = process_typing.get_type_status()
+        else:
+            process_dto.type_status = TypingStatus.UNAVAILABLE
+
+        return process_dto
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """

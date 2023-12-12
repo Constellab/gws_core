@@ -16,10 +16,7 @@ from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.settings import Settings
 from gws_core.resource.resource_model import ResourceModel
-
-
-class ShareLinkType(Enum):
-    RESOURCE = "RESOURCE"
+from gws_core.share.shared_dto import ShareLinkDTO, ShareLinkType
 
 
 class ShareLink(ModelWithUser):
@@ -95,23 +92,36 @@ class ShareLink(ModelWithUser):
             raise BadRequestException(f"Entity type {entity_type} is not supported")
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        json_ = super().to_json(deep, **kwargs)
+        return self.to_dto()
 
-        json_['link'] = f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/info/{self.token}"
+    def to_dto(self) -> ShareLinkDTO:
+        link_dto = ShareLinkDTO(
+            id=self.id,
+            created_at=self.created_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_at=self.last_modified_at,
+            last_modified_by=self.last_modified_by.to_dto(),
+            entity_id=self.entity_id,
+            entity_type=self.entity_type,
+            valid_until=self.valid_until,
+            link=f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/info/{self.token}",
+            status='SUCCESS',
+        )
 
         # add the info of the associated entity if it exists
         entity = self.get_model(self.entity_id, self.entity_type)
         if entity:
             if isinstance(entity, ResourceModel):
-                json_['entity_name'] = entity.name
-            json_['status'] = 'SUCCESS'
+                link_dto.entity_name = entity.name
+            link_dto.status = 'SUCCESS'
         else:
-            json_['status'] = 'ERROR'
+            link_dto.status = 'ERROR'
 
-        return json_
+        return link_dto
 
     # generate unique key with entity_id and entity_type
     class Meta:
+        table_name = 'gws_share_link'
         indexes = (
             (("entity_id", "entity_type"), True),
         )

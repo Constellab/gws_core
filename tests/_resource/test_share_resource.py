@@ -12,15 +12,15 @@ from gws_core import (BaseTestCase, ConfigParams, File, IExperiment,
                       OutputSpec, OutputSpecs, ResourceModel, ResourceSet,
                       Settings, Table, Task, TaskInputs, TaskOutputs,
                       task_decorator)
+from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
-from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
-from gws_core.share.share_link import ShareLinkType
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_service import ShareService
 from gws_core.share.shared_dto import (GenerateShareLinkDTO,
-                                       ShareEntityInfoDTO,
-                                       ShareEntityZippedResponseDTO)
+                                       ShareEntityInfoReponseDTO,
+                                       ShareEntityZippedResponseDTO,
+                                       ShareLinkType)
 from gws_core.tag.tag import Tag, TagOrigins, TagOriginType
 from gws_core.user.current_user_service import CurrentUserService
 
@@ -80,7 +80,7 @@ class TestShareResource(BaseTestCase):
         share_link = ShareLinkService.generate_share_link(generate_dto)
 
         # get the share entity info
-        share_entity_info: ShareEntityInfoDTO = ShareService.get_share_entity_info(share_link.token)
+        share_entity_info: ShareEntityInfoReponseDTO = ShareService.get_share_entity_info(share_link.token)
         self.assertEqual(share_entity_info.entity_type, ShareLinkType.RESOURCE)
         self.assertEqual(share_entity_info.entity_id, original_resource_model.id)
         self.assertIsNotNone(share_entity_info.zip_entity_route)

@@ -93,4 +93,5 @@ class TaskInputModel(BaseModel):
         return super().save(*args, force_insert=True, **kwargs)
 
     class Meta:
+        table_name = 'gws_task_inputs'
         primary_key = CompositeKey("task_model", "port_name")

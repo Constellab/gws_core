@@ -14,7 +14,7 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_decorator import view
-from gws_core.resource.view.view_dto import CallViewResult
+from gws_core.resource.view.view_result import CallViewResult
 
 
 @resource_decorator("ReportResource", human_name="Report resource", short_description="Report resource")

@@ -9,9 +9,10 @@ from typing import Iterable, List, Optional, Tuple, Type, Union
 from typing_extensions import TypedDict
 
 from gws_core.brick.brick_helper import BrickHelper
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
-from gws_core.model.typing_dict import TypingRef
+from gws_core.model.typing_dict import TypingRef, TypingRefDTO
 
 from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
@@ -28,6 +29,15 @@ class IOSpecDict(TypedDict):
     is_optional: bool
     sub_class: Optional[bool]
     is_constant: Optional[bool]
+
+
+class IOSpecDTO(BaseModelDTO):
+    resource_types: List[TypingRefDTO]
+    human_name: Optional[str]
+    short_description: Optional[str]
+    is_optional: bool
+    sub_class: Optional[bool] = None
+    is_constant: Optional[bool] = None
 
 
 class IOSpec:
@@ -171,6 +181,7 @@ class IOSpec:
                                 expected_types: Iterable[Type[Resource]]) -> bool:
         return resource_type in expected_types
 
+    # TODO TO DELETE
     def to_json(self) -> IOSpecDict:
         json_: IOSpecDict = {"resource_types": [],
                              "is_optional": self.is_optional,
@@ -184,6 +195,25 @@ class IOSpec:
 
             json_["resource_types"].append(resource_json)
         return json_
+
+    def to_dto(self) -> IOSpecDTO:
+        spec_dto = IOSpecDTO(
+            resource_types=[],
+            is_optional=self.is_optional,
+            human_name=self.human_name,
+            short_description=self.short_description,
+        )
+
+        for resource_type in self.resource_types:
+            typing = TypingManager.get_typing_from_name_and_check(
+                resource_type._typing_name)
+
+            spec_dto.resource_types.append(TypingRefDTO(
+                typing_name=typing.typing_name,
+                brick_version=str(BrickHelper.get_brick_version(typing.brick)),
+                human_name=typing.human_name
+            ))
+        return spec_dto
 
     @classmethod
     def from_json(cls, json_: IOSpecDict) -> 'IOSpec':
@@ -248,13 +278,6 @@ class InputSpec(IOSpec):
     def is_subclass_out(self) -> bool:
         return False
 
-     # Add the sub class attribute
-
-    def to_json(self) -> IOSpecDict:
-        json_ = super().to_json()
-
-        return json_
-
 
 class OutputSpec(IOSpec):
     """ Spec for an output task port
@@ -306,6 +329,14 @@ class OutputSpec(IOSpec):
         json_["is_constant"] = self._is_constant
 
         return json_
+
+    def to_dto(self) -> IOSpecDTO:
+        spec_dto = super().to_dto()
+
+        spec_dto.sub_class = self._sub_class
+        spec_dto.is_constant = self._is_constant
+
+        return spec_dto
 
     @classmethod
     def from_json(cls, json_: IOSpecDict) -> 'OutputSpec':

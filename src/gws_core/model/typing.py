@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Type
 from peewee import BooleanField, CharField, ModelSelect
 
 from gws_core.brick.brick_helper import BrickHelper
+from gws_core.model.typing_dto import TypingDTO, TypingFullDTO
 from gws_core.model.typing_name import TypingNameObj
 
 from ..core.decorator.json_ignore import json_ignore
@@ -17,14 +18,8 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.model.base import Base
 from ..core.model.model import Model
 from ..core.utils.utils import Utils
-from .typing_dict import TypingDict, TypingObjectType, TypingRef, TypingStatus
-
-# ####################################################################
-#
-# ProcessType class
-#
-# ####################################################################
-SEPARATOR: str = "."
+from .typing_dict import (TypingDict, TypingObjectType, TypingRef,
+                          TypingRefDTO, TypingStatus)
 
 
 @json_ignore(["model_type", "related_model_typing_name", "data", "brick", "brick_version", "is_archived"])
@@ -110,6 +105,13 @@ class Typing(Model):
             "human_name": self.human_name
         }
 
+    def get_typing_ref_dto(self) -> TypingRefDTO:
+        return TypingRefDTO(
+            typing_name=self.typing_name,
+            brick_version=self.brick_version,
+            human_name=self.human_name
+        )
+
     @property
     def typing_name(self) -> str:
         return TypingNameObj.typing_obj_to_str(self.object_type, self.brick, self.unique_name)
@@ -120,30 +122,42 @@ class Typing(Model):
         return TypingStatus.OK if model_t is not None else TypingStatus.UNAVAILABLE
 
     def to_json(self, deep: bool = False, **kwargs) -> TypingDict:
-        _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
+        self.to_dto()
 
-        _json["typing_name"] = self.typing_name
+    def to_dto(self) -> TypingDTO:
+        return TypingDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            object_type=self.object_type,
+            typing_name=self.typing_name,
+            brick_version=self.brick_version,
+            human_name=self.human_name,
+            short_description=self.short_description,
+            object_sub_type=self.object_sub_type,
+            deprecated_since=self.deprecated_since,
+            deprecated_message=self.deprecated_message,
+            additional_data=self.additional_data,
+            status=self.get_type_status()
+        )
+
+    def to_full_dto(self) -> TypingFullDTO:
+        typing_dto = self.to_dto()
+
+        full_dto = TypingFullDTO(**typing_dto.dict())
 
         # retrieve the task python type
         model_t: Type[Base] = self.get_type()
-        _json["status"] = self.get_type_status()
 
-        if deep and model_t:
-            _json['doc'] = self.get_model_type_doc()
+        if model_t:
+            full_dto.doc = self.get_model_type_doc()
 
             # handle parent ref
             parent_typing: Typing = self.get_parent_typing()
             if parent_typing:
-                parent: TypingRef = parent_typing.get_typing_ref()
-            else:
-                parent = None
-            _json["parent"] = parent
+                full_dto.parent = parent_typing.get_typing_ref_dto()
 
-        brick_info = BrickHelper.get_brick_info(self.brick)
-        if brick_info:
-            _json["brick_version"] = brick_info["version"]
-
-        return _json
+        return full_dto
 
     def get_parent_typing(self) -> Optional['Typing']:
         # retrieve the task python type

@@ -74,7 +74,7 @@ class ResourceLoader():
                 resource: Resource = self._load_resource(zip_resource)
 
                 # retrieve the name of the resource from the id in the resource set
-                resource_name = resource_names[zip_resource['id']]
+                resource_name = resource_names[zip_resource.id]
                 self.resource.add_resource(resource, unique_name=resource_name)
 
                 self.children_resources.append(resource)
@@ -82,43 +82,43 @@ class ResourceLoader():
         return self.resource
 
     def _check_compatibility(self) -> None:
-        if self.info_json['zip_version'] != 1:
+        if self.info_json.zip_version != 1:
             raise Exception(
-                f'Zip version {self.info_json["zip_version"]} is not supported.')
+                f'Zip version {self.info_json.zip_version} is not supported.')
 
         for zip_resource in self.get_all_resources():
-            TypingManager.check_typing_name_compatibility(zip_resource['resource_typing_name'])
+            TypingManager.check_typing_name_compatibility(zip_resource.resource_typing_name)
 
     def _load_resource(self, zip_resource: ZipResource) -> Resource:
         # create the kvstore
         kv_store: KVStore = None
-        if zip_resource.get('kvstore_dir_name') is not None:
+        if zip_resource.kvstore_dir_name is not None:
             # build the path to the kvstore file
             kvstore_path = os.path.join(
-                self.resource_folder, zip_resource['kvstore_dir_name'], KVStore.FILE_NAME)
+                self.resource_folder, zip_resource.kvstore_dir_name, KVStore.FILE_NAME)
 
             kv_store = KVStore(kvstore_path)
 
         resource_type: Type[Resource] = TypingManager.get_type_from_name(
-            zip_resource['resource_typing_name'])
+            zip_resource.resource_typing_name)
 
-        tags_dict = zip_resource.get('tags', [])
-        tags = TagHelper.tags_dict_to_list(tags_dict)
+        tags_dict = zip_resource.tags or []
+        tags = TagHelper.tags_dict_to_list_v2(tags_dict)
 
-        resource = ResourceFactory.create_resource(resource_type, kv_store=kv_store, data=zip_resource['data'],
-                                                   name=zip_resource['name'], tags=tags)
+        resource = ResourceFactory.create_resource(resource_type, kv_store=kv_store, data=zip_resource.data,
+                                                   name=zip_resource.name, tags=tags)
 
         # generate a new uid for the resource
         resource.uid = Resource.uid.get_default_value()
 
         # if the resource is an fs_node_name
-        if zip_resource.get('fs_node_name') is not None:
+        if zip_resource.fs_node_name is not None:
             if not isinstance(resource, FSNode):
                 raise Exception('Resource type is not a FSNode')
 
             # set the path of the resource node
             resource.path = os.path.join(
-                self.resource_folder, zip_resource['fs_node_name'])
+                self.resource_folder, zip_resource.fs_node_name)
             # clear other values
             resource.file_store_id = None
             resource.is_symbolic_link = False
@@ -136,7 +136,7 @@ class ResourceLoader():
             raise Exception(
                 f'File {info_json_path} not found in the zip file.')
 
-        info_json: ZipResourceInfo = None
+        info_json: dict = None
         with open(info_json_path, 'r', encoding='UTF-8') as file:
             info_json = load(file)
 
@@ -155,7 +155,7 @@ class ResourceLoader():
             raise Exception(
                 f"The children_resources value in {info_json_path} file is invalid, must be a list")
 
-        self.info_json = info_json
+        self.info_json = ZipResourceInfo.from_json(info_json)
 
         return self.info_json
 
@@ -184,13 +184,13 @@ class ResourceLoader():
             return Folder(self.resource_folder)
 
     def get_origin_info(self) -> ExternalLabWithUserInfo:
-        return self.info_json['origin']
+        return self.info_json.origin
 
     def get_main_resource(self) -> ZipResource:
-        return self.info_json['resource']
+        return self.info_json.resource
 
     def get_children_resources(self) -> List[ZipResource]:
-        return self.info_json['children_resources']
+        return self.info_json.children_resources
 
     def get_all_resources(self) -> List[ZipResource]:
         return [self.get_main_resource()] + self.get_children_resources()

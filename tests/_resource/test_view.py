@@ -12,7 +12,8 @@ from gws_core.config.config_types import ConfigSpecs
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.report.report_dto import ReportSaveDTO
 from gws_core.report.report_service import ReportService
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.any_view import AnyView
 from gws_core.resource.view.lazy_view_param import LazyViewParam
 from gws_core.resource.view.view_helper import ViewHelper

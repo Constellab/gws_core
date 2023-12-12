@@ -14,7 +14,7 @@ from gws_core.impl.table.view.table_view import TableView
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view.view_dto import CallViewResult
+from gws_core.resource.view.view_result import CallViewResult
 from gws_core.resource.view.view_runner import ViewRunner
 
 # List of chart callable on a Table

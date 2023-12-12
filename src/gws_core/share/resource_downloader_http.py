@@ -14,11 +14,10 @@ from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.settings import Settings
 from gws_core.model.typing_manager import TypingManager
-from gws_core.resource.resource_dto import ResourceDictDTO
 from gws_core.share.resource_downloader_base import ResourceDownloaderBase
-from gws_core.share.share_link import ShareLinkType
-from gws_core.share.shared_dto import (ShareEntityInfoDTO,
-                                       ShareEntityZippedResponseDTO)
+from gws_core.share.shared_dto import (ShareEntityInfoReponseDTO,
+                                       ShareEntityZippedResponseDTO,
+                                       ShareLinkType)
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
@@ -77,13 +76,13 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
 
         if response.status_code != 200:
             raise Exception("Error while getting information of the resource: " + response.text)
-        shared_entity_info = ShareEntityInfoDTO.parse_obj(response.json())
+        shared_entity_info = ShareEntityInfoReponseDTO.parse_obj(response.json())
 
         # check if the resource is compatible with the current lab
         if not isinstance(shared_entity_info.entity_object, list):
             raise Exception("The resource is not compatible with the current lab")
 
-        resources: List[ResourceDictDTO] = shared_entity_info.entity_object
+        resources: List[dict] = shared_entity_info.entity_object
 
         # check if the resources are compatible with the current lab
         for resource in resources:

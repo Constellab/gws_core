@@ -6,6 +6,7 @@
 from typing import Dict, List, Literal, Optional, Set
 
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.protocol.protocol_dto import ProtocolDTO
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 from gws_core.protocol.protocol_types import ConnectorDict
 
@@ -1066,6 +1067,17 @@ class ProtocolModel(ProcessModel):
             _json["graph"]["layout"] = self.layout.to_json() if self.layout else {}
 
         return _json
+
+    def to_full_dto(self) -> ProtocolDTO:
+        process_dto = self.to_dto()
+
+        graph = self.dumps_graph(process_mode='full')
+        graph['layout'] = self.layout.to_json() if self.layout else {}
+
+        return ProtocolDTO(
+            **process_dto.dict(),
+            data={'graph': graph}
+        )
 
     def export_config(self) -> Dict:
 

@@ -9,6 +9,7 @@ from typing import Dict, List
 from numpy import array, meshgrid
 
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.tag.tag_dto import TagDTO
 
 from .tag import (TAGS_SEPARATOR, EntityTagValueFormat, Tag, TagDict,
                   TagValueType)
@@ -44,6 +45,17 @@ class TagHelper():
 
         for tag_dict in tags_dict:
             tags_list.append(Tag.from_json(tag_dict))
+        return tags_list
+
+    @classmethod
+    def tags_dict_to_list_v2(cls, tags_dict: List[TagDTO]) -> List[Tag]:
+        if not tags_dict:
+            return []
+
+        tags_list: List[Tag] = []
+
+        for tag_dict in tags_dict:
+            tags_list.append(Tag.from_dto(tag_dict))
         return tags_list
 
     @classmethod

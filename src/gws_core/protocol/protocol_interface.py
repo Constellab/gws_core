@@ -8,8 +8,8 @@ from typing import List, Tuple, Type
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from gws_core.protocol.protocol_dto import ProtocolUpdateDTO
 from gws_core.protocol.protocol_spec import ConnectorSpec
+from gws_core.protocol.protocol_update import ProtocolUpdate
 from gws_core.task.plug import Sink, Source
 
 from ..config.config_types import ConfigParamsDict
@@ -66,7 +66,7 @@ class IProtocol(IProcess):
     def add_task(self, task_type: Type[Task], instance_name: str, config_params: ConfigParamsDict = None) -> ITask:
         """Add a task to this
         """
-        protocol_update: ProtocolUpdateDTO = ProtocolService.add_process_to_protocol(
+        protocol_update: ProtocolUpdate = ProtocolService.add_process_to_protocol(
             protocol_model=self._process_model, process_type=task_type, instance_name=instance_name,
             config_params=config_params)
 
@@ -75,7 +75,7 @@ class IProtocol(IProcess):
     def add_empty_protocol(self, instance_name: str) -> 'IProtocol':
         """Add an empty protocol to this protocol
         """
-        protocol_update: ProtocolUpdateDTO = ProtocolService.add_empty_protocol_to_protocol(
+        protocol_update: ProtocolUpdate = ProtocolService.add_empty_protocol_to_protocol(
             self._process_model, instance_name)
         return IProtocol(protocol_update.process)
 
@@ -83,7 +83,7 @@ class IProtocol(IProcess):
                      instance_name: str, config_params: ConfigParamsDict = None) -> 'IProtocol':
         """Add a protocol from a protocol type
         """
-        protocol_update: ProtocolUpdateDTO = ProtocolService.add_process_to_protocol(
+        protocol_update: ProtocolUpdate = ProtocolService.add_process_to_protocol(
             protocol_model=self._process_model, process_type=protocol_type,
             instance_name=instance_name, config_params=config_params)
 

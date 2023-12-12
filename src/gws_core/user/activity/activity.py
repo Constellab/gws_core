@@ -3,37 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from enum import Enum
 from typing import final
 
 from peewee import CharField, ForeignKeyField
 
 from gws_core.core.classes.enum_field import EnumField
+from gws_core.user.activity.activity_dto import (ActivityDTO,
+                                                 ActivityObjectType,
+                                                 ActivityType)
 
 from ...core.model.model import Model
 from ..current_user_service import CurrentUserService
 from ..user import User
-
-
-class ActivityType(Enum):
-    CREATE = "CREATE"
-    DELETE = "DELETE"
-    ARCHIVE = "ARCHIVE"
-    UNARCHIVE = "UNARCHIVE"
-    VALIDATE = "VALIDATE"
-    HTTP_AUTHENTICATION = "HTTP_AUTHENTICATION"
-    RUN_EXPERIMENT = "RUN_EXPERIMENT"
-    RUN_PROCESS = "RUN_PROCESS"
-    STOP_EXPERIMENT = "STOP_EXPERIMENT"
-    LAB_START = "LAB_START"
-
-
-class ActivityObjectType(Enum):
-    EXPERIMENT = "EXPERIMENT"
-    PROCESS = "PROCESS"
-    USER = "USER"
-    REPORT = "REPORT"
-    REPORT_TEMPLATE = "REPORT_TEMPLATE"
 
 
 @final
@@ -74,20 +55,15 @@ class Activity(Model):
         return Activity.select().order_by(Activity.created_at.desc()).first()
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns JSON string or dictionnary representation of the model.
+        self.to_dto()
 
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-
-        _json = super().to_json(deep=deep, **kwargs)
-
-        if self.user:
-            _json["user"] = self.user.to_json()
-
-        return _json
+    def to_dto(self) -> ActivityDTO:
+        return ActivityDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            user=self.user.to_dto(),
+            activity_type=self.activity_type,
+            object_type=self.object_type,
+            object_id=self.object_id,
+        )

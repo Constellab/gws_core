@@ -10,9 +10,11 @@ from peewee import ModelSelect
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
 from gws_core.core.utils.logger import Logger
+from gws_core.user.activity.activity_dto import (ActivityObjectType,
+                                                 ActivityType)
 
 from ..user import User
-from .activity import Activity, ActivityObjectType, ActivityType
+from .activity import Activity
 from .activity_search_builder import ActivitySearchBuilder
 
 

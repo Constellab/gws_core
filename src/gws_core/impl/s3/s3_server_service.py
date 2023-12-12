@@ -18,7 +18,8 @@ from gws_core.impl.s3.s3_server_exception import (S3ServerContext,
                                                   S3ServerException,
                                                   S3ServerNoSuchKey)
 from gws_core.project.project import Project
-from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_model_search_builder import \
     ResourceModelSearchBuilder
 from gws_core.resource.resource_service import ResourceService

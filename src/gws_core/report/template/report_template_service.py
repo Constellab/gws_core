@@ -16,7 +16,8 @@ from gws_core.report.report_file_service import ReportFileService
 from gws_core.report.template.report_template import ReportTemplate
 from gws_core.report.template.report_template_search_builder import \
     ReportTemplateSearchBuilder
-from gws_core.user.activity.activity import ActivityObjectType, ActivityType
+from gws_core.user.activity.activity_dto import (ActivityObjectType,
+                                                 ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
 
 from ...core.classes.paginator import Paginator

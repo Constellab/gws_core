@@ -15,8 +15,8 @@ from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_loader import ResourceLoader
-from gws_core.share.shared_entity_info import (SharedEntityInfo,
-                                               SharedEntityMode)
+from gws_core.share.shared_dto import SharedEntityMode
+from gws_core.share.shared_entity_info import SharedEntityInfo
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.task import Task
 from gws_core.task.task_io import TaskInputs, TaskOutputs
