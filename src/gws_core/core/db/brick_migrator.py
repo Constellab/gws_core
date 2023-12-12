@@ -5,6 +5,7 @@
 from abc import abstractmethod
 from typing import List, Type
 
+from gws_core.core.db.migration_dto import MigrationDTO
 from gws_core.core.db.version import Version
 from gws_core.core.utils.logger import Logger
 from gws_core.user import current_user_service
@@ -44,11 +45,11 @@ class MigrationObject():
         self.short_description = short_description
         self.authenticate_sys_user = authenticate_sys_user
 
-    def to_json(self) -> dict:
-        return {
-            "version": str(self.version),
-            "short_description": self.short_description
-        }
+    def to_dto(self) -> MigrationDTO:
+        return MigrationDTO(
+            version=str(self.version),
+            short_description=self.short_description
+        )
 
 
 class BrickMigrator():

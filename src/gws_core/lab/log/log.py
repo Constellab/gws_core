@@ -7,22 +7,10 @@ from datetime import date, datetime, timedelta
 from json import loads
 from typing import List
 
-from typing_extensions import TypedDict
-
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import LogFileLine, Logger, MessageType
-
-
-class LogInfo(TypedDict):
-
-    name: str
-    file_size: int
-
-
-class LogsStatus(TypedDict):
-
-    log_folder: str
-    log_files: List[LogInfo]
+from gws_core.lab.log.log_dto import (LogCompleteInfoDTO, LogDTO, LogInfo,
+                                      LogsBetweenDatesDTO)
 
 
 class LogLine():
@@ -126,9 +114,9 @@ class LogLine():
     def get_datetime_without_microseconds(self) -> datetime:
         return self.date_time.replace(microsecond=self.date_time.microsecond // 1000 * 1000)
 
-    def to_json(self) -> dict:
-        return {"level": self.level, "date_time": self.date_time,
-                "message": self.message, "experiment_id": self.experiment_id}
+    def to_dto(self) -> LogDTO:
+        return LogDTO(level=self.level, date_time=self.date_time,
+                      message=self.message, experiment_id=self.experiment_id)
 
     def to_str(self) -> str:
         return f"{self.level} - {self.date_time} - {self.message}"
@@ -194,11 +182,11 @@ class LogCompleteInfo():
 
         return log_lines
 
-    def to_json(self) -> dict:
-        return {"log_info": self.log_info, "content": self.content}
+    def to_dto(self) -> LogCompleteInfoDTO:
+        return LogCompleteInfoDTO(log_info=self.log_info, content=self.content)
 
 
-class LogsBetweenDatesDTO():
+class LogsBetweenDates():
 
     logs: List[LogLine]
     from_date: datetime
@@ -214,15 +202,14 @@ class LogsBetweenDatesDTO():
         self.from_experiment_id = from_experiment_id
         self.is_last_page = is_last_page
 
-    def to_json(self) -> dict:
-        return {
-            "logs": [log.to_json() for log in self.logs],
-            "from_date": self.from_date,
-            "to_date": self.to_date,
-            "from_experiment_id": self.from_experiment_id,
-            "is_last_page": self.is_last_page,
-            "next_page_date": self.get_next_page_date()
-        }
+    def to_dto(self) -> LogsBetweenDatesDTO:
+        return LogsBetweenDatesDTO(
+            logs=[log.to_dto() for log in self.logs],
+            from_date=self.from_date,
+            to_date=self.to_date,
+            from_experiment_id=self.from_experiment_id,
+            is_last_page=self.is_last_page
+        )
 
     def get_next_page_date(self) -> datetime:
         """return the start date for the next page

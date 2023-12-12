@@ -8,6 +8,8 @@ from typing import Dict, List, Optional, Union
 from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
 
 from gws_core.core.decorator.transaction import transaction
+from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.experiment.queue_dto import JobDTO
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
@@ -170,13 +172,14 @@ class Job(Model):
     def remove_experiment_from_queue(cls, experiment_id: str) -> None:
         return Job.delete().where(cls.experiment == experiment_id).execute()
 
-    # TODO TO REMOVE
-    def to_json(self, deep: bool = False) -> Dict:
-
-        json_ = super().to_json(deep=deep)
-        json_["user"] = self.user.to_json()
-        json_["experiment"] = self.experiment.to_json()
-        return json_
+    def to_dto(self) -> JobDTO:
+        return JobDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            user=self.user.to_dto(),
+            experiment=self.experiment.to_dto(),
+        )
 
     class Meta:
         table_name = 'gws_queue_job'

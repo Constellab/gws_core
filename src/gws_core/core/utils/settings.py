@@ -16,6 +16,7 @@ from typing_extensions import TypedDict
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.lab.system_dto import SettingsDTO
 from gws_core.user.user_dto import SpaceDict
 
 from .date_helper import DateHelper
@@ -550,26 +551,26 @@ class Settings():
     def version(self):
         return self.data.get("version", None)
 
-    def to_json(self) -> dict:
+    def to_dto(self) -> SettingsDTO:
 
         # get data and remove sensitive informations
         data = deepcopy(self.data)
         del data["secret_key"]
-        return {
-            "lab_id": self.get_lab_id(),
-            "lab_name": self.get_lab_name(),
-            "space_api_url": self.get_space_api_url(),
-            "lab_prod_api_url": self.get_lab_prod_api_url(),
-            "lab_dev_api_url": self.get_lab_dev_api_url(),
-            "lab_environemnt": self.get_lab_environment(),
-            "virtual_host": self.get_virtual_host(),
-            "cwd": self.get_cwd(),
-            "log_dir": self.get_log_dir(),
-            "data_dir": self.get_data_dir(),
-            "file_store_dir": self.get_file_store_dir(),
-            "kv_store_dir": self.get_kv_store_base_dir(),
-            "data": data
-        }
+        return SettingsDTO(
+            lab_id=self.get_lab_id(),
+            lab_name=self.get_lab_name(),
+            space_api_url=self.get_space_api_url(),
+            lab_prod_api_url=self.get_lab_prod_api_url(),
+            lab_dev_api_url=self.get_lab_dev_api_url(),
+            lab_environment=self.get_lab_environment(),
+            virtual_host=self.get_virtual_host(),
+            cwd=self.get_cwd(),
+            log_dir=self.get_log_dir(),
+            data_dir=self.get_data_dir(),
+            file_store_dir=self.get_file_store_dir(),
+            kv_store_dir=self.get_kv_store_base_dir(),
+            data=data
+        )
 
     ############################ PIP PACKAGES ############################
     def get_all_pip_packages(self) -> List[PipPackage]:

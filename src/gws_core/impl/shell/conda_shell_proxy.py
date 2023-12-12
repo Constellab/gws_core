@@ -10,8 +10,9 @@ from typing import Union
 from typing_extensions import Literal
 
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.shell.venv.venv_dto import VEnvCreationInfo
 
-from .base_env_shell import BaseEnvShell, VEnvCreationInfo
+from .base_env_shell import BaseEnvShell
 
 
 class CondaShellProxy(BaseEnvShell):
@@ -122,7 +123,7 @@ class CondaShellProxy(BaseEnvShell):
         try:
             env_creation_info: VEnvCreationInfo = cls.get_creation_info(folder_path)
 
-            if 'env_type' in env_creation_info and env_creation_info['env_type'] != cls.get_env_type():
+            if env_creation_info.env_type != cls.get_env_type():
                 return False
 
             return True

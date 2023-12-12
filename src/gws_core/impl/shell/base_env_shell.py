@@ -10,24 +10,16 @@ from json import dump, load
 from pathlib import Path
 from typing import Any, Union, final
 
-from typing_extensions import Literal, TypedDict
+from typing_extensions import Literal
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.shell.venv.venv_dto import VEnvCreationInfo
 
 from .shell_proxy import ShellProxy
-
-
-class VEnvCreationInfo(TypedDict):
-    file_version: int
-    name: str
-    created_at: str
-    # path of the file that was used to create the env
-    origin_env_config_file_path: str
-    env_type: Literal['conda', 'mamba', 'pip']
 
 
 class BaseEnvShell(ShellProxy):
@@ -235,13 +227,13 @@ class BaseEnvShell(ShellProxy):
         """
         Create the READY file
         """
-        env_info: VEnvCreationInfo = {
-            'file_version': 2,
-            'name': self.env_dir_name,
-            'created_at': DateHelper.now_utc().isoformat(),
-            'origin_env_config_file_path': self.env_file_path,
-            'env_type': self.get_env_type()
-        }
+        env_info = VEnvCreationInfo(
+            file_version=2,
+            name=self.env_dir_name,
+            created_at=DateHelper.now_utc().isoformat(),
+            origin_env_config_file_path=self.env_file_path,
+            env_type=self.get_env_type()
+        )
 
         with open(self._get_json_info_file_path(), "w", encoding="UTF-8") as outfile:
             dump(env_info, outfile)
@@ -300,7 +292,7 @@ class BaseEnvShell(ShellProxy):
             raise Exception("The virtual environment is not installed")
 
         with open(os.path.join(folder_path, cls.CREATION_INFO_FILE_NAME), encoding="UTF-8") as json_file:
-            return load(json_file)
+            return VEnvCreationInfo.from_json(load(json_file))
 
     @classmethod
     def from_env_str(cls, env_str: str, message_dispatcher: MessageDispatcher) -> "BaseEnvShell":

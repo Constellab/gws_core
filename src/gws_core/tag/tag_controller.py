@@ -14,7 +14,7 @@ from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, NewTagDTO,
                                   SaveTagModelResonseDTO, TagKeyModelDTO,
                                   TagPropagationImpactDTO, TagValueModelDTO)
 
-from ..core_app import core_app
+from ..core_controller import core_app
 from ..user.auth_service import AuthService
 from .tag_service import TagService
 

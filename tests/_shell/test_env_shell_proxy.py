@@ -11,12 +11,13 @@ from unittest import TestCase
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import \
     BasicMessageObserver
-from gws_core.impl.shell.base_env_shell import BaseEnvShell, VEnvCreationInfo
+from gws_core.impl.shell.base_env_shell import BaseEnvShell
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
 from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
-from gws_core.impl.shell.venv_service import (VEnsStatus, VEnvBasicInfo,
-                                              VEnvService)
+from gws_core.impl.shell.venv.venv_dto import (VEnsStatusDTO, VEnvBasicInfoDTO,
+                                               VEnvCreationInfo)
+from gws_core.impl.shell.venv.venv_service import VEnvService
 
 
 # test_env_shell_proxy
@@ -71,20 +72,20 @@ class TestEnvShellProxy(TestCase):
 
             creation_info: VEnvCreationInfo = shell_proxy_type.get_creation_info(shell_proxy.get_env_dir_path())
 
-            self.assertEqual(creation_info['name'], env_name)
-            self.assertTrue(creation_info['created_at'] is not None and creation_info['created_at'] != '')
-            self.assertEqual(creation_info['origin_env_config_file_path'], env_file_path)
+            self.assertEqual(creation_info.name, env_name)
+            self.assertTrue(creation_info.created_at is not None and creation_info.created_at != '')
+            self.assertEqual(creation_info.origin_env_config_file_path, env_file_path)
 
             # Test venv service
-            status: VEnsStatus = VEnvService.get_vens_status()
+            status: VEnsStatusDTO = VEnvService.get_vens_status()
 
-            self.assertTrue(len([x for x in status['envs'] if x['name'] == env_name]) == 1)
-            basic_info: VEnvBasicInfo = [x for x in status['envs'] if x['name'] == env_name][0]
+            self.assertTrue(len([x for x in status.envs if x.name == env_name]) == 1)
+            basic_info: VEnvBasicInfoDTO = [x for x in status.envs if x.name == env_name][0]
 
-            self.assertEqual(basic_info['name'], env_name)
-            self.assertEqual(basic_info['folder'], shell_proxy.get_env_dir_path())
-            self.assertIsNotNone(basic_info['creation_info'])
-            self.assertEqual(basic_info['creation_info']['env_type'], shell_proxy.get_env_type())
+            self.assertEqual(basic_info.name, env_name)
+            self.assertEqual(basic_info.folder, shell_proxy.get_env_dir_path())
+            self.assertIsNotNone(basic_info.creation_info)
+            self.assertEqual(basic_info.creation_info.env_type, shell_proxy.get_env_type())
 
             venv_info = VEnvService.get_venv_complete_info(env_name)
 

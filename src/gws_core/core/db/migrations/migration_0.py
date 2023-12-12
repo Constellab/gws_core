@@ -24,9 +24,9 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
-from gws_core.impl.shell.base_env_shell import VEnvCreationInfo
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
-from gws_core.impl.shell.venv_service import VEnsStatus, VEnvService
+from gws_core.impl.shell.venv.venv_dto import VEnsStatusDTO, VEnvCreationInfo
+from gws_core.impl.shell.venv.venv_service import VEnvService
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor import Monitor
 from gws_core.model.typing import Typing
@@ -777,7 +777,7 @@ class Migration0515(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        envs: VEnsStatus = VEnvService.get_vens_status()
+        envs: VEnsStatusDTO = VEnvService.get_vens_status()
 
         for env in envs['envs']:
             try:
@@ -789,15 +789,15 @@ class Migration0515(BrickMigration):
                     else:
                         env_type = 'conda'
 
-                    env_creation: VEnvCreationInfo = {
-                        'file_version': 2,
-                        'created_at': env['creation_info']['created_at'],
-                        'env_type': env_type,
-                        'name': env['creation_info']['name'],
-                        'origin_env_config_file_path': env['creation_info']['origin_env_config_file_path'],
-                    }
+                    env_creation = VEnvCreationInfo(
+                        file_version=2,
+                        created_at=env['creation_info']['created_at'],
+                        env_type=env_type,
+                        name=env['creation_info']['name'],
+                        origin_env_config_file_path=env['creation_info']['origin_env_config_file_path'],
+                    )
                     with open(os.path.join(env_path, PipShellProxy.CREATION_INFO_FILE_NAME), "w", encoding="UTF-8") as outfile:
-                        dump(env_creation, outfile)
+                        dump(env_creation.dict(), outfile)
 
             except Exception as exception:
                 Logger.error(

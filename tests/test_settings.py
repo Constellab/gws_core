@@ -6,6 +6,7 @@
 from unittest import TestCase
 
 from gws_core.core.utils.settings import Settings
+from gws_core.lab.system_dto import SettingsDTO
 
 
 # test_settings
@@ -27,4 +28,4 @@ class TestSettings(TestCase):
         self.assertEqual(len(multiple_packages), 2)
 
     def test_to_json(self):
-        self.assertIsInstance(Settings.get_instance().to_json(), dict)
+        self.assertIsInstance(Settings.get_instance().to_dto(), SettingsDTO)

@@ -12,9 +12,9 @@ from starlette_context.middleware.context_middleware import ContextMiddleware
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
 
 from .core.classes.cors_config import CorsConfig
-from .core_app import core_app
+from .core_controller import core_app
 from .lab.system_service import SystemService
-from .space.space_app import space_app
+from .space.space_controller import space_app
 
 app = FastAPI(docs_url=None)
 

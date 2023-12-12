@@ -14,28 +14,31 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.lab.log.log_dto import LogInfo, LogsStatusDTO
 
-from .log import (LogCompleteInfo, LogInfo, LogLine, LogsBetweenDatesDTO,
-                  LogsStatus)
+from .log import LogCompleteInfo, LogLine, LogsBetweenDates
 
 
 class LogService:
 
     @classmethod
-    def get_logs_status(cls) -> LogsStatus:
+    def get_logs_status(cls) -> LogsStatusDTO:
 
         log_folder = Settings.get_instance().get_log_dir()
-        log_status: LogsStatus = {"log_folder": log_folder, "log_files": []}
+        log_status: LogsStatusDTO = LogsStatusDTO(
+            log_folder=log_folder,
+            log_files=[]
+        )
 
         for node_name in os.listdir(log_folder):
             log_info = cls.get_log_info(node_name)
 
             if log_info is not None:
-                log_status["log_files"].append(log_info)
+                log_status.log_files.append(log_info)
 
         # sort logs_files by name in reverse but keep the last log file named 'log' at the top
-        log_status["log_files"].sort(key=lambda log: log["name"], reverse=True)
-        log_status["log_files"].sort(key=lambda log: log["name"] == "log", reverse=True)
+        log_status.log_files.sort(key=lambda log: log.name, reverse=True)
+        log_status.log_files.sort(key=lambda log: log.name == "log", reverse=True)
 
         return log_status
 
@@ -65,14 +68,14 @@ class LogService:
         if not FileHelper.is_file(log_file_path):
             return None
 
-        return {
-            "name": node_name,
-            "file_size": FileHelper.get_size(log_file_path),
-        }
+        return LogInfo(
+            name=node_name,
+            file_size=FileHelper.get_size(log_file_path),
+        )
 
     @classmethod
     def get_logs_between_dates(cls, from_date: datetime, to_date: datetime,
-                               from_experiment_id: str = None, nb_of_lines: int = 100) -> LogsBetweenDatesDTO:
+                               from_experiment_id: str = None, nb_of_lines: int = 100) -> LogsBetweenDates:
 
         log_lines: List[LogLine] = []
 
@@ -109,8 +112,8 @@ class LogService:
             if len(log_lines) >= nb_of_lines:
                 break
 
-        return LogsBetweenDatesDTO(logs=log_lines, from_date=from_date, to_date=to_date,
-                                   from_experiment_id=from_experiment_id, is_last_page=len(log_lines) < nb_of_lines)
+        return LogsBetweenDates(logs=log_lines, from_date=from_date, to_date=to_date,
+                                from_experiment_id=from_experiment_id, is_last_page=len(log_lines) < nb_of_lines)
 
     @classmethod
     def get_logs_between_dates_same_day(cls, from_date: datetime, to_date: datetime,

@@ -22,6 +22,7 @@ class ProtocolLayoutDict(TypedDict):
     outerface_layouts: Dict[str, ProcessLayout]
 
 
+# TODO IMPROVE TO JSON
 class ProtocolLayout(SerializableObject):
     """object to store the layout (position) of a protocol's processes
     """

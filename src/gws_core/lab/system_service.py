@@ -20,6 +20,7 @@ from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor_service import MonitorService
+from gws_core.lab.system_dto import LabInfoDTO
 from gws_core.project.project_service import ProjectService
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
@@ -210,14 +211,14 @@ class SystemService:
             Logger.log_exception_stack_trace(err)
 
     @classmethod
-    def get_lab_info(cls) -> dict:
+    def get_lab_info(cls) -> LabInfoDTO:
         settings = Settings.get_instance()
-        return {
-            "lab_name": settings.get_lab_name(),
-            "front_version": settings.get_front_version(),
-            "space": settings.get_space(),
-            "id": settings.get_lab_id(),
-        }
+        return LabInfoDTO(
+            lab_name=settings.get_lab_name(),
+            front_version=settings.get_front_version(),
+            space=settings.get_space(),
+            id=settings.get_lab_id(),
+        )
 
     @classmethod
     def save_space_async(cls, space: Space) -> None:

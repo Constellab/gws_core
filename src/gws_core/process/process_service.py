@@ -10,7 +10,7 @@ from typing import Literal, Type
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.lab.log.log import LogsBetweenDatesDTO
+from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_service import LogService
 from gws_core.lab.monitor.monitor_dto import MonitorBetweenDateDTO
 from gws_core.lab.monitor.monitor_service import MonitorService
@@ -29,7 +29,7 @@ class ProcessService:
 
     @classmethod
     def get_logs_of_process(
-            cls, process_type: ProcessType, process_id: str, from_page_date: datetime = None) -> LogsBetweenDatesDTO:
+            cls, process_type: ProcessType, process_id: str, from_page_date: datetime = None) -> LogsBetweenDates:
         """Read the server log on filtered by the process start and end date
         """
         process_model: ProcessModel = cls.get_and_check_process_model(process_type, process_id)

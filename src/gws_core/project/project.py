@@ -10,7 +10,8 @@ from peewee import CharField, ForeignKeyField, ModelSelect
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.project.project_dto import EnumProjectLevelStatus, ProjectDTO
+from gws_core.project.project_dto import (EnumProjectLevelStatus, ProjectDTO,
+                                          ProjectTreeDTO)
 
 
 class Project(Model):
@@ -31,16 +32,21 @@ class Project(Model):
         return self.to_dto()
 
     def to_dto(self) -> ProjectDTO:
-        children = [child.to_json() for child in self.children]
-
         return ProjectDTO(
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
             code=self.code,
             title=self.title,
-            children=children,
             levelStatus=self.level_status
+        )
+
+    def to_tree_dto(self) -> ProjectTreeDTO:
+        children = [child.to_tree_dto() for child in self.children]
+
+        return ProjectTreeDTO(
+            **self.to_dto().dict(),
+            children=children
         )
 
     @classmethod

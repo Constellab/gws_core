@@ -10,7 +10,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.lab.log.log import LogCompleteInfo, LogsBetweenDatesDTO
+from gws_core.lab.log.log import LogCompleteInfo, LogsBetweenDates
 from gws_core.lab.log.log_service import LogService, LogsStatus
 
 
@@ -47,7 +47,7 @@ class TestLogService(TestCase):
         from_date = DateHelper.from_iso_str('2022-12-01:00:00+00:00')
         to_date = DateHelper.from_iso_str('2022-12-01T23:32:00+00:00')
 
-        result: LogsBetweenDatesDTO = LogService.get_logs_between_dates(from_date, to_date)
+        result: LogsBetweenDates = LogService.get_logs_between_dates(from_date, to_date)
         self.assertEqual(len(result.logs), 3)
 
     def test_get_between_dates_and_pagination(self):
@@ -57,26 +57,26 @@ class TestLogService(TestCase):
         # skip the last message of the log file 2
         to_date = DateHelper.from_iso_str('2022-12-02T23:32:00+00:00')
 
-        result: LogsBetweenDatesDTO = LogService.get_logs_between_dates(from_date, to_date)
+        result: LogsBetweenDates = LogService.get_logs_between_dates(from_date, to_date)
         self.assertEqual(len(result.logs), 6)
 
         # get only log from experiment
-        result: LogsBetweenDatesDTO = LogService.get_logs_between_dates(from_date, to_date,
-                                                                        from_experiment_id="1234567890")
+        result: LogsBetweenDates = LogService.get_logs_between_dates(from_date, to_date,
+                                                                     from_experiment_id="1234567890")
         self.assertEqual(len(result.logs), 2)
 
         # get logs paginated and skip the first log and the last log
         from_date = DateHelper.from_iso_str('2022-12-01:09:00+00:00')
         to_date = DateHelper.from_iso_str('2022-12-02T09:32:00+00:00')
 
-        result: LogsBetweenDatesDTO = LogService.get_logs_between_dates(from_date, to_date, nb_of_lines=3)
+        result: LogsBetweenDates = LogService.get_logs_between_dates(from_date, to_date, nb_of_lines=3)
         self.assertEqual(len(result.logs), 3)
         self.assertEqual(result.logs[0].message, 'first - log day 1')
         self.assertEqual(result.logs[1].message, 'second - log day 1')
         self.assertEqual(result.logs[2].message, 'Day 2')
 
         # get next page
-        result: LogsBetweenDatesDTO = LogService.get_logs_between_dates(
+        result: LogsBetweenDates = LogService.get_logs_between_dates(
             result.get_next_page_date(), to_date, nb_of_lines=3)
         self.assertEqual(len(result.logs), 1)
         self.assertEqual(result.logs[0].message, 'first - log day 2')

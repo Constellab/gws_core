@@ -121,7 +121,7 @@ class ViewConfigService():
 
     @classmethod
     def search(cls, search: SearchParams,
-               page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+               page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
 
         search_builder: SearchBuilder = ViewConfigSearchBuilder()
 
@@ -129,7 +129,7 @@ class ViewConfigService():
 
     @classmethod
     def search_by_report(cls, report_id: str, search: SearchParams,
-                         page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+                         page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
         from ...report.report_service import ReportService
 
         search_builder: SearchBuilder = ViewConfigSearchBuilder()
@@ -143,7 +143,7 @@ class ViewConfigService():
 
     @classmethod
     def _search(cls, search_builder: SearchBuilder, search: SearchParams,
-                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
         # exclude the type of view that are not useful in historic
         search_builder.add_expression(ViewConfig.view_type.not_in(exluded_views_in_historic))
 

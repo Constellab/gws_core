@@ -26,8 +26,10 @@ class SpaceProject(BaseModel):
 
 
 class ProjectDTO(ModelDTO):
-
     code: str
     title: str
-    children: List['ProjectDTO']
     levelStatus: EnumProjectLevelStatus
+
+
+class ProjectTreeDTO(ProjectDTO):
+    children: List['ProjectTreeDTO']
