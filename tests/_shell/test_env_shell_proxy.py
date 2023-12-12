@@ -15,9 +15,10 @@ from gws_core.impl.shell.base_env_shell import BaseEnvShell
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
 from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
-from gws_core.impl.shell.venv.venv_dto import (VEnsStatusDTO, VEnvBasicInfoDTO,
-                                               VEnvCreationInfo)
-from gws_core.impl.shell.venv.venv_service import VEnvService
+from gws_core.impl.shell.virtual_env.venv_dto import (VEnsStatusDTO,
+                                                      VEnvBasicInfoDTO,
+                                                      VEnvCreationInfo)
+from gws_core.impl.shell.virtual_env.venv_service import VEnvService
 
 
 # test_env_shell_proxy

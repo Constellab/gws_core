@@ -17,7 +17,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.shell.venv.venv_dto import VEnvCreationInfo
+from gws_core.impl.shell.virtual_env.venv_dto import VEnvCreationInfo
 
 from .shell_proxy import ShellProxy
 

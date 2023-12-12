@@ -10,7 +10,7 @@ from typing import Union
 from typing_extensions import Literal
 
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.shell.venv.venv_dto import VEnvCreationInfo
+from gws_core.impl.shell.virtual_env.venv_dto import VEnvCreationInfo
 
 from .base_env_shell import BaseEnvShell
 

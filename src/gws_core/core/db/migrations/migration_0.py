@@ -25,8 +25,9 @@ from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
-from gws_core.impl.shell.venv.venv_dto import VEnsStatusDTO, VEnvCreationInfo
-from gws_core.impl.shell.venv.venv_service import VEnvService
+from gws_core.impl.shell.virtual_env.venv_dto import (VEnsStatusDTO,
+                                                      VEnvCreationInfo)
+from gws_core.impl.shell.virtual_env.venv_service import VEnvService
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor import Monitor
 from gws_core.model.typing import Typing
