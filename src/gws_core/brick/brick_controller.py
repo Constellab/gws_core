@@ -9,6 +9,7 @@ from typing import List, Optional
 from fastapi import Depends
 
 from gws_core.brick.brick_dto import BrickDTO
+from gws_core.brick.technical_doc_dto import TechnicalDocDTO
 from gws_core.brick.technical_doc_service import TechnicalDocService
 from gws_core.core.db.db_migration import DbMigrationService
 from gws_core.core.db.migration_dto import MigrationDTO
@@ -31,14 +32,11 @@ def get_brick_info(brick_name: str, _=Depends(AuthService.check_user_access_toke
         return None
     return brick.to_dto()
 
-# TODO TO TEST AND TYPE
-
 
 @core_app.get("/brick/{brick_name}/technical-doc", tags=["Bricks"], summary="Generate technical doc for a brick")
 def export_technical_doc(brick_name: str,
-                         _=Depends(AuthService.check_user_access_token)) -> dict:
-    res = TechnicalDocService.generate_technical_doc(brick_name)
-    return res
+                         _=Depends(AuthService.check_user_access_token)) -> TechnicalDocDTO:
+    return TechnicalDocService.generate_technical_doc(brick_name)
 
 
 @core_app.post("/brick/{brick_name}/call-migration/{version}",  tags=["Bricks"], summary="Call a specific migration")

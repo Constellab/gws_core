@@ -31,7 +31,7 @@ class ProtocolTemplateService(BaseService):
         protocol_template = cls.get_by_id_and_check(id)
 
         if protocol:
-            protocol_template.set_template(protocol.dumps_graph('config'))
+            protocol_template.set_template(protocol.to_protocol_config_dto())
         if name:
             protocol_template.name = name
         if description:

@@ -12,7 +12,7 @@ from gws_core.brick.brick_service import BrickService
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.lab.lab_config_model import LabConfig
+from gws_core.lab.lab_config_dto import LabConfigModelDTO
 from gws_core.space.space_dto import (LabStartDTO, SaveExperimentToSpaceDTO,
                                       SaveReportToSpaceDTO, SpaceSendMailDTO)
 from gws_core.user.user_dto import UserFullDTO, UserSpace
@@ -85,16 +85,14 @@ class SpaceService(BaseService):
         return parse_obj_as(UserSpace, response.json())
 
     @classmethod
-    def register_lab_start(cls, lab_config: LabConfig) -> bool:
+    def register_lab_start(cls, lab_config: LabConfigModelDTO) -> bool:
         """
         Call the space api to mark the lab as started
         """
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/start")
 
-        body: LabStartDTO = {
-            "lab_config": lab_config
-        }
+        body = LabStartDTO(lab_config=lab_config)
 
         try:
             ExternalApiService.put(space_api_url, body, cls._get_request_header(),

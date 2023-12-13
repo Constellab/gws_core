@@ -7,8 +7,23 @@
 from datetime import datetime
 from typing import List, Optional
 
+from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.progress_bar.progress_bar import ProgressBarMessage
+
+
+class ProgressBarMessageWithTypeDTO(BaseModelDTO):
+    type: MessageLevel
+    message: str
+    progress: Optional[float]
+
+
+class ProgressBarMessageDTO(BaseModelDTO):
+    type: MessageLevel
+    text: str
+    datetime: str
+
+    def __str__(self) -> str:
+        return f"{self.type} - {self.datetime} - {self.text}"
 
 
 class ProgressBarDTO(BaseModelDTO):
@@ -20,8 +35,7 @@ class ProgressBarDTO(BaseModelDTO):
     second_start: Optional[datetime]
 
 
-# TODO IMPROVE TYPE
 class ProgressBarMessagesBetweenDatesDTO(BaseModelDTO):
     from_datatime: Optional[datetime]
     to_datatime: Optional[datetime]
-    messages: List[ProgressBarMessage]
+    messages: List[ProgressBarMessageDTO]

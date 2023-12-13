@@ -5,8 +5,9 @@
 
 
 from abc import abstractmethod
-from typing import Dict, Generic, List, Type, TypedDict, TypeVar, final
+from typing import Dict, Generic, List, Type, TypeVar, final
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_dto import IODTO
 from gws_core.io.io_spec import IOSpec
@@ -18,26 +19,12 @@ from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .io_exception import ResourceNotCompatibleException
-from .port import InPort, OutPort, Port, PortDict
-
-
-class IODict(TypedDict):
-    """IODict type
-    """
-    ports: Dict[str, PortDict]
-    type: IOSpecsType
-    additional_info: dict
-
+from .port import InPort, OutPort, Port
 
 # For generic Port type
 PortType = TypeVar('PortType', bound=Port)
 
 
-####################################################################
-#
-# IO class
-#
-# ####################################################################
 class IO(Base, Generic[PortType]):
     """
     Base IO class. The IO class defines base functionalitie for the
@@ -46,13 +33,13 @@ class IO(Base, Generic[PortType]):
 
     _ports: Dict[str, PortType] = {}
     _type: IOSpecsType = None
-    _additional_info: dict = {}
+    _additional_info: BaseModelDTO = None
 
-    def __init__(self, type_: IOSpecsType = 'normal', additional_info: dict = None) -> None:
+    def __init__(self, type_: IOSpecsType = 'normal', additional_info: BaseModelDTO = None) -> None:
         self._ports = dict()
         self._type = type_
         if additional_info is None:
-            additional_info = {}
+            additional_info = None
         self._additional_info = additional_info
 
     @property
@@ -220,18 +207,21 @@ class IO(Base, Generic[PortType]):
     ################################################### JSON ########################################
 
     @classmethod
-    def load_from_json(cls, io_json: IODict) -> 'IO':
-        io: IO = cls(type_=io_json.get('type', 'normal'), additional_info=io_json.get('additional_info', {}))
-        port_dict: dict = io_json.get('ports', {})
+    def load_from_json(cls, io_json: dict) -> 'IO':
+        return cls.load_from_dto(IODTO.from_json(io_json))
+
+    @classmethod
+    def load_from_dto(cls, io_dto: IODTO) -> 'IO':
+        io: IO = cls(type_=io_dto.type, additional_info=io_dto.additional_info)
 
         # To create an InPort or OutPort
         port_type: Type[PortType] = io._get_port_type()
-        for key, port_dict in port_dict.items():
+        for key, port_dto in io_dto.ports.items():
 
-            port: PortType = port_type.load_from_json(port_dict, key)
+            port: PortType = port_type.load_from_dto(port_dto, key)
 
-            if port_dict["resource_id"]:
-                resource_model: ResourceModel = ResourceModel.get_by_id(port_dict["resource_id"])
+            if port_dto.resource_id:
+                resource_model: ResourceModel = ResourceModel.get_by_id(port_dto.resource_id)
                 port.resource_model = resource_model
 
             io.add_port(key, port)
@@ -248,17 +238,8 @@ class IO(Base, Generic[PortType]):
 
         return io
 
-    def to_json(self) -> IODict:
-        _json: IODict = {
-            "ports": {},
-            "type": self._type,
-            "additional_info": self._additional_info
-        }
-
-        for key, port in self._ports.items():
-            _json["ports"][key] = port.to_json()
-
-        return _json
+    def to_json(self) -> dict:
+        return self.to_dto().dict()
 
     def to_dto(self) -> IODTO:
         io_dto = IODTO(
@@ -290,13 +271,6 @@ class IO(Base, Generic[PortType]):
         return io_specs
 
 
-# ####################################################################
-#
-# Input class
-#
-# ####################################################################
-
-
 @final
 class Inputs(IO[InPort]):
     """
@@ -310,13 +284,6 @@ class Inputs(IO[InPort]):
         if self.is_dynamic:
             return DynamicInputs(specs)
         return InputSpecs(specs)
-
-
-# ####################################################################
-#
-# Output class
-#
-# ####################################################################
 
 
 @final

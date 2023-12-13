@@ -10,8 +10,8 @@ from peewee import CharField, ForeignKeyField, ModelSelect
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.model.model import Model
-from gws_core.tag.tag import EntityTagValueFormat, TagValueType
-from gws_core.tag.tag_dto import TagValueModelDTO
+from gws_core.tag.tag import TagValueType
+from gws_core.tag.tag_dto import EntityTagValueFormat, TagValueModelDTO
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
 
@@ -32,9 +32,6 @@ class TagValueModel(Model):
 
     def get_str_tag_value(self) -> str:
         return self.tag_value
-
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return self.to_dto()
 
     def to_dto(self) -> TagValueModelDTO:
         return TagValueModelDTO(

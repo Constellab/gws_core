@@ -21,7 +21,8 @@ from gws_core.share.shared_dto import (GenerateShareLinkDTO,
                                        ShareEntityInfoReponseDTO,
                                        ShareEntityZippedResponseDTO,
                                        ShareLinkType)
-from gws_core.tag.tag import Tag, TagOrigins, TagOriginType
+from gws_core.tag.tag import Tag, TagOrigins
+from gws_core.tag.tag_dto import TagOriginType
 from gws_core.user.current_user_service import CurrentUserService
 
 

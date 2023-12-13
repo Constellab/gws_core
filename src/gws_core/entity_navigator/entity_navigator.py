@@ -15,7 +15,8 @@ from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag import Tag, TagOriginType
+from gws_core.tag.tag import Tag
+from gws_core.tag.tag_dto import TagOriginType
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 

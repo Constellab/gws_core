@@ -4,21 +4,47 @@
 # About us: https://gencovery.com
 
 from datetime import datetime
-from typing import Any, List
+from enum import Enum
+from typing import Any, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.entity_navigator.entity_navigator_type import EntityNavGroupDTO
 
 
+# Origin of the tag (who created the tag)
+# If USER, the origin_id is the user id
+# If S3, the origin_id is the external source id
+# If TASK, (when the task tagged the resource object directly) the origin_id is task model id
+# If TASK_PROPAGATED, the origin_id is task model id that propagated the tag
+# If EXP_PROPAGATED, the origin_id is experiment model id that propagated the tag
+# If RESOURCE_PROPAGATED, the origin_id is resource model id that propagated the tag
+# If VIEW_PROPAGATED, the origin_id is view config id that propagated the tag
+class TagOriginType(Enum):
+    USER = 'USER'
+    S3 = 'S3'
+    TASK = 'TASK'
+    TASK_PROPAGATED = 'TASK_PROPAGATED'
+    EXPERIMENT_PROPAGATED = 'EXPERIMENT_PROPAGATED'
+    RESOURCE_PROPAGATED = 'RESOURCE_PROPAGATED'
+    VIEW_PROPAGATED = 'VIEW_PROPAGATED'
+
+
+class EntityTagValueFormat(Enum):
+    STRING = "STRING"
+    INTEGER = "INTEGER"
+    FLOAT = "FLOAT"
+    DATETIME = "DATETIME"
+
+
 class TagDTO(BaseModelDTO):
     key: str
     value: Any
-    is_user_origin: bool
-    is_propagable: bool
+    is_user_origin: Optional[bool]
+    is_propagable: Optional[bool]
 
 
 class TagOriginDTO(BaseModelDTO):
-    origin_type: str
+    origin_type: TagOriginType
     origin_id: str
 
 
@@ -54,16 +80,14 @@ class TagPropagationImpactDTO(BaseModelDTO):
 
 class TagKeyModelDTO(ModelDTO):
     key: str
-    # TODO type with EntityTagValueFormat
-    value_format: Any
+    value_format: EntityTagValueFormat
     is_propagable: bool
 
 
 class TagValueModelDTO(ModelDTO):
     key: str
     value: Any
-    # TODO type with EntityTagValueFormat
-    value_format: Any
+    value_format: EntityTagValueFormat
 
 
 class SaveTagModelResonseDTO(BaseModelDTO):

@@ -28,7 +28,7 @@ from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.space.space_dto import SaveReportToSpaceDTO
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag import TagOriginType
+from gws_core.tag.tag_dto import TagOriginType
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
@@ -306,12 +306,12 @@ class ReportService():
 
         lab_config: LabConfigModel = report.lab_config or LabConfigModel.get_current_config()
 
-        save_report_dto: SaveReportToSpaceDTO = {
-            "report": report.to_json(deep=True),
-            "experiment_ids": [experiment.id for experiment in experiments],
-            "lab_config": lab_config.to_json(),
-            "resource_views": {}
-        }
+        save_report_dto = SaveReportToSpaceDTO(
+            report=report.to_full_dto(),
+            experiment_ids=[experiment.id for experiment in experiments],
+            lab_config=lab_config.to_dto(),
+            resource_views={}
+        )
 
         rich_text = RichText(report.content)
 
@@ -329,7 +329,7 @@ class ReportService():
                 resource_view["resource_id"],
                 resource_view["view_method_name"],
                 resource_view["view_config"])
-            save_report_dto["resource_views"][resource_view["id"]] = view_result.to_json()
+            save_report_dto.resource_views[resource_view["id"]] = view_result.to_dto()
         # Save the experiment in space
         SpaceService.save_report(report.project.id, save_report_dto, file_paths)
 

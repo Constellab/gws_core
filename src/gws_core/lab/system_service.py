@@ -198,7 +198,7 @@ class SystemService:
             Logger.info('Registering lab start on space')
 
             result = SpaceService.register_lab_start(
-                LabConfigModel.get_current_config().to_json())
+                LabConfigModel.get_current_config().to_dto())
 
             if result:
                 Logger.info('Lab start successfully registered on space')

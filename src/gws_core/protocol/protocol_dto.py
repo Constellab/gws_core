@@ -3,22 +3,84 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional
+from typing import Dict, List, Optional
+
+from pydantic import Field
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing_dto import TypingFullDTO
 from gws_core.process.process_dto import ProcessDTO
+from gws_core.process.process_types import ProcessConfigDTO, ProcessMinimumDTO
+from gws_core.protocol.protocol_layout import ProtocolLayoutDTO
+
+
+class ConnectorPartDict(BaseModelDTO):
+    node: str
+    port: str
+
+
+class ConnectorDTO(BaseModelDTO):
+    from_: ConnectorPartDict = Field(alias='from')
+    to: ConnectorPartDict
+
+    # Override the method to use the alias in serialization
+    def dict(self, *args, **kwargs):
+        kwargs['by_alias'] = True
+        return super().dict(*args, **kwargs)
+
+    def json(self, *args, **kwargs):
+        kwargs['by_alias'] = True
+        return super().json(*args, **kwargs)
+
+
+class InterfaceDTO(BaseModelDTO):
+    name: str
+    from_: ConnectorPartDict = Field(alias='from')
+    to: ConnectorPartDict
+
+    # Override the method to use the alias in serialization
+    def dict(self, *args, **kwargs):
+        kwargs['by_alias'] = True
+        return super().dict(*args, **kwargs)
+
+    def json(self, *args, **kwargs):
+        kwargs['by_alias'] = True
+        return super().json(*args, **kwargs)
+
+
+class ProtocolConfigDTO(BaseModelDTO):
+    nodes: Dict[str, ProcessConfigDTO]
+    links: List[ConnectorDTO]
+    interfaces: Dict[str, InterfaceDTO]
+    outerfaces: Dict[str, InterfaceDTO]
+    layout: Optional[ProtocolLayoutDTO]
+
+
+class ProtocolMinimumDTO(BaseModelDTO):
+    nodes: Dict[str, ProcessMinimumDTO]
+    links: List[ConnectorDTO]
+    interfaces: Dict[str, InterfaceDTO]
+    outerfaces: Dict[str, InterfaceDTO]
+
+
+class ProtocolFullDTO(BaseModelDTO):
+    nodes: Dict[str, ProcessDTO]
+    links: List[ConnectorDTO]
+    interfaces: Dict[str, InterfaceDTO]
+    outerfaces: Dict[str, InterfaceDTO]
+    layout: Optional[ProtocolLayoutDTO]
 
 
 class ProtocolDTO(ProcessDTO):
-    data: dict
+    data: ProtocolFullDTO
 
+
+################################### ROUTES DTOs ###################################
 
 class ProtocolUpdateDTO(BaseModelDTO):
     process: Optional[ProcessDTO]
-    # TODO TO type
-    link: Optional[dict]
+    link: Optional[ConnectorDTO]
     protocol_updated: bool
     protocol: Optional[ProtocolDTO]
 

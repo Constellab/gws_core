@@ -69,12 +69,12 @@ class MailService:
         :return: _description_
         :rtype: bool
         """
-        mail_dto: SpaceSendMailDTO = {
-            "receiver_ids": receivers_ids,
-            "mail_template": mail_template,
-            "data": data,
-            "subject": subject
-        }
+        mail_dto = SpaceSendMailDTO(
+            receiver_ids=receivers_ids,
+            mail_template=mail_template,
+            data=data,
+            subject=subject
+        )
 
         SpaceService.send_mail(mail_dto)
 

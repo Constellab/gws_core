@@ -1,11 +1,12 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 import inspect
 from typing import Any, Callable, Dict, List, Tuple
 
 from ..classes.func_meta_data import FuncArgMetaData, FuncArgsMetaData
 from ..utils.utils import Utils
-
-# TODO: En double dans view_decorator.py
-VIEW_META_DATA_ATTRIBUTE = '_view_mata_data'
 
 
 class ReflectorHelper():

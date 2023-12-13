@@ -85,9 +85,9 @@ class TestResourceModel(BaseTestCase):
         self.search(search_dict, 2)
 
     def search(self, search_dict: SearchParams, expected_nb_of_result: int) -> None:
-        paginator = ResourceService.search(search_dict).to_json()
+        paginator = ResourceService.search(search_dict).to_dto()
         self.assertEqual(
-            paginator['total_number_of_items'], expected_nb_of_result)
+            paginator.total_number_of_items, expected_nb_of_result)
 
     def test_upload_and_delete(self):
         file: File = DataProvider.get_iris_file()

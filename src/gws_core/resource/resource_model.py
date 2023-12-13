@@ -95,12 +95,16 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
     brick_version = CharField(null=False, max_length=50, default="")
 
     data: Dict[str, Any] = JSONField(null=True)
+    is_archived = BooleanField(default=False, index=True)
 
     _table_name = 'gws_resource'
     _resource: Resource = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if not self.is_saved() and not self.data:
+            self.data = {}
 
         # check that the class level property _typing_name is set
         if self._typing_name == CONST_RESOURCE_MODEL_TYPING_NAME and type(self) != ResourceModel:  # pylint: disable=unidiomatic-typecheck
@@ -145,17 +149,6 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
         kv_store: Optional[KVStore] = self.get_kv_store()
         if kv_store:
             kv_store.remove()
-
-    @classmethod
-    def drop_table(cls, *args, **kwargs):
-        """
-        Drop model table
-        """
-
-        if not cls.table_exists():
-            return
-
-        super().drop_table(*args, **kwargs)
 
     @classmethod
     def select_by_resource_typing_name(cls, resource_typing_name: str) -> ModelSelect:
@@ -518,20 +511,6 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
 
     ########################################## JSON ######################################
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns JSON string or dictionnary representation of the model.
-
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-
-        return self.to_dto()
-
     def to_dto(self) -> ResourceDTO:
         resource_dto = ResourceDTO(
             id=self.id,
@@ -581,14 +560,6 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
             'name': self.name,
             'resource_typing_name': self.resource_typing_name,
         }
-
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns a JSON string or dictionnary representation of the model data.
-        :return: The representation
-        :rtype: `dict`
-        """
-        return {}
 
     ########################################## OTHER ######################################
 

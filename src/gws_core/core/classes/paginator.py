@@ -7,27 +7,10 @@ from typing import Any, Callable, Dict, Generic, List, TypeVar
 
 from numpy.core.numeric import Infinity
 from peewee import ModelSelect
-from typing_extensions import TypedDict
 
-from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.model.model_dto import PageDTO
 
 from ..model.model import Model
-
-
-# TODO SUREMENT A SUPPRIMER
-class PaginatorDict(TypedDict):
-    objects: List[dict]
-    page: int
-    prev_page: int
-    next_page: int
-    last_page: int
-    total_number_of_items: int
-    total_number_of_pages: int
-    number_of_items_per_page: int
-    is_first_page: bool
-    is_last_page: bool
-
 
 PaginatorType = TypeVar('PaginatorType', bound=Model)
 
@@ -151,12 +134,6 @@ class Paginator(Generic[PaginatorType]):
         :type map_result: Callable[[PaginatorType], Any]
         """
         self.results = [map_result(x) for x in self.results]
-
-    def to_json(self, deep: bool = False) -> PaginatorDict:
-        return {
-            "objects": ListJsonable(self.results).to_json(deep=deep),
-            **self.page_info.to_json(),
-        }
 
     def to_dto(self) -> PageDTO:
         return PageDTO(

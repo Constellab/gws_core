@@ -4,8 +4,7 @@
 # About us: https://gencovery.com
 
 from gws_core import BaseTestCase, IExperiment, RobotCreate, RobotMove
-from gws_core.protocol.protocol_layout import (ProtocolLayout,
-                                               ProtocolLayoutDict)
+from gws_core.protocol.protocol_layout import ProtocolLayout, ProtocolLayoutDTO
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
 
@@ -32,7 +31,7 @@ class TestProtocolLayout(BaseTestCase):
         self.assert_json(layout.get_process('robot_create'), {'x': 10, 'y': 10})
 
         # define ans save a layout
-        dict_layout: ProtocolLayoutDict = {
+        dict_layout: ProtocolLayoutDTO = {
             'process_layouts': {
                 'robot_create': {'x': 0, 'y': 0},
                 'robot_move': {'x': 100, 'y': 100}

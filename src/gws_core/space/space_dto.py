@@ -4,40 +4,50 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
-from typing_extensions import TypedDict
+from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.experiment.experiment_dto import ExperimentDTO
+from gws_core.lab.lab_config_dto import LabConfigModelDTO
+from gws_core.report.report_dto import ReportFullDTO
+from gws_core.resource.view.view_dto import CallViewResultDTO
+from gws_core.user.activity.activity_dto import ActivityDTO
 
-from gws_core.lab.lab_config_model import LabConfig
+
+class LabStartDTO(BaseModelDTO):
+    lab_config: LabConfigModelDTO
 
 
-class LabStartDTO(TypedDict):
-    lab_config: LabConfig
-
-
-class SaveExperimentToSpaceDTO(TypedDict):
-    experiment: dict
+class SaveExperimentToSpaceDTO(BaseModelDTO):
+    experiment: ExperimentDTO
     protocol: dict
-    lab_config: dict
+    lab_config: LabConfigModelDTO
 
 
-class SaveReportToSpaceDTO(TypedDict):
-    report: dict
+class SaveReportToSpaceDTO(BaseModelDTO):
+    report: ReportFullDTO
     experiment_ids: List[str]
-    lab_config: dict
-    resource_views: dict
+    lab_config: LabConfigModelDTO
+    resource_views: Dict[str, CallViewResultDTO]
 
 
-class SpaceSendMailDTO(TypedDict):
+class SpaceSendMailDTO(BaseModelDTO):
     receiver_ids: List[str]
     mail_template: Literal['experiment-finished', 'generic']
     data: Optional[Any]
     subject: Optional[str]  # if provided, it override the template subject
 
 
-class SendExperimentFinishMailData(TypedDict):
+class SendExperimentFinishMailData(BaseModelDTO):
     """Experiment info when send finish mail
     """
     title: str
     status: str
     experiment_link: str
+
+
+class LabActivityReponseDTO(BaseModelDTO):
+    running_experiments: int
+    queued_experiments: int
+    last_activity: Optional[ActivityDTO]
+    dev_env_running: bool

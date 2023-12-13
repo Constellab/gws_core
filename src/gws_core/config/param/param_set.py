@@ -9,7 +9,7 @@ from gws_core.config.config_types import ConfigSpecs
 
 from ...core.classes.validator import DictValidator, ListValidator
 from .param_spec import ParamSpec, ParamSpecType
-from .param_types import ParamSpecDict, ParamSpecVisibilty
+from .param_types import ParamSpecDTO, ParamSpecVisibilty
 
 
 class ParamSet(ParamSpec[list]):
@@ -90,19 +90,14 @@ class ParamSet(ParamSpec[list]):
 
         return list_
 
-    def to_json(self) -> ParamSpecDict:
-        json_: ParamSpecDict = super().to_json()
+    def to_dto(self) -> ParamSpecDTO:
+        json_: ParamSpecDTO = super().to_dto()
 
         # convert the additional info to json
-        additional_info_json = {
+        json_.additional_info = {
             "max_number_of_occurrences": self.max_number_of_occurrences,
-            "param_set": {}
+            "param_set": {key: spec.to_dto() for key, spec in self.param_set.items()}
         }
-
-        for key, spec in self.param_set.items():
-            additional_info_json["param_set"][key] = spec.to_json()
-
-        json_["additional_info"] = additional_info_json
 
         return json_
 
@@ -111,14 +106,14 @@ class ParamSet(ParamSpec[list]):
         return "param_set"
 
     @classmethod
-    def load_from_json(cls, json_: Dict[str, Any]) -> "ParamSet":
+    def load_from_dto(cls, spec_dto: ParamSpecDTO) -> "ParamSet":
         from .param_spec_helper import ParamSpecHelper
-        param_set: ParamSet = super().load_from_json(json_)
+        param_set: ParamSet = super().load_from_dto(spec_dto)
 
         # load info from additional info
-        param_set.max_number_of_occurrences = json_.get("additional_info").get("max_number_of_occurrences")
+        param_set.max_number_of_occurrences = spec_dto.additional_info.get("max_number_of_occurrences")
 
-        for key, param in json_.get("additional_info").get("param_set").items():
+        for key, param in spec_dto.additional_info.get("param_set").items():
             param_set.param_set[key] = ParamSpecHelper.create_param_spec_from_json(param)
 
         return param_set

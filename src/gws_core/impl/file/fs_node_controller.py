@@ -9,8 +9,8 @@ from fastapi import Depends
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-from typing_extensions import TypedDict
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.model.typing_dto import TypingDTO
 from gws_core.resource.resource_dto import ResourceDTO
 from gws_core.resource.view.view_dto import CallViewResultDTO
@@ -63,7 +63,7 @@ def download_a_file(id: str,
 ############################# FOLDER ROUTES ###########################
 
 
-class ExtractFileDTO(TypedDict):
+class ExtractFileDTO(BaseModelDTO):
     path: str
     fs_node_typing_name: str
 
@@ -76,11 +76,11 @@ def extract_node_from_folder(id: str,
     Extract a node from a folder to make it a new Resource
     """
     return ConverterService.call_file_extractor(
-        folder_model_id=id, sub_path=extract["path"],
-        fs_node_typing_name=extract["fs_node_typing_name"]).to_dto()
+        folder_model_id=id, sub_path=extract.path,
+        fs_node_typing_name=extract.fs_node_typing_name).to_dto()
 
 
-class SubFilePath(TypedDict):
+class SubFilePath(BaseModelDTO):
     sub_file_path: str
 
 
@@ -92,7 +92,7 @@ def call_folder_sub_file_view(id: str,
     """
     Call the default view of a sub file in a folder
     """
-    return FsNodeService.call_folder_sub_file_view(resource_id=id, sub_file_path=data['sub_file_path']).to_dto()
+    return FsNodeService.call_folder_sub_file_view(resource_id=id, sub_file_path=data.sub_file_path).to_dto()
 
 
 ############################# FILE TYPE ###########################

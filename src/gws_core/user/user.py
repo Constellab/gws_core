@@ -74,13 +74,6 @@ class User(Model):
              ((User.first_name.contains(name2)) & (User.last_name.contains(name1))))
         ).order_by(User.first_name, User.last_name)
 
-    def archive(self, archive: bool) -> None:
-        """
-        Archive method. This method is deactivated. Always returns False.
-        """
-
-        return None
-
     @property
     def full_name(self):
         return " ".join([self.first_name, self.last_name]).strip()

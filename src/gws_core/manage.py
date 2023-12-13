@@ -126,6 +126,8 @@ class AppManager:
 
     @classmethod
     def reset_environment(cls) -> None:
+        # Init the db
+        DbManagerService.init_all_db()
         SystemService.reset_dev_envionment(check_user=False)
         Logger.info("Dev env reset successfully")
         return

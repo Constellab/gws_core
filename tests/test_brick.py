@@ -7,7 +7,6 @@ from typing import Dict, List
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.brick.brick_model import BrickModel
 from gws_core.brick.brick_service import BrickService
-from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.utils.settings import ModuleInfo
 from gws_core.task.task import Task
 from gws_core.test.base_test_case import BaseTestCase
@@ -34,7 +33,7 @@ class TestBrick(BaseTestCase):
         brick_models: List[BrickModel] = BrickService.get_all_brick_models()
         self.assertTrue(len(brick_models) > 0)
 
-        self.assertIsNotNone(ListJsonable(brick_models).to_json())
+        self.assertIsNotNone([brick_model.to_dto() for brick_model in brick_models])
 
     def test_log_brick_message(self):
         BrickService.log_brick_message_from_obj(Task, 'Test message', 'ERROR')

@@ -365,11 +365,11 @@ class ExperimentRunService():
                 return
 
             user: User = CurrentUserService.get_and_check_current_user()
-            experiment_dto: SendExperimentFinishMailData = {
-                "title": experiment.title,
-                "status": experiment.status.value,
-                "experiment_link": FrontService.get_experiment_url(experiment_id=experiment.id)
-            }
+            experiment_dto = SendExperimentFinishMailData(
+                title=experiment.title,
+                status=experiment.status.value,
+                experiment_link=FrontService.get_experiment_url(experiment_id=experiment.id)
+            )
 
             MailService.send_experiment_finished_mail(user.id, experiment_dto)
         except Exception as err:

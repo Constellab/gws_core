@@ -5,13 +5,13 @@
 
 from typing import Any, Dict, final
 
-from gws_core.config.config_dto import ConfigDTO
+from gws_core.config.config_dto import ConfigDTO, ConfigSimpleDTO
 from gws_core.core.model.db_field import JSONField
 
 from ..core.model.model_with_user import ModelWithUser
 from .config_exceptions import InvalidParamValueException, UnkownParamException
 from .config_specs_helper import ConfigSpecsHelper
-from .config_types import ConfigDict, ConfigParamsDict, ConfigSpecs
+from .config_types import ConfigParamsDict, ConfigSpecs
 from .param.param_spec import ParamSpec
 from .param.param_spec_helper import ParamSpecHelper
 from .param.param_types import ParamValue
@@ -51,7 +51,11 @@ class Config(ModelWithUser):
         ConfigSpecsHelper.check_config_specs(specs)
 
         self._specs = specs
-        self.data["specs"] = ConfigSpecsHelper.config_specs_to_json(specs)
+
+        spec_json = {}
+        for key, spec in specs.items():
+            spec_json[key] = spec.to_dto().dict()
+        self.data["specs"] = spec_json
 
     def get_spec(self, param_name: str) -> ParamSpec:
         self._check_param(param_name)
@@ -149,41 +153,26 @@ class Config(ModelWithUser):
     def _clear_values(self):
         self.data["values"] = {}
 
-    # TODO REMOVE
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return self.to_dto()
-
     def to_dto(self) -> ConfigDTO:
-        # return all the spec but the private specs
-        specs: ConfigSpecs = self.get_specs()
-        json_specs: dict = {}
-        for key, spec in specs.items():
-            if spec.visibility == 'private':
-                continue
-            json_specs[key] = spec.to_json()
-
         return ConfigDTO(
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
             created_by=self.created_by.to_dto(),
             last_modified_by=self.last_modified_by.to_dto(),
-            specs=json_specs,
+            specs=ConfigSpecsHelper.config_specs_to_dto(self.get_specs()),
             values=self.get_values()
         )
 
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        return {}
-
-    def export_config(self) -> ConfigDict:
+    def to_simple_dto(self) -> ConfigSimpleDTO:
         """
         Export the config to a dict
         """
 
-        return {
-            "specs": self.data["specs"],
-            "values": self.get_and_check_values()
-        }
+        return ConfigSimpleDTO(
+            specs=self.data["specs"],
+            values=self.get_and_check_values()
+        )
 
     def copy(self) -> 'Config':
         """Copy the config to a new Config with a new Id

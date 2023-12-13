@@ -2,29 +2,18 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from typing import Dict, List, Literal, TypedDict
+from typing import Dict, List, Literal, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.io.io_exception import (InvalidInputsException,
                                       MissingInputResourcesException)
-from gws_core.io.io_spec import (InputSpec, IOSpec, IOSpecDict, IOSpecDTO,
-                                 OutputSpec)
+from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_factory import ResourceFactory
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 IOSpecsType = Literal['normal', 'dynamic']
-
-# TODO TO REMOVE
-
-
-class IOSpecsDict(TypedDict):
-    """IOSpecsDict type
-    """
-    specs: Dict[str, IOSpecDict]
-    type: IOSpecsType
-    additional_info: dict
 
 
 class IOSpecsDTO(BaseModelDTO):
@@ -32,21 +21,21 @@ class IOSpecsDTO(BaseModelDTO):
     """
     specs: Dict[str, IOSpecDTO]
     type: IOSpecsType
-    additional_info: dict
+    additional_info: BaseModelDTO
 
 
-class OutputsCheckResult(TypedDict):
+class OutputsCheckResult(BaseModelDTO):
     """OutputCheckResult type
     """
-    error: str
-    outputs: TaskOutputs
+    error: Optional[str]
+    outputs: Optional[TaskOutputs]
 
 
-class OutputCheckResult(TypedDict):
+class OutputCheckResult(BaseModelDTO):
     """OutputCheckResult type
     """
-    error: str
-    resource: Resource
+    error: Optional[str]
+    resource: Optional[Resource]
 
 
 class IOSpecs():
@@ -72,24 +61,11 @@ class IOSpecs():
     def get_type(self) -> IOSpecsType:
         return 'normal'
 
-    def get_additional_info(self) -> dict:
-        return {}
+    def get_additional_info(self) -> BaseModelDTO:
+        return BaseModelDTO()
 
-    def set_additional_info(self, additional_info: dict) -> None:
+    def set_additional_info(self, additional_info: BaseModelDTO) -> None:
         pass
-
-    def to_json(self) -> IOSpecsDict:
-        """to_json method for IOSpecs
-        """
-
-        json_:  IOSpecsDict = {
-            "specs": {},
-            "type": self.get_type(),
-            "additional_info": self.get_additional_info()
-        }
-        for key, spec in self.get_specs().items():
-            json_["specs"][key] = spec.to_json()
-        return json_
 
     def to_dto(self) -> IOSpecsDTO:
         spec_dto = IOSpecsDTO(
@@ -198,18 +174,18 @@ class OutputSpecs(IOSpecs):
                 resource: Resource = task_outputs[key]
 
                 check_result = self._check_output(resource, spec, self._get_spec_key_pretty_name(key))
-                if check_result["error"] is not None and len(check_result["error"]) > 0:
-                    error_text = error_text + check_result["error"]
+                if check_result.error is not None and len(check_result.error) > 0:
+                    error_text = error_text + check_result.error
                     continue
 
                 # save the resource event if there is an error
-                if isinstance(check_result["resource"], Resource):
-                    verified_outputs[key] = check_result["resource"]
+                if isinstance(check_result.resource, Resource):
+                    verified_outputs[key] = check_result.resource
 
-        return {
-            "error": error_text,
-            "outputs": verified_outputs
-        }
+        return OutputsCheckResult(
+            error=error_text,
+            outputs=verified_outputs
+        )
 
     def _check_output(self, output_resource: Resource, spec: OutputSpec, pretty_key_name: str) -> OutputCheckResult:
         """Method to check a output resource, return str if there is an error with the resource
@@ -220,33 +196,35 @@ class OutputSpecs(IOSpecs):
             resource_type = type(output_resource)
             output_resource = ResourceFactory.create_from_object(output_resource)
             if output_resource is None:
-                return {
-                    "error": f"The output '{pretty_key_name}' of type '{resource_type.__name__}' is not a resource and could not be converted dynamically. It must extend the Resource class",
-                    "resource": None
-                }
+                return OutputCheckResult(
+                    error=f"The output '{pretty_key_name}' of type '{resource_type.__name__}' is not a resource and could not be converted dynamically. It must extend the Resource class",
+                    resource=None
+                )
 
         # Check resource is compatible with specs
         if not spec.is_compatible_with_resource_type(type(output_resource)):
-            return {
-                "error": f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' is not a compatble with the corresponding output spec.",
-                "resource": None
-            }
+            return OutputCheckResult(
+                error=f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' is not a compatble with the corresponding output spec.",
+                resource=None
+            )
 
         # Check that the resource is well formed
         try:
             error = output_resource.check_resource()
 
             if error is not None and len(error) > 0:
-                return {"error": error, "resource": None}
+                return OutputCheckResult(error=error, resource=None)
 
         except Exception as err:
             Logger.log_exception_stack_trace(err)
-            return {"error": f"Error during the key of the output resource '{pretty_key_name}'. Error : {str(err)}", "resource": None}
+            return OutputCheckResult(
+                error=f"Error during the key of the output resource '{pretty_key_name}'. Error : {str(err)}",
+                resource=None)
 
-        return {
-            "resource": output_resource,
-            "error": None
-        }
+        return OutputCheckResult(
+            resource=output_resource,
+            error=None
+        )
 
     def _transform_output_resources(self, task_outputs: TaskOutputs) -> TaskOutputs:
         """ Method to convert the task output to be saved in the outputs.

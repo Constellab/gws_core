@@ -5,10 +5,10 @@
 
 from typing import Dict, List, Type
 
-from gws_core.io.io import Inputs, IODict, Outputs
+from gws_core.io.io_dto import IODTO
+from gws_core.protocol.protocol_dto import ProtocolConfigDTO
 from gws_core.protocol.protocol_layout import ProtocolLayout
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
-from gws_core.protocol.protocol_types import ProtocolConfigDict
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
@@ -42,8 +42,8 @@ class ProcessFactory():
             cls, task_type: Type[Task],
             config_params: ConfigParamsDict = None,
             instance_name: str = None,
-            inputs_dict: IODict = None,
-            outputs_dict: IODict = None) -> TaskModel:
+            inputs_dto: IODTO = None,
+            outputs_dto: IODTO = None) -> TaskModel:
         if not issubclass(task_type, Task):
             name = task_type.__name__ if task_type.__name__ is not None else str(
                 task_type)
@@ -55,7 +55,7 @@ class ProcessFactory():
                 f"The task {task_type.full_classname()} is not register. Did you add the @task_decorator decorator on your task class ?")
 
         task_model: TaskModel = TaskModel()
-        task_model.set_process_type(task_type._typing_name, inputs_dict, outputs_dict)
+        task_model.set_process_type(task_type._typing_name, inputs_dto, outputs_dto)
 
         config: Config = Config()
         config.set_specs(task_type.config_specs)
@@ -209,7 +209,7 @@ class ProcessFactory():
         return protocol_model
 
     @classmethod
-    def create_protocol_model_from_graph(cls, graph: ProtocolConfigDict) -> ProtocolModel:
+    def create_protocol_model_from_graph(cls, graph: ProtocolConfigDTO) -> ProtocolModel:
         """
         Create a new instance from a existing graph
 
@@ -227,7 +227,7 @@ class ProcessFactory():
 
     @classmethod
     def _create_protocol_model_from_graph_recur(cls, protocol: ProtocolModel,
-                                                graph: ProtocolConfigDict) -> ProtocolModel:
+                                                graph: ProtocolConfigDTO) -> ProtocolModel:
         """
         Create a new instance from a existing graph
 
@@ -321,7 +321,7 @@ class ProcessFactory():
         :return: [description]
         :rtype: ProtocolModel
         """
-        return cls.create_protocol_model_from_graph(protocol_model.dumps_graph('config'))
+        return cls.create_protocol_model_from_graph(protocol_model.to_config_dto())
 
       ############################################### SPECIFIC #################################################
 

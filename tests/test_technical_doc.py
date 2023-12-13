@@ -11,7 +11,9 @@ from gws_core.brick.technical_doc_service import TechnicalDocService
 class TestTechnicalDoc(BaseTestCase):
 
     def test_technical_doc(self):
-        dict_ = TechnicalDocService.generate_technical_doc('gws_core')
+        technical_doc = TechnicalDocService.generate_technical_doc('gws_core')
 
-        self.assertIsNotNone(dict_['resources'])
-        self.assertIsNotNone(dict_['tasks'])
+        self.assertTrue(technical_doc.brick_name == 'gws_core')
+        self.assertTrue(len(technical_doc.resources) > 0)
+        self.assertTrue(len(technical_doc.tasks) > 0)
+        self.assertTrue(len(technical_doc.protocols) > 0)

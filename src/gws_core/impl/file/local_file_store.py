@@ -13,6 +13,7 @@ from typing import List, Type, Union
 
 from genericpath import isdir
 
+from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.folder import Folder
 
 from ...core.decorator.transaction import transaction
@@ -167,7 +168,10 @@ class LocalFileStore(FileStore):
 
     @classmethod
     def drop_table(cls, *args, **kwargs):
-        cls.remove_all_file_stores()
+        try:
+            cls.remove_all_file_stores()
+        except Exception as err:
+            Logger.error(f"Cannot remove all file stores, error : {err}")
         super().drop_table(*args, **kwargs)
 
     @classmethod

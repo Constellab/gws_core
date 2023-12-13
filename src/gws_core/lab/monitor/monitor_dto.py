@@ -5,7 +5,7 @@
 
 
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 
@@ -38,12 +38,14 @@ class MonitorDTO(ModelDTO):
     ram_usage_percent: float
 
     gpu_enabled: bool
-    gpu_percent: float
-    gpu_temperature: float
-    gpu_memory_total: float
-    gpu_memory_used: float
-    gpu_memory_free: float
-    gpu_memory_percent: float
+    gpu_percent: Optional[float]
+    gpu_temperature: Optional[float]
+    gpu_memory_total: Optional[float]
+    gpu_memory_used: Optional[float]
+    gpu_memory_free: Optional[float]
+    gpu_memory_percent: Optional[float]
+
+    data: dict
 
 
 class MonitorBetweenDateDTO(BaseModelDTO):

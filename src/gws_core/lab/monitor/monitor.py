@@ -4,12 +4,13 @@
 # About us: https://gencovery.com
 
 import subprocess
-from typing import List
+from typing import Any, Dict, List
 
 import psutil
 from peewee import FloatField
-from typing_extensions import TypedDict
 
+from gws_core.core.model.db_field import JSONField
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.monitor.monitor_dto import MonitorDTO
@@ -17,7 +18,7 @@ from gws_core.lab.monitor.monitor_dto import MonitorDTO
 from ...core.model.model import Model
 
 
-class GpuInfo(TypedDict):
+class GpuInfo(BaseModelDTO):
     percent: float
     temperature: float
     memory_total: float
@@ -74,7 +75,14 @@ class Monitor(Model):
     gpu_memory_free = FloatField(default=0)
     gpu_memory_percent = FloatField(default=0)
 
+    data: Dict[str, Any] = JSONField(null=True)
+
     _table_name = 'gws_lab_monitor'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_saved() and not self.data:
+            self.data = {}
 
     @classmethod
     def get_last(cls):
@@ -129,12 +137,12 @@ class Monitor(Model):
         if Settings.gpu_is_available():
             gpu_info = cls.get_gpu_info()
             if gpu_info:
-                monitor.gpu_percent = gpu_info['percent']
-                monitor.gpu_temperature = gpu_info['temperature']
-                monitor.gpu_memory_total = gpu_info['memory_total']
-                monitor.gpu_memory_used = gpu_info['memory_used']
-                monitor.gpu_memory_free = gpu_info['memory_free']
-                monitor.gpu_memory_percent = gpu_info['memory_percent']
+                monitor.gpu_percent = gpu_info.percent
+                monitor.gpu_temperature = gpu_info.temperature
+                monitor.gpu_memory_total = gpu_info.memory_total
+                monitor.gpu_memory_used = gpu_info.memory_used
+                monitor.gpu_memory_free = gpu_info.memory_free
+                monitor.gpu_memory_percent = gpu_info.memory_percent
 
         return monitor
 
@@ -150,14 +158,14 @@ class Monitor(Model):
             memory_used = float(gpu_info[3]) * 1024 * 1024 * 1024
             memory_free = float(gpu_info[4]) * 1024 * 1024 * 1024
             memory_total = float(gpu_info[2]) * 1024 * 1024 * 1024
-            return {
-                'percent': float(gpu_info[0]),
-                'temperature': float(gpu_info[1]),
-                'memory_total': memory_total,
-                'memory_used': memory_used,
-                'memory_free': memory_free,
-                'memory_percent': memory_used / memory_total * 100
-            }
+            return GpuInfo(
+                percent=float(gpu_info[0]),
+                temperature=float(gpu_info[1]),
+                memory_total=memory_total,
+                memory_used=memory_used,
+                memory_free=memory_free,
+                memory_percent=memory_used / memory_total * 100
+            )
         except Exception as err:
             Logger.debug(f"Error while getting gpu info from nvidia-smi : {err}")
             return None
@@ -165,10 +173,6 @@ class Monitor(Model):
     @property
     def get_all_cpu_percent(self) -> List[float]:
         return self.data.get("all_cpu_percent", [])
-
-    # TODO TO REMOVE
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return self.to_dto()
 
     def to_dto(self) -> MonitorDTO:
         return MonitorDTO(
@@ -201,7 +205,8 @@ class Monitor(Model):
             gpu_memory_total=self.gpu_memory_total,
             gpu_memory_used=self.gpu_memory_used,
             gpu_memory_free=self.gpu_memory_free,
-            gpu_memory_percent=self.gpu_memory_percent
+            gpu_memory_percent=self.gpu_memory_percent,
+            data=self.data
         )
 
     class Meta:

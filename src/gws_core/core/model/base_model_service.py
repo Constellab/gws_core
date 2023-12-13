@@ -8,14 +8,14 @@ from typing import Dict, List, Type
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.db.db_manager import AbstractDbManager
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.settings import Settings
-from typing_extensions import TypedDict
 
 from ..utils.logger import Logger
 from .base_model import BaseModel
 
 
-class DbWithModels(TypedDict):
+class DbWithModels(BaseModelDTO):
     db_manager: AbstractDbManager
     models: List[Type[BaseModel]]
 
@@ -54,10 +54,10 @@ class BaseModelService:
 
         db_with_models = cls._get_db_and_model_types()
         for db_with_model in db_with_models:
-            db_manager = db_with_model["db_manager"]
+            db_manager = db_with_model.db_manager
             try:
 
-                models = [t for t in db_with_model["models"] if not t.table_exists()]
+                models = [t for t in db_with_model.models if not t.table_exists()]
 
                 db_manager.db.create_tables(models)
             except Exception as err:
@@ -77,7 +77,7 @@ class BaseModelService:
 
         # Create the foreign keys after if necessary (for DeferredForeignKey for example)
         for db_with_model in db_with_models:
-            for model in db_with_model["models"]:
+            for model in db_with_model.models:
                 model.after_all_tables_init()
 
     @classmethod
@@ -95,7 +95,7 @@ class BaseModelService:
         for db_with_model in db_with_models:
 
             models: List[Type[BaseModel]] = [
-                t for t in db_with_model["models"] if t.table_exists()]
+                t for t in db_with_model.models if t.table_exists()]
 
             if len(models) == 0:
                 Logger.debug("No table to drop")
@@ -103,12 +103,12 @@ class BaseModelService:
 
             # Disable foreigne key on my sql to drop the tables
             if models[0].is_mysql_engine():
-                db_with_model["db_manager"].db.execute_sql("SET FOREIGN_KEY_CHECKS=0")
+                db_with_model.db_manager.db.execute_sql("SET FOREIGN_KEY_CHECKS=0")
             # Drop all the tables
-            db_with_model["db_manager"].db.drop_tables(models)
+            db_with_model.db_manager.db.drop_tables(models)
 
             if models[0].is_mysql_engine():
-                db_with_model["db_manager"].db.execute_sql("SET FOREIGN_KEY_CHECKS=1")
+                db_with_model.db_manager.db.execute_sql("SET FOREIGN_KEY_CHECKS=1")
 
     @classmethod
     def _get_db_and_model_types(cls) -> List[DbWithModels]:
@@ -119,12 +119,12 @@ class BaseModelService:
             db_manager = model.get_db_manager()
 
             if db_manager.get_unique_name() not in db_with_models:
-                db_with_models[db_manager.get_unique_name()] = {
-                    "db_manager": db_manager,
-                    "models": []
-                }
+                db_with_models[db_manager.get_unique_name()] = DbWithModels(
+                    db_manager=db_manager,
+                    models=[]
+                )
 
             db_with_model = db_with_models[db_manager.get_unique_name()]
-            db_with_model["models"].append(model)
+            db_with_model.models.append(model)
 
         return list(db_with_models.values())

@@ -7,7 +7,7 @@
 from typing import final
 
 from gws_core.process.process_model import ProcessModel
-from gws_core.protocol.protocol_types import InterfaceDict
+from gws_core.protocol.protocol_dto import InterfaceDTO
 
 from ..resource.resource_model import ResourceModel
 from .port import InPort, OutPort, Port
@@ -46,8 +46,8 @@ class IOface:
         if self.target_port:
             self.target_port.reset()
 
-    def to_json(self) -> InterfaceDict:
-        return {
+    def to_dto(self) -> InterfaceDTO:
+        return InterfaceDTO.from_json({
             "name": self.name,
             "from": {
                 "node": self.source_process.instance_name,
@@ -57,7 +57,7 @@ class IOface:
                 "node": self.target_process.instance_name,
                 "port": self.target_port_name,
             },
-        }
+        })
 
 
 @final
@@ -73,10 +73,10 @@ class Interface(IOface):
     def target_port(self) -> InPort:
         return self.target_process.in_port(self.target_port_name)
 
-    def to_json(self) -> InterfaceDict:
-        _json = super().to_json()
-        _json["from"]["node"] = ":parent:"
-        return _json
+    def to_dto(self) -> InterfaceDTO:
+        dto = super().to_dto()
+        dto.from_.node = ":parent:"
+        return dto
 
 
 @final
@@ -95,7 +95,7 @@ class Outerface(IOface):
     def get_resource(self) -> ResourceModel:
         return self.source_port.resource_model
 
-    def to_json(self) -> InterfaceDict:
-        _json = super().to_json()
-        _json["to"]["node"] = ":parent:"
+    def to_dto(self) -> InterfaceDTO:
+        _json = super().to_dto()
+        _json.to.node = ":parent:"
         return _json

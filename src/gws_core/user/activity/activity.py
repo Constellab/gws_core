@@ -30,13 +30,6 @@ class Activity(Model):
 
     _table_name = "gws_user_activity"
 
-    def archive(self, archive: bool) -> None:
-        """
-        Deactivated method. Allways returns False.
-        """
-
-        return None
-
     @classmethod
     def add(cls, activity_type: ActivityType, object_type: ActivityObjectType,
             object_id: str, user: User = None):
@@ -53,9 +46,6 @@ class Activity(Model):
     @classmethod
     def get_last_activity(cls) -> "Activity":
         return Activity.select().order_by(Activity.created_at.desc()).first()
-
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        self.to_dto()
 
     def to_dto(self) -> ActivityDTO:
         return ActivityDTO(

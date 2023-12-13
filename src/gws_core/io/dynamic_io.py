@@ -3,19 +3,20 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List, TypedDict
+from typing import Dict, List, Optional
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.io.io_specs import IOSpecsType
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.task.task_io import TaskOutputs
 
-from .io_spec import InputSpec, IOSpecDict, OutputSpec
+from .io_spec import InputSpec, IOSpecDTO, OutputSpec
 from .io_specs import InputSpecs, OutputSpecs
 
 
-class AdditionalInfo(TypedDict):
-    additionnal_port_spec: IOSpecDict
+class AdditionalInfo(BaseModelDTO):
+    additionnal_port_spec: Optional[IOSpecDTO]
 
 
 class DynamicInputs(InputSpecs):
@@ -43,16 +44,16 @@ class DynamicInputs(InputSpecs):
         return 'dynamic'
 
     def get_additional_info(self) -> AdditionalInfo:
-        return {
-            'additionnal_port_spec': self.additionnal_port_spec.to_json() if self.additionnal_port_spec else None
-        }
+        return AdditionalInfo(
+            additionnal_port_spec=self.additionnal_port_spec.to_dto() if self.additionnal_port_spec else None
+        )
 
-    def set_additional_info(self, additional_info: AdditionalInfo) -> None:
-        if not additional_info:
+    def set_additional_info(self, additional_info: BaseModelDTO) -> None:
+        if not additional_info or not isinstance(additional_info, AdditionalInfo):
             return
 
-        if additional_info.get('additionnal_port_spec'):
-            self.additionnal_port_spec = InputSpec.from_json(additional_info['additionnal_port_spec'])
+        if additional_info.additionnal_port_spec:
+            self.additionnal_port_spec = InputSpec.from_dto(additional_info.additionnal_port_spec)
 
     def _transform_input_resources(self, resources: Dict[str, Resource]) -> Dict[str, Resource]:
         """
@@ -98,16 +99,16 @@ class DynamicOutputs(OutputSpecs):
         return 'dynamic'
 
     def get_additional_info(self) -> AdditionalInfo:
-        return {
-            'additionnal_port_spec': self.additionnal_port_spec.to_json() if self.additionnal_port_spec else None
-        }
+        return AdditionalInfo(
+            additionnal_port_spec=self.additionnal_port_spec.to_dto() if self.additionnal_port_spec else None
+        )
 
-    def set_additional_info(self, additional_info: AdditionalInfo) -> None:
-        if not additional_info:
+    def set_additional_info(self, additional_info: BaseModelDTO) -> None:
+        if not additional_info or not isinstance(additional_info, AdditionalInfo):
             return
 
-        if additional_info.get('additionnal_port_spec'):
-            self.additionnal_port_spec = OutputSpec.from_json(additional_info['additionnal_port_spec'])
+        if additional_info.additionnal_port_spec:
+            self.additionnal_port_spec = OutputSpec.from_dto(additional_info.additionnal_port_spec)
 
     def _transform_output_resources(self, task_outputs: TaskOutputs) -> TaskOutputs:
         """ Method to convert the task output to be saved in the outputs.

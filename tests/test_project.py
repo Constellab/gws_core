@@ -22,16 +22,19 @@ class TestProject(BaseTestCase):
             "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
             "code": "Root",
             "title": "Root project",
+            "levelStatus": "PARENT",
             "children": [
                 {
                     "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f2",
                     "code": "WP1",
                     "title": "Work package 1",
+                    "levelStatus": "PARENT",
                     "children": [
                         {
                             "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f3",
                             "code": "TASK1",
                             "title": "Task 1",
+                            "levelStatus": "LEAF",
                         }
                     ]
                 },
@@ -39,6 +42,7 @@ class TestProject(BaseTestCase):
                     "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f4",
                     "code": "WP2",
                     "title": "Work package 2",
+                    "levelStatus": "PARENT",
                     "children": []
                 }
             ]
@@ -52,15 +56,15 @@ class TestProject(BaseTestCase):
         # test get
         project: Project = Project.get_by_id_and_check("caf61803-70e5-4ac3-9adb-53a35f65a2f1")
 
-        json_ = project.to_json(deep=True)
-        self.assertEqual(json_['code'], 'Root')
-        self.assertEqual(len(json_['children']), 2)
-        self.assertEqual(json_['children'][0]['code'], 'WP1')
-        self.assertEqual(json_['children'][1]['code'], 'WP2')
-        self.assertEqual(len(json_['children'][0]['children']), 1)
-        self.assertEqual(json_['children'][0]['children'][0]['code'], 'TASK1')
-        self.assertEqual(len(json_['children'][0]['children'][0]['children']), 0)
-        self.assertEqual(len(json_['children'][1]['children']), 0)
+        json_ = project.to_tree_dto()
+        self.assertEqual(json_.code, 'Root')
+        self.assertEqual(len(json_.children), 2)
+        self.assertEqual(json_.children[0].code, 'WP1')
+        self.assertEqual(json_.children[1].code, 'WP2')
+        self.assertEqual(len(json_.children[0].children), 1)
+        self.assertEqual(json_.children[0].children[0].code, 'TASK1')
+        self.assertEqual(len(json_.children[0].children[0].children), 0)
+        self.assertEqual(len(json_.children[1].children), 0)
 
         # test get available projects as tree
         project_trees = ProjectService.get_project_trees()

@@ -5,21 +5,8 @@
 
 from typing import Dict
 
-from typing_extensions import TypedDict
-
 from .param.param_spec import ParamSpec
-from .param.param_types import ParamSpecDict, ParamValue
+from .param.param_types import ParamValue
 
 ConfigParamsDict = Dict[str, ParamValue]
 ConfigSpecs = Dict[str, ParamSpec]
-
-
-class ConfigDict(TypedDict):
-    """Config values send to the task
-    """
-
-    # specification of the config
-    specs: Dict[str, ParamSpecDict]
-
-    # values of the config
-    values: ConfigParamsDict

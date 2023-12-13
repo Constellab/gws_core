@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from enum import Enum
 from typing import Type
 
 from peewee import CharField
@@ -90,9 +89,6 @@ class ShareLink(ModelWithUser):
             return ResourceModel
         else:
             raise BadRequestException(f"Entity type {entity_type} is not supported")
-
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return self.to_dto()
 
     def to_dto(self) -> ShareLinkDTO:
         link_dto = ShareLinkDTO(

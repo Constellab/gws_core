@@ -8,32 +8,18 @@ from typing import Any, Dict, List, Optional, final
 
 from fastapi.encoders import jsonable_encoder
 from peewee import CharField, FloatField
-from typing_extensions import TypedDict
 
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.progress_bar.progress_bar_dto import ProgressBarDTO
+from gws_core.progress_bar.progress_bar_dto import (
+    ProgressBarDTO, ProgressBarMessageDTO, ProgressBarMessageWithTypeDTO)
 
-from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 
 
-class ProgressBarMessageWithType(TypedDict):
-    type: MessageLevel
-    message: str
-    progress: float
-
-
-class ProgressBarMessage(TypedDict):
-    type: MessageLevel
-    text: str
-    datetime: str
-
-
 @final
-@json_ignore(['process_id', 'process_typing_name'])
 class ProgressBar(Model):
     """
     ProgressBar class
@@ -155,14 +141,14 @@ class ProgressBar(Model):
 
         self.save()
 
-    def add_messages(self, messages: List[ProgressBarMessageWithType]) -> None:
+    def add_messages(self, messages: List[ProgressBarMessageWithTypeDTO]) -> None:
 
         for message in messages:
-            if message["type"] == MessageLevel.PROGRESS:
+            if message.type == MessageLevel.PROGRESS:
                 self._update_progress(
-                    value=message["progress"], message=message["message"])
+                    value=message.progress, message=message.message)
             else:
-                self._add_message(message["message"], message["type"])
+                self._add_message(message.message, message.type)
 
         # save only once at the end
         self.save()
@@ -170,12 +156,12 @@ class ProgressBar(Model):
     def _add_message(self, message: str, type_: MessageLevel = MessageLevel.INFO):
         dtime = jsonable_encoder(DateHelper.now_utc())
 
-        progress_bar_message: ProgressBarMessage = {
-            "type": type_,
-            "text": message,
-            "datetime": dtime
-        }
-        self.data["messages"].append(progress_bar_message)
+        progress_bar_message = ProgressBarMessageDTO(
+            type=type_,
+            text=message,
+            datetime=dtime
+        )
+        self.data["messages"].append(progress_bar_message.dict())
 
     def start(self):
         if self.is_started:
@@ -223,27 +209,28 @@ class ProgressBar(Model):
             self._add_message("{:1.1f}%: {}".format(
                 perc, message), MessageLevel.PROGRESS)
 
-    @property
-    def messages(self) -> List[ProgressBarMessage]:
-        return self.data["messages"]
+    def get_messages(self) -> List[ProgressBarMessageDTO]:
+        return ProgressBarMessageDTO.from_json_list(self.data["messages"])
 
-    def get_last_message(self) -> Optional[ProgressBarMessage]:
-        if not self.messages:
+    def get_last_message(self) -> Optional[ProgressBarMessageDTO]:
+        messages = self.get_messages()
+        if not messages:
             return None
-        return self.messages[-1]
+        return messages[-1]
 
-    def get_messages_paginated(self, nb_of_messages: int, before_date: datetime = None) -> List[ProgressBarMessage]:
+    def get_messages_paginated(self, nb_of_messages: int, before_date: datetime = None) -> List[ProgressBarMessageDTO]:
         """
         Get the last nb_of_messages messages
         :param nb_of_messages: number of messages to get
         :param from_datatime: if provided, get the last nb_of_messages messages before this date
         :return:
         """
-        if not self.messages:
+        messages = self.get_messages()
+        if not messages:
             return []
 
         # get a copy of the message
-        messages = [*self.messages]
+        messages = [*messages]
         messages.reverse()
 
         if before_date is None:
@@ -251,7 +238,7 @@ class ProgressBar(Model):
 
         filtered_messages = []
         for message in messages:
-            if DateHelper.from_iso_str(message["datetime"]) < before_date:
+            if DateHelper.from_iso_str(message.datetime) < before_date:
                 filtered_messages.append(message)
 
             if len(filtered_messages) >= nb_of_messages:
@@ -260,11 +247,7 @@ class ProgressBar(Model):
         return filtered_messages
 
     def get_messages_as_str(self) -> str:
-        return "\n".join([self.progress_message_to_str(message) for message in self.messages])
-
-    @classmethod
-    def progress_message_to_str(cls, message: ProgressBarMessage) -> str:
-        return f"{message['type']} - {message['datetime']} - {message['text']}"
+        return "\n".join([str(message) for message in self.get_messages()])
 
     ################################################## VALUE #################################################
 
@@ -285,21 +268,6 @@ class ProgressBar(Model):
 
     ################################################## TO JSON #################################################
 
-    # TODO TO REMOVE
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns JSON string or dictionnary representation of the model.
-
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-
-        return self.to_dto()
-
     def to_dto(self) -> ProgressBarDTO:
         return ProgressBarDTO(
             id=self.id,
@@ -309,6 +277,3 @@ class ProgressBar(Model):
             elapsed_time=self.get_elapsed_time(),
             second_start=self.second_start,
         )
-
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        return {}

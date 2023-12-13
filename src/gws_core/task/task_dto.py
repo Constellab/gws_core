@@ -4,15 +4,15 @@
 # About us: https://gencovery.com
 
 
-from typing import Optional
+from typing import Dict, Optional
 
-from gws_core.io.io_spec import IOSpecDTO
+from gws_core.config.param.param_types import ParamSpecDTO
+from gws_core.io.io_specs import IOSpecsDTO
 from gws_core.model.typing_dto import TypingFullDTO
 
 
 class TaskTypingDTO(TypingFullDTO):
-    input_specs: Optional[IOSpecDTO] = None
-    output_specs: Optional[IOSpecDTO] = None
-    # TODO imrove typing
-    config_specs: Optional[dict] = None
+    input_specs: Optional[IOSpecsDTO] = None
+    output_specs: Optional[IOSpecsDTO] = None
+    config_specs: Optional[Dict[str, ParamSpecDTO]] = None
     additional_data: Optional[dict] = None

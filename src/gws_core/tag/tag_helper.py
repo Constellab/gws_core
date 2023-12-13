@@ -9,19 +9,18 @@ from typing import Dict, List
 from numpy import array, meshgrid
 
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.tag.tag_dto import TagDTO
+from gws_core.tag.tag_dto import EntityTagValueFormat, TagDTO
 
-from .tag import (TAGS_SEPARATOR, EntityTagValueFormat, Tag, TagDict,
-                  TagValueType)
+from .tag import TAGS_SEPARATOR, Tag, TagValueType
 
 
 class TagHelper():
 
     @classmethod
-    def tags_to_json(cls, tags: List[Tag]) -> List[TagDict]:
+    def tags_to_json(cls, tags: List[Tag]) -> List[dict]:
         if not tags:
             return []
-        return [tag.to_json() for tag in tags]
+        return [tag.to_dto().dict() for tag in tags]
 
     @classmethod
     def tags_to_list(cls, tags: str) -> List[Tag]:
@@ -37,14 +36,14 @@ class TagHelper():
         return tags_list
 
     @classmethod
-    def tags_dict_to_list(cls, tags_dict: List[TagDict]) -> List[Tag]:
+    def tags_dict_to_list(cls, tags_dict: List[dict]) -> List[Tag]:
         if not tags_dict:
             return []
 
         tags_list: List[Tag] = []
 
         for tag_dict in tags_dict:
-            tags_list.append(Tag.from_json(tag_dict))
+            tags_list.append(Tag.from_dto(TagDTO.from_json(tag_dict)))
         return tags_list
 
     @classmethod

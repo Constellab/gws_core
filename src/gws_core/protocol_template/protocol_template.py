@@ -8,8 +8,8 @@ from peewee import CharField, IntegerField
 
 from gws_core.core.model.db_field import JSONField
 from gws_core.process.process_factory import ProcessFactory
+from gws_core.protocol.protocol_dto import ProtocolConfigDTO
 from gws_core.protocol.protocol_model import ProtocolModel
-from gws_core.protocol.protocol_types import ProtocolConfigDict
 from gws_core.protocol_template.protocol_template_dto import (
     ProtocolTemplateDTO, ProtocolTemplateFullDTO)
 from gws_core.tag.taggable_model import TaggableModel
@@ -34,24 +34,17 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
 
     _table_name = "gws_protocol_template"
 
-    def get_template(self) -> ProtocolConfigDict:
-        return self.data
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def set_template(self, template: ProtocolConfigDict):
-        self.data = template
+        if not self.is_saved() and not self.data:
+            self.data = {}
 
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
+    def get_template(self) -> ProtocolConfigDTO:
+        return ProtocolConfigDTO.from_json(self.data)
 
-        if deep:
-            # create a new protocol to refresh the template info ()
-            protocol_model = ProcessFactory.create_protocol_model_from_graph(self.get_template())
-            return protocol_model.dumps_graph('config')
-        else:
-            return None
-
-    # TODO TO REMOVE
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return self.to_dto()
+    def set_template(self, template: ProtocolConfigDTO):
+        self.data = template.dict()
 
     def to_dto(self) -> ProtocolTemplateDTO:
         return ProtocolTemplateDTO(
@@ -65,6 +58,8 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
         )
 
     def to_full_dto(self) -> ProtocolTemplateFullDTO:
+        # create a new protocol to refresh the template info ()
+        protocol_model = ProcessFactory.create_protocol_model_from_graph(self.get_template())
         return ProtocolTemplateFullDTO(
             id=self.id,
             created_at=self.created_at,
@@ -73,7 +68,7 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
             last_modified_by=self.last_modified_by.to_dto(),
             name=self.name,
             version=self.version,
-            data=self.data,
+            data=protocol_model.to_protocol_config_dto(),
             description=self.description
         )
 
@@ -81,17 +76,18 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
     def from_protocol_model(
             cls, protocol_model: ProtocolModel, name: str, description: str = None) -> 'ProtocolTemplate':
         protocol_template = ProtocolTemplate()
-        protocol_template.set_template(protocol_model.dumps_graph('config'))
+        protocol_template.set_template(protocol_model.to_protocol_config_dto())
         protocol_template.name = name
         protocol_template.description = description
         return protocol_template
 
     @classmethod
     def from_json(cls, json_: dict) -> 'ProtocolTemplate':
+        template_dto = ProtocolTemplateFullDTO.from_json(json_)
         protocol_template = ProtocolTemplate()
-        protocol_template.name = json_['name']
-        protocol_template.description = json_.get('description')
-        protocol_template.version = json_.get('version')
-        protocol_template.set_template(json_['data'])
+        protocol_template.name = template_dto.name
+        protocol_template.description = template_dto.description
+        protocol_template.version = template_dto.version
+        protocol_template.set_template(template_dto.data)
 
         return protocol_template

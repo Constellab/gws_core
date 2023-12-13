@@ -18,8 +18,8 @@ class TestLabConfig(BaseTestCase):
         self.assertEqual(count, 1)
 
         brick_versions: List[BrickVersion] = [
-            {'name': 'test', 'version': '2.1.1'},
-            {'name': 'gws_core', 'version': '1.1.1'}]
+            BrickVersion(name='test', version='2.1.1'),
+            BrickVersion(name='gws_core', version='1.1.1')]
         config_1 = LabConfigModel.create_config_if_not_exits(brick_versions)
 
         count = LabConfigModel.select().count()

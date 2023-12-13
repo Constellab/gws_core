@@ -7,8 +7,7 @@ from abc import abstractmethod
 from typing import Optional, Type
 
 from gws_core.model.typing import Typing
-from gws_core.process.process_types import (ProcessConfigDict,
-                                            ProcessMinimumDict)
+from gws_core.process.process_types import ProcessConfigDTO, ProcessMinimumDTO
 from gws_core.protocol.protocol import Protocol
 from gws_core.task.task import Task
 
@@ -35,10 +34,11 @@ class SubProcessBuilderReadFromDb(ProtocolSubProcessBuilder):
     from the DB
     """
 
-    def instantiate_process_from_json(self, node_json: ProcessMinimumDict, instance_name: str) -> ProcessModel:
-        proc_id: str = node_json.get("id", None)
+    def instantiate_process_from_json(self, node_json: dict, instance_name: str) -> ProcessModel:
+        process_dto = ProcessMinimumDTO.from_json(node_json)
+        proc_id: str = process_dto.id
 
-        proc_type_str: str = node_json["process_typing_name"]
+        proc_type_str: str = process_dto.process_typing_name
         is_protocol = Typing.typing_name_is_protocol(proc_type_str)
 
         return self._get_process_from_db(process_id=proc_id, is_protocol=is_protocol)
@@ -60,8 +60,9 @@ class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
     It requires a ProcessConfigDict instead of a ProcessMinimumDict
     """
 
-    def instantiate_process_from_json(self, node_json: ProcessConfigDict, instance_name: str) -> ProcessModel:
-        process_type_str: str = node_json["process_typing_name"]
+    def instantiate_process_from_json(self, node_json: dict, instance_name: str) -> ProcessModel:
+        process_dto = ProcessConfigDTO.from_json(node_json)
+        process_type_str: str = process_dto.process_typing_name
         process_type: Type[Process] = TypingManager.get_type_from_name(process_type_str)
 
         if process_type is None:
@@ -69,23 +70,23 @@ class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
                 f"Process {process_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
 
         return self._create_new_process(process_type=process_type, instance_name=instance_name,
-                                        node_json=node_json)
+                                        process_dto=process_dto)
 
     def _create_new_process(self, process_type: Type[Process],
-                            instance_name: str, node_json: ProcessConfigDict) -> ProcessModel:
+                            instance_name: str, process_dto: ProcessConfigDTO) -> ProcessModel:
         """Method to instantiate a new process and configure it
         """
         from ..process.process_factory import ProcessFactory
 
         config_params: ConfigParamsDict = {}
         # Configure the process
-        if node_json.get('config'):
-            config_params = node_json.get('config').get("values", {})
+        if process_dto.config:
+            config_params = process_dto.config.values
 
         if issubclass(process_type, Task):
             return ProcessFactory.create_task_model_from_type(process_type, config_params, instance_name,
-                                                              node_json.get('inputs'),
-                                                              node_json.get('outputs'))
+                                                              process_dto.inputs,
+                                                              process_dto.outputs)
         elif issubclass(process_type, Protocol):
             return ProcessFactory.create_protocol_model_from_type(process_type, config_params, instance_name)
         else:

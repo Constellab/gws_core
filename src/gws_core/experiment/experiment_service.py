@@ -16,6 +16,7 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
+from gws_core.user.activity.activity_service import ActivityService
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
@@ -84,7 +85,7 @@ class ExperimentService(BaseService):
             type_=type_
         )
 
-        ActivityService.add(
+        ActivityService .add(
             ActivityType.CREATE,
             object_type=ActivityObjectType.EXPERIMENT,
             object_id=experiment.id
@@ -264,11 +265,11 @@ class ExperimentService(BaseService):
         lab_config: LabConfigModel = experiment.lab_config
         if lab_config is None:
             lab_config = LabConfigModel.get_current_config()
-        save_experiment_dto: SaveExperimentToSpaceDTO = {
-            "experiment": experiment.to_json(),
-            "protocol": experiment.export_protocol(),
-            "lab_config": lab_config.to_json()
-        }
+        save_experiment_dto = SaveExperimentToSpaceDTO(
+            experiment=experiment.to_dto(),
+            protocol=experiment.export_protocol(),
+            lab_config=lab_config.to_dto()
+        )
         # Save the experiment in space
         SpaceService.save_experiment(
             experiment.project.id, save_experiment_dto)

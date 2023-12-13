@@ -20,7 +20,8 @@ from gws_core.report.report_dto import ReportSaveDTO
 from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_service import ResourceService
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag import EntityTagValueFormat, TagOrigins, TagOriginType
+from gws_core.tag.tag import TagOrigins
+from gws_core.tag.tag_dto import EntityTagValueFormat, TagOriginType
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_service import TagService
 from gws_core.tag.tag_value_model import TagValueModel
@@ -114,9 +115,6 @@ class TestTag(BaseTestCase):
         self.assertEqual(tag.get_tag_value(), now)
         self.assertEqual(TagValueModel.get_tag_value_model('test_datetime', now).get_tag_value(), now)
         self.assertEqual(TagKeyModel.find_by_key('test_datetime').value_format, EntityTagValueFormat.DATETIME)
-
-        # test to json TODO
-        # self.assertIsNotNone(resource_model_db.to_json()['tags'])
 
     def test_tag_crud(self) -> None:
         """ Test update and delete tag"""

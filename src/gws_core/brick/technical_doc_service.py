@@ -6,6 +6,10 @@
 import inspect
 from typing import Any, Dict, List, Type
 
+from gws_core.brick.technical_doc_dto import (ResourceDocDTO,
+                                              ResourceMethodDocDTO,
+                                              TechnicalDocDTO)
+from gws_core.model.typing_dto import TypingFullDTO
 from gws_core.protocol.protocol_typing import ProtocolTyping
 
 from ..core.utils.reflector_helper import ReflectorHelper
@@ -21,20 +25,20 @@ from .brick_helper import BrickHelper
 class TechnicalDocService():
 
     @classmethod
-    def generate_technical_doc(cls, brick_name: str) -> dict:
+    def generate_technical_doc(cls, brick_name: str) -> TechnicalDocDTO:
         """Method to return the technical doc information about a brick to upload it on the hub
         """
 
         brick_info = BrickHelper.get_brick_info_and_check(brick_name)
 
-        return {
-            "json_version": 1,
-            "brick_name": brick_info["name"],
-            "brick_version": brick_info["version"],
-            "resources": cls.export_typing_technical_doc(brick_name, ResourceTyping),
-            "tasks": cls.export_typing_technical_doc(brick_name, TaskTyping),
-            "protocols": cls.export_typing_technical_doc(brick_name, ProtocolTyping),
-        }
+        return TechnicalDocDTO(
+            json_version=1,
+            brick_name=brick_info["name"],
+            brick_version=brick_info["version"],
+            resources=cls.export_typing_technical_doc(brick_name, ResourceTyping),
+            tasks=cls.export_typing_technical_doc(brick_name, TaskTyping),
+            protocols=cls.export_typing_technical_doc(brick_name, ProtocolTyping),
+        )
 
     @classmethod
     def export_typing_technical_doc(cls, brick_name: str, typing_class: Type[Typing]) -> list:
@@ -50,19 +54,22 @@ class TechnicalDocService():
             json_list.append(json_)
         return json_list
 
-    # TODO TO FIX
     @classmethod
-    def _get_typing_technical_doc(cls, typing: Typing) -> dict:
+    def _get_typing_technical_doc(cls, typing: Typing) -> TypingFullDTO:
         type_: Type[Resource] = typing.get_type()
         if type_ is None:
             return None
-        res = typing.to_json(deep=True)
-        if type(typing) is ResourceTyping:
-            res["methods"] = cls.get_class_methods_docs(type_)
-        return res
+        typing_dto = typing.to_full_dto()
+        if isinstance(typing, ResourceTyping):
+            typing_dto = ResourceDocDTO(
+                **typing_dto.dict(),
+                methods=cls.get_class_methods_docs(type_)
+            )
+
+        return typing_dto
 
     @classmethod
-    def get_class_methods_docs(cls, type_: type) -> List[Dict[str, Any]]:
+    def get_class_methods_docs(cls, type_: type) -> ResourceMethodDocDTO:
         if not inspect.isclass(type_):
             return None
         methods: Any = inspect.getmembers(type_, predicate=inspect.isfunction)
@@ -72,7 +79,7 @@ class TechnicalDocService():
         public_func_methods: Any = [(m[0], m[1])
                                     for m in func_methods if not m[0].startswith('_') or m[0] == '__init__']
         funcs: List[Dict[str, Any]] = ReflectorHelper.get_methods_doc(public_func_methods)
-        return {
-            'funcs': funcs if len(funcs) > 0 else None,
-            'views': views_methods_json if len(views_methods_json) > 0 else None
-        }
+        return ResourceMethodDocDTO(
+            funcs=funcs if len(funcs) > 0 else None,
+            views=views_methods_json if len(views_methods_json) > 0 else None
+        )

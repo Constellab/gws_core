@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Optional
+
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.user.user_dto import SpaceDict
 
@@ -11,7 +13,7 @@ class LabInfoDTO(BaseModelDTO):
     id: str
     lab_name: str
     front_version: str
-    space: SpaceDict
+    space: Optional[SpaceDict]
 
 
 class SettingsDTO(BaseModelDTO):

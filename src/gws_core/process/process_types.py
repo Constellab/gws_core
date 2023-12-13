@@ -3,16 +3,19 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from __future__ import annotations
+
 from enum import Enum
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Optional
 
 from typing_extensions import TypedDict
 
-from gws_core.config.config_types import ConfigDict
-from gws_core.config.param.param_types import ParamSpecDict
-from gws_core.io.io import IODict
-from gws_core.io.io_spec import IOSpecDict
-from gws_core.model.typing_dict import TypingDict
+from gws_core.config.config_dto import ConfigSimpleDTO
+from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.io.io_dto import IODTO
+
+if TYPE_CHECKING:
+    from gws_core.protocol.protocol_dto import ProtocolConfigDTO
 
 
 class ProcessStatus(Enum):
@@ -25,12 +28,6 @@ class ProcessStatus(Enum):
     WAITING_FOR_CLI_PROCESS = "WAITING_FOR_CLI_PROCESS"
 
 
-class ProcessSpecDict(TypingDict):
-    input_specs: Dict[str, IOSpecDict]
-    output_specs: Dict[str, IOSpecDict]
-    config_specs: Dict[str, ParamSpecDict]
-
-
 class ProcessErrorInfo(TypedDict):
     detail: str
     unique_code: str
@@ -38,20 +35,20 @@ class ProcessErrorInfo(TypedDict):
     instance_id: str
 
 
-class ProcessMinimumDict(TypedDict):
+class ProcessMinimumDTO(BaseModelDTO):
     id: str
     process_typing_name: str
 
 
-class ProcessConfigDict(TypedDict):
+class ProcessConfigDTO(BaseModelDTO):
     process_typing_name: str
     instance_name: str
-    config: ConfigDict
-    human_name: str
-    short_description: str
+    config: ConfigSimpleDTO
+    human_name: Optional[str]
+    short_description: Optional[str]
     brick_version: str
-    inputs: IODict
-    outputs: IODict
+    inputs: IODTO
+    outputs: IODTO
     status: str
     # for sub protocol, recursive graph
-    graph: Optional[dict]
+    graph: Optional['ProtocolConfigDTO'] = None

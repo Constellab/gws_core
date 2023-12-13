@@ -6,9 +6,11 @@
 from typing import Dict, List, Literal, Optional, Set
 
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.protocol.protocol_dto import ProtocolDTO
+from gws_core.protocol.protocol_dto import (ConnectorDTO, InterfaceDTO,
+                                            ProtocolConfigDTO, ProtocolDTO,
+                                            ProtocolFullDTO,
+                                            ProtocolMinimumDTO)
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
-from gws_core.protocol.protocol_types import ConnectorDict
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -18,7 +20,7 @@ from ..io.io import Inputs, Outputs
 from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort, Port
 from ..process.process_model import ProcessModel
-from ..process.process_types import ProcessStatus
+from ..process.process_types import ProcessConfigDTO, ProcessStatus
 from ..process.protocol_sub_process_builder import (
     ProtocolSubProcessBuilder, SubProcessBuilderReadFromDb)
 from ..user.user import User
@@ -76,7 +78,8 @@ class ProtocolModel(ProcessModel):
 
         for process in self.processes.values():
             process.archive(archive)
-        return super().archive(archive)
+        self.is_archived = archive
+        return self.save()
 
     @transaction()
     def reset(self) -> 'ProtocolModel':
@@ -155,11 +158,7 @@ class ProtocolModel(ProcessModel):
     def refresh_graph_from_dump(self) -> None:
         """Refresh the graph json obnject inside the data from the dump method
         """
-        self.data["graph"] = self.dumps_graph(process_mode='minimize')
-
-    @property
-    def graph(self):
-        return self.data.get("graph", {})
+        self.data["graph"] = self.to_protocol_minimum_dto().dict()
 
     ############################### RUN #################################
 
@@ -629,17 +628,13 @@ class ProtocolModel(ProcessModel):
             # this checks the port
             process.out_port(port_name)
 
-    def init_connectors_from_graph(self, links: ConnectorDict, check_compatiblity: bool = True) -> None:
+    def init_connectors_from_graph(self, links: list, check_compatiblity: bool = True) -> None:
+        links_dto = ConnectorDTO.from_json_list(links)
         self._connectors = []
         # create links
-        for link in links:
-            left_proc_name: str = link["from"]["node"]
-            left_port_name: str = link["from"]["port"]
-            right_proc_name = link["to"]["node"]
-            right_port_name: str = link["to"]["port"]
-
-            self._add_connector(left_proc_name, left_port_name,
-                                right_proc_name, right_port_name,
+        for link in links_dto:
+            self._add_connector(link.from_.node, link.from_.port,
+                                link.to.node, link.to.port,
                                 check_compatiblity=check_compatiblity)
 
     def _get_connectors_linked_to_process(self, process_model: ProcessModel) -> List[Connector]:
@@ -819,17 +814,16 @@ class ProtocolModel(ProcessModel):
 
         return interfaces
 
-    def _init_interfaces_from_graph(self, interfaces_dict: Dict) -> None:
+    def _init_interfaces_from_graph(self, interfaces_dict: dict) -> None:
         # clear current interfaces
         self._interfaces = {}
         self._inputs = Inputs()
 
-        for key in interfaces_dict:
+        interfaces = InterfaceDTO.from_json_dict(interfaces_dict)
+
+        for key, interface in interfaces.items():
             # destination port of the interface
-            _to: dict = interfaces_dict[key]["to"]
-            proc_name: str = _to["node"]
-            port_name: str = _to["port"]
-            self._add_interface(key, proc_name, port_name)
+            self._add_interface(key, interface.to.node, interface.to.port)
 
     def _reset_iofaces(self):
         for interface in self.interfaces.values():
@@ -958,17 +952,16 @@ class ProtocolModel(ProcessModel):
                 outerfaces.append(outerface)
         return outerfaces
 
-    def _init_outerfaces_from_graph(self, outerfaces_dict: Dict) -> None:
+    def _init_outerfaces_from_graph(self, outerfaces_dict: dict) -> None:
         # clear current interfaces
         self._outerfaces = {}
         self._outputs = Outputs()
 
-        for key in outerfaces_dict:
+        outerfaces = InterfaceDTO.from_json_dict(outerfaces_dict)
+
+        for key, outerface in outerfaces.items():
             # source port of the outerface
-            _from: dict = outerfaces_dict[key]["from"]
-            proc_name: str = _from["node"]
-            port_name: str = _from["port"]
-            self._add_outerface(key, proc_name, port_name)
+            self._add_outerface(key, outerface.from_.node, outerface.from_.port)
 
     def remove_outerfaces_by_process_name(self, process_instance_name: str) -> None:
         """
@@ -1013,77 +1006,44 @@ class ProtocolModel(ProcessModel):
 
     ############################### JSON #################################
 
-    def dumps_graph(self, process_mode: Literal['full', 'minimize', 'config']) -> dict:
-        """ Dumps the JSON graph representing the protocol.
+    def to_config_dto(self) -> ProcessConfigDTO:
+        dto = super().to_config_dto()
+        dto.graph = self.to_protocol_config_dto()
+        return dto
 
-        :param process_mode: mode for the json process:
-            - full: full json process (not recursive for the sub-protocol)
-            - minimize: minimized json process (only id and typing name)
-            - config: json process for config including the layout
-        :type process_mode: Literal[full, minimize, config]
-        :return: _description_
-        :rtype: dict
-        """
+    def to_protocol_config_dto(self) -> ProtocolConfigDTO:
+        return ProtocolConfigDTO(
+            nodes={key: process.to_config_dto() for key, process in self.processes.items()},
+            links=[connector.to_dto() for connector in self.connectors],
+            interfaces={key: interface.to_dto() for key, interface in self.interfaces.items()},
+            outerfaces={key: outerface.to_dto() for key, outerface in self.outerfaces.items()},
+            layout=self.layout.to_dto() if self.layout else {}
+        )
 
-        graph = {
-            "nodes": {},
-            "links": [],
-            "interfaces": {},
-            "outerfaces": {}
-        }
+    def to_protocol_minimum_dto(self) -> ProtocolMinimumDTO:
+        return ProtocolMinimumDTO(
+            nodes={key: process.to_minimum_dto() for key, process in self.processes.items()},
+            links=[connector.to_dto() for connector in self.connectors],
+            interfaces={key: interface.to_dto() for key, interface in self.interfaces.items()},
+            outerfaces={key: outerface.to_dto() for key, outerface in self.outerfaces.items()}
+        )
 
-        for conn in self.connectors:
-            graph['links'].append(conn.to_json())
-        for key, process in self.processes.items():
-            process_json: dict
-            if process_mode == 'minimize':
-                process_json = process.get_minimum_json()
-            elif process_mode == 'full':
-                process_json = process.to_json(deep=False)
-            else:
-                process_json = process.export_config()
+    def to_protocol_full_dto(self) -> ProtocolFullDTO:
+        return ProtocolFullDTO(
+            nodes={key: process.to_dto() for key, process in self.processes.items()},
+            links=[connector.to_dto() for connector in self.connectors],
+            interfaces={key: interface.to_dto() for key, interface in self.interfaces.items()},
+            outerfaces={key: outerface.to_dto() for key, outerface in self.outerfaces.items()},
+            layout=self.layout.to_dto() if self.layout else {}
+        )
 
-            graph["nodes"][key] = process_json
-        for key, interface in self.interfaces.items():
-            graph['interfaces'][key] = interface.to_json()
-        for key, outerface in self.outerfaces.items():
-            graph['outerfaces'][key] = outerface.to_json()
-
-        if process_mode == 'config':
-            graph["layout"] = self.layout.to_json() if self.layout else {}
-
-        return graph
-
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns a JSON string or dictionnary representation of the model.
-        :return: The representation
-        :rtype: `dict`
-        """
-        _json: dict = super().data_to_json(deep=deep)
-
-        if deep:
-            _json["graph"] = self.dumps_graph(process_mode='full')
-            _json["graph"]["layout"] = self.layout.to_json() if self.layout else {}
-
-        return _json
-
-    def to_full_dto(self) -> ProtocolDTO:
+    def to_protocol_dto(self) -> ProtocolDTO:
         process_dto = self.to_dto()
-
-        graph = self.dumps_graph(process_mode='full')
-        graph['layout'] = self.layout.to_json() if self.layout else {}
 
         return ProtocolDTO(
             **process_dto.dict(),
-            data={'graph': graph}
+            data=self.to_protocol_full_dto()
         )
-
-    def export_config(self) -> Dict:
-
-        _json = super().export_config()
-        _json["graph"] = self.dumps_graph('config')
-        return _json
 
     ############################### OTHER #################################
 

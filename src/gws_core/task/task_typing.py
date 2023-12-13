@@ -8,7 +8,6 @@ from typing import List, Literal, Set, Type, Union, final
 from peewee import CharField, Expression, ModelSelect
 
 from gws_core.core.utils.utils import Utils
-from gws_core.process.process_types import ProcessSpecDict
 from gws_core.resource.resource import Resource
 from gws_core.task.task_dto import TaskTypingDTO
 
@@ -94,7 +93,6 @@ class TaskTyping(Typing):
 
         task_typing = TaskTypingDTO(
             **typing_dto.dict(),
-            additional_data={}
         )
 
         # retrieve the task python type
@@ -103,11 +101,11 @@ class TaskTyping(Typing):
         if model_t:
             task_typing.input_specs = model_t.input_specs.to_dto()
             task_typing.output_specs = model_t.output_specs.to_dto()
-            task_typing.config_specs = ConfigSpecsHelper.config_specs_to_json(model_t.config_specs)
+            task_typing.config_specs = ConfigSpecsHelper.config_specs_to_dto(model_t.config_specs)
 
             from ..task.converter.importer import ResourceImporter
             if Utils.issubclass(model_t, ResourceImporter):
                 importer_t: Type[ResourceImporter] = model_t
-                task_typing.additional_data["supported_extensions"] = importer_t._supported_extensions
+                task_typing.additional_data = {"supported_extensions": importer_t._supported_extensions}
 
         return task_typing

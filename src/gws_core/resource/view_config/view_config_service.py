@@ -17,7 +17,7 @@ from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_types import exluded_views_in_historic
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag import TagOriginType
+from gws_core.tag.tag_dto import TagOriginType
 from gws_core.user.current_user_service import CurrentUserService
 
 from ...core.classes.paginator import Paginator

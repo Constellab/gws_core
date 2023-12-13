@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from datetime import datetime
-from typing import Generic, List, TypeVar
+from typing import Dict, Generic, List, Type, TypeVar
 
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
@@ -18,18 +18,25 @@ class BaseModelDTO(BaseModel):
     """
 
     @classmethod
-    def from_json(cls, json_: dict) -> BaseModelDTOType:
+    def from_json(cls: Type[BaseModelDTOType], json_: dict) -> BaseModelDTOType:
         """
         Create a ModelDTO from a json.
         """
         return cls.parse_obj(json_)
 
     @classmethod
-    def from_json_list(cls, json_list: list) -> List[BaseModelDTOType]:
+    def from_json_list(cls: Type[BaseModelDTOType], json_list: list) -> List[BaseModelDTOType]:
         """
         Create a list of ModelDTO from a list of json.
         """
         return [cls.from_json(json_) for json_ in json_list]
+
+    @classmethod
+    def from_json_dict(cls: Type[BaseModelDTOType], json_dict: dict) -> Dict[str, BaseModelDTOType]:
+        """
+        Create a dict of ModelDTO from a dict of json.
+        """
+        return {key: cls.from_json(value) for key, value in json_dict.items()}
 
 
 class ModelDTO(BaseModelDTO):

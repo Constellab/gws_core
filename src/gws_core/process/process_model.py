@@ -15,11 +15,11 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.model.typing import Typing
 from gws_core.model.typing_dict import TypingStatus
 from gws_core.process.process_dto import ProcessDTO
+from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.task.plug import Sink, Source
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField
-from ..core.decorator.json_ignore import json_ignore
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
@@ -31,17 +31,17 @@ from ..experiment.experiment import Experiment
 from ..io.io import Inputs, Outputs
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
-from ..progress_bar.progress_bar import ProgressBar, ProgressBarMessage
+from ..progress_bar.progress_bar import ProgressBar
 from ..user.user import User
 from .process import Process
 from .process_exception import ProcessRunException
-from .process_types import ProcessErrorInfo, ProcessMinimumDict, ProcessStatus
+from .process_types import (ProcessConfigDTO, ProcessErrorInfo,
+                            ProcessMinimumDTO, ProcessStatus)
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
 
 
-@json_ignore(["parent_protocol_id"])
 class ProcessModel(ModelWithUser):
     """Base abstract class for Process and Protocol
 
@@ -83,6 +83,9 @@ class ProcessModel(ModelWithUser):
         self._inputs = None
         self._outputs = None
 
+        if not self.is_saved() and not self.data:
+            self.data = {}
+
     ################################# MODEL METHODS #############################
 
     @transaction()
@@ -94,7 +97,8 @@ class ProcessModel(ModelWithUser):
         if self.is_archived == archive:
             return self
 
-        return super().archive(archive)
+        self.is_archived = archive
+        return self.save()
 
     @transaction()
     def delete_instance(self, *args, **kwargs):
@@ -396,7 +400,7 @@ class ProcessModel(ModelWithUser):
         """
         return self.process_typing_name == Sink._typing_name
 
-    def get_last_message(self) -> Optional[ProgressBarMessage]:
+    def get_last_message(self) -> Optional[ProgressBarMessageDTO]:
         """Return the last message of the process
         """
         if self.progress_bar is None:
@@ -414,51 +418,15 @@ class ProcessModel(ModelWithUser):
 
     ########################### JSON #################################
 
-    def get_minimum_json(self) -> ProcessMinimumDict:
+    def to_minimum_dto(self) -> ProcessMinimumDTO:
         """
         Return the minium json to recognize this process
 
         """
-        return {
-            "id": self.id,
-            "process_typing_name": self.process_typing_name,
-
-        }
-
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns JSON string or dictionnary representation of the process.
-
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-
-        _json = super().to_json(deep=deep, **kwargs)
-
-        _json["experiment_id"] = self.experiment.id if self.experiment else None
-        _json["parent_protocol_id"] = self.parent_protocol.id if self.parent_protocol_id else None
-        _json["is_protocol"] = self.is_protocol()
-
-        _json["config"] = self.config.to_json(
-            deep=deep, **kwargs)
-        _json["progress_bar"] = self.progress_bar.to_json(deep=False)
-
-        _json["inputs"] = self.inputs.to_json()
-        _json["outputs"] = self.outputs.to_json()
-
-        process_typing: Typing = self.get_process_typing()
-        if process_typing:
-            _json["human_name"] = process_typing.human_name
-            _json["short_description"] = process_typing.short_description
-            _json["type_status"] = process_typing.get_type_status()
-        else:
-            _json["type_status"] = TypingStatus.UNAVAILABLE
-
-        return _json
+        return ProcessMinimumDTO(
+            id=self.id,
+            process_typing_name=self.process_typing_name,
+        )
 
     def to_dto(self) -> ProcessDTO:
         process_dto = ProcessDTO(
@@ -495,23 +463,7 @@ class ProcessModel(ModelWithUser):
 
         return process_dto
 
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns a JSON string or dictionnary representation of the model.
-        :return: The representation
-        :rtype: `dict`
-        """
-        _json: dict = {}
-
-        process_typing: Typing = self.get_process_typing()
-        if process_typing:
-            _json["title"] = process_typing.human_name
-            _json["description"] = process_typing.short_description
-            _json["doc"] = process_typing.get_model_type_doc()
-
-        return _json
-
-    def export_config(self) -> Dict:
+    def to_config_dto(self) -> ProcessConfigDTO:
 
         process_typing: Typing = self.get_process_typing()
 
@@ -519,17 +471,17 @@ class ProcessModel(ModelWithUser):
             raise Exception(
                 f"Could not find the process typing {self.process_typing_name}")
 
-        return {
-            "process_typing_name": self.process_typing_name,
-            "instance_name": self.instance_name,
-            "config": self.config.export_config(),
-            "human_name": process_typing.human_name,
-            "short_description": process_typing.short_description,
-            "brick_version": self.brick_version,
-            "inputs": self.inputs.to_json(),
-            "outputs": self.outputs.to_json(),
-            "status": self.status.value,
-        }
+        return ProcessConfigDTO(
+            process_typing_name=self.process_typing_name,
+            instance_name=self.instance_name,
+            config=self.config.to_simple_dto(),
+            human_name=process_typing.human_name,
+            short_description=process_typing.short_description,
+            brick_version=self.brick_version,
+            inputs=self.inputs.to_dto(),
+            outputs=self.outputs.to_dto(),
+            status=self.status.value,
+        )
 
     ########################### STATUS MANAGEMENT ##################################
 

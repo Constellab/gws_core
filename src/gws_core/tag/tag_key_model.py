@@ -8,8 +8,8 @@ from typing import Optional
 from peewee import BooleanField, CharField, IntegerField, ModelSelect
 
 from gws_core.core.classes.enum_field import EnumField
-from gws_core.tag.tag import EntityTagValueFormat, TagValueType
-from gws_core.tag.tag_dto import TagKeyModelDTO
+from gws_core.tag.tag import TagValueType
+from gws_core.tag.tag_dto import EntityTagValueFormat, TagKeyModelDTO
 from gws_core.tag.tag_helper import TagHelper
 
 from ..core.model.model import Model

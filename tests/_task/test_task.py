@@ -72,10 +72,7 @@ class TestTask(BaseTestCase):
         p1: TaskModel = protocol.get_process("p1")
         p2: TaskModel = protocol.get_process("p2")
         p3: TaskModel = protocol.get_process("p3")
-        p_wait: TaskModel = protocol.get_process("p_wait")
         elon: Robot = p0.outputs.get_resource_model('robot').get_resource()
-
-        print(" \n------ Resource --------")
 
         self.assertEqual(elon.weight, 70)
 
@@ -104,10 +101,8 @@ class TestTask(BaseTestCase):
 
         self.assertTrue(
             len(p0.progress_bar.data["messages"]) >= 2)
-        print(p0.progress_bar.data)
 
-        print(" \n------ Experiment --------")
-        print(experiment.to_json())
+        experiment.to_dto()
 
     def test_after_run(self):
         """Test that the after run method is called

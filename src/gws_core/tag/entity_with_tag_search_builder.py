@@ -9,7 +9,8 @@ from peewee import Expression, Field
 
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
-from gws_core.tag.tag import EntityTagValueFormat, Tag
+from gws_core.tag.tag import Tag
+from gws_core.tag.tag_dto import EntityTagValueFormat
 from gws_core.tag.tag_key_model import TagKeyModel
 
 from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,

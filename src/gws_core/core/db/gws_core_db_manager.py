@@ -3,17 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core.core.db.db_config import DbConfig, DbMode
-from gws_core.core.utils.settings import Settings
 from peewee import DatabaseProxy
 
-from .db_manager import AbstractDbManager
+from gws_core.core.db.db_config import DbConfig, DbMode
+from gws_core.core.utils.settings import Settings
 
-# ####################################################################
-#
-# DbManager class
-#
-# ####################################################################
+from .db_manager import AbstractDbManager
 
 
 class GwsCoreDbManager(AbstractDbManager):

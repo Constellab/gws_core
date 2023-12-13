@@ -10,8 +10,6 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import ViewType
 
-from ...core.classes.jsonable import ListJsonable
-
 if TYPE_CHECKING:
     from gws_core.resource.resource_model import ResourceModel
 
@@ -45,4 +43,4 @@ class ResourcesListView(View):
         self._resource_model += resource_model_json
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        return ListJsonable(self._resource_model).to_json()
+        return [resource.to_dto().dict() for resource in self._resource_model]

@@ -5,6 +5,7 @@
 
 from typing import Any, Dict, List, Type
 
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.credentials.credentials_param import CredentialsParam
@@ -108,10 +109,11 @@ class ParamSpecHelper():
 
     @staticmethod
     def create_param_spec_from_json(json_: Dict[str, Any]) -> ParamSpec:
-        param_spec_type = ParamSpecHelper._get_param_spec_type_from_str(
-            json_.get('type'))
+        spec_dto = ParamSpecDTO.from_json(json_)
 
-        return param_spec_type.load_from_json(json_)
+        param_spec_type = ParamSpecHelper._get_param_spec_type_from_str(spec_dto.type)
+
+        return param_spec_type.load_from_dto(spec_dto)
 
     @staticmethod
     def _get_param_spec_type_from_str(type_: str) -> Type[ParamSpec]:

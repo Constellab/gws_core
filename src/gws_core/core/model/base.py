@@ -154,4 +154,4 @@ class Base:
                 next_line = sourcelines[i + 1]
                 name = next_line.split('def')[1].split('(')[0].strip()
                 if name:
-                    yield(name)
+                    yield (name)

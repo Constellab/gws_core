@@ -55,7 +55,6 @@ from .core.classes.observer.message_observer import \
     ProgressBarMessageObserver as ProgressBarMessageObserver
 # Core > Classes
 from .core.classes.paginator import Paginator as Paginator
-from .core.classes.paginator import PaginatorDict as PaginatorDict
 from .core.classes.search_builder import SearchBuilder as SearchBuilder
 from .core.classes.validator import BoolValidator as BoolValidator
 from .core.classes.validator import DictValidator as DictValidator

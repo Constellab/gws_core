@@ -185,10 +185,10 @@ class TaskRunner():
 
         result = self._output_specs.check_and_build_outputs(task_outputs)
 
-        self._outputs = result['outputs']
+        self._outputs = result.outputs
 
-        if result['error'] and len(result['error']) > 0:
-            raise InvalidOutputsException(result['error'])
+        if result.error and len(result.error) > 0:
+            raise InvalidOutputsException(result.error)
 
         return self._outputs
 

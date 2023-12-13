@@ -12,14 +12,15 @@ from gws_core.entity_navigator.entity_navigator import EntityNavigator
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag_dto import NewTagDTO, TagPropagationImpactDTO
+from gws_core.tag.tag_dto import (NewTagDTO, TagOriginType,
+                                  TagPropagationImpactDTO)
 from gws_core.tag.tag_value_model import TagValueModel
 from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from .tag import Tag, TagOriginType, TagValueType
+from .tag import Tag, TagValueType
 from .tag_key_model import TagKeyModel
 
 

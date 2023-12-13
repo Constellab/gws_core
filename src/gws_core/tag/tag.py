@@ -7,19 +7,8 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Union
 
-from typing_extensions import TypedDict
-
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.core.utils.string_helper import StringHelper
-from gws_core.tag.tag_dto import TagDTO, TagOriginDTO
-
-
-class EntityTagValueFormat(Enum):
-    STRING = "STRING"
-    INTEGER = "INTEGER"
-    FLOAT = "FLOAT"
-    DATETIME = "DATETIME"
-
+from gws_core.tag.tag_dto import TagDTO, TagOriginDTO, TagOriginType
 
 KEY_VALUE_SEPARATOR: str = ':'
 TAGS_SEPARATOR = ','
@@ -27,38 +16,6 @@ TAGS_SEPARATOR = ','
 MAX_TAG_LENGTH = 1000
 
 TagValueType = Union[str, int, float, datetime]
-
-
-# Origin of the tag (who created the tag)
-# If USER, the origin_id is the user id
-# If S3, the origin_id is the external source id
-# If TASK, (when the task tagged the resource object directly) the origin_id is task model id
-# If TASK_PROPAGATED, the origin_id is task model id that propagated the tag
-# If EXP_PROPAGATED, the origin_id is experiment model id that propagated the tag
-# If RESOURCE_PROPAGATED, the origin_id is resource model id that propagated the tag
-# If VIEW_PROPAGATED, the origin_id is view config id that propagated the tag
-class TagOriginType(Enum):
-    USER = 'USER'
-    S3 = 'S3'
-    TASK = 'TASK'
-    TASK_PROPAGATED = 'TASK_PROPAGATED'
-    EXPERIMENT_PROPAGATED = 'EXPERIMENT_PROPAGATED'
-    RESOURCE_PROPAGATED = 'RESOURCE_PROPAGATED'
-    VIEW_PROPAGATED = 'VIEW_PROPAGATED'
-
-# TODO check if useful
-
-
-class TagOriginDict(TypedDict):
-    origin_type: str
-    origin_id: str
-
-
-class TagDict(TypedDict):
-    key: str
-    value: str
-    is_user_origin: bool
-    is_propagable: bool
 
 
 class TagOrigin():
@@ -74,9 +31,6 @@ class TagOrigin():
             return False
         return (self is o) or (self.origin_type == o.origin_type and self.origin_id == o.origin_id)
 
-    def to_json(self) -> TagOriginDict:
-        return {"origin_type": self.origin_type.value, "origin_id": self.origin_id}
-
     def to_dto(self) -> TagOriginDTO:
         return TagOriginDTO(
             origin_type=self.origin_type.value,
@@ -84,10 +38,10 @@ class TagOrigin():
         )
 
     @staticmethod
-    def from_json(json: TagOriginDict) -> 'TagOrigin':
+    def from_dto(dto: TagOriginDTO) -> 'TagOrigin':
         return TagOrigin(
-            origin_type=StringHelper.to_enum(TagOriginType, json["origin_type"]),
-            origin_id=json["origin_id"])
+            origin_type=dto.origin_type,
+            origin_id=dto.origin_id)
 
 
 class TagOrigins():
@@ -166,8 +120,8 @@ class TagOrigins():
     def set_origins(self, origin_type: TagOriginType, origin_id: str) -> None:
         self._origins = [TagOrigin(origin_type, origin_id)]
 
-    def to_json(self) -> List[TagOriginDict]:
-        return [origin.to_json() for origin in self._origins]
+    def to_json(self) -> List[dict]:
+        return [origin.dict() for origin in self.to_dto()]
 
     def to_dto(self) -> List[TagOriginDTO]:
         return [origin.to_dto() for origin in self._origins]
@@ -186,12 +140,12 @@ class TagOrigins():
             self.remove_origin(origin.origin_type, origin.origin_id)
 
     @classmethod
-    def from_json(cls, json: List[TagOriginDict]) -> 'TagOrigins':
+    def from_dto(cls, dto: List[TagOriginDTO]) -> 'TagOrigins':
         tag_origins = TagOrigins()
 
-        if json:
-            for origin in json:
-                origin_obj = TagOrigin.from_json(origin)
+        if dto:
+            for origin in dto:
+                origin_obj = TagOrigin.from_dto(origin)
                 tag_origins.add_origin(origin_obj.origin_type, origin_obj.origin_id)
         return tag_origins
 
@@ -256,14 +210,6 @@ class Tag():
             return False
         return (self is o) or (self.key == o.key and self.value == o.value)
 
-    def to_json(self) -> TagDict:
-        return {
-            "key": self.key,
-            "value": self.get_str_value(),
-            "is_user_origin": self.origins.is_user_origin(),
-            "is_propagable": self.is_propagable
-        }
-
     def to_dto(self) -> TagDTO:
         return TagDTO(
             key=self.key,
@@ -285,10 +231,6 @@ class Tag():
             return Tag(tag_info[0], '')
         else:
             return Tag(tag_info[0], tag_info[1])
-
-    @staticmethod
-    def from_json(json: TagDict) -> 'Tag':
-        return Tag(key=json.get("key"), value=json.get("value"), is_propagable=json.get("is_propagable"))
 
     @staticmethod
     def from_dto(dto: TagDTO) -> 'Tag':

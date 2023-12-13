@@ -9,11 +9,10 @@ from fastapi import Depends
 from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.core.model.model_dto import PageDTO
+from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.resource.resource_dto import ResourceDTO
 from gws_core.resource.view.view_dto import (CallViewResultDTO,
                                              ResourceViewMetadatalDTO)
-from gws_core.resource.view.view_types import CallViewParams
 from gws_core.share.shared_dto import ShareEntityInfoDTO
 from gws_core.task.action.action_service import ActionService
 from gws_core.task.converter.converter_service import ConverterService
@@ -35,6 +34,11 @@ def get_view_specs_from_resource(id: str, view_name: str,
     return ResourceService.get_view_specs_from_resource(id, view_name)
 
 
+class CallViewParams(BaseModelDTO):
+    values: dict
+    save_view_config: bool
+
+
 @core_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
                summary="Call the view name for a resource")
 def call_view_on_resource(id: str,
@@ -43,8 +47,8 @@ def call_view_on_resource(id: str,
                           _=Depends(AuthService.check_user_access_token)) -> CallViewResultDTO:
 
     return ResourceService.get_and_call_view_on_resource_model(
-        id, view_name, call_view_params["values"],
-        call_view_params["save_view_config"]).to_dto()
+        id, view_name, call_view_params.values,
+        call_view_params.save_view_config).to_dto()
 
 
 ####################################### Resource Model ###################################

@@ -24,6 +24,11 @@ class BrickModel(Model):
 
     _table_name = "gws_brick"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_saved() and not self.data:
+            self.data = {}
+
     def add_message(self, message: str, status: BrickMessageStatus, timestamp: float = None) -> None:
         if 'messages' not in self.data:
             self.data['messages'] = []

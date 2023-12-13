@@ -6,6 +6,8 @@
 
 from typing import Any, Dict
 
+from gws_core.config.param.param_types import ParamSpecDTO
+
 from ..core.exception.exceptions import BadRequestException
 from .config_types import ConfigSpecs
 from .param.param_spec_helper import ParamSpecHelper
@@ -22,7 +24,7 @@ class ConfigSpecsHelper():
             raise BadRequestException("The specs must be a dictionnary")
 
     @classmethod
-    def config_specs_to_json(cls, specs: ConfigSpecs) -> Dict[str, Any]:
+    def config_specs_to_dto(cls, specs: ConfigSpecs) -> Dict[str, ParamSpecDTO]:
         """convert the config specs to json
         """
         json_: Dict[str, Any] = {}
@@ -30,7 +32,7 @@ class ConfigSpecsHelper():
             # skip private params
             if spec.visibility == "private":
                 continue
-            json_[key] = spec.to_json()
+            json_[key] = spec.to_dto()
 
         return json_
 

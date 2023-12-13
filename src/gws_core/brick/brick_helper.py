@@ -109,10 +109,10 @@ class BrickHelper():
             if brick['repo_type'] == 'app':
                 continue
 
-            brick_versions.append({
-                'name': brick['name'],
-                'version': brick['version'],
-            })
+            brick_versions.append(BrickVersion(
+                name=brick['name'],
+                version=brick['version'],
+            ))
         return brick_versions
 
     @classmethod

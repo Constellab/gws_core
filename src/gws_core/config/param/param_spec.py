@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Generic, List, Optional, TypeVar
 
 from typing_extensions import TypedDict
 
@@ -15,7 +15,7 @@ from ...core.classes.validator import (BoolValidator, DictValidator,
                                        ListValidator, StrValidator)
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from .param_types import ParamSpecDict, ParamSpecVisibilty
+from .param_types import ParamSpecDTO, ParamSpecVisibilty
 
 ParamSpecType = TypeVar("ParamSpecType")
 
@@ -96,25 +96,18 @@ class ParamSpec(Generic[ParamSpecType]):
     def get_default_value(self) -> ParamSpecType:
         return self.default_value
 
-    def to_json(self) -> ParamSpecDict:
-        _json: ParamSpecDict = {
-            "type": self.get_str_type(),
-            "optional": self.optional,
-            "visibility": self.visibility,
-            "additional_info": self.additional_info or {}
-        }
-
-        if self.default_value is not None:
-            _json["default_value"] = self.default_value
-        if self.human_name is not None:
-            _json["human_name"] = self.human_name
-        if self.short_description is not None:
-            _json["short_description"] = self.short_description
-        if self.unit is not None:
-            _json["unit"] = self.unit
-        if self.allowed_values:
-            _json["allowed_values"] = self.allowed_values
-        return _json
+    def to_dto(self) -> ParamSpecDTO:
+        return ParamSpecDTO(
+            type=self.get_str_type(),
+            optional=self.optional,
+            visibility=self.visibility,
+            additional_info=self.additional_info or {},
+            default_value=self.default_value,
+            human_name=self.human_name,
+            short_description=self.short_description,
+            unit=self.unit,
+            allowed_values=self.allowed_values,
+        )
 
     def validate(self, value: Any) -> ParamSpecType:
         """
@@ -174,16 +167,16 @@ class ParamSpec(Generic[ParamSpecType]):
         return cls()
 
     @classmethod
-    def load_from_json(cls, json_: Dict[str, Any]) -> "ParamSpec":
+    def load_from_dto(cls, spec_dto: ParamSpecDTO) -> "ParamSpec":
         param_spec = cls.empty()
-        param_spec.default_value = json_.get("default_value")
-        param_spec.optional = json_.get("optional")
-        param_spec.human_name = json_.get("human_name")
-        param_spec.short_description = json_.get("short_description")
-        param_spec.unit = json_.get("unit")
-        param_spec.visibility = json_.get("visibility")
-        param_spec.allowed_values = json_.get("allowed_values")
-        param_spec.additional_info = json_.get("additional_info") or {}
+        param_spec.default_value = spec_dto.default_value
+        param_spec.optional = spec_dto.optional
+        param_spec.human_name = spec_dto.human_name
+        param_spec.short_description = spec_dto.short_description
+        param_spec.unit = spec_dto.unit
+        param_spec.visibility = spec_dto.visibility
+        param_spec.allowed_values = spec_dto.allowed_values
+        param_spec.additional_info = spec_dto.additional_info or {}
         return param_spec
 
 

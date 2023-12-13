@@ -79,9 +79,6 @@ class SharedEntityInfo(Model):
         return cls.select().where(cls.entity == entity_id, cls.share_mode == SharedEntityMode.SENT).order_by(
             cls.created_at.desc())
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return self.to_dto()
-
     def to_dto(self) -> ShareEntityInfoDTO:
         return ShareEntityInfoDTO(
             id=self.id,

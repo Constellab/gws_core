@@ -7,8 +7,8 @@
 from typing import Any, Dict
 
 from fastapi import Depends
-from typing_extensions import TypedDict
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.table.resource_table_service import (ResourceTableService,
                                                         TableChart)
 from gws_core.resource.view.view_dto import CallViewResultDTO
@@ -17,7 +17,7 @@ from gws_core.user.auth_service import AuthService
 from ...core_controller import core_app
 
 
-class CallChartTable(TypedDict):
+class CallChartTable(BaseModelDTO):
     table_view_name: str
     table_config_values: Dict[str, Any]
     chart_type: TableChart
@@ -33,7 +33,7 @@ def call_chart_on_table(id: str,
 
     """
     return ResourceTableService.call_table_chart(resource_id=id,
-                                                 table_view_name=call_chart_table["table_view_name"],
-                                                 table_config_values=call_chart_table["table_config_values"],
-                                                 chart_type=call_chart_table["chart_type"],
-                                                 chart_config_values=call_chart_table["chart_config_values"]).to_dto()
+                                                 table_view_name=call_chart_table.table_view_name,
+                                                 table_config_values=call_chart_table.table_config_values,
+                                                 chart_type=call_chart_table.chart_type,
+                                                 chart_config_values=call_chart_table.chart_config_values).to_dto()

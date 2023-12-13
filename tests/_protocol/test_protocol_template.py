@@ -104,7 +104,7 @@ class TestProtocolTemplate(BaseTestCase):
         self.assertIsNotNone(template_db.get_template()['nodes']['mini_proto']['graph'])
         self.assertIsNotNone(template_db.get_template()['links'])
         self.assertIsNotNone(template_db.get_template()['layout'])
-        self.assertIsInstance(template_db.to_json(deep=True), dict)
+        self.assertIsNotNone(template_db.to_full_dto())
 
         # update the template
         ProtocolTemplateService.update(id=template.id, name='new_name')

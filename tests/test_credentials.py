@@ -57,9 +57,8 @@ class TestCredentials(BaseTestCase):
         self.assertEqual(search_result.results[0].name, "test2")
 
         # Test json
-        json_ = first_credentials.to_json()
-        self.assertEqual(json_["name"], first_credentials.name)
-        self.assertIsNone(json_["data"])
+        json_ = first_credentials.to_dto()
+        self.assertEqual(json_.name, first_credentials.name)
 
         # Test delete
         CredentialsService.delete(first_credentials.id)

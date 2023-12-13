@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, List
+from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -16,12 +16,12 @@ from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.lab.system_dto import SettingsDTO
 from gws_core.project.project_dto import SpaceProject
 from gws_core.project.project_service import ProjectService
+from gws_core.space.space_dto import LabActivityReponseDTO
 from gws_core.user.activity.activity_service import ActivityService
 
 from ..core.exception.exception_handler import ExceptionHandler
 from ..core.service.settings_service import SettingsService
 from ..user.auth_service import AuthService
-from ..user.user import User
 from ..user.user_dto import UserFullDTO, UserLoginInfo
 from ..user.user_service import UserService
 from ._auth_space import AuthSpace
@@ -166,7 +166,7 @@ def delete_project(id: str, _=Depends(AuthSpace.check_space_api_key_and_user)) -
 ############################################### EXPERIMENT #####################################################
 
 @space_app.get("/lab/global-activity", tags=["Experiment"])
-def lab_activity(_=Depends(AuthSpace.check_space_api_key)):
+def lab_activity(_=Depends(AuthSpace.check_space_api_key)) -> LabActivityReponseDTO:
     """
     Count the number of running or queued experiments
 
@@ -174,9 +174,9 @@ def lab_activity(_=Depends(AuthSpace.check_space_api_key)):
 
     last_activity = ActivityService.get_last_activity()
 
-    return {
-        "running_experiments": ExperimentService.count_running_or_queued_experiments(),
-        "queued_experiments": ExperimentService.count_queued_experiments(),
-        "last_activity": last_activity.to_json() if last_activity is not None else None,
-        'dev_env_running': DevEnvService.dev_env_is_running()
-    }
+    return LabActivityReponseDTO(
+        running_experiments=ExperimentService.count_running_or_queued_experiments(),
+        queued_experiments=ExperimentService.count_queued_experiments(),
+        last_activity=last_activity.to_dto() if last_activity is not None else None,
+        dev_env_running=DevEnvService.dev_env_is_running()
+    )

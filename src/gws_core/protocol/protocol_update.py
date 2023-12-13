@@ -38,9 +38,9 @@ class ProtocolUpdate():
     def to_dto(self) -> ProtocolUpdateDTO:
         return ProtocolUpdateDTO(
             process=self.process.to_dto() if self.process else None,
-            link=self.connector.to_json() if self.connector else None,
+            link=self.connector.to_dto() if self.connector else None,
             protocol_updated=self.protocol_updated,
-            protocol=self.protocol.to_full_dto() if self.protocol_updated else None
+            protocol=self.protocol.to_protocol_dto() if self.protocol_updated else None
         )
 
     def merge(self, protocol_update: 'ProtocolUpdate') -> 'ProtocolUpdate':

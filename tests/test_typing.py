@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List
+from typing import List
 
 from gws_core import (BaseTestCase, File, ProcessSpec, Protocol,
                       ProtocolTyping, ResourceTyping, RobotCreate, RobotEat,
@@ -65,12 +65,12 @@ class TestTyping(BaseTestCase):
 
         self.assertEqual(eat_type.get_type(), RobotEat)
 
-        eat_json: Dict = eat_type.to_json(deep=True)
+        eat_json = eat_type.to_full_dto()
 
-        self.assertIsNotNone(eat_json['input_specs'])
-        self.assertIsNotNone(eat_json['input_specs']['specs'])
-        self.assertIsNotNone(eat_json['input_specs']['specs']['robot'])
-        self.assertIsNotNone(eat_json['input_specs']['specs']['food'])
+        self.assertIsNotNone(eat_json.input_specs)
+        self.assertIsNotNone(eat_json.input_specs.specs)
+        self.assertIsNotNone(eat_json.input_specs.specs['robot'])
+        self.assertIsNotNone(eat_json.input_specs.specs['food'])
 
     def test_protocol_type(self):
         world_travel: ProtocolTyping = ProtocolTyping.get_by_model_type(
@@ -78,19 +78,19 @@ class TestTyping(BaseTestCase):
 
         self.assertEqual(world_travel.get_type(), RobotTravelProto)
 
-        world_travel_json: Dict = world_travel.to_json(deep=True)
+        world_travel_json = world_travel.to_full_dto()
 
-        self.assertIsNotNone(world_travel_json['input_specs']['specs']['robot'])
-        self.assertIsNotNone(world_travel_json['output_specs']['specs']['robot'])
+        self.assertIsNotNone(world_travel_json.input_specs.specs['robot'])
+        self.assertIsNotNone(world_travel_json.output_specs.specs['robot'])
 
     def test_resource_type(self):
         robot: ResourceTyping = ResourceTyping.get_by_model_type(Robot)
 
         self.assertEqual(robot.get_type(), Robot)
 
-        robot_json: Dict = robot.to_json(deep=True)
+        robot_json = robot.to_full_dto()
 
-        self.assertEqual(robot_json['typing_name'], 'RESOURCE.gws_core.Robot')
+        self.assertEqual(robot_json.typing_name, 'RESOURCE.gws_core.Robot')
 
     def test_get_children_typings(self):
         typings: List[Typing] = Typing.get_children_typings('RESOURCE', File)

@@ -12,6 +12,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from gws_core.core.utils.response_helper import ResponseHelper
+from gws_core.io.io_spec import IOSpecDTO
 from gws_core.protocol.protocol_dto import (AddConnectorDTO, ProtocolDTO,
                                             ProtocolUpdateDTO)
 from gws_core.protocol_template.protocol_template_dto import \
@@ -37,7 +38,7 @@ def get_a_protocol(id: str,
     - **id**: the id of the protocol
     """
 
-    return ProtocolService.get_protocol_by_id(id=id).to_full_dto()
+    return ProtocolService.get_protocol_by_id(id=id).to_protocol_dto()
 
 
 @core_app.post("/protocol/{id}/add-process/{process_typing_name}", tags=["Protocol"],
@@ -326,7 +327,7 @@ def delete_dynamic_output_port_of_process(id: str,
 def update_dynamic_input_port_of_process(id: str,
                                          process_name: str,
                                          port_name: str,
-                                         io_spec: dict,
+                                         io_spec: IOSpecDTO,
                                          _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.update_dynamic_input_port_of_process(id, process_name, port_name, io_spec).to_dto()
@@ -337,7 +338,7 @@ def update_dynamic_input_port_of_process(id: str,
 def update_dynamic_output_port_of_process(id: str,
                                           process_name: str,
                                           port_name: str,
-                                          io_spec: dict,
+                                          io_spec: IOSpecDTO,
                                           _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.update_dynamic_output_port_of_process(id, process_name, port_name, io_spec).to_dto()

@@ -52,5 +52,5 @@ class TestExperimentSearch(BaseTestCase):
         self.search(search_dict, 1)
 
     def search(self, search_dict: SearchParams, expected_nb_of_result: int) -> None:
-        paginator = ExperimentService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], expected_nb_of_result)
+        paginator = ExperimentService.search(search_dict).to_dto()
+        self.assertEqual(paginator.total_number_of_items, expected_nb_of_result)

@@ -66,9 +66,6 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
             raise BadRequestException(
                 detail="The report is archived, please unachived it to update it")
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return self.to_dto()
-
     def to_dto(self) -> ReportDTO:
         return ReportDTO(
             id=self.id,
@@ -110,6 +107,13 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
         self.validated_at = DateHelper.now_utc()
         self.validated_by = CurrentUserService.get_and_check_current_user()
         self.lab_config = LabConfigModel.get_current_config()
+
+    def archive(self, archive: bool) -> 'Report':
+
+        if self.is_archived == archive:
+            return self
+        self.is_archived = archive
+        return self.save()
 
     def get_entity_name(self) -> str:
         return self.title

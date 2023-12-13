@@ -6,8 +6,9 @@
 from abc import abstractclassmethod, abstractmethod
 from io import IOBase
 from tempfile import SpooledTemporaryFile
-from typing import Type, Union
+from typing import Any, Dict, Type, Union
 
+from gws_core.core.model.db_field import JSONField
 from gws_core.impl.file.folder import Folder
 
 from ...core.exception.exceptions import BadRequestException
@@ -20,9 +21,16 @@ class FileStore(Model):
     """
     FileStore class
     """
-    title = "File store"
-    description = ""
+
+    data: Dict[str, Any] = JSONField(null=True)
+
     _table_name = "gws_file_store"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if not self.is_saved() and not self.data:
+            self.data = {}
 
     @abstractmethod
     def add_node_from_path(self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = FSNode) -> FSNode:

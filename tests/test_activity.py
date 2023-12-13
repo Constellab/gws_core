@@ -32,4 +32,4 @@ class TestActivity(BaseTestCase):
         self.assertEqual(last_activity.object_type, ActivityObjectType.EXPERIMENT)
         self.assertEqual(last_activity.object_id, "test")
         self.assertIsNotNone(last_activity.user)
-        self.assertIsNotNone(last_activity.to_json())
+        self.assertIsNotNone(last_activity.to_dto())

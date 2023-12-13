@@ -3,32 +3,24 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import hashlib
-import json
-import uuid
-from typing import Any, Dict, List
 
-from fastapi.encoders import jsonable_encoder
-from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
-                    CharField, DoesNotExist, Field, ForeignKeyField,
-                    ManyToManyField)
+import uuid
+from typing import List
+
+from peewee import CharField, DoesNotExist
 from peewee import Model as PeeweeModel
 
-from gws_core.core.classes.jsonable import Jsonable
 from gws_core.core.model.base_model import BaseModel
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.utils.date_helper import DateHelper
 
-from ..decorator.json_ignore import json_ignore
 from ..decorator.transaction import transaction
-from ..exception.exceptions import BadRequestException, NotFoundException
+from ..exception.exceptions import NotFoundException
 from ..exception.gws_exceptions import GWSException
-from ..utils.logger import Logger
-from .db_field import DateTimeUTC, JSONField
+from .db_field import DateTimeUTC
 
 
-@json_ignore(["hash"])
-class Model(BaseModel, PeeweeModel, Jsonable):
+class Model(BaseModel, PeeweeModel):
     """
     Model class
 
@@ -42,20 +34,11 @@ class Model(BaseModel, PeeweeModel, Jsonable):
     :type created_at: `datetime`
     :property save_datetime: The last save datetime in database
     :type last_modified_at: `datetime`
-    :property is_archived: True if the model is archived, False otherwise. Defaults to False
-    :type is_archived: `bool`
-    :property data: The data of the model
-    :type data: `dict`
-    :property hash: The hash of the model
-    :type hash: `str`
     """
 
     id = CharField(primary_key=True, max_length=36)
     created_at = DateTimeUTC(default=DateHelper.now_utc)
     last_modified_at = DateTimeUTC(default=DateHelper.now_utc)
-    is_archived = BooleanField(default=False, index=True)
-    hash = CharField(null=True)
-    data: Dict[str, Any] = JSONField(null=True)
 
     # Provided at the Class level automatically by the @TypingDecorator
     _typing_name: str = None
@@ -72,78 +55,8 @@ class Model(BaseModel, PeeweeModel, Jsonable):
             self.id = str(uuid.uuid4())
             # self.id = str(uuid.uuid4())
             self._is_saved = False
-            if not self.data:
-                self.data = {}
         else:
             self._is_saved = True
-
-    def archive(self, archive: bool) -> 'Model':
-        """
-        Archive of Unarchive the model
-
-        :param archive: True to archive, False to unarchive
-        :type archive: `bool`
-        :return: True if successfully done, False otherwise
-        :rtype: `bool`
-        """
-
-        if self.is_archived == archive:
-            return self
-        self.is_archived = archive
-        return self.save()
-
-    def _create_hash_object(self):
-        hash_obj = hashlib.blake2b()
-        exclusion_list = (ForeignKeyField, JSONField,
-                          ManyToManyField, BlobField, AutoField, BigAutoField, )
-
-        for prop in self.property_names(Field, exclude=exclusion_list):
-            try:
-                if prop in ["id", "hash"]:
-                    continue
-                val = getattr(self, prop)
-                hash_obj.update(str(val).encode())
-            except Exception as err:
-                Logger.error(
-                    f"Erreur during the hash of the field property '{prop}'. Object: '{val}'")
-                raise err
-
-        for prop in self.property_names(JSONField):
-            try:
-                val = getattr(self, prop)
-                hash_obj.update(json.dumps(val, sort_keys=True).encode())
-            except Exception as err:
-                Logger.error(
-                    f"Erreur during the hash of the json field property '{prop}'. Object: '{val}'")
-                raise err
-
-        for prop in self.property_names(BlobField):
-            try:
-                val = getattr(self, prop)
-                hash_obj.update(val)
-            except Exception as err:
-                Logger.error(
-                    f"Erreur during the hash of the blob field property '{prop}'. Object: '{val}'")
-                raise err
-
-        for prop in self.property_names(ForeignKeyField):
-            try:
-                val = getattr(self, prop)
-                if isinstance(val, Model):
-                    if val.hash is None:
-                        raise Exception(
-                            f"The model '{prop}' does not have a hash. It was not saved")
-                    hash_obj.update(val.hash.encode())
-            except Exception as err:
-                Logger.error(
-                    f"Erreur during the hash of the foreign key property '{prop}'. Object: '{val}'")
-                raise err
-
-        return hash_obj
-
-    def __compute_hash(self):
-        hash_object = self._create_hash_object()
-        return hash_object.hexdigest()
 
     def __eq__(self, other: object) -> bool:
         """
@@ -215,19 +128,6 @@ class Model(BaseModel, PeeweeModel, Jsonable):
 
         return cls.select(*args, **kwargs)
 
-    def set_data(self, data: dict):
-        """
-        Sets the `data`
-
-        :param data: The input data
-        :type data: dict
-        :raises Exception: If the input parameter data is not a `dict`
-        """
-        if isinstance(data, dict):
-            self.data = data
-        else:
-            raise BadRequestException("The data must be a JSONable dictionary")
-
     def save(self, *args, **kwargs) -> 'Model':
         """
         Sets the `data`
@@ -250,8 +150,6 @@ class Model(BaseModel, PeeweeModel, Jsonable):
                 self._before_insert()
             else:
                 self._before_update()
-
-        self.hash = self.__compute_hash()
 
         kwargs['force_insert'] = force_insert
         super().save(*args, **kwargs)
@@ -285,63 +183,9 @@ class Model(BaseModel, PeeweeModel, Jsonable):
 
         return model_list
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns a JSON string or dictionnary representation of the model.
-        :return: The representation
-        :rtype: `dict`
-        """
-
-        _json = {}
-
-        exclusion_list = (ForeignKeyField, ManyToManyField,
-                          BlobField, AutoField, BigAutoField)
-        for prop in self.property_names(Field, exclude=exclusion_list):
-            # if the value is json ignored
-            if self._json_ignore_fields and prop in self._json_ignore_fields:
-                continue
-            # exclude data, it is manager after
-            if prop == 'data':
-                continue
-            if prop.startswith("_"):
-                continue  # -> private or protected property
-
-            val = getattr(self, prop)
-
-            _json[prop] = jsonable_encoder(val)
-
-        # convert the data to json
-        if self._json_ignore_fields and 'data' not in self._json_ignore_fields:
-            _json["data"] = self.data_to_json(deep=deep, **kwargs)
-
-        return _json
-
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns a JSON string or dictionnary representation of the model data.
-        :return: The representation
-        :rtype: `dict`
-        """
-        _json = {}
-
-        val = getattr(self, "data")
-        _json = jsonable_encoder(val)
-
-        return _json
-
     def to_dto(self) -> BaseModelDTO:
         return ModelDTO(
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
         )
-
-    def verify_hash(self) -> bool:
-        """
-        Verify the current hash of the model
-
-        :return: True if the hash is valid, False otherwise
-        :rtype: `bool`
-        """
-
-        return self.hash == self.__compute_hash()

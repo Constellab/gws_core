@@ -9,7 +9,6 @@ from peewee import CharField, ForeignKeyField, ModelSelect
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.model import Model
-from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.project.project_dto import (EnumProjectLevelStatus, ProjectDTO,
                                           ProjectTreeDTO)
 
@@ -26,10 +25,6 @@ class Project(Model):
     children: List['Project']
 
     _table_name = 'gws_project'
-
-    # TODO TO REMOVE
-    def to_json(self, deep: bool = False, **kwargs) -> ProjectDTO:
-        return self.to_dto()
 
     def to_dto(self) -> ProjectDTO:
         return ProjectDTO(

@@ -33,6 +33,7 @@ class FSNodeModel(Model):
 
     _table_name = "gws_fs_node"
 
+    # TODO CHECK THE delete_file PARAMETER
     def delete_instance(self, delete_file: bool = True, *args, **kwargs):
 
         # if the file is a real file, not a symbolic link, delete it
@@ -68,10 +69,6 @@ class FSNodeModel(Model):
         from gws_core.resource.resource_model import ResourceModel
         return ResourceModel.get(ResourceModel.fs_node_model == self)
 
-    # TODO TO REMOVE
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return self.to_dto()
-
     def to_dto(self) -> BaseModelDTO:
         return FsNodeModelDTO(
             id=self.id,
@@ -82,4 +79,4 @@ class FSNodeModel(Model):
         )
 
     class Meta:
-        table_name =  "gws_fs_node"
+        table_name = "gws_fs_node"

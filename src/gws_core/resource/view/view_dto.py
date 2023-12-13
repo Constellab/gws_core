@@ -23,4 +23,4 @@ class CallViewResultDTO(BaseModelDTO):
     resource_id: str
     view_config: ViewConfigDTO
     title: str
-    view_type: str
+    view_type: ViewType

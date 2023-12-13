@@ -55,7 +55,7 @@ class TestResource(BaseTestCase):
         self.assertTrue(isinstance(robot, Robot))
 
         # Check the to_json
-        resource_model.to_json(deep=True)
+        resource_model.to_dto()
 
     def test_resource_r_fields(self):
         """Test that RField are loaded and long field are lazy loaded

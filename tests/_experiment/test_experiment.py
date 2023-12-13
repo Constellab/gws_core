@@ -183,7 +183,6 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(len(processes), RobotWorldTravelProto.tasks_count)
         for process in processes:
             self.assertEqual(process.is_archived, archive)
-            self.assertEqual(process.config.is_archived, archive)
 
     def test_reset(self):
 

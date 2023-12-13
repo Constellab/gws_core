@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Type
 
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import ParamSpec
-from gws_core.core.classes.jsonable import DictJsonable
 from gws_core.resource.view.lazy_view_param import LazyViewParam
 from gws_core.resource.view.view_dto import ResourceViewMetadatalDTO
 
@@ -47,15 +46,12 @@ class ResourceViewMetaData():
             self.method_name, self.view_type, self.human_name, self.short_description, self.method_specs, self.default_view,
             self.hide)
 
-    def to_json(self) -> dict:
-        return self.to_dto()
-
     # TODO TO FIX
     def to_complete_json(self, resource: Resource = None) -> dict:
         return self.to_dto(resource)
 
     def to_dto(self, resource: Resource = None) -> ResourceViewMetadatalDTO:
-        jsonable_dict = DictJsonable(self._get_view_specs(resource, skip_private=True))
+        specs_dict = {key: value for key, value in self._get_view_specs(resource, skip_private=True).items()}
         return ResourceViewMetadatalDTO(
             method_name=self.method_name,
             view_type=self.view_type._type,
@@ -63,7 +59,7 @@ class ResourceViewMetaData():
             short_description=self.short_description,
             default_view=self.default_view,
             has_config_specs=self.has_config_specs(),
-            config_specs=jsonable_dict.to_json(),
+            config_specs=specs_dict,
         )
 
     def get_view_specs_from_resource(self, resource: Resource, skip_private: bool = False) -> ConfigSpecs:

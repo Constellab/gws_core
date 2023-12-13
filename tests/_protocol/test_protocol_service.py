@@ -15,8 +15,9 @@ from gws_core.impl.live.py_live_task import PyLiveTask
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.connector import Connector
-from gws_core.io.io_spec import IOSpecDict
+from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing import Typing
+from gws_core.model.typing_dict import TypingRefDTO
 from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.protocol.protocol_model import ProtocolModel
@@ -221,13 +222,16 @@ class TestProtocolService(BaseTestCase):
 
         # Update new port type
         typing = Typing.get_by_model_type(Robot)
-        io_spec: IOSpecDict = {
-            'resource_types': [{
-                'human_name': 'Robot',
-                'typing_name': typing.typing_name,
-                'brick_version': typing.brick_version
-            }]
-        }
+        io_spec = IOSpecDTO(
+            resource_types=[
+                TypingRefDTO(
+                    human_name='Robot',
+                    typing_name=typing.typing_name,
+                    brick_version=typing.brick_version
+                )
+            ],
+            is_optional=False,
+        )
         process_model = ProtocolService.update_dynamic_input_port_of_process(protocol.id,
                                                                              process_model.instance_name,
                                                                              port_name,

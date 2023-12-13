@@ -90,14 +90,14 @@ class ShareService():
 
         entity_object: Any = None
         if isinstance(model, ResourceModel):
-            entity_object: list = [model.to_json()]
+            entity_object: list = [model.to_dto()]
 
             # specific case for resource set that contains multiple resource
             # we need to add all the resource to the zip
             resource = model.get_resource()
             if isinstance(resource, ResourceSet):
                 resource_models = resource.get_resource_models()
-                entity_object.extend([resource_model.to_json() for resource_model in resource_models])
+                entity_object.extend([resource_model.to_dto() for resource_model in resource_models])
         else:
             raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
 

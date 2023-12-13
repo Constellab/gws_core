@@ -61,8 +61,8 @@ class TestDispatcher(BaseTestCase):
             dispatcher.notify_info_message('message 1')
             sleep(0.30)
 
-            self.assertEqual(len(progress_bar.messages), 1)
-            self.assertEqual(progress_bar.messages[0]['text'], 'message 1')
+            self.assertEqual(len(progress_bar.get_messages()), 1)
+            self.assertEqual(progress_bar.get_messages()[0].text, 'message 1')
         except Exception as err:
             dispatcher.force_dispatch_waiting_messages()
             raise err

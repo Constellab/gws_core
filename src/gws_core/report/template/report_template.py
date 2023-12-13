@@ -8,7 +8,6 @@ from typing import final
 from peewee import CharField
 
 from gws_core.core.classes.rich_text_content import RichText
-from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.report.template.report_template_dto import (
     ReportTemplateDTO, ReportTemplateFullDTO)
 
@@ -29,10 +28,6 @@ class ReportTemplate(ModelWithUser):
 
     def update_content_rich_text(self, rich_text: RichText) -> None:
         self.content = rich_text.get_content()
-
-    # TODO TO REMOVE
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return self.to_dto()
 
     def to_dto(self) -> ReportTemplateDTO:
         return ReportTemplateDTO(

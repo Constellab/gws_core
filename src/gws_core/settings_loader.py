@@ -161,7 +161,7 @@ class SettingsLoader:
 
         # loads git packages
         git_env = settings_data["environment"].get("git", [])
-        self._load_git_dependencies(git_env, parent_name=brick_name)
+        self._load_git_dependencies(git_env)
 
         # loads pip packages
         pip_env = settings_data["environment"].get("pip", [])
@@ -182,22 +182,16 @@ class SettingsLoader:
 
             self.load_brick(brick_name=brick_name, parent_name=parent_name)
 
-    def _load_git_dependencies(self, git_env: List[dict], parent_name: str) -> None:
+    def _load_git_dependencies(self, git_env: List[dict]) -> None:
 
         for channel in git_env:
             channel_source = channel["source"]
             for package in channel.get("packages"):
                 module_name = package["name"]
-                is_brick = package.get("is_brick", False)
-
-                # import brick from user workspace or system workspace
-                if is_brick:  # TODO to remove once all brick are under bricks object
-                    self.load_brick(module_name, parent_name=parent_name)
-                else:
-                    repo_dir = os.path.join(
-                        self.EXTERNAL_LIB_FOLDER, module_name)
-                    self._load_package(package_name=module_name, package_path=repo_dir,
-                                       channel_source=channel_source, repo_type="git")
+                repo_dir = os.path.join(
+                    self.EXTERNAL_LIB_FOLDER, module_name)
+                self._load_package(package_name=module_name, package_path=repo_dir,
+                                   channel_source=channel_source, repo_type="git")
 
     def _load_pip_dependencies(self, pip_env: List[dict]) -> None:
 

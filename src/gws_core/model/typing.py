@@ -8,21 +8,18 @@ from typing import Any, Dict, List, Optional, Type
 
 from peewee import BooleanField, CharField, ModelSelect
 
-from gws_core.brick.brick_helper import BrickHelper
+from gws_core.core.model.db_field import JSONField
 from gws_core.model.typing_dto import TypingDTO, TypingFullDTO
 from gws_core.model.typing_name import TypingNameObj
 
-from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
 from ..core.model.model import Model
 from ..core.utils.utils import Utils
-from .typing_dict import (TypingDict, TypingObjectType, TypingRef,
-                          TypingRefDTO, TypingStatus)
+from .typing_dict import TypingObjectType, TypingRefDTO, TypingStatus
 
 
-@json_ignore(["model_type", "related_model_typing_name", "data", "brick", "brick_version", "is_archived"])
 class Typing(Model):
     """
     Typing class. This class allows storing information on all the types of the models in the system.
@@ -52,11 +49,16 @@ class Typing(Model):
     # For process, this is a linked resource to the model (useful for IMPORTER, TRANFORMERS...)
     related_model_typing_name: CharField = CharField(null=True, index=True)
 
+    data: Dict[str, Any] = JSONField(null=True)
+
     _object_type: TypingObjectType = "MODEL"
     _table_name = 'gws_typing'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if not self.is_saved() and not self.data:
+            self.data = {}
 
         if not Utils.value_is_in_literal(self.object_type, TypingObjectType):
             raise BadRequestException(
@@ -98,13 +100,6 @@ class Typing(Model):
     def get_type(self) -> Type:
         return Utils.get_model_type(self.model_type)
 
-    def get_typing_ref(self) -> TypingRef:
-        return {
-            "typing_name": self.typing_name,
-            "brick_version": self.brick_version,
-            "human_name": self.human_name
-        }
-
     def get_typing_ref_dto(self) -> TypingRefDTO:
         return TypingRefDTO(
             typing_name=self.typing_name,
@@ -121,9 +116,6 @@ class Typing(Model):
         model_t: Type[Base] = self.get_type()
         return TypingStatus.OK if model_t is not None else TypingStatus.UNAVAILABLE
 
-    def to_json(self, deep: bool = False, **kwargs) -> TypingDict:
-        self.to_dto()
-
     def to_dto(self) -> TypingDTO:
         return TypingDTO(
             id=self.id,
@@ -137,7 +129,7 @@ class Typing(Model):
             object_sub_type=self.object_sub_type,
             deprecated_since=self.deprecated_since,
             deprecated_message=self.deprecated_message,
-            additional_data=self.additional_data,
+            additional_data=None,
             status=self.get_type_status()
         )
 

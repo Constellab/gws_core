@@ -73,4 +73,4 @@ def search_by_name(name: str,
 def download_template(id: str,
                       _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
     template = ProtocolTemplateService.get_by_id_and_check(id)
-    return ResponseHelper.create_file_response_from_json(template.to_json(deep=True), template.name + '.json')
+    return ResponseHelper.create_file_response_from_str(template.to_full_dto().json(), template.name + '.json')

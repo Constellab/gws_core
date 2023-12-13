@@ -87,6 +87,11 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
     # cache of the _protocol
     _protocol: ProtocolModel = None
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_saved() and not self.data:
+            self.data = {}
+
     @property
     def pid(self) -> int:
         if "pid" not in self.data:
@@ -168,7 +173,8 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
             return self
         self.protocol_model.archive(archive)
 
-        return super().archive(archive)
+        self.is_archived = archive
+        return self.save()
 
     @classmethod
     def count_running_experiments(cls) -> int:
@@ -424,9 +430,6 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
 
     ########################### TO JSON ##################################
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return self.to_dto()
-
     def to_dto(self) -> ExperimentDTO:
         return ExperimentDTO(
             id=self.id,
@@ -458,7 +461,7 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
         )
 
     def export_protocol(self) -> dict:
-        json_ = self.protocol_model.export_config()
+        json_ = self.protocol_model.to_config_dto()
         # remove the main instance name because it is not relevant
         del json_["instance_name"]
         return {

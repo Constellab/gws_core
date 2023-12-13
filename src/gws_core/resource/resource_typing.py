@@ -6,7 +6,6 @@
 from typing import List, Literal, Type
 
 from gws_core.core.utils.utils import Utils
-from gws_core.model.typing_dict import TypingDict
 from gws_core.model.typing_dto import TypingDTO
 
 from ..model.typing import Typing
@@ -46,7 +45,6 @@ class FileTyping(ResourceTyping):
         # retrieve the task python type
         model_t: Type[File] = self.get_type()
 
-        # TODO UTILE COTE FRONT ?
         if model_t and Utils.issubclass(model_t, File):
             typing_dto.additional_data = {"default_extensions": model_t.__default_extensions__ or []}
 

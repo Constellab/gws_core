@@ -7,8 +7,8 @@ from typing import List, Optional
 from gws_core.core.decorator.transaction import transaction
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
-from gws_core.tag.tag import Tag, TagOriginType
-from gws_core.tag.tag_dto import EntityTagDTO
+from gws_core.tag.tag import Tag
+from gws_core.tag.tag_dto import EntityTagDTO, TagOriginType
 from gws_core.tag.tag_value_model import TagValueModel
 
 
@@ -155,9 +155,6 @@ class EntityTagList():
             TagValueModel.delete_tag_value(tag.key, tag.value)
 
         self._tags.remove(existing_tag)
-
-    def to_json(self) -> List[dict]:
-        return [tag.to_json() for tag in self._tags]
 
     def to_dto(self) -> List[EntityTagDTO]:
         return [tag.to_dto() for tag in self._tags]

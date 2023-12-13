@@ -40,9 +40,6 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
 
     _table_name = 'gws_view_config'
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        return self.to_dto()
-
     def to_dto(self) -> ViewConfigDTO:
         return ViewConfigDTO(
             id=self.id,

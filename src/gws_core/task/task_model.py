@@ -2,8 +2,6 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-import inspect
-import zlib
 from traceback import format_exc
 from typing import Any, Dict, List, Type
 
@@ -12,10 +10,12 @@ from peewee import ForeignKeyField, ModelSelect
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.io.io_dto import IODTO
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag import Tag, TagOriginType
+from gws_core.tag.tag import Tag
+from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_list import TagList
 
 from ..config.config_types import ConfigParamsDict
@@ -25,10 +25,9 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.exception.gws_exceptions import GWSException
 from ..core.utils.logger import Logger
 from ..core.utils.reflector_helper import ReflectorHelper
-from ..io.io import Inputs, IODict, Outputs
+from ..io.io import Inputs, Outputs
 from ..io.io_exception import InvalidOutputsException
 from ..io.port import Port
-from ..model.typing_manager import TypingManager
 from ..process.process_exception import (CheckBeforeTaskStopException,
                                          ProcessRunException)
 from ..process.process_model import ProcessModel
@@ -63,20 +62,9 @@ class TaskModel(ProcessModel):
     # cache to store the list of tags of all inputs
     _input_resource_tags: List[Tag] = None
 
-    def create_source_zip(self):
-        """
-        Returns the zipped code source of the task
-        """
-
-        # /:\ Use the true object type (self.type)
-        model_t: Type[TaskModel] = TypingManager.get_type_from_name(
-            self.process_typing_name)
-        source = inspect.getsource(model_t)
-        return zlib.compress(source.encode())
-
     def set_process_type(self, typing_name: str,
-                         inputs_dict: IODict = None,
-                         outputs_dict: IODict = None) -> None:
+                         inputs_dto: IODTO = None,
+                         outputs_dto: IODTO = None) -> None:
         """Method used when creating a new task model, it init the input and output from task specs
 
         :param typing_name: typine name of the task
@@ -91,8 +79,8 @@ class TaskModel(ProcessModel):
         task_type: Type[Task] = self.get_process_type()
 
         # specific case for dynamic IO to init input from json and not task spec
-        if inputs_dict is not None and inputs_dict.get('type') == 'dynamic':
-            self._inputs = Inputs.load_from_json(inputs_dict)
+        if inputs_dto is not None and inputs_dto.type == 'dynamic':
+            self._inputs = Inputs.load_from_dto(inputs_dto)
             self._inputs.reset()
         else:
             self._inputs = Inputs.load_from_specs(task_type.input_specs)
@@ -101,8 +89,8 @@ class TaskModel(ProcessModel):
         self.data["inputs"] = self.inputs.to_json()
 
         # specific case for dynamic IO to init output from json and not task spec
-        if outputs_dict is not None and outputs_dict.get('type') == 'dynamic':
-            self._outputs = Outputs.load_from_json(outputs_dict)
+        if outputs_dto is not None and outputs_dto.type == 'dynamic':
+            self._outputs = Outputs.load_from_json(outputs_dto)
             self._outputs.reset()
         else:
             self._outputs = Outputs.load_from_specs(task_type.output_specs)
@@ -131,14 +119,11 @@ class TaskModel(ProcessModel):
         if self.is_archived == archive:
             return self
 
-        super().archive(archive)
-
-        # -> try to archive the config if possible!
-        self.config.archive(archive)
         for resource in self.resources:
             resource.archive(archive)
 
-        return self
+        self.is_archived = archive
+        return self.save()
 
     @property
     def resources(self) -> List[ResourceModel]:
@@ -421,18 +406,3 @@ class TaskModel(ProcessModel):
         self.status = ProcessStatus.RUNNING
         self.started_at = DateHelper.now_utc()
         self.save()
-
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns a JSON string or dictionnary representation of the model.
-        :return: The representation
-        :rtype: `dict`
-        """
-        _json: dict = super().data_to_json(deep=deep)
-
-        if "inputs" in _json:
-            del _json["inputs"]
-        if "outputs" in _json:
-            del _json["outputs"]
-
-        return _json

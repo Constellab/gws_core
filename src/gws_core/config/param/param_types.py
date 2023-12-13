@@ -3,9 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, List, Literal, Type
+from typing import Any, List, Literal, Optional, Type
 
-from typing_extensions import NotRequired, TypedDict
+from gws_core.core.model.model_dto import BaseModelDTO
 
 ParamValue = Any
 ParamValueType = Type[ParamValue]
@@ -18,13 +18,13 @@ ParamValueType = Type[ParamValue]
 ParamSpecVisibilty = Literal["public", "protected", "private"]
 
 
-class ParamSpecDict(TypedDict):
+class ParamSpecDTO(BaseModelDTO):
     type: str
     optional: bool
-    default_value: NotRequired[ParamValue]
-    unit: NotRequired[str]
-    human_name: NotRequired[str]
-    short_description: NotRequired[str]
     visibility: ParamSpecVisibilty
-    allowed_values: NotRequired[List[ParamValue]]
-    additional_info: Dict[str, str]
+    default_value: Optional[ParamValue] = None
+    unit: Optional[str] = None
+    human_name: Optional[str] = None
+    short_description: Optional[str] = None
+    allowed_values: Optional[List[ParamValue]] = None
+    additional_info: dict = {}

@@ -2,7 +2,7 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from typing import List, TypedDict
+from typing import List, Optional
 
 import botocore.auth
 import botocore.credentials
@@ -11,13 +11,14 @@ from fastapi.requests import Request
 
 from gws_core.core.exception.exceptions.forbidden_exception import \
     ForbiddenException
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import CredentialsDataS3
 
 
-class S3AuthHeader(TypedDict):
-    access_key_id: str
+class S3AuthHeader(BaseModelDTO):
+    access_key_id: Optional[str]
     request_date: str
     region_name: str
     service_name: str
@@ -47,11 +48,11 @@ class S3ServerAuth:
             Logger.error(f"Error while parsing header: {err}")
             raise ForbiddenException("Authorization header is invalid")
 
-        if not s3_header.get('access_key_id'):
+        if not s3_header.access_key_id:
             raise ForbiddenException("Access key id is missing")
 
         s3_credentials: CredentialsDataS3 = CredentialsService.get_s3_credentials_data_by_access_key(
-            s3_header['access_key_id'])
+            s3_header.access_key_id)
 
         if not s3_credentials:
             raise ForbiddenException("Access denied")
@@ -64,7 +65,7 @@ class S3ServerAuth:
             raise ForbiddenException("Signature is invalid")
 
         # check the signature (it checks the secret key)
-        if expected_signature != s3_header['signature']:
+        if expected_signature != s3_header.signature:
             raise ForbiddenException("Access denied")
 
     @classmethod
@@ -79,14 +80,14 @@ class S3ServerAuth:
 
         # get the list of the headers that are included in the signature
         sign_headers = parts[1].split("SignedHeaders=")[1].split(";")
-        return {
-            'access_key_id': access_key,
-            'request_date': request_date,
-            'region_name': region,
-            'service_name': service,
-            'signature': signature,
-            'sign_headers': sign_headers
-        }
+        return S3AuthHeader(
+            access_key_id=access_key,
+            request_date=request_date,
+            region_name=region,
+            service_name=service,
+            signature=signature,
+            sign_headers=sign_headers
+        )
 
     @classmethod
     def _build_signature(cls, request: Request, header: S3AuthHeader, secret_key: str) -> str:
@@ -94,12 +95,12 @@ class S3ServerAuth:
         """
         # Create a botocore.auth.HmacV1 instance
         # Create SigV4Auth instance
-        credentials = botocore.credentials.Credentials(header['access_key_id'], secret_key)
-        auth = botocore.auth.SigV4Auth(credentials, header['service_name'], header['region_name'])
+        credentials = botocore.credentials.Credentials(header.access_key_id, secret_key)
+        auth = botocore.auth.SigV4Auth(credentials, header.service_name, header.region_name)
 
         # Create a simulated request with the headers that are included in the signature
         simulated_headers = {}
-        for header_key in header['sign_headers']:
+        for header_key in header.sign_headers:
             if header_key in request.headers:
                 simulated_headers[header_key] = request.headers.get(header_key)
 

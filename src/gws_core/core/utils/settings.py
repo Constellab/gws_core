@@ -157,12 +157,7 @@ class Settings():
         :return: [description]
         :rtype: [type]
         """
-        env = os.environ.get("LAB_ENVIRONMENT", 'ON_CLOUD')
-
-        # TODO to remove once all lab_manager are update to v1.0.3
-        if env == 'PROD':
-            return 'ON_CLOUD'
-        return env
+        return os.environ.get("LAB_ENVIRONMENT", 'ON_CLOUD')
 
     @classmethod
     def is_local_env(cls) -> bool:

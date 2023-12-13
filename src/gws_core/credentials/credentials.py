@@ -3,11 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional, final
+from typing import Any, Dict, Optional, final
 
 from peewee import CharField, ModelSelect, TextField
 
 from gws_core.core.classes.enum_field import EnumField
+from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.credentials.credentials_dto import CredentialDTO
 
@@ -22,10 +23,14 @@ class Credentials(ModelWithUser):
 
     description = TextField(null=True)
 
+    data: Dict[str, Any] = JSONField(null=True)
+
     _table_name = "gws_credentials"
 
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        return None
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_saved() and not self.data:
+            self.data = {}
 
     def to_dto(self) -> CredentialDTO:
         return CredentialDTO(

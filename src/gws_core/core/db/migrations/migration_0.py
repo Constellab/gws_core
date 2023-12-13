@@ -6,22 +6,26 @@
 import os
 from copy import deepcopy
 from json import dump
-from typing import Dict, List
+from typing import Dict, List, Type
 
-from peewee import BigIntegerField, CharField, Model
+from peewee import BigIntegerField, CharField
+from peewee import Model as PeeweeModel
 
 from gws_core.brick.brick_helper import BrickHelper
+from gws_core.brick.brick_model import BrickModel
 from gws_core.config.config import Config
-from gws_core.config.param.param_types import ParamSpecDict
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.db.sql_migrator import SqlMigrator
+from gws_core.core.model.model import Model
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.credentials.credentials import Credentials
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
+from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
@@ -33,10 +37,11 @@ from gws_core.lab.monitor.monitor import Monitor
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process_model import ProcessModel
-from gws_core.progress_bar.progress_bar import ProgressBar, ProgressBarMessage
+from gws_core.progress_bar.progress_bar import ProgressBar
 from gws_core.project.project import Project
 from gws_core.project.project_dto import EnumProjectLevelStatus
 from gws_core.protocol.protocol_model import ProtocolModel
+from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.report.report import Report
 from gws_core.report.report_service import ReportService
 from gws_core.resource.r_field.r_field import BaseRField
@@ -48,7 +53,7 @@ from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.tag.entity_tag import EntityTag
-from gws_core.tag.tag import EntityTagValueFormat, TagOriginType
+from gws_core.tag.tag_dto import EntityTagValueFormat, TagOriginType
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
@@ -155,14 +160,14 @@ class Migration039(BrickMigration):
                 for port_name, port in process_model.outputs.ports.items():
                     if port_name in output_resources:
                         port.resource_model = output_resources[port_name]
-                process_model.data["outputs"] = process_model.outputs.to_json()
+                process_model.data["outputs"] = process_model.outputs.to_dto().dict()
 
                 # set port input from input_resources
                 for port_name, port in process_model.inputs.ports.items():
                     if port_name in input_resources:
                         port.resource_model = input_resources[port_name]
 
-                process_model.data["inputs"] = process_model.inputs.to_json()
+                process_model.data["inputs"] = process_model.inputs.to_dto().dict()
 
                 # set brick version
                 typing = TypingManager.get_typing_from_name_and_check(
@@ -206,19 +211,20 @@ class Migration0310(BrickMigration):
         tag_models: List[TagKeyModel] = list(TagKeyModel.select())
 
         order = 0
-        for tag_model in tag_models:
-            tag_model.order = order
-            order += 1
+        raise Exception('This migration is not supported anymore')
+        # for tag_model in tag_models:
+        #     tag_model.order = order
+        #     order += 1
 
-            # force lower case to current tags and convert it to array
-            values = set()
-            # if the migration was not already done
-            if not isinstance(tag_model.data['values'], list):
-                for value in tag_model.data['values'].split(','):
-                    values.add(value.lower())
+        #     # force lower case to current tags and convert it to array
+        #     values = set()
+        #     # if the migration was not already done
+        #     if not isinstance(tag_model.data['values'], list):
+        #         for value in tag_model.data['values'].split(','):
+        #             values.add(value.lower())
 
-                tag_model.data['values'] = list(values)
-                tag_model.save()
+        #         tag_model.data['values'] = list(values)
+        #         tag_model.save()
 
 
 @brick_migration('0.3.12', short_description='Add parent resource to resource model')
@@ -422,7 +428,7 @@ class Migration041(BrickMigration):
 
             progress_bar.current_value = progress_bar_data['value']
 
-            messages: List[ProgressBarMessage] = progress_bar_data['messages']
+            messages: List[dict] = progress_bar_data['messages']
 
             if len(messages) > 0:
                 started_at: str = messages[0]['datetime']
@@ -527,8 +533,8 @@ class Migration044(BrickMigration):
                 config.save()
 
     @classmethod
-    def update_config_spec_json(cls, config_spec_json: ParamSpecDict) -> ParamSpecDict:
-        copy: ParamSpecDict = deepcopy(config_spec_json)
+    def update_config_spec_json(cls, config_spec_json: dict) -> dict:
+        copy: dict = deepcopy(config_spec_json)
 
         specs = {}
 
@@ -805,7 +811,7 @@ class Migration0515(BrickMigration):
                     f'Error while migrating env creation info for env {env["name"]} : {exception}')
 
 
-class ReportResourceModel(Model):
+class ReportResourceModel(PeeweeModel):
     class Meta:
         table_name = 'gws_report_resource'
         database = GwsCoreDbManager.get_db()
@@ -885,14 +891,14 @@ class Migration060(BrickMigration):
                     f'Error while migrating report view for report {report.id} : {exception}')
 
 
-class Comment(Model):
+class Comment(PeeweeModel):
 
     class Meta:
         table_name = "gws_comment"
         database = GwsCoreDbManager.get_db()
 
 
-@brick_migration('0.6.2', short_description='Add level status in project')
+@brick_migration('0.6.2', short_description='Add level status in project, remove generic column data, archived and hash')
 class Migration062(BrickMigration):
 
     @classmethod
@@ -908,4 +914,49 @@ class Migration062(BrickMigration):
 
         migrator.drop_table_if_exists(Comment)
         migrator.drop_table_if_exists(ReportResourceModel)
+        migrator.migrate()
+
+        # remove generic column data, archived and hash
+        models: List[Type[Model]] = Model.inheritors()
+        # list of models to exclude (that use data column)
+        exclude_data = [
+            BrickModel.get_table_name(),
+            Config.get_table_name(),
+            Credentials.get_table_name(),
+            Experiment.get_table_name(),
+            FileStore.get_table_name(),
+            Monitor.get_table_name(),
+            Typing.get_table_name(),
+            TaskModel.get_table_name(),
+            ProtocolModel.get_table_name(),
+            ProgressBar.get_table_name(),
+            ProtocolTemplate.get_table_name(),
+            ResourceModel.get_table_name()]
+        exclude_archive = [Experiment.get_table_name(), TaskModel.get_table_name(), ProtocolModel.get_table_name(),
+                           Report.get_table_name(), ResourceModel.get_table_name()]
+        migrator: SqlMigrator = SqlMigrator(Model.get_db())
+
+        for model in models:
+            if not model.get_table_name():
+                continue
+            if model.get_table_name() not in exclude_data:
+                try:
+                    migrator.drop_column_if_exists(model, 'data')
+                except Exception as exception:
+                    Logger.error(
+                        f'Error while removing data column for model {model.__name__} : {exception}')
+
+            if model.get_table_name() not in exclude_archive:
+                try:
+                    migrator.drop_column_if_exists(model, 'archived')
+                except Exception as exception:
+                    Logger.error(
+                        f'Error while removing archived column for model {model.__name__} : {exception}')
+
+            try:
+                migrator.drop_column_if_exists(model, 'hash')
+            except Exception as exception:
+                Logger.error(
+                    f'Error while removing hash column for model {model.__name__} : {exception}')
+
         migrator.migrate()

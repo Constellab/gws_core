@@ -25,7 +25,8 @@ from gws_core.resource.resource_model_search_builder import \
 from gws_core.resource.resource_service import ResourceService
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag import Tag, TagOrigins, TagOriginType
+from gws_core.tag.tag import Tag, TagOrigins
+from gws_core.tag.tag_dto import TagOriginType
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 

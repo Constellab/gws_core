@@ -7,19 +7,12 @@
 from abc import abstractmethod
 from typing import Type, final
 
-from typing_extensions import TypedDict
-
 from gws_core.io.io_dto import PortDTO
 
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from .io_spec import InputSpec, IOSpec, IOSpecDict, OutputSpec
-
-
-class PortDict(TypedDict):
-    resource_id: str
-    specs: IOSpecDict  # list of supported resource typing names
+from .io_spec import InputSpec, IOSpec, OutputSpec
 
 
 class Port(Base):
@@ -149,22 +142,16 @@ class Port(Base):
             return None
         return self.resource_model.get_resource(new_instance=new_instance)
 
-    def to_json(self) -> PortDict:
-        return {
-            'resource_id': self.resource_model.id if self.resource_model else None,
-            'specs': self.resource_spec.to_json()
-        }
-
     def to_dto(self) -> PortDTO:
-        return {
-            'resource_id': self.resource_model.id if self.resource_model else None,
-            'specs': self.resource_spec.to_dto()
-        }
+        return PortDTO(
+            resource_id=self.resource_model.id if self.resource_model else None,
+            specs=self.resource_spec.to_dto()
+        )
 
     @classmethod
-    def load_from_json(cls, json_: PortDict, name: str) -> 'Port':
+    def load_from_dto(cls, dto: PortDTO, name: str) -> 'Port':
         spec_type: Type[IOSpec] = cls._get_io_spec_type()
-        specs: IOSpec = spec_type.from_json(json_['specs'])
+        specs: IOSpec = spec_type.from_dto(dto.specs)
         return cls(name, specs)
 
     @classmethod
@@ -173,11 +160,6 @@ class Port(Base):
         pass
 
 
-# ####################################################################
-#
-# InPort class
-#
-# ####################################################################
 @final
 class InPort(Port):
     """
@@ -189,11 +171,6 @@ class InPort(Port):
         return InputSpec
 
 
-# ####################################################################
-#
-# OutPort class
-#
-# ####################################################################
 @final
 class OutPort(Port):
     """

@@ -13,7 +13,7 @@ from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.experiment.experiment_enums import (ExperimentProcessStatus,
                                                   ExperimentStatus,
                                                   ExperimentType)
-from gws_core.progress_bar.progress_bar import ProgressBarMessage
+from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.project.project_dto import ProjectDTO
 from gws_core.user.user_dto import UserDTO
 
@@ -29,7 +29,7 @@ class ExperimentSaveDTO(BaseModel):
 class RunningProcessInfo(BaseModelDTO):
     id: str
     title: str
-    last_message: ProgressBarMessage
+    last_message: ProgressBarMessageDTO
     progression: float
 
 

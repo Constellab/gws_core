@@ -10,11 +10,12 @@ from gws_core.core.utils.string_helper import StringHelper
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
-from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDict, OutputSpec
-from gws_core.protocol.protocol_layout import (ProcessLayout, ProtocolLayout,
-                                               ProtocolLayoutDict)
+from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
+from gws_core.protocol.protocol_dto import ProtocolConfigDTO
+from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
+                                               ProtocolLayout,
+                                               ProtocolLayoutDTO)
 from gws_core.protocol.protocol_spec import ConnectorSpec
-from gws_core.protocol.protocol_types import ProtocolConfigDict
 from gws_core.protocol.protocol_update import ProtocolUpdate
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.protocol_template.protocol_template_service import \
@@ -552,7 +553,7 @@ class ProtocolService(BaseService):
     ########################## LAYOUT #####################
 
     @classmethod
-    def save_layout(cls, protocol_id: str, layout_dict: ProtocolLayoutDict) -> None:
+    def save_layout(cls, protocol_id: str, layout_dict: ProtocolLayoutDTO) -> None:
         layout = ProtocolLayout(layout_dict)
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
@@ -561,7 +562,7 @@ class ProtocolService(BaseService):
         protocol_model.save()
 
     @classmethod
-    def save_process_layout(cls, protocol_id: str, process_instance_name: str, layout: ProcessLayout) -> None:
+    def save_process_layout(cls, protocol_id: str, process_instance_name: str, layout: ProcessLayoutDTO) -> None:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
@@ -569,7 +570,7 @@ class ProtocolService(BaseService):
         protocol_model.save()
 
     @classmethod
-    def save_interface_layout(cls, protocol_id: str, interface_name: str, layout: ProcessLayout) -> None:
+    def save_interface_layout(cls, protocol_id: str, interface_name: str, layout: ProcessLayoutDTO) -> None:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
@@ -577,7 +578,7 @@ class ProtocolService(BaseService):
         protocol_model.save()
 
     @classmethod
-    def save_outerface_layout(cls, protocol_id: str, outerface_name: str, layout: ProcessLayout) -> None:
+    def save_outerface_layout(cls, protocol_id: str, outerface_name: str, layout: ProcessLayoutDTO) -> None:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
@@ -665,22 +666,22 @@ class ProtocolService(BaseService):
 
     @classmethod
     def update_dynamic_input_port_of_process(
-            cls, protocol_id: str, process_name: str, port_name: str, io_spec_dict: IOSpecDict) -> ProtocolUpdate:
-        return cls._update_dynamic_port_of_process(protocol_id, process_name, port_name, io_spec_dict, 'input')
+            cls, protocol_id: str, process_name: str, port_name: str, io_spec: IOSpecDTO) -> ProtocolUpdate:
+        return cls._update_dynamic_port_of_process(protocol_id, process_name, port_name, io_spec, 'input')
 
     @classmethod
     def update_dynamic_output_port_of_process(
-            cls, protocol_id: str, process_name: str, port_name: str, io_spec_dict: IOSpecDict) -> ProtocolUpdate:
-        return cls._update_dynamic_port_of_process(protocol_id, process_name, port_name, io_spec_dict, 'output')
+            cls, protocol_id: str, process_name: str, port_name: str, io_spec: IOSpecDTO) -> ProtocolUpdate:
+        return cls._update_dynamic_port_of_process(protocol_id, process_name, port_name, io_spec, 'output')
 
     @classmethod
     @transaction()
     def _update_dynamic_port_of_process(
-            cls, protocol_id: str, process_name: str, port_name: str, io_spec_dict: IOSpecDict,
+            cls, protocol_id: str, process_name: str, port_name: str, io_spec: IOSpecDTO,
             port_type: Literal['input', 'output']) -> ProtocolUpdate:
 
         io_spec_class: Type[IOSpec] = InputSpec if port_type == 'input' else OutputSpec
-        io_spec: IOSpec = io_spec_class.from_json(io_spec_dict)
+        io_spec: IOSpec = io_spec_class.from_dto(io_spec)
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
@@ -724,7 +725,7 @@ class ProtocolService(BaseService):
                 f"The template is not compatible with the current version. {err}")
 
     @classmethod
-    def create_protocol_model_from_graph(cls, graph: ProtocolConfigDict) -> ProtocolModel:
+    def create_protocol_model_from_graph(cls, graph: ProtocolConfigDTO) -> ProtocolModel:
         protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_graph(
             graph=graph)
 

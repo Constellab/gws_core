@@ -10,7 +10,6 @@ from peewee import CharField, ModelSelect
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
-from gws_core.protocol.protocol_types import ProtocolSpecDict
 
 from ..model.typing import Typing
 from ..model.typing_dict import TypingObjectType

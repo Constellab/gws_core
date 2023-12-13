@@ -5,6 +5,8 @@
 
 from peewee import ForeignKeyField
 
+from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
+
 from ...user.current_user_service import CurrentUserService
 from ...user.user import User
 from .model import Model
@@ -31,13 +33,11 @@ class ModelWithUser(Model):
         super()._before_update()
         self.last_modified_by = CurrentUserService.get_and_check_current_user()
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        json_ = super().to_json(deep=deep, **kwargs)
-
-        # add the created by and last_modified_by
-        if self.created_by:
-            json_["created_by"] = self.created_by.to_json()
-
-        if self.last_modified_by:
-            json_["last_modified_by"] = self.last_modified_by.to_json()
-        return json_
+    def to_dto(self) -> ModelWithUserDTO:
+        return ModelWithUserDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_by=self.last_modified_by.to_dto(),
+        )

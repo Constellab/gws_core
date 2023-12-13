@@ -6,8 +6,6 @@
 from enum import Enum
 from typing import Any, Dict, Union
 
-from typing_extensions import TypedDict
-
 from ...config.param.param_spec import ParamSpec
 from .lazy_view_param import LazyViewParam
 
@@ -48,8 +46,3 @@ class ViewType(Enum):
 exluded_views_in_historic = [
     ViewType.VIEW, ViewType.FOLDER, ViewType.RESOURCES_LIST_VIEW, ViewType.EMPTY,
     ViewType.RICH_TEXT]
-
-
-class CallViewParams(TypedDict):
-    values: Dict[str, Any]
-    save_view_config: bool

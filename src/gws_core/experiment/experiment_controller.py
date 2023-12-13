@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 
-from ..core.classes.paginator import PaginatorDict
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
 from .experiment_dto import (ExperimentCountByTitleResultDTO, ExperimentDTO,

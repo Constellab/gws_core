@@ -13,9 +13,10 @@ from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model import Model
 from gws_core.entity_navigator.entity_navigator_type import EntityType
-from gws_core.tag.tag import (EntityTagValueFormat, Tag, TagOrigins,
-                              TagOriginType, TagValueType)
-from gws_core.tag.tag_dto import EntityTagDTO, EntityTagFullDTO
+from gws_core.tag.tag import Tag, TagOrigins, TagValueType
+from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO,
+                                  EntityTagValueFormat, TagOriginDTO,
+                                  TagOriginType)
 from gws_core.tag.tag_helper import TagHelper
 
 
@@ -52,7 +53,7 @@ class EntityTag(Model):
         return self.get_origins().is_user_origin()
 
     def get_origins(self) -> TagOrigins:
-        return TagOrigins.from_json(self.origins)
+        return TagOrigins.from_dto(TagOriginDTO.from_json_list(self.origins))
 
     def set_origins(self, origins: TagOrigins) -> None:
         self.origins = origins.to_json()
