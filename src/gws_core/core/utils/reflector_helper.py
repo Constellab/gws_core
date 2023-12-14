@@ -5,6 +5,8 @@
 import inspect
 from typing import Any, Callable, Dict, List, Tuple
 
+from gws_core.core.utils.refloctor_types import MethodArgDoc, MethodDoc
+
 from ..classes.func_meta_data import FuncArgMetaData, FuncArgsMetaData
 from ..utils.utils import Utils
 
@@ -92,9 +94,9 @@ class ReflectorHelper():
     # TODO: gérer les views
 
     @classmethod
-    def get_methode_named_args_json(cls, method: Any) -> List[Dict[str, Any]]:
+    def get_method_named_args_json(cls, method: Any) -> List[MethodArgDoc]:
         arguments: Dict[str, FuncArgMetaData] = cls.get_function_arguments(method).get_named_args()
-        arguments_json: List[Dict[str, Any]] = []
+        arguments_json: List[MethodArgDoc] = []
         for arg in arguments.items():
             arg_name: str = arg[0]
             arg_type: Any = arg[1].type_
@@ -109,11 +111,11 @@ class ReflectorHelper():
             if not isinstance(arg_default_value, str):
                 arg_default_value = str(arg_default_value)
 
-            arguments_json.append({
-                'arg_name': arg_name,
-                'arg_type': arg_type,
-                'arg_default_value': arg_default_value
-            })
+            arguments_json.append(MethodArgDoc(
+                arg_name=arg_name,
+                arg_type=arg_type,
+                arg_default_value=arg_default_value
+            ))
         return arguments_json
 
     @classmethod
@@ -122,11 +124,12 @@ class ReflectorHelper():
         return any(('@view' in line)for line in source_lines)
 
     @classmethod
-    def get_methods_doc(cls, methods: Any) -> List[Dict[str, Any]]:
-        res: List[Dict[str, Any]] = []
+    def get_methods_doc(cls, methods: Any) -> List[MethodDoc]:
+        res: List[MethodDoc] = []
         for name, method in methods:
             signature: inspect.Signature = inspect.signature(method)
-            arguments: List = cls.get_methode_named_args_json(method)
-            res.append({"name": name, "doc": inspect.getdoc(method), "args": arguments, "return_type": (Utils.stringify_type(
-                signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None)})
+            arguments: List = cls.get_method_named_args_json(method)
+            return_type = Utils.stringify_type(
+                signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None
+            res.append(MethodDoc(name=name, doc=inspect.getdoc(method), args=arguments, return_type=return_type))
         return res

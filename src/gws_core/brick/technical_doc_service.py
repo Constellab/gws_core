@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Type
 from gws_core.brick.technical_doc_dto import (ResourceDocDTO,
                                               ResourceMethodDocDTO,
                                               TechnicalDocDTO)
+from gws_core.core.utils.refloctor_types import MethodDoc
 from gws_core.model.typing_dto import TypingFullDTO
 from gws_core.protocol.protocol_typing import ProtocolTyping
 
@@ -78,7 +79,7 @@ class TechnicalDocService():
         func_methods: Any = [method for method in methods if not ReflectorHelper.is_decorated_with_view(method)]
         public_func_methods: Any = [(m[0], m[1])
                                     for m in func_methods if not m[0].startswith('_') or m[0] == '__init__']
-        funcs: List[Dict[str, Any]] = ReflectorHelper.get_methods_doc(public_func_methods)
+        funcs: List[MethodDoc] = ReflectorHelper.get_methods_doc(public_func_methods)
         return ResourceMethodDocDTO(
             funcs=funcs if len(funcs) > 0 else None,
             views=views_methods_json if len(views_methods_json) > 0 else None

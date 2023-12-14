@@ -6,13 +6,14 @@
 from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.utils.refloctor_types import MethodDoc
 from gws_core.model.typing_dto import TypingFullDTO
 from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
 from gws_core.task.task_dto import TaskTypingDTO
 
 
 class ResourceMethodDocDTO(BaseModelDTO):
-    funcs: Optional[list]
+    funcs: Optional[List[MethodDoc]]
     views: Optional[list]
 
 
