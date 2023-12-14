@@ -39,7 +39,7 @@ from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar
 from gws_core.project.project import Project
-from gws_core.project.project_dto import EnumProjectLevelStatus
+from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.report.report import Report
@@ -907,10 +907,10 @@ class Migration062(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(Project.get_db())
         # migrator.add_column_if_not_exists(Project, Project.level_status)
         migrator.add_column_if_not_exists(Project, EnumField(
-            choices=EnumProjectLevelStatus, default=EnumProjectLevelStatus.LEAF), Project.level_status.column_name)
+            choices=ProjectLevelStatus, default=ProjectLevelStatus.LEAF), Project.level_status.column_name)
         # remove default
         migrator.alter_column_type(Project, Project.level_status.column_name, EnumField(
-            choices=EnumProjectLevelStatus, max_length=20))
+            choices=ProjectLevelStatus, max_length=20))
 
         migrator.drop_table_if_exists(Comment)
         migrator.drop_table_if_exists(ReportResourceModel)

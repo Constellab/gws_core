@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 from gws_core import BaseTestCase, IExperiment, RobotCreate, RobotMove
-from gws_core.protocol.protocol_layout import ProtocolLayout, ProtocolLayoutDTO
+from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
+                                               ProtocolLayout,
+                                               ProtocolLayoutDTO)
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
 
@@ -31,12 +33,14 @@ class TestProtocolLayout(BaseTestCase):
         self.assert_json(layout.get_process('robot_create'), {'x': 10, 'y': 10})
 
         # define ans save a layout
-        dict_layout: ProtocolLayoutDTO = {
-            'process_layouts': {
-                'robot_create': {'x': 0, 'y': 0},
-                'robot_move': {'x': 100, 'y': 100}
-            }
-        }
+        dict_layout = ProtocolLayoutDTO(
+            process_layouts={
+                'robot_create': ProcessLayoutDTO(x=0, y=0),
+                'robot_move': ProcessLayoutDTO(x=100, y=100)
+            },
+            interface_layouts={},
+            outerface_layouts={}
+        )
         # save a complete layout
         ProtocolService.save_layout(protocol_model.id, dict_layout)
 
@@ -44,7 +48,7 @@ class TestProtocolLayout(BaseTestCase):
 
         layout = protocol_model.layout
         self.assertIsInstance(layout, ProtocolLayout)
-        self.assert_json(layout.process_layouts, dict_layout['process_layouts'])
+        self.assert_json(layout.process_layouts, dict_layout.process_layouts)
 
         # remove the process and check that the layout is updated
         protocol_model.remove_process('robot_create')

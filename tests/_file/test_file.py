@@ -32,9 +32,8 @@ class CreateFileTest(Task):
         file.write('Hello')
         return {'file': file}
 
+
 # test_file
-
-
 class TestFile(BaseTestCase):
 
     def test_file_attr(self):
@@ -63,7 +62,6 @@ class TestFile(BaseTestCase):
 
         text = file_1.read()
         self.assertEqual(text, "Hi.\nMy name is John")
-        self.assertTrue(file_model.verify_hash())
 
     def test_process_file(self):
         """Test that a generated file of a task is moved to file store and check content

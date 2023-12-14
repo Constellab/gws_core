@@ -170,7 +170,7 @@ class Config(ModelWithUser):
         """
 
         return ConfigSimpleDTO(
-            specs=self.data["specs"],
+            specs=ConfigSpecsHelper.config_specs_to_dto(self.get_specs(), skip_private=False),
             values=self.get_and_check_values()
         )
 

@@ -7,11 +7,13 @@ from typing import Dict, List, Optional
 
 from pydantic import Field
 
+from gws_core.config.config_dto import ConfigSimpleDTO
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.io.io_dto import IODTO
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing_dto import TypingFullDTO
 from gws_core.process.process_dto import ProcessDTO
-from gws_core.process.process_types import ProcessConfigDTO, ProcessMinimumDTO
+from gws_core.process.process_types import ProcessMinimumDTO
 from gws_core.protocol.protocol_layout import ProtocolLayoutDTO
 
 
@@ -50,11 +52,30 @@ class InterfaceDTO(BaseModelDTO):
 
 
 class ProtocolConfigDTO(BaseModelDTO):
-    nodes: Dict[str, ProcessConfigDTO]
+    nodes: Dict[str, 'ProcessConfigDTO']
     links: List[ConnectorDTO]
     interfaces: Dict[str, InterfaceDTO]
     outerfaces: Dict[str, InterfaceDTO]
     layout: Optional[ProtocolLayoutDTO]
+
+# set this type here to avoid circular import files
+
+
+class ProcessConfigDTO(BaseModelDTO):
+    process_typing_name: str
+    instance_name: str
+    config: ConfigSimpleDTO
+    human_name: Optional[str]
+    short_description: Optional[str]
+    brick_version: str
+    inputs: IODTO
+    outputs: IODTO
+    status: str
+    # for sub protocol, recursive graph
+    graph: Optional[ProtocolConfigDTO] = None
+
+
+ProtocolConfigDTO.update_forward_refs()
 
 
 class ProtocolMinimumDTO(BaseModelDTO):

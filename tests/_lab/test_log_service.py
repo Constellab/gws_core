@@ -11,7 +11,8 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.log.log import LogCompleteInfo, LogsBetweenDates
-from gws_core.lab.log.log_service import LogService, LogsStatus
+from gws_core.lab.log.log_dto import LogsStatusDTO
+from gws_core.lab.log.log_service import LogService
 
 
 # test_log_service
@@ -23,17 +24,17 @@ class TestLogService(TestCase):
     def test_get_logs_status(self):
         Logger.info('test_get_logs_status')
 
-        logs_status: LogsStatus = LogService.get_logs_status()
+        logs_status: LogsStatusDTO = LogService.get_logs_status()
 
-        self.assertEqual(logs_status['log_folder'], Settings.get_instance().get_log_dir())
-        self.assertEqual(len(logs_status['log_files']), 3)
+        self.assertEqual(logs_status.log_folder, Settings.get_instance().get_log_dir())
+        self.assertEqual(len(logs_status.log_files), 3)
 
-        log_info = logs_status['log_files'][0]
-        self.assertEqual(log_info['name'], 'log')
-        self.assertTrue(log_info['file_size'] > 0)
+        log_info = logs_status.log_files[0]
+        self.assertEqual(log_info.name, 'log')
+        self.assertTrue(log_info.file_size > 0)
 
         # get complete log
-        log_complete_info: LogCompleteInfo = LogService.get_log_complete_info(log_info['name'])
+        log_complete_info: LogCompleteInfo = LogService.get_log_complete_info(log_info.name)
         self.assertIsNotNone(log_complete_info.log_info)
 
         content = log_complete_info.content

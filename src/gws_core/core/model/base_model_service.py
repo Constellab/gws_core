@@ -16,7 +16,7 @@ from .base_model import BaseModel
 
 
 class DbWithModels(BaseModelDTO):
-    db_manager: AbstractDbManager
+    db_manager: Type[AbstractDbManager]
     models: List[Type[BaseModel]]
 
 

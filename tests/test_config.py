@@ -18,7 +18,7 @@ class TestConfig(BaseTestCase):
             'moving_step':  FloatParam(default_value=0.1)
         }
 
-        config: Config = Config()
+        config = Config()
         config.set_specs(specs)
 
         config_params = ParamSpecHelper.build_config_params(
@@ -30,16 +30,16 @@ class TestConfig(BaseTestCase):
         self.assertEqual(config.get_and_check_values(), {'moving_step': 4.5})
         self.assertEqual(config.get_value('moving_step'), 4.5)
 
-        self.assert_json(config.data, {"specs": {'moving_step': {"type": "float", "default_value": 0.1, "optional": True,
-                         "visibility": "public", "additional_info": {"min_value": None, "max_value": None}}, }, "values": {'moving_step': 4.5}})
-
         config.save()
         config2: Config = Config.get_by_id(config.id)
         self.assertEqual(config2.data, config.data)
+        self.assertIsNotNone(config2.get_specs().get('moving_step'))
+        self.assertIsInstance(config2.get_specs().get('moving_step'), FloatParam)
+        self.assertEqual(config2.get_values().get('moving_step'), 4.5)
 
     def test_task_config(self):
 
-        robot_move: TaskModel = ProcessFactory.create_task_model_from_type(
+        robot_move = ProcessFactory.create_task_model_from_type(
             RobotMove)
         self.assertEqual(robot_move.config.get_value("moving_step"), 0.1)
         robot_move.config.set_value("moving_step", 0.3)
@@ -55,13 +55,13 @@ class TestConfig(BaseTestCase):
         }
 
         # Check an optional config
-        config: Config = Config()
+        config = Config()
         config.set_specs(specs)
         config.set_values({"moving_step": 1.1})
         self.assertEqual(config.get_and_check_values(), {"moving_step": 1.1, "optional": 0.1})
 
         # Check a missing config
-        config: Config = Config(specs=specs)
+        config = Config(specs=specs)
         config.set_specs(specs)
         config.set_values({"optional": 1.1})
 
@@ -75,8 +75,9 @@ class TestConfig(BaseTestCase):
         self.assertRaises(Exception, FloatParam, visibility="wrong")
 
         # Test that the config private are not returned in json
-        config: Config = Config()
+        config = Config()
         config.set_specs({'float_1': float_1, 'float_2': float_2})
+        config.save()
 
         json_specs = config.to_dto().specs
         self.assertTrue('float_1' in json_specs)

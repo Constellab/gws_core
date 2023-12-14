@@ -5,7 +5,10 @@
 
 from datetime import datetime
 from enum import Enum
+from json import dumps
 from typing import List, Union
+
+from fastapi.encoders import jsonable_encoder
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.tag.tag_dto import TagDTO, TagOriginDTO, TagOriginType
@@ -121,7 +124,7 @@ class TagOrigins():
         self._origins = [TagOrigin(origin_type, origin_id)]
 
     def to_json(self) -> List[dict]:
-        return [origin.dict() for origin in self.to_dto()]
+        return jsonable_encoder([origin for origin in self.to_dto()])
 
     def to_dto(self) -> List[TagOriginDTO]:
         return [origin.to_dto() for origin in self._origins]

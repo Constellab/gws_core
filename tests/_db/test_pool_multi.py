@@ -27,6 +27,12 @@ def _simple_select(_):
 # test_pool_multi
 class TestPoolMulti(TestCase):
 
+    # clean the table and db connection after the test (required if other tests are run after)
+    @classmethod
+    def tearDownClass(cls):
+        TestTable.get_db_manager().close_db()
+        TestTable.drop_table()
+
     def test_pool_multi(self):
         """ We test that the pool reset the db so sub the processes can use it
         So we open the db before the pool and close it after"""

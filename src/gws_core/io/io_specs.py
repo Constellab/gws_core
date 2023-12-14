@@ -30,12 +30,18 @@ class OutputsCheckResult(BaseModelDTO):
     error: Optional[str]
     outputs: Optional[TaskOutputs]
 
+    class Config:
+        arbitrary_types_allowed = True
+
 
 class OutputCheckResult(BaseModelDTO):
     """OutputCheckResult type
     """
     error: Optional[str]
     resource: Optional[Resource]
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class IOSpecs():

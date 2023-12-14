@@ -132,7 +132,7 @@ class LogCompleteInfo():
         self.content = content
 
     def get_log_file_date(self) -> date:
-        name = self.log_info["name"]
+        name = self.log_info.name
         return Logger.file_name_to_date(name).date()
 
     def get_log_lines_by_time(self, start_time: datetime, end_time: datetime,

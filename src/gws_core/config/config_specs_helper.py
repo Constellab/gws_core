@@ -24,13 +24,13 @@ class ConfigSpecsHelper():
             raise BadRequestException("The specs must be a dictionnary")
 
     @classmethod
-    def config_specs_to_dto(cls, specs: ConfigSpecs) -> Dict[str, ParamSpecDTO]:
+    def config_specs_to_dto(cls, specs: ConfigSpecs, skip_private: bool = True) -> Dict[str, ParamSpecDTO]:
         """convert the config specs to json
         """
         json_: Dict[str, Any] = {}
         for key, spec in specs.items():
             # skip private params
-            if spec.visibility == "private":
+            if skip_private and spec.visibility == "private":
                 continue
             json_[key] = spec.to_dto()
 

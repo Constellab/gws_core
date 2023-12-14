@@ -235,20 +235,21 @@ class ProcessFactory():
         :rtype": Protocol
         """
 
-        protocol.build_from_graph(
-            graph=graph, sub_process_factory=SubProcessBuilderCreate())
+        protocol.init_protocol(sub_process_factory=SubProcessBuilderCreate(graph),
+                               interfaces=graph.interfaces,
+                               outerfaces=graph.outerfaces)
 
         for key, process in protocol.processes.items():
             if isinstance(process, ProtocolModel):
                 cls._create_protocol_model_from_graph_recur(
-                    protocol=process, graph=graph["nodes"][key]["graph"])
+                    protocol=process, graph=graph.nodes[key].graph)
 
         # Init the connector afterward because its needs the child to init correctly
-        protocol.init_connectors_from_graph(graph["links"])
+        protocol.init_connectors_from_graph(graph.links)
 
         # set layout
-        if graph.get("layout") is not None:
-            protocol.layout = ProtocolLayout(graph["layout"])
+        if graph.layout is not None:
+            protocol.layout = ProtocolLayout(graph.layout)
 
         return protocol
 
@@ -321,7 +322,7 @@ class ProcessFactory():
         :return: [description]
         :rtype: ProtocolModel
         """
-        return cls.create_protocol_model_from_graph(protocol_model.to_config_dto())
+        return cls.create_protocol_model_from_graph(protocol_model.to_protocol_config_dto())
 
       ############################################### SPECIFIC #################################################
 

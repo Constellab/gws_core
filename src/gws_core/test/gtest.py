@@ -5,6 +5,7 @@
 
 
 from gws_core.project.project import Project
+from gws_core.project.project_dto import ProjectLevelStatus
 
 from ..core.console.console import Console
 
@@ -21,4 +22,6 @@ class GTest(Console):
         """
         Get a default Project
         """
-        return Project(title="Default project", description="Project description").save()
+        return Project(title="Default project",
+                       description="Project description",
+                       level_status=ProjectLevelStatus.LEAF).save()

@@ -27,26 +27,17 @@ class TestEnvShellProxy(TestCase):
     def test_pip_shell_proxy(self):
         pip_env_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                     "penv", "env_jwt_pip.txt")
-
-        print('--------------------------------PIP ENV FILE----------------------------')
         self._test_env_shell_proxy(PipShellProxy, 'MyPipTestEnvironment', pip_env_file)
-        print('--------------------------------END PIP ENV FILE--------------------------------')
 
     def test_conda_shell_proxy(self):
         conda_env_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                       "penv", "env_jwt_conda.yml")
-
-        print('--------------------------------CONDA ENV FILE--------------------------------')
         self._test_env_shell_proxy(CondaShellProxy, 'MyCondaTestEnvironment', conda_env_file)
-        print('--------------------------------END CONDA ENV FILE--------------------------------')
 
     def test_mamba_shell_proxy(self):
         conda_env_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                       "penv", "env_jwt_conda.yml")
-
-        print('--------------------------------MAMBA ENV FILE--------------------------------')
         self._test_env_shell_proxy(MambaShellProxy, 'MyMambaTestEnvironment', conda_env_file)
-        print('--------------------------------END MAMBA ENV FILE--------------------------------')
 
     def _test_env_shell_proxy(self, shell_proxy_type: Type[BaseEnvShell], env_name: str,
                               env_file_path: str):

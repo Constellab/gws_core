@@ -22,6 +22,7 @@ from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessStatus
 from gws_core.project.project import Project
+from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.task.plug import Sink
 
@@ -31,10 +32,9 @@ class TestExperiment(BaseTestCase):
 
     def test_create_empty(self):
 
-        project: Project = Project(title="Project")
+        project = Project(title="Project", level_status=ProjectLevelStatus.LEAF)
         project.save()
-        experiment_dto: ExperimentSaveDTO = ExperimentSaveDTO(
-            title="Experiment title", project_id=project.id)
+        experiment_dto = ExperimentSaveDTO(title="Experiment title", project_id=project.id)
         experiment = ExperimentService.create_experiment_from_dto(
             experiment_dto)
 
@@ -50,7 +50,7 @@ class TestExperiment(BaseTestCase):
 
     def test_run(self):
         # test setting the project to the experiment
-        project: Project = Project(title="First project")
+        project = Project(title="First project", level_status=ProjectLevelStatus.LEAF)
         project.save()
 
         experiment_count = Experiment.select().count()
@@ -60,9 +60,9 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(Experiment.count_running_or_queued_experiments(), 0)
 
         # Create experiment 1
-        proto1: ProtocolModel = RobotService.create_robot_simple_travel()
+        proto1 = RobotService.create_robot_simple_travel()
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+        experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=proto1, title="My exp title", project=project)
 
         self.assertEqual(Experiment.select().count(), experiment_count + 1)
@@ -95,13 +95,12 @@ class TestExperiment(BaseTestCase):
         self.assertIsNone(experiment.pid)
 
         # refresh experiment
-        experiment = Experiment.get_by_id_and_check(
-            experiment.id)
+        experiment: Experiment = Experiment.get_by_id_and_check(experiment.id)
 
         # Test the configuration on fly_1 process (west 2000)
-        move_1: ProcessModel = experiment.protocol_model.get_process('move_1')
+        move_1 = experiment.protocol_model.get_process('move_1')
         # check that the resource was associated to the project
-        robot1_model: ResourceModel = move_1.inputs.get_resource_model('robot')
+        robot1_model = move_1.inputs.get_resource_model('robot')
         self.assertEqual(robot1_model.project.id, project.id)
         robot1: Robot = robot1_model.get_resource()
 
@@ -114,7 +113,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(spec.resource_types, [Robot])
 
         # Test update the project of the experiment
-        project2: Project = Project(title="Second project")
+        project2 = Project(title="Second project", level_status=ProjectLevelStatus.LEAF)
         project2.save()
 
         ExperimentService.update_experiment_project(experiment.id, project2.id)

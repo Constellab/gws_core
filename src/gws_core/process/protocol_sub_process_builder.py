@@ -4,11 +4,13 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import Optional, Type
+from typing import Dict, Optional, Type
 
 from gws_core.model.typing import Typing
-from gws_core.process.process_types import ProcessConfigDTO, ProcessMinimumDTO
 from gws_core.protocol.protocol import Protocol
+from gws_core.protocol.protocol_dto import (ProcessConfigDTO,
+                                            ProtocolConfigDTO,
+                                            ProtocolMinimumDTO)
 from gws_core.task.task import Task
 
 from ..config.config_types import ConfigParamsDict
@@ -21,11 +23,15 @@ from .process_model import ProcessModel
 
 
 class ProtocolSubProcessBuilder():
-    """Builder used by the ProtocolModel build method to instantiate processs of Protocol form the node json Dict
+    """Builder used by the ProtocolModel build method to instantiate processs of Protocol base on a DTO
     """
 
     @abstractmethod
-    def instantiate_process_from_json(self, node_json: dict, instance_name: str) -> ProcessModel:
+    def instantiate_processes(self) -> Dict[str, ProcessModel]:
+        pass
+
+    @abstractmethod
+    def instantiate_process(self, instance_name: str) -> ProcessModel:
         pass
 
 
@@ -34,8 +40,20 @@ class SubProcessBuilderReadFromDb(ProtocolSubProcessBuilder):
     from the DB
     """
 
-    def instantiate_process_from_json(self, node_json: dict, instance_name: str) -> ProcessModel:
-        process_dto = ProcessMinimumDTO.from_json(node_json)
+    protocol_config: ProtocolMinimumDTO
+
+    def __init__(self, protocol_config: ProtocolMinimumDTO) -> None:
+        super().__init__()
+        self.protocol_config = protocol_config
+
+    def instantiate_processes(self) -> Dict[str, ProcessModel]:
+        processes: Dict[str, ProcessModel] = {}
+        for instance_name in self.protocol_config.nodes.keys():
+            processes[instance_name] = self.instantiate_process(instance_name)
+        return processes
+
+    def instantiate_process(self, instance_name: str) -> ProcessModel:
+        process_dto = self.protocol_config.nodes[instance_name]
         proc_id: str = process_dto.id
 
         proc_type_str: str = process_dto.process_typing_name
@@ -60,8 +78,20 @@ class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
     It requires a ProcessConfigDict instead of a ProcessMinimumDict
     """
 
-    def instantiate_process_from_json(self, node_json: dict, instance_name: str) -> ProcessModel:
-        process_dto = ProcessConfigDTO.from_json(node_json)
+    protocol_config: ProtocolConfigDTO
+
+    def __init__(self, protocol_config: ProtocolConfigDTO) -> None:
+        super().__init__()
+        self.protocol_config = protocol_config
+
+    def instantiate_processes(self) -> Dict[str, ProcessModel]:
+        processes: Dict[str, ProcessModel] = {}
+        for instance_name in self.protocol_config.nodes.keys():
+            processes[instance_name] = self.instantiate_process(instance_name)
+        return processes
+
+    def instantiate_process(self, instance_name: str) -> ProcessModel:
+        process_dto = self.protocol_config.nodes[instance_name]
         process_type_str: str = process_dto.process_typing_name
         process_type: Type[Process] = TypingManager.get_type_from_name(process_type_str)
 

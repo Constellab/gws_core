@@ -109,7 +109,7 @@ class TaskRunner():
             raise Exception(f"KeyError : {str(exception)}")
         except Exception as exception:
             self.force_dispatch_waiting_messages()
-            raise exception
+            raise exception from exception
 
         self.force_dispatch_waiting_messages()
         return self._check_outputs(task_outputs)

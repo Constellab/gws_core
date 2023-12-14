@@ -23,7 +23,6 @@ class LogInfo(BaseModelDTO):
 
 
 class LogsStatusDTO(BaseModelDTO):
-
     log_folder: str
     log_files: List[LogInfo]
 

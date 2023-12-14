@@ -16,6 +16,7 @@ from gws_core.model.typing import Typing
 from gws_core.model.typing_dict import TypingStatus
 from gws_core.process.process_dto import ProcessDTO
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
+from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.task.plug import Sink, Source
 
 from ..config.config import Config
@@ -35,8 +36,7 @@ from ..progress_bar.progress_bar import ProgressBar
 from ..user.user import User
 from .process import Process
 from .process_exception import ProcessRunException
-from .process_types import (ProcessConfigDTO, ProcessErrorInfo,
-                            ProcessMinimumDTO, ProcessStatus)
+from .process_types import ProcessErrorInfo, ProcessMinimumDTO, ProcessStatus
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
@@ -480,7 +480,7 @@ class ProcessModel(ModelWithUser):
             brick_version=self.brick_version,
             inputs=self.inputs.to_dto(),
             outputs=self.outputs.to_dto(),
-            status=self.status.value,
+            status=self.status.value
         )
 
     ########################### STATUS MANAGEMENT ##################################

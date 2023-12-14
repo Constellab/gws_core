@@ -3,16 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
 
-from gws_core import Experiment, Robot
+from gws_core import Robot
 from gws_core.core.classes.rich_text_content import (RichTextI,
-                                                     RichTextResourceView,
                                                      RichTextSpecialOps)
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.project.project import Project
+from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.report.report import Report, ReportExperiment
 from gws_core.report.report_dto import ReportSaveDTO
 from gws_core.report.report_service import ReportService
@@ -27,11 +26,9 @@ from gws_core.test.base_test_case import BaseTestCase
 class TestReport(BaseTestCase):
 
     def test_report(self):
-        project = Project()
-        project.title = 'Project'
-        project = project.save()
-        # test create an empty report
+        project = Project(title='Project', level_status=ProjectLevelStatus.LEAF).save()
 
+        # test create an empty report
         report = ReportService.create(ReportSaveDTO(title='Test report'))
 
         self.assertIsInstance(report, Report)
@@ -44,31 +41,31 @@ class TestReport(BaseTestCase):
         report = ReportService.update_content(report.id, content)
         self.assert_json(report.content, content)
 
-        experiment: Experiment = ExperimentService.create_experiment()
+        experiment = ExperimentService.create_experiment()
 
         # Create a second experiment with a report
-        experiment_2: Experiment = ExperimentService.create_experiment()
+        experiment_2 = ExperimentService.create_experiment()
         report_2 = ReportService.create(ReportSaveDTO(title='Report 2'), [experiment_2.id])
 
         # Add exp 1 on report 1
         ReportService.add_experiment(report.id, experiment.id)
-        reports: List[Report] = ReportService.get_by_experiment(experiment.id)
+        reports = ReportService.get_by_experiment(experiment.id)
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].id, report.id)
 
         # Check that report_2 ha an experiment
-        reports: List[Report] = ReportService.get_by_experiment(experiment_2.id)
+        reports = ReportService.get_by_experiment(experiment_2.id)
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].id, report_2.id)
 
         # Check get experiment by report
-        experiments: List[Experiment] = ReportService.get_experiments_by_report(report.id)
+        experiments = ReportService.get_experiments_by_report(report.id)
         self.assertEqual(len(experiments), 1)
         self.assertEqual(experiments[0].id, experiment.id)
 
         # Test remove experiment
         ReportService.remove_experiment(report.id, experiment.id)
-        reports: List[Report] = ReportService.get_by_experiment(experiment.id)
+        reports = ReportService.get_by_experiment(experiment.id)
         self.assertEqual(len(reports), 0)
 
         # Try to validate report_2, but there should be an error because the experiment is not validated
@@ -99,7 +96,7 @@ class TestReport(BaseTestCase):
         view_result = ResourceService.call_view_on_resource_model(resource_model, "view_as_json", {}, True)
 
         # simulate the rich text with resource id
-        rich_text_resource_view: RichTextResourceView = view_result.view_config.to_rich_text_resource_view()
+        rich_text_resource_view = view_result.view_config.to_rich_text_resource_view()
         operation = {"insert": {RichTextSpecialOps.RESOURCE_VIEW.value: rich_text_resource_view}}
 
         # update report content
@@ -150,20 +147,20 @@ class TestReport(BaseTestCase):
         rich_text = report_db.get_content_as_rich_text()
 
         # check that a view exist in the rich text
-        resource_views: List[RichTextResourceView] = rich_text.get_resource_views()
+        resource_views = rich_text.get_resource_views()
         self.assertEqual(len(resource_views), 1)
         self.assertEqual(resource_views[0]['view_method_name'], "view_as_string")
         self.assertEqual(resource_views[0]['resource_id'], robot_model.id)
 
         # verify that the report was automatically associated with the experiment
-        self.assertEqual(ReportExperiment.find_by_pk(experiment._experiment.id, report.id).count(), 1)
+        self.assertEqual(ReportExperiment.find_by_pk(experiment.get_experiment_model().id, report.id).count(), 1)
 
         with self.assertRaises(Exception):
             # Check that we cannot remove the experiment because of the view
-            ReportService.remove_experiment(report.id, experiment._experiment.id)
+            ReportService.remove_experiment(report.id, experiment.get_experiment_model().id)
 
         # remove the view from the report
         ReportService.update_content(report.id, {"ops": []})
 
         # Check that we cannot remove the experiment because of the view
-        ReportService.remove_experiment(report.id, experiment._experiment.id)
+        ReportService.remove_experiment(report.id, experiment.get_experiment_model().id)

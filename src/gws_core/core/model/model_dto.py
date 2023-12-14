@@ -6,6 +6,7 @@
 from datetime import datetime
 from typing import Dict, Generic, List, Type, TypeVar
 
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
 
@@ -16,6 +17,12 @@ class BaseModelDTO(BaseModel):
     """
     ModelDTO class.
     """
+
+    def to_json_dict(self) -> dict:
+        """
+        Convert a ModelDTO to a json dictionary. This dict can be serialized.
+        """
+        return jsonable_encoder(self)
 
     @classmethod
     def from_json(cls: Type[BaseModelDTOType], json_: dict) -> BaseModelDTOType:

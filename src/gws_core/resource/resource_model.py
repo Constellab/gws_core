@@ -124,6 +124,18 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
 
         return result
 
+    @transaction()
+    def archive(self, archive: bool) -> 'ResourceModel':
+        """
+        Archive the process
+        """
+
+        if self.is_archived == archive:
+            return self
+
+        self.is_archived = archive
+        return self.save()
+
     @classmethod
     def delete_multiple_resources(cls, resources: List[ResourceModel]):
         # sort the resources to have children resources before their parents to prevent error with

@@ -7,6 +7,7 @@
 from typing import List
 
 from peewee import BooleanField, CharField, Expression, ModelSelect
+from pydantic import parse_obj_as
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.expression_builder import ExpressionBuilder
@@ -115,9 +116,9 @@ class EntityTag(Model):
         entity_tag: EntityTag = EntityTag(
             tag_key=tag.key, value_format=value_format,
             entity_id=entity_id, entity_type=entity_type,
-            is_propagable=tag.is_propagable,
-            origins=tag.origins.to_json())
+            is_propagable=tag.is_propagable)
         entity_tag.set_value(tag.value)
+        entity_tag.set_origins(tag.origins)
         return entity_tag.save()
 
     @classmethod

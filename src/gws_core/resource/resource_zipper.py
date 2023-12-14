@@ -32,7 +32,7 @@ class ZipResource(BaseModelDTO):
     resource_typing_name: str
     brick_version: str
     data: dict
-    parent_resource_id: str
+    parent_resource_id: Optional[str]
     kvstore_dir_name: Optional[str]
     tags: List[TagDTO]
 
@@ -43,7 +43,7 @@ class ZipResource(BaseModelDTO):
 class ZipResourceInfo(BaseModelDTO):
     """ Content of the info.json file in the zip file when a resource is zipped"""
     zip_version: int
-    resource: ZipResource
+    resource: Optional[ZipResource]
     children_resources: List[ZipResource]
     origin: ExternalLabWithUserInfo
 
@@ -147,7 +147,7 @@ class ResourceZipper():
         # add the info.json file
         info_json = os.path.join(self.temp_dir, self.INFO_JSON_FILE_NAME)
         with open(info_json, 'w', encoding='UTF-8') as file:
-            dump(self.resource_info, file)
+            dump(self.resource_info.to_json_dict(), file)
 
         self.zip.add_file(info_json, file_name=self.INFO_JSON_FILE_NAME)
 

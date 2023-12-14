@@ -6,16 +6,14 @@
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
-from gws_core.core.classes.paginator import Paginator
 from gws_core.experiment.experiment_dto import ExperimentSaveDTO
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
-from gws_core.io.io_spec import InputSpec
+from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
-from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.protocol_template.protocol_template_service import \
     ProtocolTemplateService
 from gws_core.resource.resource import Resource
@@ -63,7 +61,7 @@ class TestGenerator(Task):
     Here is the documentation of the live task: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/python-live-task
     """
 
-    output_specs: OutputSpecs = OutputSpecs({'resource': InputSpec(Resource)})
+    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(Resource)})
     config_specs: ConfigSpecs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -79,7 +77,7 @@ class TestProtocolTemplate(BaseTestCase):
         init_count_task = TaskModel.select().count()
 
         # create a chain
-        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(
+        proto = ProtocolService.create_protocol_model_from_type(
             TestNestedProtocol)
 
         # configure the process to check config in template
@@ -92,18 +90,18 @@ class TestProtocolTemplate(BaseTestCase):
         count_task = TaskModel.select().count() - init_count_task
 
         # create a template
-        template: ProtocolTemplate = ProtocolService.create_protocol_template_from_id(
+        template = ProtocolService.create_protocol_template_from_id(
             protocol_id=proto.id, name='test_protocol_template')
 
         # get the template
-        template_db: ProtocolTemplate = ProtocolTemplateService.get_by_id_and_check(template.id)
+        template_db = ProtocolTemplateService.get_by_id_and_check(template.id)
 
         self.assertEqual(template_db.name, 'test_protocol_template')
-        self.assertIsNotNone(template_db.get_template()['nodes'])
+        self.assertIsNotNone(template_db.get_template().nodes)
         # check the sub protocol is in the template
-        self.assertIsNotNone(template_db.get_template()['nodes']['mini_proto']['graph'])
-        self.assertIsNotNone(template_db.get_template()['links'])
-        self.assertIsNotNone(template_db.get_template()['layout'])
+        self.assertIsNotNone(template_db.get_template().nodes['mini_proto'].graph)
+        self.assertIsNotNone(template_db.get_template().links)
+        self.assertIsNotNone(template_db.get_template().layout)
         self.assertIsNotNone(template_db.to_full_dto())
 
         # update the template
@@ -114,7 +112,7 @@ class TestProtocolTemplate(BaseTestCase):
         self.assertEqual(template_db.name, 'new_name')
 
         # test search
-        paginator: Paginator = ProtocolTemplateService.search_by_name('ew_na')
+        paginator = ProtocolTemplateService.search_by_name('ew_na')
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, template_db.id)
 
@@ -127,7 +125,7 @@ class TestProtocolTemplate(BaseTestCase):
 
         # get check of created protocol and task, connector,  interface,
         # outerface, config and layout
-        main_proto: ProtocolModel = experiment.protocol_model
+        main_proto = experiment.protocol_model
         self.assertEqual(len(main_proto.connectors), 2)
         # check config
         self.assertEqual(main_proto.get_process('p5').config.get_value('food_weight'), 1000.0)
@@ -178,7 +176,7 @@ class TestProtocolTemplate(BaseTestCase):
             i += 1
 
         # create a template
-        template: ProtocolTemplate = ProtocolService.create_protocol_template_from_id(
+        template = ProtocolService.create_protocol_template_from_id(
             protocol_id=protocol.get_model().id, name='test_dynamic')
 
         # Test create an experiment from a template

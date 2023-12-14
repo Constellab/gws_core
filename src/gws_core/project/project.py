@@ -9,7 +9,7 @@ from peewee import CharField, ForeignKeyField, ModelSelect
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.model import Model
-from gws_core.project.project_dto import (EnumProjectLevelStatus, ProjectDTO,
+from gws_core.project.project_dto import (ProjectDTO, ProjectLevelStatus,
                                           ProjectTreeDTO)
 
 
@@ -20,7 +20,7 @@ class Project(Model):
     code: str = CharField(null=False, max_length=20, default='')
     title: str = CharField(null=False, max_length=50)
     parent = ForeignKeyField('self', null=True, backref='children', on_delete='CASCADE')
-    level_status = EnumField(choices=EnumProjectLevelStatus, max_length=20)
+    level_status = EnumField(choices=ProjectLevelStatus, max_length=20)
 
     children: List['Project']
 

@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from gws_core.core.model.model_dto import ModelDTO
 
 
-class EnumProjectLevelStatus(Enum):
+class ProjectLevelStatus(Enum):
     PARENT = 'PARENT'
     LEAF = 'LEAF'
 
@@ -22,13 +22,13 @@ class SpaceProject(BaseModel):
     code: str
     title: str
     children: Optional[List['SpaceProject']]
-    levelStatus: EnumProjectLevelStatus
+    levelStatus: ProjectLevelStatus
 
 
 class ProjectDTO(ModelDTO):
     code: str
     title: str
-    levelStatus: EnumProjectLevelStatus
+    levelStatus: ProjectLevelStatus
 
 
 class ProjectTreeDTO(ProjectDTO):

@@ -52,14 +52,8 @@ class TestEnvLiveTask(TestCase):
             inputs={"source": File(source)},
         )
 
-        logger = tester.add_log_observer()
+        outputs = tester.run()
 
-        try:
-            outputs = tester.run()
-        except Exception:
-            self.assertTrue(logger.has_message_containing('No such file or directory',
-                                                          level=MessageLevel.ERROR))
-            return
         target: File = outputs["target"]
 
         self.assertTrue(isinstance(target, File))

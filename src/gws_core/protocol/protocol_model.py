@@ -7,6 +7,7 @@ from typing import Dict, List, Literal, Optional, Set
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.protocol.protocol_dto import (ConnectorDTO, InterfaceDTO,
+                                            ProcessConfigDTO,
                                             ProtocolConfigDTO, ProtocolDTO,
                                             ProtocolFullDTO,
                                             ProtocolMinimumDTO)
@@ -20,7 +21,7 @@ from ..io.io import Inputs, Outputs
 from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort, Port
 from ..process.process_model import ProcessModel
-from ..process.process_types import ProcessConfigDTO, ProcessStatus
+from ..process.process_types import ProcessStatus
 from ..process.protocol_sub_process_builder import (
     ProtocolSubProcessBuilder, SubProcessBuilderReadFromDb)
 from ..user.user import User
@@ -131,34 +132,41 @@ class ProtocolModel(ProcessModel):
         if self._is_loaded:
             return
 
-        self.build_from_graph(
-            graph=self.data["graph"], sub_process_factory=SubProcessBuilderReadFromDb())
+        graph = self.get_graph()
+        if graph is None:
+            return
+
+        self.init_protocol(
+            sub_process_factory=SubProcessBuilderReadFromDb(graph),
+            interfaces=graph.interfaces,
+            outerfaces=graph.outerfaces)
         self._is_loaded = True
 
-    def build_from_graph(self, graph: dict,
-                         sub_process_factory: ProtocolSubProcessBuilder) -> None:
-        """
-        Construct a Protocol instance using a setting dump.
-
-        :return: The protocol
-        :rtype: Protocol
-        """
-        if not isinstance(graph, dict):
-            return
-        if not isinstance(graph.get("nodes"), dict) or not graph["nodes"]:
-            return
+    def init_protocol(self,  sub_process_factory: ProtocolSubProcessBuilder,
+                      interfaces: Dict[str, InterfaceDTO],
+                      outerfaces: Dict[str, InterfaceDTO]) -> None:
 
         # init processes and sub processes
-        self._init_processes_from_graph(graph["nodes"], sub_process_factory)
+        self._init_processes_from_graph(sub_process_factory)
 
         # init interfaces and outerfaces
-        self._init_interfaces_from_graph(graph["interfaces"])
-        self._init_outerfaces_from_graph(graph["outerfaces"])
+        self.init_interfaces_from_graph(interfaces)
+        self.init_outerfaces_from_graph(outerfaces)
 
     def refresh_graph_from_dump(self) -> None:
         """Refresh the graph json obnject inside the data from the dump method
         """
         self.data["graph"] = self.to_protocol_minimum_dto().dict()
+
+    def get_graph(self) -> ProtocolMinimumDTO:
+        """Return the graph json object
+        """
+        graph = self.data["graph"]
+        if not isinstance(graph, dict):
+            return None
+        if not isinstance(graph.get("nodes"), dict) or not graph["nodes"]:
+            return None
+        return ProtocolMinimumDTO.from_json(graph)
 
     ############################### RUN #################################
 
@@ -346,15 +354,10 @@ class ProtocolModel(ProcessModel):
         process_model.instance_name = instance_name
         self._processes[instance_name] = process_model
 
-    def _init_processes_from_graph(self, nodes: Dict,
-                                   sub_process_factory: ProtocolSubProcessBuilder) -> None:
+    def _init_processes_from_graph(self, sub_process_factory: ProtocolSubProcessBuilder) -> None:
         # create nodes
-        for key, node_json in nodes.items():
-
-            # create the process instance
-            process_model: ProcessModel = sub_process_factory.instantiate_process_from_json(
-                node_json=node_json,
-                instance_name=key)
+        process_models: Dict[str, ProcessModel] = sub_process_factory.instantiate_processes()
+        for key, process_model in process_models.items():
 
             # If the process already exists
             if key in self._processes:
@@ -558,8 +561,8 @@ class ProtocolModel(ProcessModel):
         if self._connectors is None:
             # Init the connector from the graph
             if "graph" in self.data and "links" in self.data["graph"]:
-                self.init_connectors_from_graph(
-                    self.data["graph"]["links"], check_compatiblity=False)
+                links_dto = ConnectorDTO.from_json_list(self.data["graph"]["links"])
+                self.init_connectors_from_graph(links_dto, check_compatiblity=False)
             else:
                 self._connectors = []
 
@@ -628,11 +631,10 @@ class ProtocolModel(ProcessModel):
             # this checks the port
             process.out_port(port_name)
 
-    def init_connectors_from_graph(self, links: list, check_compatiblity: bool = True) -> None:
-        links_dto = ConnectorDTO.from_json_list(links)
+    def init_connectors_from_graph(self, links: List[ConnectorDTO], check_compatiblity: bool = True) -> None:
         self._connectors = []
         # create links
-        for link in links_dto:
+        for link in links:
             self._add_connector(link.from_.node, link.from_.port,
                                 link.to.node, link.to.port,
                                 check_compatiblity=check_compatiblity)
@@ -814,12 +816,10 @@ class ProtocolModel(ProcessModel):
 
         return interfaces
 
-    def _init_interfaces_from_graph(self, interfaces_dict: dict) -> None:
+    def init_interfaces_from_graph(self, interfaces: Dict[str, InterfaceDTO]) -> None:
         # clear current interfaces
         self._interfaces = {}
         self._inputs = Inputs()
-
-        interfaces = InterfaceDTO.from_json_dict(interfaces_dict)
 
         for key, interface in interfaces.items():
             # destination port of the interface
@@ -952,12 +952,10 @@ class ProtocolModel(ProcessModel):
                 outerfaces.append(outerface)
         return outerfaces
 
-    def _init_outerfaces_from_graph(self, outerfaces_dict: dict) -> None:
+    def init_outerfaces_from_graph(self, outerfaces: Dict[str, InterfaceDTO]) -> None:
         # clear current interfaces
         self._outerfaces = {}
         self._outputs = Outputs()
-
-        outerfaces = InterfaceDTO.from_json_dict(outerfaces_dict)
 
         for key, outerface in outerfaces.items():
             # source port of the outerface

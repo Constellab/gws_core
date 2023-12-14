@@ -23,6 +23,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
 from gws_core.impl.s3.s3_server_service import S3ServerService
 from gws_core.project.project import Project
+from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.test.base_test_case import BaseTestCase
@@ -37,10 +38,7 @@ class TestS3Server(BaseTestCase):
     current_file_abspath = os.path.abspath(__file__)
 
     def test_s3(self):
-        project: Project = Project()
-        project.code = 'S3'
-        project.title = 'S3'
-        project.save()
+        project: Project = Project(code='S3', title='S3', level_status=ProjectLevelStatus.LEAF).save()
 
         proc = self._start_s3_server()
 
