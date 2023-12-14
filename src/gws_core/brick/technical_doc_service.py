@@ -3,22 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import inspect
-from typing import Any, Dict, List, Type
+from typing import List, Type
 
-from gws_core.brick.technical_doc_dto import (ResourceDocDTO,
-                                              ResourceMethodDocDTO,
-                                              TechnicalDocDTO)
-from gws_core.core.utils.refloctor_types import MethodDoc
+from gws_core.brick.technical_doc_dto import TechnicalDocDTO
 from gws_core.model.typing_dto import TypingFullDTO
 from gws_core.protocol.protocol_typing import ProtocolTyping
 
-from ..core.utils.reflector_helper import ReflectorHelper
 from ..model.typing import Typing
 from ..resource.resource import Resource
 from ..resource.resource_typing import ResourceTyping
-from ..resource.view.view_helper import ViewHelper
-from ..resource.view.view_meta_data import ResourceViewMetaData
 from ..task.task_typing import TaskTyping
 from .brick_helper import BrickHelper
 
@@ -60,27 +53,4 @@ class TechnicalDocService():
         type_: Type[Resource] = typing.get_type()
         if type_ is None:
             return None
-        typing_dto = typing.to_full_dto()
-        if isinstance(typing, ResourceTyping):
-            typing_dto = ResourceDocDTO(
-                **typing_dto.dict(),
-                methods=cls.get_class_methods_docs(type_)
-            )
-
-        return typing_dto
-
-    @classmethod
-    def get_class_methods_docs(cls, type_: type) -> ResourceMethodDocDTO:
-        if not inspect.isclass(type_):
-            return None
-        methods: Any = inspect.getmembers(type_, predicate=inspect.isfunction)
-        views_methods: List[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(type_)
-        views_methods_json: List[dict] = [m.to_complete_json() for m in views_methods]
-        func_methods: Any = [method for method in methods if not ReflectorHelper.is_decorated_with_view(method)]
-        public_func_methods: Any = [(m[0], m[1])
-                                    for m in func_methods if not m[0].startswith('_') or m[0] == '__init__']
-        funcs: List[MethodDoc] = ReflectorHelper.get_methods_doc(public_func_methods)
-        return ResourceMethodDocDTO(
-            funcs=funcs if len(funcs) > 0 else None,
-            views=views_methods_json if len(views_methods_json) > 0 else None
-        )
+        return typing.to_full_dto()

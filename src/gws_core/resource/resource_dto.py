@@ -4,13 +4,15 @@
 # About us: https://gencovery.com
 
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
+from gws_core.core.utils.refloctor_types import MethodDoc
 from gws_core.experiment.experiment_dto import ExperimentSimpleDTO
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
 from gws_core.model.typing_dict import TypingStatus
+from gws_core.model.typing_dto import TypingFullDTO
 from gws_core.project.project_dto import ProjectDTO
 
 
@@ -51,3 +53,12 @@ class ResourceDTO(ModelWithUserDTO):
 class ResourceSimpleDTO(BaseModelDTO):
     id: str
     name: str
+
+
+class ResourceTypingMethodDTO(BaseModelDTO):
+    funcs: Optional[List[MethodDoc]]
+    views: Optional[list]
+
+
+class ResourceTypingDTO(TypingFullDTO):
+    methods: ResourceTypingMethodDTO

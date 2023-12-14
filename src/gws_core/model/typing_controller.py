@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Union
 
 from fastapi.param_functions import Depends
 from pydantic import BaseModel
@@ -13,14 +13,29 @@ from gws_core.core.model.model_dto import PageDTO
 from gws_core.model.typing_dict import TypingObjectType
 from gws_core.model.typing_dto import TypingDTO, TypingFullDTO
 from gws_core.model.typing_service import TypingService
+from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
+from gws_core.resource.resource_dto import ResourceTypingDTO
+from gws_core.task.task_dto import TaskTypingDTO
 from gws_core.user.auth_service import AuthService
 
 from ..core_controller import core_app
 
 
-@core_app.get("/typing/{typing_name}", tags=["Typing"], summary="Get a typing")
-def get_typing(typing_name: str,
-               _=Depends(AuthService.check_user_access_token)) -> TypingFullDTO:
+@core_app.get("/typing/resource/{typing_name}", tags=["Typing"], summary="Get a resource typing")
+def get_resource_typing(typing_name: str,
+                        _=Depends(AuthService.check_user_access_token)) -> ResourceTypingDTO:
+    return TypingService.get_typing(typing_name).to_full_dto()
+
+
+@core_app.get("/typing/task/{typing_name}", tags=["Typing"], summary="Get a task typing")
+def get_task_typing(typing_name: str,
+                    _=Depends(AuthService.check_user_access_token)) -> TaskTypingDTO:
+    return TypingService.get_typing(typing_name).to_full_dto()
+
+
+@core_app.get("/typing/protocol/{typing_name}", tags=["Typing"], summary="Get a protocol typing")
+def get_protocol_typing(typing_name: str,
+                        _=Depends(AuthService.check_user_access_token)) -> ProtocolTypingFullDTO:
     return TypingService.get_typing(typing_name).to_full_dto()
 
 
