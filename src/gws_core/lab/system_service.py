@@ -21,6 +21,7 @@ from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.lab.system_dto import LabInfoDTO
+from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.project.project_service import ProjectService
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
@@ -103,12 +104,12 @@ class SystemService:
 
             for experiment in experiments:
                 if experiment.get_process_status() != ExperimentStatus.RUNNING:
-                    experiment.mark_as_error({
-                        "detail": "The experiment process was not found.",
-                        "unique_code": "PROCESS_NOT_FOUND",
-                        "context": None,
-                        "instance_id": None
-                    })
+                    experiment.mark_as_error(ProcessErrorInfo(
+                        detail="The experiment process was not found.",
+                        unique_code="PROCESS_NOT_FOUND",
+                        context=None,
+                        instance_id=None
+                    ))
         except Exception as err:
             Logger.error(
                 f'[SystemService] Error while checking running experiments: {err}')

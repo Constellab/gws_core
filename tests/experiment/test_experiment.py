@@ -208,7 +208,7 @@ class TestExperiment(BaseTestCase):
         self.assertFalse(process_model.progress_bar.is_started)
         self.assertFalse(process_model.progress_bar.is_running)
         self.assertFalse(process_model.progress_bar.is_finished)
-        self.assertIsNone(process_model.error_info)
+        self.assertIsNone(process_model.get_error_info())
 
         for port in process_model.inputs.ports.values():
             self.assertIsNone(port.resource_model)

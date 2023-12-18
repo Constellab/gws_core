@@ -43,17 +43,19 @@ class DynamicInputs(InputSpecs):
     def get_type(self) -> IOSpecsType:
         return 'dynamic'
 
-    def get_additional_info(self) -> AdditionalInfo:
+    def get_additional_info(self) -> dict:
         return AdditionalInfo(
             additionnal_port_spec=self.additionnal_port_spec.to_dto() if self.additionnal_port_spec else None
-        )
+        ).to_json_dict()
 
-    def set_additional_info(self, additional_info: BaseModelDTO) -> None:
-        if not additional_info or not isinstance(additional_info, AdditionalInfo):
+    def set_additional_info(self, additional_info: dict) -> None:
+        if not additional_info:
             return
 
-        if additional_info.additionnal_port_spec:
-            self.additionnal_port_spec = InputSpec.from_dto(additional_info.additionnal_port_spec)
+        additional_info_dto = AdditionalInfo.from_json(additional_info)
+
+        if additional_info_dto.additionnal_port_spec:
+            self.additionnal_port_spec = InputSpec.from_dto(additional_info_dto.additionnal_port_spec)
 
     def _transform_input_resources(self, resources: Dict[str, Resource]) -> Dict[str, Resource]:
         """
@@ -70,6 +72,12 @@ class DynamicInputs(InputSpecs):
             return self.additionnal_port_spec
 
         return InputSpec(Resource, is_optional=True)
+
+    @classmethod
+    def from_dto(cls, io_specs: Dict[str, InputSpec], additional_info: dict) -> 'DynamicInputs':
+        dynamic_inputs = cls(io_specs)
+        dynamic_inputs.set_additional_info(additional_info)
+        return dynamic_inputs
 
 
 class DynamicOutputs(OutputSpecs):
@@ -98,17 +106,19 @@ class DynamicOutputs(OutputSpecs):
     def get_type(self) -> IOSpecsType:
         return 'dynamic'
 
-    def get_additional_info(self) -> AdditionalInfo:
+    def get_additional_info(self) -> dict:
         return AdditionalInfo(
             additionnal_port_spec=self.additionnal_port_spec.to_dto() if self.additionnal_port_spec else None
-        )
+        ).to_json_dict()
 
-    def set_additional_info(self, additional_info: BaseModelDTO) -> None:
-        if not additional_info or not isinstance(additional_info, AdditionalInfo):
+    def set_additional_info(self, additional_info: dict) -> None:
+        if not additional_info:
             return
 
-        if additional_info.additionnal_port_spec:
-            self.additionnal_port_spec = OutputSpec.from_dto(additional_info.additionnal_port_spec)
+        additional_info_dto = AdditionalInfo.from_json(additional_info)
+
+        if additional_info_dto.additionnal_port_spec:
+            self.additionnal_port_spec = OutputSpec.from_dto(additional_info_dto.additionnal_port_spec)
 
     def _transform_output_resources(self, task_outputs: TaskOutputs) -> TaskOutputs:
         """ Method to convert the task output to be saved in the outputs.
@@ -154,3 +164,9 @@ class DynamicOutputs(OutputSpecs):
             return self.additionnal_port_spec
 
         return OutputSpec(Resource, sub_class=True)
+
+    @classmethod
+    def from_dto(cls, io_specs: Dict[str, OutputSpec], additional_info: dict) -> 'DynamicOutputs':
+        dynamic_outputs = cls(io_specs)
+        dynamic_outputs.set_additional_info(additional_info)
+        return dynamic_outputs

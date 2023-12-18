@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, final
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, final
 
 from peewee import (BooleanField, CharField, DoubleField, ForeignKeyField,
                     ModelSelect)
@@ -63,7 +63,7 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
     score = DoubleField(null=True)
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
-    error_info: ProcessErrorInfo = JSONField(null=True)
+    error_info = JSONField(null=True)
     type: ExperimentType = EnumField(choices=ExperimentType,
                                      default=ExperimentType.EXPERIMENT)
 
@@ -357,7 +357,7 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
         self.score = None
         self.status = ExperimentStatus.DRAFT
         self.lab_config = None
-        self.error_info = None
+        self.set_error_info(None)
         self.save()
 
     def mark_as_error(self, error_info: ProcessErrorInfo) -> None:
@@ -365,13 +365,19 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
             return
         self.pid = None
         self.status = ExperimentStatus.ERROR
-        self.error_info = error_info
+        self.set_error_info(error_info)
         self.save()
 
     def mark_as_partially_run(self) -> None:
         self.status = ExperimentStatus.PARTIALLY_RUN
-        self.error_info = None
+        self.set_error_info(None)
         self.save()
+
+    def get_error_info(self) -> Optional[ProcessErrorInfo]:
+        return ProcessErrorInfo.from_json(self.error_info) if self.error_info else None
+
+    def set_error_info(self, error_info: ProcessErrorInfo) -> None:
+        self.error_info = error_info.to_json_dict() if error_info else None
 
     def check_is_runnable(self) -> None:
         """Throw an error if the experiment is not runnable

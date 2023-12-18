@@ -6,8 +6,7 @@
 from __future__ import annotations
 
 from enum import Enum
-
-from typing_extensions import TypedDict
+from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 
@@ -22,11 +21,11 @@ class ProcessStatus(Enum):
     WAITING_FOR_CLI_PROCESS = "WAITING_FOR_CLI_PROCESS"
 
 
-class ProcessErrorInfo(TypedDict):
+class ProcessErrorInfo(BaseModelDTO):
     detail: str
-    unique_code: str
-    context: str
-    instance_id: str
+    unique_code: Optional[str]
+    context: Optional[str]
+    instance_id: Optional[str]
 
 
 class ProcessMinimumDTO(BaseModelDTO):

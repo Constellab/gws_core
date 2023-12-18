@@ -21,7 +21,7 @@ class IOSpecsDTO(BaseModelDTO):
     """
     specs: Dict[str, IOSpecDTO]
     type: IOSpecsType
-    additional_info: BaseModelDTO
+    additional_info: dict
 
 
 class OutputsCheckResult(BaseModelDTO):
@@ -67,10 +67,10 @@ class IOSpecs():
     def get_type(self) -> IOSpecsType:
         return 'normal'
 
-    def get_additional_info(self) -> BaseModelDTO:
-        return BaseModelDTO()
+    def get_additional_info(self) -> dict:
+        return {}
 
-    def set_additional_info(self, additional_info: BaseModelDTO) -> None:
+    def set_additional_info(self, additional_info: dict) -> None:
         pass
 
     def to_dto(self) -> IOSpecsDTO:

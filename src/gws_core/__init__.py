@@ -320,6 +320,8 @@ from .impl.view.tabular_view import TabularView as TabularView
 from .impl.view.venn_diagram_view import VennDiagramView as VennDiagramView
 # Io
 from .io.connector import Connector as Connector
+from .io.dynamic_io import DynamicInputs as DynamicInputs
+from .io.dynamic_io import DynamicOutputs as DynamicOutputs
 from .io.io import IO as IO
 from .io.io import Inputs as Inputs
 from .io.io import Outputs as Outputs

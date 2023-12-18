@@ -5,6 +5,7 @@
 
 
 import os
+from abc import abstractmethod
 from pathlib import PosixPath
 
 from gws_core.impl.file.file_helper import FileHelper
@@ -47,3 +48,22 @@ class FSNode(Resource):
 
     def exists(self):
         return os.path.exists(self.path)
+
+    @abstractmethod
+    def copy_to_path(self, destination: str) -> str:
+        pass
+
+    def copy_to_directory(self, destination: str) -> str:
+        """Copy the node to the directory and keep the same base name
+
+        :param destination: _description_
+        :type destination: str
+        """
+        return self.copy_to_path(os.path.join(destination, self.get_base_name()))
+
+    @abstractmethod
+    def get_base_name(self) -> str:
+        pass
+
+    def get_default_name(self) -> str:
+        return self.get_base_name()

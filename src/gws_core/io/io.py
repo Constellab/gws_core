@@ -33,9 +33,9 @@ class IO(Base, Generic[PortType]):
 
     _ports: Dict[str, PortType] = {}
     _type: IOSpecsType = None
-    _additional_info: BaseModelDTO = None
+    _additional_info: dict = None
 
-    def __init__(self, type_: IOSpecsType = 'normal', additional_info: BaseModelDTO = None) -> None:
+    def __init__(self, type_: IOSpecsType = 'normal', additional_info: dict = None) -> None:
         self._ports = dict()
         self._type = type_
         if additional_info is None:
@@ -267,7 +267,6 @@ class IO(Base, Generic[PortType]):
             specs[key] = port.resource_spec
 
         io_specs = self._build_specs(specs)
-        io_specs.set_additional_info(self._additional_info)
         return io_specs
 
 
@@ -282,7 +281,7 @@ class Inputs(IO[InPort]):
 
     def _build_specs(self, specs: Dict[str, IOSpec]) -> IOSpecs:
         if self.is_dynamic:
-            return DynamicInputs(specs)
+            return DynamicInputs.from_dto(specs, self._additional_info)
         return InputSpecs(specs)
 
 
@@ -297,5 +296,5 @@ class Outputs(IO[OutPort]):
 
     def _build_specs(self, specs: Dict[str, IOSpec]) -> IOSpecs:
         if self.is_dynamic:
-            return DynamicOutputs(specs)
+            return DynamicOutputs.from_dto(specs, self._additional_info)
         return OutputSpecs(specs)

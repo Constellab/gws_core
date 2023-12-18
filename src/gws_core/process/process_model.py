@@ -134,7 +134,7 @@ class ProcessModel(ModelWithUser):
         self.progress_bar.reset()
 
         self.status = ProcessStatus.DRAFT
-        self.error_info = None
+        self.set_error_info(None)
         self.started_at = None
         self.ended_at = None
         self._reset_io()
@@ -197,6 +197,12 @@ class ProcessModel(ModelWithUser):
             raise BadRequestException(
                 "The protocol is already related to an experiment")
         self.experiment = experiment
+
+    def get_error_info(self) -> Optional[ProcessErrorInfo]:
+        return ProcessErrorInfo.from_json(self.error_info) if self.error_info else None
+
+    def set_error_info(self, error_info: ProcessErrorInfo) -> None:
+        self.error_info = error_info.to_json_dict() if error_info else None
 
     ################################# INPUTS #############################
 
@@ -443,7 +449,7 @@ class ProcessModel(ModelWithUser):
             process_typing_name=self.process_typing_name,
             brick_version=self.brick_version,
             status=self.status,
-            error_info=self.error_info,
+            error_info=self.get_error_info(),
             started_at=self.started_at,
             ended_at=self.ended_at,
             is_archived=self.is_archived,
@@ -542,20 +548,20 @@ class ProcessModel(ModelWithUser):
     def mark_as_error(self, error_info: ProcessErrorInfo):
         if self.is_error:
             return
-        self.progress_bar.stop_error(error_info["detail"],
+        self.progress_bar.stop_error(error_info.detail,
                                      self.get_execution_time())
         self.status = ProcessStatus.ERROR
-        self.error_info = error_info
+        self.set_error_info(error_info)
         self.ended_at = DateHelper.now_utc()
         self.save()
 
     def mark_as_error_and_parent(self, process_error: ProcessRunException, context: str = None):
-        self.mark_as_error({
-            "detail": process_error.get_error_message(context),
-            "unique_code": process_error.unique_code,
-            "context": context,
-            "instance_id": process_error.instance_id
-        })
+        self.mark_as_error(ProcessErrorInfo(
+            detail=process_error.get_error_message(context),
+            unique_code=process_error.unique_code,
+            context=context,
+            instance_id=process_error.instance_id
+        ))
 
         new_context: str = f"{self.get_instance_name_context()}"
         if context:
@@ -565,12 +571,12 @@ class ProcessModel(ModelWithUser):
             self.parent_protocol.mark_as_error_and_parent(process_error, new_context)
         # once we reach the main protocol, we mark the experiment as error
         elif self.experiment:
-            self.experiment.mark_as_error({
-                "detail": process_error.get_error_message(new_context),
-                "unique_code": process_error.unique_code,
-                "context": new_context,
-                "instance_id": process_error.instance_id
-            })
+            self.experiment.mark_as_error(ProcessErrorInfo(
+                detail=process_error.get_error_message(new_context),
+                unique_code=process_error.unique_code,
+                context=new_context,
+                instance_id=process_error.instance_id
+            ))
 
     def mark_as_waiting_for_cli_process(self):
         self.status = ProcessStatus.WAITING_FOR_CLI_PROCESS

@@ -4,15 +4,15 @@
 # About us: https://gencovery.com
 
 from json import loads
-from typing import Dict
+from typing import Dict, Optional
 
 from gws_core.core.model.db_field import SerializableObject
 from gws_core.core.model.model_dto import BaseModelDTO
 
 
 class ProcessLayoutDTO(BaseModelDTO):
-    x: float
-    y: float
+    x: Optional[float]
+    y: Optional[float]
 
 
 class ProtocolLayoutDTO(BaseModelDTO):

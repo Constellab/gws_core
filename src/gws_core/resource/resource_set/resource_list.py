@@ -99,3 +99,6 @@ class ResourceList(ResourceListBase):
     # convert to list
     def to_list(self) -> List[Resource]:
         return self.get_resources()
+
+    def is_empty(self) -> bool:
+        return len(self.get_resources()) == 0

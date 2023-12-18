@@ -73,7 +73,11 @@ class OpenAiHelper():
             inputs_texts.append(
                 f"'{key}' (type '{Utils.stringify_type(type(value), True)}')")
 
-        return f"You have access to the following input variables : {', '.join(inputs_texts)}. The input variables are already initialized, do not create them."
+        return cls.describe_inputs_text_for_context(str({', '.join(inputs_texts)}))
+
+    @classmethod
+    def describe_inputs_text_for_context(cls, input_description: str) -> str:
+        return f"You have access to the following input variables : {input_description}. The input variables are already initialized, do not create them."
 
     @classmethod
     def describe_outputs_for_context(cls, outputs_specs: Dict[str, type]) -> str:
@@ -82,4 +86,8 @@ class OpenAiHelper():
             outputs_texts.append(
                 f"'{key}' (type '{Utils.stringify_type(value, True)}')")
 
-        return f"You must assigne the result to the following output variables : {', '.join(outputs_texts)}."
+        return cls.describe_outputs_text_for_context(str({', '.join(outputs_texts)}))
+
+    @classmethod
+    def describe_outputs_text_for_context(cls, output_description: str) -> str:
+        return f"You must assigne the result to the following output variables : {output_description}."

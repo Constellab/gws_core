@@ -82,7 +82,14 @@ class File(FSNode):
     def mime(self):
         return FileHelper.get_mime(self.path)
 
-    def get_default_name(self) -> str:
+    def copy_to_path(self, destination: str) -> str:
+        """
+        Copy the file to the target path
+        """
+        FileHelper.copy_file(self.path, destination)
+        return destination
+
+    def get_base_name(self) -> str:
         return FileHelper.get_name_with_extension(self.path)
 
     def open(self, mode: str, encoding: str = None) -> Any:

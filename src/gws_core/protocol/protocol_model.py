@@ -1137,5 +1137,5 @@ class ProtocolModel(ProcessModel):
             return
         self.ended_at = None
         self.status = ProcessStatus.DRAFT
-        self.error_info = None
+        self.set_error_info(None)
         self.save()

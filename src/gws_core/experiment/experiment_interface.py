@@ -84,7 +84,7 @@ class IExperiment:
         if self._experiment.is_error:
             if auto_delete_if_error:
                 self.delete()
-            raise Exception(self._experiment.error_info['detail'])
+            raise Exception(self._experiment.get_error_info().detail)
 
         # when stop manually the experiment, wait a bit for the status to be updated
         # because the experiment status is updated after the process is stopped
@@ -92,7 +92,7 @@ class IExperiment:
             sleep(2)
             self.refresh()
             if self._experiment.is_error:
-                raise Exception(self._experiment.error_info['detail'])
+                raise Exception(self._experiment.get_error_info().detail)
 
         if process.exitcode != 0:
             raise Exception("Error in during the execution of the experiment")

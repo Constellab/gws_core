@@ -677,11 +677,11 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def _update_dynamic_port_of_process(
-            cls, protocol_id: str, process_name: str, port_name: str, io_spec: IOSpecDTO,
+            cls, protocol_id: str, process_name: str, port_name: str, io_spec_dto: IOSpecDTO,
             port_type: Literal['input', 'output']) -> ProtocolUpdate:
 
         io_spec_class: Type[IOSpec] = InputSpec if port_type == 'input' else OutputSpec
-        io_spec: IOSpec = io_spec_class.from_dto(io_spec)
+        io_spec: IOSpec = io_spec_class.from_dto(io_spec_dto)
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)

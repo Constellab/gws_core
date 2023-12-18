@@ -29,8 +29,6 @@ This task is still in beta version.
 
 This task uses openAI API to generate python code that transforms a dataframe. This code is then automatically executed.
 
-/!\ This task does not support table tags.
-
 The data of the table is not transferered to OpenAI, only the provided text.
     """
 
@@ -57,7 +55,7 @@ The data of the table is not transferered to OpenAI, only the provided text.
         table: Table = task_inputs["source"]
 
         return f"""{self.VAR_PY_INTRO}
-The code purpose is to generate modify a dataframe.
+The code purpose is to modify a dataframe.
 {self.VAR_INPUTS}
 The dataframe has {table.nb_rows} rows and {table.nb_columns} columns.
 {self.VAR_OUTPUTS}

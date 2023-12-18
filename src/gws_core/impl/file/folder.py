@@ -49,9 +49,6 @@ class Folder(FSNode):
         """
         return os.path.join(self.path, sub_node_path)
 
-    def get_default_name(self) -> str:
-        return FileHelper.get_dir_name(self.path)
-
     def get_sub_node(self, sub_node_path: str) -> FSNode:
         """Get the sub node of this folder, with the given path
         """
@@ -64,6 +61,15 @@ class Folder(FSNode):
             return File(sub_node_path)
         else:
             return Folder(sub_node_path)
+
+    def copy_to_path(self, destination: str) -> str:
+        """Copy this folder to the given destination
+        """
+        FileHelper.copy_dir(self.path, destination)
+        return destination
+
+    def get_base_name(self) -> str:
+        return FileHelper.get_dir_name(self.path)
 
     @view(view_type=LocalFolderView, human_name="View folder content",
           short_description="View the sub files and folders", default_view=True)

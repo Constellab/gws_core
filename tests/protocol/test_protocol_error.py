@@ -97,10 +97,10 @@ class TestProtocolError(BaseTestCase):
     def test_error_on_task(self):
         """Test an experiment with a task that throws an exception """
 
-        protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(
+        protocol = ProtocolService.create_protocol_model_from_type(
             TestErrorProtocol)
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+        experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol)
 
         # check that the experiment end up in error and get exception
@@ -115,30 +115,30 @@ class TestProtocolError(BaseTestCase):
         # Check that experiment is in error status
         experiment = ExperimentService.get_experiment_by_id(experiment.id)
         self.assertTrue(experiment.is_error)
-        self.assertIsNotNone(experiment.error_info)
+        self.assertIsNotNone(experiment.get_error_info())
         # Check that the instance_id and unique_code where copied from base exception
         self.assertEqual(
-            experiment.error_info['instance_id'], exception.instance_id)
+            experiment.get_error_info().instance_id, exception.instance_id)
         self.assertEqual(
-            experiment.error_info['unique_code'], exception.unique_code)
+            experiment.get_error_info().unique_code, exception.unique_code)
 
         # Check that main protocol is in error status
-        protocol: ProtocolModel = experiment.protocol_model
+        protocol = experiment.protocol_model
         self.assertTrue(protocol.is_error)
-        self.assertIsNotNone(protocol.error_info)
+        self.assertIsNotNone(protocol.get_error_info())
         self.assertEqual(
-            protocol.error_info['instance_id'], exception.instance_id)
+            protocol.get_error_info().instance_id, exception.instance_id)
         self.assertEqual(
-            protocol.error_info['unique_code'], exception.unique_code)
+            protocol.get_error_info().unique_code, exception.unique_code)
 
         # Check sub protocol is in error status
         sub_protocol: ProtocolModel = protocol.get_process('sub_proto')
         self.assertTrue(sub_protocol.is_error)
-        self.assertIsNotNone(sub_protocol.error_info)
+        self.assertIsNotNone(sub_protocol.get_error_info())
         self.assertEqual(
-            sub_protocol.error_info['instance_id'], exception.instance_id)
+            sub_protocol.get_error_info().instance_id, exception.instance_id)
         self.assertEqual(
-            sub_protocol.error_info['unique_code'], exception.unique_code)
+            sub_protocol.get_error_info().unique_code, exception.unique_code)
 
         # Check that the create process endup in success
         create_process: ProcessModel = sub_protocol.get_process('create')
@@ -147,11 +147,11 @@ class TestProtocolError(BaseTestCase):
         # Check that process is in error status
         error_process: ProcessModel = sub_protocol.get_process('error')
         self.assertTrue(error_process.is_error)
-        self.assertIsNotNone(error_process.error_info)
+        self.assertIsNotNone(error_process.get_error_info())
         self.assertEqual(
-            error_process.error_info['instance_id'], exception.instance_id)
+            error_process.get_error_info().instance_id, exception.instance_id)
         self.assertEqual(
-            error_process.error_info['unique_code'], exception.unique_code)
+            error_process.get_error_info().unique_code, exception.unique_code)
 
         # reset error tasks
         ProtocolService.reset_error_processes_of_protocol(protocol)
@@ -166,10 +166,10 @@ class TestProtocolError(BaseTestCase):
         self.assertTrue(error_process.is_draft)
 
     def test_error_on_before_check(self):
-        protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(
+        protocol = ProtocolService.create_protocol_model_from_type(
             CheckBeforeTaskErrorProtocol)
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+        experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol)
 
         # check that the experiment end up in error and get exception
@@ -194,11 +194,10 @@ class TestProtocolError(BaseTestCase):
     def test_protocol_build_error(self):
         """Test an error happens during protocol build
         """
-        exception: ProtocolBuildException
         try:
             ProcessFactory.create_protocol_model_from_type(
                 TestProtocolBuildError)
-        except ProtocolBuildException as err:
-            exception = err
+        except ProtocolBuildException:
+            pass
         else:
             self.fail('Run experiment shoud have raisedd ProtocolBuildException')

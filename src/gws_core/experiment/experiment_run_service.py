@@ -51,9 +51,11 @@ class ExperimentRunService():
         except Exception as err:
             error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + str(err)
             Logger.error(error_text)
-            experiment.mark_as_error({"detail": error_text,
-                                      "unique_code": GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
-                                      "context": None, "instance_id": None})
+            experiment.mark_as_error(ProcessErrorInfo(
+                detail=error_text,
+                unique_code=GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
+                context=None,
+                instance_id=None))
         cls.run_experiment(experiment)
 
     @classmethod
@@ -85,8 +87,8 @@ class ExperimentRunService():
         except Exception as err:
             exception: ExperimentRunException = ExperimentRunException.from_exception(
                 experiment=experiment, exception=err)
-            error: ProcessErrorInfo = {"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
-                                       "context": None, "instance_id": exception.instance_id}
+            error = ProcessErrorInfo(detail=exception.get_detail_with_args(), unique_code=exception.unique_code,
+                                     context=None, instance_id=exception.instance_id)
             experiment = experiment.refresh()
             experiment.mark_as_error(error)
 
@@ -116,9 +118,9 @@ class ExperimentRunService():
         except Exception as err:
             error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + str(err)
             Logger.error(error_text)
-            experiment.mark_as_error({"detail": error_text,
-                                      "unique_code": GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
-                                      "context": None, "instance_id": None})
+            experiment.mark_as_error(ProcessErrorInfo(detail=error_text,
+                                                      unique_code=GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
+                                                      context=None, instance_id=None))
         cls._run_experiment_process(experiment, protocol_model, process_name)
 
     @classmethod
@@ -183,8 +185,9 @@ class ExperimentRunService():
             traceback.print_exc()
             exception: ExperimentRunException = ExperimentRunException.from_exception(
                 experiment=experiment, exception=err)
-            experiment.mark_as_error({"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
-                                      "context": None, "instance_id": exception.instance_id})
+            experiment.mark_as_error(ProcessErrorInfo(detail=exception.get_detail_with_args(),
+                                                      unique_code=exception.unique_code,
+                                                      context=None, instance_id=exception.instance_id))
             raise exception
 
     @classmethod
@@ -211,8 +214,9 @@ class ExperimentRunService():
             traceback.print_exc()
             exception: ExperimentRunException = ExperimentRunException.from_exception(
                 experiment=experiment, exception=err)
-            experiment.mark_as_error({"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
-                                      "context": None, "instance_id": exception.instance_id})
+            experiment.mark_as_error(ProcessErrorInfo(detail=exception.get_detail_with_args(),
+                                                      unique_code=exception.unique_code,
+                                                      context=None, instance_id=exception.instance_id))
             raise exception
 
     @classmethod
@@ -284,19 +288,19 @@ class ExperimentRunService():
             Logger.error(str(err))
 
         # mark the experiment as error
-        error: ProcessErrorInfo = {
-            "detail": f"Experiment manually stopped by {CurrentUserService.get_and_check_current_user().full_name}",
-            "unique_code": "EXPERIMENT_STOPPED_MANUALLY",
-            "context": None,
-            "instance_id": None
-        }
+        error = ProcessErrorInfo(
+            detail=f"Experiment manually stopped by {CurrentUserService.get_and_check_current_user().full_name}",
+            unique_code="EXPERIMENT_STOPPED_MANUALLY",
+            context=None,
+            instance_id=None
+        )
         experiment.mark_as_error(error)
 
         # mark all the running tasks as error
         task_models: List[TaskModel] = experiment.get_running_tasks()
         for task_model in task_models:
-            exception = ProcessRunException(task_model, error["detail"],
-                                            error["unique_code"], "Task error", None)
+            exception = ProcessRunException(task_model, error.detail,
+                                            error.unique_code, "Task error", None)
             task_model.mark_as_error_and_parent(exception)
 
         ActivityService.add(
