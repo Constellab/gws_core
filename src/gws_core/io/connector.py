@@ -50,9 +50,6 @@ class Connector:
         if left_port.resource_provided:
             self.propagate_resource()
 
-    def to_json(self) -> dict:
-        return self.to_dto().dict()
-
     def to_dto(self) -> ConnectorDTO:
         return ConnectorDTO.from_json({
             "from": {

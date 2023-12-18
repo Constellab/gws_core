@@ -7,9 +7,8 @@
 from typing import Optional
 
 from fastapi import Depends
-from pydantic.main import BaseModel
-
 from gws_core.core.model.model_dto import ModelDTO, PageDTO
+from pydantic.main import BaseModel
 
 from ..core_controller import core_app
 from ..user.auth_service import AuthService

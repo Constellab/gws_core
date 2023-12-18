@@ -6,10 +6,10 @@
 from unittest import TestCase
 
 from gws_core import File, LocalFileStore
-from gws_core.test.data_provider import DataProvider
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.folder import Folder
+from gws_core.test.data_provider import DataProvider
 
 
 # test_file_store
@@ -18,15 +18,15 @@ class TestLocalFileStore(TestCase):
     def test_file(self):
         file_store: FileStore = LocalFileStore()
 
-        file_path = DataProvider.get_test_data_path("mini_travel_graph.json")
+        file_path = DataProvider.get_test_data_path("sample.json")
 
         # Add a file from a path
         file: File = file_store.add_file_from_path(file_path)
         self.assertTrue(file_store.node_name_exists(file.get_default_name()))
-        self.assertTrue(file.get_default_name(), 'mini_travel_graph.json')
+        self.assertTrue(file.get_default_name(), 'sample.json')
 
         # Add a file with the same name
-        file_2 = file_store.add_file_from_path(file_path, 'mini_travel_graph.json')
+        file_2 = file_store.add_file_from_path(file_path, 'sample.json')
         self.assertTrue(file_store.node_exists(file_2))
         self.assertEqual(file_2.get_default_name(), 'mini_travel_graph_1.json')
 
@@ -69,7 +69,7 @@ class TestLocalFileStore(TestCase):
         dangerous_file_name = "\"Az02'{([$*!%?-_.txt"
         safe_file_name = "Az02-_.txt"
         file_store: FileStore = LocalFileStore()
-        file_path = DataProvider.get_test_data_path("mini_travel_graph.json")
+        file_path = DataProvider.get_test_data_path("sample.json")
         # Add a file from a path
         file: File = file_store.add_file_from_path(file_path, dangerous_file_name)
 

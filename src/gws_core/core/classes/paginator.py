@@ -5,10 +5,9 @@
 
 from typing import Any, Callable, Dict, Generic, List, TypeVar
 
+from gws_core.core.model.model_dto import PageDTO
 from numpy.core.numeric import Infinity
 from peewee import ModelSelect
-
-from gws_core.core.model.model_dto import PageDTO
 
 from ..model.model import Model
 
@@ -55,20 +54,6 @@ class PageInfo():
     @property
     def is_last_page(self) -> bool:
         return self.page >= self.last_page
-
-    def to_json(self) -> Dict:
-        return {
-            'page': self.page,
-            'prev_page': self.prev_page,
-            'next_page': self.next_page,
-            'last_page': self.last_page,
-            'total_number_of_items': self.total_number_of_items,
-            'total_number_of_pages': self.total_number_of_pages,
-            'number_of_items_per_page': self.number_of_items_per_page,
-            'is_first_page': self.is_first_page,
-            'is_last_page': self.is_last_page,
-            'total_is_approximate': self.total_is_approximate
-        }
 
 
 class Paginator(Generic[PaginatorType]):

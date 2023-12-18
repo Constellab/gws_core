@@ -239,7 +239,7 @@ class IO(Base, Generic[PortType]):
         return io
 
     def to_json(self) -> dict:
-        return self.to_dto().dict()
+        return self.to_dto().to_json_dict()
 
     def to_dto(self) -> IODTO:
         io_dto = IODTO(
