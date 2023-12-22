@@ -121,6 +121,7 @@ class ReportService():
         return report.save()
 
     @classmethod
+    @transaction()
     def _update_report_project(cls, report: Report, project_id: str) -> None:
         # update project
         if project_id:
@@ -141,13 +142,9 @@ class ReportService():
         experiments: List[Experiment] = cls.get_experiments_by_report(report.id)
 
         for experiment in experiments:
-            if experiment.project is None:
-                raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_NO_PROJECT.value,
-                                          GWSException.REPORT_VALIDATION_EXP_NO_PROJECT.name, {'title': experiment.title})
-
-            if experiment.project.id != report.project.id:
-                raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.value,
-                                          GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.name, {'title': experiment.title})
+            exp_project_id = experiment.project.id if experiment.project else None
+            if exp_project_id != project_id:
+                ExperimentService.update_experiment_project(experiment.id, project_id)
 
     @classmethod
     @transaction()
