@@ -83,6 +83,7 @@ class BrickModel(Model):
                     timestamp=time()
                 )
             )
+            brick_dto.status = 'CRITICAL'
 
         return brick_dto
 
