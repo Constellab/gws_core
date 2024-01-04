@@ -3,20 +3,21 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict
+from typing import Dict, Optional
 
 from gws_core.resource.view.view_dto import CallViewResultDTO
+from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view_config.view_config import ViewConfig
 
 
 class CallViewResult():
     view: Dict
     resource_id: str
-    view_config: ViewConfig
+    view_config: Optional[ViewConfig]
     title: str
-    view_type: str
+    view_type: ViewType
 
-    def __init__(self, view: Dict, resource_id: str, view_config: ViewConfig, title: str, view_type: str):
+    def __init__(self, view: Dict, resource_id: str, view_config: ViewConfig, title: str, view_type: ViewType):
         self.view = view
         self.resource_id = resource_id
         self.view_config = view_config
