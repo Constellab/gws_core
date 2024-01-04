@@ -44,6 +44,7 @@ from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.report.report import Report
 from gws_core.report.report_service import ReportService
+from gws_core.report.template.report_template import ReportTemplate
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -52,6 +53,7 @@ from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view_config.view_config import ViewConfig
+from gws_core.space.space_service import SpaceService
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag_dto import EntityTagValueFormat, TagOriginType
 from gws_core.tag.tag_helper import TagHelper
@@ -873,7 +875,7 @@ class Migration060(BrickMigration):
 
                 report_updated = False
 
-                for report_view in rich_text.get_resource_views():
+                for report_view in rich_text.get_resource_views_data():
                     if report_view.get('view_config_id') is None:
                         view_result = ResourceService.get_and_call_view_on_resource_model(report_view.get(
                             'resource_id'), report_view.get('view_method_name'), report_view.get('view_config'), True)
@@ -934,7 +936,7 @@ class Migration062(BrickMigration):
             ResourceModel.get_table_name()]
         exclude_archive = [Experiment.get_table_name(), TaskModel.get_table_name(), ProtocolModel.get_table_name(),
                            Report.get_table_name(), ResourceModel.get_table_name()]
-        migrator: SqlMigrator = SqlMigrator(Model.get_db())
+        migrator = SqlMigrator(Model.get_db())
 
         for model in models:
             if not model.get_table_name():
@@ -960,3 +962,41 @@ class Migration062(BrickMigration):
                     f'Error while removing hash column for model {model.__name__} : {exception}')
 
         migrator.migrate()
+
+
+@brick_migration('0.6.3', short_description='Change text editor')
+class Migration063(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(Report.get_db())
+        migrator.add_column_if_not_exists(Report, Report.old_content)
+        migrator.add_column_if_not_exists(ReportTemplate, ReportTemplate.old_content)
+        migrator.add_column_if_not_exists(Experiment, Experiment.old_description)
+        migrator.add_column_if_not_exists(ProtocolTemplate, ProtocolTemplate.old_description)
+        migrator.migrate()
+
+        cls.migrate_content(Report, 'content', 'old_content')
+        cls.migrate_content(ReportTemplate, 'content', 'old_content')
+        cls.migrate_content(Experiment, 'description', 'old_description')
+        cls.migrate_content(ProtocolTemplate, 'description', 'old_description')
+
+    @classmethod
+    def migrate_content(cls, model_type: Type[Model], content_column_name: str, old_content_column_name) -> None:
+        models_list: List[Model] = list(model_type.select())
+        for model in models_list:
+            try:
+                current_content = getattr(model, content_column_name)
+
+                # if it was already migrated
+                if current_content is None or 'ops' not in current_content:
+                    continue
+
+                new_content = SpaceService.migrate_text_editor(getattr(model, content_column_name))
+                setattr(model, old_content_column_name, getattr(model, content_column_name))
+                setattr(model, content_column_name, new_content)
+                model.save()
+            except Exception as exception:
+                Logger.error(
+                    f'Error while migrating {model_type.__name__} {model.id} : {exception}')

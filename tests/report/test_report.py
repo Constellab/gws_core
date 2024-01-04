@@ -5,8 +5,9 @@
 
 
 from gws_core import Robot
-from gws_core.core.classes.rich_text_content import (RichTextI,
-                                                     RichTextSpecialOps)
+from gws_core.core.classes.rich_text_content import (RichText,
+                                                     RichTextBlockType,
+                                                     RichTextI)
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.robot.robot_tasks import RobotCreate
@@ -37,7 +38,8 @@ class TestReport(BaseTestCase):
         report = ReportService.update(report.id, ReportSaveDTO(title='New title'))
         self.assertEqual(report.title, 'New title')
 
-        content: RichTextI = {'ops': [{'insert': 'Hello'}]}
+        content: RichTextI = RichText.create_rich_text_i(
+            [{'id': '0', 'type': 'paragraph', 'data': {'text': 'Hello world!'}}])
         report = ReportService.update_content(report.id, content)
         self.assert_json(report.content, content)
 
@@ -97,10 +99,10 @@ class TestReport(BaseTestCase):
 
         # simulate the rich text with resource id
         rich_text_resource_view = view_result.view_config.to_rich_text_resource_view()
-        operation = {"insert": {RichTextSpecialOps.RESOURCE_VIEW.value: rich_text_resource_view}}
+        block = RichText.create_block(RichTextBlockType.RESOURCE_VIEW, rich_text_resource_view)
 
         # update report content
-        new_content = {"ops": [operation]}
+        new_content = {"blocks": [block]}
         ReportService.update_content(report.id, new_content)
 
         # check that the associated ReportViewModel is created
@@ -114,13 +116,13 @@ class TestReport(BaseTestCase):
         self.assertEqual(paginator.results[0].id, report.id)
 
         # test adding the same resource a second time it shouldn't create a new associated view
-        new_content = {"ops": [operation, operation]}
+        new_content = {"blocks": [block, block]}
         ReportService.update_content(report.id, new_content)
         report_views = ReportViewModel.get_by_report(report.id)
         self.assertEqual(len(report_views), 1)
 
         # test removing the resource
-        new_content = {"ops": []}
+        new_content = {"blocks": []}
         ReportService.update_content(report.id, new_content)
         report_views = ReportViewModel.get_by_report(report.id)
         self.assertEqual(len(report_views), 0)
@@ -147,7 +149,7 @@ class TestReport(BaseTestCase):
         rich_text = report_db.get_content_as_rich_text()
 
         # check that a view exist in the rich text
-        resource_views = rich_text.get_resource_views()
+        resource_views = rich_text.get_resource_views_data()
         self.assertEqual(len(resource_views), 1)
         self.assertEqual(resource_views[0]['view_method_name'], "view_as_string")
         self.assertEqual(resource_views[0]['resource_id'], robot_model.id)
@@ -160,7 +162,7 @@ class TestReport(BaseTestCase):
             ReportService.remove_experiment(report.id, experiment.get_experiment_model().id)
 
         # remove the view from the report
-        ReportService.update_content(report.id, {"ops": []})
+        ReportService.update_content(report.id, {"blocks": []})
 
         # Check that we cannot remove the experiment because of the view
         ReportService.remove_experiment(report.id, experiment.get_experiment_model().id)

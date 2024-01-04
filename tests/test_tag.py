@@ -353,7 +353,7 @@ class TestTag(BaseTestCase):
         self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, experiment_id))
 
         # if we remove the view from the report, the tag should be kept with 1 origin
-        ReportService.update_content(report.id, {"ops": []})
+        ReportService.update_content(report.id, {"blocks": []})
 
         report_tags = EntityTagList.find_by_entity(EntityType.REPORT, report.id)
         self.assertEqual(len(report_tags.get_tags()), 1)
