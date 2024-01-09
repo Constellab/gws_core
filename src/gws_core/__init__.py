@@ -227,8 +227,6 @@ from .impl.table.helper.table_scaler_helper import \
     TableScalerHelper as TableScalerHelper
 from .impl.table.helper.table_tag_aggregator_helper import \
     TableTagAggregatorHelper as TableTagAggregatorHelper
-from .impl.table.helper.table_tag_extractor_helper import \
-    TableTagExtractorHelper as TableTagExtractorHelper
 from .impl.table.helper.table_unfolder_helper import \
     TableUnfolderHelper as TableUnfolderHelper
 from .impl.table.metadata_table.helper.table_annotator_helper import \

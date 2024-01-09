@@ -516,7 +516,7 @@ class Table(Resource):
         position_union = sorted(list(set(position_union)))
         return position_union
 
-    ######################################## COLUM TAGS ########################################
+    ######################################## COLUMN TAGS ########################################
 
     def add_column_tag_by_index(self, column_index: int, key: str, value: str) -> None:
         """
@@ -613,7 +613,52 @@ class Table(Resource):
             if source_table.column_exists(column_name):
                 self.set_column_tags_by_name(column_name, source_table.get_column_tags_by_name(column_name))
 
+    def extract_column_tags_to_new_row(self, tag_key: str,
+                                       new_row_name: str = None) -> None:
+        """Create a new row and fill it with the values of the tag of each column
+
+        :param key: key of the tag to extract
+        :type key: str
+        :param new_row_name: name of the new row that will contains tag values.
+                                If none, tag key is used as name, defaults to None
+        :type new_row_name: str, optional
+        """
+        # create a new row name
+        if new_row_name is None:
+            new_row_name = self.generate_new_column_name(tag_key)
+        else:
+            new_row_name = self.generate_new_column_name(new_row_name)
+
+        tags: List[Dict[str, str]] = self.get_column_tags()
+
+        tags_values = [tag.get(tag_key) for tag in tags]
+        self.add_row(new_row_name, tags_values)
+
+    def extract_row_values_to_column_tags(self, row_name: str, new_tag_key: str = None,
+                                          delete_row: bool = False) -> None:
+        """Create a new tag for each column and fill it with the values of the row
+
+        :param row_name: name of the row to extract values from
+        :type row_name: str
+        :param new_tag_key: key of the new tag that will contains row values. If none, row name is used as key, defaults to None
+        :type new_tag_key: str, optional
+        :param delete_row: if true, delete the row after the extraction, defaults to False
+        :type delete_row: bool, optional
+        """
+        # create a new tag key
+        if new_tag_key is None:
+            new_tag_key = row_name
+
+        row_values = self.get_row_data(row_name)
+
+        for i in range(self.nb_columns):
+            self.add_column_tag_by_index(i, new_tag_key, str(row_values[i]))
+
+        if delete_row:
+            self.remove_row(row_name)
+
     ######################################## ROW TAGS ########################################
+
     def add_row_tag_by_index(self, row_index: int, key: str, value: str) -> None:
         """
         Add a {key, value} tag to a row at a given index
@@ -707,6 +752,51 @@ class Table(Resource):
         for row_name in self.row_names:
             if source_table.row_exists(row_name):
                 self.set_row_tags_by_name(row_name, source_table.get_row_tag_by_name(row_name))
+
+    def extract_row_tags_to_new_column(self, tag_key: str,
+                                       new_column_name: str = None) -> None:
+        """Create a new columns and fill it with the values of the tag of each row
+
+        :param key: key of the tag to extract
+        :type key: str
+        :param new_column_name: name of the new column that will contains tag values.
+                                If none, tag key is used as name, defaults to None
+        :type new_column_name: str, optional
+        """
+        # create a new column name
+        if new_column_name is None:
+            new_column_name = self.generate_new_column_name(tag_key)
+        else:
+            new_column_name = self.generate_new_column_name(new_column_name)
+
+        tags: List[Dict[str, str]] = self.get_row_tags()
+
+        tags_values = [tag.get(tag_key) for tag in tags]
+        self.add_column(new_column_name, tags_values)
+
+    def extract_column_values_to_row_tags(self, column_name: str, new_tag_key: str = None,
+                                          delete_column: bool = False) -> None:
+        """Create a new tag for each row and fill it with the values of the provided column
+
+        :param column_name: name of the column to extract
+        :type column_name: str
+        :param new_tag_key: key of the new tag that will contains column values.
+                            If none, column name is used as key, defaults to None
+        :type new_tag_key: str, optional
+        :param delete_column: if true, delete the column after the extraction, defaults to False
+        :type delete_column: bool, optional
+        """
+        # create a new tag key
+        if new_tag_key is None:
+            new_tag_key = column_name
+
+        column_values = self.get_column_data(column_name)
+
+        for i in range(self.nb_rows):
+            self.add_row_tag_by_index(i, new_tag_key, str(column_values[i]))
+
+        if delete_column:
+            self.remove_column(column_name)
 
     #################################### FILTERING ####################################
 

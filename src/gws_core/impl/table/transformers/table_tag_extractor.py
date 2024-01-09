@@ -3,28 +3,22 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import StrParam
-from gws_core.impl.table.helper.table_tag_extractor_helper import \
-    TableTagExtractorHelper
 from gws_core.impl.table.table import Table
 from gws_core.task.transformer.transformer import (Transformer,
                                                    transformer_decorator)
 
 tag_key_param = StrParam(human_name="Tag key", short_description="Tag key to extract")
 
-tag_type_param = StrParam(human_name="Tag values type",
-                          short_description="Force tag values type, leave to char for no conversion",
-                          allowed_values=TableTagExtractorHelper.TAG_EXTRACT_TYPES)
-
 
 @transformer_decorator(
     unique_name="TableRowTagExtractor",
     resource_type=Table,
-    short_description="Extract row tags values in a new column",
+    human_name="Extract row tags to new column",
+    short_description="Extract row tags values to a new column",
 )
 class TableRowTagExtractor(Transformer):
     """
@@ -68,31 +62,24 @@ class TableRowTagExtractor(Transformer):
                 "tag_key": tag_key_param,
                 "new_column_name": StrParam(human_name="New column name",
                                             short_description="Name of the new column that will contain the tag values. If empty, the tag key will be used",
-                                            optional=True),
-                "tag_type": tag_type_param,
+                                            optional=True)
             },
             human_name="",
         ),
     }
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-
-        result = source
-
         for param_dict in params["params"]:
+            source.extract_row_tags_to_new_column(param_dict["tag_key"], new_column_name=param_dict["new_column_name"])
 
-            result = TableTagExtractorHelper.extract_row_tags(
-                result, param_dict["tag_key"],
-                param_dict["tag_type"],
-                param_dict["new_column_name"],)
-
-        return result
+        return source
 
 
 @transformer_decorator(
     unique_name="TableColumnTagExtractor",
     resource_type=Table,
-    short_description="Extract column tags values in a new row",
+    human_name="Extract column tags to new row",
+    short_description="Extract column tags values to a new row",
 )
 class TableColumnTagExtractor(Transformer):
     """
@@ -139,21 +126,13 @@ class TableColumnTagExtractor(Transformer):
                 "new_row_name": StrParam(human_name="New row name",
                                          short_description="Name of the new row that will contain the tag values. If empty, the tag key will be used",
                                          optional=True),
-                "tag_type": tag_type_param,
             },
             human_name="",
         ),
     }
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-
-        result = source
-
         for param_dict in params["params"]:
+            source.extract_column_tags_to_new_row(param_dict["tag_key"], new_row_name=param_dict["new_row_name"])
 
-            result = TableTagExtractorHelper.extract_column_tags(
-                result, param_dict["tag_key"],
-                param_dict["tag_type"],
-                param_dict["new_row_name"])
-
-        return result
+        return source

@@ -8,37 +8,54 @@ from unittest import TestCase
 
 from pandas import DataFrame
 
-from gws_core import Table, TableTagExtractorHelper
+from gws_core import Table
 
 
 # test_table_tag_extractor
 class TestTableTagAggregator(TestCase):
 
-    def test_table_tag_extractor_helper(self):
-        initial_df = DataFrame({'F1': [1, 2, 3, 4], 'F2': [7, 1, 10, 8], 'F3': [2, 1, 4, 2]})
+    def test_extract_row_tags_to_new_columns(self):
+        initial_df = DataFrame({'F1': [1, 2], 'F2': [3, 4]})
         row_tags = [{'gender': 'M', 'age': '10'},
-                    {'gender': 'F', 'age': '15'},
-                    {'gender': 'M', 'age': '10'},
-                    {'gender': 'F', 'age': '12'}]
-        column_tags = [{'group': 'A'}, {'group': 'A'}, {'group': 'B'}]
+                    {'gender': 'F', 'age': '15'}]
 
-        table = Table(initial_df, row_tags=row_tags, column_tags=column_tags)
+        table = Table(initial_df, row_tags=row_tags)
 
         # Create a new column contaning the gender values
-        result_table = TableTagExtractorHelper.extract_row_tags(table, key='gender')
+        table.extract_row_tags_to_new_column('gender')
 
-        self.assertEqual(result_table.nb_columns, 4)
-        self.assertEqual(result_table.get_data()['gender'].tolist(), ['M', 'F', 'M', 'F'])
+        self.assertEqual(table.nb_columns, 3)
+        self.assertEqual(table.nb_rows, 2)
+        self.assertEqual(table.get_column_data('gender'), ['M', 'F'])
 
-        # Test creating a new column name 'test_age' with age as number
-        result_table = TableTagExtractorHelper.extract_row_tags(
-            table, key='age', tag_values_type='numeric', new_column_name='test_age')
-
-        self.assertEqual(result_table.nb_columns, 4)
-        self.assertEqual(result_table.get_data()['test_age'].tolist(), [10.0, 15.0, 10.0, 12.0])
+    def test_extract_columns_tags_to_new_row(self):
+        initial_df = DataFrame({'F1': [1, 2], 'F2': [3, 4]})
+        column_tags = [{'group': 'A'}, {'group': 'A'}]
 
         # Create a new row contaning the group values
-        result_table = TableTagExtractorHelper.extract_column_tags(table, key='group')
+        table = Table(initial_df, column_tags=column_tags)
+        table.extract_column_tags_to_new_row('group')
 
-        self.assertEqual(result_table.nb_rows, 5)
-        self.assertEqual(result_table.get_data().iloc[4].tolist(), ['A', 'A', 'B'])
+        self.assertEqual(table.nb_rows, 3)
+        self.assertEqual(table.nb_columns, 2)
+        self.assertEqual(table.get_row_data('group'), ['A', 'A'])
+
+    def test_extract_row_values_to_column_tags(self):
+        initial_df = DataFrame({'F1': [1, 2], 'F2': [3, 4]})
+
+        table = Table(initial_df)
+        table.extract_row_values_to_column_tags('0')
+
+        self.assertEqual(table.nb_rows, 2)
+        self.assertEqual(table.nb_columns, 2)
+>        self.assertEqual(table.get_column_tags(), [{'0': '1'}, {'0': '3'}])
+
+    def test_extract_column_values_to_row_tags(self):
+        initial_df = DataFrame({'F1': [1, 2], 'F2': [3, 4]})
+
+        table = Table(initial_df)
+        table.extract_column_values_to_row_tags('F1')
+
+        self.assertEqual(table.nb_rows, 2)
+        self.assertEqual(table.nb_columns, 2)
+        self.assertEqual(table.get_row_tags(), [{'F1': '1'}, {'F1': '2'}])
