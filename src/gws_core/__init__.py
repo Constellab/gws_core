@@ -286,9 +286,9 @@ from .impl.table.transformers.table_tag_aggregator import \
 from .impl.table.transformers.table_tag_aggregator import \
     TableRowTagAggregator as TableRowTagAggregator
 from .impl.table.transformers.table_tag_extractor import \
-    TableColumnTagExtractor as TableColumnTagExtractor
+    TableColumnTagToRowExtractor as TableColumnTagToRowExtractor
 from .impl.table.transformers.table_tag_extractor import \
-    TableRowTagExtractor as TableRowTagExtractor
+    TableRowTagToColumnExtractor as TableRowTagToColumnExtractor
 from .impl.table.transformers.table_transposer import \
     TableTransposer as TableTransposer
 from .impl.table.transformers.table_unfolder import \

@@ -48,7 +48,7 @@ class TestTableTagAggregator(TestCase):
 
         self.assertEqual(table.nb_rows, 2)
         self.assertEqual(table.nb_columns, 2)
->        self.assertEqual(table.get_column_tags(), [{'0': '1'}, {'0': '3'}])
+        self.assertEqual(table.get_column_tags(), [{'0': '1'}, {'0': '3'}])
 
     def test_extract_column_values_to_row_tags(self):
         initial_df = DataFrame({'F1': [1, 2], 'F2': [3, 4]})
