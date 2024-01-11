@@ -469,8 +469,6 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
 
     def export_protocol(self) -> dict:
         json_ = self.protocol_model.to_config_dto()
-        # remove the main instance name because it is not relevant
-        del json_["instance_name"]
         return {
             "version": 1,  # version of the protocol json format
             "data": json_
