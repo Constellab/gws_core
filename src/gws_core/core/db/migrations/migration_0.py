@@ -964,8 +964,8 @@ class Migration062(BrickMigration):
         migrator.migrate()
 
 
-@brick_migration('0.6.3', short_description='Change text editor')
-class Migration063(BrickMigration):
+@brick_migration('0.7.0', short_description='Change text editor')
+class Migration070(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
