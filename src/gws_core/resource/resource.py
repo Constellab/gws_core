@@ -5,12 +5,11 @@
 
 import os
 from copy import deepcopy
-from typing import Dict, List, Union, final
+from typing import Dict, TypeVar, Union, final
 
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
-from gws_core.tag.tag import Tag
 from gws_core.tag.tag_list import TagList
 from gws_core.tag.tag_list_field import TagListField
 
@@ -28,6 +27,9 @@ from .view.view_decorator import view
 
 # Typing names generated for the class resource
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
+
+
+ResourceType = TypeVar('ResourceType', bound='ResourceType')
 
 
 @typing_registrator(unique_name="Resource", object_type="RESOURCE")
@@ -128,9 +130,12 @@ class Resource(Base):
         """
         return None
 
-    def clone(self) -> 'Resource':
-        """Clone the resource to create a new instance with a new id
-            It copies the RFields
+    def clone(self: ResourceType) -> ResourceType:
+        """
+        Clone the resource to create a new instance with a new id. It copies the RFields.
+
+        :return: The cloned resource
+        :rtype: Resource
         """
         clone: Resource = type(self)()
         clone._model_id = self._model_id

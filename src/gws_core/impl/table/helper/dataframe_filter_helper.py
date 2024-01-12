@@ -19,6 +19,11 @@ AxisName = Literal['row', 'column']
 
 
 class DataframeFilterName(TypedDict):
+    """
+    Object to filter a dataframe by name. The name can be a list of string or a string.
+    If the name is a list of string, the dataframe will be filtered by the rows/columns that have one of the name.
+    If the name is a string, the dataframe will be filtered by the rows/columns that have the name. The name can be a regular expression.
+    """
     name: Union[List[str], str]
     is_regex: NotRequired[bool]
 
