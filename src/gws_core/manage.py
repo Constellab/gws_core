@@ -3,12 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
-import importlib
+import fnmatch
+import importlib.util
 import os
 import unittest
 from copy import Error
-from unittest.suite import BaseTestSuite
+from typing import List
+from unittest.suite import TestSuite
 
 import click
 
@@ -36,7 +37,9 @@ class AppManager:
               show_sql: bool = False, is_test: bool = False) -> Settings:
 
         log_dir = Settings.build_log_dir(is_test=is_test)
-        Logger(log_dir=log_dir, level=log_level, experiment_id=experiment_id)
+
+        logger_level = Logger.check_log_level(log_level)
+        Logger(log_dir=log_dir, level=logger_level, experiment_id=experiment_id)
 
         if show_sql:
             Logger.print_sql_queries()
@@ -58,7 +61,7 @@ class AppManager:
             f"Starting server in {('prod' if Settings.is_prod_mode() else 'dev')} mode with {Settings.get_lab_environment()} lab env.")
 
         # start app
-        App.start(port=port)
+        App.start(port=int(port))
 
     @classmethod
     def run_test(cls, test: str, log_level: str, show_sql: bool) -> None:
@@ -66,17 +69,25 @@ class AppManager:
             raise BadRequestException(
                 "Cannot run tests while the Application is running.")
 
+        if not test:
+            raise BadRequestException(
+                "Please provide a test to run. The input must be as follow: [BRICK_NAME]/[TEST_NAME] where [BRICK_NAME] is the name of the brick and [TEST_NAME] is the name of the test file (only the name, not the path).")
+
         settings = cls._init(log_level=log_level, show_sql=show_sql, is_test=True)
 
         if test in ["*", "all"]:
             test = "test*"
-        tests: str = test.split(' ')
+        tests: List[str] = test.split(' ')
         loader = unittest.TestLoader()
-        test_suite: BaseTestSuite = BaseTestSuite()
+        test_suite = TestSuite()
 
         for test_file in tests:
             tab = test_file.split("/")
-            if len(tab) == 2:
+            if len(tab) > 2:
+                raise BadRequestException(
+                    f"The input '{test_file}' is not valid. The input must be as follow: [BRICK_NAME]/[TEST_NAME] where [BRICK_NAME] is the name of the brick and [TEST_NAME] is the name of the test file (only the name, not the path).")
+            # if the brick name is provided
+            if len(tab) > 1:
                 bricks = settings.get_bricks()
                 brick_name = tab[0]
                 test_file = tab[1]
@@ -88,12 +99,21 @@ class AppManager:
                 test_file = tab[0]
                 brick_dir = settings.get_cwd()
 
-            test_suite.addTests(loader.discover(os.path.join(
-                brick_dir, "./tests/"), pattern=test_file+".py"))
+            # loop over all files in the tests directory and load them
+            for dirpath, _, filenames in os.walk(os.path.join(brick_dir, "tests")):
 
+                test_file_python = test_file + ".py" if not test_file.endswith(".py") else test_file
+                for filename in fnmatch.filter(filenames, test_file_python):
+                    test_file_path = os.path.join(dirpath, filename)
+                    spec = importlib.util.spec_from_file_location("tests", test_file_path)
+                    test_module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(test_module)
+                    test_suite.addTests(loader.loadTestsFromModule(test_module))
+
+        # check if there are any tests discovered
         if test_suite.countTestCases() == 0:
             raise Error(
-                f"No test file with name '{test}' found. Or the file does not contain tests")
+                f"No tests discovered for input '{test}'. The input must be as follow: [BRICK_NAME]/[TEST_NAME] where [BRICK_NAME] is the name of the brick and [TEST_NAME] is the name of the test file (only the name, not the path).")
 
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
@@ -134,7 +154,7 @@ class AppManager:
 
 
 def load_settings(cwd: str) -> None:
-    print("/!\ manage.load_settings() is deprecated, please remove it and use manage.start_app() instead")
+    print("[WARNING] manage.load_settings() is deprecated, please remove it and use manage.start_app() instead")
     start_app(cwd)
 
 
@@ -167,7 +187,7 @@ def start_notebook(cwd: str, log_level: str = 'INFO') -> None:
 @click.option('--user-id', help='User id')
 @click.option('--protocol-model-id', help='Protocol model id')
 @click.option('--process-instance-name', help='Process instance name')
-def _start_app_console(ctx, test: str, run_experiment: bool, runserver: bool,
+def _start_app_console(_, test: str, run_experiment: bool, runserver: bool,
                        port: str, log_level: str, show_sql: bool, reset_env: bool,
                        experiment_id: str, user_id: str,
                        protocol_model_id: str, process_instance_name: str) -> None:
