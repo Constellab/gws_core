@@ -203,6 +203,10 @@ class TestExperiment(BaseTestCase):
         self._check_process_reset(
             ExperimentService.get_experiment_by_id(experiment.id).protocol_model)
 
+        # test get experiment protocol config
+        result = experiment.export_protocol()
+        self.assertIsNotNone(result)
+
     def _check_process_reset(self, process_model: ProcessModel) -> None:
         self.assertEqual(process_model.status, ProcessStatus.DRAFT)
         self.assertFalse(process_model.progress_bar.is_started)

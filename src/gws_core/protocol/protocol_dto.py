@@ -75,6 +75,7 @@ class ProcessConfigDTO(BaseModelDTO):
     graph: Optional[ProtocolConfigDTO] = None
 
 
+# call this method to set the type of the recursive graph
 ProtocolConfigDTO.update_forward_refs()
 
 
@@ -97,7 +98,12 @@ class ProtocolDTO(ProcessDTO):
     data: ProtocolFullDTO
 
 
+class ExperimentProtocolDTO(BaseModelDTO):
+    version: int
+    data: ProcessConfigDTO
+
 ################################### ROUTES DTOs ###################################
+
 
 class ProtocolUpdateDTO(BaseModelDTO):
     process: Optional[ProcessDTO]
