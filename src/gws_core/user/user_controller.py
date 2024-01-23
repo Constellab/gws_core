@@ -95,7 +95,7 @@ def check_dev_login_unique_code(unique_code: str) -> UserFullDTO:
     """
     Check the temp unique code to login to the dev lab
     """
-    return DevEnvService.check_dev_login_unique_code(unique_code).to_dto()
+    return DevEnvService.check_dev_login_unique_code(unique_code).to_full_dto()
 
 
 @core_app.post("/logout", tags=["User"], summary="Logout the user")
