@@ -5,14 +5,13 @@
 
 from typing import List, Literal, Optional
 
-from typing_extensions import TypedDict
-
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
+from typing_extensions import TypedDict
 
 
 class BrickVersion(BaseModelDTO):
     name: str
-    version: str
+    version: Optional[str] = None
 
 
 class BrickMigrationLogHistory(TypedDict):
