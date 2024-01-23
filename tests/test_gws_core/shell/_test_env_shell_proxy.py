@@ -81,14 +81,14 @@ class TestEnvShellProxy(TestCase):
 
             venv_info = VEnvService.get_venv_complete_info(env_name)
 
-            self.assertIsNotNone(venv_info['basic_info'])
-            self.assertTrue(venv_info['env_size'] > 0)
+            self.assertIsNotNone(venv_info.basic_info)
+            self.assertTrue(venv_info.env_size > 0)
 
             # check that the PipFile saved in the venv is the same as the one used to create the venv
             with open(env_file_path, 'r+', encoding='UTF-8') as file:
                 config_file_content = file.read()
 
-            self.assertEqual(venv_info['config_file_content'], config_file_content)
+            self.assertEqual(venv_info.config_file_content, config_file_content)
 
             # if we try to recreate the venv, it should not be recreated
             self.assertFalse(shell_proxy.install_env())

@@ -5,10 +5,10 @@
 
 
 from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
-                      Experiment, ExperimentService, InputSpec, InputSpecs,
-                      OutputSpec, OutputSpecs, ProcessFactory, ProcessModel,
-                      ProcessSpec, Protocol, ProtocolModel, ProtocolService,
-                      Resource, RobotMove, Task, TaskInputs, TaskOutputs,
+                      ExperimentService, InputSpec, InputSpecs, OutputSpec,
+                      OutputSpecs, ProcessFactory, ProcessModel, ProcessSpec,
+                      Protocol, ProtocolModel, ProtocolService, Resource,
+                      RobotMove, Task, TaskInputs, TaskOutputs,
                       protocol_decorator, resource_decorator, task_decorator)
 from gws_core.experiment.experiment_exception import ExperimentRunException
 from gws_core.experiment.experiment_run_service import ExperimentRunService
@@ -16,8 +16,9 @@ from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.protocol.protocol_exception import ProtocolBuildException
 
-
 #################### Error during the task ################
+
+
 @task_decorator("ErrorTask")
 class ErrorTask(Task):
     input_specs: InputSpecs = InputSpecs({'robot': InputSpec(Robot)})
@@ -85,7 +86,7 @@ class TestSubProtocolBuildError(Protocol):
         ])
 
 
-@protocol_decorator("TestNestedProtocol")
+@protocol_decorator("TestProtocolBuildError")
 class TestProtocolBuildError(Protocol):
     def configure_protocol(self) -> None:
         self.add_process(TestSubProtocolBuildError, 'sub_proto')

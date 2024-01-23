@@ -6,10 +6,10 @@
 
 from unittest import TestCase
 
-from gws_core_test_helper import GWSCoreTestHelper
-
 from gws_core import TableDecoder, TableEncoder, TaskRunner
 from gws_core.impl.table.table import Table
+
+from ..gws_core_test_helper import GWSCoreTestHelper
 
 
 # test_table_encoding

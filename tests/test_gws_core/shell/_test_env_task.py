@@ -22,22 +22,22 @@ from gws_core.task.task_runner import TaskRunner
 __cdir__ = os.path.dirname(os.path.realpath(__file__))
 
 
-# test_env_task
-@task_decorator("CondaEnvTaskTester")
-class CondaEnvTaskTester(CondaEnvTask):
-    output_specs = OutputSpecs({'file': OutputSpec(File)})
-    env_file_path = os.path.join(__cdir__, "penv", "env_jwt_conda.yml")
+# # test_env_task
+# @task_decorator("CondaEnvTaskTester")
+# class CondaEnvTaskTester(CondaEnvTask):
+#     output_specs = OutputSpecs({'file': OutputSpec(File)})
+#     env_file_path = os.path.join(__cdir__, "penv", "env_jwt_conda.yml")
 
-    def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
-                       shell_proxy: ShellProxy) -> TaskOutputs:
-        command = [
-            "python", os.path.join(
-                __cdir__, "penv", "jwt_encode.py"), ">", "out.txt"
-        ]
-        shell_proxy.run(command)
+#     def run_with_proxy(self, params: ConfigParams, inputs: TaskInputs,
+#                        shell_proxy: ShellProxy) -> TaskOutputs:
+#         command = [
+#             "python", os.path.join(
+#                 __cdir__, "penv", "jwt_encode.py"), ">", "out.txt"
+#         ]
+#         shell_proxy.run(command)
 
-        file = File(path=os.path.join(self.working_dir, "out.txt"))
-        return {"file": file}
+#         file = File(path=os.path.join(self.working_dir, "out.txt"))
+#         return {"file": file}
 
 
 @task_decorator("MambaEnvTaskTester")
@@ -75,8 +75,10 @@ class PipEnvTaskTester(PipEnvTask):
 # test_env_task
 class TestEnvTask(TestCase):
 
-    def test_conda(self):
-        self._test(CondaEnvTaskTester, CondaShellProxy)
+    # don't test conda because thoses classes are not really used and the
+    # conda installed take a lot of time
+    # def test_conda(self):
+    #     self._test(CondaEnvTaskTester, CondaShellProxy)
 
     def test_mamba(self):
         self._test(MambaEnvTaskTester, MambaShellProxy)

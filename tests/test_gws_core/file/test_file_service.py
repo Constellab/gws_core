@@ -16,8 +16,8 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.resource.resource_typing import FileTyping
 
 
-@resource_decorator("SubFile2")
-class SubFile(File):
+@resource_decorator("SubFileService")
+class SubFileService(File):
 
     pass
 
@@ -28,13 +28,13 @@ class TestFileService(BaseTestCase):
     def test_get_file_types(self):
         file_types: List[ResourceTyping] = FsNodeService.get_file_types()
 
-        # Check that there is at least 2 files type, File and SubFile
+        # Check that there is at least 2 files type, File and SubFileService
         self.assertTrue(len(file_types) >= 2)
 
-        # Check that the File and SubFile type exists
+        # Check that the File and SubFileService type exists
         self.assertIsNotNone(next(filter(lambda file: File == file.get_type(), file_types), None))
 
-        sub_file_type: FileTyping = next(filter(lambda file: SubFile == file.get_type(), file_types), None)
+        sub_file_type: FileTyping = next(filter(lambda file: SubFileService == file.get_type(), file_types), None)
         self.assertIsNotNone(sub_file_type)
         self.assertIsInstance(sub_file_type, FileTyping)
 
@@ -44,7 +44,7 @@ class TestFileService(BaseTestCase):
         # Check that there is at least 1 folder type, Folder
         self.assertTrue(len(file_types) >= 1)
 
-        # Check that the File and SubFile type exists
+        # Check that the File and SubFileService type exists
         self.assertIsNotNone(next(filter(lambda file: Folder == file.get_type(), file_types), None))
 
     def test_upload_download_file(self):

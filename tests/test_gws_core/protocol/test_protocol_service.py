@@ -22,7 +22,8 @@ from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase
-from tests.protocol_examples import TestNestedProtocol, TestSimpleProtocol
+
+from ..protocol_examples import TestNestedProtocol
 
 
 # test_protocol_service
@@ -190,36 +191,47 @@ class TestProtocolService(BaseTestCase):
                 sub_protocol.get_model().id, 'p2')
 
     def test_run_protocol_process(self):
-        experiment = IExperiment(TestSimpleProtocol)
+        experiment = IExperiment()
+        i_protocol = experiment.get_protocol()
+        protocol_id = i_protocol.get_model().id
+        p0 = i_protocol.add_process(RobotCreate, 'p0')
+        p1 = i_protocol.add_process(RobotMove, 'p1')
+        p2 = i_protocol.add_process(RobotMove, 'p2')
+        p3 = i_protocol.add_process(RobotMove, 'p3')
+        i_protocol.add_connector(p0 >> 'robot', p1 << 'robot')
+        i_protocol.add_connector(p1 >> 'robot', p2 << 'robot')
+        i_protocol.add_connector(p2 >> 'robot', p3 << 'robot')
 
         # Run process p0
-        ProtocolService.run_process(experiment.get_protocol().get_model().id, 'p0')
+        ProtocolService.run_process(protocol_id, 'p0')
         experiment.refresh()
 
         count = 0
         while count < 30:
-            experiment.refresh()
-            if experiment.get_protocol().get_process('p0').get_model().is_finished:
+            p0.refresh()
+            if p0.get_model().is_finished:
                 break
             sleep(1)
             count += 1
-
-        self.assertTrue(experiment.get_protocol().get_process('p0').get_model().is_success)
-        self.assertTrue(experiment.get_protocol().get_process('p1').get_model().is_draft)
+        p0.refresh()
+        p1.refresh()
+        self.assertTrue(p0.get_model().is_success)
+        self.assertTrue(p1.get_model().is_draft)
 
         # Test run process p1
-        ProtocolService.run_process(experiment.get_protocol().get_model().id, 'p1')
+        ProtocolService.run_process(protocol_id, 'p1')
 
         count = 0
         while count < 30:
-            experiment.refresh()
-            if experiment.get_protocol().get_process('p1').get_model().is_finished:
+            p1.refresh()
+            if p1.get_model().is_finished:
                 break
             sleep(1)
             count += 1
 
-        self.assertTrue(experiment.get_protocol().get_process('p1').get_model().is_success)
+        p1.refresh()
+        self.assertTrue(p1.get_model().is_success)
 
-        # Test ru nprocess p4 which shoud not be runable
+        # Test run process p4 which shoud not be runable
         with self.assertRaises(Exception):
-            ProtocolService.run_process(experiment.get_protocol().get_model().id, 'p4')
+            ProtocolService.run_process(protocol_id, 'p3')

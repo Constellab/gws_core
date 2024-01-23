@@ -36,7 +36,7 @@ class TestException(TestCase):
             response: ExceptionResponse = ExceptionHandler.handle_exception(request=None, exception=err)
             self.assertEqual(response.status_code, 400)
             body: Dict = response.get_json_body()
-            self.assertEqual(body["code"], "_core.known_exception")
+            self.assertEqual(body["code"], "test_gws_core.known_exception")
             self.assertEqual(body["detail"], "Error")
             self.assertEqual(body["instanceId"], err.instance_id)
 
@@ -49,7 +49,7 @@ class TestException(TestCase):
             response: ExceptionResponse = ExceptionHandler.handle_exception(request=None, exception=err)
             self.assertEqual(response.status_code, 400)
             body: Dict = response.get_json_body()
-            self.assertEqual(body["code"], "_core.test_exception.py.test_http_exception")
+            self.assertEqual(body["code"], "test_gws_core.test_exception.py.test_http_exception")
             self.assertEqual(body["detail"], "Error")
             self.assertIsNotNone(body["instanceId"])
 
@@ -62,6 +62,6 @@ class TestException(TestCase):
             response: ExceptionResponse = ExceptionHandler.handle_exception(request=None, exception=err)
             self.assertEqual(response.status_code, 500)
             body: Dict = response.get_json_body()
-            self.assertEqual(body["code"], "_core.test_exception.py.test_unknown_exception")
+            self.assertEqual(body["code"], "test_gws_core.test_exception.py.test_unknown_exception")
             self.assertEqual(body["detail"], "Error")
             self.assertIsNotNone(body["instanceId"])

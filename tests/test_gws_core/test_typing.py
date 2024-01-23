@@ -38,8 +38,8 @@ class CreateSimpleRobot2Deprecated(Protocol):
     pass
 
 
-@resource_decorator('SubFile')
-class SubFile(File):
+@resource_decorator('SubFileTyping')
+class SubFileTyping(File):
     pass
 
 
@@ -49,7 +49,7 @@ class FileTransformer(Transformer):
     pass
 
 
-@transformer_decorator(unique_name="SubFileTransformer", resource_type=SubFile)
+@transformer_decorator(unique_name="SubFileTransformer", resource_type=SubFileTyping)
 class SubFileTransformer(Transformer):
     pass
 
@@ -98,9 +98,9 @@ class TestTyping(BaseTestCase):
         # Check that we found the File type
         self.assertIsNotNone(
             [x for x in typings if x.unique_name == 'File'][0])
-        # Check that we found the SubFile type
+        # Check that we found the SubFileTyping type
         self.assertIsNotNone(
-            [x for x in typings if x.unique_name == 'SubFile'][0])
+            [x for x in typings if x.unique_name == 'SubFileTyping'][0])
 
     def test_get_by_related_resource(self):
         """Test the get of task typing by related resource
@@ -108,7 +108,7 @@ class TestTyping(BaseTestCase):
 
         # find task typings related to Table
         typings: List[Typing] = TaskTyping.get_by_related_resource(
-            SubFile, 'TRANSFORMER')
+            SubFileTyping, 'TRANSFORMER')
 
         # Check that we found the FileTransformer
         self.assertEqual(
@@ -128,7 +128,7 @@ class TestTyping(BaseTestCase):
             len([x for x in typings if x.unique_name == 'SubFileTransformer']), 0)
 
     def test_get_typing(self):
-        typing: Typing = TypingService.get_typing(SubFile._typing_name)
+        typing: Typing = TypingService.get_typing(SubFileTyping._typing_name)
         self.assertIsInstance(typing, ResourceTyping)
 
         typing = TypingService.get_typing(FileTransformer._typing_name)
@@ -152,28 +152,28 @@ class TestTyping(BaseTestCase):
         # Search on text
         search_dict.filtersCriteria = [
             {'key': 'text', "operator": "CONTAINS", "value": "filetra"}]
-        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        paginator = TypingService.search(search_dict)
         # Test that it found the FileTransformer
         self.assertTrue(
             len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
         search_dict.filtersCriteria = [
             {'key': 'text', "operator": "CONTAINS", "value": "possib"}]
-        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        paginator = TypingService.search(search_dict)
         # Test that it found the FileTransformer
         self.assertTrue(
             len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
         search_dict.filtersCriteria = [
             {'key': 'text', "operator": "CONTAINS", "value": "FileTransformer"}]
-        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        paginator = TypingService.search(search_dict)
         # Test that it found the FileTransformer
         self.assertTrue(
             len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
         # # Test search on related model
-        paginator: Paginator[Typing] = TypingService.search_transformers(
-            [SubFile._typing_name], SearchParams())
+        paginator = TypingService.search_transformers(
+            [SubFileTyping._typing_name], SearchParams())
         # Test that it found the FileTransformer
         self.assertTrue(
             len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
@@ -191,12 +191,12 @@ class TestTyping(BaseTestCase):
         # Test with deprecated typing and found option, it should be found
         search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "CreateSimpleRobot2Deprecated"},
                                        {'key': 'include_deprecated', "operator": "EQ", "value": True}]
-        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        paginator = TypingService.search(search_dict)
         # Test that it found the FileTransformer
         self.assertTrue(len([x for x in paginator.results
                         if x.unique_name == 'CreateSimpleRobot2Deprecated']) > 0)
 
     def test_typing_search_by_name(self):
-        typings = list(Typing.get_by_object_type_and_name('PROTOCOL', 'SimpleRobot2Deprecated'))
+        typings: List[Typing] = list(Typing.get_by_object_type_and_name('PROTOCOL', 'SimpleRobot2Deprecated'))
         self.assertEqual(len(typings), 1)
         self.assertEqual(typings[0].unique_name, 'CreateSimpleRobot2Deprecated')

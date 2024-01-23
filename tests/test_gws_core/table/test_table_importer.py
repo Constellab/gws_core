@@ -8,9 +8,10 @@ from unittest import TestCase
 
 import numpy
 import pandas
-from gws_core_test_helper import GWSCoreTestHelper
 
 from gws_core import File, Table, TableExporter, TableImporter, TaskRunner
+
+from ..gws_core_test_helper import GWSCoreTestHelper
 
 
 # test_table_importer

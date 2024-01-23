@@ -4,7 +4,6 @@
 # About us: https://gencovery.com
 
 import fnmatch
-import importlib.util
 import os
 import unittest
 from copy import Error
@@ -99,16 +98,10 @@ class AppManager:
                 test_file = tab[0]
                 brick_dir = settings.get_cwd()
 
-            # loop over all files in the tests directory and load them
-            for dirpath, _, filenames in os.walk(os.path.join(brick_dir, "tests")):
-
-                test_file_python = test_file + ".py" if not test_file.endswith(".py") else test_file
-                for filename in fnmatch.filter(filenames, test_file_python):
-                    test_file_path = os.path.join(dirpath, filename)
-                    spec = importlib.util.spec_from_file_location("tests", test_file_path)
-                    test_module = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(test_module)
-                    test_suite.addTests(loader.loadTestsFromModule(test_module))
+            brick_test_folder = os.path.join(brick_dir, "tests")
+            test_suite.addTests(loader.discover(brick_test_folder,
+                                                pattern=test_file+".py",
+                                                ))
 
         # check if there are any tests discovered
         if test_suite.countTestCases() == 0:

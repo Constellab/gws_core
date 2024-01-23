@@ -10,7 +10,7 @@ from pydantic import Field
 from gws_core.config.config_dto import ConfigSimpleDTO
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.io.io_dto import IODTO
-from gws_core.io.io_spec import IOSpecDTO
+from gws_core.io.io_specs import IOSpecsDTO
 from gws_core.model.typing_dto import TypingFullDTO
 from gws_core.process.process_dto import ProcessDTO
 from gws_core.process.process_types import ProcessMinimumDTO
@@ -120,6 +120,6 @@ class AddConnectorDTO(BaseModelDTO):
 
 
 class ProtocolTypingFullDTO(TypingFullDTO):
-    input_specs: Optional[IOSpecDTO] = None
-    output_specs: Optional[IOSpecDTO] = None
+    input_specs: Optional[IOSpecsDTO] = None
+    output_specs: Optional[IOSpecsDTO] = None
     config_specs: Optional[dict] = None

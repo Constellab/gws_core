@@ -5,12 +5,14 @@
 
 import os
 from unittest import TestCase
+
 from pandas import DataFrame
-from gws_core import Text
+
 from gws_core import PackageHelper as pkg
+from gws_core import Text
 
 
-# test_py_conda_live_task
+# test_package_helper
 class TestPackageHelper(TestCase):
 
     def test_package_load(self):

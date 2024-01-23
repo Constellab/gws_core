@@ -22,7 +22,8 @@ from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase
-from tests.protocol_examples import TestNestedProtocol
+
+from ..protocol_examples import TestNestedProtocol
 
 
 @task_decorator("TestProtocolTemplateDynamic")

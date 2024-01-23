@@ -3,14 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import sys
 import importlib
 import pathlib
-import subprocess
+import sys
 
+from ...impl.shell.shell_proxy import ShellProxy
 from .logger import Logger
 from .string_helper import StringHelper
-from ...impl.shell.shell_proxy import ShellProxy
 
 
 class PackageHelper:

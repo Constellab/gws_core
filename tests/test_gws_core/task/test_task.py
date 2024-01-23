@@ -13,7 +13,8 @@ from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.task.plug import Source
-from tests.protocol_examples import TestSimpleProtocol
+
+from ..protocol_examples import TestSimpleProtocol
 
 
 @task_decorator(unique_name="RunAfterTask")
@@ -66,12 +67,12 @@ class TestTask(BaseTestCase):
         protocol: ProtocolModel = experiment.protocol_model
         self.assertEqual(protocol.created_by, GTest.user)
 
-        p0: TaskModel = protocol.get_process("p0")
+        p0 = protocol.get_process("p0")
         self.assertEqual(protocol.created_by, GTest.user)
 
-        p1: TaskModel = protocol.get_process("p1")
-        p2: TaskModel = protocol.get_process("p2")
-        p3: TaskModel = protocol.get_process("p3")
+        p1 = protocol.get_process("p1")
+        p2 = protocol.get_process("p2")
+        p3 = protocol.get_process("p3")
         elon: Robot = p0.outputs.get_resource_model('robot').get_resource()
 
         self.assertEqual(elon.weight, 70)
