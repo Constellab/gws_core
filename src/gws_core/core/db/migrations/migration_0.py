@@ -8,6 +8,9 @@ from copy import deepcopy
 from json import dump
 from typing import Dict, List, Type
 
+from peewee import BigIntegerField, CharField
+from peewee import Model as PeeweeModel
+
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.brick.brick_model import BrickModel
 from gws_core.config.config import Config
@@ -65,8 +68,6 @@ from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
-from peewee import BigIntegerField, CharField
-from peewee import Model as PeeweeModel
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -940,6 +941,7 @@ class Migration062(BrickMigration):
         for model in models:
             if not model.get_table_name() or not model.get_table_name().startswith('gws') or model.get_table_name().startswith('biota'):
                 continue
+
             if model.get_table_name() not in exclude_data:
                 try:
                     migrator.drop_column_if_exists(model, 'data')
@@ -949,7 +951,7 @@ class Migration062(BrickMigration):
 
             if model.get_table_name() not in exclude_archive:
                 try:
-                    migrator.drop_column_if_exists(model, 'archived')
+                    migrator.drop_column_if_exists(model, 'is_archived')
                 except Exception as exception:
                     Logger.error(
                         f'Error while removing archived column for model {model.__name__} : {exception}')
