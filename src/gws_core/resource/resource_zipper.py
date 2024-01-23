@@ -10,7 +10,7 @@ from typing import List, Optional
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.service.external_lab_service import (
     ExternalLabService, ExternalLabWithUserInfo)
-from gws_core.core.utils.compress.zip import Zip
+from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.file.file_helper import FileHelper
@@ -59,7 +59,7 @@ class ResourceZipper():
 
     temp_dir: str
 
-    zip: Zip
+    zip: ZipCompress
 
     resource_info: ZipResourceInfo
 
@@ -68,7 +68,7 @@ class ResourceZipper():
     def __init__(self, shared_by: User):
         self.shared_by = shared_by
         self.temp_dir = Settings.get_instance().make_temp_dir()
-        self.zip = Zip(self.get_zip_file_path())
+        self.zip = ZipCompress(self.get_zip_file_path())
         self.resource_info = ZipResourceInfo(
             zip_version=1,
             resource=None,

@@ -9,7 +9,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from .compress import Compress
 
 
-class Zip(Compress):
+class ZipCompress(Compress):
     """
     Class to zip and unzip files and folders
     """

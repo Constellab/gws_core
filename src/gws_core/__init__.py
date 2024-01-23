@@ -103,7 +103,8 @@ from .core.service.settings_service import SettingsService as SettingsService
 from .core.utils.compress.compress import Compress as Compress
 from .core.utils.compress.gzip_compress import GzipCompress as GzipCompress
 from .core.utils.compress.tar_compress import TarCompress as TarCompress
-from .core.utils.compress.zip import Zip as Zip
+from .core.utils.compress.tar_compress import TarGzCompress as TarGzCompress
+from .core.utils.compress.zip_compress import ZipCompress as ZipCompress
 from .core.utils.cryptography import Cryptography as Cryptography
 from .core.utils.gws_core_packages import GwsCorePackages as GwsCorePackages
 from .core.utils.logger import Logger as Logger

@@ -11,7 +11,7 @@ from pandas import DataFrame
 from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
                       OutputSpecs, Resource, Task, TaskInputs, TaskOutputs,
                       resource_decorator, task_decorator)
-from gws_core.core.utils.compress.zip import Zip
+from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.settings import Settings
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.file.file import File
@@ -131,7 +131,7 @@ class TestResourceSet(BaseTestCase):
         self.assertTrue(zip_file.exists())
 
         dest_folder = settings.make_temp_dir()
-        Zip.decompress(zip_file.path, dest_folder)
+        ZipCompress.decompress(zip_file.path, dest_folder)
 
         self.assertTrue(os.path.exists(os.path.join(dest_folder, 'table.csv')))
         self.assertTrue(os.path.exists(os.path.join(dest_folder, 'test.json')))

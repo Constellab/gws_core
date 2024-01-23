@@ -11,7 +11,7 @@ from typing import Callable, Type, final
 
 from typing_extensions import TypedDict
 
-from gws_core.core.utils.compress.zip import Zip
+from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -143,7 +143,7 @@ class ResourceExporter(Converter):
             self.log_info_message(f"Zip the folder {result.path}")
             tmp_dir = Settings.make_temp_dir()
             zip_file = os.path.join(tmp_dir, FileHelper.get_dir_name(result.path) + '.zip')
-            Zip.compress_dir(result.path, zip_file)
+            ZipCompress.compress_dir(result.path, zip_file)
             return File(zip_file)
         elif isinstance(result, File):
             return result

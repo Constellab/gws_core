@@ -9,7 +9,7 @@ from typing import Dict, List, Type
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs_helper import ConfigSpecsHelper
-from gws_core.core.utils.compress.zip import Zip
+from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
@@ -74,7 +74,7 @@ class ResourceSetExporter(ResourceExporter):
         temp_dir = Settings.get_instance().make_temp_dir()
         zip_path = os.path.join(temp_dir, f"{source.name or 'export'}.zip")
 
-        zip = Zip(zip_path)
+        zip = ZipCompress(zip_path)
 
         for file in fs_nodes:
             zip.add_fs_node(file.path, file.get_default_name())

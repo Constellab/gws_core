@@ -9,7 +9,7 @@ from .compress import Compress
 
 
 class TarCompress(Compress):
-    """Class to compress and uncompress tar.gz file.
+    """Class to compress and uncompress tar file.
 
     :return: _description_
     :rtype: _type_
@@ -17,9 +17,11 @@ class TarCompress(Compress):
 
     tar_file: TarFile
 
+    compress_option: str = ''
+
     def __init__(self, destination_file_path: str):
         super().__init__(destination_file_path)
-        self.tar_file = tar_open(destination_file_path, "w:gz")
+        self.tar_file = tar_open(destination_file_path, "w" + self.compress_option)
 
     def add_dir(self, dir_path: str, dir_name: str = None) -> None:
         dir_name = self._generate_node_name(dir_path, dir_name)
@@ -43,8 +45,26 @@ class TarCompress(Compress):
         :param tar_gz_file_path: `str`
         """
 
-        with tar_open(file_path, "r:gz") as tar:
+        with tar_open(file_path, "r" + cls.compress_option) as tar:
             tar.extractall(destination_folder)
+
+    @classmethod
+    def can_uncompress_file(cls, file_path: str) -> bool:
+        """Return true if the file can be uncompressed by this class
+        """
+        return file_path.endswith('.tar')
+
+
+class TarGzCompress(TarCompress):
+    """Class to compress and uncompress tar.gz file.
+
+    :return: _description_
+    :rtype: _type_
+    """
+
+    tar_file: TarFile
+
+    compress_option: str = ':gz'
 
     @classmethod
     def can_uncompress_file(cls, file_path: str) -> bool:
