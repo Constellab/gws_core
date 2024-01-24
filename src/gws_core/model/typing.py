@@ -124,6 +124,7 @@ class Typing(Model):
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
+            unique_name=self.unique_name,
             object_type=self.object_type,
             typing_name=self.typing_name,
             brick_version=self.brick_version,
@@ -133,7 +134,8 @@ class Typing(Model):
             deprecated_since=self.deprecated_since,
             deprecated_message=self.deprecated_message,
             additional_data=None,
-            status=self.get_type_status()
+            status=self.get_type_status(),
+            hide=self.hide
         )
 
     def to_full_dto(self) -> TypingFullDTO:
