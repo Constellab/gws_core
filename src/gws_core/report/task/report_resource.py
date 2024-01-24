@@ -5,10 +5,10 @@
 
 
 from gws_core.config.config_types import ConfigParamsDict
-from gws_core.core.classes.rich_text_content import RichText
+from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_view import RichTextView
 from gws_core.report.report import Report
 from gws_core.report.report_service import ReportService
-from gws_core.report.rich_text_view import RichTextView
 from gws_core.resource.r_field.primitive_r_field import StrRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
@@ -46,7 +46,7 @@ class ReportResource(Resource):
 
     def add_paragraph(self, paragraph: str) -> None:
         rich_text: RichText = self.get_content()
-        rich_text.add_paragraph(paragraph)
+        rich_text. add_paragraph(paragraph)
         self._content = rich_text
 
     def add_view(self, resource: Resource, view_method_name: str, config_values: ConfigParamsDict = None,

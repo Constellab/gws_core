@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse
 
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.experiment.experiment_dto import ExperimentDTO
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 
 from ..core.classes.search_builder import SearchParams
 from ..core_controller import core_app
@@ -53,7 +54,7 @@ def update_project(report_id: str,
 
 
 @core_app.put("/report/{report_id}/content", tags=["Report"], summary="Update a report content")
-def update_content(report_id: str, content: dict, _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
+def update_content(report_id: str, content: RichTextDTO, _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
     return ReportService.update_content(report_id, content).to_dto()
 
 

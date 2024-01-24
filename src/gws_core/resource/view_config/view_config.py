@@ -9,7 +9,6 @@ from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 from gws_core.config.config import Config
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.classes.rich_text_content import RichTextResourceViewData
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
@@ -17,6 +16,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
+from gws_core.impl.rich_text.rich_text_types import RichTextResourceViewData
 from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view_config.view_config_dto import ViewConfigDTO
 from gws_core.tag.entity_tag_list import EntityTagList

@@ -4,19 +4,19 @@
 # About us: https://gencovery.com
 
 
-from datetime import datetime
 from typing import Callable, List
 
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from peewee import ModelSelect
 
-from gws_core.core.classes.rich_text_content import (RichText, RichTextI,
-                                                     RichTextResourceViewData)
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
+                                                     RichTextResourceViewData)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.project.project import Project
 from gws_core.report.report_file_service import ReportFileService
@@ -63,21 +63,22 @@ class ReportService():
             report.content = template.content
         else:
             # Set default content for report
-            report.content = RichText.create_rich_text_i(
-                [{"id": "0", "type": "header", "data": {"text": "Introduction"}},
-                 {"id": "1", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "2", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "3", "type": "header", "data": {"text": "Methods"}},
-                 {"id": "4", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "5", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "6", "type": "header", "data": {"text": "Results"}},
-                 {"id": "7", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "8", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "9", "type": "header", "data": {"text": "Conclusion"}},
-                 {"id": "10", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "11", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "12", "type": "header", "data": {"text": "References"}},
-                 {"id": "13", "type": "paragraph", "data": {"text": ""}}])
+            report.content = RichText.create_rich_text_dto(
+                [RichText.create_header("0", "Introduction", 2),
+                 RichText.create_paragraph("1", ""),
+                 RichText.create_paragraph("2", ""),
+                 RichText.create_header("3", "Methods", 2),
+                 RichText.create_paragraph("4", ""),
+                 RichText.create_paragraph("5", ""),
+                 RichText.create_header("6", "Results", 2),
+                 RichText.create_paragraph("7", ""),
+                 RichText.create_paragraph("8", ""),
+                 RichText.create_header("9", "Conclusion", 2),
+                 RichText.create_paragraph("10", ""),
+                 RichText.create_paragraph("11", ""),
+                 RichText.create_header("12", "References", 2),
+                 RichText.create_paragraph("13", "")
+                 ])
 
         report.save()
 
@@ -146,7 +147,7 @@ class ReportService():
 
     @classmethod
     @transaction()
-    def update_content(cls, report_id: str, report_content: RichTextI) -> Report:
+    def update_content(cls, report_id: str, report_content: RichTextDTO) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
 
         report.content = report_content

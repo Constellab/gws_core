@@ -8,8 +8,9 @@ from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from peewee import ModelSelect
 
-from gws_core.core.classes.rich_text_content import RichText, RichTextI
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.report.report import Report
 from gws_core.report.report_dto import ReportImageDTO
 from gws_core.report.report_file_service import ReportFileService
@@ -30,7 +31,7 @@ class ReportTemplateService():
     @classmethod
     @transaction()
     def create_empty(cls, title: str) -> ReportTemplate:
-        return cls._create(title, {})
+        return cls._create(title)
 
     @classmethod
     @transaction()
@@ -41,7 +42,7 @@ class ReportTemplateService():
 
     @classmethod
     @transaction()
-    def _create(cls, title: str, content: dict) -> ReportTemplate:
+    def _create(cls, title: str, content: RichTextDTO = None) -> ReportTemplate:
         report = ReportTemplate()
         report.title = title
 
@@ -69,7 +70,7 @@ class ReportTemplateService():
 
     @classmethod
     @transaction()
-    def update_content(cls, report_id: str, report_content: RichTextI) -> ReportTemplate:
+    def update_content(cls, report_id: str, report_content: RichTextDTO) -> ReportTemplate:
         report: ReportTemplate = cls.get_by_id_and_check(report_id)
 
         report.content = report_content
