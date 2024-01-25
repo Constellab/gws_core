@@ -10,6 +10,7 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.model.model import Model
+from gws_core.core.service.external_lab_service import ExternalLabWithUserInfo
 from gws_core.share.shared_dto import SharedEntityMode, ShareEntityInfoDTO
 from gws_core.user.user import User
 
@@ -78,6 +79,25 @@ class SharedEntityInfo(Model):
         """
         return cls.select().where(cls.entity == entity_id, cls.share_mode == SharedEntityMode.SENT).order_by(
             cls.created_at.desc())
+
+    @classmethod
+    def create_from_lab_info(cls, entity_id: str, mode: SharedEntityMode,
+                             lab_info: ExternalLabWithUserInfo, created_by: User) -> None:
+        """Method that log the resource origin for each imported resources
+        """
+
+        shared_entity = cls()
+        shared_entity.entity = entity_id
+        shared_entity.share_mode = mode
+        shared_entity.lab_id = lab_info.lab_id
+        shared_entity.lab_name = lab_info.lab_name
+        shared_entity.user_id = lab_info.user_id
+        shared_entity.user_firstname = lab_info.user_firstname
+        shared_entity.user_lastname = lab_info.user_lastname
+        shared_entity.space_id = lab_info.space_id
+        shared_entity.space_name = lab_info.space_name
+        shared_entity.created_by = created_by
+        shared_entity.save()
 
     def to_dto(self) -> ShareEntityInfoDTO:
         return ShareEntityInfoDTO(
