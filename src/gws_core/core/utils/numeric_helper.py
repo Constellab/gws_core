@@ -14,6 +14,25 @@ class NumericHelper():
     """
 
     @staticmethod
+    def list_2d_to_float(list_2d: List[List[Any]],
+                         remove_none: bool = False, default_value: Any = None) -> List[List[Optional[float]]]:
+        """Convert a list of list of any to list of list of float. Replace infinity by default_value
+
+        :param list_2d: _description_
+        :type list_2d: List[List[Any]]
+        :param remove_none: if False, the non converted element are keep as None,
+                            if True they are removed
+        :type remove_none: List[Any]
+        :return: _description_
+        :rtype: List[List[Optional[float]]]
+        """
+        data = [NumericHelper.list_to_float(val, remove_none, default_value) for val in list_2d]
+
+        if remove_none:
+            return [i for i in data if i is not None]
+        return data
+
+    @staticmethod
     def list_to_float(list_: List[Any], remove_none: bool = False, default_value: Any = None) -> List[Optional[float]]:
         """Convert a list of any to list of float. Replace infinity by default_value
 
