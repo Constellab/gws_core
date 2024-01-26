@@ -26,11 +26,7 @@ class NumericHelper():
         :return: _description_
         :rtype: List[List[Optional[float]]]
         """
-        data = [NumericHelper.list_to_float(val, remove_none, default_value) for val in list_2d]
-
-        if remove_none:
-            return [i for i in data if i is not None]
-        return data
+        return [NumericHelper.list_to_float(val, remove_none, default_value) for val in list_2d]
 
     @staticmethod
     def list_to_float(list_: List[Any], remove_none: bool = False, default_value: Any = None) -> List[Optional[float]]:
