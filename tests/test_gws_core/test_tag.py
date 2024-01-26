@@ -361,7 +361,7 @@ class TestTag(BaseTestCase):
         self.assertEqual(tag.origins.count_origins(), 1)
         self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, experiment_id))
 
-        # Unassociate the experiment from the report, it should delete the tag
+        # Unlink the experiment from the report, it should delete the tag
         ReportService.remove_experiment(report.id, experiment_id)
         report_tags = EntityTagList.find_by_entity(EntityType.REPORT, report.id)
         self.assertEqual(len(report_tags.get_tags()), 0)

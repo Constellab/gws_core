@@ -137,7 +137,7 @@ class ReportService():
                 # delete the report in space
                 SpaceService.delete_report(project_id=report.project.id, report_id=report.id)
 
-        # check that all associated experiment are in same project
+        # check that all linked experiment are in same project
         experiments: List[Experiment] = cls.get_experiments_by_report(report.id)
 
         for experiment in experiments:
@@ -175,7 +175,7 @@ class ReportService():
 
         report = cls.update_content(report_id, rich_text.get_content())
 
-        # if the view is associated to an experiment, link it to the report
+        # if the view is linked to an experiment, link it to the report
         if view_config.experiment:
             cls.add_experiment(report_id, view_config.experiment.id, False)
 
@@ -217,7 +217,7 @@ class ReportService():
             raise BadRequestException(
                 "The experiment must be associated with a leaf project (project with no children)")
 
-        # check that all associated experiment are validated and are in same project
+        # check that all linked experiment are validated and are in same project
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
         for experiment in experiments:
             if experiment.project and experiment.project.id != report.project.id:
@@ -331,12 +331,12 @@ class ReportService():
 
         return report
 
-    ###################################  ASSOCIATED EXPERIMENT  ##############################
+    ###################################  LINKED EXPERIMENT  ##############################
 
     @classmethod
     @transaction()
     def add_experiment(cls, report_id: str, experiment_id: str,
-                       error_if_already_associated: bool = True) -> Experiment:
+                       error_if_already_linked: bool = True) -> Experiment:
         report: Report = cls._get_and_check_before_update(report_id)
 
         report_exp: ReportExperiment = ReportExperiment.find_by_pk(experiment_id, report_id).first()
@@ -344,9 +344,9 @@ class ReportService():
         # If the experiment was already added to the report
         if report_exp is not None:
 
-            if error_if_already_associated:
-                raise BadRequestException(GWSException.REPORT_EXP_ALREADY_ASSOCIATED.value,
-                                          GWSException.REPORT_EXP_ALREADY_ASSOCIATED.name)
+            if error_if_already_linked:
+                raise BadRequestException(GWSException.REPORT_EXP_ALREADY_LINKED.value,
+                                          GWSException.REPORT_EXP_ALREADY_LINKED.name)
             else:
                 return report_exp.experiment
 
@@ -493,8 +493,8 @@ class ReportService():
         experiments = ReportService.get_experiments_by_report(report_id)
 
         if len(experiments) == 0:
-            raise BadRequestException(GWSException.REPORT_NO_ASSOCIATED_EXPERIMENT.value,
-                                      GWSException.REPORT_NO_ASSOCIATED_EXPERIMENT.name)
+            raise BadRequestException(GWSException.REPORT_NO_LINKED_EXPERIMENT.value,
+                                      GWSException.REPORT_NO_LINKED_EXPERIMENT.name)
 
         experiment_ids = [experiment.id for experiment in experiments]
 
