@@ -160,6 +160,12 @@ class Settings():
         return os.environ.get("LAB_ENVIRONMENT", 'ON_CLOUD')
 
     @classmethod
+    def get_community_api_url(cls) -> str:
+        if cls.is_local_env():
+            return 'http://host.docker.internal:3333'
+        return os.getenv("COMMUNITY_API_URL")
+
+    @classmethod
     def is_local_env(cls) -> bool:
         return cls.get_lab_environment() == 'LOCAL'
 
