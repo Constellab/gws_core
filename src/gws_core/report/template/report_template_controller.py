@@ -10,8 +10,10 @@ from fastapi.param_functions import Depends
 from fastapi.responses import FileResponse
 
 from gws_core.core.model.model_dto import PageDTO
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.report.report_dto import ReportImageDTO
 from gws_core.report.template.report_template_dto import (
+    CreateReportTemplateDTO, CreateReportTemplateFromReportDTO,
     ReportTemplateDTO, ReportTemplateFullDTO)
 from gws_core.report.template.report_template_service import \
     ReportTemplateService
@@ -22,26 +24,28 @@ from ...user.auth_service import AuthService
 
 
 @core_app.post("/report-template", tags=["Report template"], summary="Create an empty report template")
-def create_empty(data: dict, _=Depends(AuthService.check_user_access_token)) -> ReportTemplateDTO:
-    return ReportTemplateService.create_empty(data['title']).to_dto()
+def create_empty(data: CreateReportTemplateDTO, _=Depends(AuthService.check_user_access_token)) -> ReportTemplateDTO:
+    return ReportTemplateService.create_empty(data.title).to_dto()
 
 
 @core_app.post("/report-template/from-report", tags=["Report template"],
                summary="Create a report template from a report")
-def create_from_report(data: dict, _=Depends(AuthService.check_user_access_token)) -> ReportTemplateDTO:
-    return ReportTemplateService.create_from_report(data['report_id']).to_dto()
+def create_from_report(
+        data: CreateReportTemplateFromReportDTO, _=Depends(AuthService.check_user_access_token)) -> ReportTemplateDTO:
+    return ReportTemplateService.create_from_report(data.report_id).to_dto()
 
 
 @core_app.put("/report-template/{report_id}/title", tags=["Report template"],
               summary="Update the title of a report")
 def update_title(report_id: str,
-                 body: dict,
+                 body: CreateReportTemplateDTO,
                  _=Depends(AuthService.check_user_access_token)) -> ReportTemplateDTO:
-    return ReportTemplateService.update_title(report_id, body["title"]).to_dto()
+    return ReportTemplateService.update_title(report_id, body.title).to_dto()
 
 
 @core_app.put("/report-template/{report_id}/content", tags=["Report template"], summary="Update a report content")
-def update_content(report_id: str, content: dict, _=Depends(AuthService.check_user_access_token)) -> ReportTemplateDTO:
+def update_content(
+        report_id: str, content: RichTextDTO, _=Depends(AuthService.check_user_access_token)) -> ReportTemplateDTO:
     return ReportTemplateService.update_content(report_id, content).to_dto()
 
 
