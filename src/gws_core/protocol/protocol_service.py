@@ -91,33 +91,6 @@ class ProtocolService(BaseService):
 
     @classmethod
     @transaction()
-    def add_community_live_task_version_to_protocol_id(cls, protocol_id: str, live_task_version_id: str) -> ProtocolUpdate:
-        community_live_task_version: CommunityLiveTaskVersionDTO = CommunityService.get_community_live_task_version(live_task_version_id)
-        conf_params = dict()
-        conf_params['code'] = community_live_task_version.code
-        if community_live_task_version.environment is not None and community_live_task_version.environment != '':
-            conf_params['env'] = community_live_task_version.environment
-        protocol_update = cls.add_process_to_protocol_id(protocol_id, community_live_task_version.type, config_params=conf_params)
-
-        for port in list(protocol_update.process.inputs.ports.keys()):
-            protocol_update = cls.delete_dynamic_input_port_of_process(protocol_id, protocol_update.process.instance_name, port)
-
-        for port in list(protocol_update.process.outputs.ports.keys()):
-            protocol_update = cls.delete_dynamic_output_port_of_process(protocol_id, protocol_update.process.instance_name, port)
-
-        for io_spec in list(community_live_task_version.input_specs['specs'].values()):
-            io_spec = parse_obj_as(IOSpecDTO, io_spec)
-            protocol_update = cls.add_dynamic_input_port_to_process(protocol_id, protocol_update.process.instance_name, io_spec)
-
-        for io_spec in list(community_live_task_version.output_specs['specs'].values()):
-            io_spec = parse_obj_as(IOSpecDTO, io_spec)
-            protocol_update = cls.add_dynamic_output_port_to_process(protocol_id, protocol_update.process.instance_name, io_spec)
-
-
-        return protocol_update
-
-    @classmethod
-    @transaction()
     def add_empty_protocol_to_protocol(
             cls, protocol_model: ProtocolModel, instance_name: str = None) -> ProtocolUpdate:
         child_protocol_model: ProtocolModel = ProcessFactory.create_protocol_empty()
@@ -776,3 +749,37 @@ class ProtocolService(BaseService):
         return ProtocolTemplate.from_protocol_model(protocol_model,
                                                     protocol_model.experiment.title,
                                                     protocol_model.experiment.description)
+
+
+    ########################## COMMUNITY #####################
+    @classmethod
+    @transaction()
+    def add_community_live_task_version_to_protocol_id(cls, protocol_id: str, live_task_version_id: str) -> ProtocolUpdate:
+        community_live_task_version: CommunityLiveTaskVersionDTO = CommunityService.get_community_live_task_version(live_task_version_id)
+        conf_params = dict()
+        conf_params['code'] = community_live_task_version.code
+        if community_live_task_version.environment is not None and community_live_task_version.environment != '':
+            conf_params['env'] = community_live_task_version.environment
+        protocol_update = cls.add_process_to_protocol_id(protocol_id, community_live_task_version.type, config_params=conf_params)
+
+        for port in list(protocol_update.process.inputs.ports.keys()):
+            protocol_update = cls.delete_dynamic_input_port_of_process(protocol_id, protocol_update.process.instance_name, port)
+
+        for port in list(protocol_update.process.outputs.ports.keys()):
+            protocol_update = cls.delete_dynamic_output_port_of_process(protocol_id, protocol_update.process.instance_name, port)
+
+        for io_spec in list(community_live_task_version.input_specs['specs'].values()):
+            io_spec = parse_obj_as(IOSpecDTO, io_spec)
+            protocol_update = cls.add_dynamic_input_port_to_process(protocol_id, protocol_update.process.instance_name, io_spec)
+
+        for io_spec in list(community_live_task_version.output_specs['specs'].values()):
+            io_spec = parse_obj_as(IOSpecDTO, io_spec)
+            protocol_update = cls.add_dynamic_output_port_to_process(protocol_id, protocol_update.process.instance_name, io_spec)
+
+
+        return protocol_update
+
+    @classmethod
+    @transaction()
+    def get_community_available_live_tasks(cls) -> List[CommunityLiveTaskDTO]:
+        return CommunityService.get_community_available_live_tasks()

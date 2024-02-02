@@ -133,4 +133,4 @@ class TaskGeneratorService:
                     'RCondaLiveTask' : 'CONDA_R',
                     'RMambaLiveTask' : 'MAMBA_R'
                 }
-        return choice[instance_name]
+        return choice[instance_name.split('_')[0]]
