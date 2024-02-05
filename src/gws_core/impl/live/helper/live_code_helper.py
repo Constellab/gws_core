@@ -40,7 +40,7 @@ class LiveCodeHelper:
         :return: _description_
         :rtype: Dict[str, Any]
         """
-        result = {}
+        result: Dict[str, Any] = {}
         if params:
             params_str: str = "\n".join(params)
             try:
