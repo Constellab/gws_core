@@ -6,9 +6,11 @@
 from typing import Any
 
 from gws_core.config.param.param_spec import DictParam
+from gws_core.config.param.param_spec_decorator import param_spec_decorator
 from gws_core.impl.rich_text.rich_text import RichText
 
 
+@param_spec_decorator()
 class RichTextParam(DictParam):
 
     def build(self, value: Any) -> Any:

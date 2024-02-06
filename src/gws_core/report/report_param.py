@@ -5,10 +5,12 @@
 from typing import Any, Optional
 
 from gws_core.config.param.param_spec import ParamSpec
+from gws_core.config.param.param_spec_decorator import param_spec_decorator
 from gws_core.config.param.param_types import ParamSpecVisibilty
 from gws_core.core.classes.validator import StrValidator
 
 
+@param_spec_decorator()
 class ReportParam(ParamSpec[str]):
     """ Report params spec. When used, the end user will be able to select a report
     from the list of report available in the lab.

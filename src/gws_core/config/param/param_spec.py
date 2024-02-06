@@ -8,6 +8,7 @@ from typing import Any, Generic, List, Optional, TypeVar
 
 from typing_extensions import TypedDict
 
+from gws_core.config.param.param_spec_decorator import param_spec_decorator
 from gws_core.core.utils.logger import Logger
 
 from ...core.classes.validator import (BoolValidator, DictValidator,
@@ -187,6 +188,7 @@ class StrParamAdditionalInfo(TypedDict):
     max_length: Optional[int]
 
 
+@param_spec_decorator()
 class StrParam(ParamSpec[str]):
     """String param"""
 
@@ -252,6 +254,7 @@ class StrParam(ParamSpec[str]):
         return 'str'
 
 
+@param_spec_decorator()
 class TextParam(ParamSpec[str]):
     """Text param used for long string (like multi line text)
     If you want a short string param, use the StrParam.
@@ -299,6 +302,7 @@ class TextParam(ParamSpec[str]):
         return 'text'
 
 
+@param_spec_decorator()
 class BoolParam(ParamSpec[bool]):
     """Boolean param"""
 
@@ -347,6 +351,7 @@ class BoolParam(ParamSpec[bool]):
         return 'bool'
 
 
+@param_spec_decorator()
 class DictParam(ParamSpec[dict]):
     """Any json dict param"""
 
@@ -362,6 +367,7 @@ class DictParam(ParamSpec[dict]):
         return 'dict'
 
 
+@param_spec_decorator()
 class ListParam(ParamSpec[list]):
     """Any list param"""
 
@@ -445,6 +451,7 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
         pass
 
 
+@param_spec_decorator()
 class IntParam(NumericParam[int]):
     """int param"""
 
@@ -464,6 +471,7 @@ class IntParam(NumericParam[int]):
         return "int"
 
 
+@param_spec_decorator()
 class FloatParam(NumericParam[float]):
     """float param"""
 

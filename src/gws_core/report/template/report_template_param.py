@@ -5,11 +5,13 @@
 from typing import Any, Optional
 
 from gws_core.config.param.param_spec import ParamSpec
+from gws_core.config.param.param_spec_decorator import param_spec_decorator
 from gws_core.config.param.param_types import ParamSpecVisibilty
 from gws_core.core.classes.validator import StrValidator
 from gws_core.report.template.report_template import ReportTemplate
 
 
+@param_spec_decorator()
 class ReportTemplateParam(ParamSpec[str]):
     """ Report template params spec. When used, the end user will be able to select a report template
     from the list of report template available in the lab.

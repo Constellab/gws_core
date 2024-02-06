@@ -6,12 +6,14 @@
 from typing import Any, Dict, List, Optional
 
 from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.param.param_spec_decorator import param_spec_decorator
 
 from ...core.classes.validator import DictValidator, ListValidator
 from .param_spec import ParamSpec, ParamSpecType
 from .param_types import ParamSpecDTO, ParamSpecVisibilty
 
 
+@param_spec_decorator()
 class ParamSet(ParamSpec[list]):
     """ ParamSet. Use to define a group of parameters that can be added multiple times. This will
     provid a list of dictionary as values : List[Dict[str, Any]]

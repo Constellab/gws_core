@@ -5,8 +5,10 @@
 
 
 from gws_core.config.param.param_spec import TextParam
+from gws_core.config.param.param_spec_decorator import param_spec_decorator
 
 
+@param_spec_decorator()
 class JsonCodeParam(TextParam):
     """Param for json code. It shows a simple json IDE
       in the interface to provide code for json.

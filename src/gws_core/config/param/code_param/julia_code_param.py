@@ -4,9 +4,12 @@
 # About us: https://gencovery.com
 
 
+from gws_core.config.param.param_spec_decorator import param_spec_decorator
+
 from ..param_spec import TextParam
 
 
+@param_spec_decorator()
 class JuliaCodeParam(TextParam):
     """Param for julia code. It shows a simple julia IDE
       in the interface to provide code for julia.

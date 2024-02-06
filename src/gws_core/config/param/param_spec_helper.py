@@ -8,25 +8,12 @@ from typing import Any, Dict, List, Type
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from gws_core.credentials.credentials_param import CredentialsParam
-from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
-from gws_core.impl.rich_text.rich_text_param import RichTextParam
-from gws_core.report.report_param import ReportParam
-from gws_core.report.template.report_template_param import ReportTemplateParam
 
 from ..config_exceptions import MissingConfigsException
 from ..config_params import ConfigParams
 from ..config_types import ConfigParamsDict, ConfigSpecs
-from .code_param.json_code_param import JsonCodeParam
-from .code_param.julia_code_param import JuliaCodeParam
-from .code_param.perl_code_param import PerlCodeParam
-from .code_param.python_code_param import PythonCodeParam
-from .code_param.r_code_param import RCodeParam
-from .code_param.yaml_code_param import YamlCodeParam
-from .param_set import ParamSet
-from .param_spec import (BoolParam, DictParam, FloatParam, IntParam, ListParam,
-                         ParamSpec, StrParam, TextParam)
-from .tags_param_spec import TagsParam
+from .param_spec import ParamSpec
+from .param_spec_decorator import PARAM_SPEC_TYPES_LIST
 
 
 class ParamSpecHelper():
@@ -127,6 +114,4 @@ class ParamSpecHelper():
 
     @staticmethod
     def _get_param_spec_types() -> List[Type[ParamSpec]]:
-        return [BoolParam, IntParam, FloatParam, StrParam, TextParam, ListParam, ParamSet, TagsParam,
-                DictParam, PythonCodeParam, JsonCodeParam, JuliaCodeParam, PerlCodeParam, RCodeParam, YamlCodeParam,
-                OpenAiChatParam, CredentialsParam, ReportTemplateParam, ReportParam, RichTextParam]
+        return PARAM_SPEC_TYPES_LIST

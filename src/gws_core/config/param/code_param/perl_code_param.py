@@ -4,9 +4,12 @@
 # About us: https://gencovery.com
 
 
+from gws_core.config.param.param_spec_decorator import param_spec_decorator
+
 from ..param_spec import TextParam
 
 
+@param_spec_decorator()
 class PerlCodeParam(TextParam):
     """Param for perl code. It shows a simple perl IDE
       in the interface to provide code for perl.
