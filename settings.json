@@ -43,7 +43,8 @@
                   {"name": "boto3-stubs[s3]", "version": "1.28.66"},
                   {"name": "plotly", "version": "5.15.0"},
                   {"name": "simplejson", "version": "3.19.1"},
-                  {"name": "xmltodict ", "version": "0.13.0"}
+                  {"name": "xmltodict ", "version": "0.13.0"},
+                  {"name": "streamlit", "version": "1.30.0"}
                 ]
             },
             {

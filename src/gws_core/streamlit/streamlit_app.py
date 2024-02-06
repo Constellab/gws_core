@@ -63,7 +63,7 @@ class StreamlitApp():
 
         # setting the source variable in the streamlit code
         full_code = f"""
-sources = {self.fs_node_paths}
+source_paths = {self.fs_node_paths}
 {self.streamlit_code}
 """
 

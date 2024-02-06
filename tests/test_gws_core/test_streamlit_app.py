@@ -9,7 +9,6 @@ from unittest import TestCase
 from pandas import DataFrame
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.streamlit.streamlit_app_managers import StreamlitAppManager
@@ -60,11 +59,9 @@ if sources:
         # url = streamlit_app.generate_app()
 
         # check if the app is running
-        ExternalApiService.get(f"http://localhost:{StreamlitAppManager.MAIN_APP_PORT}/healthz")
+        self.assertTrue(StreamlitAppManager.call_health_check())
 
         StreamlitAppManager.stop_main_app()
 
         # check if the app is running
-        with self.assertRaises(Exception):
-            ExternalApiService.get(f"http://localhost:{StreamlitAppManager.MAIN_APP_PORT}/healthz",
-                                   raise_exception_if_error=False)
+        self.assertFalse(StreamlitAppManager.call_health_check())

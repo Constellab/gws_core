@@ -26,9 +26,10 @@ class StreamlitAppManager():
     MAIN_APP_PORT = 8501
 
     # interval in second to check if the app is still used
-    CHECK_RUNNING_INTERVAL = 5
+    CHECK_RUNNING_INTERVAL = 30
 
-    # number of successive check before killing the app
+    # number of successive check when there is not connection to the main app
+    # before killing it
     SUCCESSIVE_CHECK_BEFORE_KILL = 3
 
     MAIN_APP_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -39,6 +40,7 @@ class StreamlitAppManager():
 
     current_running_apps: Dict[str, StreamlitApp] = {}
 
+    # number of successive check when there is not connection to the main app
     current_no_connection_check: int = 0
 
     check_is_running = False
@@ -49,7 +51,7 @@ class StreamlitAppManager():
 
     @classmethod
     def main_app_is_running(cls) -> bool:
-        return cls.main_app_process is not None
+        return cls.main_app_process is not None and cls.main_app_process.is_alive()
 
     @classmethod
     def create_or_get_app(cls, resource_id: str) -> StreamlitApp:
@@ -82,7 +84,7 @@ class StreamlitAppManager():
             return
 
         cls.main_app_token = StringHelper.generate_random_chars(50)
-        Logger.debug(f"Starting streamlit app")
+        Logger.debug("Starting streamlit app")
 
         cmd = ['streamlit', 'run', cls.MAIN_APP_FILE_PATH,
                '--theme.backgroundColor', '#222222',
@@ -136,17 +138,21 @@ class StreamlitAppManager():
             Logger.debug("Checking running streamlit app")
 
             try:
-                cls._check_running()
+                if not cls._check_running():
+                    break
             except Exception as e:
                 Logger.error(f"Error while checking running streamlit app: {e}")
+
+        Logger.debug("Killing the streamlit app")
+        apps = list(cls.current_running_apps.values())
+        for app in apps:
+            cls.delete_app(app)
+        cls.stop_main_app()
 
         cls.check_is_running = False
 
     @classmethod
-    def _check_running(cls) -> None:
-        if not cls.main_app_is_running():
-            return
-
+    def _check_running(cls) -> bool:
         # count the number of network connections of the app
         connection_count = cls.count_connections()
 
@@ -156,15 +162,13 @@ class StreamlitAppManager():
             cls.current_no_connection_check += 1
 
             if cls.current_no_connection_check >= cls.SUCCESSIVE_CHECK_BEFORE_KILL:
-                Logger.debug("No connection to the streamlit app, killing the process")
-                apps = list(cls.current_running_apps.values())
-                for app in apps:
-                    cls.delete_app(app)
-
-                cls.stop_main_app()
+                Logger.debug("No connections, killing the app")
+                return False
 
         else:
             cls.current_no_connection_check = 0
+
+        return True
 
     @classmethod
     def wait_main_app_heath_check(cls) -> None:
@@ -172,14 +176,23 @@ class StreamlitAppManager():
         i = 0
         while True:
             time.sleep(1)
-            try:
-                ExternalApiService.get(f"http://localhost:{cls.MAIN_APP_PORT}/healthz")
+
+            health_check = cls.call_health_check()
+            if health_check:
                 break
-            except Exception:
-                Logger.debug("Waiting for streamlit app to start")
-                i += 1
-                if i > 30:
-                    raise Exception("Streamlit app did not start in time")
+            Logger.debug("Waiting for streamlit app to start")
+            i += 1
+            if i > 30:
+                raise Exception("Streamlit app did not start in time")
+
+    @classmethod
+    def call_health_check(cls) -> bool:
+        try:
+            ExternalApiService.get(f"http://localhost:{cls.MAIN_APP_PORT}/healthz")
+        except Exception:
+            return False
+
+        return True
 
     @classmethod
     def count_connections(cls) -> int:
@@ -189,13 +202,19 @@ class StreamlitAppManager():
 
         # count the number of connections
         cons = []
-        count = 0
+        count_established = 0
+        count_listen = 0
         for conn in connections:
             if conn.pid == cls.main_app_process.pid:
                 if conn.status == 'ESTABLISHED':
-                    count += 1
+                    count_established += 1
                 elif conn.status == 'LISTEN':
-                    count -= 1
+                    count_listen += 1
                 cons.append(conn)
 
-        return count
+        # specific case on the first apps, it seems to have only one established connection
+        if count_established == 1:
+            return count_established
+
+        # to count otherwise, we substract the listen connections
+        return count_established - count_listen

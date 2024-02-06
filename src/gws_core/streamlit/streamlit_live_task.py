@@ -20,15 +20,15 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 @task_decorator("StreamlitLiveTask", human_name="Streamlite live task")
 class StreamlitLiveTask(Task):
     """
-    Python live tasks allow to execute any Python code snippets on the fly.
-
-    Live tasks are fast and efficient tools to develop, test, use and share code snippets.
+    Live task to generate a streamlit app dashboard.
 
     **Warning**: It is recommended to use code snippets comming from trusted sources.
 
     Here is the general documentation for live task (including how to use the parameters): https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/getting-started
 
-    Here is the documentation of the live task: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/python-live-task
+    Here is the documentation of the streamlit live task: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/streamlit-live-task
+
+    More information about streamlit: https://streamlit.io
     """
 
     input_specs: InputSpecs = DynamicInputs(
@@ -37,12 +37,11 @@ class StreamlitLiveTask(Task):
         'streamlit_app': OutputSpec(StreamlitResource, human_name="Streamlit app")
     })
     config_specs: ConfigSpecs = {
-        # 'params': EnvLiveTask.get_list_param_config(),
         'code':
         PythonCodeParam(
-            default_value=LiveCodeHelper.get_python_template(),
-            human_name="Python code snippet",
-            short_description="Python code snippet to run"), }
+            default_value=LiveCodeHelper.get_streamlit_template(),
+            human_name="Streamlit app code",
+            short_description="Code of the streamlit app to run"), }
 
     CONFIG_PARAMS_NAME = 'params'
     CONFIG_CODE_NAME = 'code'
