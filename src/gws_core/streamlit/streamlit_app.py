@@ -9,6 +9,7 @@ from typing import List, Union
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.streamlit.streamlit_dto import StreamlitAppDTO
 
 
 class StreamlitApp():
@@ -23,7 +24,7 @@ class StreamlitApp():
 
     streamlit_code: str = None
     temp_folder: str = None
-    fs_node_paths: List[str] = None
+    source_paths: List[str] = None
     token: str = None
 
     _streamlit_app_code_path: str = None
@@ -32,21 +33,21 @@ class StreamlitApp():
         self.port = port
         self.resource_id = resource_id
         self.token = token
-        self.fs_node_paths = []
+        self.source_paths = []
 
     def set_streamlit_code(self, streamlit_code: str) -> None:
         self.streamlit_code = streamlit_code
 
-    def add_fs_node_path(self, node_path: Union[str, List[str]]) -> None:
-        if isinstance(node_path, str):
-            self.fs_node_paths.append(node_path)
-        elif isinstance(node_path, list):
-            self.fs_node_paths.extend(node_path)
+    def add_source_path(self, source_path: Union[str, List[str]]) -> None:
+        if isinstance(source_path, str):
+            self.source_paths.append(source_path)
+        elif isinstance(source_path, list):
+            self.source_paths.extend(source_path)
         else:
             raise Exception("node_path must be a string or a list of string")
 
-    def set_fs_node_paths(self, fs_nodes: List[str]) -> None:
-        self.fs_node_paths = fs_nodes
+    def set_source_paths(self, source_paths: List[str]) -> None:
+        self.source_paths = source_paths
 
     def get_app_url(self) -> str:
         return f"http://localhost:{self.port}"
@@ -56,14 +57,14 @@ class StreamlitApp():
         Method to create the streamlit app code file and return the url to access the app.
         """
         if self._streamlit_app_code_path is not None:
-            return f"{self.get_app_url()}?gws_token={self.token}&gws_app_path={self._streamlit_app_code_path}"
+            return self.get_app_full_url()
 
         if self.streamlit_code is None:
             raise Exception("streamlit_code must be set before starting the app")
 
         # setting the source variable in the streamlit code
         full_code = f"""
-source_paths = {self.fs_node_paths}
+source_paths = {self.source_paths}
 {self.streamlit_code}
 """
 
@@ -77,9 +78,20 @@ source_paths = {self.fs_node_paths}
         self._streamlit_app_code_path = app_code_path
 
         # return the url to access the app using the token and the app code path
-        return f"{self.get_app_url()}?gws_token={self.token}&gws_app_path={app_code_path}"
+        return self.get_app_full_url()
+
+    def get_app_full_url(self) -> str:
+        return f"{self.get_app_url()}?gws_token={self.token}&gws_app_path={self._streamlit_app_code_path}"
 
     def clean(self) -> None:
         if self.temp_folder is not None:
             FileHelper.delete_dir(self.temp_folder)
             self.temp_folder = None
+
+    def to_dto(self) -> StreamlitAppDTO:
+        return StreamlitAppDTO(
+            resource_id=self.resource_id,
+            source_paths=self.source_paths,
+            streamlit_app_code_path=self._streamlit_app_code_path,
+            url=self.get_app_full_url()
+        )

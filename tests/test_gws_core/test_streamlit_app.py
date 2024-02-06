@@ -49,17 +49,18 @@ if sources:
 
         streamlit_resource = StreamlitResource(streamlit_code)
         streamlit_resource.add_resource(File(file_path), unique_name="test.csv")
+        streamlit_resource._model_id = '1'
 
         # generate the streamlit app
         streamlit_resource.default_view(ConfigParams())
 
-        # streamlit_app = StreamlitAppManager.create_or_get_app('1')
-        # streamlit_app.set_fs_node_paths([file_path])
-        # streamlit_app.set_streamlit_code(streamlit_code)
-        # url = streamlit_app.generate_app()
-
         # check if the app is running
         self.assertTrue(StreamlitAppManager.call_health_check())
+
+        status = StreamlitAppManager.get_status_dto()
+        self.assertEqual(status.status, 'RUNNING')
+        self.assertEqual(len(status.running_apps), 1)
+        self.assertEqual(status.running_apps[0].resource_id, streamlit_resource._model_id)
 
         StreamlitAppManager.stop_main_app()
 

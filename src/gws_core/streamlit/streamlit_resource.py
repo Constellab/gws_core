@@ -49,7 +49,7 @@ class StreamlitResource(ResourceSet):
 
         streamlit_app = StreamlitAppManager.create_or_get_app(self._model_id)
         resources: List[FSNode] = list(self.get_resources_as_set())
-        streamlit_app.set_fs_node_paths([resource.path for resource in resources])
+        streamlit_app.set_source_paths([resource.path for resource in resources])
         streamlit_app.set_streamlit_code(self.get_streamlit_app_code())
         url = streamlit_app.generate_app()
 

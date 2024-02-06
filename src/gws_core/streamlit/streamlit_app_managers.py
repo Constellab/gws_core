@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import math
 import os
 import time
 from threading import Thread
@@ -15,6 +16,7 @@ from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.streamlit.streamlit_app import StreamlitApp
+from gws_core.streamlit.streamlit_dto import StreamlitStatusDTO
 
 
 class StreamlitAppManager():
@@ -196,6 +198,8 @@ class StreamlitAppManager():
 
     @classmethod
     def count_connections(cls) -> int:
+        if not cls.main_app_process:
+            return 0
 
         # get the list of the connections
         connections = psutil.net_connections(kind='inet')
@@ -216,5 +220,16 @@ class StreamlitAppManager():
         if count_established == 1:
             return count_established
 
-        # to count otherwise, we substract the listen connections
-        return count_established - count_listen
+        # to count otherwise, we substract the listen connections, if lower than 0, we return 0
+        count = count_established - count_listen
+        return count if count > 0 else 0
+
+    ############################# OTHERS ####################################
+
+    @classmethod
+    def get_status_dto(cls) -> StreamlitStatusDTO:
+        return StreamlitStatusDTO(
+            status="RUNNING" if cls.main_app_is_running() else "STOPPED",
+            running_apps=[app.to_dto() for app in cls.get_current_running_apps()],
+            nb_of_connections=cls.count_connections(),
+        )

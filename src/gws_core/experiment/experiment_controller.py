@@ -2,10 +2,9 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from fastapi import Depends
-from git import List
 from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
