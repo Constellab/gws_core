@@ -289,7 +289,7 @@ class ProtocolService(BaseService):
         # Delete all the TaskInput as well
         # Most of them are deleted when deleting the resource but for some constant inputs (link source)
         # the resource is not deleted but the input must be deleted
-        TaskInputModel.delete_by_task_ids(process_ids)
+        TaskInputModel.delete_by_process_ids(process_ids)
 
         # re-propagate the resources because some of them might be deleted by the reset
         protocol_model.propagate_resources()

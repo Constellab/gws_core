@@ -74,8 +74,11 @@ class TaskInputModel(BaseModel):
         return TaskInputModel.delete().where(TaskInputModel.experiment == experiment_id).execute()
 
     @classmethod
-    def delete_by_task_ids(cls, task_ids: List[str]) -> int:
-        return TaskInputModel.delete().where(TaskInputModel.task_model.in_(task_ids)).execute()
+    def delete_by_process_ids(cls, process_ids: List[str]) -> None:
+        """Delete all task input where the task_model or the parent protocol_model is in the list of process_ids
+        """
+        TaskInputModel.delete().where(TaskInputModel.task_model.in_(process_ids)).execute()
+        TaskInputModel.delete().where(TaskInputModel.protocol_model.in_(process_ids)).execute()
 
     @classmethod
     def resource_is_used_by_experiment(cls, resource_model_id: str, experiment_ids: List[str]) -> bool:
