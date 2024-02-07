@@ -84,10 +84,6 @@ class TestTaskInputModel(BaseTestCase):
         experiment_3.get_protocol().get_process('source').set_param('resource_id', task_input.resource_model.id)
         experiment_3.run()
         # Get all the task input where the resource is used in another experiment
-        task_input: TaskInputModel = TaskInputModel.get_other_experiments(
+        task_input = TaskInputModel.get_other_experiments(
             [task_input.resource_model.id], experiment_1._experiment.id).first()
         self.assertEqual(task_input.experiment.id, experiment_3._experiment.id)
-
-        # Test deleting by experiment
-        TaskInputModel.delete_by_experiment(experiment_1._experiment.id)
-        self.assertEqual(TaskInputModel.get_by_experiment(experiment_1._experiment.id).count(), 0)

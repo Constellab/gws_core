@@ -286,16 +286,15 @@ class ProtocolService(BaseService):
         # Delete all the resources previously generated to clear the DB
         ResourceModel.delete_multiple_resources(process_resources)
 
-        # Delete all the TaskInput as well
-        # Most of them are deleted when deleting the resource but for some constant inputs (link source)
-        # the resource is not deleted but the input must be deleted
-        TaskInputModel.delete_by_process_ids(process_ids)
-
         # re-propagate the resources because some of them might be deleted by the reset
         protocol_model.propagate_resources()
 
+        # add all the sub protocols that were resetted
+        sub_resetted_protocols: Set[ProtocolModel] = {
+            protocol_model for protocol_model in processes_to_reset if isinstance(protocol_model, ProtocolModel)}
+
         # refresh the protocol to get the updated graph because the connection and inputs might not be exact
-        return ProtocolUpdate(protocol=protocol_model, protocol_updated=True)
+        return ProtocolUpdate(protocol=protocol_model, protocol_updated=True, sub_protocols=sub_resetted_protocols)
 
     @classmethod
     def run_process(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdate:

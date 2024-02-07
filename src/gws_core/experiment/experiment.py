@@ -216,9 +216,6 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
         :rtype: `bool`
         """
         from gws_core.report.report_view_model import ReportViewModel
-
-        from ..task.task_input_model import TaskInputModel
-
         if not self.is_saved():
             raise BadRequestException(
                 "Can't reset an experiment not saved before")
@@ -249,11 +246,6 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
 
         # Delete all the resources previously generated to clear the DB
         ResourceModel.delete_multiple_resources(output_resources)
-
-        # Delete all the TaskInput as well
-        # Most of them are deleted when deleting the resource but for some constant inputs (link source)
-        # the resource is not deleted but the input must be deleted
-        TaskInputModel.delete_by_experiment(self.id)
 
         self.mark_as_draft()
         return self

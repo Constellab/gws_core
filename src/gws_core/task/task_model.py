@@ -125,6 +125,20 @@ class TaskModel(ProcessModel):
         self.is_archived = archive
         return self.save()
 
+    @transaction()
+    def reset(self) -> 'ProcessModel':
+        """
+        Reset the process
+        """
+        from gws_core.task.task_input_model import TaskInputModel
+
+        process = super().reset()
+
+        # Delete the TaskInputModel of this task
+        TaskInputModel.delete_by_task_id(self.id)
+
+        return process
+
     @property
     def resources(self) -> List[ResourceModel]:
         if not self.is_saved():
