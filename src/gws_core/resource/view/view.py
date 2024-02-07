@@ -20,6 +20,9 @@ class View:
     _title: str = None
     _technical_info: TechnicalInfoDict
 
+    # if True, the view is marked as favorite
+    _favorite: bool = False
+
     # Spec of the view. All the view spec must be optional or have a default value
     _specs: ViewSpecs = {}
 
@@ -51,6 +54,14 @@ class View:
     def get_title(self) -> str:
         """ Get title """
         return self._title
+
+    def set_favorite(self, favorite: bool):
+        """ Set favorite """
+        self._favorite = favorite
+
+    def is_favorite(self) -> bool:
+        """ Is favorite """
+        return self._favorite
 
     def get_type(self) -> ViewType:
         """ Get type """

@@ -36,7 +36,7 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, on_delete='CASCADE')
     resource_model: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
 
-    flagged = BooleanField(default=False)
+    is_favorite = BooleanField(default=False, column_name='flagged')
 
     _table_name = 'gws_view_config'
 
@@ -50,10 +50,10 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
             title=self.title,
             view_type=self.view_type,
             view_name=self.view_name,
-            flagged=self.flagged,
+            is_favorite=self.is_favorite,
             config_values=self.get_config_values(),
-            experiment=self.experiment.to_dto() if self.experiment else None,
-            resource=self.resource_model.to_dto() if self.resource_model else None,
+            experiment=self.experiment.to_simple_dto() if self.experiment else None,
+            resource=self.resource_model.to_simple_dto() if self.resource_model else None,
         )
 
     def get_config_values(self) -> ConfigParamsDict:
@@ -106,8 +106,8 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
         return ViewConfig.select().where(ViewConfig.resource_model.in_(resource_model_ids))
 
     @classmethod
-    def get_by_resource_and_flagged(cls, resource_model_id: str) -> ModelSelect:
-        return ViewConfig.select().where((ViewConfig.resource_model == resource_model_id) & (ViewConfig.flagged == True))
+    def get_by_resource_and_favorite(cls, resource_model_id: str) -> ModelSelect:
+        return ViewConfig.select().where((ViewConfig.resource_model == resource_model_id) & (ViewConfig.is_favorite == True))
 
     @classmethod
     def delete_by_resource(cls, resource_model_id: str) -> None:

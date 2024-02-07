@@ -57,12 +57,12 @@ class Viewer(Task):
         view_runner: ViewRunner = ViewRunner(resource, view_method_name, config_values)
         view = view_runner.generate_view()
 
-        # save the view config as flagged
+        # save the view config as favorite
         ViewConfigService.save_view_config(
             resource_model=resource_model,
             view=view,
             view_name=view_method_name,
             config=view_runner.get_config(),
-            flagged=True)
+            is_favorite=True)
 
         return {}

@@ -15,7 +15,7 @@ class ViewConfigDTO(ModelWithUserDTO):
     title: str
     view_type: ViewType
     view_name: str
-    flagged: bool
+    is_favorite: bool
     config_values: dict
     experiment: Optional[ExperimentSimpleDTO]
     resource: Optional[ResourceSimpleDTO]

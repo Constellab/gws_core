@@ -214,12 +214,12 @@ class TestView(BaseTestCase):
         self.assertEqual(len([x for x in views_to_delete if x.id == view_config.id]), 1)
 
         # Flag the view and check that it is not listed in the views to delete
-        ViewConfigService.update_flagged(view_config.id, True)
+        ViewConfigService.update_favorite(view_config.id, True)
         views_to_delete = ViewConfigService.get_old_views_to_delete()
         self.assertEqual(len([x for x in views_to_delete if x.id == view_config.id]), 0)
 
         # unflag the view and associate it to a report and check that it is not listed in the views to delete
-        ViewConfigService.update_flagged(view_config.id, False)
+        ViewConfigService.update_favorite(view_config.id, False)
         report_1 = ReportService.create(ReportSaveDTO(title='test_report'))
         ReportService.add_view_to_content(report_1.id, view_config.id)
         views_to_delete = ViewConfigService.get_old_views_to_delete()
@@ -246,4 +246,4 @@ class TestView(BaseTestCase):
         # check that view config was saved
         view_configs: List[ViewConfig] = list(ViewConfig.get_by_resource(resource_model.id))
         self.assertEqual(len(view_configs), 1)
-        self.assertTrue(view_configs[0].flagged)
+        self.assertTrue(view_configs[0].is_favorite)

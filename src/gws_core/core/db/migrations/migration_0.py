@@ -377,7 +377,7 @@ class Migration0316(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
 
         migrator.add_column_if_not_exists(ViewConfig, ViewConfig.tags)
-        migrator.add_column_if_not_exists(ViewConfig, ViewConfig.flagged)
+        migrator.add_column_if_not_exists(ViewConfig, ViewConfig.is_favorite)
         migrator.rename_column_if_exists(
             ResourceModel, 'show_in_databox', 'flagged')
         migrator.alter_column_type(
