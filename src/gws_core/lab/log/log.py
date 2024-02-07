@@ -56,12 +56,12 @@ class LogLine():
         Read the line as json and extract the level, date, content and if it is from an experiment
         """
         try:
-            line_json: LogFileLine = loads(line_str)
-            self.level = line_json.get('level')
-            self.init_new_date(line_json.get('timestamp'))
-            self.message = line_json.get('message')
-            self.is_from_experiment = line_json.get('experiment_id') is not None
-            self.experiment_id = line_json.get('experiment_id')
+            line_json: LogFileLine = LogFileLine.parse_raw(line_str)
+            self.level = line_json.level
+            self.init_new_date(line_json.timestamp)
+            self.message = line_json.message
+            self.is_from_experiment = line_json.experiment_id is not None
+            self.experiment_id = line_json.experiment_id
         except ValueError:
             pass
 

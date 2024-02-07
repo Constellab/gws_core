@@ -52,7 +52,7 @@ class View:
         """ Get title """
         return self._title
 
-    def get_type(self) -> str:
+    def get_type(self) -> ViewType:
         """ Get type """
         return self._type
 

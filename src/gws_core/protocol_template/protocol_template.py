@@ -27,6 +27,7 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
     name = CharField(max_length=255)
 
     description = JSONField(null=True)
+    old_description = JSONField(null=True)
 
     # version number of the protocol template
     version = IntegerField(null=False, default=1)

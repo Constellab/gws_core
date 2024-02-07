@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, parse_obj_as
 from requests.models import Response
@@ -239,3 +239,15 @@ class SpaceService(BaseService):
             headers[cls.user_id_header_key] = user.id
 
         return headers
+
+    # TODO TO REMOVE
+    @classmethod
+    def migrate_text_editor(cls, content: Any) -> Any:
+        """
+        Check the credential of an email/password by calling space, with 2Fa if needed
+        """
+        space_api_url: str = cls._get_space_api_url('lab-instances/migrate-quill-json')
+        response = ExternalApiService.post(
+            space_api_url, content, raise_exception_if_error=True)
+
+        return response.json()

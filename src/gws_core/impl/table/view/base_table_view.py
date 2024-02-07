@@ -160,7 +160,7 @@ class BaseTableView(View):
             column_index: int
             if selection_range.is_column_selection():
                 column_name = selection_range.selection[0]
-                column_index = self._table.get_column_position_from_name(column_name)
+                column_index = self._table.get_column_index_from_name(column_name)
             else:
                 range: CellRange = selection_range.selection[0]
                 column_index = range.get_from().column

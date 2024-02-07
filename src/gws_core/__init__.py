@@ -103,7 +103,8 @@ from .core.service.settings_service import SettingsService as SettingsService
 from .core.utils.compress.compress import Compress as Compress
 from .core.utils.compress.gzip_compress import GzipCompress as GzipCompress
 from .core.utils.compress.tar_compress import TarCompress as TarCompress
-from .core.utils.compress.zip import Zip as Zip
+from .core.utils.compress.tar_compress import TarGzCompress as TarGzCompress
+from .core.utils.compress.zip_compress import ZipCompress as ZipCompress
 from .core.utils.cryptography import Cryptography as Cryptography
 from .core.utils.gws_core_packages import GwsCorePackages as GwsCorePackages
 from .core.utils.logger import Logger as Logger
@@ -227,8 +228,6 @@ from .impl.table.helper.table_scaler_helper import \
     TableScalerHelper as TableScalerHelper
 from .impl.table.helper.table_tag_aggregator_helper import \
     TableTagAggregatorHelper as TableTagAggregatorHelper
-from .impl.table.helper.table_tag_extractor_helper import \
-    TableTagExtractorHelper as TableTagExtractorHelper
 from .impl.table.helper.table_unfolder_helper import \
     TableUnfolderHelper as TableUnfolderHelper
 from .impl.table.metadata_table.helper.table_annotator_helper import \
@@ -288,9 +287,9 @@ from .impl.table.transformers.table_tag_aggregator import \
 from .impl.table.transformers.table_tag_aggregator import \
     TableRowTagAggregator as TableRowTagAggregator
 from .impl.table.transformers.table_tag_extractor import \
-    TableColumnTagExtractor as TableColumnTagExtractor
+    TableColumnTagToRowExtractor as TableColumnTagToRowExtractor
 from .impl.table.transformers.table_tag_extractor import \
-    TableRowTagExtractor as TableRowTagExtractor
+    TableRowTagToColumnExtractor as TableRowTagToColumnExtractor
 from .impl.table.transformers.table_transposer import \
     TableTransposer as TableTransposer
 from .impl.table.transformers.table_unfolder import \

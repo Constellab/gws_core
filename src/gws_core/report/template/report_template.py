@@ -20,6 +20,7 @@ class ReportTemplate(ModelWithUser):
     title = CharField()
 
     content = JSONField(null=True)
+    old_content = JSONField(null=True)
 
     _table_name = 'gws_report_template'
 

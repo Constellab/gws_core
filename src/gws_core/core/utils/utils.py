@@ -5,6 +5,7 @@
 import inspect
 import os
 import re
+import sys
 from importlib import import_module
 from importlib.util import find_spec
 from json import dumps
@@ -25,8 +26,8 @@ class Utils:
 
     @staticmethod
     def walk_dir(path) -> Tuple[List[str], List[str]]:
-        dirs = []
-        files = []
+        dirs: List[str] = []
+        files: List[str] = []
         reg = re.compile(r"^[a-zA-Z].*\.py$")
 
         def is_valid_dir(d) -> bool:
@@ -54,27 +55,48 @@ class Utils:
         :type: `str`
         """
 
-        if type_str is None:
+        module_name, function_name = cls._extract_module_name(type_str)
+
+        if module_name not in sys.modules:
             return None
 
-        try:
-            tab = type_str.split(".")
-            length = len(tab)
-            module_name = ".".join(tab[0:length-1])
-            function_name = tab[length-1]
+        module = sys.modules[module_name]
 
-            if find_spec(module_name) is None:
-                return None
-
-            module = import_module(module_name)
-
-            return getattr(module, function_name, None)
-        except:
+        if not hasattr(module, function_name):
             return None
+
+        return getattr(module, function_name, None)
 
     @classmethod
-    def model_type_exists(cls, type_str: str = None) -> bool:
-        return cls.get_model_type(type_str) is not None
+    def model_type_exists(cls, type_str: str) -> bool:
+        module_name, function_name = cls._extract_module_name(type_str)
+
+        if module_name not in sys.modules:
+            return False
+
+        module = sys.modules[module_name]
+
+        if not hasattr(module, function_name):
+            return False
+
+        return True
+
+    @classmethod
+    def _extract_module_name(cls, type_str: str) -> Tuple[str, str]:
+        """
+        Extract the module name and the function name from a litteral type
+
+        :param type: Litteral type (can be a slugyfied string)
+        :type type: str
+        :return: The module name and the function name
+        :type: `Tuple[str, str]`
+        """
+        tab = type_str.split(".")
+        length = len(tab)
+        module_name = ".".join(tab[0:length-1])
+        function_name = tab[length-1]
+
+        return module_name, function_name
 
     @staticmethod
     def issubclass(__cls: type, __class_or_tuple:  Union[type, Tuple[Union[type, Tuple[Any, ...]], ...]]) -> bool:

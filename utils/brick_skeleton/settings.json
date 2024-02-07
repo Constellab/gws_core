@@ -6,20 +6,16 @@
     "skeleton:testdata_dir": "${CURRENT_DIR}/tests/testdata"
   },
   "environment": {
+    "bricks": [
+      {
+        "name": "gws_core",
+        "version": "0.7.0"
+      }
+    ],
     "pip": [
       {
         "source": "https://pypi.python.org/simple",
         "packages": []
-      },
-      {
-        "source": "https://$GWS_GIT_LOGIN:$GWS_GIT_PWD@gitlab.com/gencovery/core",
-        "packages": [
-          {
-            "name": "gws_core",
-            "version": "0.5.0-beta.1",
-            "is_brick": true
-          }
-        ]
       }
     ],
     "git": [

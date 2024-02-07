@@ -37,7 +37,7 @@ class TableImporter(ResourceImporter):
         'encoding': StrParam(default_value="auto", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="File encoding", short_description="Encoding of the file, 'auto' for automatic detection."),
         "metadata_columns": ParamSet({
             'column': StrParam(default_value=None, optional=True, visibility=StrParam.PROTECTED_VISIBILITY, human_name="Column", short_description="Metadata column to use to tag rows"),
-            'keep_in_table': BoolParam(default_value=False, optional=True, visibility=BoolParam.PROTECTED_VISIBILITY, human_name="Keep in table", short_description="Set True to keep the column in the final table; False otherwise"),
+            'keep_in_table': BoolParam(default_value=True, optional=True, visibility=BoolParam.PROTECTED_VISIBILITY, human_name="Keep in table", short_description="Set True to keep the column in the final table; False otherwise"),
         }, optional=True, visibility=ParamSet.PROTECTED_VISIBILITY, human_name="Metadata columns", short_description="Columns data to use to tag the rows of the table"),
     }
 
@@ -69,33 +69,14 @@ class TableImporter(ResourceImporter):
             raise BadRequestException(
                 f"Valid file formats are {Table.ALLOWED_FILE_FORMATS}.")
 
-        table: Table = None
-        # set metadata and build Table
-        metadata_columns = params.get_value('metadata_columns', [])
-        if metadata_columns:
-            row_tags = []
-            meta_cols = []
-            keep_in_table = {}
-            for metadata in metadata_columns:
-                colname = metadata.get("column")
-                meta_cols.append(colname)
-                keep_in_table[colname] = metadata.get("keep_in_table") or False
+        table: Table = target_type(data=dataframe, format_header_names=params.get(
+            'format_header_names', False))
 
-            tag_df = dataframe[meta_cols]
-            drop_cols = [col for col, keep in keep_in_table.items()
-                         if keep is False]
-            if drop_cols:
-                dataframe.drop(drop_cols, axis=1, inplace=True)
-            for idx in dataframe.index:
-                tag = {col: tag_df.loc[idx, col] for col in tag_df.columns}
-                row_tags.append(tag)
-
-            table = target_type(data=dataframe, format_header_names=params.get(
-                'format_header_names', False))
-            table.set_all_row_tags(row_tags)
-        else:
-            table = target_type(data=dataframe, format_header_names=params.get(
-                'format_header_names', False))
+        # Extract the columns as tags
+        for metadata_column in params.get_value('metadata_columns', []):
+            column = metadata_column['column']
+            delete_column = not metadata_column['keep_in_table']
+            table.extract_column_values_to_row_tags(column, delete_column=delete_column)
 
         table.set_comments(self._read_comments(source, comment_char, encoding))
         return table

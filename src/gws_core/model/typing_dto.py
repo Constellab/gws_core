@@ -10,6 +10,7 @@ from gws_core.model.typing_dict import TypingRefDTO, TypingStatus
 
 
 class TypingDTO(ModelDTO):
+    unique_name: str
     object_type: str
     typing_name: str
     brick_version: str
@@ -20,6 +21,7 @@ class TypingDTO(ModelDTO):
     deprecated_message: Optional[str]
     additional_data: Optional[dict]
     status: TypingStatus
+    hide: bool
 
 
 class TypingFullDTO(TypingDTO):

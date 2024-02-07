@@ -72,7 +72,7 @@ class EncodingTable(Table):
     def get_encoded_column_data(self) -> list:
         return self.get_column_data(self.encoded_column)
 
-    def select_by_column_positions(self, positions: List[int]) -> 'EncodingTable':
+    def select_by_column_indexes(self, positions: List[int]) -> 'EncodingTable':
         raise BadRequestException("Not allowed of EncodingTable")
 
     def select_by_column_name(self, name_regex: str) -> 'Table':

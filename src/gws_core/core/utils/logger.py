@@ -9,9 +9,11 @@ from datetime import datetime
 from logging import Logger as PythonLogger
 from logging.handlers import TimedRotatingFileHandler
 from os import makedirs, path
-from typing import Any, Literal, Optional, TypedDict
+from typing import Any, Literal, Optional
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.utils import Utils
 
 from ..exception.exceptions.bad_request_exception import BadRequestException
 
@@ -21,8 +23,10 @@ RESET_COLOR = "\x1b[0m"
 
 MessageType = Literal['ERROR', 'WARNING', 'INFO', 'DEBUG', 'PROGRESS', 'EXCEPTION']
 
+LoggerLevel = Literal['INFO', 'DEBUG', 'ERROR']
 
-class LogFileLine(TypedDict):
+
+class LogFileLine(BaseModelDTO):
     level: MessageType
     timestamp: str
     message: str
@@ -37,16 +41,14 @@ class JSONFormatter(logging.Formatter):
         super().__init__()
         self.experiment_id = experiment_id
 
-    def format(self, record):
-        log_data: LogFileLine = {
-            'level': record.levelname,
-            'timestamp': Logger.get_date(),
-            'message': record.getMessage()
-        }
-
-        if self.experiment_id:
-            log_data['experiment_id'] = self.experiment_id
-        return json.dumps(log_data)
+    def format(self, record) -> str:
+        log_data = LogFileLine(
+            level=record.levelname,
+            timestamp=Logger.get_date(),
+            message=record.getMessage(),
+            experiment_id=self.experiment_id
+        )
+        return log_data.json()
 
 
 class Logger:
@@ -67,7 +69,7 @@ class Logger:
     _waiting_messages: list = []
 
     def __init__(self, log_dir: str = None,
-                 level: Literal["ERROR", "INFO", "DEBUG"] = "INFO", experiment_id: str = None) -> None:
+                 level: LoggerLevel = "INFO", experiment_id: str = None) -> None:
         """Create the Gencovery logger, it logs into the console and into a file
 
         :param level: level of the logs to show, defaults to "info"
@@ -121,6 +123,15 @@ class Logger:
             Logger.info(f"Logger configured with log level: {level}")
 
         self._log_waiting_message()
+
+    @classmethod
+    def check_log_level(cls, log_level: str) -> LoggerLevel:
+        if not log_level:
+            return "INFO"
+        if not Utils.value_is_in_literal(log_level, LoggerLevel):
+            raise BadRequestException(
+                f"The logging level '{log_level}' is incorrect, please use one of the following [INFO, DEBUG, ERROR]")
+        return log_level
 
     @classmethod
     def error(cls, message: str) -> None:

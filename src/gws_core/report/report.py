@@ -33,6 +33,7 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
     title = CharField()
 
     content = JSONField(null=True)
+    old_content = JSONField(null=True)
 
     project: Project = ForeignKeyField(Project, null=True)
 

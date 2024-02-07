@@ -9,7 +9,7 @@ from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 from gws_core.config.config import Config
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.classes.rich_text_content import RichTextResourceView
+from gws_core.core.classes.rich_text_content import RichTextResourceViewData
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
@@ -115,7 +115,7 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
         for view_config in view_configs:
             view_config.delete_instance()
 
-    def to_rich_text_resource_view(self, title: str = None, caption: str = None) -> RichTextResourceView:
+    def to_rich_text_resource_view(self, title: str = None, caption: str = None) -> RichTextResourceViewData:
         return {
             "id": self.id + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
             "view_config_id": self.id,

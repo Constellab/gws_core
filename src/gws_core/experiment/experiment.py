@@ -20,6 +20,7 @@ from gws_core.experiment.experiment_dto import (ExperimentDTO,
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.project.model_with_project import ModelWithProject
+from gws_core.protocol.protocol_dto import ExperimentProtocolDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.user.current_user_service import CurrentUserService
 
@@ -69,6 +70,7 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
 
     title = CharField(max_length=50)
     description = JSONField(null=True)
+    old_description = JSONField(null=True)
     lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
 
     is_validated: bool = BooleanField(default=False)
@@ -466,14 +468,11 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
             title=self.title
         )
 
-    def export_protocol(self) -> dict:
-        json_ = self.protocol_model.to_config_dto()
-        # remove the main instance name because it is not relevant
-        del json_["instance_name"]
-        return {
-            "version": 1,  # version of the protocol json format
-            "data": json_
-        }
+    def export_protocol(self) -> ExperimentProtocolDTO:
+        return ExperimentProtocolDTO(
+            version=1,  # version of the protocol json format
+            data=self.protocol_model.to_config_dto()
+        )
 
     class Meta:
         table_name = 'gws_experiment'

@@ -10,8 +10,8 @@ from typing import Type
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
-from gws_core.core.utils.compress.tar_compress import TarCompress
-from gws_core.core.utils.compress.zip import Zip
+from gws_core.core.utils.compress.tar_compress import TarGzCompress
+from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -45,11 +45,11 @@ class FolderExporter(ResourceExporter):
         if compression == "zip":
             destination += folder_name + ".zip"
             self.log_info_message('Compressing folder ' + folder_name + ' to ' + destination)
-            Zip.compress_dir(folder.path, destination)
+            ZipCompress.compress_dir(folder.path, destination)
         elif compression == "tar.gz":
             destination += folder_name + ".tar.gz"
             self.log_info_message('Compressing folder ' + folder_name + ' to ' + destination)
-            TarCompress.compress_dir(folder.path, destination)
+            TarGzCompress.compress_dir(folder.path, destination)
         else:
             raise Exception("Compression type not supported")
 

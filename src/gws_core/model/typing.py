@@ -73,6 +73,9 @@ class Typing(Model):
 
     def _get_hierarchy_table(self) -> List[str]:
         model_t: Type = self.get_type()
+
+        if model_t is None:
+            raise Exception(f"Can't get the type of the typing {self.typing_name}")
         mro: List[Type] = inspect.getmro(model_t)
 
         ht: List[str] = []
@@ -97,7 +100,7 @@ class Typing(Model):
     def get_ancestors(self) -> List[str]:
         return self.data["ancestors"]
 
-    def get_type(self) -> Type:
+    def get_type(self) -> Optional[Type]:
         return Utils.get_model_type(self.model_type)
 
     def get_typing_ref_dto(self) -> TypingRefDTO:
@@ -121,6 +124,7 @@ class Typing(Model):
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
+            unique_name=self.unique_name,
             object_type=self.object_type,
             typing_name=self.typing_name,
             brick_version=self.brick_version,
@@ -130,7 +134,8 @@ class Typing(Model):
             deprecated_since=self.deprecated_since,
             deprecated_message=self.deprecated_message,
             additional_data=None,
-            status=self.get_type_status()
+            status=self.get_type_status(),
+            hide=self.hide
         )
 
     def to_full_dto(self) -> TypingFullDTO:

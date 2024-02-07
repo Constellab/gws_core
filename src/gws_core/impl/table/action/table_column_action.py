@@ -42,7 +42,7 @@ class TableRemoveColumn(Action):
     def execute(self, resource: Table) -> Table:
         # save the column data in the params for undo
         self.params["data"] = resource.get_column_data(self.params["name"])
-        self.params["index"] = resource.get_column_position_from_name(self.params["name"])
+        self.params["index"] = resource.get_column_index_from_name(self.params["name"])
         resource.remove_column(self.params["name"])
         return resource
 

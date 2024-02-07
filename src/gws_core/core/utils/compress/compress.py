@@ -118,6 +118,6 @@ class Compress:
         """Get the child classes of the compress class.
         """
         from .gzip_compress import GzipCompress
-        from .tar_compress import TarCompress
-        from .zip import Zip
-        return [TarCompress, Zip, GzipCompress]
+        from .tar_compress import TarCompress, TarGzCompress
+        from .zip_compress import ZipCompress
+        return [TarGzCompress, TarCompress, ZipCompress, GzipCompress]
