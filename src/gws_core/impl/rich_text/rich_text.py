@@ -294,6 +294,6 @@ class RichText(SerializableObjectJson):
     def create_rich_text_dto(cls, blocks: List[RichTextBlock]) -> RichTextDTO:
         return RichTextDTO(
             blocks=blocks,
-            version="2.28.2",
+            version="2.9.0",
             time=int(datetime.now().timestamp() * 1000)
         )
