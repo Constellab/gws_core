@@ -269,6 +269,14 @@ class IO(Base, Generic[PortType]):
         io_specs = self._build_specs(specs)
         return io_specs
 
+    def get_specs_as_dict(self) -> dict:
+        specs = self.get_specs().get_specs()
+        io_specs = {}
+        for key, value in specs.items():
+            io_specs[key] = value.to_dto().dict()
+
+        return {"specs": io_specs}
+
 
 @final
 class Inputs(IO[InPort]):

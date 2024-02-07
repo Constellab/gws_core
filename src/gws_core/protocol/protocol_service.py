@@ -26,6 +26,9 @@ from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.current_user_service import CurrentUserService
 
+from ..community.community_dto import CommunityLiveTaskVersionDTO, CommunityLiveTaskDTO
+from ..community.community_service import CommunityService
+
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -40,6 +43,8 @@ from ..process.process_model import ProcessModel
 from ..protocol.protocol_model import ProtocolModel
 from ..task.task_model import TaskModel
 from .protocol import Protocol
+
+from pydantic import parse_obj_as
 
 
 class ProtocolService(BaseService):
@@ -73,7 +78,7 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_process_to_protocol_id(cls, protocol_id: str, process_typing_name: str,
-                                   instance_name: str = None) -> ProtocolUpdate:
+                                   instance_name: str = None, config_params: ConfigParamsDict = None) -> ProtocolUpdate:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
@@ -82,7 +87,7 @@ class ProtocolService(BaseService):
             process_typing_name)
 
         return cls.add_process_to_protocol(protocol_model=protocol_model, process_type=process_typing.get_type(),
-                                           instance_name=instance_name)
+                                           instance_name=instance_name, config_params=config_params)
 
     @classmethod
     @transaction()
@@ -589,17 +594,17 @@ class ProtocolService(BaseService):
 
     @classmethod
     def add_dynamic_input_port_to_process(
-            cls, protocol_id: str, process_name: str) -> ProtocolUpdate:
-        return cls._add_dynamic_port_to_process(protocol_id, process_name, 'input')
+            cls, protocol_id: str, process_name: str, io_spec_dto: IOSpecDTO=None) -> ProtocolUpdate:
+        return cls._add_dynamic_port_to_process(protocol_id, process_name, 'input', io_spec_dto)
 
     @classmethod
     def add_dynamic_output_port_to_process(
-            cls, protocol_id: str, process_name: str) -> ProtocolUpdate:
-        return cls._add_dynamic_port_to_process(protocol_id, process_name, 'output')
+            cls, protocol_id: str, process_name: str, io_spec_dto: IOSpecDTO=None) -> ProtocolUpdate:
+        return cls._add_dynamic_port_to_process(protocol_id, process_name, 'output', io_spec_dto)
 
     @classmethod
     def _add_dynamic_port_to_process(cls, protocol_id: str, process_name: str,
-                                     port_type: Literal['input', 'output']) -> ProtocolUpdate:
+                                     port_type: Literal['input', 'output'], io_spec_dto: IOSpecDTO=None) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
@@ -615,7 +620,7 @@ class ProtocolService(BaseService):
 
         # generate the default spec and add port
         io_specs: Union[DynamicInputs, DynamicOutputs] = io.get_specs()
-        io_spec = io_specs.get_default_spec()
+        io_spec = IOSpec.from_dto(io_spec_dto) if io_spec_dto is not None else io_specs.get_default_spec()
         io.create_port(StringHelper.generate_uuid(), io_spec)
 
         process_model.save()
@@ -744,3 +749,37 @@ class ProtocolService(BaseService):
         return ProtocolTemplate.from_protocol_model(protocol_model,
                                                     protocol_model.experiment.title,
                                                     protocol_model.experiment.description)
+
+
+    ########################## COMMUNITY #####################
+    @classmethod
+    @transaction()
+    def add_community_live_task_version_to_protocol_id(cls, protocol_id: str, live_task_version_id: str) -> ProtocolUpdate:
+        community_live_task_version: CommunityLiveTaskVersionDTO = CommunityService.get_community_live_task_version(live_task_version_id)
+        conf_params = dict()
+        conf_params['code'] = community_live_task_version.code
+        if community_live_task_version.environment is not None and community_live_task_version.environment != '':
+            conf_params['env'] = community_live_task_version.environment
+        protocol_update = cls.add_process_to_protocol_id(protocol_id, community_live_task_version.type, config_params=conf_params)
+
+        for port in list(protocol_update.process.inputs.ports.keys()):
+            protocol_update = cls.delete_dynamic_input_port_of_process(protocol_id, protocol_update.process.instance_name, port)
+
+        for port in list(protocol_update.process.outputs.ports.keys()):
+            protocol_update = cls.delete_dynamic_output_port_of_process(protocol_id, protocol_update.process.instance_name, port)
+
+        for io_spec in list(community_live_task_version.input_specs['specs'].values()):
+            io_spec = parse_obj_as(IOSpecDTO, io_spec)
+            protocol_update = cls.add_dynamic_input_port_to_process(protocol_id, protocol_update.process.instance_name, io_spec)
+
+        for io_spec in list(community_live_task_version.output_specs['specs'].values()):
+            io_spec = parse_obj_as(IOSpecDTO, io_spec)
+            protocol_update = cls.add_dynamic_output_port_to_process(protocol_id, protocol_update.process.instance_name, io_spec)
+
+
+        return protocol_update
+
+    @classmethod
+    @transaction()
+    def get_community_available_live_tasks(cls) -> List[CommunityLiveTaskDTO]:
+        return CommunityService.get_community_available_live_tasks()

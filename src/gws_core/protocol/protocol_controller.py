@@ -5,7 +5,9 @@
 
 
 import threading
-from typing import Optional
+from typing import Optional, List
+
+from starlette.responses import JSONResponse
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
@@ -21,6 +23,8 @@ from gws_core.protocol_template.protocol_template_dto import \
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
 from .protocol_service import ProtocolService
+from ..community.community_service import CommunityService
+from ..community.community_dto import CommunityLiveTaskDTO
 
 # use to prevent multiple request to modify a protocol at the same time, they will be queued
 # this is because protocol load can be long if there is a lot of process so second request can start
@@ -55,6 +59,25 @@ def add_process(id: str,
             protocol_id=id,
             process_typing_name=process_typing_name
         ).to_dto()
+
+@core_app.post("/protocol/{id}/add-community-live-task/{live_task_version_id}", tags=["Protocol"],
+               summary="Add a community live-task to a protocol")
+def add_community_live_task(id: str,
+                live_task_version_id: str,
+                _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+    """
+    Add a constellab community live task to a protocol
+    """
+    with update_lock:
+        return ProtocolService.add_community_live_task_version_to_protocol_id(id, live_task_version_id).to_dto()
+
+@core_app.post("/protocol/get-community-available-live-tasks", tags=["Protocol"],
+               summary="Get community live-tasks available for the protocol")
+def get_community_available_live_tasks(_=Depends(AuthService.check_user_access_token)) -> List[CommunityLiveTaskDTO]:
+    """
+    Add a constellab community live task to a protocol
+    """
+    return ProtocolService.get_community_available_live_tasks()
 
 
 @core_app.post("/protocol/{id}/add-process/{process_typing_name}/connected-to-output/{process_name}/{port_name}",
@@ -329,6 +352,7 @@ def update_dynamic_input_port_of_process(id: str,
                                          port_name: str,
                                          io_spec: IOSpecDTO,
                                          _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+    print(process_name, port_name, io_spec)
     with update_lock:
         return ProtocolService.update_dynamic_input_port_of_process(id, process_name, port_name, io_spec).to_dto()
 

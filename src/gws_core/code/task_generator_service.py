@@ -14,7 +14,8 @@ from gws_core.config.param.param_spec import (BoolParam, FloatParam, IntParam,
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.impl.live.py_live_task import PyLiveTask
 from gws_core.task.task_model import TaskModel
-
+from gws_core.brick.brick_helper import BrickHelper
+import json
 
 class TaskGeneratorService:
 
@@ -82,3 +83,54 @@ class TaskGeneratorService:
             task_generator.add_config_spec(param_name, param_type)
 
         return task_generator.generate_code()
+
+
+
+    @classmethod
+    def generate_live_task_file_from_live_task_id(cls, task_id: str) -> str:
+        task: TaskModel = TaskModel.get_by_id_and_check(task_id)
+        values = task.config.get_and_check_values()
+        code = task.config.get_value("code")
+        env = ""
+        if values.get("env") is not None:
+            env = task.config.get_value("env")
+        inputs = task.inputs.get_specs_as_dict()
+        outputs = task.outputs.get_specs_as_dict()
+
+        brick_versions = BrickHelper.get_all_brick_versions()
+        bricks = []
+
+        for brick_version in brick_versions:
+            brick_name = brick_version.name
+            brick_version = brick_version.version
+            if brick_name in code:
+                bricks.append({
+                    "name": brick_name,
+                    "version": brick_version
+                })
+
+        res = {
+            "json_version": 1,
+            "code": code,
+            "environment": env,
+            "input_specs": inputs,
+            "output_specs": outputs,
+            "config_specs": {},
+            "bricks": bricks,
+            "task_type": cls.get_live_task_type(task.instance_name),
+        }
+
+        res_str = str(json.dumps(res))
+        return res_str
+
+    @classmethod
+    def get_live_task_type(self, instance_name: str) -> str:
+        choice = {
+                    'PyLiveTask' :'PYTHON',
+                    'PyCondaLiveTask' : 'CONDA_PYTHON',
+                    'PyMambaLiveTask' : 'MAMBA_PYTHON',
+                    'PyPipenvLiveTask' : 'PIP_PYTHON',
+                    'RCondaLiveTask' : 'CONDA_R',
+                    'RMambaLiveTask' : 'MAMBA_R'
+                }
+        return choice[instance_name.split('_')[0]]
