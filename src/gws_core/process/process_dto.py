@@ -21,7 +21,8 @@ class ProcessDTO(ModelWithUserDTO):
     config: ConfigDTO
     progress_bar: ProgressBarDTO
     process_typing_name: str
-    brick_version: str
+    brick_version_on_create: str
+    brick_version_on_run: str
     status: ProcessStatus
     error_info: Optional[ProcessErrorInfo]
     started_at: Optional[datetime]

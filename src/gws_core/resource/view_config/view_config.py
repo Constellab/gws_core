@@ -36,7 +36,7 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, on_delete='CASCADE')
     resource_model: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
 
-    is_favorite = BooleanField(default=False, column_name='flagged')
+    is_favorite = BooleanField(default=False)
 
     _table_name = 'gws_view_config'
 

@@ -136,9 +136,9 @@ class Migration039(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(Typing.get_db())
 
         migrator.add_column_if_not_exists(Typing, Typing.brick_version)
-        migrator.add_column_if_not_exists(TaskModel, TaskModel.brick_version)
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.brick_version_on_create)
         migrator.add_column_if_not_exists(
-            ProtocolModel, ProtocolModel.brick_version)
+            ProtocolModel, ProtocolModel.brick_version_on_create)
         migrator.migrate()
 
         process_model_list: List[ProcessModel] = list(
@@ -174,7 +174,7 @@ class Migration039(BrickMigration):
                 # set brick version
                 typing = TypingManager.get_typing_from_name_and_check(
                     process_model.process_typing_name)
-                process_model.brick_version = BrickHelper.get_brick_version(
+                process_model.brick_version_on_create = BrickHelper.get_brick_version(
                     typing.brick)
                 process_model.save()
             except Exception as err:
@@ -1001,3 +1001,24 @@ class Migration070(BrickMigration):
             except Exception as exception:
                 Logger.error(
                     f'Error while migrating {model_type.__name__} {model.id} : {exception}')
+
+
+@brick_migration('0.7.3', short_description='Reanem view config flagged to favorite and add run_brick_version to process_model')
+class Migration073(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
+        migrator.rename_column_if_exists(ViewConfig, 'flagged', 'is_favorite')
+        migrator.rename_column_if_exists(TaskModel, 'brick_version', 'brick_version_on_create')
+        migrator.rename_column_if_exists(ProtocolModel, 'brick_version', 'brick_version_on_create')
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.brick_version_on_run)
+        migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.brick_version_on_run)
+        migrator.migrate()
+
+        process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
+        for process_model in process_models:
+            if not process_model.brick_version_on_run:
+                process_model.brick_version_on_run = process_model.brick_version_on_create
+                process_model.save(skip_hook=True)
