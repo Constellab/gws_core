@@ -33,6 +33,11 @@ class ExperimentType(Enum):
     ACTIONS = "ACTIONS"
 
 
+class ExperimentExecutionType(Enum):
+    MANUAL = "MANUAL"
+    AUTO = "AUTO"
+
+
 class ExperimentProcessStatus(Enum):
     # if the experiment is not running
     NONE = "NONE"

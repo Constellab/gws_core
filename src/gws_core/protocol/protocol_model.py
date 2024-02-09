@@ -1139,3 +1139,12 @@ class ProtocolModel(ProcessModel):
         self.status = ProcessStatus.DRAFT
         self.set_error_info(None)
         self.save()
+
+    def check_is_updatable(self, error_if_finished: bool = True) -> None:
+        super().check_is_updatable(error_if_finished)
+        if self.experiment:
+            self.experiment.check_is_updatable()
+
+            if self.experiment.is_running:
+                raise BadRequestException(
+                    detail="The experiment is running, you can't update it")

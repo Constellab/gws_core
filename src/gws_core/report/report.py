@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, final
+from typing import List, Optional, final
 
 from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
                     ModelSelect)
@@ -122,6 +122,15 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
 
     def get_entity_type(self) -> EntityType:
         return EntityType.REPORT
+
+    def get_entity_parent_name(self) -> Optional[str]:
+        return self.project.title if self.project else None
+
+    def get_entity_parent_type(self) -> Optional[EntityType]:
+        return EntityType.PROJECT
+
+    def entity_is_validated(self) -> bool:
+        return self.is_validated
 
     class Meta:
         table_name = 'gws_report'

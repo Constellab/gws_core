@@ -145,6 +145,12 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
         for output_resource in resources:
             output_resource.delete_instance()
 
+    @classmethod
+    def delete_resource_by_task_model(cls, task_model_id: str) -> None:
+        task_resources: List[ResourceModel] = list(ResourceModel.get_by_task_model(task_model_id).execute())
+
+        cls.delete_multiple_resources(task_resources)
+
     def _delete_object(self):
         """Delete the kv_store and the file if they exist does not delete model in DB
         """
@@ -221,6 +227,10 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
         return ResourceModel.select().where(ResourceModel.experiment.in_(experiment_ids))
 
     @classmethod
+    def get_by_task_model(cls, task_model_id: str) -> ModelSelect:
+        return ResourceModel.select().where(ResourceModel.task_model == task_model_id)
+
+    @classmethod
     def get_by_task_models(cls, task_model_ids: List[str]) -> ModelSelect:
         return ResourceModel.select().where(ResourceModel.task_model.in_(task_model_ids))
 
@@ -271,15 +281,15 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
                 map(lambda x: x.id, resources))
 
             # check if it is used as input
-            other_experiment: TaskInputModel = TaskInputModel.get_other_experiments(
-                resource_ids, experiment_id).first()
+            # other_experiment: TaskInputModel = TaskInputModel.get_other_experiments(
+            #     resource_ids, experiment_id).first()
 
-            if other_experiment is not None:
-                raise ResourceUsedInAnotherExperimentException(
-                    other_experiment.resource_model.name,
-                    other_experiment.resource_model.id,
-                    other_experiment.experiment.get_short_name(),
-                    other_experiment.experiment.id)
+            # if other_experiment is not None:
+            #     raise ResourceUsedInAnotherExperimentException(
+            #         other_experiment.resource_model.name,
+            #         other_experiment.resource_model.id,
+            #         other_experiment.experiment.get_short_name(),
+            #         other_experiment.experiment.id)
 
             # check if it is used as source
             other_task: TaskModel = TaskModel.get_source_task_using_resource_in_another_experiment(
@@ -595,6 +605,12 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
 
     def get_entity_type(self) -> EntityType:
         return EntityType.RESOURCE
+
+    def get_entity_parent_name(self) -> Optional[str]:
+        return self.experiment.title if self.experiment else None
+
+    def get_entity_parent_type(self) -> Optional[EntityType]:
+        return EntityType.EXPERIMENT
 
     class Meta:
         table_name = 'gws_resource'

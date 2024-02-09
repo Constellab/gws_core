@@ -137,7 +137,7 @@ class TestShareResource(BaseTestCase):
         i_process = i_experiment.get_protocol().get_process('generate_resource_set')
         resource_model_id = i_process.get_output_resource_model('resource_set').id
 
-        original_resource_model = ResourceService.get_resource_by_id(resource_model_id)
+        original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
         original_resource_set: ResourceSet = original_resource_model.get_resource()
 
         zipped_resource = ShareService.zip_resource(

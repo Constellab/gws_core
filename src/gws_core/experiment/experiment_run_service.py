@@ -359,7 +359,7 @@ class ExperimentRunService():
 
     @classmethod
     def _send_experiment_finished_mail(cls, experiment: Experiment) -> None:
-        if not Settings.get_instance().is_prod_mode() or experiment.type != ExperimentType.EXPERIMENT:
+        if not Settings.get_instance().is_prod_mode() or not experiment.is_manual():
             return
         try:
             elapsed_time = experiment.protocol_model.progress_bar.get_last_execution_time()

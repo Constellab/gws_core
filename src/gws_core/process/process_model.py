@@ -517,16 +517,14 @@ class ProcessModel(ModelWithUser):
     def is_draft(self) -> bool:
         return self.status == ProcessStatus.DRAFT
 
-    def check_is_updatable(self) -> None:
+    def check_is_updatable(self, error_if_finished: bool = True) -> None:
         if self.is_running:
-            raise BadRequestException(
-                "The process is running and cannot be updated")
-        if self.experiment:
-            self.experiment.check_is_updatable()
+            raise BadRequestException(GWSException.PROCESS_UPDATE_RUNNING_ERROR.value,
+                                      GWSException.PROCESS_UPDATE_RUNNING_ERROR.name)
 
-            if self.experiment.is_running:
-                raise BadRequestException(
-                    detail="The experiment is running, you can't update it")
+        if error_if_finished and self.is_finished:
+            raise BadRequestException(GWSException.PROCESS_UPDATE_FISHINED_ERROR.value,
+                                      GWSException.PROCESS_UPDATE_FISHINED_ERROR.name)
 
     @property
     def is_error(self) -> bool:

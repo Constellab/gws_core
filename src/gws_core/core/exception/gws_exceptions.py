@@ -52,3 +52,7 @@ class GWSException(Enum):
     DELETE_PROJECT_WITH_REPORTS = "The project can't be deleted because it contains synced reports"
     EXP_CONTINUE_LAB_INCOMPATIBLE = "The experiment cannot be continued because the lab version has changed since last execution. Please reset the experiment first."
     PROCESS_TYPE_NOT_FOUND = "The process type '{{process_typing_name}}' was not found. Please check if the brick is correctly installed in monitoring section."
+    PROCESS_UPDATE_RUNNING_ERROR = "The process is running. Please stop the process or wait for it to finish before modifying it."
+    PROCESS_UPDATE_FISHINED_ERROR = "The process is finished. Please reset the process before modifying it."
+    RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP = "Can't reset the experiment because one of the output resource is used in experiment '<a href=\"{{experiment_url}}\" target=\"_blank\">{{experiment}}</a>'"
+    RESET_ERROR_EXP_LINKED_TO_A_REPORT = "Can't reset the experiment because one of the output resource is used in report '<a href=\"{{report_url}}\" target=\"_blank\">{{report}}</a>'"

@@ -22,7 +22,8 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.credentials.credentials import Credentials
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_enums import ExperimentType
+from gws_core.experiment.experiment_enums import (ExperimentExecutionType,
+                                                  ExperimentType)
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.file_store import FileStore
@@ -1015,6 +1016,7 @@ class Migration073(BrickMigration):
         migrator.rename_column_if_exists(ProtocolModel, 'brick_version', 'brick_version_on_create')
         migrator.add_column_if_not_exists(TaskModel, TaskModel.brick_version_on_run)
         migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.brick_version_on_run)
+        migrator.add_column_if_not_exists(Experiment, Experiment.execution_type)
         migrator.migrate()
 
         process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
@@ -1022,3 +1024,13 @@ class Migration073(BrickMigration):
             if not process_model.brick_version_on_run:
                 process_model.brick_version_on_run = process_model.brick_version_on_create
                 process_model.save(skip_hook=True)
+
+        experiments: List[Experiment] = list(Experiment.select())
+        for experiment in experiments:
+            if experiment.type in [ExperimentType.TRANSFORMER, ExperimentType.IMPORTER, ExperimentType.EXPORTER,
+                                   ExperimentType.FS_NODE_EXTRACTOR, ExperimentType.RESOURCE_DOWNLOADER]:
+                experiment.execution_type = ExperimentExecutionType.MANUAL
+            else:
+                experiment.execution_type = ExperimentExecutionType.AUTO
+
+            experiment.save(skip_hook=True)

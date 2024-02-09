@@ -5,26 +5,27 @@
 
 
 import threading
-from typing import Optional, List
-
-from starlette.responses import JSONResponse
+from typing import List, Optional
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from gws_core.core.utils.response_helper import ResponseHelper
+from gws_core.entity_navigator.entity_navigator_dto import \
+    ProcessResetResultDTO
+from gws_core.entity_navigator.entity_navigator_service import \
+    EntityNavigatorService
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.protocol.protocol_dto import (AddConnectorDTO, ProtocolDTO,
                                             ProtocolUpdateDTO)
 from gws_core.protocol_template.protocol_template_dto import \
     ProtocolTemplateDTO
 
+from ..community.community_dto import CommunityLiveTaskDTO
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
 from .protocol_service import ProtocolService
-from ..community.community_service import CommunityService
-from ..community.community_dto import CommunityLiveTaskDTO
 
 # use to prevent multiple request to modify a protocol at the same time, they will be queued
 # this is because protocol load can be long if there is a lot of process so second request can start
@@ -42,7 +43,7 @@ def get_a_protocol(id: str,
     - **id**: the id of the protocol
     """
 
-    return ProtocolService.get_protocol_by_id(id=id).to_protocol_dto()
+    return ProtocolService.get_by_id_and_check(id=id).to_protocol_dto()
 
 
 @core_app.post("/protocol/{id}/add-process/{process_typing_name}", tags=["Protocol"],
@@ -60,16 +61,18 @@ def add_process(id: str,
             process_typing_name=process_typing_name
         ).to_dto()
 
+
 @core_app.post("/protocol/{id}/add-community-live-task/{live_task_version_id}", tags=["Protocol"],
                summary="Add a community live-task to a protocol")
 def add_community_live_task(id: str,
-                live_task_version_id: str,
-                _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                            live_task_version_id: str,
+                            _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     """
     Add a constellab community live task to a protocol
     """
     with update_lock:
         return ProtocolService.add_community_live_task_version_to_protocol_id(id, live_task_version_id).to_dto()
+
 
 @core_app.post("/protocol/get-community-available-live-tasks", tags=["Protocol"],
                summary="Get community live-tasks available for the protocol")
@@ -132,16 +135,17 @@ def delete_process(id: str,
         ).to_dto()
 
 
-@core_app.put("/protocol/{id}/process/{process_instance_name}/reset", tags=["Protocol"],
+@core_app.put("/protocol/{id}/process/{process_instance_name}/reset/{force}", tags=["Protocol"],
               summary="Reset a process of a protocol")
 def reset_process(id: str,
+                  force: bool,
                   process_instance_name: str,
-                  _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                  _=Depends(AuthService.check_user_access_token)) -> ProcessResetResultDTO:
     with update_lock:
-        return ProtocolService.reset_process_of_protocol_id(
+        return EntityNavigatorService.reset_process_of_protocol_id(
             protocol_id=id,
-            process_instance_name=process_instance_name
-        ).to_dto()
+            process_instance_name=process_instance_name,
+            force=force)
 
 
 @core_app.put("/protocol/{id}/process/{process_instance_name}/run", tags=["Protocol"],

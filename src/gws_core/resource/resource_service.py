@@ -103,7 +103,7 @@ class ResourceService(BaseService):
 
     @classmethod
     def update_name(cls, resource_model_id: str, name: str) -> ResourceModel:
-        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
+        resource_model: ResourceModel = cls.get_by_id_and_check(resource_model_id)
 
         if resource_model.origin == ResourceOrigin.S3_PROJECT_STORAGE:
             raise BadRequestException(
@@ -135,13 +135,13 @@ class ResourceService(BaseService):
 
     @classmethod
     def update_flagged(cls, view_config_id: str, flagged: bool) -> ResourceModel:
-        resource_model: ResourceModel = cls.get_resource_by_id(view_config_id)
+        resource_model: ResourceModel = cls.get_by_id_and_check(view_config_id)
         resource_model.flagged = flagged
         return resource_model.save()
 
     @classmethod
     def update_project(cls, resource_id: str, project_id: Optional[str]) -> ResourceModel:
-        resource_model: ResourceModel = cls.get_resource_by_id(resource_id)
+        resource_model: ResourceModel = cls.get_by_id_and_check(resource_id)
 
         if resource_model.origin == ResourceOrigin.S3_PROJECT_STORAGE:
             raise BadRequestException(
@@ -158,12 +158,12 @@ class ResourceService(BaseService):
     ############################# GET RESOURCE MODEL ###########################
 
     @classmethod
-    def get_resource_by_id(cls, id: str) -> ResourceModel:
+    def get_by_id_and_check(cls, id: str) -> ResourceModel:
         return ResourceModel.get_by_id_and_check(id)
 
     @classmethod
     def get_resource_children(cls, id: str) -> List[ResourceModel]:
-        resource_model: ResourceModel = cls.get_resource_by_id(id)
+        resource_model: ResourceModel = cls.get_by_id_and_check(id)
 
         resource: Resource = resource_model.get_resource()
 
@@ -219,7 +219,7 @@ class ResourceService(BaseService):
 
     @classmethod
     def get_view_specs_from_resource(cls, resource_model_id: str, view_name: str) -> ResourceViewMetadatalDTO:
-        resource_model: ResourceModel = cls.get_resource_by_id(
+        resource_model: ResourceModel = cls.get_by_id_and_check(
             resource_model_id)
 
         resource = resource_model.get_resource()
@@ -243,7 +243,7 @@ class ResourceService(BaseService):
                                             view_name: str, config_values: ConfigParamsDict,
                                             save_view_config: bool = False) -> CallViewResult:
 
-        resource_model: ResourceModel = cls.get_resource_by_id(
+        resource_model: ResourceModel = cls.get_by_id_and_check(
             resource_model_id)
         return cls.call_view_on_resource_model(resource_model, view_name, config_values, save_view_config)
 

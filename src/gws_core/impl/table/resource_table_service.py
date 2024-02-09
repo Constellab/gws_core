@@ -34,7 +34,7 @@ class ResourceTableService:
                          chart_config_values: ConfigParamsDict) -> CallViewResult:
         """Method to call a chart on a table from the table view
         """
-        resource_model: ResourceModel = ResourceService.get_resource_by_id(resource_id)
+        resource_model: ResourceModel = ResourceService.get_by_id_and_check(resource_id)
         resource: Resource = resource_model.get_resource()
 
         view_name = cls._get_table_view_method_name(chart_type)

@@ -7,8 +7,8 @@
 from time import sleep
 
 from gws_core import ResourceModel
-from gws_core.experiment.experiment_exception import \
-    ResourceUsedInAnotherExperimentException
+from gws_core.entity_navigator.entity_navigator_service import \
+    EntityNavigatorService
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
@@ -146,8 +146,9 @@ class TestProtocolService(BaseTestCase):
         self.assertIsNotNone(sub_resource_to_keep.refresh())
         self.assertIsNotNone(sub_resource_to_clear.refresh())
 
-        ProtocolService.reset_process_of_protocol_id(
-            sub_protocol.get_model().id, 'p2')
+        reset_result = EntityNavigatorService.reset_process_of_protocol_id(
+            sub_protocol.get_model().id, 'p2', force=False)
+        self.assertTrue(reset_result.success)
 
         # check that all the next processes of p2 are reset
         main_protocol = main_protocol.refresh()
@@ -186,9 +187,9 @@ class TestProtocolService(BaseTestCase):
         experiment2.get_protocol().add_source(
             'source', main_resource.id, robot_mode << 'robot')
 
-        with self.assertRaises(ResourceUsedInAnotherExperimentException):
-            ProtocolService.reset_process_of_protocol_id(
-                sub_protocol.get_model().id, 'p2')
+        reset_result = EntityNavigatorService.reset_process_of_protocol_id(
+            sub_protocol.get_model().id, 'p2', force=False)
+        self.assertFalse(reset_result.success)
 
     def test_run_protocol_process(self):
         experiment = IExperiment()

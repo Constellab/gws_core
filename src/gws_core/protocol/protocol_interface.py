@@ -237,5 +237,5 @@ class IProtocol(IProcess):
 
     @ classmethod
     def get_by_id(cls, id: str) -> 'IProtocol':
-        protocol_model: ProtocolModel = ProtocolService.get_protocol_by_id(id)
+        protocol_model: ProtocolModel = ProtocolService.get_by_id_and_check(id)
         return IProtocol(protocol_model)

@@ -201,17 +201,15 @@ class ExperimentService(BaseService):
         return experiment
 
     @classmethod
-    def update_experiment_description(cls, id: str, description: Dict) -> Experiment:
-        experiment: Experiment = Experiment.get_by_id_and_check(id)
+    def update_experiment_description(cls, id_: str, description: Dict) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id_)
 
         experiment.check_is_updatable()
         experiment.description = description
         return experiment.save()
 
     @classmethod
-    def reset_experiment(cls, id: str) -> Experiment:
-        experiment: Experiment = Experiment.get_by_id_and_check(id)
-
+    def reset_experiment(cls, experiment: Experiment) -> Experiment:
         return experiment.reset()
 
     ###################################  VALIDATION  ##############################
@@ -445,6 +443,20 @@ class ExperimentService(BaseService):
 
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
+        experiment.delete_instance()
+
+        # if the experiment was sync with space, delete it in space too
+        if experiment.last_sync_at is not None and experiment.project is not None:
+            SpaceService.delete_experiment(
+                experiment.project.id, experiment.id)
+
+        ActivityService.add(activity_type=ActivityType.DELETE,
+                            object_type=ActivityObjectType.EXPERIMENT,
+                            object_id=experiment.id)
+
+    @classmethod
+    @transaction()
+    def delete_experiment_2(cls, experiment: Experiment) -> None:
         experiment.delete_instance()
 
         # if the experiment was sync with space, delete it in space too

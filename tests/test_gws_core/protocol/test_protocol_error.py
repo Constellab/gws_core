@@ -10,6 +10,8 @@ from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
                       Protocol, ProtocolModel, ProtocolService, Resource,
                       RobotMove, Task, TaskInputs, TaskOutputs,
                       protocol_decorator, resource_decorator, task_decorator)
+from gws_core.entity_navigator.entity_navigator_service import \
+    EntityNavigatorService
 from gws_core.experiment.experiment_exception import ExperimentRunException
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.impl.robot.robot_resource import Robot
@@ -155,7 +157,7 @@ class TestProtocolError(BaseTestCase):
             error_process.get_error_info().unique_code, exception.unique_code)
 
         # reset error tasks
-        ProtocolService.reset_error_processes_of_protocol(protocol)
+        EntityNavigatorService.reset_error_processes_of_protocol(protocol)
 
         protocol = protocol.refresh()
         self.assertTrue(protocol.is_partially_run)

@@ -10,6 +10,10 @@ from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
+from gws_core.entity_navigator.entity_navigator_dto import \
+    DeleteResourceResultDTO
+from gws_core.entity_navigator.entity_navigator_service import \
+    EntityNavigatorService
 from gws_core.resource.resource_dto import ResourceDTO
 from gws_core.resource.view.view_dto import (CallViewResultDTO,
                                              ResourceViewMetadatalDTO)
@@ -63,7 +67,7 @@ def get_a_resource(id: str,
     - **id**: the id of the resource
     """
 
-    return ResourceService.get_resource_by_id(id=id).to_dto()
+    return ResourceService.get_by_id_and_check(id=id).to_dto()
 
 
 @core_app.get("/resource/{id}/children", tags=["Resource"], summary="Get a resource")
@@ -77,14 +81,15 @@ def get_resource_children(id: str,
     return [resource.to_dto() for resource in resources]
 
 
-@core_app.delete("/resource/{id}", tags=["Resource"], summary="Delete a resource")
-def delete_file(id: str,
-                _=Depends(AuthService.check_user_access_token)) -> None:
+@core_app.delete("/resource/{id}/force/{force}", tags=["Resource"], summary="Delete a resource")
+def delete_resource(id_: str,
+                    force: bool,
+                    _=Depends(AuthService.check_user_access_token)) -> DeleteResourceResultDTO:
     """
     Delete a resource.
     """
 
-    ResourceService.delete(id)
+    return EntityNavigatorService.delete_resource(id_, force)
 
 
 @core_app.post("/resource/advanced-search", tags=["Resource"], summary="Advanced search for resource")

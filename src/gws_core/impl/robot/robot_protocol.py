@@ -10,7 +10,7 @@ from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
                           RobotFly, RobotMove)
 
 
-@protocol_decorator("RobotSimpleTravel", hide=True)
+@protocol_decorator("RobotSimpleTravel", hide=False)
 class RobotSimpleTravel(Protocol):
 
     tasks_count = 7
@@ -38,7 +38,7 @@ class RobotSimpleTravel(Protocol):
         ])
 
 
-@protocol_decorator("RobotTravelProto", hide=True)
+@protocol_decorator("RobotTravelProto", hide=False)
 class RobotTravelProto(Protocol):
 
     tasks_count = 7

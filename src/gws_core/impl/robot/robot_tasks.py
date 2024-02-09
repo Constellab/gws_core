@@ -18,7 +18,8 @@ from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("RobotCreate", human_name="Create robot", short_description="This task creates a robot", hide=True)
+@task_decorator("RobotCreate", human_name="Create robot", short_description="This task creates a robot",
+                hide=False)
 class RobotCreate(Task):
     input_specs = InputSpecs({})  # no required input
     output_specs = OutputSpecs({'robot': OutputSpec(Robot)})
@@ -31,7 +32,7 @@ class RobotCreate(Task):
 
 
 @task_decorator("RobotMove", human_name="Move robot",
-                short_description="This task emulates a short moving step of the robot", hide=True)
+                short_description="This task emulates a short moving step of the robot", hide=False)
 class RobotMove(Task):
     input_specs = InputSpecs({'robot': InputSpec(Robot, human_name="Robot",
                                                  short_description="The robot to feed")})  # just for testing

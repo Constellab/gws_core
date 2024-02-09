@@ -48,7 +48,7 @@ class Viewer(Task):
             raise Exception(
                 f"The input resource type '{resource._human_name}' is not compatible with the type provided in the config: '{config_resource_type._human_name}'")
 
-        resource_model = ResourceService.get_resource_by_id(resource._model_id)
+        resource_model = ResourceService.get_by_id_and_check(resource._model_id)
 
         view_config = params.get('view_config')
         view_method_name = view_config['view_method_name']

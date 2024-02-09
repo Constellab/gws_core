@@ -69,7 +69,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         return NavigableEntitySet(next_entities)
 
     def get_next_entities_recursive(self, requested_entities: List[EntityType] = None,
-                                    include_current_entities: bool = False) -> NavigableEntitySet:
+                                    include_current_entities: bool = False) -> NavigableEntitySet[NavigableEntity]:
         """Return all the entities that are linked to the current entities
 
         :param requested_entities: [description]
@@ -93,7 +93,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
     def _get_next_entities_recursive(
             self, requested_entities: List[EntityType],
-            loaded_entities: Set[GenericNavigableEntity]) -> Set[GenericNavigableEntity]:
+            loaded_entities: Set[NavigableEntity]) -> Set[NavigableEntity]:
 
         if self.is_empty():
             return loaded_entities
@@ -118,11 +118,11 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
     def _get_next_entities_type_recursive(
             self, requested_entities: List[EntityType],
-            loaded_entities: Set[GenericNavigableEntity],
+            loaded_entities: Set[NavigableEntity],
             entity_nav: 'EntityNavigator',
-            nav_class: Type['EntityNavigator']) -> Set[GenericNavigableEntity]:
+            nav_class: Type['EntityNavigator']) -> Set[NavigableEntity]:
 
-        new_entities: Set[GenericNavigableEntity] = entity_nav.get_entities_as_set() - loaded_entities
+        new_entities: Set[NavigableEntity] = entity_nav.get_entities_as_set() - loaded_entities
 
         if len(new_entities) > 0:
             loaded_entities.update(new_entities)
@@ -133,7 +133,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         return loaded_entities
 
     def get_previous_entities_recursive(self, requested_entities: List[EntityType] = None,
-                                        include_current_entities: bool = False) -> NavigableEntitySet:
+                                        include_current_entities: bool = False) -> NavigableEntitySet[NavigableEntity]:
         """Return all the entities that are linked to the current entities
 
         :param requested_entities: [description]
@@ -157,7 +157,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
     def _get_previous_entities_recursive(
             self, requested_entities: List[EntityType],
-            loaded_entities: Set[GenericNavigableEntity]) -> Set[GenericNavigableEntity]:
+            loaded_entities: Set[NavigableEntity]) -> Set[NavigableEntity]:
 
         if self.is_empty():
             return loaded_entities
@@ -182,11 +182,11 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
     def _get_previous_entities_type_recursive(
             self, requested_entities: List[EntityType],
-            loaded_entities: Set[GenericNavigableEntity],
+            loaded_entities: Set[NavigableEntity],
             entity_nav: 'EntityNavigator',
-            nav_class: Type['EntityNavigator']) -> Set[GenericNavigableEntity]:
+            nav_class: Type['EntityNavigator']) -> Set[NavigableEntity]:
 
-        new_entities: Set[GenericNavigableEntity] = entity_nav.get_entities_as_set() - loaded_entities
+        new_entities: Set[NavigableEntity] = entity_nav.get_entities_as_set() - loaded_entities
 
         if len(new_entities) > 0:
             loaded_entities.update(new_entities)
@@ -363,6 +363,11 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         return EntityNavigatorView(views)
 
     def get_next_resources(self) -> 'EntityNavigatorResource':
+        """Return all the output resources of tasks that use the resource as input
+
+        :return: _description_
+        :rtype: EntityNavigatorResource
+        """
         tasks_model = self._get_next_tasks()
 
         task_model_ids = [task.id for task in tasks_model]
@@ -379,7 +384,7 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         return {task_input.task_model for task_input in task_input_models}
 
     def get_next_experiments(self) -> 'EntityNavigatorExperiment':
-        """Return all the experiments that use the resource as input of a task"""
+        """Return all the experiments that use the resource in a source task"""
         task_models: List[TaskModel] = list(TaskModel.get_source_task_using_resource_in_another_experiment(
             self._get_entities_ids()))
 

@@ -9,6 +9,10 @@ from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
+from gws_core.entity_navigator.entity_navigator_dto import \
+    ResetExperimentResultDTO
+from gws_core.entity_navigator.entity_navigator_service import \
+    EntityNavigatorService
 
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
@@ -32,16 +36,16 @@ def get_the_list_of_running_experiments(
     return ExperimentService.get_running_experiments()
 
 
-@core_app.get("/experiment/{id}", tags=["Experiment"], summary="Get an experiment")
-def get_an_experiment(id: str,
+@core_app.get("/experiment/{id_}", tags=["Experiment"], summary="Get an experiment")
+def get_an_experiment(id_: str,
                       _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
     """
     Retrieve an experiment
 
-    - **id**: the id of an experiment
+    - **id_**: the id_ of an experiment
     """
 
-    return ExperimentService.get_experiment_by_id(id=id).to_dto()
+    return ExperimentService.get_experiment_by_id(id_).to_dto()
 
 
 @core_app.post("/experiment/advanced-search", tags=["Experiment"], summary="Advanced search for experiment")
@@ -104,88 +108,89 @@ def create_an_experiment(experiment: ExperimentSaveDTO,
 ###################################### UPDATE  ################################
 
 
-@core_app.put("/experiment/{id}/validate/{project_id}", tags=["Experiment"], summary="Validate an experiment")
-def validate_an_experiment(id: str,
+@core_app.put("/experiment/{id_}/validate/{project_id}", tags=["Experiment"], summary="Validate an experiment")
+def validate_an_experiment(id_: str,
                            project_id: str = None,
                            _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
     """
     Validate a protocol
 
-    - **id**: the id of the experiment
+    - **id_**: the id_ of the experiment
     """
 
-    return ExperimentService.validate_experiment_by_id(id=id, project_id=project_id).to_dto()
+    return ExperimentService.validate_experiment_by_id(id_, project_id=project_id).to_dto()
 
 
-@core_app.put("/experiment/{id}", tags=["Experiment"], summary="Update an experiment")
-def update_experiment(id: str,
+@core_app.put("/experiment/{id_}", tags=["Experiment"], summary="Update an experiment")
+def update_experiment(id_: str,
                       experiment: ExperimentSaveDTO,
                       _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
     """
     Update an experiment
 
-    - **id**: the id of the experiment
+    - **id_**: the id_ of the experiment
     - **title**: the new title [optional]
     - **description**: the new description [optional]
     """
 
-    return ExperimentService.update_experiment(id, experiment).to_dto()
+    return ExperimentService.update_experiment(id_, experiment).to_dto()
 
 
-@core_app.put("/experiment/{id}/title", tags=["Experiment"],
+@core_app.put("/experiment/{id_}/title", tags=["Experiment"],
               summary="Update the title of an experiment")
-def update_title(id: str,
+def update_title(id_: str,
                  body: dict,
                  _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
-    return ExperimentService.update_experiment_title(id, body["title"]).to_dto()
+    return ExperimentService.update_experiment_title(id_, body["title"]).to_dto()
 
 
 class UpdateProject(BaseModel):
     project_id: Optional[str]
 
 
-@core_app.put("/experiment/{id}/project", tags=["Experiment"], summary="Update the project of an experiment")
-def update_experiment_project(id: str,
+@core_app.put("/experiment/{id_}/project", tags=["Experiment"], summary="Update the project of an experiment")
+def update_experiment_project(id_: str,
                               project: UpdateProject,
                               _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
     """
     Update the project of an experiment
 
-    - **id**: the id of the experiment
-    - **project_id**: the id of the project
+    - **id_**: the id_ of the experiment
+    - **project_id**: the id_ of the project
     """
 
-    return ExperimentService.update_experiment_project(id, project.project_id).to_dto()
+    return ExperimentService.update_experiment_project(id_, project.project_id).to_dto()
 
 
-@core_app.put("/experiment/{id}/description", tags=["Experiment"], summary="Update an experiment's description")
-def update_experiment_description(id: str,
+@core_app.put("/experiment/{id_}/description", tags=["Experiment"], summary="Update an experiment's description")
+def update_experiment_description(id_: str,
                                   description: Dict,
                                   _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
     """
     Update an experiment's description
     """
 
-    return ExperimentService.update_experiment_description(id, description).to_dto()
+    return ExperimentService.update_experiment_description(id_, description).to_dto()
 
 
-@core_app.put("/experiment/{id}/reset", tags=["Experiment"], summary="Reset an experiment")
-def reset_an_experiment(id: str,
-                        _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
-    return ExperimentService.reset_experiment(id).to_dto()
+@core_app.put("/experiment/{id_}/reset/{force}", tags=["Experiment"], summary="Reset an experiment")
+def reset_an_experiment(id_: str,
+                        force: bool = False,
+                        _=Depends(AuthService.check_user_access_token)) -> ResetExperimentResultDTO:
+    return EntityNavigatorService.reset_experiment(id_, force)
 
 
-@core_app.put("/experiment/{id}/sync-with-space", tags=["Experiment"],
+@core_app.put("/experiment/{id_}/sync-with-space", tags=["Experiment"],
               summary="Synchronise the experiment with the space")
-def sync_with_space(id: str,
+def sync_with_space(id_: str,
                     _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
-    return ExperimentService.synchronize_with_space_by_id(id).to_dto()
+    return ExperimentService.synchronize_with_space_by_id(id_).to_dto()
 
 ###################################### RUN ################################
 
 
-@core_app.post("/experiment/{id}/start", tags=["Experiment"], summary="Start an experiment")
-def start_an_experiment(id: str,
+@core_app.post("/experiment/{id_}/start", tags=["Experiment"], summary="Start an experiment")
+def start_an_experiment(id_: str,
                         _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
     """
     Start an experiment
@@ -193,45 +198,45 @@ def start_an_experiment(id: str,
     - **flow**: the flow object
     """
 
-    return QueueService.add_experiment_to_queue(experiment_id=id).to_dto()
+    return QueueService.add_experiment_to_queue(experiment_id=id_).to_dto()
 
 
-@core_app.post("/experiment/{id}/stop", tags=["Experiment"], summary="Stop an experiment")
-def stop_an_experiment(id: str,
+@core_app.post("/experiment/{id_}/stop", tags=["Experiment"], summary="Stop an experiment")
+def stop_an_experiment(id_: str,
                        _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
     """
     Stop an experiment
 
-    - **id**: the experiment id
+    - **id_**: the experiment id_
     """
 
-    return ExperimentRunService.stop_experiment(id=id).to_dto()
+    return ExperimentRunService.stop_experiment(id_).to_dto()
 
 ################################### COPY ##############################
 
 
-@core_app.put("/experiment/{id}/clone", tags=["Experiment"], summary="Clone an experiment")
-def clone_experiment(id: str,
+@core_app.put("/experiment/{id_}/clone", tags=["Experiment"], summary="Clone an experiment")
+def clone_experiment(id_: str,
                      _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
-    return ExperimentService.clone_experiment(id).to_dto()
+    return ExperimentService.clone_experiment(id_).to_dto()
 
 ################################### DELETE ##############################
 
 
-@core_app.delete("/experiment/{id}", tags=["Experiment"], summary="Delete an experiment")
-def delete_experiment(id: str,
+@core_app.delete("/experiment/{id_}", tags=["Experiment"], summary="Delete an experiment")
+def delete_experiment(id_: str,
                       _=Depends(AuthService.check_user_access_token)) -> None:
-    ExperimentService.delete_experiment(id)
+    ExperimentService.delete_experiment(id_)
 
 
 ################################### ARCHIVE ##############################
-@core_app.put("/experiment/{id}/archive", tags=["Experiment"], summary="Archive an experiment")
-def archive(id: str,
+@core_app.put("/experiment/{id_}/archive", tags=["Experiment"], summary="Archive an experiment")
+def archive(id_: str,
             _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
-    return ExperimentService.archive_experiment_by_id(id).to_dto()
+    return ExperimentService.archive_experiment_by_id(id_).to_dto()
 
 
-@core_app.put("/experiment/{id}/unarchive", tags=["Experiment"], summary="Unarchive an experiment")
-def unarchive(id: str,
+@core_app.put("/experiment/{id_}/unarchive", tags=["Experiment"], summary="Unarchive an experiment")
+def unarchive(id_: str,
               _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
-    return ExperimentService.unarchive_experiment_by_id(id).to_dto()
+    return ExperimentService.unarchive_experiment_by_id(id_).to_dto()

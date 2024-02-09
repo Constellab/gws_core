@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
+from gws_core.entity_navigator.entity_navigator_type import EntityNavGroupDTO
 from gws_core.experiment.experiment_enums import (ExperimentProcessStatus,
                                                   ExperimentStatus,
                                                   ExperimentType)
