@@ -168,12 +168,6 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
     def get_entity_type(self) -> EntityType:
         return EntityType.EXPERIMENT
 
-    def get_entity_parent_name(self) -> Optional[str]:
-        return self.project.title if self.project else None
-
-    def get_entity_parent_type(self) -> Optional[EntityType]:
-        return EntityType.PROJECT
-
     def entity_is_validated(self) -> bool:
         return self.is_validated
 
@@ -232,7 +226,6 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
         :return: True if it is reset, False otherwise
         :rtype: `bool`
         """
-        # from gws_core.report.report_view_model import ReportViewModel
         self.check_is_updatable()
 
         if not self.is_saved():
@@ -241,25 +234,8 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
         if self.is_running:
             raise BadRequestException("Can't reset a running experiment")
 
-        # Check if any resource of this experiment is used in another one
-        # output_resources: List[ResourceModel] = list(
-        #     ResourceModel.get_by_experiment(self.id))
-        # ResourceModel.check_if_any_resource_is_used_in_another_exp(
-        #     output_resources, self.id)
-
-        # check if any resource of this experiment is used in a report
-        # resource_ids = [r.id for r in output_resources]
-        # report_view_models: List[ReportViewModel] = list(ReportViewModel.get_by_resources(resource_ids))
-        # if len(report_view_models) > 0:
-        #     report_names = list({r.report.title for r in report_view_models})
-        #     raise BadRequestException(
-        #         f"Can't reset an experiment because the report(s) {report_names} are using some resource(s) of this experiment")
-
         if self.protocol_model:
             self.protocol_model.reset()
-
-        # Delete all the resources previously generated to clear the DB
-        # ResourceModel.delete_multiple_resources(output_resources)
 
         self.mark_as_draft()
         return self

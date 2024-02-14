@@ -3,38 +3,28 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, List, Optional
+from typing import List
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.entity_navigator.entity_navigator_type import (
-    EntityNavGroupDTO, NavigableEntitySet)
-from gws_core.experiment.experiment_dto import ExperimentDTO
-from gws_core.protocol.protocol_dto import ProtocolUpdateDTO
-from gws_core.resource.resource_dto import ResourceDTO
+from gws_core.entity_navigator.entity_navigator_deep import NavigableEntitySet
+from gws_core.entity_navigator.entity_navigator_type import EntityNavGroupDTO
+
+
+class ImpactResultDTO(BaseModelDTO):
+    has_entities: bool
+    impacted_entities: List[EntityNavGroupDTO]
 
 
 class ImpactResult():
-    success: bool
-    impacted_entities: NavigableEntitySet[Any]
+    impacted_entities: NavigableEntitySet
 
-    def __init__(self, success: bool, impacted_entities: NavigableEntitySet[Any]):
-        self.success = success
+    def __init__(self, impacted_entities: NavigableEntitySet):
         self.impacted_entities = impacted_entities
 
+    def has_entities(self) -> bool:
+        return len(self.impacted_entities) > 0
 
-class ResetExperimentResultDTO(BaseModelDTO):
-    success: bool
-    experiment: ExperimentDTO
-    impacted_entities: Optional[List[EntityNavGroupDTO]] = None
-
-
-class DeleteResourceResultDTO(BaseModelDTO):
-    success: bool
-    resource: ResourceDTO
-    impacted_entities: Optional[List[EntityNavGroupDTO]] = None
-
-
-class ProcessResetResultDTO(BaseModelDTO):
-    success: bool
-    protocol_update: Optional[ProtocolUpdateDTO] = None
-    impacted_entities: Optional[List[EntityNavGroupDTO]] = None
+    def to_dto(self) -> ImpactResultDTO:
+        return ImpactResultDTO(
+            has_entities=self.has_entities(),
+            impacted_entities=self.impacted_entities.get_entity_dict_nav_group())

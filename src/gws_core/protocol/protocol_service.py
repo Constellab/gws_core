@@ -116,7 +116,7 @@ class ProtocolService(BaseService):
     def add_process_model_to_protocol(cls, protocol_model: ProtocolModel, process_model: ProcessModel,
                                       instance_name: str = None) -> ProtocolUpdate:
 
-        protocol_model.check_is_updatable()
+        protocol_model.check_is_updatable(error_if_finished=False)
         protocol_model.add_process_model(
             process_model=process_model, instance_name=instance_name)
         # save the new process

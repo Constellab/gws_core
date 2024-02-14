@@ -116,7 +116,7 @@ class TestProtocolError(BaseTestCase):
             self.fail('Run experiment shoud have raised ExperimentRunException')
 
         # Check that experiment is in error status
-        experiment = ExperimentService.get_experiment_by_id(experiment.id)
+        experiment = ExperimentService.get_by_id_and_check(experiment.id)
         self.assertTrue(experiment.is_error)
         self.assertIsNotNone(experiment.get_error_info())
         # Check that the instance_id and unique_code where copied from base exception
@@ -185,7 +185,7 @@ class TestProtocolError(BaseTestCase):
             self.fail('Run experiment shoud have raised ExperimentRunException')
 
         # Check that experiment is in error status
-        experiment = ExperimentService.get_experiment_by_id(experiment.id)
+        experiment = ExperimentService.get_by_id_and_check(experiment.id)
         self.assertTrue(experiment.is_error)
         self.assertIsNotNone(experiment.error_info)
         # Check that the instance_id and unique_code where copied from base exception

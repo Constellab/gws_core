@@ -9,8 +9,7 @@ from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
-from gws_core.entity_navigator.entity_navigator_dto import \
-    ResetExperimentResultDTO
+from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
 
@@ -45,7 +44,7 @@ def get_an_experiment(id_: str,
     - **id_**: the id_ of an experiment
     """
 
-    return ExperimentService.get_experiment_by_id(id_).to_dto()
+    return ExperimentService.get_by_id_and_check(id_).to_dto()
 
 
 @core_app.post("/experiment/advanced-search", tags=["Experiment"], summary="Advanced search for experiment")
@@ -173,11 +172,16 @@ def update_experiment_description(id_: str,
     return ExperimentService.update_experiment_description(id_, description).to_dto()
 
 
-@core_app.put("/experiment/{id_}/reset/{force}", tags=["Experiment"], summary="Reset an experiment")
+@core_app.put("/experiment/{id_}/reset", tags=["Experiment"], summary="Reset an experiment")
 def reset_an_experiment(id_: str,
-                        force: bool = False,
-                        _=Depends(AuthService.check_user_access_token)) -> ResetExperimentResultDTO:
-    return EntityNavigatorService.reset_experiment(id_, force)
+                        _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
+    return EntityNavigatorService.reset_experiment(id_).to_dto()
+
+
+@core_app.get("/experiment/{id_}/reset/check-impact", tags=["Experiment"], summary="Check impact for experiment reset")
+def check_impact_for_experiment_reset(id_: str,
+                                      _=Depends(AuthService.check_user_access_token)) -> ImpactResultDTO:
+    return EntityNavigatorService.check_impact_for_experiment_reset(id_).to_dto()
 
 
 @core_app.put("/experiment/{id_}/sync-with-space", tags=["Experiment"],
@@ -226,7 +230,7 @@ def clone_experiment(id_: str,
 @core_app.delete("/experiment/{id_}", tags=["Experiment"], summary="Delete an experiment")
 def delete_experiment(id_: str,
                       _=Depends(AuthService.check_user_access_token)) -> None:
-    ExperimentService.delete_experiment(id_)
+    return EntityNavigatorService.delete_experiment(id_)
 
 
 ################################### ARCHIVE ##############################

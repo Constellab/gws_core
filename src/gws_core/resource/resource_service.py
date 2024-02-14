@@ -48,32 +48,11 @@ class ResourceService(BaseService):
 
     ############################# UPDATE RESOURCE MODEL ###########################
     @classmethod
-    def delete(cls, resource_id: str, allow_s3_project_storage: bool = False) -> None:
+    def delete(cls, resource_id: str) -> None:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
             resource_id)
 
-        if resource_model.is_manually_generated():
-            cls._check_before_resource_update(resource_model)
-
-            resource_model.delete_instance()
-        # if the resource was imported or transformed, we delete the experiment that generated it
-        elif resource_model.origin in [ResourceOrigin.IMPORTED, ResourceOrigin.TRANSFORMED, ResourceOrigin.IMPORTED_FROM_LAB]:
-            experiment: Experiment = resource_model.experiment
-            if experiment is None:
-                raise BadRequestException(
-                    "The resource is not associated to an experiment")
-
-            ExperimentService.delete_experiment(experiment.id)
-        elif resource_model.origin == ResourceOrigin.S3_PROJECT_STORAGE:
-            if allow_s3_project_storage:
-                resource_model.delete_instance()
-            else:
-                raise BadRequestException(
-                    "This resource is a document of the project in the space, it can't be deleted from the lab.")
-
-        else:
-            raise BadRequestException(
-                "Can't delete this resource as it was created by an experiment")
+        resource_model.delete_instance()
 
     @classmethod
     def _check_before_resource_update(cls, resource_model: ResourceModel) -> None:

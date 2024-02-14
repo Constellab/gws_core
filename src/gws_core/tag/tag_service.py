@@ -224,7 +224,7 @@ class TagService():
             entity_nav = EntityNavigator.from_entity_id(entity_type, entity_id)
             return TagPropagationImpactDTO(
                 tags=[tag_to_delete.to_dto()],
-                impacted_entities=entity_nav.get_entities().get_entity_dict_nav_group()
+                impacted_entities=entity_nav.get_as_nav_set().get_entity_dict_nav_group()
             )
 
         return cls._check_tag_propagation_impact(entity_type, entity_id, [tag_to_delete])

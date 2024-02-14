@@ -45,7 +45,7 @@ class TestExperiment(BaseTestCase):
 
         ExperimentService.update_experiment_description(
             experiment.id, {"test": "ok"})
-        experiment = ExperimentService.get_experiment_by_id(experiment.id)
+        experiment = ExperimentService.get_by_id_and_check(experiment.id)
         self.assert_json(experiment.description, {"test": "ok"})
 
     def test_run(self):
@@ -201,7 +201,7 @@ class TestExperiment(BaseTestCase):
         self._check_process_reset(experiment.protocol_model)
         # Same test with experiment from DB
         self._check_process_reset(
-            ExperimentService.get_experiment_by_id(experiment.id).protocol_model)
+            ExperimentService.get_by_id_and_check(experiment.id).protocol_model)
 
         # test get experiment protocol config
         result = experiment.export_protocol()

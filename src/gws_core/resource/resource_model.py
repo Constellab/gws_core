@@ -273,6 +273,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
     def check_if_any_resource_is_used_in_another_exp(cls, resources: List[ResourceModel], experiment_id: str) -> None:
         """Raised an exception if one of the resources if used in another experiment. As input or as config of a Source task
         """
+        # TODO to fix
         from ..task.task_input_model import TaskInputModel
         from ..task.task_model import TaskModel
 
@@ -605,12 +606,6 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
 
     def get_entity_type(self) -> EntityType:
         return EntityType.RESOURCE
-
-    def get_entity_parent_name(self) -> Optional[str]:
-        return self.experiment.title if self.experiment else None
-
-    def get_entity_parent_type(self) -> Optional[EntityType]:
-        return EntityType.EXPERIMENT
 
     class Meta:
         table_name = 'gws_resource'

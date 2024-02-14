@@ -522,7 +522,7 @@ class ProcessModel(ModelWithUser):
             raise BadRequestException(GWSException.PROCESS_UPDATE_RUNNING_ERROR.value,
                                       GWSException.PROCESS_UPDATE_RUNNING_ERROR.name)
 
-        if error_if_finished and self.is_finished:
+        if error_if_finished and self.is_finished and not self.is_source_task():
             raise BadRequestException(GWSException.PROCESS_UPDATE_FISHINED_ERROR.value,
                                       GWSException.PROCESS_UPDATE_FISHINED_ERROR.name)
 

@@ -7,6 +7,9 @@
 from gws_core.entity_navigator.entity_navigator import (
     EntityNavigatorExperiment, EntityNavigatorReport, EntityNavigatorResource,
     EntityNavigatorView)
+from gws_core.entity_navigator.entity_navigator_service import \
+    EntityNavigatorService
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
@@ -49,6 +52,7 @@ class TestEntityNavigator(BaseTestCase):
         self._test_view_navigation()
         self._test_report_navigation()
         self._test_recursive_navigation()
+        self._test_entity_nav_service()
 
     def _create_experiments(self):
         # first experiment RobotCreate -> RobotMove
@@ -279,14 +283,20 @@ class TestEntityNavigator(BaseTestCase):
         exp = EntityNavigatorExperiment(self.exp_1)
 
         # Test get next entities of experiment 1
-        next_exps = list(exp.get_next_entities_recursive())
+        next_exps = exp.get_next_entities_recursive()
 
         # return everything
         self.assertEqual(len(next_exps), 9)
 
+        # test the get deepest level
+        experiments = next_exps.get_entities_from_deepest_level(EntityType.EXPERIMENT)
+        self.assertEqual(len(experiments), 2)
+        self.assertEqual(experiments[0].id, self.exp_3.id)
+        self.assertEqual(experiments[1].id, self.exp_2.id)
+
         # Test get next entities of experiment 2
         exp = EntityNavigatorExperiment(self.exp_2)
-        next_exps = list(exp.get_next_entities_recursive())
+        next_exps = exp.get_next_entities_recursive()
         self.assertEqual(len(next_exps), 4)
 
         # Test previous entities of experiment 3
@@ -298,3 +308,28 @@ class TestEntityNavigator(BaseTestCase):
         exp = EntityNavigatorExperiment(self.exp_2)
         prev_exps = list(exp.get_previous_entities_recursive())
         self.assertEqual(len(prev_exps), 3)
+
+    def _test_entity_nav_service(self):
+        result = EntityNavigatorService.check_impact_for_experiment_reset(self.exp_1.id)
+        self.assertTrue(result.has_entities())
+        self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.EXPERIMENT)), 2)
+        self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.REPORT)), 1)
+
+        result = EntityNavigatorService.check_impact_for_experiment_reset(self.exp_2.id)
+        self.assertTrue(result.has_entities())
+        self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.EXPERIMENT)), 1)
+        self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.REPORT)), 0)
+
+        result = EntityNavigatorService.check_impact_for_experiment_reset(self.exp_3.id)
+        self.assertFalse(result.has_entities())
+
+        # delete the first exp
+        EntityNavigatorService.delete_experiment(self.exp_1.id)
+
+        # check that everything is deleted
+        self.assertIsNone(Experiment.get_by_id(self.exp_1.id))
+        self.assertIsNone(ResourceModel.get_by_id(self.exp_1_resource_1.id))
+        self.assertIsNone(ResourceModel.get_by_id(self.exp_1_resource_2.id))
+        self.assertIsNone(Report.get_by_id(self.report_1.id))
+        self.assertIsNone(Experiment.get_by_id(self.exp_2.id))
+        self.assertIsNone(Experiment.get_by_id(self.exp_3.id))

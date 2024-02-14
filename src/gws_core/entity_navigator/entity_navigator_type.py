@@ -6,9 +6,7 @@
 
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Generic, List, Optional, TypeVar, Union
-
-from pyparsing import Set
+from typing import Any, List, TypeVar
 
 from gws_core.core.model.model_dto import BaseModelDTO
 
@@ -51,33 +49,9 @@ all_entity_types = [EntityType.EXPERIMENT, EntityType.RESOURCE,
                     EntityType.VIEW, EntityType.REPORT]
 
 
-class EntityNavDTO(BaseModelDTO):
-    id: str
-    type: EntityType
-    name: str
-    parent_name: Optional[str]
-    parent_type: Optional[EntityType]
-
-
-class EntityNavGroupDTO(BaseModelDTO):
-    """Store the entities nav grouped by type
-    """
-    type: EntityType
-    entities: List[Any]
-
-
 class NavigableEntity():
 
     id: str
-
-    def get_entity_nav(self) -> EntityNavDTO:
-        return EntityNavDTO(
-            id=self.id,
-            type=self.get_entity_type(),
-            name=self.get_entity_name(),
-            parent_name=self.get_entity_parent_name(),
-            parent_type=self.get_entity_parent_type()
-        )
 
     @abstractmethod
     def get_entity_type(self) -> EntityType:
@@ -87,12 +61,6 @@ class NavigableEntity():
     def get_entity_name(self) -> str:
         pass
 
-    def get_entity_parent_name(self) -> Optional[str]:
-        return None
-
-    def get_entity_parent_type(self) -> Optional[EntityType]:
-        return None
-
     def entity_is_validated(self) -> bool:
         return False
 
@@ -100,62 +68,11 @@ class NavigableEntity():
         pass
 
 
+class EntityNavGroupDTO(BaseModelDTO):
+    """Store the entities nav grouped by type
+    """
+    type: EntityType
+    entities: List[Any]
+
+
 GenericNavigableEntity = TypeVar('GenericNavigableEntity', bound=NavigableEntity)
-
-
-class NavigableEntitySet(Generic[GenericNavigableEntity]):
-
-    _entities: Set[GenericNavigableEntity]
-
-    def __init__(
-            self, entities:
-            Union[GenericNavigableEntity, List[GenericNavigableEntity],
-                  Set[GenericNavigableEntity]] = None):
-        if entities is None:
-            self._entities = set()
-        elif isinstance(entities, list):
-            self._entities = set(entities)
-        elif isinstance(entities, set):
-            self._entities = entities
-        else:
-            self._entities = set([entities])
-
-    def get_entity_navs(self) -> List[BaseModelDTO]:
-        return [entity.to_dto() for entity in self._entities]
-
-    def get_entity_dict_nav_group(self) -> List[EntityNavGroupDTO]:
-        entity_nav_group: List[EntityNavGroupDTO] = []
-        for entity_type in EntityType:
-            group_dto = EntityNavGroupDTO(
-                type=entity_type,
-                entities=[entity.to_dto() for entity in self._entities
-                          if entity.get_entity_type() == entity_type])
-            entity_nav_group.append(group_dto)
-        return entity_nav_group
-
-    def get_entity_ids(self) -> List[str]:
-        return [entity.id for entity in self._entities]
-
-    def get_as_set(self) -> Set[GenericNavigableEntity]:
-        return set(self._entities)
-
-    def get_as_list(self) -> List[GenericNavigableEntity]:
-        return list(self._entities)
-
-    def has_entity(self, entity_id: str) -> bool:
-        return entity_id in self.get_entity_ids()
-
-    def has_entity_of_type(self, entity_type: EntityType) -> bool:
-        return len(self.get_entity_by_type(entity_type)) > 0
-
-    def get_entity_by_type(self, entity_type: EntityType) -> List[GenericNavigableEntity]:
-        return [entity for entity in self._entities if entity.get_entity_type() == entity_type]
-
-    def __len__(self):
-        return len(self._entities)
-
-    def __iter__(self):
-        return iter(self._entities)
-
-    def is_empty(self):
-        return len(self._entities) == 0

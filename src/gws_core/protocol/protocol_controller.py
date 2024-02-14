@@ -12,8 +12,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from gws_core.core.utils.response_helper import ResponseHelper
-from gws_core.entity_navigator.entity_navigator_dto import \
-    ProcessResetResultDTO
+from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
 from gws_core.io.io_spec import IOSpecDTO
@@ -135,17 +134,25 @@ def delete_process(id: str,
         ).to_dto()
 
 
-@core_app.put("/protocol/{id}/process/{process_instance_name}/reset/{force}", tags=["Protocol"],
+@core_app.put("/protocol/{id}/process/{process_instance_name}/reset", tags=["Protocol"],
               summary="Reset a process of a protocol")
 def reset_process(id: str,
-                  force: bool,
                   process_instance_name: str,
-                  _=Depends(AuthService.check_user_access_token)) -> ProcessResetResultDTO:
+                  _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return EntityNavigatorService.reset_process_of_protocol_id(
             protocol_id=id,
-            process_instance_name=process_instance_name,
-            force=force)
+            process_instance_name=process_instance_name).to_dto()
+
+
+@core_app.get("/protocol/{id}/process/{process_instance_name}/reset/check-impact", tags=["Protocol"],
+              summary="Reset a process of a protocol")
+def check_impact_for_process_reset(id: str,
+                                   process_instance_name: str,
+                                   _=Depends(AuthService.check_user_access_token)) -> ImpactResultDTO:
+    return EntityNavigatorService.check_impact_for_process_reset(
+        protocol_id=id,
+        process_instance_name=process_instance_name).to_dto()
 
 
 @core_app.put("/protocol/{id}/process/{process_instance_name}/run", tags=["Protocol"],

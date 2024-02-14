@@ -123,12 +123,6 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
     def get_entity_type(self) -> EntityType:
         return EntityType.REPORT
 
-    def get_entity_parent_name(self) -> Optional[str]:
-        return self.project.title if self.project else None
-
-    def get_entity_parent_type(self) -> Optional[EntityType]:
-        return EntityType.PROJECT
-
     def entity_is_validated(self) -> bool:
         return self.is_validated
 

@@ -146,9 +146,11 @@ class TestProtocolService(BaseTestCase):
         self.assertIsNotNone(sub_resource_to_keep.refresh())
         self.assertIsNotNone(sub_resource_to_clear.refresh())
 
-        reset_result = EntityNavigatorService.reset_process_of_protocol_id(
-            sub_protocol.get_model().id, 'p2', force=False)
-        self.assertTrue(reset_result.success)
+        impact_result = EntityNavigatorService.check_impact_for_process_reset(
+            sub_protocol.get_model().id, 'p2')
+        self.assertFalse(impact_result.has_entities())
+        EntityNavigatorService.reset_process_of_protocol_id(
+            sub_protocol.get_model().id, 'p2')
 
         # check that all the next processes of p2 are reset
         main_protocol = main_protocol.refresh()
@@ -187,9 +189,9 @@ class TestProtocolService(BaseTestCase):
         experiment2.get_protocol().add_source(
             'source', main_resource.id, robot_mode << 'robot')
 
-        reset_result = EntityNavigatorService.reset_process_of_protocol_id(
-            sub_protocol.get_model().id, 'p2', force=False)
-        self.assertFalse(reset_result.success)
+        reset_impact = EntityNavigatorService.check_impact_for_process_reset(
+            sub_protocol.get_model().id, 'p2')
+        self.assertTrue(reset_impact.has_entities)
 
     def test_run_protocol_process(self):
         experiment = IExperiment()
