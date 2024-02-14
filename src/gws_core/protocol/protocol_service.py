@@ -257,9 +257,6 @@ class ProtocolService(BaseService):
         process_resources: List[ResourceModel] = list(ResourceModel.get_by_task_models(
             process_ids))
 
-        ResourceModel.check_if_any_resource_is_used_in_another_exp(
-            process_resources, protocol_model.experiment.id)
-
         for process in processes_to_reset:
             process.reset()
 

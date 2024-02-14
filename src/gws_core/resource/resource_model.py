@@ -14,8 +14,6 @@ from gws_core.core.model.db_field import JSONField as JSONField
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
-from gws_core.experiment.experiment_exception import \
-    ResourceUsedInAnotherExperimentException
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dict import TypingStatus
 from gws_core.project.model_with_project import ModelWithProject
@@ -34,7 +32,6 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.model.model_with_user import ModelWithUser
 from ..core.utils.logger import Logger
 from ..core.utils.reflector_helper import ReflectorHelper
-from ..experiment.experiment_enums import ExperimentType
 from ..impl.file.file_r_field import FileRField
 from ..impl.file.fs_node import FSNode
 from ..impl.file.fs_node_model import FSNodeModel
@@ -270,43 +267,6 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
         return ResourceModel.select().where(cls.get_by_types_and_sub_expression(typing_names))
 
     @classmethod
-    def check_if_any_resource_is_used_in_another_exp(cls, resources: List[ResourceModel], experiment_id: str) -> None:
-        """Raised an exception if one of the resources if used in another experiment. As input or as config of a Source task
-        """
-        # TODO to fix
-        from ..task.task_input_model import TaskInputModel
-        from ..task.task_model import TaskModel
-
-        if len(resources) > 0:
-            resource_ids: List[str] = list(
-                map(lambda x: x.id, resources))
-
-            # check if it is used as input
-            # other_experiment: TaskInputModel = TaskInputModel.get_other_experiments(
-            #     resource_ids, experiment_id).first()
-
-            # if other_experiment is not None:
-            #     raise ResourceUsedInAnotherExperimentException(
-            #         other_experiment.resource_model.name,
-            #         other_experiment.resource_model.id,
-            #         other_experiment.experiment.get_short_name(),
-            #         other_experiment.experiment.id)
-
-            # check if it is used as source
-            other_task: TaskModel = TaskModel.get_source_task_using_resource_in_another_experiment(
-                resource_ids, experiment_id).first()
-
-            if other_task is not None:
-                # retrieve the resource model
-                resource_model: ResourceModel = [
-                    x for x in resources if x.id == other_task.source_config_id][0]
-                raise ResourceUsedInAnotherExperimentException(
-                    resource_model.name,
-                    resource_model.id,
-                    other_task.experiment.get_short_name(),
-                    other_task.experiment.id)
-
-    @classmethod
     def replace_resource_typing_name(cls, old_typing_name: str, new_typing_name: str) -> None:
         """Replace the typing name of all the resource models
         """
@@ -355,26 +315,14 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
         """
 
         # If the origin is not uploaded, then the experiment and the task must be provided
-        if origin not in [ResourceOrigin.UPLOADED, ResourceOrigin.ACTIONS, ResourceOrigin.S3_PROJECT_STORAGE]:
+        if origin not in [ResourceOrigin.UPLOADED, ResourceOrigin.S3_PROJECT_STORAGE]:
             if experiment is None or task_model is None:
                 raise Exception(
                     "To create a GENERATED resource, you must provide the experiment and the task")
 
-            # replace the origin if the experiment has a special type
-            if experiment.type == ExperimentType.IMPORTER:
-                origin = ResourceOrigin.IMPORTED
-            elif experiment.type == ExperimentType.EXPORTER:
-                origin = ResourceOrigin.EXPORTED
-            elif experiment.type == ExperimentType.TRANSFORMER:
-                origin = ResourceOrigin.TRANSFORMED
-            elif experiment.type == ExperimentType.ACTIONS:
-                origin = ResourceOrigin.ACTIONS
-            elif experiment.type == ExperimentType.RESOURCE_DOWNLOADER:
-                origin = ResourceOrigin.IMPORTED_FROM_LAB
-
         resource_model: ResourceModel = ResourceModel()
         resource_model.set_resource_typing_name(resource._typing_name)
-        resource_model.origin = origin
+        resource_model.origin = resource.__origin__ or origin
         if experiment:
             resource_model.experiment = experiment
             resource_model.project = experiment.project

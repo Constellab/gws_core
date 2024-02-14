@@ -34,9 +34,8 @@ from ..project.project import Project
 from ..resource.resource_model import ResourceModel
 from ..tag.taggable_model import TaggableModel
 from ..user.user import User
-from .experiment_enums import (ExperimentExecutionType,
-                               ExperimentProcessStatus, ExperimentStatus,
-                               ExperimentType)
+from .experiment_enums import (ExperimentCreationType, ExperimentProcessStatus,
+                               ExperimentStatus)
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
@@ -66,12 +65,9 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
     error_info = JSONField(null=True)
-    type: ExperimentType = EnumField(choices=ExperimentType,
-                                     default=ExperimentType.EXPERIMENT)
-
-    execution_type: ExperimentExecutionType = EnumField(choices=ExperimentExecutionType,
-                                                        default=ExperimentExecutionType.MANUAL,
-                                                        max_length=20)
+    creation_type: ExperimentCreationType = EnumField(choices=ExperimentCreationType,
+                                                      default=ExperimentCreationType.MANUAL,
+                                                      max_length=20)
 
     title = CharField(max_length=50)
     description = JSONField(null=True)
@@ -172,7 +168,7 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
         return self.is_validated
 
     def is_manual(self) -> bool:
-        return self.execution_type == ExperimentExecutionType.MANUAL
+        return self.creation_type == ExperimentCreationType.MANUAL
 
     ########################################## MODEL METHODS ######################################
 
@@ -429,7 +425,7 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
             last_modified_by=self.last_modified_by.to_dto(),
             title=self.title,
             description=self.description,
-            type=self.type,
+            creation_type=self.creation_type,
             protocol={
                 "id": self.protocol_model.id
             },

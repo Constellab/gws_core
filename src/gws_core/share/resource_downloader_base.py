@@ -47,7 +47,7 @@ class ResourceDownloaderBase(Task):
         pass
 
     def create_resource_from_file(
-            self, resource_file: str, uncompress_option: Literal['auto', 'yes', 'no']) -> TaskOutputs:
+            self, resource_file: str, uncompress_option: Literal['auto', 'yes', 'no']) -> Resource:
         """Methode to create the resource from a file (once downloaded) and return it as a task output
         """
 
@@ -56,11 +56,11 @@ class ResourceDownloaderBase(Task):
             if uncompress_option == 'yes':
                 raise Exception("The file is not a compress file. Please disbale compress option.")
             self.log_info_message("Saving file as a resource")
-            return {'resource': File(resource_file)}
+            return File(resource_file)
 
         if uncompress_option == 'no':
             self.log_info_message("Saving compressed file")
-            return {'resource': File(resource_file)}
+            return File(resource_file)
 
         # Convert the zip file to a resource
         try:
@@ -72,7 +72,7 @@ class ResourceDownloaderBase(Task):
 
             # skip if the option is auto
             self.log_error_message(f"Error while unzipping the file. Saving the file without decompress. Error: {err}.")
-            return {'resource': File(resource_file)}
+            return File(resource_file)
 
         self.log_info_message("Loading the resource")
         resource = self.resource_loader.load_resource()
@@ -80,7 +80,7 @@ class ResourceDownloaderBase(Task):
         # delete the compressed file
         FileHelper.delete_file(resource_file)
 
-        return {'resource': resource}
+        return resource
 
     def run_after_task(self) -> None:
         """Save share info, clean temp files, etc

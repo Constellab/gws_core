@@ -17,7 +17,7 @@ from ..project.project import Project
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_interface import IProtocol
 from .experiment import Experiment
-from .experiment_enums import ExperimentType
+from .experiment_enums import ExperimentCreationType
 from .experiment_service import ExperimentService
 
 
@@ -35,7 +35,7 @@ class IExperiment:
 
     def __init__(
             self, protocol_type: Type[Protocol] = None, project: Project = None, title: str = '',
-            type_: ExperimentType = ExperimentType.EXPERIMENT):
+            creation_type: ExperimentCreationType = ExperimentCreationType.AUTO):
         """This create an experiment in the database with the provided Task or Protocol
 
         :param process_type: Can be the type of a Protocol or a Task.
@@ -46,14 +46,14 @@ class IExperiment:
         :type project: str, optional
         :param title: experiment title, defaults to ''
         :type title: str, optional
-        :param type_: type fo the experiment, to change only if you want what you are doing, defaults to ExperimentType.EXPERIMENT
-        :type type_: str, optional
+        :param creation_type: type of the created experiment, defaults to ExperimentExecutionType.AUTO
+        :type creation_type: ExperimentExecutionType, optional
         :raises Exception: [description]
         """
 
         if protocol_type is None:
             self._experiment = ExperimentService.create_experiment(
-                title=title, project_id=project, type_=type_)
+                title=title, project_id=project, creation_type=creation_type)
         else:
             if not isclass(protocol_type) or not issubclass(protocol_type, Protocol):
                 raise Exception(

@@ -30,7 +30,7 @@ from ..user.activity.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from .experiment import Experiment
-from .experiment_enums import ExperimentStatus, ExperimentType
+from .experiment_enums import ExperimentStatus
 
 
 class ExperimentRunService():

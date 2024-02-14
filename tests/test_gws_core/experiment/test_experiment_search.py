@@ -1,9 +1,11 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_enums import (ExperimentStatus,
-                                                  ExperimentType)
+from gws_core.experiment.experiment_enums import ExperimentStatus
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.project.project import Project
 from gws_core.test.base_test_case import BaseTestCase
@@ -15,8 +17,7 @@ class TestExperimentSearch(BaseTestCase):
 
     def test_search(self):
         experiment_1 = ExperimentService.create_experiment(
-            title="My first experiment title world",
-            type_=ExperimentType.TRANSFORMER)
+            title="My first experiment title world")
 
         experiment_2: Experiment = ExperimentService.create_experiment(
             title="The second one world")
@@ -36,11 +37,6 @@ class TestExperimentSearch(BaseTestCase):
         # Test status search
         search_dict.filtersCriteria = [
             {"key": "status", "operator": "EQ", "value": ExperimentStatus.SUCCESS.value}]
-        self.search(search_dict, 1)
-
-        # Test type search
-        search_dict.filtersCriteria = [
-            {"key": "type", "operator": "EQ", "value": ExperimentType.TRANSFORMER.value}]
         self.search(search_dict, 1)
 
         # Test validate search

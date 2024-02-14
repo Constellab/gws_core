@@ -16,25 +16,10 @@ class ExperimentStatus(Enum):
     PARTIALLY_RUN = "PARTIALLY_RUN"
 
 
-class ExperimentType(Enum):
-    # Basic experiment
-    EXPERIMENT = "EXPERIMENT"
-    # specific experiment generated from a transformer task
-    TRANSFORMER = "TRANSFORMER"
-    # specific experiment generated from a importer task
-    IMPORTER = "IMPORTER"
-    # specific experiment generated from a exporter task
-    EXPORTER = "EXPORTER"
-    # specific experiment generated from a fs node extractor
-    FS_NODE_EXTRACTOR = "FS_NODE_EXTRACTOR"
-    # specific experiment generated from resource downloader
-    RESOURCE_DOWNLOADER = "RESOURCE_DOWNLOADER"
-    # specific experiment generated from a action task
-    ACTIONS = "ACTIONS"
-
-
-class ExperimentExecutionType(Enum):
+class ExperimentCreationType(Enum):
+    # created by the user
     MANUAL = "MANUAL"
+    # Created and executed by the system
     AUTO = "AUTO"
 
 

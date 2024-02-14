@@ -10,7 +10,6 @@ from gws_core.task.transformer.transformer import Transformer
 
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...experiment.experiment_enums import ExperimentType
 from ...experiment.experiment_interface import IExperiment
 from ...model.typing_manager import TypingManager
 from ...process.process_interface import IProcess
@@ -39,7 +38,7 @@ class TransformerService():
 
         # Create an experiment containing 1 source, X transformers task , 1 sink
         experiment: IExperiment = IExperiment(
-            None, title=f"{resource_type._human_name} transformation", type_=ExperimentType.TRANSFORMER)
+            None, title=f"{resource_type._human_name} transformation")
         protocol: IProtocol = experiment.get_protocol()
 
         # create the source and save last process to create connectors later

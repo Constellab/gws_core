@@ -17,7 +17,6 @@ from gws_core.resource.resource_dto import ResourceDTO
 from gws_core.resource.view.view_dto import (CallViewResultDTO,
                                              ResourceViewMetadatalDTO)
 from gws_core.share.shared_dto import ShareEntityInfoDTO
-from gws_core.task.action.action_service import ActionService
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_dto import TaskTypingDTO
 from gws_core.task.transformer.transformer_service import TransformerService
@@ -211,19 +210,6 @@ def get_resource_type_views(resource_typing_name: str,
 def get_view_specs_from_type(resource_type: str, view_name: str,
                              _=Depends(AuthService.check_user_access_token)) -> ResourceViewMetadatalDTO:
     return ResourceService.get_view_specs_from_type(resource_type, view_name)
-
-
-############################### ACTIONS ##############################
-
-@core_app.post("/resource/{id_}/action/add/{action_typing_name}", tags=["Resource"],
-               summary="Add an action to a resource")
-def add_action_to_resource(id_: str, action_typing_name: str,
-                           action_params: dict,
-                           _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
-    """
-    Add an action to a resource.
-    """
-    return ActionService.execute_action(id_, action_typing_name, action_params).to_dto()
 
 
 ############################# SHARED RESOURCE ###########################

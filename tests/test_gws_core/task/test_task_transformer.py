@@ -41,7 +41,7 @@ class TestTaskTransformer(BaseTestCase):
         resource_model: ResourceModel = TransformerService.create_and_run_transformer_experiment(
             transformers, robot_model.id)
 
-        self.assertEqual(resource_model.origin, ResourceOrigin.TRANSFORMED)
+        self.assertEqual(resource_model.origin, ResourceOrigin.GENERATED)
 
         # retrieve robot and check age
         robot: Robot = resource_model.get_resource()

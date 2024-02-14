@@ -36,7 +36,7 @@ from ..user.current_user_service import CurrentUserService
 from .experiment import Experiment
 from .experiment_dto import (ExperimentSaveDTO, RunningExperimentInfoDTO,
                              RunningProcessInfo)
-from .experiment_enums import ExperimentStatus, ExperimentType
+from .experiment_enums import ExperimentCreationType, ExperimentStatus
 
 
 class ExperimentService(BaseService):
@@ -59,13 +59,14 @@ class ExperimentService(BaseService):
             project_id=experiment_DTO.project_id,
             title=experiment_DTO.title,
             protocol_template=protocol_template,
+            creation_type=ExperimentCreationType.MANUAL
         )
 
     @classmethod
     @transaction()
     def create_experiment(cls, project_id: str = None, title: str = "",
                           protocol_template: ProtocolTemplate = None,
-                          type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
+                          creation_type: ExperimentCreationType = ExperimentCreationType.MANUAL) -> Experiment:
         protocol_model: ProtocolModel = None
 
         description: Dict = None
@@ -82,7 +83,7 @@ class ExperimentService(BaseService):
             project=project,
             title=title,
             description=description,
-            type_=type_
+            creation_type=creation_type
         )
 
         ActivityService .add(
@@ -96,9 +97,8 @@ class ExperimentService(BaseService):
     @classmethod
     @transaction()
     def create_experiment_from_protocol_model(
-            cls, protocol_model: ProtocolModel, project: Project = None, title: str = "",
-            description: Dict = None,
-            type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
+            cls, protocol_model: ProtocolModel, project: Project = None, title: str = "", description: Dict = None,
+            creation_type: ExperimentCreationType = ExperimentCreationType.MANUAL) -> Experiment:
         if not isinstance(protocol_model, ProtocolModel):
             raise BadRequestException(
                 "An instance of ProtocolModel is required")
@@ -106,7 +106,7 @@ class ExperimentService(BaseService):
         experiment.title = title.strip()
         experiment.description = description
         experiment.project = project
-        experiment.type = type_
+        experiment.creation_type = creation_type
 
         experiment = experiment.save()
 
@@ -118,13 +118,13 @@ class ExperimentService(BaseService):
     @classmethod
     def create_experiment_from_protocol_type(
             cls, protocol_type: Type[Protocol],
-            project: Project = None, title: str = "",
-            type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
+            project: Project = None, title: str = "", creation_type: ExperimentCreationType = ExperimentCreationType.
+            MANUAL) -> Experiment:
 
         protocol_model: ProtocolModel = ProtocolService.create_protocol_model_from_type(
             protocol_type=protocol_type)
         return cls.create_experiment_from_protocol_model(
-            protocol_model=protocol_model, project=project, title=title, type_=type_)
+            protocol_model=protocol_model, project=project, title=title, creation_type=creation_type)
 
     ################################### UPDATE ##############################
 

@@ -10,10 +10,7 @@ from peewee import ModelSelect
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
-from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.experiment.experiment_interface import IExperiment
-from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.process.process_interface import IProcess
 from gws_core.project.project import Project
 from gws_core.protocol.protocol_interface import IProtocol
@@ -313,8 +310,7 @@ class ResourceService(BaseService):
 
         file_name = link.split('/')[-1]
         # Create an experiment containing 1 resource downloader , 1 sink
-        experiment: IExperiment = IExperiment(
-            None, title=f"Download {file_name}", type_=ExperimentType.RESOURCE_DOWNLOADER)
+        experiment: IExperiment = IExperiment(None, title=f"Download {file_name}")
         protocol: IProtocol = experiment.get_protocol()
 
         # Add the importer and the connector
