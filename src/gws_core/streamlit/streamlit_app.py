@@ -50,7 +50,7 @@ class StreamlitApp():
         self.source_paths = source_paths
 
     def get_app_url(self) -> str:
-        return f"http://localhost:{self.port}"
+        return Settings.get_streamlit_host_url()
 
     def generate_app(self) -> str:
         """

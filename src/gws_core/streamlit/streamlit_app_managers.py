@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import math
 import os
 import time
 from threading import Thread
@@ -14,6 +13,7 @@ import psutil
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.streamlit.streamlit_app import StreamlitApp
 from gws_core.streamlit.streamlit_dto import StreamlitStatusDTO
@@ -24,8 +24,6 @@ class StreamlitAppManager():
 
     Each apps runs on the same streamlit server managed by the _main_streamlit_app
     """
-
-    MAIN_APP_PORT = 8501
 
     # interval in second to check if the app is still used
     CHECK_RUNNING_INTERVAL = 30
@@ -66,7 +64,7 @@ class StreamlitAppManager():
     def _create_app(cls, resource_id: str) -> StreamlitApp:
         cls.start_streamlit_main_app()
 
-        app = StreamlitApp(cls.MAIN_APP_PORT, resource_id, cls.main_app_token)
+        app = StreamlitApp(cls.get_main_app_port(), resource_id, cls.main_app_token)
         cls.current_running_apps[resource_id] = app
 
         return app
@@ -93,7 +91,7 @@ class StreamlitAppManager():
                '--theme.secondaryBackgroundColor', '#2B2D2E',
                '--theme.textColor', '#ffffff',
                '--theme.primaryColor', '#49A8A9',
-               '--server.port', str(cls.MAIN_APP_PORT),
+               '--server.port', str(cls.get_main_app_port()),
                #    '--theme.font', 'Roboto Serif',
                '--',
                '--gws_token', cls.main_app_token]
@@ -190,7 +188,7 @@ class StreamlitAppManager():
     @classmethod
     def call_health_check(cls) -> bool:
         try:
-            ExternalApiService.get(f"http://localhost:{cls.MAIN_APP_PORT}/healthz")
+            ExternalApiService.get(f"http://localhost:{cls.get_main_app_port()}/healthz")
         except Exception:
             return False
 
@@ -233,3 +231,7 @@ class StreamlitAppManager():
             running_apps=[app.to_dto() for app in cls.get_current_running_apps()],
             nb_of_connections=cls.count_connections(),
         )
+
+    @classmethod
+    def get_main_app_port(cls) -> int:
+        return Settings.get_streamlit_main_app_port()
