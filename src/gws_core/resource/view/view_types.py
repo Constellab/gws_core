@@ -44,6 +44,6 @@ class ViewType(Enum):
 
 
 # List of view type that cannot be used in a report
-exluded_views_in_historic = [
+exluded_views_in_report = [
     ViewType.VIEW, ViewType.FOLDER, ViewType.RESOURCES_LIST_VIEW, ViewType.EMPTY,
     ViewType.RICH_TEXT, ViewType.STREAMLIT]

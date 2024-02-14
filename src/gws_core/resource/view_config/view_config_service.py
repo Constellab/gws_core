@@ -15,7 +15,6 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.view.view_helper import ViewHelper
-from gws_core.resource.view.view_types import exluded_views_in_historic
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.user.current_user_service import CurrentUserService
@@ -26,6 +25,7 @@ from ...core.utils.logger import Logger
 from ...user.user import User
 from ..resource_model import ResourceModel
 from ..view.view import View
+from ..view.view_types import exluded_views_in_report
 from .view_config import ViewConfig
 from .view_config_search_builder import ViewConfigSearchBuilder
 
@@ -139,13 +139,14 @@ class ViewConfigService():
         resources: List[ResourceModel] = ReportService.get_resources_of_associated_experiments(report_id)
         search_builder.add_expression(ViewConfig.resource_model.in_(resources))
 
+        # exclude the type of view that are not useful in historic
+        search_builder.add_expression(ViewConfig.view_type.not_in(exluded_views_in_report))
+
         return cls._search(search_builder, search, page, number_of_items_per_page)
 
     @classmethod
     def _search(cls, search_builder: SearchBuilder, search: SearchParams,
                 page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
-        # exclude the type of view that are not useful in historic
-        search_builder.add_expression(ViewConfig.view_type.not_in(exluded_views_in_historic))
 
         # # if the include not favorite is not checked, filter favorite
         if not search.get_filter_criteria_value("include_not_favorite"):

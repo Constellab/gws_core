@@ -16,7 +16,7 @@ from gws_core.streamlit.streamlit_app_managers import StreamlitAppManager
 from gws_core.streamlit.streamlit_view import StreamlitView
 
 
-@resource_decorator("StreamlitResource")
+@resource_decorator("StreamlitResource", human_name="Streamlit App", short_description="Streamlit App")
 class StreamlitResource(ResourceSet):
     """
     Resource that contains a plotly figure.
@@ -54,4 +54,6 @@ class StreamlitResource(ResourceSet):
         url = streamlit_app.generate_app()
 
         # create the view
-        return StreamlitView(url)
+        view_ = StreamlitView(url)
+        view_.set_favorite(True)
+        return view_
