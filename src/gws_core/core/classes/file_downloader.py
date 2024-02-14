@@ -9,6 +9,7 @@ from email.header import decode_header
 from typing import Dict
 
 import requests
+
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.core.utils.date_helper import DateHelper
@@ -256,10 +257,12 @@ class FileDownloader():
                     filename = decode_header(filename_encoding)[0][0]
 
                 if filename:
-                    return filename
+                    # max filename length is 100
+                    return filename[:100]
 
         # If the filename couldn't be extracted from the header, fall back to extracting it from the URL
-        filename = url.split("/")[-1]
+        # get text from / to ? or end of string with max length of 100
+        filename = url.split("/")[-1].split("?")[0][:100]
 
         # check if there is an extension in the filename
         if "." not in filename and content_type:
@@ -267,4 +270,5 @@ class FileDownloader():
             if extension:
                 filename += extension
 
+        # max filename length is 100
         return filename
