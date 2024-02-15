@@ -162,9 +162,14 @@ class SystemService:
         if check_user:
             user: User = CurrentUserService.get_and_check_current_user()
 
-        if Experiment.table_exists():
-            # Stop all running experiment
-            ExperimentRunService.stop_all_running_experiment()
+        try:
+            if Experiment.table_exists():
+                # Stop all running experiment
+                ExperimentRunService.stop_all_running_experiment()
+        except Exception as err:
+            Logger.error(
+                f"[SystemService] Error while stopping all running experiments: {err}, continue...")
+            Logger.log_exception_stack_trace(err)
 
         cls.deinit_queue_and_monitor()
 
