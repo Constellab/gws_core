@@ -95,7 +95,7 @@ class DynamicOutputs(OutputSpecs):
         :param additionnal_port_spec: force the type of newly created port, defaults to Resource
         :type additionnal_port_spec: Type[Resource], optional
         """
-
+        self.additionnal_port_spec = additionnal_port_spec
         if default_specs is None:
             # set 1 output spec by default
             default_specs = {"target": self.get_default_spec()}
