@@ -258,36 +258,37 @@ class SystemService:
                 'Cannot run the lab cleaning while there are running or waiting experiments')
 
         Logger.info('Starting the garbage collector')
-        Logger.info('Deleting all the temp files')
 
         temp_root_dir = Settings.get_instance().get_root_temp_dir()
         if FileHelper.exists_on_os(temp_root_dir):
+            Logger.info('Deleting all the temp files')
             FileHelper.delete_dir_content(temp_root_dir)
 
-        Logger.info('Deleting all usunused resource kv stores')
-        kv_store_dir = KVStore.get_base_dir()
         # loop through all the kv store files and folder
+        kv_store_dir = KVStore.get_base_dir()
+        if FileHelper.exists_on_os(kv_store_dir):
+            Logger.info('Deleting all usunused resource kv stores')
+            for file_name in os.listdir(kv_store_dir):
+                file_store_file_path = KVStore.get_full_file_path(
+                    file_name, with_extension=False)
+                # if filename correspond to a ressource, don't delete it
+                # check if filename is the resource id or is contained in the kv store path
+                # (use contains for security to avoid deleting everything)
+                if ResourceModel.get_or_none(
+                    (ResourceModel.kv_store_path.contains(file_name)) |
+                        (ResourceModel.id == file_name)) is None:
+                    file_path = os.path.join(kv_store_dir, file_name)
+                    Logger.info(f'Deleting KVStore {file_path}')
+                    FileHelper.delete_node(file_path)
 
-        for file_name in os.listdir(kv_store_dir):
-            file_store_file_path = KVStore.get_full_file_path(
-                file_name, with_extension=False)
-            # if filename correspond to a ressource, don't delete it
-            # check if filename is the resource id or is contained in the kv store path
-            # (use contains for security to avoid deleting everything)
-            if ResourceModel.get_or_none(
-                (ResourceModel.kv_store_path.contains(file_name)) |
-                    (ResourceModel.id == file_name)) is None:
-                file_path = os.path.join(kv_store_dir, file_name)
-                Logger.info(f'Deleting KVStore {file_path}')
-                FileHelper.delete_node(file_path)
-
-        Logger.info('Deleting all usunused resource files')
         file_store: LocalFileStore = FileStore.get_default_instance()
-        for file_name in os.listdir(file_store.path):
-            file_store_file_path = os.path.join(file_store.path, file_name)
-            if FSNodeModel.get_or_none(FSNodeModel.path == file_store_file_path) is None:
-                Logger.info(f'Deleting file {file_store_file_path}')
-                FileHelper.delete_node(file_store_file_path)
+        if FileHelper.exists_on_os(file_store.path):
+            Logger.info('Deleting all usunused resource files')
+            for file_name in os.listdir(file_store.path):
+                file_store_file_path = os.path.join(file_store.path, file_name)
+                if FSNodeModel.get_or_none(FSNodeModel.path == file_store_file_path) is None:
+                    Logger.info(f'Deleting file {file_store_file_path}')
+                    FileHelper.delete_node(file_store_file_path)
 
         Logger.info('Ending the garbage collector')
 
