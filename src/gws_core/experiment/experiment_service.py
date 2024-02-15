@@ -453,17 +453,3 @@ class ExperimentService(BaseService):
         ActivityService.add(activity_type=ActivityType.DELETE,
                             object_type=ActivityObjectType.EXPERIMENT,
                             object_id=experiment.id)
-
-    @classmethod
-    @transaction()
-    def delete_experiment_2(cls, experiment: Experiment) -> None:
-        experiment.delete_instance()
-
-        # if the experiment was sync with space, delete it in space too
-        if experiment.last_sync_at is not None and experiment.project is not None:
-            SpaceService.delete_experiment(
-                experiment.project.id, experiment.id)
-
-        ActivityService.add(activity_type=ActivityType.DELETE,
-                            object_type=ActivityObjectType.EXPERIMENT,
-                            object_id=experiment.id)

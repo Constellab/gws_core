@@ -59,7 +59,7 @@ class IExperiment:
                 raise Exception(
                     f"The provided process_type '{str(protocol_type)}' is not a process")
             self._experiment = ExperimentService.create_experiment_from_protocol_type(
-                protocol_type=protocol_type, title=title, project=project, type_=type_)
+                protocol_type=protocol_type, title=title, project=project, creation_type=creation_type)
 
         # Init the IProtocol
         self._protocol = IProtocol(self._experiment.protocol_model)
@@ -96,11 +96,6 @@ class IExperiment:
 
         if process.exitcode != 0:
             raise Exception("Error in during the execution of the experiment")
-
-    def reset(self) -> None:
-        """Reset the status and the resources of the experiment, its protocols and tasks
-        """
-        self._experiment.reset()
 
     def stop(self) -> None:
         ExperimentRunService.stop_experiment(self._experiment.id)

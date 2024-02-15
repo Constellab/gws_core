@@ -227,24 +227,6 @@ class TestExperiment(BaseTestCase):
             for process in process_model.processes.values():
                 self._check_process_reset(process)
 
-    def test_reset_error(self):
-        """ Test that we can't reset an experiment if one of its resource is used by another experiment
-        """
-        experiment: IExperiment = IExperiment(CreateSimpleRobot)
-        experiment.run()
-
-        # Retrieve the robot
-        resource = experiment.get_protocol().get_process('facto').get_output('robot')
-
-        # Create a new experiment that uses the previously generated robot
-        experiment2: IExperiment = IExperiment(MoveSimpleRobot)
-        experiment2.get_protocol().get_process(
-            'source').set_param('resource_id', resource._model_id)
-        experiment2.run()
-
-        with self.assertRaises(ResourceUsedInAnotherExperimentException):
-            experiment.reset()
-
     def test_protocol_copy(self):
 
         count_protocol = ProtocolModel.select().count()
