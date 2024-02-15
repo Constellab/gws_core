@@ -22,6 +22,7 @@ class RichTextBlockType(Enum):
     LIST = 'list'
     VIDEO = 'video'
     FORMULA = 'formula'
+    TABLE = 'table'
 
 
 class RichTextBlock(BaseModelDTO):
