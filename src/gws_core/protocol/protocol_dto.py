@@ -110,6 +110,7 @@ class ProtocolUpdateDTO(BaseModelDTO):
     link: Optional[ConnectorDTO]
     protocol_updated: bool
     protocol: Optional[ProtocolDTO]
+    sub_protocols: Optional[List[ProtocolDTO]]
 
 
 class AddConnectorDTO(BaseModelDTO):

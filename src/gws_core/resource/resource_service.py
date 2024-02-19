@@ -10,10 +10,7 @@ from peewee import ModelSelect
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
-from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_enums import ExperimentType
 from gws_core.experiment.experiment_interface import IExperiment
-from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.process.process_interface import IProcess
 from gws_core.project.project import Project
 from gws_core.protocol.protocol_interface import IProtocol
@@ -48,32 +45,11 @@ class ResourceService(BaseService):
 
     ############################# UPDATE RESOURCE MODEL ###########################
     @classmethod
-    def delete(cls, resource_id: str, allow_s3_project_storage: bool = False) -> None:
+    def delete(cls, resource_id: str) -> None:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
             resource_id)
 
-        if resource_model.is_manually_generated():
-            cls._check_before_resource_update(resource_model)
-
-            resource_model.delete_instance()
-        # if the resource was imported or transformed, we delete the experiment that generated it
-        elif resource_model.origin in [ResourceOrigin.IMPORTED, ResourceOrigin.TRANSFORMED, ResourceOrigin.IMPORTED_FROM_LAB]:
-            experiment: Experiment = resource_model.experiment
-            if experiment is None:
-                raise BadRequestException(
-                    "The resource is not associated to an experiment")
-
-            ExperimentService.delete_experiment(experiment.id)
-        elif resource_model.origin == ResourceOrigin.S3_PROJECT_STORAGE:
-            if allow_s3_project_storage:
-                resource_model.delete_instance()
-            else:
-                raise BadRequestException(
-                    "This resource is a document of the project in the space, it can't be deleted from the lab.")
-
-        else:
-            raise BadRequestException(
-                "Can't delete this resource as it was created by an experiment")
+        resource_model.delete_instance()
 
     @classmethod
     def _check_before_resource_update(cls, resource_model: ResourceModel) -> None:
@@ -103,7 +79,7 @@ class ResourceService(BaseService):
 
     @classmethod
     def update_name(cls, resource_model_id: str, name: str) -> ResourceModel:
-        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
+        resource_model: ResourceModel = cls.get_by_id_and_check(resource_model_id)
 
         if resource_model.origin == ResourceOrigin.S3_PROJECT_STORAGE:
             raise BadRequestException(
@@ -135,13 +111,13 @@ class ResourceService(BaseService):
 
     @classmethod
     def update_flagged(cls, view_config_id: str, flagged: bool) -> ResourceModel:
-        resource_model: ResourceModel = cls.get_resource_by_id(view_config_id)
+        resource_model: ResourceModel = cls.get_by_id_and_check(view_config_id)
         resource_model.flagged = flagged
         return resource_model.save()
 
     @classmethod
     def update_project(cls, resource_id: str, project_id: Optional[str]) -> ResourceModel:
-        resource_model: ResourceModel = cls.get_resource_by_id(resource_id)
+        resource_model: ResourceModel = cls.get_by_id_and_check(resource_id)
 
         if resource_model.origin == ResourceOrigin.S3_PROJECT_STORAGE:
             raise BadRequestException(
@@ -158,12 +134,12 @@ class ResourceService(BaseService):
     ############################# GET RESOURCE MODEL ###########################
 
     @classmethod
-    def get_resource_by_id(cls, id: str) -> ResourceModel:
+    def get_by_id_and_check(cls, id: str) -> ResourceModel:
         return ResourceModel.get_by_id_and_check(id)
 
     @classmethod
     def get_resource_children(cls, id: str) -> List[ResourceModel]:
-        resource_model: ResourceModel = cls.get_resource_by_id(id)
+        resource_model: ResourceModel = cls.get_by_id_and_check(id)
 
         resource: Resource = resource_model.get_resource()
 
@@ -219,7 +195,7 @@ class ResourceService(BaseService):
 
     @classmethod
     def get_view_specs_from_resource(cls, resource_model_id: str, view_name: str) -> ResourceViewMetadatalDTO:
-        resource_model: ResourceModel = cls.get_resource_by_id(
+        resource_model: ResourceModel = cls.get_by_id_and_check(
             resource_model_id)
 
         resource = resource_model.get_resource()
@@ -243,7 +219,7 @@ class ResourceService(BaseService):
                                             view_name: str, config_values: ConfigParamsDict,
                                             save_view_config: bool = False) -> CallViewResult:
 
-        resource_model: ResourceModel = cls.get_resource_by_id(
+        resource_model: ResourceModel = cls.get_by_id_and_check(
             resource_model_id)
         return cls.call_view_on_resource_model(resource_model, view_name, config_values, save_view_config)
 
@@ -334,8 +310,7 @@ class ResourceService(BaseService):
 
         file_name = link.split('/')[-1]
         # Create an experiment containing 1 resource downloader , 1 sink
-        experiment: IExperiment = IExperiment(
-            None, title=f"Download {file_name}", type_=ExperimentType.RESOURCE_DOWNLOADER)
+        experiment: IExperiment = IExperiment(None, title=f"Download {file_name}")
         protocol: IProtocol = experiment.get_protocol()
 
         # Add the importer and the connector

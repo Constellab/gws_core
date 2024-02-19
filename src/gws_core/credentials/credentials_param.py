@@ -5,6 +5,7 @@
 from typing import Any, Optional, TypedDict
 
 from gws_core.config.param.param_spec import ParamSpec
+from gws_core.config.param.param_spec_decorator import param_spec_decorator
 from gws_core.config.param.param_types import ParamSpecVisibilty
 from gws_core.core.classes.validator import StrValidator
 
@@ -18,6 +19,7 @@ class CredentialsParamAdditionalInfo(TypedDict):
     credentials_type: Optional[str]
 
 
+@param_spec_decorator()
 class CredentialsParam(ParamSpec[str]):
     """ Credentials params spec. When used, the end user will be able to select a credentials
     from the list of credentials available in the lab. The config stores only the credentials name

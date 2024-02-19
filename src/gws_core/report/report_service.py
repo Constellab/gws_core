@@ -4,19 +4,19 @@
 # About us: https://gencovery.com
 
 
-from datetime import datetime
 from typing import Callable, List
 
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from peewee import ModelSelect
 
-from gws_core.core.classes.rich_text_content import (RichText, RichTextI,
-                                                     RichTextResourceViewData)
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
+                                                     RichTextResourceViewData)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.project.project import Project
 from gws_core.report.report_file_service import ReportFileService
@@ -24,7 +24,7 @@ from gws_core.report.report_view_model import ReportViewModel
 from gws_core.report.template.report_template import ReportTemplate
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view.view_types import exluded_views_in_historic
+from gws_core.resource.view.view_types import exluded_views_in_report
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.space.space_dto import SaveReportToSpaceDTO
@@ -63,21 +63,22 @@ class ReportService():
             report.content = template.content
         else:
             # Set default content for report
-            report.content = RichText.create_rich_text_i(
-                [{"id": "0", "type": "header", "data": {"text": "Introduction"}},
-                 {"id": "1", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "2", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "3", "type": "header", "data": {"text": "Methods"}},
-                 {"id": "4", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "5", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "6", "type": "header", "data": {"text": "Results"}},
-                 {"id": "7", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "8", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "9", "type": "header", "data": {"text": "Conclusion"}},
-                 {"id": "10", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "11", "type": "paragraph", "data": {"text": ""}},
-                 {"id": "12", "type": "header", "data": {"text": "References"}},
-                 {"id": "13", "type": "paragraph", "data": {"text": ""}}])
+            report.content = RichText.create_rich_text_dto(
+                [RichText.create_header("0", "Introduction", 2),
+                 RichText.create_paragraph("1", ""),
+                 RichText.create_paragraph("2", ""),
+                 RichText.create_header("3", "Methods", 2),
+                 RichText.create_paragraph("4", ""),
+                 RichText.create_paragraph("5", ""),
+                 RichText.create_header("6", "Results", 2),
+                 RichText.create_paragraph("7", ""),
+                 RichText.create_paragraph("8", ""),
+                 RichText.create_header("9", "Conclusion", 2),
+                 RichText.create_paragraph("10", ""),
+                 RichText.create_paragraph("11", ""),
+                 RichText.create_header("12", "References", 2),
+                 RichText.create_paragraph("13", "")
+                 ])
 
         report.save()
 
@@ -136,7 +137,7 @@ class ReportService():
                 # delete the report in space
                 SpaceService.delete_report(project_id=report.project.id, report_id=report.id)
 
-        # check that all associated experiment are in same project
+        # check that all linked experiment are in same project
         experiments: List[Experiment] = cls.get_experiments_by_report(report.id)
 
         for experiment in experiments:
@@ -146,7 +147,7 @@ class ReportService():
 
     @classmethod
     @transaction()
-    def update_content(cls, report_id: str, report_content: RichTextI) -> Report:
+    def update_content(cls, report_id: str, report_content: RichTextDTO) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
 
         report.content = report_content
@@ -162,7 +163,7 @@ class ReportService():
 
         view_config: ViewConfig = ViewConfigService.get_by_id(view_config_id)
 
-        if view_config.view_type in exluded_views_in_historic:
+        if view_config.view_type in exluded_views_in_report:
             raise BadRequestException("You can't add this type of view to a report")
 
         # create the json object for the rich text
@@ -174,7 +175,7 @@ class ReportService():
 
         report = cls.update_content(report_id, rich_text.get_content())
 
-        # if the view is associated to an experiment, link it to the report
+        # if the view is linked to an experiment, link it to the report
         if view_config.experiment:
             cls.add_experiment(report_id, view_config.experiment.id, False)
 
@@ -216,7 +217,7 @@ class ReportService():
             raise BadRequestException(
                 "The experiment must be associated with a leaf project (project with no children)")
 
-        # check that all associated experiment are validated and are in same project
+        # check that all linked experiment are validated and are in same project
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
         for experiment in experiments:
             if experiment.project and experiment.project.id != report.project.id:
@@ -230,7 +231,7 @@ class ReportService():
         resource_views: List[RichTextResourceViewData] = rich_text.get_resource_views_data()
         experiment_ids = [experiment.id for experiment in experiments]
         for resource_view in resource_views:
-            resource = ResourceService.get_resource_by_id(resource_view["resource_id"])
+            resource = ResourceService.get_by_id_and_check(resource_view["resource_id"])
 
             view_name = resource_view.get("title") or resource.name
             # If the resource was generated by an experiment, check that the experiment is linked to the report
@@ -330,12 +331,12 @@ class ReportService():
 
         return report
 
-    ###################################  ASSOCIATED EXPERIMENT  ##############################
+    ###################################  LINKED EXPERIMENT  ##############################
 
     @classmethod
     @transaction()
     def add_experiment(cls, report_id: str, experiment_id: str,
-                       error_if_already_associated: bool = True) -> Experiment:
+                       error_if_already_linked: bool = True) -> Experiment:
         report: Report = cls._get_and_check_before_update(report_id)
 
         report_exp: ReportExperiment = ReportExperiment.find_by_pk(experiment_id, report_id).first()
@@ -343,9 +344,9 @@ class ReportService():
         # If the experiment was already added to the report
         if report_exp is not None:
 
-            if error_if_already_associated:
-                raise BadRequestException(GWSException.REPORT_EXP_ALREADY_ASSOCIATED.value,
-                                          GWSException.REPORT_EXP_ALREADY_ASSOCIATED.name)
+            if error_if_already_linked:
+                raise BadRequestException(GWSException.REPORT_EXP_ALREADY_LINKED.value,
+                                          GWSException.REPORT_EXP_ALREADY_LINKED.name)
             else:
                 return report_exp.experiment
 
@@ -492,8 +493,8 @@ class ReportService():
         experiments = ReportService.get_experiments_by_report(report_id)
 
         if len(experiments) == 0:
-            raise BadRequestException(GWSException.REPORT_NO_ASSOCIATED_EXPERIMENT.value,
-                                      GWSException.REPORT_NO_ASSOCIATED_EXPERIMENT.name)
+            raise BadRequestException(GWSException.REPORT_NO_LINKED_EXPERIMENT.value,
+                                      GWSException.REPORT_NO_LINKED_EXPERIMENT.name)
 
         experiment_ids = [experiment.id for experiment in experiments]
 

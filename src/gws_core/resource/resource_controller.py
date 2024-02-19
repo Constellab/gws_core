@@ -10,11 +10,13 @@ from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
+from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
+from gws_core.entity_navigator.entity_navigator_service import \
+    EntityNavigatorService
 from gws_core.resource.resource_dto import ResourceDTO
 from gws_core.resource.view.view_dto import (CallViewResultDTO,
                                              ResourceViewMetadatalDTO)
 from gws_core.share.shared_dto import ShareEntityInfoDTO
-from gws_core.task.action.action_service import ActionService
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_dto import TaskTypingDTO
 from gws_core.task.transformer.transformer_service import TransformerService
@@ -27,11 +29,11 @@ from .resource_service import ResourceService
 ############################# VIEW ###########################
 
 
-@core_app.get("/resource/{id}/views/{view_name}/specs", tags=["Resource"],
+@core_app.get("/resource/{id_}/views/{view_name}/specs", tags=["Resource"],
               summary="Get the specs for a view of a resource")
-def get_view_specs_from_resource(id: str, view_name: str,
+def get_view_specs_from_resource(id_: str, view_name: str,
                                  _=Depends(AuthService.check_user_access_token)) -> ResourceViewMetadatalDTO:
-    return ResourceService.get_view_specs_from_resource(id, view_name)
+    return ResourceService.get_view_specs_from_resource(id_, view_name)
 
 
 class CallViewParams(BaseModelDTO):
@@ -39,52 +41,59 @@ class CallViewParams(BaseModelDTO):
     save_view_config: bool
 
 
-@core_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
+@core_app.post("/resource/{id_}/views/{view_name}", tags=["Resource"],
                summary="Call the view name for a resource")
-def call_view_on_resource(id: str,
+def call_view_on_resource(id_: str,
                           view_name: str,
                           call_view_params: CallViewParams,
                           _=Depends(AuthService.check_user_access_token)) -> CallViewResultDTO:
 
     return ResourceService.get_and_call_view_on_resource_model(
-        id, view_name, call_view_params.values,
+        id_, view_name, call_view_params.values,
         call_view_params.save_view_config).to_dto()
 
 
 ####################################### Resource Model ###################################
 
 
-@core_app.get("/resource/{id}", tags=["Resource"], summary="Get a resource")
-def get_a_resource(id: str,
+@core_app.get("/resource/{id_}", tags=["Resource"], summary="Get a resource")
+def get_a_resource(id_: str,
                    _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
     """
-    Retrieve a ResourceModel from a ResourceModel ID
+    Retrieve a ResourceModel from a ResourceModel id_
 
-    - **id**: the id of the resource
+    - **id_**: the id_ of the resource
     """
 
-    return ResourceService.get_resource_by_id(id=id).to_dto()
+    return ResourceService.get_by_id_and_check(id_).to_dto()
 
 
-@core_app.get("/resource/{id}/children", tags=["Resource"], summary="Get a resource")
-def get_resource_children(id: str,
+@core_app.get("/resource/{id_}/children", tags=["Resource"], summary="Get a resource")
+def get_resource_children(id_: str,
                           _=Depends(AuthService.check_user_access_token)) -> List[ResourceDTO]:
     """
-    Retrieve a ResourceModel children resource of a ResourceModel ID
+    Retrieve a ResourceModel children resource of a ResourceModel id_
     """
 
-    resources = ResourceService.get_resource_children(id=id)
+    resources = ResourceService.get_resource_children(id_)
     return [resource.to_dto() for resource in resources]
 
 
-@core_app.delete("/resource/{id}", tags=["Resource"], summary="Delete a resource")
-def delete_file(id: str,
-                _=Depends(AuthService.check_user_access_token)) -> None:
+@core_app.delete("/resource/{id_}", tags=["Resource"], summary="Delete a resource")
+def delete_resource(id_: str,
+                    _=Depends(AuthService.check_user_access_token)) -> None:
     """
     Delete a resource.
     """
 
-    ResourceService.delete(id)
+    EntityNavigatorService.delete_resource(id_)
+
+
+@core_app.get("/resource/{id_}/delete/check-impact", tags=["Resource"], summary="Check impact of resource deletion")
+def check_impact_delete_resource(id_: str,
+                                 _=Depends(AuthService.check_user_access_token)) -> ImpactResultDTO:
+
+    return EntityNavigatorService.check_impact_delete_resource(id_).to_dto()
 
 
 @core_app.post("/resource/advanced-search", tags=["Resource"], summary="Advanced search for resource")
@@ -99,41 +108,41 @@ def advanced_search(search_dict: SearchParams,
     return ResourceService.search(search_dict, page, number_of_items_per_page).to_dto()
 
 
-@core_app.put("/resource/{id}/name/{name}", tags=["Resource"], summary="Update the resource name")
-def update_name(id: str, name: str,
+@core_app.put("/resource/{id_}/name/{name}", tags=["Resource"], summary="Update the resource name")
+def update_name(id_: str, name: str,
                 _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
     """
     Advanced search on resources
     """
 
-    return ResourceService.update_name(id, name).to_dto()
+    return ResourceService.update_name(id_, name).to_dto()
 
 
-@core_app.put("/resource/{id}/type/{resource_typing_name}", tags=["Files"], summary="Update resource type")
-def update_file_type(id: str,
+@core_app.put("/resource/{id_}/type/{resource_typing_name}", tags=["Files"], summary="Update resource type")
+def update_file_type(id_: str,
                      resource_typing_name: str,
                      _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
-    return ResourceService.update_resource_type(id, resource_typing_name).to_dto()
+    return ResourceService.update_resource_type(id_, resource_typing_name).to_dto()
 
 
-@core_app.put("/resource/{id}/flagged", tags=["Resource"],
+@core_app.put("/resource/{id_}/flagged", tags=["Resource"],
               summary="Update the flagged of a resource")
-def update_flagged(id: str,
+def update_flagged(id_: str,
                    body: dict,
                    _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
-    return ResourceService.update_flagged(id, body["flagged"]).to_dto()
+    return ResourceService.update_flagged(id_, body["flagged"]).to_dto()
 
 
 class UpdateProject(BaseModel):
     project_id: Optional[str]
 
 
-@core_app.put("/resource/{id}/project", tags=["Resource"],
+@core_app.put("/resource/{id_}/project", tags=["Resource"],
               summary="Update the project of a resource")
-def update_project(id: str,
+def update_project(id_: str,
                    project: UpdateProject,
                    _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
-    return ResourceService.update_project(id, project.project_id).to_dto()
+    return ResourceService.update_project(id_, project.project_id).to_dto()
 
 ############################# TRANSFORMER ###########################
 
@@ -172,10 +181,10 @@ def get_exporter_config(
     return ConverterService.get_resource_exporter_from_name(resource_typing_name).to_full_dto()
 
 
-@core_app.post("/resource/{id}/export/{exporter_typing_name}", tags=["Resources"],
+@core_app.post("/resource/{id_}/export/{exporter_typing_name}", tags=["Resources"],
                summary="Export a resource")
 def export_resource(
-        id: str,
+        id_: str,
         exporter_typing_name: str,
         params: dict,
         _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
@@ -183,7 +192,7 @@ def export_resource(
     Export a resource.
     """
     return ConverterService.call_exporter(
-        resource_model_id=id, exporter_typing_name=exporter_typing_name, params=params).to_dto()
+        resource_model_id=id_, exporter_typing_name=exporter_typing_name, params=params).to_dto()
 
 ############################# RESOURCE TYPE ###########################
 
@@ -203,27 +212,14 @@ def get_view_specs_from_type(resource_type: str, view_name: str,
     return ResourceService.get_view_specs_from_type(resource_type, view_name)
 
 
-############################### ACTIONS ##############################
-
-@core_app.post("/resource/{id}/action/add/{action_typing_name}", tags=["Resource"],
-               summary="Add an action to a resource")
-def add_action_to_resource(id: str, action_typing_name: str,
-                           action_params: dict,
-                           _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
-    """
-    Add an action to a resource.
-    """
-    return ActionService.execute_action(id, action_typing_name, action_params).to_dto()
-
-
 ############################# SHARED RESOURCE ###########################
 
 
-@core_app.get("/resource/{id}/shared-origin", tags=["Resource"],
+@core_app.get("/resource/{id_}/shared-origin", tags=["Resource"],
               summary="Get origin of this imported resource", response_model=None)
-def get_shared_resource_origin_info(id: str,
+def get_shared_resource_origin_info(id_: str,
                                     _=Depends(AuthService.check_user_access_token)) -> ShareEntityInfoDTO:
-    return ResourceService.get_shared_resource_origin_info(id).to_dto()
+    return ResourceService.get_shared_resource_origin_info(id_).to_dto()
 
 
 ################################ RESOURCE ################################

@@ -29,7 +29,7 @@ class ViewConfigSearchBuilder(EntityWithTagSearchBuilder):
                          default_orders=[ViewConfig.last_modified_at.desc()])
 
     def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
-        if filter_['key'] == 'include_not_flagged':
+        if filter_['key'] == 'include_not_favorite':
             return None
         elif filter_['key'] == 'project':
             # Handle the project filters, get all experiment of this project and filter by experiment

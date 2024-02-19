@@ -11,6 +11,8 @@ from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.impl.robot.robot_resource import Robot, RobotFood
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotEat, RobotMove
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -353,7 +355,7 @@ class TestTag(BaseTestCase):
         self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, experiment_id))
 
         # if we remove the view from the report, the tag should be kept with 1 origin
-        ReportService.update_content(report.id, {"blocks": []})
+        ReportService.update_content(report.id, RichText.create_rich_text_dto([]))
 
         report_tags = EntityTagList.find_by_entity(EntityType.REPORT, report.id)
         self.assertEqual(len(report_tags.get_tags()), 1)
@@ -361,7 +363,7 @@ class TestTag(BaseTestCase):
         self.assertEqual(tag.origins.count_origins(), 1)
         self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, experiment_id))
 
-        # Unassociate the experiment from the report, it should delete the tag
+        # Unlink the experiment from the report, it should delete the tag
         ReportService.remove_experiment(report.id, experiment_id)
         report_tags = EntityTagList.find_by_entity(EntityType.REPORT, report.id)
         self.assertEqual(len(report_tags.get_tags()), 0)

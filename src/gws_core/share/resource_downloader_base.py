@@ -4,10 +4,9 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import List, Literal, Type
+from typing import List, Literal
 
 from gws_core.config.param.param_spec import StrParam
-from gws_core.core.service.external_lab_service import ExternalLabWithUserInfo
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -16,12 +15,10 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.share.shared_dto import SharedEntityMode
-from gws_core.share.shared_entity_info import SharedEntityInfo
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.task import Task
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
-from gws_core.user.user import User
 
 from ..config.config_params import ConfigParams
 from ..config.config_types import ConfigSpecs
@@ -50,7 +47,7 @@ class ResourceDownloaderBase(Task):
         pass
 
     def create_resource_from_file(
-            self, resource_file: str, uncompress_option: Literal['auto', 'yes', 'no']) -> TaskOutputs:
+            self, resource_file: str, uncompress_option: Literal['auto', 'yes', 'no']) -> Resource:
         """Methode to create the resource from a file (once downloaded) and return it as a task output
         """
 
@@ -59,11 +56,11 @@ class ResourceDownloaderBase(Task):
             if uncompress_option == 'yes':
                 raise Exception("The file is not a compress file. Please disbale compress option.")
             self.log_info_message("Saving file as a resource")
-            return {'resource': File(resource_file)}
+            return File(resource_file)
 
         if uncompress_option == 'no':
             self.log_info_message("Saving compressed file")
-            return {'resource': File(resource_file)}
+            return File(resource_file)
 
         # Convert the zip file to a resource
         try:
@@ -75,7 +72,7 @@ class ResourceDownloaderBase(Task):
 
             # skip if the option is auto
             self.log_error_message(f"Error while unzipping the file. Saving the file without decompress. Error: {err}.")
-            return {'resource': File(resource_file)}
+            return File(resource_file)
 
         self.log_info_message("Loading the resource")
         resource = self.resource_loader.load_resource()
@@ -83,7 +80,7 @@ class ResourceDownloaderBase(Task):
         # delete the compressed file
         FileHelper.delete_file(resource_file)
 
-        return {'resource': resource}
+        return resource
 
     def run_after_task(self) -> None:
         """Save share info, clean temp files, etc
@@ -102,24 +99,6 @@ class ResourceDownloaderBase(Task):
         self.log_info_message("Storing the resource origin info")
         resources: List[Resource] = self.resource_loader.get_all_generated_resources()
         for resource in resources:
-            self._create_shared_entity(SharedResource, resource._model_id, SharedEntityMode.RECEIVED,
-                                       self.resource_loader.get_origin_info(),
-                                       CurrentUserService.get_and_check_current_user())
-
-    def _create_shared_entity(self, shared_entity_type: Type[SharedEntityInfo], entity_id: str,
-                              mode: SharedEntityMode, lab_info: ExternalLabWithUserInfo, created_by: User) -> None:
-        """Method that log the resource origin for each imported resources
-        """
-
-        shared_entity = shared_entity_type()
-        shared_entity.entity = entity_id
-        shared_entity.share_mode = mode
-        shared_entity.lab_id = lab_info['lab_id']
-        shared_entity.lab_name = lab_info['lab_name']
-        shared_entity.user_id = lab_info['user_id']
-        shared_entity.user_firstname = lab_info['user_firstname']
-        shared_entity.user_lastname = lab_info['user_lastname']
-        shared_entity.space_id = lab_info['space_id']
-        shared_entity.space_name = lab_info['space_name']
-        shared_entity.created_by = created_by
-        shared_entity.save()
+            SharedResource.create_from_lab_info(resource._model_id, SharedEntityMode.RECEIVED,
+                                                self.resource_loader.get_origin_info(),
+                                                CurrentUserService.get_and_check_current_user())

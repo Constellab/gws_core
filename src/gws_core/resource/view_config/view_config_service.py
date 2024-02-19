@@ -15,7 +15,6 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.view.view_helper import ViewHelper
-from gws_core.resource.view.view_types import exluded_views_in_historic
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.user.current_user_service import CurrentUserService
@@ -26,6 +25,7 @@ from ...core.utils.logger import Logger
 from ...user.user import User
 from ..resource_model import ResourceModel
 from ..view.view import View
+from ..view.view_types import exluded_views_in_report
 from .view_config import ViewConfig
 from .view_config_search_builder import ViewConfigSearchBuilder
 
@@ -42,7 +42,7 @@ class ViewConfigService():
     @transaction()
     def save_view_config(cls, resource_model: ResourceModel, view: View,
                          view_name: str, config: Config,
-                         flagged: bool = False,
+                         is_favorite: bool = False,
                          user: User = None) -> ViewConfig:
         try:
 
@@ -58,7 +58,7 @@ class ViewConfigService():
                 view_name=view_meta_data.method_name,
                 view_type=view.get_type(),
                 config_values={},
-                flagged=flagged,
+                is_favorite=is_favorite or view.is_favorite(),
                 config=config
             )
 
@@ -100,9 +100,9 @@ class ViewConfigService():
 
     @classmethod
     def get_old_views_to_delete(cls) -> List[ViewConfig]:
-        """ return the 100 oldest view config that are not flagged and not used in a report"""
+        """ return the 100 oldest view config that are not favorite and not used in a report"""
         return list(ViewConfig.select().left_outer_join(ReportViewModel).where(
-            (ViewConfig.flagged == False) & (ReportViewModel.report.is_null(True))).order_by(
+            (ViewConfig.is_favorite == False) & (ReportViewModel.report.is_null(True))).order_by(
             ViewConfig.last_modified_at.asc()).limit(100))
 
     @classmethod
@@ -112,9 +112,9 @@ class ViewConfigService():
         return view_config.save()
 
     @classmethod
-    def update_flagged(cls, view_config_id: str, flagged: bool) -> ViewConfig:
+    def update_favorite(cls, view_config_id: str, is_favorite: bool) -> ViewConfig:
         view_config: ViewConfig = ViewConfig.get_by_id_and_check(view_config_id)
-        view_config.flagged = flagged
+        view_config.is_favorite = is_favorite
         return view_config.save()
 
     ############################################ SEARCH ############################################
@@ -139,18 +139,19 @@ class ViewConfigService():
         resources: List[ResourceModel] = ReportService.get_resources_of_associated_experiments(report_id)
         search_builder.add_expression(ViewConfig.resource_model.in_(resources))
 
+        # exclude the type of view that are not useful in historic
+        search_builder.add_expression(ViewConfig.view_type.not_in(exluded_views_in_report))
+
         return cls._search(search_builder, search, page, number_of_items_per_page)
 
     @classmethod
     def _search(cls, search_builder: SearchBuilder, search: SearchParams,
                 page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
-        # exclude the type of view that are not useful in historic
-        search_builder.add_expression(ViewConfig.view_type.not_in(exluded_views_in_historic))
 
-        # # if the include not flagged is not checked, filter flagged
-        if not search.get_filter_criteria_value("include_not_flagged"):
-            search_builder.add_expression(ViewConfig.flagged == True)
-        search.remove_filter_criteria("include_not_flagged")
+        # # if the include not favorite is not checked, filter favorite
+        if not search.get_filter_criteria_value("include_not_favorite"):
+            search_builder.add_expression(ViewConfig.is_favorite == True)
+        search.remove_filter_criteria("include_not_favorite")
 
         model_select: ModelSelect = search_builder.add_search_params(search).build_search()
         return Paginator(
@@ -160,13 +161,13 @@ class ViewConfigService():
 
     @classmethod
     def get_by_resource(cls, resource_id: str,
-                        flagged: bool = False,
+                        favorite: bool = False,
                         page: int = 0,
                         number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
 
         query: ModelSelect = None
-        if flagged:
-            query = ViewConfig.get_by_resource_and_flagged(resource_id).order_by(ViewConfig.last_modified_at.desc())
+        if favorite:
+            query = ViewConfig.get_by_resource_and_favorite(resource_id).order_by(ViewConfig.last_modified_at.desc())
         else:
             query = ViewConfig.get_by_resource(resource_id).order_by(ViewConfig.last_modified_at.desc())
 

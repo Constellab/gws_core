@@ -39,7 +39,9 @@ class PlotlyResource(Resource):
           default_view=True)
     def default_view(self, _: ConfigParams) -> PlotlyView:
         # If the json, is a json of a view
-        return PlotlyView(self.figure)
+        view_ = PlotlyView(self.figure)
+        view_.set_favorite(True)
+        return view_
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, PlotlyResource):

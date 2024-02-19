@@ -10,9 +10,9 @@ from pydantic import BaseModel
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
-from gws_core.experiment.experiment_enums import (ExperimentProcessStatus,
-                                                  ExperimentStatus,
-                                                  ExperimentType)
+from gws_core.experiment.experiment_enums import (ExperimentCreationType,
+                                                  ExperimentProcessStatus,
+                                                  ExperimentStatus)
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.project.project_dto import ProjectDTO
 from gws_core.user.user_dto import UserDTO
@@ -43,7 +43,7 @@ class RunningExperimentInfoDTO(BaseModelDTO):
 class ExperimentDTO(ModelWithUserDTO):
     title: str
     description: Optional[dict]
-    type: ExperimentType
+    creation_type: ExperimentCreationType
     protocol: dict
     status: ExperimentStatus
     is_validated: bool

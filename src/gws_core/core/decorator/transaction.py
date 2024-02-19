@@ -1,3 +1,7 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from typing import Callable
 
@@ -17,7 +21,7 @@ class TransactionSignleton():
             TransactionSignleton.count_transaction = 0
 
     @staticmethod
-    def hasTransaction() -> bool:
+    def has_transaction() -> bool:
         return TransactionSignleton.count_transaction > 0
 
 
@@ -39,7 +43,7 @@ def transaction(nested_transaction: bool = False) -> Callable:
 
             # If we are in unique transaction mode and a transaction already exists,
             # don't create a transaction
-            if not nested_transaction and TransactionSignleton.hasTransaction():
+            if not nested_transaction and TransactionSignleton.has_transaction():
                 return func(*args, **kwargs)
 
             TransactionSignleton.increment()

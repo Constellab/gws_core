@@ -7,11 +7,12 @@ from typing import final
 
 from peewee import CharField
 
-from gws_core.core.classes.rich_text_content import RichText
+from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.report.template.report_template_dto import (
     ReportTemplateDTO, ReportTemplateFullDTO)
 
-from ...core.model.db_field import JSONField
+from ...core.model.db_field import BaseDTOField, JSONField
 from ...core.model.model_with_user import ModelWithUser
 
 
@@ -19,7 +20,7 @@ from ...core.model.model_with_user import ModelWithUser
 class ReportTemplate(ModelWithUser):
     title = CharField()
 
-    content = JSONField(null=True)
+    content: RichTextDTO = BaseDTOField(RichTextDTO, null=True)
     old_content = JSONField(null=True)
 
     _table_name = 'gws_report_template'

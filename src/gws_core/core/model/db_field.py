@@ -9,8 +9,10 @@ from abc import abstractmethod
 from datetime import datetime
 from typing import Type
 
-from gws_core.core.utils.date_helper import DateHelper
 from peewee import DateTimeField, TextField
+
+from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.utils.date_helper import DateHelper
 
 # ####################################################################
 #
@@ -57,6 +59,31 @@ class DateTimeUTC(DateTimeField):
             return datetime_
 
         return DateHelper.convert_datetime_to_utc(datetime_)
+
+
+class BaseDTOField(TextField):
+    """
+    Custom field that support serialization and deserialization of DTOs to JSON.
+    """
+
+    JSON_FIELD_TEXT_TYPE = "LONGTEXT"
+    field_type = JSON_FIELD_TEXT_TYPE
+
+    dto_type: Type[BaseModelDTO] = None
+
+    def __init__(self, dto_type: Type[BaseModelDTO], *args, **kwargs):
+        self.dto_type = dto_type
+        super().__init__(*args, **kwargs)
+
+    def db_value(self, value: BaseModelDTO):
+        if value is not None:
+            return value.json()
+        return None
+
+    def python_value(self, value):
+        if value is not None:
+            return self.dto_type.parse_raw(value)
+        return None
 
 
 class SerializableObject():

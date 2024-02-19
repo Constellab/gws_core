@@ -161,7 +161,7 @@ class FsNodeService(BaseService):
 
     @classmethod
     def call_folder_sub_file_view(cls, resource_id: str, sub_file_path: str) -> CallViewResult:
-        resource_model: ResourceModel = ResourceService.get_resource_by_id(
+        resource_model: ResourceModel = ResourceService.get_by_id_and_check(
             resource_id)
 
         view_name = Folder.view_sub_file.__name__

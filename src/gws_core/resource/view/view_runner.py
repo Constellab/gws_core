@@ -48,7 +48,10 @@ class ViewRunner():
 
         # set view name if not defined
         if view.get_title() is None:
-            view.set_title(self.resource.name + " - " + view_metadata.human_name)
+            title = self.resource.name
+            if view_metadata.human_name:
+                title += " - " + view_metadata.human_name
+            view.set_title(title)
 
         # set the resource technical infos
         if self.resource.technical_info:

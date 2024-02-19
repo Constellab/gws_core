@@ -317,6 +317,19 @@ class Settings():
         else:
             return "/logs"
 
+    ##### STREAMLIT ####
+    @classmethod
+    def get_streamlit_main_app_port(cls) -> int:
+        """Returns the front version of the lab
+        """
+        return int(os.environ.get("STREAMLIT_APP_SERVER_PORT", 8501))
+
+    @classmethod
+    def get_streamlit_host_url(cls) -> str:
+        """Returns the front version of the lab
+        """
+        return os.environ.get("STREAMLIT_APP_SERVER_HOST", 'http://localhost:8501')
+
     def get_gws_core_db_name(self) -> str:
         return 'gws_core'
 

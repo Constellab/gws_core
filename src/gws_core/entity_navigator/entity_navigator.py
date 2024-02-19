@@ -4,11 +4,11 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, Generic, List, Set, Type, Union
+from typing import Dict, Generic, Iterable, List, Set, Type, Union
 
+from gws_core.entity_navigator.entity_navigator_deep import NavigableEntitySet
 from gws_core.entity_navigator.entity_navigator_type import (
-    EntityType, GenericNavigableEntity, NavigableEntity, NavigableEntitySet,
-    all_entity_types)
+    EntityType, GenericNavigableEntity, NavigableEntity, all_entity_types)
 from gws_core.experiment.experiment import Experiment
 from gws_core.report.report import Report, ReportExperiment
 from gws_core.report.report_view_model import ReportViewModel
@@ -23,18 +23,17 @@ from gws_core.task.task_model import TaskModel
 
 class EntityNavigator(Generic[GenericNavigableEntity]):
 
-    _entities: NavigableEntitySet[GenericNavigableEntity]
+    _entities: Set[GenericNavigableEntity]
 
     _all_entity_types = all_entity_types
 
-    def __init__(
-            self, entities: Union[GenericNavigableEntity, List[GenericNavigableEntity],
-                                  Set[GenericNavigableEntity],
-                                  NavigableEntitySet]):
-        if isinstance(entities, NavigableEntitySet):
-            self._entities = entities
+    def __init__(self, entities: Union[GenericNavigableEntity, Iterable[GenericNavigableEntity]]):
+        if entities is None:
+            self._entities = set()
+        elif isinstance(entities, Iterable):
+            self._entities = set(entities)
         else:
-            self._entities = NavigableEntitySet(entities)
+            self._entities = set([entities])
 
     def has_next_entities(self, requested_entities: List[EntityType] = None) -> bool:
         if requested_entities is None:
@@ -83,52 +82,58 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         if requested_entities is None:
             requested_entities = self._all_entity_types
 
-        loaded_entities = self._entities.get_as_set()
-        self._get_next_entities_recursive(requested_entities, loaded_entities)
+        loaded_entities = NavigableEntitySet(self._entities, 0)
+        self._get_next_entities_recursive(requested_entities, loaded_entities, 1)
 
         if not include_current_entities:
-            loaded_entities = loaded_entities - self._entities.get_as_set()
+            loaded_entities.remove_deep(0)
 
-        return NavigableEntitySet(loaded_entities)
+        return loaded_entities
 
     def _get_next_entities_recursive(
             self, requested_entities: List[EntityType],
-            loaded_entities: Set[GenericNavigableEntity]) -> Set[GenericNavigableEntity]:
+            loaded_entities: NavigableEntitySet,
+            deep_level: int) -> NavigableEntitySet:
 
         if self.is_empty():
             return loaded_entities
 
         if EntityType.EXPERIMENT in requested_entities:
             self._get_next_entities_type_recursive(
-                requested_entities, loaded_entities, self.get_next_experiments(), EntityNavigatorExperiment)
+                requested_entities, loaded_entities, self.get_next_experiments(),
+                EntityNavigatorExperiment, deep_level)
 
         if EntityType.RESOURCE in requested_entities:
             self._get_next_entities_type_recursive(
-                requested_entities, loaded_entities, self.get_next_resources(), EntityNavigatorResource)
+                requested_entities, loaded_entities, self.get_next_resources(),
+                EntityNavigatorResource, deep_level)
 
         if EntityType.REPORT in requested_entities:
             self._get_next_entities_type_recursive(
-                requested_entities, loaded_entities, self.get_next_reports(), EntityNavigatorReport)
+                requested_entities, loaded_entities, self.get_next_reports(),
+                EntityNavigatorReport, deep_level)
 
         if EntityType.VIEW in requested_entities:
             self._get_next_entities_type_recursive(
-                requested_entities, loaded_entities, self.get_next_views(), EntityNavigatorView)
+                requested_entities, loaded_entities, self.get_next_views(),
+                EntityNavigatorView, deep_level)
 
         return loaded_entities
 
     def _get_next_entities_type_recursive(
             self, requested_entities: List[EntityType],
-            loaded_entities: Set[GenericNavigableEntity],
+            loaded_entities: NavigableEntitySet,
             entity_nav: 'EntityNavigator',
-            nav_class: Type['EntityNavigator']) -> Set[GenericNavigableEntity]:
+            nav_class: Type['EntityNavigator'],
+            deep_level: int) -> NavigableEntitySet:
 
-        new_entities: Set[GenericNavigableEntity] = entity_nav.get_entities_as_set() - loaded_entities
+        new_entities: Set[NavigableEntity] = entity_nav.get_entities_as_set() - loaded_entities.get_entities()
 
         if len(new_entities) > 0:
-            loaded_entities.update(new_entities)
+            loaded_entities.update(new_entities, deep_level)
 
             next_entity_nav: EntityNavigator = nav_class(new_entities)
-            next_entity_nav._get_next_entities_recursive(requested_entities, loaded_entities)
+            next_entity_nav._get_next_entities_recursive(requested_entities, loaded_entities, deep_level + 1)
 
         return loaded_entities
 
@@ -147,52 +152,57 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         if requested_entities is None:
             requested_entities = self._all_entity_types
 
-        loaded_entities = self._entities.get_as_set()
-        self._get_previous_entities_recursive(requested_entities, loaded_entities)
+        loaded_entities = NavigableEntitySet(self._entities, 0)
+        self._get_previous_entities_recursive(requested_entities, loaded_entities, 1)
 
         if not include_current_entities:
-            loaded_entities = loaded_entities - self._entities.get_as_set()
+            loaded_entities.remove_deep(0)
 
-        return NavigableEntitySet(loaded_entities)
+        return loaded_entities
 
     def _get_previous_entities_recursive(
             self, requested_entities: List[EntityType],
-            loaded_entities: Set[GenericNavigableEntity]) -> Set[GenericNavigableEntity]:
+            loaded_entities: NavigableEntitySet, deep_level: int) -> NavigableEntitySet:
 
         if self.is_empty():
             return loaded_entities
 
         if EntityType.EXPERIMENT in requested_entities:
             self._get_previous_entities_type_recursive(
-                requested_entities, loaded_entities, self.get_previous_experiments(), EntityNavigatorExperiment)
+                requested_entities, loaded_entities, self.get_previous_experiments(),
+                EntityNavigatorExperiment, deep_level)
 
         if EntityType.RESOURCE in requested_entities:
             self._get_previous_entities_type_recursive(
-                requested_entities, loaded_entities, self.get_previous_resources(), EntityNavigatorResource)
+                requested_entities, loaded_entities, self.get_previous_resources(),
+                EntityNavigatorResource, deep_level)
 
         if EntityType.REPORT in requested_entities:
             self._get_previous_entities_type_recursive(
-                requested_entities, loaded_entities, self.get_previous_reports(), EntityNavigatorReport)
+                requested_entities, loaded_entities, self.get_previous_reports(),
+                EntityNavigatorReport, deep_level)
 
         if EntityType.VIEW in requested_entities:
             self._get_previous_entities_type_recursive(
-                requested_entities, loaded_entities, self.get_previous_views(), EntityNavigatorView)
+                requested_entities, loaded_entities, self.get_previous_views(),
+                EntityNavigatorView, deep_level)
 
         return loaded_entities
 
     def _get_previous_entities_type_recursive(
             self, requested_entities: List[EntityType],
-            loaded_entities: Set[GenericNavigableEntity],
+            loaded_entities: NavigableEntitySet,
             entity_nav: 'EntityNavigator',
-            nav_class: Type['EntityNavigator']) -> Set[GenericNavigableEntity]:
+            nav_class: Type['EntityNavigator'],
+            deep_level: int) -> NavigableEntitySet:
 
-        new_entities: Set[GenericNavigableEntity] = entity_nav.get_entities_as_set() - loaded_entities
+        new_entities: Set[NavigableEntity] = entity_nav.get_entities_as_set() - loaded_entities.get_entities()
 
         if len(new_entities) > 0:
-            loaded_entities.update(new_entities)
+            loaded_entities.update(new_entities, deep_level)
 
             previous_entity_nav: EntityNavigator = nav_class(new_entities)
-            previous_entity_nav._get_previous_entities_recursive(requested_entities, loaded_entities)
+            previous_entity_nav._get_previous_entities_recursive(requested_entities, loaded_entities, deep_level + 1)
 
         return loaded_entities
 
@@ -220,14 +230,14 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
     def get_previous_experiments(self) -> 'EntityNavigatorExperiment':
         return EntityNavigatorExperiment(set())
 
-    def get_entities(self) -> NavigableEntitySet:
-        return self._entities
+    def get_as_nav_set(self) -> NavigableEntitySet:
+        return NavigableEntitySet(self._entities, 0)
 
     def get_entities_as_set(self) -> Set[GenericNavigableEntity]:
-        return self._entities.get_as_set()
+        return self._entities
 
     def get_entities_list(self) -> List[GenericNavigableEntity]:
-        return self._entities.get_as_list()
+        return list(self._entities)
 
     def propagate_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None) -> None:
         pass
@@ -266,10 +276,10 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         entity_tags.delete_tags(new_tags)
 
     def is_empty(self) -> bool:
-        return self._entities.is_empty()
+        return len(self._entities) == 0
 
     def _get_entities_ids(self) -> List[str]:
-        return self._entities.get_entity_ids()
+        return [entity.id for entity in self._entities]
 
     @classmethod
     def from_entity_id(cls, entity_type: EntityType, entity_id: str) -> 'EntityNavigator':
@@ -363,6 +373,11 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         return EntityNavigatorView(views)
 
     def get_next_resources(self) -> 'EntityNavigatorResource':
+        """Return all the output resources of tasks that use the resource as input
+
+        :return: _description_
+        :rtype: EntityNavigatorResource
+        """
         tasks_model = self._get_next_tasks()
 
         task_model_ids = [task.id for task in tasks_model]
@@ -379,7 +394,7 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         return {task_input.task_model for task_input in task_input_models}
 
     def get_next_experiments(self) -> 'EntityNavigatorExperiment':
-        """Return all the experiments that use the resource as input of a task"""
+        """Return all the experiments that use the resource in a source task"""
         task_models: List[TaskModel] = list(TaskModel.get_source_task_using_resource_in_another_experiment(
             self._get_entities_ids()))
 

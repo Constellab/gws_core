@@ -5,11 +5,11 @@
 
 
 from gws_core import Robot
-from gws_core.core.classes.rich_text_content import (RichText,
-                                                     RichTextBlockType,
-                                                     RichTextI)
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_types import (RichTextBlockType,
+                                                     RichTextDTO)
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.project.project import Project
 from gws_core.project.project_dto import ProjectLevelStatus
@@ -30,7 +30,7 @@ class TestReport(BaseTestCase):
         project = Project(title='Project', level_status=ProjectLevelStatus.LEAF).save()
 
         # test create an empty report
-        report = ReportService.create(ReportSaveDTO(title='Test report'))
+        report: Report = ReportService.create(ReportSaveDTO(title='Test report'))
 
         self.assertIsInstance(report, Report)
         self.assertEqual(report.title, 'Test report')
@@ -38,10 +38,10 @@ class TestReport(BaseTestCase):
         report = ReportService.update(report.id, ReportSaveDTO(title='New title'))
         self.assertEqual(report.title, 'New title')
 
-        content: RichTextI = RichText.create_rich_text_i(
-            [{'id': '0', 'type': 'paragraph', 'data': {'text': 'Hello world!'}}])
-        report = ReportService.update_content(report.id, content)
-        self.assert_json(report.content, content)
+        content: RichTextDTO = RichText.create_rich_text_dto([RichText.create_paragraph('1', 'Hello world!')])
+        ReportService.update_content(report.id, content)
+        report = report.refresh()
+        self.assertEqual(len(report.content.blocks), 1)
 
         experiment = ExperimentService.create_experiment()
 
@@ -99,10 +99,10 @@ class TestReport(BaseTestCase):
 
         # simulate the rich text with resource id
         rich_text_resource_view = view_result.view_config.to_rich_text_resource_view()
-        block = RichText.create_block(RichTextBlockType.RESOURCE_VIEW, rich_text_resource_view)
+        block = RichText.create_block('1', RichTextBlockType.RESOURCE_VIEW, rich_text_resource_view)
 
         # update report content
-        new_content = {"blocks": [block]}
+        new_content = RichText.create_rich_text_dto([block])
         ReportService.update_content(report.id, new_content)
 
         # check that the associated ReportViewModel is created
@@ -116,13 +116,13 @@ class TestReport(BaseTestCase):
         self.assertEqual(paginator.results[0].id, report.id)
 
         # test adding the same resource a second time it shouldn't create a new associated view
-        new_content = {"blocks": [block, block]}
+        new_content = RichText.create_rich_text_dto([block, block])
         ReportService.update_content(report.id, new_content)
         report_views = ReportViewModel.get_by_report(report.id)
         self.assertEqual(len(report_views), 1)
 
         # test removing the resource
-        new_content = {"blocks": []}
+        new_content = RichText.create_rich_text_dto([])
         ReportService.update_content(report.id, new_content)
         report_views = ReportViewModel.get_by_report(report.id)
         self.assertEqual(len(report_views), 0)
@@ -162,7 +162,7 @@ class TestReport(BaseTestCase):
             ReportService.remove_experiment(report.id, experiment.get_experiment_model().id)
 
         # remove the view from the report
-        ReportService.update_content(report.id, {"blocks": []})
+        ReportService.update_content(report.id, RichText.create_rich_text_dto([]))
 
         # Check that we cannot remove the experiment because of the view
         ReportService.remove_experiment(report.id, experiment.get_experiment_model().id)

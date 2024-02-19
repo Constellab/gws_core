@@ -104,7 +104,7 @@ class TestResourceSet(BaseTestCase):
         self.assertEqual(
             len(resource_set.view_resources_list({}).to_dict({})['data']), 2)
 
-        experiment.reset()
+        experiment.get_experiment_model().reset()
         # check that the reset cleared the correct resources
         self.assertEqual(ResourceModel.select().count(), resource_count)
 

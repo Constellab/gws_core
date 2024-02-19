@@ -9,7 +9,6 @@ from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 from gws_core.config.config import Config
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.classes.rich_text_content import RichTextResourceViewData
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
@@ -17,6 +16,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
+from gws_core.impl.rich_text.rich_text_types import RichTextResourceViewData
 from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view_config.view_config_dto import ViewConfigDTO
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -36,7 +36,7 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, on_delete='CASCADE')
     resource_model: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
 
-    flagged = BooleanField(default=False)
+    is_favorite = BooleanField(default=False)
 
     _table_name = 'gws_view_config'
 
@@ -50,10 +50,10 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
             title=self.title,
             view_type=self.view_type,
             view_name=self.view_name,
-            flagged=self.flagged,
+            is_favorite=self.is_favorite,
             config_values=self.get_config_values(),
-            experiment=self.experiment.to_dto() if self.experiment else None,
-            resource=self.resource_model.to_dto() if self.resource_model else None,
+            experiment=self.experiment.to_simple_dto() if self.experiment else None,
+            resource=self.resource_model.to_simple_dto() if self.resource_model else None,
         )
 
     def get_config_values(self) -> ConfigParamsDict:
@@ -106,8 +106,8 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
         return ViewConfig.select().where(ViewConfig.resource_model.in_(resource_model_ids))
 
     @classmethod
-    def get_by_resource_and_flagged(cls, resource_model_id: str) -> ModelSelect:
-        return ViewConfig.select().where((ViewConfig.resource_model == resource_model_id) & (ViewConfig.flagged == True))
+    def get_by_resource_and_favorite(cls, resource_model_id: str) -> ModelSelect:
+        return ViewConfig.select().where((ViewConfig.resource_model == resource_model_id) & (ViewConfig.is_favorite == True))
 
     @classmethod
     def delete_by_resource(cls, resource_model_id: str) -> None:

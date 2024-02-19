@@ -6,11 +6,13 @@
 from typing import Any, Optional
 
 from gws_core.config.param.param_spec import ParamSpec
+from gws_core.config.param.param_spec_decorator import param_spec_decorator
 from gws_core.config.param.param_types import ParamSpecVisibilty
 from gws_core.core.classes.validator import DictValidator
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 
 
+@param_spec_decorator()
 class OpenAiChatParam(ParamSpec[dict]):
     """Special param for config that create a chat with open ai similar
     to ChatGPT.

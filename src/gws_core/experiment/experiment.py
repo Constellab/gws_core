@@ -34,8 +34,8 @@ from ..project.project import Project
 from ..resource.resource_model import ResourceModel
 from ..tag.taggable_model import TaggableModel
 from ..user.user import User
-from .experiment_enums import (ExperimentProcessStatus, ExperimentStatus,
-                               ExperimentType)
+from .experiment_enums import (ExperimentCreationType, ExperimentProcessStatus,
+                               ExperimentStatus)
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
@@ -65,8 +65,9 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
     error_info = JSONField(null=True)
-    type: ExperimentType = EnumField(choices=ExperimentType,
-                                     default=ExperimentType.EXPERIMENT)
+    creation_type: ExperimentCreationType = EnumField(choices=ExperimentCreationType,
+                                                      default=ExperimentCreationType.MANUAL,
+                                                      max_length=20)
 
     title = CharField(max_length=50)
     description = JSONField(null=True)
@@ -163,6 +164,12 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
     def get_entity_type(self) -> EntityType:
         return EntityType.EXPERIMENT
 
+    def entity_is_validated(self) -> bool:
+        return self.is_validated
+
+    def is_manual(self) -> bool:
+        return self.creation_type == ExperimentCreationType.MANUAL
+
     ########################################## MODEL METHODS ######################################
 
     @transaction()
@@ -215,45 +222,16 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
         :return: True if it is reset, False otherwise
         :rtype: `bool`
         """
-        from gws_core.report.report_view_model import ReportViewModel
-
-        from ..task.task_input_model import TaskInputModel
+        self.check_is_updatable()
 
         if not self.is_saved():
-            raise BadRequestException(
-                "Can't reset an experiment not saved before")
-
-        if self.is_validated or self.is_archived:
-            raise BadRequestException(
-                "Can't reset a validated or archived experiment")
+            raise BadRequestException("Can't reset an experiment not saved before")
 
         if self.is_running:
             raise BadRequestException("Can't reset a running experiment")
 
-        # Check if any resource of this experiment is used in another one
-        output_resources: List[ResourceModel] = list(
-            ResourceModel.get_by_experiment(self.id))
-        ResourceModel.check_if_any_resource_is_used_in_another_exp(
-            output_resources, self.id)
-
-        # check if any resource of this experiment is used in a report
-        resource_ids = [r.id for r in output_resources]
-        report_view_models: List[ReportViewModel] = list(ReportViewModel.get_by_resources(resource_ids))
-        if len(report_view_models) > 0:
-            report_names = list({r.report.title for r in report_view_models})
-            raise BadRequestException(
-                f"Can't reset an experiment because the report(s) {report_names} are using some resource(s) of this experiment")
-
         if self.protocol_model:
             self.protocol_model.reset()
-
-        # Delete all the resources previously generated to clear the DB
-        ResourceModel.delete_multiple_resources(output_resources)
-
-        # Delete all the TaskInput as well
-        # Most of them are deleted when deleting the resource but for some constant inputs (link source)
-        # the resource is not deleted but the input must be deleted
-        TaskInputModel.delete_by_experiment(self.id)
 
         self.mark_as_draft()
         return self
@@ -447,7 +425,7 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
             last_modified_by=self.last_modified_by.to_dto(),
             title=self.title,
             description=self.description,
-            type=self.type,
+            creation_type=self.creation_type,
             protocol={
                 "id": self.protocol_model.id
             },

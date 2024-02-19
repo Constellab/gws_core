@@ -65,11 +65,11 @@ class ShareService():
         share_entity_info: Type[SharedEntityInfo] = cls._get_shared_entity_type(entity_type)
 
         # check if this resource was already downloaded by this lab
-        if share_entity_info.already_shared_with_lab(shared_entity_link.entity_id, receiver_lab['lab_id']):
+        if share_entity_info.already_shared_with_lab(shared_entity_link.entity_id, receiver_lab.lab_id):
             return
 
-        cls._create_shared_entity(share_entity_info, shared_entity_link.entity_id,  SharedEntityMode.SENT, receiver_lab,
-                                  shared_entity_link.created_by)
+        share_entity_info.create_from_lab_info(shared_entity_link.entity_id, SharedEntityMode.SENT,
+                                               receiver_lab, shared_entity_link.created_by)
 
     @classmethod
     def _get_shared_entity_type(cls, entity_type: ShareLinkType) -> Type[SharedEntityInfo]:
@@ -88,9 +88,9 @@ class ShareService():
         model: Model = shared_entity_link.get_model_and_check(
             shared_entity_link.entity_id, shared_entity_link.entity_type)
 
-        entity_object: Any = None
+        entity_object: list = None
         if isinstance(model, ResourceModel):
-            entity_object: list = [model.to_dto()]
+            entity_object = [model.to_dto()]
 
             # specific case for resource set that contains multiple resource
             # we need to add all the resource to the zip
@@ -149,11 +149,11 @@ class ShareService():
     #################################### RESOURCE ####################################
 
     @classmethod
-    def zip_resource(cls, id: str, shared_by: User) -> ResourceModel:
+    def zip_resource(cls, id_: str, shared_by: User) -> ResourceModel:
         """Method that zip a resource ands return the new resource
         """
 
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(id)
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(id_)
 
         experiment: IExperiment = IExperiment(
             None, title=f"{resource_model.name} zipper")
@@ -172,24 +172,3 @@ class ShareService():
         sink.refresh()
 
         return sink.get_input_resource_model(Sink.input_name)
-
-    #################################### OTHER ####################################
-
-    @classmethod
-    def _create_shared_entity(cls, shared_entity_type: Type[SharedEntityInfo], entity_id: str,
-                              mode: SharedEntityMode, lab_info: ExternalLabWithUserInfo, created_by: User) -> None:
-        """Method that log the resource origin for each imported resources
-        """
-
-        shared_entity = shared_entity_type()
-        shared_entity.entity = entity_id
-        shared_entity.share_mode = mode
-        shared_entity.lab_id = lab_info['lab_id']
-        shared_entity.lab_name = lab_info['lab_name']
-        shared_entity.user_id = lab_info['user_id']
-        shared_entity.user_firstname = lab_info['user_firstname']
-        shared_entity.user_lastname = lab_info['user_lastname']
-        shared_entity.space_id = lab_info['space_id']
-        shared_entity.space_name = lab_info['space_name']
-        shared_entity.created_by = created_by
-        shared_entity.save()

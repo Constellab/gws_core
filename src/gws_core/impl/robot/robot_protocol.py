@@ -10,7 +10,7 @@ from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
                           RobotFly, RobotMove)
 
 
-@protocol_decorator("RobotSimpleTravel", hide=True)
+@protocol_decorator("RobotSimpleTravel", hide=False)
 class RobotSimpleTravel(Protocol):
 
     tasks_count = 7
@@ -38,7 +38,7 @@ class RobotSimpleTravel(Protocol):
         ])
 
 
-@protocol_decorator("RobotTravelProto", hide=True)
+@protocol_decorator("RobotTravelProto", hide=False)
 class RobotTravelProto(Protocol):
 
     tasks_count = 7
@@ -88,7 +88,7 @@ class RobotSuperTravelProto(Protocol):
         self.add_outerface('robot', sub_travel, 'robot')
 
 
-@protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro", hide=False)
+@protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro", hide=True)
 class RobotWorldTravelProto(Protocol):
 
     tasks_count = 3 + RobotSuperTravelProto.tasks_count

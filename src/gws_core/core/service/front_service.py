@@ -13,6 +13,10 @@ class FrontService():
         return FrontService.get_app_url() + '/biox/experiment/' + experiment_id
 
     @staticmethod
+    def get_report_url(report_id: str) -> str:
+        return FrontService.get_app_url() + '/biox/report/' + report_id
+
+    @staticmethod
     def get_resource_url(resource_id: str) -> str:
         return FrontService.get_app_url() + '/databox/resource/' + resource_id
 

@@ -3,25 +3,26 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, final
+from typing import List, Optional, final
 
 from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
                     ModelSelect)
 
-from gws_core.core.classes.rich_text_content import RichText
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
+from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.project.model_with_project import ModelWithProject
 from gws_core.report.report_dto import ReportDTO, ReportFullDTO
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
 from ..core.model.base_model import BaseModel
-from ..core.model.db_field import DateTimeUTC, JSONField
+from ..core.model.db_field import BaseDTOField, DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..experiment.experiment import Experiment
 from ..lab.lab_config_model import LabConfigModel
@@ -32,7 +33,7 @@ from ..project.project import Project
 class Report(ModelWithUser, ModelWithProject, NavigableEntity):
     title = CharField()
 
-    content = JSONField(null=True)
+    content: RichTextDTO = BaseDTOField(RichTextDTO, null=True)
     old_content = JSONField(null=True)
 
     project: Project = ForeignKeyField(Project, null=True)
@@ -121,6 +122,9 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
 
     def get_entity_type(self) -> EntityType:
         return EntityType.REPORT
+
+    def entity_is_validated(self) -> bool:
+        return self.is_validated
 
     class Meta:
         table_name = 'gws_report'

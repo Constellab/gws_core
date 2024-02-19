@@ -45,7 +45,7 @@ class TestExperiment(BaseTestCase):
 
         ExperimentService.update_experiment_description(
             experiment.id, {"test": "ok"})
-        experiment = ExperimentService.get_experiment_by_id(experiment.id)
+        experiment = ExperimentService.get_by_id_and_check(experiment.id)
         self.assert_json(experiment.description, {"test": "ok"})
 
     def test_run(self):
@@ -201,7 +201,7 @@ class TestExperiment(BaseTestCase):
         self._check_process_reset(experiment.protocol_model)
         # Same test with experiment from DB
         self._check_process_reset(
-            ExperimentService.get_experiment_by_id(experiment.id).protocol_model)
+            ExperimentService.get_by_id_and_check(experiment.id).protocol_model)
 
         # test get experiment protocol config
         result = experiment.export_protocol()
@@ -226,24 +226,6 @@ class TestExperiment(BaseTestCase):
         if isinstance(process_model, ProtocolModel):
             for process in process_model.processes.values():
                 self._check_process_reset(process)
-
-    def test_reset_error(self):
-        """ Test that we can't reset an experiment if one of its resource is used by another experiment
-        """
-        experiment: IExperiment = IExperiment(CreateSimpleRobot)
-        experiment.run()
-
-        # Retrieve the robot
-        resource = experiment.get_protocol().get_process('facto').get_output('robot')
-
-        # Create a new experiment that uses the previously generated robot
-        experiment2: IExperiment = IExperiment(MoveSimpleRobot)
-        experiment2.get_protocol().get_process(
-            'source').set_param('resource_id', resource._model_id)
-        experiment2.run()
-
-        with self.assertRaises(ResourceUsedInAnotherExperimentException):
-            experiment.reset()
 
     def test_protocol_copy(self):
 

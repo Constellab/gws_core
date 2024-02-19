@@ -70,12 +70,8 @@ class TaskInputModel(BaseModel):
         return TaskInputModel.select().where(TaskInputModel.experiment.in_(experiment_ids))
 
     @classmethod
-    def delete_by_experiment(cls, experiment_id: str) -> int:
-        return TaskInputModel.delete().where(TaskInputModel.experiment == experiment_id).execute()
-
-    @classmethod
-    def delete_by_task_ids(cls, task_ids: List[str]) -> int:
-        return TaskInputModel.delete().where(TaskInputModel.task_model.in_(task_ids)).execute()
+    def delete_by_task_id(cls, task_id: str) -> int:
+        return TaskInputModel.delete().where(TaskInputModel.task_model == task_id).execute()
 
     @classmethod
     def resource_is_used_by_experiment(cls, resource_model_id: str, experiment_ids: List[str]) -> bool:

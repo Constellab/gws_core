@@ -40,7 +40,7 @@ class LiveCodeHelper:
         :return: _description_
         :rtype: Dict[str, Any]
         """
-        result = {}
+        result: Dict[str, Any] = {}
         if params:
             params_str: str = "\n".join(params)
             try:
@@ -61,6 +61,10 @@ class LiveCodeHelper:
     @classmethod
     def get_r_template(cls) -> str:
         return cls._read_template("r_env_snippet_template.R", 'code')
+
+    @classmethod
+    def get_streamlit_template(cls) -> str:
+        return cls._read_template("streamlit_live_task_template.py", 'code')
 
     @classmethod
     def get_pip_env_file_template(cls) -> str:

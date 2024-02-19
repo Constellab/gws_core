@@ -11,6 +11,8 @@ from mypy_boto3_s3.type_defs import ListObjectsV2OutputTypeDef, ObjectTypeDef
 
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.settings import Settings
+from gws_core.entity_navigator.entity_navigator_service import \
+    EntityNavigatorService
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -144,7 +146,13 @@ class S3ServerService:
             # Authenticate sys user because in S3 server we don't have a user
             CurrentUserService.set_current_user(User.get_sysuser())
             try:
-                ResourceService.delete(resource_id=resource.id, allow_s3_project_storage=True)
+                result = EntityNavigatorService.check_impact_delete_resource(resource.id)
+                if result.has_entities():
+                    raise S3ServerException(
+                        status_code=400, code='delete_impact',
+                        message='Cannot delete the resource because it is used in an next experiment or a report.',
+                        bucket_name=bucket_name, key=key)
+                EntityNavigatorService.delete_resource(resource_id=resource.id, allow_s3_project_storage=True)
             finally:
                 CurrentUserService.set_current_user(None)
 

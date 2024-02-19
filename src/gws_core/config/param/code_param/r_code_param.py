@@ -4,11 +4,12 @@
 # About us: https://gencovery.com
 
 
-from gws_core.core.classes.validator import StrValidator, Validator
+from gws_core.config.param.param_spec_decorator import param_spec_decorator
 
 from ..param_spec import TextParam
 
 
+@param_spec_decorator()
 class RCodeParam(TextParam):
     """Param for r code. It shows a simple r IDE
       in the interface to provide code for r.

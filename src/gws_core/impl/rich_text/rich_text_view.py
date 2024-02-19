@@ -5,7 +5,7 @@
 
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.core.classes.rich_text_content import RichText
+from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import ViewType
 
@@ -18,7 +18,7 @@ class RichTextView(View):
     ```
     {
         "type": "rich-text-view"
-        "data": {'content': RichTextI}
+        "data": {'content': RichTextDTO}
     }
     ```
     """
@@ -30,4 +30,4 @@ class RichTextView(View):
         self._rich_text = rich_text
 
     def data_to_dict(self, params: ConfigParams = None) -> dict:
-        return {'content': self._rich_text.get_content()}
+        return {'content': self._rich_text.get_content_as_json()}

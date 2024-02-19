@@ -57,7 +57,10 @@ class ProcessModel(ModelWithUser):
     progress_bar: ProgressBar = ForeignKeyField(
         ProgressBar, null=True, backref='+')
     process_typing_name = CharField(null=False)
-    brick_version = CharField(null=False, max_length=50, default="")
+    # version of the brick when the process was created
+    brick_version_on_create = CharField(null=False, max_length=50, default="")
+    # version of the brick when the process was run
+    brick_version_on_run = CharField(null=True, max_length=50, default="")
     status: ProcessStatus = EnumField(choices=ProcessStatus,
                                       default=ProcessStatus.DRAFT)
     error_info: ProcessErrorInfo = JSONField(null=True)
@@ -184,10 +187,12 @@ class ProcessModel(ModelWithUser):
         self._parent_protocol = parent_protocol
 
     def set_process_type(self, typing_name: str) -> None:
-        typing: Typing = TypingManager.get_typing_from_name_and_check(
-            typing_name)
         self.process_typing_name = typing_name
-        self.brick_version = typing.brick_version
+        self.brick_version_on_create = self._get_type_brick_version()
+
+    def _get_type_brick_version(self) -> str:
+        typing: Typing = TypingManager.get_typing_from_name_and_check(self.process_typing_name)
+        return typing.brick_version
 
     def set_experiment(self, experiment: Experiment):
         if not isinstance(experiment, Experiment):
@@ -307,6 +312,9 @@ class ProcessModel(ModelWithUser):
 
         # Set the data inputs dict
         self.data["inputs"] = self.inputs.to_json()
+
+        # save the version of the brick when the process was run
+        self.brick_version_on_run = self._get_type_brick_version()
 
         self.save()
 
@@ -447,7 +455,8 @@ class ProcessModel(ModelWithUser):
             config=self.config.to_dto(),
             progress_bar=self.progress_bar.to_dto(),
             process_typing_name=self.process_typing_name,
-            brick_version=self.brick_version,
+            brick_version_on_create=self.brick_version_on_create,
+            brick_version_on_run=self.brick_version_on_run,
             status=self.status,
             error_info=self.get_error_info(),
             started_at=self.started_at,
@@ -483,7 +492,7 @@ class ProcessModel(ModelWithUser):
             config=self.config.to_simple_dto(),
             human_name=process_typing.human_name,
             short_description=process_typing.short_description,
-            brick_version=self.brick_version,
+            brick_version=self.brick_version_on_create,
             inputs=self.inputs.to_dto(),
             outputs=self.outputs.to_dto(),
             status=self.status.value
@@ -508,16 +517,14 @@ class ProcessModel(ModelWithUser):
     def is_draft(self) -> bool:
         return self.status == ProcessStatus.DRAFT
 
-    def check_is_updatable(self) -> None:
+    def check_is_updatable(self, error_if_finished: bool = True) -> None:
         if self.is_running:
-            raise BadRequestException(
-                "The process is running and cannot be updated")
-        if self.experiment:
-            self.experiment.check_is_updatable()
+            raise BadRequestException(GWSException.PROCESS_UPDATE_RUNNING_ERROR.value,
+                                      GWSException.PROCESS_UPDATE_RUNNING_ERROR.name)
 
-            if self.experiment.is_running:
-                raise BadRequestException(
-                    detail="The experiment is running, you can't update it")
+        if error_if_finished and self.is_finished and not self.is_source_task():
+            raise BadRequestException(GWSException.PROCESS_UPDATE_FISHINED_ERROR.value,
+                                      GWSException.PROCESS_UPDATE_FISHINED_ERROR.name)
 
     @property
     def is_error(self) -> bool:

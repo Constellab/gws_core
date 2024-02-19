@@ -10,6 +10,8 @@ from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
                       Protocol, ProtocolModel, ProtocolService, Resource,
                       RobotMove, Task, TaskInputs, TaskOutputs,
                       protocol_decorator, resource_decorator, task_decorator)
+from gws_core.entity_navigator.entity_navigator_service import \
+    EntityNavigatorService
 from gws_core.experiment.experiment_exception import ExperimentRunException
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.impl.robot.robot_resource import Robot
@@ -114,7 +116,7 @@ class TestProtocolError(BaseTestCase):
             self.fail('Run experiment shoud have raised ExperimentRunException')
 
         # Check that experiment is in error status
-        experiment = ExperimentService.get_experiment_by_id(experiment.id)
+        experiment = ExperimentService.get_by_id_and_check(experiment.id)
         self.assertTrue(experiment.is_error)
         self.assertIsNotNone(experiment.get_error_info())
         # Check that the instance_id and unique_code where copied from base exception
@@ -155,7 +157,7 @@ class TestProtocolError(BaseTestCase):
             error_process.get_error_info().unique_code, exception.unique_code)
 
         # reset error tasks
-        ProtocolService.reset_error_processes_of_protocol(protocol)
+        EntityNavigatorService.reset_error_processes_of_protocol(protocol)
 
         protocol = protocol.refresh()
         self.assertTrue(protocol.is_partially_run)
@@ -183,7 +185,7 @@ class TestProtocolError(BaseTestCase):
             self.fail('Run experiment shoud have raised ExperimentRunException')
 
         # Check that experiment is in error status
-        experiment = ExperimentService.get_experiment_by_id(experiment.id)
+        experiment = ExperimentService.get_by_id_and_check(experiment.id)
         self.assertTrue(experiment.is_error)
         self.assertIsNotNone(experiment.error_info)
         # Check that the instance_id and unique_code where copied from base exception

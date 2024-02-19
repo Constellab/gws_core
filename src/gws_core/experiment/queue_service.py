@@ -7,7 +7,8 @@ import threading
 from typing import List
 
 from gws_core.core.model.sys_proc import SysProc
-from gws_core.protocol.protocol_service import ProtocolService
+from gws_core.entity_navigator.entity_navigator_service import \
+    EntityNavigatorService
 from gws_core.user.user import User
 
 from ..core.exception.exceptions import NotFoundException
@@ -143,7 +144,7 @@ class QueueService(BaseService):
                 "The experiment is already running or in the queue")
 
         # reset the processes that are in error
-        ProtocolService.reset_error_processes_of_protocol(
+        EntityNavigatorService.reset_error_processes_of_protocol(
             experiment.protocol_model)
 
         user = CurrentUserService.get_and_check_current_user()

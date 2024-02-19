@@ -40,24 +40,24 @@ def update_title(id: str,
     return ViewConfigService.update_title(id, body["title"]).to_dto()
 
 
-@core_app.put("/view-config/{id}/flagged", tags=["View config"],
-              summary="Update the flagged of a view config")
-def update_flagged(id: str,
-                   body: dict,
-                   _=Depends(AuthService.check_user_access_token)) -> ViewConfigDTO:
-    return ViewConfigService.update_flagged(id, body["flagged"]).to_dto()
+@core_app.put("/view-config/{id}/favorite", tags=["View config"],
+              summary="Update the favorite of a view config")
+def update_favorite(id: str,
+                    body: dict,
+                    _=Depends(AuthService.check_user_access_token)) -> ViewConfigDTO:
+    return ViewConfigService.update_favorite(id, body["is_favorite"]).to_dto()
 
 
-@core_app.get("/view-config/resource/{resource_id}/flag/{flagged}", tags=["View config"],
+@core_app.get("/view-config/resource/{resource_id}/favorite/{favorite}", tags=["View config"],
               summary="Get the list of view config by resource")
 def get_by_resource(resource_id: str,
-                    flagged: bool,
+                    favorite: bool,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
                     _=Depends(AuthService.check_user_access_token)) -> PageDTO[ViewConfigDTO]:
     return ViewConfigService.get_by_resource(
         resource_id=resource_id,
-        flagged=flagged,
+        favorite=favorite,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
     ).to_dto()

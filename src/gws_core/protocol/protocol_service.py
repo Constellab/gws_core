@@ -5,8 +5,13 @@
 
 from typing import List, Literal, Optional, Set, Type, Union
 
+from pydantic import parse_obj_as
+
+from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
@@ -23,12 +28,11 @@ from gws_core.protocol_template.protocol_template_service import \
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
-from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.current_user_service import CurrentUserService
 
-from ..community.community_dto import CommunityLiveTaskVersionDTO, CommunityLiveTaskDTO
+from ..community.community_dto import (CommunityLiveTaskDTO,
+                                       CommunityLiveTaskVersionDTO)
 from ..community.community_service import CommunityService
-
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -44,15 +48,13 @@ from ..protocol.protocol_model import ProtocolModel
 from ..task.task_model import TaskModel
 from .protocol import Protocol
 
-from pydantic import parse_obj_as
-
 
 class ProtocolService(BaseService):
 
     ########################## GET #####################
 
     @classmethod
-    def get_protocol_by_id(cls, id: str) -> ProtocolModel:
+    def get_by_id_and_check(cls, id: str) -> ProtocolModel:
         return ProtocolModel.get_by_id_and_check(id)
 
     ########################## CREATE #####################
@@ -114,7 +116,7 @@ class ProtocolService(BaseService):
     def add_process_model_to_protocol(cls, protocol_model: ProtocolModel, process_model: ProcessModel,
                                       instance_name: str = None) -> ProtocolUpdate:
 
-        protocol_model.check_is_updatable()
+        protocol_model.check_is_updatable(error_if_finished=False)
         protocol_model.add_process_model(
             process_model=process_model, instance_name=instance_name)
         # save the new process
@@ -217,20 +219,15 @@ class ProtocolService(BaseService):
 
     @classmethod
     def delete_process_of_protocol_id(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdate:
-        protocol_model = cls.get_protocol_by_id(protocol_id)
+        protocol_model = cls.get_by_id_and_check(protocol_id)
         return cls.delete_process_of_protocol(
             protocol_model=protocol_model, process_instance_name=process_instance_name)
 
     @classmethod
     @transaction()
     def delete_process_of_protocol(cls, protocol_model: ProtocolModel, process_instance_name: str) -> ProtocolUpdate:
-        protocol_model.check_is_updatable()
-        process_model: ProcessModel = protocol_model.get_process(
-            process_instance_name)
-
-        # reset the process before deleting it
-        update_protocol = cls.reset_process_of_protocol(
-            protocol_model, process_model.instance_name)
+        process_model: ProcessModel = protocol_model.get_process(process_instance_name)
+        process_model.check_is_updatable()
 
         # delete the process from the parent protocol
         protocol_model.remove_process(process_instance_name)
@@ -242,29 +239,13 @@ class ProtocolService(BaseService):
         # delete the process form the DB
         process_model.delete_instance()
 
-        return update_protocol
-
-    @classmethod
-    @transaction()
-    def reset_error_processes_of_protocol(cls, protocol_model: ProtocolModel) -> None:
-        error_tasks = protocol_model.get_error_tasks()
-
-        for task in error_tasks:
-            cls.reset_process_of_protocol(
-                task.parent_protocol, task.instance_name)
-
-    @classmethod
-    @transaction()
-    def reset_process_of_protocol_id(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdate:
-        protocol_model = cls.get_protocol_by_id(protocol_id)
-        return cls.reset_process_of_protocol(protocol_model, process_instance_name)
+        return ProtocolUpdate(protocol=protocol_model, protocol_updated=True, process=process_model)
 
     @classmethod
     @transaction()
     def reset_process_of_protocol(cls, protocol_model: ProtocolModel, process_instance_name: str) -> ProtocolUpdate:
-        protocol_model.check_is_updatable()
-        process_model: ProcessModel = protocol_model.get_process(
-            process_instance_name)
+        process_model: ProcessModel = protocol_model.get_process(process_instance_name)
+        process_model.check_is_updatable(error_if_finished=False)
 
         processes_to_reset: Set[ProcessModel] = protocol_model.get_all_next_processes(
             process_instance_name)
@@ -275,8 +256,6 @@ class ProtocolService(BaseService):
             process_model.id for process_model in processes_to_reset]
         process_resources: List[ResourceModel] = list(ResourceModel.get_by_task_models(
             process_ids))
-        ResourceModel.check_if_any_resource_is_used_in_another_exp(
-            process_resources, protocol_model.experiment.id)
 
         for process in processes_to_reset:
             process.reset()
@@ -286,16 +265,15 @@ class ProtocolService(BaseService):
         # Delete all the resources previously generated to clear the DB
         ResourceModel.delete_multiple_resources(process_resources)
 
-        # Delete all the TaskInput as well
-        # Most of them are deleted when deleting the resource but for some constant inputs (link source)
-        # the resource is not deleted but the input must be deleted
-        TaskInputModel.delete_by_task_ids(process_ids)
-
         # re-propagate the resources because some of them might be deleted by the reset
         protocol_model.propagate_resources()
 
+        # add all the sub protocols that were resetted
+        sub_resetted_protocols: Set[ProtocolModel] = {
+            protocol_model for protocol_model in processes_to_reset if isinstance(protocol_model, ProtocolModel)}
+
         # refresh the protocol to get the updated graph because the connection and inputs might not be exact
-        return ProtocolUpdate(protocol=protocol_model, protocol_updated=True)
+        return ProtocolUpdate(protocol=protocol_model, protocol_updated=True, sub_protocols=sub_resetted_protocols)
 
     @classmethod
     def run_process(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdate:
@@ -325,6 +303,12 @@ class ProtocolService(BaseService):
             protocol_update.protocol_updated = True
 
         return protocol_update
+
+    @classmethod
+    def _get_process_of_protocol(cls, protocol_model_id: str, process_instance_name: str) -> ProcessModel:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
+            protocol_model_id)
+        return protocol_model.get_process(process_instance_name)
 
     ########################## CONNECTORS #####################
     @classmethod
@@ -377,12 +361,7 @@ class ProtocolService(BaseService):
             return ProtocolUpdate(protocol=protocol)
 
         # reset the right process of the connector if it is finished
-        if connector.right_process.is_finished:
-            update_protocol = cls.reset_process_of_protocol(
-                protocol, connector.right_process.instance_name)
-            update_protocol.connector = connector
-            update_protocol.protocol_updated = True
-            return update_protocol
+        connector.right_process.check_is_updatable()
 
         protocol_updated = False
 
@@ -424,7 +403,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def delete_interface_of_protocol_id(cls, protocol_id: str, interface_name: str) -> ProtocolUpdate:
-        protocol_model = cls.get_protocol_by_id(protocol_id)
+        protocol_model = cls.get_by_id_and_check(protocol_id)
         return cls.delete_interface_of_protocol(protocol_model, interface_name)
 
     @classmethod
@@ -437,7 +416,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def delete_outerface_of_protocol_id(cls, protocol_id: str, outerface_name: str) -> ProtocolUpdate:
-        protocol_model = cls.get_protocol_by_id(protocol_id)
+        protocol_model = cls.get_by_id_and_check(protocol_id)
         return cls.delete_outerface_of_protocol(protocol_model, outerface_name)
 
     @classmethod
@@ -466,21 +445,10 @@ class ProtocolService(BaseService):
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
-        protocol_model.check_is_updatable()
-        process_model: ProcessModel = protocol_model.get_process(
-            process_instance_name)
+        process_model: ProcessModel = protocol_model.get_process(process_instance_name)
+        process_model.check_is_updatable()
 
-        update_dto: ProtocolUpdate = ProtocolUpdate(
-            protocol=protocol_model, process=process_model)
-
-        # reset the process and next processes if required
-        if process_model.is_finished:
-            cls.reset_process_of_protocol(
-                protocol_model, process_model.instance_name)
-            update_dto.protocol_updated = True
-        elif protocol_model.is_finished:
-            protocol_model.mark_as_partially_run()
-            update_dto.protocol_updated = True
+        update_dto: ProtocolUpdate = ProtocolUpdate(protocol=protocol_model, process=process_model)
 
         # set config value and save
         process_model.config.set_values(config_values)
@@ -509,6 +477,9 @@ class ProtocolService(BaseService):
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
+        if protocol_model.experiment:
+            cls._check_experiment_circular_reference(resource_id, protocol_model.experiment.id)
+
         # Create source task model
         source: TaskModel = ProcessFactory.create_source(resource_id)
 
@@ -522,8 +493,25 @@ class ProtocolService(BaseService):
         """ Add a source task to the protocol. Configure it with the resource. And add connector
             from source to process
         """
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
+            protocol_id)
+        if protocol_model.experiment:
+            cls._check_experiment_circular_reference(resource_id, protocol_model.experiment.id)
         return cls.add_process_connected_to_input(
             protocol_id, Source._typing_name, process_name, input_port_name, {Source.config_name: resource_id})
+
+    @classmethod
+    def _check_experiment_circular_reference(cls, new_resource_id: str, experiment_id: str) -> None:
+        # Check is there is a circular reference between experiments (due to partial reset)
+        resource_model = ResourceModel.get_by_id_and_check(new_resource_id)
+        resource_nav = EntityNavigatorResource(resource_model)
+
+        # check if in the previous experiment of this resource we find the current experiment
+        all_previous_exp = resource_nav.get_previous_entities_recursive(
+            requested_entities=[EntityType.EXPERIMENT])
+        if all_previous_exp.has_entity(experiment_id):
+            raise BadRequestException(
+                "Circular reference detected. The selected resource was generated by this experiment or has a resource origin generated by this experiment.")
 
     @classmethod
     def add_sink_to_process_ouput(
@@ -594,25 +582,25 @@ class ProtocolService(BaseService):
 
     @classmethod
     def add_dynamic_input_port_to_process(
-            cls, protocol_id: str, process_name: str, io_spec_dto: IOSpecDTO=None) -> ProtocolUpdate:
+            cls, protocol_id: str, process_name: str, io_spec_dto: IOSpecDTO = None) -> ProtocolUpdate:
         return cls._add_dynamic_port_to_process(protocol_id, process_name, 'input', io_spec_dto)
 
     @classmethod
     def add_dynamic_output_port_to_process(
-            cls, protocol_id: str, process_name: str, io_spec_dto: IOSpecDTO=None) -> ProtocolUpdate:
+            cls, protocol_id: str, process_name: str, io_spec_dto: IOSpecDTO = None) -> ProtocolUpdate:
         return cls._add_dynamic_port_to_process(protocol_id, process_name, 'output', io_spec_dto)
 
     @classmethod
-    def _add_dynamic_port_to_process(cls, protocol_id: str, process_name: str,
-                                     port_type: Literal['input', 'output'], io_spec_dto: IOSpecDTO=None) -> ProtocolUpdate:
+    def _add_dynamic_port_to_process(
+            cls, protocol_id: str, process_name: str, port_type: Literal['input', 'output'],
+            io_spec_dto: IOSpecDTO = None) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
-        # reset the process
-        update_protocol = cls.reset_process_of_protocol(
-            protocol_model, process_name)
+        process_model = protocol_model.get_process(process_name)
 
-        process_model: ProcessModel = protocol_model.get_process(process_name)
+        process_model.check_is_updatable()
+
         io: IO = process_model.inputs if port_type == 'input' else process_model.outputs
         if not io.is_dynamic:
             raise BadRequestException(
@@ -626,7 +614,7 @@ class ProtocolService(BaseService):
         process_model.save()
         new_update = ProtocolUpdate(protocol=protocol_model, protocol_updated=False,
                                     process=process_model)
-        return update_protocol.merge(new_update)
+        return new_update
 
     @classmethod
     def delete_dynamic_input_port_of_process(
@@ -645,11 +633,8 @@ class ProtocolService(BaseService):
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
-        # reset the process
-        update_protocol = cls.reset_process_of_protocol(
-            protocol_model, process_name)
-
         process_model: ProcessModel = protocol_model.get_process(process_name)
+        process_model.check_is_updatable()
 
         io: IO = process_model.inputs if port_type == 'input' else process_model.outputs
 
@@ -667,7 +652,7 @@ class ProtocolService(BaseService):
         process_model.save()
         new_update = ProtocolUpdate(protocol=protocol_model, protocol_updated=True,
                                     process=process_model)
-        return update_protocol.merge(new_update)
+        return new_update
 
     @classmethod
     def update_dynamic_input_port_of_process(
@@ -691,11 +676,8 @@ class ProtocolService(BaseService):
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
-        # reset the process
-        update_protocol = cls.reset_process_of_protocol(
-            protocol_model, process_name)
-
         process_model: ProcessModel = protocol_model.get_process(process_name)
+        process_model.check_is_updatable()
         io: IO = process_model.inputs if port_type == 'input' else process_model.outputs
 
         if not io.is_dynamic:
@@ -707,7 +689,7 @@ class ProtocolService(BaseService):
 
         new_update = ProtocolUpdate(protocol=protocol_model, protocol_updated=False,
                                     process=process_model)
-        return update_protocol.merge(new_update)
+        return new_update
 
     ########################## PROTOCOL TEMPLATE #####################
 
@@ -750,32 +732,38 @@ class ProtocolService(BaseService):
                                                     protocol_model.experiment.title,
                                                     protocol_model.experiment.description)
 
-
     ########################## COMMUNITY #####################
+
     @classmethod
     @transaction()
-    def add_community_live_task_version_to_protocol_id(cls, protocol_id: str, live_task_version_id: str) -> ProtocolUpdate:
-        community_live_task_version: CommunityLiveTaskVersionDTO = CommunityService.get_community_live_task_version(live_task_version_id)
+    def add_community_live_task_version_to_protocol_id(
+            cls, protocol_id: str, live_task_version_id: str) -> ProtocolUpdate:
+        community_live_task_version: CommunityLiveTaskVersionDTO = CommunityService.get_community_live_task_version(
+            live_task_version_id)
         conf_params = dict()
         conf_params['code'] = community_live_task_version.code
         if community_live_task_version.environment is not None and community_live_task_version.environment != '':
             conf_params['env'] = community_live_task_version.environment
-        protocol_update = cls.add_process_to_protocol_id(protocol_id, community_live_task_version.type, config_params=conf_params)
+        protocol_update = cls.add_process_to_protocol_id(
+            protocol_id, community_live_task_version.type, config_params=conf_params)
 
         for port in list(protocol_update.process.inputs.ports.keys()):
-            protocol_update = cls.delete_dynamic_input_port_of_process(protocol_id, protocol_update.process.instance_name, port)
+            protocol_update = cls.delete_dynamic_input_port_of_process(
+                protocol_id, protocol_update.process.instance_name, port)
 
         for port in list(protocol_update.process.outputs.ports.keys()):
-            protocol_update = cls.delete_dynamic_output_port_of_process(protocol_id, protocol_update.process.instance_name, port)
+            protocol_update = cls.delete_dynamic_output_port_of_process(
+                protocol_id, protocol_update.process.instance_name, port)
 
         for io_spec in list(community_live_task_version.input_specs['specs'].values()):
             io_spec = parse_obj_as(IOSpecDTO, io_spec)
-            protocol_update = cls.add_dynamic_input_port_to_process(protocol_id, protocol_update.process.instance_name, io_spec)
+            protocol_update = cls.add_dynamic_input_port_to_process(
+                protocol_id, protocol_update.process.instance_name, io_spec)
 
         for io_spec in list(community_live_task_version.output_specs['specs'].values()):
             io_spec = parse_obj_as(IOSpecDTO, io_spec)
-            protocol_update = cls.add_dynamic_output_port_to_process(protocol_id, protocol_update.process.instance_name, io_spec)
-
+            protocol_update = cls.add_dynamic_output_port_to_process(
+                protocol_id, protocol_update.process.instance_name, io_spec)
 
         return protocol_update
 

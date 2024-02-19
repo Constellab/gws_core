@@ -4,9 +4,12 @@
 # About us: https://gencovery.com
 
 
+from gws_core.config.param.param_spec_decorator import param_spec_decorator
+
 from .param_spec import DictParam
 
 
+@param_spec_decorator()
 class TagsParam(DictParam):
     """TagsParam. Use to define a param for tags
 

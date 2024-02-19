@@ -15,7 +15,6 @@ from gws_core.task.plug import Sink
 from ...config.config_types import ConfigParamsDict
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...experiment.experiment_enums import ExperimentType
 from ...experiment.experiment_interface import IExperiment
 from ...impl.file.file import File
 from ...model.typing_manager import TypingManager
@@ -41,7 +40,7 @@ class ConverterService:
 
         # Create an experiment containing 1 source, 1 importer , 1 sink
         experiment: IExperiment = IExperiment(
-            None, title=f"{resource_type._human_name} importer", type_=ExperimentType.IMPORTER)
+            None, title=f"{resource_type._human_name} importer")
         protocol: IProtocol = experiment.get_protocol()
 
         # Add the importer and the connector
@@ -98,7 +97,7 @@ class ConverterService:
 
         # Create an experiment containing 1 source, 1 extractor , 1 sink
         experiment: IExperiment = IExperiment(
-            None, title=f"{resource_model.name} exporter", type_=ExperimentType.EXPORTER)
+            None, title=f"{resource_model.name} exporter")
         protocol: IProtocol = experiment.get_protocol()
 
         # Add the importer and the connector
@@ -127,7 +126,7 @@ class ConverterService:
 
         # Create an experiment containing 1 source, 1 extractor , 1 sink
         experiment: IExperiment = IExperiment(
-            None, title=f"{FileHelper.get_name(sub_path)} extractor", type_=ExperimentType.FS_NODE_EXTRACTOR)
+            None, title=f"{FileHelper.get_name(sub_path)} extractor")
         protocol: IProtocol = experiment.get_protocol()
 
         # Add the importer and the connector

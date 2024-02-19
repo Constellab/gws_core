@@ -19,7 +19,7 @@ class LabInfoDTO(BaseModelDTO):
 class SettingsDTO(BaseModelDTO):
     lab_id: str
     lab_name: str
-    space_api_url: str
+    space_api_url: Optional[str]
     lab_prod_api_url: str
     lab_dev_api_url: str
     lab_environment: str

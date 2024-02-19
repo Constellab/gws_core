@@ -22,7 +22,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.credentials.credentials import Credentials
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_enums import ExperimentType
+from gws_core.experiment.experiment_enums import ExperimentCreationType
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.file_store import FileStore
@@ -136,9 +136,9 @@ class Migration039(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(Typing.get_db())
 
         migrator.add_column_if_not_exists(Typing, Typing.brick_version)
-        migrator.add_column_if_not_exists(TaskModel, TaskModel.brick_version)
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.brick_version_on_create)
         migrator.add_column_if_not_exists(
-            ProtocolModel, ProtocolModel.brick_version)
+            ProtocolModel, ProtocolModel.brick_version_on_create)
         migrator.migrate()
 
         process_model_list: List[ProcessModel] = list(
@@ -174,7 +174,7 @@ class Migration039(BrickMigration):
                 # set brick version
                 typing = TypingManager.get_typing_from_name_and_check(
                     process_model.process_typing_name)
-                process_model.brick_version = BrickHelper.get_brick_version(
+                process_model.brick_version_on_create = BrickHelper.get_brick_version(
                     typing.brick)
                 process_model.save()
             except Exception as err:
@@ -285,11 +285,11 @@ class Migration0313(BrickMigration):
 
             try:
                 # update orgin values
-                if resource_model.experiment is not None:
-                    if resource_model.experiment.type == ExperimentType.IMPORTER:
-                        resource_model.origin = ResourceOrigin.IMPORTED
-                    elif resource_model.experiment.type == ExperimentType.TRANSFORMER:
-                        resource_model.origin = ResourceOrigin.TRANSFORMED
+                # if resource_model.experiment is not None:
+                #     if resource_model.experiment.type == ExperimentType.IMPORTER:
+                #         resource_model.origin = ResourceOrigin.GENERATED
+                #     elif resource_model.experiment.type == ExperimentType.TRANSFORMER:
+                #         resource_model.origin = ResourceOrigin.GENERATED
 
                 # set show_in_databox
                 task_input_model: TaskInputModel = TaskInputModel.get_by_resource_model(
@@ -377,7 +377,7 @@ class Migration0316(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
 
         migrator.add_column_if_not_exists(ViewConfig, ViewConfig.tags)
-        migrator.add_column_if_not_exists(ViewConfig, ViewConfig.flagged)
+        migrator.add_column_if_not_exists(ViewConfig, ViewConfig.is_favorite)
         migrator.rename_column_if_exists(
             ResourceModel, 'show_in_databox', 'flagged')
         migrator.alter_column_type(
@@ -1001,3 +1001,35 @@ class Migration070(BrickMigration):
             except Exception as exception:
                 Logger.error(
                     f'Error while migrating {model_type.__name__} {model.id} : {exception}')
+
+
+@brick_migration('0.7.3', short_description='Rename view config flagged to favorite and add run_brick_version to process_model. Simplify resource origin')
+class Migration073(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
+        migrator.rename_column_if_exists(ViewConfig, 'flagged', 'is_favorite')
+        migrator.rename_column_if_exists(TaskModel, 'brick_version', 'brick_version_on_create')
+        migrator.rename_column_if_exists(ProtocolModel, 'brick_version', 'brick_version_on_create')
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.brick_version_on_run)
+        migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.brick_version_on_run)
+        migrator.add_column_if_not_exists(Experiment, Experiment.creation_type)
+        migrator.migrate()
+
+        process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
+        for process_model in process_models:
+            if not process_model.brick_version_on_run:
+                process_model.brick_version_on_run = process_model.brick_version_on_create
+                process_model.save(skip_hook=True)
+
+        ResourceModel.update(origin=ResourceOrigin.GENERATED).where(
+            ResourceModel.origin.in_(["IMPORTED", "EXPORTED", "TRANSFORMED", "ACTIONS"])).execute()
+
+        if Experiment.column_exists('type'):
+            Experiment.get_db().execute_sql('UPDATE gws_experiment SET creation_type = "MANUAL" WHERE type = "EXPERIMENT"')
+            Experiment.get_db().execute_sql('UPDATE gws_experiment SET creation_type = "AUTO" WHERE type in ("TRANSFORMER", "IMPORTER", "EXPORTER", "FS_NODE_EXTRACTOR", "RESOURCE_DOWNLOADER", "ACTIONS")')
+            migrator: SqlMigrator = SqlMigrator(Experiment.get_db())
+            migrator.drop_column_if_exists(Experiment, 'type')
+            migrator.migrate()
