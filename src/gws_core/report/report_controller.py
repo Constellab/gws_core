@@ -88,13 +88,13 @@ def remove_experiment(
 @core_app.put("/report/{report_id}/validate/{project_id}", tags=["Report"], summary="Validate the report")
 def validate(report_id: str, project_id: Optional[str] = None,
              _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
-    return ReportService.validate_and_send_to_space(report_id, project_id).to_full_dto()
+    return ReportService.validate_and_send_to_space(report_id, project_id).to_dto()
 
 
 @core_app.put('/report/{report_id}/sync-with-space', tags=["Report"], summary="Sync the report with space")
 def sync_with_space(report_id: str,
                     _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
-    return ReportService.synchronize_with_space_by_id(report_id).to_full_dto()
+    return ReportService.synchronize_with_space_by_id(report_id).to_dto()
 
 
 ################################################# Image ########################################

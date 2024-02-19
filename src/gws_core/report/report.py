@@ -85,7 +85,6 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
             is_archived=self.is_archived
         )
 
-    # TODO make a separate route to get content
     def to_full_dto(self) -> ReportFullDTO:
         return ReportFullDTO(
             id=self.id,
