@@ -13,8 +13,8 @@ from gws_core.protocol.protocol_dto import ProtocolConfigDTO
 class ProtocolTemplateDTO(ModelWithUserDTO):
     name: str
     version: int
+    description: Optional[dict]
 
 
 class ProtocolTemplateFullDTO(ProtocolTemplateDTO):
     data: ProtocolConfigDTO
-    description: Optional[dict]

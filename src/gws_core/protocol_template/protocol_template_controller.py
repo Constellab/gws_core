@@ -14,8 +14,9 @@ from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.core_controller import core_app
-from gws_core.protocol_template.protocol_template_dto import (
-    ProtocolTemplateDTO, ProtocolTemplateFullDTO)
+from gws_core.protocol.protocol_dto import ProtocolConfigDTO
+from gws_core.protocol_template.protocol_template_dto import \
+    ProtocolTemplateDTO
 from gws_core.user.auth_service import AuthService
 
 from .protocol_template_service import ProtocolTemplateService
@@ -23,9 +24,17 @@ from .protocol_template_service import ProtocolTemplateService
 
 @core_app.get("/protocol-template/{id}", tags=["Protocol template"], summary="Get an protocol template")
 def get_by_id(id: str,
-              _=Depends(AuthService.check_user_access_token)) -> ProtocolTemplateFullDTO:
+              _=Depends(AuthService.check_user_access_token)) -> ProtocolTemplateDTO:
 
-    return ProtocolTemplateService.get_by_id_and_check(id=id).to_full_dto()
+    return ProtocolTemplateService.get_by_id_and_check(id=id).to_dto()
+
+
+@core_app.get("/protocol-template/{id}/graph", tags=["Protocol template"],
+              summary="Get the protocol template data by id")
+def get_protocol_template_graph(id: str,
+                                _=Depends(AuthService.check_user_access_token)) -> ProtocolConfigDTO:
+
+    return ProtocolTemplateService.get_by_id_and_check(id=id).get_protocol_config_dto()
 
 
 class UpdateProtocolTemplate(BaseModel):
@@ -36,9 +45,9 @@ class UpdateProtocolTemplate(BaseModel):
 @core_app.put("/protocol-template/{id}", tags=["Protocol template"], summary="Update protocol template")
 def update(id: str,
            update_protocol_template: UpdateProtocolTemplate,
-           _=Depends(AuthService.check_user_access_token)) -> ProtocolTemplateFullDTO:
+           _=Depends(AuthService.check_user_access_token)) -> ProtocolTemplateDTO:
     return ProtocolTemplateService.update(id=id, name=update_protocol_template.name,
-                                          description=update_protocol_template.description).to_full_dto()
+                                          description=update_protocol_template.description).to_dto()
 
 
 @core_app.delete("/protocol-template/{id}", tags=["Protocol template"], summary="Delete an protocol template")

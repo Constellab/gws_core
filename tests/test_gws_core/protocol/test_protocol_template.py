@@ -104,6 +104,7 @@ class TestProtocolTemplate(BaseTestCase):
         self.assertIsNotNone(template_db.get_template().links)
         self.assertIsNotNone(template_db.get_template().layout)
         self.assertIsNotNone(template_db.to_full_dto())
+        self.assertIsNotNone(template_db.get_protocol_config_dto())
 
         # update the template
         ProtocolTemplateService.update(id=template.id, name='new_name')
