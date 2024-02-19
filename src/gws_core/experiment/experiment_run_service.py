@@ -149,7 +149,7 @@ class ExperimentRunService():
 
             protocol_model.run_process(process_instance_name)
             protocol_model = protocol_model.refresh()
-            protocol_model.mark_as_partially_run()
+            protocol_model.refresh_status()
 
             return experiment
 

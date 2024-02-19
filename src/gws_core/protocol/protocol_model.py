@@ -95,7 +95,7 @@ class ProtocolModel(ProcessModel):
 
         # auto execute the source task
         for process in self.processes.values():
-            if process.is_source_task():
+            if process.is_auto_run() and process.is_runnable:
                 process.run()
 
         # re-propagate the resources (because source task has been executed)
@@ -505,35 +505,35 @@ class ProtocolModel(ProcessModel):
         return execution_time
 
     def has_finished_processes(self) -> bool:
-        """Return True if the protocol has finished processes (except the source and sink task)
+        """Return True if the protocol has finished processes (except the auto run processes)
 
         :return: True if the protocol has finished processes
         :rtype: bool
         """
         for process in self.processes.values():
-            if process.is_finished and not process.is_source_task() and not process.is_sink_task():
+            if process.is_finished and not process.is_auto_run():
                 return True
         return False
 
     def all_processes_are_success(self) -> bool:
-        """Return True if all the processes are in success (except the source and sink task)
+        """Return True if all the processes are in success
 
         :return: True if all the processes are in success
         :rtype: bool
         """
         for process in self.processes.values():
-            if not process.is_success and not process.is_source_task() and not process.is_sink_task():
+            if not process.is_success:
                 return False
         return True
 
     def all_processes_are_draft(self) -> bool:
-        """Return True if all the processes are in draft (except the source and sink task)
+        """Return True if all the processes are in draft
 
         :return: True if all the processes are in draft
         :rtype: bool
         """
         for process in self.processes.values():
-            if not process.is_draft and not process.is_source_task() and not process.is_sink_task():
+            if not process.is_draft and not process.is_auto_run():
                 return False
         return True
 
@@ -595,6 +595,11 @@ class ProtocolModel(ProcessModel):
 
         # check if there is a circular connexion
         self.get_all_next_processes(from_process_name, check_circular_connexion=True)
+
+        # run the next process if it is auto run
+        next_process = self.get_process(to_process_name)
+        if next_process.is_auto_run() and next_process.is_runnable:
+            next_process.run()
 
         return connector
 
@@ -1102,7 +1107,8 @@ class ProtocolModel(ProcessModel):
         self.status = ProcessStatus.RUNNING
         self.save()
 
-    def mark_as_partially_run(self):
+    def refresh_status(self):
+        """Refresh the status of the protocol based on the status of its processes """
 
         # check if there is any process that is finished
         if self.all_processes_are_draft():
@@ -1113,7 +1119,7 @@ class ProtocolModel(ProcessModel):
             self._mark_as_partially_run()
 
         if self.parent_protocol and (self.parent_protocol.is_finished or self.parent_protocol.is_partially_run):
-            self.parent_protocol.mark_as_partially_run()
+            self.parent_protocol.refresh_status()
 
         # when we reached the root protocol, mark the experiment as partially run
         if not self.parent_protocol and self.experiment:

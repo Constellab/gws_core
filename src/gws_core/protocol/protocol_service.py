@@ -122,7 +122,7 @@ class ProtocolService(BaseService):
         # save the new process
         process_model.save_full()
 
-        if process_model.is_source_task():
+        if process_model.is_auto_run() and process_model.is_runnable:
             process_model.run()
 
         # Refresh the protocol graph and save
@@ -234,7 +234,7 @@ class ProtocolService(BaseService):
         protocol_model.save_graph()
 
         # update the protocol model status
-        protocol_model.mark_as_partially_run()
+        protocol_model.refresh_status()
 
         # delete the process form the DB
         process_model.delete_instance()
@@ -260,7 +260,7 @@ class ProtocolService(BaseService):
         for process in processes_to_reset:
             process.reset()
 
-        protocol_model.mark_as_partially_run()
+        protocol_model.refresh_status()
 
         # Delete all the resources previously generated to clear the DB
         ResourceModel.delete_multiple_resources(process_resources)
@@ -298,8 +298,10 @@ class ProtocolService(BaseService):
         """
         protocol_update = ProtocolUpdate(protocol=protocol_model, process=process_model,
                                          connector=connector, protocol_updated=protocol_updated)
-        if protocol_model.is_finished:
-            protocol_model.mark_as_partially_run()
+
+        current_status = protocol_model.status
+        protocol_model.refresh_status()
+        if current_status != protocol_model.status:
             protocol_update.protocol_updated = True
 
         return protocol_update

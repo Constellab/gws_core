@@ -414,6 +414,11 @@ class ProcessModel(ModelWithUser):
         """
         return self.process_typing_name == Sink._typing_name
 
+    def is_auto_run(self) -> bool:
+        """Return true if the process is of type Source
+        """
+        return self.get_process_type().__auto_run__
+
     def get_last_message(self) -> Optional[ProgressBarMessageDTO]:
         """Return the last message of the process
         """
@@ -522,7 +527,7 @@ class ProcessModel(ModelWithUser):
             raise BadRequestException(GWSException.PROCESS_UPDATE_RUNNING_ERROR.value,
                                       GWSException.PROCESS_UPDATE_RUNNING_ERROR.name)
 
-        if error_if_finished and self.is_finished and not self.is_source_task():
+        if error_if_finished and self.is_finished and not self.is_auto_run():
             raise BadRequestException(GWSException.PROCESS_UPDATE_FISHINED_ERROR.value,
                                       GWSException.PROCESS_UPDATE_FISHINED_ERROR.name)
 

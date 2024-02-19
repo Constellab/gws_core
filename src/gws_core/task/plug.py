@@ -39,6 +39,8 @@ class Source(Task):
         'resource_id': StrParam(optional=True, short_description="The id of the resource"),
     }
 
+    __auto_run__: bool = True
+
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         r_id: str = params.get_value(Source.config_name)
         if not r_id:
@@ -70,6 +72,8 @@ class Sink(Task):
     config_specs: ConfigSpecs = {
         'flag_resource': BoolParam(default_value=True, human_name="Check to flag the resource provided in the output")
     }
+
+    __auto_run__: bool = True
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
