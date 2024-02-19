@@ -122,9 +122,6 @@ class ProtocolService(BaseService):
         # save the new process
         process_model.save_full()
 
-        if process_model.is_auto_run() and process_model.is_runnable:
-            process_model.run()
-
         # Refresh the protocol graph and save
         protocol_model.save_graph()
 

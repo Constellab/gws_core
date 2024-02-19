@@ -94,9 +94,7 @@ class ProtocolModel(ProcessModel):
         self._reset_iofaces()
 
         # auto execute the source task
-        for process in self.processes.values():
-            if process.is_auto_run() and process.is_runnable:
-                process.run()
+        self.run_auto_run_processes()
 
         # re-propagate the resources (because source task has been executed)
         # and save processes
@@ -212,7 +210,18 @@ class ProtocolModel(ProcessModel):
         self._run_before_task()
         self.mark_as_started()
         self._run_process(process)
+
+        # auto run the next process if it is auto run
+        self.run_auto_run_processes()
+
         self._run_after_task()
+
+    def run_auto_run_processes(self) -> None:
+        """Run all the auto run processes of the protocol
+        """
+        for process in self.processes.values():
+            if process.is_auto_run() and process.is_runnable:
+                self._run_process(process)
 
     def _run_protocol(self) -> None:
         """
@@ -319,6 +328,9 @@ class ProtocolModel(ProcessModel):
 
         self._add_process_model(
             process_model=process_model, instance_name=instance_name)
+
+        # run the next process if it is auto run
+        self.run_auto_run_processes()
 
     def _add_process_model(self, process_model: ProcessModel, instance_name: str = None) -> None:
         """
@@ -597,9 +609,7 @@ class ProtocolModel(ProcessModel):
         self.get_all_next_processes(from_process_name, check_circular_connexion=True)
 
         # run the next process if it is auto run
-        next_process = self.get_process(to_process_name)
-        if next_process.is_auto_run() and next_process.is_runnable:
-            next_process.run()
+        self.run_auto_run_processes()
 
         return connector
 
