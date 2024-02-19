@@ -16,7 +16,7 @@ from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from ..core.classes.search_builder import SearchParams
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
-from .report_dto import ReportDTO, ReportFullDTO, ReportImageDTO, ReportSaveDTO
+from .report_dto import ReportDTO, ReportImageDTO, ReportSaveDTO
 from .report_service import ReportService
 
 
@@ -54,8 +54,8 @@ def update_project(report_id: str,
 
 
 @core_app.put("/report/{report_id}/content", tags=["Report"], summary="Update a report content")
-def update_content(report_id: str, content: RichTextDTO, _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
-    return ReportService.update_content(report_id, content).to_dto()
+def update_content(report_id: str, content: RichTextDTO, _=Depends(AuthService.check_user_access_token)) -> RichTextDTO:
+    return ReportService.update_content(report_id, content).content
 
 
 @core_app.put("/report/{report_id}/content/add-view/{view_config_id}", tags=["Report"],
@@ -87,13 +87,13 @@ def remove_experiment(
 
 @core_app.put("/report/{report_id}/validate/{project_id}", tags=["Report"], summary="Validate the report")
 def validate(report_id: str, project_id: Optional[str] = None,
-             _=Depends(AuthService.check_user_access_token)) -> ReportFullDTO:
+             _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
     return ReportService.validate_and_send_to_space(report_id, project_id).to_full_dto()
 
 
 @core_app.put('/report/{report_id}/sync-with-space', tags=["Report"], summary="Sync the report with space")
 def sync_with_space(report_id: str,
-                    _=Depends(AuthService.check_user_access_token)) -> ReportFullDTO:
+                    _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
     return ReportService.synchronize_with_space_by_id(report_id).to_full_dto()
 
 
@@ -119,20 +119,25 @@ def delete_image(filename: str,
 ################################################# GET ########################################
 
 
-@core_app.get("/report/{id}", tags=["Report"], summary="Get a report", response_model=None)
-def get_by_id(id: str, _=Depends(AuthService.check_user_access_token)) -> ReportFullDTO:
-    return ReportService.get_by_id_and_check(id).to_full_dto()
+@core_app.get("/report/{id_}", tags=["Report"], summary="Get a report")
+def get_by_id(id_: str, _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
+    return ReportService.get_by_id_and_check(id_).to_dto()
+
+
+@core_app.get("/report/{id_}/content", tags=["Report"], summary="Get the report content",)
+def get_content(id_: str, _=Depends(AuthService.check_user_access_token)) -> RichTextDTO:
+    return ReportService.get_by_id_and_check(id_).content
 
 
 @core_app.get("/report/experiment/{experiment_id}", tags=["Report"],
-              summary="Find reports of an experiment", response_model=None)
+              summary="Find reports of an experiment")
 def get_by_experiment(experiment_id: str, _=Depends(AuthService.check_user_access_token)) -> List[ReportDTO]:
     reports = ReportService.get_by_experiment(experiment_id)
     return [report.to_dto() for report in reports]
 
 
 @core_app.get("/report/{report_id}/experiments", tags=["Report"],
-              summary="Find experiments of a report", response_model=None)
+              summary="Find experiments of a report")
 def get_experiment_by_report(
         report_id: str, _=Depends(AuthService.check_user_access_token)) -> List[ExperimentDTO]:
     experiments = ReportService.get_experiments_by_report(report_id)
@@ -175,11 +180,11 @@ def get_by_resource(resource_id: str,
 
 
 ################################################# ARCHIVE ########################################
-@core_app.put("/report/{id}/archive", tags=["Report"], summary="Archive a report")
-def archive(id: str, _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
-    return ReportService.archive_report(id).to_dto()
+@core_app.put("/report/{id_}/archive", tags=["Report"], summary="Archive a report")
+def archive(id_: str, _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
+    return ReportService.archive_report(id_).to_dto()
 
 
-@core_app.put("/report/{id}/unarchive", tags=["Report"], summary="Unarchive a report")
-def unarchive(id: str, _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
-    return ReportService.unarchive_report(id).to_dto()
+@core_app.put("/report/{id_}/unarchive", tags=["Report"], summary="Unarchive a report")
+def unarchive(id_: str, _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
+    return ReportService.unarchive_report(id_).to_dto()
