@@ -21,6 +21,7 @@ from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.lab.system_dto import LabInfoDTO
+from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.project.project_service import ProjectService
 from gws_core.resource.kv_store import KVStore
@@ -104,12 +105,18 @@ class SystemService:
 
             for experiment in experiments:
                 if experiment.get_process_status() != ExperimentStatus.RUNNING:
-                    experiment.mark_as_error(ProcessErrorInfo(
-                        detail="The experiment process was not found.",
-                        unique_code="PROCESS_NOT_FOUND",
-                        context=None,
-                        instance_id=None
-                    ))
+                    Logger.info(f"Marking experiment {experiment.id} as stopped because the process is not running")
+                    running_process = experiment.protocol_model.get_running_task()
+
+                    error_text = "The lab was stopped while the experiment was running. It killed the experiment's process. Marking the experiment as stopped."
+                    if running_process is not None:
+                        running_process.mark_as_error_and_parent(ProcessRunException.from_exception(
+                            process_model=running_process, exception=Exception(error_text),
+                            error_prefix="Lab init"))
+                    else:
+                        experiment.mark_as_error(ProcessErrorInfo(
+                            detail="The lab was stopped while the experiment was running. It killed the experiment's process. Marking the experiment as stopped.",
+                            unique_code="LAB_STOPPED_WHILE_RUNNING", context=None, instance_id=None))
         except Exception as err:
             Logger.error(
                 f'[SystemService] Error while checking running experiments: {err}')
