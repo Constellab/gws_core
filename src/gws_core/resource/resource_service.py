@@ -16,6 +16,7 @@ from gws_core.project.project import Project
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
+from gws_core.resource.view.view_types import exluded_views_in_report
 from gws_core.resource.view.view_dto import ResourceViewMetadatalDTO
 from gws_core.resource.view.view_result import CallViewResult
 from gws_core.resource.view.view_runner import ViewRunner
@@ -222,6 +223,17 @@ class ResourceService(BaseService):
         resource_model: ResourceModel = cls.get_by_id_and_check(
             resource_model_id)
         return cls.call_view_on_resource_model(resource_model, view_name, config_values, save_view_config)
+
+    @classmethod
+    def get_view_json_file(cls, resource_model_id: str,
+                            view_name: str, config_values: ConfigParamsDict,
+                            save_view_config: bool = False) -> any:
+        resource_model: ResourceModel = cls.get_by_id_and_check(resource_model_id)
+        view = cls.call_view_on_resource_model(resource_model, view_name, config_values, save_view_config).view
+        if view['type'] in list(map(lambda x: x.value, exluded_views_in_report)):
+            raise BadRequestException(
+                f"View '{view_name}' is not supported to be exported as a file.")
+        return view
 
     @classmethod
     def call_view_on_resource_model(cls, resource_model: ResourceModel,

@@ -7,6 +7,7 @@ import json
 from io import StringIO
 from typing import Any
 
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import Response, StreamingResponse
 from xmltodict import unparse
 
@@ -27,6 +28,21 @@ class ResponseHelper():
         str_json = json.dumps(json_, indent=4)
 
         return ResponseHelper.create_file_response_from_str(str_json, file_name, media_type)
+
+    @staticmethod
+    def create_file_response_from_object(obj: Any, file_name: str = 'file.json',
+                                       media_type: str = 'application/json') -> StreamingResponse:
+        """
+        Create a StreamingResponse from an object
+
+        :param obj: the object to stream
+        :param file_name: the name of the file
+        :param media_type: the media type of the file
+        :return: the StreamingResponse
+        """
+        str_json = jsonable_encoder(obj)
+
+        return ResponseHelper.create_file_response_from_json(str_json, file_name, media_type)
 
     @staticmethod
     def create_file_response_from_str(text: str, file_name: str = 'file.txt',
