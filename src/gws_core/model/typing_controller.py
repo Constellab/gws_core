@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional
 
 from fastapi.param_functions import Depends
 from pydantic import BaseModel
@@ -11,10 +11,10 @@ from pydantic import BaseModel
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.model.typing_dict import TypingObjectType
-from gws_core.model.typing_dto import TypingDTO, TypingFullDTO
+from gws_core.model.typing_dto import TypingDTO
 from gws_core.model.typing_service import TypingService
 from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
-from gws_core.resource.resource_dto import ResourceTypingDTO
+from gws_core.resource.resource_typing_dto import ResourceTypingDTO
 from gws_core.task.task_dto import TaskTypingDTO
 from gws_core.user.auth_service import AuthService
 

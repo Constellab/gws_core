@@ -46,12 +46,8 @@ class ResourceViewMetaData():
             self.method_name, self.view_type, self.human_name, self.short_description, self.method_specs, self.default_view,
             self.hide)
 
-    # TODO TO FIX
-    def to_complete_json(self, resource: Resource = None) -> dict:
-        return self.to_dto(resource)
-
     def to_dto(self, resource: Resource = None) -> ResourceViewMetadatalDTO:
-        specs_dict = {key: value for key, value in self._get_view_specs(resource, skip_private=True).items()}
+        specs_dict = {key: value.to_dto() for key, value in self._get_view_specs(resource, skip_private=True).items()}
         return ResourceViewMetadatalDTO(
             method_name=self.method_name,
             view_type=self.view_type._type,
