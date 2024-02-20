@@ -122,6 +122,9 @@ class ProtocolService(BaseService):
         # save the new process
         process_model.save_full()
 
+        # run the next process if it is auto run
+        protocol_model.run_auto_run_processes()
+
         # Refresh the protocol graph and save
         protocol_model.save_graph()
 
@@ -326,6 +329,9 @@ class ProtocolService(BaseService):
         protocol_model.add_connectors(connectors)
         protocol_model.save_graph()
 
+        # run the next process if it is auto run
+        protocol_model.run_auto_run_processes()
+
         return cls._on_protocol_object_updated(protocol_model)
 
     @classmethod
@@ -336,6 +342,9 @@ class ProtocolService(BaseService):
         connector = protocol_model.add_connector(from_process_name, from_port_name,
                                                  to_process_name, to_port_name)
         protocol_model.save_graph()
+
+        # run the next process if it is auto run
+        protocol_model.run_auto_run_processes()
 
         return cls._on_connector_updated(protocol_model, connector, 'create')
 

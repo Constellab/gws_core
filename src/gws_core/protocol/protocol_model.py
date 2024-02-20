@@ -329,9 +329,6 @@ class ProtocolModel(ProcessModel):
         self._add_process_model(
             process_model=process_model, instance_name=instance_name)
 
-        # run the next process if it is auto run
-        self.run_auto_run_processes()
-
     def _add_process_model(self, process_model: ProcessModel, instance_name: str = None) -> None:
         """
         Adds a process to the protocol.
@@ -549,6 +546,19 @@ class ProtocolModel(ProcessModel):
                 return False
         return True
 
+    def get_running_task(self) -> Optional[ProcessModel]:
+        """Return the running process, go through all the sub protocols
+
+        :return: the running process
+        :rtype: ProcessModel
+        """
+        for process in self.processes.values():
+            if process.is_running:
+                if isinstance(process, ProtocolModel):
+                    return process.get_running_task()
+                return process
+        return None
+
     def _check_instance_name(self, instance_name: str) -> None:
         if instance_name not in self.processes:
             raise BadRequestException(
@@ -607,9 +617,6 @@ class ProtocolModel(ProcessModel):
 
         # check if there is a circular connexion
         self.get_all_next_processes(from_process_name, check_circular_connexion=True)
-
-        # run the next process if it is auto run
-        self.run_auto_run_processes()
 
         return connector
 
