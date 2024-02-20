@@ -750,6 +750,8 @@ class ProtocolService(BaseService):
             live_task_version_id)
         conf_params = dict()
         conf_params['code'] = community_live_task_version.code
+        if community_live_task_version.params is not None and len(community_live_task_version.params) > 0:
+            conf_params['params'] = community_live_task_version.params
         if community_live_task_version.environment is not None and community_live_task_version.environment != '':
             conf_params['env'] = community_live_task_version.environment
         protocol_update = cls.add_process_to_protocol_id(
