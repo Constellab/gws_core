@@ -62,19 +62,25 @@ class Connector:
             }
         })
 
-    def propagate_resource(self) -> None:
+    def propagate_resource(self) -> bool:
         """
         Propagate the resource from the output port to the input port.
         """
 
         if not self.left_port.resource_provided:
-            return
+            return False
+
+        # if the resource was already propagated, we don't propagate it again
+        if self.right_port.resource_provided and self.right_port.resource_model.id == self.left_port.resource_model.id:
+            return False
 
         # Get the resource from the output port
         resource = self.left_port.resource_model
 
         # Set the resource to the input port
         self.right_port.resource_model = resource
+
+        return True
 
     @property
     def left_port(self) -> OutPort:

@@ -729,12 +729,14 @@ class ProtocolModel(ProcessModel):
             if item.is_left_connected_to(left_process_name, left_process_port_name)]
 
     def propagate_resources(self) -> None:
+        affected_processes: Set[ProcessModel] = set()
         for connector in self.connectors:
-            connector.propagate_resource()
+            if connector.propagate_resource():
+                affected_processes.add(connector.right_process)
 
         # save processes to update inputs and outputs
-        for process in self.processes.values():
-            process.save()
+        for process in affected_processes:
+                process.save()
 
     ############################### INPUTS #################################
 
