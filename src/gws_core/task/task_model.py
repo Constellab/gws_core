@@ -216,6 +216,7 @@ class TaskModel(ProcessModel):
                                                      error_prefix='Error during check after task') from err
 
         self._run_after_task()
+        self.mark_as_success()
 
     def _run_before_task(self) -> None:
         super()._run_before_task()

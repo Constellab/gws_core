@@ -150,11 +150,6 @@ class ProcessModel(ModelWithUser):
         self.data["inputs"] = self.inputs.to_json()
         self.data["outputs"] = self.outputs.to_json()
 
-    def save_after_task(self) -> None:
-        """Method called after the task to save the process
-        """
-        self.save()
-
     def save(self, *args, **kwargs) -> 'ProcessModel':
         """Override save to save the inputs and outputs
         """
@@ -319,13 +314,8 @@ class ProcessModel(ModelWithUser):
         self.save()
 
     def _run_after_task(self):
-        self.mark_as_success()
-
         # Set the data outputs dict
         self.data["outputs"] = self.outputs.to_json()
-
-        # Save the process (to save the new data)
-        self.save_after_task()
 
     def check_user_privilege(self, user: User) -> None:
         """Throw an exception if the user cand execute the protocol

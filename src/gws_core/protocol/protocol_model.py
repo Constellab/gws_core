@@ -291,13 +291,9 @@ class ProtocolModel(ProcessModel):
             return
 
         self._propagate_outerfaces()
+        self.refresh_status(refresh_parent=False)
 
-        super()._run_after_task()
-
-    def save_after_task(self) -> None:
-        """Method called after the task to save the process
-        """
-        # override the method to update the graph before saving
+        # save the protocol graph
         self.save_graph()
 
     ############################### PROCESS #################################
@@ -1127,7 +1123,7 @@ class ProtocolModel(ProcessModel):
         self.status = ProcessStatus.RUNNING
         self.save()
 
-    def refresh_status(self):
+    def refresh_status(self, refresh_parent: bool = True):
         """Refresh the status of the protocol based on the status of its processes """
 
         # check if there is any process that is finished
@@ -1138,17 +1134,19 @@ class ProtocolModel(ProcessModel):
         else:
             self._mark_as_partially_run()
 
-        if self.parent_protocol and (self.parent_protocol.is_finished or self.parent_protocol.is_partially_run):
-            self.parent_protocol.refresh_status()
+        if refresh_parent:
+            if self.parent_protocol and (
+                    self.parent_protocol.is_finished or self.parent_protocol.is_partially_run):
+                self.parent_protocol.refresh_status()
 
-        # when we reached the root protocol, mark the experiment as partially run
-        if not self.parent_protocol and self.experiment:
-            if self.is_partially_run and not self.experiment.is_partially_run:
-                self.experiment.mark_as_partially_run()
-            elif self.is_draft and not self.experiment.is_draft:
-                self.experiment.mark_as_draft()
-            elif self.is_success and not self.experiment.is_success:
-                self.experiment.mark_as_success()
+            # when we reached the root protocol, mark the experiment as partially run
+            if not self.parent_protocol and self.experiment:
+                if self.is_partially_run and not self.experiment.is_partially_run:
+                    self.experiment.mark_as_partially_run()
+                elif self.is_draft and not self.experiment.is_draft:
+                    self.experiment.mark_as_draft()
+                elif self.is_success and not self.experiment.is_success:
+                    self.experiment.mark_as_success()
 
     def _mark_as_partially_run(self):
         if self.is_partially_run:

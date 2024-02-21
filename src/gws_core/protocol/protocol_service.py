@@ -260,13 +260,12 @@ class ProtocolService(BaseService):
         for process in processes_to_reset:
             process.reset()
 
-        protocol_model.refresh_status()
-
         # Delete all the resources previously generated to clear the DB
         ResourceModel.delete_multiple_resources(process_resources)
 
         # re-propagate the resources because some of them might be deleted by the reset
         protocol_model.propagate_resources()
+        protocol_model.refresh_status()
 
         # add all the sub protocols that were resetted
         sub_resetted_protocols: Set[ProtocolModel] = {
