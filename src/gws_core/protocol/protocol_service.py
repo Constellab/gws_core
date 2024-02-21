@@ -346,9 +346,10 @@ class ProtocolService(BaseService):
         # run the next process if it is auto run
         protocol_model.run_auto_run_processes()
 
-        return cls._on_connector_updated(protocol_model, connector, 'create')
+        return cls._on_connector_updated(protocol_model, connector)
 
     @classmethod
+    @transaction()
     def delete_connector_of_protocol(
             cls, protocol_id: str, dest_process_name: str, dest_process_port_name: str) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
@@ -356,37 +357,24 @@ class ProtocolService(BaseService):
 
         protocol_model.check_is_updatable()
 
-        connector = protocol_model.delete_connector_from_right(
-            dest_process_name, dest_process_port_name)
+        connector = protocol_model.delete_connector_from_right(dest_process_name, dest_process_port_name)
         protocol_model.save_graph()
 
-        return cls._on_connector_updated(protocol_model, connector, 'delete')
+        return cls._on_connector_updated(protocol_model, connector)
 
     @classmethod
-    def _on_connector_updated(cls, protocol: ProtocolModel, connector: Optional[Connector],
-                              mode: Literal['create', 'delete']) -> ProtocolUpdate:
+    def _on_connector_updated(cls, protocol: ProtocolModel, connector: Optional[Connector]) -> ProtocolUpdate:
         if connector is None:
             return ProtocolUpdate(protocol=protocol)
 
         # reset the right process of the connector if it is finished
         connector.right_process.check_is_updatable()
 
-        protocol_updated = False
-
-        if mode == 'create':
-            # automatically propagate the resource if the left port has a resource
-            if connector.left_port.resource_model:
-                connector.propagate_resource()
-                # save the right process to save its inputs
-                connector.right_process.save()
-                protocol_updated = True
-        else:
-            # in delete mode we always consider the protocol as updated
-            # because the next port is resetted
-            protocol_updated = True
+        # save the right process to save its inputs (new or deleted)
+        connector.right_process.save()
 
         return cls._on_protocol_object_updated(
-            protocol_model=protocol, connector=connector, protocol_updated=protocol_updated)
+            protocol_model=protocol, connector=connector, protocol_updated=True)
 
     ########################## INTERFACE & OUTERFACE #####################
 

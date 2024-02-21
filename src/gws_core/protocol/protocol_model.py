@@ -205,7 +205,7 @@ class ProtocolModel(ProcessModel):
 
         if not self.process_is_ready(process):
             raise BadRequestException(
-                "The process cannot be run because it is not ready. Where the previous process run and are the inputs provided ?")
+                "The process cannot be run because it is not ready. Are the previous processes run and are the inputs provided ?")
 
         self._run_before_task()
         self.mark_as_started()
@@ -614,6 +614,9 @@ class ProtocolModel(ProcessModel):
 
         connector = self._add_connector(from_process_name, from_port_name,
                                         to_process_name, to_port_name)
+
+        # propagate the resource if the left port has a resource
+        connector.propagate_resource()
 
         # check if there is a circular connexion
         self.get_all_next_processes(from_process_name, check_circular_connexion=True)
