@@ -448,7 +448,7 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
 
     def export_protocol(self) -> ExperimentProtocolDTO:
         return ExperimentProtocolDTO(
-            version=1,  # version of the protocol json format
+            version=2,  # version of the protocol json format
             data=self.protocol_model.to_config_dto()
         )
 

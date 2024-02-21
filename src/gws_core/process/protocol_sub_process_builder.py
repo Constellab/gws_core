@@ -116,9 +116,13 @@ class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
         if issubclass(process_type, Task):
             return ProcessFactory.create_task_model_from_type(process_type, config_params, instance_name,
                                                               process_dto.inputs,
-                                                              process_dto.outputs)
+                                                              process_dto.outputs,
+                                                              process_dto.name)
         elif issubclass(process_type, Protocol):
-            return ProcessFactory.create_protocol_model_from_type(process_type, config_params, instance_name)
+            # return ProcessFactory.create_protocol_empty(instance_name)
+            # TODO TO CHECK
+            return ProcessFactory.create_protocol_model_from_type(process_type, config_params,
+                                                                  instance_name, process_dto.name)
         else:
             name = process_type.__name__ if process_type.__name__ is not None else str(
                 process_type)

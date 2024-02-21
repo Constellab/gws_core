@@ -12,7 +12,7 @@ from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.io.io_dto import IODTO
 from gws_core.io.io_specs import IOSpecsDTO
 from gws_core.model.typing_dto import TypingFullDTO
-from gws_core.process.process_dto import ProcessDTO
+from gws_core.process.process_dto import ProcessDTO, ProcessTypeDTO
 from gws_core.process.process_types import ProcessMinimumDTO
 from gws_core.protocol.protocol_layout import ProtocolLayoutDTO
 
@@ -58,19 +58,18 @@ class ProtocolConfigDTO(BaseModelDTO):
     outerfaces: Dict[str, InterfaceDTO]
     layout: Optional[ProtocolLayoutDTO]
 
+
 # set this type here to avoid circular import files
-
-
 class ProcessConfigDTO(BaseModelDTO):
     process_typing_name: str
     instance_name: str
     config: ConfigSimpleDTO
-    human_name: Optional[str]
-    short_description: Optional[str]
+    name: str
     brick_version: str
     inputs: IODTO
     outputs: IODTO
     status: str
+    process_type: ProcessTypeDTO
     # for sub protocol, recursive graph
     graph: Optional[ProtocolConfigDTO] = None
 

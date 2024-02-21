@@ -14,7 +14,7 @@ from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.model.typing import Typing
 from gws_core.model.typing_dict import TypingStatus
-from gws_core.process.process_dto import ProcessDTO
+from gws_core.process.process_dto import ProcessDTO, ProcessTypeDTO
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.task.plug import Sink, Source
@@ -70,6 +70,9 @@ class ProcessModel(ModelWithUser):
 
     data: Dict[str, Any] = JSONField(null=True)
     is_archived = BooleanField(default=False, index=True)
+
+    # name of the process set by the user
+    name = CharField(null=True)
 
     _experiment: Experiment = None
     _parent_protocol: ProtocolModel = None
@@ -184,6 +187,10 @@ class ProcessModel(ModelWithUser):
     def set_process_type(self, typing_name: str) -> None:
         self.process_typing_name = typing_name
         self.brick_version_on_create = self._get_type_brick_version()
+
+        task_type: Type[Process] = self.get_process_type()
+        Logger.info(f"Setting process name of {self.id} to {task_type._human_name}")
+        # self.name = task_type._human_name
 
     def _get_type_brick_version(self) -> str:
         typing: Typing = TypingManager.get_typing_from_name_and_check(self.process_typing_name)
@@ -346,17 +353,6 @@ class ProcessModel(ModelWithUser):
     def is_protocol(self) -> bool:
         pass
 
-    def get_info(self) -> str:
-        """Return basic information for this process (usefull for error message)
-        """
-
-        info: str = ""
-
-        if self.instance_name:
-            info += f"'{self.instance_name}' "
-
-        return f"{info} ({self.get_process_type().classname()})"
-
     def get_instance_name_context(self) -> str:
         """ return the instance name in the context
         """
@@ -365,22 +361,12 @@ class ProcessModel(ModelWithUser):
         if self.parent_protocol_id is None:
             return "Main protocol"
 
-        process_type: Type[Process] = TypingManager.get_type_from_name(
-            self.process_typing_name)
-
-        if process_type:
-            return process_type._human_name
-
-        return self.instance_name
+        return self.get_name()
 
     def get_name(self) -> str:
         """Return the name of the process
         """
-        process_typing: Typing = self.get_process_typing()
-        if process_typing:
-            return process_typing.human_name
-
-        return self.instance_name
+        return self.name
 
     def get_process_type(self) -> Type[Process]:
         process_type = TypingManager.get_type_from_name(self.process_typing_name)
@@ -460,13 +446,16 @@ class ProcessModel(ModelWithUser):
             is_protocol=self.is_protocol(),
             inputs=self.inputs.to_dto(),
             outputs=self.outputs.to_dto(),
-            type_status=TypingStatus.OK
+            type_status=TypingStatus.OK,
+            name=self.name
         )
 
         process_typing: Typing = self.get_process_typing()
         if process_typing:
-            process_dto.human_name = process_typing.human_name
-            process_dto.short_description = process_typing.short_description
+            process_dto.process_type = ProcessTypeDTO(
+                human_name=process_typing.human_name,
+                short_description=process_typing.short_description
+            )
             process_dto.type_status = process_typing.get_type_status()
         else:
             process_dto.type_status = TypingStatus.UNAVAILABLE
@@ -485,12 +474,15 @@ class ProcessModel(ModelWithUser):
             process_typing_name=self.process_typing_name,
             instance_name=self.instance_name,
             config=self.config.to_simple_dto(),
-            human_name=process_typing.human_name,
-            short_description=process_typing.short_description,
+            name=self.name,
             brick_version=self.brick_version_on_create,
             inputs=self.inputs.to_dto(),
             outputs=self.outputs.to_dto(),
-            status=self.status.value
+            status=self.status.value,
+            process_type=ProcessTypeDTO(
+                human_name=process_typing.human_name,
+                short_description=process_typing.short_description
+            )
         )
 
     ########################### STATUS MANAGEMENT ##################################

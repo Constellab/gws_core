@@ -22,7 +22,6 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.credentials.credentials import Credentials
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_enums import ExperimentCreationType
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.file_store import FileStore
@@ -36,6 +35,7 @@ from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor import Monitor
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
+from gws_core.process.process_factory import ProcessFactory
 from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar
 from gws_core.project.project import Project
@@ -1030,6 +1030,54 @@ class Migration073(BrickMigration):
         if Experiment.column_exists('type'):
             Experiment.get_db().execute_sql('UPDATE gws_experiment SET creation_type = "MANUAL" WHERE type = "EXPERIMENT"')
             Experiment.get_db().execute_sql('UPDATE gws_experiment SET creation_type = "AUTO" WHERE type in ("TRANSFORMER", "IMPORTER", "EXPORTER", "FS_NODE_EXTRACTOR", "RESOURCE_DOWNLOADER", "ACTIONS")')
-            migrator: SqlMigrator = SqlMigrator(Experiment.get_db())
+            migrator = SqlMigrator(Experiment.get_db())
             migrator.drop_column_if_exists(Experiment, 'type')
             migrator.migrate()
+
+
+@brick_migration('0.7.5', short_description='Add name to process model')
+class Migration075(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(TaskModel.get_db())
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.name)
+        migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.name)
+        migrator.migrate()
+
+        process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
+        for process_model in process_models:
+            if not process_model.name:
+                process_type = TypingManager.get_typing_from_name(process_model.process_typing_name)
+                if process_type:
+                    process_model.name = process_type.human_name
+                else:
+                    process_model.name = process_model.instance_name
+                process_model.save(skip_hook=True)
+
+        # migrate protocol template to new name
+        protocol_templates: List[ProtocolTemplate] = list(ProtocolTemplate.select())
+        for protocol_template in protocol_templates:
+            cls.migrate_protocol_template_recur(protocol_template.data)
+            protocol_template.save(skip_hook=True)
+
+    @classmethod
+    def migrate_protocol_template_recur(cls, protocol_dto: dict) -> None:
+        for process_dto in protocol_dto["nodes"].values():
+            if "name" not in process_dto:
+                process_dto["name"] = process_dto["human_name"]
+
+            if "process_type" not in process_dto:
+                process_dto["process_type"] = {
+                    "human_name": process_dto["human_name"],
+                    "short_description": process_dto["short_description"]
+                }
+
+            if "human_name" in process_dto:
+                del process_dto["human_name"]
+            if "short_description" in process_dto:
+                del process_dto["short_description"]
+
+            if process_dto.get('graph') is not None and "nodes" in process_dto["graph"]:
+                cls.migrate_protocol_template_recur(process_dto["graph"])

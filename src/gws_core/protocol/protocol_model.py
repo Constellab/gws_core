@@ -370,6 +370,8 @@ class ProtocolModel(ProcessModel):
                 self._processes[key].data = process_model.data
                 self._processes[key].config.set_values(
                     process_model.config.get_values())
+                # TODO TO CHECK
+                # self._processes[key].name = process_model.name
             # If it's a new process
             else:
                 self._add_process_model(process_model, key)
@@ -1038,7 +1040,7 @@ class ProtocolModel(ProcessModel):
             links=[connector.to_dto() for connector in self.connectors],
             interfaces={key: interface.to_dto() for key, interface in self.interfaces.items()},
             outerfaces={key: outerface.to_dto() for key, outerface in self.outerfaces.items()},
-            layout=self.layout.to_dto() if self.layout else {}
+            layout=self.layout.to_dto() if self.layout else None
         )
 
     def to_protocol_minimum_dto(self) -> ProtocolMinimumDTO:

@@ -61,7 +61,6 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
 
     def to_full_dto(self) -> ProtocolTemplateFullDTO:
         # create a new protocol to refresh the template info ()
-        protocol_model = ProcessFactory.create_protocol_model_from_graph(self.get_template())
         return ProtocolTemplateFullDTO(
             id=self.id,
             created_at=self.created_at,
@@ -70,7 +69,7 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
             last_modified_by=self.last_modified_by.to_dto(),
             name=self.name,
             version=self.version,
-            data=protocol_model.to_protocol_config_dto(),
+            data=self.get_protocol_config_dto(),
             description=self.description
         )
 

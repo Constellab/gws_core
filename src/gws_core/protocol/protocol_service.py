@@ -686,6 +686,19 @@ class ProtocolService(BaseService):
                                     process=process_model)
         return new_update
 
+    ########################## OTHERS  #####################
+
+    @classmethod
+    def rename_process(cls, protocol_id: str, process_instance_name: str,
+                       custom_name: str) -> ProcessModel:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        process_model: ProcessModel = protocol_model.get_process(process_instance_name)
+        process_model.name = custom_name
+        process_model.save()
+
+        return process_model
+
     ########################## PROTOCOL TEMPLATE #####################
 
     @classmethod

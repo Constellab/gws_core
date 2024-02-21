@@ -7,11 +7,17 @@ from datetime import datetime
 from typing import Optional
 
 from gws_core.config.config_dto import ConfigDTO
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.io.io_dto import IODTO
 from gws_core.model.typing_dict import TypingStatus
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.progress_bar.progress_bar_dto import ProgressBarDTO
+
+
+class ProcessTypeDTO(BaseModelDTO):
+    human_name: Optional[str] = None
+    short_description: Optional[str] = None
 
 
 class ProcessDTO(ModelWithUserDTO):
@@ -31,6 +37,6 @@ class ProcessDTO(ModelWithUserDTO):
     is_protocol: bool
     inputs: IODTO
     outputs: IODTO
-    human_name: Optional[str] = None
-    short_description: Optional[str] = None
     type_status: TypingStatus
+    process_type: Optional[ProcessTypeDTO] = None
+    name: Optional[str] = None

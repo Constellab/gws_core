@@ -5,6 +5,7 @@
 
 from typing import Dict, List, Type
 
+from gws_core.core.utils.logger import Logger
 from gws_core.io.io_dto import IODTO
 from gws_core.protocol.protocol_dto import ProtocolConfigDTO
 from gws_core.protocol.protocol_layout import ProtocolLayout
@@ -43,7 +44,8 @@ class ProcessFactory():
             config_params: ConfigParamsDict = None,
             instance_name: str = None,
             inputs_dto: IODTO = None,
-            outputs_dto: IODTO = None) -> TaskModel:
+            outputs_dto: IODTO = None,
+            name: str = None) -> TaskModel:
         if not issubclass(task_type, Task):
             name = task_type.__name__ if task_type.__name__ is not None else str(
                 task_type)
@@ -74,7 +76,9 @@ class ProcessFactory():
             config.set_values(config_params)
 
         cls._init_process_model(process_model=task_model,
-                                config=config, instance_name=instance_name)
+                                config=config,
+                                instance_name=instance_name,
+                                name=name)
 
         return task_model
 
@@ -91,7 +95,8 @@ class ProcessFactory():
     @classmethod
     def create_protocol_model_from_type(cls, protocol_type: Type[Protocol],
                                         config_params: ConfigParamsDict = None,
-                                        instance_name: str = None) -> ProtocolModel:
+                                        instance_name: str = None,
+                                        name: str = None) -> ProtocolModel:
 
         try:
             if not issubclass(protocol_type, Protocol):
@@ -109,7 +114,8 @@ class ProcessFactory():
 
             config: Config = Config()
             cls._init_process_model(
-                process_model=protocol_model, config=config, instance_name=instance_name)
+                process_model=protocol_model, config=config,
+                instance_name=instance_name, name=name)
 
             protocol: Protocol = protocol_type.instantiate_protocol()
             create_config: ProtocolCreateConfig = protocol.get_create_config()
@@ -127,13 +133,23 @@ class ProcessFactory():
                         'Task', key, err)
 
             # create the protocol from a statis protocol class
+            # TODO TO CHECK
             return cls._build_protocol_model(
                 protocol_model=protocol_model,
-                processes=processes,
-                connectors=create_config["connectors"],
+                processes={},
+                connectors=[],
                 interfaces=create_config["interfaces"],
                 outerfaces=create_config["outerfaces"]
             )
+
+            # create the protocol from a statis protocol class
+            # return cls._build_protocol_model(
+            #     protocol_model=protocol_model,
+            #     processes=processes,
+            #     connectors=create_config["connectors"],
+            #     interfaces=create_config["interfaces"],
+            #     outerfaces=create_config["outerfaces"]
+            # )
         except ProtocolBuildException as err:
             raise ProtocolBuildException.from_build_exception(
                 parent_instance_name=instance_name, exception=err)
@@ -142,8 +158,8 @@ class ProcessFactory():
                 'Protocol', instance_name, err)
 
     @classmethod
-    def create_protocol_empty(cls, instance_name: str = None) -> ProtocolModel:
-        return cls.create_protocol_model_from_data(instance_name=instance_name)
+    def create_protocol_empty(cls, instance_name: str = None, name: str = None) -> ProtocolModel:
+        return cls.create_protocol_model_from_data(instance_name=instance_name, name=name)
 
     @classmethod
     def create_protocol_model_from_data(cls, processes: Dict[str, ProcessModel] = None,
@@ -152,14 +168,16 @@ class ProcessFactory():
                                                          InterfaceSpec] = None,
                                         outerfaces: Dict[str,
                                                          InterfaceSpec] = None,
-                                        instance_name: str = None) -> ProtocolModel:
+                                        instance_name: str = None,
+                                        name: str = None) -> ProtocolModel:
         protocol_model: ProtocolModel = ProtocolModel()
 
         # Use the Protocol default type because the protocol is not linked to a specific type
         protocol_model.process_typing_name = Protocol._typing_name
 
         cls._init_process_model(
-            process_model=protocol_model, config=Config(), instance_name=instance_name)
+            process_model=protocol_model, config=Config(),
+            instance_name=instance_name, name=name)
 
         # create the protocol from a statis protocol class
         return cls._build_protocol_model(
@@ -280,7 +298,8 @@ class ProcessFactory():
 
     @classmethod
     def _init_process_model(
-            cls, process_model: ProcessModel, config: Config, instance_name: str = None) -> None:
+            cls, process_model: ProcessModel, config: Config,
+            instance_name: str = None, name: str = None) -> None:
 
         process_model.status = ProcessStatus.DRAFT
         # Set the config
@@ -296,6 +315,10 @@ class ProcessFactory():
         else:
             # Init the instance_name if it does not exists
             process_model.instance_name = process_model.id
+
+        if name is not None:
+            Logger.info(f"Settting the name of the process {process_model.id} to {name}")
+            process_model.name = name
 
     ############################################### PROCESS  #################################################
 
