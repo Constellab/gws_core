@@ -340,10 +340,10 @@ class ProtocolService(BaseService):
         protocol_model.check_is_updatable()
         connector = protocol_model.add_connector(from_process_name, from_port_name,
                                                  to_process_name, to_port_name)
-        protocol_model.save_graph()
 
         # run the next process if it is auto run
         protocol_model.run_auto_run_processes()
+        protocol_model.save_graph()
 
         return cls._on_connector_updated(protocol_model, connector)
 

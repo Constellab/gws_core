@@ -6,20 +6,21 @@
 from typing import Dict, List, Literal, Optional, Set
 
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.protocol.protocol_dto import (ConnectorDTO, InterfaceDTO,
+from gws_core.protocol.protocol_dto import (ConnectorDTO, IOFaceDTO,
                                             ProcessConfigDTO,
                                             ProtocolConfigDTO, ProtocolDTO,
                                             ProtocolFullDTO,
                                             ProtocolMinimumDTO)
+from gws_core.protocol.protocol_exception import \
+    IOFaceConnectedToTheParentDeleteException
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.db_field import SerializableDBField
 from ..io.connector import Connector
-from ..io.io import Inputs, Outputs
-from ..io.ioface import Interface, Outerface
-from ..io.port import InPort, OutPort, Port
+from ..io.ioface import IOface
+from ..io.port import InPort, OutPort
 from ..process.process_model import ProcessModel
 from ..process.process_types import ProcessStatus
 from ..process.protocol_sub_process_builder import (
@@ -40,8 +41,8 @@ class ProtocolModel(ProcessModel):
 
     _processes: Dict[str, ProcessModel] = {}
     _connectors: List[Connector] = None
-    _interfaces: Dict[str, Interface] = {}
-    _outerfaces: Dict[str, Outerface] = {}
+    _interfaces: Dict[str, IOface] = {}
+    _outerfaces: Dict[str, IOface] = {}
     _table_name = "gws_protocol"  # is locked for all the protocols
 
     def __init__(self, *args, **kwargs):
@@ -91,7 +92,6 @@ class ProtocolModel(ProcessModel):
         super().reset()
         for process in self.processes.values():
             process.reset()
-        self._reset_iofaces()
 
         # auto execute the source task
         self.run_auto_run_processes()
@@ -141,18 +141,18 @@ class ProtocolModel(ProcessModel):
         self._is_loaded = True
 
     def init_protocol(self,  sub_process_factory: ProtocolSubProcessBuilder,
-                      interfaces: Dict[str, InterfaceDTO],
-                      outerfaces: Dict[str, InterfaceDTO]) -> None:
+                      interfaces: Dict[str, IOFaceDTO],
+                      outerfaces: Dict[str, IOFaceDTO]) -> None:
 
         # init processes and sub processes
         self._init_processes_from_graph(sub_process_factory)
 
         # init interfaces and outerfaces
-        self.init_interfaces_from_graph(interfaces)
-        self.init_outerfaces_from_graph(outerfaces)
+        self._interfaces = IOface.load_from_dto_dict(interfaces)
+        self._outerfaces = IOface.load_from_dto_dict(outerfaces)
 
     def refresh_graph_from_dump(self) -> None:
-        """Refresh the graph json obnject inside the data from the dump method
+        """Refresh the graph json object inside the data from the dump method
         """
         self.data["graph"] = self.to_protocol_minimum_dto().dict()
 
@@ -225,8 +225,6 @@ class ProtocolModel(ProcessModel):
 
     def _run_protocol(self) -> None:
         """
-        BUILT-IN PROTOCOL TASK
-
         Runs the process and save its state in the database.
         Override mother class method.
         """
@@ -738,43 +736,12 @@ class ProtocolModel(ProcessModel):
 
         # save processes to update inputs and outputs
         for process in affected_processes:
-                process.save()
-
-    ############################### INPUTS #################################
-
-    @property
-    def inputs(self) -> 'Inputs':
-        """
-        Returns inputs of the process.
-
-        :return: The inputs
-        :rtype: Inputs
-        """
-        if self._inputs is None:
-            # load first the value if there are not loaded
-            self._load_from_graph()
-
-        return super().inputs
-
-    ############################### OUTPUTS #################################
-    @property
-    def outputs(self) -> 'Outputs':
-        """
-        Returns outputs of the process.
-
-        :return: The outputs
-        :rtype: Outputs
-        """
-        if self._outputs is None:
-            # load first the value if there are not loaded
-            self._load_from_graph()
-
-        return super().outputs
+            process.save()
 
     ############################### INTERFACE #################################
 
     @property
-    def interfaces(self) -> Dict[str, Interface]:
+    def interfaces(self) -> Dict[str, IOface]:
         """
         Returns the interfaces of the protocol lazy loaded
 
@@ -789,15 +756,15 @@ class ProtocolModel(ProcessModel):
             self.add_interface(
                 key, spec["process_instance_name"], spec["port_name"])
 
-    def add_interface(self, name: str, target_process_name: str, target_port_name: str) -> None:
+    def add_interface(self, name: str, process_name: str, port_name: str) -> None:
         # to support lazy loading
         self._load_from_graph()
-        self._check_port(target_process_name, target_port_name, "IN")
-        self._add_interface(name, target_process_name, target_port_name)
+        self._check_port(process_name, port_name, "IN")
+        self._add_interface(name, process_name, port_name)
 
-    def _add_interface(self, name: str, target_process_name: str, target_port_name: str) -> None:
-        target_process = self._processes[target_process_name]
-        target_port = target_process.in_port(target_port_name)
+    def _add_interface(self, name: str, process_name: str, port_name: str) -> None:
+        target_process = self._processes[process_name]
+        target_port = target_process.in_port(port_name)
 
         # Create the input's port
         source_port: InPort = self.inputs.create_port(
@@ -807,9 +774,11 @@ class ProtocolModel(ProcessModel):
 
         # create the interface
         # use _interfaces because this is call during the init
-        self._interfaces[name] = Interface(
-            name=name, source_process=self, target_process=target_process,
-            source_port_name=name, target_port_name=target_port_name)
+        self._interfaces[name] = IOface(
+            name=name,
+            process_instance_name=process_name,
+            port_name=port_name
+        )
 
     def _propagate_interfaces(self):
         """
@@ -817,7 +786,8 @@ class ProtocolModel(ProcessModel):
         """
 
         for key, interface in self.interfaces.items():
-            port = interface.target_port
+            process = self.get_process(interface.process_instance_name)
+            port = process.in_port(interface.port_name)
             port.resource_model = self.inputs.get_resource_model(key)
 
     def is_interfaced_with(self, process_instance_name: str) -> bool:
@@ -829,38 +799,23 @@ class ProtocolModel(ProcessModel):
             process_instance_name)
         return len(interfaces) > 0
 
-    def get_interfaces_linked_to_process(self, process_instance_name: str) -> List[Interface]:
+    def get_interfaces_linked_to_process(self, process_instance_name: str) -> List[IOface]:
         """
         Returns the interfaces linked to a process
         """
-        interfaces: List[Interface] = []
+        interfaces: List[IOface] = []
 
         for interface in self.interfaces.values():
-            if interface.target_process.instance_name == process_instance_name:
+            if interface.process_instance_name == process_instance_name:
                 interfaces.append(interface)
 
         return interfaces
-
-    def init_interfaces_from_graph(self, interfaces: Dict[str, InterfaceDTO]) -> None:
-        # clear current interfaces
-        self._interfaces = {}
-        self._inputs = Inputs()
-
-        for key, interface in interfaces.items():
-            # destination port of the interface
-            self._add_interface(key, interface.to.node, interface.to.port)
-
-    def _reset_iofaces(self):
-        for interface in self.interfaces.values():
-            interface.reset()
-        for outerface in self.outerfaces.values():
-            outerface.reset()
 
     def remove_interfaces_by_process_name(self, process_name: str) -> None:
         """
         Remove the interface linked the process with the given name
         """
-        to_delete: List[Interface] = self.get_interfaces_linked_to_process(
+        to_delete: List[IOface] = self.get_interfaces_linked_to_process(
             process_name)
 
         for interface in to_delete:
@@ -878,42 +833,46 @@ class ProtocolModel(ProcessModel):
             raise BadRequestException(
                 f"The protocol '{self.get_instance_name_context()}' does not have an interface named '{name}'")
 
-        interface: Interface = self.interfaces[name]
+        interface: IOface = self.interfaces[name]
+        # check if the interface is connected in the parent protocol
+        if self.parent_protocol:
+            # in parent check if a connector is linked to this interface
+            connector = self.parent_protocol.get_connector_from_right(
+                self.instance_name, interface.name)
+
+            if connector:
+                raise IOFaceConnectedToTheParentDeleteException(
+                    'interface', name, self.parent_protocol.get_instance_name_context())
+
+            # in parent check if an interface is linked to this interface
+            interfaces: List[IOface] = self.parent_protocol.get_interfaces_linked_to_process(
+                self.instance_name)
+
+            if len(interfaces) > 0:
+                raise IOFaceConnectedToTheParentDeleteException(
+                    'interface', name, self.parent_protocol.get_instance_name_context())
+
         del self._interfaces[name]
 
         # delete the corresponding input's port
         self.inputs.remove_port(name)
 
-        # check if the interface is connected in the parent protocol
-        if self.parent_protocol:
-            # in parent check if a connector is linked to this interface
-            connector = self.parent_protocol.get_connector_from_right(
-                interface.source_process.instance_name, interface.source_port.name)
-
-            if connector:
-                raise BadRequestException(
-                    f"The interface '{name}' is connected in the parent protocol '{self.parent_protocol.get_instance_name_context()}', please remove the link connected to this interface in the parent protocol")
-
-            # in parent check if an interface is linked to this interface
-            interfaces: List[Interface] = self.parent_protocol.get_interfaces_linked_to_process(
-                self.instance_name)
-
-            if len(interfaces) > 0:
-                raise BadRequestException(
-                    f"The interface '{name}' is connected in the parent protocol '{self.parent_protocol.get_instance_name_context()}', please remove the link connected to this interface in the parent protocol")
-
         if self.layout:
             self.layout.remove_interface(name)
 
-    def port_is_interface(self, name: str, port: Port) -> bool:
-        if not name in self.interfaces:
-            return False
+    def port_is_interface(self, process_instance_name: str, port_name) -> bool:
+        """ Return True if the port of the process is an interface of the protocol
+        """
+        for interface in self.interfaces.values():
+            if interface.process_instance_name == process_instance_name and interface.port_name == port_name:
+                return True
 
-        return self.interfaces[name].target_port == port
+        return False
+
     ############################### OUTERFACE #################################
 
     @property
-    def outerfaces(self) -> Dict[str, Outerface]:
+    def outerfaces(self) -> Dict[str, IOface]:
         """
         Returns the outerfaces of the protocol lazy loaded
         """
@@ -928,7 +887,9 @@ class ProtocolModel(ProcessModel):
         """
 
         for key, outerface in self.outerfaces.items():
-            port = outerface.source_port
+            process = self.get_process(outerface.process_instance_name)
+            port = process.out_port(outerface.port_name)
+            # port = outerface.source_port
             self.outputs.set_resource_model(key, port.resource_model)
 
     def add_outerfaces(self, outerfaces: Dict[str, InterfaceSpec]) -> None:
@@ -936,15 +897,15 @@ class ProtocolModel(ProcessModel):
             self.add_outerface(
                 key, spec["process_instance_name"], spec["port_name"])
 
-    def add_outerface(self, name: str, source_process_name: str, source_port_name: str) -> None:
+    def add_outerface(self, name: str, process_name: str, port_name: str) -> None:
         # to support lazy loading
         self._load_from_graph()
-        self._check_port(source_process_name, source_port_name, "OUT")
-        self._add_outerface(name, source_process_name, source_port_name)
+        self._check_port(process_name, port_name, "OUT")
+        self._add_outerface(name, process_name, port_name)
 
-    def _add_outerface(self, name: str, source_process_name: str, source_port_name: str) -> None:
-        source_process = self._processes[source_process_name]
-        source_port = source_process.out_port(source_port_name)
+    def _add_outerface(self, name: str, process_name: str, port_name: str) -> None:
+        source_process = self._processes[process_name]
+        source_port = source_process.out_port(port_name)
 
         # Create the output's port
         target_port: OutPort = self.outputs.create_port(
@@ -954,9 +915,11 @@ class ProtocolModel(ProcessModel):
 
         # create the interface
         # use _outerfaces because this is call during the init
-        self._outerfaces[name] = Outerface(
-            name=name, source_process=source_process, source_port_name=source_port_name,
-            target_process=self, target_port_name=name)
+        self._outerfaces[name] = IOface(
+            name=name,
+            process_instance_name=process_name,
+            port_name=port_name
+        )
 
     def is_outerfaced_with(self, process_instance_name: str) -> bool:
         """
@@ -967,30 +930,21 @@ class ProtocolModel(ProcessModel):
             process_instance_name)
         return len(outerfaces) > 0
 
-    def get_outerface_linked_to_process(self, process_instance_name: str) -> List[Outerface]:
+    def get_outerface_linked_to_process(self, process_instance_name: str) -> List[IOface]:
         """
         Returns the outerface linked to the process with the given name
         """
-        outerfaces: List[Outerface] = []
+        outerfaces: List[IOface] = []
         for outerface in self.outerfaces.values():
-            if outerface.source_process.instance_name == process_instance_name:
+            if outerface.process_instance_name == process_instance_name:
                 outerfaces.append(outerface)
         return outerfaces
-
-    def init_outerfaces_from_graph(self, outerfaces: Dict[str, InterfaceDTO]) -> None:
-        # clear current interfaces
-        self._outerfaces = {}
-        self._outputs = Outputs()
-
-        for key, outerface in outerfaces.items():
-            # source port of the outerface
-            self._add_outerface(key, outerface.from_.node, outerface.from_.port)
 
     def remove_outerfaces_by_process_name(self, process_instance_name: str) -> None:
         """
         Remove the outerfaces linked to the process with the given name
         """
-        to_delete: List[Outerface] = self.get_outerface_linked_to_process(
+        to_delete: List[IOface] = self.get_outerface_linked_to_process(
             process_instance_name)
         for outerface in to_delete:
             self.remove_outerface(outerface.name)
@@ -1000,30 +954,29 @@ class ProtocolModel(ProcessModel):
             raise BadRequestException(
                 f"The protocol '{self.get_instance_name_context()}' does not have an outerface named '{name}'")
 
-        outerface: Outerface = self._outerfaces[name]
-        del self._outerfaces[name]
-
-        # delete the corresponding output
-        self.outputs.remove_port(name)
-
+        outerface: IOface = self._outerfaces[name]
         # check if the outerface is connected in the parent protocol
         if self.parent_protocol:
             # in parent check if a connector is linked to this interface
             connectors = self.parent_protocol.get_connectors_from_left(
-                outerface.target_process.instance_name, outerface.target_port.name)
+                self.instance_name, outerface.name)
 
             if len(connectors) > 0:
-                raise BadRequestException(
-                    f"The outerface '{name}' is connected in the parent protocol '{self.parent_protocol.get_instance_name_context()}', please remove the link connected to this outerface in the parent protocol")
+                raise IOFaceConnectedToTheParentDeleteException(
+                    'outerface', name, self.parent_protocol.get_instance_name_context())
 
             # in parent check if an outerface is linked to this outerface
-            outerfaces: List[Outerface] = self.parent_protocol.get_outerface_linked_to_process(
+            outerfaces: List[IOface] = self.parent_protocol.get_outerface_linked_to_process(
                 self.instance_name)
 
             if len(outerfaces) > 0:
-                raise BadRequestException(
-                    f"The outerface '{name}' is connected in the parent protocol '{self.parent_protocol.get_instance_name_context()}', please remove the link connected to this outerface in the parent protocol")
+                raise IOFaceConnectedToTheParentDeleteException(
+                    'outerface', name, self.parent_protocol.get_instance_name_context())
 
+        del self._outerfaces[name]
+
+        # delete the corresponding output
+        self.outputs.remove_port(name)
         if self.layout:
             self.layout.remove_outerface(name)
 
@@ -1057,7 +1010,7 @@ class ProtocolModel(ProcessModel):
             links=[connector.to_dto() for connector in self.connectors],
             interfaces={key: interface.to_dto() for key, interface in self.interfaces.items()},
             outerfaces={key: outerface.to_dto() for key, outerface in self.outerfaces.items()},
-            layout=self.layout.to_dto() if self.layout else {}
+            layout=self.layout.to_dto() if self.layout else None
         )
 
     def to_protocol_dto(self) -> ProtocolDTO:

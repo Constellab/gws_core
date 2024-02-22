@@ -184,8 +184,8 @@ class ProcessModel(ModelWithUser):
             self.parent_protocol_id = parent_protocol.id
         self._parent_protocol = parent_protocol
 
-    def set_process_type(self, typing_name: str) -> None:
-        self.process_typing_name = typing_name
+    def set_process_type(self, process_type: Type[Process]) -> None:
+        self.process_typing_name = process_type._typing_name
         self.brick_version_on_create = self._get_type_brick_version()
 
         task_type: Type[Process] = self.get_process_type()

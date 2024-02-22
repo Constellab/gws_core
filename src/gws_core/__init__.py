@@ -329,9 +329,7 @@ from .io.io_spec import OutputSpec as OutputSpec
 from .io.io_specs import InputSpecs as InputSpecs
 from .io.io_specs import OutputSpecs as OutputSpecs
 from .io.io_validator import IOValidator as IOValidator
-from .io.ioface import Interface as Interface
 from .io.ioface import IOface as IOface
-from .io.ioface import Outerface as Outerface
 from .io.port import InPort as InPort
 from .io.port import OutPort as OutPort
 from .io.port import Port as Port

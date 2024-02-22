@@ -6,6 +6,8 @@
 from gws_core import (BaseTestCase, IExperiment, IProcess, IProtocol, ITask,
                       ProtocolModel, Robot, RobotCreate, RobotMove,
                       RobotSuperTravelProto, RobotTravelProto)
+from gws_core.protocol.protocol_exception import \
+    IOFaceConnectedToTheParentDeleteException
 
 
 # test_iexperiment
@@ -28,8 +30,8 @@ class TestIExperiment(BaseTestCase):
         # test parent of sub_move
         self.assertEqual(sub_move.parent_protocol.instance_name, 'sub_proto')
 
-        sub_proto.add_interface('robot_i', sub_move.instance_name, 'robot')
-        sub_proto.add_outerface('robot_o', sub_move.instance_name, 'robot')
+        sub_proto.add_interface('new_robot_i', sub_move.instance_name, 'robot')
+        sub_proto.add_outerface('new_robot_o', sub_move.instance_name, 'robot')
 
         # Add a RobotTravel protocol
         robot_travel: IProtocol = protocol.add_protocol(
@@ -37,8 +39,8 @@ class TestIExperiment(BaseTestCase):
 
         # Add main protocol connectors
         protocol.add_connectors([
-            (create >> 'robot', sub_proto << 'robot_i'),
-            (sub_proto >> 'robot_o', robot_travel << 'robot')
+            (create >> 'robot', sub_proto << 'new_robot_i'),
+            (sub_proto >> 'new_robot_o', robot_travel << 'travel_int')
         ])
 
         # test the get process
@@ -58,11 +60,11 @@ class TestIExperiment(BaseTestCase):
 
         # Test the sub proto outerface
         robot_o = sub_move.get_output('robot')
-        robot_o2: Robot = sub_proto.get_output('robot_o')
+        robot_o2: Robot = sub_proto.get_output('new_robot_o')
         self.assertEqual(robot_o, robot_o2)
 
         # Test that the RobotTravelProto worked
-        robot_o = robot_travel.get_output('robot')
+        robot_o = robot_travel.get_output('travel_out')
         self.assertIsInstance(robot_o, Robot)
 
         # test that robot_travel has a sub process
@@ -73,14 +75,24 @@ class TestIExperiment(BaseTestCase):
         experiment: IExperiment = IExperiment(RobotSuperTravelProto)
 
         super_travel: IProtocol = experiment.get_protocol()
+        super_travel_model: ProtocolModel = super_travel.get_model()
         sub_travel: IProtocol = super_travel.get_process('sub_travel')
         move_1: IProcess = sub_travel.get_process('move_1')
 
+        # Try to remove the interface of sub travel, it should raise an exception
+        # because the input of sub_travel is connected
+        self.assertRaises(IOFaceConnectedToTheParentDeleteException, sub_travel.delete_interface, 'travel_int')
+        self.assertRaises(IOFaceConnectedToTheParentDeleteException, sub_travel.delete_outerface, 'travel_out')
+
         # Remove interface
-        super_travel.delete_interface('robot')
+        super_travel.delete_interface('super_travel_int')
+        self.assertEqual(len(super_travel_model.interfaces), 0)
+        self.assertEqual(len(super_travel_model.inputs.ports), 0)
 
         # Remove outerface
-        super_travel.delete_outerface('robot')
+        super_travel.delete_outerface('super_travel_out')
+        self.assertEqual(len(super_travel_model.outerfaces), 0)
+        self.assertEqual(len(super_travel_model.outputs.ports), 0)
 
         # Test removing the process
         super_travel.delete_process('sub_travel')
@@ -89,7 +101,6 @@ class TestIExperiment(BaseTestCase):
         self.assertRaises(Exception, ITask.get_by_id, move_1.get_model().id)
 
         # Test info in protocol model
-        super_travel_model: ProtocolModel = super_travel.get_model()
         self._test_super_travel_after_remove(super_travel_model)
 
         # Verify that the DB was updated

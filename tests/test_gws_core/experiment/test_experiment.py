@@ -10,13 +10,9 @@ from gws_core import (BaseTestCase, Experiment, ExperimentSaveDTO,
                       ExperimentService, ExperimentStatus, GTest, ProcessModel,
                       ProtocolModel, ResourceModel, Robot, RobotService,
                       RobotWorldTravelProto, TaskModel)
-from gws_core.experiment.experiment_exception import \
-    ResourceUsedInAnotherExperimentException
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
-from gws_core.impl.robot.robot_protocol import (CreateSimpleRobot,
-                                                MoveSimpleRobot,
-                                                RobotSimpleTravel)
+from gws_core.impl.robot.robot_protocol import RobotSimpleTravel
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel

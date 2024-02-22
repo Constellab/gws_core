@@ -64,14 +64,14 @@ class ProtocolLayout(SerializableObject):
 
     def remove_interface(self, interface_name: str) -> None:
         if interface_name in self.interface_layouts:
-            del self.process_layouts[interface_name]
+            del self.interface_layouts[interface_name]
 
     def set_outerface(self, outerface_name: str,  layout: ProcessLayoutDTO) -> None:
         self.outerface_layouts[outerface_name] = layout
 
     def remove_outerface(self, outerface_name: str) -> None:
         if outerface_name in self.outerface_layouts:
-            del self.process_layouts[outerface_name]
+            del self.outerface_layouts[outerface_name]
 
     def get_process(self, instance_name: str) -> ProcessLayoutDTO:
         if instance_name not in self.process_layouts:

@@ -57,7 +57,7 @@ class ProcessFactory():
                 f"The task {task_type.full_classname()} is not register. Did you add the @task_decorator decorator on your task class ?")
 
         task_model: TaskModel = TaskModel()
-        task_model.set_process_type(task_type._typing_name, inputs_dto, outputs_dto)
+        task_model.set_process_type(task_type, inputs_dto, outputs_dto)
 
         config: Config = Config()
         config.set_specs(task_type.config_specs)
@@ -110,7 +110,7 @@ class ProcessFactory():
                     f"The protocol {protocol_type.full_classname()} is not register. Did you add the @ProtocolDecorator decorator on your protocol class ?")
 
             protocol_model: ProtocolModel = ProtocolModel()
-            protocol_model.set_process_type(protocol_type._typing_name)
+            protocol_model.set_process_type(protocol_type)
 
             config: Config = Config()
             cls._init_process_model(
@@ -133,23 +133,13 @@ class ProcessFactory():
                         'Task', key, err)
 
             # create the protocol from a statis protocol class
-            # TODO TO CHECK
             return cls._build_protocol_model(
                 protocol_model=protocol_model,
-                processes={},
-                connectors=[],
+                processes=processes,
+                connectors=create_config["connectors"],
                 interfaces=create_config["interfaces"],
                 outerfaces=create_config["outerfaces"]
             )
-
-            # create the protocol from a statis protocol class
-            # return cls._build_protocol_model(
-            #     protocol_model=protocol_model,
-            #     processes=processes,
-            #     connectors=create_config["connectors"],
-            #     interfaces=create_config["interfaces"],
-            #     outerfaces=create_config["outerfaces"]
-            # )
         except ProtocolBuildException as err:
             raise ProtocolBuildException.from_build_exception(
                 parent_instance_name=instance_name, exception=err)

@@ -56,3 +56,4 @@ class GWSException(Enum):
     PROCESS_UPDATE_FISHINED_ERROR = "The process is finished. Please reset the process before modifying it."
     RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP = "Can't reset the experiment because one of the output resource is used in experiment '<a href=\"{{experiment_url}}\" target=\"_blank\">{{experiment}}</a>'"
     RESET_ERROR_EXP_LINKED_TO_A_REPORT = "Can't reset the experiment because one of the output resource is used in report '<a href=\"{{report_url}}\" target=\"_blank\">{{report}}</a>'"
+    IOFACE_CONNECTED_TO_PARENT_DELETE_ERROR = "The {{ioface_type}} '{{ioface_name}}' is connected in the parent protocol '{{parent_protocol_name}}', please remove the link connected to this {{ioface_type}} in the parent protocol."

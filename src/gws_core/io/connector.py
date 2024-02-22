@@ -65,6 +65,9 @@ class Connector:
     def propagate_resource(self) -> bool:
         """
         Propagate the resource from the output port to the input port.
+
+        :return: True if the resource was propagated, False otherwise
+        :rtype: bool
         """
 
         if not self.left_port.resource_provided:

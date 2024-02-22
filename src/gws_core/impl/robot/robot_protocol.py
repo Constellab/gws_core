@@ -10,7 +10,7 @@ from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
                           RobotFly, RobotMove)
 
 
-@protocol_decorator("RobotSimpleTravel", hide=False)
+@protocol_decorator("RobotSimpleTravel", hide=True)
 class RobotSimpleTravel(Protocol):
 
     tasks_count = 7
@@ -65,11 +65,11 @@ class RobotTravelProto(Protocol):
             (eat_1 >> 'robot', eat_2 << 'robot'),
         ])
 
-        self.add_interface('robot', move_1, 'robot')
-        self.add_outerface('robot', eat_2, 'robot')
+        self.add_interface('travel_int', move_1, 'robot')
+        self.add_outerface('travel_out', eat_2, 'robot')
 
 
-@protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro", hide=True)
+@protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro", hide=False)
 class RobotSuperTravelProto(Protocol):
 
     tasks_count = 1 + RobotTravelProto.tasks_count
@@ -81,11 +81,11 @@ class RobotSuperTravelProto(Protocol):
         move_4: ProcessSpec = self.add_process(RobotMove, "move_4")
 
         self.add_connectors([
-            (move_4 >> 'robot', sub_travel << 'robot'),
+            (move_4 >> 'robot', sub_travel << 'travel_int'),
         ])
 
-        self.add_interface('robot', move_4, 'robot')
-        self.add_outerface('robot', sub_travel, 'robot')
+        self.add_interface('super_travel_int', move_4, 'robot')
+        self.add_outerface('super_travel_out', sub_travel, 'travel_out')
 
 
 @protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro", hide=True)
@@ -109,8 +109,8 @@ class RobotWorldTravelProto(Protocol):
         sink_1: ProcessSpec = self.add_process(Sink, 'sink_1')
 
         self.add_connectors([
-            (facto >> 'robot', super_travel << 'robot'),
-            (super_travel >> 'robot', fly_1 << 'robot'),
+            (facto >> 'robot', super_travel << 'super_travel_int'),
+            (super_travel >> 'super_travel_out', fly_1 << 'robot'),
             (fly_1 >> 'robot', sink_1 << 'resource')
         ])
 

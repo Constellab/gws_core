@@ -85,3 +85,12 @@ class ProtocolBuildException(BadRequestException):
             return GWSException.PROTOCOL_BUILD_EXCEPTION.value
         else:
             return GWSException.TASK_BUILD_EXCEPTION.value
+
+
+class IOFaceConnectedToTheParentDeleteException(BadRequestException):
+    def __init__(self, ioface_type: Literal['interface', 'outerface'],
+                 ioface_name: str, parent_protocol_name: str) -> None:
+        super().__init__(detail=GWSException.IOFACE_CONNECTED_TO_PARENT_DELETE_ERROR.value,
+                         unique_code=GWSException.IOFACE_CONNECTED_TO_PARENT_DELETE_ERROR.name,
+                         detail_args={"ioface_type": ioface_type, "ioface_name": ioface_name,
+                                      "parent_protocol_name": parent_protocol_name})

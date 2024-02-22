@@ -155,8 +155,7 @@ class Migration039(BrickMigration):
                     input_resources[port_name] = port.resource_model
 
                 # update io specs
-                process_model.set_process_type(
-                    process_model.process_typing_name)
+                process_model.set_process_type(process_model.get_process_type())
 
                 # set port output from output_resources
                 for port_name, port in process_model.outputs.ports.items():
@@ -1035,7 +1034,7 @@ class Migration073(BrickMigration):
             migrator.migrate()
 
 
-@brick_migration('0.7.5', short_description='Add name to process model')
+@brick_migration('0.7.5', short_description='Add name to process model. Migrate protocol IOFaces.')
 class Migration075(BrickMigration):
 
     @classmethod
@@ -1061,6 +1060,27 @@ class Migration075(BrickMigration):
         for protocol_template in protocol_templates:
             cls.migrate_protocol_template_recur(protocol_template.data)
             protocol_template.save(skip_hook=True)
+
+        # simplify the json stored for interface and outerface
+        protocol_models: List[ProtocolModel] = list(ProtocolModel.select())
+        for protocol_model in protocol_models:
+            for interface in protocol_model.data["graph"]["interfaces"].values():
+                if "to" in interface:
+                    interface["process_instance_name"] = interface["to"]["node"]
+                    interface["port_name"] = interface["to"]["port"]
+                    del interface["to"]
+                if "from" in interface:
+                    del interface["from"]
+
+            for outerface in protocol_model.data["graph"]["outerfaces"].values():
+                if "from" in outerface:
+                    outerface["process_instance_name"] = outerface["from"]["node"]
+                    outerface["port_name"] = outerface["from"]["port"]
+                    del outerface["from"]
+                if "to" in outerface:
+                    del outerface["to"]
+
+            protocol_model.save(skip_hook=True)
 
     @classmethod
     def migrate_protocol_template_recur(cls, protocol_dto: dict) -> None:

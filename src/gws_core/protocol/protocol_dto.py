@@ -36,26 +36,17 @@ class ConnectorDTO(BaseModelDTO):
         return super().json(*args, **kwargs)
 
 
-class InterfaceDTO(BaseModelDTO):
+class IOFaceDTO(BaseModelDTO):
     name: str
-    from_: ConnectorPartDict = Field(alias='from')
-    to: ConnectorPartDict
-
-    # Override the method to use the alias in serialization
-    def dict(self, *args, **kwargs):
-        kwargs['by_alias'] = True
-        return super().dict(*args, **kwargs)
-
-    def json(self, *args, **kwargs):
-        kwargs['by_alias'] = True
-        return super().json(*args, **kwargs)
+    process_instance_name: str
+    port_name: str
 
 
 class ProtocolConfigDTO(BaseModelDTO):
     nodes: Dict[str, 'ProcessConfigDTO']
     links: List[ConnectorDTO]
-    interfaces: Dict[str, InterfaceDTO]
-    outerfaces: Dict[str, InterfaceDTO]
+    interfaces: Dict[str, IOFaceDTO]
+    outerfaces: Dict[str, IOFaceDTO]
     layout: Optional[ProtocolLayoutDTO]
 
 
@@ -81,15 +72,15 @@ ProtocolConfigDTO.update_forward_refs()
 class ProtocolMinimumDTO(BaseModelDTO):
     nodes: Dict[str, ProcessMinimumDTO]
     links: List[ConnectorDTO]
-    interfaces: Dict[str, InterfaceDTO]
-    outerfaces: Dict[str, InterfaceDTO]
+    interfaces: Dict[str, IOFaceDTO]
+    outerfaces: Dict[str, IOFaceDTO]
 
 
 class ProtocolFullDTO(BaseModelDTO):
     nodes: Dict[str, ProcessDTO]
     links: List[ConnectorDTO]
-    interfaces: Dict[str, InterfaceDTO]
-    outerfaces: Dict[str, InterfaceDTO]
+    interfaces: Dict[str, IOFaceDTO]
+    outerfaces: Dict[str, IOFaceDTO]
     layout: Optional[ProtocolLayoutDTO]
 
 

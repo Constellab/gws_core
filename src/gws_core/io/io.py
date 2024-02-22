@@ -243,13 +243,10 @@ class IO(Base, Generic[PortType]):
 
     def to_dto(self) -> IODTO:
         io_dto = IODTO(
-            ports={},
+            ports={key: port.to_dto() for key, port in self._ports.items()},
             type=self._type,
             additional_info=self._additional_info
         )
-
-        for key, port in self._ports.items():
-            io_dto.ports[key] = port.to_dto()
 
         return io_dto
 

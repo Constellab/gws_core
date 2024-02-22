@@ -11,6 +11,7 @@ from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.io.io_dto import IODTO
+from gws_core.process.process import Process
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -62,28 +63,31 @@ class TaskModel(ProcessModel):
     # cache to store the list of tags of all inputs
     _input_resource_tags: List[Tag] = None
 
-    def set_process_type(self, typing_name: str,
+    def set_process_type(self, process_type: Type[Process],
                          inputs_dto: IODTO = None,
                          outputs_dto: IODTO = None) -> None:
         """Method used when creating a new task model, it init the input and output from task specs
 
-        :param typing_name: typine name of the task
+        :param typing_name: type of the task
         :type typing_name: str
         :param inputs_dict: If provided, override the input spec of the task (useful for dynamic IO), defaults to None
         :type inputs_dict: IODict, optional
         :param outputs_dict: If provided, override the output spec of the task (useful for dynamic IO), defaults to None
         :type outputs_dict: IODict, optional
         """
-        super().set_process_type(typing_name)
+        if not issubclass(process_type, Task):
+            raise Exception(
+                f"Error while setting the task type. The provided type '{process_type}' is not a subclass of Task")
+        super().set_process_type(process_type)
 
-        task_type: Type[Task] = self.get_process_type()
+        # task_type: Type[Task] = self.get_process_type()
 
         # specific case for dynamic IO to init input from json and not task spec
         if inputs_dto is not None and inputs_dto.type == 'dynamic':
             self._inputs = Inputs.load_from_dto(inputs_dto)
             self._inputs.reset()
         else:
-            self._inputs = Inputs.load_from_specs(task_type.input_specs)
+            self._inputs = Inputs.load_from_specs(process_type.input_specs)
 
         # Set the data inputs dict
         self.data["inputs"] = self.inputs.to_json()
@@ -93,7 +97,7 @@ class TaskModel(ProcessModel):
             self._outputs = Outputs.load_from_json(outputs_dto)
             self._outputs.reset()
         else:
-            self._outputs = Outputs.load_from_specs(task_type.output_specs)
+            self._outputs = Outputs.load_from_specs(process_type.output_specs)
 
         # Set the data inputs dict
         self.data["outputs"] = self.outputs.to_json()
@@ -229,7 +233,7 @@ class TaskModel(ProcessModel):
           this will allow to know what resource this task uses as input
         """
         from .task_input_model import TaskInputModel
-        for key, port in self.inputs.ports.items():
+        for port_name, port in self.inputs.ports.items():
 
             resource_model: ResourceModel = port.resource_model
 
@@ -238,7 +242,7 @@ class TaskModel(ProcessModel):
 
             if not resource_model.is_saved():
                 raise Exception(
-                    f"The resource of port '{key}' is not saved, it can't be used as input of the task")
+                    f"The resource of port '{port_name}' is not saved, it can't be used as input of the task")
 
             # Create the Input resource to save the resource use as input
             input_resource: TaskInputModel = TaskInputModel()
@@ -248,8 +252,8 @@ class TaskModel(ProcessModel):
 
             parent = self.parent_protocol
             input_resource.protocol_model = parent
-            input_resource.port_name = key
-            input_resource.is_interface = parent.port_is_interface(key, port)
+            input_resource.port_name = port_name
+            input_resource.is_interface = parent.port_is_interface(self.instance_name, port_name)
 
             input_resource.save()
 

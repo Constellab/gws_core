@@ -3,99 +3,41 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Dict
 
-from typing import final
-
-from gws_core.process.process_model import ProcessModel
-from gws_core.protocol.protocol_dto import InterfaceDTO
-
-from ..resource.resource_model import ResourceModel
-from .port import InPort, OutPort, Port
+from gws_core.protocol.protocol_dto import IOFaceDTO
 
 
 class IOface:
     name: str = None
 
-    source_process: ProcessModel = None
-    target_process: ProcessModel = None
+    # For interface, this is the process that receives the resource from interface
+    # For outerface, this is the process that sends the resource to outerface
+    process_instance_name: str = None
+    port_name: str = None
 
-    source_port_name: str = None
-    target_port_name: str = None
-
-    def __init__(self, name: str, source_process: ProcessModel, target_process: ProcessModel,
-                 source_port_name: str, target_port_name: str):
+    def __init__(self, name: str,
+                 process_instance_name: str, port_name: str):
 
         self.name = name
-        self.source_process = source_process
-        self.target_process = target_process
-        self.source_port_name = source_port_name
-        self.target_port_name = target_port_name
+        self.process_instance_name = process_instance_name
+        self.port_name = port_name
 
-    @property
-    def source_port(self) -> Port:
-        return self.source_process.in_port(self.source_port_name)
+    def to_dto(self) -> IOFaceDTO:
+        return IOFaceDTO(
+            name=self.name,
+            process_instance_name=self.process_instance_name,
+            port_name=self.port_name
+        )
 
-    @property
-    def target_port(self) -> Port:
-        return self.target_process.in_port(self.target_port_name)
+    @classmethod
+    def load_from_dto(cls, dto: IOFaceDTO) -> 'IOface':
+        return IOface(
+            name=dto.name,
+            process_instance_name=dto.process_instance_name,
+            port_name=dto.port_name
+        )
 
-    def reset(self):
-        if self.source_port:
-            self.source_port.reset()
-
-        if self.target_port:
-            self.target_port.reset()
-
-    def to_dto(self) -> InterfaceDTO:
-        return InterfaceDTO.from_json({
-            "name": self.name,
-            "from": {
-                "node": self.source_process.instance_name,
-                "port": self.source_port_name,
-            },
-            "to": {
-                "node": self.target_process.instance_name,
-                "port": self.target_port_name,
-            },
-        })
-
-
-@final
-class Interface(IOface):
-    source_port: InPort = None
-    target_port: InPort = None
-
-    @property
-    def source_port(self) -> InPort:
-        return self.source_process.in_port(self.source_port_name)
-
-    @property
-    def target_port(self) -> InPort:
-        return self.target_process.in_port(self.target_port_name)
-
-    def to_dto(self) -> InterfaceDTO:
-        dto = super().to_dto()
-        dto.from_.node = ":parent:"
-        return dto
-
-
-@final
-class Outerface(IOface):
-    source_port: OutPort = None
-    target_port: OutPort = None
-
-    @property
-    def source_port(self) -> OutPort:
-        return self.source_process.out_port(self.source_port_name)
-
-    @property
-    def target_port(self) -> OutPort:
-        return self.target_process.out_port(self.target_port_name)
-
-    def get_resource(self) -> ResourceModel:
-        return self.source_port.resource_model
-
-    def to_dto(self) -> InterfaceDTO:
-        _json = super().to_dto()
-        _json.to.node = ":parent:"
-        return _json
+    @classmethod
+    def load_from_dto_dict(cls, iofaces: Dict[str, IOFaceDTO]) -> Dict[str, 'IOface']:
+        return {name: cls.load_from_dto(dto) for name, dto in iofaces.items()}
