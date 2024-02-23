@@ -1064,27 +1064,12 @@ class Migration075(BrickMigration):
         # simplify the json stored for interface and outerface
         protocol_models: List[ProtocolModel] = list(ProtocolModel.select())
         for protocol_model in protocol_models:
-            for interface in protocol_model.data["graph"]["interfaces"].values():
-                if "to" in interface:
-                    interface["process_instance_name"] = interface["to"]["node"]
-                    interface["port_name"] = interface["to"]["port"]
-                    del interface["to"]
-                if "from" in interface:
-                    del interface["from"]
-
-            for outerface in protocol_model.data["graph"]["outerfaces"].values():
-                if "from" in outerface:
-                    outerface["process_instance_name"] = outerface["from"]["node"]
-                    outerface["port_name"] = outerface["from"]["port"]
-                    del outerface["from"]
-                if "to" in outerface:
-                    del outerface["to"]
-
+            cls.migrate_protocol_iofaces(protocol_model.data["graph"])
             protocol_model.save(skip_hook=True)
 
     @classmethod
-    def migrate_protocol_template_recur(cls, protocol_dto: dict) -> None:
-        for process_dto in protocol_dto["nodes"].values():
+    def migrate_protocol_template_recur(cls, protocol_graph: dict) -> None:
+        for process_dto in protocol_graph["nodes"].values():
             if "name" not in process_dto:
                 process_dto["name"] = process_dto["human_name"]
 
@@ -1101,3 +1086,22 @@ class Migration075(BrickMigration):
 
             if process_dto.get('graph') is not None and "nodes" in process_dto["graph"]:
                 cls.migrate_protocol_template_recur(process_dto["graph"])
+        cls.migrate_protocol_iofaces(protocol_graph)
+
+    @classmethod
+    def migrate_protocol_iofaces(cls, protocol_graph: dict) -> None:
+        for interface in protocol_graph["interfaces"].values():
+            if "to" in interface:
+                interface["process_instance_name"] = interface["to"]["node"]
+                interface["port_name"] = interface["to"]["port"]
+                del interface["to"]
+            if "from" in interface:
+                del interface["from"]
+
+        for outerface in protocol_graph["outerfaces"].values():
+            if "from" in outerface:
+                outerface["process_instance_name"] = outerface["from"]["node"]
+                outerface["port_name"] = outerface["from"]["port"]
+                del outerface["from"]
+            if "to" in outerface:
+                del outerface["to"]
