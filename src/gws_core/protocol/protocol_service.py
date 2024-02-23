@@ -461,6 +461,10 @@ class ProtocolService(BaseService):
                 process_model.source_config_id = None
             process_model.save()
 
+        if process_model.is_auto_run():
+            protocol_model.run_auto_run_processes()
+            update_dto.protocol_updated = True
+
         return update_dto
 
     ########################## SPECIFIC PROCESS #####################

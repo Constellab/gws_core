@@ -46,7 +46,7 @@ class ParamSpecHelper():
                     full_values[key] = spec.get_default_value()
                 else:
                     # if there is not default value the value is missing
-                    missing_params.append(key)
+                    missing_params.append(spec.human_name or key)
             else:
                 full_values[key] = spec.validate(param_values[key])
 
@@ -115,3 +115,18 @@ class ParamSpecHelper():
     @staticmethod
     def _get_param_spec_types() -> List[Type[ParamSpec]]:
         return PARAM_SPEC_TYPES_LIST
+
+    @staticmethod
+    def mandatory_values_are_set(param_specs: ConfigSpecs,
+                                 param_values: ConfigParamsDict) -> bool:
+        """
+        check that all mandatory configs are provided
+        """
+        if param_specs is None:
+            return True
+
+        for key, spec in param_specs.items():
+            if not spec.optional and not key in param_values:
+                return False
+
+        return True

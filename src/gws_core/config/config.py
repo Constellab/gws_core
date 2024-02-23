@@ -150,6 +150,9 @@ class Config(ModelWithUser):
 
         return name in self.data["values"] and self.data["values"][name] is not None
 
+    def mandatory_values_are_set(self) -> bool:
+        return ParamSpecHelper.mandatory_values_are_set(self.get_specs(), self.get_values())
+
     def _clear_values(self):
         self.data["values"] = {}
 
@@ -164,14 +167,14 @@ class Config(ModelWithUser):
             values=self.get_values()
         )
 
-    def to_simple_dto(self) -> ConfigSimpleDTO:
+    def to_simple_dto(self, ignore_values: bool = False) -> ConfigSimpleDTO:
         """
         Export the config to a dict
         """
 
         return ConfigSimpleDTO(
             specs=ConfigSpecsHelper.config_specs_to_dto(self.get_specs(), skip_private=False),
-            values=self.get_and_check_values()
+            values=self.get_values() if not ignore_values else {}
         )
 
     def copy(self) -> 'Config':

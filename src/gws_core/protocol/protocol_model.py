@@ -6,6 +6,7 @@
 from typing import Dict, List, Literal, Optional, Set
 
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.logger import Logger
 from gws_core.protocol.protocol_dto import (ConnectorDTO, IOFaceDTO,
                                             ProcessConfigDTO,
                                             ProtocolConfigDTO, ProtocolDTO,
@@ -93,12 +94,17 @@ class ProtocolModel(ProcessModel):
         for process in self.processes.values():
             process.reset()
 
-        # auto execute the source task
-        self.run_auto_run_processes()
+        try:
+            # auto execute the source task
+            self.run_auto_run_processes()
 
-        # re-propagate the resources (because source task has been executed)
-        # and save processes
-        self.propagate_resources()
+            # re-propagate the resources (because source task has been executed)
+            # and save processes
+            self.propagate_resources()
+        # Catch to be sure the reset works, it should not block the reset
+        except Exception as e:
+            Logger.error(
+                f"Error while resetting the protocol on auto run or propagate resource. Continue reset. Error : {e}")
 
         return self.save_graph()
 
@@ -214,7 +220,7 @@ class ProtocolModel(ProcessModel):
         """Run all the auto run processes of the protocol
         """
         for process in self.processes.values():
-            if process.is_auto_run() and process.is_runnable:
+            if process.is_auto_run() and process.is_runnable and process.config.mandatory_values_are_set():
                 self._run_process(process)
 
     def _run_protocol(self) -> None:
@@ -980,14 +986,14 @@ class ProtocolModel(ProcessModel):
 
     ############################### JSON #################################
 
-    def to_config_dto(self) -> ProcessConfigDTO:
+    def to_config_dto(self, ignore_source_config: bool = False) -> ProcessConfigDTO:
         dto = super().to_config_dto()
-        dto.graph = self.to_protocol_config_dto()
+        dto.graph = self.to_protocol_config_dto(ignore_source_config=ignore_source_config)
         return dto
 
-    def to_protocol_config_dto(self) -> ProtocolConfigDTO:
+    def to_protocol_config_dto(self, ignore_source_config: bool = False) -> ProtocolConfigDTO:
         return ProtocolConfigDTO(
-            nodes={key: process.to_config_dto() for key, process in self.processes.items()},
+            nodes={key: process.to_config_dto(ignore_source_config) for key, process in self.processes.items()},
             links=[connector.to_dto() for connector in self.connectors],
             interfaces={key: interface.to_dto() for key, interface in self.interfaces.items()},
             outerfaces={key: outerface.to_dto() for key, outerface in self.outerfaces.items()},

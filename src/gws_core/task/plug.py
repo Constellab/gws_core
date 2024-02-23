@@ -36,7 +36,7 @@ class Source(Task):
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
         Resource, sub_class=True, is_constant=True, human_name="Resource", short_description="Loaded resource")})
     config_specs: ConfigSpecs = {
-        'resource_id': StrParam(optional=True, short_description="The id of the resource"),
+        'resource_id': StrParam(human_name="Resource"),
     }
 
     __auto_run__: bool = True

@@ -81,7 +81,8 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
     def from_protocol_model(
             cls, protocol_model: ProtocolModel, name: str, description: str = None) -> 'ProtocolTemplate':
         protocol_template = ProtocolTemplate()
-        protocol_template.set_template(protocol_model.to_protocol_config_dto())
+        # retrieve the protocol config, without the source task config
+        protocol_template.set_template(protocol_model.to_protocol_config_dto(ignore_source_config=True))
         protocol_template.name = name
         protocol_template.description = description
         return protocol_template

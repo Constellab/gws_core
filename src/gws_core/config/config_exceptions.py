@@ -18,9 +18,21 @@ class MissingConfigsException(BadRequestException):
 
     def __init__(self, missing_params: List[str]) -> None:
         self.missing_params = missing_params
-        super().__init__(detail=GWSException.MISSING_CONFIG_PARAMS.value,
-                         unique_code=GWSException.MISSING_CONFIG_PARAMS.name,
-                         detail_args={"param_names": self.get_missing_params_text()})
+        detail: str
+        unique_code: str
+        details_args: dict
+        if len(missing_params) > 1:
+            detail = GWSException.MISSING_CONFIG_PARAMS.value
+            unique_code = GWSException.MISSING_CONFIG_PARAMS.name
+            details_args = {"param_names": self.get_missing_params_text()}
+        else:
+            detail = GWSException.MISSING_CONFIG_PARAM.value
+            unique_code = GWSException.MISSING_CONFIG_PARAM.name
+            details_args = {"param_name": missing_params[0]}
+
+        super().__init__(detail=detail,
+                         unique_code=unique_code,
+                         detail_args=details_args)
 
     def get_missing_params_text(self) -> str:
         return ",".join(self.missing_params)

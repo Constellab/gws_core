@@ -21,6 +21,7 @@ class GWSException(Enum):
     USER_NOT_ACTIVATED = "User not activated"
     RESOURCE_NOT_COMPATIBLE = "Trying to set an incompatible resource to port '{{port}}'. Resource type: '{{resource_type}}', excepted types : '{{expected_types}}'."
     MISSING_CONFIG_PARAMS = "The mandatory configs '{{param_names}}' are missing."
+    MISSING_CONFIG_PARAM = "The mandatory config '{{param_name}}' is missing."
     UNKNOWN_CONFIG_PARAMS = "The parameter '{{param_name}}' does not exist in the config."
     INVALID_PARAM_VALUE = "Invalid value '{{param_value}}' for the parameter '{{param_name}}'. Error : {{error}}"
     EXPERIMENT_RUN_EXCEPTION = "{{error}} | Experiment : '{{experiment}}'"

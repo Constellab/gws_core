@@ -38,7 +38,7 @@ class RobotMove(Task):
                                                  short_description="The robot to feed")})  # just for testing
     output_specs = OutputSpecs({'robot': OutputSpec(
         Robot), 'food': OutputSpec(RobotFood, is_optional=True)})
-    config_specs = {'moving_step': FloatParam(default_value=0.1, short_description="The moving step of the robot"), 'direction': StrParam(
+    config_specs = {'moving_step': FloatParam(short_description="The moving step of the robot"), 'direction': StrParam(
         default_value="north", allowed_values=["north", "south", "east", "west"], short_description="The moving direction")}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

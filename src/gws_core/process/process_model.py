@@ -459,7 +459,14 @@ class ProcessModel(ModelWithUser):
 
         return process_dto
 
-    def to_config_dto(self) -> ProcessConfigDTO:
+    def to_config_dto(self, ignore_source_config: bool = False) -> ProcessConfigDTO:
+        """Return the config DTO
+
+        :param ignore_source_config: if true, the config values of Source task is ignored, defaults to False
+        :type ignore_source_config: bool, optional
+        :return: _description_
+        :rtype: ProcessConfigDTO
+        """
 
         process_typing: Typing = self.get_process_typing()
 
@@ -467,10 +474,12 @@ class ProcessModel(ModelWithUser):
             raise Exception(
                 f"Could not find the process typing {self.process_typing_name}")
 
+        ignore_config_values = ignore_source_config and self.is_source_task()
+
         return ProcessConfigDTO(
             process_typing_name=self.process_typing_name,
             instance_name=self.instance_name,
-            config=self.config.to_simple_dto(),
+            config=self.config.to_simple_dto(ignore_config_values),
             name=self.name,
             brick_version=self.brick_version_on_create,
             inputs=self.inputs.to_dto(),

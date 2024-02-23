@@ -58,7 +58,6 @@ class EntityNavigatorService:
         """Delete the experiment
         """
         cls.reset_experiment(experiment_id)
-        cls.reset_experiment(experiment_id)
 
         ExperimentService.delete_experiment(experiment_id)
 
