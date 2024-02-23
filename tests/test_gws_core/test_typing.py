@@ -80,8 +80,8 @@ class TestTyping(BaseTestCase):
 
         world_travel_json = world_travel.to_full_dto()
 
-        self.assertIsNotNone(world_travel_json.input_specs.specs['robot'])
-        self.assertIsNotNone(world_travel_json.output_specs.specs['robot'])
+        self.assertIsNotNone(world_travel_json.input_specs.specs['travel_int'])
+        self.assertIsNotNone(world_travel_json.output_specs.specs['travel_out'])
 
     def test_resource_type(self):
         robot: ResourceTyping = ResourceTyping.get_by_model_type(Robot)
