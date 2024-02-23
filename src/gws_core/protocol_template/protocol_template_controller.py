@@ -50,6 +50,17 @@ def update(id: str,
                                           description=update_protocol_template.description).to_dto()
 
 
+class UpdateProtocolTemplateName(BaseModel):
+    name: str
+
+
+@core_app.put("/protocol-template/{id}", tags=["Protocol template"], summary="Update protocol template name")
+def update_name(id: str,
+                update_protocol_template: UpdateProtocolTemplateName,
+                _=Depends(AuthService.check_user_access_token)) -> ProtocolTemplateDTO:
+    return ProtocolTemplateService.update_name(id=id, name=update_protocol_template.name).to_dto()
+
+
 @core_app.delete("/protocol-template/{id}", tags=["Protocol template"], summary="Delete an protocol template")
 def delete_by_id(id: str,
                  _=Depends(AuthService.check_user_access_token)) -> None:

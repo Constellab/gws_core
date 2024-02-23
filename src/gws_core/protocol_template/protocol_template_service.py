@@ -40,6 +40,12 @@ class ProtocolTemplateService(BaseService):
         return protocol_template.save()
 
     @classmethod
+    def update_name(cls, id: str, name: str) -> ProtocolTemplate:
+        protocol_template = cls.get_by_id_and_check(id)
+        protocol_template.name = name
+        return protocol_template.save()
+
+    @classmethod
     def get_by_id_and_check(cls, id: str) -> ProtocolTemplate:
         return ProtocolTemplate.get_by_id_and_check(id)
 
