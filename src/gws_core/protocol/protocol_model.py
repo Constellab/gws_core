@@ -132,24 +132,18 @@ class ProtocolModel(ProcessModel):
 
         graph = self.get_graph()
         if graph is None:
+            self._is_loaded = True
             return
 
-        self.init_protocol(
-            sub_process_factory=SubProcessBuilderReadFromDb(graph),
-            interfaces=graph.interfaces,
-            outerfaces=graph.outerfaces)
-        self._is_loaded = True
-
-    def init_protocol(self,  sub_process_factory: ProtocolSubProcessBuilder,
-                      interfaces: Dict[str, IOFaceDTO],
-                      outerfaces: Dict[str, IOFaceDTO]) -> None:
+        sub_process_factory = SubProcessBuilderReadFromDb(graph)
 
         # init processes and sub processes
         self.init_processes_from_graph(sub_process_factory)
 
         # init interfaces and outerfaces
-        self._interfaces = IOface.load_from_dto_dict(interfaces)
-        self._outerfaces = IOface.load_from_dto_dict(outerfaces)
+        self._interfaces = IOface.load_from_dto_dict(graph.interfaces)
+        self._outerfaces = IOface.load_from_dto_dict(graph.outerfaces)
+        self._is_loaded = True
 
     def refresh_graph_from_dump(self) -> None:
         """Refresh the graph json object inside the data from the dump method

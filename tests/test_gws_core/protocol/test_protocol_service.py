@@ -20,7 +20,6 @@ from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
-from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase
 
 from ..protocol_examples import TestNestedProtocol
@@ -46,7 +45,7 @@ class TestProtocolService(BaseTestCase):
             protocol_model.id, resource_model.id, process_model.instance_name, 'robot').process
 
         protocol_model = protocol_model.refresh()
-        source_model: TaskModel = protocol_model.get_process(
+        source_model = protocol_model.get_process(
             source_model.instance_name)
         self.assertEqual(source_model.get_process_type(), Source)
         self.assertEqual(source_model.config.get_value(
@@ -72,6 +71,11 @@ class TestProtocolService(BaseTestCase):
 
         # Check that the connector was created
         self.assertEqual(len(protocol_model.connectors), 2)
+
+        # Test rename the process
+        ProtocolService.rename_process(protocol_model.id, process_model.instance_name, 'New super name')
+        process_model = process_model.refresh()
+        self.assertEqual(process_model.name, 'New super name')
 
     def test_add_viewer(self):
         protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
