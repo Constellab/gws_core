@@ -187,10 +187,7 @@ class ProcessModel(ModelWithUser):
     def set_process_type(self, process_type: Type[Process]) -> None:
         self.process_typing_name = process_type._typing_name
         self.brick_version_on_create = self._get_type_brick_version()
-
-        task_type: Type[Process] = self.get_process_type()
-        Logger.info(f"Setting process name of {self.id} to {task_type._human_name}")
-        # self.name = task_type._human_name
+        self.name = process_type._human_name
 
     def _get_type_brick_version(self) -> str:
         typing: Typing = TypingManager.get_typing_from_name_and_check(self.process_typing_name)

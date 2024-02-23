@@ -75,7 +75,8 @@ class SubProcessBuilderReadFromDb(ProtocolSubProcessBuilder):
 
 class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
     """Factory used to force creation of a processes when building a protocol
-    It requires a ProcessConfigDict instead of a ProcessMinimumDict
+    It requires a ProcessConfigDict instead of a ProcessMinimumDict.
+    For protocol, it creates an empty protocol
     """
 
     protocol_config: ProtocolConfigDTO
@@ -119,10 +120,9 @@ class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
                                                               process_dto.outputs,
                                                               process_dto.name)
         elif issubclass(process_type, Protocol):
-            # return ProcessFactory.create_protocol_empty(instance_name)
-            # TODO TO CHECK
-            return ProcessFactory.create_protocol_model_from_type(process_type, config_params,
-                                                                  instance_name, process_dto.name)
+            # create an empty protocol, it will be filled with graph later
+            return ProcessFactory.create_protocol_empty(instance_name, process_dto.name,
+                                                        process_type)
         else:
             name = process_type.__name__ if process_type.__name__ is not None else str(
                 process_type)

@@ -90,7 +90,7 @@ class ProcessFactory():
         return cls.create_task_model_from_type(
             task_type=task_type, config_params=config_params, instance_name=instance_name)
 
-    ############################################### PROTOCOL #################################################
+    ############################################### PROTOCOL FROM TYPE #################################################
 
     @classmethod
     def create_protocol_model_from_type(cls, protocol_type: Type[Protocol],
@@ -133,7 +133,7 @@ class ProcessFactory():
                         'Task', key, err)
 
             # create the protocol from a statis protocol class
-            return cls._build_protocol_model(
+            return cls._build_protocol_model_from_type(
                 protocol_model=protocol_model,
                 processes=processes,
                 connectors=create_config["connectors"],
@@ -148,41 +148,12 @@ class ProcessFactory():
                 'Protocol', instance_name, err)
 
     @classmethod
-    def create_protocol_empty(cls, instance_name: str = None, name: str = None) -> ProtocolModel:
-        return cls.create_protocol_model_from_data(instance_name=instance_name, name=name)
-
-    @classmethod
-    def create_protocol_model_from_data(cls, processes: Dict[str, ProcessModel] = None,
+    def _build_protocol_model_from_type(cls, protocol_model: ProtocolModel, processes: Dict[str, ProcessModel] = None,
                                         connectors: List[ConnectorSpec] = None,
-                                        interfaces: Dict[str,
-                                                         InterfaceSpec] = None,
-                                        outerfaces: Dict[str,
-                                                         InterfaceSpec] = None,
-                                        instance_name: str = None,
-                                        name: str = None) -> ProtocolModel:
-        protocol_model: ProtocolModel = ProtocolModel()
-
-        # Use the Protocol default type because the protocol is not linked to a specific type
-        protocol_model.process_typing_name = Protocol._typing_name
-
-        cls._init_process_model(
-            process_model=protocol_model, config=Config(),
-            instance_name=instance_name, name=name)
-
-        # create the protocol from a statis protocol class
-        return cls._build_protocol_model(
-            protocol_model=protocol_model,
-            processes=processes,
-            connectors=connectors,
-            interfaces=interfaces,
-            outerfaces=outerfaces
-        )
-
-    @classmethod
-    def _build_protocol_model(cls, protocol_model: ProtocolModel, processes: Dict[str, ProcessModel] = None,
-                              connectors: List[ConnectorSpec] = None,
-                              interfaces: Dict[str, InterfaceSpec] = None,
-                              outerfaces: Dict[str, InterfaceSpec] = None) -> ProtocolModel:
+                                        interfaces: Dict[str, InterfaceSpec] = None,
+                                        outerfaces: Dict[str, InterfaceSpec] = None) -> ProtocolModel:
+        """Construct the protocol graph from the attribut of Protocol class
+        """
         if processes is None:
             processes = {}
         if connectors is None:
@@ -216,6 +187,8 @@ class ProcessFactory():
 
         return protocol_model
 
+    ############################################### PROTOCOL FROM GRAPH #################################################
+
     @classmethod
     def create_protocol_model_from_graph(cls, graph: ProtocolConfigDTO) -> ProtocolModel:
         """
@@ -226,8 +199,7 @@ class ProcessFactory():
         """
 
         # create an empty protocol
-        protocol: ProtocolModel = cls.create_protocol_model_from_type(
-            protocol_type=Protocol)
+        protocol: ProtocolModel = cls.create_protocol_empty()
 
         cls._create_protocol_model_from_graph_recur(
             protocol=protocol, graph=graph)
@@ -243,16 +215,17 @@ class ProcessFactory():
         :rtype": Protocol
         """
 
-        protocol.init_protocol(sub_process_factory=SubProcessBuilderCreate(graph),
-                               interfaces=graph.interfaces,
-                               outerfaces=graph.outerfaces)
+        protocol.init_processes_from_graph(SubProcessBuilderCreate(graph))
 
+        # call the method recursively for each sub protocol
         for key, process in protocol.processes.items():
             if isinstance(process, ProtocolModel):
                 cls._create_protocol_model_from_graph_recur(
                     protocol=process, graph=graph.nodes[key].graph)
 
-        # Init the connector afterward because its needs the child to init correctly
+        # Init the iofaces and connectors afterward because its needs the child to init correctly
+        protocol.add_interfaces_from_dto(graph.interfaces)
+        protocol.add_outerfaces_from_dto(graph.outerfaces)
         protocol.init_connectors_from_graph(graph.links)
 
         # set layout
@@ -260,6 +233,24 @@ class ProcessFactory():
             protocol.layout = ProtocolLayout(graph.layout)
 
         return protocol
+
+    ############################################### PROTOCOL EMPTY #################################################
+
+    @classmethod
+    def create_protocol_empty(cls, instance_name: str = None, name: str = None,
+                              protocol_type: Type[Protocol] = Protocol) -> ProtocolModel:
+
+        protocol_model: ProtocolModel = ProtocolModel()
+
+        # Use the Protocol default type because the protocol is not linked to a specific type
+        protocol_model.set_process_type(protocol_type)
+
+        cls._init_process_model(
+            process_model=protocol_model, config=Config(),
+            instance_name=instance_name, name=name)
+
+        # create the protocol from a statis protocol class
+        return protocol_model
 
     ############################################### PROCESS  #################################################
 

@@ -145,7 +145,7 @@ class ProtocolModel(ProcessModel):
                       outerfaces: Dict[str, IOFaceDTO]) -> None:
 
         # init processes and sub processes
-        self._init_processes_from_graph(sub_process_factory)
+        self.init_processes_from_graph(sub_process_factory)
 
         # init interfaces and outerfaces
         self._interfaces = IOface.load_from_dto_dict(interfaces)
@@ -357,20 +357,14 @@ class ProtocolModel(ProcessModel):
         process_model.instance_name = instance_name
         self._processes[instance_name] = process_model
 
-    def _init_processes_from_graph(self, sub_process_factory: ProtocolSubProcessBuilder) -> None:
+    def init_processes_from_graph(self, sub_process_factory: ProtocolSubProcessBuilder) -> None:
         # create nodes
         process_models: Dict[str, ProcessModel] = sub_process_factory.instantiate_processes()
         for key, process_model in process_models.items():
 
             # If the process already exists
             if key in self._processes:
-                # update process info
-                self._processes[key].data = process_model.data
-                self._processes[key].config.set_values(
-                    process_model.config.get_values())
-                # TODO TO CHECK
-                # self._processes[key].name = process_model.name
-            # If it's a new process
+                raise Exception(f"Process '{key}' already exists")
             else:
                 self._add_process_model(process_model, key)
 
@@ -756,6 +750,11 @@ class ProtocolModel(ProcessModel):
             self.add_interface(
                 key, spec["process_instance_name"], spec["port_name"])
 
+    def add_interfaces_from_dto(self, interfaces: Dict[str, IOFaceDTO]) -> None:
+        for key, spec in interfaces.items():
+            self.add_interface(
+                key, spec.process_instance_name, spec.port_name)
+
     def add_interface(self, name: str, process_name: str, port_name: str) -> None:
         # to support lazy loading
         self._load_from_graph()
@@ -896,6 +895,11 @@ class ProtocolModel(ProcessModel):
         for key, spec in outerfaces.items():
             self.add_outerface(
                 key, spec["process_instance_name"], spec["port_name"])
+
+    def add_outerfaces_from_dto(self, outerfaces: Dict[str, IOFaceDTO]) -> None:
+        for key, spec in outerfaces.items():
+            self.add_outerface(
+                key, spec.process_instance_name, spec.port_name)
 
     def add_outerface(self, name: str, process_name: str, port_name: str) -> None:
         # to support lazy loading
