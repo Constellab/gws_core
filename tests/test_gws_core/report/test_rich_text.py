@@ -43,14 +43,15 @@ class TestRichText(BaseTestCaseLight):
                 id="3",
                 type=RichTextBlockType.PARAGRAPH,
                 data={
-                    "text": "Place for $test2$ variable"
+                    # Paragraph with a variable named test2
+                    "text": 'Place for <te-variable-inline data-jsondata=\'{"name": "test2", "description": "", "type": "string", "value": null}\'></te-variable-inline> variable'
                 }
             ),
             RichTextBlock(
                 id="9",
                 type=RichTextBlockType.PARAGRAPH,
                 data={
-                    "text": "Variable : $figure_1$ super"
+                    "text": 'Variable : <te-variable-inline data-jsondata=\'{"name": "figure_1", "description": "", "type": "string", "value": null}\'></te-variable-inline> super'
                 }
             ),
             RichTextBlock(
@@ -77,7 +78,9 @@ class TestRichText(BaseTestCaseLight):
         self.assertEqual(len(associated_resources), 0)
 
         rich_text.replace_variable('test2', 'test2_value')
-        self.assertEqual(rich_text.get_content().blocks[2].data["text"], 'Place for test2_value variable')
+        self.assertEqual(
+            rich_text.get_content().blocks[2].data["text"],
+            'Place for <te-variable-inline data-jsondata=\'{"name": "test2", "description": "", "type": "string", "value": "test2_value"}\'></te-variable-inline> variable')
 
         # test views
         view: RichTextResourceViewData = {

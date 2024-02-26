@@ -5,7 +5,7 @@
 
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Literal, Optional, TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
 
@@ -85,3 +85,12 @@ class RichTextResourceViewData(TypedDict):
     title: Optional[str]
     caption: Optional[str]
     # technical_info: List[Dict]
+
+
+################################ BLOCK DATA ################################
+class RichTextVariableData(TypedDict):
+    """Object representing a variable in a rich text"""
+    name: str
+    description: str
+    value: Any
+    type: Literal['string']

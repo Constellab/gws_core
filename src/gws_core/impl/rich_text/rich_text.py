@@ -4,14 +4,20 @@
 # About us: https://gencovery.com
 
 
+import json
 from datetime import datetime
 from typing import Any, List, Optional, Set
 
+from bs4 import BeautifulSoup
+
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.impl.rich_text.rich_text_paragraph_text import \
+    RichTextParagraphText
 from gws_core.impl.rich_text.rich_text_types import (
     RichTextBlock, RichTextBlockType, RichTextDTO, RichTextFigureData,
     RichTextParagraphData, RichTextParagraphHeaderData,
-    RichTextResourceViewData)
+    RichTextResourceViewData, RichTextVariableData)
 from gws_core.resource.r_field.serializable_r_field import \
     SerializableObjectJson
 
@@ -22,6 +28,9 @@ class RichText(SerializableObjectJson):
     :return: [description]
     :rtype: [type]
     """
+
+    VARIABLE_TAG_NAME = 'te-variable-inline'
+    VARIABLE_JSON_ATTRIBUTE = 'data-jsondata'
 
     _content: RichTextDTO
 
@@ -114,7 +123,6 @@ class RichText(SerializableObjectJson):
         """
 
         block_index = 0
-        variable_name = self._format_variable_name(variable_name)
         while block_index < len(self.get_blocks()):
             current_block = self.get_blocks()[block_index]
 
@@ -129,27 +137,23 @@ class RichText(SerializableObjectJson):
                 block_index += 1
                 continue
 
-            # if the block contains the variable name, split the string
-            if variable_name in paragraph_data['text']:
+            paragraph_text = RichTextParagraphText(paragraph_data['text'])
+            result = paragraph_text.replace_variable_with_block(variable_name)
+
+            if result is not None:
                 # remove current block
                 self._remove_block_at_index(block_index)
 
-                # split the string
-                splitted = paragraph_data['text'].split(variable_name)
-
-                # replace the current block by 3 blocks (before, variable, after)
-                if splitted[0]:
-                    before_paragraph = self.create_paragraph(self.generate_id(), splitted[0])
-                    # add a \n at the end to finish the previous block
+                if result.before:
+                    before_paragraph = self.create_paragraph(self.generate_id(), result.before)
                     self._insert_block_at_index(block_index, before_paragraph)
                     block_index += 1
 
-                # add the view block
                 self._insert_block_at_index(block_index, view_block)
                 block_index += 1
 
-                if splitted[1]:
-                    after_paragraph = self.create_paragraph(self.generate_id(), splitted[1])
+                if result.after:
+                    after_paragraph = self.create_paragraph(self.generate_id(), result.after)
                     self._insert_block_at_index(block_index, after_paragraph)
                     block_index += 1
 
@@ -159,8 +163,6 @@ class RichText(SerializableObjectJson):
     def replace_variable(self, variable_name: str, value: str) -> None:
         """Replace the variable in the rich text content text
         """
-        variable_name = self._format_variable_name(variable_name)
-
         paragraphs = self.get_block(RichTextBlockType.PARAGRAPH)
 
         for paragraph in paragraphs:
@@ -169,8 +171,11 @@ class RichText(SerializableObjectJson):
             if 'text' not in data:
                 continue
 
-            if variable_name in data['text']:
-                data['text'] = data['text'].replace(variable_name, value)
+            paragraph_text = RichTextParagraphText(data['text'])
+            new_text = paragraph_text.replace_variable_with_text(variable_name, value)
+
+            if new_text is not None:
+                data['text'] = new_text
 
     def replace_resource_views_with_variables(self) -> None:
         """
@@ -181,7 +186,8 @@ class RichText(SerializableObjectJson):
         view_index = 1
         for block in self.get_block(RichTextBlockType.RESOURCE_VIEW):
 
-            variable = self._format_variable_name(f"figure_{view_index}")
+            variable = '<te-variable-inline data-jsondata=\'{"name": "figure_' + str(view_index) + \
+                '", "description": "", "type": "string", "value": ""}\'></te-variable-inline>'
             paragraph = self.create_paragraph(self.generate_id(), variable)
             self.replace_block_by_id(block.id, paragraph)
             view_index += 1
