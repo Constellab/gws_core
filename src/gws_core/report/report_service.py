@@ -101,7 +101,13 @@ class ReportService():
 
         cls._update_report_project(report, report_dto.project_id)
 
-        return report.save()
+        report = report.save()
+
+        ActivityService.add_or_update(ActivityType.UPDATE,
+                                      object_type=ActivityObjectType.REPORT,
+                                      object_id=report.id)
+
+        return report
 
     @classmethod
     def update_title(cls, report_id: str, title: str) -> Report:
@@ -109,7 +115,13 @@ class ReportService():
 
         report.title = title.strip()
 
-        return report.save()
+        report = report.save()
+
+        ActivityService.add_or_update(ActivityType.UPDATE,
+                                      object_type=ActivityObjectType.REPORT,
+                                      object_id=report.id)
+
+        return report
 
     @classmethod
     def update_project(cls, report_id: str, project_id: str) -> Report:
@@ -117,7 +129,13 @@ class ReportService():
 
         cls._update_report_project(report, project_id)
 
-        return report.save()
+        report = report.save()
+
+        ActivityService.add_or_update(ActivityType.UPDATE,
+                                      object_type=ActivityObjectType.REPORT,
+                                      object_id=report.id)
+
+        return report
 
     @classmethod
     @transaction()
@@ -131,11 +149,11 @@ class ReportService():
 
         # if the project was removed
         if project_id is None and report.project is not None:
-            report.project = None
 
             if report.last_sync_at is not None:
                 # delete the report in space
                 SpaceService.delete_report(project_id=report.project.id, report_id=report.id)
+            report.project = None
 
         # check that all linked experiment are in same project
         experiments: List[Experiment] = cls.get_experiments_by_report(report.id)
@@ -154,7 +172,12 @@ class ReportService():
         # refresh ReportResource table
         cls._refresh_report_views_and_tags(report)
 
-        return report.save()
+        report = report.save()
+        ActivityService.add_or_update(ActivityType.UPDATE,
+                                      object_type=ActivityObjectType.REPORT,
+                                      object_id=report.id)
+
+        return report
 
     @classmethod
     @transaction()

@@ -136,17 +136,26 @@ class ExperimentService(BaseService):
 
         experiment.title = experiment_dto.title.strip()
 
-        return cls._update_experiment_project(experiment, experiment_dto.project_id)
+        experiment = cls._update_experiment_project(experiment, experiment_dto.project_id)
+        ActivityService.add_or_update(ActivityType.UPDATE,
+                                      object_type=ActivityObjectType.EXPERIMENT,
+                                      object_id=experiment.id)
+
+        return experiment
 
     @classmethod
     def update_experiment_title(cls, experiment_id: str, title: str) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         experiment.check_is_updatable()
-
         experiment.title = title.strip()
+        experiment = experiment.save()
 
-        return experiment.save()
+        ActivityService.add_or_update(ActivityType.UPDATE,
+                                      object_type=ActivityObjectType.EXPERIMENT,
+                                      object_id=experiment.id)
+
+        return experiment
 
     @classmethod
     def update_experiment_project(cls, experiment_id: str, project_id: Optional[str]) -> Experiment:
@@ -154,7 +163,13 @@ class ExperimentService(BaseService):
 
         experiment.check_is_updatable()
 
-        return cls._update_experiment_project(experiment, project_id)
+        experiment = cls._update_experiment_project(experiment, project_id)
+
+        ActivityService.add_or_update(ActivityType.UPDATE,
+                                      object_type=ActivityObjectType.EXPERIMENT,
+                                      object_id=experiment.id)
+
+        return experiment
 
     @classmethod
     @transaction()
@@ -192,11 +207,11 @@ class ExperimentService(BaseService):
 
         # if the project was removed
         if project_removed:
-            experiment.project = None
             if experiment.last_sync_at is not None:
                 # delete the experiment in space
                 SpaceService.delete_experiment(
                     project_id=experiment.project.id, experiment_id=experiment.id)
+            experiment.project = None
 
         return experiment
 
@@ -206,11 +221,23 @@ class ExperimentService(BaseService):
 
         experiment.check_is_updatable()
         experiment.description = description
-        return experiment.save()
+        experiment = experiment.save()
+
+        ActivityService.add_or_update(ActivityType.UPDATE,
+                                      object_type=ActivityObjectType.EXPERIMENT,
+                                      object_id=experiment.id)
+
+        return experiment
 
     @classmethod
     def reset_experiment(cls, experiment: Experiment) -> Experiment:
-        return experiment.reset()
+        experiment = experiment.reset()
+
+        ActivityService.add_or_update(ActivityType.UPDATE,
+                                      object_type=ActivityObjectType.EXPERIMENT,
+                                      object_id=experiment.id)
+
+        return experiment
 
     ###################################  VALIDATION  ##############################
 

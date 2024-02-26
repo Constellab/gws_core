@@ -3,7 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import final
+from datetime import datetime, timedelta
+from typing import Optional, final
 
 from peewee import CharField, ForeignKeyField
 
@@ -30,9 +31,13 @@ class Activity(Model):
 
     _table_name = "gws_user_activity"
 
+    # For add of update activity, if the last activity or same type is less than ACTIVITY_MERGE_MAX_TIME seconds,
+    # the activity will be updated
+    ACTIVITY_MERGE_MAX_TIME = 60 * 5
+
     @classmethod
     def add(cls, activity_type: ActivityType, object_type: ActivityObjectType,
-            object_id: str, user: User = None):
+            object_id: str, user: User = None) -> "Activity":
         if user is None:
             user = CurrentUserService.get_and_check_current_user()
         activity = Activity(
@@ -41,11 +46,52 @@ class Activity(Model):
             object_type=object_type,
             object_id=object_id
         )
-        activity.save()
+        return activity.save()
 
     @classmethod
     def get_last_activity(cls) -> "Activity":
         return Activity.select().order_by(Activity.created_at.desc()).first()
+
+    @classmethod
+    def add_or_update(cls, activity_type: ActivityType,
+                      object_type: ActivityObjectType, object_id: str,
+                      user: User = None) -> "Activity":
+
+        max_date = datetime.now() - timedelta(seconds=Activity.ACTIVITY_MERGE_MAX_TIME)
+
+        same_activity = Activity.get_last_of_type(
+            activity_type=activity_type,
+            object_type=object_type,
+            object_id=object_id,
+            max_date=max_date,
+            user=user
+        )
+
+        if same_activity is not None:
+            same_activity.last_modified_at = datetime.now()
+            return same_activity.save()
+        else:
+            return cls.add(activity_type, object_type, object_id, user)
+
+    @classmethod
+    def get_last_of_type(cls, activity_type: ActivityType,
+                         object_type: ActivityObjectType, object_id: str,
+                         max_date: datetime, user: User = None) -> Optional["Activity"]:
+        """Method to check if an activity exists for a given type and object
+        and is more recent than a given date
+
+        :return: _description_
+        :rtype: _type_
+        """
+        if user is None:
+            user = CurrentUserService.get_and_check_current_user()
+        return Activity.select().where(
+            (Activity.activity_type == activity_type) &
+            (Activity.user == user) &
+            (Activity.object_type == object_type) &
+            (Activity.object_id == object_id) &
+            (Activity.last_modified_at > max_date)
+        ).order_by(Activity.created_at.desc()).first()
 
     def to_dto(self) -> ActivityDTO:
         return ActivityDTO(

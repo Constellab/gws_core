@@ -22,8 +22,8 @@ class ActivityService:
 
     @classmethod
     def add(cls, activity_type: ActivityType, object_type: ActivityObjectType,
-            object_id: str, user: User = None):
-        Activity.add(
+            object_id: str, user: User = None) -> Activity:
+        return Activity.add(
             activity_type=activity_type,
             object_type=object_type,
             object_id=object_id,
@@ -33,12 +33,24 @@ class ActivityService:
     @classmethod
     def add_with_catch(cls, activity_type: ActivityType,
                        object_type: ActivityObjectType, object_id: str,
-                       user: User = None):
+                       user: User = None) -> Optional[Activity]:
         try:
-            cls.add(activity_type, object_type, object_id, user)
+            return cls.add(activity_type, object_type, object_id, user)
         except Exception as err:
             Logger.error(f"Error while adding activity {activity_type.value} {object_type.value}. Error : {err}")
-            pass
+            return None
+
+    @classmethod
+    def add_or_update(cls, activity_type: ActivityType,
+                      object_type: ActivityObjectType, object_id: str,
+                      user: User = None) -> Activity:
+
+        return Activity.add_or_update(
+            activity_type=activity_type,
+            object_type=object_type,
+            object_id=object_id,
+            user=user,
+        )
 
     @classmethod
     def get_last_activity(cls) -> Optional[Activity]:

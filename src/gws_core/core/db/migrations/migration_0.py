@@ -1067,6 +1067,10 @@ class Migration075(BrickMigration):
             cls.migrate_protocol_iofaces(protocol_model.data["graph"])
             protocol_model.save(skip_hook=True)
 
+        # fix old activity type
+        Activity.update(activity_type=ActivityType.STOP_EXPERIMENT.value).where(
+            Activity.activity_type == "STOP").execute()
+
     @classmethod
     def migrate_protocol_template_recur(cls, protocol_graph: dict) -> None:
         for process_dto in protocol_graph["nodes"].values():
