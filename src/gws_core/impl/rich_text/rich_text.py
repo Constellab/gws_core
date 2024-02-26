@@ -4,20 +4,16 @@
 # About us: https://gencovery.com
 
 
-import json
 from datetime import datetime
 from typing import Any, List, Optional, Set
 
-from bs4 import BeautifulSoup
-
-from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.rich_text.rich_text_paragraph_text import \
     RichTextParagraphText
 from gws_core.impl.rich_text.rich_text_types import (
     RichTextBlock, RichTextBlockType, RichTextDTO, RichTextFigureData,
     RichTextParagraphData, RichTextParagraphHeaderData,
-    RichTextResourceViewData, RichTextVariableData)
+    RichTextResourceViewData)
 from gws_core.resource.r_field.serializable_r_field import \
     SerializableObjectJson
 
