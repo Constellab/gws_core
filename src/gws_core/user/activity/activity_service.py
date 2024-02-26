@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from threading import Thread
+from time import sleep
 from typing import Optional
 
 from peewee import ModelSelect
@@ -12,6 +14,7 @@ from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
 from gws_core.core.utils.logger import Logger
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
+from gws_core.user.current_user_service import CurrentUserService
 
 from ..user import User
 from .activity import Activity
@@ -51,6 +54,18 @@ class ActivityService:
             object_id=object_id,
             user=user,
         )
+
+    @classmethod
+    def add_or_update_async(cls, activity_type: ActivityType,
+                            object_type: ActivityObjectType, object_id: str,
+                            user: User = None) -> None:
+
+        if user is None:
+            user = CurrentUserService.get_and_check_current_user()
+
+        # call add_or_update in new thread
+        thread = Thread(target=cls.add_or_update, args=(activity_type, object_type, object_id, user))
+        thread.start()
 
     @classmethod
     def get_last_activity(cls) -> Optional[Activity]:

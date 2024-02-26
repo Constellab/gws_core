@@ -103,9 +103,9 @@ class ReportService():
 
         report = report.save()
 
-        ActivityService.add_or_update(ActivityType.UPDATE,
-                                      object_type=ActivityObjectType.REPORT,
-                                      object_id=report.id)
+        ActivityService.add_or_update_async(ActivityType.UPDATE,
+                                            object_type=ActivityObjectType.REPORT,
+                                            object_id=report.id)
 
         return report
 
@@ -117,9 +117,9 @@ class ReportService():
 
         report = report.save()
 
-        ActivityService.add_or_update(ActivityType.UPDATE,
-                                      object_type=ActivityObjectType.REPORT,
-                                      object_id=report.id)
+        ActivityService.add_or_update_async(ActivityType.UPDATE,
+                                            object_type=ActivityObjectType.REPORT,
+                                            object_id=report.id)
 
         return report
 
@@ -131,9 +131,9 @@ class ReportService():
 
         report = report.save()
 
-        ActivityService.add_or_update(ActivityType.UPDATE,
-                                      object_type=ActivityObjectType.REPORT,
-                                      object_id=report.id)
+        ActivityService.add_or_update_async(ActivityType.UPDATE,
+                                            object_type=ActivityObjectType.REPORT,
+                                            object_id=report.id)
 
         return report
 
@@ -173,9 +173,9 @@ class ReportService():
         cls._refresh_report_views_and_tags(report)
 
         report = report.save()
-        ActivityService.add_or_update(ActivityType.UPDATE,
-                                      object_type=ActivityObjectType.REPORT,
-                                      object_id=report.id)
+        ActivityService.add_or_update_async(ActivityType.UPDATE,
+                                            object_type=ActivityObjectType.REPORT,
+                                            object_id=report.id)
 
         return report
 

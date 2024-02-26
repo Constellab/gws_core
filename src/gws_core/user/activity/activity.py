@@ -50,7 +50,7 @@ class Activity(Model):
 
     @classmethod
     def get_last_activity(cls) -> "Activity":
-        return Activity.select().order_by(Activity.created_at.desc()).first()
+        return Activity.select().order_by(Activity.last_modified_at.desc()).first()
 
     @classmethod
     def add_or_update(cls, activity_type: ActivityType,

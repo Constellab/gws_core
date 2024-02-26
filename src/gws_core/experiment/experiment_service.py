@@ -137,7 +137,7 @@ class ExperimentService(BaseService):
         experiment.title = experiment_dto.title.strip()
 
         experiment = cls._update_experiment_project(experiment, experiment_dto.project_id)
-        ActivityService.add_or_update(ActivityType.UPDATE,
+        ActivityService.add_or_update_async(ActivityType.UPDATE,
                                       object_type=ActivityObjectType.EXPERIMENT,
                                       object_id=experiment.id)
 
@@ -151,7 +151,7 @@ class ExperimentService(BaseService):
         experiment.title = title.strip()
         experiment = experiment.save()
 
-        ActivityService.add_or_update(ActivityType.UPDATE,
+        ActivityService.add_or_update_async(ActivityType.UPDATE,
                                       object_type=ActivityObjectType.EXPERIMENT,
                                       object_id=experiment.id)
 
@@ -165,7 +165,7 @@ class ExperimentService(BaseService):
 
         experiment = cls._update_experiment_project(experiment, project_id)
 
-        ActivityService.add_or_update(ActivityType.UPDATE,
+        ActivityService.add_or_update_async(ActivityType.UPDATE,
                                       object_type=ActivityObjectType.EXPERIMENT,
                                       object_id=experiment.id)
 
@@ -223,7 +223,7 @@ class ExperimentService(BaseService):
         experiment.description = description
         experiment = experiment.save()
 
-        ActivityService.add_or_update(ActivityType.UPDATE,
+        ActivityService.add_or_update_async(ActivityType.UPDATE,
                                       object_type=ActivityObjectType.EXPERIMENT,
                                       object_id=experiment.id)
 
@@ -233,7 +233,7 @@ class ExperimentService(BaseService):
     def reset_experiment(cls, experiment: Experiment) -> Experiment:
         experiment = experiment.reset()
 
-        ActivityService.add_or_update(ActivityType.UPDATE,
+        ActivityService.add_or_update_async(ActivityType.UPDATE,
                                       object_type=ActivityObjectType.EXPERIMENT,
                                       object_id=experiment.id)
 
