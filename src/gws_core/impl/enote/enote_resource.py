@@ -38,22 +38,72 @@ class ENoteResource(Resource):
             self.rich_text = rich_text
 
     def replace_variable(self, variable_name: str, value: str) -> None:
+        """
+        Replace a variable in the e-note content with text.
+
+        :param variable_name: variable name to replace
+        :type variable_name: str
+        :param value: value to replace the variable with
+        :type value: str
+        """
         self.rich_text.replace_variable(variable_name, value)
 
     def add_paragraph(self, paragraph: str) -> None:
+        """
+        Add a paragraph to the e-note content.
+
+        :param paragraph: paragraph to add
+        :type paragraph: str
+        """
         self.rich_text.add_paragraph(paragraph)
 
     def add_header(self, header: str, level: RichTextParagraphHeaderLevel) -> None:
+        """
+        Add a header to the e-note content.
+
+        :param header: header to add
+        :type header: str
+        :param level: header level
+        :type level: RichTextParagraphHeaderLevel
+        """
         self.rich_text.add_header(header, level)
 
     def append_enote(self, enote: "ENoteResource") -> None:
+        """Append the content of another e-note at the end of the e-note content.
+
+        :param enote: e-note to append
+        :type enote: ENoteResource
+        """
         self.append_rich_text(enote.rich_text)
 
     def append_rich_text(self, rich_text: RichText) -> None:
+        """Append rich text at the end of the e-note content.
+
+        :param rich_text: rich text to append
+        :type rich_text: RichText
+        """
         self.rich_text.append_rich_text(rich_text)
 
     def add_view(self, resource: Resource, view_method_name: str, config_values: ConfigParamsDict = None,
                  title: str = None, caption: str = None, variable_name: str = None) -> None:
+        """Add a view to the e-note content.
+        To get the information of the views, once you opened the view in the application, you can
+        click on View settings > Show view configuration
+
+        :param resource: resource to call the view on
+        :type resource: Resource
+        :param view_method_name: name of the view method to call
+        :type view_method_name: str
+        :param config_values: config values for the views, defaults to None
+        :type config_values: ConfigParamsDict, optional
+        :param title: view title, defaults to None
+        :type title: str, optional
+        :param caption: view caption, defaults to None
+        :type caption: str, optional
+        :param variable_name: if provided, the view replace the provided variable.
+                            if not, the view is append at the end of the enote, defaults to None
+        :type variable_name: str, optional
+        """
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
             resource._model_id, view_method_name, config_values, True)
 
