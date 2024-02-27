@@ -13,7 +13,7 @@ from gws_core.impl.rich_text.rich_text_paragraph_text import \
 from gws_core.impl.rich_text.rich_text_types import (
     RichTextBlock, RichTextBlockType, RichTextDTO, RichTextFigureData,
     RichTextParagraphData, RichTextParagraphHeaderData,
-    RichTextResourceViewData)
+    RichTextParagraphHeaderLevel, RichTextResourceViewData)
 from gws_core.resource.r_field.serializable_r_field import \
     SerializableObjectJson
 
@@ -50,6 +50,8 @@ class RichText(SerializableObjectJson):
     def _append_block(self, block: RichTextBlock) -> None:
         """Append an element to the rich text content
         """
+        if not block.id or self.get_block_by_id(block.id) is not None:
+            block.id = self.generate_id()
         self._content.blocks.append(block)
 
     def _insert_block_at_index(self, index: int, block: RichTextBlock) -> None:
@@ -225,6 +227,13 @@ class RichText(SerializableObjectJson):
         """
         self._append_block(self.create_paragraph(self.generate_id(), text))
 
+    ##################################### HEADER #########################################
+
+    def add_header(self, text: str, level: RichTextParagraphHeaderLevel) -> None:
+        """Add a header to the rich text content
+        """
+        self._append_block(self.create_header(self.generate_id(), text, level))
+
     ##################################### OTHERS #########################################
 
     def get_content(self) -> RichTextDTO:
@@ -234,13 +243,26 @@ class RichText(SerializableObjectJson):
         return self._content.to_json_dict()
 
     def is_empty(self) -> bool:
-        return self._content is None or not self._content.blocks or len(self._content.blocks) == 0
+        if self._content is None or not self._content.blocks or len(self._content.blocks) == 0:
+            return True
+
+        for block in self._content.blocks:
+            if block.type != RichTextBlockType.PARAGRAPH:
+                return False
+            if 'text' in block.data and block.data['text']:
+                return False
+
+        return True
 
     def generate_id(self) -> str:
         while True:
             id_ = StringHelper.generate_random_chars(10)
             if not self.get_block_by_id(id_):
                 return id_
+
+    def append_rich_text(self, rich_text: 'RichText') -> None:
+        for block in rich_text.get_blocks():
+            self._append_block(block)
 
     ##################################### SERIALIZATION / DESERIALIZATION #########################################
 
@@ -276,11 +298,16 @@ class RichText(SerializableObjectJson):
         return cls.create_block(id_, RichTextBlockType.PARAGRAPH, data)
 
     @classmethod
-    def create_header(cls, id_: str, text: str, level: int) -> RichTextBlock:
+    def create_header(cls, id_: str, text: str, level: RichTextParagraphHeaderLevel) -> RichTextBlock:
         """Create a paragraph block
         """
-        data: RichTextParagraphHeaderData = {'text': text, 'level': level}
-        return cls.create_block(id_, RichTextBlockType.HEADER, data)
+        if not text:
+            raise ValueError('The text is empty')
+        if not isinstance(level, RichTextParagraphHeaderLevel):
+            raise ValueError('The level is not valid')
+
+        header_data: RichTextParagraphHeaderData = {'text': text, 'level': level.value}
+        return cls.create_block(id_, RichTextBlockType.HEADER, header_data)
 
     @classmethod
     def create_block(cls, id_: str, block_type: RichTextBlockType, data: Any) -> RichTextBlock:

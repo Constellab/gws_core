@@ -15,8 +15,8 @@ from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
-                                                     RichTextResourceViewData)
+from gws_core.impl.rich_text.rich_text_types import (
+    RichTextDTO, RichTextParagraphHeaderLevel, RichTextResourceViewData)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.project.project import Project
 from gws_core.report.report_file_service import ReportFileService
@@ -64,19 +64,19 @@ class ReportService():
         else:
             # Set default content for report
             report.content = RichText.create_rich_text_dto(
-                [RichText.create_header("0", "Introduction", 2),
+                [RichText.create_header("0", "Introduction", RichTextParagraphHeaderLevel.HEADER_1),
                  RichText.create_paragraph("1", ""),
                  RichText.create_paragraph("2", ""),
-                 RichText.create_header("3", "Methods", 2),
+                 RichText.create_header("3", "Methods", RichTextParagraphHeaderLevel.HEADER_1),
                  RichText.create_paragraph("4", ""),
                  RichText.create_paragraph("5", ""),
-                 RichText.create_header("6", "Results", 2),
+                 RichText.create_header("6", "Results", RichTextParagraphHeaderLevel.HEADER_1),
                  RichText.create_paragraph("7", ""),
                  RichText.create_paragraph("8", ""),
-                 RichText.create_header("9", "Conclusion", 2),
+                 RichText.create_header("9", "Conclusion", RichTextParagraphHeaderLevel.HEADER_1),
                  RichText.create_paragraph("10", ""),
                  RichText.create_paragraph("11", ""),
-                 RichText.create_header("12", "References", 2),
+                 RichText.create_header("12", "References", RichTextParagraphHeaderLevel.HEADER_1),
                  RichText.create_paragraph("13", "")
                  ])
 

@@ -49,6 +49,12 @@ class RichTextParagraphData(TypedDict):
     text: str
 
 
+class RichTextParagraphHeaderLevel(Enum):
+    HEADER_1 = 2
+    HEADER_2 = 3
+    HEADER_3 = 4
+
+
 class RichTextParagraphHeaderData(TypedDict):
     """Object representing a paragraph block data in a rich text
 
@@ -56,7 +62,7 @@ class RichTextParagraphHeaderData(TypedDict):
     :type TypedDict: [type]
     """
     text: str
-    level: int  # 1 to 6
+    level: int
 
 
 class RichTextFigureData(TypedDict):

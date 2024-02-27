@@ -116,3 +116,29 @@ class TestRichText(BaseTestCaseLight):
         rich_text.replace_resource_views_with_variables()
         # TODO check to improve
         self.assertEqual(rich_text.get_content().blocks[4].type, RichTextBlockType.PARAGRAPH)
+
+    def test_is_empty(self):
+        rich_text = RichText()
+        self.assertTrue(rich_text.is_empty())
+
+        rich_text = RichText(RichText.create_rich_text_dto([
+            RichTextBlock(
+                id="0",
+                type=RichTextBlockType.PARAGRAPH,
+                data={
+                    "text": "Introduction"
+                }
+            )
+        ]))
+        self.assertFalse(rich_text.is_empty())
+
+        rich_text = RichText(RichText.create_rich_text_dto([
+            RichTextBlock(
+                id="0",
+                type=RichTextBlockType.PARAGRAPH,
+                data={
+                    "text": ""
+                }
+            )
+        ]))
+        self.assertTrue(rich_text.is_empty())

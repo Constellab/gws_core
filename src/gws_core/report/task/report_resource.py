@@ -67,4 +67,4 @@ class ReportResource(Resource):
 
     @view(view_type=RichTextView, human_name="View report", short_description="View report content", default_view=True)
     def view_report(self, config: ConfigParamsDict = None) -> RichTextView:
-        return RichTextView(self.get_content())
+        return RichTextView(self._get_report().title, self.get_content())

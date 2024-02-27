@@ -11,19 +11,21 @@ from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_param import RichTextParam
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
-from gws_core.report.task.note_resource import NoteResource
 from gws_core.report.template.report_template import ReportTemplate
 from gws_core.report.template.report_template_param import ReportTemplateParam
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
+from .enote_resource import ENoteResource
+
 
 @task_decorator(
-    unique_name="CreateNote",
-    short_description="Create a note",
+    unique_name="CreateENote",
+    human_name="Create e-note",
+    short_description="Create a e-note",
 )
-class CreateNote(Task):
+class CreateENote(Task):
     """
     Create a note that can be exported to a report.
     """
@@ -31,28 +33,30 @@ class CreateNote(Task):
     input_specs: InputSpecs = InputSpecs()
 
     output_specs: OutputSpecs = OutputSpecs({
-        'note': OutputSpec(NoteResource, human_name='Note', short_description='New note')
+        'enote': OutputSpec(ENoteResource, human_name='E-note', short_description='New e-note')
     })
 
     config_specs: ConfigSpecs = {
         'template': ReportTemplateParam(optional=True),
-        'title': StrParam(human_name='Title', short_description='Title of the note', default_value='New note'),
-        'note': RichTextParam(human_name='Note', short_description='Note content, this overrides the template',
-                              optional=True)
+        'title': StrParam(human_name='Title', short_description='Title of the e-note', default_value='New e-note'),
+        'enote': RichTextParam(human_name='E-note', short_description='E-note content, this overrides the template',
+                               optional=True)
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         template: ReportTemplate = params['template']
         title: str = params['title']
-        note_param: RichText = params['note']
+        enote_param: RichText = params['enote']
 
-        note_resource = NoteResource(title=title or 'New note')
+        enote_resource = ENoteResource()
 
-        if note_param is not None:
-            note_resource.rich_text = note_param
+        if enote_param and not enote_param.is_empty():
+            enote_resource.rich_text = enote_param
+            enote_resource.title = title or 'New e-note'
         elif template is not None:
-            note_resource.rich_text = RichText(template.content)
+            enote_resource.rich_text = RichText(template.content)
+            enote_resource.title = title or template.title
 
         return {
-            'note': note_resource
+            'enote': enote_resource
         }
