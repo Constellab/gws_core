@@ -17,7 +17,8 @@ from gws_core.resource.view.view_decorator import view
 from gws_core.resource.view.view_result import CallViewResult
 
 
-@resource_decorator("ReportResource", human_name="Report resource", short_description="Report resource")
+@resource_decorator("ReportResource", human_name="Report resource", short_description="Report resource",
+                    icon="report")
 class ReportResource(Resource):
 
     report_id: str = StrRField()

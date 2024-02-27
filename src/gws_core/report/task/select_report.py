@@ -17,6 +17,7 @@ from .report_resource import ReportResource
 @task_decorator(
     unique_name="SelectReport",
     short_description="Select a report",
+    hide=True,
 )
 class SelectReport(Task):
     """

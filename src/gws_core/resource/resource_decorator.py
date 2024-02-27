@@ -14,7 +14,7 @@ from ..resource.resource import Resource
 
 
 def resource_decorator(unique_name: str, human_name: str = "", short_description: str = "",
-                       hide: bool = False,
+                       hide: bool = False, icon: str = None,
                        deprecated_since: str = None, deprecated_message: str = None) -> Callable:
     """ Decorator to be placed on all the resourcees. A resource not decorated will not be runnable.
     It define static information about the resource
@@ -31,6 +31,9 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
     :param hide: Only the resource will hide=False will be available in the interface, other will be hidden.
                 It is useful for resource that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
+    :param icon: icon to display in the interface when viewing the protocols.
+                Select icon name from : https://fonts.google.com/icons?icon.set=Material+Icons, defaults to None
+    :type icon: str, optional
     :param deprecated_since: To provide when the object is deprecated. It must be a version string like 1.0.0 to
                             tell at which version the object became deprecated, defaults to None
     :type deprecated_since: str, optional
@@ -56,7 +59,7 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
 
         register_gws_typing_class(object_class=resource_class, object_type="RESOURCE", unique_name=unique_name,
                                   human_name=human_name, short_description=short_description, hide=hide,
-                                  object_sub_type='RESOURCE',
+                                  icon=icon, object_sub_type='RESOURCE',
                                   deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
         return resource_class

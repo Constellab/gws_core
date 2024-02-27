@@ -17,7 +17,7 @@ from .enote_resource import ENoteResource
 
 
 @task_decorator("GenerateReportFromENote", human_name="Generate report from e-note",
-                short_description="Task to generate a report from an e-note")
+                short_description="Task to generate a report from an e-note", icon="sticky_note_2")
 class GenerateReportFromENote(Task):
     """
     Generate a report from the note content.

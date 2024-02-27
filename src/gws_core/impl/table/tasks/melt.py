@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 
-from gws_core.config.param.param_spec import StrParam, BoolParam, ListParam
+import pandas as pd
+
+from gws_core.config.param.param_spec import BoolParam, ListParam, StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
@@ -14,11 +16,10 @@ from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
 from ..table import Table
 
-import pandas as pd
-
 
 @task_decorator("Melt", human_name="Melt",
-                short_description="pandas.melt, Unpivot a DataFrame from wide to long format, optionally leaving identifiers set.")
+                short_description="pandas.melt, Unpivot a DataFrame from wide to long format, optionally leaving identifiers set.",
+                icon="table_chart")
 class Melt(Task):
     """
     Melt from pandas \n
@@ -76,9 +77,9 @@ class Melt(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         dataframe = pd.DataFrame(inputs['input_table'].get_data())
-        for key, i  in params.items() :
-            if i == "" :
-                params[key]= None
+        for key, i in params.items():
+            if i == "":
+                params[key] = None
         result = pd.melt(dataframe,
                          id_vars=params['id_vars'],
                          value_vars=params["value_vars"],

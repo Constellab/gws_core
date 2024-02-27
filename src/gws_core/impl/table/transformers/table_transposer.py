@@ -8,14 +8,10 @@ from ....config.config_types import ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 
-# ####################################################################
-#
-# TableTransposer class
-#
-# ####################################################################
 
-
-@transformer_decorator(unique_name="TableTransposer", resource_type=Table, short_description="Transposes the table")
+@transformer_decorator(unique_name="TableTransposer", resource_type=Table,
+                       short_description="Transposes the table",
+                       icon="pivot_table_chart")
 class TableTransposer(Transformer):
     """
     Transformer to transpose the table (switch columns and lines).

@@ -43,6 +43,7 @@ class Typing(Model):
     deprecated_since: CharField = CharField(null=True, max_length=50)
     deprecated_message: CharField = CharField(null=True, max_length=255)
     hide: BooleanField = BooleanField(default=False)
+    icon: CharField = CharField(null=True, max_length=50)
 
     # Sub type of the object, types will be differents based on object type
     object_sub_type: CharField = CharField(null=True, max_length=20)
@@ -135,7 +136,8 @@ class Typing(Model):
             deprecated_message=self.deprecated_message,
             additional_data=None,
             status=self.get_type_status(),
-            hide=self.hide
+            hide=self.hide,
+            icon=self.icon
         )
 
     def to_full_dto(self) -> TypingFullDTO:

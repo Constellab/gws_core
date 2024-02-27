@@ -15,7 +15,9 @@ from .plotly_r_field import PlotlyRField
 from .plotly_view import PlotlyView
 
 
-@resource_decorator("PlotlyResource", human_name="Plotly resource", short_description="Plotly resource")
+@resource_decorator("PlotlyResource", human_name="Plotly resource",
+                    short_description="Plotly resource",
+                    icon="analytics")
 class PlotlyResource(Resource):
     """
     Resource that contains a plotly figure.

@@ -16,7 +16,9 @@ from gws_core.streamlit.streamlit_app_managers import StreamlitAppManager
 from gws_core.streamlit.streamlit_view import StreamlitView
 
 
-@resource_decorator("StreamlitResource", human_name="Streamlit App", short_description="Streamlit App")
+@resource_decorator("StreamlitResource", human_name="Streamlit App",
+                    short_description="Streamlit App",
+                    icon="dashboard")
 class StreamlitResource(ResourceSet):
     """
     Resource that contains a plotly figure.

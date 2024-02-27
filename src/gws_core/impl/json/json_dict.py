@@ -18,7 +18,9 @@ from ...resource.view.view_decorator import view
 from .json_view import JSONView
 
 
-@resource_decorator("JSONDict", human_name="JSON Dict", short_description="Resource that holds a JSON dict")
+@resource_decorator("JSONDict", human_name="JSON Dict",
+                    short_description="Resource that holds a JSON dict",
+                    icon="data_object")
 class JSONDict(Resource):
 
     data: dict = DictRField()

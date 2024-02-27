@@ -48,7 +48,8 @@ ALLOWED_TXT_FILE_FORMATS = ['csv', 'tsv', 'tab', 'txt']
 ALLOWED_FILE_FORMATS = [*ALLOWED_XLS_FILE_FORMATS, *ALLOWED_TXT_FILE_FORMATS]
 
 
-@resource_decorator("Table", human_name="Table", short_description="2d excel like table")
+@resource_decorator("Table", human_name="Table", short_description="2d excel like table",
+                    icon="table_chart")
 class Table(Resource):
     """
     Main 2d table with named columns and named rows. It can also contains tags for each column and row.

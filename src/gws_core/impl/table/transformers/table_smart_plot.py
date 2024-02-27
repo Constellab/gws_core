@@ -20,7 +20,8 @@ from gws_core.task.task_io import TaskInputs
 
 
 @task_decorator("SmartPlot", human_name="Smart plot generator",
-                short_description="Generate a plot using an AI (OpenAI).")
+                short_description="Generate a plot using an AI (OpenAI).",
+                icon="insights")
 class SmartPlot(SmartTaskBase):
     """
 This task is still in beta version.

@@ -32,7 +32,8 @@ ENCODED_COLUMN = "encoded_column"
 
 @resource_decorator("EncodingTable",
                     human_name="EncodingTable",
-                    short_description="Table encoding")
+                    short_description="Table encoding",
+                    icon="table_chart")
 class EncodingTable(Table):
     """
     Represents an encoding table

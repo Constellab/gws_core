@@ -21,7 +21,7 @@ from .plotly_resource import PlotlyResource
 
 
 @task_decorator("SmartPlotly", human_name="Smart interactive plot generator",
-                short_description="Generate an interactive plot using an AI (OpenAI).")
+                short_description="Generate an interactive plot using an AI (OpenAI).", icon="insights")
 class SmartPlotly(SmartTaskBase):
     """
 This task is still in beta version.

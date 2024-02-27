@@ -18,6 +18,7 @@ from gws_core.progress_bar.progress_bar_dto import ProgressBarDTO
 class ProcessTypeDTO(BaseModelDTO):
     human_name: Optional[str] = None
     short_description: Optional[str] = None
+    icon: Optional[str] = None
 
 
 class ProcessDTO(ModelWithUserDTO):

@@ -17,7 +17,7 @@ from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("StreamlitLiveTask", human_name="Streamlite live task")
+@task_decorator("StreamlitLiveTask", human_name="Streamlite live task", icon="code")
 class StreamlitLiveTask(Task):
     """
     Live task to generate a streamlit app dashboard.

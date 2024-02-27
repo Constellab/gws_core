@@ -22,6 +22,7 @@ class TypingDTO(ModelDTO):
     additional_data: Optional[dict]
     status: TypingStatus
     hide: bool
+    icon: Optional[str]
 
 
 class TypingFullDTO(TypingDTO):

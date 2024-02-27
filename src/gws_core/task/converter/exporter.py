@@ -42,6 +42,7 @@ def exporter_decorator(
         unique_name: str, source_type: Type[Resource], target_type: Type[File] = File,
         allowed_user: UserGroup = UserGroup.USER,
         human_name: str = None, short_description: str = None, hide: bool = False,
+        icon: str = 'file_upload',
         deprecated_since: str = None, deprecated_message: str = None) -> Callable:
     """ Decorator to place on a ResourceExporter. It defines a special task to export a resource (of type resource_type) to
     a File (file or folder)
@@ -60,6 +61,9 @@ def exporter_decorator(
     :param hide: Only the task with hide=False will be available in the interface(web platform), other will be hidden.
                 It is useful for task that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
+    :param icon: icon to display in the interface when viewing the protocols.
+                Select icon name from : https://fonts.google.com/icons?icon.set=Material+Icons, defaults to None
+    :type icon: str, optional
     :param deprecated_since: To provide when the object is deprecated. It must be a version string like 1.0.0 to
                             tell at which version the object became deprecated, defaults to None
     :type deprecated_since: str, optional
@@ -95,7 +99,7 @@ def exporter_decorator(
             decorate_converter(
                 task_class, unique_name=unique_name, task_type='EXPORTER', source_type=source_type,
                 target_type=target_type, related_resource=source_type, human_name=human_name_computed,
-                short_description=short_description_computed, allowed_user=allowed_user, hide=hide,
+                short_description=short_description_computed, allowed_user=allowed_user, hide=hide, icon=icon,
                 deprecated_since=deprecated_since, deprecated_message=deprecated_message)
         except Exception as err:
             traceback.print_stack()

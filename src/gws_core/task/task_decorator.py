@@ -19,7 +19,8 @@ from .task_typing import TaskSubType
 
 
 def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
-                   human_name: str = "", short_description: str = "", hide: bool = False,
+                   human_name: str = "", short_description: str = "",
+                   hide: bool = False, icon: str = None,
                    deprecated_since: str = None, deprecated_message: str = None) -> Callable:
     """ Decorator to be placed on all the tasks. A task not decorated will not be runnable.
     It define static information about the task
@@ -38,6 +39,9 @@ def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
     :param hide: Only the task with hide=False will be available in the interface(web platform), other will be hidden.
                 It is useful for task that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
+    :param icon: icon to display in the interface when viewing the protocols.
+                Select icon name from : https://fonts.google.com/icons?icon.set=Material+Icons, defaults to None
+    :type icon: str, optional
     :param deprecated_since: To provide when the object is deprecated. It must be a version string like 1.0.0 to
                             tell at which version the object became deprecated, defaults to None
     :type deprecated_since: str, optional
@@ -48,7 +52,7 @@ def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
     """
     def decorator(task_class: Type[Task]):
         decorate_task(task_class, unique_name=unique_name, task_type='TASK', allowed_user=allowed_user,
-                      human_name=human_name, short_description=short_description, hide=hide,
+                      human_name=human_name, short_description=short_description, hide=hide, icon=icon,
                       deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
         return task_class
@@ -60,6 +64,7 @@ def decorate_task(
         task_type: TaskSubType, related_resource: Type[Resource] = None,
         allowed_user: UserGroup = UserGroup.USER,
         human_name: str = "", short_description: str = "", hide: bool = False,
+        icon: str = None,
         deprecated_since: str = None, deprecated_message: str = None):
     """Method to decorate a task
     """
@@ -97,7 +102,7 @@ def decorate_task(
 
     register_gws_typing_class(object_class=task_class, object_type="TASK", unique_name=unique_name,
                               object_sub_type=task_type, human_name=human_name, short_description=short_description,
-                              hide=hide, related_model_typing_name=related_resource_typing_name,
+                              hide=hide, icon=icon, related_model_typing_name=related_resource_typing_name,
                               deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
     # set the allowed user for the task

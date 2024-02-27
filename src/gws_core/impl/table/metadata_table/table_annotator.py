@@ -15,15 +15,10 @@ from ....task.task_io import TaskInputs, TaskOutputs
 from ...table.table import Table
 from .helper.table_annotator_helper import TableAnnotatorHelper
 
-# ####################################################################
-#
-# TableRowAnnotator class
-#
-# ####################################################################
-
 
 @task_decorator(unique_name="TableRowAnnotator", human_name="Table row annotator",
-                short_description="Annotate table rows according to a metadata table")
+                short_description="Annotate table rows according to a metadata table",
+                icon="table_chart")
 class TableRowAnnotator(Task):
     """
     TableRowAnnotator
@@ -85,14 +80,9 @@ class TableRowAnnotator(Task):
         return {"sample_table": table}
 
 
-# ####################################################################
-#
-# TableColumnAnnotator class
-#
-# ####################################################################
-
 @task_decorator(unique_name="TableColumnAnnotator", human_name="Table column annotator",
-                short_description="Annotate table columns according to a metadata table")
+                short_description="Annotate table columns according to a metadata table",
+                icon="table_chart")
 class TableColumnAnnotator(Task):
     """
     TableColumnAnnotator

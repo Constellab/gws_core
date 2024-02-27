@@ -9,6 +9,7 @@ from typing import Tuple, Type, final
 
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_manager import TypingManager
 
 from ...brick.brick_service import BrickService
 from ...config.config_params import ConfigParams
@@ -28,6 +29,7 @@ def decorate_converter(task_class: Type['Converter'], unique_name: str, task_typ
                        related_resource: Type[Resource] = None,
                        allowed_user: UserGroup = UserGroup.USER,
                        human_name: str = "", short_description: str = "", hide: bool = False,
+                       icon: str = None,
                        deprecated_since: str = None, deprecated_message: str = None) -> None:
     if not Utils.issubclass(task_class, Converter):
         BrickService.log_brick_error(
@@ -35,13 +37,26 @@ def decorate_converter(task_class: Type['Converter'], unique_name: str, task_typ
             f"The decorate_converter is used on the class: {task_class.__name__} and this class is not a sub class of Converter")
         return
 
+    if not Utils.issubclass(source_type, Resource):
+        BrickService.log_brick_error(
+            task_class,
+            f"The source_type: {source_type.__name__} is not a sub class of Resource")
+        return
+
+    # use the icon of resource by default
+    if not icon:
+        typing = TypingManager.get_typing_from_name(source_type._typing_name)
+        if typing:
+            icon = typing.icon
+
     # force the input and output specs
     task_class.input_specs = InputSpecs({Converter.input_name: InputSpec(source_type)})
     task_class.output_specs = OutputSpecs({Converter.output_name: OutputSpec(target_type)})
 
     # register the task and set the human_name and short_description dynamically based on resource
     decorate_task(task_class, unique_name, human_name=human_name, related_resource=related_resource,
-                  task_type=task_type, short_description=short_description, allowed_user=allowed_user, hide=hide,
+                  task_type=task_type, short_description=short_description, allowed_user=allowed_user,
+                  hide=hide, icon=icon,
                   deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
 

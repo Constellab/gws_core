@@ -508,6 +508,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
             resource_dto.resource_type_short_description = resource_typing.short_description
             resource_dto.is_downloadable = self.is_downloadable
             resource_dto.type_status = resource_typing.get_type_status()
+            resource_dto.type_icon = resource_typing.icon
 
             resource_type: Type = resource_typing.get_type()
 

@@ -25,7 +25,8 @@ from ...task.task_io import TaskInputs, TaskOutputs
 
 
 @task_decorator(unique_name="ResourceUploaderS3", human_name="Upload resource to S3",
-                short_description="Simple task to send the input resource to a S3 bucket")
+                short_description="Simple task to send the input resource to a S3 bucket",
+                icon="cloud_upload")
 class ResourceUploaderS3(Task):
     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
     config_specs: ConfigSpecs = {

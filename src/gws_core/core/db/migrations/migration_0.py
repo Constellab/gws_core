@@ -1044,6 +1044,7 @@ class Migration075(BrickMigration):
         migrator.add_column_if_not_exists(TaskModel, TaskModel.name)
         migrator.add_column_if_not_exists(TaskModel, TaskModel.community_live_task_version_id)
         migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.name)
+        migrator.add_column_if_not_exists(Typing, Typing.icon)
         migrator.migrate()
 
         process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())

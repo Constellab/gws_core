@@ -16,14 +16,9 @@ from ....task.task_io import TaskInputs, TaskOutputs
 from ...table.table import Table
 from .encoding_table import EncodingTable
 
-# ####################################################################
-#
-# TableEncoder class
-#
-# ####################################################################
 
-
-@task_decorator(unique_name="TableEncoder", short_description="Table encoder")
+@task_decorator(unique_name="TableEncoder", short_description="Table encoder",
+                icon="table_chart")
 class TableEncoder(Task):
     input_specs: InputSpecs = InputSpecs({"table": InputSpec(Table), "encoding_table": InputSpec(EncodingTable)})
     output_specs: OutputSpecs = OutputSpecs({"encoded_table": OutputSpec(Table)})

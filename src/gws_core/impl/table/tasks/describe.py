@@ -3,7 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core.config.param.param_spec import StrParam, BoolParam
+import pandas as pd
+
+from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
@@ -13,11 +15,9 @@ from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
 from ..table import Table
 
-import pandas as pd
 
-
-
-@task_decorator("describe", human_name='Describe', short_description="Generate short descriptive statistics")
+@task_decorator("describe", human_name='Describe', short_description="Generate short descriptive statistics",
+                icon="table_chart")
 class Describe(Task):
     """
     Descriptive statistics include those that summarize the central tendency, dispersion and shape of a dataset’s distribution, excluding `NaN` values.

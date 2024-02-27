@@ -10,7 +10,7 @@ from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
                           RobotFly, RobotMove)
 
 
-@protocol_decorator("RobotSimpleTravel", hide=True)
+@protocol_decorator("RobotSimpleTravel", hide=True, icon="smart_toy")
 class RobotSimpleTravel(Protocol):
 
     tasks_count = 7
@@ -38,7 +38,7 @@ class RobotSimpleTravel(Protocol):
         ])
 
 
-@protocol_decorator("RobotTravelProto", hide=False)
+@protocol_decorator("RobotTravelProto", hide=True, icon="smart_toy")
 class RobotTravelProto(Protocol):
 
     tasks_count = 7
@@ -69,7 +69,8 @@ class RobotTravelProto(Protocol):
         self.add_outerface('travel_out', eat_2, 'robot')
 
 
-@protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro", hide=False)
+@protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro",
+                    hide=True, icon="smart_toy")
 class RobotSuperTravelProto(Protocol):
 
     tasks_count = 1 + RobotTravelProto.tasks_count
@@ -88,7 +89,8 @@ class RobotSuperTravelProto(Protocol):
         self.add_outerface('super_travel_out', sub_travel, 'travel_out')
 
 
-@protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro", hide=True)
+@protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro",
+                    hide=True, icon="smart_toy")
 class RobotWorldTravelProto(Protocol):
 
     tasks_count = 3 + RobotSuperTravelProto.tasks_count
@@ -115,7 +117,7 @@ class RobotWorldTravelProto(Protocol):
         ])
 
 
-@protocol_decorator("CreateSimpleRobot", hide=True)
+@protocol_decorator("CreateSimpleRobot", hide=True, icon="smart_toy")
 class CreateSimpleRobot(Protocol):
     def configure_protocol(self) -> None:
         facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
@@ -128,7 +130,7 @@ class CreateSimpleRobot(Protocol):
         ])
 
 
-@protocol_decorator("MoveSimpleRobot", hide=True)
+@protocol_decorator("MoveSimpleRobot", hide=True, icon="smart_toy")
 class MoveSimpleRobot(Protocol):
 
     def configure_protocol(self) -> None:

@@ -28,7 +28,8 @@ from ..config.config_types import ConfigSpecs
 
 
 @task_decorator(unique_name="ResourceDownloaderHttp", human_name="Download resource from external source",
-                short_description="Download a resource from an external source using a link")
+                short_description="Download a resource from an external source using a link",
+                icon="cloud_download")
 class ResourceDownloaderHttp(ResourceDownloaderBase):
     """
     Task to download a resource from an external source using an HTTP link.

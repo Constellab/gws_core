@@ -23,6 +23,7 @@ from .report_resource import ReportResource
 @task_decorator(
     unique_name="CreateReport",
     short_description="Create a report",
+    hide=True,
 )
 class CreateReport(Task):
     """

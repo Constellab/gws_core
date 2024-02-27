@@ -16,7 +16,8 @@ from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator(unique_name="ResourceDownloaderS3", human_name="Download resource from a S3 bucket")
+@task_decorator(unique_name="ResourceDownloaderS3", human_name="Download resource from a S3 bucket",
+                icon="cloud_download")
 class ResourceDownloaderS3(ResourceDownloaderBase):
     """
     Task to download a resource from an external source using an HTTP link.

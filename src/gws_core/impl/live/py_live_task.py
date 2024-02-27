@@ -20,7 +20,8 @@ from ...task.task_io import TaskInputs, TaskOutputs
 
 
 @task_decorator("PyLiveTask", human_name="Python live task",
-                short_description="Live task to run Python snippets directly in the global environment. The input data and parameters are passed in memory to the snippet.")
+                short_description="Live task to run Python snippets directly in the global environment. The input data and parameters are passed in memory to the snippet.",
+                icon="code")
 class PyLiveTask(Task):
     """
     Python live tasks allow to execute any Python code snippets on the fly.

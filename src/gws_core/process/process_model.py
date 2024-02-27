@@ -451,7 +451,8 @@ class ProcessModel(ModelWithUser):
         if process_typing:
             process_dto.process_type = ProcessTypeDTO(
                 human_name=process_typing.human_name,
-                short_description=process_typing.short_description
+                short_description=process_typing.short_description,
+                icon=process_typing.icon
             )
             process_dto.type_status = process_typing.get_type_status()
         else:
@@ -487,7 +488,8 @@ class ProcessModel(ModelWithUser):
             status=self.status.value,
             process_type=ProcessTypeDTO(
                 human_name=process_typing.human_name,
-                short_description=process_typing.short_description
+                short_description=process_typing.short_description,
+                icon=process_typing.icon
             )
         )
 

@@ -19,7 +19,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 
 
 @task_decorator("RobotCreate", human_name="Create robot", short_description="This task creates a robot",
-                hide=False)
+                hide=True, icon="smart_toy")
 class RobotCreate(Task):
     input_specs = InputSpecs({})  # no required input
     output_specs = OutputSpecs({'robot': OutputSpec(Robot)})
@@ -32,7 +32,8 @@ class RobotCreate(Task):
 
 
 @task_decorator("RobotMove", human_name="Move robot",
-                short_description="This task emulates a short moving step of the robot", hide=False)
+                short_description="This task emulates a short moving step of the robot",
+                hide=True, icon="smart_toy")
 class RobotMove(Task):
     input_specs = InputSpecs({'robot': InputSpec(Robot, human_name="Robot",
                                                  short_description="The robot to feed")})  # just for testing
@@ -49,7 +50,8 @@ class RobotMove(Task):
 
 
 @task_decorator("RobotEat", human_name="Eat task",
-                short_description="This task emulates the meal of the robot before its flight!", hide=True)
+                short_description="This task emulates the meal of the robot before its flight!", hide=True,
+                icon="smart_toy")
 class RobotEat(Task):
     input_specs = InputSpecs({'robot': InputSpec(
         Robot), 'food': InputSpec(RobotFood, is_optional=True)})
@@ -71,7 +73,8 @@ class RobotEat(Task):
 
 
 @task_decorator("RobotWait", human_name="Wait task",
-                short_description="This task emulates the resting time of the robot before its flight!", hide=True)
+                short_description="This task emulates the resting time of the robot before its flight!",
+                hide=True, icon="smart_toy")
 class RobotWait(Task):
     input_specs = InputSpecs({'robot': InputSpec(Robot)})
     output_specs = OutputSpecs({'robot': OutputSpec(Robot)})
@@ -86,7 +89,8 @@ class RobotWait(Task):
 
 
 @task_decorator("RobotFly", human_name="Fly task",
-                short_description="This task emulates the fly of the robot. It inherites the Move task.", hide=True)
+                short_description="This task emulates the fly of the robot. It inherites the Move task.",
+                hide=True, icon="smart_toy")
 class RobotFly(RobotMove):
     config_specs = {'moving_step': FloatParam(default_value=1000.0, unit="km"), 'direction': StrParam(
         default_value="west", allowed_values=["north", "south", "east", "west"], short_description="The flying direction")}
@@ -95,7 +99,7 @@ class RobotFly(RobotMove):
         return super().run(params, inputs)
 
 
-@task_decorator("RobotAdd", hide=True)
+@task_decorator("RobotAdd", hide=True, icon="smart_toy")
 class RobotAdd(Task):
     input_specs = InputSpecs({'robot': InputSpec(Robot), 'addon': InputSpec(RobotAddOn)})
     output_specs = OutputSpecs({'mega_robot': OutputSpec(MegaRobot)})
@@ -109,7 +113,8 @@ class RobotAdd(Task):
 
 
 @task_decorator(unique_name="RobotAddOnCreate", human_name="The travel of `Astro`",
-                short_description="This is the travel of astro composed of several steps", hide=True)
+                short_description="This is the travel of astro composed of several steps",
+                hide=True, icon="smart_toy")
 class RobotAddOnCreate(Task):
     output_specs = OutputSpecs({'addon': OutputSpec(RobotAddOn)})
     config_specs = {}
@@ -119,7 +124,8 @@ class RobotAddOnCreate(Task):
 
 
 @task_decorator(unique_name="RobotSugarCreate", human_name="Create a sugar type of food",
-                short_description="Create a sugar type of food", hide=True)
+                short_description="Create a sugar type of food",
+                hide=True, icon="smart_toy")
 class RobotSugarCreate(Task):
     """Task that create a sugar type of food and wait 3 secondes for it
     used in TestRobotWithSugarProtocol

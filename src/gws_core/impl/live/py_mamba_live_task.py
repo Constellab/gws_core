@@ -11,7 +11,8 @@ from ...task.task_decorator import task_decorator
 
 @task_decorator(
     "PyMambaLiveTask", human_name="Mamba env live task",
-    short_description="Live task to run Python snippets in a mamba shell environment.")
+    short_description="Live task to run Python snippets in a mamba shell environment.",
+    icon="code")
 class PyMambaLiveTask(PyCondaLiveTask):
     """
     Mamba-based Python live tasks allow to execute Python snippets on the fly in isolated conda environments.

@@ -16,7 +16,8 @@ from ...task.task_decorator import task_decorator
 
 @task_decorator(
     "PyCondaLiveTask", human_name="Conda env live task",
-    short_description="Live task to run Python snippets in a conda shell environment.")
+    short_description="Live task to run Python snippets in a conda shell environment.",
+    icon="code")
 class PyCondaLiveTask(EnvLiveTask):
     """
     Conda-based Python live tasks allow to execute Python snippets on the fly in isolated conda environments.

@@ -21,9 +21,6 @@ from ..model.typing import Typing
 
 class TypingManager:
 
-    # a dictionary to save the types,the key if the full typing name
-    _typings_before_save: Dict[str, Typing] = {}
-
     # Mark as true when the tables exists, the typings can then be saved directly
     _tables_are_created: bool = False
 
@@ -90,14 +87,14 @@ class TypingManager:
             raise Exception(
                 f"""Trying to register the type {name} but it is not a subclass of Base""")
 
-        if typing.typing_name in cls._typings_before_save:
+        if typing.typing_name in cls._typings_name_cache:
             raise Exception(
                 f"""2 differents {typing.object_type} in the brick {typing.brick} register with the same name : {typing.unique_name}.
-                                {typing.object_type} already register: [{cls._typings_before_save[typing.typing_name].model_type }].
+                                {typing.object_type} already register: [{cls._typings_name_cache[typing.typing_name].model_type }].
                                 {typing.object_type} trying to register : {object_class.full_classname()}
                                 Please update one of the unique name""")
 
-        cls._typings_before_save[typing.typing_name] = typing
+        cls._typings_name_cache[typing.typing_name] = typing
 
         # If the tables exists, directly create the typing
         if cls._tables_are_created:
@@ -108,7 +105,7 @@ class TypingManager:
         # once this method is called, we considere the tables are ready
         cls._tables_are_created = True
 
-        for typing in cls._typings_before_save.values():
+        for typing in cls._typings_name_cache.values():
             cls._save_object_type_in_db(typing)
 
     @classmethod
@@ -145,7 +142,8 @@ class TypingManager:
                 return
 
             # If another value has changed only udpate the DB
-            if typing_db.hide != typing.hide or typing_db.human_name != typing.human_name or typing_db.short_description != typing.short_description or \
+            if typing_db.hide != typing.hide or typing_db.human_name != typing.human_name or \
+                    typing_db.short_description != typing.short_description or typing_db.icon != typing.icon or \
                     typing_db.deprecated_since != typing.deprecated_since or typing_db.deprecated_message != typing.deprecated_message or \
                     typing_db.brick_version != typing.brick_version:
                 cls._update_typing(typing, typing_db)
@@ -159,15 +157,11 @@ class TypingManager:
         typing.save(force_insert=False)  # use to update instead of insert
 
     @classmethod
-    def get_typings(cls) -> Dict[str, Typing]:
-        return cls._typings_before_save
-
-    @classmethod
     def check_typing_name_compatibility(cls, typing_name: str) -> None:
         """Method to check if the typing name is compatible with the current lab
         """
         if not typing_name:
-            raise Exception(f'The typing name is empty.')
+            raise Exception('The typing name is empty.')
         typing = TypingNameObj.from_typing_name(typing_name)
 
         if not BrickHelper.brick_is_loaded(typing.brick_name):

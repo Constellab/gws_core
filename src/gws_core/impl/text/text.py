@@ -14,7 +14,8 @@ from ...resource.view.view_decorator import view
 from .text_view import TextView
 
 
-@resource_decorator("Text")
+@resource_decorator("Text", human_name="Text", short_description="Resource that holds a text",
+                    icon="text_snippet")
 class Text(Resource):
     DEFAULT_FILE_FORMAT = "txt"
     _data: str = StrRField(searchable=False)

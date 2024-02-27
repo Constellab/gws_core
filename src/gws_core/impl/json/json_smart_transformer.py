@@ -20,7 +20,7 @@ from gws_core.task.task_io import TaskInputs
 
 
 @task_decorator("SmartJsonTransformer", human_name="Smart json transformer",
-                short_description="Json transformer that uses AI  (OpenAI).")
+                short_description="Json transformer that uses AI  (OpenAI).", icon="insights")
 class JsonSmartTransformer(SmartTaskBase):
     """
 This task is still in beta version.

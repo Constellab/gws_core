@@ -15,7 +15,7 @@ from ..table.view.table_view import TableView
 from ..text.text_view import TextView
 
 
-@resource_decorator(unique_name="Robot", human_name="Robot", hide=True)
+@resource_decorator(unique_name="Robot", human_name="Robot", hide=True, icon="smart_toy")
 class Robot(Resource):
 
     age: int = IntRField()
@@ -62,12 +62,12 @@ class Robot(Resource):
         return {"age": self.age, "position": self.position, "weight": self.weight}
 
 
-@resource_decorator("RobotAddOn", hide=True)
+@resource_decorator("RobotAddOn", hide=True, icon="smart_toy")
 class RobotAddOn(Resource):
     pass
 
 
-@resource_decorator("MegaRobot", hide=True)
+@resource_decorator("MegaRobot", hide=True, icon="smart_toy")
 class MegaRobot(Robot):
 
     @classmethod
@@ -79,7 +79,7 @@ class MegaRobot(Robot):
         return mega
 
 
-@resource_decorator("RobotFood", hide=True)
+@resource_decorator("RobotFood", hide=True, icon="smart_toy")
 class RobotFood(Resource):
 
     multiplicator: int = IntRField()

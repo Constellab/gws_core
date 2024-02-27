@@ -23,7 +23,7 @@ from .resource_set import ResourceSet
 
 
 @task_decorator(unique_name="ResourceStacker", short_description="Stack a set of resource in a resource set",
-                hide=False)
+                hide=False, icon="format_list_bulleted")
 class ResourceStacker(Task):
 
     config_specs: ConfigSpecs = {'keys': ParamSet(
@@ -64,7 +64,7 @@ class ResourceStacker(Task):
 
 
 @task_decorator(unique_name="ResourcePicker", short_description="Pick a resource from a resource set",
-                hide=False)
+                hide=False, icon="format_list_bulleted")
 class ResourcePicker(Task):
     input_specs: InputSpecs = InputSpecs({
         "resource_set": InputSpec(ResourceSet),

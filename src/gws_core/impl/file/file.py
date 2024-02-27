@@ -22,7 +22,7 @@ from ..text.text_view import SimpleTextView, TextView, TextViewData
 from .fs_node import FSNode
 
 
-@resource_decorator("File")
+@resource_decorator("File", human_name="File", icon="description")
 class File(FSNode):
     """
     File class.

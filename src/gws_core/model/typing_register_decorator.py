@@ -38,7 +38,7 @@ def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bo
 # Save the Typing to the TypingManager and set the _typing_name class property
 def register_typing_class(
         object_class: Type[Base], object_type: TypingObjectType, unique_name: str,
-        human_name: str, short_description, hide: bool = False,
+        human_name: str, short_description, hide: bool = False, icon: str = None,
         object_sub_type: str = None, related_model_typing_name: str = None,
         deprecated_since: str = None, deprecated_message: str = None) -> None:
 
@@ -54,10 +54,11 @@ def register_typing_class(
         human_name=human_name,
         short_description=short_description,
         hide=hide,
+        icon=icon,
         object_sub_type=object_sub_type,
         related_model_typing_name=related_model_typing_name,
         deprecated_since=deprecated_since,
-        deprecated_message=deprecated_message
+        deprecated_message=deprecated_message,
     )
 
     TypingManager.register_typing(typing, object_class)
@@ -70,7 +71,7 @@ def register_typing_class(
 # Method to register gws object like Resource, Task and Protocol
 def register_gws_typing_class(
         object_class: Type[Base], object_type: TypingObjectType, unique_name: str,
-        human_name: str, short_description, hide: bool = False,
+        human_name: str, short_description, hide: bool = False, icon: str = None,
         object_sub_type: str = None, related_model_typing_name: str = None,
         deprecated_since: str = None, deprecated_message: str = None) -> None:
 
@@ -82,7 +83,7 @@ def register_gws_typing_class(
         BrickService.log_brick_error(
             object_class,
             f"The unique name '{unique_name}' for typing object {human_name} is not valid. It must contains only alpha numeric characters and '_'")
-        return object_class
+        return
 
     # check deprecated_since version
     if deprecated_since is not None:
@@ -98,6 +99,6 @@ def register_gws_typing_class(
         # clear the deprecated message if the deprecated_since version is provided
         deprecated_message = None
     register_typing_class(object_class=object_class, object_type=object_type, unique_name=unique_name,
-                          human_name=human_name, short_description=short_description, hide=hide,
+                          human_name=human_name, short_description=short_description, hide=hide, icon=icon,
                           object_sub_type=object_sub_type, related_model_typing_name=related_model_typing_name,
                           deprecated_since=deprecated_since, deprecated_message=deprecated_message)

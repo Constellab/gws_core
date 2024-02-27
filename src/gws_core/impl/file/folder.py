@@ -22,7 +22,7 @@ from .file_helper import FileHelper
 from .fs_node import FSNode
 
 
-@resource_decorator("Folder")
+@resource_decorator("Folder", human_name="Folder", icon="folder")
 class Folder(FSNode):
 
     def has_node(self, node_name: str) -> bool:

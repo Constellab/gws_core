@@ -21,7 +21,8 @@ from .task import CheckBeforeTaskResult, Task
 from .task_decorator import task_decorator
 
 
-@task_decorator(unique_name="Source")
+@task_decorator(unique_name="Source", human_name="Source", short_description="Select a resource from the databox",
+                icon="login")
 class Source(Task):
     """
     Source task.
@@ -57,12 +58,12 @@ class Source(Task):
         return config.get(Source.config_name, None)
 
 
-@task_decorator(unique_name="Sink")
+@task_decorator(unique_name="Sink", human_name="Output", icon="output")
 class Sink(Task):
     """
     Sink task.
 
-    A sink task is used to recieve a resource. No action is done.
+    A sink task is used to recieve a resource. The resource is flagged to show in databox.
     """
 
     input_name: str = 'resource'
@@ -89,7 +90,7 @@ class Sink(Task):
         return None
 
 
-@task_decorator(unique_name="FIFO2")
+@task_decorator(unique_name="FIFO2", hide=True)
 class FIFO2(Task):
     """
     FIFO2 task (with 2 input ports)
@@ -123,7 +124,7 @@ class FIFO2(Task):
         return None
 
 
-@task_decorator(unique_name="Switch2")
+@task_decorator(unique_name="Switch2", hide=True)
 class Switch2(Task):
     """
     Switch task (with 2 input ports)
@@ -152,7 +153,8 @@ class Switch2(Task):
         return {"resource": resource}
 
 
-@task_decorator(unique_name="Wait", short_description="Wait a number of seconds specified in the config")
+@task_decorator(unique_name="Wait", short_description="Wait a number of seconds specified in the config",
+                icon="front_hand")
 class Wait(Task):
     """
     Wait task
@@ -180,7 +182,8 @@ class Wait(Task):
         return {"resource": resource}
 
 
-@task_decorator(unique_name="ShellWait", short_description="Wait a number of seconds in the shell specified in the config")
+@task_decorator(unique_name="ShellWait",
+                short_description="Wait a number of seconds in the shell specified in the config", icon="front_hand")
 class ShellWait(Task):
     """
     Wait task
@@ -210,7 +213,7 @@ class ShellWait(Task):
         return {"resource": resource}
 
 
-@task_decorator(unique_name="Dispatch2")
+@task_decorator(unique_name="Dispatch2", hide=True)
 class Dispatch2(Task):
     """
     Dispatch task (with 2 input ports)

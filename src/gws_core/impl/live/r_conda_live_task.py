@@ -18,7 +18,8 @@ from ...task.task_decorator import task_decorator
 
 @task_decorator(
     "RCondaLiveTask", human_name="R conda env live task",
-    short_description="Live task to run R snippets in conda a shell environment.")
+    short_description="Live task to run R snippets in conda a shell environment.",
+    icon="code")
 class RCondaLiveTask(EnvLiveTask):
     """
     Conda-based R live tasks allow to execute R snippets on the fly in isolated conda environments.

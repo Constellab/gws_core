@@ -22,7 +22,8 @@ from gws_core.resource.view.view_result import CallViewResult
 
 
 @resource_decorator("ENoteResource", human_name="E-note resource",
-                    short_description="Resource that contains a rich text that can be exported to a report")
+                    short_description="Resource that contains a rich text that can be exported to a report",
+                    icon="sticky_note_2")
 class ENoteResource(Resource):
 
     title: str = StrRField()

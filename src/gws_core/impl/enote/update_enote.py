@@ -24,6 +24,7 @@ from .enote_resource import ENoteResource
     unique_name="UpdatENote",
     human_name="Update e-note",
     short_description="Append content to an existing e-note",
+    icon="sticky_note_2"
 )
 class UpdatENote(Task):
     """
