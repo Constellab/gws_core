@@ -1,3 +1,4 @@
+
 {
     "name"          : "gws_core",
     "author"        : "Gencovery",
@@ -44,7 +45,8 @@
                   {"name": "plotly", "version": "5.15.0"},
                   {"name": "simplejson", "version": "3.19.1"},
                   {"name": "xmltodict ", "version": "0.13.0"},
-                  {"name": "streamlit", "version": "1.30.0"}
+                  {"name": "streamlit", "version": "1.30.0"},
+                  {"name": "beautifulsoup4", "version": "4.12.3"}
                 ]
             },
             {
