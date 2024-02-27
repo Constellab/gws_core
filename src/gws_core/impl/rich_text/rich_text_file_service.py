@@ -7,19 +7,24 @@ import os
 
 from fastapi import UploadFile
 from PIL import Image
-from typing_extensions import TypedDict
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.report.report_dto import ReportImageDTO
 
 
-class ReportFileService():
-    """Service to store file (mainly image) linked to report
+class RichTextUploadImageResultDTO(BaseModelDTO):
+    filename: str
+    width: int
+    height: int
+
+
+class RichTextFileService():
+    """Service to store file assosicated to a rich text (report, report template, enote)
 
     :return: [description]
     :rtype: [type]
@@ -28,7 +33,7 @@ class ReportFileService():
     _dir_name = 'report'
 
     @classmethod
-    def upload_file(cls, file: UploadFile) -> ReportImageDTO:
+    def upload_file(cls, file: UploadFile) -> RichTextUploadImageResultDTO:
         image = None
         try:
             image = Image.open(file.file)
@@ -51,7 +56,7 @@ class ReportFileService():
         image.save(file_path)
         image.close()
 
-        return ReportImageDTO(
+        return RichTextUploadImageResultDTO(
             filename=filename,
             width=image_size[0],
             height=image_size[1]

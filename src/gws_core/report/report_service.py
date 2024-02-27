@@ -6,20 +6,17 @@
 
 from typing import Callable, List
 
-from fastapi import UploadFile
-from fastapi.responses import FileResponse
 from peewee import ModelSelect
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment_service import ExperimentService
-from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (
     RichTextDTO, RichTextParagraphHeaderLevel, RichTextResourceViewData)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.project.project import Project
-from gws_core.report.report_file_service import ReportFileService
 from gws_core.report.report_view_model import ReportViewModel
 from gws_core.report.template.report_template import ReportTemplate
 from gws_core.resource.resource_model import ResourceModel
@@ -43,7 +40,7 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..experiment.experiment import Experiment
-from ..report.report_dto import ReportImageDTO, ReportSaveDTO
+from ..report.report_dto import ReportSaveDTO
 from ..report.report_search_builder import ReportSearchBuilder
 from ..space.space_service import SpaceService
 from .report import Report, ReportExperiment
@@ -338,7 +335,7 @@ class ReportService():
         file_paths: List[str] = []
 
         for figure in rich_text.get_figures_data():
-            file_paths.append(ReportFileService.get_file_path(figure['filename']))
+            file_paths.append(RichTextFileService.get_file_path(figure['filename']))
 
         # set the resource views in the json object
         for resource_view in rich_text.get_resource_views_data():
@@ -487,26 +484,8 @@ class ReportService():
         paginator.map_result(map_function)
         return paginator
 
-    ################################################# Image ########################################
-
-    @classmethod
-    def upload_image(cls, file: UploadFile) -> ReportImageDTO:
-        return ReportFileService.upload_file(file)
-
-    @classmethod
-    def get_image_path(cls, filename: str) -> str:
-        return ReportFileService.get_file_path(filename)
-
-    @classmethod
-    def get_image_file_response(cls, filename: str) -> FileResponse:
-        file_path = cls.get_image_path(filename)
-        return FileHelper.create_file_response(file_path, filename=filename)
-
-    @classmethod
-    def delete_image(cls, filename: str) -> None:
-        ReportFileService.delete_file(filename)
-
     ################################################# Resource View ########################################
+
     @classmethod
     def get_resources_of_associated_experiments(cls, report_id: str) -> List[ResourceModel]:
         """Method to retrieve the resources of the experiments associated with a report.

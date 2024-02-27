@@ -35,9 +35,3 @@ class ReportDTO(ModelWithUserDTO):
 
 class ReportFullDTO(ReportDTO):
     content: dict
-
-
-class ReportImageDTO(BaseModelDTO):
-    filename: str
-    width: int
-    height: int

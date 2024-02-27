@@ -4,16 +4,11 @@
 # About us: https://gencovery.com
 
 
-from fastapi import UploadFile
-from fastapi.responses import FileResponse
 from peewee import ModelSelect
 
-from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.report.report import Report
-from gws_core.report.report_dto import ReportImageDTO
-from gws_core.report.report_file_service import ReportFileService
 from gws_core.report.template.report_template import ReportTemplate
 from gws_core.report.template.report_template_search_builder import \
     ReportTemplateSearchBuilder
@@ -113,22 +108,3 @@ class ReportTemplateService():
 
         return Paginator(
             model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
-
-    ################################################# Image ########################################
-
-    @classmethod
-    def upload_image(cls, file: UploadFile) -> ReportImageDTO:
-        return ReportFileService.upload_file(file)
-
-    @classmethod
-    def get_image_path(cls, filename: str) -> str:
-        return ReportFileService.get_file_path(filename)
-
-    @classmethod
-    def get_image_file_response(cls, filename: str) -> FileResponse:
-        file_path = cls.get_image_path(filename)
-        return FileHelper.create_file_response(file_path, filename=filename)
-
-    @classmethod
-    def delete_image(cls, filename: str) -> None:
-        ReportFileService.delete_file(filename)

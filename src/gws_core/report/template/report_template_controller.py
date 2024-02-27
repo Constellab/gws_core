@@ -4,14 +4,10 @@
 # About us: https://gencovery.com
 from typing import Optional
 
-from fastapi import File as FastAPIFile
-from fastapi import UploadFile
 from fastapi.param_functions import Depends
-from fastapi.responses import FileResponse
 
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
-from gws_core.report.report_dto import ReportImageDTO
 from gws_core.report.template.report_template_dto import (
     CreateReportTemplateDTO, CreateReportTemplateFromReportDTO,
     ReportTemplateDTO, ReportTemplateFullDTO)
@@ -52,26 +48,6 @@ def update_content(
 @core_app.delete("/report-template/{report_id}", tags=["Report template"], summary="Delete a report")
 def delete(report_id: str, _=Depends(AuthService.check_user_access_token)) -> None:
     ReportTemplateService.delete(report_id)
-
-
-################################################# Image ########################################
-
-@core_app.post("/report-template/image", tags=["Report template"], summary="Upload an object")
-def upload_image(image: UploadFile = FastAPIFile(...),
-                 _=Depends(AuthService.check_user_access_token)) -> ReportImageDTO:
-    return ReportTemplateService.upload_image(image)
-
-
-@core_app.get("/report-template/image/{filename}", tags=["Report template"], summary="Get an image of the report")
-def get_image(filename: str,
-              _=Depends(AuthService.check_user_access_token)) -> FileResponse:
-    return ReportTemplateService.get_image_file_response(filename)
-
-
-@core_app.delete("/report-template/image/{filename}", tags=["Report template"], summary="Delete an object")
-def delete_image(filename: str,
-                 _=Depends(AuthService.check_user_access_token)) -> None:
-    ReportTemplateService.delete_image(filename)
 
 ################################################# GET ########################################
 

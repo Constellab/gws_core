@@ -4,10 +4,7 @@
 # About us: https://gencovery.com
 from typing import List, Optional
 
-from fastapi import File as FastAPIFile
-from fastapi import UploadFile
 from fastapi.param_functions import Depends
-from fastapi.responses import FileResponse
 
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.experiment.experiment_dto import ExperimentDTO
@@ -16,7 +13,7 @@ from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from ..core.classes.search_builder import SearchParams
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
-from .report_dto import ReportDTO, ReportImageDTO, ReportSaveDTO
+from .report_dto import ReportDTO, ReportSaveDTO
 from .report_service import ReportService
 
 
@@ -96,25 +93,6 @@ def sync_with_space(report_id: str,
                     _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
     return ReportService.synchronize_with_space_by_id(report_id).to_dto()
 
-
-################################################# Image ########################################
-
-@core_app.post("/report/image", tags=["Report"], summary="Upload an object")
-def upload_image(image: UploadFile = FastAPIFile(...),
-                 _=Depends(AuthService.check_user_access_token)) -> ReportImageDTO:
-    return ReportService.upload_image(image)
-
-
-@core_app.get("/report/image/{filename}", tags=["Report"], summary="Get an image of the report")
-def get_image(filename: str,
-              _=Depends(AuthService.check_user_access_token)) -> FileResponse:
-    return ReportService.get_image_file_response(filename)
-
-
-@core_app.delete("/report/image/{filename}", tags=["Report"], summary="Delete an object")
-def delete_image(filename: str,
-                 _=Depends(AuthService.check_user_access_token)) -> None:
-    ReportService.delete_image(filename)
 
 ################################################# GET ########################################
 
