@@ -108,12 +108,12 @@ class TypingManager:
         for typing in cls._typings_name_cache.values():
             cls._save_object_type_in_db(typing)
 
+        # clean the cache so the next get are retrived from the DB
+        cls.clear_cache()
+
     @classmethod
     def _save_object_type_in_db(cls, typing: Typing) -> None:
         try:
-
-            query: ModelSelect = Typing.get_by_brick_and_unique_name(
-                typing.object_type, typing.brick, typing.unique_name)
 
             # set the version because the bricks are not loaded before
             brick_info = BrickHelper.get_brick_info(typing.brick)
@@ -126,6 +126,8 @@ class TypingManager:
             # refresh or set the ancestors list
             typing.refresh_ancestors()
 
+            query: ModelSelect = Typing.get_by_brick_and_unique_name(
+                typing.object_type, typing.brick, typing.unique_name)
             # If it doesn't exist, create the type in DB
             if query.count() == 0:
                 # force the creation (useful for tests when this is called multiple time with the same objects)
@@ -169,3 +171,7 @@ class TypingManager:
 
         # check that the type exist
         TypingManager.get_typing_from_name_and_check(typing_name)
+
+    @classmethod
+    def clear_cache(cls) -> None:
+        cls._typings_name_cache = {}
