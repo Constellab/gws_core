@@ -35,7 +35,7 @@ class ResourceDTO(ModelWithUserDTO):
     name: str
     has_children: bool
     type_status: TypingStatus
-    type_icon: Optional[str]
+    type_icon: Optional[str] = None
     flagged: bool
     experiment: Optional[ExperimentSimpleDTO]
     project: Optional[ProjectDTO]

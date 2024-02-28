@@ -112,13 +112,14 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
 
     @transaction()
     def delete_instance(self, *args, **kwargs):
+        # fs_node_model: FSNodeModel = self.fs_node_model
         result = super().delete_instance(*args, **kwargs)
-        if self.fs_node_model:
-            self.fs_node_model.delete_instance(delete_file=False)
-
-        self._delete_object()
         EntityTagList.delete_by_entity(EntityType.RESOURCE, self.id)
 
+        if self.fs_node_model:
+            self.fs_node_model.delete_instance()
+        # TODO to improve, if there is an error, the kvstore is not restored
+        self.remove_kv_store()
         return result
 
     @transaction()
@@ -147,15 +148,6 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
         task_resources: List[ResourceModel] = list(ResourceModel.get_by_task_model(task_model_id).execute())
 
         cls.delete_multiple_resources(task_resources)
-
-    def _delete_object(self):
-        """Delete the kv_store and the file if they exist does not delete model in DB
-        """
-        if self.fs_node_model:
-            self.fs_node_model.delete_object()
-
-        # TODO to improve, if there is an error, the kvstore is not restored
-        self.remove_kv_store()
 
     def remove_kv_store(self):
         """
