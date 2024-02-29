@@ -101,7 +101,8 @@ class DevEnvService:
             return False
 
         try:
-            ExternalApiService.get(dev_api + '/health-check', raise_exception_if_error=True)
+            ExternalApiService.get(dev_api + '/' + Settings.core_api_route_path() + '/health-check',
+                                   raise_exception_if_error=True)
             return True
         except Exception:
             return False
