@@ -94,6 +94,14 @@ class TypingManager:
                                 {typing.object_type} trying to register : {object_class.full_classname()}
                                 Please update one of the unique name""")
 
+        # set the version because the bricks are not loaded before
+        brick_info = BrickHelper.get_brick_info(typing.brick)
+        if brick_info is None:
+            Logger.error(
+                f"Can't get the brick info for brick '{typing.brick}' of typing '{typing.typing_name}'. Is the file in the correct folder in your brick ? Skipping the typing")
+            return
+        typing.brick_version = brick_info["version"]
+
         cls._typings_name_cache[typing.typing_name] = typing
 
         # If the tables exists, directly create the typing
@@ -111,15 +119,6 @@ class TypingManager:
     @classmethod
     def _save_object_type_in_db(cls, typing: Typing) -> None:
         try:
-
-            # set the version because the bricks are not loaded before
-            brick_info = BrickHelper.get_brick_info(typing.brick)
-            if brick_info is None:
-                Logger.error(
-                    f"Can't get the brick info for brick '{typing.brick}' of typing '{typing.typing_name}'. Is the file in the correct folder in your brick ? Skipping the typing")
-                return
-            typing.brick_version = brick_info["version"]
-
             # refresh or set the ancestors list
             typing.refresh_ancestors()
 
@@ -129,6 +128,8 @@ class TypingManager:
             if query.count() == 0:
                 # force the creation (useful for tests when this is called multiple time with the same objects)
                 typing.save(force_insert=True)
+                # replace in the cache
+                cls._typings_name_cache[typing.typing_name] = typing
                 return
 
             typing_db: Typing = query.first()
@@ -137,25 +138,27 @@ class TypingManager:
             if typing_db.model_type != typing.model_type or typing_db.related_model_typing_name != typing.related_model_typing_name or \
                     typing_db.object_sub_type != typing.object_sub_type or str(typing_db.data) != str(typing.data):
                 Logger.info(f"""Typing {typing.unique_name} in brick {typing.brick} has changed.""")
-                cls._update_typing(typing, typing_db)
+                typing_db = cls._update_typing(typing, typing_db)
                 return
 
             # If another value has changed only udpate the DB
-            if typing_db.hide != typing.hide or typing_db.human_name != typing.human_name or \
+            elif typing_db.hide != typing.hide or typing_db.human_name != typing.human_name or \
                     typing_db.short_description != typing.short_description or typing_db.icon != typing.icon or \
                     typing_db.deprecated_since != typing.deprecated_since or typing_db.deprecated_message != typing.deprecated_message or \
                     typing_db.brick_version != typing.brick_version:
-                cls._update_typing(typing, typing_db)
+                typing_db = cls._update_typing(typing, typing_db)
                 return
+
+            # replace in the cache
+            cls._typings_name_cache[typing.typing_name] = typing_db
+
         except Exception as err:
             Logger.error(f"Error while saving the typing '{typing.typing_name}', skipping the typing. Error : {err}")
 
     @classmethod
-    def _update_typing(cls, typing: Typing, typing_db: Typing) -> None:
+    def _update_typing(cls, typing: Typing, typing_db: Typing) -> Typing:
         typing.id = typing_db.id
-        typing.save(force_insert=False)  # use to update instead of insert
-        # replace in the cache
-        cls._typings_name_cache[typing.typing_name] = typing
+        return typing.save(force_insert=False)  # use to update instead of insert
 
     @classmethod
     def check_typing_name_compatibility(cls, typing_name: str) -> None:
