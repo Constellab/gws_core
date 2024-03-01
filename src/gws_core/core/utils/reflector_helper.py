@@ -100,16 +100,29 @@ class ReflectorHelper():
         for arg in arguments.items():
             arg_name: str = arg[0]
             arg_type: Any = arg[1].type_
-            arg_default_value: Any = arg[1].default_value.__name__ if not '_empty' else None
+
+
+            arg_default_value: Any = None
+            if arg[1].has_default_value():
+                arg_default_value = arg[1].default_value if arg[1].default_value is not None else 'None'
 
             arg_type = Utils.stringify_type(arg_type)
-
+            if arg_type == '_empty':
+                if arg_default_value is not None:
+                    arg_type = Utils.stringify_type(type(arg_default_value))
+                else:
+                    arg_type = 'Any'
             if not isinstance(arg_name, str):
                 print(arg_name)
             if not isinstance(arg_type, str):
                 print(arg_type)
+            if isinstance(arg_default_value, str) and len(arg_default_value) == 0:
+                arg_default_value = "''"
             if not isinstance(arg_default_value, str):
-                arg_default_value = str(arg_default_value)
+                if arg_default_value is None:
+                    arg_default_value = ''
+                else:
+                    arg_default_value = str(arg_default_value)
 
             arguments_json.append(MethodArgDoc(
                 arg_name=arg_name,
