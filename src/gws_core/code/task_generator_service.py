@@ -135,6 +135,7 @@ class TaskGeneratorService:
                     'PyMambaLiveTask' : 'MAMBA_PYTHON',
                     'PyPipenvLiveTask' : 'PIP_PYTHON',
                     'RCondaLiveTask' : 'CONDA_R',
-                    'RMambaLiveTask' : 'MAMBA_R'
+                    'RMambaLiveTask' : 'MAMBA_R',
+                    'StreamlitLiveTask' : 'STREAMLIT',
                 }
         return choice[instance_name.split('_')[0]]

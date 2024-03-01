@@ -5,7 +5,7 @@
 from traceback import format_exc
 from typing import Any, Dict, List, Type
 
-from peewee import ForeignKeyField, ModelSelect
+from peewee import CharField, ForeignKeyField, ModelSelect
 
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
@@ -57,6 +57,9 @@ class TaskModel(ProcessModel):
     # with lazy load = false, the Resource is not Loaded, it only contains the id
     source_config_id: str = ForeignKeyField(
         ResourceModel, null=True, index=True, lazy_load=False)
+
+    community_live_task_version_id: str = CharField(null=True, max_length=36, default="")
+
 
     _table_name = 'gws_task'
 
@@ -434,3 +437,8 @@ class TaskModel(ProcessModel):
 
         if self.parent_protocol:
             self.parent_protocol.check_is_updatable(error_if_finished=error_if_finished)
+
+    def to_dto(self):
+        res = super().to_dto()
+        res.community_live_task_version_id = self.community_live_task_version_id
+        return res

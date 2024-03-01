@@ -1034,7 +1034,7 @@ class Migration073(BrickMigration):
             migrator.migrate()
 
 
-@brick_migration('0.7.5', short_description='Add name to process model. Migrate protocol IOFaces.')
+@brick_migration('0.7.5', short_description='Add name to process model. Migrate protocol IOFaces. Add community live task version id column to Task model')
 class Migration075(BrickMigration):
 
     @classmethod
@@ -1042,6 +1042,7 @@ class Migration075(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(TaskModel.get_db())
         migrator.add_column_if_not_exists(TaskModel, TaskModel.name)
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.community_live_task_version_id)
         migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.name)
         migrator.migrate()
 
