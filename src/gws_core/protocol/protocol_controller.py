@@ -5,7 +5,7 @@
 
 
 import threading
-from typing import List, Optional
+from typing import List, Optional, Dict, AnyStr, Any
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
@@ -24,7 +24,7 @@ from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
 from gws_core.protocol_template.protocol_template_dto import \
     ProtocolTemplateDTO
 
-from ..community.community_dto import CommunityLiveTaskDTO
+from ..community.community_dto import CommunityCreateLiveTaskDTO, CommunityLiveTaskDTO
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
 from .protocol_service import ProtocolService
@@ -76,13 +76,68 @@ def add_community_live_task(id_: str,
         return ProtocolService.add_community_live_task_version_to_protocol_id(id_, live_task_version_id).to_dto()
 
 
-@core_app.post("/protocol/get-community-available-live-tasks", tags=["Protocol"],
-               summary="Get community live-tasks available for the protocol")
-def get_community_available_live_tasks(_=Depends(AuthService.check_user_access_token)) -> List[CommunityLiveTaskDTO]:
+@core_app.post("/protocol/get-community-available-spaces", tags=["Protocol"],
+                summary="Get community spaces available for the protocol")
+def get_community_available_space(_=Depends(AuthService.check_user_access_token)) -> Any:
     """
     Add a constellab community live task to a protocol
     """
-    return ProtocolService.get_community_available_live_tasks()
+    return ProtocolService.get_community_available_space()
+
+@core_app.post("/protocol/get-community-available-live-tasks", tags=["Protocol"],
+               summary="Get community live-tasks available for the protocol")
+def get_community_available_live_tasks(page: int,
+                                       number_of_items_per_page: int,
+                                       body: Dict[AnyStr, Any],
+                                       _=Depends(AuthService.check_user_access_token)) -> Any:
+    """
+    Add a constellab community live task to a protocol
+    """
+    spaces_filter = body.get(str.encode('spacesFilter'), [])
+    title_filter = body.get(str.encode('titleFilter'), '')
+    personalOnly = body.get(str.encode('personalOnly'), False)
+    return ProtocolService.get_community_available_live_tasks(spaces_filter, title_filter, personalOnly, page, number_of_items_per_page)
+
+
+@core_app.get("/protocol/get-current-live-task/{live_task_version_id}", tags=["Protocol"],
+               summary="Get community live task by live task version id")
+def get_community_live_task(live_task_version_id: str,
+                             _=Depends(AuthService.check_user_access_token)) -> CommunityLiveTaskDTO:
+    return ProtocolService.get_community_live_task(live_task_version_id)
+
+@core_app.post("/protocol/{id}/create-community-live-task", tags=["Protocol"],
+                summary="Create a community live-task in community")
+def create_community_live_task(id: str,
+                                 form_data: CommunityCreateLiveTaskDTO,
+                                 _=Depends(AuthService.check_user_access_token)) -> Any:
+     """
+     Create a constellab community live task
+     """
+     return ProtocolService.create_community_live_task(id, form_data)
+
+
+@core_app.post("/protocol/{id}/fork-community-live-task/{live_task_version_id}", tags=["Protocol"],
+                summary="Fork into a new community live-task")
+def fork_community_live_task(id: str,
+                            form_data: CommunityCreateLiveTaskDTO,
+                            live_task_version_id: str,
+                            _=Depends(AuthService.check_user_access_token)) -> Any:
+     """
+     Create a constellab community live task
+     """
+     return ProtocolService.fork_community_live_task(id, form_data, live_task_version_id)
+
+
+
+@core_app.post("/protocol/{id}/add-version-to-community-live-task/{live_task_id}", tags=["Protocol"],
+                summary="Create a community live-task in community")
+def create_new_community_live_task_version(id: str,
+                                 live_task_id: str,
+                                 _=Depends(AuthService.check_user_access_token)) -> Any:
+     """
+     Create a new constellab community live task version
+     """
+     return ProtocolService.create_community_live_task_version(id, live_task_id)
 
 
 @core_app.post("/protocol/{id_}/add-process/{process_typing_name}/connected-to-output/{process_name}/{port_name}",

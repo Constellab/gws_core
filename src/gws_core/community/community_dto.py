@@ -1,6 +1,5 @@
 from gws_core.core.model.model_dto import BaseModelDTO
-from typing import Dict, Optional, List
-from datetime import datetime
+from typing import Dict, Optional, List, Any
 
 class CommunityLiveTaskSpaceDTO(BaseModelDTO):
     id: str
@@ -27,3 +26,12 @@ class CommunityLiveTaskVersionDTO(BaseModelDTO):
     output_specs: Dict
     config_specs: Dict
     live_task: CommunityLiveTaskDTO
+
+class CommunityCreateLiveTaskDTO(BaseModelDTO):
+    title: str
+    type: str
+    space: Any
+
+class CommunityLiveTaskVersionCreateResDTO(BaseModelDTO):
+    id: str
+    live_task_version: str

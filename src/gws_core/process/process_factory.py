@@ -45,7 +45,8 @@ class ProcessFactory():
             instance_name: str = None,
             inputs_dto: IODTO = None,
             outputs_dto: IODTO = None,
-            name: str = None) -> TaskModel:
+            name: str = None,
+            community_live_task_version_id: str = None) -> TaskModel:
         if not issubclass(task_type, Task):
             name = task_type.__name__ if task_type.__name__ is not None else str(
                 task_type)
@@ -58,6 +59,9 @@ class ProcessFactory():
 
         task_model: TaskModel = TaskModel()
         task_model.set_process_type(task_type, inputs_dto, outputs_dto)
+
+        # Set the community_live_task_version_id if provided
+        task_model.community_live_task_version_id = community_live_task_version_id
 
         config: Config = Config()
         config.set_specs(task_type.config_specs)
@@ -258,9 +262,10 @@ class ProcessFactory():
     def create_process_model_from_type(
             cls, process_type: Type[Process],
             config_params: ConfigParamsDict = None,
-            instance_name: str = None) -> TaskModel:
+            instance_name: str = None,
+            community_live_task_version_id: str = None) -> TaskModel:
         if issubclass(process_type, Task):
-            return cls.create_task_model_from_type(process_type, config_params, instance_name)
+            return cls.create_task_model_from_type(process_type, config_params, instance_name, community_live_task_version_id=community_live_task_version_id)
         elif issubclass(process_type, Protocol):
             return cls.create_protocol_model_from_type(process_type, config_params, instance_name)
         else:

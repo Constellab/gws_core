@@ -3,11 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Literal, Optional, Set, Type, Union
+from typing import List, Literal, Optional, Set, Type, Union, Any
 
 from pydantic import parse_obj_as
 
-from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
@@ -30,8 +29,7 @@ from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 from gws_core.user.current_user_service import CurrentUserService
 
-from ..community.community_dto import (CommunityLiveTaskDTO,
-                                       CommunityLiveTaskVersionDTO)
+from ..community.community_dto import (CommunityLiveTaskVersionCreateResDTO, CommunityCreateLiveTaskDTO,CommunityLiveTaskVersionDTO, CommunityLiveTaskDTO)
 from ..community.community_service import CommunityService
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
@@ -47,6 +45,7 @@ from ..process.process_model import ProcessModel
 from ..protocol.protocol_model import ProtocolModel
 from ..task.task_model import TaskModel
 from .protocol import Protocol
+from ..code.task_generator_service import TaskGeneratorService
 
 
 class ProtocolService(BaseService):
@@ -80,7 +79,7 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_process_to_protocol_id(cls, protocol_id: str, process_typing_name: str,
-                                   instance_name: str = None, config_params: ConfigParamsDict = None) -> ProtocolUpdate:
+                                   instance_name: str = None, config_params: ConfigParamsDict = None, community_live_task_version_id: str = None) -> ProtocolUpdate:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
@@ -89,7 +88,7 @@ class ProtocolService(BaseService):
             process_typing_name)
 
         return cls.add_process_to_protocol(protocol_model=protocol_model, process_type=process_typing.get_type(),
-                                           instance_name=instance_name, config_params=config_params)
+                                           instance_name=instance_name, config_params=config_params, community_live_task_version_id=community_live_task_version_id)
 
     @classmethod
     @transaction()
@@ -103,10 +102,10 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_process_to_protocol(cls, protocol_model: ProtocolModel, process_type: Type[Process],
-                                instance_name: str = None, config_params: ConfigParamsDict = None) -> ProtocolUpdate:
+                                instance_name: str = None, config_params: ConfigParamsDict = None, community_live_task_version_id: str = None) -> ProtocolUpdate:
         # create the process
         process_model: ProcessModel = ProcessFactory.create_process_model_from_type(
-            process_type=process_type, config_params=config_params)
+            process_type=process_type, config_params=config_params, community_live_task_version_id=community_live_task_version_id)
 
         return cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=process_model,
                                                  instance_name=instance_name)
@@ -601,9 +600,7 @@ class ProtocolService(BaseService):
         process_model.check_is_updatable()
 
         io: IO = process_model.inputs if port_type == 'input' else process_model.outputs
-        if not io.is_dynamic:
-            raise BadRequestException(
-                f"The process does not support dynamic {port_type} ports")
+
 
         # generate the default spec and add port
         io_specs: Union[DynamicInputs, DynamicOutputs] = io.get_specs()
@@ -636,10 +633,6 @@ class ProtocolService(BaseService):
         process_model.check_is_updatable()
 
         io: IO = process_model.inputs if port_type == 'input' else process_model.outputs
-
-        if not io.is_dynamic:
-            raise BadRequestException(
-                f"The process does not support dynamic {port_type} ports")
 
         if port_type == 'input':
             protocol_model.delete_connector_from_right(process_name, port_name)
@@ -758,8 +751,9 @@ class ProtocolService(BaseService):
             conf_params['params'] = community_live_task_version.params
         if community_live_task_version.environment is not None and community_live_task_version.environment != '':
             conf_params['env'] = community_live_task_version.environment
+
         protocol_update = cls.add_process_to_protocol_id(
-            protocol_id, community_live_task_version.type, config_params=conf_params)
+            protocol_id, community_live_task_version.type, config_params=conf_params, community_live_task_version_id=community_live_task_version.id)
 
         for port in list(protocol_update.process.inputs.ports.keys()):
             protocol_update = cls.delete_dynamic_input_port_of_process(
@@ -783,5 +777,30 @@ class ProtocolService(BaseService):
 
     @classmethod
     @transaction()
-    def get_community_available_live_tasks(cls) -> List[CommunityLiveTaskDTO]:
-        return CommunityService.get_community_available_live_tasks()
+    def get_community_available_space(cls) -> Any:
+        return CommunityService.get_community_available_space()
+
+    @classmethod
+    @transaction()
+    def get_community_available_live_tasks(cls, spaces_filter: List[str], title_filter: str, personalOnly: bool, page: int, number_of_items_per_page: int)  -> Any:
+        return CommunityService.get_community_available_live_tasks(spaces_filter, title_filter, personalOnly, page, number_of_items_per_page)
+
+    @classmethod
+    def get_community_live_task(cls, live_task_version_id: str) -> CommunityLiveTaskDTO:
+        return CommunityService.get_community_live_task(live_task_version_id)
+
+    @classmethod
+    def create_community_live_task(cls, process_id: str, form_data: CommunityCreateLiveTaskDTO) -> CommunityLiveTaskVersionCreateResDTO:
+        code = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
+        return CommunityService.create_community_live_task(code, form_data)
+
+    @classmethod
+    def fork_community_live_task(cls, process_id: str, form_data: CommunityCreateLiveTaskDTO, live_task_version_id: str) -> CommunityLiveTaskVersionCreateResDTO:
+        code = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
+        return CommunityService.fork_community_live_task(code, form_data, live_task_version_id)
+
+
+    @classmethod
+    def create_community_live_task_version(cls, process_id: str,live_task_id: str) -> CommunityLiveTaskVersionCreateResDTO:
+        code = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
+        return CommunityService.create_community_live_task_version(code, live_task_id)
