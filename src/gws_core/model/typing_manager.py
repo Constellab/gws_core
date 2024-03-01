@@ -108,9 +108,6 @@ class TypingManager:
         for typing in cls._typings_name_cache.values():
             cls._save_object_type_in_db(typing)
 
-        # clean the cache so the next get are retrived from the DB
-        cls.clear_cache()
-
     @classmethod
     def _save_object_type_in_db(cls, typing: Typing) -> None:
         try:
@@ -157,6 +154,8 @@ class TypingManager:
     def _update_typing(cls, typing: Typing, typing_db: Typing) -> None:
         typing.id = typing_db.id
         typing.save(force_insert=False)  # use to update instead of insert
+        # replace in the cache
+        cls._typings_name_cache[typing.typing_name] = typing
 
     @classmethod
     def check_typing_name_compatibility(cls, typing_name: str) -> None:
@@ -171,7 +170,3 @@ class TypingManager:
 
         # check that the type exist
         TypingManager.get_typing_from_name_and_check(typing_name)
-
-    @classmethod
-    def clear_cache(cls) -> None:
-        cls._typings_name_cache = {}

@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import fnmatch
 import os
 import unittest
 from copy import Error
@@ -14,7 +13,6 @@ import click
 
 from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment_run_service import ExperimentRunService
-from gws_core.model.typing_manager import TypingManager
 from gws_core.settings_loader import SettingsLoader
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
@@ -127,10 +125,6 @@ class AppManager:
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
         CurrentUserService.set_current_user(user)
-
-        # clean the typing manager cache to use the type from DB
-        # because method save_object_types_in_db of typing manager is not call when running and experiment
-        TypingManager.clear_cache()
 
         if protocol_model_id and process_instance_name:
             ExperimentRunService.run_experiment_process_in_cli(experiment_id, protocol_model_id, process_instance_name)
