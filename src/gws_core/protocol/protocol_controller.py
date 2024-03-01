@@ -473,4 +473,4 @@ def create_template(id_: str,
 def download_template(id_: str,
                       _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
     template = ProtocolService.generate_protocol_template(id_)
-    return ResponseHelper.create_file_response_from_str(template.to_full_dto().json(), template.name + '.json')
+    return ResponseHelper.create_file_response_from_str(template.to_export_dto().json(), template.name + '.json')

@@ -303,7 +303,6 @@ class ProcessFactory():
             process_model.instance_name = process_model.id
 
         if name is not None:
-            Logger.info(f"Settting the name of the process {process_model.id} to {name}")
             process_model.name = name
 
     ############################################### PROCESS  #################################################

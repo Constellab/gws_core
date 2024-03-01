@@ -7,6 +7,8 @@
 from typing import Optional
 
 from fastapi import Depends
+from fastapi import File as FastAPIFile
+from fastapi import UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -35,6 +37,14 @@ def get_protocol_template_graph(id: str,
                                 _=Depends(AuthService.check_user_access_token)) -> ProtocolConfigDTO:
 
     return ProtocolTemplateService.get_by_id_and_check(id=id).get_protocol_config_dto()
+
+
+@core_app.post("/protocol-template/import-from-file", tags=["Fs node"],
+               summary="Import a protocol template from a file")
+def upload_folder(file: UploadFile = FastAPIFile(...),
+                  _=Depends(AuthService.check_user_access_token)) -> ProtocolTemplateDTO:
+
+    return ProtocolTemplateService.create_from_file(file).to_dto()
 
 
 class UpdateProtocolTemplate(BaseModel):
@@ -93,4 +103,4 @@ def search_by_name(name: str,
 def download_template(id: str,
                       _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
     template = ProtocolTemplateService.get_by_id_and_check(id)
-    return ResponseHelper.create_file_response_from_str(template.to_full_dto().json(), template.name + '.json')
+    return ResponseHelper.create_file_response_from_str(template.to_export_dto().json(), template.name + '.json')

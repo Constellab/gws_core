@@ -52,7 +52,7 @@ class ExperimentService(BaseService):
             protocol_template = ProtocolTemplate.get_by_id_and_check(
                 experiment_DTO.protocol_template_id)
         elif experiment_DTO.protocol_template_json and isinstance(experiment_DTO.protocol_template_json, dict):
-            protocol_template = ProtocolTemplate.from_json(
+            protocol_template = ProtocolTemplate.from_export_dto_dict(
                 experiment_DTO.protocol_template_json)
 
         return cls.create_experiment(
@@ -138,8 +138,8 @@ class ExperimentService(BaseService):
 
         experiment = cls._update_experiment_project(experiment, experiment_dto.project_id)
         ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                      object_type=ActivityObjectType.EXPERIMENT,
-                                      object_id=experiment.id)
+                                            object_type=ActivityObjectType.EXPERIMENT,
+                                            object_id=experiment.id)
 
         return experiment
 
@@ -152,8 +152,8 @@ class ExperimentService(BaseService):
         experiment = experiment.save()
 
         ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                      object_type=ActivityObjectType.EXPERIMENT,
-                                      object_id=experiment.id)
+                                            object_type=ActivityObjectType.EXPERIMENT,
+                                            object_id=experiment.id)
 
         return experiment
 
@@ -166,8 +166,8 @@ class ExperimentService(BaseService):
         experiment = cls._update_experiment_project(experiment, project_id)
 
         ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                      object_type=ActivityObjectType.EXPERIMENT,
-                                      object_id=experiment.id)
+                                            object_type=ActivityObjectType.EXPERIMENT,
+                                            object_id=experiment.id)
 
         return experiment
 
@@ -224,8 +224,8 @@ class ExperimentService(BaseService):
         experiment = experiment.save()
 
         ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                      object_type=ActivityObjectType.EXPERIMENT,
-                                      object_id=experiment.id)
+                                            object_type=ActivityObjectType.EXPERIMENT,
+                                            object_id=experiment.id)
 
         return experiment
 
@@ -234,8 +234,8 @@ class ExperimentService(BaseService):
         experiment = experiment.reset()
 
         ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                      object_type=ActivityObjectType.EXPERIMENT,
-                                      object_id=experiment.id)
+                                            object_type=ActivityObjectType.EXPERIMENT,
+                                            object_id=experiment.id)
 
         return experiment
 

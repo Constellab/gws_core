@@ -103,7 +103,7 @@ class TestProtocolTemplate(BaseTestCase):
         self.assertIsNotNone(template_db.get_template().nodes['mini_proto'].graph)
         self.assertIsNotNone(template_db.get_template().links)
         self.assertIsNotNone(template_db.get_template().layout)
-        self.assertIsNotNone(template_db.to_full_dto())
+        self.assertIsNotNone(template_db.to_export_dto())
         self.assertIsNotNone(template_db.get_protocol_config_dto())
 
         # update the template
@@ -189,3 +189,13 @@ class TestProtocolTemplate(BaseTestCase):
         protocol_2 = experiment.protocol_model
         self.assertEqual(len(protocol_2.processes), 5)
         self.assertEqual(len(protocol_2.connectors), 4)
+
+        # Test create the same experiment with the template json instead of the template id
+        export_dto = template.to_export_dto()
+        experiment_dto = ExperimentSaveDTO(protocol_template_json=export_dto, title='')
+        experiment = ExperimentService.create_experiment_from_dto(experiment_dto)
+
+        # check that protocol and task are created
+        protocol_3 = experiment.protocol_model
+        self.assertEqual(len(protocol_3.processes), 5)
+        self.assertEqual(len(protocol_3.connectors), 4)

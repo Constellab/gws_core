@@ -4,6 +4,8 @@
 # About us: https://gencovery.com
 
 
+from fastapi import UploadFile
+
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.service.base_service import BaseService
@@ -21,6 +23,11 @@ class ProtocolTemplateService(BaseService):
                              name: str, description: dict = None) -> ProtocolTemplate:
 
         protocol_template = ProtocolTemplate.from_protocol_model(protocol, name, description)
+        return protocol_template.save()
+
+    @classmethod
+    def create_from_file(cls, file: UploadFile) -> ProtocolTemplate:
+        protocol_template = ProtocolTemplate.from_export_dto_str_bytes(file.file.read())
         return protocol_template.save()
 
     @classmethod
