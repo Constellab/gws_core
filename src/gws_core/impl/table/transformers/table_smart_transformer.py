@@ -23,7 +23,7 @@ from gws_core.task.task_io import TaskInputs
 
 @task_decorator("SmartTableTransformer", human_name="Smart table transformer",
                 short_description="Table transformer that uses AI  (OpenAI).",
-                icon="insights")
+                icon="auto_awesome")
 class TableSmartTransformer(SmartTaskBase):
     """
 This task is still in beta version.
