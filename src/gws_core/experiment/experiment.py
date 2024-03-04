@@ -71,7 +71,6 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
 
     title = CharField(max_length=50)
     description = JSONField(null=True)
-    old_description = JSONField(null=True)
     lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
 
     is_validated: bool = BooleanField(default=False)

@@ -34,7 +34,6 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
     title = CharField()
 
     content: RichTextDTO = BaseDTOField(RichTextDTO, null=True)
-    old_content = JSONField(null=True)
 
     project: Project = ForeignKeyField(Project, null=True)
 

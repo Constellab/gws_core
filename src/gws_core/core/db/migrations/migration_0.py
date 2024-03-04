@@ -964,44 +964,6 @@ class Migration062(BrickMigration):
         migrator.migrate()
 
 
-@brick_migration('0.7.0', short_description='Change text editor')
-class Migration070(BrickMigration):
-
-    @classmethod
-    def migrate(cls, from_version: Version, to_version: Version) -> None:
-
-        migrator: SqlMigrator = SqlMigrator(Report.get_db())
-        migrator.add_column_if_not_exists(Report, Report.old_content)
-        migrator.add_column_if_not_exists(ReportTemplate, ReportTemplate.old_content)
-        migrator.add_column_if_not_exists(Experiment, Experiment.old_description)
-        migrator.add_column_if_not_exists(ProtocolTemplate, ProtocolTemplate.old_description)
-        migrator.migrate()
-
-        cls.migrate_content(Report, 'content', 'old_content')
-        cls.migrate_content(ReportTemplate, 'content', 'old_content')
-        cls.migrate_content(Experiment, 'description', 'old_description')
-        cls.migrate_content(ProtocolTemplate, 'description', 'old_description')
-
-    @classmethod
-    def migrate_content(cls, model_type: Type[Model], content_column_name: str, old_content_column_name) -> None:
-        models_list: List[Model] = list(model_type.select())
-        for model in models_list:
-            try:
-                current_content = getattr(model, content_column_name)
-
-                # if it was already migrated
-                if current_content is None or 'ops' not in current_content:
-                    continue
-
-                new_content = SpaceService.migrate_text_editor(getattr(model, content_column_name))
-                setattr(model, old_content_column_name, getattr(model, content_column_name))
-                setattr(model, content_column_name, new_content)
-                model.save()
-            except Exception as exception:
-                Logger.error(
-                    f'Error while migrating {model_type.__name__} {model.id} : {exception}')
-
-
 @brick_migration('0.7.3', short_description='Rename view config flagged to favorite and add run_brick_version to process_model. Simplify resource origin')
 class Migration073(BrickMigration):
 
@@ -1111,3 +1073,18 @@ class Migration075(BrickMigration):
                 del outerface["from"]
             if "to" in outerface:
                 del outerface["to"]
+
+
+@brick_migration('0.8.0-beta.1', short_description='Remove old rich text.')
+class Migration080Beta1(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(Report.get_db())
+        migrator.drop_column_if_exists(Report, 'old_content')
+        migrator.drop_column_if_exists(ReportTemplate, "old_content")
+        migrator.drop_column_if_exists(Experiment, "old_description")
+        migrator.drop_column_if_exists(ProtocolTemplate, "old_description")
+
+        migrator.migrate()
