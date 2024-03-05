@@ -9,6 +9,7 @@ from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
 from gws_core.impl.live.base.env_live_task import EnvLiveTask
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
+from gws_core.model.typing_style import TypingStyle
 
 from ...config.config_types import ConfigSpecs
 from ...task.task_decorator import task_decorator
@@ -17,7 +18,7 @@ from ...task.task_decorator import task_decorator
 @task_decorator(
     "PyCondaLiveTask", human_name="Conda env live task",
     short_description="Live task to run Python snippets in a conda shell environment.",
-    icon="code")
+    style=TypingStyle.material_icon("code"))
 class PyCondaLiveTask(EnvLiveTask):
     """
     Conda-based Python live tasks allow to execute Python snippets on the fly in isolated conda environments.

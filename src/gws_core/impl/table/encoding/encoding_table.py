@@ -18,12 +18,6 @@ from ....task.converter.importer import importer_decorator
 from ..table import Table
 from ..tasks.table_importer import TableImporter
 
-# ####################################################################
-#
-# Encoding class
-#
-# ####################################################################
-
 ORIGINAL_ROW = "original_row"
 ORIGINAL_COLUMN = "original_column"
 ENCODED_ROW = "encoded_row"
@@ -32,8 +26,7 @@ ENCODED_COLUMN = "encoded_column"
 
 @resource_decorator("EncodingTable",
                     human_name="EncodingTable",
-                    short_description="Table encoding",
-                    icon="table_chart")
+                    short_description="Table encoding")
 class EncodingTable(Table):
     """
     Represents an encoding table

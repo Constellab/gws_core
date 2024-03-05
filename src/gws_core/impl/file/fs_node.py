@@ -9,13 +9,15 @@ from abc import abstractmethod
 from pathlib import PosixPath
 
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.primitive_r_field import BoolRField, StrRField
 
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 
 
-@resource_decorator(unique_name="FSNode", hide=True)
+@resource_decorator(unique_name="FSNode", hide=True,
+                    style=TypingStyle.material_icon("folder", background_color="#346b02"))
 class FSNode(Resource):
     """
     Node class to manage resources that are stored in the server (as file or folder)

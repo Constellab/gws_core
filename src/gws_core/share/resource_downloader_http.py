@@ -14,6 +14,7 @@ from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.settings import Settings
 from gws_core.model.typing_manager import TypingManager
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.share.resource_downloader_base import ResourceDownloaderBase
 from gws_core.share.shared_dto import (ShareEntityInfoReponseDTO,
@@ -29,7 +30,7 @@ from ..config.config_types import ConfigSpecs
 
 @task_decorator(unique_name="ResourceDownloaderHttp", human_name="Download resource from external source",
                 short_description="Download a resource from an external source using a link",
-                icon="cloud_download")
+                style=TypingStyle.material_icon("cloud_download"))
 class ResourceDownloaderHttp(ResourceDownloaderBase):
     """
     Task to download a resource from an external source using an HTTP link.

@@ -7,6 +7,7 @@
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_view import RichTextView
+from gws_core.model.typing_style import TypingStyle
 from gws_core.report.report import Report
 from gws_core.report.report_service import ReportService
 from gws_core.resource.r_field.primitive_r_field import StrRField
@@ -18,7 +19,7 @@ from gws_core.resource.view.view_result import CallViewResult
 
 
 @resource_decorator("ReportResource", human_name="Report resource", short_description="Report resource",
-                    icon="report")
+                    style=TypingStyle.material_icon("report"))
 class ReportResource(Resource):
 
     report_id: str = StrRField()

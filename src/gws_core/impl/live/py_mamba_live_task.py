@@ -5,6 +5,7 @@
 
 from gws_core.impl.live.py_conda_live_task import PyCondaLiveTask
 from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
+from gws_core.model.typing_style import TypingStyle
 
 from ...task.task_decorator import task_decorator
 
@@ -12,7 +13,7 @@ from ...task.task_decorator import task_decorator
 @task_decorator(
     "PyMambaLiveTask", human_name="Mamba env live task",
     short_description="Live task to run Python snippets in a mamba shell environment.",
-    icon="code")
+    style=TypingStyle.material_icon("code"))
 class PyMambaLiveTask(PyCondaLiveTask):
     """
     Mamba-based Python live tasks allow to execute Python snippets on the fly in isolated conda environments.

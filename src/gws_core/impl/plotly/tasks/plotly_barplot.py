@@ -8,6 +8,7 @@ import pandas as pd
 import plotly.express as px
 
 from gws_core.config.param.param_spec import StrParam
+from gws_core.model.typing_style import TypingStyle
 
 from ....config.config_params import ConfigParams
 from ....task.task_decorator import task_decorator
@@ -18,7 +19,7 @@ from .plotly_task import PlotlyTask
 
 @task_decorator(unique_name="PlotlyBarplot", human_name="Barplot Plotly",
                 short_description="Bar plot and Stack bar plot from plotly",
-                icon="bar_chart")
+                style=TypingStyle.material_icon("bar_chart"))
 class PlotlyBarplot(PlotlyTask):
     """
     Plotly Bar plot

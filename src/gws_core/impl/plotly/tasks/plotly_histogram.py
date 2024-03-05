@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.express as px
 
 from gws_core.config.param.param_spec import BoolParam, IntParam, StrParam
+from gws_core.model.typing_style import TypingStyle
 
 from ....config.config_params import ConfigParams
 from ....task.task_decorator import task_decorator
@@ -14,11 +15,10 @@ from ....task.task_io import TaskInputs, TaskOutputs
 from ..plotly_resource import PlotlyResource
 from .plotly_task import PlotlyTask
 
-# from plotly.subplots import make_subplots
-
 
 @task_decorator("PlotlyHistogram", human_name="Histogram Plotly",
-                short_description="Histogram plot from plotly(px)", icon="bar_chart")
+                short_description="Histogram plot from plotly(px)",
+                style=TypingStyle.material_icon("bar_chart"))
 class PlotlyHistogram(PlotlyTask):
 
     input_specs = PlotlyTask.input_specs

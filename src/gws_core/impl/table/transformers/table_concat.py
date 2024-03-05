@@ -39,7 +39,6 @@ def get_fill_nan_value(fill_nan_option: str) -> Any:
 @task_decorator(
     unique_name="TableRowConcat",
     short_description="Concatenate two tables along the rows by merging columns",
-    icon="table_chart"
 )
 class TableRowConcat(Task):
     """
@@ -121,7 +120,6 @@ class TableRowConcat(Task):
 @task_decorator(
     unique_name="TableColumnConcat",
     short_description="Concatenate two tables along the columns by merging rows",
-    icon="table_chart"
 )
 class TableColumnConcat(Task):
     """

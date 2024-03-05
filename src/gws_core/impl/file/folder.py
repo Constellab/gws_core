@@ -13,6 +13,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.impl.file.file import File
 from gws_core.impl.file.folder_view import LocalFolderView
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.view.view import View
 
 from ...config.config_params import ConfigParams
@@ -22,7 +23,8 @@ from .file_helper import FileHelper
 from .fs_node import FSNode
 
 
-@resource_decorator("Folder", human_name="Folder", icon="folder")
+@resource_decorator("Folder", human_name="Folder",
+                    style=TypingStyle.material_icon("folder", background_color="#346b02"))
 class Folder(FSNode):
 
     def has_node(self, node_name: str) -> bool:

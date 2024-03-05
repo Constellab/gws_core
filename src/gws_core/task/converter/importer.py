@@ -11,6 +11,7 @@ from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_style import TypingStyle
 
 from ...brick.brick_service import BrickService
 from ...config.config_params import ConfigParams
@@ -28,7 +29,7 @@ def importer_decorator(
         source_type: Type[FSNode] = File,
         allowed_user: UserGroup = UserGroup.USER, human_name: str = None,
         short_description: bool = None, hide: bool = False,
-        icon: str = 'file_download',
+        style: TypingStyle = None,
         deprecated_since: str = None, deprecated_message: str = None) -> Callable:
     """ Decorator to place on a ResourceImporter instead of task_decorator. It defines a special task to import a FsNode (file or folder)
     to resource_type
@@ -87,7 +88,7 @@ def importer_decorator(
             decorate_converter(
                 task_class, unique_name=unique_name, task_type='IMPORTER', source_type=source_type,
                 target_type=target_type, related_resource=source_type, human_name=human_name_computed,
-                short_description=short_description_computed, allowed_user=allowed_user, hide=hide, icon=icon,
+                short_description=short_description_computed, allowed_user=allowed_user, hide=hide, style=style,
                 deprecated_since=deprecated_since, deprecated_message=deprecated_message)
         except Exception as err:
             traceback.print_stack()

@@ -5,6 +5,7 @@
 
 from typing import Dict, List, Set
 
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.dict_r_field import DictRField
 from gws_core.resource.resource_model import ResourceModel
 
@@ -14,7 +15,8 @@ from .resource_list_base import ResourceListBase
 
 
 @resource_decorator(unique_name="ResourceSet", human_name="Resource set",
-                    short_description="A set of resources", icon="format_list_bulleted")
+                    short_description="A set of resources",
+                    style=TypingStyle.material_icon("format_list_bulleted"))
 class ResourceSet(ResourceListBase):
     """Resource to manage a set of resources. By default the sytem create a new
     resource for each resource in the set when saving the set

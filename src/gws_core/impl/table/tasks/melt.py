@@ -18,8 +18,7 @@ from ..table import Table
 
 
 @task_decorator("Melt", human_name="Melt",
-                short_description="pandas.melt, Unpivot a DataFrame from wide to long format, optionally leaving identifiers set.",
-                icon="table_chart")
+                short_description="pandas.melt, Unpivot a DataFrame from wide to long format, optionally leaving identifiers set.")
 class Melt(Task):
     """
     Melt from pandas \n

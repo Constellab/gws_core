@@ -30,8 +30,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 
 
 @task_decorator(unique_name="WriteToJsonFile", human_name="Write to file",
-                short_description="Simple task to write a resource json data to a file in local store",
-                icon="description")
+                short_description="Simple task to write a resource json data to a file in local store")
 class WriteToJsonFile(Task):
     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
     output_specs: OutputSpecs = OutputSpecs({'file': OutputSpec(File)})
@@ -52,8 +51,7 @@ class WriteToJsonFile(Task):
 
 
 @task_decorator(unique_name="FsNodeExtractor", human_name="Fs node extractor",
-                short_description="Extract a sub file or folder from a folder to generated a new resource",
-                icon="folder")
+                short_description="Extract a sub file or folder from a folder to generated a new resource")
 class FsNodeExtractor(Task):
     """Task to extract a file from a folder to create a resource
 

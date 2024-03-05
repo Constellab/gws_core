@@ -16,6 +16,7 @@ from gws_core.impl.table.table import Table
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs
@@ -23,7 +24,7 @@ from gws_core.task.task_io import TaskInputs
 
 @task_decorator("MultiTableSmartTransformer", human_name="Smart multi tables transformer",
                 short_description="Multi tables transformer that uses AI (OpenAI).",
-                icon="auto_awesome")
+                style=TypingStyle.material_icon("auto_awesome"))
 class MultiTableSmartTransformer(SmartTaskBase):
     """
 This task is still in beta version.

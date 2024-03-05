@@ -6,6 +6,8 @@
 import time
 from typing import Optional
 
+from gws_core.model.typing_style import TypingStyle
+
 from ..config.config_params import ConfigParams
 from ..config.config_types import ConfigParamsDict, ConfigSpecs
 from ..config.param.param_spec import BoolParam, FloatParam, IntParam, StrParam
@@ -22,7 +24,7 @@ from .task_decorator import task_decorator
 
 
 @task_decorator(unique_name="Source", human_name="Source", short_description="Select a resource from the databox",
-                icon="login")
+                style=TypingStyle.material_icon("input"))
 class Source(Task):
     """
     Source task.
@@ -58,7 +60,8 @@ class Source(Task):
         return config.get(Source.config_name, None)
 
 
-@task_decorator(unique_name="Sink", human_name="Output", icon="output")
+@task_decorator(unique_name="Sink", human_name="Output",
+                style=TypingStyle.material_icon("output"))
 class Sink(Task):
     """
     Sink task.
@@ -154,7 +157,11 @@ class Switch2(Task):
 
 
 @task_decorator(unique_name="Wait", short_description="Wait a number of seconds specified in the config",
-                icon="front_hand")
+                style=TypingStyle.community_icon(
+                    icon='http://localhost:3000/static/007-data-collection.svg',  # front_hand
+                    background_color='#ff0000',
+                ),
+                )
 class Wait(Task):
     """
     Wait task
@@ -183,7 +190,11 @@ class Wait(Task):
 
 
 @task_decorator(unique_name="ShellWait",
-                short_description="Wait a number of seconds in the shell specified in the config", icon="front_hand")
+                short_description="Wait a number of seconds in the shell specified in the config",
+                style=TypingStyle.community_image(
+                    icon='http://localhost:3000/static/qiim.jpeg',  # front_hand
+                    background_color='#ffffff',
+                ))
 class ShellWait(Task):
     """
     Wait task

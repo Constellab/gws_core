@@ -12,7 +12,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
 
 from ..model.typing import Typing
-from ..model.typing_dict import TypingObjectType
+from ..model.typing_dto import TypingObjectType
 from ..protocol.protocol import Protocol
 
 ProtocolSubType = Literal["PROTOCOL", "MANUAL_PROTOCOL"]

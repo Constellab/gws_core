@@ -9,6 +9,7 @@ from typing import Any, AnyStr, List
 from gws_core.config.param.param_spec import IntParam
 from gws_core.impl.view.html_view import HTMLView
 from gws_core.impl.view.image_view import ImageView
+from gws_core.model.typing_style import TypingStyle
 
 from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -22,7 +23,8 @@ from ..text.text_view import SimpleTextView, TextView, TextViewData
 from .fs_node import FSNode
 
 
-@resource_decorator("File", human_name="File", icon="description")
+@resource_decorator("File", human_name="File",
+                    style=TypingStyle.material_icon("description", background_color="#346b02"))
 class File(FSNode):
     """
     File class.

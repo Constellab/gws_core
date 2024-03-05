@@ -19,7 +19,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 
 
 @task_decorator(unique_name="FileUncompressTask", human_name="Uncompress file",
-                short_description="Uncompress a file", icon="description")
+                short_description="Uncompress a file")
 class FileUncompressTask(Task):
 
     input_specs = InputSpecs({"compressed_file": InputSpec(File)})

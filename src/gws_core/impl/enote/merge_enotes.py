@@ -22,7 +22,6 @@ from .enote_resource import ENoteResource
     unique_name="MergeENotes",
     human_name="Merge e-notes",
     short_description="Merge multiple e-notes into one",
-    icon="sticky_note_2"
 )
 class MergeENotes(Task):
     """

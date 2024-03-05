@@ -15,13 +15,14 @@ from gws_core.impl.table.table import Table
 from gws_core.impl.text.text import Text
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_style import TypingStyle
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs
 
 
 @task_decorator("SmartPlot", human_name="Smart plot generator",
                 short_description="Generate a plot using an AI (OpenAI).",
-                icon="insights")
+                style=TypingStyle.material_icon("auto_awesome"))
 class SmartPlot(SmartTaskBase):
     """
 This task is still in beta version.

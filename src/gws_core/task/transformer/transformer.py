@@ -10,6 +10,7 @@ from gws_core.brick.brick_service import BrickService
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_style import TypingStyle
 from gws_core.task.converter.converter import Converter, decorate_converter
 
 from ...resource.resource import Resource
@@ -21,7 +22,7 @@ from ..task_decorator import task_decorator
 def transformer_decorator(unique_name: str, resource_type: Type[Resource],
                           allowed_user: UserGroup = UserGroup.USER,
                           human_name: str = "", short_description: str = "", hide: bool = False,
-                          icon: str = None,
+                          style: TypingStyle = None,
                           deprecated_since: str = None, deprecated_message: str = None):
     """
     Decorator to place on a task instead of task_decorator. This create a specific task to transform the resource.
@@ -68,7 +69,8 @@ def transformer_decorator(unique_name: str, resource_type: Type[Resource],
         decorate_converter(task_class=task_class, unique_name=unique_name, task_type='TRANSFORMER',
                            source_type=resource_type, target_type=resource_type, related_resource=resource_type,
                            allowed_user=allowed_user, human_name=human_name,
-                           short_description=short_description, hide=hide, icon=icon,
+                           short_description=short_description, hide=hide,
+                           style=style,
                            deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
         return task_class

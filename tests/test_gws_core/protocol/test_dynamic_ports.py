@@ -11,7 +11,7 @@ from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing import Typing
-from gws_core.model.typing_dict import TypingRefDTO
+from gws_core.model.typing_dto import TypingRefDTO
 from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
@@ -68,13 +68,7 @@ class TestDynamicPorts(BaseTestCase):
         # Update new port type
         typing = Typing.get_by_model_type(Robot)
         io_spec = IOSpecDTO(
-            resource_types=[
-                TypingRefDTO(
-                    human_name='Robot',
-                    typing_name=typing.typing_name,
-                    brick_version=typing.brick_version
-                )
-            ],
+            resource_types=[typing.to_ref_dto()],
             is_optional=False,
         )
         process_model = ProtocolService.update_dynamic_input_port_of_process(protocol.id,

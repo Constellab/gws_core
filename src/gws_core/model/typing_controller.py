@@ -10,8 +10,7 @@ from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
-from gws_core.model.typing_dict import TypingObjectType
-from gws_core.model.typing_dto import TypingDTO
+from gws_core.model.typing_dto import TypingDTO, TypingObjectType
 from gws_core.model.typing_service import TypingService
 from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
 from gws_core.resource.resource_typing_dto import ResourceTypingDTO

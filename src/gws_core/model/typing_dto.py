@@ -3,10 +3,28 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional
+from enum import Enum
+from typing import Literal, Optional
 
-from gws_core.core.model.model_dto import ModelDTO
-from gws_core.model.typing_dict import TypingRefDTO, TypingStatus
+from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
+from gws_core.model.typing_style import TypingStyle
+
+
+class TypingStatus(Enum):
+    OK = 'OK'
+    UNAVAILABLE = 'UNAVAILABLE'
+
+
+# different object typed store in the typing table
+TypingObjectType = Literal["TASK", "RESOURCE", "PROTOCOL", "MODEL", "ACTION"]
+
+
+# Minimum object to reference another type
+class TypingRefDTO(BaseModelDTO):
+    typing_name: str
+    brick_version: str
+    human_name: str
+    style: Optional[TypingStyle] = None
 
 
 class TypingDTO(ModelDTO):
@@ -22,9 +40,15 @@ class TypingDTO(ModelDTO):
     additional_data: Optional[dict]
     status: TypingStatus
     hide: bool
-    icon: Optional[str]
+    style: Optional[TypingStyle]
 
 
 class TypingFullDTO(TypingDTO):
     parent: Optional[TypingRefDTO] = None
     doc: Optional[str] = None
+
+
+class SimpleTypingDTO(BaseModelDTO):
+    human_name: str = None
+    short_description: Optional[str] = None
+    style: Optional[TypingStyle] = None

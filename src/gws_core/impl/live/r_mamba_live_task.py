@@ -5,6 +5,7 @@
 
 from gws_core.impl.live.r_conda_live_task import RCondaLiveTask
 from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
+from gws_core.model.typing_style import TypingStyle
 
 from ...task.task_decorator import task_decorator
 
@@ -12,7 +13,7 @@ from ...task.task_decorator import task_decorator
 @task_decorator(
     "RMambaLiveTask", human_name="R mamba env live task",
     short_description="Live task to run R snippets in mamba a shell environment.",
-    icon="code")
+    style=TypingStyle.material_icon("code"))
 class RMambaLiveTask(RCondaLiveTask):
     """
     Mamba-based R live tasks allow to execute R snippets on the fly in isolated mamba environments.

@@ -20,6 +20,7 @@ from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_axis_tags import TableAxisTags
 from gws_core.impl.table.view.table_vulcano_plot_view import \
     TableVulcanoPlotView
+from gws_core.model.typing_style import TypingIconColor, TypingStyle
 
 from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -49,7 +50,8 @@ ALLOWED_FILE_FORMATS = [*ALLOWED_XLS_FILE_FORMATS, *ALLOWED_TXT_FILE_FORMATS]
 
 
 @resource_decorator("Table", human_name="Table", short_description="2d excel like table",
-                    icon="table_chart")
+                    style=TypingStyle.material_icon("table_chart", background_color="#413ebb",
+                                                    icon_color=TypingIconColor.WHITE))
 class Table(Resource):
     """
     Main 2d table with named columns and named rows. It can also contains tags for each column and row.

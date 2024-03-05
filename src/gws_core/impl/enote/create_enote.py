@@ -24,7 +24,6 @@ from .enote_resource import ENoteResource
     unique_name="CreateENote",
     human_name="Create e-note",
     short_description="Create a e-note",
-    icon="sticky_note_2"
 )
 class CreateENote(Task):
     """

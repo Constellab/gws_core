@@ -8,6 +8,7 @@ import pandas as pd
 import plotly.express as px
 
 from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.model.typing_style import TypingStyle
 
 from ....config.config_params import ConfigParams
 from ....task.task_decorator import task_decorator
@@ -15,11 +16,10 @@ from ....task.task_io import TaskInputs, TaskOutputs
 from ..plotly_resource import PlotlyResource
 from .plotly_task import PlotlyTask
 
-# from plotly.subplots import make_subplots
-
 
 @task_decorator("PlotlyLine", human_name="Line Plotly",
-                short_description="line plot from plotly", icon="ssid_chart")
+                short_description="line plot from plotly",
+                style=TypingStyle.material_icon("ssid_chart"))
 class PlotlyLine(PlotlyTask):
     """
     Plotly linear plot

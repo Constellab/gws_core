@@ -14,7 +14,7 @@ from gws_core.resource.resource_typing_dto import (ResourceTypingDTO,
 
 from ..core.utils.reflector_helper import ReflectorHelper
 from ..model.typing import Typing
-from ..model.typing_dict import TypingObjectType
+from ..model.typing_dto import TypingObjectType
 from ..resource.view.view_helper import ViewHelper
 from ..resource.view.view_meta_data import ResourceViewMetaData
 

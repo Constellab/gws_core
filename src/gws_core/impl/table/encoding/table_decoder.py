@@ -17,8 +17,7 @@ from ...table.table import Table
 from .encoding_table import EncodingTable
 
 
-@task_decorator(unique_name="TableDecoder", short_description="Table decoder",
-                icon="table_chart")
+@task_decorator(unique_name="TableDecoder", short_description="Table decoder")
 class TableDecoder(Task):
     input_specs: InputSpecs = InputSpecs(
         {"encoded_table": InputSpec(Table),

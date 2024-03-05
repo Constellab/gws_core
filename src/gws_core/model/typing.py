@@ -8,16 +8,18 @@ from typing import Any, Dict, List, Optional, Type
 
 from peewee import BooleanField, CharField, ModelSelect
 
-from gws_core.core.model.db_field import JSONField
-from gws_core.model.typing_dto import TypingDTO, TypingFullDTO
+from gws_core.core.model.db_field import BaseDTOField, JSONField
+from gws_core.model.typing_dto import (SimpleTypingDTO, TypingDTO,
+                                       TypingFullDTO, TypingObjectType,
+                                       TypingRefDTO, TypingStatus)
 from gws_core.model.typing_name import TypingNameObj
+from gws_core.model.typing_style import TypingStyle
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
 from ..core.model.model import Model
 from ..core.utils.utils import Utils
-from .typing_dict import TypingObjectType, TypingRefDTO, TypingStatus
 
 
 class Typing(Model):
@@ -44,6 +46,7 @@ class Typing(Model):
     deprecated_message: CharField = CharField(null=True, max_length=255)
     hide: BooleanField = BooleanField(default=False)
     icon: CharField = CharField(null=True, max_length=50)
+    style: TypingStyle = BaseDTOField(TypingStyle, null=True)
 
     # Sub type of the object, types will be differents based on object type
     object_sub_type: CharField = CharField(null=True, max_length=20)
@@ -104,13 +107,6 @@ class Typing(Model):
     def get_type(self) -> Optional[Type]:
         return Utils.get_model_type(self.model_type)
 
-    def get_typing_ref_dto(self) -> TypingRefDTO:
-        return TypingRefDTO(
-            typing_name=self.typing_name,
-            brick_version=self.brick_version,
-            human_name=self.human_name
-        )
-
     @property
     def typing_name(self) -> str:
         return TypingNameObj.typing_obj_to_str(self.object_type, self.brick, self.unique_name)
@@ -137,7 +133,22 @@ class Typing(Model):
             additional_data=None,
             status=self.get_type_status(),
             hide=self.hide,
-            icon=self.icon
+            style=self.style
+        )
+
+    def to_simple_dto(self) -> SimpleTypingDTO:
+        return SimpleTypingDTO(
+            human_name=self.human_name,
+            short_description=self.short_description,
+            style=self.style
+        )
+
+    def to_ref_dto(self) -> TypingRefDTO:
+        return TypingRefDTO(
+            typing_name=self.typing_name,
+            brick_version=self.brick_version,
+            human_name=self.human_name,
+            style=self.style
         )
 
     def to_full_dto(self) -> TypingFullDTO:
@@ -154,7 +165,7 @@ class Typing(Model):
             # handle parent ref
             parent_typing: Typing = self.get_parent_typing()
             if parent_typing:
-                full_dto.parent = parent_typing.get_typing_ref_dto()
+                full_dto.parent = parent_typing.to_ref_dto()
 
         return full_dto
 

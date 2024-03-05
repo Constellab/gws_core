@@ -6,6 +6,7 @@
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigParamsDict
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.dict_r_field import DictRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
@@ -17,7 +18,7 @@ from gws_core.resource.view.view_runner import ViewRunner
 
 @resource_decorator(unique_name="ViewResource", human_name="View resource",
                     short_description="Resource that contains a view",
-                    icon="multiline_chart")
+                    style=TypingStyle.material_icon("multiline_chart"))
 class ViewResource(Resource):
     """Special resource that holds a view
     """

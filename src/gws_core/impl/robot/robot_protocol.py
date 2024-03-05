@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.model.typing_style import TypingStyle
+
 from ...protocol.protocol import ProcessSpec, Protocol
 from ...protocol.protocol_decorator import protocol_decorator
 from ...task.plug import Sink, Source
@@ -10,7 +12,8 @@ from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
                           RobotFly, RobotMove)
 
 
-@protocol_decorator("RobotSimpleTravel", hide=True, icon="smart_toy")
+@protocol_decorator("RobotSimpleTravel", hide=True,
+                    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
 class RobotSimpleTravel(Protocol):
 
     tasks_count = 7
@@ -38,7 +41,8 @@ class RobotSimpleTravel(Protocol):
         ])
 
 
-@protocol_decorator("RobotTravelProto", hide=True, icon="smart_toy")
+@protocol_decorator("RobotTravelProto", hide=True,
+                    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
 class RobotTravelProto(Protocol):
 
     tasks_count = 7
@@ -70,7 +74,7 @@ class RobotTravelProto(Protocol):
 
 
 @protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro",
-                    hide=True, icon="smart_toy")
+                    hide=True, style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
 class RobotSuperTravelProto(Protocol):
 
     tasks_count = 1 + RobotTravelProto.tasks_count
@@ -90,7 +94,7 @@ class RobotSuperTravelProto(Protocol):
 
 
 @protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro",
-                    hide=True, icon="smart_toy")
+                    hide=True, style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
 class RobotWorldTravelProto(Protocol):
 
     tasks_count = 3 + RobotSuperTravelProto.tasks_count
@@ -117,7 +121,8 @@ class RobotWorldTravelProto(Protocol):
         ])
 
 
-@protocol_decorator("CreateSimpleRobot", hide=True, icon="smart_toy")
+@protocol_decorator("CreateSimpleRobot", hide=True,
+                    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
 class CreateSimpleRobot(Protocol):
     def configure_protocol(self) -> None:
         facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
@@ -130,7 +135,8 @@ class CreateSimpleRobot(Protocol):
         ])
 
 
-@protocol_decorator("MoveSimpleRobot", hide=True, icon="smart_toy")
+@protocol_decorator("MoveSimpleRobot", hide=True,
+                    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
 class MoveSimpleRobot(Protocol):
 
     def configure_protocol(self) -> None:

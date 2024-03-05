@@ -15,12 +15,14 @@ from gws_core.impl.openai.smart_task_base import SmartTaskBase
 from gws_core.impl.text.text import Text
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_style import TypingStyle
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs
 
 
 @task_decorator("SmartJsonTransformer", human_name="Smart json transformer",
-                short_description="Json transformer that uses AI  (OpenAI).", icon="auto_awesome")
+                short_description="Json transformer that uses AI  (OpenAI).",
+                style=TypingStyle.material_icon("auto_awesome"))
 class JsonSmartTransformer(SmartTaskBase):
     """
 This task is still in beta version.

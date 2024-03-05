@@ -11,6 +11,7 @@ from gws_core.core.utils.utils import Utils
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
 from gws_core.model.typing_manager import TypingManager
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource import Resource
 from gws_core.resource.view.view_runner import ViewRunner
 from gws_core.task.task import Task
@@ -19,7 +20,7 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
 @task_decorator('Viewer', human_name="Viewer", short_description="Show a configured view",
-                icon="visibility")
+                style=TypingStyle.material_icon("visibility"))
 class Viewer(Task):
     """Special task to configure and show a view in a protocol
     """

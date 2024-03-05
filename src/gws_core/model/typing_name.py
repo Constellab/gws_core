@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, List, Type
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from gws_core.model.typing_dict import TypingObjectType
+from gws_core.model.typing_dto import TypingObjectType
 
 if TYPE_CHECKING:
     from gws_core.core.model.model import Model

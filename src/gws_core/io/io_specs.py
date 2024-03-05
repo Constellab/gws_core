@@ -73,6 +73,11 @@ class IOSpecs():
     def set_additional_info(self, additional_info: dict) -> None:
         pass
 
+    def get_first_spec(self) -> IOSpec:
+        if len(self._specs) == 0:
+            return None
+        return list(self._specs.values())[0]
+
     def to_dto(self) -> IOSpecsDTO:
         spec_dto = IOSpecsDTO(
             specs={},

@@ -8,6 +8,7 @@ from typing import List, Type
 
 from gws_core.brick.brick_model import BrickModel
 from gws_core.brick.brick_service import BrickService
+from gws_core.core.utils.logger import Logger
 from gws_core.model.typing import Typing
 
 from ..core.classes.paginator import Paginator
@@ -94,14 +95,29 @@ class ModelService(BaseService):
     def check_all_typings(cls) -> None:
         """Method to check if all typing registered in BD exists"""
 
-        bricks: List[BrickModel] = BrickService.get_all_brick_models()
+        bricks: List[BrickModel]
+
+        try:
+            bricks = list(BrickService.get_all_brick_models())
+        except Exception as e:
+            Logger.error(f"Error while getting bricks from the database: {str(e)}")
+            return
 
         for brick in bricks:
             # don't check typing if the brick status is Crittical
             if brick.status == 'CRITICAL':
                 continue
 
-            typings: List[Typing] = Typing.select().where(Typing.brick == brick.name)
+            typings: List[Typing]
+
+            try:
+                typings = list(Typing.select().where(Typing.brick == brick.name))
+            except Exception as e:
+                BrickService.log_brick_message(
+                    brick_name=brick.name,
+                    message=f"Error while getting typings from the database: {str(e)}",
+                    status='CRITICAL')
+                continue
             for typing in typings:
                 if typing.get_type() is None:
                     BrickService.log_brick_message(

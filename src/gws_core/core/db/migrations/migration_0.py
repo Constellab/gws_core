@@ -1006,7 +1006,6 @@ class Migration075(BrickMigration):
         migrator.add_column_if_not_exists(TaskModel, TaskModel.name)
         migrator.add_column_if_not_exists(TaskModel, TaskModel.community_live_task_version_id)
         migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.name)
-        migrator.add_column_if_not_exists(Typing, Typing.icon)
         migrator.migrate()
 
         process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
@@ -1086,5 +1085,7 @@ class Migration080Beta1(BrickMigration):
         migrator.drop_column_if_exists(ReportTemplate, "old_content")
         migrator.drop_column_if_exists(Experiment, "old_description")
         migrator.drop_column_if_exists(ProtocolTemplate, "old_description")
+        migrator.drop_column_if_exists(Typing, "icon")
+        migrator.add_column_if_not_exists(Typing, Typing.style)
 
         migrator.migrate()

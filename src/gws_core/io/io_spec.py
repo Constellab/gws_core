@@ -10,7 +10,7 @@ from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
-from gws_core.model.typing_dict import TypingRefDTO
+from gws_core.model.typing_dto import TypingRefDTO
 
 from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
@@ -182,11 +182,7 @@ class IOSpec:
             typing = TypingManager.get_typing_from_name_and_check(
                 resource_type._typing_name)
 
-            spec_dto.resource_types.append(TypingRefDTO(
-                typing_name=typing.typing_name,
-                brick_version=str(BrickHelper.get_brick_version(typing.brick)),
-                human_name=typing.human_name
-            ))
+            spec_dto.resource_types.append(typing.to_ref_dto())
         return spec_dto
 
     @classmethod

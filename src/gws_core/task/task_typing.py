@@ -13,7 +13,7 @@ from gws_core.task.task_dto import TaskTypingDTO
 
 from ..config.config_specs_helper import ConfigSpecsHelper
 from ..model.typing import Typing
-from ..model.typing_dict import TypingObjectType
+from ..model.typing_dto import TypingObjectType
 from ..task.task import Task
 
 TaskSubType = Literal["TASK", "IMPORTER", "EXPORTER", "TRANSFORMER", "ACTIONS_TASK"]

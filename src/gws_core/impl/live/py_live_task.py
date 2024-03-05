@@ -9,6 +9,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.live.base.env_live_task import EnvLiveTask
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource_set.resource_list import ResourceList
 
 from ...config.config_params import ConfigParams
@@ -21,7 +22,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 
 @task_decorator("PyLiveTask", human_name="Python live task",
                 short_description="Live task to run Python snippets directly in the global environment. The input data and parameters are passed in memory to the snippet.",
-                icon="code")
+                style=TypingStyle.material_icon("code"))
 class PyLiveTask(Task):
     """
     Python live tasks allow to execute any Python code snippets on the fly.

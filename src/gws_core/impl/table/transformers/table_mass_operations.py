@@ -21,7 +21,6 @@ from ..table import Table
     unique_name="TableColumnMassOperations",
     human_name="Table column operation mass",
     short_description="Apply operations stored in table to another table",
-    icon="table_chart"
 )
 class TableColumnMassOperations(Task):
     """

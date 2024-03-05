@@ -8,6 +8,7 @@ from gws_core.credentials.credentials_param import CredentialsParam
 from gws_core.credentials.credentials_type import (CredentialsDataS3,
                                                    CredentialsType)
 from gws_core.impl.s3.s3_bucket import S3Bucket
+from gws_core.model.typing_style import TypingStyle
 from gws_core.share.resource_downloader_base import ResourceDownloaderBase
 
 from ...config.config_params import ConfigParams
@@ -17,7 +18,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 
 
 @task_decorator(unique_name="ResourceDownloaderS3", human_name="Download resource from a S3 bucket",
-                icon="cloud_download")
+                style=TypingStyle.material_icon("cloud_download"))
 class ResourceDownloaderS3(ResourceDownloaderBase):
     """
     Task to download a resource from an external source using an HTTP link.

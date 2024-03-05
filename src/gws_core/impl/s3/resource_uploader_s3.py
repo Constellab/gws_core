@@ -11,6 +11,7 @@ from gws_core.credentials.credentials_type import (CredentialsDataS3,
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.s3_bucket import S3Bucket
 from gws_core.io.io_spec import InputSpec
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource_zipper import ResourceZipper
 from gws_core.space.mail_service import MailService
 from gws_core.user.current_user_service import CurrentUserService
@@ -26,7 +27,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 
 @task_decorator(unique_name="ResourceUploaderS3", human_name="Upload resource to S3",
                 short_description="Simple task to send the input resource to a S3 bucket",
-                icon="cloud_upload")
+                style=TypingStyle.material_icon("cloud_upload"))
 class ResourceUploaderS3(Task):
     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
     config_specs: ConfigSpecs = {

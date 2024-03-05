@@ -11,6 +11,7 @@ from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
 from gws_core.impl.live.base.env_live_task import EnvLiveTask
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
+from gws_core.model.typing_style import TypingStyle
 
 from ...config.config_types import ConfigSpecs
 from ...task.task_decorator import task_decorator
@@ -19,7 +20,7 @@ from ...task.task_decorator import task_decorator
 @task_decorator(
     "RCondaLiveTask", human_name="R conda env live task",
     short_description="Live task to run R snippets in conda a shell environment.",
-    icon="code")
+    style=TypingStyle.material_icon("code"))
 class RCondaLiveTask(EnvLiveTask):
     """
     Conda-based R live tasks allow to execute R snippets on the fly in isolated conda environments.

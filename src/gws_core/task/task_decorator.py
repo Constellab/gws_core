@@ -6,6 +6,8 @@
 
 from typing import Callable, Type
 
+from gws_core.model.typing_manager import TypingManager
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource import Resource
 
 from ..brick.brick_service import BrickService
@@ -20,7 +22,8 @@ from .task_typing import TaskSubType
 
 def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
                    human_name: str = "", short_description: str = "",
-                   hide: bool = False, icon: str = None,
+                   hide: bool = False,
+                   style: TypingStyle = None,
                    deprecated_since: str = None, deprecated_message: str = None) -> Callable:
     """ Decorator to be placed on all the tasks. A task not decorated will not be runnable.
     It define static information about the task
@@ -52,7 +55,8 @@ def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
     """
     def decorator(task_class: Type[Task]):
         decorate_task(task_class, unique_name=unique_name, task_type='TASK', allowed_user=allowed_user,
-                      human_name=human_name, short_description=short_description, hide=hide, icon=icon,
+                      human_name=human_name, short_description=short_description, hide=hide,
+                      style=style,
                       deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
         return task_class
@@ -64,7 +68,7 @@ def decorate_task(
         task_type: TaskSubType, related_resource: Type[Resource] = None,
         allowed_user: UserGroup = UserGroup.USER,
         human_name: str = "", short_description: str = "", hide: bool = False,
-        icon: str = None,
+        style: TypingStyle = None,
         deprecated_since: str = None, deprecated_message: str = None):
     """Method to decorate a task
     """
@@ -98,12 +102,39 @@ def decorate_task(
             task_class, f"Invalid specs for the task : {task_class.__name__}. {str(err)}")
         return
 
+    # Set the default style if not defined
+    if not style:
+        style = get_task_default_style(task_class)
+    elif not style.background_color:
+        style.background_color = get_task_default_style(task_class).background_color
+
     related_resource_typing_name = related_resource._typing_name if related_resource else None
 
     register_gws_typing_class(object_class=task_class, object_type="TASK", unique_name=unique_name,
                               object_sub_type=task_type, human_name=human_name, short_description=short_description,
-                              hide=hide, icon=icon, related_model_typing_name=related_resource_typing_name,
+                              hide=hide, style=style,
+                              related_model_typing_name=related_resource_typing_name,
                               deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
     # set the allowed user for the task
     task_class._allowed_user = allowed_user
+
+
+def get_task_default_style(task_class: Type[Task]) -> TypingStyle:
+    """Get the default style for a task, use the first input style or the first output style
+    """
+    default_typing_name = None
+    first_input = task_class.input_specs.get_first_spec()
+    if first_input:
+        default_typing_name = first_input.get_default_resource_type()._typing_name
+    else:
+        first_output = task_class.output_specs.get_first_spec()
+        if first_output:
+            default_typing_name = first_output.get_default_resource_type()._typing_name
+
+    if default_typing_name:
+        typing = TypingManager.get_typing_from_name(default_typing_name)
+        if typing and typing.style:
+            return typing.style
+
+    return TypingStyle.material_icon("process")

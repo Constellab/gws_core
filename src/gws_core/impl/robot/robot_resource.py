@@ -3,6 +3,8 @@ from typing import Dict, List
 
 from pandas import DataFrame
 
+from gws_core.model.typing_style import TypingStyle
+
 from ...config.config_params import ConfigParams
 from ...config.param.param_spec import StrParam
 from ...resource.r_field.list_r_field import ListRField
@@ -15,7 +17,8 @@ from ..table.view.table_view import TableView
 from ..text.text_view import TextView
 
 
-@resource_decorator(unique_name="Robot", human_name="Robot", hide=True, icon="smart_toy")
+@resource_decorator(unique_name="Robot", human_name="Robot", hide=True,
+                    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
 class Robot(Resource):
 
     age: int = IntRField()
@@ -62,12 +65,14 @@ class Robot(Resource):
         return {"age": self.age, "position": self.position, "weight": self.weight}
 
 
-@resource_decorator("RobotAddOn", hide=True, icon="smart_toy")
+@resource_decorator("RobotAddOn", hide=True,
+                    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
 class RobotAddOn(Resource):
     pass
 
 
-@resource_decorator("MegaRobot", hide=True, icon="smart_toy")
+@resource_decorator("MegaRobot", hide=True,
+                    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
 class MegaRobot(Robot):
 
     @classmethod
@@ -79,7 +84,8 @@ class MegaRobot(Robot):
         return mega
 
 
-@resource_decorator("RobotFood", hide=True, icon="smart_toy")
+@resource_decorator("RobotFood", hide=True,
+                    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
 class RobotFood(Resource):
 
     multiplicator: int = IntRField()

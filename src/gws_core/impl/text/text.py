@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.primitive_r_field import StrRField
 
 from ...config.config_params import ConfigParams
@@ -15,7 +16,7 @@ from .text_view import TextView
 
 
 @resource_decorator("Text", human_name="Text", short_description="Resource that holds a text",
-                    icon="text_snippet")
+                    style=TypingStyle.material_icon("text_snippet", background_color="#12b0a0"))
 class Text(Resource):
     DEFAULT_FILE_FORMAT = "txt"
     _data: str = StrRField(searchable=False)

@@ -10,7 +10,7 @@ from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.experiment.experiment_dto import ExperimentSimpleDTO
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
-from gws_core.model.typing_dict import TypingStatus
+from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
 from gws_core.project.project_dto import ProjectDTO
 
 
@@ -27,15 +27,13 @@ class ResourceOrigin(Enum):
 
 class ResourceDTO(ModelWithUserDTO):
     resource_typing_name: str
-    resource_type_human_name: Optional[str] = None
-    resource_type_short_description: Optional[str] = None
+    resource_type: Optional[SimpleTypingDTO] = None
     fs_node: Optional[FsNodeModelDTO]
     is_downloadable: Optional[bool] = None
     origin: ResourceOrigin
     name: str
     has_children: bool
     type_status: TypingStatus
-    type_icon: Optional[str] = None
     flagged: bool
     experiment: Optional[ExperimentSimpleDTO]
     project: Optional[ProjectDTO]

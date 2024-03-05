@@ -8,6 +8,7 @@ import pandas as pd
 import plotly.express as px
 
 from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.model.typing_style import TypingStyle
 
 from ....config.config_params import ConfigParams
 from ....task.task_decorator import task_decorator
@@ -17,7 +18,8 @@ from .plotly_task import PlotlyTask
 
 
 @task_decorator(unique_name="PlotlyBoxplot", human_name="Boxplot Plotly",
-                short_description="Boxplot from Plotly", icon="multiline_chart")
+                short_description="Boxplot from Plotly",
+                style=TypingStyle.material_icon("multiline_chart"))
 class PlotlyBoxplot(PlotlyTask):
     """
     Plotly Box plot

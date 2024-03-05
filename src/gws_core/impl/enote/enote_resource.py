@@ -9,6 +9,7 @@ from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import \
     RichTextParagraphHeaderLevel
 from gws_core.impl.rich_text.rich_text_view import RichTextView
+from gws_core.model.typing_style import TypingStyle
 from gws_core.report.report import Report
 from gws_core.report.report_dto import ReportSaveDTO
 from gws_core.report.report_service import ReportService
@@ -23,7 +24,7 @@ from gws_core.resource.view.view_result import CallViewResult
 
 @resource_decorator("ENoteResource", human_name="E-note resource",
                     short_description="Resource that contains a rich text that can be exported to a report",
-                    icon="sticky_note_2")
+                    style=TypingStyle.material_icon("sticky_note_2", background_color="#b27112"),)
 class ENoteResource(Resource):
 
     title: str = StrRField()

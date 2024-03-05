@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.express as px
 
 from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.model.typing_style import TypingStyle
 
 from ....config.config_params import ConfigParams
 from ....task.task_decorator import task_decorator
@@ -16,7 +17,8 @@ from .plotly_task import PlotlyTask
 
 
 @task_decorator(unique_name="PlotlyViolinplot", human_name="Violinplot Plotly",
-                short_description="Violin plot from plotly", icon="multiline_chart")
+                short_description="Violin plot from plotly",
+                style=TypingStyle.material_icon("multiline_chart"))
 class PlotlyViolinplot(PlotlyTask):
     """
     Plotly violin plot

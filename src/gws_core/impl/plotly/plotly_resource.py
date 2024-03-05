@@ -7,6 +7,7 @@ import plotly.graph_objs as go
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.utils import Utils
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.view.view_decorator import view
@@ -17,7 +18,7 @@ from .plotly_view import PlotlyView
 
 @resource_decorator("PlotlyResource", human_name="Plotly resource",
                     short_description="Plotly resource",
-                    icon="analytics")
+                    style=TypingStyle.material_icon("analytics", background_color="#1ff80f"))
 class PlotlyResource(Resource):
     """
     Resource that contains a plotly figure.

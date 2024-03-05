@@ -5,6 +5,7 @@
 
 
 from gws_core.core.utils.utils import Utils
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.view.any_view import AnyView
 from gws_core.resource.view.view import View
 
@@ -20,7 +21,7 @@ from .json_view import JSONView
 
 @resource_decorator("JSONDict", human_name="JSON Dict",
                     short_description="Resource that holds a JSON dict",
-                    icon="data_object")
+                    style=TypingStyle.material_icon("data_object", background_color="#1fc691"))
 class JSONDict(Resource):
 
     data: dict = DictRField()

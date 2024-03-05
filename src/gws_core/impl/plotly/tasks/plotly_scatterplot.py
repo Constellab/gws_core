@@ -8,6 +8,7 @@ import pandas as pd
 import plotly.express as px
 
 from gws_core.config.param.param_spec import FloatParam, IntParam, StrParam
+from gws_core.model.typing_style import TypingStyle
 
 from ....config.config_params import ConfigParams
 from ....task.task_decorator import task_decorator
@@ -15,11 +16,10 @@ from ....task.task_io import TaskInputs, TaskOutputs
 from ..plotly_resource import PlotlyResource
 from .plotly_task import PlotlyTask
 
-# from plotly.subplots import make_subplots
-
 
 @task_decorator("PlotlyScatterplot", human_name="Scatterplot Plotly",
-                short_description="Scatter plot from plotly(px)", icon="scatter_plot")
+                short_description="Scatter plot from plotly(px)",
+                style=TypingStyle.material_icon("scatter_plot"))
 class PlotlyScatterplot(PlotlyTask):
     """
     Plotly scatter plot

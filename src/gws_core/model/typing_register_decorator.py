@@ -7,11 +7,12 @@ from typing import Callable, Type
 
 from gws_core.core.db.version import Version
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.model.typing_style import TypingStyle
 
 from ..brick.brick_helper import BrickHelper
 from ..core.model.base import Base
 from ..model.typing import Typing
-from ..model.typing_dict import TypingObjectType
+from ..model.typing_dto import TypingObjectType
 from .typing_manager import TypingManager
 
 
@@ -39,6 +40,7 @@ def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bo
 def register_typing_class(
         object_class: Type[Base], object_type: TypingObjectType, unique_name: str,
         human_name: str, short_description, hide: bool = False, icon: str = None,
+        style: TypingStyle = None,
         object_sub_type: str = None, related_model_typing_name: str = None,
         deprecated_since: str = None, deprecated_message: str = None) -> None:
 
@@ -54,7 +56,7 @@ def register_typing_class(
         human_name=human_name,
         short_description=short_description,
         hide=hide,
-        icon=icon,
+        style=style,
         object_sub_type=object_sub_type,
         related_model_typing_name=related_model_typing_name,
         deprecated_since=deprecated_since,
@@ -71,7 +73,8 @@ def register_typing_class(
 # Method to register gws object like Resource, Task and Protocol
 def register_gws_typing_class(
         object_class: Type[Base], object_type: TypingObjectType, unique_name: str,
-        human_name: str, short_description, hide: bool = False, icon: str = None,
+        human_name: str, short_description, hide: bool = False,
+        style: TypingStyle = None,
         object_sub_type: str = None, related_model_typing_name: str = None,
         deprecated_since: str = None, deprecated_message: str = None) -> None:
 
@@ -99,6 +102,7 @@ def register_gws_typing_class(
         # clear the deprecated message if the deprecated_since version is provided
         deprecated_message = None
     register_typing_class(object_class=object_class, object_type=object_type, unique_name=unique_name,
-                          human_name=human_name, short_description=short_description, hide=hide, icon=icon,
+                          human_name=human_name, short_description=short_description, hide=hide,
+                          style=style,
                           object_sub_type=object_sub_type, related_model_typing_name=related_model_typing_name,
                           deprecated_since=deprecated_since, deprecated_message=deprecated_message)

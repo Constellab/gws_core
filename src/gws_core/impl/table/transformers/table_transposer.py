@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.model.typing_style import TypingStyle
+
 from ....config.config_params import ConfigParams
 from ....config.config_types import ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
@@ -11,7 +13,7 @@ from ...table.table import Table
 
 @transformer_decorator(unique_name="TableTransposer", resource_type=Table,
                        short_description="Transposes the table",
-                       icon="pivot_table_chart")
+                       style=TypingStyle.material_icon("pivot_table_chart"))
 class TableTransposer(Transformer):
     """
     Transformer to transpose the table (switch columns and lines).

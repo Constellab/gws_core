@@ -14,7 +14,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_specs import IOSpecs
 from gws_core.model.typing import Typing
-from gws_core.model.typing_dict import TypingObjectType, TypingStatus
+from gws_core.model.typing_dto import TypingObjectType, TypingStatus
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_search_builder import TypingSearchBuilder

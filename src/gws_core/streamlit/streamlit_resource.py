@@ -8,6 +8,7 @@ from typing import List
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.file.fs_node import FSNode
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.primitive_r_field import StrRField
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_set.resource_set import ResourceSet
@@ -18,7 +19,7 @@ from gws_core.streamlit.streamlit_view import StreamlitView
 
 @resource_decorator("StreamlitResource", human_name="Streamlit App",
                     short_description="Streamlit App",
-                    icon="dashboard")
+                    style=TypingStyle.material_icon("dashboard"))
 class StreamlitResource(ResourceSet):
     """
     Resource that contains a plotly figure.

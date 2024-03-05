@@ -7,6 +7,7 @@ from threading import Thread
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
@@ -98,5 +99,6 @@ class App:
         cls.app.mount("/central-api/", space_app)
         cls.app.mount("/space-api/", space_app)
         cls.app.mount("/s3-server/", s3_server_app)
+        cls.app.mount("/static", StaticFiles(directory="/lab/user/bricks/gws_core/icons"), name="static")
 
         uvicorn.run(cls.app, host='0.0.0.0', port=int(port))

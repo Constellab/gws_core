@@ -14,6 +14,7 @@ from gws_core.impl.table.table import Table
 from gws_core.impl.text.text import Text
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_style import TypingStyle
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs
 
@@ -21,7 +22,8 @@ from .plotly_resource import PlotlyResource
 
 
 @task_decorator("SmartPlotly", human_name="Smart interactive plot generator",
-                short_description="Generate an interactive plot using an AI (OpenAI).", icon="insights")
+                short_description="Generate an interactive plot using an AI (OpenAI).",
+                style=TypingStyle.material_icon("insights"))
 class SmartPlotly(SmartTaskBase):
     """
 This task is still in beta version.

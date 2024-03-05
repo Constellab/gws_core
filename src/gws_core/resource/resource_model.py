@@ -15,7 +15,7 @@ from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.model.typing_dict import TypingStatus
+from gws_core.model.typing_dto import TypingStatus
 from gws_core.project.model_with_project import ModelWithProject
 from gws_core.project.project import Project
 from gws_core.resource.resource_dto import (ResourceDTO, ResourceOrigin,
@@ -496,11 +496,9 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
             self.resource_typing_name)
 
         if resource_typing:
-            resource_dto.resource_type_human_name = resource_typing.human_name
-            resource_dto.resource_type_short_description = resource_typing.short_description
+            resource_dto.resource_type = resource_typing.to_simple_dto()
             resource_dto.is_downloadable = self.is_downloadable
             resource_dto.type_status = resource_typing.get_type_status()
-            resource_dto.type_icon = resource_typing.icon
 
             resource_type: Type = resource_typing.get_type()
 

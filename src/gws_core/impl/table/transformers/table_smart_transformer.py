@@ -17,13 +17,14 @@ from gws_core.impl.table.table import Table
 from gws_core.impl.text.text import Text
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_style import TypingStyle
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs
 
 
 @task_decorator("SmartTableTransformer", human_name="Smart table transformer",
                 short_description="Table transformer that uses AI  (OpenAI).",
-                icon="auto_awesome")
+                style=TypingStyle.material_icon("auto_awesome"))
 class TableSmartTransformer(SmartTaskBase):
     """
 This task is still in beta version.

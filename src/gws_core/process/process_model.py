@@ -13,8 +13,8 @@ from peewee import BooleanField, CharField, ForeignKeyField
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.model.typing import Typing
-from gws_core.model.typing_dict import TypingStatus
-from gws_core.process.process_dto import ProcessDTO, ProcessTypeDTO
+from gws_core.model.typing_dto import TypingStatus
+from gws_core.process.process_dto import ProcessDTO
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.task.plug import Sink, Source
@@ -449,11 +449,7 @@ class ProcessModel(ModelWithUser):
 
         process_typing: Typing = self.get_process_typing()
         if process_typing:
-            process_dto.process_type = ProcessTypeDTO(
-                human_name=process_typing.human_name,
-                short_description=process_typing.short_description,
-                icon=process_typing.icon
-            )
+            process_dto.process_type = process_typing.to_simple_dto()
             process_dto.type_status = process_typing.get_type_status()
         else:
             process_dto.type_status = TypingStatus.UNAVAILABLE
@@ -486,11 +482,7 @@ class ProcessModel(ModelWithUser):
             inputs=self.inputs.to_dto(),
             outputs=self.outputs.to_dto(),
             status=self.status.value,
-            process_type=ProcessTypeDTO(
-                human_name=process_typing.human_name,
-                short_description=process_typing.short_description,
-                icon=process_typing.icon
-            )
+            process_type=process_typing.to_simple_dto()
         )
 
     ########################### STATUS MANAGEMENT ##################################

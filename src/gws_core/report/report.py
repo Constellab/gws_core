@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Optional, final
+from typing import List, final
 
 from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
                     ModelSelect)
@@ -22,7 +22,7 @@ from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
 from ..core.model.base_model import BaseModel
-from ..core.model.db_field import BaseDTOField, DateTimeUTC, JSONField
+from ..core.model.db_field import BaseDTOField, DateTimeUTC
 from ..core.model.model_with_user import ModelWithUser
 from ..experiment.experiment import Experiment
 from ..lab.lab_config_model import LabConfigModel
