@@ -8,6 +8,7 @@ from copy import deepcopy
 from typing import Dict, TypeVar, Union, final
 
 from gws_core.impl.file.file_r_field import FileRField
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
@@ -33,7 +34,8 @@ CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
 ResourceType = TypeVar('ResourceType', bound='Resource')
 
 
-@typing_registrator(unique_name="Resource", object_type="RESOURCE")
+@typing_registrator(unique_name="Resource", object_type="RESOURCE",
+                    style=TypingStyle.default_resource())
 class Resource(Base):
 
     uid: str = UUIDRField(searchable=True)

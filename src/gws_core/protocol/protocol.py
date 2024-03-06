@@ -13,6 +13,7 @@ from typing_extensions import TypedDict
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_style import TypingStyle
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -31,7 +32,8 @@ class ProtocolCreateConfig(TypedDict):
     outerfaces: Dict[str, InterfaceSpec]
 
 
-@typing_registrator(unique_name="Protocol", object_type="PROTOCOL", hide=True)
+@typing_registrator(unique_name="Protocol", object_type="PROTOCOL", hide=True,
+                    style=TypingStyle.default_protocol())
 class Protocol(Process):
 
     _process_specs: Dict[str, ProcessSpec]

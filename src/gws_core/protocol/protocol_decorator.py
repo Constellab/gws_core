@@ -38,6 +38,10 @@ def protocol_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USE
     :type deprecated_message: str, optional
 
     """
+    # provide the style default value
+    if style is None:
+        style = TypingStyle.default_protocol()
+
     def decorator(protocol_class: Type[Protocol]):
         if not Utils.issubclass(protocol_class, Protocol):
             BrickService.log_brick_error(

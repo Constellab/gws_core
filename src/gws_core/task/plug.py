@@ -158,7 +158,7 @@ class Switch2(Task):
 
 @task_decorator(unique_name="Wait", short_description="Wait a number of seconds specified in the config",
                 style=TypingStyle.community_icon(
-                    icon='http://localhost:3000/static/007-data-collection.svg',  # front_hand
+                    icon='007-data-collection.svg',  # front_hand
                     background_color='#ff0000',
                 ),
                 )
@@ -192,8 +192,8 @@ class Wait(Task):
 @task_decorator(unique_name="ShellWait",
                 short_description="Wait a number of seconds in the shell specified in the config",
                 style=TypingStyle.community_image(
-                    icon='http://localhost:3000/static/qiim.jpeg',  # front_hand
-                    background_color='#ffffff',
+                    icon='qiim.jpeg',
+                    background_color="#FFFFFF"  # front_hand
                 ))
 class ShellWait(Task):
     """

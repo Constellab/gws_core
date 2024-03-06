@@ -48,7 +48,7 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
         return ProtocolConfigDTO.from_json(self.data)
 
     def set_template(self, template: ProtocolConfigDTO):
-        self.data = template.dict()
+        self.data = template.to_json_dict()
 
     def to_dto(self) -> ProtocolTemplateDTO:
         return ProtocolTemplateDTO(

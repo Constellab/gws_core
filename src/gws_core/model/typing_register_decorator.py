@@ -16,7 +16,8 @@ from ..model.typing_dto import TypingObjectType
 from .typing_manager import TypingManager
 
 
-def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bool = False) -> Callable:
+def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bool = False,
+                       style: TypingStyle = None) -> Callable:
     """Decorator to register the class as a typing with a typing name
 
     param name_unique: a unique name for this type in the brick. Only 1 protocol in the current brick can have this name.
@@ -31,7 +32,7 @@ def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bo
     def decorator(object_class: Type[Base]):
         register_typing_class(object_class=object_class,
                               object_type=object_type, unique_name=unique_name,
-                              human_name="", short_description="", hide=hide)
+                              human_name="", short_description="", hide=hide, style=style)
         return object_class
     return decorator
 
@@ -39,7 +40,7 @@ def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bo
 # Save the Typing to the TypingManager and set the _typing_name class property
 def register_typing_class(
         object_class: Type[Base], object_type: TypingObjectType, unique_name: str,
-        human_name: str, short_description, hide: bool = False, icon: str = None,
+        human_name: str, short_description, hide: bool = False,
         style: TypingStyle = None,
         object_sub_type: str = None, related_model_typing_name: str = None,
         deprecated_since: str = None, deprecated_message: str = None) -> None:
@@ -101,6 +102,13 @@ def register_gws_typing_class(
     else:
         # clear the deprecated message if the deprecated_since version is provided
         deprecated_message = None
+
+    # provide the style default value
+    if style is None:
+        style = TypingStyle.default_task()
+    else:
+        style.fill_empty_values()
+
     register_typing_class(object_class=object_class, object_type=object_type, unique_name=unique_name,
                           human_name=human_name, short_description=short_description, hide=hide,
                           style=style,

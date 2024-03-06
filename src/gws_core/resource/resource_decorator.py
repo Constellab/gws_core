@@ -41,6 +41,9 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
 
     """
 
+    if not style:
+        style = TypingStyle.default_resource()
+
     def decorator(resource_class: Type[Resource]):
         if not Utils.issubclass(resource_class, Resource):
             BrickService.log_brick_error(

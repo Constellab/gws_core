@@ -14,6 +14,7 @@ from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_register_decorator import typing_registrator
+from gws_core.model.typing_style import TypingStyle
 
 from ..config.config_params import ConfigParams
 from ..config.config_types import ConfigSpecs
@@ -38,7 +39,8 @@ class CheckBeforeTaskResult(TypedDict, total=False):
     message: Optional[str]
 
 
-@typing_registrator(unique_name="Task", object_type="TASK", hide=True)
+@typing_registrator(unique_name="Task", object_type="TASK", hide=True,
+                    style=TypingStyle.default_task())
 class Task(Process):
 
     input_specs: InputSpecs = InputSpecs({})

@@ -105,8 +105,8 @@ def decorate_task(
     # Set the default style if not defined
     if not style:
         style = get_task_default_style(task_class)
-    elif not style.background_color:
-        style.background_color = get_task_default_style(task_class).background_color
+    elif not style.background_color or not style.icon_color:
+        style.copy_from_style(get_task_default_style(task_class))
 
     related_resource_typing_name = related_resource._typing_name if related_resource else None
 
@@ -137,4 +137,4 @@ def get_task_default_style(task_class: Type[Task]) -> TypingStyle:
         if typing and typing.style:
             return typing.style
 
-    return TypingStyle.material_icon("process")
+    return TypingStyle.default_task()
