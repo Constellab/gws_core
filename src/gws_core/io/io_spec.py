@@ -22,8 +22,8 @@ ResourceTypes = Union[ResourceType, Iterable[ResourceType]]
 
 class IOSpecDTO(BaseModelDTO):
     resource_types: List[TypingRefDTO]
-    human_name: Optional[str]
-    short_description: Optional[str]
+    human_name: Optional[str] = None
+    short_description: Optional[str] = None
     is_optional: bool
     sub_class: Optional[bool] = None
     is_constant: Optional[bool] = None

@@ -293,7 +293,7 @@ class TestExperiment(BaseTestCase):
         experiment_2.run()
 
         # retrieve the experiments that uses this experiment
-        paginator = ExperimentService.get_by_input_resource(robot_model.id)
+        paginator = ExperimentService.get_next_experiments_of_resource(robot_model.id)
 
         # check result
         self.assertEqual(paginator.page_info.total_number_of_items, 1)

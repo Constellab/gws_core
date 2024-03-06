@@ -85,7 +85,7 @@ def get_by_input_resource(resource_id: str,
     Retrieve a list of experiments by the input resource
     """
 
-    return ExperimentService.get_by_input_resource(
+    return ExperimentService.get_next_experiments_of_resource(
         resource_id=resource_id,
         page=page,
         number_of_items_per_page=number_of_items_per_page,

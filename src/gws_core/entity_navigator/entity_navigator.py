@@ -3,8 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
 from typing import Dict, Generic, Iterable, List, Set, Type, Union
+
+from peewee import JOIN, ModelSelect
 
 from gws_core.entity_navigator.entity_navigator_deep import NavigableEntitySet
 from gws_core.entity_navigator.entity_navigator_type import (
@@ -394,13 +395,25 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         return {task_input.task_model for task_input in task_input_models}
 
     def get_next_experiments(self) -> 'EntityNavigatorExperiment':
-        """Return all the experiments that use the resource in a source task"""
-        task_models: List[TaskModel] = list(TaskModel.get_source_task_using_resource_in_another_experiment(
-            self._get_entities_ids()))
+        """Return all the experiments that use the resource in a source task or as input of a task"""
+        return EntityNavigatorExperiment(list(self.get_next_experiments_select_model()))
 
-        experiments: Set[Experiment] = {task.experiment for task in task_models}
+    def get_next_experiments_select_model(self) -> ModelSelect:
+        """Return all the experiments that use the resource in a source task or as input of a task"""
+        expression = (TaskInputModel.resource_model.in_(self._get_entities_ids())) | (
+            TaskModel.source_config_id.in_(self._get_entities_ids()))
 
-        return EntityNavigatorExperiment(experiments)
+        resource_exp_ids = {resource.experiment.id for resource in self._entities if resource.experiment is not None}
+        # Exclude the experiment that generated the resource from the select
+        if len(resource_exp_ids) > 0:
+            expression = expression & (Experiment.id.not_in(resource_exp_ids))
+
+        # Search experiment where a Source is configured with the resource and where a task takes the resource as input
+            # with this, all case are managed
+        return Experiment.select().where(expression) \
+            .join(TaskInputModel, JOIN.LEFT_OUTER) \
+            .join(TaskModel, JOIN.LEFT_OUTER, on=(Experiment.id == TaskModel.experiment)) \
+            .distinct()
 
     def get_previous_resources(self) -> 'EntityNavigatorResource':
         # retrieve the tasks that generated the current resources

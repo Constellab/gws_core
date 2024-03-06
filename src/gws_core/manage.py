@@ -176,7 +176,6 @@ def start_notebook(cwd: str, log_level: str = 'INFO') -> None:
 @click.option('--reset_env', is_flag=True, help='Reset environment')
 @click.option('--experiment-id', help='Experiment id')
 @click.option('--user-id', help='User id')
-@click.option('--user-id', help='User id')
 @click.option('--protocol-model-id', help='Protocol model id')
 @click.option('--process-instance-name', help='Process instance name')
 def _start_app_console(_, test: str, run_experiment: bool, runserver: bool,

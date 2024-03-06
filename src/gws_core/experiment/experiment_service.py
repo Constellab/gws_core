@@ -4,12 +4,13 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, List, Optional, Type
+from typing import Callable, Dict, List, Optional, Type
 
-from peewee import ModelSelect
+from peewee import JOIN, ModelSelect
 
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.resource.resource_model import ResourceModel
@@ -388,9 +389,9 @@ class ExperimentService(BaseService):
             model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def get_by_input_resource(cls, resource_id: str,
-                              page: int = 0,
-                              number_of_items_per_page: int = 20) -> Paginator[Experiment]:
+    def get_next_experiments_of_resource(cls, resource_id: str,
+                                         page: int = 0,
+                                         number_of_items_per_page: int = 20) -> Paginator[Experiment]:
         """ Return the list of experiment that used the resource as input
 
         :param resource_id: _description_
@@ -399,22 +400,11 @@ class ExperimentService(BaseService):
         :rtype: Paginator[Experiment]
         """
 
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
-            resource_id)
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
 
-        expression_builder = ExpressionBuilder(
-            TaskInputModel.resource_model == resource_id)
-
-        # if the resource was generacted by an experiment, skip this experiment in the result
-        if resource_model.experiment is not None:
-            expression_builder.add_expression(
-                Experiment.id != resource_model.experiment.id)
-
-        query = Experiment.select().where(expression_builder.build()
-                                          ).join(TaskInputModel).distinct()
-
-        return Paginator(
-            query, page=page, nb_of_items_per_page=number_of_items_per_page)
+        resource_navigator = EntityNavigatorResource(resource_model)
+        return Paginator(resource_navigator.get_next_experiments_select_model(),
+                         page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
     def get_running_experiments(cls) -> List[RunningExperimentInfoDTO]:

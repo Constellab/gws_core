@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Type
 
 from peewee import CharField, ForeignKeyField, ModelSelect
 
-from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.io.io_dto import IODTO
@@ -59,7 +58,6 @@ class TaskModel(ProcessModel):
         ResourceModel, null=True, index=True, lazy_load=False)
 
     community_live_task_version_id: str = CharField(null=True, max_length=36, default="")
-
 
     _table_name = 'gws_task'
 
@@ -155,19 +153,6 @@ class TaskModel(ProcessModel):
             return []
 
         return list(ResourceModel.select().where(ResourceModel.task_model == self))
-
-    @classmethod
-    def get_source_task_using_resource_in_another_experiment(
-            cls, resource_model_ids: List[str], exclude_experimence_id: str = None) -> ModelSelect:
-        """
-        Returns the source task models configured with one of the provided resource that are not the the provided experiment
-        """
-        builder = ExpressionBuilder(cls.source_config_id.in_(resource_model_ids))
-
-        if exclude_experimence_id is not None:
-            builder.add_expression(cls.experiment != exclude_experimence_id)
-
-        return cls.select().where(builder.build())
 
     @classmethod
     def get_experiment_source_tasks(cls, experiment_ids: List[str]) -> ModelSelect:

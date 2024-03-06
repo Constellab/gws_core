@@ -128,9 +128,8 @@ class TestTask(BaseTestCase):
         task = experiment.get_protocol().add_task(
             Source, 'source', {Source.config_name: robot_model.id})
 
+        tasks = (list(TaskModel.select().where(TaskModel.source_config_id == robot_model.id)))
         # Check that the use of the robot in the experiment was saved
-        tasks = list(TaskModel.get_source_task_using_resource_in_another_experiment(
-            [robot_model.id], ''))
 
         self.assertEqual(len(tasks), 1)
         self.assertEqual(tasks[0].id, task.get_model().id)
