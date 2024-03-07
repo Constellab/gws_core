@@ -20,7 +20,6 @@ class Process(Base):
     _typing_name: str = None
     _human_name: str = None
     _short_description: str = None
-    _allowed_user: UserGroup = UserGroup.USER
     # For specific tasks, the process is automatically run when added or reset
     # Set only on specific tasks when you know what you are doing
     __auto_run__: bool = False

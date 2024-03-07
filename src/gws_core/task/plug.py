@@ -24,7 +24,7 @@ from .task_decorator import task_decorator
 
 
 @task_decorator(unique_name="Source", human_name="Source", short_description="Select a resource from the databox",
-                style=TypingStyle.material_icon("input"))
+                style=TypingStyle.material_icon("login"))
 class Source(Task):
     """
     Source task.
@@ -61,7 +61,7 @@ class Source(Task):
 
 
 @task_decorator(unique_name="Sink", human_name="Output",
-                style=TypingStyle.material_icon("output"))
+                style=TypingStyle.material_icon("logout"))
 class Sink(Task):
     """
     Sink task.

@@ -15,16 +15,17 @@ from ..config.param.param_spec_helper import ParamSpecHelper
 from ..core.utils.utils import Utils
 from ..io.io_spec_helper import IOSpecsHelper
 from ..model.typing_register_decorator import register_gws_typing_class
-from ..user.user_group import UserGroup
 from .task import Task
 from .task_typing import TaskSubType
 
 
-def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
-                   human_name: str = "", short_description: str = "",
+def task_decorator(unique_name: str,
+                   human_name: str = "",
+                   short_description: str = "",
                    hide: bool = False,
                    style: TypingStyle = None,
-                   deprecated_since: str = None, deprecated_message: str = None) -> Callable:
+                   deprecated_since: str = None,
+                   deprecated_message: str = None) -> Callable:
     """ Decorator to be placed on all the tasks. A task not decorated will not be runnable.
     It define static information about the task
 
@@ -32,8 +33,6 @@ def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the tasks
     :type unique_name: str
-    :param allowed_user: role needed to run the task. By default all user can run it. It Admin, the user need to be an admin of the lab to run the task
-    :type allowed_user: ProtocolAllowedUser, optional
     :param human_name: optional name that will be used in the interface when viewing the tasks. Must not be longer than 20 caracters
                         If not defined, the unique_name will be used
     :type human_name: str, optional
@@ -42,6 +41,8 @@ def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
     :param hide: Only the task with hide=False will be available in the interface(web platform), other will be hidden.
                 It is useful for task that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
+    :param style: style of the task, view TypingStyle object for more info, defaults to None
+    :type style: TypingStyle, optional
     :param icon: icon to display in the interface when viewing the protocols.
                 Select icon name from : https://fonts.google.com/icons?icon.set=Material+Icons, defaults to None
     :type icon: str, optional
@@ -54,7 +55,7 @@ def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
 
     """
     def decorator(task_class: Type[Task]):
-        decorate_task(task_class, unique_name=unique_name, task_type='TASK', allowed_user=allowed_user,
+        decorate_task(task_class, unique_name=unique_name, task_type='TASK',
                       human_name=human_name, short_description=short_description, hide=hide,
                       style=style,
                       deprecated_since=deprecated_since, deprecated_message=deprecated_message)
@@ -66,7 +67,6 @@ def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
 def decorate_task(
         task_class: Type[Task], unique_name: str,
         task_type: TaskSubType, related_resource: Type[Resource] = None,
-        allowed_user: UserGroup = UserGroup.USER,
         human_name: str = "", short_description: str = "", hide: bool = False,
         style: TypingStyle = None,
         deprecated_since: str = None, deprecated_message: str = None):
@@ -115,9 +115,6 @@ def decorate_task(
                               hide=hide, style=style,
                               related_model_typing_name=related_resource_typing_name,
                               deprecated_since=deprecated_since, deprecated_message=deprecated_message)
-
-    # set the allowed user for the task
-    task_class._allowed_user = allowed_user
 
 
 def get_task_default_style(task_class: Type[Task]) -> TypingStyle:

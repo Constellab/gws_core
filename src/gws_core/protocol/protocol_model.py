@@ -1030,17 +1030,6 @@ class ProtocolModel(ProcessModel):
     def is_protocol(self) -> bool:
         return True
 
-    def check_user_privilege(self, user: User) -> None:
-        """Throw an exception if the user cand execute the protocol
-
-        :param user: user
-        :type user: User
-        """
-
-        super().check_user_privilege(user)
-
-        for proc in self.processes.values():
-            proc.check_user_privilege(user)
 
     def generate_unique_instance_name(self, instance_name: str) -> str:
         """ Generate a unique instance name from an instance_name

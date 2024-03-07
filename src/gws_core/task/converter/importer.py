@@ -19,16 +19,18 @@ from ...config.config_types import ConfigSpecs
 from ...core.utils.utils import Utils
 from ...impl.file.fs_node import FSNode
 from ...resource.resource import Resource
-from ...user.user_group import UserGroup
 from ..task_decorator import task_decorator
 from .converter import Converter, decorate_converter
 
 
 def importer_decorator(
-        unique_name: str, target_type: Type[Resource], supported_extensions: List[str],
+        unique_name: str,
+        target_type: Type[Resource],
+        supported_extensions: List[str],
         source_type: Type[FSNode] = File,
-        allowed_user: UserGroup = UserGroup.USER, human_name: str = None,
-        short_description: bool = None, hide: bool = False,
+        human_name: str = None,
+        short_description: bool = None,
+        hide: bool = False,
         style: TypingStyle = None,
         deprecated_since: str = None, deprecated_message: str = None) -> Callable:
     """ Decorator to place on a ResourceImporter instead of task_decorator. It defines a special task to import a FsNode (file or folder)
@@ -43,8 +45,6 @@ def importer_decorator(
     :type supported_extensions: List[str], optional
     :param source_type: If provided, the importer works only on subclasses of source_type
     :type source_type: Type[FSNode], optional
-    :param allowed_user: role needed to run the task. By default all user can run it. It Admin, the user need to be an admin of the lab to run the task
-    :type allowed_user: ProtocolAllowedUser, optional
     :param human_name: optional name that will be used in the interface when viewing the tasks. Must not be longer than 20 caracters
                         If not defined, an automatic is generated.
     :type human_name: str, optional
@@ -54,9 +54,8 @@ def importer_decorator(
     :param hide: Only the task with hide=False will be available in the interface(web platform), other will be hidden.
                 It is useful for task that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
-    :param icon: icon to display in the interface when viewing the protocols.
-                Select icon name from : https://fonts.google.com/icons?icon.set=Material+Icons, defaults to None
-    :type icon: str, optional
+    :param style: style of the task, view TypingStyle object for more info, defaults to None
+    :type style: TypingStyle, optional
     :param deprecated_since: To provide when the object is deprecated. It must be a version string like 1.0.0 to
                             tell at which version the object became deprecated, defaults to None
     :type deprecated_since: str, optional
@@ -88,7 +87,7 @@ def importer_decorator(
             decorate_converter(
                 task_class, unique_name=unique_name, task_type='IMPORTER', source_type=source_type,
                 target_type=target_type, related_resource=source_type, human_name=human_name_computed,
-                short_description=short_description_computed, allowed_user=allowed_user, hide=hide, style=style,
+                short_description=short_description_computed, hide=hide, style=style,
                 deprecated_since=deprecated_since, deprecated_message=deprecated_message)
         except Exception as err:
             traceback.print_stack()

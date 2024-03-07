@@ -8,8 +8,6 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Optional, Type, final
 
-from peewee import BooleanField, CharField, ForeignKeyField
-
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.model.typing import Typing
@@ -18,6 +16,7 @@ from gws_core.process.process_dto import ProcessDTO
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.task.plug import Sink, Source
+from peewee import BooleanField, CharField, ForeignKeyField
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField
@@ -320,19 +319,6 @@ class ProcessModel(ModelWithUser):
     def _run_after_task(self):
         # Set the data outputs dict
         self.data["outputs"] = self.outputs.to_json()
-
-    def check_user_privilege(self, user: User) -> None:
-        """Throw an exception if the user cand execute the protocol
-
-        :param user: user
-        :type user: User
-        """
-
-        process_type: Type[Process] = self.get_process_type()
-
-        if not user.has_access(process_type._allowed_user):
-            raise UnauthorizedException(
-                f"You must be a {process_type._allowed_user} to run the process '{process_type.full_classname()}'")
 
     def get_execution_time(self) -> float:
         """Return the execution time of the process

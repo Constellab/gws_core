@@ -4,20 +4,17 @@
 # About us: https://gencovery.com
 
 
-from typing import Callable, Dict, List, Optional, Type
+from typing import Dict, List, Optional, Type
 
-from peewee import JOIN, ModelSelect
-
-from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
+from peewee import JOIN, ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams

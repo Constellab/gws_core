@@ -21,14 +21,17 @@ from ...task.task_decorator import decorate_task, task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 from ...task.task_runner import TaskRunner
 from ...task.task_typing import TaskSubType
-from ...user.user_group import UserGroup
 
 
-def decorate_converter(task_class: Type['Converter'], unique_name: str, task_type: TaskSubType,
-                       source_type: Type[Resource] = Resource, target_type: Type[Resource] = Resource,
+def decorate_converter(task_class: Type['Converter'],
+                       unique_name: str,
+                       task_type: TaskSubType,
+                       source_type: Type[Resource] = Resource,
+                       target_type: Type[Resource] = Resource,
                        related_resource: Type[Resource] = None,
-                       allowed_user: UserGroup = UserGroup.USER,
-                       human_name: str = "", short_description: str = "", hide: bool = False,
+                       human_name: str = "",
+                       short_description: str = "",
+                       hide: bool = False,
                        style: TypingStyle = None,
                        deprecated_since: str = None, deprecated_message: str = None) -> None:
     if not Utils.issubclass(task_class, Converter):
@@ -49,7 +52,7 @@ def decorate_converter(task_class: Type['Converter'], unique_name: str, task_typ
 
     # register the task and set the human_name and short_description dynamically based on resource
     decorate_task(task_class, unique_name, human_name=human_name, related_resource=related_resource,
-                  task_type=task_type, short_description=short_description, allowed_user=allowed_user,
+                  task_type=task_type, short_description=short_description,
                   hide=hide, style=style,
                   deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 

@@ -14,14 +14,14 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.task.converter.converter import Converter, decorate_converter
 
 from ...resource.resource import Resource
-from ...user.user_group import UserGroup
 from ..task import Task
 from ..task_decorator import task_decorator
 
 
 def transformer_decorator(unique_name: str, resource_type: Type[Resource],
-                          allowed_user: UserGroup = UserGroup.USER,
-                          human_name: str = "", short_description: str = "", hide: bool = False,
+                          human_name: str = "",
+                          short_description: str = "",
+                          hide: bool = False,
                           style: TypingStyle = None,
                           deprecated_since: str = None, deprecated_message: str = None):
     """
@@ -33,8 +33,6 @@ def transformer_decorator(unique_name: str, resource_type: Type[Resource],
     :type unique_name: str
     :param resource_type: type of the resource transformed by this transformer
     :type resource_type: Type[Resource]
-    :param allowed_user: role needed to run the task. By default all user can run it. It Admin, the user need to be an admin of the lab to run the task
-    :type allowed_user: ProtocolAllowedUser, optional
     :param human_name: optional name that will be used in the interface when viewing the tasks. Must not be longer than 20 caracters
                         If not defined, the unique_name will be used
     :type human_name: str, optional
@@ -43,6 +41,8 @@ def transformer_decorator(unique_name: str, resource_type: Type[Resource],
     :param hide: Only the task with hide=False will be available in the interface(web platform), other will be hidden.
                 It is useful for task that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
+    :param style: style of the task, view TypingStyle object for more info, defaults to None
+    :type style: TypingStyle, optional
     :param icon: icon to display in the interface when viewing the protocols.
                 Select icon name from : https://fonts.google.com/icons?icon.set=Material+Icons, defaults to None
     :type icon: str, optional
@@ -68,7 +68,7 @@ def transformer_decorator(unique_name: str, resource_type: Type[Resource],
 
         decorate_converter(task_class=task_class, unique_name=unique_name, task_type='TRANSFORMER',
                            source_type=resource_type, target_type=resource_type, related_resource=resource_type,
-                           allowed_user=allowed_user, human_name=human_name,
+                           human_name=human_name,
                            short_description=short_description, hide=hide,
                            style=style,
                            deprecated_since=deprecated_since, deprecated_message=deprecated_message)

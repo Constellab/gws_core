@@ -164,9 +164,6 @@ class ExperimentRunService():
     def _check_experiment_before_start(cls, experiment: Experiment) -> None:
         user = CurrentUserService.get_and_check_current_user()
 
-        # check user privilege
-        experiment.check_user_privilege(user)
-
         # check experiment status
         experiment.check_is_runnable()
 
@@ -227,9 +224,6 @@ class ExperimentRunService():
 
         # set the user in the context to make the update works
         CurrentUserService.set_current_user(user)
-
-        # check user privilege
-        experiment.check_user_privilege(user)
 
         if experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS:
             raise BadRequestException(
