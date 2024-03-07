@@ -22,7 +22,7 @@ class TypingIconColor(Enum):
 
 class TypingStyle(BaseModelDTO):
 
-    icon: str = None
+    icon_technical_name: str = None
     icon_type: TypingIconType = None
     background_color: Optional[str] = None
     icon_color: Optional[TypingIconColor] = None
@@ -45,45 +45,79 @@ class TypingStyle(BaseModelDTO):
             self.icon_color = style.icon_color
 
     @staticmethod
-    def material_icon(icon: str, background_color: str = None,
+    def material_icon(material_icon_name: str, background_color: str = None,
                       icon_color: Optional[TypingIconColor] = None) -> 'TypingStyle':
-        return TypingStyle(icon=icon,
+        """ Use an icon from the material icon library. List of available icons are here :
+        https://fonts.google.com/icons?icon.set=Material+Icons
+
+        :param icon_technical_name: name of the material icon
+        :type icon_technical_name: str
+        :param background_color: background color of the typing, defaults to None
+        :type background_color: str, optional
+        :param icon_color: icon color (black or white) when displayed over the background color, defaults to None
+        :type icon_color: Optional[TypingIconColor], optional
+        :return: TypingStyle object
+        :rtype: TypingStyle
+        """
+        return TypingStyle(icon_technical_name=material_icon_name,
                            icon_type=TypingIconType.MATERIAL_ICON,
                            background_color=background_color,
                            icon_color=icon_color)
 
     @staticmethod
-    def community_icon(icon: str, background_color: str = None,
+    def community_icon(icon_technical_name: str, background_color: str = None,
                        icon_color: Optional[TypingIconColor] = None) -> 'TypingStyle':
-        return TypingStyle(icon=icon,
+        """ Use an icon from the community icon library. List of available icons are here :
+        https://constellab.community/icons
+
+        :param icon_technical_name: technical name of the icon
+        :type icon_technical_name: str
+        :param background_color: background color of the typing, defaults to None
+        :type background_color: str, optional
+        :param icon_color: icon color (black or white) when displayed over the background color, defaults to None
+        :type icon_color: Optional[TypingIconColor], optional
+        :return: _description_
+        :rtype: TypingStyle
+        """
+        return TypingStyle(icon_technical_name=icon_technical_name,
                            icon_type=TypingIconType.COMMUNITY_ICON,
                            background_color=background_color,
                            icon_color=icon_color)
 
     @staticmethod
-    def community_image(icon: str, background_color: str = None) -> 'TypingStyle':
-        return TypingStyle(icon=icon,
+    def community_image(icon_technical_name: str, background_color: str = None) -> 'TypingStyle':
+        """ Use an image from the community image library. List of available images are here :
+        https://constellab.community/icons
+
+        :param icon_technical_name: technical name of the image
+        :type icon_technical_name: str
+        :param background_color: background color of the typing, defaults to None
+        :type background_color: str, optional
+        :return: _description_
+        :rtype: TypingStyle
+        """
+        return TypingStyle(icon_technical_name=icon_technical_name,
                            icon_type=TypingIconType.COMMUNITY_IMAGE,
                            background_color=background_color,
                            icon_color=None)
 
     @staticmethod
     def default_resource() -> 'TypingStyle':
-        return TypingStyle(icon="resource",
+        return TypingStyle(icon_technical_name="resource",
                            icon_type=TypingIconType.MATERIAL_ICON,
                            background_color="#af3e01",
                            icon_color=TypingIconColor.WHITE)
 
     @staticmethod
     def default_task() -> 'TypingStyle':
-        return TypingStyle(icon="process",
+        return TypingStyle(icon_technical_name="process",
                            icon_type=TypingIconType.MATERIAL_ICON,
                            background_color="#af3e01",
                            icon_color=TypingIconColor.WHITE)
 
     @staticmethod
     def default_protocol() -> 'TypingStyle':
-        return TypingStyle(icon="protocol",
+        return TypingStyle(icon_technical_name="protocol",
                            icon_type=TypingIconType.MATERIAL_ICON,
                            background_color="#af3e01",
                            icon_color=TypingIconColor.WHITE)

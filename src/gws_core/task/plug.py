@@ -158,7 +158,7 @@ class Switch2(Task):
 
 @task_decorator(unique_name="Wait", short_description="Wait a number of seconds specified in the config",
                 style=TypingStyle.material_icon(
-                    icon='front_hand',
+                    material_icon_name='front_hand',
                 ),
                 )
 class Wait(Task):
@@ -191,7 +191,7 @@ class Wait(Task):
 @task_decorator(unique_name="ShellWait",
                 short_description="Wait a number of seconds in the shell specified in the config",
                 style=TypingStyle.material_icon(
-                    icon='front_hand',
+                    material_icon_name='front_hand',
                 ))
 class ShellWait(Task):
     """
