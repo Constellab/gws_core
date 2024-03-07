@@ -11,6 +11,7 @@ from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
 
 from ...brick.brick_service import BrickService
@@ -32,7 +33,9 @@ def importer_decorator(
         short_description: bool = None,
         hide: bool = False,
         style: TypingStyle = None,
-        deprecated_since: str = None, deprecated_message: str = None) -> Callable:
+        deprecated_since: str = None,
+        deprecated_message: str = None,
+        deprecated: TypingDeprecated = None) -> Callable:
     """ Decorator to place on a ResourceImporter instead of task_decorator. It defines a special task to import a FsNode (file or folder)
     to resource_type
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
@@ -56,12 +59,8 @@ def importer_decorator(
     :type hide: bool, optional
     :param style: style of the task, view TypingStyle object for more info, defaults to None
     :type style: TypingStyle, optional
-    :param deprecated_since: To provide when the object is deprecated. It must be a version string like 1.0.0 to
-                            tell at which version the object became deprecated, defaults to None
-    :type deprecated_since: str, optional
-    :param deprecated_message: Active when deprecated_since is provided. It describe a message about the deprecation.
-                For example you can provide the name of another object to use instead, defaults to None
-    :type deprecated_message: str, optional
+    :param deprecated: object to tell that the object is deprecated. See TypingDeprecated for more info, defaults to None
+    :type deprecated: TypingDeprecated, optional
     :return: [description]
     :rtype: Callable
     """
@@ -85,10 +84,19 @@ def importer_decorator(
 
             # register the task
             decorate_converter(
-                task_class, unique_name=unique_name, task_type='IMPORTER', source_type=source_type,
-                target_type=target_type, related_resource=source_type, human_name=human_name_computed,
-                short_description=short_description_computed, hide=hide, style=style,
-                deprecated_since=deprecated_since, deprecated_message=deprecated_message)
+                task_class=task_class,
+                unique_name=unique_name,
+                task_type='IMPORTER',
+                source_type=source_type,
+                target_type=target_type,
+                related_resource=source_type,
+                human_name=human_name_computed,
+                short_description=short_description_computed,
+                hide=hide,
+                style=style,
+                deprecated_since=deprecated_since,
+                deprecated_message=deprecated_message,
+                deprecated=deprecated)
         except Exception as err:
             traceback.print_stack()
             BrickService.log_brick_error(task_class, str(err))

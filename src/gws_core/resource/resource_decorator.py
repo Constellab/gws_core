@@ -6,6 +6,7 @@
 from typing import Callable, Type
 
 from gws_core.core.utils.reflector_helper import ReflectorHelper
+from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
 
 from ..brick.brick_service import BrickService
@@ -20,7 +21,8 @@ def resource_decorator(unique_name: str,
                        hide: bool = False,
                        style: TypingStyle = None,
                        deprecated_since: str = None,
-                       deprecated_message: str = None) -> Callable:
+                       deprecated_message: str = None,
+                       deprecated: TypingDeprecated = None) -> Callable:
     """ Decorator to be placed on all the resourcees. A resource not decorated will not be runnable.
     It define static information about the resource
 
@@ -38,12 +40,8 @@ def resource_decorator(unique_name: str,
     :type hide: bool, optional
     :param style: style of the task, view TypingStyle object for more info, defaults to None
     :type style: TypingStyle, optional
-    :param deprecated_since: To provide when the object is deprecated. It must be a version string like 1.0.0 to
-                            tell at which version the object became deprecated, defaults to None
-    :type deprecated_since: str, optional
-    :param deprecated_message: Active when deprecated_since is provided. It describe a message about the deprecation.
-                For example you can provide the name of another object to use instead, defaults to None
-    :type deprecated_message: str, optional
+    :param deprecated: object to tell that the object is deprecated. See TypingDeprecated for more info, defaults to None
+    :type deprecated: TypingDeprecated, optional
 
     """
 
@@ -64,10 +62,17 @@ def resource_decorator(unique_name: str,
                 f"The Resource '{resource_class.__name__}' have a constructor with mandatory params. The resource constructor must contain only optional arguments")
             return resource_class
 
-        register_gws_typing_class(object_class=resource_class, object_type="RESOURCE", unique_name=unique_name,
-                                  human_name=human_name, short_description=short_description, hide=hide,
-                                  style=style, object_sub_type='RESOURCE',
-                                  deprecated_since=deprecated_since, deprecated_message=deprecated_message)
+        register_gws_typing_class(object_class=resource_class,
+                                  object_type="RESOURCE",
+                                  unique_name=unique_name,
+                                  human_name=human_name,
+                                  short_description=short_description,
+                                  hide=hide,
+                                  style=style,
+                                  object_sub_type='RESOURCE',
+                                  deprecated_since=deprecated_since,
+                                  deprecated_message=deprecated_message,
+                                  deprecated=deprecated)
 
         return resource_class
 

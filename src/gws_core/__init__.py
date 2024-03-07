@@ -339,7 +339,11 @@ from .lab.monitor.monitor_service import MonitorService as MonitorService
 # Model
 from .model.model_service import ModelService as ModelService
 from .model.typing import Typing as Typing
+from .model.typing_deprecated import TypingDeprecated as TypingDeprecated
 from .model.typing_manager import TypingManager as TypingManager
+from .model.typing_style import TypingIconColor as TypingIconColor
+from .model.typing_style import TypingIconType as TypingIconType
+from .model.typing_style import TypingStyle as TypingStyle
 # Core > Notebook
 from .notebook.notebook import Notebook as Notebook
 # Process

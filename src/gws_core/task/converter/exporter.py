@@ -9,13 +9,15 @@ import traceback
 from abc import abstractmethod
 from typing import Callable, Type, final
 
+from typing_extensions import TypedDict
+
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
-from typing_extensions import TypedDict
 
 from ...brick.brick_service import BrickService
 from ...config.config_params import ConfigParams
@@ -42,10 +44,12 @@ def exporter_decorator(
         source_type: Type[Resource],
         target_type: Type[File] = File,
         human_name: str = None,
-        short_description: str = None, hide: bool = False,
+        short_description: str = None,
+        hide: bool = False,
         style: TypingStyle = None,
         deprecated_since: str = None,
-        deprecated_message: str = None) -> Callable:
+        deprecated_message: str = None,
+        deprecated: TypingDeprecated = None) -> Callable:
     """ Decorator to place on a ResourceExporter. It defines a special task to export a resource (of type resource_type) to
     a File (file or folder)
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
@@ -62,20 +66,14 @@ def exporter_decorator(
     :param short_description: optional description that will be used in the interface when viewing the tasks. Must not be longer than 100 caracters
                               If not defined, an automatic is generated
     :type short_description: str, optional
-    :param style: style of the task, view TypingStyle object for more info, defaults to None
-    :type style: TypingStyle, optional
     :param hide: Only the task with hide=False will be available in the interface(web platform), other will be hidden.
                 It is useful for task that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
-    :param icon: icon to display in the interface when viewing the protocols.
-                Select icon name from : https://fonts.google.com/icons?icon.set=Material+Icons, defaults to None
-    :type icon: str, optional
-    :param deprecated_since: To provide when the object is deprecated. It must be a version string like 1.0.0 to
-                            tell at which version the object became deprecated, defaults to None
-    :type deprecated_since: str, optional
-    :param deprecated_message: Active when deprecated_since is provided. It describe a message about the deprecation.
-                For example you can provide the name of another object to use instead, defaults to None
-    :type deprecated_message: str, optional
+    :param style: style of the task, view TypingStyle object for more info, defaults to None
+    :type style: TypingStyle, optional
+    :param deprecated: object to tell that the object is deprecated. See TypingDeprecated for more info, defaults to None
+    :type deprecated: TypingDeprecated, optional
+
     :return: [description]
     :rtype: Callable
     """
@@ -103,10 +101,19 @@ def exporter_decorator(
 
             # register the task
             decorate_converter(
-                task_class, unique_name=unique_name, task_type='EXPORTER', source_type=source_type,
-                target_type=target_type, related_resource=source_type, human_name=human_name_computed,
-                short_description=short_description_computed, hide=hide, style=style,
-                deprecated_since=deprecated_since, deprecated_message=deprecated_message)
+                task_class=task_class,
+                unique_name=unique_name,
+                task_type='EXPORTER',
+                source_type=source_type,
+                target_type=target_type,
+                related_resource=source_type,
+                human_name=human_name_computed,
+                short_description=short_description_computed,
+                hide=hide,
+                style=style,
+                deprecated_since=deprecated_since,
+                deprecated_message=deprecated_message,
+                deprecated=deprecated)
         except Exception as err:
             traceback.print_stack()
             BrickService.log_brick_error(task_class, str(err))

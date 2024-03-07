@@ -5,6 +5,7 @@
 
 from typing import Callable, Type
 
+from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
 
 from ..brick.brick_service import BrickService
@@ -19,7 +20,8 @@ def protocol_decorator(unique_name: str,
                        hide: bool = False,
                        style: TypingStyle = None,
                        deprecated_since: str = None,
-                       deprecated_message: str = None) -> Callable:
+                       deprecated_message: str = None,
+                       deprecated: TypingDeprecated = None) -> Callable:
     """ Decorator to be placed on all the protocols. A protocol not decorated will not be runnable.
     It define static information about the protocol
 
@@ -37,12 +39,8 @@ def protocol_decorator(unique_name: str,
     :param hide: Only the protocol will hide=False will be available in the interface, other will be hidden.
                 It is useful for protocol that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
-    :param deprecated_since: To provide when the object is deprecated. It must be a version string like 1.0.0 to
-                            tell at which version the object became deprecated, defaults to None
-    :type deprecated_since: str, optional
-    :param deprecated_message: Active when deprecated_since is provided. It describe a message about the deprecation.
-                For example you can provide the name of another object to use instead, defaults to None
-    :type deprecated_message: str, optional
+    :param deprecated: object to tell that the object is deprecated. See TypingDeprecated for more info, defaults to None
+    :type deprecated: TypingDeprecated, optional
 
     """
     # provide the style default value
@@ -56,11 +54,17 @@ def protocol_decorator(unique_name: str,
                 f"The ProtocolDecorator is used on the class: {protocol_class.__name__} and this class is not a sub class of Protocol")
             return protocol_class
 
-        register_gws_typing_class(object_class=protocol_class, object_type="PROTOCOL", unique_name=unique_name,
+        register_gws_typing_class(object_class=protocol_class,
+                                  object_type="PROTOCOL",
+                                  unique_name=unique_name,
                                   object_sub_type='PROTOCOL',
-                                  human_name=human_name, short_description=short_description, hide=hide,
+                                  human_name=human_name,
+                                  short_description=short_description,
+                                  hide=hide,
                                   style=style,
-                                  deprecated_since=deprecated_since, deprecated_message=deprecated_message)
+                                  deprecated_since=deprecated_since,
+                                  deprecated_message=deprecated_message,
+                                  deprecated=deprecated)
 
         return protocol_class
     return decorator

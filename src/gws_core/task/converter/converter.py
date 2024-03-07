@@ -9,6 +9,7 @@ from typing import Tuple, Type, final
 
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
 
 from ...brick.brick_service import BrickService
@@ -33,7 +34,9 @@ def decorate_converter(task_class: Type['Converter'],
                        short_description: str = "",
                        hide: bool = False,
                        style: TypingStyle = None,
-                       deprecated_since: str = None, deprecated_message: str = None) -> None:
+                       deprecated_since: str = None,
+                       deprecated_message: str = None,
+                       deprecated: TypingDeprecated = None) -> None:
     if not Utils.issubclass(task_class, Converter):
         BrickService.log_brick_error(
             task_class,
@@ -51,10 +54,16 @@ def decorate_converter(task_class: Type['Converter'],
     task_class.output_specs = OutputSpecs({Converter.output_name: OutputSpec(target_type)})
 
     # register the task and set the human_name and short_description dynamically based on resource
-    decorate_task(task_class, unique_name, human_name=human_name, related_resource=related_resource,
-                  task_type=task_type, short_description=short_description,
+    decorate_task(task_class=task_class,
+                  unique_name=unique_name,
+                  human_name=human_name,
+                  related_resource=related_resource,
+                  task_type=task_type,
+                  short_description=short_description,
                   hide=hide, style=style,
-                  deprecated_since=deprecated_since, deprecated_message=deprecated_message)
+                  deprecated_since=deprecated_since,
+                  deprecated_message=deprecated_message,
+                  deprecated=deprecated)
 
 
 @task_decorator("Converter", hide=True)

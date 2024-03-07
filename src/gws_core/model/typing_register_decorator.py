@@ -6,7 +6,9 @@
 from typing import Callable, Type
 
 from gws_core.core.db.version import Version
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
 
 from ..brick.brick_helper import BrickHelper
@@ -16,7 +18,9 @@ from ..model.typing_dto import TypingObjectType
 from .typing_manager import TypingManager
 
 
-def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bool = False,
+def typing_registrator(unique_name: str,
+                       object_type: TypingObjectType,
+                       hide: bool = False,
                        style: TypingStyle = None) -> Callable:
     """Decorator to register the class as a typing with a typing name
 
@@ -39,14 +43,26 @@ def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bo
 
 # Save the Typing to the TypingManager and set the _typing_name class property
 def register_typing_class(
-        object_class: Type[Base], object_type: TypingObjectType, unique_name: str,
-        human_name: str, short_description, hide: bool = False,
+        object_class: Type[Base],
+        object_type: TypingObjectType,
+        unique_name: str,
+        human_name: str,
+        short_description,
+        hide: bool = False,
         style: TypingStyle = None,
-        object_sub_type: str = None, related_model_typing_name: str = None,
-        deprecated_since: str = None, deprecated_message: str = None) -> None:
+        object_sub_type: str = None,
+        related_model_typing_name: str = None,
+        deprecated_since: str = None,
+        deprecated_message: str = None,
+        deprecated: TypingDeprecated = None) -> None:
 
     if not human_name:
         human_name = StringHelper.camel_case_to_sentence(unique_name)
+
+    # TODO v0.9.0 remove deprecated_since and deprecated_message
+    if deprecated_since or deprecated_message:
+        Logger.warning("deprecated_since and deprecated_message are deprecated. Use the TypingDeprecated object instead.")
+        deprecated = TypingDeprecated(deprecated_since, deprecated_message)
 
     typing = Typing(
         brick=BrickHelper.get_brick_name(object_class),
@@ -60,8 +76,8 @@ def register_typing_class(
         style=style,
         object_sub_type=object_sub_type,
         related_model_typing_name=related_model_typing_name,
-        deprecated_since=deprecated_since,
-        deprecated_message=deprecated_message,
+        deprecated_since=deprecated.deprecated_since if deprecated else None,
+        deprecated_message=deprecated.deprecated_message if deprecated else None
     )
 
     TypingManager.register_typing(typing, object_class)
@@ -73,11 +89,18 @@ def register_typing_class(
 
 # Method to register gws object like Resource, Task and Protocol
 def register_gws_typing_class(
-        object_class: Type[Base], object_type: TypingObjectType, unique_name: str,
-        human_name: str, short_description, hide: bool = False,
+        object_class: Type[Base],
+    object_type: TypingObjectType,
+    unique_name: str,
+        human_name: str,
+        short_description,
+        hide: bool = False,
         style: TypingStyle = None,
-        object_sub_type: str = None, related_model_typing_name: str = None,
-        deprecated_since: str = None, deprecated_message: str = None) -> None:
+        object_sub_type: str = None,
+        related_model_typing_name: str = None,
+        deprecated_since: str = None,
+        deprecated_message: str = None,
+        deprecated: TypingDeprecated = None) -> None:
 
     # import the BrickService here and not in register_typing_class because it would create a cyclic error
     from ..brick.brick_service import BrickService
@@ -109,8 +132,15 @@ def register_gws_typing_class(
     else:
         style.fill_empty_values()
 
-    register_typing_class(object_class=object_class, object_type=object_type, unique_name=unique_name,
-                          human_name=human_name, short_description=short_description, hide=hide,
+    register_typing_class(object_class=object_class,
+                          object_type=object_type,
+                          unique_name=unique_name,
+                          human_name=human_name,
+                          short_description=short_description,
+                          hide=hide,
                           style=style,
-                          object_sub_type=object_sub_type, related_model_typing_name=related_model_typing_name,
-                          deprecated_since=deprecated_since, deprecated_message=deprecated_message)
+                          object_sub_type=object_sub_type,
+                          related_model_typing_name=related_model_typing_name,
+                          deprecated_since=deprecated_since,
+                          deprecated_message=deprecated_message,
+                          deprecated=deprecated)
