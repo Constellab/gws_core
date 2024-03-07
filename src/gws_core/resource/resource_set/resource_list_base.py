@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, List, Set
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.view.resources_list_view import ResourcesListView
+from gws_core.resource.technical_info import TechnicalInfo
 from gws_core.resource.view.view_decorator import view
 
 from ..resource import Resource
@@ -82,6 +83,8 @@ class ResourceListBase(Resource):
     def view_resources_list(self, params: ConfigParams) -> ResourcesListView:
         view = ResourcesListView()
         view.add_resources(self._get_all_resource_models())
+        view.add_technical_info(TechnicalInfo('Number of resources',
+                                              len(self.get_resources_as_set())))
         return view
 
     def __len__(self) -> int:
