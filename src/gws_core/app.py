@@ -99,6 +99,5 @@ class App:
         cls.app.mount("/central-api/", space_app)
         cls.app.mount("/space-api/", space_app)
         cls.app.mount("/s3-server/", s3_server_app)
-        cls.app.mount("/static", StaticFiles(directory="/lab/user/bricks/gws_core/icons"), name="static")
 
         uvicorn.run(cls.app, host='0.0.0.0', port=int(port))
