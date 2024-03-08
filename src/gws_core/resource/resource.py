@@ -42,6 +42,10 @@ class Resource(Base):
     name: str
     technical_info: TechnicalInfoDict = SerializableRField(TechnicalInfoDict)
 
+    # set this during the run of a task to apply a dynamic style to the resource
+    # This overrides the style set byt the resource_decorator
+    style: TypingStyle
+
     # provide tags to this attribute to save them on resource generation
     tags: TagList = TagListField()
 
@@ -69,6 +73,7 @@ class Resource(Base):
 
         # init the default name
         self.name = None
+        self.style = None
         # Init default values of BaseRField
         properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(type(self), BaseRField)
         for key, r_field in properties.items():

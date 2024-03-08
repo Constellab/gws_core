@@ -338,6 +338,11 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
             name = resource._human_name
         resource_model.name = name
 
+        style_override = resource.style
+        if style_override:
+            style_override.fill_empty_values()
+            resource_model.style = style_override
+
         if isinstance(resource, FSNode):
             resource_model.init_fs_node_model(resource, name)
 

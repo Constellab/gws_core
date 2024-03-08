@@ -207,6 +207,12 @@ class TaskModel(ProcessModel):
             raise ProcessRunException.from_exception(process_model=self, exception=err,
                                                      error_prefix='Error during check after task') from err
 
+        # save the style of the task if provided
+        style_override = task_runner.get_task().style
+        if style_override:
+            style_override.fill_empty_values()
+            self.style = style_override
+
         self._run_after_task()
         self.mark_as_success()
 

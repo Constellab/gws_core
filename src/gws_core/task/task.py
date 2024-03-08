@@ -53,6 +53,10 @@ class Task(Process):
     # Object useful to download external files required by the task
     file_downloader: FileDownloader
 
+    # set this during the run of the task to apply a dynamic style to the task
+    # This overrides the style set byt the task_decorator
+    style: TypingStyle
+
     # Current status of the task, do not update
     _status_: Literal['CHECK_BEFORE_RUN', 'RUN', 'RUN_AFTER_TASK']
 
@@ -70,6 +74,7 @@ class Task(Process):
                 f"The task {self.full_classname()} is not decorated with @task_decorator, it can't be instantiate. Please decorate the task class with @task_decorator")
         self._status_ = None
         self.message_dispatcher = None
+        self.style = None
 
     def init(self) -> None:
         """
