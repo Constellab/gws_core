@@ -6,6 +6,7 @@
 from typing import Callable, Type
 
 from gws_core.brick.brick_service import BrickService
+from gws_core.model.typing_style import TypingStyle
 
 from ...config.param.param_spec import ParamSpec
 from ...core.classes.func_meta_data import FuncArgsMetaData
@@ -18,9 +19,13 @@ from .view_types import ViewSpecs
 VIEW_META_DATA_ATTRIBUTE = '_view_mata_data'
 
 
-def view(view_type: Type[View], human_name: str = "", short_description: str = "",
-         specs: ViewSpecs = None,  default_view: bool = False,
-         hide: bool = False) -> Callable:
+def view(view_type: Type[View],
+         human_name: str = "",
+         short_description: str = "",
+         specs: ViewSpecs = None,
+         default_view: bool = False,
+         hide: bool = False,
+         style: TypingStyle = None) -> Callable:
     """ Decorator the place one resource method to define it as a view.
     Views a reference in the interfave when viewing a resource
     It must return a View.
@@ -40,12 +45,19 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
     :param hide: If true the view will not be listed in the interface.
                 It is useful when you overrided a class and you don't wan't to activate this view anymore, defaults to False
     :type hide: bool, optional
+    :param style: style of the task, view TypingStyle object for more info.
+                    This overrides the default style define by the view type, defaults to None
+    :type style: TypingStyle, optional
     :return: [description]
     :rtype: Callable
     """
 
     if specs is None:
         specs = {}
+
+    # provide the style default value
+    if style:
+        style.fill_empty_values()
 
     def decorator(func: Callable) -> Callable:
 
@@ -108,7 +120,8 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
 
             # Create the meta data object
             view_meta_data: ResourceViewMetaData = ResourceViewMetaData(
-                func.__name__, view_type, human_name, short_description, specs, default_view, hide)
+                func.__name__, view_type, human_name, short_description,
+                specs, default_view, hide, style)
             # Store the meta data object into the view_meta_data_attribute of the function
             ReflectorHelper.set_object_has_metadata(func, VIEW_META_DATA_ATTRIBUTE, view_meta_data)
         except Exception as e:

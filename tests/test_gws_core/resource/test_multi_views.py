@@ -21,6 +21,6 @@ class TestMultiViews(TestCase):
         multi_view.add_view(text_view, {}, 2, 1)
         multi_view.add_empty_block(2, 2)
 
-        dict = multi_view.to_dict(ConfigParams())
-        self.assertEqual(dict['type'], ViewType.MULTI_VIEWS.value)
-        self.assertEqual(len(dict['data']["views"]), 3)
+        view_dto = multi_view.to_dto(ConfigParams())
+        self.assertEqual(view_dto.type, ViewType.MULTI_VIEWS.value)
+        self.assertEqual(len(view_dto.data["views"]), 3)

@@ -13,19 +13,18 @@ from gws_core.config.config import Config
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.model.typing_style import TypingStyle
 from gws_core.report.report_view_model import ReportViewModel
+from gws_core.resource.view.view_dto import ViewTypeDTO
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_dto import TagOriginType
-from gws_core.user.current_user_service import CurrentUserService
 
 from ...core.classes.paginator import Paginator
 from ...core.classes.search_builder import SearchBuilder, SearchParams
-from ...core.utils.logger import Logger
-from ...user.user import User
 from ..resource_model import ResourceModel
 from ..view.view import View
-from ..view.view_types import exluded_views_in_report
+from ..view.view_types import ViewType, exluded_views_in_report
 from .view_config import ViewConfig
 from .view_config_search_builder import ViewConfigSearchBuilder
 
@@ -35,59 +34,53 @@ class ViewConfigService():
     MAX_HISTORY_SIZE = 5000
 
     @classmethod
-    def get_by_id(cls, id: str) -> ViewConfig:
-        return ViewConfig.get_by_id_and_check(id)
+    def get_by_id(cls, id_: str) -> ViewConfig:
+        return ViewConfig.get_by_id_and_check(id_)
 
     @classmethod
     @transaction()
     def save_view_config(cls, resource_model: ResourceModel, view: View,
                          view_name: str, config: Config,
                          is_favorite: bool = False,
-                         user: User = None) -> ViewConfig:
-        try:
+                         view_style: TypingStyle = None) -> ViewConfig:
+        view_meta_data = ViewHelper.get_and_check_view_meta(resource_model.get_resource_type(), view_name)
 
-            if user:
-                CurrentUserService.set_current_user(user)
+        view_config: ViewConfig = ViewConfig(
+            resource_model=resource_model,
+            experiment=resource_model.experiment,
+            title=view.get_title() or resource_model.name,
+            view_name=view_meta_data.method_name,
+            view_type=view.get_type(),
+            config_values={},
+            is_favorite=is_favorite or view.is_favorite(),
+            config=config,
+            style=view_style
+        )
 
-            view_meta_data = ViewHelper.get_and_check_view_meta(resource_model.get_resource_type(), view_name)
+        # check is the view config already exists
+        view_config_db = ViewConfig.get_same_view_config(view_config)
 
-            view_config: ViewConfig = ViewConfig(
-                resource_model=resource_model,
-                experiment=resource_model.experiment,
-                title=view.get_title() or resource_model.name,
-                view_name=view_meta_data.method_name,
-                view_type=view.get_type(),
-                config_values={},
-                is_favorite=is_favorite or view.is_favorite(),
-                config=config
-            )
+        # if not, create it
+        if view_config_db is None:
+            view_config_db = view_config.save()
+        else:
+            # refresh the last modified date
+            view_config_db.last_modified_at = DateHelper.now_utc()
+            # refresh style
+            view_config_db.style = view_style
+            view_config_db = view_config_db.save()
 
-            # check is the view config already exists
-            view_config_db = ViewConfig.get_same_view_config(view_config)
+        # Copy the resource tags to the view config
+        resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource_model.id)
+        tag_propagated = resource_tags.build_tags_propagated(TagOriginType.RESOURCE_PROPAGATED, resource_model.id)
+        view_config_tags = EntityTagList.find_by_entity(EntityType.VIEW, view_config_db.id)
+        view_config_tags.add_tags(tag_propagated)
 
-            # if not, create it
-            if view_config_db is None:
-                view_config_db = view_config.save()
-            else:
-                # refresh the last modified date
-                view_config_db.last_modified_at = DateHelper.now_utc()
-                view_config_db = view_config_db.save()
+        # limit the length without blocking the thread
+        thread = Thread(target=cls._limit_length_history)
+        thread.start()
 
-            # Copy the resource tags to the view config
-            resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource_model.id)
-            tag_propagated = resource_tags.build_tags_propagated(TagOriginType.RESOURCE_PROPAGATED, resource_model.id)
-            view_config_tags = EntityTagList.find_by_entity(EntityType.VIEW, view_config_db.id)
-            view_config_tags.add_tags(tag_propagated)
-
-            # limit the length without blocking the thread
-            thread = Thread(target=cls._limit_length_history)
-            thread.start()
-
-            return view_config_db
-        except Exception as err:
-            Logger.error(f"Error while saving view config : {err}")
-            Logger.log_exception_stack_trace(err)
-            return None
+        return view_config_db
 
     @classmethod
     def _limit_length_history(cls) -> None:
@@ -175,3 +168,19 @@ class ViewConfigService():
             query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
         return paginator
+
+    ############################# VIEW TYPE  ###########################
+
+    @classmethod
+    def get_all_view_types(cls) -> List[ViewTypeDTO]:
+        view_types_dto: List[ViewTypeDTO] = []
+        for view_type in ViewType:
+            if view_type in [ViewType.VIEW, ViewType.EMPTY, ViewType.TABULAR]:
+                continue
+            view_types_dto.append(ViewTypeDTO(
+                type=view_type,
+                human_name=view_type.get_human_name(),
+                style=view_type.get_typing_style()
+            ))
+
+        return view_types_dto

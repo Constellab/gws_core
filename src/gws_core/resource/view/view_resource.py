@@ -41,6 +41,6 @@ class ViewResource(Resource):
         view_runner.generate_view()
 
         # call the view to dict
-        view_dict = view_runner.call_view_to_dict()
+        view_dto = view_runner.call_view_to_dto()
 
-        return ViewResource(view_dict)
+        return ViewResource(view_dto.to_json_dict())

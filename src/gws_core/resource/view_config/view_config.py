@@ -10,6 +10,7 @@ from gws_core.config.config import Config
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.decorator.transaction import transaction
+from gws_core.core.model.db_field import BaseDTOField
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.date_helper import DateHelper
@@ -17,6 +18,7 @@ from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
 from gws_core.impl.rich_text.rich_text_types import RichTextResourceViewData
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view_config.view_config_dto import ViewConfigDTO
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -29,7 +31,7 @@ from ..resource_model import ResourceModel
 class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
 
     title = CharField()
-    view_type = EnumField(choices=ViewType)
+    view_type: ViewType = EnumField(choices=ViewType)
     view_name = CharField()
     config: Config = ForeignKeyField(Config, null=True, backref='+')
 
@@ -37,6 +39,8 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
     resource_model: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
 
     is_favorite = BooleanField(default=False)
+
+    style: TypingStyle = BaseDTOField(TypingStyle, null=True)
 
     _table_name = 'gws_view_config'
 
@@ -54,6 +58,7 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
             config_values=self.get_config_values(),
             experiment=self.experiment.to_simple_dto() if self.experiment else None,
             resource=self.resource_model.to_simple_dto() if self.resource_model else None,
+            style=self.style if self.style else self.view_type.get_typing_style()
         )
 
     def get_config_values(self) -> ConfigParamsDict:
@@ -76,6 +81,18 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
         result = super().delete_instance(*args, **kwargs)
         EntityTagList.delete_by_entity(EntityType.VIEW, self.id)
         return result
+
+    def to_rich_text_resource_view(self, title: str = None, caption: str = None) -> RichTextResourceViewData:
+        return {
+            "id": self.id + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
+            "view_config_id": self.id,
+            "resource_id": self.resource_model.id,
+            "experiment_id": self.experiment.id if self.experiment else None,
+            "view_method_name": self.view_name,
+            "view_config": self.get_config_values(),
+            "title": title or self.title,
+            "caption": caption or "",
+        }
 
     @classmethod
     def get_same_view_config(cls, view_config: 'ViewConfig') -> Optional['ViewConfig']:
@@ -114,18 +131,6 @@ class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
         view_configs: List[ViewConfig] = list(ViewConfig.get_by_resource(resource_model_id))
         for view_config in view_configs:
             view_config.delete_instance()
-
-    def to_rich_text_resource_view(self, title: str = None, caption: str = None) -> RichTextResourceViewData:
-        return {
-            "id": self.id + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
-            "view_config_id": self.id,
-            "resource_id": self.resource_model.id,
-            "experiment_id": self.experiment.id if self.experiment else None,
-            "view_method_name": self.view_name,
-            "view_config": self.get_config_values(),
-            "title": title or self.title,
-            "caption": caption or "",
-        }
 
     class Meta:
         table_name = 'gws_view_config'

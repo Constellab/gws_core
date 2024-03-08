@@ -41,7 +41,6 @@ class TestPlotly(TestCase):
 
         view = PlotlyView(figure)
 
-        view_dict = view.to_dict(ConfigParams())
-        self.assertIsInstance(view_dict, dict)
-        self.assertIsInstance(view_dict["data"]["data"], list)
-        self.assertIsInstance(view_dict["data"]["layout"], dict)
+        view_dto = view.to_dto(ConfigParams())
+        self.assertIsInstance(view_dto.data["data"], list)
+        self.assertIsInstance(view_dto.data["layout"], dict)

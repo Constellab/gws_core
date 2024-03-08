@@ -16,10 +16,10 @@ from gws_core.project.project import Project
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
-from gws_core.resource.view.view_types import exluded_views_in_report
-from gws_core.resource.view.view_dto import ResourceViewMetadatalDTO
+from gws_core.resource.view.view_dto import ResourceViewMetadatalDTO, ViewDTO
 from gws_core.resource.view.view_result import CallViewResult
 from gws_core.resource.view.view_runner import ViewRunner
+from gws_core.resource.view.view_types import exluded_views_in_report
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.share.resource_downloader_http import ResourceDownloaderHttp
@@ -224,11 +224,11 @@ class ResourceService(BaseService):
 
     @classmethod
     def get_view_json_file(cls, resource_model_id: str,
-                            view_name: str, config_values: ConfigParamsDict,
-                            save_view_config: bool = False) -> any:
+                           view_name: str, config_values: ConfigParamsDict,
+                           save_view_config: bool = False) -> ViewDTO:
         resource_model: ResourceModel = cls.get_by_id_and_check(resource_model_id)
         view = cls.call_view_on_resource_model(resource_model, view_name, config_values, save_view_config).view
-        if view['type'] in list(map(lambda x: x.value, exluded_views_in_report)):
+        if view.type in list(map(lambda x: x.value, exluded_views_in_report)):
             raise BadRequestException(
                 f"View '{view_name}' is not supported to be exported as a file.")
         return view
@@ -245,17 +245,27 @@ class ResourceService(BaseService):
         view = view_runner.generate_view()
 
         # call the view to dict
-        view_dict = view_runner.call_view_to_dict()
+        view_dto = view_runner.call_view_to_dto()
 
         view_title = view.get_title() or resource.name
+
+        style = view.get_style() or view_runner.get_metadata_style()
         # Save the view config
         view_config: ViewConfig = None
         if save_view_config:
             view_config = ViewConfigService.save_view_config(
-                resource_model, view, view_name, view_runner.get_config())
-            view_title = view_config.title
+                resource_model=resource_model,
+                view=view,
+                view_name=view_name,
+                config=view_runner.get_config(),
+                view_style=style)
 
-        return CallViewResult(view_dict, resource_model.id, view_config, view_title, view.get_type())
+            if view_config:
+                # use the title of the view config if it's provided
+                view_title = view_config.title
+
+        return CallViewResult(view_dto, resource_model.id, view_config,
+                              view_title, view.get_type(), style)
 
     @classmethod
     def call_view_from_view_config(cls, view_config_id: str) -> CallViewResult:
@@ -268,13 +278,14 @@ class ResourceService(BaseService):
         view = view_runner.generate_view()
 
         # call the view to dict
-        view_dict = view_runner.call_view_to_dict()
+        view_dto = view_runner.call_view_to_dto()
 
         # Update view config last call date
         view_config.last_modified_at = DateHelper.now_utc()
         view_config.save()
 
-        return CallViewResult(view_dict, view_config.resource_model.id, view_config, view_config.title, view.get_type())
+        return CallViewResult(view_dto, view_config.resource_model.id, view_config, view_config.title,
+                              view.get_type(), view_runner.get_metadata_style())
 
     ############################# SEARCH ###########################
 

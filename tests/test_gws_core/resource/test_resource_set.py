@@ -102,7 +102,7 @@ class TestResourceSet(BaseTestCase):
             resource_set._model_id).get_resource()
 
         self.assertEqual(
-            len(resource_set.view_resources_list({}).to_dict({})['data']), 2)
+            len(resource_set.view_resources_list({}).to_dto({}).data), 2)
 
         experiment.get_experiment_model().reset()
         # check that the reset cleared the correct resources

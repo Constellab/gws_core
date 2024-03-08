@@ -3,12 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Callable, Dict
+from typing import Callable, Optional
 
 from gws_core.config.config import Config
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigParamsDict
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource import Resource
+from gws_core.resource.view.view_dto import ViewDTO
 
 from ...config.config_params import ConfigParams
 from ...config.param.param_spec_helper import ParamSpecHelper
@@ -61,14 +63,14 @@ class ViewRunner():
         self._view = view
         return view
 
-    def call_view_to_dict(self) -> Dict:
+    def call_view_to_dto(self) -> ViewDTO:
         if self._view is None:
             raise Exception("You must call generate_view_on_resource before call_view_to_dict")
 
         # create a new config for the view to_dict method based on view specs
         config_params: ConfigParams = ParamSpecHelper.build_config_params(self._view._specs, dict(self.config_params))
 
-        return self._view.to_dict(config_params)
+        return self._view.to_dto(config_params)
 
     def _get_and_check_view_meta(self) -> ResourceViewMetaData:
         if self._view_metadata is None:
@@ -88,3 +90,12 @@ class ViewRunner():
         config.set_values(self.config_params)
 
         return config
+
+    def get_metadata_style(self) -> Optional[TypingStyle]:
+        """Return the style defined in the view metadata (@view decorator)
+        it can be null
+
+        :return: _description_
+        :rtype: Optional[TypingStyle]
+        """
+        return self._get_and_check_view_meta().style

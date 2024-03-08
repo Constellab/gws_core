@@ -8,7 +8,9 @@ from typing import Any, List, final
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
+from gws_core.resource.view.view_dto import ViewDTO
 
 from ...config.config_params import ConfigParams
 from .view_types import ViewSpecs, ViewType
@@ -19,6 +21,7 @@ class View:
     _type: ViewType = ViewType.VIEW
     _title: str = None
     _technical_info: TechnicalInfoDict
+    _style: TypingStyle = None
 
     # if True, the view is marked as favorite
     _favorite: bool = False
@@ -83,15 +86,25 @@ class View:
         """ Get technical info dict """
         return self._technical_info.get(key)
 
+    def get_style(self) -> TypingStyle:
+        """ Get style """
+        return self._style
+
+    def set_style(self, style: TypingStyle):
+        """ Set typing style for this view instance. This overrides the style defines in the view decorator and the default style of the view type
+        With this you can define a custom style for a specific view instance when you view is generic.
+        """
+        self._style = style
+
     @final
-    def to_dict(self, params: ConfigParams) -> dict:
-        """ Convert to dictionary """
-        return {
-            "type": self._type.value,
-            "title": self._title,
-            "technical_info": self._technical_info.serialize(),
-            "data": self.data_to_dict(params),
-        }
+    def to_dto(self, params: ConfigParams) -> ViewDTO:
+        """ Convert to DTO """
+        return ViewDTO(
+            type=self._type,
+            title=self._title,
+            technical_info=self._technical_info.serialize(),
+            data=self.data_to_dict(params),
+        )
 
     def data_to_dict(self, params: ConfigParams) -> dict:
         """ Convert to dictionary """

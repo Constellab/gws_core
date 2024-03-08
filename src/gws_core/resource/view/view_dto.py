@@ -7,6 +7,7 @@ from typing import Dict, Optional
 
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view_config.view_config_dto import ViewConfigDTO
 
@@ -19,11 +20,26 @@ class ResourceViewMetadatalDTO(BaseModelDTO):
     default_view: bool
     has_config_specs: bool
     config_specs: Dict[str, ParamSpecDTO]
+    style: TypingStyle
+
+
+class ViewDTO(BaseModelDTO):
+    type: ViewType
+    title: Optional[str]
+    technical_info: dict
+    data: dict
 
 
 class CallViewResultDTO(BaseModelDTO):
-    view: dict
+    view: ViewDTO
     resource_id: str
-    view_config: Optional[ViewConfigDTO]
+    view_config: ViewConfigDTO
     title: str
     view_type: ViewType
+    style: TypingStyle
+
+
+class ViewTypeDTO(BaseModelDTO):
+    type: ViewType
+    human_name: Optional[str]
+    style: TypingStyle

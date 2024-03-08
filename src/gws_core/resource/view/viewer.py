@@ -43,7 +43,7 @@ class Viewer(Task):
         from gws_core.resource.view_config.view_config_service import \
             ViewConfigService
 
-        resource = inputs.get('resource')
+        resource: Resource = inputs.get('resource')
 
         config_resource_type: Type[Resource] = TypingManager.get_type_from_name(params.get('resource_typing_name'))
         if not Utils.issubclass(type(resource), config_resource_type):
@@ -65,6 +65,8 @@ class Viewer(Task):
             view=view,
             view_name=view_method_name,
             config=view_runner.get_config(),
-            is_favorite=True)
+            is_favorite=True,
+            view_style=view.get_style() or view_runner.get_metadata_style()
+        )
 
         return {}

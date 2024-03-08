@@ -23,10 +23,10 @@ class TestTableBoxPlotView(TestCase):
         # 1 series :
         # first : y = petal_length
         series: List[Serie1d] = [{"name": "first", "y": {"type": "columns", "selection": ["petal_length"]}}]
-        dic = tester.to_dict({"series": series})
-        self.assertEqual(dic["type"], ViewType.BOX_PLOT.value)
+        view_dto = tester.to_dto({"series": series})
+        self.assertEqual(view_dto.type, ViewType.BOX_PLOT.value)
 
-        first_data = dic["data"]["series"][0]["data"]
+        first_data = view_dto.data["series"][0]["data"]
         self.assertEqual(first_data['x'][0], 0)
         self.assertEqual(first_data['min'][0], 1.0)
         self.assertEqual(first_data['q1'][0], 1.6)

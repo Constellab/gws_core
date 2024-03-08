@@ -23,9 +23,9 @@ class TestTableHeatmapView(TestCase):
         serie: Serie1d = {"name": "first", "y": {"type": "columns", "selection": [
             "sepal_length",  "sepal_width", "petal_length", "petal_width"]}}
 
-        view_dict = tester.to_dict({"serie": serie})
-        self.assertEqual(view_dict["type"], ViewType.HEATMAP.value)
+        view_dto = tester.to_dto({"serie": serie})
+        self.assertEqual(view_dto.type, ViewType.HEATMAP.value)
         self.assertEqual(
-            view_dict["data"]["table"],
+            view_dto.data["table"],
             table.to_dataframe().iloc[0:, 0:4].to_dict('split')["data"]
         )

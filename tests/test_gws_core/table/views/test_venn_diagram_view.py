@@ -43,9 +43,9 @@ class TestVennDiagrammView(TestCase):
         # second : y = B
         series: List[Serie1d] = [{"name": "first", "y": {"type": "columns", "selection": ["A"]}},
                                  {"name": "second", "y": {"type": "columns", "selection": ["B"]}}]
-        dic = tester.to_dict({"series": series})
-        self.assertEqual(dic["data"]["total_number_of_groups"], 2)
-        self.assertEqual(len(dic["data"]["sections"]), 3)
+        view_dto = tester.to_dto({"series": series})
+        self.assertEqual(view_dto.data["total_number_of_groups"], 2)
+        self.assertEqual(len(view_dto.data["sections"]), 3)
 
         # 4 series :
         series: List[Serie1d] = [{"name": "first", "y": {"type": "columns", "selection": ["A"]}},
@@ -56,5 +56,5 @@ class TestVennDiagrammView(TestCase):
                                  {"name": "fourth", "y": {
                                      "type": "columns", "selection": ["E"]}},
                                  ]
-        dic = tester.to_dict({"series": series})
-        self.assertEqual(len(dic["data"]["sections"]), 15)
+        view_dto = tester.to_dto({"series": series})
+        self.assertEqual(len(view_dto.data["sections"]), 15)

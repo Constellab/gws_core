@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.utils.logger import Logger
 
 
 class TypingIconType(Enum):
@@ -52,7 +53,7 @@ class TypingStyle(BaseModelDTO):
 
         :param icon_technical_name: name of the material icon
         :type icon_technical_name: str
-        :param background_color: background color of the typing, defaults to None
+        :param background_color: background color of the typing as hex color code, defaults to None
         :type background_color: str, optional
         :param icon_color: icon color (black or white) when displayed over the background color, defaults to None
         :type icon_color: Optional[TypingIconColor], optional
@@ -61,8 +62,9 @@ class TypingStyle(BaseModelDTO):
         """
         return TypingStyle(icon_technical_name=material_icon_name,
                            icon_type=TypingIconType.MATERIAL_ICON,
-                           background_color=background_color,
-                           icon_color=icon_color)
+                           background_color=TypingStyle.check_background_color(background_color),
+                           icon_color=TypingStyle.check_icon_color(icon_color)
+                           )
 
     @staticmethod
     def community_icon(icon_technical_name: str, background_color: str = None,
@@ -72,7 +74,7 @@ class TypingStyle(BaseModelDTO):
 
         :param icon_technical_name: technical name of the icon
         :type icon_technical_name: str
-        :param background_color: background color of the typing, defaults to None
+        :param background_color: background color of the typing as hex color code, defaults to None
         :type background_color: str, optional
         :param icon_color: icon color (black or white) when displayed over the background color, defaults to None
         :type icon_color: Optional[TypingIconColor], optional
@@ -81,8 +83,9 @@ class TypingStyle(BaseModelDTO):
         """
         return TypingStyle(icon_technical_name=icon_technical_name,
                            icon_type=TypingIconType.COMMUNITY_ICON,
-                           background_color=background_color,
-                           icon_color=icon_color)
+                           background_color=TypingStyle.check_background_color(background_color),
+                           icon_color=TypingStyle.check_icon_color(icon_color)
+                           )
 
     @staticmethod
     def community_image(icon_technical_name: str, background_color: str = None) -> 'TypingStyle':
@@ -98,7 +101,7 @@ class TypingStyle(BaseModelDTO):
         """
         return TypingStyle(icon_technical_name=icon_technical_name,
                            icon_type=TypingIconType.COMMUNITY_IMAGE,
-                           background_color=background_color,
+                           background_color=TypingStyle.check_background_color(background_color),
                            icon_color=None)
 
     @staticmethod
@@ -121,6 +124,27 @@ class TypingStyle(BaseModelDTO):
                            icon_type=TypingIconType.MATERIAL_ICON,
                            background_color="#af3e01",
                            icon_color=TypingIconColor.WHITE)
+
+    @staticmethod
+    def default_view() -> 'TypingStyle':
+        return TypingStyle(icon_technical_name="assessment",
+                           icon_type=TypingIconType.MATERIAL_ICON,
+                           background_color="#af3e01",
+                           icon_color=TypingIconColor.WHITE)
+
+    @staticmethod
+    def check_background_color(background_color: str) -> str:
+        if background_color and (not background_color.startswith("#") or len(background_color) != 7):
+            Logger.error(f"Invalid background color '{background_color}'. Must be a hex color code")
+            return None
+        return background_color
+
+    @staticmethod
+    def check_icon_color(icon_color: str) -> TypingIconColor:
+        if icon_color and not isinstance(icon_color, TypingIconColor):
+            Logger.error(f"Invalid icon color '{icon_color}'. Must be a TypingIconColor")
+            return None
+        return icon_color
 
     @staticmethod
     def get_contrast_color(color: str) -> TypingIconColor:

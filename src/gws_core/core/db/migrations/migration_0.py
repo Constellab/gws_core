@@ -1087,5 +1087,6 @@ class Migration080Beta1(BrickMigration):
         migrator.drop_column_if_exists(ProtocolTemplate, "old_description")
         migrator.drop_column_if_exists(Typing, "icon")
         migrator.add_column_if_not_exists(Typing, Typing.style)
+        migrator.add_column_if_not_exists(ViewConfig, ViewConfig.style)
 
         migrator.migrate()

@@ -30,7 +30,7 @@ class TestImageView(TestCase):
         view = ImageView.from_local_file(file_path)
 
         # Check the dict
-        dic = view.to_dict(ConfigParams())
-        self.assertEqual(dic["type"], "image-view")
-        self.assertEqual(dic["data"]["base_64_img"], encoded_context)
-        self.assertEqual(dic["data"]["mime_type"], "image/png")
+        view_dto = view.to_dto(ConfigParams())
+        self.assertEqual(view_dto.type, "image-view")
+        self.assertEqual(view_dto.data["base_64_img"], encoded_context)
+        self.assertEqual(view_dto.data["mime_type"], "image/png")

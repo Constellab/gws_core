@@ -308,11 +308,8 @@ from .impl.view.heatmap_view import HeatmapView as HeatmapView
 from .impl.view.histogram_view import HistogramView as HistogramView
 from .impl.view.image_view import ImageView as ImageView
 from .impl.view.lineplot_2d_view import LinePlot2DView as LinePlot2DView
-from .impl.view.lineplot_3d_view import LinePlot3DView as LinePlot3DView
 from .impl.view.scatterplot_2d_view import \
     ScatterPlot2DView as ScatterPlot2DView
-from .impl.view.scatterplot_3d_view import \
-    ScatterPlot3DView as ScatterPlot3DView
 from .impl.view.stacked_barplot_view import \
     StackedBarPlotView as StackedBarPlotView
 from .impl.view.tabular_view import TabularView as TabularView

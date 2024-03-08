@@ -10,12 +10,10 @@ from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.impl.table.table import Table
-from gws_core.impl.table.view.table_view import TableView
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_result import CallViewResult
-from gws_core.resource.view.view_runner import ViewRunner
 
 # List of chart callable on a Table
 TableChart = Literal['line-plot-2d', 'scatter-plot-2d', 'vulcano-plot',
@@ -46,34 +44,8 @@ class ResourceTableService:
                 resource_model=resource_model, view_name=view_name, config_values=chart_config_values,
                 save_view_config=True)
 
-        # otherwise, retrieve the table form the TableView
-        table: Table = cls._get_table(resource, table_view_name, table_config_values)
-
-        view_runner: ViewRunner = ViewRunner(table, view_name, chart_config_values)
-        view = view_runner.generate_view()
-
-        return {
-            # call the view to dict
-            "view": view_runner.call_view_to_dict(),
-            "resource_id": resource_model.id,
-            "view_config": None,
-            "title": view.get_title(),
-            "view_type": view.get_type(),
-        }
-
-    @classmethod
-    def _get_table(cls, resource: Resource, table_view_name: str,
-                   table_config_values: ConfigParamsDict) -> Table:
-        """Method to retrieve the Table object from the view of a resource
-        """
-
-        # Get the table view
-        view_runner: ViewRunner = ViewRunner(resource, table_view_name, table_config_values)
-        view = view_runner.generate_view()
-
-        if not isinstance(view, TableView):
-            raise BadRequestException('The base view is not a table view')
-        return view.get_table()
+        else:
+            raise BadRequestException(f"Resource is not a Table, can't call chart on it.")
 
     @classmethod
     def _get_table_view_method_name(cls, chart: TableChart) -> str:

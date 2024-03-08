@@ -53,8 +53,8 @@ class TestFolder(BaseTestCase):
         # Test json view
         params = ConfigParams()
         vw = folder.view_as_json(params)
-        dic_ = vw.to_dict(params)
-        self.assertIsNotNone(dic_["data"])
+        view_dto = vw.to_dto(params)
+        self.assertIsNotNone(view_dto.data)
 
         # Test sub file view
         result: SimpleTextView = folder.view_sub_file(

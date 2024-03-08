@@ -45,7 +45,7 @@ class WriteToJsonFile(Task):
 
         resource: Resource = inputs['resource']
         file.write(json.dumps(resource.view_as_json(
-            ConfigParams()).to_dict(ConfigParams())))
+            ConfigParams()).to_dto(ConfigParams()).to_json_dict()))
 
         return {"file": file}
 

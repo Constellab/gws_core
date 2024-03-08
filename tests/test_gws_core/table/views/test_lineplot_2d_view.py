@@ -28,10 +28,10 @@ class TestTableLinePlot2DView(TestCase):
                                  {"name": "second", "x": {"type": "columns", "selection": ["petal_length"]},
                                   "y": {"type": "columns", "selection": ["petal_width"]}}]
 
-        dic = tester.to_dict({"series": series})
+        view_dto = tester.to_dto({"series": series})
 
-        self.assertEqual(dic["type"], ViewType.LINE_PLOT_2D.value)
-        self.assertEqual(dic["data"]["series"][0]["data"]["x"], table.get_data()["sepal_length"].values.tolist())
-        self.assertEqual(dic["data"]["series"][0]["data"]["y"], table.get_data()["petal_length"].values.tolist())
-        self.assertEqual(dic["data"]["series"][1]["data"]["x"], table.get_data()["petal_length"].values.tolist())
-        self.assertEqual(dic["data"]["series"][1]["data"]["y"], table.get_data()["petal_width"].values.tolist())
+        self.assertEqual(view_dto.type, ViewType.LINE_PLOT_2D.value)
+        self.assertEqual(view_dto.data["series"][0]["data"]["x"], table.get_data()["sepal_length"].values.tolist())
+        self.assertEqual(view_dto.data["series"][0]["data"]["y"], table.get_data()["petal_length"].values.tolist())
+        self.assertEqual(view_dto.data["series"][1]["data"]["x"], table.get_data()["petal_length"].values.tolist())
+        self.assertEqual(view_dto.data["series"][1]["data"]["y"], table.get_data()["petal_width"].values.tolist())

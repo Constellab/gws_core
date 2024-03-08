@@ -45,7 +45,6 @@ class Typing(Model):
     deprecated_since: CharField = CharField(null=True, max_length=50)
     deprecated_message: CharField = CharField(null=True, max_length=255)
     hide: BooleanField = BooleanField(default=False)
-    icon: CharField = CharField(null=True, max_length=50)
     style: TypingStyle = BaseDTOField(TypingStyle, null=True)
 
     # Sub type of the object, types will be differents based on object type

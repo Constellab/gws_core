@@ -4,10 +4,11 @@
 # About us: https://gencovery.com
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Optional, Type
 
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import ParamSpec
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.view.lazy_view_param import LazyViewParam
 from gws_core.resource.view.view_dto import ResourceViewMetadatalDTO
 
@@ -29,10 +30,12 @@ class ResourceViewMetaData():
     method_specs: ViewSpecs
     default_view: bool
     hide: bool
+    style: Optional[TypingStyle]
 
     def __init__(self, method_name: str, view_type: Type[View],
                  human_name: str, short_description: str,
-                 method_specs: ViewSpecs, default_view: bool, hide: bool) -> None:
+                 method_specs: ViewSpecs, default_view: bool, hide: bool,
+                 style: TypingStyle = None) -> None:
         self.method_name = method_name
         self.view_type = view_type
         self.human_name = human_name
@@ -40,11 +43,12 @@ class ResourceViewMetaData():
         self.method_specs = method_specs
         self.default_view = default_view
         self.hide = hide
+        self.style = style
 
     def clone(self) -> 'ResourceViewMetaData':
         return ResourceViewMetaData(
             self.method_name, self.view_type, self.human_name, self.short_description, self.method_specs, self.default_view,
-            self.hide)
+            self.hide, self.style)
 
     def to_dto(self, resource: Resource = None) -> ResourceViewMetadatalDTO:
         specs_dict = {key: value.to_dto() for key, value in self._get_view_specs(resource, skip_private=True).items()}
@@ -56,6 +60,7 @@ class ResourceViewMetaData():
             default_view=self.default_view,
             has_config_specs=self.has_config_specs(),
             config_specs=specs_dict,
+            style=self.style if self.style else self.view_type._type.get_typing_style()
         )
 
     def get_view_specs_from_resource(self, resource: Resource, skip_private: bool = False) -> ConfigSpecs:

@@ -50,8 +50,7 @@ ALLOWED_FILE_FORMATS = [*ALLOWED_XLS_FILE_FORMATS, *ALLOWED_TXT_FILE_FORMATS]
 
 
 @resource_decorator("Table", human_name="Table", short_description="2d excel like table",
-                    style=TypingStyle.material_icon("table_chart", background_color="#413ebb",
-                                                    icon_color=TypingIconColor.WHITE))
+                    style=TypingStyle.material_icon("table_chart", background_color="#413ebb"))
 class Table(Resource):
     """
     Main 2d table with named columns and named rows. It can also contains tags for each column and row.
@@ -1563,7 +1562,8 @@ class Table(Resource):
 
     ################################################# TABLE VIEW #################################################
 
-    @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
+    @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={},
+          style=TypingStyle.material_icon('home', background_color='#123456'))
     def view_as_table(self, params: ConfigParams) -> TableView:
         """
         View as table
