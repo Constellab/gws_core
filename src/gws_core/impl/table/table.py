@@ -1562,8 +1562,7 @@ class Table(Resource):
 
     ################################################# TABLE VIEW #################################################
 
-    @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={},
-          style=TypingStyle.material_icon('home', background_color='#123456'))
+    @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
     def view_as_table(self, params: ConfigParams) -> TableView:
         """
         View as table

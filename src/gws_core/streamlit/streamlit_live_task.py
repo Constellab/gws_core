@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
@@ -46,9 +46,6 @@ class StreamlitLiveTask(Task):
             human_name="Streamlit app code",
             short_description="Code of the streamlit app to run"), }
 
-    CONFIG_PARAMS_NAME = 'params'
-    CONFIG_CODE_NAME = 'code'
-
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
 
@@ -61,3 +58,7 @@ class StreamlitLiveTask(Task):
                                             create_new_resource=False)
 
         return {'streamlit_app': streamlit_resource}
+
+    @classmethod
+    def build_config_params_dict(cls, code: str) -> ConfigParamsDict:
+        return {'code': code}

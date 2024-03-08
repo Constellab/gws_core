@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Literal, Optional, Set, Type, Union, Any
+from typing import Any, List, Literal, Optional, Set, Type, Union
 
 from pydantic import parse_obj_as
 
@@ -12,6 +12,8 @@ from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core.impl.live.base.env_live_task import EnvLiveTask
+from gws_core.impl.live.py_live_task import PyLiveTask
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
 from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
@@ -26,10 +28,15 @@ from gws_core.protocol_template.protocol_template_service import \
     ProtocolTemplateService
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.viewer import Viewer
+from gws_core.streamlit.streamlit_live_task import StreamlitLiveTask
 from gws_core.task.plug import Sink, Source
 from gws_core.user.current_user_service import CurrentUserService
 
-from ..community.community_dto import (CommunityLiveTaskVersionCreateResDTO, CommunityCreateLiveTaskDTO,CommunityLiveTaskVersionDTO, CommunityLiveTaskDTO)
+from ..code.task_generator_service import TaskGeneratorService
+from ..community.community_dto import (CommunityCreateLiveTaskDTO,
+                                       CommunityLiveTaskDTO,
+                                       CommunityLiveTaskVersionCreateResDTO,
+                                       CommunityLiveTaskVersionDTO)
 from ..community.community_service import CommunityService
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
@@ -45,7 +52,6 @@ from ..process.process_model import ProcessModel
 from ..protocol.protocol_model import ProtocolModel
 from ..task.task_model import TaskModel
 from .protocol import Protocol
-from ..code.task_generator_service import TaskGeneratorService
 
 
 class ProtocolService(BaseService):
@@ -79,7 +85,7 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_process_to_protocol_id(cls, protocol_id: str, process_typing_name: str,
-                                   instance_name: str = None, config_params: ConfigParamsDict = None, community_live_task_version_id: str = None) -> ProtocolUpdate:
+                                   instance_name: str = None, config_params: ConfigParamsDict = None) -> ProtocolUpdate:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
@@ -88,7 +94,7 @@ class ProtocolService(BaseService):
             process_typing_name)
 
         return cls.add_process_to_protocol(protocol_model=protocol_model, process_type=process_typing.get_type(),
-                                           instance_name=instance_name, config_params=config_params, community_live_task_version_id=community_live_task_version_id)
+                                           instance_name=instance_name, config_params=config_params)
 
     @classmethod
     @transaction()
@@ -102,10 +108,10 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_process_to_protocol(cls, protocol_model: ProtocolModel, process_type: Type[Process],
-                                instance_name: str = None, config_params: ConfigParamsDict = None, community_live_task_version_id: str = None) -> ProtocolUpdate:
+                                instance_name: str = None, config_params: ConfigParamsDict = None) -> ProtocolUpdate:
         # create the process
         process_model: ProcessModel = ProcessFactory.create_process_model_from_type(
-            process_type=process_type, config_params=config_params, community_live_task_version_id=community_live_task_version_id)
+            process_type=process_type, config_params=config_params)
 
         return cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=process_model,
                                                  instance_name=instance_name)
@@ -591,7 +597,6 @@ class ProtocolService(BaseService):
 
         io: IO = process_model.inputs if port_type == 'input' else process_model.outputs
 
-
         # generate the default spec and add port
         io_specs: Union[DynamicInputs, DynamicOutputs] = io.get_specs()
         io_spec = IOSpec.from_dto(io_spec_dto) if io_spec_dto is not None else io_specs.get_default_spec()
@@ -733,17 +738,39 @@ class ProtocolService(BaseService):
     @transaction()
     def add_community_live_task_version_to_protocol_id(
             cls, protocol_id: str, live_task_version_id: str) -> ProtocolUpdate:
+
         community_live_task_version: CommunityLiveTaskVersionDTO = CommunityService.get_community_live_task_version(
             live_task_version_id)
-        conf_params = dict()
-        conf_params['code'] = community_live_task_version.code
-        if community_live_task_version.params is not None and len(community_live_task_version.params) > 0:
-            conf_params['params'] = community_live_task_version.params
-        if community_live_task_version.environment is not None and community_live_task_version.environment != '':
-            conf_params['env'] = community_live_task_version.environment
 
-        protocol_update = cls.add_process_to_protocol_id(
-            protocol_id, community_live_task_version.type, config_params=conf_params, community_live_task_version_id=community_live_task_version.id)
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        process_typing: Typing = TypingManager.get_typing_from_name_and_check(community_live_task_version.type)
+
+        live_task_type: Type[Process] = process_typing.get_type()
+
+        # setting config params
+        config_params: ConfigParamsDict
+        if issubclass(live_task_type, PyLiveTask):
+            config_params = live_task_type.build_config_params_dict(
+                code=community_live_task_version.code,
+                params=community_live_task_version.params)
+        elif issubclass(live_task_type, EnvLiveTask):
+            config_params = live_task_type.build_config_params_dict(
+                code=community_live_task_version.code,
+                params=community_live_task_version.params,
+                env=community_live_task_version.environment)
+        elif issubclass(live_task_type, StreamlitLiveTask):
+            config_params = live_task_type.build_config_params_dict(code=community_live_task_version.code)
+        else:
+            raise BadRequestException("The live task type is not supported")
+
+        # create the process and add it to the protocol
+        process_model: ProcessModel = ProcessFactory.create_task_model_from_type(
+            task_type=process_typing.get_type(),
+            config_params=config_params,
+            community_live_task_version_id=community_live_task_version.id
+        )
+        protocol_update = cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=process_model)
 
         for port in list(protocol_update.process.inputs.ports.keys()):
             protocol_update = cls.delete_dynamic_input_port_of_process(
@@ -772,15 +799,19 @@ class ProtocolService(BaseService):
 
     @classmethod
     @transaction()
-    def get_community_available_live_tasks(cls, spaces_filter: List[str], title_filter: str, personalOnly: bool, page: int, number_of_items_per_page: int)  -> Any:
-        return CommunityService.get_community_available_live_tasks(spaces_filter, title_filter, personalOnly, page, number_of_items_per_page)
+    def get_community_available_live_tasks(
+            cls, spaces_filter: List[str],
+            title_filter: str, personalOnly: bool, page: int, number_of_items_per_page: int) -> Any:
+        return CommunityService.get_community_available_live_tasks(
+            spaces_filter, title_filter, personalOnly, page, number_of_items_per_page)
 
     @classmethod
     def get_community_live_task(cls, live_task_version_id: str) -> CommunityLiveTaskDTO:
         return CommunityService.get_community_live_task(live_task_version_id)
 
     @classmethod
-    def create_community_live_task(cls, process_id: str, form_data: CommunityCreateLiveTaskDTO) -> CommunityLiveTaskVersionCreateResDTO:
+    def create_community_live_task(
+            cls, process_id: str, form_data: CommunityCreateLiveTaskDTO) -> CommunityLiveTaskVersionCreateResDTO:
         code = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
         return CommunityService.create_community_live_task(code, form_data)
 
@@ -789,8 +820,8 @@ class ProtocolService(BaseService):
         code = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
         return CommunityService.fork_community_live_task(code, form_data, live_task_version_id)
 
-
     @classmethod
-    def create_community_live_task_version(cls, process_id: str,live_task_id: str) -> CommunityLiveTaskVersionCreateResDTO:
+    def create_community_live_task_version(
+            cls, process_id: str, live_task_id: str) -> CommunityLiveTaskVersionCreateResDTO:
         code = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
         return CommunityService.create_community_live_task_version(code, live_task_id)

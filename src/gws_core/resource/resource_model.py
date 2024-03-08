@@ -10,12 +10,13 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, final
 from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
                     ForeignKeyField, ModelDelete, ModelSelect)
 
-from gws_core.core.model.db_field import JSONField as JSONField
+from gws_core.core.model.db_field import BaseDTOField, JSONField
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dto import TypingStatus
+from gws_core.model.typing_style import TypingStyle
 from gws_core.project.model_with_project import ModelWithProject
 from gws_core.project.project import Project
 from gws_core.resource.resource_dto import (ResourceDTO, ResourceOrigin,
@@ -93,6 +94,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
 
     data: Dict[str, Any] = JSONField(null=True)
     is_archived = BooleanField(default=False, index=True)
+    style: TypingStyle = BaseDTOField(TypingStyle, null=True)
 
     _table_name = 'gws_resource'
     _resource: Resource = None
@@ -490,6 +492,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
             flagged=self.flagged,
             experiment=self.experiment.to_simple_dto() if self.experiment else None,
             project=self.project.to_dto() if self.project else None,
+            style=self.style
         )
 
         resource_typing: Optional[Typing] = TypingManager.get_typing_from_name(
@@ -505,8 +508,14 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
             # check if the resource has children resources
             if resource_type is not None and Utils.issubclass(resource_type, ResourceListBase):
                 resource_dto.has_children = True
+
+            if resource_dto.style is None:
+                resource_dto.style = resource_typing.style
         else:
             resource_dto.type_status = TypingStatus.UNAVAILABLE
+
+            if resource_dto.style is None:
+                resource_dto.style = TypingStyle.default_resource()
 
         return resource_dto
 

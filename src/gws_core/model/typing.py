@@ -139,7 +139,6 @@ class Typing(Model):
         return SimpleTypingDTO(
             human_name=self.human_name,
             short_description=self.short_description,
-            style=self.style
         )
 
     def to_ref_dto(self) -> TypingRefDTO:

@@ -12,6 +12,7 @@ from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.io.io_dto import IODTO
 from gws_core.io.io_specs import IOSpecsDTO
 from gws_core.model.typing_dto import SimpleTypingDTO, TypingFullDTO
+from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
 from gws_core.process.process_types import ProcessMinimumDTO
 from gws_core.protocol.protocol_layout import ProtocolLayoutDTO
@@ -61,6 +62,7 @@ class ProcessConfigDTO(BaseModelDTO):
     outputs: IODTO
     status: str
     process_type: SimpleTypingDTO
+    style: TypingStyle
     # for sub protocol, recursive graph
     graph: Optional[ProtocolConfigDTO] = None
 

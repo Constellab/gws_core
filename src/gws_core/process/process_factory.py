@@ -7,6 +7,7 @@ from typing import Dict, List, Type
 
 from gws_core.core.utils.logger import Logger
 from gws_core.io.io_dto import IODTO
+from gws_core.model.typing_style import TypingStyle
 from gws_core.protocol.protocol_dto import ProtocolConfigDTO
 from gws_core.protocol.protocol_layout import ProtocolLayout
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
@@ -46,7 +47,8 @@ class ProcessFactory():
             inputs_dto: IODTO = None,
             outputs_dto: IODTO = None,
             name: str = None,
-            community_live_task_version_id: str = None) -> TaskModel:
+            community_live_task_version_id: str = None,
+            style: TypingStyle = None) -> TaskModel:
         if not issubclass(task_type, Task):
             name = task_type.__name__ if task_type.__name__ is not None else str(
                 task_type)
@@ -82,7 +84,7 @@ class ProcessFactory():
         cls._init_process_model(process_model=task_model,
                                 config=config,
                                 instance_name=instance_name,
-                                name=name)
+                                name=name, style=style)
 
         return task_model
 
@@ -265,7 +267,9 @@ class ProcessFactory():
             instance_name: str = None,
             community_live_task_version_id: str = None) -> TaskModel:
         if issubclass(process_type, Task):
-            return cls.create_task_model_from_type(process_type, config_params, instance_name, community_live_task_version_id=community_live_task_version_id)
+            return cls.create_task_model_from_type(
+                process_type, config_params, instance_name,
+                community_live_task_version_id=community_live_task_version_id)
         elif issubclass(process_type, Protocol):
             return cls.create_protocol_model_from_type(process_type, config_params, instance_name)
         else:
@@ -285,7 +289,8 @@ class ProcessFactory():
     @classmethod
     def _init_process_model(
             cls, process_model: ProcessModel, config: Config,
-            instance_name: str = None, name: str = None) -> None:
+            instance_name: str = None, name: str = None,
+            style: TypingStyle = None) -> None:
 
         process_model.status = ProcessStatus.DRAFT
         # Set the config
@@ -304,6 +309,9 @@ class ProcessFactory():
 
         if name is not None:
             process_model.name = name
+
+        if style is not None:
+            process_model.style = style
 
     ############################################### PROCESS  #################################################
 

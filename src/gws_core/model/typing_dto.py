@@ -51,4 +51,3 @@ class TypingFullDTO(TypingDTO):
 class SimpleTypingDTO(BaseModelDTO):
     human_name: str = None
     short_description: Optional[str] = None
-    style: Optional[TypingStyle] = None

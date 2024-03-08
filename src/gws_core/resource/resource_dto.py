@@ -11,6 +11,7 @@ from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.experiment.experiment_dto import ExperimentSimpleDTO
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
 from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
+from gws_core.model.typing_style import TypingStyle
 from gws_core.project.project_dto import ProjectDTO
 
 
@@ -37,6 +38,7 @@ class ResourceDTO(ModelWithUserDTO):
     flagged: bool
     experiment: Optional[ExperimentSimpleDTO]
     project: Optional[ProjectDTO]
+    style: TypingStyle = None
 
 
 class ResourceSimpleDTO(BaseModelDTO):

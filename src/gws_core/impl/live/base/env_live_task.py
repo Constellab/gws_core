@@ -17,7 +17,7 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.resource.resource_set.resource_list import ResourceList
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_types import ConfigParamsDict, ConfigSpecs
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....io.io_specs import InputSpecs, OutputSpecs
@@ -228,3 +228,7 @@ with open('{target_paths_filename}', 'w') as f:
             optional=True, default_value=[],
             human_name="Parameter definitions",
             short_description="Please give one parameter definition per line (https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/getting-started#parameters)")
+
+    @classmethod
+    def build_config_params_dict(cls, code: str, params: List[str], env: str) -> ConfigParamsDict:
+        return {'code': code, "params": params, "env": env}

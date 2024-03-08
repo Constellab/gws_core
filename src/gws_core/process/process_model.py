@@ -8,23 +8,23 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Optional, Type, final
 
+from peewee import BooleanField, CharField, ForeignKeyField
+
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.model.typing import Typing
 from gws_core.model.typing_dto import TypingStatus
+from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.task.plug import Sink, Source
-from peewee import BooleanField, CharField, ForeignKeyField
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
-from ..core.exception.exceptions.unauthorized_exception import \
-    UnauthorizedException
-from ..core.model.db_field import DateTimeUTC, JSONField
+from ..core.model.db_field import BaseDTOField, DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..core.utils.logger import Logger
 from ..experiment.experiment import Experiment
@@ -32,7 +32,6 @@ from ..io.io import Inputs, Outputs
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
 from ..progress_bar.progress_bar import ProgressBar
-from ..user.user import User
 from .process import Process
 from .process_exception import ProcessRunException
 from .process_types import ProcessErrorInfo, ProcessMinimumDTO, ProcessStatus
@@ -69,6 +68,7 @@ class ProcessModel(ModelWithUser):
 
     data: Dict[str, Any] = JSONField(null=True)
     is_archived = BooleanField(default=False, index=True)
+    style: TypingStyle = BaseDTOField(TypingStyle, null=True)
 
     # name of the process set by the user
     name = CharField(null=True)
@@ -430,15 +430,21 @@ class ProcessModel(ModelWithUser):
             inputs=self.inputs.to_dto(),
             outputs=self.outputs.to_dto(),
             type_status=TypingStatus.OK,
-            name=self.name
+            name=self.name,
+            style=self.style
         )
 
         process_typing: Typing = self.get_process_typing()
         if process_typing:
             process_dto.process_type = process_typing.to_simple_dto()
             process_dto.type_status = process_typing.get_type_status()
+            if process_dto.style is None:
+                process_dto.style = process_typing.style
         else:
             process_dto.type_status = TypingStatus.UNAVAILABLE
+
+            if process_dto.style is None:
+                process_dto.style = TypingStyle.default_task()
 
         return process_dto
 
@@ -468,7 +474,8 @@ class ProcessModel(ModelWithUser):
             inputs=self.inputs.to_dto(),
             outputs=self.outputs.to_dto(),
             status=self.status.value,
-            process_type=process_typing.to_simple_dto()
+            process_type=process_typing.to_simple_dto(),
+            style=self.style or process_typing.style
         )
 
     ########################### STATUS MANAGEMENT ##################################
