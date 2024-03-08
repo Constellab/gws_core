@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Dict, List, Literal
 
 from pandas import DataFrame
 
@@ -19,6 +19,8 @@ from ...resource.view.view import View
 
 if TYPE_CHECKING:
     from gws_core.impl.table.table import Table
+
+TabularViewSortDirection = Literal["Ascending", "Descending"]
 
 
 class TabularView(View):
@@ -41,7 +43,10 @@ class TabularView(View):
         "number_of_columns_per_page": int,
         "total_number_of_rows": int,
         "total_number_of_columns": int,
-    }
+        "sort": {
+            "column": str,
+            "direction": "Ascending" | "Descending"
+        }
     ```
     """
 
@@ -54,20 +59,22 @@ class TabularView(View):
     number_of_rows_per_page: int = MAX_NUMBER_OF_ROWS_PER_PAGE
     number_of_columns_per_page: int = MAX_NUMBER_OF_COLUMNS_PER_PAGE
     replace_nan_by: str = ""
+    sort_column: str = None
+    sort_direction: TabularViewSortDirection = None
 
     _type: ViewType = ViewType.TABULAR
 
-    _table: Table
+    _table: Table = None
 
     # btyg set table not optional
-    def __init__(self, table: Table = None, from_row: int = 0, from_column: int = 0,
+    def __init__(self, table: Table, from_row: int = 0, from_column: int = 0,
                  number_of_rows_per_page: int = MAX_NUMBER_OF_ROWS_PER_PAGE,
                  number_of_columns_per_page: int = MAX_NUMBER_OF_COLUMNS_PER_PAGE,
-                 replace_nan_by: str = ""):
+                 replace_nan_by: str = "", sort_column: str = None, sort_direction: TabularViewSortDirection = None):
         super().__init__()
 
         if table is None:
-            Logger.warning("[TabularView] empty construct is deprecated. Use constructor with table instead")
+            raise ValueError("Table is not optional in TabularView")
 
         self._table = table
         self.from_row = from_row
@@ -75,12 +82,8 @@ class TabularView(View):
         self.number_of_rows_per_page = number_of_rows_per_page
         self.number_of_columns_per_page = number_of_columns_per_page
         self.replace_nan_by = replace_nan_by
-
-    def set_data(
-            self, data: DataFrame, row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None):
-        Logger.warning("[TabularView] set_data is deprecated. Use constructor instead")
-
-        self._table = Table(data, row_tags=row_tags, column_tags=column_tags)
+        self.sort_column = sort_column
+        self.sort_direction = sort_direction
 
     def _get_safe_from_row(self) -> int:
         return min(max(self.from_row, 0), self._table.nb_rows - 1)
@@ -112,6 +115,12 @@ class TabularView(View):
         safe_to_column = self._get_safe_to_column()
 
         dataframe: DataFrame = self._table.get_data()
+
+        # sort the dataframe if needed
+        if self.sort_column is not None:
+            dataframe = dataframe.sort_values(by=self.sort_column, ascending=self.sort_direction == "Ascending")
+
+        # get the sub dataframe
         sub_dataframe = dataframe.iloc[
             safe_from_row:safe_to_row,
             safe_from_column:safe_to_column,
@@ -123,6 +132,11 @@ class TabularView(View):
             replace_nan_by = ""
         data = DataframeHelper.prepare_to_json(sub_dataframe, replace_nan_by)
 
+        sort = {
+            "column": self.sort_column,
+            "direction": self.sort_direction
+        } if self.sort_column is not None else None
+
         return {
             "table": data.to_dict('split')["data"],
             "rows": self._table.get_rows_info(safe_from_row, safe_to_row),
@@ -133,4 +147,5 @@ class TabularView(View):
             "number_of_columns_per_page": self._get_safe_nb_of_columns_per_page(),
             "total_number_of_rows": self._table.nb_rows,
             "total_number_of_columns": self._table.nb_columns,
+            "sort": sort
         }

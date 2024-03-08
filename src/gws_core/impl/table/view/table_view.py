@@ -52,6 +52,8 @@ class TableView(BaseTableView):
         IntParam(
             default_value=TabularView.MAX_NUMBER_OF_ROWS_PER_PAGE, max_value=TabularView.MAX_NUMBER_OF_ROWS_PER_PAGE, min_value=1,
             human_name="Number of rows per page"),
+        "sort_column": StrParam(optional=True, human_name="Sort column"),
+        "sort_direction": StrParam(default_value="Ascending", allowed_values=["Ascending", "Descending"], human_name="Sort direction"),
         "from_column": IntParam(default_value=1, human_name="From column", visibility=StrParam.PROTECTED_VISIBILITY),
         "number_of_columns_per_page":
         IntParam(
@@ -70,6 +72,8 @@ class TableView(BaseTableView):
             from_column=params["from_column"] - 1,  # - 1 because communication uses 1-based indexing
             number_of_rows_per_page=params["number_of_rows_per_page"],
             number_of_columns_per_page=params["number_of_columns_per_page"],
-            replace_nan_by=params["replace_nan_by"])
+            replace_nan_by=params["replace_nan_by"],
+            sort_column=params["sort_column"],
+            sort_direction=params["sort_direction"])
 
         return tabular_view.data_to_dict(ConfigParams())
