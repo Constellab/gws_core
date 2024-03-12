@@ -93,6 +93,6 @@ class Folder(FSNode):
             raise BadRequestException("The path is not a file")
 
         sub_file = File(complete_path)
-        view = sub_file.get_default_view(params['line_number'])
+        view = sub_file.get_default_view(params.get('line_number', 1))
         view.set_title(sub_file.get_default_name())
         return view

@@ -159,6 +159,8 @@ class File(FSNode):
         return self.get_default_view(params.get('line_number'))
 
     def get_default_view(self, page: int = 1) -> View:
+        if page is None:
+            page = 1
         # specific extension
         if self.is_image():
             return ImageView.from_local_file(self.path)

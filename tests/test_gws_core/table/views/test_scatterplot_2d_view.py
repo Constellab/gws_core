@@ -30,7 +30,7 @@ class TestTableScatterPlot2DView(TestCase):
                                   "y": {"type": "columns", "selection": ["petal_width"]}}]
         view_dto = tester.to_dto({"series": series})
 
-        self.assertEqual(view_dto.type, ViewType.SCATTER_PLOT_2D.value)
+        self.assertEqual(view_dto.type, ViewType.SCATTER_PLOT_2D)
         self.assertEqual(view_dto.data["series"][0]["data"]["x"], table.get_data()["sepal_length"].values.tolist())
         self.assertEqual(view_dto.data["series"][0]["data"]["y"], table.get_data()["petal_length"].values.tolist())
         self.assertEqual(view_dto.data["series"][1]["data"]["x"], table.get_data()["petal_length"].values.tolist())
