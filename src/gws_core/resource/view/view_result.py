@@ -14,12 +14,12 @@ from gws_core.resource.view_config.view_config import ViewConfig
 class CallViewResult():
     view: ViewDTO
     resource_id: str
-    view_config: ViewConfig
+    view_config: Optional[ViewConfig]
     title: str
     view_type: ViewType
     style: Optional[TypingStyle]
 
-    def __init__(self, view: ViewDTO, resource_id: str, view_config: ViewConfig,
+    def __init__(self, view: ViewDTO, resource_id: str, view_config: Optional[ViewConfig],
                  title: str, view_type: ViewType, style: Optional[TypingStyle] = None) -> None:
         self.view = view
         self.resource_id = resource_id
@@ -32,7 +32,7 @@ class CallViewResult():
         return CallViewResultDTO(
             view=self.view,
             resource_id=self.resource_id,
-            view_config=self.view_config.to_dto(),
+            view_config=self.view_config.to_dto() if self.view_config else None,
             title=self.title,
             view_type=self.view_type,
             style=self.style if self.style else self.view_type.get_typing_style()

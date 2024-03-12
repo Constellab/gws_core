@@ -147,6 +147,8 @@ class ParamSpec(Generic[ParamSpecType]):
             if not isinstance(allowed_values, (list, tuple)):
                 raise BadRequestException(
                     f"Invalid allowed values '{allowed_values}' in '{self.get_str_type()}' param, it must be an list or a tuple")
+
+            self.allowed_values = allowed_values
         else:
             self.allowed_values = None
 

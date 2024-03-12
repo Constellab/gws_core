@@ -33,7 +33,7 @@ class ViewDTO(BaseModelDTO):
 class CallViewResultDTO(BaseModelDTO):
     view: ViewDTO
     resource_id: str
-    view_config: ViewConfigDTO
+    view_config: Optional[ViewConfigDTO]
     title: str
     view_type: ViewType
     style: TypingStyle

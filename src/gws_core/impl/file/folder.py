@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 from typing import List
 
-from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.param_spec import IntParam, StrParam
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.impl.file.file import File
@@ -80,7 +80,8 @@ class Folder(FSNode):
 
     @view(view_type=View, human_name="View folder content",
           short_description="View the sub files and folders", specs={
-              'sub_file_path': StrParam()
+              'sub_file_path': StrParam(),
+              "line_number": IntParam(default_value=1, min_value=1, human_name="From line")
           })
     def view_sub_file(self, params: ConfigParams) -> View:
         complete_path = os.path.join(self.path, params['sub_file_path'])
@@ -92,6 +93,6 @@ class Folder(FSNode):
             raise BadRequestException("The path is not a file")
 
         sub_file = File(complete_path)
-        view = sub_file.get_default_view()
+        view = sub_file.get_default_view(params['line_number'])
         view.set_title(sub_file.get_default_name())
         return view
