@@ -51,7 +51,6 @@ class ParamSpec(Generic[ParamSpecType]):
     PUBLIC_VISIBILITY: ParamSpecVisibilty = "public"
     PROTECTED_VISIBILITY: ParamSpecVisibilty = "protected"
     PRIVATE_VISIBILITY: ParamSpecVisibilty = "private"
-    MAX_ALLOWED_VALUES_COUNT = 50
 
     def __init__(
         self,
@@ -145,12 +144,7 @@ class ParamSpec(Generic[ParamSpecType]):
     def _check_allowed_values(self, allowed_values: Optional[List[ParamSpecType]]) -> None:
         if allowed_values is not None:
 
-            if isinstance(allowed_values, (list, tuple)):
-                if len(allowed_values) > self.MAX_ALLOWED_VALUES_COUNT:
-                    Logger.warning(
-                        f'[ParamSpecs] Max number of allowed value reached, values will be truncated. Max {self.MAX_ALLOWED_VALUES_COUNT}')
-                self.allowed_values = list(allowed_values[:self.MAX_ALLOWED_VALUES_COUNT])
-            else:
+            if not isinstance(allowed_values, (list, tuple)):
                 raise BadRequestException(
                     f"Invalid allowed values '{allowed_values}' in '{self.get_str_type()}' param, it must be an list or a tuple")
         else:
@@ -355,6 +349,40 @@ class BoolParam(ParamSpec[bool]):
 class DictParam(ParamSpec[dict]):
     """Any json dict param"""
 
+    def __init__(
+        self,
+        default_value: Optional[ParamSpecType] = None,
+        optional: bool = False,
+        visibility: ParamSpecVisibilty = "public",
+        human_name: Optional[str] = None,
+        short_description: Optional[str] = None
+    ) -> None:
+        """
+        :param default_value: Default value, if None, and optional is false, the config is mandatory
+                        If a value is provided there is no need to set the optional
+                        Setting optional to True, allows default None value
+        :param optional: See default value
+        :type optional: Optional[str]
+        :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
+        :type visibility: ParamSpecVisibilty
+        :type default: Optional[ConfigParamType]
+        :param human_name: Human readable name of the param, showed in the interface
+        :type human_name: Optional[str]
+        :param short_description: Description of the param, showed in the interface
+        :type short_description: Optional[str]
+        :param unit: Measure unit of the value (ex kg)
+        :type unit: Optional[str]
+        """
+        super().__init__(
+            default_value=default_value,
+            optional=optional,
+            visibility=visibility,
+            human_name=human_name,
+            short_description=short_description,
+            allowed_values=None,
+            unit=None,
+        )
+
     def validate(self, value: Any) -> dict:
         if value is None:
             return value
@@ -370,6 +398,40 @@ class DictParam(ParamSpec[dict]):
 @param_spec_decorator()
 class ListParam(ParamSpec[list]):
     """Any list param"""
+
+    def __init__(
+        self,
+        default_value: Optional[ParamSpecType] = None,
+        optional: bool = False,
+        visibility: ParamSpecVisibilty = "public",
+        human_name: Optional[str] = None,
+        short_description: Optional[str] = None
+    ) -> None:
+        """
+        :param default_value: Default value, if None, and optional is false, the config is mandatory
+                        If a value is provided there is no need to set the optional
+                        Setting optional to True, allows default None value
+        :param optional: See default value
+        :type optional: Optional[str]
+        :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
+        :type visibility: ParamSpecVisibilty
+        :type default: Optional[ConfigParamType]
+        :param human_name: Human readable name of the param, showed in the interface
+        :type human_name: Optional[str]
+        :param short_description: Description of the param, showed in the interface
+        :type short_description: Optional[str]
+        :param unit: Measure unit of the value (ex kg)
+        :type unit: Optional[str]
+        """
+        super().__init__(
+            default_value=default_value,
+            optional=optional,
+            visibility=visibility,
+            human_name=human_name,
+            short_description=short_description,
+            allowed_values=None,
+            unit=None,
+        )
 
     def validate(self, value: Any) -> list:
         if value is None:
