@@ -6,6 +6,7 @@
 from typing import Callable, Type
 
 from gws_core.brick.brick_service import BrickService
+from gws_core.core.utils.utils import Utils
 from gws_core.model.typing_style import TypingStyle
 
 from ...config.param.param_spec import ParamSpec
@@ -62,11 +63,16 @@ def view(view_type: Type[View],
     def decorator(func: Callable) -> Callable:
 
         try:
+
             func_args: FuncArgsMetaData = ReflectorHelper.get_function_arguments(func)
 
             if not func_args.is_method():
                 raise Exception(
                     'The @view decorator must be unsed on a method (with self). It must not be used in a classmethod or a static method')
+
+            if not Utils.issubclass(view_type, View):
+                raise Exception(
+                    f"View error. The view type '{view_type}' of the @view of method '{func_args.func_name}' is not a sub type of View")
 
             # if the view is mark as default, all the parameters must be optional
             if default_view:
