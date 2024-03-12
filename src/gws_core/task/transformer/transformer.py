@@ -37,15 +37,15 @@ def transformer_decorator(unique_name: str,
     :type unique_name: str
     :param resource_type: type of the resource transformed by this transformer
     :type resource_type: Type[Resource]
-    :param human_name: optional name that will be used in the interface when viewing the tasks. Must not be longer than 20 caracters
+    :param human_name: optional name that will be used in the interface when viewing the tasks.
                         If not defined, the unique_name will be used
     :type human_name: str, optional
-    :param short_description: optional description that will be used in the interface when viewing the tasks. Must not be longer than 100 caracters
+    :param short_description: optional description that will be used in the interface when viewing the tasks. Must not be longer than 255 caracters.
     :type short_description: str, optional
     :param hide: Only the task with hide=False will be available in the interface(web platform), other will be hidden.
                 It is useful for task that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
-    :param style: style of the task, view TypingStyle object for more info, defaults to None
+    :param style: style of the task, view TypingStyle object for more info. If not provided, takes the style of resource_type, defaults to None
     :type style: TypingStyle, optional
     :param deprecated: object to tell that the object is deprecated. See TypingDeprecated for more info, defaults to None
     :type deprecated: TypingDeprecated, optional

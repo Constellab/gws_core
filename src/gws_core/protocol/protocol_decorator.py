@@ -29,10 +29,10 @@ def protocol_decorator(unique_name: str,
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the protocols
     :type unique_name: str
-    :param human_name: optional name that will be used in the interface when viewing the protocols. Must not be longer than 20 caracters
+    :param human_name: optional name that will be used in the interface when viewing the protocols.
                         If not defined, the unique_name will be used
     :type human_name: str, optional
-    :param short_description: optional description that will be used in the interface when viewing the protocols. Must not be longer than 100 caracters
+    :param short_description: optional description that will be used in the interface when viewing the protocols. Must not be longer than 255 caracters.
     :type short_description: str, optional
     :param style: style of the task, view TypingStyle object for more info, defaults to None
     :type style: TypingStyle, optional

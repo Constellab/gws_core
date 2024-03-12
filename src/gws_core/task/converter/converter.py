@@ -10,6 +10,7 @@ from typing import Tuple, Type, final
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
+from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
 
 from ...brick.brick_service import BrickService
@@ -53,6 +54,13 @@ def decorate_converter(task_class: Type['Converter'],
     task_class.input_specs = InputSpecs({Converter.input_name: InputSpec(source_type)})
     task_class.output_specs = OutputSpecs({Converter.output_name: OutputSpec(target_type)})
 
+    main_resource_type = target_type if task_type == 'IMPORTER' else source_type
+    if not style:
+        # for the importer, takes the destination type
+        style = get_converter_default_style(main_resource_type)
+    elif not style.background_color or not style.icon_color:
+        style.copy_from_style(get_converter_default_style(main_resource_type))
+
     # register the task and set the human_name and short_description dynamically based on resource
     decorate_task(task_class=task_class,
                   unique_name=unique_name,
@@ -60,10 +68,22 @@ def decorate_converter(task_class: Type['Converter'],
                   related_resource=related_resource,
                   task_type=task_type,
                   short_description=short_description,
-                  hide=hide, style=style,
+                  hide=hide,
+                  style=style,
                   deprecated_since=deprecated_since,
                   deprecated_message=deprecated_message,
                   deprecated=deprecated)
+
+
+def get_converter_default_style(resource_type: Type[Resource]) -> TypingStyle:
+    """Get the default style for a task, use the first input style or the first output style
+    """
+
+    typing = TypingManager.get_typing_from_name(resource_type._typing_name)
+    if typing and typing.style:
+        return typing.style
+
+    return TypingStyle.default_task()
 
 
 @task_decorator("Converter", hide=True)

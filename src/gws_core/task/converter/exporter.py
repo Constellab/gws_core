@@ -60,16 +60,16 @@ def exporter_decorator(
     :type source_type: Type[Resource]
     :param target_type: Type of the file output after the export, leave it to File if you want to export to a basic file
     :type target_type: Type[File], optional
-    :param human_name: optional name that will be used in the interface when viewing the tasks. Must not be longer than 20 caracters
+    :param human_name: optional name that will be used in the interface when viewing the tasks.
                         If not defined, an automatic is generated.
     :type human_name: str, optional
-    :param short_description: optional description that will be used in the interface when viewing the tasks. Must not be longer than 100 caracters
+    :param short_description: optional description that will be used in the interface when viewing the tasks. Must not be longer than 255 caracters.
                               If not defined, an automatic is generated
     :type short_description: str, optional
     :param hide: Only the task with hide=False will be available in the interface(web platform), other will be hidden.
                 It is useful for task that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
-    :param style: style of the task, view TypingStyle object for more info, defaults to None
+    :param style: style of the task, view TypingStyle object for more info. If not provided, takes the style of source_type resource, defaults to None
     :type style: TypingStyle, optional
     :param deprecated: object to tell that the object is deprecated. See TypingDeprecated for more info, defaults to None
     :type deprecated: TypingDeprecated, optional
@@ -77,7 +77,6 @@ def exporter_decorator(
     :return: [description]
     :rtype: Callable
     """
-
     def decorator(task_class: Type[ResourceExporter]):
 
         try:

@@ -5,7 +5,6 @@
 
 from typing import Callable, Type
 
-from gws_core.core.db.version import Version
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.model.typing_deprecated import TypingDeprecated

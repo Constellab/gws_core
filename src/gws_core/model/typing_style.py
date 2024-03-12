@@ -55,7 +55,8 @@ class TypingStyle(BaseModelDTO):
         :type icon_technical_name: str
         :param background_color: background color of the typing as hex color code, defaults to None
         :type background_color: str, optional
-        :param icon_color: icon color (black or white) when displayed over the background color, defaults to None
+        :param icon_color: icon color (black or white) when displayed over the background color
+                        If not defined the color is calculated based on background color to be visible. defaults to None
         :type icon_color: Optional[TypingIconColor], optional
         :return: TypingStyle object
         :rtype: TypingStyle
@@ -76,7 +77,8 @@ class TypingStyle(BaseModelDTO):
         :type icon_technical_name: str
         :param background_color: background color of the typing as hex color code, defaults to None
         :type background_color: str, optional
-        :param icon_color: icon color (black or white) when displayed over the background color, defaults to None
+        :param icon_color: icon color (black or white) when displayed over the background color.
+                        If not defined the color is calculated based on background color to be visible. defaults to None
         :type icon_color: Optional[TypingIconColor], optional
         :return: _description_
         :rtype: TypingStyle
@@ -140,7 +142,7 @@ class TypingStyle(BaseModelDTO):
         return background_color
 
     @staticmethod
-    def check_icon_color(icon_color: str) -> TypingIconColor:
+    def check_icon_color(icon_color: TypingIconColor) -> TypingIconColor:
         if icon_color and not isinstance(icon_color, TypingIconColor):
             Logger.error(f"Invalid icon color '{icon_color}'. Must be a TypingIconColor")
             return None

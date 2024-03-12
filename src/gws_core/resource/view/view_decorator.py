@@ -33,9 +33,9 @@ def view(view_type: Type[View],
 
     :param view_type: type of the view returned. If the method can return differents views (not recommended) use View type.
     :type view_type: Type[View]
-    :param human_name: Human readable name for the view . Must not be longer than 20 caracters, defaults to ""
+    :param human_name: Human readable name for the view., defaults to ""
     :type human_name: str, optional
-    :param short_description: Short description for the view. Must not be longer than 100 caracters, defaults to ""
+    :param short_description: Short description for the view. Must not be longer than 255 caracters., defaults to ""
     :type short_description: str, optional
     :param specs: Specification for the view. The parameters corresponding to the view are passed to the view method when calling it.
      The user can provided values for the specs when calling the view, defaults to None

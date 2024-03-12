@@ -30,10 +30,10 @@ def resource_decorator(unique_name: str,
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the resourcees
     :type unique_name: str
-    :param human_name: optional name that will be used in the interface when viewing the resourcees. Must not be longer than 20 caracters
+    :param human_name: optional name that will be used in the interface when viewing the resources.
                         If not defined, the unique_name will be used
     :type human_name: str, optional
-    :param short_description: optional description that will be used in the interface when viewing the resourcees. Must not be longer than 100 caracters
+    :param short_description: optional description that will be used in the interface when viewing the resourcees. Must not be longer than 255 caracters.
     :type short_description: str, optional
     :param hide: Only the resource will hide=False will be available in the interface, other will be hidden.
                 It is useful for resource that are not meant to be viewed in the interface (like abstract classes), defaults to False
