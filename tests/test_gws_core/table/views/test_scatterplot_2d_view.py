@@ -35,4 +35,3 @@ class TestTableScatterPlot2DView(TestCase):
         self.assertEqual(view_dto.data["series"][0]["data"]["y"], table.get_data()["petal_length"].values.tolist())
         self.assertEqual(view_dto.data["series"][1]["data"]["x"], table.get_data()["petal_length"].values.tolist())
         self.assertEqual(view_dto.data["series"][1]["data"]["y"], table.get_data()["petal_width"].values.tolist())
-.

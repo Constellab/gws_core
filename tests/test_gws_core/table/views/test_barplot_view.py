@@ -31,7 +31,7 @@ class TestTableBarPlotView(TestCase):
         view_dto = tester.to_dto({"series": series})
 
         x = list(range(0, table.get_data().shape[0]))
-        self.assertEqual(view_dto.type, ViewType.BAR_PLOT.value)
+        self.assertEqual(view_dto.type, ViewType.BAR_PLOT)
         self.assertEqual(view_dto.data["series"][0]["data"]["x"], x)
         self.assertEqual(view_dto.data["series"][1]["data"]["x"], x)
         self.assertEqual(view_dto.data["series"][2]["data"]["x"], x)

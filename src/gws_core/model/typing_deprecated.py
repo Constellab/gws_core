@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.core.db.version import Version
 from gws_core.core.model.model_dto import BaseModelDTO
 
 
@@ -25,5 +26,13 @@ class TypingDeprecated(BaseModelDTO):
         :param deprecated_message: Message about the deprecation. For example you can provide the name of another object to use instead.
         :type deprecated_message: str
         """
-        self.deprecated_since = deprecated_since
-        self.deprecated_message = deprecated_message
+        super().__init__(deprecated_since=deprecated_since, deprecated_message=deprecated_message)
+
+    def check_version(self) -> bool:
+        """Check if the version if valid
+        """
+        try:
+            Version(self.deprecated_since)
+            return True
+        except:
+            return False

@@ -14,6 +14,7 @@ from gws_core.core.classes.search_builder import SearchParams
 from gws_core.impl.robot.robot_protocol import RobotTravelProto
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.model.typing import Typing
+from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_service import TypingService
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.task.transformer.transformer import Transformer
@@ -32,8 +33,8 @@ class CreateSimpleRobot2(Protocol):
         ])
 
 
-@protocol_decorator("CreateSimpleRobot2Deprecated", deprecated_since="0.3.10",
-                    deprecated_message="Use CreateSimpleRobot2")
+@protocol_decorator("CreateSimpleRobot2Deprecated",
+                    deprecated=TypingDeprecated(deprecated_since="0.3.10", deprecated_message="Use CreateSimpleRobot2"))
 class CreateSimpleRobot2Deprecated(Protocol):
     pass
 

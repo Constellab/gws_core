@@ -4,15 +4,15 @@
 # About us: https://gencovery.com
 
 from unittest import TestCase
+
 import pandas as pd
 import plotly.express as px
 
-from gws_core.impl.plotly.plotly_resource import PlotlyResource
-from gws_core.task.task_runner import TaskRunner
-from gws_core.impl.table.table import Table
 from gws_core.config.config_params import ConfigParams
-
+from gws_core.impl.plotly.plotly_resource import PlotlyResource
 from gws_core.impl.plotly.tasks.plotly_boxplot import PlotlyBoxplot
+from gws_core.impl.table.table import Table
+from gws_core.task.task_runner import TaskRunner
 
 
 class TestBoxplot(TestCase):
@@ -44,12 +44,12 @@ class TestBoxplot(TestCase):
         )
 
         outputs = runner.run()
-        plot_output = outputs['output_plot']
+        plot_output: PlotlyResource = outputs['output_plot']
         expected_output = px.box(data_frame=df, x='x', y='y', color='z',
-                                     title='title', log_x=True, log_y=False)
+                                 title='title', log_x=True, log_y=False)
         expected_output.update_yaxes(title='y_axis_name')
         expected_output.update_xaxes(title='x_axis_name')
         expected_output = PlotlyResource(expected_output)
-        self.assertIsNotNone(plot_output.default_view(ConfigParams()).to_dict(ConfigParams()))
+        self.assertIsNotNone(plot_output.default_view(ConfigParams()).to_dto(ConfigParams()))
 
     # Ajoutez d'autres méthodes de test pour tester différentes configurations et paramètres...

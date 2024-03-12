@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -26,8 +26,8 @@ class ResourceViewMetadatalDTO(BaseModelDTO):
 class ViewDTO(BaseModelDTO):
     type: ViewType
     title: Optional[str]
-    technical_info: dict
-    data: dict
+    technical_info: List[dict]
+    data: Any
 
 
 class CallViewResultDTO(BaseModelDTO):

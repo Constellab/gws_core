@@ -21,7 +21,7 @@ class TestTableView(TestCase):
             from_column=1,
             number_of_columns_per_page=50
         ))
-        self.assertEqual(view_dto.type, ViewType.TABLE.value)
+        self.assertEqual(view_dto.type, ViewType.TABLE)
 
         self.assertEqual(
             view_dto.data["table"],

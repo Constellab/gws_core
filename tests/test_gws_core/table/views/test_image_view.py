@@ -8,6 +8,7 @@ from unittest import TestCase
 
 from gws_core import ImageView, Settings
 from gws_core.config.config_params import ConfigParams
+from gws_core.resource.view.view_types import ViewType
 
 
 # test_image_view
@@ -31,6 +32,6 @@ class TestImageView(TestCase):
 
         # Check the dict
         view_dto = view.to_dto(ConfigParams())
-        self.assertEqual(view_dto.type, "image-view")
+        self.assertEqual(view_dto.type, ViewType.IMAGE)
         self.assertEqual(view_dto.data["base_64_img"], encoded_context)
         self.assertEqual(view_dto.data["mime_type"], "image/png")

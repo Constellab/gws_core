@@ -64,6 +64,14 @@ def register_typing_class(
         Logger.warning("deprecated_since and deprecated_message are deprecated. Use the TypingDeprecated object instead.")
         deprecated = TypingDeprecated(deprecated_since, deprecated_message)
 
+    # check deprecated_since version
+    if deprecated is not None and not deprecated.check_version():
+        # import the BrickService here and not in register_typing_class because it would create a cyclic error
+        from ..brick.brick_service import BrickService
+        BrickService.log_brick_error(
+            object_class,
+            f"The deprecated_since property '{deprecated.deprecated_since}' for typing object {human_name} is not a version. Must be formatted like 1.0.0")
+        deprecated = None
     typing = Typing(
         brick=BrickHelper.get_brick_name(object_class),
         brick_version=None,  # set to None because the version is not loaded yet
@@ -90,8 +98,8 @@ def register_typing_class(
 # Method to register gws object like Resource, Task and Protocol
 def register_gws_typing_class(
         object_class: Type[Base],
-    object_type: TypingObjectType,
-    unique_name: str,
+        object_type: TypingObjectType,
+        unique_name: str,
         human_name: str,
         short_description,
         hide: bool = False,
@@ -111,20 +119,6 @@ def register_gws_typing_class(
             object_class,
             f"The unique name '{unique_name}' for typing object {human_name} is not valid. It must contains only alpha numeric characters and '_'")
         return
-
-    # check deprecated_since version
-    if deprecated_since is not None:
-        try:
-            Version(deprecated_since)
-        except:
-            BrickService.log_brick_error(
-                object_class,
-                f"The deprecated_since property '{deprecated_since}' for typing object {human_name} is not a version. Must be formatted like 1.0.0")
-            deprecated_since = None
-            deprecated_message = None
-    else:
-        # clear the deprecated message if the deprecated_since version is provided
-        deprecated_message = None
 
     # provide the style default value
     if style is None:
