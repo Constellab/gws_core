@@ -1,13 +1,11 @@
-# LICENSE
-# This software is the exclusive property of Gencovery SAS.
-# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
-# About us: https://gencovery.com
+
 
 from typing import Any, Callable, Dict, Generic, List, TypeVar
 
-from gws_core.core.model.model_dto import PageDTO
 from numpy.core.numeric import Infinity
 from peewee import ModelSelect
+
+from gws_core.core.model.model_dto import PageDTO
 
 from ..model.model import Model
 

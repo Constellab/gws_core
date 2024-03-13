@@ -1,7 +1,4 @@
-# LICENSE
-# This software is the exclusive property of Gencovery SAS.
-# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
-# About us: https://gencovery.com
+
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.impl.live.base.env_live_task import EnvLiveTask

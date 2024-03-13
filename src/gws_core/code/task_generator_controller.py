@@ -1,7 +1,4 @@
-# LICENSE
-# This software is the exclusive property of Gencovery SAS.
-# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
-# About us: https://gencovery.com
+
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
@@ -25,7 +22,7 @@ def generate_task_code_from_live_task(id: str,
 @core_app.post("/task-generator/live-task-file/{id}", tags=["Task generator"],
                summary="generate live task task file from live task")
 def generate_live_task_file_from_live_task(id: str,
-                                      _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
+                                           _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
     code = TaskGeneratorService.generate_live_task_file_from_live_task_id(id)
 
     # create a file response

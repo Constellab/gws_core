@@ -1,7 +1,4 @@
-# LICENSE
-# This software is the exclusive property of Gencovery SAS.
-# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
-# About us: https://gencovery.com
+
 
 from typing import List, Optional
 
@@ -9,9 +6,9 @@ from fastapi import Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
+from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
@@ -54,13 +51,16 @@ def call_view_on_resource(id_: str,
         id_, view_name, call_view_params.values,
         call_view_params.save_view_config).to_dto()
 
+
 @core_app.post("/resource/{id_}/views/{view_name}/json-file", tags=["Resource"],
-              summary="Get the json file of a view for a resource")
+               summary="Get the json file of a view for a resource")
 def get_view_json_file(id_: str, view_name: str,
                        call_view_params: CallViewParams,
                        _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
-    return ResponseHelper.create_file_response_from_object(
-        ResourceService.get_view_json_file(id_, view_name, call_view_params.values, call_view_params.save_view_config), view_name + '.json')
+    return ResponseHelper.create_file_response_from_object(ResourceService.get_view_json_file(
+        id_, view_name, call_view_params.values,
+        call_view_params.save_view_config),
+        view_name + '.json')
 
 
 ####################################### Resource Model ###################################

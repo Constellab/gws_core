@@ -1,21 +1,18 @@
-# LICENSE
-# This software is the exclusive property of Gencovery SAS.
-# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
-# About us: https://gencovery.com
 
 
+import json
 from typing import List
 
 from typing_extensions import ParamSpec
 
+from gws_core.brick.brick_helper import BrickHelper
 from gws_core.code.task_generator import TaskGenerator
 from gws_core.config.param.param_spec import (BoolParam, FloatParam, IntParam,
                                               StrParam)
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.impl.live.py_live_task import PyLiveTask
 from gws_core.task.task_model import TaskModel
-from gws_core.brick.brick_helper import BrickHelper
-import json
+
 
 class TaskGeneratorService:
 
@@ -84,8 +81,6 @@ class TaskGeneratorService:
 
         return task_generator.generate_code()
 
-
-
     @classmethod
     def generate_live_task_file_from_live_task_id(cls, task_id: str) -> str:
         task: TaskModel = TaskModel.get_by_id_and_check(task_id)
@@ -130,12 +125,12 @@ class TaskGeneratorService:
     @classmethod
     def get_live_task_type(self, instance_name: str) -> str:
         choice = {
-                    'PyLiveTask' :'PYTHON',
-                    'PyCondaLiveTask' : 'CONDA_PYTHON',
-                    'PyMambaLiveTask' : 'MAMBA_PYTHON',
-                    'PyPipenvLiveTask' : 'PIP_PYTHON',
-                    'RCondaLiveTask' : 'CONDA_R',
-                    'RMambaLiveTask' : 'MAMBA_R',
-                    'StreamlitLiveTask' : 'STREAMLIT',
-                }
+            'PyLiveTask': 'PYTHON',
+            'PyCondaLiveTask': 'CONDA_PYTHON',
+            'PyMambaLiveTask': 'MAMBA_PYTHON',
+            'PyPipenvLiveTask': 'PIP_PYTHON',
+            'RCondaLiveTask': 'CONDA_R',
+            'RMambaLiveTask': 'MAMBA_R',
+            'StreamlitLiveTask': 'STREAMLIT',
+        }
         return choice[instance_name.split('_')[0]]

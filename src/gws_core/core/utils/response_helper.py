@@ -1,7 +1,4 @@
-# LICENSE
-# This software is the exclusive property of Gencovery SAS.
-# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
-# About us: https://gencovery.com
+
 
 import json
 from io import StringIO
@@ -31,7 +28,7 @@ class ResponseHelper():
 
     @staticmethod
     def create_file_response_from_object(obj: Any, file_name: str = 'file.json',
-                                       media_type: str = 'application/json') -> StreamingResponse:
+                                         media_type: str = 'application/json') -> StreamingResponse:
         """
         Create a StreamingResponse from an object
 

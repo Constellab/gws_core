@@ -1,7 +1,4 @@
-# LICENSE
-# This software is the exclusive property of Gencovery SAS.
-# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
-# About us: https://gencovery.com
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional, Tuple, Type

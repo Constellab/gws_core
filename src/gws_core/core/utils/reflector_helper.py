@@ -1,7 +1,4 @@
-# LICENSE
-# This software is the exclusive property of Gencovery SAS.
-# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
-# About us: https://gencovery.com
+
 import inspect
 from typing import Any, Callable, Dict, List, Tuple
 
@@ -100,7 +97,6 @@ class ReflectorHelper():
         for arg in arguments.items():
             arg_name: str = arg[0]
             arg_type: Any = arg[1].type_
-
 
             arg_default_value: Any = None
             if arg[1].has_default_value():

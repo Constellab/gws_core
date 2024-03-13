@@ -1,7 +1,4 @@
-# LICENSE
-# This software is the exclusive property of Gencovery SAS.
-# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
-# About us: https://gencovery.com
+
 
 from typing import Dict, List, Literal, Optional, Set
 
@@ -1029,7 +1026,6 @@ class ProtocolModel(ProcessModel):
 
     def is_protocol(self) -> bool:
         return True
-
 
     def generate_unique_instance_name(self, instance_name: str) -> str:
         """ Generate a unique instance name from an instance_name
