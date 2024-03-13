@@ -105,18 +105,27 @@ class TypingManager:
             cls._save_object_type_in_db(typing)
 
     @classmethod
-    def _save_object_type_in_db(cls, typing: Typing) -> None:
-        try:
-            # refresh or set the ancestors list
-            typing.refresh_ancestors()
-
-            # set the version because the bricks are not loaded before
+    def init_typings(cls) -> None:
+        """Call this method after all the bricks are loaded to refresh the ancestors list and brick version of typing
+        """
+        for typing in cls._typings_name_cache.values():
+            # set the version because the bricks might not be loaded before
+            # if this is the first start
             brick_info = BrickHelper.get_brick_info(typing.brick)
             if brick_info is None:
                 Logger.error(
                     f"Can't get the brick info for brick '{typing.brick}' of typing '{typing.typing_name}'. Is the file in the correct folder in your brick ? Skipping the typing")
-                return
-            typing.brick_version = brick_info["version"]
+            else:
+                typing.brick_version = brick_info["version"]
+
+            # refresh the ancestor list once all the type are loaded
+            typing.refresh_ancestors()
+
+    @classmethod
+    def _save_object_type_in_db(cls, typing: Typing) -> None:
+        try:
+            # refresh or set the ancestors list
+            typing.refresh_ancestors()
 
             query: ModelSelect = Typing.get_by_brick_and_unique_name(
                 typing.object_type, typing.brick, typing.unique_name)
