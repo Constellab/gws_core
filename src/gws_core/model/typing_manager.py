@@ -90,14 +90,6 @@ class TypingManager:
                                 {typing.object_type} trying to register : {object_class.full_classname()}
                                 Please update one of the unique name""")
 
-        # set the version because the bricks are not loaded before
-        brick_info = BrickHelper.get_brick_info(typing.brick)
-        if brick_info is None:
-            Logger.error(
-                f"Can't get the brick info for brick '{typing.brick}' of typing '{typing.typing_name}'. Is the file in the correct folder in your brick ? Skipping the typing")
-            return
-        typing.brick_version = brick_info["version"]
-
         cls._typings_name_cache[typing.typing_name] = typing
 
         # If the tables exists, directly create the typing
@@ -117,6 +109,14 @@ class TypingManager:
         try:
             # refresh or set the ancestors list
             typing.refresh_ancestors()
+
+            # set the version because the bricks are not loaded before
+            brick_info = BrickHelper.get_brick_info(typing.brick)
+            if brick_info is None:
+                Logger.error(
+                    f"Can't get the brick info for brick '{typing.brick}' of typing '{typing.typing_name}'. Is the file in the correct folder in your brick ? Skipping the typing")
+                return
+            typing.brick_version = brick_info["version"]
 
             query: ModelSelect = Typing.get_by_brick_and_unique_name(
                 typing.object_type, typing.brick, typing.unique_name)
