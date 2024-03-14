@@ -1,6 +1,5 @@
 
 
-import json
 import logging
 from datetime import datetime
 from logging import Logger as PythonLogger
@@ -28,6 +27,7 @@ class LogFileLine(BaseModelDTO):
     timestamp: str
     message: str
     experiment_id: Optional[str]
+    stack_trace: Optional[str]
 
 
 class JSONFormatter(logging.Formatter):
@@ -43,7 +43,8 @@ class JSONFormatter(logging.Formatter):
             level=record.levelname,
             timestamp=Logger.get_date(),
             message=record.getMessage(),
-            experiment_id=self.experiment_id
+            experiment_id=self.experiment_id,
+            stack_trace=record.exc_text if record.exc_text else None
         )
         return log_data.json()
 
@@ -112,6 +113,8 @@ class Logger:
         file_handler = TimedRotatingFileHandler(
             Logger._file_path, when="midnight")
         file_handler.setFormatter(JSONFormatter(Logger._experiment_id))
+        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        # file_handler.setFormatter(formatter)
         Logger._logger.addHandler(file_handler)
 
         if experiment_id:
@@ -171,6 +174,7 @@ class Logger:
 
             if level_name == "EXCEPTION":
                 cls._logger.exception(obj, exc_info=True)
+                cls._logger.error('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
                 return
 
             if level_name == "ERROR":
