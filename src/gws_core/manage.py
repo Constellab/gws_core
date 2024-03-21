@@ -13,6 +13,7 @@ import click
 
 from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core.model.typing_manager import TypingManager
 from gws_core.settings_loader import SettingsLoader
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
@@ -48,6 +49,9 @@ class AppManager:
 
         # Init the db
         DbManagerService.init_all_db()
+
+        # Init the typings
+        TypingManager.init_typings()
 
         return settings_loader.settings
 

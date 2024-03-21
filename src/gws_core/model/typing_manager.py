@@ -94,19 +94,28 @@ class TypingManager:
                                 {typing.object_type} trying to register : {object_class.full_classname()}
                                 Please update one of the unique name""")
 
-        # set the version because the bricks are not loaded before
-        brick_info = BrickHelper.get_brick_info(typing.brick)
-        if brick_info is None:
-            Logger.error(
-                f"Can't get the brick info for brick '{typing.brick}' of typing '{typing.typing_name}'. Is the file in the correct folder in your brick ? Skipping the typing")
-            return
-        typing.brick_version = brick_info["version"]
-
         cls._typings_name_cache[typing.typing_name] = typing
 
         # If the tables exists, directly create the typing
         if cls._tables_are_created:
             cls._save_object_type_in_db(typing)
+
+    @classmethod
+    def init_typings(cls) -> None:
+        """Call this method after all the bricks are loaded to refresh the ancestors list and brick version of typing
+        """
+        for typing in cls._typings_name_cache.values():
+            # set the version because the bricks might not be loaded before
+            # if this is the first start
+            brick_info = BrickHelper.get_brick_info(typing.brick)
+            if brick_info is None:
+                Logger.error(
+                    f"Can't get the brick info for brick '{typing.brick}' of typing '{typing.typing_name}'. Is the file in the correct folder in your brick ? Skipping the typing")
+            else:
+                typing.brick_version = brick_info["version"]
+
+            # refresh the ancestor list once all the type are loaded
+            typing.refresh_ancestors()
 
     @classmethod
     def save_object_types_in_db(cls) -> None:
@@ -119,8 +128,6 @@ class TypingManager:
     @classmethod
     def _save_object_type_in_db(cls, typing: Typing) -> None:
         try:
-            # refresh or set the ancestors list
-            typing.refresh_ancestors()
 
             query: ModelSelect = Typing.get_by_brick_and_unique_name(
                 typing.object_type, typing.brick, typing.unique_name)
