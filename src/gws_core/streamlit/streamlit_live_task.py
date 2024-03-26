@@ -53,6 +53,7 @@ class StreamlitLiveTask(Task):
         for resource in resource_list.get_resources_as_set():
             streamlit_resource.add_resource(resource, unique_name=f"resource_{i}",
                                             create_new_resource=False)
+            i += 1
 
         return {'streamlit_app': streamlit_resource}
 

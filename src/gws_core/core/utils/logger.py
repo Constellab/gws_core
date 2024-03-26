@@ -174,7 +174,6 @@ class Logger:
 
             if level_name == "EXCEPTION":
                 cls._logger.exception(obj, exc_info=True)
-                cls._logger.error('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
                 return
 
             if level_name == "ERROR":
