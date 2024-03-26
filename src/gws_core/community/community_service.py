@@ -91,13 +91,12 @@ class CommunityService(BaseService):
         return parse_obj_as(CommunityLiveTaskDTO, response.json())
 
     @classmethod
-    def create_community_live_task(cls, code: str, form_data: CommunityCreateLiveTaskDTO) -> CommunityLiveTaskVersionCreateResDTO:
-        versionFile = json.loads(code)
+    def create_community_live_task(cls, version_file: str, form_data: CommunityCreateLiveTaskDTO) -> CommunityLiveTaskVersionCreateResDTO:
         if cls.community_api_url is None:
             return None
         url = f"{cls.community_api_url}/live-task/for-lab"
         try:
-            response = ExternalApiService.post(url, {'versionFile': versionFile, 'title': form_data.title, 'type': form_data.type, 'space': form_data.space}, cls._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.post(url, {'versionFile': version_file, 'title': form_data.title, 'type': form_data.type, 'space': form_data.space}, cls._get_request_header(), raise_exception_if_error=True)
         except BaseHTTPException as err:
             err.detail = f"Can't create community live task from the lab. Error : {err.detail}"
             raise err
@@ -105,13 +104,12 @@ class CommunityService(BaseService):
         return res
 
     @classmethod
-    def fork_community_live_task(cls, code: str, form_data: CommunityCreateLiveTaskDTO, live_task_version_id: str) -> CommunityLiveTaskVersionCreateResDTO:
-        versionFile = json.loads(code)
+    def fork_community_live_task(cls, version_file: str, form_data: CommunityCreateLiveTaskDTO, live_task_version_id: str) -> CommunityLiveTaskVersionCreateResDTO:
         if cls.community_api_url is None:
             return None
         url = f"{cls.community_api_url}/live-task/for-lab/fork/{live_task_version_id}"
         try:
-            response = ExternalApiService.post(url, {'versionFile': versionFile, 'title': form_data.title, 'type': form_data.type, 'space': form_data.space}, cls._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.post(url, {'versionFile': version_file, 'title': form_data.title, 'type': form_data.type, 'space': form_data.space}, cls._get_request_header(), raise_exception_if_error=True)
         except BaseHTTPException as err:
             err.detail = f"Can't create community live task from the lab. Error : {err.detail}"
             raise err
@@ -119,13 +117,12 @@ class CommunityService(BaseService):
         return res
 
     @classmethod
-    def create_community_live_task_version(cls, code: str, live_task_id: str) -> CommunityLiveTaskVersionCreateResDTO:
-        versionFile = json.loads(code)
+    def create_community_live_task_version(cls, version_file: str, live_task_id: str) -> CommunityLiveTaskVersionCreateResDTO:
         if cls.community_api_url is None:
             return None
         url = f"{cls.community_api_url}/live-task/for-lab/version/{live_task_id}"
         try:
-            response = ExternalApiService.post(url, {'versionFile': versionFile}, cls._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.post(url, {'versionFile': version_file}, cls._get_request_header(), raise_exception_if_error=True)
         except BaseHTTPException as err:
             err.detail = f"Can't create community live task version from the lab. Error : {err.detail}"
             raise err
