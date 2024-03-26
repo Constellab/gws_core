@@ -12,8 +12,6 @@ from gws_core.model.typing_dto import (SimpleTypingDTO, TypingDTO,
 from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_style import TypingStyle
 
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from ..core.model.base import Base
 from ..core.model.model import Model
 from ..core.utils.utils import Utils
@@ -60,17 +58,6 @@ class Typing(Model):
         if not self.is_saved() and not self.data:
             self.data = {}
 
-        if not Utils.value_is_in_literal(self.object_type, TypingObjectType):
-            raise BadRequestException(
-                f"The type {self.object_type} is not authorized in Typing, possible values: {Utils.get_literal_values(TypingObjectType)}")
-
-    def get_model_types_array(self) -> List[str]:
-        """
-        Return the model_type as an array by splitting with .
-        """
-
-        return self.model_type.split('.')
-
     def _get_hierarchy_table(self) -> List[str]:
         model_t: Type = self.get_type()
 
@@ -83,13 +70,6 @@ class Typing(Model):
             if issubclass(t, Base):
                 ht.append(t.full_classname())
         return ht
-
-    def update_model_type(self, model_type) -> None:
-        """
-        Update the model type and the ancestors, then save into the DB
-        """
-        self.model_type = model_type
-        self.refresh_ancestors()
 
     def _set_ancestors(self, ancestors: List[str]) -> None:
         self.data["ancestors"] = ancestors

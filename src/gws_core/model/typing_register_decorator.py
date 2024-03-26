@@ -4,6 +4,7 @@ from typing import Callable, Type
 
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.core.utils.utils import Utils
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
 
@@ -68,6 +69,13 @@ def register_typing_class(
             object_class,
             f"The deprecated_since property '{deprecated.deprecated_since}' for typing object {human_name} is not a version. Must be formatted like 1.0.0")
         deprecated = None
+
+    if not Utils.value_is_in_literal(object_type, TypingObjectType):
+        BrickService.log_brick_error(
+            object_class,
+            f"The type {object_type} is not authorized in Typing, possible values: {Utils.get_literal_values(TypingObjectType)}")
+        return
+
     typing = Typing(
         brick=BrickHelper.get_brick_name(object_class),
         brick_version=None,  # set to None because the version is not loaded yet

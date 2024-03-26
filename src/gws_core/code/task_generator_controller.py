@@ -26,4 +26,4 @@ def generate_live_task_file_from_live_task(id: str,
     code = TaskGeneratorService.generate_live_task_file_from_live_task_id(id)
 
     # create a file response
-    return ResponseHelper.create_file_response_from_str(code, 'live_task_file.json')
+    return ResponseHelper.create_file_response_from_object(code, 'live_task_file.json')

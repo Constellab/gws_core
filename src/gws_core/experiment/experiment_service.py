@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Optional, Type
 
-from peewee import JOIN, ModelSelect
+from peewee import ModelSelect
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
@@ -171,6 +171,7 @@ class ExperimentService(BaseService):
     def _update_experiment_project(cls, experiment: Experiment, new_project_id: Optional[str]) -> Experiment:
         project_changed = False
         project_removed = False
+        old_project: Project = experiment.project
 
         new_project: Project = None
         # update the project
@@ -205,7 +206,7 @@ class ExperimentService(BaseService):
             if experiment.last_sync_at is not None:
                 # delete the experiment in space
                 SpaceService.delete_experiment(
-                    project_id=experiment.project.id, experiment_id=experiment.id)
+                    project_id=old_project.id, experiment_id=experiment.id)
             experiment.project = None
 
         return experiment

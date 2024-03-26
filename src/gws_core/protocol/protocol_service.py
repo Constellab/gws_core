@@ -765,7 +765,8 @@ class ProtocolService(BaseService):
         process_model: ProcessModel = ProcessFactory.create_task_model_from_type(
             task_type=process_typing.get_type(),
             config_params=config_params,
-            community_live_task_version_id=community_live_task_version.id
+            community_live_task_version_id=community_live_task_version.id,
+            name=community_live_task_version.live_task.title
         )
         protocol_update = cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=process_model)
 
@@ -809,16 +810,16 @@ class ProtocolService(BaseService):
     @classmethod
     def create_community_live_task(
             cls, process_id: str, form_data: CommunityCreateLiveTaskDTO) -> CommunityLiveTaskVersionCreateResDTO:
-        code = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
-        return CommunityService.create_community_live_task(code, form_data)
+        version_file = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
+        return CommunityService.create_community_live_task(version_file, form_data)
 
     @classmethod
     def fork_community_live_task(cls, process_id: str, form_data: CommunityCreateLiveTaskDTO, live_task_version_id: str) -> CommunityLiveTaskVersionCreateResDTO:
-        code = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
-        return CommunityService.fork_community_live_task(code, form_data, live_task_version_id)
+        version_file = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
+        return CommunityService.fork_community_live_task(version_file, form_data, live_task_version_id)
 
     @classmethod
     def create_community_live_task_version(
             cls, process_id: str, live_task_id: str) -> CommunityLiveTaskVersionCreateResDTO:
-        code = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
-        return CommunityService.create_community_live_task_version(code, live_task_id)
+        version_file = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
+        return CommunityService.create_community_live_task_version(version_file, live_task_id)
