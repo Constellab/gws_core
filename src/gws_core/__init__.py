@@ -134,6 +134,8 @@ from .experiment.queue import Job as Job
 from .experiment.queue import Queue as Queue
 from .experiment.queue_service import QueueService as QueueService
 # Extension
+# Impl > ENote
+from .impl.enote.enote_resource import ENoteResource as ENoteResource
 # Impl > File
 from .impl.file.file import File as File
 from .impl.file.file_helper import FileHelper as FileHelper
