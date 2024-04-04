@@ -1,8 +1,11 @@
 
 
+from typing import List
+
 from fastapi.param_functions import Depends
 from pydantic import BaseModel
 
+from gws_core.core.utils.settings import PipPackage
 from gws_core.lab.system_dto import LabInfoDTO, SettingsDTO
 
 from ..core.service.settings_service import SettingsService
@@ -34,11 +37,6 @@ def kill_process(_=Depends(AuthService.check_user_access_token)) -> None:
     SystemService.kill_process()
 
 
-@core_app.get("/system/settings",  tags=["System"], summary="Get settings")
-def get_settings(_=Depends(AuthService.check_user_access_token)) -> SettingsDTO:
-    return SettingsService.get_settings().to_dto()
-
-
 @core_app.post("/system/garbage-collector",  tags=["System"], summary="Trigger garbage collector")
 def garbage_collector(_=Depends(AuthService.check_user_access_token)) -> None:
     SystemService.garbage_collector()
@@ -53,3 +51,13 @@ class SynchronizeDTO(BaseModel):
 def synchronize(sync_dto: SynchronizeDTO,
                 _=Depends(AuthService.check_user_access_token)) -> None:
     SystemService.synchronize_with_space(sync_users=sync_dto.sync_users, sync_projects=sync_dto.sync_projects)
+
+
+@core_app.get("/system/settings",  tags=["System"], summary="Get settings")
+def get_settings(_=Depends(AuthService.check_user_access_token)) -> SettingsDTO:
+    return SettingsService.get_settings().to_dto()
+
+
+@core_app.get("/system/settings/pip-packages",  tags=["System"], summary="Get pip packages")
+def get_pip_packages(_=Depends(AuthService.check_user_access_token)) -> List[PipPackage]:
+    return SettingsService.get_installed_pip_packages()
