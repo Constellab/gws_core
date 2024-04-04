@@ -315,7 +315,7 @@ class TestTable(TestCase):
         table = Table(DataFrame({'0': [1, 2], '1': [4, 5], '2': [4, 5], '3': [4, 5]}),
                       row_names=['r0', 'r0'],
                       column_names=['A', 'A', 1, '9é [a].-SUPER'],
-                      format_header_names=True)
+                      strict_format_header_names=True)
 
         self.assertEqual(table.row_names, ['r0', 'r0_1'])
         self.assertEqual(table.column_names, ['A', 'A_1', '1', '9e_a_SUPER'])

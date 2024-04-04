@@ -119,12 +119,21 @@ class Resource(Base):
         return self._human_name
 
     def add_technical_info(self, technical_info: TechnicalInfo) -> None:
-        """Add a technical information to the resource
+        """Add technical information on the resource. Technical info are useful to set additional information on the resource.
+
+        :param technical_info: technical information to add (key, value)
+        :type technical_info: TechnicalInfo
         """
         self.technical_info.add(technical_info)
 
     def get_technical_info(self, key: str) -> TechnicalInfo:
         """Get the technical information of the resource
+
+
+        :param key: key of the technical information
+        :type key: str
+        :return: _description_
+        :rtype: TechnicalInfo
         """
         return self.technical_info.get(key)
 

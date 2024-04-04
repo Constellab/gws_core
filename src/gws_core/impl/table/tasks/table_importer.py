@@ -66,7 +66,7 @@ class TableImporter(ResourceImporter):
             raise BadRequestException(
                 f"Valid file formats are {Table.ALLOWED_FILE_FORMATS}.")
 
-        table: Table = target_type(data=dataframe, format_header_names=params.get(
+        table: Table = target_type(data=dataframe, strict_format_header_names=params.get(
             'format_header_names', False))
 
         # Extract the columns as tags

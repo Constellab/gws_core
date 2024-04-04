@@ -3,8 +3,6 @@
 import sqlite3
 from typing import List
 
-from pandas import read_sql_query
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.file.file import File
@@ -13,6 +11,7 @@ from gws_core.impl.table.view.table_view import TableView
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_decorator import view
+from pandas import read_sql_query
 
 
 @resource_decorator("SqliteResource")
@@ -22,7 +21,7 @@ class SqliteResource(File):
 
     def get_table_names(self) -> List[str]:
         table = self.execute_select("SELECT name FROM sqlite_master WHERE type='table';")
-        return table.get_column_as_list("name")
+        return table.get_column_data("name")
 
     def select_table(self, table_name: str) -> Table:
         return self.execute_select("SELECT * FROM " + table_name + ";")

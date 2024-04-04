@@ -49,18 +49,18 @@ ALLOWED_FILE_FORMATS = [*ALLOWED_XLS_FILE_FORMATS, *ALLOWED_TXT_FILE_FORMATS]
                     style=TypingStyle.material_icon("table_chart", background_color="#413ebb"))
 class Table(Resource):
     """
-    Main 2d table with named columns and named rows. It can also contains tags for each column and row.
+    Main 2d table with named columns and rows. It is a wrapper of the pandas Dataframe, to access it use the get_data() method.
 
-    It has a lot of transformers to manipulate the data.
+    ## Tags
+    In additions, a Table has tags (metadata) for each column and row.
+    A tag is a dictionary of key-value pairs.
+    It is helpful to add information about the data in the table for a row or a column.
+    Tags are visible in the interface and can be used to manipulate (filter, merge...) the data.
 
-    It has a lot of chart views to visualize the data.
-
+    ## Header names
     Table has more strict rules about row and column names than DataFrame :
      - Row names are converted to string and must be unique (if not, _1, _2, _3, ... are added to the name)
      - Column names are converted to string and must be unique (if not, _1, _2, _3, ... are added to the name)
-
-    If format_header_names is set to true, columns and row names are formatted (remove special characters, spaces, ...)
-
     """
 
     ALLOWED_DELIMITER = ["auto", "tab", "space", ",", ";"]
@@ -82,15 +82,38 @@ class Table(Resource):
     def __init__(self, data: Union[DataFrame, np.ndarray, list] = None,
                  row_names: List[str] = None, column_names: List[str] = None,
                  row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None,
-                 format_header_names: bool = False):
+                 strict_format_header_names: bool = False):
+        """Create a new Table
+
+        :param data: data use to initilialize the table, defaults to None
+        :type data: Union[DataFrame, np.ndarray, list], optional
+        :param row_names: set the row names for the table. Must be the same size as the number of rows, defaults to None
+        :type row_names: List[str], optional
+        :param column_names: set the column names for the table. Must be the same size as the number of columns, defaults to None
+        :type column_names: List[str], optional
+        :param row_tags: set the row tags for the table. Must be the same size as the number of rows, defaults to None
+        :type row_tags: List[Dict[str, str]], optional
+        :param column_tags: set the column tags for the table. Must be the same size as the number of columns, defaults to None
+        :type column_tags: List[Dict[str, str]], optional
+        :param strict_format_header_names: If false, the following rules are applied to headers (columns and rows) names:
+                                            - convert to string
+                                            - remove leading and trailing whitespaces
+                                            - rename duplicates by adding _1, _2, _3, ... at the end of the name
+                                           If true, the previous rules apply plus :
+                                            - replace ' ', '-', '.' with underscores
+                                            - remove all other special characters
+                                            - remove all accents
+        :type strict_format_header_names: bool, optional
+        """
         super().__init__()
         self._set_data(data, row_names=row_names, column_names=column_names,
-                       row_tags=row_tags, column_tags=column_tags, format_header_names=format_header_names)
+                       row_tags=row_tags, column_tags=column_tags,
+                       strict_format_header_names=strict_format_header_names)
 
     def _set_data(self, data: Union[DataFrame, np.ndarray] = None,
                   row_names=None, column_names=None,
                   row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None,
-                  format_header_names: bool = False) -> 'Table':
+                  strict_format_header_names: bool = False) -> 'Table':
         if data is None:
             data = DataFrame()
         else:
@@ -118,7 +141,7 @@ class Table(Resource):
 
         # format the row and column names
         # prevent having duplicate column and row names
-        self._data = DataframeHelper.format_column_and_row_names(data, strict=format_header_names)
+        self._data = DataframeHelper.format_column_and_row_names(data, strict=strict_format_header_names)
 
         self._set_tags(row_tags=row_tags, column_tags=column_tags)
 
@@ -203,25 +226,16 @@ class Table(Resource):
             dataframe.dropna(inplace=True)
         return dataframe
 
-    # TODO deprecated since 0.4.7
-    def get_column_as_list(self, column_name: str, skip_nan=False) -> list:
-        """
-        Get a column as a list
-        """
-        Logger.error("[Table] The get_column_as_list is deprecated. Use get_column_data instead.")
-
-        return self.get_column_data(column_name, skip_nan=skip_nan)
-
     def add_column(self, name: str, data: Union[list, Series] = None, index: int = None):
         """
         Add a new column to the Dataframe.
 
-        :param column_name: name of the column
-        :type column_name: str
-        :param column_data: data for the column, must be the same length as other colums
-        :type column_data: list
-        :param column_index: index for the column, if none, the column is append to the end, defaults to None
-        :type column_index: int, optional
+        :param name: name of the column
+        :type name: str
+        :param data: data for the column, must be the same length as other colums
+        :type data: list
+        :param index: index for the column, if none, the column is append to the end, defaults to None
+        :type index: int, optional
         """
 
         if data is None:
