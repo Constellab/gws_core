@@ -2,10 +2,11 @@
 
 import hashlib
 import os
+import subprocess
 from abc import abstractmethod
 from json import dump, load
 from pathlib import Path
-from typing import Any, Union, final
+from typing import Any, Dict, Union, final
 
 from typing_extensions import Literal
 
@@ -131,6 +132,26 @@ class BaseEnvShell(ShellProxy):
 
         return is_install
 
+    def _execute_env_install_command(self, cmd: str, env: Dict[str, str] = None) -> None:
+        """
+        Execute the command to install the virtual env, and log error if any.
+        """
+        res: subprocess.CompletedProcess = subprocess.run(
+            cmd,
+            cwd=self.get_env_dir_path(),
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+            check=False
+        )
+
+        if res.returncode != 0:
+            error_message = res.stderr.decode('utf-8') or res.stdout.decode('utf-8')
+            self._message_dispatcher.notify_error_message(error_message)
+            raise Exception(
+                f"Cannot install the virtual environment. Error: {error_message}")
+
     def _check_if_config_file_changed(self) -> bool:
         """
         Checks if the env config file has changed since the last installation.
@@ -185,6 +206,27 @@ class BaseEnvShell(ShellProxy):
         """
         Uninstall the virtual env.
         """
+
+    def _execute_uninstall_command(self, cmd: str, env: Dict[str, str] = None) -> None:
+        res = subprocess.run(
+            cmd,
+            cwd=self.get_env_dir_path(),
+            env=env,
+            stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            shell=True,
+            check=False
+        )
+        if res.returncode != 0:
+            try:
+                if FileHelper.exists_on_os(self.get_env_dir_path()):
+                    FileHelper.delete_dir(self.get_env_dir_path())
+
+            except Exception as err:
+                error_message = res.stderr.decode('utf-8') or res.stdout.decode('utf-8')
+                self._message_dispatcher.notify_error_message(error_message)
+                raise Exception(
+                    f"Cannot remove the virtual environment. {error_message}") from err
 
     def build_os_env(self) -> dict:
         """

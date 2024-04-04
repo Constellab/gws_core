@@ -1,6 +1,5 @@
 
 import os
-import subprocess
 from typing import Union
 
 from typing_extensions import Literal
@@ -32,20 +31,8 @@ class PipShellProxy(BaseEnvShell):
 
         self._message_dispatcher.notify_info_message(
             f"Installing pipenv env with command: {' '.join(cmd)}.")
-        res = subprocess.run(
-            " ".join(cmd),
-            cwd=self.get_env_dir_path(),
-            stderr=subprocess.PIPE,
-            env=env,
-            shell=True,
-            check=False
-        )
 
-        if res.returncode != 0:
-            self._message_dispatcher.notify_error_message(
-                res.stderr.decode('utf-8'))
-            raise Exception(
-                f"Cannot install the virtual environment. Error: {res.stderr}")
+        self._execute_env_install_command(" ".join(cmd), env)
 
         return True
 
@@ -65,22 +52,8 @@ class PipShellProxy(BaseEnvShell):
 
         self._message_dispatcher.notify_info_message(
             f"Uninstalling pipenv env with command: {' '.join(cmd)}.")
-        res = subprocess.run(
-            " ".join(cmd),
-            cwd=self.get_env_dir_path(),
-            stderr=subprocess.DEVNULL,
-            env=env,
-            shell=True,
-            check=False
-        )
 
-        if res.returncode != 0:
-            try:
-                if FileHelper.exists_on_os(self.get_env_dir_path()):
-                    FileHelper.delete_dir(self.get_env_dir_path())
-                    return True
-            except:
-                raise Exception("Cannot remove the virtual environment.")
+        self._execute_uninstall_command(" ".join(cmd), env)
 
         return True
 
