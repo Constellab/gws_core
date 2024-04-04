@@ -123,7 +123,8 @@ class Typing(Model):
             typing_name=self.typing_name,
             brick_version=self.brick_version,
             human_name=self.human_name,
-            style=self.style
+            style=self.style,
+            short_description=self.short_description
         )
 
     def to_full_dto(self) -> TypingFullDTO:

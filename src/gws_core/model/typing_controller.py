@@ -20,19 +20,19 @@ from ..core_controller import core_app
 @core_app.get("/typing/resource/{typing_name}", tags=["Typing"], summary="Get a resource typing")
 def get_resource_typing(typing_name: str,
                         _=Depends(AuthService.check_user_access_token)) -> ResourceTypingDTO:
-    return TypingService.get_typing(typing_name).to_full_dto()
+    return TypingService.get_and_check_typing(typing_name).to_full_dto()
 
 
 @core_app.get("/typing/task/{typing_name}", tags=["Typing"], summary="Get a task typing")
 def get_task_typing(typing_name: str,
                     _=Depends(AuthService.check_user_access_token)) -> TaskTypingDTO:
-    return TypingService.get_typing(typing_name).to_full_dto()
+    return TypingService.get_and_check_typing(typing_name).to_full_dto()
 
 
 @core_app.get("/typing/protocol/{typing_name}", tags=["Typing"], summary="Get a protocol typing")
 def get_protocol_typing(typing_name: str,
                         _=Depends(AuthService.check_user_access_token)) -> ProtocolTypingFullDTO:
-    return TypingService.get_typing(typing_name).to_full_dto()
+    return TypingService.get_and_check_typing(typing_name).to_full_dto()
 
 
 @core_app.get("/typing/object-type/{object_type}", tags=["Resource"],

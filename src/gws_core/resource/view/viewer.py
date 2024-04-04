@@ -42,7 +42,8 @@ class Viewer(Task):
 
         resource: Resource = inputs.get('resource')
 
-        config_resource_type: Type[Resource] = TypingManager.get_type_from_name(params.get('resource_typing_name'))
+        config_resource_type: Type[Resource] = TypingManager.get_and_check_type_from_name(
+            params.get('resource_typing_name'))
         if not Utils.issubclass(type(resource), config_resource_type):
             raise Exception(
                 f"The input resource type '{resource._human_name}' is not compatible with the type provided in the config: '{config_resource_type._human_name}'")

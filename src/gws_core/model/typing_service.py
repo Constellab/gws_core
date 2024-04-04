@@ -12,6 +12,7 @@ from gws_core.core.utils.utils import Utils
 from gws_core.io.io_specs import IOSpecs
 from gws_core.model.typing import Typing
 from gws_core.model.typing_dto import TypingObjectType, TypingStatus
+from gws_core.model.typing_exception import TypingNotFoundException
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_search_builder import TypingSearchBuilder
@@ -50,7 +51,7 @@ def filter_typing_by_specs(typing: Typing, resource_types: List[Type[Resource]],
 class TypingService():
 
     @classmethod
-    def get_typing(cls, typing_name: str) -> Typing:
+    def get_and_check_typing(cls, typing_name: str) -> Typing:
         typing_name_obj: TypingNameObj = TypingNameObj.from_typing_name(typing_name)
 
         typing_type: Type[Typing] = cls._get_typing_type_from_obj_type(typing_name_obj.object_type)
@@ -60,6 +61,9 @@ class TypingService():
         if typing is None:
             raise BadRequestException(
                 f"Can't find the typing with name '{typing_name}', did you register the name with corresponding decorator ?")
+
+        if typing.get_type() is None:
+            raise TypingNotFoundException(typing_name)
         return typing
 
     @classmethod

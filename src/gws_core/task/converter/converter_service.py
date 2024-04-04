@@ -30,9 +30,9 @@ class ConverterService:
             cls, resource_model_id: str, importer_typing_name: str, config: ConfigParamsDict) -> ResourceModel:
         # Get and check the resource id
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
-        resource_type: Type[File] = resource_model.get_resource_type()
+        resource_type: Type[File] = resource_model.get_and_check_resource_type()
 
-        importer_type: Type[ResourceImporter] = TypingManager.get_type_from_name(importer_typing_name)
+        importer_type: Type[ResourceImporter] = TypingManager.get_and_check_type_from_name(importer_typing_name)
 
         # Create an experiment containing 1 source, 1 importer , 1 sink
         experiment: IExperiment = IExperiment(
@@ -62,7 +62,7 @@ class ConverterService:
         """return the Task exporter typing for the resource type.
         The one that is closest to class in herarchy
         """
-        resource_type: Type[File] = TypingManager.get_type_from_name(resource_typing_name)
+        resource_type: Type[File] = TypingManager.get_and_check_type_from_name(resource_typing_name)
 
         return cls.get_resource_exporter(resource_type)
 
@@ -97,7 +97,7 @@ class ConverterService:
         protocol: IProtocol = experiment.get_protocol()
 
         # Add the importer and the connector
-        exporter_type: Type[ResourceExporter] = TypingManager.get_type_from_name(exporter_typing_name)
+        exporter_type: Type[ResourceExporter] = TypingManager.get_and_check_type_from_name(exporter_typing_name)
         extractor: IProcess = protocol.add_process(exporter_type, 'exporter', params)
 
         # Add source and connect it,

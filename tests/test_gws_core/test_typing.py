@@ -126,13 +126,13 @@ class TestTyping(BaseTestCase):
             len([x for x in typings if x.unique_name == 'SubFileTransformer']), 0)
 
     def test_get_typing(self):
-        typing: Typing = TypingService.get_typing(SubFileTyping._typing_name)
+        typing: Typing = TypingService.get_and_check_typing(SubFileTyping._typing_name)
         self.assertIsInstance(typing, ResourceTyping)
 
-        typing = TypingService.get_typing(FileTransformer._typing_name)
+        typing = TypingService.get_and_check_typing(FileTransformer._typing_name)
         self.assertIsInstance(typing, TaskTyping)
 
-        typing = TypingService.get_typing(CreateSimpleRobot2._typing_name)
+        typing = TypingService.get_and_check_typing(CreateSimpleRobot2._typing_name)
         self.assertIsInstance(typing, ProtocolTyping)
 
     def test_typing_search(self):

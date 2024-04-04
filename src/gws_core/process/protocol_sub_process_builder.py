@@ -91,11 +91,7 @@ class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
     def instantiate_process(self, instance_name: str) -> ProcessModel:
         process_dto = self.protocol_config.nodes[instance_name]
         process_type_str: str = process_dto.process_typing_name
-        process_type: Type[Process] = TypingManager.get_type_from_name(process_type_str)
-
-        if process_type is None:
-            raise BadRequestException(
-                f"Process {process_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
+        process_type: Type[Process] = TypingManager.get_and_check_type_from_name(process_type_str)
 
         return self._create_new_process(process_type=process_type, instance_name=instance_name,
                                         process_dto=process_dto)

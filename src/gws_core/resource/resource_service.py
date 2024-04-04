@@ -93,7 +93,7 @@ class ResourceService(BaseService):
 
         ResourceService._check_before_resource_update(resource_model)
 
-        file_type: Type[Resource] = TypingManager.get_type_from_name(
+        file_type: Type[Resource] = TypingManager.get_and_check_type_from_name(
             file_typing_name)
 
         if not Utils.issubclass(file_type, Resource):
@@ -176,7 +176,7 @@ class ResourceService(BaseService):
 
     @classmethod
     def get_views_of_resource(cls, resource_typing_name: str) -> List[ResourceViewMetaData]:
-        resource_type = TypingManager.get_type_from_name(resource_typing_name)
+        resource_type = TypingManager.get_and_check_type_from_name(resource_typing_name)
 
         if not Utils.issubclass(resource_type, Resource):
             raise BadRequestException(
@@ -202,7 +202,7 @@ class ResourceService(BaseService):
 
     @classmethod
     def get_view_specs_from_type(cls, resource_typing_name: str, view_name: str) -> ResourceViewMetadatalDTO:
-        resource_type: Type[Resource] = TypingManager.get_type_from_name(
+        resource_type: Type[Resource] = TypingManager.get_and_check_type_from_name(
             resource_typing_name)
 
         view_meta = ViewHelper.get_and_check_view_meta(

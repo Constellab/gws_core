@@ -7,7 +7,7 @@ from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.experiment.experiment_dto import ExperimentSimpleDTO
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
-from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
+from gws_core.model.typing_dto import TypingRefDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
 from gws_core.project.project_dto import ProjectDTO
 
@@ -25,7 +25,7 @@ class ResourceOrigin(Enum):
 
 class ResourceDTO(ModelWithUserDTO):
     resource_typing_name: str
-    resource_type: Optional[SimpleTypingDTO] = None
+    resource_type: Optional[TypingRefDTO] = None
     fs_node: Optional[FsNodeModelDTO]
     is_downloadable: Optional[bool] = None
     origin: ResourceOrigin

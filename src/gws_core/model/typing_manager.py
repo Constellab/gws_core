@@ -4,6 +4,7 @@ from typing import Dict, Optional, Type
 
 from peewee import ModelSelect
 
+from gws_core.model.typing_exception import TypingNotFoundException
 from gws_core.model.typing_name import TypingNameObj
 
 from ..brick.brick_helper import BrickHelper
@@ -42,13 +43,21 @@ class TypingManager:
         typing: Optional[Typing] = cls.get_typing_from_name(typing_name)
 
         if typing is None:
-            raise BadRequestException(
-                f"Can't find the typing with name '{typing_name}', did you register the name with corresponding decorator ?")
+            raise TypingNotFoundException(typing_name)
         return typing
 
     @classmethod
-    def get_type_from_name(cls, typing_name: str) -> Type:
+    def get_type_from_name(cls, typing_name: str) -> Optional[Type]:
         return cls.get_typing_from_name_and_check(typing_name).get_type()
+
+    @classmethod
+    def get_and_check_type_from_name(cls, typing_name: str) -> Type:
+        type_ = cls.get_type_from_name(typing_name)
+
+        if type_ is None:
+            raise TypingNotFoundException(typing_name)
+
+        return type_
 
     @classmethod
     def get_object_with_typing_name(cls, typing_name: str, object_id: str) -> Model:

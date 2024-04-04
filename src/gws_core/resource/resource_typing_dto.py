@@ -14,4 +14,4 @@ class ResourceTypingMethodDTO(BaseModelDTO):
 
 
 class ResourceTypingDTO(TypingFullDTO):
-    methods: ResourceTypingMethodDTO
+    methods: Optional[ResourceTypingMethodDTO]

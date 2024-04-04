@@ -96,7 +96,7 @@ class ResourceLoader():
 
             kv_store = KVStore(kvstore_path)
 
-        resource_type: Type[Resource] = TypingManager.get_type_from_name(
+        resource_type: Type[Resource] = TypingManager.get_and_check_type_from_name(
             zip_resource.resource_typing_name)
 
         tags_dict = zip_resource.tags or []

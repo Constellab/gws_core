@@ -39,7 +39,7 @@ class ViewConfigService():
                          view_name: str, config: Config,
                          is_favorite: bool = False,
                          view_style: TypingStyle = None) -> ViewConfig:
-        view_meta_data = ViewHelper.get_and_check_view_meta(resource_model.get_resource_type(), view_name)
+        view_meta_data = ViewHelper.get_and_check_view_meta(resource_model.get_and_check_resource_type(), view_name)
 
         view_config: ViewConfig = ViewConfig(
             resource_model=resource_model,

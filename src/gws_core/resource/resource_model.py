@@ -290,7 +290,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
         Create the Resource object from the resource_typing_name
         """
 
-        return ResourceFactory.create_resource(self.get_resource_type(),
+        return ResourceFactory.create_resource(self.get_and_check_resource_type(),
                                                kv_store=self.get_kv_store(), data=self.data,
                                                resource_model_id=self.id, name=self.name)
 
@@ -442,8 +442,11 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
         """
         return ReflectorHelper.get_property_names_of_type(resource_type, BaseRField)
 
-    def get_resource_type(self) -> Type[Resource]:
+    def get_resource_type(self) -> Optional[Type[Resource]]:
         return TypingManager.get_type_from_name(self.resource_typing_name)
+
+    def get_and_check_resource_type(self) -> Type[Resource]:
+        return TypingManager.get_and_check_type_from_name(self.resource_typing_name)
 
     ########################################## KV STORE ######################################
 
@@ -501,7 +504,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
             self.resource_typing_name)
 
         if resource_typing:
-            resource_dto.resource_type = resource_typing.to_simple_dto()
+            resource_dto.resource_type = resource_typing.to_ref_dto()
             resource_dto.is_downloadable = self.is_downloadable
             resource_dto.type_status = resource_typing.get_type_status()
 

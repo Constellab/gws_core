@@ -58,7 +58,7 @@ class FsNodeService(BaseService):
         """
 
         file_store: FileStore = LocalFileStore.get_default_instance()
-        file_type: Type[File] = TypingManager.get_type_from_name(typing_name)
+        file_type: Type[File] = TypingManager.get_and_check_type_from_name(typing_name)
 
         # retrieve the name of the file without the folder if there are some
         filename = FileHelper.get_name_with_extension(upload_file.filename)
@@ -109,7 +109,7 @@ class FsNodeService(BaseService):
         if len(files) == 0:
             raise BadRequestException('The folder is empty')
 
-        folder_type: Type[Folder] = TypingManager.get_type_from_name(
+        folder_type: Type[Folder] = TypingManager.get_and_check_type_from_name(
             folder_typing_name)
 
         if not Utils.issubclass(folder_type, Folder):

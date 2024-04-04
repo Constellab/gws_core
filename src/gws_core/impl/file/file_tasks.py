@@ -66,7 +66,7 @@ class FsNodeExtractor(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # retrieve resource type
-        _type: Type[FSNode] = TypingManager.get_type_from_name(
+        _type: Type[FSNode] = TypingManager.get_and_check_type_from_name(
             params.get('fs_node_typing_name'))
 
         path: str = params.get('fs_node_path')

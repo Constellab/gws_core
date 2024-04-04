@@ -22,6 +22,7 @@ class TypingRefDTO(BaseModelDTO):
     brick_version: str
     human_name: str
     style: Optional[TypingStyle] = None
+    short_description: Optional[str] = None
 
 
 class TypingDTO(ModelDTO):

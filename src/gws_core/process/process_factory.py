@@ -88,7 +88,7 @@ class ProcessFactory():
     @classmethod
     def create_task_model_from_typing_name(
             cls, typing_name: str, config_params: ConfigParamsDict = None, instance_name: str = None) -> TaskModel:
-        task_type: Type[Task] = TypingManager.get_type_from_name(
+        task_type: Type[Task] = TypingManager.get_and_check_type_from_name(
             typing_name=typing_name)
         return cls.create_task_model_from_type(
             task_type=task_type, config_params=config_params, instance_name=instance_name)
@@ -278,7 +278,7 @@ class ProcessFactory():
     @classmethod
     def create_process_model_from_typing_name(
             cls, typing_name: str, config_params: ConfigParamsDict = None, instance_name: str = None) -> TaskModel:
-        process_type: Type[Process] = TypingManager.get_type_from_name(
+        process_type: Type[Process] = TypingManager.get_and_check_type_from_name(
             typing_name=typing_name)
         return cls.create_process_model_from_type(
             process_type=process_type, config_params=config_params, instance_name=instance_name)

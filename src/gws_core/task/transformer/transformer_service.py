@@ -30,7 +30,7 @@ class TransformerService():
         # Get and check the resource id
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
             resource_model_id)
-        resource_type: Type[Resource] = resource_model.get_resource_type()
+        resource_type: Type[Resource] = resource_model.get_and_check_resource_type()
 
         # Create an experiment containing 1 source, X transformers task , 1 sink
         experiment: IExperiment = IExperiment(
@@ -45,7 +45,7 @@ class TransformerService():
 
         # create all transformer process with connectors
         for transformer in transformers:
-            transformer_type: Type[Task] = TypingManager.get_type_from_name(
+            transformer_type: Type[Task] = TypingManager.get_and_check_type_from_name(
                 transformer["typing_name"])
 
             new_process: IProcess = protocol.add_process(
@@ -86,7 +86,7 @@ class TransformerService():
     def call_transformer(cls, resource: Resource,
                          transformer: TransformerDict) -> Resource:
         # retrieve transformer type
-        transformer_task: Type[Converter] = TypingManager.get_type_from_name(
+        transformer_task: Type[Converter] = TypingManager.get_and_check_type_from_name(
             transformer['typing_name'])
 
         return transformer_task.call(resource, transformer['config_values'])

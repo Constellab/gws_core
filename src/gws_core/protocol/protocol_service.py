@@ -145,7 +145,7 @@ class ProtocolService(BaseService):
         existing_process: ProcessModel = protocol_model.get_process(
             output_process_name)
 
-        new_process_type: Type[Process] = TypingManager.get_type_from_name(
+        new_process_type: Type[Process] = TypingManager.get_and_check_type_from_name(
             process_typing_name)
 
         return cls._add_process_connected_to_output(
@@ -194,7 +194,7 @@ class ProtocolService(BaseService):
             input_process_name)
         existing_in_port: Port = existing_process.in_port(input_port_name)
 
-        new_process_type: Type[Process] = TypingManager.get_type_from_name(
+        new_process_type: Type[Process] = TypingManager.get_and_check_type_from_name(
             process_typing_name)
 
         output_name: str
