@@ -4,8 +4,10 @@ import copy
 from typing import Any, Dict, List, Type
 
 from pandas import DataFrame
+from plotly.graph_objs import Figure
 
 from gws_core.impl.json.json_dict import JSONDict
+from gws_core.impl.plotly.plotly_resource import PlotlyResource
 from gws_core.impl.table.table import Table
 from gws_core.impl.text.text import Text
 from gws_core.resource.kv_store import KVStore
@@ -95,5 +97,7 @@ class ResourceFactory():
             return ResourceList([cls.create_from_object(r) for r in resource])
         if isinstance(resource, DataFrame):
             return Table(resource)
+        if isinstance(resource, Figure):
+            return PlotlyResource(resource)
 
         return None
