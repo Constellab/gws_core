@@ -108,8 +108,9 @@ class TaskRunner():
             self.force_dispatch_waiting_messages()
             raise exception from exception
 
+        outputs = self._check_outputs(task_outputs)
         self.force_dispatch_waiting_messages()
-        return self._check_outputs(task_outputs)
+        return outputs
 
     def run_after_task(self) -> None:
         task: Task = self._get_task_instance()
@@ -181,6 +182,9 @@ class TaskRunner():
         """
 
         result = self._output_specs.check_and_build_outputs(task_outputs)
+
+        for auto_convert_message in result.auto_convert_messages:
+            self._message_dispatcher.notify_info_message(auto_convert_message)
 
         self._outputs = result.outputs
 

@@ -26,6 +26,7 @@ class OutputsCheckResult(BaseModelDTO):
     """
     error: Optional[str]
     outputs: Optional[TaskOutputs]
+    auto_convert_messages: List[str]
 
     class Config:
         arbitrary_types_allowed = True
@@ -36,6 +37,7 @@ class OutputCheckResult(BaseModelDTO):
     """
     error: Optional[str]
     resource: Optional[Resource]
+    auto_convert_message: Optional[str]
 
     class Config:
         arbitrary_types_allowed = True
@@ -164,6 +166,7 @@ class OutputSpecs(IOSpecs):
         task_outputs = self._transform_output_resources(task_outputs)
 
         error_text: str = ''
+        auto_convert_messages: List[str] = []
 
         verified_outputs: TaskOutputs = {}
 
@@ -182,6 +185,12 @@ class OutputSpecs(IOSpecs):
                 resource: Resource = task_outputs[key]
 
                 check_result = self._check_output(resource, spec, self._get_spec_key_pretty_name(key))
+
+                # add the auto convert message
+                if check_result.auto_convert_message is not None:
+                    auto_convert_messages.append(check_result.auto_convert_message)
+
+                # if there is an error, add it to the error text
                 if check_result.error is not None and len(check_result.error) > 0:
                     error_text = error_text + check_result.error
                     continue
@@ -192,29 +201,32 @@ class OutputSpecs(IOSpecs):
 
         return OutputsCheckResult(
             error=error_text,
-            outputs=verified_outputs
+            outputs=verified_outputs,
+            auto_convert_messages=auto_convert_messages
         )
 
     def _check_output(self, output_resource: Resource, spec: OutputSpec, pretty_key_name: str) -> OutputCheckResult:
         """Method to check a output resource, return str if there is an error with the resource
         """
 
+        auto_convert_message: str = None
         # if the resource is not a Resource, try to convert it
         if not isinstance(output_resource, Resource):
-            resource_type = type(output_resource)
-            output_resource = ResourceFactory.create_from_object(output_resource)
-            if output_resource is None:
+            converted_resource = ResourceFactory.create_from_object(output_resource)
+            if converted_resource is None:
                 return OutputCheckResult(
-                    error=f"The output '{pretty_key_name}' of type '{resource_type.__name__}' is not a resource and could not be converted dynamically. It must extend the Resource class",
+                    error=f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' is not a resource and could not be converted dynamically. It must extend the Resource class",
                     resource=None
                 )
+
+            auto_convert_message = f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' was automatically converted to '{type(converted_resource)._human_name}'."
+            output_resource = converted_resource
 
         # Check resource is compatible with specs
         if not spec.is_compatible_with_resource_type(type(output_resource)):
             return OutputCheckResult(
                 error=f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' is not a compatble with the corresponding output spec.",
-                resource=None
-            )
+                resource=None, auto_convert_message=auto_convert_message)
 
         # Check that the resource is well formed
         try:
@@ -227,11 +239,14 @@ class OutputSpecs(IOSpecs):
             Logger.log_exception_stack_trace(err)
             return OutputCheckResult(
                 error=f"Error during the key of the output resource '{pretty_key_name}'. Error : {str(err)}",
-                resource=None)
+                resource=None,
+                auto_convert_message=auto_convert_message
+            )
 
         return OutputCheckResult(
             resource=output_resource,
-            error=None
+            error=None,
+            auto_convert_message=auto_convert_message
         )
 
     def _transform_output_resources(self, task_outputs: TaskOutputs) -> TaskOutputs:
