@@ -21,9 +21,6 @@ class RichText(SerializableObjectJson):
     :rtype: [type]
     """
 
-    VARIABLE_TAG_NAME = 'te-variable-inline'
-    VARIABLE_JSON_ATTRIBUTE = 'data-jsondata'
-
     _content: RichTextDTO
 
     def __init__(self, rich_text_content: RichTextDTO = None) -> None:

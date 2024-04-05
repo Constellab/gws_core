@@ -15,7 +15,9 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_decorator import view
+from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_result import CallViewResult
+from gws_core.resource.view_config.view_config import ViewConfig
 
 
 @resource_decorator("ENoteResource", human_name="E-note resource",
@@ -81,6 +83,24 @@ class ENoteResource(Resource):
         :type rich_text: RichText
         """
         self.rich_text.append_rich_text(rich_text)
+
+    def add_default_view(self, resource: Resource,
+                         title: str = None, caption: str = None,
+                         variable_name: str = None) -> None:
+        """Add a default view to the e-note content.
+
+        :param resource: resource to call the view on
+        :type resource: Resource
+        :param title: view title, defaults to None
+        :type title: str, optional
+        :param caption: view caption, defaults to None
+        :type caption: str, optional
+        :param variable_name: if provided, the view replace the provided variable.
+                            if not, the view is append at the end of the enote, defaults to None
+        :type variable_name: str, optional
+        """
+        self.add_view(resource, ViewHelper.DEFAULT_VIEW_NAME, None,
+                      title, caption, variable_name)
 
     def add_view(self, resource: Resource, view_method_name: str, config_values: ConfigParamsDict = None,
                  title: str = None, caption: str = None, variable_name: str = None) -> None:

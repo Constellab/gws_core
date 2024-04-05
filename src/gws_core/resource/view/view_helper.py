@@ -15,13 +15,15 @@ from .view_meta_data import ResourceViewMetaData
 
 class ViewHelper():
 
+    DEFAULT_VIEW_NAME = 'default-view'
+
     @classmethod
     def get_and_check_view_meta(cls, resource_type: Type[Resource], view_name: str) -> ResourceViewMetaData:
         if not Utils.issubclass(resource_type, Resource):
             raise BadRequestException('The provided type is not a Resource type')
 
         # specific case for the default view, we retrieve the view name
-        if view_name == 'default-view':
+        if view_name == cls.DEFAULT_VIEW_NAME:
             return ViewHelper.get_default_view_of_resource_type(resource_type)
 
         # check that the method exists and is annotated with view

@@ -36,22 +36,31 @@ class TestRichText(BaseTestCaseLight):
                 }
             ),
             RichTextBlock(
-                id="3",
+                id="2",
                 type=RichTextBlockType.PARAGRAPH,
                 data={
                     # Paragraph with a variable named test2
                     "text": 'Place for <te-variable-inline data-jsondata=\'{"name": "test2", "description": "", "type": "string", "value": null}\'></te-variable-inline> variable'
                 }
             ),
+            # Variable for figure inline with text alone in a block
             RichTextBlock(
-                id="9",
+                id="3",
                 type=RichTextBlockType.PARAGRAPH,
                 data={
-                    "text": 'Variable : <te-variable-inline data-jsondata=\'{"name": "figure_1", "description": "", "type": "string", "value": null}\'></te-variable-inline> super'
+                    "text": '<te-variable-inline data-jsondata=\'{"name": "figure_1", "description": "", "type": "string", "value": null}\'> figure_1</te-variable-inline>'
+                }
+            ),
+            #  Variable for figure inline with text
+            RichTextBlock(
+                id="4",
+                type=RichTextBlockType.PARAGRAPH,
+                data={
+                    "text": 'Variable : <te-variable-inline data-jsondata=\'{"name": "figure_2", "description": "", "type": "string", "value": null}\'> figure_2</te-variable-inline> super'
                 }
             ),
             RichTextBlock(
-                id="13",
+                id="6",
                 type=RichTextBlockType.PARAGRAPH,
                 data={
                     "text": "End"
@@ -91,12 +100,19 @@ class TestRichText(BaseTestCaseLight):
         }
 
         # add the resource view in the rich text at a specific variable
-        # this should split the block in 3 blocks
+        block_count = len(rich_text.get_content().blocks)
         rich_text.add_resource_views(view, 'figure_1')
-        self.assertEqual(rich_text.get_content().blocks[3].data["text"], 'Variable : ')
-        self.assertEqual(rich_text.get_content().blocks[4].type, RichTextBlockType.RESOURCE_VIEW)
-        self.assertEqual(rich_text.get_content().blocks[5].data["text"], ' super')
-        self.assertEqual(rich_text.get_content().blocks[6].data["text"], 'End')
+        # no block should be added
+        self.assertEqual(len(rich_text.get_content().blocks), block_count)
+        self.assertEqual(rich_text.get_content().blocks[3].type, RichTextBlockType.RESOURCE_VIEW)
+
+        # add the resource view in the rich text at a specific variable
+        # this should split the block in 3 blocks
+        rich_text.add_resource_views(view, 'figure_2')
+        self.assertEqual(rich_text.get_content().blocks[4].data["text"], 'Variable : ')
+        self.assertEqual(rich_text.get_content().blocks[5].type, RichTextBlockType.RESOURCE_VIEW)
+        self.assertEqual(rich_text.get_content().blocks[6].data["text"], ' super')
+        self.assertEqual(rich_text.get_content().blocks[7].data["text"], 'End')
 
         # test replace block
         rich_text.replace_block_at_index(0, RichTextBlock(

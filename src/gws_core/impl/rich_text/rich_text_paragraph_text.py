@@ -79,7 +79,7 @@ class RichTextParagraphText():
                 json_data = tag[self.VARIABLE_JSON_ATTRIBUTE]
                 variable_data: RichTextVariableData = json.loads(json_data)
 
-                if variable_data.get('name') == variable_name:
+                if variable_data.get('name').strip() == variable_name.strip():
 
                     before = self.get_elements_before_as_str(tag)
                     after = self.get_elements_after_as_str(tag)
@@ -90,18 +90,18 @@ class RichTextParagraphText():
 
     def get_elements_before_as_str(self, target_element: BeautifulSoup) -> str:
         result: str = ''
-        current_element = target_element.previous_element
+        current_element = target_element.previous_sibling
         while current_element is not None:
             result = str(current_element) + result
-            current_element = current_element.previous_element
+            current_element = current_element.previous_sibling
         return result
 
     def get_elements_after_as_str(self, target_element: BeautifulSoup) -> str:
         result: str = ''
-        current_element = target_element.next_element
+        current_element = target_element.next_sibling
         while current_element is not None:
             result = result + str(current_element)
-            current_element = current_element.next_element
+            current_element = current_element.next_sibling
         return result
 
     # def extract_variable(self, html_string, var_name, var_value) -> SearchVariableResultDTO:
