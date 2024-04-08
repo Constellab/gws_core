@@ -92,6 +92,16 @@ def call_folder_sub_file_view(id: str,
     return FsNodeService.call_folder_sub_file_view(resource_id=id, sub_file_path=data.sub_file_path).to_dto()
 
 
+@core_app.post("/fs-node/{id}/folder/download-sub-node", tags=["Files"],
+               summary="Download a sub file of a folder")
+def download_folder_sub_file(id: str,
+                             data: SubFilePath,
+                             _=Depends(AuthService.check_user_access_token)) -> FileResponse:
+    """
+    Call the default view of a sub file in a folder
+    """
+    return FsNodeService.download_folder_sub_node(resource_id=id, sub_file_path=data.sub_file_path)
+
 ############################# FILE TYPE ###########################
 
 

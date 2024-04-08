@@ -45,7 +45,7 @@ class FsNodeService(BaseService):
         file_store: FileStore = LocalFileStore.get_default_instance()
         if not file_store.node_path_exists(resource.path):
             raise NotFoundException(
-                f"The file does not exists on the server. It has been deleted")
+                "The file does not exists on the server. It has been deleted")
 
         return FileHelper.create_file_response(resource.path, filename=resource.get_default_name())
 
@@ -102,6 +102,7 @@ class FsNodeService(BaseService):
 
 
 ############################# FOLDER ###########################
+
 
     @classmethod
     @transaction()
@@ -167,8 +168,28 @@ class FsNodeService(BaseService):
             resource_model=resource_model, view_name=view_name, config_values={
                 'sub_file_path': sub_file_path}, save_view_config=True)
 
+    @classmethod
+    def download_folder_sub_node(cls, resource_id: str, sub_file_path: str) -> FileResponse:
+        resource_model: ResourceModel = ResourceService.get_by_id_and_check(
+            resource_id)
+        resource: Folder = resource_model.get_resource()
+
+        if not isinstance(resource, Folder):
+            raise BadRequestException(
+                "Can't download resource because it is not an Folder")
+
+        sub_path_full = resource.get_sub_path(sub_file_path)
+
+        # for now, the direct download for a folder is not allowed
+        if FileHelper.is_dir(sub_path_full):
+            raise BadRequestException(
+                "The direct download of sub folder is not yet supported. Please call 'Extract folder' on the sub folder, then download the extracted folder")
+
+        return FileHelper.create_file_response(sub_path_full, filename=FileHelper.get_name(sub_file_path))
+
 
 ############################# FILE TYPE ###########################
+
 
     @classmethod
     def get_file_types(cls) -> List[FileTyping]:
