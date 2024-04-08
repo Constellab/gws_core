@@ -32,6 +32,7 @@ from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor import Monitor
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
+from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_factory import ProcessFactory
 from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar
@@ -1071,7 +1072,7 @@ class Migration075(BrickMigration):
                 del outerface["to"]
 
 
-@brick_migration('0.8.0-beta.1', short_description='Remove old rich text.')
+@brick_migration('0.8.0-beta.1', short_description='Remove old rich text. Add style to entities.')
 class Migration080Beta1(BrickMigration):
 
     @classmethod
@@ -1090,3 +1091,17 @@ class Migration080Beta1(BrickMigration):
         migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.style)
 
         migrator.migrate()
+
+        protocol_templates: List[ProtocolTemplate] = list(ProtocolTemplate.select())
+        for protocol_template in protocol_templates:
+            cls.migrate_template_data(protocol_template.data)
+            protocol_template.save(skip_hook=True)
+
+    @classmethod
+    def migrate_template_data(cls, graph: dict) -> None:
+        for node in graph["nodes"].values():
+            if "style" not in node:
+                node["style"] = TypingStyle.default_task().to_json_dict()
+
+            if node.get('graph'):
+                cls.migrate_template_data(node["graph"])
