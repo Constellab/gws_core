@@ -15,7 +15,7 @@ from .plotly_view import PlotlyView
 
 @resource_decorator("PlotlyResource", human_name="Plotly resource",
                     short_description="Plotly resource",
-                    style=TypingStyle.material_icon("analytics", background_color="#1ff80f"))
+                    style=TypingStyle.material_icon("analytics", background_color="#496989"))
 class PlotlyResource(Resource):
     """
     Resource that contains a plotly figure.

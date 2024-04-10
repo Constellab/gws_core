@@ -7,7 +7,6 @@ from pandas import DataFrame, Series
 from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
                               is_string_dtype)
 
-from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
@@ -16,7 +15,7 @@ from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_axis_tags import TableAxisTags
 from gws_core.impl.table.view.table_vulcano_plot_view import \
     TableVulcanoPlotView
-from gws_core.model.typing_style import TypingIconColor, TypingStyle
+from gws_core.model.typing_style import TypingStyle
 
 from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -46,7 +45,7 @@ ALLOWED_FILE_FORMATS = [*ALLOWED_XLS_FILE_FORMATS, *ALLOWED_TXT_FILE_FORMATS]
 
 
 @resource_decorator("Table", human_name="Table", short_description="2d excel like table",
-                    style=TypingStyle.material_icon("table_chart", background_color="#413ebb"))
+                    style=TypingStyle.material_icon("table_chart", background_color="#79ac78"))
 class Table(Resource):
     """
     Main 2d table with named columns and rows. It is a wrapper of the pandas Dataframe, to access it use the get_data() method.

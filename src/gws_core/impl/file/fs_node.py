@@ -13,7 +13,7 @@ from ...resource.resource_decorator import resource_decorator
 
 
 @resource_decorator(unique_name="FSNode", hide=True,
-                    style=TypingStyle.material_icon("folder", background_color="#346b02"))
+                    style=TypingStyle.material_icon("folder", background_color="#7b9dd2"))
 class FSNode(Resource):
     """
     Node class to manage resources that are stored in the server (as file or folder)

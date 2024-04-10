@@ -7,7 +7,7 @@ from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.io.dynamic_io import DynamicInputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
-from gws_core.model.typing_style import TypingStyle
+from gws_core.model.typing_style import TypingIconType
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.task import Task
@@ -17,7 +17,8 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 @task_decorator("StreamlitLiveTask", human_name="Streamlite live task",
                 short_description="Live task to generate a streamlit app dashboard",
-                style=TypingStyle.material_icon("code"))
+                style=StreamlitResource.clone_style(
+                    icon_technical_name='code', icon_type=TypingIconType.MATERIAL_ICON))
 class StreamlitLiveTask(Task):
     """
     Live task to generate a streamlit app dashboard.

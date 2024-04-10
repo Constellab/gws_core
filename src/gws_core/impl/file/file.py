@@ -21,7 +21,7 @@ from .fs_node import FSNode
 
 
 @resource_decorator("File", human_name="File",
-                    style=TypingStyle.material_icon("description", background_color="#346b02"))
+                    style=TypingStyle.material_icon("description"))
 class File(FSNode):
     """
     File class.

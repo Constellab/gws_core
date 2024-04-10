@@ -17,7 +17,7 @@ from .json_view import JSONView
 
 @resource_decorator("JSONDict", human_name="JSON Dict",
                     short_description="Resource that holds a JSON dict",
-                    style=TypingStyle.material_icon("data_object", background_color="#1fc691"))
+                    style=TypingStyle.material_icon("data_object", background_color="#f6995c"))
 class JSONDict(Resource):
 
     data: dict = DictRField()

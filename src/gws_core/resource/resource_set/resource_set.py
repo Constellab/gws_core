@@ -12,8 +12,7 @@ from .resource_list_base import ResourceListBase
 
 
 @resource_decorator(unique_name="ResourceSet", human_name="Resource set",
-                    short_description="A set of resources",
-                    style=TypingStyle.material_icon("format_list_bulleted"))
+                    short_description="A set of resources")
 class ResourceSet(ResourceListBase):
     """Resource to manage a set of resources. By default the sytem create a new
     resource for each resource in the set when saving the set

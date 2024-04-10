@@ -47,13 +47,13 @@ class ViewType(Enum):
         if self == ViewType.VIEW:
             style = TypingStyle.default_view()
         elif self == ViewType.JSON:
-            style = TypingStyle.material_icon("data_object", background_color="#1fc691")
+            style = TypingStyle.material_icon("data_object", background_color="#f6995c")
         elif self == ViewType.TEXT:
-            style = TypingStyle.material_icon("text_snippet", background_color="#12b0a0")
+            style = TypingStyle.material_icon("text_snippet", background_color="#e4debe")
         elif self == ViewType.TABLE or self == ViewType.TABULAR:
-            style = TypingStyle.material_icon("table_chart", background_color="#413ebb")
+            style = TypingStyle.material_icon("table_chart", background_color="#79ac78")
         elif self == ViewType.FOLDER:
-            style = TypingStyle.material_icon("folder", background_color="#346b02")
+            style = TypingStyle.material_icon("folder", background_color="#7b9dd2")
         elif self == ViewType.SCATTER_PLOT_2D:
             style = TypingStyle.material_icon("scatter_plot")
         elif self == ViewType.VULCANO_PLOT:
@@ -73,21 +73,21 @@ class ViewType(Enum):
         elif self == ViewType.VENN_DIAGRAM:
             style = TypingStyle.material_icon("assessment")
         elif self == ViewType.RESOURCES_LIST_VIEW:
-            style = TypingStyle.material_icon("format_list_bulleted")
+            style = TypingStyle.material_icon("format_list_bulleted", background_color="#496989")
         elif self == ViewType.EMPTY:
             style = TypingStyle.material_icon("assessment")
         elif self == ViewType.MULTI_VIEWS:
             style = TypingStyle.material_icon("assessment")
         elif self == ViewType.NETWORK:
-            style = TypingStyle.material_icon("hub")
+            style = TypingStyle.material_icon("hub", background_color="#627254")
         elif self == ViewType.IMAGE:
             style = TypingStyle.material_icon("image")
         elif self == ViewType.HTML:
             style = TypingStyle.material_icon("computer")
         elif self == ViewType.PLOTLY:
-            style = TypingStyle.material_icon("assessment")
+            style = TypingStyle.material_icon("analytics", background_color="#496989")
         elif self == ViewType.RICH_TEXT:
-            style = TypingStyle.material_icon("text_snippet")
+            style = TypingStyle.material_icon("text_snippet", background_color="#f6f193")
         elif self == ViewType.STREAMLIT:
             style = TypingStyle.material_icon("dashboard")
         else:

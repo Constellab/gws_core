@@ -12,7 +12,7 @@ from .text_view import TextView
 
 
 @resource_decorator("Text", human_name="Text", short_description="Resource that holds a text",
-                    style=TypingStyle.material_icon("text_snippet", background_color="#12b0a0"))
+                    style=TypingStyle.material_icon("text_snippet", background_color="#e4debe"))
 class Text(Resource):
     DEFAULT_FILE_FORMAT = "txt"
     _data: str = StrRField(searchable=False)

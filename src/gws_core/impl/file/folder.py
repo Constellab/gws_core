@@ -20,7 +20,7 @@ from .fs_node import FSNode
 
 
 @resource_decorator("Folder", human_name="Folder",
-                    style=TypingStyle.material_icon("folder", background_color="#346b02"))
+                    style=TypingStyle.material_icon("folder"))
 class Folder(FSNode):
 
     def has_node(self, node_name: str) -> bool:

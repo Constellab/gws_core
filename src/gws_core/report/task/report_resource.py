@@ -15,7 +15,7 @@ from gws_core.resource.view.view_result import CallViewResult
 
 
 @resource_decorator("ReportResource", human_name="Report resource", short_description="Report resource",
-                    style=TypingStyle.material_icon("report"))
+                    style=TypingStyle.material_icon("report", background_color="#735f32"))
 class ReportResource(Resource):
 
     report_id: str = StrRField()
@@ -39,7 +39,7 @@ class ReportResource(Resource):
 
     def replace_variable(self, variable_name: str, value: str) -> None:
         rich_text: RichText = self.get_content()
-        rich_text.replace_variable(variable_name, value)
+        rich_text.set_parameter(variable_name, value)
         self._content = rich_text
 
     def add_paragraph(self, paragraph: str) -> None:

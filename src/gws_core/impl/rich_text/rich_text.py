@@ -151,7 +151,7 @@ class RichText(SerializableObjectJson):
             else:
                 block_index += 1
 
-    def replace_variable(self, variable_name: str, value: str) -> None:
+    def set_parameter(self, parameter_name: str, value: str) -> None:
         """Replace the variable in the rich text content text
         """
         paragraphs = self.get_block(RichTextBlockType.PARAGRAPH)
@@ -163,7 +163,7 @@ class RichText(SerializableObjectJson):
                 continue
 
             paragraph_text = RichTextParagraphText(data['text'])
-            new_text = paragraph_text.replace_variable_with_text(variable_name, value)
+            new_text = paragraph_text.replace_variable_with_text(parameter_name, value)
 
             if new_text is not None:
                 data['text'] = new_text
@@ -205,13 +205,14 @@ class RichText(SerializableObjectJson):
         resource_views: List[RichTextResourceViewData] = self.get_resource_views_data()
         return {rv['resource_id'] for rv in resource_views}
 
-    def add_resource_views(self, resource_view: RichTextResourceViewData, variable_name: str = None) -> None:
+    def add_resource_views(self, resource_view: RichTextResourceViewData,
+                           parameter_name: str = None) -> None:
 
         block: RichTextBlock = self.create_block(self.generate_id(), RichTextBlockType.RESOURCE_VIEW, resource_view)
-        if variable_name is None:
+        if parameter_name is None:
             self._append_block(block)
         else:
-            self._insert_block_at_variable(variable_name, block)
+            self._insert_block_at_variable(parameter_name, block)
 
     ##################################### PARAGRAPH #########################################
 

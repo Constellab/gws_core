@@ -14,7 +14,7 @@ from gws_core.resource.view.view_runner import ViewRunner
 
 @resource_decorator(unique_name="ViewResource", human_name="View resource",
                     short_description="Resource that contains a view",
-                    style=TypingStyle.material_icon("multiline_chart"))
+                    style=TypingStyle.material_icon("multiline_chart", background_color='#496989'))
 class ViewResource(Resource):
     """Special resource that holds a view
     """

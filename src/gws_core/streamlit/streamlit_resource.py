@@ -15,15 +15,10 @@ from gws_core.streamlit.streamlit_view import StreamlitView
 
 @resource_decorator("StreamlitResource", human_name="Streamlit App",
                     short_description="Streamlit App",
-                    style=TypingStyle.material_icon("dashboard"))
+                    style=TypingStyle.material_icon("dashboard", background_color='#ff4b4b'))
 class StreamlitResource(ResourceSet):
     """
-    Resource that contains a plotly figure.
-
-    Ex :
-    import plotly.express as px
-    figure = px.scatter(source, x="A", y="B")
-    resource = PlotlyResource(figure)
+    Resource that contains a streamlit dashboard. See Streamlite live task to see how to generate it.
     """
 
     _streamlit_app_code: str = StrRField()

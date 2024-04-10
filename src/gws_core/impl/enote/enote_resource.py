@@ -1,5 +1,7 @@
 
 
+from typing import Any
+
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import \
@@ -17,12 +19,11 @@ from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_decorator import view
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_result import CallViewResult
-from gws_core.resource.view_config.view_config import ViewConfig
 
 
 @resource_decorator("ENoteResource", human_name="E-note resource",
                     short_description="Resource that contains a rich text that can be exported to a report",
-                    style=TypingStyle.material_icon("sticky_note_2", background_color="#b27112"),)
+                    style=TypingStyle.material_icon("sticky_note_2", background_color="#f6f193"),)
 class ENoteResource(Resource):
 
     title: str = StrRField()
@@ -37,16 +38,16 @@ class ENoteResource(Resource):
         if rich_text is not None:
             self.rich_text = rich_text
 
-    def replace_variable(self, variable_name: str, value: str) -> None:
+    def set_parameter(self, parameter_name: str, value: Any) -> None:
         """
-        Replace a variable in the e-note content with text.
+        Set the value of a parameter.
 
-        :param variable_name: variable name to replace
-        :type variable_name: str
-        :param value: value to replace the variable with
-        :type value: str
+        :param parameter_name: parameter name
+        :type parameter_name: str
+        :param value: value of the parameter. This is convert to str
+        :type value: Any
         """
-        self.rich_text.replace_variable(variable_name, value)
+        self.rich_text.set_parameter(parameter_name, str(value))
 
     def add_paragraph(self, paragraph: str) -> None:
         """
@@ -86,7 +87,7 @@ class ENoteResource(Resource):
 
     def add_default_view(self, resource: Resource,
                          title: str = None, caption: str = None,
-                         variable_name: str = None) -> None:
+                         parameter_name: str = None) -> None:
         """Add a default view to the e-note content.
 
         :param resource: resource to call the view on
@@ -95,39 +96,39 @@ class ENoteResource(Resource):
         :type title: str, optional
         :param caption: view caption, defaults to None
         :type caption: str, optional
-        :param variable_name: if provided, the view replace the provided variable.
+        :param parameter_name: if provided, the view replace the provided variable.
                             if not, the view is append at the end of the enote, defaults to None
-        :type variable_name: str, optional
+        :type parameter_name: str, optional
         """
         self.add_view(resource, ViewHelper.DEFAULT_VIEW_NAME, None,
-                      title, caption, variable_name)
+                      title, caption, parameter_name)
 
     def add_view(self, resource: Resource, view_method_name: str, config_values: ConfigParamsDict = None,
-                 title: str = None, caption: str = None, variable_name: str = None) -> None:
+                 title: str = None, caption: str = None, parameter_name: str = None) -> None:
         """Add a view to the e-note content.
         To get the information of the views, once you opened the view in the application, you can
         click on View settings > Show view configuration
 
         :param resource: resource to call the view on
         :type resource: Resource
-        :param view_method_name: name of the view method to call
+        :param view_method_name: name of the view method to call. View settings > Show view configuration.
         :type view_method_name: str
-        :param config_values: config values for the views, defaults to None
+        :param config_values: config values for the views. Access it from View settings > Show view configuration., defaults to None
         :type config_values: ConfigParamsDict, optional
         :param title: view title, defaults to None
         :type title: str, optional
         :param caption: view caption, defaults to None
         :type caption: str, optional
-        :param variable_name: if provided, the view replace the provided variable.
+        :param parameter_name: if provided, the view replace the provided parameter.
                             if not, the view is append at the end of the enote, defaults to None
-        :type variable_name: str, optional
+        :type parameter_name: str, optional
         """
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
             resource._model_id, view_method_name, config_values, True)
 
         self.rich_text.add_resource_views(
             view_result.view_config.to_rich_text_resource_view(title, caption),
-            variable_name)
+            parameter_name)
 
     ############################# Reports #############################
 

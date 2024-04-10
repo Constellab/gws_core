@@ -19,7 +19,7 @@ from .enote_resource import ENoteResource
 @task_decorator(
     unique_name="CreateENote",
     human_name="Create e-note",
-    short_description="Create a e-note",
+    short_description="Create an empty e-note or from a report template",
 )
 class CreateENote(Task):
     """
@@ -46,9 +46,9 @@ class CreateENote(Task):
 
         enote_resource = ENoteResource()
 
+        enote_resource.title = title or 'New e-note'
         if enote_param and not enote_param.is_empty():
             enote_resource.rich_text = enote_param
-            enote_resource.title = title or 'New e-note'
         elif template is not None:
             enote_resource.rich_text = RichText(template.content)
             enote_resource.title = title or template.title

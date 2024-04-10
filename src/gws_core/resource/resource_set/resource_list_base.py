@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, List, Set
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.view.resources_list_view import ResourcesListView
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.technical_info import TechnicalInfo
 from gws_core.resource.view.view_decorator import view
 
@@ -17,7 +18,8 @@ if TYPE_CHECKING:
 
 
 @resource_decorator(unique_name="ResourceListBase", human_name="Resource list base",
-                    short_description="Abstract class for resource list", hide=True)
+                    short_description="Abstract class for resource list", hide=True,
+                    style=TypingStyle.material_icon("format_list_bulleted", background_color="#FEC7B4"))
 class ResourceListBase(Resource):
     """Abstract class for resource list, to use only if you want you're doing.
     By default the sytem create a new

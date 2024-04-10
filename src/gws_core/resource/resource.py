@@ -5,7 +5,9 @@ from copy import deepcopy
 from typing import Dict, TypeVar, Union, final
 
 from gws_core.impl.file.file_r_field import FileRField
-from gws_core.model.typing_style import TypingStyle
+from gws_core.model.typing_manager import TypingManager
+from gws_core.model.typing_style import (TypingIconColor, TypingIconType,
+                                         TypingStyle)
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
@@ -26,7 +28,6 @@ from .view.view_decorator import view
 
 # Typing names generated for the class resource
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
-
 
 ResourceType = TypeVar('ResourceType', bound='Resource')
 
@@ -202,3 +203,25 @@ class Resource(Base):
             return tag_list
 
         return attr
+
+    @classmethod
+    def clone_style(cls, icon_technical_name: str = None,
+                    icon_type: TypingIconType = None,
+                    background_color: str = None,
+                    icon_color: TypingIconColor = None) -> TypingStyle:
+        """Clone the style of the resource with the possibility to override some properties.
+        Useful when settings the style for a task based on the resource style.
+
+        :param icon_technical_name: technical name of the icon if provided, the icon_type must also be provided, defaults to None
+        :type icon_technical_name: str, optional
+        :param icon_type: type of the icon if provided, the icon_technical_name must also be provided, defaults to None
+        :type icon_type: TypingIconType, optional
+        :param background_color: background color, defaults to None
+        :type background_color: str, optional
+        :param icon_color: icon color, defaults to None
+        :type icon_color: TypingIconColor, optional
+        :return: _description_
+        :rtype: TypingStyle
+        """
+        style = TypingManager.get_typing_from_name_and_check(cls._typing_name).style
+        return style.clone_with_overrides(icon_technical_name, icon_type, background_color, icon_color)

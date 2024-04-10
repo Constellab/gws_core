@@ -82,7 +82,7 @@ class TestRichText(BaseTestCaseLight):
         associated_resources = rich_text.get_associated_resources()
         self.assertEqual(len(associated_resources), 0)
 
-        rich_text.replace_variable('test2', 'test2_value')
+        rich_text.set_parameter('test2', 'test2_value')
         self.assertEqual(
             rich_text.get_content().blocks[2].data["text"],
             'Place for <te-variable-inline data-jsondata=\'{"name": "test2", "description": "", "type": "string", "value": "test2_value"}\'></te-variable-inline> variable')
