@@ -7,6 +7,7 @@ from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.file.file import File
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.model.typing_style import TypingIconType
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_zipper import ResourceZipper
 from gws_core.resource.technical_info import TechnicalInfo
@@ -18,7 +19,8 @@ from gws_core.user.user import User
 
 
 @task_decorator("ResourceZipper", human_name="Zip resource",
-                short_description="Zip a resource object to be downloaded by another lab")
+                short_description="Zip a resource object to be downloaded by another lab",
+                style=File.clone_style(icon_technical_name='folder_zip', icon_type=TypingIconType.MATERIAL_ICON))
 class ResourceZipperTask(Task):
 
     input_name = 'source'
