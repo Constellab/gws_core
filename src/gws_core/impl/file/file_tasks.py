@@ -27,7 +27,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 
 @task_decorator(unique_name="WriteToJsonFile", human_name="Write to file",
                 short_description="Simple task to write a resource json data to a file in local store",
-                style=File.clone_style())
+                style=File.copy_style())
 class WriteToJsonFile(Task):
     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
     output_specs: OutputSpecs = OutputSpecs({'file': OutputSpec(File)})

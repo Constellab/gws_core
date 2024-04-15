@@ -205,11 +205,11 @@ class Resource(Base):
         return attr
 
     @classmethod
-    def clone_style(cls, icon_technical_name: str = None,
-                    icon_type: TypingIconType = None,
-                    background_color: str = None,
-                    icon_color: TypingIconColor = None) -> TypingStyle:
-        """Clone the style of the resource with the possibility to override some properties.
+    def copy_style(cls, icon_technical_name: str = None,
+                   icon_type: TypingIconType = None,
+                   background_color: str = None,
+                   icon_color: TypingIconColor = None) -> TypingStyle:
+        """Copy the style of the resource with the possibility to override some properties.
         Useful when settings the style for a task based on the resource style.
 
         :param icon_technical_name: technical name of the icon if provided, the icon_type must also be provided, defaults to None

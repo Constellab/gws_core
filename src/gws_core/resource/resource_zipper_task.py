@@ -20,7 +20,7 @@ from gws_core.user.user import User
 
 @task_decorator("ResourceZipper", human_name="Zip resource",
                 short_description="Zip a resource object to be downloaded by another lab",
-                style=File.clone_style(icon_technical_name='folder_zip', icon_type=TypingIconType.MATERIAL_ICON))
+                style=File.copy_style(icon_technical_name='folder_zip', icon_type=TypingIconType.MATERIAL_ICON))
 class ResourceZipperTask(Task):
 
     input_name = 'source'
