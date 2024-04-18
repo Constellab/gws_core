@@ -130,7 +130,7 @@ class Typing(Model):
     def to_full_dto(self) -> TypingFullDTO:
         typing_dto = self.to_dto()
 
-        full_dto = TypingFullDTO(**typing_dto.dict())
+        full_dto = TypingFullDTO(**typing_dto.to_json_dict())
 
         # retrieve the task python type
         model_t: Type[Base] = self.get_type()

@@ -33,7 +33,7 @@ class TestDevEnvService(BaseTestCase):
         user_data_db = DevEnvService.check_dev_login_unique_code(unique_code)
 
         # check that the user is the same
-        self.assertEqual(user_dto.json(), user_data_db.to_full_dto().json())
+        self.assertEqual(user_dto.to_json_str(), user_data_db.to_full_dto().to_json_str())
 
         # check that we can generate the response containing token
         response = AuthService.log_user(user_data_db)

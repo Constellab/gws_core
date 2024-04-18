@@ -5,7 +5,6 @@ from typing import Dict, Generic, List, Type, TypeVar
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from pydantic.generics import GenericModel
 
 BaseModelDTOType = TypeVar('BaseModelDTOType', bound='BaseModelDTO')
 
@@ -21,12 +20,25 @@ class BaseModelDTO(BaseModel):
         """
         return jsonable_encoder(self)
 
+    def to_json_str(self) -> str:
+        """
+        Convert a ModelDTO to a json string.
+        """
+        return self.model_dump_json()
+
     @classmethod
     def from_json(cls: Type[BaseModelDTOType], json_: dict) -> BaseModelDTOType:
         """
         Create a ModelDTO from a json.
         """
-        return cls.parse_obj(json_)
+        return cls.model_validate(json_)
+
+    @classmethod
+    def from_json_str(cls: Type[BaseModelDTOType], str_json: str) -> BaseModelDTOType:
+        """
+        Create a ModelDTO from a string json.
+        """
+        return cls.model_validate_json(str_json)
 
     @classmethod
     def from_json_list(cls: Type[BaseModelDTOType], json_list: list) -> List[BaseModelDTOType]:
@@ -36,7 +48,7 @@ class BaseModelDTO(BaseModel):
         return [cls.from_json(json_) for json_ in json_list]
 
     @classmethod
-    def from_json_dict(cls: Type[BaseModelDTOType], json_dict: dict) -> Dict[str, BaseModelDTOType]:
+    def from_record(cls: Type[BaseModelDTOType], json_dict: dict) -> Dict[str, BaseModelDTOType]:
         """
         Create a dict of ModelDTO from a dict of json.
         """
@@ -52,7 +64,7 @@ class ModelDTO(BaseModelDTO):
     last_modified_at: datetime
 
 
-class PageDTO(GenericModel, Generic[BaseModelDTOType]):
+class PageDTO(BaseModel, Generic[BaseModelDTOType]):
     page: int
     prev_page: int
     next_page: int

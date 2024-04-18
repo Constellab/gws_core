@@ -266,7 +266,7 @@ class IO(Base, Generic[PortType]):
         specs = self.get_specs().get_specs()
         io_specs = {}
         for key, value in specs.items():
-            io_specs[key] = value.to_dto().dict()
+            io_specs[key] = value.to_dto().to_json_dict()
 
         return {"specs": io_specs}
 

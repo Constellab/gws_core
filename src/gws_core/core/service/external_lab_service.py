@@ -45,7 +45,7 @@ class ExternalLabService():
         """Method that mark a shared object as received"""
         return ExternalApiService.post(
             f"{lab_api_url}/{Settings.core_api_route_path()}/share/{entity_type.value}/mark-as-shared/{token}",
-            current_lab_info.dict())
+            current_lab_info.to_json_dict())
 
     @classmethod
     def get_current_lab_info(cls, user: User) -> ExternalLabWithUserInfo:

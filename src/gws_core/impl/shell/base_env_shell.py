@@ -275,7 +275,7 @@ class BaseEnvShell(ShellProxy):
         )
 
         with open(self._get_json_info_file_path(), "w", encoding="UTF-8") as outfile:
-            dump(env_info.dict(), outfile)
+            dump(env_info.to_json_dict(), outfile)
 
     def _get_json_info_file_path(self) -> str:
         """

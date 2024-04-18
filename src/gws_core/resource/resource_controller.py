@@ -4,7 +4,6 @@ from typing import List, Optional
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
@@ -143,7 +142,7 @@ def update_flagged(id_: str,
     return ResourceService.update_flagged(id_, body["flagged"]).to_dto()
 
 
-class UpdateProject(BaseModel):
+class UpdateProject(BaseModelDTO):
     project_id: Optional[str]
 
 
@@ -234,7 +233,7 @@ def get_shared_resource_origin_info(id_: str,
 
 ################################ RESOURCE ################################
 
-class ImportDto(BaseModel):
+class ImportDto(BaseModelDTO):
     url: str
     uncompress_option: str
 

@@ -118,7 +118,7 @@ class TestFile(BaseTestCase):
         # Check file content
         content: str = file.read()
         params = ConfigParams()
-        self.assertEqual(content, robot.view_as_json(params).to_dto(params).json())
+        self.assert_json(json.loads(content), robot.view_as_json(params).to_dto(params).to_json_dict())
 
         # Check file size
         self.assertTrue(file_model.fs_node_model.size > 0)

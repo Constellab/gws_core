@@ -3,8 +3,8 @@
 from typing import Optional
 
 from fastapi import Depends
-from pydantic import BaseModel
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.lab.monitor.monitor_dto import MonitorBetweenDateDTO
 
 from ...core_controller import core_app
@@ -12,7 +12,7 @@ from ...user.auth_service import AuthService
 from .monitor_service import MonitorService
 
 
-class GetMonitorRequest(BaseModel):
+class GetMonitorRequest(BaseModelDTO):
     from_date: Optional[str]
     to_date: Optional[str]
 

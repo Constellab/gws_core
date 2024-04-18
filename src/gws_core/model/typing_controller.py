@@ -3,10 +3,9 @@
 from typing import List, Literal, Optional
 
 from fastapi.param_functions import Depends
-from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.core.model.model_dto import PageDTO
+from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.model.typing_dto import TypingDTO, TypingObjectType
 from gws_core.model.typing_service import TypingService
 from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
@@ -56,7 +55,7 @@ def advanced_search(search_dict: SearchParams,
     return TypingService.search(search_dict, page, number_of_items_per_page).to_dto()
 
 
-class SearchWithResourceTypes(BaseModel):
+class SearchWithResourceTypes(BaseModelDTO):
     resource_typing_names: List[str]
     search_params: SearchParams
 

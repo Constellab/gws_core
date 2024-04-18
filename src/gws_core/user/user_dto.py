@@ -3,7 +3,6 @@
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -22,7 +21,7 @@ class UserLanguage(Enum):
 # object that represent the user in the Space
 
 
-class UserSpace(BaseModel):
+class UserSpace(BaseModelDTO):
     id: str
     firstname: str
     lastname: str
@@ -32,7 +31,7 @@ class UserSpace(BaseModel):
     photo: Optional[str]
 
 
-class Space(BaseModel):
+class Space(BaseModelDTO):
     id: str
     name: str
     domain: str
@@ -40,7 +39,7 @@ class Space(BaseModel):
 
 
 # Info provided by the user when he logs in
-class UserLoginInfo(BaseModel):
+class UserLoginInfo(BaseModelDTO):
     user: UserSpace
     space: Space
 
@@ -67,6 +66,6 @@ class UserFullDTO(UserDTO):
     last_name: str
     group: UserGroup
     is_active: bool
-    theme: Optional[UserTheme]
-    lang: Optional[UserLanguage]
-    photo: Optional[str]
+    theme: UserTheme = UserTheme.LIGHT_THEME
+    lang: UserLanguage = UserLanguage.EN
+    photo: Optional[str] = None

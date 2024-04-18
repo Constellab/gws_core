@@ -10,7 +10,7 @@ from peewee import BooleanField, CharField, ForeignKeyField
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.model.typing import Typing
-from gws_core.model.typing_dto import TypingStatus
+from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
@@ -398,7 +398,24 @@ class ProcessModel(ModelWithUser):
         )
 
     def to_dto(self) -> ProcessDTO:
-        process_dto = ProcessDTO(
+
+        process_typing: Typing = self.get_process_typing()
+        process_type_dto: SimpleTypingDTO = None
+        type_status: TypingStatus = TypingStatus.OK
+        style: TypingStyle = self.style
+
+        if process_typing:
+            process_type_dto = process_typing.to_simple_dto()
+            type_status = process_typing.get_type_status()
+            if style is None:
+                style = process_typing.style
+        else:
+            type_status = TypingStatus.UNAVAILABLE
+
+        if style is None:
+            style = TypingStyle.default_task()
+
+        return ProcessDTO(
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
@@ -420,24 +437,11 @@ class ProcessModel(ModelWithUser):
             is_protocol=self.is_protocol(),
             inputs=self.inputs.to_dto(),
             outputs=self.outputs.to_dto(),
-            type_status=TypingStatus.OK,
+            type_status=type_status,
+            process_type=process_type_dto,
             name=self.name,
-            style=self.style
+            style=style
         )
-
-        process_typing: Typing = self.get_process_typing()
-        if process_typing:
-            process_dto.process_type = process_typing.to_simple_dto()
-            process_dto.type_status = process_typing.get_type_status()
-            if process_dto.style is None:
-                process_dto.style = process_typing.style
-        else:
-            process_dto.type_status = TypingStatus.UNAVAILABLE
-
-            if process_dto.style is None:
-                process_dto.style = TypingStyle.default_task()
-
-        return process_dto
 
     def to_config_dto(self, ignore_source_config: bool = False) -> ProcessConfigDTO:
         """Return the config DTO

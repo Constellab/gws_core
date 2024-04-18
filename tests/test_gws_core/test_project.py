@@ -14,7 +14,7 @@ class TestProject(BaseTestCase):
 
     def test_get_or_create_project_with_children(self):
 
-        space_project: SpaceProject = SpaceProject(**{
+        space_project: SpaceProject = SpaceProject.from_json({
             "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
             "code": "Root",
             "title": "Root project",

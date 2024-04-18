@@ -6,10 +6,9 @@ from fastapi import Depends
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.core.model.model_dto import PageDTO
+from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.core_controller import core_app
 from gws_core.protocol.protocol_dto import ProtocolConfigDTO
@@ -43,7 +42,7 @@ def upload_folder(file: UploadFile = FastAPIFile(...),
     return ProtocolTemplateService.create_from_file(file).to_dto()
 
 
-class UpdateProtocolTemplate(BaseModel):
+class UpdateProtocolTemplate(BaseModelDTO):
     name: Optional[str] = None
     description: Optional[dict] = None
 
@@ -56,7 +55,7 @@ def update(id: str,
                                           description=update_protocol_template.description).to_dto()
 
 
-class UpdateProtocolTemplateName(BaseModel):
+class UpdateProtocolTemplateName(BaseModelDTO):
     name: str
 
 
@@ -99,4 +98,6 @@ def search_by_name(name: str,
 def download_template(id: str,
                       _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
     template = ProtocolTemplateService.get_by_id_and_check(id)
-    return ResponseHelper.create_file_response_from_str(template.to_export_dto().json(), template.name + '.json')
+    return ResponseHelper.create_file_response_from_str(
+        template.to_export_dto().to_json_str(),
+        template.name + '.json')

@@ -4,9 +4,9 @@ from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
-from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.lab.system_dto import SettingsDTO
@@ -60,12 +60,12 @@ def health_check() -> bool:
 ##################################################### USER #####################################################
 
 
-class TokenData(BaseModel):
+class TokenData(BaseModelDTO):
     access_token: str
     token_type: str
 
 
-class UserIdData(BaseModel):
+class UserIdData(BaseModelDTO):
     id: str
 
 

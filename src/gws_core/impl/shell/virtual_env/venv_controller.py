@@ -1,7 +1,7 @@
 
 from fastapi import Depends
-from pydantic import BaseModel
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.shell.virtual_env.venv_dto import (VEnsStatusDTO,
                                                       VEnvCompleteInfoDTO)
 from gws_core.impl.shell.virtual_env.venv_service import VEnvService
@@ -20,7 +20,7 @@ def get_venv_list(_=Depends(AuthService.check_user_access_token)) -> VEnsStatusD
     return VEnvService.get_vens_status()
 
 
-class VenvNameRequest(BaseModel):
+class VenvNameRequest(BaseModelDTO):
     venv_name: str
 
 

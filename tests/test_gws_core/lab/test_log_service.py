@@ -18,6 +18,36 @@ class TestLogService(TestCase):
     log_1_date = DateHelper.from_str('01-12-2022', '%d-%m-%Y')
     log_2_date = DateHelper.from_str('02-12-2022', '%d-%m-%Y')
 
+    def setUp(self) -> None:
+        log_dir = Settings.get_instance().get_log_dir()
+        FileHelper.delete_dir_content(log_dir)
+        Logger.clear_logger()
+        Logger(Settings.build_log_dir(True), level='INFO')
+
+        log_content_1 = """{"level": "INFO", "timestamp": "2022-12-01T08:24:46.905469+00:00", "message": "Day 1"}
+INFO - 2022-12-01 09:26:46.906581 - first - log day 1
+INFO - 2022-12-01 09:30:46.947581 - [EXPERIMENT] - second - log day 1
+"""
+
+        log_content_2 = """{"level": "INFO", "timestamp": "2022-12-02 09:24:46.905469", "message": "Day 2"}
+INFO - 2022-12-02 09:26:46.906581 - first - log day 2
+{"level": "INFO", "timestamp": "2022-12-02T19:30:46.947581+00:00", "message": "second - log day 2", "experiment_id": "1234567890"}
+"""
+        # create logs files
+
+        # write log file 1
+        log_file_path = os.path.join(log_dir, Logger.date_to_file_name(self.log_1_date))
+        with open(log_file_path, "w", encoding='UTF-8') as f:
+            f.write(log_content_1)
+
+        # write log file 2
+        log_file_path = os.path.join(log_dir, Logger.date_to_file_name(self.log_2_date))
+        with open(log_file_path, "w", encoding='UTF-8') as f:
+            f.write(log_content_2)
+
+    def tearDown(self) -> None:
+        FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
+
     def test_get_logs_status(self):
         Logger.info('test_get_logs_status')
 
@@ -59,52 +89,22 @@ class TestLogService(TestCase):
         self.assertEqual(len(result.logs), 6)
 
         # get only log from experiment
-        result: LogsBetweenDates = LogService.get_logs_between_dates(from_date, to_date,
-                                                                     from_experiment_id="1234567890")
+        result = LogService.get_logs_between_dates(from_date, to_date,
+                                                   from_experiment_id="1234567890")
         self.assertEqual(len(result.logs), 2)
 
         # get logs paginated and skip the first log and the last log
         from_date = DateHelper.from_iso_str('2022-12-01:09:00+00:00')
         to_date = DateHelper.from_iso_str('2022-12-02T09:32:00+00:00')
 
-        result: LogsBetweenDates = LogService.get_logs_between_dates(from_date, to_date, nb_of_lines=3)
+        result = LogService.get_logs_between_dates(from_date, to_date, nb_of_lines=3)
         self.assertEqual(len(result.logs), 3)
         self.assertEqual(result.logs[0].message, 'first - log day 1')
         self.assertEqual(result.logs[1].message, 'second - log day 1')
         self.assertEqual(result.logs[2].message, 'Day 2')
 
         # get next page
-        result: LogsBetweenDates = LogService.get_logs_between_dates(
+        result = LogService.get_logs_between_dates(
             result.get_next_page_date(), to_date, nb_of_lines=3)
         self.assertEqual(len(result.logs), 1)
         self.assertEqual(result.logs[0].message, 'first - log day 2')
-
-    def setUp(self) -> None:
-        log_dir = Settings.get_instance().get_log_dir()
-        FileHelper.delete_dir_content(log_dir)
-        Logger.clear_logger()
-        Logger(Settings.build_log_dir(True), level='INFO')
-
-        log_content_1 = """{"level": "INFO", "timestamp": "2022-12-01T08:24:46.905469+00:00", "message": "Day 1"}
-INFO - 2022-12-01 09:26:46.906581 - first - log day 1
-INFO - 2022-12-01 09:30:46.947581 - [EXPERIMENT] - second - log day 1
-"""
-
-        log_content_2 = """{"level": "INFO", "timestamp": "2022-12-02 09:24:46.905469", "message": "Day 2"}
-INFO - 2022-12-02 09:26:46.906581 - first - log day 2
-{"level": "INFO", "timestamp": "2022-12-02T19:30:46.947581+00:00", "message": "second - log day 2", "experiment_id": "1234567890"}
-"""
-        # create logs files
-
-        # write log file 1
-        log_file_path = os.path.join(log_dir, Logger.date_to_file_name(self.log_1_date))
-        with open(log_file_path, "w", encoding='UTF-8') as f:
-            f.write(log_content_1)
-
-        # write log file 2
-        log_file_path = os.path.join(log_dir, Logger.date_to_file_name(self.log_2_date))
-        with open(log_file_path, "w", encoding='UTF-8') as f:
-            f.write(log_content_2)
-
-    def tearDown(self) -> None:
-        FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())

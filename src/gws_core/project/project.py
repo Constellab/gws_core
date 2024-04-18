@@ -37,7 +37,7 @@ class Project(Model):
         children = [child.to_tree_dto() for child in self.children]
 
         return ProjectTreeDTO(
-            **self.to_dto().dict(),
+            **self.to_dto().to_json_dict(),
             children=children
         )
 

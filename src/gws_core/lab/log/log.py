@@ -1,7 +1,6 @@
 
 
 from datetime import date, datetime, timedelta
-from json import loads
 from typing import List
 
 from gws_core.core.utils.date_helper import DateHelper
@@ -53,7 +52,7 @@ class LogLine():
         Read the line as json and extract the level, date, content and if it is from an experiment
         """
         try:
-            line_json: LogFileLine = LogFileLine.parse_raw(line_str)
+            line_json: LogFileLine = LogFileLine.from_json_str(line_str)
             self.level = line_json.level
             self.init_new_date(line_json.timestamp)
             self.message = line_json.message

@@ -24,15 +24,6 @@ class ConnectorDTO(BaseModelDTO):
     from_: ConnectorPartDict = Field(alias='from')
     to: ConnectorPartDict
 
-    # Override the method to use the alias in serialization
-    def dict(self, *args, **kwargs):
-        kwargs['by_alias'] = True
-        return super().dict(*args, **kwargs)
-
-    def json(self, *args, **kwargs):
-        kwargs['by_alias'] = True
-        return super().json(*args, **kwargs)
-
 
 class IOFaceDTO(BaseModelDTO):
     name: str
@@ -65,7 +56,7 @@ class ProcessConfigDTO(BaseModelDTO):
 
 
 # call this method to set the type of the recursive graph
-ProtocolConfigDTO.update_forward_refs()
+ProtocolConfigDTO.model_rebuild()
 
 
 class ProtocolMinimumDTO(BaseModelDTO):

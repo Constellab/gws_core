@@ -114,7 +114,7 @@ class OptionalTaskOut(Task):
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        return
+        return {}
 
 
 # This is to test the ConstantOut type
@@ -202,7 +202,7 @@ class TestIO(BaseTestCase):
             Connector(process_2, process_3, 'move_person_out',
                       'move_drive_in')
 
-        self.assertEqual(port_connect.to_dto().dict(), {
+        self.assertEqual(port_connect.to_dto().to_json_dict(), {
             "from": {"node": "p0",  "port": "create_person_out"},
             "to": {"node": "p1",  "port": "move_person_in"},
         })

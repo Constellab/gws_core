@@ -2,10 +2,9 @@
 from typing import Dict, List, Optional
 
 from fastapi import Depends
-from pydantic import BaseModel
 
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.core.model.model_dto import PageDTO
+from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
@@ -140,7 +139,7 @@ def update_title(id_: str,
     return ExperimentService.update_experiment_title(id_, body["title"]).to_dto()
 
 
-class UpdateProject(BaseModel):
+class UpdateProject(BaseModelDTO):
     project_id: Optional[str]
 
 

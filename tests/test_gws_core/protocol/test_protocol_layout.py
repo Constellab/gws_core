@@ -24,10 +24,10 @@ class TestProtocolLayout(BaseTestCase):
         protocol_model: ProtocolModel = i_protocol._process_model
 
         # add layout for create robot process
-        ProtocolService.save_process_layout(protocol_model.id, 'robot_create', {'x': 10, 'y': 10})
+        ProtocolService.save_process_layout(protocol_model.id, 'robot_create', ProcessLayoutDTO(x=10, y=10))
         protocol_model = protocol_model.refresh()
         layout: ProtocolLayout = protocol_model.layout
-        self.assert_json(layout.get_process('robot_create'), {'x': 10, 'y': 10})
+        self.assert_json(layout.get_process('robot_create').to_json_dict(), {'x': 10, 'y': 10})
 
         # define ans save a layout
         dict_layout = ProtocolLayoutDTO(

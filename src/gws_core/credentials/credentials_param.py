@@ -77,7 +77,7 @@ class CredentialsParam(ParamSpec[str]):
             raise Exception(f"Credentials {value} is not of type {self.credentials_type}")
 
         json_: CredentialsDataBase = {
-            "__meta__": credentials.to_dto().dict(),
+            "__meta__": credentials.to_dto().to_json_dict(),
             **credentials.data
         }
         return json_

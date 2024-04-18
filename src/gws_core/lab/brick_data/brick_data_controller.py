@@ -2,8 +2,8 @@
 from typing import List
 
 from fastapi.param_functions import Depends
-from pydantic import BaseModel
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.lab.brick_data.brick_data_dto import BrickDataDTO
 
 from ...core_controller import core_app
@@ -20,7 +20,7 @@ def get_brick_data_list(_=Depends(AuthService.check_user_access_token)) -> List[
     return BrickDataService.get_brick_data_list()
 
 
-class DeleteBrickData(BaseModel):
+class DeleteBrickData(BaseModelDTO):
     fs_node_path: str
 
 

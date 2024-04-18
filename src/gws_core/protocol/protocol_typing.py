@@ -55,7 +55,7 @@ class ProtocolTyping(Typing):
         typing_dto = super().to_full_dto()
 
         protocol_typing = ProtocolTypingFullDTO(
-            **typing_dto.dict(),
+            **typing_dto.to_json_dict(),
         )
 
         # retrieve the task python type

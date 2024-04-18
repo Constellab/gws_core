@@ -128,7 +128,7 @@ class TestProtocolTemplate(BaseTestCase):
         # check config
         self.assertEqual(main_proto.get_process('p5').config.get_value('food_weight'), 1000.0)
         # check layout
-        self.assert_json(main_proto.layout.process_layouts['p5'], {'x': 1000, 'y': 1000})
+        self.assert_json(main_proto.layout.process_layouts['p5'].to_json_dict(), {'x': 1000, 'y': 1000})
 
         mini_proto: ProtocolModel = main_proto.get_process('mini_proto')
         self.assertIsNotNone(mini_proto)
@@ -188,7 +188,7 @@ class TestProtocolTemplate(BaseTestCase):
 
         # Test create the same experiment with the template json instead of the template id
         export_dto = template.to_export_dto()
-        experiment_dto = ExperimentSaveDTO(protocol_template_json=export_dto, title='')
+        experiment_dto = ExperimentSaveDTO(protocol_template_json=export_dto.to_json_dict(), title='')
         experiment = ExperimentService.create_experiment_from_dto(experiment_dto)
 
         # check that protocol and task are created

@@ -2,12 +2,12 @@
 
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, parse_obj_as
 from requests.models import Response
 
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
 from gws_core.space.space_dto import (LabStartDTO, SaveExperimentToSpaceDTO,
@@ -24,7 +24,7 @@ from ..user.user import User
 from ..user.user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
 
 
-class ExternalCheckCredentialResponse(BaseModel):
+class ExternalCheckCredentialResponse(BaseModelDTO):
     status: Literal['OK', '2FA_REQUIRED']
     user: Optional[UserSpace]
     twoFAUrlCode: Optional[str]
@@ -63,10 +63,10 @@ class SpaceService(BaseService):
         space_api_url: str = cls._get_space_api_url(
             f'{cls._external_labs_route}/{route}')
         response = ExternalApiService.post(
-            space_api_url, credentials.dict(), headers=cls._get_request_header(),
+            space_api_url, credentials, headers=cls._get_request_header(),
             raise_exception_if_error=True)
 
-        return parse_obj_as(ExternalCheckCredentialResponse, response.json())
+        return ExternalCheckCredentialResponse.from_json(response.json())
 
     @classmethod
     def check_2_fa(cls, credentials: UserCredentials2Fa) -> UserSpace:
@@ -77,9 +77,9 @@ class SpaceService(BaseService):
         space_api_url: str = cls._get_space_api_url(
             'auth/external/check-2fa')
         response = ExternalApiService.post(
-            space_api_url, credentials.dict(), raise_exception_if_error=True)
+            space_api_url, credentials, raise_exception_if_error=True)
 
-        return parse_obj_as(UserSpace, response.json())
+        return UserSpace.from_json(response.json())
 
     @classmethod
     def register_lab_start(cls, lab_config: LabConfigModelDTO) -> bool:
@@ -186,7 +186,7 @@ class SpaceService(BaseService):
             raise err
 
         # get response and parse it to a list of spaceProject
-        return parse_obj_as(List[SpaceProject], response.json())
+        return SpaceProject.from_json_list(response.json())
 
     @classmethod
     def get_all_lab_users(cls) -> List[UserFullDTO]:

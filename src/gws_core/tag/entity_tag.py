@@ -3,7 +3,6 @@
 from typing import List
 
 from peewee import BooleanField, CharField, Expression, ModelSelect
-from pydantic import parse_obj_as
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.expression_builder import ExpressionBuilder

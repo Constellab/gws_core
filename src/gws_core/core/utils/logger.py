@@ -26,8 +26,8 @@ class LogFileLine(BaseModelDTO):
     level: MessageType
     timestamp: str
     message: str
-    experiment_id: Optional[str]
-    stack_trace: Optional[str]
+    experiment_id: Optional[str] = None
+    stack_trace: Optional[str] = None
 
 
 class JSONFormatter(logging.Formatter):
@@ -46,7 +46,7 @@ class JSONFormatter(logging.Formatter):
             experiment_id=self.experiment_id,
             stack_trace=record.exc_text if record.exc_text else None
         )
-        return log_data.json()
+        return log_data.to_json_str()
 
 
 class Logger:

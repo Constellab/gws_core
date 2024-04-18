@@ -27,7 +27,7 @@ class ResourceDTO(ModelWithUserDTO):
     resource_typing_name: str
     resource_type: Optional[TypingRefDTO] = None
     fs_node: Optional[FsNodeModelDTO]
-    is_downloadable: Optional[bool] = None
+    is_downloadable: bool
     origin: ResourceOrigin
     name: str
     has_children: bool
@@ -35,7 +35,7 @@ class ResourceDTO(ModelWithUserDTO):
     flagged: bool
     experiment: Optional[ExperimentSimpleDTO]
     project: Optional[ProjectDTO]
-    style: TypingStyle = None
+    style: TypingStyle
 
 
 class ResourceSimpleDTO(BaseModelDTO):

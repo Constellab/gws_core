@@ -3,8 +3,8 @@
 from typing import List
 
 from fastapi.param_functions import Depends
-from pydantic import BaseModel
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.settings import PipPackage
 from gws_core.lab.system_dto import LabInfoDTO, SettingsDTO
 
@@ -42,7 +42,7 @@ def garbage_collector(_=Depends(AuthService.check_user_access_token)) -> None:
     SystemService.garbage_collector()
 
 
-class SynchronizeDTO(BaseModel):
+class SynchronizeDTO(BaseModelDTO):
     sync_users: bool
     sync_projects: bool
 

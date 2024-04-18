@@ -151,7 +151,7 @@ class ProtocolModel(ProcessModel):
     def refresh_graph_from_dump(self) -> None:
         """Refresh the graph json object inside the data from the dump method
         """
-        self.data["graph"] = self.to_protocol_minimum_dto().dict()
+        self.data["graph"] = self.to_protocol_minimum_dto().to_json_dict()
 
     def get_graph(self) -> ProtocolMinimumDTO:
         """Return the graph json object
@@ -1018,7 +1018,7 @@ class ProtocolModel(ProcessModel):
         process_dto = self.to_dto()
 
         return ProtocolDTO(
-            **process_dto.dict(),
+            **process_dto.to_json_dict(),
             data=self.to_protocol_full_dto()
         )
 

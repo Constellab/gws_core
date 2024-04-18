@@ -37,7 +37,7 @@ class ResourceTyping(Typing):
         typing_dto = super().to_full_dto()
 
         return ResourceTypingDTO(
-            **typing_dto.dict(),
+            **typing_dto.to_json_dict(),
             methods=self.get_class_methods_docs()
         )
 

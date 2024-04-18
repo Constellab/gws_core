@@ -20,9 +20,9 @@
             {
                 "source": "https://pypi.python.org/simple",
                 "packages":[
-                  {"name": "openpyxl", "version": "3.0.10"},
+                  {"name": "openpyxl", "version": "3.1.2"},
                   {"name": "awesome-slugify", "version": "1.6.5"},
-                  {"name": "cryptography", "version": "39.0.1"},
+                  {"name": "cryptography", "version": "42.0.5"},
                   {"name": "fastapi", "version": "0.91.0"},
                   {"name": "peewee", "version": "3.15.4"},
                   {"name": "psutil", "version": "5.9.0"},

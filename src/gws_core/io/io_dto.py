@@ -15,4 +15,4 @@ class PortDTO(BaseModelDTO):
 class IODTO(BaseModelDTO):
     ports: Dict[str, PortDTO] = {}
     type: IOSpecsType = 'normal'
-    additional_info: dict = None
+    additional_info: Optional[dict] = None

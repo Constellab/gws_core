@@ -3,8 +3,6 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel
-
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.experiment.experiment_enums import (ExperimentCreationType,
@@ -16,7 +14,7 @@ from gws_core.user.user_dto import UserDTO
 
 
 # DTO to create/update an experiment
-class ExperimentSaveDTO(BaseModel):
+class ExperimentSaveDTO(BaseModelDTO):
     project_id: Optional[str] = None
     title: str = None
     protocol_template_id: Optional[str] = None

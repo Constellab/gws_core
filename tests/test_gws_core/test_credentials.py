@@ -47,7 +47,7 @@ class TestCredentials(BaseTestCase):
         self.assertEqual(search_result.results[0].name, "test2")
 
         # Test search by name and type
-        search_dict.filtersCriteria.append({"key": "type", "operator": "EQUALS", "value": CredentialsType.OTHER})
+        search_dict.filtersCriteria.append({"key": "type", "operator": "EQ", "value": CredentialsType.OTHER})
         search_result = CredentialsService.search(search_dict)
         self.assertEqual(search_result.page_info.total_number_of_items, 1)
         self.assertEqual(search_result.results[0].name, "test2")

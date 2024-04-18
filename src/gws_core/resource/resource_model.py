@@ -12,7 +12,7 @@ from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.model.typing_dto import TypingStatus
+from gws_core.model.typing_dto import TypingRefDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
 from gws_core.project.model_with_project import ModelWithProject
 from gws_core.project.project import Project
@@ -482,47 +482,53 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
     ########################################## JSON ######################################
 
     def to_dto(self) -> ResourceDTO:
-        resource_dto = ResourceDTO(
+
+        resource_type_ref: TypingRefDTO = None
+        is_downloadable: Optional[bool] = False
+        type_status: TypingStatus = TypingStatus.OK
+        has_children: bool = False
+        style: TypingStyle = self.style
+
+        resource_typing: Optional[Typing] = TypingManager.get_typing_from_name(
+            self.resource_typing_name)
+        if resource_typing:
+            resource_type_ref = resource_typing.to_ref_dto()
+            is_downloadable = self.is_downloadable
+            type_status = resource_typing.get_type_status()
+
+            resource_type: Type = resource_typing.get_type()
+
+            # check if the resource has children resources
+            if resource_type is not None and Utils.issubclass(resource_type, ResourceListBase):
+                has_children = True
+
+            if style is None:
+                style = resource_typing.style
+        else:
+            type_status = TypingStatus.UNAVAILABLE
+
+        if style is None:
+            style = TypingStyle.default_resource()
+
+        return ResourceDTO(
             id=self.id,
             created_at=self.created_at,
             created_by=self.created_by.to_dto(),
             last_modified_at=self.last_modified_at,
             last_modified_by=self.last_modified_by.to_dto(),
             resource_typing_name=self.resource_typing_name,
+            resource_type=resource_type_ref,
             fs_node=self.fs_node_model.to_dto() if self.fs_node_model else None,
             origin=self.origin,
+            is_downloadable=is_downloadable,
             name=self.name,
-            has_children=False,
-            type_status=TypingStatus.OK,
+            has_children=has_children,
+            type_status=type_status,
             flagged=self.flagged,
             experiment=self.experiment.to_simple_dto() if self.experiment else None,
             project=self.project.to_dto() if self.project else None,
-            style=self.style
+            style=style,
         )
-
-        resource_typing: Optional[Typing] = TypingManager.get_typing_from_name(
-            self.resource_typing_name)
-
-        if resource_typing:
-            resource_dto.resource_type = resource_typing.to_ref_dto()
-            resource_dto.is_downloadable = self.is_downloadable
-            resource_dto.type_status = resource_typing.get_type_status()
-
-            resource_type: Type = resource_typing.get_type()
-
-            # check if the resource has children resources
-            if resource_type is not None and Utils.issubclass(resource_type, ResourceListBase):
-                resource_dto.has_children = True
-
-            if resource_dto.style is None:
-                resource_dto.style = resource_typing.style
-        else:
-            resource_dto.type_status = TypingStatus.UNAVAILABLE
-
-            if resource_dto.style is None:
-                resource_dto.style = TypingStyle.default_resource()
-
-        return resource_dto
 
     def to_simple_dto(self) -> ResourceSimpleDTO:
         return ResourceSimpleDTO(

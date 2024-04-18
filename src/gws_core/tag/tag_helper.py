@@ -17,7 +17,7 @@ class TagHelper():
     def tags_to_json(cls, tags: List[Tag]) -> List[dict]:
         if not tags:
             return []
-        return [tag.to_dto().dict() for tag in tags]
+        return [tag.to_dto().to_json_dict() for tag in tags]
 
     @classmethod
     def tags_to_list(cls, tags: str) -> List[Tag]:

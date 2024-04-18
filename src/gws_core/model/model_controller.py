@@ -3,9 +3,8 @@
 from typing import Optional
 
 from fastapi import Depends
-from pydantic.main import BaseModel
 
-from gws_core.core.model.model_dto import ModelDTO, PageDTO
+from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO, PageDTO
 
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
@@ -24,7 +23,7 @@ def count_the_number_of_models(typing_name: str,
     return ModelService.count_model(typing_name=typing_name)
 
 
-class SearchBody(BaseModel):
+class SearchBody(BaseModelDTO):
     search_text: str
 
 

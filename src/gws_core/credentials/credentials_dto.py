@@ -2,21 +2,20 @@
 
 from typing import Optional
 
-from pydantic import BaseModel
-
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 
 from .credentials_type import CredentialsType
 
 
-class SaveCredentialDTO(BaseModel):
+class SaveCredentialDTO(BaseModelDTO):
     name: str
     type: CredentialsType
-    description: Optional[str]
+    description: Optional[str] = None
     data: dict
 
 
 class CredentialDTO(ModelWithUserDTO):
     name: str
     type: CredentialsType
-    description: Optional[str]
+    description: Optional[str] = None

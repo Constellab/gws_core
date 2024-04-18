@@ -158,7 +158,7 @@ class ProgressBar(Model):
             text=message,
             datetime=dtime
         )
-        self.data["messages"].append(progress_bar_message.dict())
+        self.data["messages"].append(progress_bar_message.to_json_dict())
 
     def start(self):
         if self.is_started:

@@ -20,7 +20,7 @@ class ExternalApiService:
     """
 
     @classmethod
-    def post(cls, url: str, body: Dict, headers: Dict[str, str] = None,
+    def post(cls, url: str, body: Any, headers: Dict[str, str] = None,
              raise_exception_if_error: bool = False, timeout: int = DEFAULT_TIMEOUT) -> Response:
         """
         Make an HTTP post request
@@ -31,7 +31,7 @@ class ExternalApiService:
         return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
-    def put(cls, url: str, body: Dict, headers: Dict[str, str] = None, files: Any = None,
+    def put(cls, url: str, body: Any, headers: Dict[str, str] = None, files: Any = None,
             raise_exception_if_error: bool = False, timeout: int = DEFAULT_TIMEOUT) -> Response:
         """
         Make an HTTP put request

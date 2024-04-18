@@ -2,8 +2,6 @@
 
 from typing import Any, List, Literal, Optional, Set, Type, Union
 
-from pydantic import parse_obj_as
-
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
@@ -779,12 +777,12 @@ class ProtocolService(BaseService):
                 protocol_id, protocol_update.process.instance_name, port)
 
         for io_spec in list(community_live_task_version.input_specs['specs'].values()):
-            io_spec = parse_obj_as(IOSpecDTO, io_spec)
+            io_spec = IOSpecDTO.from_json(io_spec)
             protocol_update = cls.add_dynamic_input_port_to_process(
                 protocol_id, protocol_update.process.instance_name, io_spec)
 
         for io_spec in list(community_live_task_version.output_specs['specs'].values()):
-            io_spec = parse_obj_as(IOSpecDTO, io_spec)
+            io_spec = IOSpecDTO.from_json(io_spec)
             protocol_update = cls.add_dynamic_output_port_to_process(
                 protocol_id, protocol_update.process.instance_name, io_spec)
 

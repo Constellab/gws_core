@@ -159,14 +159,14 @@ class Migration039(BrickMigration):
                 for port_name, port in process_model.outputs.ports.items():
                     if port_name in output_resources:
                         port.resource_model = output_resources[port_name]
-                process_model.data["outputs"] = process_model.outputs.to_dto().dict()
+                process_model.data["outputs"] = process_model.outputs.to_dto().to_json_dict()
 
                 # set port input from input_resources
                 for port_name, port in process_model.inputs.ports.items():
                     if port_name in input_resources:
                         port.resource_model = input_resources[port_name]
 
-                process_model.data["inputs"] = process_model.inputs.to_dto().dict()
+                process_model.data["inputs"] = process_model.inputs.to_dto().to_json_dict()
 
                 # set brick version
                 typing = TypingManager.get_typing_from_name_and_check(
@@ -803,7 +803,7 @@ class Migration0515(BrickMigration):
                         origin_env_config_file_path=env['creation_info']['origin_env_config_file_path'],
                     )
                     with open(os.path.join(env_path, PipShellProxy.CREATION_INFO_FILE_NAME), "w", encoding="UTF-8") as outfile:
-                        dump(env_creation.dict(), outfile)
+                        dump(env_creation.to_json_dict(), outfile)
 
             except Exception as exception:
                 Logger.error(

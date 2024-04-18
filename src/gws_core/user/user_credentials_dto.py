@@ -2,15 +2,15 @@
 
 from typing import Optional
 
-from pydantic import BaseModel
+from gws_core.core.model.model_dto import BaseModelDTO
 
 
-class UserCredentialsDTO(BaseModel):
+class UserCredentialsDTO(BaseModelDTO):
     email: str
     password: str
     captcha: Optional[str]
 
 
-class UserCredentials2Fa(BaseModel):
+class UserCredentials2Fa(BaseModelDTO):
     twoFAUrlCode: str
     twoFACode: str

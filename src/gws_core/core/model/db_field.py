@@ -73,12 +73,12 @@ class BaseDTOField(TextField):
 
     def db_value(self, value: BaseModelDTO):
         if value is not None:
-            return value.json()
+            return value.to_json_str()
         return None
 
     def python_value(self, value):
         if value is not None:
-            return self.dto_type.parse_raw(value)
+            return self.dto_type.from_json_str(value)
         return None
 
 

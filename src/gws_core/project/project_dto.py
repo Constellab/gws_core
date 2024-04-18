@@ -3,9 +3,7 @@
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel
-
-from gws_core.core.model.model_dto import ModelDTO
+from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 
 
 class ProjectLevelStatus(Enum):
@@ -13,12 +11,12 @@ class ProjectLevelStatus(Enum):
     LEAF = 'LEAF'
 
 
-class SpaceProject(BaseModel):
+class SpaceProject(BaseModelDTO):
 
     id: str
     code: str
     title: str
-    children: Optional[List['SpaceProject']]
+    children: Optional[List['SpaceProject']] = None
     levelStatus: ProjectLevelStatus
 
 

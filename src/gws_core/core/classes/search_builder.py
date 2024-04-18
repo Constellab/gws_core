@@ -5,12 +5,12 @@ from typing import Any, Callable, List, Literal, Optional, Type
 from peewee import (Expression, Field, FloatField, IntegerField, ModelSelect,
                     Ordering)
 from playhouse.mysql_ext import Match
-from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.model.model_dto import BaseModelDTO
 
 from ..model.model import Model
 from .expression_builder import ExpressionBuilder
@@ -39,7 +39,7 @@ class SearchJoin(TypedDict):
     on: Expression
 
 
-class SearchParams(BaseModel):
+class SearchParams(BaseModelDTO):
     """Dictionnary containing information to filter and order a search
 
     :param TypedDict: [description]

@@ -89,7 +89,7 @@ class TaskTyping(Typing):
         typing_dto = super().to_full_dto()
 
         task_typing = TaskTypingDTO(
-            **typing_dto.dict(),
+            **typing_dto.to_json_dict(),
         )
 
         # retrieve the task python type

@@ -2,7 +2,6 @@
 from typing import Any, Dict
 
 from peewee import CharField, IntegerField
-from pydantic import StrBytes
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -94,10 +93,10 @@ class ProtocolTemplate(ModelWithUser, TaggableModel):
         return cls.from_export_dto(protocol_template_dto)
 
     @classmethod
-    def from_export_dto_str_bytes(cls, export_dict: StrBytes) -> 'ProtocolTemplate':
+    def from_export_dto_str_bytes(cls, export_dict: Any) -> 'ProtocolTemplate':
         protocol_template_dto: ProtocolTemplateExportDTO
         try:
-            protocol_template_dto = ProtocolTemplateExportDTO.parse_raw(export_dict)
+            protocol_template_dto = ProtocolTemplateExportDTO.from_json(export_dict)
         except Exception as e:
             Logger.error(f"Error while reading the protocol template file: {e}")
             raise BadRequestException(f"The protocol template file is not valid : {e}")

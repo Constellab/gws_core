@@ -40,4 +40,4 @@ class ResourcesListView(View):
         self._resource_model += resource_model_json
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        return [resource.to_dto().dict() for resource in self._resource_model]
+        return [resource.to_dto().to_json_dict() for resource in self._resource_model]

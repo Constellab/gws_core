@@ -89,7 +89,7 @@ class LabConfigModel(BaseModel):
         lab_config = LabConfigModel()
         lab_config.id = StringHelper.generate_uuid()
         lab_config.hash = hash
-        lab_config.brick_versions = [brick_version.dict() for brick_version in brick_versions]
+        lab_config.brick_versions = [brick_version.to_json_dict() for brick_version in brick_versions]
         lab_config.version = cls.LAB_CONFIG_VERSION
 
         return lab_config.save(force_insert=True)
@@ -103,7 +103,7 @@ class LabConfigModel(BaseModel):
         # sort brick by name before hasing
         hash_obj = hashlib.blake2b()
         brick_versions = sorted(brick_versions, key=lambda d: d.name)
-        brick_versions_dict = [brick_version.dict() for brick_version in brick_versions]
+        brick_versions_dict = [brick_version.to_json_dict() for brick_version in brick_versions]
         hash_obj.update(dumps(brick_versions_dict).encode())
 
         return hash_obj.hexdigest()

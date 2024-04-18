@@ -40,7 +40,7 @@ class ProtocolLayout(SerializableObject):
             self.outerface_layouts = {}
 
     def serialize(self) -> str:
-        return self.to_dto().json()
+        return self.to_dto().to_json_str()
 
     def to_dto(self) -> ProtocolLayoutDTO:
         return ProtocolLayoutDTO(

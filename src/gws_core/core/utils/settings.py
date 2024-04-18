@@ -7,11 +7,11 @@ from copy import deepcopy
 from json import JSONDecodeError, dump, load
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.system_dto import SettingsDTO
 from gws_core.user.user_dto import SpaceDict
@@ -56,7 +56,7 @@ class BrickMigrationLog(TypedDict):
     history: List[BrickMigrationLogHistory]
 
 
-class PipPackage(BaseModel):
+class PipPackage(BaseModelDTO):
     name: str
     version: str
 

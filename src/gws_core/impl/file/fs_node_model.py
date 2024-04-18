@@ -54,7 +54,7 @@ class FSNodeModel(Model):
         from gws_core.resource.resource_model import ResourceModel
         return ResourceModel.get(ResourceModel.fs_node_model == self)
 
-    def to_dto(self) -> BaseModelDTO:
+    def to_dto(self) -> FsNodeModelDTO:
         return FsNodeModelDTO(
             id=self.id,
             size=self.size,

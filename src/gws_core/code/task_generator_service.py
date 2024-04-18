@@ -82,7 +82,7 @@ class TaskGeneratorService:
         return task_generator.generate_code()
 
     @classmethod
-    def generate_live_task_file_from_live_task_id(cls, task_id: str) -> object:
+    def generate_live_task_file_from_live_task_id(cls, task_id: str) -> dict:
         task: TaskModel = TaskModel.get_by_id_and_check(task_id)
         values = task.config.get_and_check_values()
         code = task.config.get_value("code")
@@ -107,7 +107,7 @@ class TaskGeneratorService:
                     "version": brick_version
                 })
 
-        res = {
+        return {
             "json_version": 1,
             "params": params,
             "code": code,
@@ -118,7 +118,6 @@ class TaskGeneratorService:
             "bricks": bricks,
             "task_type": cls.get_live_task_type(task.instance_name),
         }
-        return res
 
     @classmethod
     def get_live_task_type(self, instance_name: str) -> str:
