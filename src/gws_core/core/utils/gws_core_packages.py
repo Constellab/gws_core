@@ -27,3 +27,5 @@ class GwsCorePackages():
     PLOTLY = "plotly"
     SIMPLE_JSON = "simplejson"
     XML_TO_DICT = "xmltodict"
+    STREAMLIT = "streamlit"
+    BEAUTIFUL_SOUP = "beautifulsoup4"
