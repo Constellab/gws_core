@@ -32,7 +32,7 @@ class PipEnvTask(BaseEnvShellTask):
         name = 'pypi'
 
         [requires]
-        python_version = '3.8'
+        python_version = '3.10'
 
         [packages]
         requests = { extras = ['socks'] }
