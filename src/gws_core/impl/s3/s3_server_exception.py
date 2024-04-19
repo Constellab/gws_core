@@ -1,9 +1,8 @@
 
 
 from fastapi import HTTPException, status
-from xmltodict import unparse
 
-from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.xml_helper import XMLHelper
 
 
 class S3ServerException(HTTPException):
@@ -50,7 +49,7 @@ class S3ServerException(HTTPException):
         else:
             json_['Error']['Resource'] = f'/{self.bucket_name}'
 
-        return unparse(json_)
+        return XMLHelper.dict_to_xml(json_)
 
 
 class S3ServerNoSuchBucket(S3ServerException):
@@ -73,25 +72,3 @@ class S3ServerNoSuchKey(S3ServerException):
                          code='NoSuchKey',
                          message='The specified key does not exist.',
                          bucket_name=bucket_name, key=key)
-
-
-class S3ServerContext:
-    """ Context to support with statement to catch exceptions and convert
-    them to S3ServerException"""
-
-    bucket_name: str
-    key: str
-
-    def __init__(self, bucket_name: str = None, key: str = None) -> None:
-        self.bucket_name = bucket_name
-        self.key = key
-
-    def __enter__(self):
-        # Code to set up and acquire resources
-        return self  # You can return an object that you want to use in the with block
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        if exc_value:
-            Logger.log_exception_stack_trace(exc_value)
-            raise S3ServerException.from_exception(exc_value, self.bucket_name, self.key)
-        return True  # You can return True to suppress any further exception

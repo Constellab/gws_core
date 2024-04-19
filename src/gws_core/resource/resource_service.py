@@ -7,6 +7,7 @@ from peewee import ModelSelect
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
+from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.process.process_interface import IProcess
 from gws_core.project.project import Project
@@ -22,7 +23,6 @@ from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.share.resource_downloader_http import ResourceDownloaderHttp
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Sink
-from gws_core.task.task_model import TaskModel
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
@@ -57,23 +57,19 @@ class ResourceService(BaseService):
             raise BadRequestException(GWSException.DELETE_GENERATED_RESOURCE_ERROR.value,
                                       GWSException.DELETE_GENERATED_RESOURCE_ERROR.value)
 
-        # Check if resource is used as input of a task
-        task_input: TaskInputModel = TaskInputModel.get_by_resource_model(
-            resource_model.id).first()
+        cls.check_if_resource_is_used(resource_model)
 
-        if task_input:
+    @classmethod
+    def check_if_resource_is_used(cls, resource_model: ResourceModel) -> None:
+        """Check if a resource is used in an experiment, raise an exception if it is the case
+        """
+        resource_navigation = EntityNavigatorResource(resource_model)
+        next_experiment = resource_navigation.get_next_experiments().get_first_entity()
+
+        if next_experiment:
             raise BadRequestException(GWSException.RESOURCE_USED_ERROR.value,
                                       unique_code=GWSException.RESOURCE_USED_ERROR.value,
-                                      detail_args={"experiment": task_input.experiment.get_short_name()})
-
-        # Check if resource is used as Config of a Source Task
-        task_model: TaskModel = TaskModel.select().where(
-            TaskModel.source_config_id == resource_model.id).first()
-
-        if task_model:
-            raise BadRequestException(GWSException.RESOURCE_USED_ERROR.value,
-                                      unique_code=GWSException.RESOURCE_USED_ERROR.value,
-                                      detail_args={"experiment": task_model.experiment.get_short_name()})
+                                      detail_args={"experiment": next_experiment.get_short_name()})
 
     @classmethod
     def update_name(cls, resource_model_id: str, name: str) -> ResourceModel:

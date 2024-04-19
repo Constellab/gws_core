@@ -6,7 +6,8 @@ from typing import Any
 
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import Response, StreamingResponse
-from xmltodict import unparse
+
+from gws_core.core.utils.xml_helper import XMLHelper
 
 
 class ResponseHelper():
@@ -70,4 +71,4 @@ class ResponseHelper():
 
     @staticmethod
     def create_xml_response_from_json(json_: Any) -> Response:
-        return ResponseHelper.create_xml_response(unparse(json_))
+        return ResponseHelper.create_xml_response(XMLHelper.dict_to_xml(json_))

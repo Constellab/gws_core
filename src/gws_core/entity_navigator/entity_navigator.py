@@ -1,6 +1,6 @@
 
 
-from typing import Dict, Generic, Iterable, List, Set, Type, Union
+from typing import Dict, Generic, Iterable, List, Optional, Set, Type, Union
 
 from peewee import JOIN, ModelSelect
 
@@ -236,6 +236,10 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
     def get_entities_list(self) -> List[GenericNavigableEntity]:
         return list(self._entities)
+
+    def get_first_entity(self) -> Optional[GenericNavigableEntity]:
+        entities = self.get_entities_list()
+        return entities[0] if len(entities) > 0 else None
 
     def propagate_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None) -> None:
         pass

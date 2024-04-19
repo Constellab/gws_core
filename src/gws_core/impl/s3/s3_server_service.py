@@ -1,20 +1,21 @@
 
 
 from os import path
-from typing import ByteString, Optional
+from typing import ByteString, List, Optional
 
 from fastapi.responses import FileResponse
 from mypy_boto3_s3.type_defs import ListObjectsV2OutputTypeDef, ObjectTypeDef
 
 from gws_core.core.decorator.transaction import transaction
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.s3.s3_server_exception import (S3ServerContext,
-                                                  S3ServerException,
+from gws_core.impl.s3.s3_server_context import S3ServerContext
+from gws_core.impl.s3.s3_server_exception import (S3ServerException,
                                                   S3ServerNoSuchKey)
 from gws_core.project.project import Project
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -26,8 +27,6 @@ from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
-from gws_core.user.current_user_service import CurrentUserService
-from gws_core.user.user import User
 
 
 class S3ServerService:
@@ -87,9 +86,14 @@ class S3ServerService:
         resource_model = cls._get_object(bucket_name, key)
 
         if resource_model:
-            raise S3ServerException(status_code=400, code='object_exists', message='Object already exists',
-                                    bucket_name=bucket_name, key=key)
+            cls._update_object(bucket_name, key, data, resource_model)
+        else:
+            cls._create_object(bucket_name, key, data, project)
 
+    @classmethod
+    def _create_object(cls, bucket_name: str,
+                       key: str, data: ByteString,
+                       project: Project) -> None:
         with S3ServerContext(bucket_name, key):
             # create a file in a temp folder
             temp_folder = Settings.make_temp_dir()
@@ -109,21 +113,35 @@ class S3ServerService:
             resource_model.name = FileHelper.get_name_with_extension(key)
             resource_model.project = project
 
-            # Authenticate sys user because in S3 server we don't have a user
-            CurrentUserService.set_current_user(User.get_sysuser())
-            try:
-                resource_model = resource_model.save_full()
+            resource_model = resource_model.save_full()
 
-                resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource_model.id)
+            resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource_model.id)
 
-                # Add the tags, make sure they are not propagable
-                origins = TagOrigins(TagOriginType.S3, 's3')
-                resource_tags.add_tag(Tag('storage', 's3', is_propagable=False, origins=origins))
-                resource_tags.add_tag(Tag('bucket', bucket_name, is_propagable=False, origins=origins))
-                resource_tags.add_tag(Tag('key', key, is_propagable=False, origins=origins))
+            # Add the tags, make sure they are not propagable
+            origins = TagOrigins(TagOriginType.S3, 's3')
+            resource_tags.add_tag(Tag('storage', 's3', is_propagable=False, origins=origins))
+            resource_tags.add_tag(Tag('bucket', bucket_name, is_propagable=False, origins=origins))
+            resource_tags.add_tag(Tag('key', key, is_propagable=False, origins=origins))
 
-            finally:
-                CurrentUserService.set_current_user(None)
+    @classmethod
+    def _update_object(cls, bucket_name: str,
+                       key: str, data: ByteString,
+                       resource_model: ResourceModel) -> None:
+        with S3ServerContext(bucket_name, key):
+
+            if not resource_model.fs_node_model:
+                raise S3ServerException(status_code=500, code='invalid_object',
+                                        message='Object is not a file', bucket_name=bucket_name, key=key)
+
+            ResourceService.check_if_resource_is_used(resource_model)
+
+            # override the file
+            file_path = resource_model.fs_node_model.path
+            with open(file_path, 'wb') as write_file:
+                write_file.write(data)
+
+            resource_model.last_modified_at = DateHelper.now_utc()
+            resource_model.save()
 
     @classmethod
     def get_object(cls, bucket_name: str, key: str) -> FileResponse:
@@ -137,21 +155,32 @@ class S3ServerService:
     def delete_object(cls, bucket_name: str, key: str) -> None:
         """Delete an object from the bucket
         """
-        resource: ResourceModel = cls._get_object_and_check(bucket_name, key)
+        resource: ResourceModel = cls._get_and_check_before_delete_object(bucket_name, key)
 
         with S3ServerContext(bucket_name, key):
-            # Authenticate sys user because in S3 server we don't have a user
-            CurrentUserService.set_current_user(User.get_sysuser())
-            try:
-                result = EntityNavigatorService.check_impact_delete_resource(resource.id)
-                if result.has_entities():
-                    raise S3ServerException(
-                        status_code=400, code='delete_impact',
-                        message='Cannot delete the resource because it is used in an next experiment or a report.',
-                        bucket_name=bucket_name, key=key)
+            EntityNavigatorService.delete_resource(resource_id=resource.id, allow_s3_project_storage=True)
+
+    @classmethod
+    def delete_objects(cls, bucket_name: str, keys: List[str]) -> None:
+
+        resources: List[ResourceModel] = []
+        for key in keys:
+            resources.append(cls._get_and_check_before_delete_object(bucket_name, key))
+
+        with S3ServerContext(bucket_name):
+            for resource in resources:
                 EntityNavigatorService.delete_resource(resource_id=resource.id, allow_s3_project_storage=True)
-            finally:
-                CurrentUserService.set_current_user(None)
+
+    @classmethod
+    def _get_and_check_before_delete_object(cls, bucket_name: str, key: str) -> ResourceModel:
+        resource: ResourceModel = cls._get_object_and_check(bucket_name, key)
+        result = EntityNavigatorService.check_impact_delete_resource(resource.id)
+        if result.has_entities():
+            raise S3ServerException(
+                status_code=400, code='delete_impact',
+                message='Cannot delete the resource because it is used in an next experiment or a report.',
+                bucket_name=bucket_name, key=key)
+        return resource
 
     @classmethod
     def head_object(cls, bucket_name: str, key: str) -> None:
