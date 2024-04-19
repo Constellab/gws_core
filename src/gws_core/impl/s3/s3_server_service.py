@@ -140,6 +140,10 @@ class S3ServerService:
             with open(file_path, 'wb') as write_file:
                 write_file.write(data)
 
+            # refresh the size of the file
+            resource_model.fs_node_model.size = FileHelper.get_size(file_path)
+            resource_model.fs_node_model.save()
+            # update the last modified date
             resource_model.last_modified_at = DateHelper.now_utc()
             resource_model.save()
 
