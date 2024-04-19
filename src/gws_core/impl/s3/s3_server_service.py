@@ -187,10 +187,15 @@ class S3ServerService:
         return resource
 
     @classmethod
-    def head_object(cls, bucket_name: str, key: str) -> None:
+    def head_object(cls, bucket_name: str, key: str) -> dict:
         """Head an object from the bucket
         """
-        cls._get_object_and_check(bucket_name, key)
+        resource = cls._get_object_and_check(bucket_name, key)
+        return {
+            'Content-Length': str(resource.fs_node_model.size),
+            'Content-Type': FileHelper.get_mime(resource.fs_node_model.path),
+            'Last-Modified': DateHelper.to_rfc7231_str(resource.last_modified_at),
+        }
 
     @classmethod
     def _get_object(cls, bucket_name: str, key: str) -> Optional[ResourceModel]:

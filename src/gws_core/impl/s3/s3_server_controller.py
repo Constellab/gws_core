@@ -88,8 +88,10 @@ def list_objects(bucket: str,
 
 @s3_server_app.head("/v1/{bucket}/{key:path}")
 def head_object(bucket: str, key: str,
-                _=Depends(S3ServerAuth.check_s3_server_auth)) -> None:
-    S3ServerService.head_object(bucket, key)
+                _=Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
+    headers = S3ServerService.head_object(bucket, key)
+
+    return Response(status_code=204, headers=headers)
 
 
 @s3_server_app.delete("/v1/{bucket}/{key:path}")

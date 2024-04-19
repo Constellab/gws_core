@@ -30,6 +30,12 @@ class DateHelper:
         return date.isoformat()
 
     @staticmethod
+    def to_rfc7231_str(date: datetime) -> str:
+        """convert a datetime to a string in the RFC 7231 format. Useful for HTTP headers.
+        """
+        return date.strftime('%a, %d %b %Y %H:%M:%S GMT')
+
+    @staticmethod
     def are_same_day(date1: datetime, date2: datetime) -> bool:
         return date1.date() == date2.date()
 
