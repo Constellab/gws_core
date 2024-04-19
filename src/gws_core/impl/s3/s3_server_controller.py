@@ -1,6 +1,6 @@
 
 
-from typing import List
+from typing import List, Union
 
 from fastapi import Depends, Request
 from fastapi.params import Query
@@ -25,7 +25,7 @@ def health_check() -> bool:
 # Route call for multiple command. The x_id content the command.
 # the trailing slash is important to make the route work
 @s3_server_app.post("/v1/{bucket}/")
-async def test(bucket: str,
+async def post(bucket: str,
                request: Request,
                x_id: str = Query(None, alias='x-id'),
                _=Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
@@ -35,9 +35,13 @@ async def test(bucket: str,
         # return await delete_objectjj(bucket, request)
         xml_content = await request.body()
         str_xml = xml_content.decode('utf-8')
-
         dict_ = XMLHelper.xml_to_dict(str_xml)
-        keys: List[str] = [obj['Key'] for obj in dict_['Delete']['Object']]
+        objects: Union[dict, List[dict]] = dict_['Delete']['Object']
+        keys: list[str]
+        if not isinstance(objects, list):
+            keys = [objects['Key']]
+        else:
+            keys = [obj['Key'] for obj in objects]
         S3ServerService.delete_objects(bucket, keys)
         return Response(status_code=204)
 
