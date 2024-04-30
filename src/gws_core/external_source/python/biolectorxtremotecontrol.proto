@@ -1,0 +1,525 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+option objc_class_prefix = "HLW";
+
+// naming conventions according to https://developers.google.com/protocol-buffers/docs/style
+package biolectorxt.api;
+
+/* =========================== Services =========================== */
+service BioLectorXtRemoteControl {
+
+    // Get the list of all protocols
+    rpc GetProtocols (google.protobuf.Empty) returns (GetProtocolListResponse) {} // List of IDs and protocol names
+    // Upload a protocol file
+    rpc UploadProtocol (stream FileChunk) returns (StdResponse) {}
+    // Download a protocol file based on ID
+    rpc DownloadProtocol (google.protobuf.StringValue) returns (stream FileChunk) {}
+    // Delete protocol by ID
+    rpc DeleteProtocol (google.protobuf.StringValue) returns (StdResponse) {}
+
+    // Get the list of all conducted experiments
+    rpc GetExperimentList (google.protobuf.Empty) returns (GetExperimentListResponse) {}
+    // Download results for a particular experiment
+    rpc DownloadExperiment (google.protobuf.StringValue) returns (stream FileChunk) {} // CSV download
+    // Delete experiment results from the SD card
+    rpc DeleteExperiment (google.protobuf.StringValue) returns (StdResponse) {}
+    // Update parameters for a running experiment - json string passed as parameter
+    rpc UpdateLiveExperiment (google.protobuf.StringValue) returns (UpdateRunningExperimentResponse) {}
+
+    // Start protocol by ID
+    rpc StartProtocol(google.protobuf.StringValue) returns (StartProtocolResponse) {}
+    // Stop running protocol
+    rpc StopProtocol(google.protobuf.Empty) returns (StopProtocolResponse) {}
+    // Pause protocol and stop / continue shaking (true / false)
+    rpc PauseProtocol(google.protobuf.BoolValue) returns (google.protobuf.Empty) {}
+    // Continue protocol
+    rpc ContinueProtocol(google.protobuf.Empty) returns (ContinueProtocolResponse) {}
+
+    // Get current progress
+    rpc GetCurrentProgress(google.protobuf.Empty) returns (GetCurrentProgressResponse) {}
+
+    // Temperature calls
+    // Get temperature control status
+    rpc GetTemperatureControlStatus(google.protobuf.Empty) returns (GetTemperatureControlStatusResponse) {}
+    // Set target temperature - float value
+    rpc SetTemperatureSetpoint(google.protobuf.FloatValue) returns (google.protobuf.Empty) {}
+    // Start/stop temperature control
+    rpc SetTemperatureControlEnabled(google.protobuf.BoolValue) returns (google.protobuf.Empty) {}
+
+    // Shaker calls
+    // Get shaker status
+    rpc GetShakerControlStatus(google.protobuf.Empty) returns (GetShakerControlStatusResponse) {}
+    // Set shaker RPM
+    rpc SetShakerSetpoint(google.protobuf.UInt32Value) returns (google.protobuf.Empty) {}
+    // Start/stop shaker
+    rpc SetShakerEnabled(google.protobuf.BoolValue) returns (google.protobuf.Empty) {}
+
+    // Cover operations
+    // Open cover
+    rpc OpenCover(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    // Close cover
+    rpc CloseCover(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    // Get cover state
+    rpc GetCoverState(google.protobuf.Empty) returns (GetCoverStateResponse) {}       
+
+    // Gassing calls
+    // Get actual gassing mode for a well
+    rpc GetActualGassingMode(google.protobuf.Empty) returns (GetActualGassingModeResponse) {}
+    // Get target gassing flowrate for a well
+    rpc GetGassingFlowrate(google.protobuf.Empty) returns (google.protobuf.FloatValue) {}
+    // Set target gassing flowrate
+    rpc SetGassingFlowrate(google.protobuf.FloatValue) returns (google.protobuf.Empty) {}
+    // Get target gas percentage
+    rpc GetTargetGasPercentage(GetGasPercentageRequest) returns (google.protobuf.FloatValue) {}
+    // Get actual gas percentage
+    rpc GetActualGasPercentage(GetGasPercentageRequest) returns (google.protobuf.FloatValue) {}
+    // Set target gas percentage
+    rpc SetTargetGassPercentage(SetTargetGasPercentageRequest) returns (google.protobuf.Empty) {}    
+    // Get humidity control state
+    rpc GetHumidityControlState(google.protobuf.Empty) returns (google.protobuf.BoolValue) {}
+    // Set humidity control state
+    rpc SetHumidityControlState(google.protobuf.BoolValue) returns (google.protobuf.Empty) {}
+
+    // Get cultivation values
+    rpc GetCultivationValues(google.protobuf.Empty) returns (GetCultivationValuesResponse) {}
+
+    // Get pH control status
+    rpc GetPhControlStatus(google.protobuf.Empty) returns (GetPhControlStatusResponse) {}
+    // Set target pH
+    rpc SetTargetPh(SetTargetPhRequest) returns (google.protobuf.Empty) {}
+    // Set pH control state
+    rpc SetPhControlState(SetPhControlStateRequest) returns (google.protobuf.Empty) {}
+    // Set pH control params
+    rpc SetPhControlParams(SetPhControlParamsRequest) returns (google.protobuf.Empty) {}
+
+    // Microfluidic feeding
+    // Start feed
+    rpc StartFeed(FeedRequest) returns (google.protobuf.Empty) {}
+    // Stop feed
+    rpc StopFeed(FeedRequest) returns (google.protobuf.Empty) {}
+    // Set feed control params
+    rpc SetFeedControlParams(SetFeedControlParamsRequest) returns (google.protobuf.Empty) {}
+    // Run feed pulse
+    rpc RunFeedPulse(RunFeedPulseRequest) returns (google.protobuf.Empty) {}
+    // Add comment
+    rpc AddComment(google.protobuf.StringValue) returns (google.protobuf.Empty) {}
+
+    // LAM functions
+    // Set LAM work mode
+    rpc SetLAMWorkMode(SetLAMWorkModeRequest) returns (google.protobuf.Empty) {}
+    // Set LAM frequency
+    rpc SetLAMFrequency(google.protobuf.FloatValue) returns (google.protobuf.Empty) {}
+    // Set LAM relative powers
+    rpc SetLAMRelativePowers(SetLAMRelativePowersRequest) returns (google.protobuf.Empty) {}
+
+    rpc GetLAMStatus(google.protobuf.Empty) returns (GetLAMStatusResponse) {}
+
+    // Streaming calls
+    // Status update stream
+    rpc StatusUpdateStream(google.protobuf.Empty) returns (stream StatusUpdateStreamResponse) {}
+    // Acknowledge an event message
+    // rpc AcknowledgeEvent (AckRequest) returns (AckReply) {}
+}
+
+// Messages
+// Well label enum
+enum WellLabel {
+    A01 = 0;
+    A02 = 1;
+    A03 = 2;
+    A04 = 3;
+    A05 = 4;
+    A06 = 5;
+    A07 = 6;
+    A08 = 7;
+    B01 = 8;
+    B02 = 9;
+    B03 = 10;
+    B04 = 11;
+    B05 = 12;
+    B06 = 13;
+    B07 = 14;
+    B08 = 15;
+    C01 = 16;
+    C02 = 17;
+    C03 = 18;
+    C04 = 19;
+    C05 = 20;
+    C06 = 21;
+    C07 = 22;
+    C08 = 23;
+    D01 = 24;
+    D02 = 25;
+    D03 = 26;
+    D04 = 27;
+    D05 = 28;
+    D06 = 29;
+    D07 = 30;
+    D08 = 31;
+    E01 = 32;
+    E02 = 33;
+    E03 = 34;
+    E04 = 35;
+    E05 = 36;
+    E06 = 37;
+    E07 = 38;
+    E08 = 39;
+    F01 = 40;
+    F02 = 41;
+    F03 = 42;
+    F04 = 43;
+    F05 = 44;
+    F06 = 45;
+    F07 = 46;
+    F08 = 47;
+    LABEL_UNKNOWN = 48;
+}
+
+// Protocol info
+message ProtocolInfo {
+    string protocol_id = 1; // Protocol ID
+    string protocol_name = 2; // Protocol name
+}
+
+// Protocol list
+message GetProtocolListResponse {
+    repeated ProtocolInfo protocols = 1;
+}
+
+// Standard transfer status
+enum StdItemStatus
+{
+    OK = 0;
+    UNKNOWN_ERROR = 1;
+}
+
+// File meta data
+message MetaData {
+  string filename = 1;
+}
+
+// Upload file information
+message FileChunk {
+  oneof request {
+    MetaData metadata = 1;
+    bytes chunk_data = 2;
+  }
+}
+
+// Standard response
+message StdResponse {
+   StdItemStatus status = 1; // Status
+   string comment = 2; // Additional optional comment
+}
+
+// start protocol response
+message StartProtocolResponse {
+  enum StartProtocolReturnCode {
+    UNKNOWN = 0; // unknown reply
+    SUCCESS = 1; // protocol was started
+    PROTOCOL_NOT_FOUND = 2; // protocol was not found on the device
+    DEVICE_NOT_IDLE = 3; // device was not in idle state
+    LICENSE_MISSING = 4; // license is missing to run the protocol
+  }
+  StartProtocolReturnCode status = 1; // reply of protocol start request
+}
+
+// Stop protocol messages
+enum StopProtocolStatus {
+    UNKNOWN = 0; // Unknown error
+    SUCCESS = 1; // Stop success
+    NOT_RUNNING = 2; // No protocol running
+}
+
+// Stop protocol response
+message StopProtocolResponse {
+    StopProtocolStatus status = 1;
+}
+
+message ContinueProtocolResponse {
+    // Continue protocol messages
+    enum ContinueProtocolStatus {
+        UNKNOWN = 0; // Unknown error
+        SUCCESS = 1; // Continue success
+        NOT_PAUSED = 2; // Protocol running
+    }
+    ContinueProtocolStatus status = 1;
+}
+
+// Experiment info
+message ExperimentInfo {
+    string experiment_id = 1; // Experiment ID
+    string protocol_id = 2; // Protocol ID
+    string start_time = 3; // Experiment start time
+    string file_path = 4; // Experiment results file path
+    bool finished = 5; // Experiment finished
+}
+
+// Experiment list
+message GetExperimentListResponse {
+    repeated ExperimentInfo experiment = 1;
+}
+
+// message containing result from updating protocol inside running experiment
+message UpdateRunningExperimentResponse {
+    // message reporting on updates of all LUA scripts contained in protocol
+    message UpdateScriptReply {
+       string id = 1; // id of script
+       enum UpdateScriptResult {
+          OK = 0; // LUA script was replacedwithout errors
+          NO_SCRIPTS = 2; // the protocol contains no LUA scripts
+          EMPTY_SCRIPT_ID = 3; // id of LUA script is empty - no update executed
+          DUPLICATE_SCRIPT_ID = 4; // the protocol contains multiple LUA scripts of ame id - all these are not updated
+          NULL_SCRIPT = 5; // LUA scipt has no content - no update executed
+          SYNTAX_ERROR = 6; // LUA script contains syntax errors - not updated
+          DRY_RUN_ERROR = 7; // LUA script dry run excution yielded error(s)
+          UNSPECIFIED_ERROR = 8; // some other problem occured while updating LUA script
+       }
+       UpdateScriptResult update_result = 2; // result from updating LUA script
+       string message = 3; // associated error message from updating LUA script
+    }
+    repeated UpdateScriptReply update_script_replies = 3;
+}
+
+// Get current progress response
+message GetCurrentProgressResponse {
+    uint64 cycle = 1; // current cycle
+    uint64 elapsed_time = 2; // elapsed time
+    uint64 next_cycle_time = 3; // next cycle time
+    uint32 current_channel = 4; // channel
+    uint32 total_channels = 5; // total channels
+    uint32 current_cultivation = 6; // current cultivation
+    uint32 total_cultivations = 7; // total cultivations
+}
+
+// Get temperature control status response
+message GetTemperatureControlStatusResponse {
+    float actual_temperature = 1; // actual temperature
+    float target_temperature = 2; // target temperature
+    bool enabled = 3; // temperature control enabled flag
+}
+
+// Get shaker control status response
+message GetShakerControlStatusResponse {
+    uint32 actual_rpm = 1; // actual rpm
+    uint32 target_rpm = 2; // target rpm
+    bool enabled = 3; // shaker running
+}
+
+// Enum representing possible cover states
+enum CoverStatus {
+    COV_UNKNOWN = 0; // Unknown/undefined state
+    COV_MOVING = 1; // Cover is moving
+    COV_FAILING = 2; // Cover is in error state, possible physically blocked
+    COV_OPEN = 3; // Cover is in open position
+    COV_CLOSED = 4; // Cover is in closed position
+}
+
+// Cover state response
+message GetCoverStateResponse {
+    CoverStatus cover_state = 1; // current cover state
+}
+
+// Gassing modes
+enum GassingMode {
+    GMODE_UNKNOWN = 0;
+    GMODE_OFF = 1;
+    GMODE_AIR = 2;
+    GMODE_ANAEROBE = 3;
+    GMODE_GASSING_O2_UP = 4;
+    GMODE_GASSING_O2_DOWN = 5;
+    GMODE_GASSING_CO2_UP = 6;
+}
+
+// Gassing mode response
+message GetActualGassingModeResponse {
+    GassingMode gassing_mode = 1;
+}
+
+// Enum representing the gas type
+enum GasTypeN {
+    GTT_UNKNOWN = 0; // Unknown gas
+    GTT_O2 = 1; // oxygen
+    GTT_CO2 = 2; // carbon-dioxide
+}
+
+// Get target gas percentage request
+message GetGasPercentageRequest {
+    GasTypeN gas_type = 1; // Gas type
+}
+
+// Set target gas percentage request
+message SetTargetGasPercentageRequest {
+    GasTypeN gas_type = 1; // Gas type
+    float gas_percentage = 2; // Gas percentage
+}
+
+// Cultivation values item
+message CultivationValuesItem {
+    WellLabel label = 1; // Well label
+    float current_volume = 2; // Current volume
+    float pumped_volume_a = 3; // Pumped volume
+    float pumped_volume_b = 4; // Pumped volume
+    float pumped_external = 5; // Externally added volume - e.g. by a robot
+    message Value {
+        uint32 index = 1; // well index
+        string name = 2; // channel name
+        float value = 3; // calibrated value
+        google.protobuf.Timestamp time_stamp = 4; // time stamp in milliseconds
+    }
+    repeated Value value = 6;
+}
+
+// Get cultivation values response
+message GetCultivationValuesResponse {
+    repeated CultivationValuesItem cultivation = 1; // list of cultivation volume infos
+}
+
+message PhControlParams {
+    float p = 1; // P parameter
+    float i = 2; // I parameter
+    float v_min = 3; // v min
+    float v_max = 4; // v max
+    float deadband = 5; // deadband
+    float start_volume = 6; // start volume
+}
+
+// Get pH control status response
+message GetPhControlStatusResponse {
+     message ControlStatus {
+        WellLabel label = 1; // Well label
+        float target_ph = 2; // target pH
+        float current_ph = 3; // current pH
+        PhControlParams params = 4;
+    }
+
+    repeated ControlStatus control_status = 1;
+}
+
+// Set target pH request
+message SetTargetPhRequest {
+    WellLabel label = 1; // Well label
+    float ph = 2; // target pH
+}
+
+// Set pH control state request
+message SetPhControlStateRequest {
+    WellLabel label = 1; // Well label
+    bool enabled = 2; // enable / disable pH control
+}
+
+// Set pH control parameters request
+message SetPhControlParamsRequest {
+    WellLabel label = 1; // Well label
+    PhControlParams params = 2;
+}
+
+// Start / stop feed request
+message FeedRequest {
+    WellLabel label = 1; // Well label
+    string source_label = 2; // Feeding source A or B
+}
+
+// Set feed control params request
+message SetFeedControlParamsRequest {
+    WellLabel label = 1; // Well label
+    string source_label = 2; // source label
+    float a = 3; // a
+    float b = 4; // b
+    float c = 5; // c
+    float d = 6; // d
+}
+
+// Run feed pulse request
+message RunFeedPulseRequest {
+    WellLabel label = 1; // Well label
+    string source_label = 2; // source label
+    float volume = 3; // volume
+}
+
+// LAM modes enum
+enum LAMModes {
+    LAM_PWM = 0;
+    LAM_DC = 1;
+    LAM_UNKNOWN = 2;
+}
+
+// Set LAM work mode request
+message SetLAMWorkModeRequest {
+    LAMModes mode = 1; // LAM mode
+}
+
+message Power {
+    uint32 index = 1;
+    float value = 2;
+}
+
+// Set LAM relative power for multiple wells
+message SetLAMRelativePowersRequest {
+    repeated Power powers = 1;
+}
+
+message GetLAMStatusResponse {
+    float frequency = 1;
+    LAMModes mode = 2;
+    repeated Power powers = 3;
+}
+
+// Shaker status
+message ShakerStatus {
+  float actual_rpm = 1; // actual rpm
+  float target_rpm = 2; // target rpm
+  float enabled = 3; // shaker enabled
+}
+
+// Temperature status
+message TemperatureStatus {
+    float actual_temperature = 1; // actual temperature
+    float target_temperature = 2; // target temperature
+    bool enabled = 3; // temperature control enabled
+}
+
+message MeasurementStatus {
+    WellLabel cultivation = 1; // Well label
+    uint32 channel_index = 2; // channel index
+    string channel_name = 3; // channel name
+    float value = 4; // measured value
+    uint64 experiment_duration = 5; // experiment duration in seconds
+    google.protobuf.Timestamp time_stamp = 6; // time stamp in milliseconds
+}
+
+// Comment source
+enum CommentKind {
+    C_UNKNOWN = 0;
+    C_SERVICE = 1; // Service
+    C_USER = 2; // User comment
+    C_SYSTEM = 3; // System comment
+}
+
+// Comment
+message StatusComment {
+    CommentKind kind = 1; // type of comment
+    string comment = 2; // comment contents
+}
+
+//Status stream response
+message StatusUpdateStreamResponse {
+    oneof current_status {
+        CoverStatus cover_state = 1;
+        int32 actual_rpm = 2;
+        int32 target_rpm = 3;
+        bool shaker_enabled = 4;
+        float actual_temperature = 5;
+        float target_temperature = 6;
+        bool temperature_enabled = 7;
+        StatusComment comment_status = 8;
+        MeasurementStatus measurement_status = 9;
+        float o2 = 10;
+        float co2 = 11;
+        float flow_rate = 12;
+    }
+}
