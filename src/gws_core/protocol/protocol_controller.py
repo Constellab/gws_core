@@ -60,6 +60,21 @@ def add_process(id_: str,
             process_typing_name=process_typing_name
         ).to_dto()
 
+@core_app.post("/protocol/{id_}/add-duplicate-process/{process_id}", tags=["Protocol"],
+               summary="Add a duplicate process to a protocol")
+def add_duplicate_process(id_: str,
+                          process_id: str,
+                          _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+    """
+    Add a process to a protocol
+    """
+
+    with update_lock:
+        return ProtocolService.add_duplicate_process_to_protocol_id(
+            protocol_id=id_,
+            process_id=process_id
+        ).to_dto()
+
 
 @core_app.post("/protocol/{id_}/add-community-live-task/{live_task_version_id}", tags=["Protocol"],
                summary="Add a community live-task to a protocol")

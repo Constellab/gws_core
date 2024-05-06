@@ -93,6 +93,28 @@ class ProtocolService(BaseService):
         return cls.add_process_to_protocol(protocol_model=protocol_model, process_type=process_typing.get_type(),
                                            instance_name=instance_name, config_params=config_params)
 
+
+    @classmethod
+    @transaction()
+    def add_duplicate_process_to_protocol_id(cls, protocol_id: str, process_id: str) -> ProtocolUpdate:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
+            protocol_id)
+        process_model: TaskModel = None
+        for process in protocol_model.processes:
+            if protocol_model.processes[process].id == process_id:
+                process_model = protocol_model.get_process(process)
+                break
+
+        duplicate_process_model: ProcessModel = ProcessFactory.create_process_model_from_process_model(process_model)
+
+
+        if duplicate_process_model is None:
+            raise BadRequestException("The process does not exist in the protocol")
+
+
+        return cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=duplicate_process_model)
+
+
     @classmethod
     @transaction()
     def add_empty_protocol_to_protocol(

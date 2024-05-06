@@ -1,7 +1,7 @@
 
 
 import inspect
-from typing import Any, List, Literal, Type
+from typing import Any, List, Literal, Type, Dict, Optional
 
 from gws_core.core.utils.refloctor_types import MethodDoc
 from gws_core.core.utils.utils import Utils
@@ -38,13 +38,43 @@ class ResourceTyping(Typing):
 
         return ResourceTypingDTO(
             **typing_dto.dict(),
+            variables=self.get_all_public_args(),
             methods=self.get_class_methods_docs()
         )
 
-    def get_class_methods_docs(self) -> ResourceTypingMethodDTO:
+    def get_all_public_args(self) -> Optional[Dict]:
+
         type_: Type = self.get_type()
         if not inspect.isclass(type_):
             return None
+
+        def get_public_args(type_) -> Dict:
+            vars = inspect.getmembers(type_)[1][1]
+            try:
+                vars_keys = [i for i in vars.keys() if i[0] != '_'].sort()
+                res: Dict = {}
+                for k in vars_keys:
+                    if vars[k].__name__ is None:
+                        print(vars[k])
+                    try:
+                        res.update({k: vars[k].__name__})
+                    except:
+                        pass
+                return res
+            except:
+                return {}
+
+        res = {}
+        for class_ in inspect.getmro(type_):
+            res.update(get_public_args(class_))
+        return res if len(res) > 0 else None
+
+    def get_class_methods_docs(self) -> ResourceTypingMethodDTO:
+
+        type_: Type = self.get_type()
+        if not inspect.isclass(type_):
+            return None
+
         methods: Any = inspect.getmembers(type_, predicate=inspect.isfunction)
         views_methods: List[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(type_)
         views_methods_dto = [m.to_dto() for m in views_methods]
