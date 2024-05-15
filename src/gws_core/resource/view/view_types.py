@@ -89,7 +89,7 @@ class ViewType(Enum):
         elif self == ViewType.RICH_TEXT:
             style = TypingStyle.material_icon("text_snippet", background_color="#f6f193")
         elif self == ViewType.STREAMLIT:
-            style = TypingStyle.material_icon("dashboard")
+            style = TypingStyle.material_icon("dashboard", background_color='#ff4b4b')
         else:
             style = TypingStyle.default_view()
 

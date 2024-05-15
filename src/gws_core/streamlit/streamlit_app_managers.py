@@ -51,27 +51,27 @@ class StreamlitAppManager():
         return cls.main_app_process is not None and cls.main_app_process.is_alive()
 
     @classmethod
-    def create_or_get_app(cls, resource_id: str) -> StreamlitApp:
-        if resource_id in cls.current_running_apps:
-            return cls.current_running_apps[resource_id]
+    def create_or_get_app(cls, app_id: str) -> StreamlitApp:
+        if app_id in cls.current_running_apps:
+            return cls.current_running_apps[app_id]
 
-        return cls._create_app(resource_id)
+        return cls._create_app(app_id)
 
     @classmethod
-    def _create_app(cls, resource_id: str) -> StreamlitApp:
+    def _create_app(cls, app_id: str) -> StreamlitApp:
         cls.start_streamlit_main_app()
 
-        app = StreamlitApp(cls.get_main_app_port(), resource_id, cls.main_app_token)
-        cls.current_running_apps[resource_id] = app
+        app = StreamlitApp(cls.get_main_app_port(), app_id, cls.main_app_token)
+        cls.current_running_apps[app_id] = app
 
         return app
 
     @classmethod
     def delete_app(cls, app: StreamlitApp) -> None:
-        if not app.resource_id in cls.current_running_apps:
+        if not app.app_id in cls.current_running_apps:
             raise Exception("App not found")
 
-        del cls.current_running_apps[app.resource_id]
+        del cls.current_running_apps[app.app_id]
         app.clean()
 
     @classmethod

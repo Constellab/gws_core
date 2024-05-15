@@ -266,6 +266,10 @@ class Settings():
         return os.path.join(cls.get_lab_folder(), '.sys')
 
     @classmethod
+    def get_main_app_folder(cls) -> str:
+        return os.path.join(cls._get_system_folder(), 'app')
+
+    @classmethod
     def get_global_env_dir(cls) -> str:
         return os.path.join(cls._get_system_folder(), ".env")
 

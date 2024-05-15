@@ -7,6 +7,7 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.streamlit.streamlit_dto import StreamlitAppDTO
+from gws_core.user.current_user_service import CurrentUserService
 
 
 class StreamlitApp():
@@ -17,23 +18,32 @@ class StreamlitApp():
     """
 
     port: int = None
-    resource_id: str = None
+    app_id: str = None
 
     streamlit_code: str = None
+
     temp_folder: str = None
     source_paths: List[str] = None
     token: str = None
 
     _streamlit_app_code_path: str = None
 
-    def __init__(self, port: int, resource_id: str, token: str):
+    def __init__(self, port: int, app_id: str, token: str):
         self.port = port
-        self.resource_id = resource_id
+        self.app_id = app_id
         self.token = token
         self.source_paths = []
 
     def set_streamlit_code(self, streamlit_code: str) -> None:
         self.streamlit_code = streamlit_code
+
+    def set_streamlit_code_path(self, streamlit_app_code_path: str) -> None:
+        if not FileHelper.exists_on_os(streamlit_app_code_path):
+            raise Exception(f"streamlit_app_code_path {streamlit_app_code_path} does not exist")
+
+        # read the streamlit code from the file
+        with open(streamlit_app_code_path, 'r', encoding="utf-8") as file_path:
+            self.streamlit_code = file_path.read()
 
     def add_source_path(self, source_path: Union[str, List[str]]) -> None:
         if isinstance(source_path, str):
@@ -78,7 +88,7 @@ source_paths = {self.source_paths}
         return self.get_app_full_url()
 
     def get_app_full_url(self) -> str:
-        return f"{self.get_app_url()}?gws_token={self.token}&gws_app_path={self._streamlit_app_code_path}"
+        return f"{self.get_app_url()}?gws_token={self.token}&gws_app_path={self._streamlit_app_code_path}&gws_user_id={CurrentUserService.get_and_check_current_user().id}"
 
     def clean(self) -> None:
         if self.temp_folder is not None:
@@ -87,7 +97,7 @@ source_paths = {self.source_paths}
 
     def to_dto(self) -> StreamlitAppDTO:
         return StreamlitAppDTO(
-            resource_id=self.resource_id,
+            resource_id=self.app_id,
             source_paths=self.source_paths,
             streamlit_app_code_path=self._streamlit_app_code_path,
             url=self.get_app_full_url()

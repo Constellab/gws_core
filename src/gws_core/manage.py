@@ -29,8 +29,8 @@ class AppManager:
     root_cwd: str = None
 
     @classmethod
-    def _init(cls, log_level: str, experiment_id: str = None,
-              show_sql: bool = False, is_test: bool = False) -> Settings:
+    def init_gws_env(cls, log_level: str, experiment_id: str = None,
+                     show_sql: bool = False, is_test: bool = False) -> Settings:
 
         log_dir = Settings.build_log_dir(is_test=is_test)
 
@@ -54,7 +54,7 @@ class AppManager:
 
     @classmethod
     def start_app(cls, port: str, log_level: str, show_sql: bool) -> None:
-        cls._init(log_level=log_level, show_sql=show_sql)
+        cls.init_gws_env(log_level=log_level, show_sql=show_sql)
 
         Logger.info(
             f"Starting server in {('prod' if Settings.is_prod_mode() else 'dev')} mode with {Settings.get_lab_environment()} lab env.")
@@ -72,7 +72,7 @@ class AppManager:
             raise BadRequestException(
                 "Please provide a test to run. The input must be as follow: [BRICK_NAME]/[TEST_NAME] where [BRICK_NAME] is the name of the brick and [TEST_NAME] is the name of the test file (only the name, not the path).")
 
-        settings = cls._init(log_level=log_level, show_sql=show_sql, is_test=True)
+        settings = cls.init_gws_env(log_level=log_level, show_sql=show_sql, is_test=True)
 
         if test in ["*", "all"]:
             test = "test*"
@@ -115,8 +115,8 @@ class AppManager:
     def run_experiment(cls, experiment_id: str,
                        protocol_model_id: str, process_instance_name: str,
                        user_id: str, log_level: str, show_sql: bool, is_test: bool) -> None:
-        cls._init(log_level=log_level, experiment_id=experiment_id,
-                  show_sql=show_sql, is_test=is_test)
+        cls.init_gws_env(log_level=log_level, experiment_id=experiment_id,
+                         show_sql=show_sql, is_test=is_test)
 
         if experiment_id is None:
             raise BadRequestException("Please provide an experiment id to run the experiment")
@@ -134,7 +134,7 @@ class AppManager:
 
     @classmethod
     def run_notebook(cls, log_level: str) -> None:
-        cls._init(log_level=log_level)
+        cls.init_gws_env(log_level=log_level)
         Notebook.init_complete()
 
     @classmethod

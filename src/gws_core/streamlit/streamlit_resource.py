@@ -3,6 +3,7 @@
 from typing import List
 
 from gws_core.config.config_params import ConfigParams
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.primitive_r_field import StrRField
@@ -29,6 +30,17 @@ class StreamlitResource(ResourceSet):
 
     def get_streamlit_app_code(self) -> str:
         return self._streamlit_app_code
+
+    def set_streamlit_code(self, streamlit_code: str) -> None:
+        self._streamlit_app_code = streamlit_code
+
+    def set_streamlit_code_path(self, streamlit_app_code_path: str) -> None:
+        if not FileHelper.exists_on_os(streamlit_app_code_path):
+            raise Exception(f"streamlit_app_code_path {streamlit_app_code_path} does not exist")
+
+        # read the streamlit code from the file
+        with open(streamlit_app_code_path, 'r', encoding="utf-8") as file_path:
+            self._streamlit_app_code = file_path.read()
 
     def add_resource(self, resource: FSNode, unique_name: str = None, create_new_resource: bool = True) -> None:
         """Add a resource to the set
