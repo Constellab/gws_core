@@ -166,7 +166,7 @@ class File(FSNode):
 
         # if the file is not readable, don't open the file and return the main view
         if not self.is_readable():
-            return TextView("This file is not readable, please import it to view it")
+            return TextView("This file is not readable, please import or download it to view it")
 
         if self.is_json():
             try:

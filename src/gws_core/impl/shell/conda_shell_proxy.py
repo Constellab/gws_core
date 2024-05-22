@@ -63,10 +63,22 @@ class CondaShellProxy(BaseEnvShell):
         if isinstance(user_cmd, list):
             user_cmd = [str(c) for c in user_cmd]
             user_cmd = " ".join(user_cmd)
-        venv_dir = self.get_venv_dir_path()
         # the run command must use conda, not mamba
-        cmd = self._build_conda_command(CondaShellProxy.conda_command, f'run -p {venv_dir} {user_cmd}')
-        return cmd
+        # use conda activate and not run, otherwise the logs are retrieve only after the command is finished (not in real time)
+        return self._build_conda_command(CondaShellProxy.conda_command,
+                                         f'activate {self.get_venv_dir_path()} && {user_cmd}')
+
+    def build_os_env(self) -> dict:
+        """
+        Creates the OS environment variables that are passed to the shell command
+
+        :return: The OS environment variables
+        :rtype: `dict`
+        """
+
+        # PYTHONUNBUFFERED is used to force the python output to be unbuffered so the log are in real time
+        # (this needs to be with conda activate to be log in real time)
+        return {'PYTHONUNBUFFERED': '1'}
 
     def get_config_file_path(self) -> str:
         return os.path.join(self.get_env_dir_path(), self.CONFIG_FILE_NAME)
@@ -74,7 +86,7 @@ class CondaShellProxy(BaseEnvShell):
     def get_venv_dir_path(self) -> str:
         return os.path.join(self.get_env_dir_path(), self.VENV_DIR_NAME)
 
-    def _build_conda_command(self, conda_cmd: str, cmd: str, ) -> str:
+    def _build_conda_command(self, conda_cmd: str, cmd: str) -> str:
         return f'bash -c "source /opt/conda/etc/profile.d/{CondaShellProxy.conda_command}.sh && {conda_cmd} {cmd}"'
 
     @classmethod
