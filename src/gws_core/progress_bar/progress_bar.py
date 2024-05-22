@@ -36,6 +36,7 @@ class ProgressBar(Model):
 
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0
+    _MAX_MESSAGE_LENGTH = 10000
 
     _table_name = "gws_process_progress_bar"
 
@@ -141,14 +142,24 @@ class ProgressBar(Model):
     def add_messages(self, messages: List[ProgressBarMessageWithTypeDTO]) -> None:
 
         for message in messages:
+
+            message_content = self._check_message_length(message.message)
+
             if message.type == MessageLevel.PROGRESS:
                 self._update_progress(
-                    value=message.progress, message=message.message)
+                    value=message.progress, message=message_content)
             else:
-                self._add_message(message.message, message.type)
+                self._add_message(message_content, message.type)
 
         # save only once at the end
         self.save()
+
+    def _check_message_length(self, message: str) -> str:
+        if len(message) > self._MAX_MESSAGE_LENGTH:
+            info_message = f"[INFO] Message too long, it is truncated to {self._MAX_MESSAGE_LENGTH} characters. Check the server logs for the full message."
+            return f"{info_message}\n{message[:self._MAX_MESSAGE_LENGTH]}\n{info_message}"
+
+        return message
 
     def _add_message(self, message: str, type_: MessageLevel = MessageLevel.INFO):
         dtime = jsonable_encoder(DateHelper.now_utc())
