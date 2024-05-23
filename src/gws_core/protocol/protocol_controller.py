@@ -66,7 +66,7 @@ def add_duplicate_process(id_: str,
                           process_id: str,
                           _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     """
-    Add a process to a protocol
+    Add a duplication of a process to a protocol
     """
 
     with update_lock:

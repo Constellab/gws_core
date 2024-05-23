@@ -49,3 +49,6 @@ class MonitorBetweenDateDTO(BaseModelDTO):
     from_date: datetime
     to_date: datetime
     monitors: List[MonitorDTO]
+    main_figure: dict
+    cpu_figure: dict
+    network_figure: dict
