@@ -48,26 +48,11 @@ class ShellProxy():
         else:
             self._message_dispatcher = MessageDispatcher()
 
-    def check_output(self, cmd: Union[list, str], env: dict = None, text: bool = True,
-                     shell_mode: bool = False) -> Any:
-
-        try:
-            output = subprocess.check_output(
-                cmd,
-                cwd=self.working_dir,
-                text=text,
-                env=env,
-                shell=shell_mode
-            )
-            return output
-        except Exception as err:
-            Logger.log_exception_stack_trace(err)
-            raise Exception(f"The shell process has failed. Error {err}.")
-
     def run(self, cmd: Union[list, str], env: dict = None,
             shell_mode: bool = False) -> int:
         """
         Run a command in a shell.
+        The logs of the command will be dispatched to the message dispatcher during the execution.
 
         :param cmd: command to run
         :type cmd: Union[list, str]
@@ -159,6 +144,37 @@ class ShellProxy():
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             self._message_dispatcher.notify_error_message(str(err))
+            raise Exception(f"The shell process has failed. Error {err}.")
+
+    def check_output(self, cmd: Union[list, str], env: dict = None,
+                     shell_mode: bool = False, text: bool = True) -> Any:
+        """
+        Run a command in a shell and return the output.
+
+        :param cmd: command to run
+        :type cmd: Union[list, str]
+        :param env: environment variables to pass to the shell, defaults to None
+        :type env: dict, optional
+        :param shell_mode: if True, the command is run in a shell, defaults to False
+        :type shell_mode: bool, optional
+        :param text: if True, the output is returned as a string, defaults to True
+        :type text: bool, optional
+        :raises Exception: _description_
+        :return: output of the command
+        :rtype: Any
+        """
+
+        try:
+            output = subprocess.check_output(
+                cmd,
+                cwd=self.working_dir,
+                text=text,
+                env=env,
+                shell=shell_mode
+            )
+            return output
+        except Exception as err:
+            Logger.log_exception_stack_trace(err)
             raise Exception(f"The shell process has failed. Error {err}.")
 
     def _self_dispatch_stdouts(self, messages: List[bytes]) -> None:

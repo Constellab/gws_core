@@ -8,6 +8,7 @@ from gws_core.core.model.model_dto import BaseModelDTO
 class VEnvCreationInfo(BaseModelDTO):
     file_version: int
     name: str
+    hash: str
     created_at: str
     # path of the file that was used to create the env
     origin_env_config_file_path: str

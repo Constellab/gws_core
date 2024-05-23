@@ -196,16 +196,10 @@ from .impl.robot.robot_tasks import RobotWait as RobotWait
 from .impl.s3.s3_bucket import S3Bucket as S3Bucket
 # Impl > Shell
 from .impl.shell.base_env_shell import BaseEnvShell as BaseEnvShell
-from .impl.shell.conda_env_task import CondaEnvTask as CondaEnvTask
 from .impl.shell.conda_shell_proxy import CondaShellProxy as CondaShellProxy
-from .impl.shell.helper.env_shell_proxy_helper import \
-    EnvShellProxyHelper as EnvShellProxyHelper
-from .impl.shell.mamba_env_task import MambaEnvTask as MambaEnvTask
 from .impl.shell.mamba_shell_proxy import MambaShellProxy as MambaShellProxy
-from .impl.shell.pip_env_task import PipEnvTask as PipEnvTask
 from .impl.shell.pip_shell_proxy import PipShellProxy as PipShellProxy
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy
-from .impl.shell.shell_task import ShellTask as ShellTask
 # Impl > Table
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
 from .impl.table.encoding.encoding_table import EncodingTable as EncodingTable

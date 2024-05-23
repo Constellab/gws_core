@@ -22,7 +22,8 @@ from .shell_proxy import ShellProxy
 
 class BaseEnvShell(ShellProxy):
 
-    env_dir_name: str = None
+    env_name: str = None
+    env_hash: str = None
     env_file_path: str = None
 
     VENV_DIR_NAME = ".venv"
@@ -31,13 +32,12 @@ class BaseEnvShell(ShellProxy):
     # overrided by subclasses. Use to define the default env file name
     CONFIG_FILE_NAME: str = None
 
-    def __init__(self, env_dir_name: str, env_file_path: Union[Path, str],
+    def __init__(self, env_name: str, env_file_path: Union[Path, str],
                  working_dir: str = None, message_dispatcher: MessageDispatcher = None):
         """_summary_
 
-        :param env_dir_name: unique name for the env directory. This name will be used to create the env directory.
-                            If the env directory already exists, it will be reused.
-        :type env_dir_name: str
+        :param env_name: Name of the environment. This name will be shown in the env list. If not provided, a name is generated
+        :type env_name: str
         :param env_file_path: path to the env file. This file must contained dependencies for the virtual env and
                               will be used to create the env. If the env file has changed, the env will be recreated and
                               previous env will be deleted.
@@ -52,7 +52,6 @@ class BaseEnvShell(ShellProxy):
         :raises Exception: _description_
         """
         super().__init__(working_dir, message_dispatcher)
-        self.env_dir_name = env_dir_name
 
         # check env file path
         if isinstance(env_file_path, (str, Path)):
@@ -62,6 +61,25 @@ class BaseEnvShell(ShellProxy):
         else:
             raise Exception("Invalid env file path")
         self.env_file_path = str(env_file_path)
+        self.env_hash = self._generate_env_hash()
+
+        if env_name:
+            self.env_name = env_name
+        else:
+            self.env_name = self.env_hash
+
+    def _generate_env_hash(self) -> str:
+        """
+        Generate a hash from the env file to create a unique env dir name.
+        """
+
+        try:
+            with open(self.env_file_path, 'r', encoding='utf-8') as file:
+                env_str = file.read()
+
+            return self.hash_env_str(env_str)
+        except Exception as err:
+            raise Exception(f"Error while reading the env file. Error {err}") from err
 
     def run(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = True) -> int:
         formatted_cmd = self.format_command(cmd)
@@ -77,8 +95,8 @@ class BaseEnvShell(ShellProxy):
         return super().run(formatted_cmd, complete_env, shell_mode)
 
     @final
-    def check_output(self, cmd: Union[list, str], env: dict = None, text: bool = True,
-                     shell_mode: bool = False) -> Any:
+    def check_output(self, cmd: Union[list, str], env: dict = None,
+                     shell_mode: bool = False, text: bool = True) -> Any:
         formatted_cmd = self.format_command(cmd)
 
         # compute env
@@ -89,7 +107,7 @@ class BaseEnvShell(ShellProxy):
         # install env if not installed
         self.install_env()
 
-        return super().check_output(formatted_cmd, complete_env, text, shell_mode)
+        return super().check_output(formatted_cmd, complete_env, shell_mode, text)
 
     @final
     def install_env(self) -> bool:
@@ -99,20 +117,15 @@ class BaseEnvShell(ShellProxy):
         """
 
         if self.env_is_installed():
-            if self._check_if_config_file_changed():
-                self._message_dispatcher.notify_info_message(
-                    f"The virtual environment '{self.env_dir_name}' is already installed but the config file has changed.")
-                self.uninstall_env()
-            else:
-                # environment already installed and ok
-                self._message_dispatcher.notify_info_message(
-                    f"Virtual environment '{self.env_dir_name}' already installed, skipping installation.")
-                return False
+            # environment already installed and ok
+            self._message_dispatcher.notify_info_message(
+                f"Virtual environment '{self.env_name}' already installed, skipping installation.")
+            return False
 
         self.create_env_dir()
 
         self._message_dispatcher.notify_info_message(
-            f"Installing the virtual environment '{self.env_dir_name}' from file '{self.env_file_path}'. This might take few minutes.")
+            f"Installing the virtual environment '{self.env_name}' from file '{self.env_file_path}' into folder {self.get_env_dir_path()}'. This might take few minutes.")
 
         is_install: bool = False
         try:
@@ -128,7 +141,7 @@ class BaseEnvShell(ShellProxy):
         if is_install:
             self._create_env_creation_file()
             self._message_dispatcher.notify_info_message(
-                f"Virtual environment '{self.env_dir_name}' installed!")
+                f"Virtual environment '{self.env_name}' installed!")
 
         return is_install
 
@@ -152,25 +165,6 @@ class BaseEnvShell(ShellProxy):
             raise Exception(
                 f"Cannot install the virtual environment. Error: {error_message}")
 
-    def _check_if_config_file_changed(self) -> bool:
-        """
-        Checks if the env config file has changed since the last installation.
-        If the env is not installed, return False.
-        """
-        if not self.env_is_installed():
-            return False
-
-        # load the creation info file
-        with open(self.get_config_file_path(), "r", encoding='utf-8') as f:
-            current_config = f.read()
-
-        # loads the new config
-        with open(self.env_file_path, "r", encoding='utf-8') as f:
-            new_config = f.read()
-
-        # check if the env config file has changed
-        return current_config != new_config
-
     @abstractmethod
     def _install_env(self) -> bool:
         """
@@ -186,7 +180,7 @@ class BaseEnvShell(ShellProxy):
             return False
 
         self._message_dispatcher.notify_info_message(
-            f"Uninstalling the virtual environment '{self.env_dir_name}'")
+            f"Uninstalling the virtual environment '{self.env_name}'")
         is_uninstall: bool = False
         try:
             is_uninstall = self._uninstall_env()
@@ -197,7 +191,7 @@ class BaseEnvShell(ShellProxy):
 
         if is_uninstall:
             self._message_dispatcher.notify_info_message(
-                f"Virtual environment '{self.env_dir_name}' uninstalled!")
+                f"Virtual environment '{self.env_name}' uninstalled!")
 
         return is_uninstall
 
@@ -268,7 +262,8 @@ class BaseEnvShell(ShellProxy):
         """
         env_info = VEnvCreationInfo(
             file_version=2,
-            name=self.env_dir_name,
+            name=self.env_name,
+            hash=self.env_hash,
             created_at=DateHelper.now_utc().isoformat(),
             origin_env_config_file_path=self.env_file_path,
             env_type=self.get_env_type()
@@ -304,10 +299,7 @@ class BaseEnvShell(ShellProxy):
         All env are in the global env dir.
         """
 
-        env_dir = os.path.join(
-            Settings.get_global_env_dir(), self.env_dir_name)
-
-        return env_dir
+        return os.path.join(Settings.get_global_env_dir(), self.env_hash)
 
     @final
     def create_env_dir(self) -> Path:
@@ -342,14 +334,24 @@ class BaseEnvShell(ShellProxy):
         So if the env_str is the same, the env dir name will be the same.
         """
 
-        unique_env_dir_name = hashlib.md5(env_str.encode('utf-8')).hexdigest()
+        env_hash = cls.hash_env_str(env_str)
         temp_dir = Settings.make_temp_dir()
         env_file_path = os.path.join(temp_dir, cls.CONFIG_FILE_NAME)
         with open(env_file_path, 'w', encoding="utf-8") as file_path:
             file_path.write(env_str)
 
-        return cls(env_dir_name=unique_env_dir_name,
+        return cls(env_name=env_hash,
                    env_file_path=env_file_path, message_dispatcher=message_dispatcher)
+
+    @classmethod
+    def hash_env_str(cls, env_str: str) -> str:
+        """
+        Create a hash from the env_str to generate a unique env dir name.
+        """
+
+        # remove all the white spaces and new lines
+        env_to_hash = env_str.replace(" ", "").replace("\n", "")
+        return hashlib.md5(env_to_hash.encode('utf-8')).hexdigest()
 
     @classmethod
     @abstractmethod

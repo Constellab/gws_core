@@ -777,39 +777,6 @@ class Migration057(BrickMigration):
                     f'Error while setting process type for process id {process_model.id} : {exception}')
 
 
-@brick_migration('0.5.15', short_description='Migrate env creation info file to v2')
-class Migration0515(BrickMigration):
-
-    @classmethod
-    def migrate(cls, from_version: Version, to_version: Version) -> None:
-
-        envs: VEnsStatusDTO = VEnvService.get_vens_status()
-
-        for env in envs['envs']:
-            try:
-                if env['creation_info']['file_version'] == 1:
-                    env_path = os.path.join(envs['venv_folder'], env['name'])
-                    env_type: str
-                    if PipShellProxy.folder_is_env(env_path):
-                        env_type = 'pip'
-                    else:
-                        env_type = 'conda'
-
-                    env_creation = VEnvCreationInfo(
-                        file_version=2,
-                        created_at=env['creation_info']['created_at'],
-                        env_type=env_type,
-                        name=env['creation_info']['name'],
-                        origin_env_config_file_path=env['creation_info']['origin_env_config_file_path'],
-                    )
-                    with open(os.path.join(env_path, PipShellProxy.CREATION_INFO_FILE_NAME), "w", encoding="UTF-8") as outfile:
-                        dump(env_creation.to_json_dict(), outfile)
-
-            except Exception as exception:
-                Logger.error(
-                    f'Error while migrating env creation info for env {env["name"]} : {exception}')
-
-
 class ReportResourceModel(PeeweeModel):
     class Meta:
         table_name = 'gws_report_resource'
@@ -1105,3 +1072,12 @@ class Migration080Beta1(BrickMigration):
 
             if node.get('graph'):
                 cls.migrate_template_data(node["graph"])
+
+
+@brick_migration('0.8.0', short_description='Delete virtual environments for new format')
+class Migration080(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            # delete all virtual environments
+            VEnvService.delete_all_venvs()
