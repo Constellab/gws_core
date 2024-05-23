@@ -24,17 +24,6 @@ from ..protocol_examples import TestNestedProtocol
 
 @task_decorator("TestProtocolTemplateDynamic")
 class TestProtocolTemplateDynamic(Task):
-    """
-    Python live tasks allow to execute any Python code snippets on the fly.
-
-    Live tasks are fast and efficient tools to develop, test, use and share code snippets.
-
-    **Warning**: It is recommended to use code snippets comming from trusted sources.
-
-    Here is the general documentation for live task (including how to use the parameters): https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/getting-started
-
-    Here is the documentation of the live task: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/python-live-task
-    """
 
     input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = DynamicOutputs()
@@ -46,17 +35,6 @@ class TestProtocolTemplateDynamic(Task):
 
 @task_decorator("TestGenerator")
 class TestGenerator(Task):
-    """
-    Python live tasks allow to execute any Python code snippets on the fly.
-
-    Live tasks are fast and efficient tools to develop, test, use and share code snippets.
-
-    **Warning**: It is recommended to use code snippets comming from trusted sources.
-
-    Here is the general documentation for live task (including how to use the parameters): https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/getting-started
-
-    Here is the documentation of the live task: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/python-live-task
-    """
 
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(Resource)})
     config_specs: ConfigSpecs = {}

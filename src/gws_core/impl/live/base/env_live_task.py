@@ -224,7 +224,7 @@ with open('{target_paths_filename}', 'w') as f:
         return ListParam(
             optional=True, default_value=[],
             human_name="Parameter definitions",
-            short_description="Please give one parameter definition per line (https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/getting-started#parameters)")
+            short_description="Please give one parameter definition per line (https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779#parameters)")
 
     @classmethod
     def build_config_params_dict(cls, code: str, params: List[str], env: str) -> ConfigParamsDict:

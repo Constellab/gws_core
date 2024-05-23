@@ -7,7 +7,7 @@ from gws_core import BaseTestCase, Table, TaskRunner
 
 class TestTableFactor(BaseTestCase):
     """This is the solution for the test of the tutorial 'Create your first task' :
-      https://constellab.community/bricks/gws_core/latest/latest/doc/tutorials/create-your-first-task
+      https://constellab.community/bricks/gws_core/latest/doc/developer-guide/task/create-your-first-task/3be4ac25-2591-417f-b246-26b5b5495281
 
       This test needs to be run to check that your task was correctly implemented
     """
