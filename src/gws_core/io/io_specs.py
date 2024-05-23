@@ -119,7 +119,7 @@ class InputSpecs(IOSpecs):
             resource: Resource = inputs[key]
             if not spec.is_compatible_with_resource_type(type(resource)):
                 invalid_input_text = invalid_input_text + \
-                    f"The input '{key}' of type '{resource._typing_name}' is not a compatible with the corresponding input spec."
+                    f"The input '{spec.human_name}' expected a '{spec.get_resources_human_names()}' but the provided resource is a '{resource._human_name}'. Please provide a valid resource."
 
             # validate the resource through the spec
             spec.validate_resource(resource)

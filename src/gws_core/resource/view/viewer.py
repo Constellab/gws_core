@@ -17,7 +17,7 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
 @task_decorator('Viewer', human_name="Viewer", short_description="Show a configured view",
-                style=TypingStyle.material_icon("visibility"))
+                style=TypingStyle.material_icon("visibility"), hide=True)
 class Viewer(Task):
     """Special task to configure and show a view in a protocol
     """
