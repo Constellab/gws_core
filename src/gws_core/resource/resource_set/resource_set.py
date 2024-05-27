@@ -109,6 +109,10 @@ class ResourceSet(ResourceListBase):
 
         return resources[resource_name]
 
+    def get_resource_or_none(self, resource_name: str) -> Resource | None:
+        resources = self.get_resources()
+        return resources.get(resource_name, None)
+
     def resource_exists(self, resource_name: str) -> Resource:
         resources = self.get_resources()
         return resource_name in resources
