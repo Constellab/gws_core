@@ -1,10 +1,9 @@
 
 
-from ..core.service.base_service import BaseService
 from .task_model import TaskModel
 
 
-class TaskService(BaseService):
+class TaskService():
 
     @classmethod
     def get_task_by_id(cls, id: str) -> TaskModel:

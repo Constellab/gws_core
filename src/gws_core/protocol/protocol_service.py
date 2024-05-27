@@ -36,7 +36,6 @@ from ..community.community_service import CommunityService
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
-from ..core.service.base_service import BaseService
 from ..io.connector import Connector
 from ..io.port import Port
 from ..model.typing import Typing
@@ -49,7 +48,7 @@ from ..task.task_model import TaskModel
 from .protocol import Protocol
 
 
-class ProtocolService(BaseService):
+class ProtocolService():
 
     ########################## GET #####################
 

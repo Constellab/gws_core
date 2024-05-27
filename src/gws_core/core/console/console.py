@@ -73,10 +73,3 @@ class Console:
             raise Exception('Can only delete the data and temp folder in test env')
         shutil.rmtree(path=settings.get_data_dir(), ignore_errors=True)
         SystemService.delete_temp_folder()
-
-    @classmethod
-    def print(cls, text):
-        """
-        Print test title
-        """
-        print(f"---- Test: {text} ----")

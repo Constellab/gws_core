@@ -3,7 +3,6 @@ from abc import abstractmethod
 from collections.abc import Iterable as IterableClass
 from typing import Iterable, List, Optional, Tuple, Type, Union
 
-from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
@@ -37,13 +36,13 @@ class IOSpec:
 
     is_optional: bool = False
 
+    # not activated yet
     validators: List[IOValidator] = []
 
     _name: str = "IOSpec"   # unique name to distinguish the types, do not modify
 
     def __init__(self, resource_types: ResourceTypes, is_optional: bool = False, human_name: Optional[str] = None,
-                 short_description: Optional[str] = None,
-                 validators: List[IOValidator] = None) -> None:
+                 short_description: Optional[str] = None) -> None:
         """[summary]
 
         :param resource_types: type of supported resource or resources
@@ -74,8 +73,6 @@ class IOSpec:
             self.short_description = short_description
         else:
             self.short_description = default_type._short_description
-
-        self.validators = validators or []
 
     def check_resource_types(self):
         for resource_type in self.resource_types:
@@ -212,8 +209,7 @@ class InputSpec(IOSpec):
                  is_optional: bool = False,
                  is_skippable: bool = False,
                  human_name: Optional[str] = None,
-                 short_description: Optional[str] = None,
-                 validators: List[IOValidator] = None) -> None:
+                 short_description: Optional[str] = None) -> None:
         """_summary_
 
         :param resource_types: _description_
@@ -236,8 +232,7 @@ class InputSpec(IOSpec):
             is_optional = True
 
         super().__init__(resource_types=resource_types, is_optional=is_optional,
-                         human_name=human_name, short_description=short_description,
-                         validators=validators)
+                         human_name=human_name, short_description=short_description)
 
     def is_constant_out(self) -> bool:
         return False
@@ -259,8 +254,7 @@ class OutputSpec(IOSpec):
                  sub_class: bool = False,
                  is_constant: bool = False,
                  human_name: Optional[str] = None,
-                 short_description: Optional[str] = None,
-                 validators: List[IOValidator] = None) -> None:
+                 short_description: Optional[str] = None) -> None:
         """_summary_
 
         :param resource_types: _description_
@@ -278,8 +272,7 @@ class OutputSpec(IOSpec):
         """
 
         super().__init__(resource_types=resource_types, is_optional=is_optional,
-                         human_name=human_name, short_description=short_description,
-                         validators=validators)
+                         human_name=human_name, short_description=short_description)
         self._sub_class = sub_class
         self._is_constant = is_constant
 

@@ -2,8 +2,6 @@
 
 from typing import List, Optional, Type
 
-from peewee import ModelSelect
-
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
@@ -23,6 +21,7 @@ from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.share.resource_downloader_http import ResourceDownloaderHttp
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Sink
+from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
@@ -30,7 +29,6 @@ from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
-from ..core.service.base_service import BaseService
 from ..model.typing_manager import TypingManager
 from ..task.task_input_model import TaskInputModel
 from .resource_model import Resource, ResourceModel
@@ -39,7 +37,7 @@ from .view.view_helper import ViewHelper
 from .view.view_meta_data import ResourceViewMetaData
 
 
-class ResourceService(BaseService):
+class ResourceService():
 
     ############################# UPDATE RESOURCE MODEL ###########################
     @classmethod

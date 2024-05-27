@@ -1,10 +1,8 @@
 
 
 from fastapi import UploadFile
-
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.core.service.base_service import BaseService
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol_template.protocol_template_search_builder import \
     ProtocolTemplateSearchBuilder
@@ -12,7 +10,7 @@ from gws_core.protocol_template.protocol_template_search_builder import \
 from .protocol_template import ProtocolTemplate
 
 
-class ProtocolTemplateService(BaseService):
+class ProtocolTemplateService():
 
     @classmethod
     def create_from_protocol(cls, protocol: ProtocolModel,

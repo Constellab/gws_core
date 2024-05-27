@@ -8,12 +8,11 @@ from gws_core.user.user_dto import UserFullDTO
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
-from ..core.service.base_service import BaseService
 from .user import User
 from .user_group import UserGroup
 
 
-class UserService(BaseService):
+class UserService():
 
     @classmethod
     def activate_user(cls, id: str) -> User:

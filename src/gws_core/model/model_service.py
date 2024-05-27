@@ -11,11 +11,12 @@ from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.model import Model
-from ..core.service.base_service import BaseService
 from .typing_manager import TypingManager
 
 
-class ModelService(BaseService):
+class ModelService():
+
+    _number_of_items_per_page = 20
 
     ############################################## GET ############################################
 

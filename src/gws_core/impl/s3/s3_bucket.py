@@ -4,12 +4,11 @@ import time
 from typing import TypedDict
 
 import boto3
-from mypy_boto3_s3.client import S3Client
-
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
+from mypy_boto3_s3.client import S3Client
 
 
 class S3BucketActionProgress(TypedDict):
@@ -18,6 +17,14 @@ class S3BucketActionProgress(TypedDict):
 
 
 class S3Bucket():
+    """
+    S3Bucket class is a wrapper around boto3 S3 client to provide a simplified interface to upload and download files
+    to and from an S3 bucket.
+
+    :raises Exception: _description_
+    :return: _description_
+    :rtype: _type_
+    """
 
     endpoint: str
     region: str
@@ -29,6 +36,21 @@ class S3Bucket():
 
     def __init__(self, endpoint: str, region: str, access_key_id: str, secret_access_key: str, bucket_name: str,
                  message_dispatcher: MessageDispatcher = None):
+        """
+
+        :param endpoint: url of the S3 endpoint
+        :type endpoint: str
+        :param region: region of the S3 bucket
+        :type region: str
+        :param access_key_id: access key id
+        :type access_key_id: str
+        :param secret_access_key: secret access key
+        :type secret_access_key: str
+        :param bucket_name: name of the S3 bucket
+        :type bucket_name: str
+        :param message_dispatcher: a message dispatcher can be provided (from a task for example) to notify the progress of the upload/download
+        :type message_dispatcher: MessageDispatcher, optional
+        """
         self.endpoint = endpoint
         self.region = region
         self.access_key_id = access_key_id

@@ -3,10 +3,9 @@
 from typing import List
 
 from ..utils.settings import PipPackage, Settings
-from .base_service import BaseService
 
 
-class SettingsService(BaseService):
+class SettingsService():
 
     @classmethod
     def get_settings(cls) -> Settings:

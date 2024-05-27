@@ -8,8 +8,6 @@ from tempfile import SpooledTemporaryFile
 from time import time
 from typing import List, Type, Union
 
-from genericpath import isdir
-
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.folder import Folder
 

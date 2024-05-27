@@ -7,7 +7,6 @@ from typing import List, Type
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
@@ -19,7 +18,6 @@ from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...core.exception.exceptions.not_found_exception import NotFoundException
-from ...core.service.base_service import BaseService
 from ...model.typing_manager import TypingManager
 from ...resource.resource_model import ResourceModel
 from ...resource.resource_typing import FileTyping, ResourceTyping
@@ -31,7 +29,7 @@ from .fs_node import FSNode
 from .local_file_store import LocalFileStore
 
 
-class FsNodeService(BaseService):
+class FsNodeService():
 
     @classmethod
     def download_file(cls, fs_node_id: str) -> FileResponse:

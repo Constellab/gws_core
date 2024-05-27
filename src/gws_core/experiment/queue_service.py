@@ -11,7 +11,6 @@ from gws_core.user.user import User
 from ..core.exception.exceptions import NotFoundException
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
 from ..experiment.experiment_run_service import ExperimentRunService
 from ..user.current_user_service import CurrentUserService
@@ -21,7 +20,7 @@ from .queue import Job, Queue
 TICK_INTERVAL_SECONDS = 60   # 60 sec
 
 
-class QueueService(BaseService):
+class QueueService():
     # Bool to true during the tick method (used to prevent concurrent ticks)
     tick_is_running: bool = False
     is_init = False

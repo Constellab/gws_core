@@ -62,8 +62,11 @@ class BaseTestCaseLight(TestCase):
         GTest.delete_data_and_temp_folder()
 
     @classmethod
-    def print(cls, text):
-        GTest.print(text)
+    def print(cls, text: str):
+        """
+        Print test title
+        """
+        print(f"---- Test: {text} ----")
 
     @classmethod
     def assert_json(cls, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None) -> None:

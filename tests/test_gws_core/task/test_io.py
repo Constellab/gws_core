@@ -1,6 +1,6 @@
 
 
-from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
+from gws_core import (BadRequestException, BaseTestCase, ConfigParams,
                       Connector, Experiment, ExperimentService, InputSpecs,
                       OutputSpecs, ProcessFactory, ProcessSpec, Protocol,
                       ProtocolModel, Resource, ResourceModel, Task, TaskInputs,
@@ -142,7 +142,13 @@ class TestPersonProtocol(Protocol):
 
 
 @task_decorator(unique_name="FIFO2")
-class Skippable(FIFO2):
+class Skippable(Task):
+
+    input_specs: InputSpecs = InputSpecs({'resource_1': InputSpec(Resource, is_optional=True),
+                                          'resource_2': InputSpec(Resource, is_optional=True)})
+    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
+        resource_types=Resource, sub_class=True, is_constant=True)})
+
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         resource1 = inputs.get("resource_1")

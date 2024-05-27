@@ -1,15 +1,13 @@
 
 
 from fastapi.param_functions import Depends
-from starlette.responses import JSONResponse, Response
-
 from gws_core.lab.system_service import SystemService
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
+from starlette.responses import JSONResponse, Response
 
 from ..core.exception.exceptions import UnauthorizedException
 from ..core.exception.gws_exceptions import GWSException
-from ..core.service.base_service import BaseService
 from ..core.utils.settings import Settings
 from ..space.space_service import ExternalCheckCredentialResponse, SpaceService
 from .activity.activity_service import ActivityService
@@ -25,7 +23,7 @@ from .user_exception import InvalidTokenException, WrongCredentialsException
 from .user_service import UserService
 
 
-class AuthService(BaseService):
+class AuthService():
 
     @classmethod
     def login(cls, credentials: UserCredentialsDTO) -> JSONResponse:

@@ -12,12 +12,11 @@ from gws_core.report.report import Report
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.space.space_service import SpaceService
 
-from ..core.service.base_service import BaseService
 from .project import Project
 from .project_dto import SpaceProject
 
 
-class ProjectService(BaseService):
+class ProjectService():
 
     entity_with_projects: List[ModelWithProject] = [Experiment, Report, ResourceModel]
 

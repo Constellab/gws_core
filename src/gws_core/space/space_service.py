@@ -2,8 +2,6 @@
 
 from typing import Any, Dict, List, Literal, Optional
 
-from requests.models import Response
-
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
@@ -13,9 +11,9 @@ from gws_core.lab.lab_config_dto import LabConfigModelDTO
 from gws_core.space.space_dto import (LabStartDTO, SaveExperimentToSpaceDTO,
                                       SaveReportToSpaceDTO, SpaceSendMailDTO)
 from gws_core.user.user_dto import UserFullDTO, UserSpace
+from requests.models import Response
 
 from ..core.exception.exceptions import BadRequestException
-from ..core.service.base_service import BaseService
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings
 from ..project.project_dto import SpaceProject
@@ -30,7 +28,7 @@ class ExternalCheckCredentialResponse(BaseModelDTO):
     twoFAUrlCode: Optional[str]
 
 
-class SpaceService(BaseService):
+class SpaceService():
 
     # external lab route on space
     _external_labs_route: str = 'external-labs'

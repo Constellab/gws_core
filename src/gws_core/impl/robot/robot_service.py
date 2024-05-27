@@ -1,6 +1,5 @@
 
 
-from ...core.service.base_service import BaseService
 from ...experiment.experiment_service import ExperimentService
 from ...experiment.queue_service import QueueService
 from ...process.process_factory import ProcessFactory
@@ -8,7 +7,7 @@ from ...protocol.protocol_model import ProtocolModel
 from .robot_protocol import RobotSimpleTravel, RobotWorldTravelProto
 
 
-class RobotService(BaseService):
+class RobotService():
 
     @classmethod
     def run_robot_travel(cls):

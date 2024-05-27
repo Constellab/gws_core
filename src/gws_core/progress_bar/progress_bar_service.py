@@ -5,11 +5,10 @@ from datetime import datetime
 from gws_core.progress_bar.progress_bar_dto import \
     ProgressBarMessagesBetweenDatesDTO
 
-from ..core.service.base_service import BaseService
 from .progress_bar import ProgressBar
 
 
-class ProgressBarService(BaseService):
+class ProgressBarService():
 
     @classmethod
     def download_progress_bar(cls, id: str) -> str:

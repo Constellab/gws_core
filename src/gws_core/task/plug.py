@@ -90,40 +90,6 @@ class Sink(Task):
         return None
 
 
-@task_decorator(unique_name="FIFO2", hide=True)
-class FIFO2(Task):
-    """
-    FIFO2 task (with 2 input ports)
-
-    The FIFO2 (First-In-First-Out) task sends to the output port the first resource received in an input port
-    """
-
-    input_specs: InputSpecs = InputSpecs({'resource_1': InputSpec(Resource, is_optional=True),
-                                          'resource_2': InputSpec(Resource, is_optional=True)})
-    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
-        resource_types=Resource, sub_class=True, is_constant=True)})
-    config_specs: ConfigSpecs = {}
-
-    def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
-        res_1 = inputs.get('resource_1')
-        res_2 = inputs.get('resource_2')
-        is_ready = res_1 or res_2
-        if not is_ready:
-            return {"result": False}
-
-        return {"result": True}
-
-    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-
-        if inputs.has_resource("resource_1"):
-            return {"resource": inputs["resource_1"]}
-
-        if inputs.has_resource("resource_2"):
-            return {"resource": inputs["resource_2"]}
-
-        return None
-
-
 @task_decorator(unique_name="Switch2", hide=True)
 class Switch2(Task):
     """
@@ -217,26 +183,3 @@ class ShellWait(Task):
         # return the input resource as output
         resource = inputs["resource"]
         return {"resource": resource}
-
-
-@task_decorator(unique_name="Dispatch2", hide=True)
-class Dispatch2(Task):
-    """
-    Dispatch task (with 2 input ports)
-
-    The Dispatch2 proccess dispatch the input data to the 2 outputs
-    """
-
-    input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
-    output_specs: OutputSpecs = OutputSpecs({
-        'resource_1': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True),
-        'resource_2': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)
-    })
-    config_specs: ConfigSpecs = {}
-
-    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        resource = inputs["resource"]
-        return {
-            "resource_1": resource,
-            "resource_2": resource
-        }

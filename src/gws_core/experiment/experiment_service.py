@@ -2,8 +2,6 @@
 
 from typing import Dict, List, Optional, Type
 
-from peewee import ModelSelect
-
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.lab.lab_config_model import LabConfigModel
@@ -12,12 +10,12 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
+from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
-from ..core.service.base_service import BaseService
 from ..experiment.experiment_search_builder import ExperimentSearchBuilder
 from ..process.process_factory import ProcessFactory
 from ..project.project import Project
@@ -34,7 +32,7 @@ from .experiment_dto import (ExperimentSaveDTO, RunningExperimentInfoDTO,
 from .experiment_enums import ExperimentCreationType, ExperimentStatus
 
 
-class ExperimentService(BaseService):
+class ExperimentService():
 
     ################################### CREATE ##############################
 

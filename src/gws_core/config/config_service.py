@@ -1,12 +1,11 @@
 
 
-from ..core.service.base_service import BaseService
 from .config import Config
 from .config_types import ConfigParamsDict
 from .param.param_types import ParamValue
 
 
-class ConfigService(BaseService):
+class ConfigService():
 
     @classmethod
     def update_config_params_with_id(cls, id: str, config_params: ConfigParamsDict) -> Config:

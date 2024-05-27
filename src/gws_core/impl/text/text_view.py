@@ -76,7 +76,7 @@ class TextView(View):
     def _slice(self, from_char_index: int = 0, to_char_index: int = MAX_NUMBER_OF_CHARS_PER_PAGE) -> str:
         length = len(self._data)
         from_char_index = min(max(from_char_index, 0), length)
-        to_char_index = min(min(to_char_index, from_char_index + MAX_NUMBER_OF_CHARS_PER_PAGE), length)
+        to_char_index = min(to_char_index, from_char_index + MAX_NUMBER_OF_CHARS_PER_PAGE, length)
         return self._data[from_char_index:to_char_index]
 
     def data_to_dict(self, params: ConfigParams) -> dict:

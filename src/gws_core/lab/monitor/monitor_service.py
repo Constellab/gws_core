@@ -6,12 +6,11 @@ from datetime import datetime, timedelta
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 
-from ...core.service.base_service import BaseService
 from .monitor import Monitor
 from .monitor_dto import MonitorBetweenDateDTO
 
 
-class MonitorService(BaseService):
+class MonitorService():
 
     TICK_INTERVAL_SECONDS = 30   # 30 seconds
     TICK_INTERVAL_CLEANUP = 60 * 60 * 24  # 24 hours
