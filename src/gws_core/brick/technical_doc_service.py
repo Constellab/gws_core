@@ -90,10 +90,11 @@ class TechnicalDocService():
 
         variables = ReflectorHelper.get_all_public_args(obj)
 
-        functions: Any = inspect.getmembers(obj, predicate=inspect.isfunction)
+        functions: Any = inspect.getmembers(
+            obj, predicate=inspect.isfunction) + inspect.getmembers(obj, predicate=inspect.ismethod)
         public_func_methods: Any = [MethodDocFunction(name=m[0], func=m[1])
                                     for m in functions if not m[0].startswith('_') or m[0] == '__init__']
-        methods = ReflectorHelper.get_methods_doc(public_func_methods)
+        methods = ReflectorHelper.get_methods_doc(obj, public_func_methods)
 
         if not hasattr(obj, '__name__'):
             name = str(obj)

@@ -5,6 +5,13 @@ from typing import Any, Dict, List, Optional
 from gws_core.core.model.model_dto import BaseModelDTO
 
 
+# enum
+class MethodDocType(str):
+    CLASSMETHOD = "classmethod"
+    STATICMETHOD = "staticmethod"
+    BASICMETHOD = None
+
+
 class MethodArgDoc(BaseModelDTO):
     arg_name: str
     arg_type: str
@@ -28,6 +35,7 @@ class MethodDoc(BaseModelDTO):
     doc: Optional[str]
     args: List[MethodArgDoc]
     return_type: Optional[str]
+    method_type: Optional[str]
 
 
 class ClassicClassDocDTO(BaseModelDTO):

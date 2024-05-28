@@ -4,7 +4,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.refloctor_types import (MethodArgDoc, MethodDoc,
-                                                 MethodDocFunction)
+                                                 MethodDocFunction,
+                                                 MethodDocType)
 
 from ..classes.func_meta_data import FuncArgMetaData, FuncArgsMetaData
 from ..utils.utils import Utils
@@ -128,15 +129,30 @@ class ReflectorHelper():
         return arguments_json
 
     @classmethod
-    def get_methods_doc(cls, methods: List[MethodDocFunction]) -> List[MethodDoc]:
+    def get_methods_doc(cls, type_: Type, methods: List[MethodDocFunction]) -> List[MethodDoc]:
         res: List[MethodDoc] = []
         for method in methods:
-            signature: inspect.Signature = inspect.signature(method.func)
-            arguments: List = cls.get_method_named_args_json(method.func)
-            return_type = Utils.stringify_type(
-                signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None
-            res.append(MethodDoc(name=method.name, doc=inspect.getdoc(
-                method.func), args=arguments, return_type=return_type))
+            try:
+                if not callable(method.func):
+                    continue
+
+                method_type: str = MethodDocType.BASICMETHOD
+
+                if isinstance(inspect.getattr_static(type_, method.name), classmethod):
+                    method_type = MethodDocType.CLASSMETHOD
+
+                if isinstance(inspect.getattr_static(type_, method.name), staticmethod):
+                    method_type = MethodDocType.STATICMETHOD
+
+                signature: inspect.Signature = inspect.signature(method.func)
+                arguments: List = cls.get_method_named_args_json(method.func)
+                return_type = Utils.stringify_type(
+                    signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None
+                res.append(MethodDoc(name=method.name, doc=inspect.getdoc(method.func),
+                                     args=arguments, return_type=return_type, method_type=method_type))
+            except Exception:
+                Logger.error(f"Error while getting method doc of {method.name} in {type_}")
+                continue
         return res
 
     @classmethod

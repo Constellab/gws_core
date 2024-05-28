@@ -49,7 +49,8 @@ class ResourceTyping(Typing):
         if not inspect.isclass(type_):
             return None
 
-        methods: Any = inspect.getmembers(type_, predicate=inspect.isfunction)
+        methods: Any = inspect.getmembers(
+            type_, predicate=inspect.isfunction) + inspect.getmembers(type_, predicate=inspect.ismethod)
         views_methods: List[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(type_)
         views_methods_dto = [m.to_dto() for m in views_methods]
 
@@ -57,7 +58,7 @@ class ResourceTyping(Typing):
 
         public_func_methods: Any = [MethodDocFunction(name=m[0], func=m[1])
                                     for m in func_methods if not m[0].startswith('_') or m[0] == '__init__']
-        funcs: List[MethodDoc] = ReflectorHelper.get_methods_doc(public_func_methods)
+        funcs: List[MethodDoc] = ReflectorHelper.get_methods_doc(type_, public_func_methods)
         return ResourceTypingMethodDTO(
             funcs=funcs if len(funcs) > 0 else None,
             views=views_methods_dto if len(views_methods_dto) > 0 else None
