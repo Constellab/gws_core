@@ -1,6 +1,6 @@
 
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 
@@ -11,8 +11,27 @@ class MethodArgDoc(BaseModelDTO):
     arg_default_value: str
 
 
+class MethodDocFunction():
+    name: str
+    func: Any
+
+    def __init__(self, name: str, func: Any):
+        # if name not str
+        if not isinstance(name, str):
+            raise ValueError("name should be str")
+        self.name = name
+        self.func = func
+
+
 class MethodDoc(BaseModelDTO):
     name: str
     doc: Optional[str]
     args: List[MethodArgDoc]
     return_type: Optional[str]
+
+
+class ClassicClassDocDTO(BaseModelDTO):
+    name: str
+    doc: Optional[str]
+    methods: Optional[List[MethodDoc]]
+    variables: Optional[Dict]

@@ -1,8 +1,11 @@
-
-
-from typing import List, Type
+import inspect
+import sys
+from typing import Any, Dict, List, Type
 
 from gws_core.brick.technical_doc_dto import TechnicalDocDTO
+from gws_core.core.utils.reflector_helper import ReflectorHelper
+from gws_core.core.utils.refloctor_types import (ClassicClassDocDTO,
+                                                 MethodDocFunction)
 from gws_core.model.typing_dto import TypingFullDTO
 from gws_core.protocol.protocol_typing import ProtocolTyping
 
@@ -11,8 +14,6 @@ from ..resource.resource import Resource
 from ..resource.resource_typing import ResourceTyping
 from ..task.task_typing import TaskTyping
 from .brick_helper import BrickHelper
-
-import sys, inspect
 
 
 class TechnicalDocService():
@@ -29,31 +30,20 @@ class TechnicalDocService():
         protocols = cls.export_typing_technical_doc(brick_name, ProtocolTyping)
 
         # Get all the classes of the brick except the resources, tasks and protocols
-        rtp = resources + tasks + protocols
-        other_classes = {}
-        clsmembers = inspect.getmembers(sys.modules[brick_name], inspect.isclass)
-        for name, obj in clsmembers:
-            ok = True
-            for t in rtp:
-                if name == t.unique_name:
-                    ok = False
-                    break
-            if ok:
-                doc = cls._get_non_typing_obj_technical_doc(obj)
-                other_classes[name] = doc
+        other_classes = cls.export_other_classes_technical_doc(brick_name, resources + tasks + protocols)
 
         return TechnicalDocDTO(
             json_version=1,
             brick_name=brick_info["name"],
             brick_version=brick_info["version"],
-            resources= resources,
+            resources=resources,
             tasks=tasks,
             protocols=protocols,
             other_classes=other_classes
         )
 
     @classmethod
-    def export_typing_technical_doc(cls, brick_name: str, typing_class: Type[Typing]) -> list:
+    def export_typing_technical_doc(cls, brick_name: str, typing_class: Type[Typing]) -> List[TypingFullDTO]:
         typings: List[Typing] = typing_class.get_by_brick_and_object_type(brick_name)
         sorted_typings = sorted(typings, key=lambda x: len(x.get_ancestors()))
         json_list = []
@@ -74,81 +64,40 @@ class TechnicalDocService():
         return typing.to_full_dto()
 
     @classmethod
-    def _get_non_typing_obj_technical_doc(cls, obj: Type) -> dict:
-        # Get the doc of a class who is not a Resource, Task or Protocol
-        doc = {
-            "name": obj.__name__,
-            "doc": inspect.getdoc(obj)
-        }
-        members = inspect.getmembers(obj)
-        doc["variables"] = []
-        doc["methods"] = []
-        for name, member  in members:
-            if name.startswith("_"):
-                continue
+    def export_other_classes_technical_doc(
+            cls, brick_name: str, resources_tasks_protocols: List[TypingFullDTO]) -> Dict[
+            str, ClassicClassDocDTO]:
+        other_classes = {}
+        clsmembers = inspect.getmembers(sys.modules[brick_name], inspect.isclass)
 
-            d = inspect.getdoc(member)
-            d = d if d is not None else ""
+        for name, obj in clsmembers:
+            ok = True
+            for class_ in resources_tasks_protocols:
+                if name == class_.unique_name:
+                    ok = False
+                    break
+            if ok:
+                doc = cls._get_non_typing_obj_technical_doc(obj)
+                other_classes[name] = doc
 
-            if callable(member):
-                try:
-                    signature = inspect.signature(member)
-                except TypeError:
-                    continue
-                except ValueError:
-                    continue
+        return other_classes
 
-                if signature is None:
-                    continue
-                return_type = signature.return_annotation
-                if return_type == inspect._empty:
-                    return_type = 'None'
-                else:
-                    if hasattr(return_type, '__name__'):
-                        return_type = return_type.__name__
-                    else:
-                        return_type = str(return_type)
+    @classmethod
+    def _get_non_typing_obj_technical_doc(cls, obj: Type) -> ClassicClassDocDTO:
+        '''
+        Get the doc of a class who is not a Resource, Task or Protocol
+        '''
 
-                args = []
-                for arg_name, arg_param in signature.parameters.items():
-                    arg_default_value = arg_param.default
-                    if arg_default_value == inspect._empty:
-                        arg_default_value = 'None'
-                    else:
-                        if hasattr(arg_default_value, '__name__'):
-                            arg_default_value = arg_default_value.__name__
-                        else:
-                            arg_default_value = str(arg_default_value)
+        variables = ReflectorHelper.get_all_public_args(obj)
 
-                    arg_type = arg_param.annotation
-                    if arg_type == inspect._empty:
-                        arg_type = 'None'
-                    else:
-                        if hasattr(arg_type, '__name__'):
-                            arg_type = arg_type.__name__
-                        else:
-                            arg_type = str(arg_type)
-                    args.append({
-                        "arg_name": arg_name,
-                        "arg_type": arg_type,
-                        "arg_default_value": arg_default_value
-                    })
+        functions: Any = inspect.getmembers(obj, predicate=inspect.isfunction)
+        public_func_methods: Any = [MethodDocFunction(name=m[0], func=m[1])
+                                    for m in functions if not m[0].startswith('_') or m[0] == '__init__']
+        methods = ReflectorHelper.get_methods_doc(public_func_methods)
 
-                doc["methods"].append({
-                    "name": name,
-                    "doc": d,
-                    "args": args,
-                    "return_type": return_type
-                })
-            else:
-                var_type = type(member)
-                if var_type.__name__:
-                    var_type = var_type.__name__
-                else:
-                    var_type = str(var_type)
-                doc["variables"].append({
-                    "name": name,
-                    "doc": d,
-                    "type": var_type
-                })
-        return doc
+        if not hasattr(obj, '__name__'):
+            name = str(obj)
+        else:
+            name = obj.__name__
+
+        return ClassicClassDocDTO(name=name, doc=inspect.getdoc(obj), methods=methods, variables=variables)
