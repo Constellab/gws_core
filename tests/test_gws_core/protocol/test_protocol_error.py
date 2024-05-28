@@ -3,15 +3,15 @@
 from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
                       ExperimentService, InputSpec, InputSpecs, OutputSpec,
                       OutputSpecs, ProcessFactory, ProcessModel, ProcessSpec,
-                      Protocol, ProtocolModel, ProtocolService, Resource,
-                      RobotMove, Task, TaskInputs, TaskOutputs,
-                      protocol_decorator, resource_decorator, task_decorator)
+                      Protocol, ProtocolModel, ProtocolService, Resource, Task,
+                      TaskInputs, TaskOutputs, protocol_decorator,
+                      resource_decorator, task_decorator)
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
 from gws_core.experiment.experiment_exception import ExperimentRunException
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.impl.robot.robot_resource import Robot
-from gws_core.impl.robot.robot_tasks import RobotCreate
+from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.protocol.protocol_exception import ProtocolBuildException
 
 #################### Error during the task ################

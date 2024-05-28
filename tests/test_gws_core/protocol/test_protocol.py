@@ -3,9 +3,10 @@
 from typing import Set
 
 from gws_core import (BaseTestCase, Experiment, ExperimentService,
-                      ExperimentStatus, ProtocolModel, ProtocolService, Robot,
-                      RobotFood, TaskModel)
+                      ExperimentStatus, ProtocolModel, ProtocolService,
+                      TaskModel)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core.impl.robot.robot_resource import Robot, RobotFood
 from gws_core.process.process_model import ProcessModel
 from gws_core.process.process_types import ProcessStatus
 

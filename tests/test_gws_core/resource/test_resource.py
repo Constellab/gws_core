@@ -2,8 +2,10 @@
 from typing import List
 
 from gws_core import (BaseTestCase, File, IntRField, ListRField, ResourceModel,
-                      Robot, RobotCreate, StrRField)
+                      StrRField)
 from gws_core.experiment.experiment_interface import IExperiment
+from gws_core.impl.robot.robot_resource import Robot
+from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.process.process_interface import IProcess
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator

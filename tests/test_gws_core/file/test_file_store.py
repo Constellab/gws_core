@@ -2,10 +2,11 @@
 
 from unittest import TestCase
 
-from gws_core import File, LocalFileStore
+from gws_core import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.folder import Folder
+from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.test.data_provider import DataProvider
 
 

@@ -2,9 +2,10 @@
 from unittest import TestCase
 
 from gws_core import (BadRequestException, ConfigParams, JSONDict, OutputSpecs,
-                      Resource, Robot, RobotMove, Table, Task, TaskInputs,
-                      TaskOutputs, TaskRunner, resource_decorator,
-                      task_decorator)
+                      Resource, Table, Task, TaskInputs, TaskOutputs,
+                      TaskRunner, resource_decorator, task_decorator)
+from gws_core.impl.robot.robot_resource import Robot
+from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.io_exception import (InvalidInputsException,
                                       InvalidOutputsException,
                                       MissingInputResourcesException)

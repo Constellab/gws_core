@@ -4,12 +4,14 @@ import time
 from typing import List
 
 from gws_core import (BaseTestCase, Experiment, ExperimentSaveDTO,
-                      ExperimentService, ExperimentStatus, GTest, ProcessModel,
-                      ProtocolModel, ResourceModel, Robot, RobotService,
-                      RobotWorldTravelProto, TaskModel)
+                      ExperimentService, ExperimentStatus, ProcessModel,
+                      ProtocolModel, ResourceModel, TaskModel)
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
-from gws_core.impl.robot.robot_protocol import RobotSimpleTravel
+from gws_core.impl.robot.robot_protocol import (RobotSimpleTravel,
+                                                RobotWorldTravelProto)
+from gws_core.impl.robot.robot_resource import Robot
+from gws_core.impl.robot.robot_service import RobotService
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel
@@ -18,6 +20,7 @@ from gws_core.project.project import Project
 from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.task.plug import Sink
+from gws_core.test.gtest import GTest
 
 
 # test_experiment
@@ -338,3 +341,31 @@ class TestExperiment(BaseTestCase):
         # Check that the move process was run
         move_process = move_process.refresh()
         self.assertEqual(move_process.status, ProcessStatus.SUCCESS)
+
+    def test_delete_intermediate_resources(self):
+
+        experiment = IExperiment()
+        protocol = experiment.get_protocol()
+        i_create = protocol.add_process(RobotCreate, 'create')
+        move_1 = protocol.add_process(RobotMove, 'move_1')
+        move_2 = protocol.add_process(RobotMove, 'move_2')
+        protocol.add_connector(i_create >> 'robot', move_1 << 'robot')
+        protocol.add_connector(move_1 >> 'robot', move_2 << 'robot')
+        sink = protocol.add_sink('sink', move_2 >> 'robot')
+        experiment.run()
+
+        # flag the output of i_create
+        create_output = i_create.refresh().get_output_resource_model('robot')
+        create_output.flagged = True
+        create_output.save()
+
+        # Delete the intermediate resource data
+        ExperimentService.delete_intermediate_resources(experiment.get_experiment_model().id)
+
+        create_output.refresh()
+        # the output of i_create should not be deleted because it is flagged
+        self.assertFalse(create_output.content_is_deleted)
+        # the output of move_2 should not be deleted because it is the output of the experiment
+        self.assertFalse(move_2.refresh().get_output_resource_model('robot').content_is_deleted)
+        # the output of move_1 should be deleted
+        self.assertTrue(move_1.refresh().get_output_resource_model('robot').content_is_deleted)

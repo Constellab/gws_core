@@ -91,6 +91,10 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
 
     data: Dict[str, Any] = JSONField(null=True)
     is_archived = BooleanField(default=False, index=True)
+
+    # true if the resource content was deleted
+    # when cleaning intermediate resources or importing an experience without the intermediate resources
+    content_is_deleted = BooleanField(default=False)
     style: TypingStyle = BaseDTOField(TypingStyle, null=True)
 
     _table_name = 'gws_resource'
@@ -120,6 +124,19 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
         # TODO to improve, if there is an error, the kvstore is not restored
         self.remove_kv_store()
         return result
+
+    @transaction()
+    def delete_resource_content(self) -> 'ResourceModel':
+        """
+        Delete the content of the resource, the data, the kv store and the fs node
+        """
+        self.content_is_deleted = True
+        self.save()
+        if self.fs_node_model:
+            self.fs_node_model.delete_instance()
+        # TODO to improve, if there is an error, the kvstore is not restored
+        self.remove_kv_store()
+        return self
 
     @transaction()
     def archive(self, archive: bool) -> 'ResourceModel':
@@ -258,6 +275,11 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
         return ResourceModel.select().where(cls.get_by_types_and_sub_expression(typing_names))
 
     @classmethod
+    def get_resource_by_experiment_and_flag(cls, experiment_id: str, flagged: bool) -> ModelSelect:
+        return ResourceModel.select().where(ResourceModel.experiment == experiment_id,
+                                            ResourceModel.flagged == flagged)
+
+    @classmethod
     def replace_resource_typing_name(cls, old_typing_name: str, new_typing_name: str) -> None:
         """Replace the typing name of all the resource models
         """
@@ -276,6 +298,9 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
         Returns the resource created from the data and resource_typing_name
         if new_instance, it forces to rebuild the resource
         """
+        if self.content_is_deleted:
+            raise BadRequestException(
+                f"Intermediate resource '{self.name}' was deleted, can't get the resource data")
 
         if new_instance:
             return self._instantiate_resource()

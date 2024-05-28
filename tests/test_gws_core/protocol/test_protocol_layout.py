@@ -1,6 +1,7 @@
 
 
-from gws_core import BaseTestCase, IExperiment, RobotCreate, RobotMove
+from gws_core import BaseTestCase, IExperiment
+from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
                                                ProtocolLayout,
                                                ProtocolLayoutDTO)

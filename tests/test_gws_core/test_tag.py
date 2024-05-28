@@ -9,7 +9,6 @@ from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.impl.robot.robot_resource import Robot, RobotFood
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotEat, RobotMove
 from gws_core.io.io_spec import InputSpec, OutputSpec

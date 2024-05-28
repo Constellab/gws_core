@@ -29,10 +29,10 @@ class ReportResource(Resource):
 
     def get_content(self) -> RichText:
         if self._content is None:
-            self._content = self._get_report().get_content_as_rich_text()
+            self._content = self.get_report().get_content_as_rich_text()
         return self._content
 
-    def _get_report(self) -> Report:
+    def get_report(self) -> Report:
         if self._report is None:
             self._report = Report.get_by_id_and_check(self.report_id)
         return self._report
@@ -65,4 +65,4 @@ class ReportResource(Resource):
 
     @view(view_type=RichTextView, human_name="View report", short_description="View report content", default_view=True)
     def view_report(self, config: ConfigParamsDict = None) -> RichTextView:
-        return RichTextView(self._get_report().title, self.get_content())
+        return RichTextView(self.get_report().title, self.get_content())

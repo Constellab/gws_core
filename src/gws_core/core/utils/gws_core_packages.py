@@ -5,7 +5,6 @@ class GwsCorePackages():
     """
     OPENPYXL = "openpyxl"
     AWESOME_SLUGIFY = "awesome-slugify"
-    CRYPTOGRAPHY = "cryptography"
     FASTAPI = "fastapi"
     PEEWEE = "peewee"
     PSUTIL = "psutil"

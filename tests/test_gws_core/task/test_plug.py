@@ -1,8 +1,9 @@
 
 
-from gws_core import (CheckBeforeTaskResult, ResourceModel, Robot, Source,
-                      Switch2, TaskOutputs, TaskRunner)
+from gws_core import (CheckBeforeTaskResult, ResourceModel, Source, Switch2,
+                      TaskOutputs, TaskRunner)
 from gws_core.experiment.experiment_interface import IExperiment
+from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.process.process_interface import IProcess
 from gws_core.protocol.protocol_interface import IProtocol

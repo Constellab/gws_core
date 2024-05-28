@@ -5,8 +5,9 @@ from pandas.core.frame import DataFrame
 
 from gws_core import (BaseTestCase, BoolRField, DataFrameRField, DictRField,
                       FloatRField, IntRField, KVStore, ListRField,
-                      ResourceModel, ResourceRField, Robot,
-                      SerializableObjectJson, SerializableRField, StrRField)
+                      ResourceModel, ResourceRField, SerializableObjectJson,
+                      SerializableRField, StrRField)
+from gws_core.impl.robot.robot_resource import Robot
 from gws_core.resource.resource_dto import ResourceOrigin
 
 

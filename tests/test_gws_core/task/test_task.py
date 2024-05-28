@@ -3,13 +3,16 @@
 from abc import abstractmethod
 
 from gws_core import (BaseTestCase, ConfigParams, Experiment,
-                      ExperimentService, GTest, ProcessFactory, ProtocolModel,
-                      ProtocolService, ResourceModel, Robot, RobotCreate, Task,
-                      TaskInputs, TaskModel, TaskOutputs, task_decorator)
+                      ExperimentService, ProcessFactory, ProtocolModel,
+                      ProtocolService, ResourceModel, Task, TaskInputs,
+                      TaskModel, TaskOutputs, task_decorator)
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core.impl.robot.robot_resource import Robot
+from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.task.plug import Source
+from gws_core.test.gtest import GTest
 
 from ..protocol_examples import TestSimpleProtocol
 

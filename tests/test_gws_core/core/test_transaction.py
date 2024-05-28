@@ -1,8 +1,6 @@
 
-from gws_core import config
 from gws_core.config.config import Config
-from gws_core.core.decorator.transaction import (TransactionSignleton,
-                                                 transaction)
+from gws_core.core.decorator.transaction import transaction
 from gws_core.test.base_test_case import BaseTestCase
 
 

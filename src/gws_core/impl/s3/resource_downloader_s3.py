@@ -6,7 +6,8 @@ from gws_core.credentials.credentials_type import (CredentialsDataS3,
                                                    CredentialsType)
 from gws_core.impl.s3.s3_bucket import S3Bucket
 from gws_core.model.typing_style import TypingStyle
-from gws_core.share.resource_downloader_base import ResourceDownloaderBase
+from gws_core.share.resource.resource_downloader_base import \
+    ResourceDownloaderBase
 
 from ...config.config_params import ConfigParams
 from ...config.config_types import ConfigSpecs

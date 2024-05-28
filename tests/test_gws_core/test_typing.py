@@ -3,13 +3,13 @@
 from typing import List
 
 from gws_core import (BaseTestCase, File, ProcessSpec, Protocol,
-                      ProtocolTyping, ResourceTyping, RobotCreate, RobotEat,
-                      Sink, TaskTyping, protocol_decorator,
-                      transformer_decorator)
+                      ProtocolTyping, ResourceTyping, Sink, TaskTyping,
+                      protocol_decorator, transformer_decorator)
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.impl.robot.robot_protocol import RobotTravelProto
 from gws_core.impl.robot.robot_resource import Robot
+from gws_core.impl.robot.robot_tasks import RobotCreate, RobotEat
 from gws_core.model.typing import Typing
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_service import TypingService

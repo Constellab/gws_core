@@ -2,10 +2,11 @@
 import time
 
 from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
-                      OutputSpecs, ProcessSpec, Protocol, RobotCreate,
-                      RobotEat, RobotFood, RobotMove, RobotSugarCreate,
-                      RobotWait, Task, TaskInputs, TaskOutputs,
-                      protocol_decorator, task_decorator)
+                      OutputSpecs, ProcessSpec, Protocol, Task, TaskInputs,
+                      TaskOutputs, protocol_decorator, task_decorator)
+from gws_core.impl.robot.robot_resource import RobotFood
+from gws_core.impl.robot.robot_tasks import (RobotCreate, RobotEat, RobotMove,
+                                             RobotSugarCreate, RobotWait)
 
 # File for Tests containing examples of protocols
 

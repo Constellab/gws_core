@@ -2,6 +2,8 @@
 
 from typing import List, Optional, Type
 
+from peewee import ModelSelect
+
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
@@ -18,10 +20,10 @@ from gws_core.resource.view.view_runner import ViewRunner
 from gws_core.resource.view.view_types import exluded_views_in_report
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
-from gws_core.share.resource_downloader_http import ResourceDownloaderHttp
+from gws_core.share.resource.resource_downloader_http import \
+    ResourceDownloaderHttp
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Sink
-from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
@@ -104,6 +106,10 @@ class ResourceService():
     @classmethod
     def update_flagged(cls, view_config_id: str, flagged: bool) -> ResourceModel:
         resource_model: ResourceModel = cls.get_by_id_and_check(view_config_id)
+
+        if resource_model.content_is_deleted:
+            raise BadRequestException(
+                "Can't update the flagged status if the content of the resource is deleted")
         resource_model.flagged = flagged
         return resource_model.save()
 

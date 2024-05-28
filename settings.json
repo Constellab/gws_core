@@ -4,7 +4,7 @@
     "author"        : "Gencovery",
     "author_email"  : "admin@gencovery.com",
     "description"   : "Core Gencovery Web Services",
-    "version"       : "0.8.0-beta.4",
+    "version"       : "0.8.0",
     "app_dir"       : "./",
     "app_host"      : "0.0.0.0",
     "app_port"      : 3000,
@@ -22,7 +22,6 @@
                 "packages":[
                   {"name": "openpyxl", "version": "3.1.2"},
                   {"name": "awesome-slugify", "version": "1.6.5"},
-                  {"name": "cryptography", "version": "42.0.5"},
                   {"name": "fastapi", "version": "0.110.1"},
                   {"name": "pydantic", "version": "2.7.0"},
                   {"name": "peewee", "version": "3.17.3"},

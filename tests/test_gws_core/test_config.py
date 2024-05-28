@@ -1,10 +1,11 @@
 
 
 from gws_core import (BaseTestCase, Config, FloatParam, ProcessFactory,
-                      RobotMove, TaskModel)
+                      TaskModel)
 from gws_core.config.config_exceptions import MissingConfigsException
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.impl.robot.robot_tasks import RobotMove
 
 
 # test_config

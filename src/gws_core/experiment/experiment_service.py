@@ -2,15 +2,18 @@
 
 from typing import Dict, List, Optional, Type
 
+from peewee import ModelSelect
+
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.task.plug import Sink
+from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
-from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
@@ -426,7 +429,7 @@ class ExperimentService():
             running_tasks=running_tasks,
         )
 
-        ################################### COPY  ##############################
+    ################################### COPY  ##############################
 
     @classmethod
     @transaction()
@@ -445,7 +448,7 @@ class ExperimentService():
         new_experiment.description = experiment.description
         return new_experiment.save()
 
-      ################################### DELETE ##############################
+    ################################### DELETE ##############################
 
     @classmethod
     @transaction()
@@ -463,3 +466,65 @@ class ExperimentService():
         ActivityService.add(activity_type=ActivityType.DELETE,
                             object_type=ActivityObjectType.EXPERIMENT,
                             object_id=experiment.id)
+
+    ################################### INTERMEDIATE RESOURCES ##############################
+
+    @classmethod
+    @transaction()
+    def delete_intermediate_resources(cls, experiment_id: str) -> None:
+        """Delete the intermediate resources of an experiment
+        An intermediate resource is a resource that is not used as input of a sink and not flagged
+
+        :param experiment_id: id of the experiment
+        :type experiment_id: str
+        """
+
+        intermediate_resources: List[ResourceModel] = cls.get_intermediate_results(
+            experiment_id)
+
+        if not intermediate_resources:
+            raise BadRequestException("No intermediate resources found for the experiment")
+
+        # check if all the intermediate resources where already deleted
+        if all(resource.content_is_deleted for resource in intermediate_resources):
+            raise BadRequestException("All the intermediate resources are already deleted")
+
+        # check if the intermediate resources are used in other experiments
+        resoure_navigator = EntityNavigatorResource(intermediate_resources)
+        if resoure_navigator.get_next_experiments().has_entities():
+            raise BadRequestException(
+                "Some intermediate resources are used in other experiments")
+
+        # delete the intermediate resources content
+        for resource in intermediate_resources:
+            resource.delete_resource_content()
+
+        ActivityService.add(activity_type=ActivityType.DELETE_EXPERIMENT_INTERMEDIATE_RESOURCES,
+                            object_type=ActivityObjectType.EXPERIMENT,
+                            object_id=experiment_id)
+
+    @classmethod
+    def get_intermediate_results(cls, experiment_id: str) -> List[ResourceModel]:
+        """Retrieve the list of intermediate resources of an experiment
+        A resource is considered as intermediate if it is not used as input of a sink and not flagged
+
+        :param experiment_id: id of the experiment
+        :type experiment_id: str
+        :return: _description_
+        :rtype: List[ResourceModel]
+        """
+        not_flagged_resources: List[ResourceModel] = list(
+            ResourceModel.get_resource_by_experiment_and_flag(experiment_id, False)
+        )
+
+        intermediate_resources: List[ResourceModel] = []
+        for resource in not_flagged_resources:
+            # check if the resource is used a input of sink
+            task_input_model = TaskInputModel.get_by_resource_model_and_task_type(
+                resource.id, Sink._typing_name)
+
+            # if the resource is not used as input of a sink, it is an intermediate resource
+            if not task_input_model:
+                intermediate_resources.append(resource)
+
+        return intermediate_resources

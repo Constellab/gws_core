@@ -1,8 +1,11 @@
 
 
 from gws_core import (BaseTestCase, IExperiment, IProcess, IProtocol, ITask,
-                      ProtocolModel, Robot, RobotCreate, RobotMove,
-                      RobotSuperTravelProto, RobotTravelProto)
+                      ProtocolModel)
+from gws_core.impl.robot.robot_protocol import (RobotSuperTravelProto,
+                                                RobotTravelProto)
+from gws_core.impl.robot.robot_resource import Robot
+from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.protocol.protocol_exception import \
     IOFaceConnectedToTheParentDeleteException
 

@@ -3,6 +3,8 @@
 from abc import abstractmethod
 from typing import List, Literal
 
+from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.impl.file.file import File
@@ -16,9 +18,6 @@ from gws_core.share.shared_resource import SharedResource
 from gws_core.task.task import Task
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
-
-from ..config.config_params import ConfigParams
-from ..config.config_types import ConfigSpecs
 
 
 class ResourceDownloaderBase(Task):

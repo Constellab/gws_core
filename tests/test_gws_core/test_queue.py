@@ -3,9 +3,10 @@
 import time
 
 from gws_core import (BaseTestCase, Experiment, ExperimentService,
-                      ExperimentStatus, GTest, Queue, QueueService,
-                      RobotService)
+                      ExperimentStatus, Queue, QueueService)
 from gws_core.impl.robot.robot_protocol import RobotSimpleTravel
+from gws_core.impl.robot.robot_service import RobotService
+from gws_core.test.gtest import GTest
 
 
 # test_queue

@@ -40,6 +40,12 @@ class TaskInputModel(BaseModel):
         return TaskInputModel.select().where(TaskInputModel.resource_model == resource_model_id)
 
     @classmethod
+    def get_by_resource_model_and_task_type(cls, resource_model_id: str, task_typing_name: str) -> ModelSelect:
+        return TaskInputModel.select().join(TaskModel).where(
+            (TaskInputModel.resource_model == resource_model_id) &
+            (TaskInputModel.task_model.process_typing_name == task_typing_name))
+
+    @classmethod
     def get_by_resource_models(cls, resource_model_ids: List[str]) -> ModelSelect:
         return TaskInputModel.select().where(TaskInputModel.resource_model.in_(resource_model_ids))
 

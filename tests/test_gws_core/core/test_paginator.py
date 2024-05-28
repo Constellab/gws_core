@@ -1,7 +1,8 @@
 
 
 from gws_core import (BaseTestCase, Experiment, ExperimentService, Paginator,
-                      ProtocolModel, RobotService)
+                      ProtocolModel)
+from gws_core.impl.robot.robot_service import RobotService
 
 
 # test_paginator

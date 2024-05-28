@@ -362,7 +362,9 @@ from .resource.view.view_types import ViewSpecs as ViewSpecs
 from .resource.view.view_types import ViewType as ViewType
 from .resource.view.viewer import Viewer as Viewer
 # Share
-from .share.resource_downloader_http import \
+from .share.resource.resource_downloader_base import \
+    ResourceDownloaderBase as ResourceDownloaderBase
+from .share.resource.resource_downloader_http import \
     ResourceDownloaderHttp as ResourceDownloaderHttp
 # Space
 from .space.mail_service import MailService as MailService

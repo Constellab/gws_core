@@ -240,3 +240,12 @@ def archive(id_: str,
 def unarchive(id_: str,
               _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
     return ExperimentService.unarchive_experiment_by_id(id_).to_dto()
+
+
+################################### INTERMEDIATE RESOURCES ##############################
+
+@core_app.delete("/experiment/{id_}/intermediate-resources", tags=["Experiment"],
+                 summary="Delete all intermediate resources of an experiment")
+def delete_intermediate_resources(id_: str,
+                                  _=Depends(AuthService.check_user_access_token)) -> None:
+    return ExperimentService.delete_intermediate_resources(id_)

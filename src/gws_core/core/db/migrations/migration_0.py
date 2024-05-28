@@ -1082,6 +1082,8 @@ class Migration080(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(Experiment.get_db())
         migrator.drop_column_if_exists(Experiment, 'score')
+        migrator.add_column_if_not_exists(ResourceModel, ResourceModel.content_is_deleted)
+
         migrator.migrate()
 
         # delete all virtual environments
