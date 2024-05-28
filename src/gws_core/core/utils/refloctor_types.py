@@ -18,16 +18,9 @@ class MethodArgDoc(BaseModelDTO):
     arg_default_value: str
 
 
-class MethodDocFunction():
+class MethodDocFunction(BaseModelDTO):
     name: str
     func: Any
-
-    def __init__(self, name: str, func: Any):
-        # if name not str
-        if not isinstance(name, str):
-            raise ValueError("name should be str")
-        self.name = name
-        self.func = func
 
 
 class MethodDoc(BaseModelDTO):

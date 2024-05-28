@@ -50,7 +50,7 @@ class TestMonitor(BaseTestCase):
 
         monitor_time = []
 
-        n = n
+        n = 10
         for i in range(n):
             # append random time between from_date and to_date
             monitor_time.append(from_date + (to_date - from_date) * random.random())
