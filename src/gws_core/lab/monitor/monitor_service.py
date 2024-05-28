@@ -3,6 +3,9 @@
 import threading
 from datetime import datetime, timedelta
 
+import plotly.express as px
+from pandas import DataFrame, Series, Timedelta, concat, to_datetime
+
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.plotly.plotly_r_field import PlotlyRField
@@ -10,9 +13,6 @@ from gws_core.impl.plotly.plotly_r_field import PlotlyRField
 from ...core.service.base_service import BaseService
 from .monitor import Monitor
 from .monitor_dto import MonitorBetweenDateDTO
-
-import pandas as pd
-import plotly.express as px
 
 
 class MonitorService(BaseService):
@@ -84,7 +84,7 @@ class MonitorService(BaseService):
 
     @classmethod
     def get_plotly_figure_dict(cls,
-                               dataframe: pd.DataFrame,
+                               dataframe: DataFrame,
                                x: str,
                                y: list,
                                y_labs: dict = None) -> dict:
@@ -95,15 +95,13 @@ class MonitorService(BaseService):
             y_labs = {y_: y_ for y_ in y}
         figure.for_each_trace(
             lambda t: t.update(
-                name = y_labs[t.name],
-                legendgroup = y_labs[t.name],
-                hovertemplate = t.hovertemplate.replace(t.name, y_labs[t.name])
+                name=y_labs[t.name],
+                legendgroup=y_labs[t.name],
+                hovertemplate=t.hovertemplate.replace(t.name, y_labs[t.name])
             )
         )
         figure.update_layout(
             {
-                'plot_bgcolor': 'rgba(0,0,0,0)',
-                'paper_bgcolor': 'rgba(0,0,0,0)',
                 'title': '',
                 'xaxis_title': '',
                 'yaxis_title': '',
@@ -131,7 +129,8 @@ class MonitorService(BaseService):
         if len(monitors) == 0:
             raise Exception("No monitor data found between the given dates")
 
-        df = pd.DataFrame([vars(monitor.to_dto()) for monitor in monitors])
+        # vars transform the dto object to a dict
+        df = DataFrame([vars(monitor.to_dto()) for monitor in monitors])
 
         if df.empty:
             return MonitorBetweenDateDTO(
@@ -144,10 +143,9 @@ class MonitorService(BaseService):
             )
 
         # Add the utc number to the date if needed for plotly to display the correct date
-        df['created_at'] = pd.to_datetime(df['created_at'], utc=True)
+        df['created_at'] = to_datetime(df['created_at'], utc=True)
         if utc_number != 0:
-            df['created_at'] = df['created_at'] + pd.Timedelta(hours=utc_number)
-
+            df['created_at'] = df['created_at'] + Timedelta(hours=utc_number)
 
         # Create the main figure
         y_labels = {
@@ -157,25 +155,30 @@ class MonitorService(BaseService):
             'ram_usage_percent': 'RAM Usage',
             'swap_memory_percent': 'Swap Memory'
         }
-        main_figure = cls.get_plotly_figure_dict(df, 'created_at', ['cpu_percent', 'disk_usage_percent', 'external_disk_usage_percent', 'ram_usage_percent', 'swap_memory_percent'], y_labels)
-
+        main_figure = cls.get_plotly_figure_dict(
+            df, 'created_at',
+            ['cpu_percent', 'disk_usage_percent', 'external_disk_usage_percent', 'ram_usage_percent',
+             'swap_memory_percent'],
+            y_labels)
 
         # Create the cpu figure
-        df_cpu = df['data'].apply(lambda x: pd.Series(x['all_cpu_percent']))
+        df_cpu = df['data'].apply(lambda x: Series(x['all_cpu_percent']))
         df_cpu_columns = [f'CPU {i} (%)' for i in range(len(df_cpu.columns))]
         df_cpu.columns = df_cpu_columns
-        df_cpu = pd.concat([df['created_at'], df_cpu], axis=1)
+        df_cpu = concat([df['created_at'], df_cpu], axis=1)
 
         cpu_figure = cls.get_plotly_figure_dict(df_cpu, 'created_at', df_cpu_columns)
 
-
         # Create the network figure
-        df_network = pd.concat([df['created_at'], df['net_io_bytes_recv'] / (1024*1024), df['net_io_bytes_sent'] / (1024*1024)], axis=1)
+        df_network = concat(
+            [df['created_at'],
+             df['net_io_bytes_recv'] / (1024 * 1024),
+             df['net_io_bytes_sent'] / (1024 * 1024)],
+            axis=1)
         df_network_columns = ['created_at', 'In (Mb)', 'Out (Mb)']
         df_network.columns = df_network_columns
 
         network_figure = cls.get_plotly_figure_dict(df_network, 'created_at', ['In (Mb)', 'Out (Mb)'])
-
 
         return MonitorBetweenDateDTO(
             from_date=from_date,

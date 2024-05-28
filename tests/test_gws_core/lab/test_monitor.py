@@ -1,12 +1,11 @@
 
-from datetime import datetime
-import time
 import random
+import time
+from datetime import datetime
 
-from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.lab.monitor.monitor import Monitor
+from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.test.base_test_case import BaseTestCase
-
 
 
 # test_monitor
@@ -51,7 +50,7 @@ class TestMonitor(BaseTestCase):
 
         monitor_time = []
 
-        n = random.randint(1, 10)
+        n = n
         for i in range(n):
             # append random time between from_date and to_date
             monitor_time.append(from_date + (to_date - from_date) * random.random())
@@ -86,7 +85,6 @@ class TestMonitor(BaseTestCase):
             )
             m.save()
 
-
         # Get monitor data between from_date and to_date
         monitor_between_date = MonitorService.get_monitor_data_between_dates(
             from_date=from_date,
@@ -94,9 +92,8 @@ class TestMonitor(BaseTestCase):
         )
 
         self.assertGreater(len(monitor_between_date.monitors), 0)
+        self.assertEqual(len(monitor_between_date.monitors), n)
         self.assertTrue(monitor_between_date.from_date <= monitor_between_date.to_date)
         self.assertIsNotNone(monitor_between_date.main_figure)
         self.assertIsNotNone(monitor_between_date.cpu_figure)
         self.assertIsNotNone(monitor_between_date.network_figure)
-
-
