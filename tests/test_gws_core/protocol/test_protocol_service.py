@@ -238,3 +238,24 @@ class TestProtocolService(BaseTestCase):
         # Test run process p4 which shoud not be runable
         with self.assertRaises(Exception):
             ProtocolService.run_process(protocol_id, 'p3')
+
+    def test_duplicate_process_to_protocol_id(self):
+        protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
+
+        process_model: ProcessModel = ProtocolService.add_process_to_protocol_id(
+            protocol_model.id, RobotMove._typing_name).process
+
+        ProtocolService.duplicate_process_to_protocol_id(
+            protocol_model.id, process_model.instance_name)
+
+        protocol_model = protocol_model.refresh()
+
+        duplicated_process = protocol_model.get_process(
+            process_model.instance_name + '_1')
+
+        self.assertEqual(len(protocol_model.processes), 2)
+        self.assertIsNotNone(duplicated_process)
+        self.assertEqual(duplicated_process.get_process_type(), RobotMove)
+        self.assertEqual(duplicated_process.to_config_dto().inputs, process_model.to_config_dto().inputs)
+        self.assertEqual(duplicated_process.to_config_dto().outputs, process_model.to_config_dto().outputs)
+
