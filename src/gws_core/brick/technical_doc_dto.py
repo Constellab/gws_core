@@ -17,4 +17,4 @@ class TechnicalDocDTO(BaseModelDTO):
     resources: List[ResourceTypingDTO]
     tasks: List[TaskTypingDTO]
     protocols: List[ProtocolTypingFullDTO]
-    other_classes: Optional[Dict[str, ClassicClassDocDTO]]
+    other_classes: List[ClassicClassDocDTO]

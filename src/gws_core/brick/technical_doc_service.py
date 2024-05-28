@@ -65,9 +65,8 @@ class TechnicalDocService():
 
     @classmethod
     def export_other_classes_technical_doc(
-            cls, brick_name: str, resources_tasks_protocols: List[TypingFullDTO]) -> Dict[
-            str, ClassicClassDocDTO]:
-        other_classes = {}
+            cls, brick_name: str, resources_tasks_protocols: List[TypingFullDTO]) -> List[ClassicClassDocDTO]:
+        other_classes: List[ClassicClassDocDTO] = []
         clsmembers = inspect.getmembers(sys.modules[brick_name], inspect.isclass)
 
         for name, obj in clsmembers:
@@ -77,8 +76,8 @@ class TechnicalDocService():
                     ok = False
                     break
             if ok:
-                doc = cls._get_non_typing_obj_technical_doc(obj)
-                other_classes[name] = doc
+                doc: ClassicClassDocDTO = cls._get_non_typing_obj_technical_doc(obj)
+                other_classes.append(doc)
 
         return other_classes
 
