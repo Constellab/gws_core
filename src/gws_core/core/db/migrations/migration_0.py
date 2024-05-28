@@ -1077,7 +1077,12 @@ class Migration080Beta1(BrickMigration):
 @brick_migration('0.8.0', short_description='Delete virtual environments for new format')
 class Migration080(BrickMigration):
 
-        @classmethod
-        def migrate(cls, from_version: Version, to_version: Version) -> None:
-            # delete all virtual environments
-            VEnvService.delete_all_venvs()
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(Experiment.get_db())
+        migrator.drop_column_if_exists(Experiment, 'score')
+        migrator.migrate()
+
+        # delete all virtual environments
+        VEnvService.delete_all_venvs()

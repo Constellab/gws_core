@@ -58,7 +58,6 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
 
     project: Project = ForeignKeyField(Project, null=True)
 
-    score = DoubleField(null=True)
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
     error_info = JSONField(null=True)
@@ -327,7 +326,6 @@ class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity
 
     def mark_as_draft(self):
         self.pid = None
-        self.score = None
         self.status = ExperimentStatus.DRAFT
         self.lab_config = None
         self.set_error_info(None)
