@@ -316,7 +316,8 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
 
         return ResourceFactory.create_resource(self.get_and_check_resource_type(),
                                                kv_store=self.get_kv_store(), data=self.data,
-                                               resource_model_id=self.id, name=self.name)
+                                               resource_model_id=self.id, name=self.name,
+                                               style=self.style)
 
     @classmethod
     def from_resource(cls, resource: Resource, origin: ResourceOrigin = ResourceOrigin.GENERATED,

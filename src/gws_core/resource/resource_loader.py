@@ -96,7 +96,8 @@ class ResourceLoader():
         tags = TagHelper.tags_dto_to_list(tags_dict)
 
         resource = ResourceFactory.create_resource(resource_type, kv_store=kv_store, data=zip_resource.data,
-                                                   name=zip_resource.name, tags=tags)
+                                                   name=zip_resource.name, tags=tags,
+                                                   style=zip_resource.style)
 
         # generate a new uid for the resource
         resource.uid = Resource.uid.get_default_value()

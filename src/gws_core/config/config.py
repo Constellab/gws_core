@@ -174,6 +174,18 @@ class Config(ModelWithUser):
             values=self.get_values() if not ignore_values else {}
         )
 
+    @classmethod
+    def from_simple_json(cls, config_dict: dict) -> 'Config':
+        """
+        Import the config from a dict
+        """
+
+        config = Config()
+        config.set_specs(ConfigSpecsHelper.config_specs_from_json(config_dict.get("specs", {})))
+        config.set_values(config_dict.get("values", {}))
+
+        return config
+
     def copy(self) -> 'Config':
         """Copy the config to a new Config with a new Id
         """
