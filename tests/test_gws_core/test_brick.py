@@ -4,7 +4,7 @@ from typing import Dict, List
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.brick.brick_model import BrickModel
 from gws_core.brick.brick_service import BrickService
-from gws_core.core.utils.settings import ModuleInfo
+from gws_core.lab.system_dto import ModuleInfo
 from gws_core.task.task import Task
 from gws_core.test.base_test_case import BaseTestCase
 

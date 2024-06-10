@@ -1,6 +1,7 @@
 
 
 import os
+import sys
 from threading import Thread
 from typing import List
 
@@ -17,7 +18,7 @@ from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor_service import MonitorService
-from gws_core.lab.system_dto import LabInfoDTO
+from gws_core.lab.system_dto import LabInfoDTO, LabSystemConfig
 from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.project.project_service import ProjectService
@@ -309,3 +310,10 @@ class SystemService:
         if sync_projects:
             ProjectService.synchronize_all_space_projects()
         Logger.info('Synchronization with space done')
+
+    @classmethod
+    def get_system_config(cls) -> LabSystemConfig:
+        return LabSystemConfig(
+            python_version=sys.version,
+            pip_packages=Settings.get_instance().get_all_pip_packages()
+        )

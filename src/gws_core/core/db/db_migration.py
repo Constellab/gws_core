@@ -7,9 +7,9 @@ from gws_core.brick.brick_service import BrickService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.settings import (BrickMigrationLog, ModuleInfo,
-                                          Settings)
+from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
+from gws_core.lab.system_dto import BrickMigrationLog, ModuleInfo
 
 from .brick_migrator import BrickMigration, BrickMigrator, MigrationObject
 from .version import Version

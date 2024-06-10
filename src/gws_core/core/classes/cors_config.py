@@ -1,13 +1,15 @@
 
 
-from typing import Any, Literal
+from typing import Any
 
 from fastapi.applications import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from ..utils.settings import LabEnvironment, Settings
+from gws_core.lab.system_dto import LabEnvironment
+
+from ..utils.settings import Settings
 
 
 class CorsConfig():

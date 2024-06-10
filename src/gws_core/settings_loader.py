@@ -9,9 +9,10 @@ from typing import Dict, List, Literal
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.utils.logger import Logger
+from gws_core.lab.system_dto import ModuleInfo
 
 from .brick.brick_service import BrickService
-from .core.utils.settings import ModuleInfo, Settings
+from .core.utils.settings import Settings
 
 
 class SettingsLoader:

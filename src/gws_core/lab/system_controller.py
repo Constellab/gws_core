@@ -5,8 +5,8 @@ from typing import List
 from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.core.utils.settings import PipPackage
-from gws_core.lab.system_dto import LabInfoDTO, SettingsDTO
+from gws_core.lab.system_dto import (LabInfoDTO, LabSystemConfig, PipPackage,
+                                     SettingsDTO)
 
 from ..core.service.settings_service import SettingsService
 from ..core_controller import core_app
@@ -58,6 +58,6 @@ def get_settings(_=Depends(AuthService.check_user_access_token)) -> SettingsDTO:
     return SettingsService.get_settings().to_dto()
 
 
-@core_app.get("/system/settings/pip-packages",  tags=["System"], summary="Get pip packages")
-def get_pip_packages(_=Depends(AuthService.check_user_access_token)) -> List[PipPackage]:
-    return SettingsService.get_installed_pip_packages()
+@core_app.get("/system/config",  tags=["System"], summary="Get system config")
+def get_pip_packages(_=Depends(AuthService.check_user_access_token)) -> LabSystemConfig:
+    return SystemService.get_system_config()

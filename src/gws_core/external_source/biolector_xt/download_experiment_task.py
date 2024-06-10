@@ -27,7 +27,7 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 @task_decorator(unique_name="BiolectorDownloadExperiment",
                 short_description="Download the reuslt of an experiment from Biolector XT",
-                style=TypingStyle.community_icon("bioreactor"))
+                style=TypingStyle.community_icon("bioreactor"), hide=True)
 class BiolectorDownloadExperiment(Task):
 
     config_specs: ConfigSpecs = {

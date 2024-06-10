@@ -5,15 +5,13 @@ import re
 import tempfile
 from copy import deepcopy
 from json import JSONDecodeError, dump, load
-from typing import Any, Dict, List, Literal, Optional, Union
-
-from typing_extensions import TypedDict
+from typing import Any, Dict, List, Optional, Union
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
-from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.lab.system_dto import SettingsDTO
+from gws_core.lab.system_dto import (BrickMigrationLog, LabEnvironment,
+                                     ModuleInfo, PipPackage, SettingsDTO)
 from gws_core.user.user_dto import SpaceDict
 
 from .date_helper import DateHelper
@@ -28,37 +26,6 @@ __DEFAULT_SETTINGS__ = {
     "app_host": '0.0.0.0',
     "app_port": 3000,
 }
-
-LabEnvironment = Literal["ON_CLOUD", "DESKTOP", "LOCAL"]
-
-
-class ModuleInfo(TypedDict):
-    path: str
-    name: str
-    source: str
-    version: str
-    repo_type: Literal['app', 'git', 'pip']
-    repo_commit: Optional[str]
-    # name of the package that depend on this module
-    parent_name: Optional[str]
-    error: Optional[str]  # provided if the module could not be loaded
-
-
-class BrickMigrationLogHistory(TypedDict):
-    version: str
-    migration_date: str
-
-
-class BrickMigrationLog(TypedDict):
-    brick_name: str
-    version: str
-    last_date_check: str
-    history: List[BrickMigrationLogHistory]
-
-
-class PipPackage(BaseModelDTO):
-    name: str
-    version: str
 
 
 class Settings():
