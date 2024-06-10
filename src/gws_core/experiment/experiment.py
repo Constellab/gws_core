@@ -5,8 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, final
 
-from peewee import (BooleanField, CharField, DoubleField, ForeignKeyField,
-                    ModelSelect)
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
