@@ -284,6 +284,23 @@ class ProcessFactory():
             process_type=process_type, config_params=config_params, instance_name=instance_name)
 
     @classmethod
+    def create_process_model_from_process_model(
+            cls, process_model: ProcessModel, instance_name: str = None) -> ProcessModel:
+        if isinstance(process_model, TaskModel):
+            return cls.create_task_model_from_type(
+                process_model.get_process_type(),
+                process_model.config.get_values(),
+                instance_name,
+                inputs_dto=process_model.to_config_dto().inputs,
+                outputs_dto=process_model.to_config_dto().outputs,
+                style=process_model.style,
+                community_live_task_version_id=process_model.community_live_task_version_id,
+                name=process_model.name + " (copy)"
+                )
+        else:
+            return cls.create_protocol_model_from_graph(process_model)
+
+    @classmethod
     def _init_process_model(
             cls, process_model: ProcessModel, config: Config,
             instance_name: str = None, name: str = None,

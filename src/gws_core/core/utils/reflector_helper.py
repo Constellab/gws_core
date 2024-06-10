@@ -1,8 +1,11 @@
 
 import inspect
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
-from gws_core.core.utils.refloctor_types import MethodArgDoc, MethodDoc
+from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.refloctor_types import (MethodArgDoc, MethodDoc,
+                                                 MethodDocFunction,
+                                                 MethodDocType)
 
 from ..classes.func_meta_data import FuncArgMetaData, FuncArgsMetaData
 from ..utils.utils import Utils
@@ -88,8 +91,6 @@ class ReflectorHelper():
         # Check if the method is annotated with view
         return setattr(object_, meta_data_name, value)
 
-    # TODO: gérer les views
-
     @classmethod
     def get_method_named_args_json(cls, method: Any) -> List[MethodArgDoc]:
         arguments: Dict[str, FuncArgMetaData] = cls.get_function_arguments(method).get_named_args()
@@ -100,7 +101,7 @@ class ReflectorHelper():
 
             arg_default_value: Any = None
             if arg[1].has_default_value():
-                arg_default_value = arg[1].default_value if arg[1].default_value is not None else 'None'
+                arg_default_value = arg[1].default_value if arg[1].default_value is not None else None
 
             arg_type = Utils.stringify_type(arg_type)
             if arg_type == '_empty':
@@ -128,17 +129,62 @@ class ReflectorHelper():
         return arguments_json
 
     @classmethod
-    def is_decorated_with_view(cls, func: Any) -> bool:
-        source_lines = inspect.getsource(func[1]).splitlines()
-        return any(('@view' in line)for line in source_lines)
+    def get_methods_doc(cls, type_: Type, methods: List[MethodDocFunction]) -> List[MethodDoc]:
+        res: List[MethodDoc] = []
+        for method in methods:
+            try:
+                if not callable(method.func):
+                    continue
+
+                method_type: str = MethodDocType.BASICMETHOD
+
+                if isinstance(inspect.getattr_static(type_, method.name), classmethod):
+                    method_type = MethodDocType.CLASSMETHOD
+
+                if isinstance(inspect.getattr_static(type_, method.name), staticmethod):
+                    method_type = MethodDocType.STATICMETHOD
+
+                signature: inspect.Signature = inspect.signature(method.func)
+                arguments: List = cls.get_method_named_args_json(method.func)
+                return_type = Utils.stringify_type(
+                    signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None
+                res.append(MethodDoc(name=method.name, doc=inspect.getdoc(method.func),
+                                     args=arguments, return_type=return_type, method_type=method_type))
+            except Exception:
+                Logger.error(f"Error while getting method doc of {method.name} in {type_}")
+                continue
+        return res
 
     @classmethod
-    def get_methods_doc(cls, methods: Any) -> List[MethodDoc]:
-        res: List[MethodDoc] = []
-        for name, method in methods:
-            signature: inspect.Signature = inspect.signature(method)
-            arguments: List = cls.get_method_named_args_json(method)
-            return_type = Utils.stringify_type(
-                signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None
-            res.append(MethodDoc(name=name, doc=inspect.getdoc(method), args=arguments, return_type=return_type))
-        return res
+    def get_all_public_args(cls, type_: Type) -> Optional[Dict]:
+        '''
+            Get all the public args of a class and its ancestors
+        '''
+        if not inspect.isclass(type_):
+            # return None if the type is not a class
+            return None
+
+        res = {}
+        for class_ in inspect.getmro(type_):
+            res.update(cls.get_public_args(class_))
+        return res if len(res) > 0 else None
+
+    @classmethod
+    def get_public_args(cls, class_) -> Dict:
+        '''
+            Get the public args of a class
+        '''
+
+        variables: dict = inspect.getmembers(class_)[1][1]
+        try:
+            vars_keys = sorted([i for i in variables.keys() if i[0] != '_'])  # get the sorted keys of public variables
+            res: Dict = {}
+            for k in vars_keys:
+                if hasattr(variables[k], '__name__'):
+                    res.update({k: variables[k].__name__})
+                else:
+                    res.update({k: str(variables[k])})
+            return res
+        except:
+            Logger.error(f"Error while getting public args of {class_}")
+            return {}
