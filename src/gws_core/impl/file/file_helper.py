@@ -180,8 +180,10 @@ class FileHelper():
             cls.delete_file(node_path)
 
     @classmethod
-    def delete_dir_content(cls, dir_path: PathType) -> None:
+    def delete_dir_content(cls, dir_path: PathType, ignore_errors: bool = True) -> None:
         path = cls.get_path(dir_path)
+        if ignore_errors and not cls.exists_on_os(path):
+            return
         for child in path.iterdir():
             cls.delete_node(child)
 
