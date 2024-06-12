@@ -34,7 +34,7 @@ def dev_reset(_=Depends(AuthService.check_user_access_token)) -> None:
 
 @core_app.post("/system/kill", tags=["System"], summary="Stop the python process and the API")
 def kill_process(_=Depends(AuthService.check_user_access_token)) -> None:
-    SystemService.kill_process()
+    SystemService.kill_dev_environment()
 
 
 @core_app.post("/system/garbage-collector",  tags=["System"], summary="Trigger garbage collector")

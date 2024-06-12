@@ -138,12 +138,12 @@ class AppManager:
         Notebook.init_complete()
 
     @classmethod
-    def reset_environment(cls) -> None:
+    def reset_environment(cls, reset_dev_env_key: str) -> None:
+        if reset_dev_env_key != "reset-dev-env":
+            raise Exception("Invalid input. Please type 'reset-dev-env' to reset the dev environment.")
         # Init the db
         DbManagerService.init_all_db()
         SystemService.reset_dev_envionment(check_user=False)
-        Logger.info("Dev env reset successfully")
-        return
 
 
 def load_settings(cwd: str) -> None:
@@ -174,7 +174,7 @@ def start_notebook(cwd: str, log_level: str = 'INFO') -> None:
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
 @click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
-@click.option('--reset_env', is_flag=True, help='Reset environment')
+@click.option('--reset_env', help='Reset environment')
 @click.option('--experiment-id', help='Experiment id')
 @click.option('--user-id', help='User id')
 @click.option('--protocol-model-id', help='Protocol model id')
@@ -193,6 +193,6 @@ def _start_app_console(_, test: str, run_experiment: bool, runserver: bool,
     elif test:
         AppManager.run_test(test=test, log_level=log_level, show_sql=show_sql)
     elif reset_env:
-        AppManager.reset_environment()
+        AppManager.reset_environment(reset_env)
     else:
         Logger.error("Nothing to do. Please provide a valid command like --runserver, --test or --reset_env")

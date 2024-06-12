@@ -167,6 +167,8 @@ class SystemService:
         if check_user:
             user: User = CurrentUserService.get_and_check_current_user()
 
+        Logger.info('Resetting the dev environment')
+
         try:
             if Experiment.table_exists():
                 # Stop all running experiment
@@ -180,6 +182,8 @@ class SystemService:
 
         cls.delete_temp_folder()
         cls.drop_all_tables()
+        # clean kvstore
+        FileHelper.delete_node(Settings.get_instance().get_kv_store_base_dir())
 
         cls.init()
         cls.init_queue_and_monitor()
@@ -187,11 +191,15 @@ class SystemService:
         if check_user:
             UserService.create_or_update_user_dto(user.to_full_dto())
 
+        Logger.info('Dev environment resetted')
+
     @classmethod
-    def kill_process(cls) -> None:
+    def kill_dev_environment(cls) -> None:
         if not Settings.is_dev_mode():
             raise UnauthorizedException(
                 'The kill method can only be called in dev environment')
+
+        Logger.info('Killing the dev environment')
 
         # kill current process and all its children
         sys_proc = SysProc.from_pid(os.getpid())

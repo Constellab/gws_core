@@ -8,7 +8,7 @@
         {
             "args": ["--runserver"],
             "name": "Starts GWS server",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "/lab/.sys/app/manage.py",
             "console": "integratedTerminal"
@@ -17,7 +17,7 @@
         {
             "args": ["--runserver", "--log_level=DEBUG"],
             "name": "Starts GWS server - DEBUG log",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
             "console": "integratedTerminal"
@@ -26,7 +26,7 @@
         {
             "args": ["--test", "all"],
             "name": "Test all",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
             "console": "integratedTerminal"
@@ -35,23 +35,23 @@
         {
             "args": ["--test", "${input:testFileName}"],
             "name": "Test single",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
             "console": "integratedTerminal",
         },
         // reset the dev env
         {
-          "args": ["--reset_env"],
+          "args": ["--reset_env", "${input:resetKey}"],
           "name": "Reset dev env",
-          "type": "python",
+          "type": "debugpy",
           "request": "launch",
           "program": "${workspaceFolder}/manage.py",
           "console": "integratedTerminal",
       },
       {
         "name": "Client s3",
-        "type": "python",
+        "type": "debugpy",
         "request": "launch",
         "program": "/lab/user/bricks/gws_core/test_s3/test_s3_client.py",
         "console": "integratedTerminal",
@@ -64,6 +64,11 @@
             "id": "testFileName",
             "type": "promptString",
             "description": "Name of the test files to run (separated with space)",
+        },
+        {
+            "id": "resetKey",
+            "type": "promptString",
+            "description": "/!\\ This delete all the data of the dev env (prod env will not be affected). Please type 'reset-dev-env' to confirm./!\\",
         }
     ]
 }
