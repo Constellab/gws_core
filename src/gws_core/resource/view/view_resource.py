@@ -22,6 +22,11 @@ class ViewResource(Resource):
     view_dict: dict = DictRField()
 
     def __init__(self, view_dict: dict = None) -> None:
+        """Create the view resource from the view dict
+
+        :param view_dict: dict of a view, defaults to None
+        :type view_dict: dict, optional
+        """
         super().__init__()
         self.view_dict = view_dict
 
@@ -32,6 +37,17 @@ class ViewResource(Resource):
     @staticmethod
     def from_resource(resource: Resource, view_method_name: str,
                       config_values: ConfigParamsDict = None) -> 'ViewResource':
+        """ Create a view resource from a resource and a view method name
+
+        :param resource: resource to call the view method on
+        :type resource: Resource
+        :param view_method_name: name of the view method to call
+        :type view_method_name: str
+        :param config_values: config value to use on call, defaults to None
+        :type config_values: ConfigParamsDict, optional
+        :return: _description_
+        :rtype: ViewResource
+        """
         view_runner: ViewRunner = ViewRunner(resource, view_method_name, config_values)
 
         view_runner.generate_view()
@@ -40,3 +56,19 @@ class ViewResource(Resource):
         view_dto = view_runner.call_view_to_dto()
 
         return ViewResource(view_dto.to_json_dict())
+
+    @staticmethod
+    def from_view(view_: View, view_config_values: ConfigParamsDict = None) -> 'ViewResource':
+        """Create a view resource directly from the view object
+
+        :param view_: view object to use
+        :type view_: View
+        :param view_config_values: config value of the view when call to_json_dict, defaults to None
+        :type view_config_values: ConfigParamsDict, optional
+        :return: _description_
+        :rtype: ViewResource
+        """
+        if not isinstance(view_, View):
+            raise Exception("The view object must be an instance of View")
+        config_params = ConfigParams(view_config_values or {})
+        return ViewResource(view_.to_dto(config_params).to_json_dict())
