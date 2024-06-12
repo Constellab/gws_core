@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        "ms-python.vscode-pylance",
+        "ms-python.mypy-type-checker",
+        "ms-python.pylint",
+        "ms-python.python",
+        "ms-python.debugpy",
+        "ms-python.isort",
+        "ms-python.autopep8",
+        "njpwerner.autodocstring"
+    ]
+}
