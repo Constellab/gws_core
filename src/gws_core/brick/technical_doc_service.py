@@ -34,8 +34,8 @@ class TechnicalDocService():
 
         return TechnicalDocDTO(
             json_version=1,
-            brick_name=brick_info["name"],
-            brick_version=brick_info["version"],
+            brick_name=brick_info.name,
+            brick_version=brick_info.version,
             resources=resources,
             tasks=tasks,
             protocols=protocols,

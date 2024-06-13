@@ -381,12 +381,12 @@ class Settings():
         self.data["modules"][module_info["name"]] = module_info
 
     def get_bricks(self) -> Dict[str, BrickInfo]:
-        return self.data.get("bricks", {})
+        return BrickInfo.from_record(self.data.get("bricks", {}))
 
     def add_brick(self, brick_info: BrickInfo) -> None:
         if 'bricks' not in self.data:
             self.data['bricks'] = {}
-        self.data["bricks"][brick_info['name']] = brick_info
+        self.data["bricks"][brick_info.name] = brick_info.to_json_dict()
 
     def get_space(self) -> SpaceDict:
         return self.data.get("space")

@@ -2,6 +2,7 @@
 
 from typing import Callable, Dict, List, Type
 
+from gws_core.brick.brick_dto import BrickInfo
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -9,7 +10,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
-from gws_core.lab.system_dto import BrickMigrationLog, ModuleInfo
+from gws_core.lab.system_dto import BrickMigrationLog
 
 from .brick_migrator import BrickMigration, BrickMigrator, MigrationObject
 from .version import Version
@@ -41,7 +42,7 @@ class DbMigrationService:
         # save all the brick current version as last migration
         bricks = BrickHelper.get_all_bricks()
         for brick in bricks.values():
-            settings.update_brick_migration_log(brick["name"], brick["version"])
+            settings.update_brick_migration_log(brick.name, brick.version)
 
     @classmethod
     def _init_brick_migrators(cls) -> None:
@@ -53,7 +54,7 @@ class DbMigrationService:
         brick_migrators: Dict[str, BrickMigrator] = {}
 
         for migration_obj in cls._migration_objects:
-            brick_info: ModuleInfo
+            brick_info: BrickInfo
 
             try:
                 brick_info = BrickHelper.get_brick_info_and_check(migration_obj.brick_migration)
@@ -62,8 +63,8 @@ class DbMigrationService:
                     f"Can't retrieve brick information for migration class : '{str(migration_obj.brick_migration)}'")
                 continue
 
-            brick_name = brick_info["name"]
-            current_brick_version = Version(brick_info["version"])
+            brick_name = brick_info.name
+            current_brick_version = Version(brick_info.version)
             migration_version = migration_obj.version
 
             # Check that the migration version is not higher than the brick version

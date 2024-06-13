@@ -69,7 +69,7 @@ class BaseModelService:
                 brick_info = BrickHelper.get_brick_info(db_manager.get_brick_name())
                 if brick_info is not None:
                     BrickService.log_brick_message(
-                        brick_info["name"],
+                        brick_info.name,
                         f"Cannot initialize databse {db_manager.get_unique_name()}. Error : {err}", "CRITICAL")
 
         # Create the foreign keys after if necessary (for DeferredForeignKey for example)

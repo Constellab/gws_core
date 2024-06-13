@@ -8,8 +8,9 @@ from typing import Any, Dict, List
 
 from typing_extensions import TypedDict
 
-from gws_core.brick.brick_dto import BrickMessageStatus
-from gws_core.lab.system_dto import ModuleInfo
+from gws_core.brick.brick_dto import BrickInfo, BrickMessageStatus
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 
 from ..core.utils.logger import Logger
 from ..core.utils.utils import Utils
@@ -105,7 +106,7 @@ class BrickService():
         """Clear the BrickModel table and log all the messages that were waiting on start
         """
         BrickModel.clear_all_message()
-        bricks_info: Dict[str, ModuleInfo] = BrickHelper.get_all_bricks()
+        bricks_info: Dict[str, BrickInfo] = BrickHelper.get_all_bricks()
         for brick_info in bricks_info.values():
             cls._init_brick_model(brick_info)
 
@@ -115,12 +116,12 @@ class BrickService():
         cls._waiting_messages = []
 
     @classmethod
-    def _init_brick_model(cls, brick_info: ModuleInfo) -> BrickModel:
-        brick_model: BrickModel = cls._get_brick_model(brick_info['name'])
+    def _init_brick_model(cls, brick_info: BrickInfo) -> BrickModel:
+        brick_model: BrickModel = cls._get_brick_model(brick_info.name)
 
         if brick_model is None:
             brick_model = BrickModel()
-            brick_model.name = brick_info['name']
+            brick_model.name = brick_info.name
 
         brick_model.status = 'SUCCESS'
         brick_model.clear_messages()
@@ -139,18 +140,25 @@ class BrickService():
         return BrickModel.find_by_name(name)
 
     @classmethod
+    def get_brick_version(cls, name: str) -> str:
+        brick = cls.get_brick_model(name)
+        if not brick:
+            raise BadRequestException(f"Brick {name} not found")
+        return brick.get_version()
+
+    @classmethod
     def import_all_bricks_in_python(cls) -> None:
-        bricks_info: Dict[str, ModuleInfo] = BrickHelper.get_all_bricks()
+        bricks_info: Dict[str, BrickInfo] = BrickHelper.get_all_bricks()
         for brick_name, brick_info in bricks_info.items():
 
             # for brick with error, just log the error and skip brick
-            if brick_info['error']:
+            if brick_info.error:
                 cls.log_brick_message(brick_name=brick_name,
-                                      message=brick_info['error'],
+                                      message=brick_info.error,
                                       status='CRITICAL')
                 continue
 
-            cls.import_brick_in_python(brick_name, brick_info['path'])
+            cls.import_brick_in_python(brick_name, brick_info.path)
 
     @classmethod
     def import_brick_in_python(cls, brick_name: str, brick_path: str) -> None:

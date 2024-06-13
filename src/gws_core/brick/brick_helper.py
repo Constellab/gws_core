@@ -52,15 +52,15 @@ class BrickHelper():
         if brick_name not in bricks:
             # secific case for the test mode when brick name is test filename
             if Settings.get_instance().is_test:
-                return {
-                    "path": '',
-                    "name": brick_name,
-                    "version": '0.0.0',
-                    "repo_commit": '',
-                    "repo_type": 'git',
-                    "parent_name": None,
-                    "error": None,
-                }
+                return BrickInfo(
+                    path='',
+                    name=brick_name,
+                    version='0.0.0',
+                    repo_type='git',
+                    repo_commit='',
+                    parent_name=None,
+                    error=None,
+                )
             return None
 
         return bricks[brick_name]
@@ -94,7 +94,7 @@ class BrickHelper():
         """
 
         brick_info = cls.get_brick_info_and_check(obj)
-        return Version(brick_info.get("version"))
+        return Version(brick_info.version)
 
     @classmethod
     def get_all_brick_versions(cls) -> List[BrickVersion]:
@@ -103,12 +103,12 @@ class BrickHelper():
 
         for brick in bricks.values():
             # ignore app brick
-            if brick['repo_type'] == 'app':
+            if brick.repo_type == 'app':
                 continue
 
             brick_versions.append(BrickVersion(
-                name=brick['name'],
-                version=brick['version'],
+                name=brick.name,
+                version=brick.version,
             ))
         return brick_versions
 

@@ -24,11 +24,11 @@ class BrickMigrationLog(TypedDict):
     history: List[BrickMigrationLogHistory]
 
 
-class BrickInfo(TypedDict):
+class BrickInfo(BaseModelDTO):
     path: str
     name: str
-    version: str
-    repo_type: Literal['git', 'pip']
+    version: Optional[str]
+    repo_type: Optional[Literal['git', 'pip']]
     repo_commit: Optional[str]
     # name of the package that depend on this module
     parent_name: Optional[str]

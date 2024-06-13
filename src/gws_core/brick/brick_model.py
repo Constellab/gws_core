@@ -54,6 +54,9 @@ class BrickModel(Model):
     def get_brick_info(self) -> BrickInfo:
         return BrickHelper.get_brick_info_and_check(self.name)
 
+    def get_version(self) -> str:
+        return self.get_brick_info().version
+
     def to_dto(self) -> BrickDTO:
         brick_dto = BrickDTO(
             id=self.id,
@@ -66,11 +69,11 @@ class BrickModel(Model):
 
         try:
             brick_info = self.get_brick_info()
-            brick_dto.version = brick_info['version']
-            brick_dto.repo_type = brick_info['repo_type']
-            brick_dto.brick_path = brick_info['path']
-            brick_dto.repo_commit = brick_info['repo_commit']
-            brick_dto.parent_name = brick_info['parent_name']
+            brick_dto.version = brick_info.version
+            brick_dto.repo_type = brick_info.repo_type
+            brick_dto.brick_path = brick_info.path
+            brick_dto.repo_commit = brick_info.repo_commit
+            brick_dto.parent_name = brick_info.parent_name
 
         except Exception as err:
             brick_dto.messages.append(

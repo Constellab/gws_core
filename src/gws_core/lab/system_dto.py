@@ -37,12 +37,7 @@ class ModuleInfo(TypedDict):
     path: str
     name: str
     source: str
-    version: str
-    repo_type: Literal['app', 'git', 'pip']
-    repo_commit: Optional[str]
-    # name of the package that depend on this module
-    parent_name: Optional[str]
-    error: Optional[str]  # provided if the module could not be loaded
+    error: Optional[str]
 
 
 class BrickMigrationLogHistory(TypedDict):

@@ -105,19 +105,19 @@ class SettingsLoader:
         if brick_name in self.settings.get_bricks():
             return
 
-        brick_module: BrickInfo = {
-            "path": brick_path,
-            "name": brick_name,
-            "version": None,
-            "repo_type": None,
-            "repo_commit": None,
-            "parent_name": parent_name,
-            "error": None
-        }
+        brick_module = BrickInfo(
+            path=brick_path,
+            name=brick_name,
+            version=None,
+            repo_type=None,
+            repo_commit=None,
+            parent_name=parent_name,
+            error=None
+        )
 
         if not os.path.exists(brick_path):
-            brick_module["error"] = f"Folder '{brick_path}' for brick '{brick_name}' is not found. Skipping brick."
-            Logger.error(brick_module["error"])
+            brick_module.error = f"Folder '{brick_path}' for brick '{brick_name}' is not found. Skipping brick."
+            Logger.error(brick_module.error)
             self._save_brick(brick_module)
             return
 
@@ -130,27 +130,25 @@ class SettingsLoader:
                 Logger.error(
                     f"Error: cannot parse the the settings file of brick '{brick_name}'")
                 Logger.log_exception_stack_trace(err)
-                brick_module[
-                    "error"] = f"Error: cannot parse the the settings file of brick '{brick_name}'. Error {err}"
+                brick_module.error = f"Error: cannot parse the the settings file of brick '{brick_name}'. Error {err}"
                 self._save_brick(brick_module)
                 return
 
         # get brick version
         if not settings_data.get('version'):
-            brick_module[
-                "error"] = f"Missing version in settings.json for brick {brick_name}. Skipping brick."
+            brick_module.error = f"Missing version in settings.json for brick {brick_name}. Skipping brick."
             self._save_brick(brick_module)
             return
 
-        brick_module["version"] = settings_data.get('version')
+        brick_module.version = settings_data.get('version')
 
         # add src folder to python path
         sys.path.insert(0, os.path.join(brick_path, self.SOURCE_FOLDER_NAME))
 
         # get brick commit and version
         git_commit = self._get_git_commit(brick_path)
-        brick_module["repo_commit"] = git_commit
-        brick_module["repo_type"] = 'git' if git_commit else 'pip'
+        brick_module.repo_commit = git_commit
+        brick_module.repo_type = 'git' if git_commit else 'pip'
         self._save_brick(brick_module)
 
         # parse and save variables
@@ -233,10 +231,6 @@ class SettingsLoader:
             "path": package_path,
             "name": package_name,
             "source": channel_source,
-            "version": None,
-            "repo_type": "",
-            "repo_commit": None,
-            "parent_name": None,
             "error": None
         }
 
@@ -246,9 +240,6 @@ class SettingsLoader:
             brick_module["error"] = error
             self._save_module(brick_module)
             return
-
-        # get brick commit
-        brick_module["repo_commit"] = self._get_git_commit(package_path)
 
         # loading module
         # for git repo, if an src folder is present, add it to the path

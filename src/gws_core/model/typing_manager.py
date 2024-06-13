@@ -132,7 +132,7 @@ class TypingManager:
                 Logger.error(
                     f"Can't get the brick info for brick '{typing.brick}' of typing '{typing.typing_name}'. Is the file in the correct folder in your brick ? Skipping the typing")
             else:
-                typing.brick_version = brick_info["version"]
+                typing.brick_version = brick_info.version
 
         # refresh the ancestor list once all the type are loaded
         typing.refresh_ancestors()
