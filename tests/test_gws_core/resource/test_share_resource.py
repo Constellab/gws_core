@@ -12,6 +12,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, IExperiment,
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_service import ResourceService
+from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_service import ShareService
 from gws_core.share.shared_dto import (GenerateShareLinkDTO,
@@ -55,6 +56,27 @@ class GenerateResourceSet(Task):
         resource_set.add_resource(file, 'file')
 
         return {'resource_set': resource_set}
+
+
+@task_decorator(unique_name='GenerateResourceList')
+class GenerateResourceList(Task):
+
+    output_specs = OutputSpecs({
+        'resource_list': OutputSpec(ResourceList)
+    })
+
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        # create a simple resource
+        table = get_table()
+
+        # save the resource model
+        file = get_file()
+
+        resource_list: ResourceList = ResourceList()
+        resource_list.add_resource(table)
+        resource_list.add_resource(file)
+
+        return {'resource_list': resource_list}
 
 
 # test_share_resource
@@ -128,6 +150,7 @@ class TestShareResource(BaseTestCase):
         self.assertEqual('test', resource.read())
 
     def test_share_resource_set(self):
+        # Generate a resource set
         i_experiment: IExperiment = IExperiment()
         i_experiment.get_protocol().add_process(GenerateResourceSet, 'generate_resource_set')
         i_experiment.run()
@@ -160,5 +183,42 @@ class TestShareResource(BaseTestCase):
         self.assertIsNotNone(file)
         self.assertEqual('test', file.read())
         original_file = original_resource_set.get_resource('file')
+        # check that this is a new resource
+        self.assertNotEqual(original_file._model_id, file._model_id)
+
+    def test_share_resource_list(self):
+        # Generate a resource list
+        i_experiment: IExperiment = IExperiment()
+        i_experiment.get_protocol().add_process(GenerateResourceList, 'generate_resource_list')
+        i_experiment.run()
+        i_process = i_experiment.get_protocol().get_process('generate_resource_list')
+        resource_model_id = i_process.get_output_resource_model('resource_list').id
+
+        original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
+        original_resource_list: ResourceList = original_resource_model.get_resource()
+
+        zipped_resource = ShareService.zip_resource(
+            resource_model_id, CurrentUserService.get_and_check_current_user())
+        zip_path = zipped_resource.fs_node_model.path
+
+        resource_unzipper: ResourceLoader = ResourceLoader.from_compress_file(zip_path)
+        resource_list: ResourceList = resource_unzipper.load_resource()
+
+        self.assertEqual(3, len(resource_unzipper.get_all_generated_resources()))
+        self.assertIsInstance(resource_list, ResourceList)
+
+        # check the table
+        table: Table = resource_list[0]
+        self.assertIsNotNone(table)
+        original_table: Table = original_resource_list[0]
+        # check that this is a new resource
+        self.assertNotEqual(original_table._model_id, table._model_id)
+        self.assertTrue(original_table.equals(table))
+
+        # check the file
+        file: File = resource_list[1]
+        self.assertIsNotNone(file)
+        self.assertEqual('test', file.read())
+        original_file = original_resource_list[1]
         # check that this is a new resource
         self.assertNotEqual(original_file._model_id, file._model_id)

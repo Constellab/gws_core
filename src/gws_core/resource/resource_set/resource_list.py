@@ -1,6 +1,6 @@
 
 
-from typing import List, Set
+from typing import Dict, List, Set
 
 from gws_core.resource.r_field.list_r_field import ListRField
 
@@ -15,7 +15,6 @@ class ResourceList(ResourceListBase):
     """Resource to manage a list of resources. By default the sytem create a new
     resource for each resource in the set when saving the set
 
-    /!\ for now this resource is only used for DynamicIO. It is not really supposed to be saved in the DB
     """
 
     # list of resource ids stored
@@ -30,7 +29,11 @@ class ResourceList(ResourceListBase):
 
     def get_resources(self) -> List[Resource]:
         if not self._resources:
-            self._resources = list(self._load_resources())
+            # load the resource and keep the _resources order
+            resources = []
+            for resource_id in self._resource_ids:
+                resources.append(self._get_resource_by_model_id(resource_id))
+            self._resources = resources
 
         return self._resources
 
@@ -40,58 +43,65 @@ class ResourceList(ResourceListBase):
     def get_resources_as_set(self) -> Set[Resource]:
         return set(self.get_resources())
 
-    def _set_r_field(self) -> None:
+    def __set_r_field__(self) -> None:
         """ set _resource_ids with key = resource_name and value = resource_id"""
         self._resource_ids = [resource._model_id for resource in self._resources]
 
     # add methods to act like a list
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Resource:
         return self.get_resources()[key]
 
-    def __setitem__(self, key, val):
+    def __setitem__(self, key, val: Resource) -> None:
         self.get_resources()[key] = val
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.get_resources())
 
     def __iter__(self):
         return iter(self.get_resources())
 
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         return item in self.get_resources()
 
-    def append(self, item):
-        self.get_resources().append(item)
-
-    def extend(self, item):
-        self.get_resources().extend(item)
-
-    def insert(self, index, item):
-        self.get_resources().insert(index, item)
-
-    def remove(self, item):
-        self.get_resources().remove(item)
-
-    def pop(self, index=None):
-        return self.get_resources().pop(index)
-
-    def index(self, item):
+    def index(self, item) -> int:
         return self.get_resources().index(item)
 
-    def count(self, item):
+    def count(self, item) -> int:
         return self.get_resources().count(item)
 
-    def sort(self, key=None, reverse=False):
-        return self.get_resources().sort(key=key, reverse=reverse)
+    def sort(self, key=None, reverse=False) -> None:
+        self.get_resources().sort(key=key, reverse=reverse)
 
-    def reverse(self):
-        return self.get_resources().reverse()
+    def reverse(self) -> None:
+        self.get_resources().reverse()
 
-    def clear(self):
-        return self.get_resources().clear()
+    def clear(self) -> None:
+        self.get_resources().clear()
 
-    def copy(self):
-        return self.get_resources().copy()
+    def add_resource(self, resource: Resource,
+                     create_new_resource: bool = True) -> None:
+        """Add a resource to the list
+
+        :param resource: resource to add
+        :type resource: Resource
+        :param create_new_resource: If true, a new resource is created when saving the resource.
+                                    Otherwise it doesn't create a new resource but references it. In this case
+                                    the resource must be an input of the task that created the ResourceList and the resource
+                                    must have been saved before, defaults to True
+        :type create_new_resource: bool, optional
+        """
+        self.get_resources().append(resource)
+
+        # if the resource already exist, add it to the constant list so
+        # the system will not create a new resource on save
+        if not create_new_resource:
+            if self.__constant_resource_ids__ is None:
+                self.__constant_resource_ids__ = set()
+            self.__constant_resource_ids__.add(resource.uid)
+
+    def clear_resources(self) -> None:
+        self._resources = []
+        self._resource_ids = []
 
     # convert to list
     def to_list(self) -> List[Resource]:
@@ -99,3 +109,14 @@ class ResourceList(ResourceListBase):
 
     def is_empty(self) -> bool:
         return len(self.get_resources()) == 0
+
+    def replace_resources_by_model_id(self, resources: Dict[str, Resource]) -> None:
+        # get a copy of original order to replace resources in the same order
+        original_order = self._resource_ids
+
+        self.clear_resources()
+
+        for resource_model_id in original_order:
+            if resource_model_id not in resources:
+                raise Exception(f"Resource with id {resource_model_id} not found in the resources to replace")
+            self.add_resource(resources[resource_model_id])

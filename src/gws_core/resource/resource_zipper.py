@@ -15,7 +15,6 @@ from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
-from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_dto import TagDTO
 from gws_core.user.user import User
@@ -125,11 +124,7 @@ class ResourceZipper():
 
         # if the resource is a ResourceListBase, add all the children to the zip recursively
         resource: Resource = resource_model.get_resource()
-        if isinstance(resource, ResourceListBase) and not isinstance(resource, ResourceSet):
-            raise Exception(
-                'Only ResourceSet is supported other sub class of ResourceListBase are not supported yet.')
-
-        if isinstance(resource, ResourceSet):
+        if isinstance(resource, ResourceListBase):
             for child_id in resource.get_resource_ids():
                 self.add_resource_model(child_id, resource_id)
 

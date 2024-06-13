@@ -55,10 +55,10 @@ st.markdown("""
         .block-container {
             padding: 8px;
         }
-        #MainMenu {visibility: hidden;}
-        .stDeployButton {display:none;}
-        footer {visibility: hidden;}
-        #stDecoration {display:none;}
+        /* hide the streamlit header menu */
+        header {
+            display: none !important;
+        }
 
     </style>
 """, unsafe_allow_html=True)

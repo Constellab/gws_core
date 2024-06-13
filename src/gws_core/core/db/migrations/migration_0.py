@@ -247,7 +247,7 @@ class Migration0312(BrickMigration):
                 resource_set: ResourceSet = resource_model.get_resource()
 
                 # loop through children to set the parent resource
-                children_resources = resource_set._get_all_resource_models()
+                children_resources = resource_set.get_resource_models()
                 for child_resource_model in children_resources:
                     # update the parent only if the resource was created by the same task than parent (meaning it was created with the resource set)
                     if resource_model.task_model == child_resource_model.task_model:

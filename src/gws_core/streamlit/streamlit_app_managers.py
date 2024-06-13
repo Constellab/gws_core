@@ -9,11 +9,13 @@ import psutil
 
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.service.external_api_service import ExternalApiService
+from gws_core.core.service.front_service import FrontService, FrontTheme
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.streamlit.streamlit_app import StreamlitApp
 from gws_core.streamlit.streamlit_dto import StreamlitStatusDTO
+from gws_core.user.current_user_service import CurrentUserService
 
 
 class StreamlitAppManager():
@@ -83,14 +85,20 @@ class StreamlitAppManager():
         cls.main_app_token = StringHelper.generate_random_chars(50)
         Logger.debug("Starting streamlit app")
 
+        theme = cls.get_current_user_theme()
+
         cmd = ['streamlit', 'run', cls.MAIN_APP_FILE_PATH,
-               '--theme.backgroundColor', '#222222',
-               '--theme.secondaryBackgroundColor', '#2B2D2E',
-               '--theme.textColor', '#ffffff',
-               '--theme.primaryColor', '#49A8A9',
+               '--theme.backgroundColor', theme.background_color,
+               '--theme.secondaryBackgroundColor', theme.secondary_background_color,
+               '--theme.textColor', theme.text_color,
+               '--theme.primaryColor', theme.primary_color,
                '--server.port', str(cls.get_main_app_port()),
+               # prevent streamlit to open the browser
+               '--server.headless', "true",
                #    '--theme.font', 'Roboto Serif',
+               # custom options
                '--',
+               # configure a token to secure the app
                '--gws_token', cls.main_app_token]
 
         cls.main_app_process = SysProc.popen(cmd)
@@ -232,3 +240,12 @@ class StreamlitAppManager():
     @classmethod
     def get_main_app_port(cls) -> int:
         return Settings.get_streamlit_main_app_port()
+
+    @classmethod
+    def get_current_user_theme(cls) -> FrontTheme:
+        user = CurrentUserService.get_current_user()
+
+        if user and user.has_dark_theme():
+            return FrontService.get_dark_theme()
+
+        return FrontService.get_light_theme()

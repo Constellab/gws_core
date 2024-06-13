@@ -154,9 +154,9 @@ class EnvLiveTask(Task):
                 raise Exception(f"The path {path} in target_path variable does not exist. It will be ignored.")
 
             if os.path.isdir(path):
-                resource_list.append(Folder(path))
+                resource_list.add_resource(Folder(path))
             else:
-                resource_list.append(File(path))
+                resource_list.add_resource(File(path))
 
         return resource_list
 

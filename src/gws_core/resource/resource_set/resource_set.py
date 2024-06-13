@@ -1,10 +1,8 @@
 
 
-from typing import Dict, List, Set
+from typing import Dict, Set
 
-from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.dict_r_field import DictRField
-from gws_core.resource.resource_model import ResourceModel
 
 from ..resource import Resource
 from ..resource_decorator import resource_decorator
@@ -40,13 +38,10 @@ class ResourceSet(ResourceListBase):
     def get_resource_ids(self) -> Set[str]:
         return set(self._resource_ids.values())
 
-    def get_resource_models(self) -> List[ResourceModel]:
-        return [ResourceModel.get_by_id_and_check(resource_id) for resource_id in self.get_resource_ids()]
-
     def get_resources_as_set(self) -> Set[Resource]:
         return set(self.get_resources().values())
 
-    def _set_r_field(self) -> None:
+    def __set_r_field__(self) -> None:
         """ set _resource_ids with key = resource_name and value = resource_id"""
         self._resource_ids = {
             name: resource._model_id for name, resource in self._resources.items()}
@@ -56,7 +51,7 @@ class ResourceSet(ResourceListBase):
                      create_new_resource: bool = True) -> None:
         """Add a resource to the set
 
-        :param resource: resource to Add
+        :param resource: resource to add
         :type resource: Resource
         :param unique_name: name used to store the resource in the dict. It must be unique. The resource
         can be retrieve by calling the get_resource method with the name. If not provided, the resource name is used
@@ -120,3 +115,15 @@ class ResourceSet(ResourceListBase):
     def clear_resources(self) -> None:
         self._resources = {}
         self._resource_ids = {}
+
+    def replace_resources_by_model_id(self, resources: Dict[str, Resource]) -> None:
+        # get a copy of the original dict to iterate over it
+        resource_ids = self._resource_ids
+
+        self.clear_resources()
+
+        for name, resource_model_id in resource_ids.items():
+            if resource_model_id not in resources:
+                raise Exception(
+                    f"Resource with id {resource_model_id} not found in the resources to replace")
+            self.add_resource(resources[resource_model_id], unique_name=name)

@@ -142,7 +142,7 @@ class ResourceService():
         resource: Resource = resource_model.get_resource()
 
         if isinstance(resource, ResourceListBase):
-            return resource._get_all_resource_models()
+            return resource.get_resource_models()
 
         return []
 

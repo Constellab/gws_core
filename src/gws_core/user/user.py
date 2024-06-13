@@ -92,6 +92,9 @@ class User(Model):
         """
         return self.group <= group
 
+    def has_dark_theme(self) -> bool:
+        return self.theme == UserTheme.DARK_THEME
+
     def save(self, *arg, **kwargs) -> 'User':
         if not UserGroup.has_value(self.group):
             raise BadRequestException("Invalid user group")

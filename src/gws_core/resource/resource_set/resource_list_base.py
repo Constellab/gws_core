@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, List, Set
+from typing import TYPE_CHECKING, Dict, List, Set
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.view.resources_list_view import ResourcesListView
@@ -37,7 +37,15 @@ class ResourceListBase(Resource):
     def get_resources_as_set(self) -> Set[Resource]:
         pass
 
-    def __resource_is_constant__(self, resource_uid: str) -> Set[Resource]:
+    @abstractmethod
+    def replace_resources_by_model_id(self, resources: Dict[str, Resource]) -> None:
+        """Replace current resources by the resources in the dict
+
+        :param resources: dict where key is the resource model id and value is the resource
+        :type resources: Dict[str, Resource]
+        """
+
+    def __resource_is_constant__(self, resource_uid: str) -> bool:
         """return true if the resource is constant and was create before
         a task that generated this resource set
         """
@@ -51,7 +59,7 @@ class ResourceListBase(Resource):
         return ResourceModel.get_by_id_and_check(resource_model_id).get_resource()
 
     @abstractmethod
-    def _set_r_field(self) -> None:
+    def __set_r_field__(self) -> None:
         """This method is called before the save of this resource but after the save of the
         child resources. Set the r_field of this resource with the ids of the child
 
@@ -60,14 +68,14 @@ class ResourceListBase(Resource):
         raise NotImplementedError()
 
     def _load_resources(self) -> Set[Resource]:
-        resource_models: List[ResourceModel] = self._get_all_resource_models()
+        resource_models: List[ResourceModel] = self.get_resource_models()
 
         resources: Set[Resource] = set()
         for resource_model in resource_models:
             resources.add(resource_model.get_resource())
         return resources
 
-    def _get_all_resource_models(self) -> List[ResourceModel]:
+    def get_resource_models(self) -> List[ResourceModel]:
         from ..resource_model import ResourceModel
         resource_ids = list(self.get_resource_ids())
 
@@ -81,7 +89,7 @@ class ResourceListBase(Resource):
           short_description='List the resources', default_view=True)
     def view_resources_list(self, params: ConfigParams) -> ResourcesListView:
         view = ResourcesListView()
-        view.add_resources(self._get_all_resource_models())
+        view.add_resources(self.get_resource_models())
         view.add_technical_info(TechnicalInfo('Number of resources',
                                               len(self.get_resources_as_set())))
         return view

@@ -361,7 +361,7 @@ class TaskModel(ProcessModel):
                                               unique_code=GWSException.INVALID_LINKED_RESOURCE.name,
                                               detail_args={'port_name': port_name})
 
-        resource_list._set_r_field()
+        resource_list.__set_r_field__()
         return new_children_resources
 
     def _check_resource_r_fields(self, resource: Resource, port_name: str):

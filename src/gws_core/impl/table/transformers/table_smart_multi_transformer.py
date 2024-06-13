@@ -108,6 +108,6 @@ targets = [Table(t) for t in target]
         resource_list = ResourceList()
 
         for dataframe in output:
-            resource_list.append(Table(dataframe))
+            resource_list.add_resource(Table(dataframe))
 
         return {'target': resource_list}

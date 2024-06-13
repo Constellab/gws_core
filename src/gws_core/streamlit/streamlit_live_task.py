@@ -47,14 +47,12 @@ class StreamlitLiveTask(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
 
+        # build the streamlit resource with the code and the resources
         streamlit_resource = StreamlitResource(code)
-
         resource_list: ResourceList = inputs.get('source')
-        i = 0
-        for resource in resource_list.get_resources_as_set():
-            streamlit_resource.add_resource(resource, unique_name=f"resource_{i}",
-                                            create_new_resource=False)
-            i += 1
+        for resource in resource_list.get_resources():
+            if resource:
+                streamlit_resource.add_resource(resource, create_new_resource=False)
 
         return {'streamlit_app': streamlit_resource}
 

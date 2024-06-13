@@ -87,6 +87,8 @@ from .core.model.sys_proc import SysProc as SysProc
 # Core > Service
 from .core.service.external_api_service import \
     ExternalApiService as ExternalApiService
+from .core.service.front_service import FrontService as FrontService
+from .core.service.front_service import FrontTheme as FrontTheme
 # Core > Utils
 from .core.utils.compress.compress import Compress as Compress
 from .core.utils.compress.gzip_compress import GzipCompress as GzipCompress

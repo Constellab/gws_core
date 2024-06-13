@@ -15,7 +15,7 @@ from gws_core.model.typing_manager import TypingManager
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_factory import ResourceFactory
-from gws_core.resource.resource_set.resource_set import ResourceSet
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.tag.tag_helper import TagHelper
 
 from .resource_zipper import ResourceZipper, ZipResource, ZipResourceInfo
@@ -55,26 +55,19 @@ class ResourceLoader():
         main_resource = self.get_main_resource()
         self.resource = self._load_resource(main_resource)
 
-        if isinstance(self.resource, ResourceSet):
+        if isinstance(self.resource, ResourceListBase):
 
-            # Get the resource ids from the ResourceSet
-            resource_ids: Dict[str, str] = self.resource._resource_ids
-            # invserse the dict to be able to retrieve resource name from id
-            resource_names: Dict[str, str] = {}
-            for key, value in resource_ids.items():
-                resource_names[value] = key
-
-            # remove all the resources from the ResourceSet to add the new ones
-            self.resource.clear_resources()
-
+            # dict where key is resource model id and value is the resource
+            resources: Dict[str, Resource] = {}
+            # load all the children resources
             for zip_resource in self.get_children_resources():
                 resource: Resource = self._load_resource(zip_resource)
-
-                # retrieve the name of the resource from the id in the resource set
-                resource_name = resource_names[zip_resource.id]
-                self.resource.add_resource(resource, unique_name=resource_name)
-
                 self.children_resources.append(resource)
+
+                resources[zip_resource.id] = resource
+
+            # replace the resources in the ResourceListBase by the new ones
+            self.resource.replace_resources_by_model_id(resources)
 
         return self.resource
 

@@ -12,7 +12,7 @@ from gws_core.process.process_interface import IProcess
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.resource_set.resource_set import ResourceSet
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_zipper_task import ResourceZipperTask
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import (SharedEntityMode,
@@ -91,7 +91,7 @@ class ShareService():
             # specific case for resource set that contains multiple resource
             # we need to add all the resource to the zip
             resource = model.get_resource()
-            if isinstance(resource, ResourceSet):
+            if isinstance(resource, ResourceListBase):
                 resource_models = resource.get_resource_models()
                 entity_object.extend([resource_model.to_dto() for resource_model in resource_models])
         else:
