@@ -36,8 +36,8 @@ class EntityTagValueFormat(Enum):
 class TagDTO(BaseModelDTO):
     key: str
     value: Any
-    is_user_origin: Optional[bool]
-    is_propagable: Optional[bool]
+    is_user_origin: Optional[bool] = None
+    is_propagable: Optional[bool] = None
 
 
 class TagOriginDTO(BaseModelDTO):

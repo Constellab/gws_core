@@ -3,7 +3,7 @@
 import inspect
 from typing import Any, Dict, List, Literal, Type
 
-from gws_core.core.utils.refloctor_types import MethodDoc, MethodDocFunction
+from gws_core.core.utils.reflector_types import MethodDoc, MethodDocFunction
 from gws_core.core.utils.utils import Utils
 from gws_core.model.typing_dto import TypingDTO
 from gws_core.resource.resource_typing_dto import (ResourceTypingDTO,

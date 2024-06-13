@@ -1,14 +1,19 @@
 
 
-from typing import Any, Type
+from typing import Type
+
+from peewee import JOIN
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.model.model import Model
 from gws_core.core.service.external_lab_service import (
     ExternalLabService, ExternalLabWithUserInfo)
+from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.file.file import File
+from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process_interface import IProcess
+from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
@@ -22,6 +27,8 @@ from gws_core.share.shared_dto import (SharedEntityMode,
 from gws_core.share.shared_entity_info import SharedEntityInfo
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Sink
+from gws_core.task.task_input_model import TaskInputModel
+from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import AuthenticateUser
 from gws_core.user.user import User
 
@@ -108,8 +115,7 @@ class ShareService():
 
         zipped_resource: ResourceModel
         if shared_entity_link.entity_type == ShareLinkType.RESOURCE:
-            with AuthenticateUser(shared_entity_link.created_by):
-                zipped_resource = cls.zip_resource(shared_entity_link.entity_id, shared_entity_link.created_by)
+            zipped_resource = cls.zip_shared_resource(shared_entity_link)
         else:
             raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
 
@@ -145,7 +151,28 @@ class ShareService():
     #################################### RESOURCE ####################################
 
     @classmethod
-    def zip_resource(cls, id_: str, shared_by: User) -> ResourceModel:
+    def zip_shared_resource(cls, shared_entity_link: ShareLink) -> ResourceModel:
+        # check if the resource was already zipped in this lab for the current version of ResourceZipperTask
+        typing = TypingManager.get_typing_from_name_and_check(ResourceZipperTask._typing_name)
+        task_model: TaskModel = TaskModel.select().where(
+            (TaskModel.process_typing_name == typing.typing_name) &
+            (TaskModel.status == ProcessStatus.SUCCESS) &
+            (TaskModel.brick_version_on_run == typing.brick_version) &
+            (TaskInputModel.resource_model == shared_entity_link.entity_id)) \
+            .join(TaskInputModel, JOIN.LEFT_OUTER) \
+            .first()
+
+        # if the resource was already zipped
+        if task_model:
+            Logger.info(
+                f"Resource {shared_entity_link.entity_id} was already zipped by task {task_model.id}, using the same zip file.")
+            return task_model.outputs.get_resource_model(ResourceZipperTask.output_name)
+
+        with AuthenticateUser(shared_entity_link.created_by):
+            return cls.run_zip_resource_exp(shared_entity_link.entity_id, shared_entity_link.created_by)
+
+    @classmethod
+    def run_zip_resource_exp(cls, id_: str, shared_by: User) -> ResourceModel:
         """Method that zip a resource ands return the new resource
         """
 

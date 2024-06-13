@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Type
 
 from gws_core.brick.technical_doc_dto import TechnicalDocDTO
 from gws_core.core.utils.reflector_helper import ReflectorHelper
-from gws_core.core.utils.refloctor_types import (ClassicClassDocDTO,
+from gws_core.core.utils.reflector_types import (ClassicClassDocDTO,
                                                  MethodDocFunction)
 from gws_core.model.typing_dto import TypingFullDTO
 from gws_core.protocol.protocol_typing import ProtocolTyping

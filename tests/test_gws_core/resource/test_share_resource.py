@@ -137,7 +137,7 @@ class TestShareResource(BaseTestCase):
 
         original_resource_model = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
 
-        zipped_resource = ShareService.zip_resource(
+        zipped_resource = ShareService.run_zip_resource_exp(
             original_resource_model.id, CurrentUserService.get_and_check_current_user())
         zip_path = zipped_resource.fs_node_model.path
 
@@ -160,7 +160,7 @@ class TestShareResource(BaseTestCase):
         original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
         original_resource_set: ResourceSet = original_resource_model.get_resource()
 
-        zipped_resource = ShareService.zip_resource(
+        zipped_resource = ShareService.run_zip_resource_exp(
             resource_model_id, CurrentUserService.get_and_check_current_user())
         zip_path = zipped_resource.fs_node_model.path
 
@@ -197,7 +197,7 @@ class TestShareResource(BaseTestCase):
         original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
         original_resource_list: ResourceList = original_resource_model.get_resource()
 
-        zipped_resource = ShareService.zip_resource(
+        zipped_resource = ShareService.run_zip_resource_exp(
             resource_model_id, CurrentUserService.get_and_check_current_user())
         zip_path = zipped_resource.fs_node_model.path
 

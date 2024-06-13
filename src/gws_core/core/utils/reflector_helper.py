@@ -3,7 +3,7 @@ import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.refloctor_types import (MethodArgDoc, MethodDoc,
+from gws_core.core.utils.reflector_types import (MethodArgDoc, MethodDoc,
                                                  MethodDocFunction,
                                                  MethodDocType)
 

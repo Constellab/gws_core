@@ -80,7 +80,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
 
         if response.status_code != 200:
             raise Exception("Error while getting information of the resource: " + response.text)
-        shared_entity_info = ShareEntityInfoReponseDTO.parse_obj(response.json())
+        shared_entity_info = ShareEntityInfoReponseDTO.from_json(response.json())
 
         # check if the resource is compatible with the current lab
         if not isinstance(shared_entity_info.entity_object, list):
@@ -100,7 +100,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         if response.status_code != 200:
             raise Exception("Error while zipping the resource: " + response.text)
 
-        zip_response = ShareEntityZippedResponseDTO.parse_obj(response.json())
+        zip_response = ShareEntityZippedResponseDTO.from_json(response.json())
 
         self.log_info_message("Resource zipped, downloading the resource")
         return zip_response.download_entity_route
@@ -143,4 +143,9 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         """Check if the link is a share resource link, it must start with https://glab,
         contains share/resource/download and end with a token
         """
+        settings = Settings.get_instance()
+        # specific case for dev env, accept if the link is from this lab
+        if settings.is_local_dev_env():
+            return (link.startswith('https://glab') or link.startswith(settings.get_lab_api_url())) and link.find('share/info/') != -1
+
         return link.startswith('https://glab') and link.find('share/info/') != -1

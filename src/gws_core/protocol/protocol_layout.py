@@ -80,4 +80,4 @@ class ProtocolLayout(SerializableObject):
         if not value:
             return ProtocolLayout()
         else:
-            return ProtocolLayout(ProtocolLayoutDTO.parse_obj(loads(value)))
+            return ProtocolLayout(ProtocolLayoutDTO.from_json(loads(value)))

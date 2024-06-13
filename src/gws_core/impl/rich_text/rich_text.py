@@ -281,7 +281,7 @@ class RichText(SerializableObjectJson):
         """
         if data is None:
             return RichText()
-        return RichText(RichTextDTO.parse_obj(data))
+        return RichText(RichTextDTO.from_json(data))
     ##################################### CLASS METHODS #########################################
 
     @classmethod

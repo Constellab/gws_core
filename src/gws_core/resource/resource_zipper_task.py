@@ -9,6 +9,7 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingIconType
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_zipper import ResourceZipper
 from gws_core.resource.technical_info import TechnicalInfo
 from gws_core.task.task import Task
@@ -66,3 +67,40 @@ class ResourceZipperTask(Task):
         file.add_technical_info(TechnicalInfo("origin_entity_id", origin_entity_id))
 
         return {"target": file}
+
+
+@task_decorator("ResourceUnzipper", human_name="Unzip and load resource",
+                short_description="Unzip a resource zip and load it as a new resource.",
+                style=File.copy_style(icon_technical_name='folder_zip', icon_type=TypingIconType.MATERIAL_ICON))
+class ResourceUnZipper(Task):
+
+    input_name = 'source'
+    output_name = 'target'
+
+    input_specs: InputSpecs = InputSpecs({
+        "source": InputSpec(File, human_name="Resource to unzip")
+    })
+
+    output_specs: OutputSpecs = OutputSpecs({
+        "target": OutputSpec(Resource, human_name="Resource")
+    })
+
+    config_specs: ConfigSpecs = {
+    }
+
+    resource_loader: ResourceLoader = None
+
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+
+        source: File = inputs['source']
+
+        self.log_info_message("Uncompressing the file")
+        self.resource_loader = ResourceLoader.from_compress_file(source.path)
+
+        self.log_info_message("Loading the resource")
+        resource = self.resource_loader.load_resource()
+
+        return {"target": resource}
+
+    def run_after_task(self) -> None:
+        self.resource_loader.delete_resource_folder()
