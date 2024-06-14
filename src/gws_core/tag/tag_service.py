@@ -7,17 +7,22 @@ from peewee import ModelSelect
 from gws_core.core.classes.paginator import Paginator
 from gws_core.entity_navigator.entity_navigator import EntityNavigator
 from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.experiment.experiment import Experiment
+from gws_core.resource.resource_model import ResourceModel
+from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag_dto import (NewTagDTO, TagOriginType,
+from gws_core.tag.tag_dto import (NewTagDTO, TagOriginDetailDTO, TagOriginType,
                                   TagPropagationImpactDTO)
 from gws_core.tag.tag_value_model import TagValueModel
+from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.user import User
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from .tag import Tag, TagValueType
+from .tag import Tag, TagOrigin, TagValueType
 from .tag_key_model import TagKeyModel
 
 
@@ -244,3 +249,47 @@ class TagService():
     @classmethod
     def get_and_check_entity_tag(cls, entity_tag_id: str) -> EntityTag:
         return EntityTag.get_by_id_and_check(entity_tag_id)
+
+    @classmethod
+    def get_tag_origins(cls, entity_tag_id: str) -> List[TagOriginDetailDTO]:
+        entity_tag = cls.get_and_check_entity_tag(entity_tag_id)
+
+        origins: List[TagOriginDetailDTO] = []
+
+        for origin in entity_tag.get_origins().get_origins():
+            origins.append(cls._get_tag_origin_detail(origin))
+
+        return origins
+
+    @classmethod
+    def _get_tag_origin_detail(cls, tag_origin: TagOrigin) -> TagOriginDetailDTO:
+        origin_detail = TagOriginDetailDTO(
+            origin_type=tag_origin.origin_type,
+            origin_id=tag_origin.origin_id,
+            origin_object=None
+        )
+
+        if tag_origin.origin_type == TagOriginType.USER:
+            user = User.get_by_id(tag_origin.origin_id)
+            if user:
+                origin_detail.origin_object = user.to_dto()
+        elif tag_origin.origin_type == TagOriginType.S3:
+            origin_detail.origin_object = None
+        elif tag_origin.origin_type == TagOriginType.TASK or tag_origin.origin_type == TagOriginType.TASK_PROPAGATED:
+            task_model = TaskModel.get_by_id_and_check(tag_origin.origin_id)
+            if task_model:
+                origin_detail.origin_object = task_model.name
+        elif tag_origin.origin_type == TagOriginType.EXPERIMENT_PROPAGATED:
+            experiment = Experiment.get_by_id(tag_origin.origin_id)
+            if experiment:
+                origin_detail.origin_object = experiment.title
+        elif tag_origin.origin_type == TagOriginType.RESOURCE_PROPAGATED:
+            resource = ResourceModel.get_by_id(tag_origin.origin_id)
+            if resource:
+                origin_detail.origin_object = resource.name
+        elif tag_origin.origin_type == TagOriginType.VIEW_PROPAGATED:
+            view = ViewConfig.get_by_id(tag_origin.origin_id)
+            if view:
+                origin_detail.origin_object = view.title
+
+        return origin_detail

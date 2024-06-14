@@ -69,7 +69,6 @@ class EntityTag(Model):
             value=self.get_tag_value(),
             is_user_origin=self.origin_is_user(),
             is_propagable=self.is_propagable,
-            origins=self.get_origins().to_dto(),
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
         )

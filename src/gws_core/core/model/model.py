@@ -1,7 +1,7 @@
 
 
 import uuid
-from typing import List
+from typing import List, Type, TypeVar
 
 from peewee import CharField, DoesNotExist
 from peewee import Model as PeeweeModel
@@ -14,6 +14,8 @@ from ..decorator.transaction import transaction
 from ..exception.exceptions import NotFoundException
 from ..exception.gws_exceptions import GWSException
 from .db_field import DateTimeUTC
+
+ModelType = TypeVar('ModelType', bound='BaseModel')
 
 
 class Model(BaseModel, PeeweeModel):
@@ -80,15 +82,15 @@ class Model(BaseModel, PeeweeModel):
         return hash(type(self).__name__ + self.id)
 
     @classmethod
-    def get_by_id(cls, id: str) -> 'Model':
+    def get_by_id(cls: Type[ModelType], id: str) -> ModelType:
         return cls.get_or_none(cls.id == id)
 
     @classmethod
-    def get_by_ids(cls, ids: List[str]) -> List['Model']:
+    def get_by_ids(cls: Type[ModelType], ids: List[str]) -> List[ModelType]:
         return list(cls.select().where(cls.id.in_(ids)))
 
     @classmethod
-    def get_by_id_and_check(cls, id: str) -> 'Model':
+    def get_by_id_and_check(cls: Type[ModelType], id: str) -> ModelType:
         """Get by ID and throw 404 error if object not found
 
         :param id: [description]
@@ -103,7 +105,7 @@ class Model(BaseModel, PeeweeModel):
                                     unique_code=GWSException.OBJECT_ID_NOT_FOUND.name,
                                     detail_args={"objectName": cls.classname(), "id": id})
 
-    def is_saved(self):
+    def is_saved(self) -> bool:
         """
         Returns True if the model is saved in db, False otherwise
 
@@ -113,18 +115,10 @@ class Model(BaseModel, PeeweeModel):
 
         return self._is_saved
 
-    def refresh(self) -> 'Model':
+    def refresh(self: ModelType) -> ModelType:
         return self.get_by_id_and_check(self.id)
 
-    @classmethod
-    def select_me(cls, *args, **kwargs):
-        """
-        Select objects by ensuring that the object-type is the same as the current model.
-        """
-
-        return cls.select(*args, **kwargs)
-
-    def save(self, *args, **kwargs) -> 'Model':
+    def save(self: ModelType, *args, **kwargs) -> ModelType:
         """
         Sets the `data`
         set force_insert to True to force creation of the object
@@ -164,7 +158,7 @@ class Model(BaseModel, PeeweeModel):
 
     @classmethod
     @transaction()
-    def save_all(cls, model_list: List['Model'] = None) -> List['Model']:
+    def save_all(cls: Type[ModelType], model_list: List[ModelType] = None) -> List[ModelType]:
         """
         Automically and safely save a list of models in the database. If an error occurs
         during the operation, the whole transactions is rolled back.

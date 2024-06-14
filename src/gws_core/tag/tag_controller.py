@@ -8,7 +8,8 @@ from gws_core.core.model.model_dto import PageDTO
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, NewTagDTO,
                                   SaveTagModelResonseDTO, TagKeyModelDTO,
-                                  TagPropagationImpactDTO, TagValueModelDTO)
+                                  TagOriginDetailDTO, TagPropagationImpactDTO,
+                                  TagValueModelDTO)
 
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
@@ -102,10 +103,16 @@ def delete_registered_tag(key: str,
 ################################# ENTITY TAG #################################
 
 
-@core_app.get("/tag/entity/{entity_tag_id}", tags=["Tag"], summary='Get 1 tag detail')
+@core_app.get("/tag/entity/{entity_tag_id}", tags=["Tag"], summary='Get detail info of an entity tag')
 def get_tag_detail(entity_tag_id: str,
                    _=Depends(AuthService.check_user_access_token)) -> EntityTagFullDTO:
     return TagService.get_and_check_entity_tag(entity_tag_id).to_full_dto()
+
+
+@core_app.get("/tag/entity/{entity_tag_id}/origins", tags=["Tag"], summary='Get origins of a tag')
+def get_tag_origins(entity_tag_id: str,
+                    _=Depends(AuthService.check_user_access_token)) -> List[TagOriginDetailDTO]:
+    return TagService.get_tag_origins(entity_tag_id)
 
 
 @core_app.get("/tag/entity/{entity_type}/{entity_id}", tags=["Tag"], summary='Get tags of an entity')

@@ -6,6 +6,7 @@ from typing import Any, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.entity_navigator.entity_navigator_type import EntityNavGroupDTO
+from gws_core.user.user_dto import UserDTO
 
 
 # Origin of the tag (who created the tag)
@@ -45,6 +46,10 @@ class TagOriginDTO(BaseModelDTO):
     origin_id: str
 
 
+class TagOriginDetailDTO(TagOriginDTO):
+    origin_object: Optional[str | UserDTO]
+
+
 class EntityTagDTO(BaseModelDTO):
     id: str
     key: str
@@ -54,7 +59,6 @@ class EntityTagDTO(BaseModelDTO):
 
 class EntityTagFullDTO(EntityTagDTO):
     is_propagable: bool
-    origins: List[TagOriginDTO]
     created_at: datetime
     last_modified_at: datetime
 

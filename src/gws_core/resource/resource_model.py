@@ -175,7 +175,7 @@ class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEnt
 
     @classmethod
     def select_by_resource_typing_name(cls, resource_typing_name: str) -> ModelSelect:
-        return cls.select_me().where(cls.resource_typing_name == resource_typing_name)
+        return cls.select().where(cls.resource_typing_name == resource_typing_name)
 
     @classmethod
     def select_by_type_and_sub_types(cls, type_: Type[Resource]) -> ModelSelect:
