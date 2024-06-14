@@ -11,7 +11,9 @@
 ## What is Constellab?
 // Add definition of Constellab (and gencovery ?). Add info about the open access offer. Info about Codelab ?
 
-Constellab offers a platform where users can access and manage data labs. With our Open Access offer, you can use Constellab for free. [Sign up here](https://constellab.space/). Find more information about the Open Access offer here (link to be defined).
+Constellab offers a platform where users can access and manage data labs. 
+
+🌍 With our Open Access offer, you can use Constellab for free. [Sign up here](https://constellab.space/). Find more information about the Open Access offer here (link to be defined).
 
 ## Documentation
 

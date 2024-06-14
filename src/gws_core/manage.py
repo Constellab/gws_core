@@ -7,7 +7,6 @@ from typing import List
 from unittest.suite import TestSuite
 
 import click
-
 from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.model.typing_manager import TypingManager
@@ -93,7 +92,7 @@ class AppManager:
                 if brick_name not in bricks:
                     raise BadRequestException(
                         f"The brick '{brick_name}' is not found. It is maybe not loaded on this lab.")
-                brick_dir = bricks[brick_name]["path"]
+                brick_dir = bricks[brick_name].path
             else:
                 test_file = tab[0]
                 brick_dir = settings.get_cwd()
