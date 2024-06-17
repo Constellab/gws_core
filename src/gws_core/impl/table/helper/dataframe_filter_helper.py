@@ -2,7 +2,7 @@
 
 from typing import List, Literal, Union
 
-from pandas import DataFrame, Index
+from pandas import DataFrame, Index, api
 from typing_extensions import NotRequired, TypedDict
 
 from gws_core.config.param.param_set import ParamSet
@@ -80,7 +80,7 @@ class DataframeFilterHelper:
             ax_index: Index = data.index if axis == "row" else data.columns
 
             # if the index is only numeric value (default) we must convert values to int to compare
-            if ax_index.is_numeric():
+            if api.types.is_numeric_dtype(ax_index):
                 value = [int(i) for i in value]
 
             return data.filter(items=value, axis=ax)

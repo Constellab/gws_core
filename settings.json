@@ -34,7 +34,7 @@
                   {"name": "charset-normalizer", "version": "2.1.1"},
                   {"name": "dill", "version": "0.3.8"},
                   {"name": "numpy", "version": "1.26.4"},
-                  {"name": "pandas", "version": "1.5.2"},
+                  {"name": "pandas", "version": "2.2.2"},
                   {"name": "matplotlib", "version": "3.8.4"},
                   {"name": "scipy", "version": "1.13.0"},
                   {"name": "scikit-learn", "version": "1.4.2"},

@@ -85,7 +85,7 @@ class TestTable(TestCase):
         ])
 
         sub_table = table.select_by_row_indexes([1, 2, 1])
-        self.assertEqual(sub_table.row_names, ["Tokyo", "Paris", "Tokyo_1"])
+        self.assertEqual(sub_table.row_names, ["Tokyo", "Paris"])
 
         # ------------------------------------------------------------
         # Select by column positions
@@ -106,7 +106,7 @@ class TestTable(TestCase):
 
         # check that is we are selecting a column twice, it return the column twice
         sub_table = table.select_by_column_indexes([0, 2, 0])
-        self.assertEqual(sub_table.column_names, ["London", "Beijin", "London_1"])
+        self.assertEqual(sub_table.column_names, ["London", "Beijin"])
 
         # ------------------------------------------------------------
         # Select by row names
