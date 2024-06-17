@@ -67,15 +67,15 @@ class TestEnvShellProxy(TestCase):
             # Test venv service
             status: VEnsStatusDTO = VEnvService.get_vens_status()
 
-            self.assertTrue(len([x for x in status.envs if x.name == env_name]) == 1)
-            basic_info: VEnvBasicInfoDTO = [x for x in status.envs if x.name == env_name][0]
+            self.assertTrue(len([x for x in status.envs if x.creation_info.name == env_name]) == 1)
+            basic_info: VEnvBasicInfoDTO = [x for x in status.envs if x.creation_info.name == env_name][0]
 
-            self.assertEqual(basic_info.name, env_name)
+            self.assertEqual(basic_info.creation_info.name, env_name)
             self.assertEqual(basic_info.folder, shell_proxy.get_env_dir_path())
             self.assertIsNotNone(basic_info.creation_info)
             self.assertEqual(basic_info.creation_info.env_type, shell_proxy.get_env_type())
 
-            venv_info = VEnvService.get_venv_complete_info(env_name)
+            venv_info = VEnvService.get_venv_complete_info(basic_info.name)
 
             self.assertIsNotNone(venv_info.basic_info)
             self.assertTrue(venv_info.env_size > 0)
@@ -94,7 +94,7 @@ class TestEnvShellProxy(TestCase):
             self.assertEqual(result, 0)
             self.assertTrue(basic_observer.has_message_containing('eyJhb'))
 
-            VEnvService.delete_venv(env_name)
+            VEnvService.delete_venv(basic_info.name)
             self.assertFalse(shell_proxy.env_is_installed())
 
         finally:

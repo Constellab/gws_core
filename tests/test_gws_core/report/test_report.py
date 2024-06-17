@@ -1,11 +1,11 @@
 
 
-from gws_core import Robot
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import (RichTextBlockType,
                                                      RichTextDTO)
+from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.project.project import Project
 from gws_core.project.project_dto import ProjectLevelStatus

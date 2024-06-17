@@ -9,9 +9,9 @@
 ℹ️ ```gws_core``` is a [Constellab](https://constellab.io) library (called bricks) developped by [Gencovery](https://gencovery.com/). GWS stands for Gencovery Web Services.
 
 ## What is Constellab?
-// Add definition of Constellab (and gencovery ?). Add info about the open access offer. Info about Codelab ?
 
-Constellab offers a platform where users can access and manage data labs. 
+// Add definition of Constellab (and gencovery ?). Add info about the open access offer. Info about Codelab ?
+Gencovery is a software company that offers Constellab, the leading open and secure digital infrastructure designed to consolidate data and unlock its full potential in the life sciences industry. Gencovery's mission is to provide universal access to data to enhance people's health and well-being.
 
 🌍 With our Open Access offer, you can use Constellab for free. [Sign up here](https://constellab.space/). Find more information about the Open Access offer here (link to be defined).
 

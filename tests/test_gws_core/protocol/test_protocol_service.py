@@ -17,6 +17,7 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 from gws_core.test.base_test_case import BaseTestCase
+from gws_core.user.current_user_service import CurrentUserService
 
 from ..protocol_examples import TestNestedProtocol
 
@@ -25,6 +26,7 @@ from ..protocol_examples import TestNestedProtocol
 class TestProtocolService(BaseTestCase):
 
     def test_add_process(self):
+        CurrentUserService.get_and_check_current_user()
         protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
 
         process_model: ProcessModel = ProtocolService.add_process_to_protocol_id(
@@ -258,4 +260,3 @@ class TestProtocolService(BaseTestCase):
         self.assertEqual(duplicated_process.get_process_type(), RobotMove)
         self.assertEqual(duplicated_process.to_config_dto().inputs, process_model.to_config_dto().inputs)
         self.assertEqual(duplicated_process.to_config_dto().outputs, process_model.to_config_dto().outputs)
-
