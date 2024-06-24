@@ -4,30 +4,25 @@
 
 <br/>
 
-# Welcome to GWS Core 👋
+# 👋 Welcome to GWS Core 
 
 ```gws_core``` is a [Constellab](https://constellab.io) library (called bricks) developped by [Gencovery](https://gencovery.com/). GWS stands for Gencovery Web Services.
 
-## What is Constellab?
-
-Gencovery is a software company that offers Constellab, the leading open and secure digital infrastructure designed to consolidate data and unlock its full potential in the life sciences industry. Gencovery's mission is to provide universal access to data to enhance people's health and well-being.
-
-🌍 With our Open Access offer, you can use Constellab for free. [Sign up here](https://constellab.space/). Find more information about the Open Access offer here (link to be defined).
-
-## Documentation
-
-📄  For `gws_core` brick documentation, click [here](https://constellab.community/bricks/gws_core/latest/doc/getting-started/6efb7ab9-8508-4f99-b3e1-1a43e55755c4)
-
-📄 For Constellab application documentation, click [here](https://constellab.community/bricks/gws_academy/latest/doc/getting-started/b38e4929-2e4f-469c-b47b-f9921a3d4c74)
+## 🚀 What is Constellab?
 
 
-## Features
+✨ [Gencovery](https://gencovery.com/) is a software company that offers [Constellab](https://constellab.io)., the leading open and secure digital infrastructure designed to consolidate data and unlock its full potential in the life sciences industry. Gencovery's mission is to provide universal access to data to enhance people's health and well-being.
+
+🌍 With our Fair Open Access offer, you can use Constellab for free. [Sign up here](https://constellab.space/). Find more information about the Open Access offer here (link to be defined).
+
+
+## ✅ Features
+
+⚠️ **This brick is required to run the data lab.** ⚠️
 
 This repository is the core library for Constellab data lab. It provides the achitecture and API for the data lab. It also provides all the feature to develop new bricks.
-
-**This brick is required to run the data lab.**
  
-Here is the list of the main features:
+📋 Here is the list of the main features:
 - Running the data lab's API.
 - Setting up the data lab's architecture.
 - Managing pipelines and data.
@@ -35,16 +30,21 @@ Here is the list of the main features:
 
 It also include standard ```Resources``` (like Table, File, Folder, PlotlyResource, E-note...) and ```Tasks``` (for manipulating theses resources). You can find the list of theses ```Resources``` and ```Tasks``` in the ```gws_core``` documentation.
 
+## 📄 Documentation
 
-## Installation
+📄  For `gws_core` brick documentation, click [here](https://constellab.community/bricks/gws_core/latest/doc/getting-started/6efb7ab9-8508-4f99-b3e1-1a43e55755c4)
 
-### Recommended Method
+💫 For Constellab application documentation, click [here](https://constellab.community/bricks/gws_academy/latest/doc/getting-started/b38e4929-2e4f-469c-b47b-f9921a3d4c74)
 
-The best way to install a brick is through the Constellab platform. With our Open Access offer, you get a free cloud data lab where you can install bricks directly.
+## 🛠️ Installation
+
+### 🔥 Recommended Method
+
+The best way to install a brick is through the Constellab platform. With our Fair Open Access offer, you get a free cloud data lab where you can install bricks directly. [Sign up here](https://constellab.space/)
 
 Learn about the data lab here : [Overview](https://constellab.community/bricks/gws_academy/latest/doc/digital-lab/overview/294e86b4-ce9a-4c56-b34e-61c9a9a8260d) and [Data lab management](https://constellab.community/bricks/gws_academy/latest/doc/digital-lab/on-cloud-digital-lab-management/4ab03b1f-a96d-4d7a-a733-ad1edf4fb53c)
 
-### Manual installation
+### 🔧 Manual installation
 
 This section is for users who want to install the brick manually. It can also be used to install the brick manually in the Constellab Codelab.
 
@@ -59,13 +59,13 @@ pip install openpyxl==3.1.4 awesome-slugify==1.6.5 fastapi==0.111.0 pydantic==2.
 #### Usage
 
 
-To start the server :
+▶️ To start the server :
 
 ```bash
 python3 manage.py --runserver
 ```
 
-To run a given unit test
+🕵️ To run a given unit test
 
 ```bash
 python3 manage.py --test [TEST_FILE_NAME]
@@ -73,26 +73,28 @@ python3 manage.py --test [TEST_FILE_NAME]
 
 Replace `[TEST_FILE_NAME]` with the name of the test file (without `.py`) in the tests folder.
 
-To run the whole test suite, use the following command:
+🕵️ To run the whole test suite, use the following command:
 
 ```bash
 python3 manage.py --test all
 ```
 
-VSCode users can use the predefined run configuration in `.vscode/launch.json`.
+📌 VSCode users can use the predefined run configuration in `.vscode/launch.json`.
 
-## Community
+## 🤗 Community
 
-If you have any questions or suggestions, please feel free to contact us at gencovery@contact.com
+🌍 Join the Constellab community [here](https://constellab.community/) to share and explore stories, code snippets and bricks with other users.
 
-Feel free to open an issue if you have any question or suggestion.
+🚩 Feel free to open an issue if you have any question or suggestion.
 
-## License
+☎️ If you have any questions or suggestions, please feel free to contact us through our website: [Constellab](https://constellab.io/).
+
+## 🌎 License
 
 ```gws_core``` is completely free and open-source and licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.en.html).
 
-## Constellab
-For more information about Constellab, visit [our website](https://constellab.io).
+<br/>
+
 
 This brick is maintained with ❤️ by [Gencovery](https://gencovery.com/).
 
