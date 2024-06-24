@@ -94,8 +94,8 @@ class Logger:
         # Set the logger level
         Logger._logger.setLevel(level)
 
-        # Format of the logs
-        formatter = logging.Formatter(f"%(levelname)s - {self.get_date()} - %(message)s")
+        # Format of the logs, format date like : 2024-06-24T14:18:07.442618+00:00
+        formatter = logging.Formatter("%(levelname)s - %(asctime)s - %(message)s")
 
         # Configure the console logger
         console_logger = logging.StreamHandler()
