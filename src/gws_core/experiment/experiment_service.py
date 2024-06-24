@@ -405,7 +405,9 @@ class ExperimentService():
     @classmethod
     def get_running_experiments(cls) -> List[RunningExperimentInfoDTO]:
         experiments: List[Experiment] = list(
-            Experiment.select().where(Experiment.status == ExperimentStatus.RUNNING).order_by(
+            Experiment.select().where(
+                # consider the WAITING_FOR_CLI_PROCESS as running
+                Experiment.status.in_([ExperimentStatus.RUNNING, ExperimentStatus.WAITING_FOR_CLI_PROCESS])).order_by(
                 Experiment.last_modified_at.desc()))
 
         return [cls.get_running_experiment_info(experiment) for experiment in experiments]
