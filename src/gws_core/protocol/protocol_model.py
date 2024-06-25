@@ -122,7 +122,7 @@ class ProtocolModel(ProcessModel):
         :rtype: [type]
         """
         for process in self.processes.values():
-            process.delete_instance(recursive=True, delete_nullable=True)
+            process.delete_instance()
 
         return super().delete_instance(*args, **kwargs)
 
