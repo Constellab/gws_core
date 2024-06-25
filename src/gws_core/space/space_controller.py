@@ -86,37 +86,37 @@ def generate_user_temp_access(user_login_info: UserLoginInfo,
     return {"temp_token":  AuthService.generate_user_temp_access(user_login_info)}
 
 
-@space_app.put("/user/{id}/activate", tags=["User management"])
-def activate_user(id: str, _=Depends(AuthSpace.check_space_api_key_and_user)) -> UserFullDTO:
+@space_app.put("/user/{id_}/activate", tags=["User management"])
+def activate_user(id_: str, _=Depends(AuthSpace.check_space_api_key_and_user)) -> UserFullDTO:
     """
     Activate a user. Requires space privilege.
 
-    - **id**: the user id
+    - **id_**: the user id_
     """
 
-    return UserService.activate_user(id).to_full_dto()
+    return UserService.activate_user(id_).to_full_dto()
 
 
-@space_app.put("/user/{id}/deactivate", tags=["User management"])
-def deactivate_user(id: str, _=Depends(AuthSpace.check_space_api_key_and_user)) -> UserFullDTO:
+@space_app.put("/user/{id_}/deactivate", tags=["User management"])
+def deactivate_user(id_: str, _=Depends(AuthSpace.check_space_api_key_and_user)) -> UserFullDTO:
     """
     Deactivate a user. Require space privilege.
 
-    - **id**: the user id
+    - **id_**: the user id_
     """
 
-    return UserService.deactivate_user(id).to_full_dto()
+    return UserService.deactivate_user(id_).to_full_dto()
 
 
-@space_app.get("/user/{id}", tags=["User management"])
-def get_user(id: str, _=Depends(AuthSpace.check_space_api_key_and_user)) -> UserFullDTO:
+@space_app.get("/user/{id_}", tags=["User management"])
+def get_user(id_: str, _=Depends(AuthSpace.check_space_api_key_and_user)) -> UserFullDTO:
     """
     Get the details of a user. Require space privilege.
 
-    - **id**: the user id
+    - **id_**: the user id_
     """
 
-    return UserService.get_user_by_id(id).to_full_dto()
+    return UserService.get_user_by_id(id_).to_full_dto()
 
 
 @space_app.post("/user", tags=["User management"])
@@ -149,14 +149,14 @@ def create_project(project: SpaceProject, _=Depends(AuthSpace.check_space_api_ke
     ProjectService.synchronize_space_project(project)
 
 
-@space_app.delete("/project/{id}", tags=["Project"])
-def delete_project(id: str, _=Depends(AuthSpace.check_space_api_key_and_user)) -> None:
+@space_app.delete("/project/{id_}", tags=["Project"])
+def delete_project(id_: str, _=Depends(AuthSpace.check_space_api_key_and_user)) -> None:
     """
     Remove a project from the lab
 
     """
 
-    ProjectService.delete_project(id)
+    ProjectService.delete_project(id_)
 
 
 ############################################### EXPERIMENT #####################################################

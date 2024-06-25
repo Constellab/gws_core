@@ -82,7 +82,7 @@ class Model(BaseModel, PeeweeModel):
         return hash(type(self).__name__ + self.id)
 
     @classmethod
-    def get_by_id(cls: Type[ModelType], id: str) -> ModelType:
+    def get_by_id(cls: Type[ModelType], id: str) -> ModelType | None:
         return cls.get_or_none(cls.id == id)
 
     @classmethod

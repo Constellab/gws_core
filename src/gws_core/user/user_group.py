@@ -8,7 +8,6 @@ from ..core.exception.exceptions.bad_request_exception import \
 class UserGroup(Enum):
     SYSUSER = "SYSUSER"
     OWNER = "OWNER"
-    ADMIN = "ADMIN"
     USER = "USER"
 
     @classmethod
@@ -23,20 +22,6 @@ class UserGroup(Enum):
         switcher = {
             UserGroup.SYSUSER: 0,
             UserGroup.OWNER: 5,
-            UserGroup.ADMIN: 10,
-            UserGroup.USER: 15,
-        }
-        return switcher.get(user_group)
-
-    @classmethod
-    def is_higher_or_equals(cls, user_group: 'UserGroup') -> int:
-        if not cls.has_value(user_group):
-            raise BadRequestException(f"The user group {user_group} doesn't exists")
-
-        switcher = {
-            UserGroup.SYSUSER: 0,
-            UserGroup.OWNER: 5,
-            UserGroup.ADMIN: 10,
             UserGroup.USER: 15,
         }
         return switcher.get(user_group)

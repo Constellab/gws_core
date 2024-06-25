@@ -97,16 +97,6 @@ class CurrentUserService:
         if not user.is_owner:
             raise UnauthorizedException(detail="Unauthorized: owner required")
 
-    @classmethod
-    def check_is_admin(cls):
-        try:
-            user = CurrentUserService.get_and_check_current_user()
-        except:
-            raise UnauthorizedException(detail="Unauthorized: admin required")
-
-        if not user.is_admin:
-            raise UnauthorizedException(detail="Unauthorized: admin required")
-
 
 class AuthenticateUser:
     """ Context to support with statement to catch exceptions and convert

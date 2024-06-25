@@ -15,12 +15,12 @@ from .user_group import UserGroup
 class UserService():
 
     @classmethod
-    def activate_user(cls, id: str) -> User:
-        return cls.set_user_active(id, True)
+    def activate_user(cls, id_: str) -> User:
+        return cls.set_user_active(id_, True)
 
     @classmethod
     def create_or_update_user_dto(cls, user_dto: UserFullDTO) -> User:
-        db_user: User = cls.get_user_by_id(user_dto.id)
+        db_user: User | None = cls.get_user_by_id(user_dto.id)
         if db_user is not None:
             db_user.from_full_dto(user_dto)
             return db_user.save()
@@ -33,44 +33,43 @@ class UserService():
             raise BadRequestException("Cannot create sysuser")
 
         user = User(data={})
-        # set the id later to mark the user as not saved
+        # set the id_ later to mark the user as not saved
         user.id = user_dto.id
         user.from_full_dto(user_dto)
         user.save()
         return User.get_by_id(user.id)
 
     @classmethod
-    def deactivate_user(cls, id) -> User:
-        return cls.set_user_active(id, False)
+    def deactivate_user(cls, id_: str) -> User:
+        return cls.set_user_active(id_, False)
 
     @classmethod
-    def get_by_id_or_none(cls, id: str) -> Union[User, None]:
-        return User.get_by_id(id)
+    def get_by_id_or_none(cls, id_: str) -> Union[User, None]:
+        return User.get_by_id(id_)
 
     @classmethod
-    def get_by_id_and_check(cls, id: str) -> User:
-        return User.get_by_id_and_check(id)
+    def get_by_id_and_check(cls, id_: str) -> User:
+        return User.get_by_id_and_check(id_)
 
     @classmethod
-    def fetch_user_list(cls,
-                        page: int = 0,
-                        number_of_items_per_page: int = 20) -> Paginator[User]:
-
-        query = User.select().order_by(User.created_at.desc())
-        return Paginator(
-            query, page=page, nb_of_items_per_page=number_of_items_per_page)
+    def get_user_by_id(cls, id_: str) -> User | None:
+        return User.get_by_id(id_)
 
     @classmethod
-    def get_user_by_id(cls, id: str) -> User:
-        return User.get_by_id(id)
-
-    @classmethod
-    def get_user_by_email(cls, email: str) -> User:
+    def get_user_by_email(cls, email: str) -> User | None:
         return User.get_by_email(email)
 
     @classmethod
-    def set_user_active(cls, id: str, is_active: bool) -> User:
-        user: User = User.get_by_id_and_check(id)
+    def set_user_active(cls, id_: str, is_active: bool) -> User:
+        user: User = User.get_by_id_and_check(id_)
+
+        if not is_active:
+            if user.is_sysuser:
+                raise BadRequestException("Cannot deactivate the system user")
+            if user.is_owner:
+                # check if this is the last owner
+                if User.select().where((User.group == UserGroup.OWNER) & (User.is_active == True)).count() == 1:
+                    raise BadRequestException("Cannot deactivate the last owner")
 
         user.is_active = is_active
         return user.save()
@@ -102,20 +101,12 @@ class UserService():
             user.save()
 
     @classmethod
-    def get_admin(cls):
-        return User.get_admin()
-
-    @classmethod
-    def get_owner(cls):
-        return User.get_owner()
-
-    @classmethod
     def get_sysuser(cls):
         return User.get_sysuser()
 
     @classmethod
-    def user_exists(cls, id: str) -> bool:
-        return cls.get_user_by_id(id) is not None
+    def user_exists(cls, id_: str) -> bool:
+        return cls.get_user_by_id(id_) is not None
 
     @classmethod
     def synchronize_all_space_users(cls) -> None:

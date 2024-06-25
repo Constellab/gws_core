@@ -17,7 +17,7 @@ class TestDevEnvService(BaseTestCase):
             email="test_mail@gencovery.com",
             first_name="Firstname test",
             last_name="Lastname test",
-            group=UserGroup.ADMIN,
+            group=UserGroup.OWNER,
             is_active=True,
             theme=UserTheme.LIGHT_THEME,
             lang=UserLanguage.EN,

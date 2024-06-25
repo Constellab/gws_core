@@ -1,6 +1,6 @@
 
 
-from typing import final
+from typing import Optional, final
 
 from peewee import BooleanField, CharField, ModelSelect
 
@@ -41,19 +41,11 @@ class User(Model):
     _table_name = 'gws_user'
 
     @classmethod
-    def get_admin(cls) -> 'User':
-        return User.get(User.group == UserGroup.ADMIN)
-
-    @classmethod
-    def get_owner(cls) -> 'User':
-        return User.get(User.group == UserGroup.OWNER)
-
-    @classmethod
     def get_sysuser(cls) -> 'User':
         return User.get(User.group == UserGroup.SYSUSER)
 
     @classmethod
-    def get_by_email(cls, email: str) -> 'User':
+    def get_by_email(cls, email: str) -> Optional['User']:
         return User.get(User.email == email)
 
     @classmethod
@@ -76,10 +68,6 @@ class User(Model):
         return " ".join([self.first_name, self.last_name]).strip()
 
     @property
-    def is_admin(self):
-        return self.group == UserGroup.ADMIN
-
-    @property
     def is_owner(self):
         return self.group == UserGroup.OWNER
 
@@ -98,10 +86,6 @@ class User(Model):
     def save(self, *arg, **kwargs) -> 'User':
         if not UserGroup.has_value(self.group):
             raise BadRequestException("Invalid user group")
-        if self.is_owner or self.is_admin or self.is_sysuser:
-            if not self.is_active:
-                raise BadRequestException(
-                    "Cannot deactivate the {owner, admin, system} users")
         return super().save(*arg, **kwargs)
 
     def to_dto(self) -> UserDTO:
