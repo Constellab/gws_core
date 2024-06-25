@@ -968,6 +968,7 @@ class Migration080(BrickMigration):
         migrator.drop_column_if_exists(ViewConfig, 'tags')
 
         migrator.add_column_if_not_exists(ResourceModel, ResourceModel.content_is_deleted)
+        migrator.alter_column_type(Project, Project.title.column_name, CharField(null=False, max_length=100))
 
         migrator.migrate()
 

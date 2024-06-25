@@ -15,7 +15,7 @@ class Project(Model):
     Project class.
     """
     code: str = CharField(null=False, max_length=20, default='')
-    title: str = CharField(null=False, max_length=50)
+    title: str = CharField(null=False, max_length=100)
     parent = ForeignKeyField('self', null=True, backref='children', on_delete='CASCADE')
     level_status = EnumField(choices=ProjectLevelStatus, max_length=20)
 
