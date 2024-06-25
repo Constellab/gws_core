@@ -29,7 +29,6 @@ from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..project.project import Project
 from ..resource.resource_model import ResourceModel
-from ..tag.taggable_model import TaggableModel
 from ..user.user import User
 from .experiment_enums import (ExperimentCreationType, ExperimentProcessStatus,
                                ExperimentStatus)
@@ -40,7 +39,7 @@ if TYPE_CHECKING:
 
 
 @final
-class Experiment(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity):
+class Experiment(ModelWithUser, ModelWithProject, NavigableEntity):
     """
     Experiment class.
 

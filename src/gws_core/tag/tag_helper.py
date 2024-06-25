@@ -20,19 +20,6 @@ class TagHelper():
         return [tag.to_dto().to_json_dict() for tag in tags]
 
     @classmethod
-    def tags_to_list(cls, tags: str) -> List[Tag]:
-        if not tags:
-            return []
-
-        tags_list: List[Tag] = []
-
-        for tag_str in tags.split(TAGS_SEPARATOR):
-            # skip the empty tag (like first and la separator)
-            if len(tag_str) > 0:
-                tags_list.append(Tag.from_string(tag_str))
-        return tags_list
-
-    @classmethod
     def tags_dict_to_list(cls, tags_dict: List[dict]) -> List[Tag]:
         if not tags_dict:
             return []
@@ -44,7 +31,7 @@ class TagHelper():
         return tags_list
 
     @classmethod
-    def tags_dict_to_list_v2(cls, tags_dict: List[TagDTO]) -> List[Tag]:
+    def tags_dto_to_list(cls, tags_dict: List[TagDTO]) -> List[Tag]:
         if not tags_dict:
             return []
 

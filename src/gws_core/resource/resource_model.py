@@ -38,7 +38,6 @@ from ..model.typing import Typing
 from ..model.typing_manager import TypingManager
 from ..resource.kv_store import KVStore
 from ..resource.resource import Resource
-from ..tag.taggable_model import TaggableModel
 from .r_field.r_field import BaseRField
 from .resource_factory import ResourceFactory
 
@@ -50,7 +49,7 @@ if TYPE_CHECKING:
 CONST_RESOURCE_MODEL_TYPING_NAME = "MODEL.gws_core.ResourceModel"
 
 
-class ResourceModel(ModelWithUser, TaggableModel, ModelWithProject, NavigableEntity):
+class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
 
     """
     ResourceModel class.

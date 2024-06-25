@@ -93,7 +93,7 @@ class ResourceLoader():
             zip_resource.resource_typing_name)
 
         tags_dict = zip_resource.tags or []
-        tags = TagHelper.tags_dict_to_list_v2(tags_dict)
+        tags = TagHelper.tags_dto_to_list(tags_dict)
 
         resource = ResourceFactory.create_resource(resource_type, kv_store=kv_store, data=zip_resource.data,
                                                    name=zip_resource.name, tags=tags)

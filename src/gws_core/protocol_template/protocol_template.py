@@ -12,12 +12,11 @@ from gws_core.protocol.protocol_dto import ProtocolConfigDTO
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol_template.protocol_template_dto import (
     ProtocolTemplateDTO, ProtocolTemplateExportDTO)
-from gws_core.tag.taggable_model import TaggableModel
 
 from ..core.model.model_with_user import ModelWithUser
 
 
-class ProtocolTemplate(ModelWithUser, TaggableModel):
+class ProtocolTemplate(ModelWithUser):
     """ Entity to store template of protocol
 
     :param ModelWithUser: _description_

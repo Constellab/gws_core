@@ -19,13 +19,12 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view_config.view_config_dto import ViewConfigDTO
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.taggable_model import TaggableModel
 
 from ...experiment.experiment import Experiment
 from ..resource_model import ResourceModel
 
 
-class ViewConfig(ModelWithUser, TaggableModel, NavigableEntity):
+class ViewConfig(ModelWithUser, NavigableEntity):
 
     title = CharField()
     view_type: ViewType = EnumField(choices=ViewType)

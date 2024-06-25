@@ -1,8 +1,6 @@
 
 
-import os
 from copy import deepcopy
-from json import dump
 from typing import Dict, List, Type
 
 from peewee import BigIntegerField, CharField
@@ -17,23 +15,18 @@ from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.model.model import Model
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.credentials.credentials import Credentials
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
-from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
-from gws_core.impl.shell.virtual_env.venv_dto import (VEnsStatusDTO,
-                                                      VEnvCreationInfo)
 from gws_core.impl.shell.virtual_env.venv_service import VEnvService
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor import Monitor
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
-from gws_core.process.process_factory import ProcessFactory
 from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar
 from gws_core.project.project import Project
@@ -41,30 +34,21 @@ from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.report.report import Report
-from gws_core.report.report_service import ReportService
 from gws_core.report.template.report_template import ReportTemplate
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view_config.view_config import ViewConfig
-from gws_core.space.space_service import SpaceService
-from gws_core.tag.entity_tag import EntityTag
-from gws_core.tag.tag_dto import EntityTagValueFormat, TagOriginType
-from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
-from gws_core.tag.tag_value_model import TagValueModel
-from gws_core.tag.taggable_model import TaggableModel
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.user.activity.activity import Activity
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
-from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
 from ...utils.logger import Logger
@@ -747,80 +731,6 @@ class ReportResourceModel(PeeweeModel):
         database = GwsCoreDbManager.get_db()
 
 
-@brick_migration('0.6.0', short_description='Migrate tags, new table ReportViewModel')
-class Migration060(BrickMigration):
-
-    @classmethod
-    def migrate(cls, from_version: Version, to_version: Version) -> None:
-
-        migrator: SqlMigrator = SqlMigrator(ViewConfig.get_db())
-        migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.value_format)
-        migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.is_propagable)
-        migrator.drop_column_if_exists(ViewConfig, 'config_values')
-        migrator.alter_column_type(
-            ViewConfig, ViewConfig.config.column_name,
-            CharField(max_length=36, null=False, index=True))
-        migrator.drop_table_if_exists(ReportResourceModel)
-        migrator.migrate()
-
-        TagKeyModel.update(value_format=EntityTagValueFormat.STRING).where(
-            TagKeyModel.value_format.is_null()).execute()
-
-        entities: List[TaggableModel] = list(
-            ResourceModel.select()) + list(Experiment.select()) + list(ViewConfig.select())
-
-        for entity in entities:
-            try:
-                tags = TagHelper.tags_to_list(entity.tags)
-
-                for tag in tags:
-                    entity_type: EntityType
-                    if isinstance(entity, ResourceModel):
-                        entity_type = EntityType.RESOURCE
-                    elif isinstance(entity, Experiment):
-                        entity_type = EntityType.EXPERIMENT
-                    elif isinstance(entity, ViewConfig):
-                        entity_type = EntityType.VIEW
-                    entity_tag = EntityTag.find_by_tag_and_entity(tag, entity_type, entity.id)
-
-                    if entity_tag is None:
-                        tag.origins.add_origin(TagOriginType.USER, CurrentUserService.get_and_check_current_user().id)
-
-                        tag_model = TagValueModel.create_tag_value_if_not_exists(tag.key, tag.value)
-                        entity_tag = EntityTag.create_entity_tag(
-                            tag=tag, value_format=tag_model.tag_key.value_format, entity_id=entity.id,
-                            entity_type=entity_type)
-            except Exception as exception:
-                Logger.error(
-                    f'Error while migrating tags for entity {type(entity).__name__} {entity.id} : {exception}')
-
-        # fill ReportViewModel table
-        report_models: List[Report] = list(Report.select())
-
-        for report in report_models:
-            try:
-                rich_text = report.get_content_as_rich_text()
-
-                report_updated = False
-
-                for report_view in rich_text.get_resource_views_data():
-                    if report_view.get('view_config_id') is None:
-                        view_result = ResourceService.get_and_call_view_on_resource_model(report_view.get(
-                            'resource_id'), report_view.get('view_method_name'), report_view.get('view_config'), True)
-
-                        report_view['view_config_id'] = view_result.view_config.id
-                        report_updated = True
-
-                if report_updated:
-                    report.content = rich_text.get_content()
-                    report.save()
-                    ReportService._refresh_report_views_and_tags(report)
-
-            except Exception as exception:
-                Logger.error(
-                    f'Error while migrating report view for report {report.id} : {exception}')
-
-
 class Comment(PeeweeModel):
 
     class Meta:
@@ -1038,7 +948,7 @@ class Migration080Beta1(BrickMigration):
                 cls.migrate_template_data(node["graph"])
 
 
-@brick_migration('0.8.0', short_description='Delete virtual environments for new format')
+@brick_migration('0.8.0', short_description='Delete virtual environments for new format. Remove external disk usage from monitor. Remove old tags columns.')
 class Migration080(BrickMigration):
 
     @classmethod
@@ -1051,6 +961,11 @@ class Migration080(BrickMigration):
         migrator.drop_column_if_exists(Monitor, 'external_disk_usage_used')
         migrator.drop_column_if_exists(Monitor, 'external_disk_usage_percent')
         migrator.drop_column_if_exists(Monitor, 'external_disk_usage_free')
+
+        migrator.drop_column_if_exists(Experiment, 'tags')
+        migrator.drop_column_if_exists(ProtocolTemplate, 'tags')
+        migrator.drop_column_if_exists(ResourceModel, 'tags')
+        migrator.drop_column_if_exists(ViewConfig, 'tags')
 
         migrator.add_column_if_not_exists(ResourceModel, ResourceModel.content_is_deleted)
 
