@@ -43,7 +43,7 @@ class ReflectorHelper():
         :rtype: Dict[str, type]
         """
 
-        parameters: Dict[str, inspect.Parameter] = inspect.signature(func).parameters
+        parameters: dict[str, inspect.Parameter] = inspect.signature(func).parameters
 
         arguments: FuncArgsMetaData = FuncArgsMetaData(func.__name__)
 
@@ -174,8 +174,12 @@ class ReflectorHelper():
         '''
             Get the public args of a class
         '''
+        arr_variables = [d for (t, d) in inspect.getmembers(class_) if t == '__annotations__']
 
-        variables: dict = inspect.getmembers(class_)[1][1]
+        if len(arr_variables) == 0:
+            return {}
+
+        variables: dict = arr_variables[0]
         try:
             vars_keys = sorted([i for i in variables.keys() if i[0] != '_'])  # get the sorted keys of public variables
             res: Dict = {}

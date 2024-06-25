@@ -9,7 +9,8 @@ from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.core_controller import core_app
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_dto import LogsBetweenDatesDTO
-from gws_core.lab.monitor.monitor_dto import MonitorBetweenDateDTO
+from gws_core.lab.monitor.monitor_dto import (GetMonitorTimezoneDTO,
+                                              MonitorBetweenDateGraphicsDTO)
 from gws_core.user.auth_service import AuthService
 
 from .process_service import ProcessService, ProcessType
@@ -42,13 +43,14 @@ def download_process_logs(process_type: ProcessType,
     return ResponseHelper.create_file_response_from_str(logs.to_str(), "logs.txt")
 
 
-@core_app.get("/process/{process_type}/{id}/monitor", tags=["Process"],
-              summary="Get the monitoring data of a process", response_model=None)
+@core_app.post("/process/{process_type}/{id}/monitor", tags=["Process"],
+               summary="Get the monitoring data of a process", response_model=None)
 def get_process_monitors(process_type: ProcessType,
                          id: str,
-                         _=Depends(AuthService.check_user_access_token)) -> MonitorBetweenDateDTO:
+                         body: GetMonitorTimezoneDTO,
+                         _=Depends(AuthService.check_user_access_token)) -> MonitorBetweenDateGraphicsDTO:
     """
     Retrieve a list of running experiments.
     """
-
-    return ProcessService.get_monitor_of_process(process_type, id)
+    timezone_number = body.timezone_number if body.timezone_number else 0
+    return ProcessService.get_monitor_of_process(process_type, id, timezone_number)

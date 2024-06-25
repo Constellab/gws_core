@@ -42,12 +42,6 @@ class Monitor(Model):
     disk_usage_free = FloatField()
     disk_usage_percent = FloatField()
 
-    # External disk
-    external_disk_total = FloatField(default=0)
-    external_disk_usage_used = FloatField(default=0)
-    external_disk_usage_free = FloatField(default=0)
-    external_disk_usage_percent = FloatField(default=0)
-
     # Swap Memory
     swap_memory_total = FloatField()
     swap_memory_used = FloatField()
@@ -103,13 +97,6 @@ class Monitor(Model):
         monitor.disk_usage_used = disk.used
         monitor.disk_usage_free = disk.free
         monitor.disk_usage_percent = disk.percent
-
-        # External Disk
-        disk = psutil.disk_usage(Settings.get_lab_folder())
-        monitor.external_disk_total = disk.total
-        monitor.external_disk_usage_used = disk.used
-        monitor.external_disk_usage_free = disk.free
-        monitor.external_disk_usage_percent = disk.percent
 
         # Network
         iobytes = psutil.net_io_counters()
@@ -182,10 +169,6 @@ class Monitor(Model):
             disk_usage_used=self.disk_usage_used,
             disk_usage_free=self.disk_usage_free,
             disk_usage_percent=self.disk_usage_percent,
-            external_disk_total=self.external_disk_total,
-            external_disk_usage_used=self.external_disk_usage_used,
-            external_disk_usage_free=self.external_disk_usage_free,
-            external_disk_usage_percent=self.external_disk_usage_percent,
             swap_memory_total=self.swap_memory_total,
             swap_memory_used=self.swap_memory_used,
             swap_memory_free=self.swap_memory_free,

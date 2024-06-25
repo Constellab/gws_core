@@ -8,10 +8,11 @@ from pandas import DataFrame, Series, Timedelta, concat, to_datetime
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.impl.plotly.plotly_r_field import PlotlyRField
 
 from .monitor import Monitor
-from .monitor_dto import MonitorBetweenDateDTO
+from .monitor_dto import MonitorBetweenDateGraphicsDTO, MonitorDTO
 
 
 class MonitorService():
@@ -66,16 +67,19 @@ class MonitorService():
         return monitor.save()
 
     @classmethod
+    def get_current_monitor_data(cls) -> MonitorDTO:
+        return cls.get_current_monitor().to_dto()
+
+    @classmethod
     def get_current_monitor(cls) -> Monitor:
         return Monitor.get_current()
 
     @classmethod
-    def get_monitor_data_between_dates_str(cls,
-                                           from_date_str: str,
-                                           to_date_str: str,
-                                           utc_num: int = 0) -> MonitorBetweenDateDTO:
-
-        return cls.get_monitor_data_between_dates(
+    def get_monitor_graphics_between_dates_str(cls,
+                                               from_date_str: str,
+                                               to_date_str: str,
+                                               utc_num: float = 0.0) -> MonitorBetweenDateGraphicsDTO:
+        return cls.get_monitor_data_graphics_between_dates(
             DateHelper.from_iso_str(from_date_str),
             DateHelper.from_iso_str(to_date_str),
             utc_num
@@ -112,10 +116,10 @@ class MonitorService():
         return PlotlyRField.figure_to_dict(figure)
 
     @classmethod
-    def get_monitor_data_between_dates(cls,
-                                       from_date: datetime,
-                                       to_date: datetime,
-                                       utc_number: int = 0) -> MonitorBetweenDateDTO:
+    def get_monitor_data_graphics_between_dates(cls,
+                                                from_date: datetime,
+                                                to_date: datetime,
+                                                utc_number: float = 0) -> MonitorBetweenDateGraphicsDTO:
 
         # convert date to string and add tick interval to be sure to have at least one tick
         from_date = from_date - timedelta(seconds=cls.TICK_INTERVAL_SECONDS)
@@ -132,13 +136,14 @@ class MonitorService():
         df = DataFrame([vars(monitor.to_dto()) for monitor in monitors])
 
         if df.empty:
-            return MonitorBetweenDateDTO(
+            return MonitorBetweenDateGraphicsDTO(
                 from_date=from_date,
                 to_date=to_date,
-                monitors=[],
                 main_figure={},
                 cpu_figure={},
-                network_figure={}
+                network_figure={},
+                gpu_figure={},
+                gpu_enabled=Settings.gpu_is_available()
             )
 
         # Add the utc number to the date if needed for plotly to display the correct date
@@ -150,13 +155,12 @@ class MonitorService():
         y_labels = {
             'cpu_percent': 'CPU',
             'disk_usage_percent': 'Disk Usage',
-            'external_disk_usage_percent': 'External Disk Usage',
             'ram_usage_percent': 'RAM Usage',
             'swap_memory_percent': 'Swap Memory'
         }
         main_figure = cls.get_plotly_figure_dict(
             df, 'created_at',
-            ['cpu_percent', 'disk_usage_percent', 'external_disk_usage_percent', 'ram_usage_percent',
+            ['cpu_percent', 'disk_usage_percent', 'ram_usage_percent',
              'swap_memory_percent'],
             y_labels)
 
@@ -176,16 +180,21 @@ class MonitorService():
             axis=1)
         df_network_columns = ['created_at', 'In (Mb)', 'Out (Mb)']
         df_network.columns = df_network_columns
-
         network_figure = cls.get_plotly_figure_dict(df_network, 'created_at', ['In (Mb)', 'Out (Mb)'])
 
-        return MonitorBetweenDateDTO(
+        # Create the gpu figure
+        df_gpu = concat([df['created_at'], df['gpu_temperature']], axis=1)
+        df_gpu.columns = ['created_at', 'GPU Temperature']
+        gpu_figure = cls.get_plotly_figure_dict(df_gpu, 'created_at', ['GPU Temperature'])
+
+        return MonitorBetweenDateGraphicsDTO(
             from_date=from_date,
             to_date=to_date,
-            monitors=[monitor.to_dto() for monitor in monitors],
             main_figure=main_figure,
             cpu_figure=cpu_figure,
-            network_figure=network_figure
+            network_figure=network_figure,
+            gpu_figure=gpu_figure,
+            gpu_enabled=Settings.gpu_is_available()
         )
 
     @classmethod

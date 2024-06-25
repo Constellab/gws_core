@@ -29,7 +29,8 @@ class View:
     def __init__(self):
         # Check view type
         if not isinstance(self._type, ViewType):
-            raise BadRequestException(f"The view type '{self._type}' is not a valid ViewType")
+            raise BadRequestException(
+                f"The view type '{self._type}' is not a valid ViewType")
 
         self._check_view_specs()
         self._technical_info = TechnicalInfoDict()

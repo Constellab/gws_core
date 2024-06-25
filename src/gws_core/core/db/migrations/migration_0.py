@@ -583,42 +583,6 @@ class Migration045(BrickMigration):
         migrator.migrate()
 
 
-@brick_migration('0.4.7', short_description='Remove created_by and last_modified_by from Project. Update kvstore path. Add external disk to monitor')
-class Migration047(BrickMigration):
-    """Remove created_by and last_modified_by from Project because project are synchronized on lab start
-
-    :param BrickMigration: _description_
-    :type BrickMigration: _type_
-    """
-
-    @classmethod
-    def migrate(cls, from_version: Version, to_version: Version) -> None:
-
-        migrator: SqlMigrator = SqlMigrator(Project.get_db())
-        migrator.drop_column_if_exists(Project, "created_by_id")
-        migrator.drop_column_if_exists(Project, "last_modified_by_id")
-        migrator.add_column_if_not_exists(Monitor, Monitor.external_disk_total)
-        migrator.add_column_if_not_exists(
-            Monitor, Monitor.external_disk_usage_used)
-        migrator.add_column_if_not_exists(
-            Monitor, Monitor.external_disk_usage_free)
-        migrator.add_column_if_not_exists(
-            Monitor, Monitor.external_disk_usage_percent)
-        migrator.migrate()
-
-        # update kvstore path to an absolute clean path (replace /data/./kvstore by /data/kvstore)
-        resources: List[ResourceModel] = list(ResourceModel.select())
-        for resource in resources:
-            try:
-                if resource.kv_store_path is not None:
-                    resource.kv_store_path = os.path.abspath(
-                        resource.kv_store_path)
-                    resource.save()
-            except Exception as exception:
-                Logger.error(
-                    f'Error while updating kvstore path for {resource.resource_typing_name}, resource id {resource.id} : {exception}')
-
-
 @brick_migration('0.5.0-beta.2', short_description='Update FsNode Rfield values')
 class Migration050Beta1(BrickMigration):
 
@@ -1082,6 +1046,12 @@ class Migration080(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(Experiment.get_db())
         migrator.drop_column_if_exists(Experiment, 'score')
+
+        migrator.drop_column_if_exists(Monitor, 'external_disk_total')
+        migrator.drop_column_if_exists(Monitor, 'external_disk_usage_used')
+        migrator.drop_column_if_exists(Monitor, 'external_disk_usage_percent')
+        migrator.drop_column_if_exists(Monitor, 'external_disk_usage_free')
+
         migrator.add_column_if_not_exists(ResourceModel, ResourceModel.content_is_deleted)
 
         migrator.migrate()

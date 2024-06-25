@@ -47,8 +47,10 @@ def decorate_converter(task_class: Type['Converter'],
         return
 
     # force the input and output specs
-    task_class.input_specs = InputSpecs({Converter.input_name: InputSpec(source_type)})
-    task_class.output_specs = OutputSpecs({Converter.output_name: OutputSpec(target_type)})
+    task_class.input_specs = InputSpecs(
+        {Converter.input_name: InputSpec(source_type)})
+    task_class.output_specs = OutputSpecs(
+        {Converter.output_name: OutputSpec(target_type)})
 
     main_resource_type = target_type if task_type == 'IMPORTER' else source_type
     if not style:
@@ -100,7 +102,8 @@ class Converter(Task):
         resource: Resource = inputs.get(Converter.input_name)
 
         # call convert method
-        target: Resource = self.convert(resource, params, self.get_target_type())
+        target: Resource = self.convert(
+            resource, params, self.get_target_type())
 
         if target is None:
             raise Exception('The target resource is None')
@@ -133,9 +136,11 @@ class Converter(Task):
           :type params: ConfigParamsDict
         """
         if not isinstance(source, cls.get_source_type()):
-            raise Exception(f"The {cls.__name__} task requires a {cls.get_source_type().__name__} resource")
+            raise Exception(
+                f"The {cls.__name__} task requires a {cls.get_source_type()[0].__name__} resource")
 
-        converter_runner: ConverterRunner = ConverterRunner(cls, params=params, input_=source)
+        converter_runner: ConverterRunner = ConverterRunner(
+            cls, params=params, input_=source)
 
         result = converter_runner.run()
         converter_runner.run_after_task()

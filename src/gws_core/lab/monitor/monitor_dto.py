@@ -1,7 +1,7 @@
 
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 
@@ -14,11 +14,6 @@ class MonitorDTO(ModelDTO):
     disk_usage_used: float
     disk_usage_free: float
     disk_usage_percent: float
-
-    external_disk_total: float
-    external_disk_usage_used: float
-    external_disk_usage_free: float
-    external_disk_usage_percent: float
 
     swap_memory_total: float
     swap_memory_used: float
@@ -44,11 +39,21 @@ class MonitorDTO(ModelDTO):
     data: dict
 
 
-class MonitorBetweenDateDTO(BaseModelDTO):
+class MonitorBetweenDateGraphicsDTO(BaseModelDTO):
 
     from_date: datetime
     to_date: datetime
-    monitors: List[MonitorDTO]
-    main_figure: dict
-    cpu_figure: dict
-    network_figure: dict
+    main_figure: Dict
+    cpu_figure: Dict
+    network_figure: Dict
+    gpu_enabled: bool
+    gpu_figure: Optional[Dict]
+
+
+class GetMonitorTimezoneDTO(BaseModelDTO):
+    timezone_number: Optional[float]
+
+
+class GetMonitorRequestDTO(GetMonitorTimezoneDTO):
+    from_date: Optional[str]
+    to_date: Optional[str]

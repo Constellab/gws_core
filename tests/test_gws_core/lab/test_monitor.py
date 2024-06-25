@@ -64,10 +64,6 @@ class TestMonitor(BaseTestCase):
                 disk_usage_used=random.randint(0, 100),
                 disk_usage_free=random.randint(0, 100),
                 disk_usage_percent=random.randint(0, 100),
-                external_disk_total=random.randint(0, 100),
-                external_disk_usage_used=random.randint(0, 100),
-                external_disk_usage_free=random.randint(0, 100),
-                external_disk_usage_percent=random.randint(0, 100),
                 net_io_bytes_sent=random.randint(0, 100),
                 net_io_bytes_recv=random.randint(0, 100),
                 ram_usage_total=random.randint(0, 100),
@@ -86,14 +82,13 @@ class TestMonitor(BaseTestCase):
             m.save()
 
         # Get monitor data between from_date and to_date
-        monitor_between_date = MonitorService.get_monitor_data_between_dates(
+        monitor_between_date = MonitorService.get_monitor_data_graphics_between_dates(
             from_date=from_date,
             to_date=to_date
         )
 
-        self.assertGreater(len(monitor_between_date.monitors), 0)
-        self.assertEqual(len(monitor_between_date.monitors), n)
         self.assertTrue(monitor_between_date.from_date <= monitor_between_date.to_date)
         self.assertIsNotNone(monitor_between_date.main_figure)
         self.assertIsNotNone(monitor_between_date.cpu_figure)
         self.assertIsNotNone(monitor_between_date.network_figure)
+        self.assertIsNotNone(monitor_between_date.gpu_figure)
