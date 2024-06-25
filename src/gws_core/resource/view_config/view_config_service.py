@@ -179,4 +179,7 @@ class ViewConfigService():
                 style=view_type.get_typing_style()
             ))
 
+        # sort by human name
+        view_types_dto.sort(key=lambda x: x.human_name)
+
         return view_types_dto
