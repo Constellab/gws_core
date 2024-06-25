@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from jwt import decode, encode
 from typing_extensions import TypedDict
 
+from gws_core.core.utils.date_helper import DateHelper
+
 from ..core.utils.settings import Settings
 from .user_exception import InvalidTokenException
 
@@ -24,7 +26,7 @@ class JWTService:
     @classmethod
     def create_jwt(cls, user_id: str) -> str:
         # calculate the expiration date
-        expire = datetime.utcnow() + timedelta(seconds=cls.get_token_duration_in_seconds())
+        expire = DateHelper.now_utc() + timedelta(seconds=cls.get_token_duration_in_seconds())
 
         data: JWTData = {"sub": user_id, "exp": expire}
 
@@ -51,6 +53,10 @@ class JWTService:
     @classmethod
     def get_token_duration_in_seconds(cls) -> int:
         return ACCESS_TOKEN_EXPIRE_SECONDS
+
+    @classmethod
+    def get_token_duration_in_milliseconds(cls) -> int:
+        return cls.get_token_duration_in_seconds() * 1000
 
     @classmethod
     def _get_secret(cls) -> str:

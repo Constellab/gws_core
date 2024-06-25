@@ -61,7 +61,7 @@ def login_from_temp_token(unique_code: str) -> Response:
     try:
         user: User = AuthService.check_unique_code(unique_code)
 
-        response = RedirectResponse(FrontService.get_auto_login_url(JWTService.get_token_duration_in_seconds()))
+        response = RedirectResponse(FrontService.get_auto_login_url(JWTService.get_token_duration_in_milliseconds()))
         return AuthService.log_user(user, response=response)
     except Exception:
         # if there is any problem redirect to the front base url (login)
