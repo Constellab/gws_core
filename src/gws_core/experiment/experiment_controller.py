@@ -116,21 +116,6 @@ def validate_an_experiment(id_: str,
     return ExperimentService.validate_experiment_by_id(id_, project_id=project_id).to_dto()
 
 
-@core_app.put("/experiment/{id_}", tags=["Experiment"], summary="Update an experiment")
-def update_experiment(id_: str,
-                      experiment: ExperimentSaveDTO,
-                      _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
-    """
-    Update an experiment
-
-    - **id_**: the id_ of the experiment
-    - **title**: the new title [optional]
-    - **description**: the new description [optional]
-    """
-
-    return ExperimentService.update_experiment(id_, experiment).to_dto()
-
-
 @core_app.put("/experiment/{id_}/title", tags=["Experiment"],
               summary="Update the title of an experiment")
 def update_title(id_: str,

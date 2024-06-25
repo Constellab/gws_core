@@ -120,7 +120,7 @@ class ReportService():
     def update_project(cls, report_id: str, project_id: str) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
 
-        cls._update_report_project(report, project_id)
+        report = cls._update_report_project(report, project_id)
 
         report = report.save()
 
@@ -132,20 +132,20 @@ class ReportService():
 
     @classmethod
     @transaction()
-    def _update_report_project(cls, report: Report, project_id: str) -> None:
+    def _update_report_project(cls, report: Report, project_id: str) -> Report:
         # update project
         if project_id:
             project = Project.get_by_id_and_check(project_id)
             if report.last_sync_at is not None and project != report.project:
-                raise BadRequestException("You can't change the project of an experiment that has been synced")
+                raise BadRequestException(
+                    "You can't change the project of report that has been synced. You must unlink it from the project first.")
             report.project = project
 
         # if the project was removed
         if project_id is None and report.project is not None:
 
             if report.last_sync_at is not None:
-                # delete the report in space
-                SpaceService.delete_report(project_id=report.project.id, report_id=report.id)
+                cls._unsynchronize_with_space(report, report.project.id)
             report.project = None
 
         # check that all linked experiment are in same project
@@ -154,7 +154,10 @@ class ReportService():
         for experiment in experiments:
             exp_project_id = experiment.project.id if experiment.project else None
             if exp_project_id != project_id:
-                ExperimentService.update_experiment_project(experiment.id, project_id)
+                ExperimentService.update_experiment_project(experiment.id,
+                                                            project_id, check_report=False)
+
+        return report
 
     @classmethod
     @transaction()
@@ -344,6 +347,16 @@ class ReportService():
             save_report_dto.resource_views[resource_view["id"]] = view_result.to_dto()
         # Save the experiment in space
         SpaceService.save_report(report.project.id, save_report_dto, file_paths)
+
+        return report
+
+    @classmethod
+    def _unsynchronize_with_space(cls, report: Report, project_id: str) -> Report:
+        # delete the report in space
+        SpaceService.delete_report(project_id=project_id, report_id=report.id)
+
+        report.last_sync_at = None
+        report.last_sync_by = None
 
         return report
 

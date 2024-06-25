@@ -157,8 +157,17 @@ class ReportExperiment(BaseModel):
         return cls.select().where((cls.experiment == experiment_id) & (cls.report == report_id))
 
     @classmethod
-    def find_reports_by_experiments(cls, experiment_ids: List[str]) -> List[Report]:
-        list_: List[ReportExperiment] = list(cls.select().where(cls.experiment.in_(experiment_ids)))
+    def find_reports_by_experiments(cls, experiment_id: List[str]) -> List[Report]:
+        list_: List[ReportExperiment] = list(cls.select().where(cls.experiment.in_(experiment_id)))
+
+        return [x.report for x in list_]
+
+    @classmethod
+    def find_synced_reports_by_experiment(cls, experiment_id: str) -> List[Report]:
+        list_: List[ReportExperiment] = list(cls.select().where(
+            (cls.experiment == experiment_id) & (cls.report.last_sync_at.is_null(False)))
+            .join(Report)
+        )
 
         return [x.report for x in list_]
 

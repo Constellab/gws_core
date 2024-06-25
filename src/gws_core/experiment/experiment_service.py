@@ -8,6 +8,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
+from gws_core.report.report import ReportExperiment
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.plug import Sink
 from gws_core.task.task_input_model import TaskInputModel
@@ -125,21 +126,6 @@ class ExperimentService():
     ################################### UPDATE ##############################
 
     @classmethod
-    def update_experiment(cls, experiment_id: str, experiment_dto: ExperimentSaveDTO) -> Experiment:
-        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
-
-        experiment.check_is_updatable()
-
-        experiment.title = experiment_dto.title.strip()
-
-        experiment = cls._update_experiment_project(experiment, experiment_dto.project_id)
-        ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                            object_type=ActivityObjectType.EXPERIMENT,
-                                            object_id=experiment.id)
-
-        return experiment
-
-    @classmethod
     def update_experiment_title(cls, experiment_id: str, title: str) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
@@ -154,12 +140,13 @@ class ExperimentService():
         return experiment
 
     @classmethod
-    def update_experiment_project(cls, experiment_id: str, project_id: Optional[str]) -> Experiment:
+    def update_experiment_project(cls, experiment_id: str, project_id: Optional[str],
+                                  check_report: bool = True) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         experiment.check_is_updatable()
 
-        experiment = cls._update_experiment_project(experiment, project_id)
+        experiment = cls._update_experiment_project(experiment, project_id, check_reports=check_report)
 
         ActivityService.add_or_update_async(ActivityType.UPDATE,
                                             object_type=ActivityObjectType.EXPERIMENT,
@@ -169,7 +156,9 @@ class ExperimentService():
 
     @classmethod
     @transaction()
-    def _update_experiment_project(cls, experiment: Experiment, new_project_id: Optional[str]) -> Experiment:
+    def _update_experiment_project(cls, experiment: Experiment,
+                                   new_project_id: Optional[str],
+                                   check_reports: bool) -> Experiment:
         project_changed = False
         project_removed = False
         old_project: Project = experiment.project
@@ -181,7 +170,7 @@ class ExperimentService():
 
             if experiment.last_sync_at is not None and new_project != experiment.project:
                 raise BadRequestException(
-                    "You can't change the project of an experiment that has been synced")
+                    "You can't change the project of an experiment that has been synced. Please unlink the experiment from the project first.")
 
             if experiment.project != new_project:
                 project_changed = True
@@ -205,10 +194,8 @@ class ExperimentService():
         # if the project was removed
         if project_removed:
             if experiment.last_sync_at is not None:
-                # delete the experiment in space
-                SpaceService.delete_experiment(
-                    project_id=old_project.id, experiment_id=experiment.id)
-            experiment.project = None
+                cls._unsynchronize_with_space(experiment, old_project.id,
+                                              check_reports=check_reports)
 
         return experiment
 
@@ -296,6 +283,26 @@ class ExperimentService():
         SpaceService.save_experiment(
             experiment.project.id, save_experiment_dto)
         return experiment
+
+    @classmethod
+    @transaction()
+    def _unsynchronize_with_space(cls, experiment: Experiment, project_id: str,
+                                  check_reports: bool) -> Experiment:
+
+        if check_reports:
+            synced_associated_reports = ReportExperiment.find_synced_reports_by_experiment(experiment.id)
+
+            if len(synced_associated_reports) > 0:
+                raise BadRequestException(
+                    "You can't unsynchronize an experiment that has associated reports synced in space. Please unsync the reports first.")
+
+        # Delete the experiment in space
+        SpaceService.delete_experiment(project_id, experiment.id)
+
+        # clear sync info
+        experiment.last_sync_at = None
+        experiment.last_sync_by = None
+        return experiment.save()
 
     ################################### ARCHIVE  ##############################
 
