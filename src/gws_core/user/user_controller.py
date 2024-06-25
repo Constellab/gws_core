@@ -30,7 +30,7 @@ def read_user_me(_=Depends(AuthService.check_user_access_token)) -> UserFullDTO:
 
 
 @core_app.post("/login", tags=["User"], summary="Login to the lab by requesting space")
-def login(credentials: UserCredentialsDTO) -> JSONResponse:
+def login(credentials: UserCredentialsDTO) -> Response:
     """
     Log the user using space
     """
@@ -39,7 +39,7 @@ def login(credentials: UserCredentialsDTO) -> JSONResponse:
 
 
 @core_app.post("/login-2fa", tags=["User"], summary="Login 2FA to the lab by requesting space")
-def login_2_fa(credentials: UserCredentials2Fa) -> JSONResponse:
+def login_2_fa(credentials: UserCredentials2Fa) -> Response:
     """
     Login 2FA to the lab by requesting space
     """

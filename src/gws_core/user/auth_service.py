@@ -27,7 +27,7 @@ from .user_service import UserService
 class AuthService():
 
     @classmethod
-    def login(cls, credentials: UserCredentialsDTO) -> JSONResponse:
+    def login(cls, credentials: UserCredentialsDTO) -> Response:
 
         # Check if user exist in the lab
         user: User
@@ -55,7 +55,7 @@ class AuthService():
             return JSONResponse(content=content)
 
     @classmethod
-    def login_with_2fa(cls, credentials: UserCredentials2Fa) -> JSONResponse:
+    def login_with_2fa(cls, credentials: UserCredentials2Fa) -> Response:
 
         # Check if the code is valid
         user_space: UserSpace = SpaceService.check_2_fa(credentials)
