@@ -7,7 +7,7 @@ from gws_core.core.model.model_dto import PageDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.report.template.report_template_dto import (
     CreateReportTemplateDTO, CreateReportTemplateFromReportDTO,
-    ReportTemplateDTO, ReportTemplateFullDTO)
+    ReportTemplateDTO)
 from gws_core.report.template.report_template_service import \
     ReportTemplateService
 
@@ -29,32 +29,38 @@ def create_from_report(
 
 
 @core_app.put("/report-template/{report_id}/title", tags=["Report template"],
-              summary="Update the title of a report")
+              summary="Update the title of a report template")
 def update_title(report_id: str,
                  body: CreateReportTemplateDTO,
                  _=Depends(AuthService.check_user_access_token)) -> ReportTemplateDTO:
     return ReportTemplateService.update_title(report_id, body.title).to_dto()
 
 
-@core_app.put("/report-template/{report_id}/content", tags=["Report template"], summary="Update a report content")
+@core_app.put("/report-template/{report_id}/content", tags=["Report template"],
+              summary="Update a report template content")
 def update_content(
-        report_id: str, content: RichTextDTO, _=Depends(AuthService.check_user_access_token)) -> ReportTemplateDTO:
-    return ReportTemplateService.update_content(report_id, content).to_dto()
+        report_id: str, content: RichTextDTO, _=Depends(AuthService.check_user_access_token)) -> RichTextDTO:
+    return ReportTemplateService.update_content(report_id, content).content
 
 
-@core_app.delete("/report-template/{report_id}", tags=["Report template"], summary="Delete a report")
+@core_app.delete("/report-template/{report_id}", tags=["Report template"], summary="Delete a reporttemplate ")
 def delete(report_id: str, _=Depends(AuthService.check_user_access_token)) -> None:
     ReportTemplateService.delete(report_id)
 
 ################################################# GET ########################################
 
 
-@core_app.get("/report-template/{id}", tags=["Report template"], summary="Get a report", response_model=None)
-def get_by_id(id: str, _=Depends(AuthService.check_user_access_token)) -> ReportTemplateFullDTO:
-    return ReportTemplateService.get_by_id_and_check(id).to_full_dto()
+@core_app.get("/report-template/{id_}", tags=["Report template"], summary="Get a report template", response_model=None)
+def get_by_id(id_: str, _=Depends(AuthService.check_user_access_token)) -> ReportTemplateDTO:
+    return ReportTemplateService.get_by_id_and_check(id_).to_dto()
 
 
-@core_app.post("/report-template/search", tags=["Report template"], summary="Advanced search for reports")
+@core_app.get("/report-template/{id_}/content", tags=["Report template"], summary="Get a report", response_model=None)
+def get_content(id_: str, _=Depends(AuthService.check_user_access_token)) -> RichTextDTO:
+    return ReportTemplateService.get_by_id_and_check(id_).content
+
+
+@core_app.post("/report-template/search", tags=["Report template"], summary="Advanced search for report templates")
 def search(search_dict: SearchParams,
            page: Optional[int] = 1,
            number_of_items_per_page: Optional[int] = 20,
@@ -67,7 +73,7 @@ def search(search_dict: SearchParams,
 
 
 @core_app.get("/report-template/search-name/{name}", tags=["Report template"],
-              summary="Search for report by name")
+              summary="Search for report template by name")
 def search_by_name(name: str,
                    page: Optional[int] = 1,
                    number_of_items_per_page: Optional[int] = 20,

@@ -8,10 +8,6 @@ class ReportTemplateDTO(ModelWithUserDTO):
     title: str
 
 
-class ReportTemplateFullDTO(ReportTemplateDTO):
-    content: dict
-
-
 class CreateReportTemplateDTO(BaseModelDTO):
     title: str
 
