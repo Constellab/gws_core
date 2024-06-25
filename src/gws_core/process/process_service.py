@@ -8,7 +8,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_service import LogService
-from gws_core.lab.monitor.monitor_dto import MonitorBetweenDateDTO
+from gws_core.lab.monitor.monitor_dto import MonitorBetweenDateGraphicsDTO
 from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.process.process_model import ProcessModel
 from gws_core.process.process_types import ProcessStatus
@@ -46,7 +46,7 @@ class ProcessService:
         return LogService.get_logs_between_dates(start_date, end_date, from_experiment_id=process_model.experiment.id)
 
     @classmethod
-    def get_monitor_of_process(cls, process_type: ProcessType, process_id: str) -> MonitorBetweenDateDTO:
+    def get_monitor_of_process(cls, process_type: ProcessType, process_id: str, timezone_number: float = 0.0) -> MonitorBetweenDateGraphicsDTO:
         process_model: ProcessModel = cls.get_and_check_process_model(process_type, process_id)
 
         if process_model.status == ProcessStatus.DRAFT:
@@ -54,7 +54,7 @@ class ProcessService:
 
         from_date = process_model.started_at
         to_date = process_model.ended_at or DateHelper.now_utc()
-        return MonitorService.get_monitor_data_between_dates(from_date, to_date)
+        return MonitorService.get_monitor_data_graphics_between_dates(from_date, to_date, utc_number=timezone_number)
 
     @classmethod
     def get_and_check_process_model(cls, process_type: ProcessType, process_id: str) -> ProcessModel:

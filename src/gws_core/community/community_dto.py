@@ -1,19 +1,23 @@
+from typing import Any, Dict, List, Optional
+
 from gws_core.core.model.model_dto import BaseModelDTO
-from typing import Dict, Optional, List, Any
+
 
 class CommunityLiveTaskSpaceDTO(BaseModelDTO):
     id: str
     name: str
 
+
 class CommunityLiveTaskDTO(BaseModelDTO):
     id: str
     title: str
-    space: Optional[CommunityLiveTaskSpaceDTO]
-    created_at: Optional[str]
-    last_modified_at: Optional[str]
-    created_by: Optional[object]
+    space: Optional[CommunityLiveTaskSpaceDTO] = None
+    created_at: Optional[str] = None
+    last_modified_at: Optional[str] = None
+    created_by: Optional[object] = None
     latest_publish_version: int
-    description: Optional[object]
+    description: Optional[object] = None
+
 
 class CommunityLiveTaskVersionDTO(BaseModelDTO):
     id: str
@@ -22,15 +26,17 @@ class CommunityLiveTaskVersionDTO(BaseModelDTO):
     environment: Optional[str]
     params: Optional[List[str]]
     code: str
-    input_specs: Dict
-    output_specs: Dict
-    config_specs: Dict
+    input_specs: Optional[Dict]
+    output_specs: Optional[Dict]
+    config_specs: Optional[Dict]
     live_task: CommunityLiveTaskDTO
+
 
 class CommunityCreateLiveTaskDTO(BaseModelDTO):
     title: str
     type: str
     space: Any
+
 
 class CommunityLiveTaskVersionCreateResDTO(BaseModelDTO):
     id: str
