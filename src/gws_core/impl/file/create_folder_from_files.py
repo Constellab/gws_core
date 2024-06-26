@@ -22,7 +22,7 @@ from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator(unique_name="folder_1_path", human_name="Create folder from files",
+@task_decorator(unique_name="CreateFolderFromFile", human_name="Create folder from files",
                 short_description="Create a folder from a list of files or folders.")
 class CreateFolderFromFiles(Task):
     """
@@ -51,6 +51,8 @@ class CreateFolderFromFiles(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         temp_dir: str = None
+
+        # get the folder name from the config or generate a temp folder
         folder_name = params.get_value('folder_name')
         if folder_name:
             temp_dir = os.path.join(Settings.get_root_temp_dir(), folder_name)
@@ -67,6 +69,7 @@ class CreateFolderFromFiles(Task):
                 self.log_error_message(f"Resource {i} is not a file nor a folder")
                 continue
 
+            # retrive the node name from config or use the base name
             node_name: str = None
             if len(configs) > i and configs[i] and configs[i]['filename']:
                 node_name = configs[i]['filename']
