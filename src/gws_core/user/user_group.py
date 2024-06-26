@@ -7,7 +7,7 @@ from ..core.exception.exceptions.bad_request_exception import \
 # Enum to define the role needed for a protocol
 class UserGroup(Enum):
     SYSUSER = "SYSUSER"
-    OWNER = "OWNER"
+    ADMIN = "ADMIN"
     USER = "USER"
 
     @classmethod
@@ -21,7 +21,7 @@ class UserGroup(Enum):
 
         switcher = {
             UserGroup.SYSUSER: 0,
-            UserGroup.OWNER: 5,
+            UserGroup.ADMIN: 5,
             UserGroup.USER: 15,
         }
         return switcher.get(user_group)

@@ -66,14 +66,14 @@ class TestUser(BaseTestCase):
         user.email = "testpol@gencovery.com"
         user.first_name = "Michel"
         user.last_name = "Pol"
-        user.group = UserGroup.OWNER
+        user.group = UserGroup.ADMIN
         user.save()
 
         user2: User = User()
         user2.email = "testbeau@gencovery.com"
         user2.first_name = "Jack"
         user2.last_name = "Beauregard"
-        user2.group = UserGroup.OWNER
+        user2.group = UserGroup.ADMIN
         user2.save()
 
         user3: User = User()
@@ -86,7 +86,7 @@ class TestUser(BaseTestCase):
         UserService.deactivate_user(user.id)
         UserService.deactivate_user(user3.id)
 
-        # can't deactivate the last owner
+        # can't deactivate the last admin
         self.assertRaises(BadRequestException, UserService.deactivate_user, user2.id)
 
     def test_user_search(self):

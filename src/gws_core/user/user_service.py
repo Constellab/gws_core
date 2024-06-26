@@ -66,10 +66,10 @@ class UserService():
         if not is_active:
             if user.is_sysuser:
                 raise BadRequestException("Cannot deactivate the system user")
-            if user.is_owner:
-                # check if this is the last owner
-                if User.select().where((User.group == UserGroup.OWNER) & (User.is_active == True)).count() == 1:
-                    raise BadRequestException("Cannot deactivate the last owner")
+            if user.is_admin:
+                # check if this is the last admin
+                if User.select().where((User.group == UserGroup.ADMIN) & (User.is_active == True)).count() == 1:
+                    raise BadRequestException("Cannot deactivate the last admin")
 
         user.is_active = is_active
         return user.save()

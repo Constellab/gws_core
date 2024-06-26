@@ -88,14 +88,14 @@ class CurrentUserService:
             raise UnauthorizedException(detail="Unauthorized: sysuser required")
 
     @classmethod
-    def check_is_owner(cls):
+    def check_is_admin(cls):
         try:
             user = CurrentUserService.get_and_check_current_user()
         except:
-            raise UnauthorizedException(detail="Unauthorized: owner required")
+            raise UnauthorizedException(detail="Unauthorized: admin required")
 
-        if not user.is_owner:
-            raise UnauthorizedException(detail="Unauthorized: owner required")
+        if not user.is_admin:
+            raise UnauthorizedException(detail="Unauthorized: admin required")
 
 
 class AuthenticateUser:

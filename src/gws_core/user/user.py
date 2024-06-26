@@ -13,17 +13,6 @@ from .user_group import UserGroup
 
 @final
 class User(Model):
-    """
-    User class
-
-    :property email: The user email
-    :type email: `str`
-    :property group: The user group (`sysuser`, `admin`, `owner` or `user`)
-    :type group: `str`
-    :property is_active: True if the is active, False otherwise
-    :type is_active: `bool`
-    """
-
     email: str = CharField(default=False, index=True)
     first_name: str = CharField(default=False)
     last_name: str = CharField(default=False)
@@ -68,8 +57,8 @@ class User(Model):
         return " ".join([self.first_name, self.last_name]).strip()
 
     @property
-    def is_owner(self):
-        return self.group == UserGroup.OWNER
+    def is_admin(self):
+        return self.group == UserGroup.ADMIN
 
     @property
     def is_sysuser(self):
