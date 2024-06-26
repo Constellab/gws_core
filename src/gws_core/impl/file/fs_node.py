@@ -18,6 +18,7 @@ class FSNode(Resource):
     """
     Node class to manage resources that are stored in the server (as file or folder)
 
+    ## Technical notes:
     /!\ The class that extend file can only have a path and  file_store_id attributes. Other attributes will not be
     provided when creating the resource
     """
@@ -30,6 +31,11 @@ class FSNode(Resource):
     is_symbolic_link: bool = BoolRField(default_value=False)
 
     def __init__(self, path: str = ""):
+        """ Create a new FSNode
+
+        :param path: absolute path to the file, defaults to ""
+        :type path: str, optional
+        """
         super().__init__()
 
         if path is None:
@@ -38,7 +44,7 @@ class FSNode(Resource):
         if not isinstance(path, str) and not isinstance(path, PosixPath):
             raise ValueError("The path must be a string")
 
-        self.path = path
+        self.path = str(path)
         self.file_store_id = None
 
     def get_size(self) -> int:
@@ -49,19 +55,29 @@ class FSNode(Resource):
 
     @abstractmethod
     def copy_to_path(self, destination: str) -> str:
-        pass
+        """
+        Copy the file or folder to the destination and rename the base name
+
+        :param destination: complete path to the destination
+        :type destination: str
+        :return: the new path
+        :rtype: str
+        """
 
     def copy_to_directory(self, destination: str) -> str:
-        """Copy the node to the directory and keep the same base name
+        """
+        Copy the node to the directory and keep the same base name
 
-        :param destination: _description_
+        :param destination: the destination directory
         :type destination: str
         """
         return self.copy_to_path(os.path.join(destination, self.get_base_name()))
 
     @abstractmethod
     def get_base_name(self) -> str:
-        pass
+        """
+        Get the name of the file or folder without the path
+        """
 
     def get_default_name(self) -> str:
         return self.get_base_name()

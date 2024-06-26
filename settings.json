@@ -31,7 +31,7 @@
                   {"name": "python-multipart", "version": "0.0.9"},
                   {"name": "starlette-context", "version": "0.3.6"},
                   {"name": "uvicorn", "version": "0.30.1"},
-                  {"name": "charset-normalizer", "version": "3.3.2"},
+                  {"name": "charset-normalizer", "version": "2.1.1"},
                   {"name": "dill", "version": "0.3.8"},
                   {"name": "numpy", "version": "1.26.4"},
                   {"name": "pandas", "version": "2.2.2"},

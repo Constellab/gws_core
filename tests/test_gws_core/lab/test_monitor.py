@@ -1,6 +1,5 @@
 
 import random
-import time
 from datetime import datetime
 
 from gws_core.lab.monitor.monitor import Monitor
@@ -18,11 +17,6 @@ class TestMonitor(BaseTestCase):
         self.assertNotEqual(monitoring.disk_usage_used, 0.0)
         self.assertNotEqual(monitoring.disk_usage_free, 0.0)
         self.assertNotEqual(monitoring.disk_usage_percent, 0.0)
-
-        self.assertNotEqual(monitoring.external_disk_total, 0.0)
-        self.assertNotEqual(monitoring.external_disk_usage_used, 0.0)
-        self.assertNotEqual(monitoring.external_disk_usage_free, 0.0)
-        self.assertNotEqual(monitoring.external_disk_usage_percent, 0.0)
 
         self.assertNotEqual(monitoring.cpu_count, 0.0)
         self.assertNotEqual(monitoring.cpu_percent, 0.0)

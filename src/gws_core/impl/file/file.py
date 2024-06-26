@@ -24,19 +24,19 @@ from .fs_node import FSNode
                     style=TypingStyle.material_icon("description"))
 class File(FSNode):
     """
-    File class.
+    Resource that represents a file in the system.
 
+
+    ## Technical notes:
     /!\ The class that extend file can only have a path and  file_store_id attributes. Other attributes will not be
-    provided when creating the resource
+    provided when creating the resource.
     """
 
-    _mode = "t"
-
+    __default_extensions__: List[str] = []
     """
     Override to define the default extensions of the file
     When upoading a file, if the file extension matches this list, this type will be used as default
     """
-    __default_extensions__: List[str] = []
 
     TEXT_VIEW_NB_LINES = 100
     PAGE_PARAM_NAME = 'line_number'
@@ -48,9 +48,6 @@ class File(FSNode):
     @property
     def extension(self):
         return FileHelper.get_extension(self.path)
-
-    def is_large(self):
-        return FileHelper.is_large(self.path)
 
     def is_json(self):
         return FileHelper.is_json(self.path)
@@ -89,11 +86,21 @@ class File(FSNode):
         return destination
 
     def get_base_name(self) -> str:
+        """
+        Get file name with extension
+        """
         return FileHelper.get_name_with_extension(self.path)
 
     def open(self, mode: str, encoding: str = None) -> Any:
         """
         Open the file
+
+        :param mode: mode of the file
+        :type mode: str
+        :param encoding: encoding used to open the file. If none the encoding is automatically detected with charset-normalizer, defaults to None
+        :type encoding: str, optional
+        :return: _description_
+        :rtype: Any
         """
 
         if encoding is None:
@@ -109,10 +116,25 @@ class File(FSNode):
                         f"Cannot create directory {self.dir}")
             return open(self.path, mode="w+", encoding=encoding)
 
-    def read_part(self, from_line: int = 0, to_line: int = 10) -> str:
+    def read_part(self, from_line: int = 0, to_line: int = 10,
+                  encoding: str = None,
+                  mode: str = 'r+t') -> str:
+        """
+        Read a part of the file
+
+        :param from_line: start line, defaults to 0
+        :type from_line: int, optional
+        :param to_line: end line (excluded), defaults to 10
+        :type to_line: int, optional
+        :param encoding: encoding used to read the file. If none the encoding is automatically detected with charset-normalizer, defaults to None
+        :type encoding: str, optional
+        :param mode: mode of the file, defaults to 'r+t'
+        :type mode: str, optional
+        :return: _description_
+        :rtype: str
+        """
         text = ""
-        mode = "r+" + self._mode
-        with self.open(mode) as file:
+        with self.open(mode, encoding=encoding) as file:
             for index, line in enumerate(file):
                 if index >= from_line and index < to_line:
                     text += line
@@ -120,13 +142,49 @@ class File(FSNode):
                     break
         return text
 
-    def read(self, size: int = -1) -> AnyStr:
-        mode = "r+"+self._mode
-        with self.open(mode) as file:
+    def read(self, size: int = -1, encoding: str = None,
+             mode: str = 'r+t') -> AnyStr:
+        """
+        Read the file
+
+        :param size: size of the file to read, defaults to -1
+        :type size: int, optional
+        :param encoding: encoding used to read the file. If none the encoding is automatically detected with charset-normalizer, defaults to None
+        :type encoding: str, optional
+        :param mode: mode of the file, defaults to 'r+t'
+        :type mode: str, optional
+        :return: _description_
+        :rtype: AnyStr
+        """
+
+        with self.open(mode, encoding=encoding) as file:
             data = file.read(size)
         return data
 
+    def write(self, data: str, encoding: str = None,
+              mode: str = 'a+t'):
+        """
+        Write data to the file
+
+        :param data: data to write
+        :type data: str
+        :param encoding: encoding used to write the file. If none the encoding is automatically detected with charset-normalizer, defaults to None
+        :type encoding: str, optional
+        :param mode: mode of the file, defaults to 'a+t'
+        :type mode: str, optional
+        """
+        with self.open(mode, encoding=encoding) as fp:
+            fp.write(data)
+
     def detect_file_encoding(self, default_encoding: str = 'utf-8') -> str:
+        """
+        Detect the encoding of the file using charset-normalizer
+
+        :param default_encoding: default encoding to use if the encoding is not detected, defaults to 'utf-8'
+        :type default_encoding: str, optional
+        :return: _description_
+        :rtype: str
+        """
         return FileHelper.detect_file_encoding(self.path, default_encoding)
 
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json")
@@ -156,6 +214,14 @@ class File(FSNode):
         return self.get_default_view(params.get('line_number'))
 
     def get_default_view(self, page: int = 1) -> View:
+        """
+        Get the default view of the file.
+
+        :param page: page number, defaults to 1
+        :type page: int, optional
+        :return: the default view
+        :rtype: View
+        """
         if page is None:
             page = 1
         # specific extension
@@ -197,11 +263,3 @@ class File(FSNode):
             previous_page=max(start_line - self.TEXT_VIEW_NB_LINES, 1),
             page_param_name=self.PAGE_PARAM_NAME
         ))
-
-    def write(self, data: str):
-        """
-        Write in the file
-        """
-        mode = "a+"+self._mode
-        with self.open(mode) as fp:
-            fp.write(data)

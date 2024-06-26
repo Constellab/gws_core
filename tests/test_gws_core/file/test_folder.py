@@ -60,6 +60,12 @@ class TestFolder(BaseTestCase):
         self.assertTrue(isinstance(result, SimpleTextView))
         self.assertEqual(result._data.text, 'test')
 
+        # Test creating a sub file and sub folder directly
+        sub_file_2 = folder.create_dir_if_not_exist('sub_folder/test.txt')
+        sub_folder_2 = folder.create_empty_file_if_not_exist('sub_folder2/test.txt')
+        self.assertTrue(folder.has_node('sub_folder/test.txt'))
+        self.assertTrue(folder.has_node('sub_folder2/test.txt'))
+
     def test_folder_process(self):
         experiment: IExperiment = IExperiment()
         experiment.get_protocol().add_process(CreateFolderTest, 'create_folder')

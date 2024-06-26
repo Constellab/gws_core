@@ -22,33 +22,88 @@ from .fs_node import FSNode
 @resource_decorator("Folder", human_name="Folder",
                     style=TypingStyle.material_icon("folder"))
 class Folder(FSNode):
+    """
+    Resource that represents a folder in the system.
 
-    def has_node(self, node_name: str) -> bool:
-        return FileHelper.exists_on_os(self.get_sub_path(node_name))
 
-    def create_empty_file_if_not_exist(self, file_name: str) -> Path:
-        return FileHelper.create_empty_file_if_not_exist(self.get_sub_path(file_name))
+    ## Technical notes:
+    /!\ The class that extend folder can only have a path and  file_store_id attributes. Other attributes will not be
+    provided when creating the resource.
+    """
 
-    def create_dir_if_not_exist(self, dir_name: str) -> Path:
-        return FileHelper.create_dir_if_not_exist(self.get_sub_path(dir_name))
+    def has_node(self, sub_node_path: str) -> bool:
+        """
+        Check if the sub node exists
+
+        :param sub_node_path: relative path of the sub node
+        :type sub_node_path: str
+        :return: True if the sub node exists
+        :rtype: bool
+        """
+        return FileHelper.exists_on_os(self.get_sub_path(sub_node_path))
+
+    def create_empty_file_if_not_exist(self, file_path: str) -> Path:
+        """
+        Create an empty file inside this folder if it does not exist.
+        Creates intermediate directories if needed.
+
+        :param file_path: relative path of the file
+        :type file_path: str
+        :return: the path of the file
+        :rtype: Path
+        """
+        return FileHelper.create_empty_file_if_not_exist(self.get_sub_path(file_path))
+
+    def create_dir_if_not_exist(self, dir_path: str) -> Path:
+        """
+        Create a directory inside this folder if it does not exist.
+        Creates intermediate directories if needed.
+
+        :param dir_name: relative path of the directory
+        :type dir_name: str
+        :return: the path of the directory
+        :rtype: Path
+        """
+        return FileHelper.create_dir_if_not_exist(self.get_sub_path(dir_path))
 
     def list_dir(self) -> List[str]:
-        """Return the name of files and directories inside this folder
+        """
+        List the files and directories inside this folder (not recursive)
+
+        :return: List of files and directories
+        :rtype: List[str]
         """
         return os.listdir(self.path)
 
     def list_dir_path(self) -> List[str]:
-        """Return the path of files and directories inside this folder
+        """
+        List the files and directories absolute path inside this folder (not recursive)
+
+        :return: List of absolute path files and directories
+        :rtype: List[str]
         """
         return list(map(self.get_sub_path,  self.list_dir()))
 
     def get_sub_path(self, sub_node_path: str) -> str:
-        """Get the path of a sub node, in the folder
+        """
+        Get the absolute path of the sub node
+
+        :param sub_node_path: relative path of the sub node
+        :type sub_node_path: str
+        :return: the absolute path of the sub node
+        :rtype: str
         """
         return os.path.join(self.path, sub_node_path)
 
     def get_sub_node(self, sub_node_path: str) -> FSNode:
-        """Get the sub node of this folder, with the given path
+        """
+        Get the sub node (file or folder) at the given path as a FSNode
+
+        :param sub_node_path: relative path of the sub node
+        :type sub_node_path: str
+        :raises BadRequestException: If the sub node does not exist
+        :return: the sub node
+        :rtype: FSNode
         """
         sub_node_path = self.get_sub_path(sub_node_path)
 
@@ -61,12 +116,24 @@ class Folder(FSNode):
             return Folder(sub_node_path)
 
     def copy_to_path(self, destination: str) -> str:
-        """Copy this folder to the given destination
+        """
+        Copy the folder to the destination and rename the base name
+
+        :param destination: complete path to the destination
+        :type destination: str
+        :return: the new path
+        :rtype: str
         """
         FileHelper.copy_dir(self.path, destination)
         return destination
 
     def get_base_name(self) -> str:
+        """
+        Get the name of the folder without the path
+
+        :return: the name of the folder
+        :rtype: str
+        """
         return FileHelper.get_dir_name(self.path)
 
     @view(view_type=LocalFolderView, human_name="View folder content",
@@ -89,6 +156,6 @@ class Folder(FSNode):
             raise BadRequestException("The path is not a file")
 
         sub_file = File(complete_path)
-        view = sub_file.get_default_view(params.get('line_number', 1))
-        view.set_title(sub_file.get_default_name())
-        return view
+        view_ = sub_file.get_default_view(params.get('line_number', 1))
+        view_.set_title(sub_file.get_default_name())
+        return view_
