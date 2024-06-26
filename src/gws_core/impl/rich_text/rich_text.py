@@ -40,12 +40,20 @@ class RichText(SerializableObjectJson):
         """
         return [block for block in self.get_blocks() if block.type == block_type]
 
-    def _append_block(self, block: RichTextBlock) -> None:
-        """Append an element to the rich text content
+    def append_block(self, block: RichTextBlock) -> int:
+        """
+        Append a block to the rich text content
+
+        :param block: block to add
+        :type block: RichTextBlock
+        :return: index of the new block
+        :rtype: int
         """
         if not block.id or self.get_block_by_id(block.id) is not None:
             block.id = self.generate_id()
         self._content.blocks.append(block)
+
+        return len(self.get_blocks()) - 1
 
     def _insert_block_at_index(self, index: int, block: RichTextBlock) -> None:
         """Insert an element in the rich text content at the given index
@@ -210,7 +218,7 @@ class RichText(SerializableObjectJson):
 
         block: RichTextBlock = self.create_block(self.generate_id(), RichTextBlockType.RESOURCE_VIEW, resource_view)
         if parameter_name is None:
-            self._append_block(block)
+            self.append_block(block)
         else:
             self._insert_block_at_variable(parameter_name, block)
 
@@ -219,14 +227,26 @@ class RichText(SerializableObjectJson):
     def add_paragraph(self, text: str) -> None:
         """Add a paragraph to the rich text content
         """
-        self._append_block(self.create_paragraph(self.generate_id(), text))
+        self.append_block(self.create_paragraph(self.generate_id(), text))
 
     ##################################### HEADER #########################################
 
     def add_header(self, text: str, level: RichTextParagraphHeaderLevel) -> None:
         """Add a header to the rich text content
         """
-        self._append_block(self.create_header(self.generate_id(), text, level))
+        self.append_block(self.create_header(self.generate_id(), text, level))
+
+    ##################################### FIGURE #########################################
+
+    def add_figure(self, figure_data: RichTextFigureData,
+                   parameter_name: str = None) -> None:
+        """Add a figure to the rich text content
+        """
+        block: RichTextBlock = self.create_block(self.generate_id(), RichTextBlockType.FIGURE, figure_data)
+        if parameter_name is None:
+            self.append_block(block)
+        else:
+            self._insert_block_at_variable(parameter_name, block)
 
     ##################################### OTHERS #########################################
 
@@ -256,7 +276,7 @@ class RichText(SerializableObjectJson):
 
     def append_rich_text(self, rich_text: 'RichText') -> None:
         for block in rich_text.get_blocks():
-            self._append_block(block)
+            self.append_block(block)
 
     ##################################### SERIALIZATION / DESERIALIZATION #########################################
 

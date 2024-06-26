@@ -77,14 +77,11 @@ class Resource(Base):
         for key, r_field in properties.items():
             setattr(self, key, r_field.get_default_value())
 
-        # call init
-        self.init()
-
     def init(self) -> None:
         """
         This can be overwritten to perform custom initialization of the resource.
-        This method is called just after the __init__ (constructor) of the resource.
-        The default values of RFields are set before this method is called.
+        This method is called after the __init__ (constructor) of the resource.
+        The values of RFields are set when this method is called.
         """
 
     @view(view_type=JSONView, human_name="View resource", short_description="View the complete resource as json", default_view=True)

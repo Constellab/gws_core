@@ -385,9 +385,16 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
             # Move the node to the LocalFileStore and create fs node model
             node = LocalFileStore.get_default_instance().add_node_from_path(resource.path, name)
         else:
+
             # On uploaded resource, the node is already in the file store, no need to add it
             node = resource
             node.file_store_id = local_file_store.id
+
+        # Verify if a node with same path already exists
+        fs_node_model: FSNodeModel = FSNodeModel.find_by_path(node.path)
+        if fs_node_model:
+            raise Exception(
+                f"Attempting to save a new File or Folder resource with path '{node.path}' that already exists in the database. Another resource with the same path already exists.")
 
         # update the resource path and file store
         resource.path = node.path

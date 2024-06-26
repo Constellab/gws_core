@@ -21,7 +21,7 @@ class RichTextUploadImageResultDTO(BaseModelDTO):
 
 
 class RichTextFileService():
-    """Service to store file assosicated to a rich text (report, report template, enote)
+    """Service to store file assosicated to a rich text (report, report template, RichTextParam)
 
     :return: [description]
     :rtype: [type]
@@ -30,11 +30,10 @@ class RichTextFileService():
     _dir_name = 'report'
 
     @classmethod
-    def upload_file(cls, file: UploadFile) -> RichTextUploadImageResultDTO:
-        image = None
+    def upload_image(cls, file: UploadFile) -> RichTextUploadImageResultDTO:
+        image: Image.Image = None
         try:
             image = Image.open(file.file)
-            image_size = image.size
         except Exception:
             raise BadRequestException('The uploaded file is not an image')
 
@@ -44,8 +43,24 @@ class RichTextFileService():
             extension = 'png'
         else:
             extension = FileHelper.get_extension(file.filename)
-        filename = StringHelper.generate_uuid() + '_' + \
-            str(DateHelper.now_utc_as_milliseconds()) + '.' + extension
+
+        return cls.save_image(image, extension)
+
+    @classmethod
+    def save_image(cls, image: Image.Image, extension: str) -> RichTextUploadImageResultDTO:
+        """
+        Method to save the image of a report to the file system
+
+        :param image: _description_
+        :type image: Image.Image
+        :param extension: _description_
+        :type extension: str
+        :return: _description_
+        :rtype: RichTextUploadImageResultDTO
+        """
+        image_size = image.size
+
+        filename = f"{StringHelper.generate_uuid()}_{str(DateHelper.now_utc_as_milliseconds())}.{extension}"
 
         dest_dir = cls._init_dir()
         file_path = os.path.join(dest_dir, filename)
