@@ -122,7 +122,7 @@ class TableOperationHelper():
                     f"The operation operation column '{operation_calculations_column}' does not exist in the operation table, please check your configuration")
 
         for index, row in operation_df.iterrows():
-            operation: str = str(row[operation_calculations_column])
+            operation: str = str(row.iloc[operation_calculations_column])
 
             # if we throw an error if the column is unknown, don't touch the operation
             if error_on_unknown_column:
@@ -137,7 +137,7 @@ class TableOperationHelper():
                     clean_operation = operation
 
             # create the operation
-            operations.append(f"{row[operation_name_column]} = {clean_operation}")
+            operations.append(f"{row.iloc[operation_name_column]} = {clean_operation}")
 
         return TableOperationHelper.column_operations(table, operations, keep_original_columns)
 

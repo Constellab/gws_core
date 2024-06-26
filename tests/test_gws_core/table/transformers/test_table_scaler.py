@@ -55,13 +55,13 @@ class TestTableScaler(TestCase):
         result = DataframeScalerHelper.scale_by_columns(df, func="standard")
         # mean of the result should be 0
         mean_result = result.mean().round(3)
-        self.assertEqual(mean_result[0], 0.0)
-        self.assertEqual(mean_result[1], -0.0)
+        self.assertEqual(mean_result.iloc[0], 0.0)
+        self.assertEqual(mean_result.iloc[1], -0.0)
 
         # standard of the result should be 1
         std_result = result.std().round(3)
-        self.assertEqual(std_result[0], 1.0)
-        self.assertEqual(std_result[1], 1.0)
+        self.assertEqual(std_result.iloc[0], 1.0)
+        self.assertEqual(std_result.iloc[1], 1.0)
 
     def test_df_scale_by_rows(self):
         # Test unit

@@ -56,7 +56,7 @@ class DataframeHelper:
     def dataframe_to_float(dataframe: DataFrame) -> DataFrame:
         """Convert all element of a dataframe to float, if element is not convertible, is sets NaN
         """
-        return dataframe.applymap(lambda x: NumericHelper.to_float(x, NaN),  na_action='ignore')
+        return dataframe.map(lambda x: NumericHelper.to_float(x, NaN),  na_action='ignore')
 
     @classmethod
     def replace_inf(cls, data: DataFrame, value=NaN) -> DataFrame:
@@ -69,46 +69,46 @@ class DataframeHelper:
         """
         data: DataFrame = dataframe.replace({NaN: value})
         # replace masked value by value
-        data = data.applymap(lambda x: value if x is masked else x, na_action='ignore')
+        data = data.map(lambda x: value if x is masked else x, na_action='ignore')
         return cls.replace_inf(data, value)
 
     @classmethod
     def nanify_none_number(cls, data: DataFrame) -> DataFrame:
         """ Convert all not numeric element to NaN"""
-        return data.applymap(lambda x: x if isinstance(x, (float, int)) else NaN)
+        return data.map(lambda x: x if isinstance(x, (float, int)) else NaN)
 
     @classmethod
     def nanify_none_str(cls, data: DataFrame) -> DataFrame:
         """ Convert all not string element to NaN"""
-        return data.applymap(lambda x: x if isinstance(x, str) else NaN)
+        return data.map(lambda x: x if isinstance(x, str) else NaN)
 
     @classmethod
     def contains(cls, data: DataFrame, value: Any) -> DataFrame:
         """
         Return a dataframe with True if the cell contains the value
         """
-        return data.applymap(lambda x: value in x, na_action='ignore')
+        return data.map(lambda x: value in x, na_action='ignore')
 
     @classmethod
     def contains_not(cls, data: DataFrame, value: Any) -> DataFrame:
         """
         Return a dataframe with True if the cell does not contain the value
         """
-        return data.applymap(lambda x: value not in x, na_action='ignore')
+        return data.map(lambda x: value not in x, na_action='ignore')
 
     @classmethod
     def starts_with(cls, data: DataFrame, value: str) -> DataFrame:
         """
         Return a dataframe with True if the cell starts with the value
         """
-        return data.applymap(lambda x: x.startswith(value), na_action='ignore')
+        return data.map(lambda x: x.startswith(value), na_action='ignore')
 
     @classmethod
     def ends_with(cls, data: DataFrame, value: str) -> DataFrame:
         """
         Return a dataframe with True if the cell ends with the value
         """
-        return data.applymap(lambda x: x.endswith(value), na_action='ignore')
+        return data.map(lambda x: x.endswith(value), na_action='ignore')
 
     @classmethod
     def stringify(cls, data: DataFrame) -> DataFrame:

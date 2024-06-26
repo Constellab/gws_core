@@ -92,7 +92,7 @@ class SettingsLoader:
                     self.load_brick(folder)
                 else:
                     Logger.warning(
-                        f"{Settings.get_user_bricks_folder()} folder should only contain bricks, please remove {folder} element.")
+                        f"{Settings.get_user_bricks_folder()} folder should only contain bricks, please remove '{folder}' element.")
 
     def load_brick(self, brick_name: str, parent_name: str = None) -> None:
 

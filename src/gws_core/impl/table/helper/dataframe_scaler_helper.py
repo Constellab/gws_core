@@ -25,11 +25,11 @@ class DataframeScalerHelper:
         cls._check_scale_func(func)
 
         if func == "log10":
-            data = data.applymap(DataframeScalerHelper._log10, na_action='ignore')
+            data = data.map(DataframeScalerHelper._log10, na_action='ignore')
         elif func == "log2":
-            data = data.applymap(DataframeScalerHelper._log2, na_action='ignore')
+            data = data.map(DataframeScalerHelper._log2, na_action='ignore')
         elif func == "log":
-            data = data.applymap(DataframeScalerHelper._log, na_action='ignore')
+            data = data.map(DataframeScalerHelper._log, na_action='ignore')
 
         return data
 

@@ -126,7 +126,6 @@ class Log(Task):
     config_specs = {}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        print('Log person')
         return {'samePerson': inputs.get('person'), 'otherPerson': inputs.get('person')}
 
 

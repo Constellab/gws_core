@@ -34,8 +34,8 @@ class TestTableImporter(TestCase):
             File(file_path), params={"comment": ""})
 
         df = table.get_data()
-        self.assertEqual(df['A'][0], '#')
-        self.assertEqual(df['B'][0], 'éçàùè$€')
+        self.assertEqual(df['A'].iloc[0], '#')
+        self.assertEqual(df['B'].iloc[0], 'éçàùè$€')
 
     def test_importer_exporter(self):
         # importer
@@ -60,7 +60,7 @@ class TestTableImporter(TestCase):
         outputs = tester.run()
         file_: File = outputs["target"]
 
-        with open(file_.path, 'r') as fp:
+        with open(file_.path, 'r', encoding='utf-8') as fp:
             text = fp.read()
             self.assertTrue(text.startswith("#This is a table"))
 
