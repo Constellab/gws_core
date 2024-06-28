@@ -1,6 +1,6 @@
 
 
-from typing import Any
+from typing import Any, List
 
 from PIL import Image
 
@@ -11,8 +11,8 @@ from gws_core.impl.file.file import File
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (
-    RichTextBlock, RichTextBlockType, RichTextFigureData,
-    RichTextParagraphHeaderLevel)
+    RichTextBlock, RichTextBlockType, RichTextENoteResourceViewData,
+    RichTextFigureData, RichTextParagraphHeaderLevel, RichTextResourceViewData)
 from gws_core.impl.rich_text.rich_text_view import RichTextView
 from gws_core.model.typing_style import TypingStyle
 from gws_core.report.report import Report
@@ -22,10 +22,14 @@ from gws_core.resource.r_field.primitive_r_field import StrRField
 from gws_core.resource.r_field.serializable_r_field import SerializableRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_set import ResourceSet
+from gws_core.resource.view.view import View
 from gws_core.resource.view.view_decorator import view
+from gws_core.resource.view.view_dto import CallViewResultDTO
 from gws_core.resource.view.view_helper import ViewHelper
+from gws_core.resource.view.view_resource import ViewResource
 from gws_core.resource.view.view_result import CallViewResult
 
 
@@ -35,16 +39,15 @@ from gws_core.resource.view.view_result import CallViewResult
 class ENoteResource(ResourceSet):
 
     title: str = StrRField()
-    rich_text: RichText = SerializableRField(RichText)
+    _rich_text: RichText = SerializableRField(RichText)
 
-    def __init__(self, title: str = None, rich_text: RichText = None):
+    def __init__(self, title: str = None):
         super().__init__()
 
         if title is not None:
             self.title = title
 
-        if rich_text is not None:
-            self.rich_text = rich_text
+        self._rich_text = RichText()
 
     def set_parameter(self, parameter_name: str, value: Any) -> None:
         """
@@ -55,7 +58,7 @@ class ENoteResource(ResourceSet):
         :param value: value of the parameter. This is convert to str
         :type value: Any
         """
-        self.rich_text.set_parameter(parameter_name, str(value))
+        self._rich_text.set_parameter(parameter_name, str(value))
 
     def add_paragraph(self, paragraph: str) -> None:
         """
@@ -64,11 +67,11 @@ class ENoteResource(ResourceSet):
         :param paragraph: paragraph to add
         :type paragraph: str
         """
-        self.rich_text.add_paragraph(paragraph)
+        self._rich_text.add_paragraph(paragraph)
 
     def add_blank_line(self) -> None:
         """Add a blank line to the e-note content."""
-        self.rich_text.add_paragraph('')
+        self._rich_text.add_paragraph('')
 
     def add_header(self, header: str, level: RichTextParagraphHeaderLevel) -> None:
         """
@@ -79,27 +82,14 @@ class ENoteResource(ResourceSet):
         :param level: header level
         :type level: RichTextParagraphHeaderLevel
         """
-        self.rich_text.add_header(header, level)
+        self._rich_text.add_header(header, level)
 
-    def append_enote(self, enote: "ENoteResource") -> None:
-        """Append the content of another e-note at the end of this e-note content.
+    ########################################################### VIEW ###########################################################
 
-        :param enote: e-note to append
-        :type enote: ENoteResource
-        """
-        for block in enote.rich_text.get_blocks():
-            if block.type == RichTextBlockType.FIGURE:
-                # add the figure manually (including the resource)
-                self.add_figure_file(enote.get_figure(block.data['filename']),
-                                     title=block.data['title'], caption=block.data['caption'],
-                                     create_new_resource=False)
-
-            else:
-                self.rich_text.append_block(block)
-
-    def add_default_view(self, resource: Resource,
-                         title: str = None, caption: str = None,
-                         parameter_name: str = None) -> None:
+    def add_default_view_from_resource(self, resource: Resource,
+                                       title: str = None, caption: str = None,
+                                       parameter_name: str = None,
+                                       create_new_resource: bool = False) -> None:
         """Add a default view to the e-note content.
 
         :param resource: resource to call the view on
@@ -112,11 +102,16 @@ class ENoteResource(ResourceSet):
                             if not, the view is append at the end of the enote, defaults to None
         :type parameter_name: str, optional
         """
-        self.add_view(resource, ViewHelper.DEFAULT_VIEW_NAME, None,
-                      title, caption, parameter_name)
+        self.add_view_from_resource(resource, ViewHelper.DEFAULT_VIEW_NAME, None,
+                                    title, caption, parameter_name, create_new_resource)
 
-    def add_view(self, resource: Resource, view_method_name: str, config_values: ConfigParamsDict = None,
-                 title: str = None, caption: str = None, parameter_name: str = None) -> None:
+    def add_view_from_resource(self, resource: Resource,
+                               view_method_name: str,
+                               config_values: ConfigParamsDict = None,
+                               title: str = None,
+                               caption: str = None,
+                               parameter_name: str = None,
+                               create_new_resource: bool = False) -> None:
         """Add a view to the e-note content.
         To get the information of the views, once you opened the view in the application, you can
         click on View settings > Show view configuration
@@ -135,24 +130,110 @@ class ENoteResource(ResourceSet):
                             if not, the view is append at the end of the enote, defaults to None
         :type parameter_name: str, optional
         """
-        view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
-            resource._model_id, view_method_name, config_values, True)
+        # store the resource in the enote
+        self.add_resource(resource, resource.uid,
+                          create_new_resource=create_new_resource)
 
-        self.rich_text.add_resource_views(
-            view_result.view_config.to_rich_text_resource_view(title, caption),
-            parameter_name)
+        self._add_view(resource.uid, view_method_name, config_values, title, caption, parameter_name)
+
+    def add_view(self, view_: View,
+                 view_config_values: ConfigParamsDict = None,
+                 title: str = None, caption: str = None,
+                 parameter_name: str = None) -> None:
+        """
+        Add a view to the e-note content.
+
+        :param view: view to add
+        :type view: View
+        :param view_config_values: config value of the view when call to_json_dict, defaults to None
+        :type view_config_values: ConfigParamsDict, optional
+        :param title: title of the view, defaults to None
+        :type title: str, optional
+        :param caption: caption of the view, defaults to None
+        :type caption: str, optional
+        :param parameter_name: if provided, the view replace the provided variable.
+                              If not, the view is append at the end of the enote, defaults to None
+        :type parameter_name: str, optional
+        """
+        view_resource = ViewResource.from_view(view_, view_config_values)
+
+        self.add_resource(view_resource, view_resource.uid, create_new_resource=True)
+
+        self._add_view(view_resource.uid, ViewHelper.DEFAULT_VIEW_NAME,
+                       view_config_values, title, caption, parameter_name)
+
+    def _add_view(self, resource_key: str,
+                  view_method_name: str,
+                  view_config_values: ConfigParamsDict = None,
+                  title: str = None, caption: str = None,
+                  parameter_name: str = None) -> None:
+        rich_text_view: RichTextENoteResourceViewData = {
+            "id": StringHelper.generate_uuid() + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
+            "sub_resource_key": resource_key,
+            "view_method_name": view_method_name,
+            "view_config": view_config_values or {},
+            "title": title or "",
+            "caption": caption or "",
+        }
+        self._rich_text.add_enote_resource_view(rich_text_view, parameter_name)
+
+    def call_view_on_resource(self, resource_key: str, view_name: str, config: ConfigParamsDict) -> CallViewResultDTO:
+        """Call a view method on the resource.
+
+        :param resource_key: key of the resource
+        :type resource_key: str
+        :return: result of the view method
+        :rtype: CallViewResultDTO
+        """
+        resource = self.get_resource(resource_key)
+
+        view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
+            resource._model_id, view_name, config, False)
+
+        return view_result.to_dto()
 
     ########################################################### FIGURE ###########################################################
 
-    # TODO : gérer les images qui sont dans un template puis utiliser dans une enote
     def add_figure(self, image_path: str, title: str = None, caption: str = None,
                    parameter_name: str = None) -> None:
+        """
+        Add a figure to the e-note content.
+
+        :param image_path: path of the image file
+        :type image_path: str
+        :param title: title of the figure, defaults to None
+        :type title: str, optional
+        :param caption: caption of the figure, defaults to None
+        :type caption: str, optional
+        :param parameter_name: if provided, the figure replace the provided variable.
+                              If not, the figure is append at the end of the enote, defaults to None
+        :type parameter_name: str, optional
+        """
         file = File(image_path)
 
         self.add_figure_file(file, title, caption, parameter_name, create_new_resource=True)
 
     def add_figure_file(self, file: File, title: str = None, caption: str = None,
-                        parameter_name: str = None, create_new_resource: bool = True) -> None:
+                        parameter_name: str = None, create_new_resource: bool = False) -> None:
+        """
+        Add a figure to the e-note content.
+
+        :param file: file of the image
+        :type file: File
+        :param title: title of the figure, defaults to None
+        :type title: str, optional
+        :param caption: caption of the figure, defaults to None
+        :type caption: str, optional
+        :param parameter_name: if provided, the figure replace the provided variable.
+                                If not, the figure is append at the end of the enote, defaults to None
+        :type parameter_name: str, optional
+        :param create_new_resource: if True, a new resource is created with the file.
+                                    If False, the file is used as a resource.
+                                    Set False if the File resource already exist ans saved on the lab, defaults to True
+        :type create_new_resource: bool, optional
+        :raises ValueError: _description_
+        :raises ValueError: _description_
+        """
 
         if not isinstance(file, File):
             raise ValueError("The file must be a File object")
@@ -176,7 +257,7 @@ class ENoteResource(ResourceSet):
             "caption": caption,
         }
 
-        self.rich_text.add_figure(figure_data, parameter_name=parameter_name)
+        self._rich_text.add_figure(figure_data, parameter_name=parameter_name)
 
         self.add_resource(file, filename, create_new_resource=create_new_resource)
 
@@ -208,23 +289,8 @@ class ENoteResource(ResourceSet):
         """
         return self.get_figure(filename).path
 
-    # def add_view_2(self, view_: View, view_config_values: ConfigParamsDict = None,
-    #                title: str = None, caption: str = None, parameter_name: str = None) -> None:
-    #     view_data: RichTextResourceViewData = {
-    #         "id": StringHelper.generate_uuid() + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
-    #         "view_config_id": None,
-    #         "resource_id": None,
-    #         "experiment_id": None,
-    #         "view_method_name": None,
-    #         "view_config": self.get_config_values(),
-    #         "title": title or self.title,
-    #         "caption": caption or "",
-    #     }
-    #     self.rich_text.add_resource_views(
-    #         view_result.view_config.to_rich_text_resource_view(title, caption),
-    #         parameter_name)
+    ############################# Block #############################
 
-    ############################# Others #############################
     def append_block(self, block: RichTextBlock) -> int:
         """
         Append a block to the enote
@@ -234,7 +300,86 @@ class ENoteResource(ResourceSet):
         :return: index of the new block
         :rtype: int
         """
-        return self.rich_text.append_block(block)
+        return self._rich_text.append_block(block)
+
+    def get_blocks(self) -> List[RichTextBlock]:
+        """
+        Get the blocks of the e-note
+
+        :return: list of blocks
+        :rtype: List[RichTextBlock]
+        """
+        return self._rich_text.get_blocks()
+
+    def get_blocks_by_type(self, block_type: RichTextBlockType) -> List[RichTextBlock]:
+        """
+        Get the blocks of the e-note by type
+
+        :param block_type: type of the block
+        :type block_type: RichTextBlockType
+        :return: list of blocks
+        :rtype: List[RichTextBlock]
+        """
+        return [block for block in self.get_blocks() if block.type == block_type]
+
+    def get_block_at_index(self, index: int) -> RichTextBlock:
+        """
+        Get the block at the specified index
+
+        :param index: index of the block
+        :type index: int
+        :return: the block
+        :rtype: RichTextBlock
+        """
+        return self._rich_text.get_block_at_index(index)
+
+    def get_block_by_id(self, block_id: str) -> RichTextBlock:
+        """
+        Get the block by id
+
+        :param block_id: id of the block
+        :type block_id: str
+        :return: the block
+        :rtype: RichTextBlock
+        """
+        return self._rich_text.get_block_by_id(block_id)
+
+    def get_block_index_by_id(self, block_id: str) -> int:
+        """
+        Get the index of the block by id
+
+        :param block_id: id of the block
+        :type block_id: str
+        :return: index of the block
+        :rtype: int
+        """
+        return self._rich_text.get_block_index_by_id(block_id)
+
+    ############################# Other #############################
+
+    def append_enote(self, enote: "ENoteResource") -> None:
+        """Append the content of another e-note at the end of this e-note content.
+
+        :param enote: e-note to append
+        :type enote: ENoteResource
+        """
+        for block in enote.get_blocks():
+            if block.type == RichTextBlockType.FIGURE:
+                # add the figure manually (including the resource)
+                self.add_figure_file(enote.get_figure(block.data['filename']),
+                                     title=block.data['title'], caption=block.data['caption'],
+                                     create_new_resource=False)
+            elif block.type == RichTextBlockType.RESOURCE_VIEW:
+                # add the view manually (including the resource)
+                self.add_view_from_resource(enote.get_resource(block.data['sub_resource_key']),
+                                            view_method_name=block.data['view_method_name'],
+                                            config_values=block.data['view_config'],
+                                            title=block.data['title'],
+                                            caption=block.data['caption'],
+                                            create_new_resource=False)
+
+            else:
+                self._rich_text.append_block(block)
 
     ############################# Reports #############################
 
@@ -256,18 +401,28 @@ class ENoteResource(ResourceSet):
                 filename = RichTextFileService.get_file_path(block.data['filename'])
                 # add the figure manually
                 self.add_figure(filename, block.data['title'], block.data['caption'])
+            elif block.type == RichTextBlockType.RESOURCE_VIEW:
+                resource_model = ResourceModel.get_by_id_and_check(block.data['resource_id'])
+                # add the view manually
+                self.add_view_from_resource(resource_model.get_resource(),
+                                            view_method_name=block.data['view_method_name'],
+                                            config_values=block.data['view_config'],
+                                            title=block.data['title'],
+                                            caption=block.data['caption'],
+                                            create_new_resource=False)
+
             else:
                 self.append_block(block)
 
-    def export_as_report(self) -> Report:
+    def export_as_report(self, title: str = None) -> Report:
         """
         Export the note as a report. The report is automatically saved in the database.
         :param report_title: The title of the report
         :return: The report
         """
-        if not self.title:
+        if not title and not self.title:
             raise ValueError("The e-note title is empty")
-        report_dto = ReportSaveDTO(title=self.title)
+        report_dto = ReportSaveDTO(title=title or self.title)
         report: Report = ReportService.create(report_dto)
 
         report_rich_text = self.export_as_report_rich_text()
@@ -285,38 +440,62 @@ class ENoteResource(ResourceSet):
         report_rich_text = RichText()
 
         # add the block 1 by 1 to the report
-        for block in self.rich_text.get_blocks():
+        for block in self._rich_text.get_blocks():
             # specific case for the figure
             if block.type == RichTextBlockType.FIGURE:
-                figure_file = self.get_figure(block.data['filename'])
-
-                image: Image.Image = None
-                try:
-                    image = Image.open(figure_file.path)
-                except Exception:
-                    raise Exception(f'The file {figure_file.path} is not an image')
-
-                # add the figure to report storage
-                result = RichTextFileService.save_image(image, figure_file.extension)
-
                 # add the figure manually
-                figure_data: RichTextFigureData = {
-                    "filename": result.filename,
-                    "width": result.width,
-                    "height": result.height,
-                    "naturalWidth": result.width,
-                    "naturalHeight": result.height,
-                    "title": block.data['title'],
-                    "caption": block.data['caption'],
-                }
+                figure_data = self._convert_figure_for_report_rich_text(block.data)
                 report_rich_text.add_figure(figure_data)
+            elif block.type == RichTextBlockType.RESOURCE_VIEW:
+                # add the view manually
+                view_data = self._convert_view_for_report_rich_text(block.data)
+                report_rich_text.add_resource_view(view_data)
             else:
                 report_rich_text.append_block(block)
 
         return report_rich_text
 
+    def _convert_figure_for_report_rich_text(self, enote_figure: RichTextFigureData) -> RichTextFigureData:
+        """Method to convert a enote figure to a report figure. It saves the figure in the report storage.
+        """
+        figure_file = self.get_figure(enote_figure['filename'])
+        image: Image.Image = None
+        try:
+            image = Image.open(figure_file.path)
+        except Exception:
+            raise Exception(f'The file {figure_file.path} is not an image')
+
+        # add the figure to report storage
+        result = RichTextFileService.save_image(image, figure_file.extension)
+
+        # add the figure manually
+        return {
+            "filename": result.filename,
+            "width": result.width,
+            "height": result.height,
+            "naturalWidth": result.width,
+            "naturalHeight": result.height,
+            "title": enote_figure['title'],
+            "caption": enote_figure['caption'],
+        }
+
+    def _convert_view_for_report_rich_text(self, enote_view: RichTextENoteResourceViewData) -> RichTextResourceViewData:
+        """Method to convert a enote view to a report view.
+        """
+        # retrieve the resource model from the resource
+        resource = self.get_resource(enote_view['sub_resource_key'])
+
+        if not resource._model_id:
+            raise ValueError(
+                f"The resource {enote_view['sub_resource_key']} of the e-note was not saved on the database.")
+
+        view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
+            resource._model_id, enote_view['view_method_name'], enote_view["view_config"], True)
+
+        return view_result.view_config.to_rich_text_resource_view()
+
     ############################# Views #############################
 
     @view(view_type=RichTextView, human_name="View e-note", short_description="View e-note content", default_view=True)
     def view_enote(self, config: ConfigParamsDict = None) -> RichTextView:
-        return RichTextView(self.title, self.rich_text)
+        return RichTextView(self.title, self._rich_text)

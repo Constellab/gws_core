@@ -38,7 +38,7 @@ class ReportTemplateService():
         report.title = title
 
         rich_text = RichText(content)
-        rich_text.replace_resource_views_with_variables()
+        rich_text.replace_resource_views_with_parameters()
 
         # Set default content for report
         report.content = rich_text.get_content()

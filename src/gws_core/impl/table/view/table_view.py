@@ -73,4 +73,6 @@ class TableView(BaseTableView):
             sort_column=params["sort_column"],
             sort_direction=params["sort_direction"])
 
+        tabular_view.copy_info(self)
+
         return tabular_view.data_to_dict(ConfigParams())

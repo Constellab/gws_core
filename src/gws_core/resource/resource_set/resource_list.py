@@ -78,7 +78,7 @@ class ResourceList(ResourceListBase):
                                     must have been saved before, defaults to True
         :type create_new_resource: bool, optional
         """
-        self._check_resource_before_add(resource, create_new_resource=create_new_resource)
+        self._check_resource_before_add(resource)
         # if the resource already exist, add it to the constant list so
         # the system will not create a new resource on save
         if not create_new_resource:

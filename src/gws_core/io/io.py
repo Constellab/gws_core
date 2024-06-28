@@ -210,7 +210,7 @@ class IO(Base, Generic[PortType]):
 
                 if include_sub_resouces:
                     resource = port.get_resource(new_instance=False)
-                    if isinstance(resource, ResourceListBase) and resource.has_resource(resource_model_id):
+                    if isinstance(resource, ResourceListBase) and resource.has_resource_model(resource_model_id):
                         return True
 
         return False

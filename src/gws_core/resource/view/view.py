@@ -20,6 +20,8 @@ class View:
     _technical_info: TechnicalInfoDict
     _style: TypingStyle = None
 
+    _disable_pagination: bool = False
+
     # if True, the view is marked as favorite
     _favorite: bool = False
 
@@ -93,6 +95,29 @@ class View:
         With this you can define a custom style for a specific view instance when you view is generic.
         """
         self._style = style
+
+    def disable_pagination(self):
+        """
+        Mark the view as not interactive, disable the pagination
+        """
+        self._disable_pagination = True
+
+    def is_pagination_disabled(self) -> bool:
+        """ Is interaction disabled """
+        return self._disable_pagination
+
+    def copy_info(self, view: 'View'):
+        """
+        Copy the view information from another view
+
+        :param view: view to copy the information from
+        :type view: View
+        """
+        self._title = view.get_title()
+        self._technical_info = view.get_technical_info_dict()
+        self._style = view.get_style()
+        self._disable_pagination = view.is_pagination_disabled()
+        self._favorite = view.is_favorite()
 
     @final
     def to_dto(self, params: ConfigParams) -> ViewDTO:

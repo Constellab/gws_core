@@ -7,9 +7,10 @@ from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.rich_text.rich_text_paragraph_text import \
     RichTextParagraphText
 from gws_core.impl.rich_text.rich_text_types import (
-    RichTextBlock, RichTextBlockType, RichTextDTO, RichTextFigureData,
-    RichTextParagraphData, RichTextParagraphHeaderData,
-    RichTextParagraphHeaderLevel, RichTextResourceViewData)
+    RichTextBlock, RichTextBlockType, RichTextDTO,
+    RichTextENoteResourceViewData, RichTextFigureData, RichTextParagraphData,
+    RichTextParagraphHeaderData, RichTextParagraphHeaderLevel,
+    RichTextResourceViewData)
 from gws_core.resource.r_field.serializable_r_field import \
     SerializableObjectJson
 
@@ -114,11 +115,26 @@ class RichText(SerializableObjectJson):
                 return current_block
         return None
 
-    ##################################### VARIABLE  #########################################
+    ##################################### PARAMETER  #########################################
 
-    def _insert_block_at_variable(self, variable_name: str, view_block: RichTextBlock) -> None:
-        """Insert an element in the rich text content at the given variable name. If the variable name is in the middle of a text,
-        the text is splitted in 3 parts (before, variable, after)
+    def _append_or_insert_block_at_parameter(self, view_block: RichTextBlock, parameter_name: str = None) -> None:
+        """
+        Append the block to the rich text content or insert it at the given parameter name
+
+        :param view_block: block to add
+        :type view_block: RichTextBlock
+        :param parameter_name: name of the parameter where to insert the block. If None, the block is appended
+        :type parameter_name: str, optional
+        """
+
+        if parameter_name is None:
+            self.append_block(view_block)
+        else:
+            self._insert_block_at_parameter(parameter_name, view_block)
+
+    def _insert_block_at_parameter(self, parameter_name: str, view_block: RichTextBlock) -> None:
+        """Insert an element in the rich text content at the given parameter name. If the parameter name is in the middle of a text,
+        the text is splitted in 3 parts (before, parameter, after)
         """
 
         block_index = 0
@@ -137,7 +153,7 @@ class RichText(SerializableObjectJson):
                 continue
 
             paragraph_text = RichTextParagraphText(paragraph_data['text'])
-            result = paragraph_text.replace_variable_with_block(variable_name)
+            result = paragraph_text.replace_parameter_with_block(parameter_name)
 
             if result is not None:
                 # remove current block
@@ -160,7 +176,7 @@ class RichText(SerializableObjectJson):
                 block_index += 1
 
     def set_parameter(self, parameter_name: str, value: str) -> None:
-        """Replace the variable in the rich text content text
+        """Replace the parameter in the rich text content text
         """
         paragraphs = self.get_block(RichTextBlockType.PARAGRAPH)
 
@@ -171,28 +187,28 @@ class RichText(SerializableObjectJson):
                 continue
 
             paragraph_text = RichTextParagraphText(data['text'])
-            new_text = paragraph_text.replace_variable_with_text(parameter_name, value)
+            new_text = paragraph_text.replace_parameter_with_text(parameter_name, value)
 
             if new_text is not None:
                 data['text'] = new_text
 
-    def replace_resource_views_with_variables(self) -> None:
+    def replace_resource_views_with_parameters(self) -> None:
         """
         Method to remove the resource view from the rich text content
-        and replace it when variables. Useful when creating a template (because templates can't have resource views)
+        and replace it when parameters. Useful when creating a template (because templates can't have resource views)
         """
 
         view_index = 1
         for block in self.get_block(RichTextBlockType.RESOURCE_VIEW):
 
-            variable = '<te-variable-inline data-jsondata=\'{"name": "figure_' + str(view_index) + \
+            parameter_inline = '<te-variable-inline data-jsondata=\'{"name": "figure_' + str(view_index) + \
                 '", "description": "", "type": "string", "value": ""}\'></te-variable-inline>'
-            paragraph = self.create_paragraph(self.generate_id(), variable)
+            paragraph = self.create_paragraph(self.generate_id(), parameter_inline)
             self.replace_block_by_id(block.id, paragraph)
             view_index += 1
 
-    def _format_variable_name(self, variable_name: str) -> str:
-        return f'${variable_name}$'
+    def _format_parameter_name(self, parameter_name: str) -> str:
+        return f'${parameter_name}$'
 
     ##################################### FIGURE #########################################
     def get_figures_data(self) -> List[RichTextFigureData]:
@@ -213,14 +229,24 @@ class RichText(SerializableObjectJson):
         resource_views: List[RichTextResourceViewData] = self.get_resource_views_data()
         return {rv['resource_id'] for rv in resource_views}
 
-    def add_resource_views(self, resource_view: RichTextResourceViewData,
-                           parameter_name: str = None) -> None:
+    def add_resource_view(self, resource_view: RichTextResourceViewData,
+                          parameter_name: str = None) -> None:
 
         block: RichTextBlock = self.create_block(self.generate_id(), RichTextBlockType.RESOURCE_VIEW, resource_view)
-        if parameter_name is None:
-            self.append_block(block)
-        else:
-            self._insert_block_at_variable(parameter_name, block)
+        self._append_or_insert_block_at_parameter(block, parameter_name)
+
+    def add_enote_resource_view(self, resource_view: RichTextENoteResourceViewData,
+                                parameter_name: str = None) -> None:
+        """
+        Add a view to a rich text content used in enote. This requires the enote to call the view
+
+        :param resource_view: view to add
+        :type resource_view: RichTextENoteResourceViewData
+        :param parameter_name: name of the parameter where to insert the block. If None, the block is appended
+        :type parameter_name: str, optional
+        """
+        block: RichTextBlock = self.create_block(self.generate_id(), RichTextBlockType.RESOURCE_VIEW, resource_view)
+        self._append_or_insert_block_at_parameter(block, parameter_name)
 
     ##################################### PARAGRAPH #########################################
 
@@ -243,10 +269,7 @@ class RichText(SerializableObjectJson):
         """Add a figure to the rich text content
         """
         block: RichTextBlock = self.create_block(self.generate_id(), RichTextBlockType.FIGURE, figure_data)
-        if parameter_name is None:
-            self.append_block(block)
-        else:
-            self._insert_block_at_variable(parameter_name, block)
+        self._append_or_insert_block_at_parameter(block, parameter_name)
 
     ##################################### OTHERS #########################################
 

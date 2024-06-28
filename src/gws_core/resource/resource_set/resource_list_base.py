@@ -65,7 +65,7 @@ class ResourceListBase(Resource):
         :type resources: Dict[str, Resource]
         """
 
-    def has_resource(self, resource_model_id: str) -> bool:
+    def has_resource_model(self, resource_model_id: str) -> bool:
         """
         Return true if the resource with the given id is in the resource list
 
@@ -131,7 +131,7 @@ class ResourceListBase(Resource):
 
         if not create_new_resource and resource._model_id is None:
             raise Exception(
-                "The resource must be saved before, if create_new_resource is False")
+                "The create_new_resource option was set to False but the resource is not saved in the database")
 
     @view(view_type=ResourcesListView, human_name='Resources list',
           short_description='List the resources', default_view=True)

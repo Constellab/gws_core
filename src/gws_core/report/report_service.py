@@ -190,7 +190,7 @@ class ReportService():
 
         # get the rich text and add the resource view
         rich_text = report.get_content_as_rich_text()
-        rich_text.add_resource_views(view_content)
+        rich_text.add_resource_view(view_content)
 
         report = cls.update_content(report_id, rich_text.get_content())
 

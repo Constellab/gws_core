@@ -80,7 +80,7 @@ class ResourceSet(ResourceListBase):
                                     must have been saved before, defaults to True
         :type create_new_resource: bool, optional
         """
-        self._check_resource_before_add(resource, create_new_resource=create_new_resource)
+        self._check_resource_before_add(resource)
 
         if self._resources is None:
             self._resources = {}

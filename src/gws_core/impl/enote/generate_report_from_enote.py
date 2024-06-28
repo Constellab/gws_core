@@ -2,6 +2,7 @@
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.param.param_spec import StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.report.task.report_resource import ReportResource
@@ -28,12 +29,14 @@ class GenerateReportFromENote(Task):
     })
 
     config_specs: ConfigSpecs = {
+        'title': StrParam(human_name='Report title', short_description='This overides the e-note title',
+                          optional=True)
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         enote_resource: ENoteResource = inputs['enote']
 
-        report = enote_resource.export_as_report()
+        report = enote_resource.export_as_report(params['title'])
 
         return {
             'report': ReportResource(report.id)

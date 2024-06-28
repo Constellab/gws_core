@@ -354,6 +354,10 @@ class TaskModel(ProcessModel):
                 resource._model_id = resource_model.id
                 new_children_resources.append(resource_model)
             else:
+                # verify that the resource exists
+                if resource._model_id is None:
+                    raise Exception(
+                        f"The resource with '{resource.name or resource.uid}' was added to a ResourceList with create_new_resource set to False but the resource does not exists in the system. It seems it wasn't saved in the database before, is it a new resource ?")
                 # case when the resource is a constant and we don't create a new resource
                 # if the resource is not listed in task input, error
                 # Accept the resource if it is a sub resource of a input resource set
