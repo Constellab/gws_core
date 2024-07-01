@@ -8,6 +8,7 @@ from gws_core.io.dynamic_io import DynamicInputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingIconType
+from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.task import Task
@@ -33,7 +34,7 @@ class StreamlitLiveTask(Task):
     """
 
     input_specs: InputSpecs = DynamicInputs(
-        additionnal_port_spec=InputSpec(FSNode, human_name="File or folder", is_optional=True))
+        additionnal_port_spec=InputSpec(Resource, human_name="Resource", is_optional=True))
     output_specs: OutputSpecs = OutputSpecs({
         'streamlit_app': OutputSpec(StreamlitResource, human_name="Streamlit app")
     })

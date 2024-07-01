@@ -2,8 +2,19 @@ import argparse
 import importlib.util
 import os
 import sys
+from typing import List, Optional
 
 import streamlit as st
+from pydantic import BaseModel
+
+APP_CONFIG_FILENAME = 'streamlit_config.json'
+APP_MAIN_FILENAME = 'main.py'
+
+
+class StreamlitConfigDTO(BaseModel):
+    app_dir_path: str
+    source_ids: List[str]
+    params: Optional[dict]
 
 
 def import_streamlit_helper():
@@ -20,8 +31,25 @@ def import_streamlit_helper():
         sys.path.insert(0, streamlit_helper_folder)
 
 
+@st.cache_data
+def load_sources(source_ids: List[str]) -> List['Resource']:
+    """
+    Cached method to load the sources from the source ids.
+
+    :return: list of resources
+    :rtype: _type_
+    """
+    from gws_core import ResourceModel
+    sources_ = []
+    for source_path in source_ids:
+        resource_model = ResourceModel.get_by_id_and_check(source_path)
+        sources_.append(resource_model.get_resource())
+    return sources_
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--gws_token', type=str, default=None)
+parser.add_argument('--app_dir', type=str, default=None)
 args = parser.parse_args()
 
 # Configure Streamlit
@@ -37,10 +65,30 @@ if url_token != args.gws_token:
     st.error('Invalid token')
     st.stop()
 
+app_config_dir = args.app_dir
+if not app_config_dir:
+    st.error('App dir not provided')
+    st.stop()
+
+if not os.path.exists(app_config_dir):
+    st.error(f"App dir not found: {app_config_dir}")
+    st.stop()
+
 # check the app path
-app_path = st.query_params.get('gws_app_path')
-if not app_path:
-    st.error('App path not provided')
+app_id = st.query_params.get('gws_app_id')
+if not app_id:
+    st.error('App id not provided')
+    st.stop()
+
+# check if the app id folder exists
+app_config_folder = os.path.join(app_config_dir, app_id)
+if not os.path.exists(app_config_folder) or not os.path.isdir(app_config_folder):
+    st.error('App config folder not found or is not a folder')
+    st.stop()
+
+app_config_file = os.path.join(app_config_folder, APP_CONFIG_FILENAME)
+if not os.path.exists(app_config_file):
+    st.error('App config file not found')
     st.stop()
 
 # check the user id
@@ -71,24 +119,47 @@ except Exception as e:
 
 # load and run the streamlit sub app
 try:
-    if not isinstance(app_path, str):
-        st.error("Invalid app path")
+
+    # load config from the app path
+    config: StreamlitConfigDTO = None
+
+    with open(app_config_file, 'r', encoding="utf-8") as file_path:
+        str_json = file_path.read()
+        config = StreamlitConfigDTO.model_validate_json(str_json)
+
+    if not os.path.exists(config.app_dir_path) or not os.path.isdir(config.app_dir_path):
+        st.error(f"App dir not found: {config.app_dir_path}")
         st.stop()
 
-    if not os.path.exists(app_path):
-        st.error(f"Python script file not found: {app_path}")
+    # load the folder as module if not already in sys path
+    if config.app_dir_path not in sys.path:
+        sys.path.insert(0, config.app_dir_path)
+
+    app_main_path = os.path.join(config.app_dir_path, APP_MAIN_FILENAME)
+
+    if not os.path.exists(app_main_path):
+        st.error(
+            f"Main python script file not found: {app_main_path}. Please make sure you have a main.py file in the app folder.")
         st.stop()
 
-    spec = importlib.util.spec_from_file_location("module_name", app_path)
-
+    spec = importlib.util.spec_from_file_location("module_name", app_main_path)
     if spec is None:
-        st.error(f"Python script file not found: {app_path}")
+        st.error(f"Python script file not found: {app_main_path}")
         st.stop()
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-except FileNotFoundError:
-    st.error(f"Python script file not found: {app_path}")
-    st.stop()
+
+    # Load gws environment and log the user
+    from gws_streamlit_helper import StreamlitEnvLoader
+    with StreamlitEnvLoader():
+
+        # load resources
+        sources = load_sources(config.source_ids)
+
+        # set the source paths and params in the module
+        setattr(module, 'sources', sources)
+        setattr(module, 'params', config.params)
+
+        spec.loader.exec_module(module)
 except Exception as e:
     st.error(f"Error loading python script: {e}")
     st.stop()
