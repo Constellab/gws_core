@@ -53,7 +53,7 @@ We recommend installing using Ubuntu 22.04 with python 3.10.
 Required packages are listed in the ```settings.json``` file, for now the packages must be installed manually.
 
 ```bash 
-pip install openpyxl==3.1.4 awesome-slugify==1.6.5 fastapi==0.111.0 pydantic==2.7.4 peewee==3.17.5 psutil==5.9.8 pyjwt==2.8.0 pymysql==1.1.1 python-multipart==0.0.9 starlette-context==0.3.6 uvicorn==0.30.1 charset-normalizer==2.1.1 dill==0.3.8 numpy==1.26.4 pandas==2.2.2 matplotlib==3.9.0 scipy==1.13.1 scikit-learn==1.5.0 openai==1.34.0 typing_extensions==4.12.2 boto3==1.34.127 "boto3-stubs[s3]==1.34.127" plotly==5.22.0 simplejson==3.19.2 xmltodict==0.13.0 streamlit==1.35.0 beautifulsoup4==4.12.3 grpcio==1.64.1
+pip install openpyxl==3.1.4 awesome-slugify==1.6.5 fastapi==0.111.0 pydantic==2.7.4 peewee==3.17.5 psutil==5.9.8 pyjwt==2.8.0 pymysql==1.1.1 python-multipart==0.0.9 starlette-context==0.3.6 uvicorn==0.30.1 charset-normalizer==2.1.1 dill==0.3.8 numpy==1.26.4 pandas==2.2.2 matplotlib==3.9.0 scipy==1.13.1 scikit-learn==1.5.0 openai==1.34.0 typing_extensions==4.12.2 boto3==1.34.127 "boto3-stubs[s3]==1.34.127" plotly==5.22.0 simplejson==3.19.2 xmltodict==0.13.0 streamlit==1.36.0 beautifulsoup4==4.12.3 grpcio==1.64.1
 ```
 
 #### Usage

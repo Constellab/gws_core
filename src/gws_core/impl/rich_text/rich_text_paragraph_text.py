@@ -26,7 +26,7 @@ class RichTextParagraphText():
     def __init__(self, text: str):
         self.text = text
 
-    def replace_variable_with_text(self, variable_name: str, value: str) -> str:
+    def replace_parameter_with_text(self, variable_name: str, value: str) -> str:
         """Replace the variable in the rich text content text
 
         :param variable_name: the name of the variable to replace
@@ -59,7 +59,7 @@ class RichTextParagraphText():
 
         return None
 
-    def replace_variable_with_block(self, variable_name: str) -> ReplaceWithBlockResultDTO:
+    def replace_parameter_with_block(self, variable_name: str) -> ReplaceWithBlockResultDTO:
         """Replace the variable in the rich text content text
 
         :param variable_name: the name of the variable to replace

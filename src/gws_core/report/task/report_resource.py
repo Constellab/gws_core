@@ -53,7 +53,7 @@ class ReportResource(Resource):
             resource._model_id, view_method_name, config_values, True)
 
         rich_text: RichText = self.get_content()
-        rich_text.add_resource_views(view_result.view_config.to_rich_text_resource_view(title, caption), variable_name)
+        rich_text.add_resource_view(view_result.view_config.to_rich_text_resource_view(title, caption), variable_name)
         self._content = rich_text
 
     def update_title(self, title: str) -> None:
@@ -65,4 +65,4 @@ class ReportResource(Resource):
 
     @view(view_type=RichTextView, human_name="View report", short_description="View report content", default_view=True)
     def view_report(self, config: ConfigParamsDict = None) -> RichTextView:
-        return RichTextView(self.get_report().title, self.get_content())
+        return RichTextView(self.get_report().title, self.get_content(), self.report_id)

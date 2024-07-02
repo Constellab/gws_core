@@ -16,13 +16,19 @@ class ResourceSet(ResourceListBase):
     resource for each resource in the set when saving the set
     """
 
-    # dict where key is the initial name of the resource and value is the resource id
+    # dict where key is the initial name of the resource and value is the resource model id
     _resource_ids: Dict[str, str] = DictRField()
 
     # dict provided before the resources are saved
     _resources: Dict[str, Resource] = None
 
     def get_resources(self) -> Dict[str, Resource]:
+        """
+        Return the sub resources as a dict
+
+        :return: dict of resources where key is the resource name
+        :rtype: Dict[str, Resource]
+        """
         if not self._resources:
             resources = self._load_resources()
             self._resources = {}
@@ -35,10 +41,22 @@ class ResourceSet(ResourceListBase):
 
         return self._resources
 
-    def get_resource_ids(self) -> Set[str]:
+    def get_resource_model_ids(self) -> Set[str]:
+        """
+        Return the resource model ids of the sub resources
+
+        :return: set of resource model ids
+        :rtype: Set[str]
+        """
         return set(self._resource_ids.values())
 
     def get_resources_as_set(self) -> Set[Resource]:
+        """
+        Return the sub resources as a set
+
+        :return: set of resources
+        :rtype: Set[Resource]
+        """
         return set(self.get_resources().values())
 
     def __set_r_field__(self) -> None:
@@ -62,19 +80,7 @@ class ResourceSet(ResourceListBase):
                                     must have been saved before, defaults to True
         :type create_new_resource: bool, optional
         """
-        if not isinstance(resource, Resource):
-            raise Exception('The resource_set accepts only Resource')
-
-        if isinstance(resource, ResourceListBase):
-            raise Exception('ResourceSet does not support nested')
-
-        if self._model_id is not None:
-            raise Exception(
-                "The ResourceSet is already saved, you can't add a resource to it")
-
-        if not create_new_resource and resource._model_id is None:
-            raise Exception(
-                "The resource must be saved before, if create_new_resource is False")
+        self._check_resource_before_add(resource)
 
         if self._resources is None:
             self._resources = {}
@@ -90,13 +96,23 @@ class ResourceSet(ResourceListBase):
         # if the resource already exist, add it to the constant list so
         # the system will not create a new resource on save
         if not create_new_resource:
-            if self.__constant_resource_ids__ is None:
-                self.__constant_resource_ids__ = set()
-            self.__constant_resource_ids__.add(resource.uid)
+            if self.__constant_resource_uids__ is None:
+                self.__constant_resource_uids__ = set()
+            self.__constant_resource_uids__.add(resource.uid)
 
         self._resources[name] = resource
 
     def get_resource(self, resource_name: str) -> Resource:
+        """
+        Return the resource with the given name
+
+        :param resource_name: name of the resource
+        :type resource_name: str
+        :raises Exception: if the resource with the given name is not found
+        :return: resource with the given name
+        :rtype: Resource
+        """
+
         resources = self.get_resources()
 
         if not resource_name in resources:
@@ -105,18 +121,44 @@ class ResourceSet(ResourceListBase):
         return resources[resource_name]
 
     def get_resource_or_none(self, resource_name: str) -> Resource | None:
+        """
+        Return the resource with the given name or None if not found
+
+        :param resource_name: name of the resource
+        :type resource_name: str
+        :return: resource with the given name or None if not found
+        :rtype: Resource | None
+        """
         resources = self.get_resources()
         return resources.get(resource_name, None)
 
     def resource_exists(self, resource_name: str) -> Resource:
+        """
+        Return true if the resource with the given name exists in the dict
+
+        :param resource_name: name of the resource
+        :type resource_name: str
+        :return: True if the resource with the given name exists in the dict
+        :rtype: Resource
+        """
         resources = self.get_resources()
         return resource_name in resources
 
     def clear_resources(self) -> None:
+        """
+        Clear the resources
+        """
         self._resources = {}
         self._resource_ids = {}
 
     def replace_resources_by_model_id(self, resources: Dict[str, Resource]) -> None:
+        """
+        Replace current resources by the resources in the dict
+
+        :param resources: dict where key is the resource model id and value is the resource
+        :type resources: Dict[str, Resource]
+        """
+
         # get a copy of the original dict to iterate over it
         resource_ids = self._resource_ids
 
@@ -127,3 +169,6 @@ class ResourceSet(ResourceListBase):
                 raise Exception(
                     f"Resource with id {resource_model_id} not found in the resources to replace")
             self.add_resource(resources[resource_model_id], unique_name=name)
+
+    def __len__(self) -> int:
+        return len(self.get_resources())

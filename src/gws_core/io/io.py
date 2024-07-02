@@ -3,11 +3,11 @@
 from abc import abstractmethod
 from typing import Dict, Generic, List, Type, TypeVar, final
 
-from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_dto import IODTO
 from gws_core.io.io_spec import IOSpec
 from gws_core.io.io_specs import InputSpecs, IOSpecs, IOSpecsType, OutputSpecs
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -192,12 +192,27 @@ class IO(Base, Generic[PortType]):
         port: PortType = self.get_port(port_name)
         return port.resource_model
 
-    def has_resource_model(self, resource_model_id: str) -> bool:
-        """return true if one of the ports contain the resource model
+    def has_resource_model(self, resource_model_id: str, include_sub_resouces: bool = False) -> bool:
+        """_summary_
+        return true if one of the ports contain the resource model
+
+        :param resource_model_id: resource model id to check
+        :type resource_model_id: str
+        :param include_sub_resouces: if True, it also check if provided resource is inside ResourceListBase, defaults to False
+        :type include_sub_resouces: bool, optional
+        :return: True if the resource model is in the ports
+        :rtype: bool
         """
         for port in self._ports.values():
-            if port.resource_model and port.resource_model.id == resource_model_id:
-                return True
+            if port.resource_model:
+                if port.resource_model.id == resource_model_id:
+                    return True
+
+                if include_sub_resouces:
+                    resource = port.get_resource(new_instance=False)
+                    if isinstance(resource, ResourceListBase) and resource.has_resource_model(resource_model_id):
+                        return True
+
         return False
 
     ################################################### JSON ########################################

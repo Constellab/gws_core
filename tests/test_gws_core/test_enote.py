@@ -1,18 +1,28 @@
 
 
+from PIL import Image
+
+from gws_core.core.utils.settings import Settings
 from gws_core.impl.enote.create_enote import CreateENote
 from gws_core.impl.enote.enote_resource import ENoteResource
 from gws_core.impl.enote.generate_report_from_enote import \
     GenerateReportFromENote
 from gws_core.impl.enote.merge_enotes import MergeENotes
 from gws_core.impl.enote.update_enote import UpdatENote
+from gws_core.impl.file.file import File
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_types import RichTextBlockType
+from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
+from gws_core.impl.rich_text.rich_text_types import (RichTextBlockType,
+                                                     RichTextFigureData)
+from gws_core.impl.robot.robot_resource import Robot
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
 from gws_core.report.report import Report
 from gws_core.report.task.report_resource import ReportResource
 from gws_core.report.template.report_template import ReportTemplate
+from gws_core.resource.resource import Resource
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.task.task_runner import TaskRunner
 from gws_core.test.base_test_case import BaseTestCase
@@ -20,6 +30,11 @@ from gws_core.test.base_test_case import BaseTestCase
 
 # test_enote
 class TestEnote(BaseTestCase):
+
+    def test_create_methods(self):
+        enote = ENoteResource()
+        enote.add_paragraph("This is a test paragraph")
+        self.assertEqual(enote.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
 
     def test_create_enote(self):
         rich_text = RichText()
@@ -35,12 +50,16 @@ class TestEnote(BaseTestCase):
         enote: ENoteResource = outputs['enote']
         self.assertIsInstance(enote, ENoteResource)
         self.assertEqual(enote.title, "My custom note")
-        self.assertEqual(enote.rich_text.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(enote.rich_text.get_block_at_index(0).data["text"], "This is a test paragraph")
+        self.assertEqual(enote.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
+        self.assertEqual(enote.get_block_at_index(0).data["text"], "This is a test paragraph")
 
     def test_create_enote_from_template(self):
         template_rich_text = RichText()
         template_rich_text.add_paragraph("This is a test paragraph")
+
+        # add figure to the template
+        figure_data = self._create_report_image('test')
+        template_rich_text.add_figure(figure_data)
 
         report_template = ReportTemplate(title="My template", content=template_rich_text.get_content())
         report_template.save()
@@ -56,13 +75,16 @@ class TestEnote(BaseTestCase):
         enote: ENoteResource = outputs['enote']
         self.assertIsInstance(enote, ENoteResource)
         self.assertEqual(enote.title, "My template")
-        self.assertEqual(enote.rich_text.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(enote.rich_text.get_block_at_index(0).data["text"], "This is a test paragraph")
+        self.assertEqual(enote.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
+        self.assertEqual(enote.get_block_at_index(0).data["text"], "This is a test paragraph")
+        # check that the image existe and is in the e-note resource set
+        self.assertEqual(enote.get_block_at_index(1).type, RichTextBlockType.FIGURE)
+        self.assertEqual(enote.get_block_at_index(1).data['title'], 'test')
+        self.assertEqual(len(enote.get_resources()), 1)
 
     def test_update_enote(self):
-        base_rich_text = RichText()
-        base_rich_text.add_paragraph("This is a test paragraph")
-        base_enote = ENoteResource(title="My custom note", rich_text=base_rich_text)
+        base_enote = ENoteResource(title="My custom note")
+        base_enote.add_paragraph("This is a test paragraph")
 
         # Test update e-note
         rich_text = RichText()
@@ -79,17 +101,18 @@ class TestEnote(BaseTestCase):
         updated_enote: ENoteResource = outputs['enote']
         self.assertIsInstance(updated_enote, ENoteResource)
         self.assertEqual(updated_enote.title, "My custom note")
-        self.assertEqual(updated_enote.rich_text.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(updated_enote.rich_text.get_block_at_index(0).data["text"], "This is a test paragraph")
-        self.assertEqual(updated_enote.rich_text.get_block_at_index(1).type, RichTextBlockType.HEADER)
-        self.assertEqual(updated_enote.rich_text.get_block_at_index(1).data["text"], "New section")
-        self.assertEqual(updated_enote.rich_text.get_block_at_index(2).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(updated_enote.rich_text.get_block_at_index(2).data["text"], "This is a new paragraph")
+        self.assertEqual(updated_enote.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
+        self.assertEqual(updated_enote.get_block_at_index(0).data["text"], "This is a test paragraph")
+        self.assertEqual(updated_enote.get_block_at_index(1).type, RichTextBlockType.HEADER)
+        self.assertEqual(updated_enote.get_block_at_index(1).data["text"], "New section")
+        self.assertEqual(updated_enote.get_block_at_index(2).type, RichTextBlockType.PARAGRAPH)
+        self.assertEqual(updated_enote.get_block_at_index(2).data["text"], "This is a new paragraph")
 
     def test_generate_report_from_enote(self):
-        rich_text = RichText()
-        rich_text.add_paragraph("This is a test paragraph")
-        enote = ENoteResource(title="My custom note", rich_text=rich_text)
+        enote = ENoteResource(title="My custom note")
+        enote.add_paragraph("This is a test paragraph")
+        enote.add_figure_file(self._create_enote_image(), title='test', create_new_resource=False)
+        enote.add_default_view_from_resource(self._create_resource(), title='view', create_new_resource=True)
 
         # Test generate report from e-note
         task_runner = TaskRunner(GenerateReportFromENote, inputs={
@@ -108,10 +131,14 @@ class TestEnote(BaseTestCase):
 
     def test_merge_enote(self):
         # Test merge enote
-        first_enote = ENoteResource(title="First e-note", rich_text=RichText())
+        first_enote = ENoteResource(title="First e-note")
         first_enote.add_paragraph("This is a first paragraph")
-        second_enote = ENoteResource(title="Second e-note", rich_text=RichText())
+
+        second_enote = ENoteResource(title="Second e-note")
         second_enote.add_paragraph("This is a second paragraph")
+        second_enote.add_figure_file(self._create_enote_image(), title='figure', create_new_resource=False)
+        second_enote.add_default_view_from_resource(self._create_resource(), title='view', create_new_resource=False)
+
         resource_list = ResourceList([first_enote, second_enote])
         task_runner = TaskRunner(MergeENotes, params={
             "title": "Merged enote",
@@ -128,7 +155,53 @@ class TestEnote(BaseTestCase):
         merged_enote: ENoteResource = outputs['enote']
         self.assertIsInstance(merged_enote, ENoteResource)
         self.assertEqual(merged_enote.title, "Merged enote")
-        self.assertEqual(merged_enote.rich_text.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(merged_enote.rich_text.get_block_at_index(0).data["text"], "This is a first paragraph")
-        self.assertEqual(merged_enote.rich_text.get_block_at_index(1).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(merged_enote.rich_text.get_block_at_index(1).data["text"], "This is a second paragraph")
+        self.assertEqual(merged_enote.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
+        self.assertEqual(merged_enote.get_block_at_index(0).data["text"], "This is a first paragraph")
+        self.assertEqual(merged_enote.get_block_at_index(1).type, RichTextBlockType.PARAGRAPH)
+        self.assertEqual(merged_enote.get_block_at_index(1).data["text"], "This is a second paragraph")
+        self.assertEqual(merged_enote.get_block_at_index(2).type, RichTextBlockType.FIGURE)
+        self.assertEqual(merged_enote.get_block_at_index(2).data['title'], 'figure')
+        self.assertEqual(merged_enote.get_block_at_index(3).type, RichTextBlockType.RESOURCE_VIEW)
+        self.assertEqual(merged_enote.get_block_at_index(3).data['title'], 'view')
+
+        # the merged enote contains the figure and view resources
+        self.assertEqual(len(merged_enote.get_resources()), 2)
+
+    def _create_image(self) -> Image.Image:
+        img = Image.new('RGB', (1, 1))
+        img.putdata([(255, 0, 0)])
+        return img
+
+    def _create_enote_image(self) -> File:
+        # create an image with a red pixel and save it to a file
+        img = self._create_image()
+
+        temp_dir = Settings.make_temp_dir()
+        filename = f"{temp_dir}/temp.png"
+        img.save(filename)
+
+        file = File(filename)
+        # simulate that the file is already saved
+        file._model_id = '1234'
+        return file
+
+    def _create_report_image(self, title: str = None) -> RichTextFigureData:
+        # create an image with a red pixel and save it in report storage
+        img = self._create_image()
+
+        # add the image to the template
+        result = RichTextFileService.save_image(img, 'png')
+        return {
+            "filename": result.filename,
+            "width": result.width,
+            "height": result.height,
+            "naturalHeight": result.height,
+            "naturalWidth": result.width,
+            "title": title,
+            "caption": None,
+        }
+
+    def _create_resource(self) -> Resource:
+        resource_model = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)
+
+        return resource_model.get_resource(new_instance=True)

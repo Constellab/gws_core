@@ -42,6 +42,8 @@ class ResourceFactory():
             resource.tags.add_tags(tags)
 
         cls._send_fields_to_resource(resource, kv_store=kv_store, data=data)
+
+        resource.init()
         return resource
 
     @classmethod

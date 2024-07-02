@@ -51,7 +51,8 @@ class MergeENotes(Task):
             if index == 1:
                 enote_resource.title = params['title'] or resource.title
 
-            enote_resource.append_rich_text(resource.rich_text)
+            enote_resource.append_enote(resource)
+            index += 1
 
         return {
             'enote': enote_resource

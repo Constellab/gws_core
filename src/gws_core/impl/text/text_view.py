@@ -89,8 +89,9 @@ class TextView(View):
 
         return TextViewData(
             text=text,
-            is_first_page=page_info.is_first_page,
-            is_last_page=page_info.is_last_page,
+            # if interaction is disabled, disable pagination
+            is_first_page=page_info.is_first_page or self.is_pagination_disabled(),
+            is_last_page=page_info.is_last_page or self.is_pagination_disabled(),
             next_page=page_info.next_page,
             previous_page=page_info.prev_page,
             page_param_name=self.PAGE_PARAM_NAME

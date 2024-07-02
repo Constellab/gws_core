@@ -15,7 +15,7 @@ from gws_core.user.auth_service import AuthService
 @core_app.post("/rich-text/image", tags=["Report"], summary="Upload an image to a rich text")
 def upload_image(image: UploadFile = FastAPIFile(...),
                  _=Depends(AuthService.check_user_access_token)) -> RichTextUploadImageResultDTO:
-    return RichTextFileService.upload_file(image)
+    return RichTextFileService.upload_image(image)
 
 
 @core_app.get("/rich-text/image/{filename}", tags=["Report"], summary="Get an image of a rich text")

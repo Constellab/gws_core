@@ -101,14 +101,14 @@ class TestRichText(BaseTestCaseLight):
 
         # add the resource view in the rich text at a specific variable
         block_count = len(rich_text.get_content().blocks)
-        rich_text.add_resource_views(view, 'figure_1')
+        rich_text.add_resource_view(view, 'figure_1')
         # no block should be added
         self.assertEqual(len(rich_text.get_content().blocks), block_count)
         self.assertEqual(rich_text.get_content().blocks[3].type, RichTextBlockType.RESOURCE_VIEW)
 
         # add the resource view in the rich text at a specific variable
         # this should split the block in 3 blocks
-        rich_text.add_resource_views(view, 'figure_2')
+        rich_text.add_resource_view(view, 'figure_2')
         self.assertEqual(rich_text.get_content().blocks[4].data["text"], 'Variable : ')
         self.assertEqual(rich_text.get_content().blocks[5].type, RichTextBlockType.RESOURCE_VIEW)
         self.assertEqual(rich_text.get_content().blocks[6].data["text"], ' super')
@@ -125,7 +125,7 @@ class TestRichText(BaseTestCaseLight):
         rich_text.get_content().blocks[0].type = RichTextBlockType.PARAGRAPH
 
         # test replace views block with variables
-        rich_text.replace_resource_views_with_variables()
+        rich_text.replace_resource_views_with_parameters()
         # TODO check to improve
         self.assertEqual(rich_text.get_content().blocks[4].type, RichTextBlockType.PARAGRAPH)
 

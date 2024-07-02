@@ -1,16 +1,16 @@
 # This is a template for a streamlit live task.
 # This generates an app with one dataframe as input. Then the user can select 2 columns to plot a scatter plot.
 
-import pandas as pd
 import plotly.express as px
 import streamlit as st
+from pandas import DataFrame
 
 # Your Streamlit app code here
 st.title("Dashboard example")
 
 # show a table from file_path which is a csv file full width
-if source_paths:
-    df = pd.read_csv(source_paths[0])
+if sources:
+    df: DataFrame = sources[0].get_data()
 
     # show the dataframe
     st.dataframe(df)

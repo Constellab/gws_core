@@ -125,7 +125,7 @@ class ResourceZipper():
         # if the resource is a ResourceListBase, add all the children to the zip recursively
         resource: Resource = resource_model.get_resource()
         if isinstance(resource, ResourceListBase):
-            for child_id in resource.get_resource_ids():
+            for child_id in resource.get_resource_model_ids():
                 self.add_resource_model(child_id, resource_id)
 
     def _get_next_resource_index(self) -> int:

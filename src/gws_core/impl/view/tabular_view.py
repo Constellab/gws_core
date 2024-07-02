@@ -134,6 +134,16 @@ class TabularView(View):
             "direction": self.sort_direction
         } if self.sort_column is not None else None
 
+        total_number_of_rows: int = None
+        total_number_of_columns: int = None
+
+        if self._disable_pagination:
+            total_number_of_rows = min(self._get_safe_nb_of_rows_per_page(), self._table.nb_rows)
+            total_number_of_columns = min(self._get_safe_nb_of_columns_per_page(), self._table.nb_columns)
+        else:
+            total_number_of_rows = self._table.nb_rows
+            total_number_of_columns = self._table.nb_columns
+
         return {
             "table": data.to_dict('split')["data"],
             "rows": self._table.get_rows_info(safe_from_row, safe_to_row),
@@ -142,7 +152,7 @@ class TabularView(View):
             "number_of_rows_per_page": self._get_safe_nb_of_rows_per_page(),
             "from_column": safe_from_column + 1,  # return 1-based index
             "number_of_columns_per_page": self._get_safe_nb_of_columns_per_page(),
-            "total_number_of_rows": self._table.nb_rows,
-            "total_number_of_columns": self._table.nb_columns,
+            "total_number_of_rows": total_number_of_rows,
+            "total_number_of_columns": total_number_of_columns,
             "sort": sort
         }

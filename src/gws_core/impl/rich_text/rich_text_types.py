@@ -86,7 +86,17 @@ class RichTextResourceViewData(TypedDict):
     view_config: Dict[str, Any]
     title: Optional[str]
     caption: Optional[str]
-    # technical_info: List[Dict]
+
+
+class RichTextENoteResourceViewData(TypedDict):
+    """Object representing a resource view in an enote rich text"""
+    id: str
+    # key in the enote of the sub resource to call view on
+    sub_resource_key: str
+    view_method_name: str
+    view_config: Dict[str, Any]
+    title: Optional[str]
+    caption: Optional[str]
 
 
 ################################ BLOCK DATA ################################

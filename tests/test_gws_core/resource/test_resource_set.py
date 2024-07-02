@@ -52,6 +52,24 @@ class RobotsGenerator(Task):
         return {'set': resource_set}
 
 
+@task_decorator(unique_name="RobotsAdd")
+class RobotsAdd(Task):
+
+    input_specs: InputSpecs = InputSpecs({"set": InputSpec(ResourceSet)})
+    output_specs: OutputSpecs = OutputSpecs({'set': OutputSpec(ResourceSet)})
+
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        # this task takes the resource set and add a new robot
+        # keeps the resources that where already in the set
+        resource_set: ResourceSet = inputs.get('set')
+        robot_3 = Robot.empty()
+        robot_3.age = 100
+        robot_3.name = "Robot 3"
+        resource_set.add_resource(robot_3)
+
+        return {'set': resource_set}
+
+
 # test_resource_set
 class TestResourceSet(BaseTestCase):
 
@@ -62,16 +80,20 @@ class TestResourceSet(BaseTestCase):
         protocol: IProtocol = experiment.get_protocol()
         robot_create = experiment.get_protocol().add_process(RobotCreate, 'create')
         robot_generator = protocol.add_process(RobotsGenerator, 'generator')
-        experiment.get_protocol().add_connector(
-            robot_create >> 'robot', robot_generator << 'robot_i')
+        robot_add = protocol.add_process(RobotsAdd, 'add')
+        experiment.get_protocol().add_connectors([
+            (robot_create >> 'robot', robot_generator << 'robot_i'),
+            (robot_generator >> 'set', robot_add << 'set')
+        ])
 
         experiment.run()
 
         robot_generator.refresh()
         robot_create.refresh()
+        robot_add.refresh()
 
-        # check that it created 3 resource (1 for the resrouce set and 2 robots)
-        self.assertEqual(ResourceModel.select().count(), resource_count + 3)
+        # check that it created 5 resources (2 for the resource set and 3 robots)
+        self.assertEqual(ResourceModel.select().count(), resource_count + 5)
 
         resource_set: ResourceSet = robot_generator.get_output('set')
 
@@ -100,8 +122,14 @@ class TestResourceSet(BaseTestCase):
         self.assertEqual(
             len(resource_set.view_resources_list({}).to_dto({}).data), 2)
 
-        experiment.get_experiment_model().reset()
+        # check that output or robot add has 3 robots
+        resource_set = robot_add.get_output('set')
+        self.assertEqual(len(resource_set.get_resources()), 3)
+        self.assertTrue(resource_set.resource_exists('Robot 2'))
+        self.assertTrue(resource_set.resource_exists('Robot 3'))
+
         # check that the reset cleared the correct resources
+        experiment.get_experiment_model().reset()
         self.assertEqual(ResourceModel.select().count(), resource_count)
 
     def test_resource_set_exporter(self):

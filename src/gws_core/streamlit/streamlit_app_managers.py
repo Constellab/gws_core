@@ -34,6 +34,8 @@ class StreamlitAppManager():
     MAIN_APP_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                       "_main_streamlit_app.py")
 
+    app_dir: str = None
+
     main_app_token: str = None
     main_app_process: SysProc = None
 
@@ -63,7 +65,8 @@ class StreamlitAppManager():
     def _create_app(cls, app_id: str) -> StreamlitApp:
         cls.start_streamlit_main_app()
 
-        app = StreamlitApp(cls.get_main_app_port(), app_id, cls.main_app_token)
+        app = StreamlitApp(cls.get_main_app_port(), app_id,
+                           cls.main_app_token, cls.get_app_dir())
         cls.current_running_apps[app_id] = app
 
         return app
@@ -99,7 +102,9 @@ class StreamlitAppManager():
                # custom options
                '--',
                # configure a token to secure the app
-               '--gws_token', cls.main_app_token]
+               '--gws_token', cls.main_app_token,
+               '--app_dir', cls.get_app_dir(),
+               ]
 
         cls.main_app_process = SysProc.popen(cmd)
         cls.current_no_connection_check = 0
@@ -249,3 +254,9 @@ class StreamlitAppManager():
             return FrontService.get_dark_theme()
 
         return FrontService.get_light_theme()
+
+    @classmethod
+    def get_app_dir(cls) -> str:
+        if cls.app_dir is None:
+            cls.app_dir = Settings.make_temp_dir()
+        return cls.app_dir
