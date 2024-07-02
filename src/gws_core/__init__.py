@@ -370,6 +370,9 @@ from .share.resource.resource_downloader_http import \
     ResourceDownloaderHttp as ResourceDownloaderHttp
 # Space
 from .space.mail_service import MailService as MailService
+# Streamlit
+from .streamlit.streamlit_resource import \
+    StreamlitResource as StreamlitResource
 # Tag
 from .tag.tag import Tag as Tag
 from .tag.tag_helper import TagHelper as TagHelper

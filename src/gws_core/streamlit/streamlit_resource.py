@@ -9,7 +9,6 @@ from gws_core.impl.file.fs_node import FSNode
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.dict_r_field import DictRField
 from gws_core.resource.r_field.primitive_r_field import StrRField
-from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.resource.view.view_decorator import view
@@ -121,7 +120,7 @@ class StreamlitResource(ResourceList):
             self._params = {}
         self._params[key] = value
 
-    @view(view_type=StreamlitView, default_view=True)
+    @view(view_type=StreamlitView, human_name="Dashboard", short_description="Dahsboard generated with streamlit", default_view=True)
     def default_view(self, _: ConfigParams) -> StreamlitView:
 
         streamlit_app = StreamlitAppManager.create_or_get_app(self.uid)
