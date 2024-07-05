@@ -386,8 +386,6 @@ from .task.converter.importer import importer_decorator as importer_decorator
 # Task
 from .task.plug import Sink as Sink
 from .task.plug import Source as Source
-from .task.plug import Switch2 as Switch2
-from .task.plug import Wait as Wait
 from .task.task import CheckBeforeTaskResult as CheckBeforeTaskResult
 from .task.task import Task as Task
 from .task.task_decorator import task_decorator as task_decorator

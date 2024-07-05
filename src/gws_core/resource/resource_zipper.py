@@ -75,6 +75,8 @@ class ResourceZipper():
         )
 
     def add_resource(self, resource: Resource) -> None:
+        if not resource._model_id:
+            raise Exception('Resource must have a model id')
         self.add_resource_model(resource._model_id)
 
     def add_resource_model(self, resource_id: str, parent_resource_id: str = None) -> None:

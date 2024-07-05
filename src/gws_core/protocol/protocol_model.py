@@ -361,7 +361,7 @@ class ProtocolModel(ProcessModel):
 
             # If the process already exists
             if key in self._processes:
-                raise Exception(f"Process '{key}' already exists")
+                raise Exception(f"Process with instance name '{key}' already exists")
             else:
                 self._add_process_model(process_model, key)
 

@@ -42,19 +42,19 @@ class ExperimentService():
 
     @classmethod
     @transaction()
-    def create_experiment_from_dto(cls, experiment_DTO: ExperimentSaveDTO) -> Experiment:
+    def create_experiment_from_dto(cls, experiment_dto: ExperimentSaveDTO) -> Experiment:
 
         protocol_template: ProtocolTemplate = None
-        if experiment_DTO.protocol_template_id:
+        if experiment_dto.protocol_template_id:
             protocol_template = ProtocolTemplate.get_by_id_and_check(
-                experiment_DTO.protocol_template_id)
-        elif experiment_DTO.protocol_template_json and isinstance(experiment_DTO.protocol_template_json, dict):
+                experiment_dto.protocol_template_id)
+        elif experiment_dto.protocol_template_json and isinstance(experiment_dto.protocol_template_json, dict):
             protocol_template = ProtocolTemplate.from_export_dto_dict(
-                experiment_DTO.protocol_template_json)
+                experiment_dto.protocol_template_json)
 
         return cls.create_experiment(
-            project_id=experiment_DTO.project_id,
-            title=experiment_DTO.title,
+            project_id=experiment_dto.project_id,
+            title=experiment_dto.title,
             protocol_template=protocol_template,
             creation_type=ExperimentCreationType.MANUAL
         )
