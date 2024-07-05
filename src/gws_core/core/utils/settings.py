@@ -184,10 +184,11 @@ class Settings():
         """
 
         # specific space api key for local env
-        if cls.is_local_env() and not os.environ.get("CENTRAL_API_KEY"):
+        if cls.is_local_env() and not os.environ.get("SPACE_API_KEY"):
             return '123456'
 
-        return os.environ.get("CENTRAL_API_KEY")
+        # TODO remove CENTRAL_API_KEY once all lab manager are updated to v1.9.0
+        return os.environ.get("SPACE_API_KEY") or os.environ.get("CENTRAL_API_KEY")
 
     @classmethod
     def get_space_api_url(cls) -> str:
@@ -198,10 +199,11 @@ class Settings():
         """
 
         # specific space api url for local env
-        if cls.is_local_env() and not os.environ.get("CENTRAL_API_URL"):
+        if cls.is_local_env() and not os.environ.get("SPACE_API_URL"):
             return 'http://host.docker.internal:3001'
 
-        return os.environ.get("CENTRAL_API_URL")
+        # TODO remove CENTRAL_API_URL once all lab manager are updated to v1.9.0
+        return os.environ.get("SPACE_API_URL") or os.environ.get("CENTRAL_API_URL")
 
     @classmethod
     def get_front_url(cls) -> str:
