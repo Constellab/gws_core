@@ -8,7 +8,6 @@ from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.utils.compress.tar_compress import TarGzCompress
 from gws_core.core.utils.compress.zip_compress import ZipCompress
-from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
@@ -32,7 +31,7 @@ class FolderExporter(ResourceExporter):
     def export_to_path(self, source: Resource, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]) -> File:
 
         folder: Folder = source
-        tmp_dir = Settings.make_temp_dir()
+        tmp_dir = self.create_tmp_dir()
         destination = os.path.join(tmp_dir, FileHelper.get_dir_name(folder.path))
 
         folder_name = FileHelper.get_dir_name(folder.path)

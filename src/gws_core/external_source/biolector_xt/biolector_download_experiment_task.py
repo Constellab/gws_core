@@ -42,7 +42,6 @@ class BiolectorDownloadExperiment(Task):
     output_specs: OutputSpecs = OutputSpecs({'result': OutputSpec(Table)})
 
     zip_path = None
-    tmp_dir = None
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
@@ -63,15 +62,15 @@ class BiolectorDownloadExperiment(Task):
         self.zip_path = inputs['file'].path
         # unzip the file
         self.log_info_message("Unzipping the downloaded file")
-        self.tmp_dir = Settings.make_temp_dir()
-        ZipCompress.decompress(self.zip_path, self.tmp_dir)
+        tmp_dir = self.create_tmp_dir()
+        ZipCompress.decompress(self.zip_path, tmp_dir)
 
         # read the csv result file
         # find the csv file in the unzipped folder, no recursion
         csv_file = None
-        for file in os.listdir(self.tmp_dir):
+        for file in os.listdir(tmp_dir):
             if file.endswith('.csv'):
-                csv_file = os.path.join(self.tmp_dir, file)
+                csv_file = os.path.join(tmp_dir, file)
                 break
 
         if csv_file is None:
@@ -93,6 +92,3 @@ class BiolectorDownloadExperiment(Task):
         super().run_after_task()
         if self.zip_path:
             FileHelper.delete_file(self.zip_path)
-
-        if self.tmp_dir:
-            FileHelper.delete_dir(self.tmp_dir)

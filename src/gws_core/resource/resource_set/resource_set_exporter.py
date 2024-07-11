@@ -67,7 +67,7 @@ class ResourceSetExporter(ResourceExporter):
             fs_nodes.append(exporter.call(resource, params={}))
 
         # create a zip file with all the exported files
-        temp_dir = Settings.get_instance().make_temp_dir()
+        temp_dir = self.create_tmp_dir()
         zip_path = os.path.join(temp_dir, f"{source.name or 'export'}.zip")
 
         zip = ZipCompress(zip_path)
