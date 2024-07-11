@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional, Tuple, Type
 
-from gws_core.config.config_service import ConfigService
 from gws_core.process.process import Process
+from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource_dto import ResourceOrigin
 
 from ..config.config_types import ConfigParamsDict
@@ -57,13 +57,13 @@ class IProcess:
     def set_param(self, param_name: str, value: ParamValue) -> None:
         """Set the param value
         """
-        ConfigService.update_config_value(
+        ProtocolService.set_process_model_config_value(
             self._process_model.config, param_name, value)
 
     def set_config_params(self, config_params: ConfigParamsDict) -> None:
         """Set the config param values
         """
-        ConfigService.update_config_params(
+        ProtocolService.configure_process_model(
             self._process_model.config, config_params)
 
     def get_param(self, name: str) -> Any:

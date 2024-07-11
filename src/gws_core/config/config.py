@@ -175,14 +175,14 @@ class Config(ModelWithUser):
         )
 
     @classmethod
-    def from_simple_json(cls, config_dict: dict) -> 'Config':
+    def from_simple_dto(cls, config_dto: ConfigSimpleDTO) -> 'Config':
         """
-        Import the config from a dict
+        Import the config from a dto
         """
 
         config = Config()
-        config.set_specs(ConfigSpecsHelper.config_specs_from_json(config_dict.get("specs", {})))
-        config.set_values(config_dict.get("values", {}))
+        config.set_specs(ConfigSpecsHelper.config_specs_from_dto(config_dto.specs))
+        config.set_values(config_dto.values)
 
         return config
 

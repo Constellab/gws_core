@@ -5,8 +5,8 @@ from json import dump
 from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.core.service.external_lab_service import (
-    ExternalLabService, ExternalLabWithUserInfo)
+from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator_type import EntityType

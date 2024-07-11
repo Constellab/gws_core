@@ -7,8 +7,11 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Type, final
 
 from peewee import BooleanField, CharField, ForeignKeyField
 
+from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.io.io_dto import IODTO
+from gws_core.io.io_specs import IOSpecs
 from gws_core.model.typing import Typing
 from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
@@ -172,30 +175,56 @@ class ProcessModel(ModelWithUser):
         Sets the parent protocol of the process
         """
 
-        from ..protocol.protocol_model import ProtocolModel
-        if not isinstance(parent_protocol, ProtocolModel):
-            raise BadRequestException(
-                "An instance of ProtocolModel is required")
         if parent_protocol.id:
             self.parent_protocol_id = parent_protocol.id
         self._parent_protocol = parent_protocol
+
+        self.set_experiment(parent_protocol.experiment)
 
     def set_process_type(self, process_type: Type[Process]) -> None:
         self.process_typing_name = process_type._typing_name
         self.brick_version_on_create = self._get_type_brick_version()
         self.name = process_type._human_name
 
+    def set_inputs_from_specs(self, inputs_specs: IOSpecs) -> None:
+        """Set the inputs from specs
+        """
+        self._inputs = Inputs.load_from_specs(inputs_specs)
+
+        # Set the data inputs dict
+        self.data["inputs"] = self.inputs.to_json()
+
+    def set_outputs_from_specs(self, outputs_specs: IOSpecs) -> None:
+        """Set the outputs from specs
+        """
+        self._outputs = Outputs.load_from_specs(outputs_specs)
+        # Set the data inputs dict
+        self.data["outputs"] = self.outputs.to_json()
+
+    def set_inputs_from_dto(self, inputs_dto: IODTO, reset: bool = False) -> None:
+        """Set the inputs from a DTO
+        """
+        self._inputs = Inputs.load_from_dto(inputs_dto)
+
+        if reset:
+            self._inputs.reset()
+        # Set the data inputs dict
+        self.data["inputs"] = self.inputs.to_json()
+
+    def set_outputs_from_dto(self, outputs_dto: IODTO, reset: bool = False) -> None:
+        """Set the outputs from a DTO
+        """
+        self._outputs = Outputs.load_from_dto(outputs_dto)
+        if reset:
+            self._outputs.reset()
+        # Set the data inputs dict
+        self.data["outputs"] = self.outputs.to_json()
+
     def _get_type_brick_version(self) -> str:
         typing: Typing = TypingManager.get_typing_from_name_and_check(self.process_typing_name)
         return typing.brick_version
 
-    def set_experiment(self, experiment: Experiment):
-        if not isinstance(experiment, Experiment):
-            raise BadRequestException("An instance of Experiment is required")
-
-        if self.experiment and self.experiment.id != self.experiment.id:
-            raise BadRequestException(
-                "The protocol is already related to an experiment")
+    def set_experiment(self, experiment: Experiment) -> None:
         self.experiment = experiment
 
     def get_error_info(self) -> Optional[ProcessErrorInfo]:
@@ -327,6 +356,36 @@ class ProcessModel(ModelWithUser):
             return 0
         return (DateHelper.now_utc() - self.progress_bar.started_at).total_seconds() * 1000
 
+    ########################### CONFIG #################################
+
+    def set_config_value(self, param_name: str, value: Any) -> None:
+        """Set a value of the config
+
+        :param param_name: [description]
+        :type param_name: str
+        :param value: [description]
+        :type value: Any
+        """
+
+        self.config.set_value(param_name, value)
+
+    def set_config_values(self, config_values: ConfigParamsDict) -> None:
+        """Set the config values
+
+        :param config_values: [description]
+        :type config_values: Dict[str, Any]
+        """
+
+        self.config.set_values(config_values)
+
+    def set_config(self, config: Config) -> None:
+        """Set the config object
+
+        :param config: [description]
+        :type config: ConfigParamsDict
+        """
+        self.config = config
+
     ########################### INFO #################################
 
     @abstractmethod
@@ -342,6 +401,17 @@ class ProcessModel(ModelWithUser):
             return "Main protocol"
 
         return self.get_name()
+
+    def get_instance_path(self) -> str:
+        """Return the instance path
+        """
+        if self.parent_protocol_id:
+            parent_path = self.parent_protocol.get_instance_path()
+            if len(parent_path) > 0:
+                return f"{parent_path}.{self.get_instance_name_context()}"
+            else:
+                return self.instance_name
+        return ""
 
     def get_name(self) -> str:
         """Return the name of the process
@@ -465,12 +535,14 @@ class ProcessModel(ModelWithUser):
             instance_name=self.instance_name,
             config=self.config.to_simple_dto(ignore_config_values),
             name=self.name,
-            brick_version=self.brick_version_on_create,
+            brick_version_on_create=self.brick_version_on_create,
+            brick_version_on_run=self.brick_version_on_run,
             inputs=self.inputs.to_dto(),
             outputs=self.outputs.to_dto(),
             status=self.status.value,
             process_type=process_typing.to_simple_dto(),
-            style=self.style or process_typing.style
+            style=self.style or process_typing.style,
+            progress_bar=self.progress_bar.to_config_dto(),
         )
 
     ########################### STATUS MANAGEMENT ##################################

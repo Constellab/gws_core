@@ -1,10 +1,9 @@
 
 
-from typing import TYPE_CHECKING, List, Union, final
+from typing import TYPE_CHECKING, List, Optional, final
 
 from peewee import BigIntegerField, BooleanField, CharField
 
-from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
 
@@ -43,7 +42,7 @@ class FSNodeModel(Model):
         return FileStore.get_by_id_and_check(self.file_store_id)
 
     @classmethod
-    def find_by_path(cls, path: str) -> Union['FSNodeModel', None]:
+    def find_by_path(cls, path: str) -> Optional['FSNodeModel']:
         return cls.select().where(cls.path == path).first()
 
     @classmethod

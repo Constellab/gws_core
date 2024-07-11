@@ -15,10 +15,9 @@ from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_service import ShareService
-from gws_core.share.shared_dto import (GenerateShareLinkDTO,
-                                       ShareEntityInfoReponseDTO,
-                                       ShareEntityZippedResponseDTO,
-                                       ShareLinkType)
+from gws_core.share.shared_dto import (GenerateShareLinkDTO, ShareLinkType,
+                                       ShareResourceInfoReponseDTO,
+                                       ShareResourceZippedResponseDTO)
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.user.current_user_service import CurrentUserService
@@ -100,7 +99,7 @@ class TestShareResource(BaseTestCase):
         share_link = ShareLinkService.generate_share_link(generate_dto)
 
         # get the share entity info
-        share_entity_info: ShareEntityInfoReponseDTO = ShareService.get_share_entity_info(share_link.token)
+        share_entity_info: ShareResourceInfoReponseDTO = ShareService.get_resource_entity_object_info(share_link.token)
         self.assertEqual(share_entity_info.entity_type, ShareLinkType.RESOURCE)
         self.assertEqual(share_entity_info.entity_id, original_resource_model.id)
         self.assertIsNotNone(share_entity_info.zip_entity_route)
@@ -108,7 +107,7 @@ class TestShareResource(BaseTestCase):
         self.assertTrue(len(share_entity_info.entity_object), 1)
 
         # Zip the resource
-        response: ShareEntityZippedResponseDTO = ShareService.zip_shared_entity(share_link.token)
+        response: ShareResourceZippedResponseDTO = ShareService.zip_shared_resource(share_link.token)
         self.assertEqual(response.entity_type, ShareLinkType.RESOURCE)
         self.assertEqual(response.entity_id, original_resource_model.id)
         self.assertIsNotNone(response.download_entity_route)

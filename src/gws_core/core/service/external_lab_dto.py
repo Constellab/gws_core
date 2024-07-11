@@ -1,0 +1,18 @@
+
+from typing import Optional
+
+from gws_core.core.model.model_dto import BaseModelDTO
+
+
+class ExternalLabWithUserInfo(BaseModelDTO):
+    """Class that contains information a lab when 2 labs communicate with each other"""
+    lab_id: str
+    lab_name: str
+    lab_api_url: str
+
+    user_id: str
+    user_firstname: str
+    user_lastname: str
+
+    space_id: Optional[str]
+    space_name: Optional[str]

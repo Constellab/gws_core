@@ -4,13 +4,14 @@ from fastapi import Depends
 from fastapi.responses import FileResponse
 
 from gws_core.core.model.model_dto import PageDTO
-from gws_core.core.service.external_lab_service import ExternalLabWithUserInfo
+from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.core_controller import core_app
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.share.shared_dto import (ShareEntityInfoDTO,
-                                       ShareEntityInfoReponseDTO,
-                                       ShareEntityZippedResponseDTO,
-                                       ShareLinkType)
+                                       ShareExperimentInfoReponseDTO,
+                                       ShareLinkType,
+                                       ShareResourceInfoReponseDTO,
+                                       ShareResourceZippedResponseDTO)
 from gws_core.user.auth_service import AuthService
 
 from .share_service import ShareService
@@ -34,20 +35,20 @@ def get_shared_to_list(entity_type: ShareLinkType,
 # Open route to get info about a shared entity
 @core_app.get("/share/info/{token}", tags=["Share"],
               summary="Get info about a shared entity")
-def get_share_entity_info(token: str) -> ShareEntityInfoReponseDTO:
-    return ShareService.get_share_entity_info(token)
+def get_share_entity_info(token: str) -> ShareResourceInfoReponseDTO:
+    return ShareService.get_resource_entity_object_info(token)
 
 
 # Open zip the shared entity
 @core_app.post("/share/zip-entity/{token}", tags=["Share"], summary="Zip the shared entity")
-def zip_entity(token: str) -> ShareEntityZippedResponseDTO:
-    return ShareService.zip_shared_entity(token)
+def zip_entity(token: str) -> ShareResourceZippedResponseDTO:
+    return ShareService.zip_shared_resource(token)
 
 
 # Open route to download a resource
 @core_app.get("/share/download/{token}/{zipped_entity_id}", tags=["Share"], summary="Download a zipped entity")
 def download_resource(token: str, zipped_entity_id: str) -> FileResponse:
-    file_path = ShareService.download_zipped_entity(token, zipped_entity_id)
+    file_path = ShareService.download_zipped_resource(token, zipped_entity_id)
     return FileHelper.create_file_response(file_path)
 
 ################################ RESOURCE ################################
@@ -57,3 +58,28 @@ def download_resource(token: str, zipped_entity_id: str) -> FileResponse:
 @core_app.get("/share/resource/download/{token}", tags=["Share"], summary="Download a resource")
 def old_download_resource(token: str) -> FileResponse:
     raise Exception("The shared link is deprecated, please regenerate it in the new gws_core v0.6.1 or more")
+
+
+################################ EXPERIMENT ################################
+
+# Open zip the resource of a shared experiment
+@core_app.get("/share/experiment/{token}", tags=["Share"],
+              summary="Get info of the shared experiment")
+def get_share_experiment_info(token: str) -> ShareExperimentInfoReponseDTO:
+    return ShareService.get_experiment_entity_object_info(token)
+
+# Open zip the resource of a shared experiment
+
+
+@core_app.post("/share/experiment/{token}/resource/{resource_id}/zip", tags=["Share"],
+               summary="Zip the resource of a shared experiment")
+def zip_experiment_resource(token: str, resource_id: str) -> ShareResourceZippedResponseDTO:
+    return ShareService.zip_shared_experiment_resource(token, resource_id)
+
+
+# Open route to download a resource
+@core_app.get("/share/experiment/{token}/resource/{resource_id}/download",
+              tags=["Share"], summary="Download the resource of a shared experiment")
+def download_experiment_resource(token: str, resource_id: str) -> FileResponse:
+    file_path = ShareService.download_experiment_resource(token, resource_id)
+    return FileHelper.create_file_response(file_path)

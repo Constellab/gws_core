@@ -98,3 +98,19 @@ class App:
         cls.app.mount("/s3-server/", s3_server_app)
 
         uvicorn.run(cls.app, host='0.0.0.0', port=int(port))
+
+    @classmethod
+    def start_uvicorn_app(cls, port: int = 3000):
+        # configure the context middleware
+        cls.app.add_middleware(
+            ContextMiddleware
+        )
+
+        # api routes
+        cls.app.mount("/core-api/", core_app)
+        # TODO To remove once central uses space-api (we can do that once all lab are on v0.5.0)
+        cls.app.mount("/central-api/", space_app)
+        cls.app.mount("/space-api/", space_app)
+        cls.app.mount("/s3-server/", s3_server_app)
+
+        uvicorn.run(cls.app, host='0.0.0.0', port=int(port))

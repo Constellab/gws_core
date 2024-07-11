@@ -119,36 +119,36 @@ class Switch2(Task):
         return {"resource": resource}
 
 
-@task_decorator(unique_name="Wait", short_description="Wait a number of seconds specified in the config",
-                style=TypingStyle.material_icon(
-                    material_icon_name='front_hand',
-                ),
-                )
-class Wait(Task):
-    """
-    Wait task
+# @task_decorator(unique_name="Wait", short_description="Wait a number of seconds specified in the config",
+#                 style=TypingStyle.material_icon(
+#                     material_icon_name='front_hand',
+#                 ),
+#                 )
+# class Wait(Task):
+#     """
+#     Wait task
 
-    This proccess waits during a given time before continuing.
-    """
+#     This proccess waits during a given time before continuing.
+#     """
 
-    input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
-    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
-        resource_types=Resource, sub_class=True, is_constant=True)})
-    config_specs: ConfigSpecs = {"waiting_time": FloatParam(
-        default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
+#     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
+#     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
+#         resource_types=Resource, sub_class=True, is_constant=True)})
+#     config_specs: ConfigSpecs = {"waiting_time": FloatParam(
+#         default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
 
-    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        waiting_time = params.get_value("waiting_time")
+#     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+#         waiting_time = params.get_value("waiting_time")
 
-        current_time = 0
-        while (current_time < waiting_time):
-            current_time = current_time + 1
-            self.update_progress_value(
-                (current_time / waiting_time) * 100, 'Waiting 1 sec')
-            time.sleep(1)
+#         current_time = 0
+#         while (current_time < waiting_time):
+#             current_time = current_time + 1
+#             self.update_progress_value(
+#                 (current_time / waiting_time) * 100, 'Waiting 1 sec')
+#             time.sleep(1)
 
-        resource = inputs["resource"]
-        return {"resource": resource}
+#         resource = inputs["resource"]
+#         return {"resource": resource}
 
 
 @task_decorator(unique_name="ShellWait",

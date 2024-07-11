@@ -7,8 +7,8 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.utils.logger import Logger
-from gws_core.process.process_factory import ProcessFactory
-from gws_core.protocol.protocol_dto import ProtocolConfigDTO
+from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
+from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactory
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol_template.protocol_template_dto import (
     ProtocolTemplateDTO, ProtocolTemplateExportDTO)
@@ -39,10 +39,10 @@ class ProtocolTemplate(ModelWithUser):
         if not self.is_saved() and not self.data:
             self.data = {}
 
-    def get_template(self) -> ProtocolConfigDTO:
-        return ProtocolConfigDTO.from_json(self.data)
+    def get_template(self) -> ProtocolGraphConfigDTO:
+        return ProtocolGraphConfigDTO.from_json(self.data)
 
-    def set_template(self, template: ProtocolConfigDTO):
+    def set_template(self, template: ProtocolGraphConfigDTO):
         self.data = template.to_json_dict()
 
     def to_dto(self) -> ProtocolTemplateDTO:
@@ -67,8 +67,8 @@ class ProtocolTemplate(ModelWithUser):
             description=self.description
         )
 
-    def get_protocol_config_dto(self) -> ProtocolConfigDTO:
-        protocol_model = ProcessFactory.create_protocol_model_from_graph(self.get_template())
+    def get_protocol_config_dto(self) -> ProtocolGraphConfigDTO:
+        protocol_model = ProtocolGraphFactory.create_protocol_model_from_type(self.get_template())
         return protocol_model.to_protocol_config_dto()
 
     @classmethod

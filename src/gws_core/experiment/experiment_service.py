@@ -4,8 +4,11 @@ from typing import Dict, List, Optional, Type
 
 from peewee import ModelSelect
 
+from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
+from gws_core.experiment.experiment_zipper import (ZipExperiment,
+                                                   ZipExperimentInfo)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.report.report import ReportExperiment
@@ -15,6 +18,7 @@ from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
+from gws_core.user.user import User
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
@@ -537,3 +541,24 @@ class ExperimentService():
                 intermediate_resources.append(resource)
 
         return intermediate_resources
+
+    ################################### EXPORT / IMPORT ##############################
+
+    @classmethod
+    def export_experiment(cls, experiment_id: str) -> ZipExperimentInfo:
+        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
+
+        experimeny_zip = ZipExperiment(
+            id=experiment.id,
+            title=experiment.title,
+            description=experiment.description,
+            status=experiment.status,
+            project=experiment.project.to_dto() if experiment.project is not None else None,
+            error_info=experiment.error_info
+        )
+
+        return ZipExperimentInfo(
+            zip_version=1,
+            experiment=experimeny_zip,
+            protocol=experiment.export_protocol(),
+        )

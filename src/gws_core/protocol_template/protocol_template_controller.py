@@ -11,7 +11,7 @@ from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.core_controller import core_app
-from gws_core.protocol.protocol_dto import ProtocolConfigDTO
+from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol_template.protocol_template_dto import \
     ProtocolTemplateDTO
 from gws_core.user.auth_service import AuthService
@@ -29,7 +29,7 @@ def get_by_id(id: str,
 @core_app.get("/protocol-template/{id}/graph", tags=["Protocol template"],
               summary="Get the protocol template data by id")
 def get_protocol_template_graph(id: str,
-                                _=Depends(AuthService.check_user_access_token)) -> ProtocolConfigDTO:
+                                _=Depends(AuthService.check_user_access_token)) -> ProtocolGraphConfigDTO:
 
     return ProtocolTemplateService.get_by_id_and_check(id=id).get_protocol_config_dto()
 

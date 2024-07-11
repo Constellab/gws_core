@@ -70,7 +70,7 @@ class TransformerService():
             raise exception
 
         # return the resource model of the sink process
-        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
+        return experiment.get_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
 
     @classmethod
     def call_transformers(cls, resource: Resource,

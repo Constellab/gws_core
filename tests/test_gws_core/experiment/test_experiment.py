@@ -211,11 +211,11 @@ class TestExperiment(BaseTestCase):
         self.assertIsNone(process_model.get_error_info())
 
         for port in process_model.inputs.ports.values():
-            self.assertIsNone(port.resource_model)
+            self.assertIsNone(port.get_resource_model())
             self.assertFalse(port.resource_provided)
 
         for port in process_model.outputs.ports.values():
-            self.assertIsNone(port.resource_model)
+            self.assertIsNone(port.get_resource_model())
             self.assertFalse(port.resource_provided)
 
         # If this is a protocol, check the sub process
@@ -313,7 +313,7 @@ class TestExperiment(BaseTestCase):
 
         self.assertEqual(experiment.status, ExperimentStatus.SUCCESS)
         # retrieve resource to compare it after
-        created_robot = create_process.out_port('robot').resource_model
+        created_robot = create_process.out_port('robot').get_resource_model()
         self.assertIsNotNone(created_robot)
 
         # add a move process to the protocol
@@ -335,7 +335,7 @@ class TestExperiment(BaseTestCase):
 
         # Check that the create process was not re-run by comparing output
         create_process = create_process.refresh()
-        created_robot_2 = create_process.out_port('robot').resource_model
+        created_robot_2 = create_process.out_port('robot').get_resource_model()
         self.assertEqual(created_robot.id, created_robot_2.id)
 
         # Check that the move process was run
@@ -360,7 +360,7 @@ class TestExperiment(BaseTestCase):
         create_output.save()
 
         # Delete the intermediate resource data
-        ExperimentService.delete_intermediate_resources(experiment.get_experiment_model().id)
+        ExperimentService.delete_intermediate_resources(experiment.get_model().id)
 
         create_output.refresh()
         # the output of i_create should not be deleted because it is flagged

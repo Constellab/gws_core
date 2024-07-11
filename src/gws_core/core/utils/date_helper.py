@@ -5,6 +5,8 @@ from datetime import date, datetime, timedelta, timezone
 
 class DateHelper:
 
+    MAX_DATE = datetime.max.replace(tzinfo=timezone.utc)
+
     @staticmethod
     def convert_datetime_to_utc(datetime_: datetime) -> datetime:
         return datetime_.astimezone()

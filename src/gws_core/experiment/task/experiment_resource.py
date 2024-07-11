@@ -32,7 +32,7 @@ class ExperimentResource(Resource):
 
     def get_experiment(self) -> Experiment:
         if self.experiment is None:
-            self.experiment = Experiment.get_by_id_and_check(self.experiment)
+            self.experiment = Experiment.get_by_id_and_check(self.experiment_id)
         return self.experiment
 
     @view(view_type=JSONView, human_name="View experiment info", default_view=True)

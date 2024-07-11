@@ -96,9 +96,13 @@ class ParamSpecHelper():
     def create_param_spec_from_json(json_: Dict[str, Any]) -> ParamSpec:
         spec_dto = ParamSpecDTO.from_json(json_)
 
-        param_spec_type = ParamSpecHelper._get_param_spec_type_from_str(spec_dto.type)
+        return ParamSpecHelper.create_param_spec_from_dto(spec_dto)
 
-        return param_spec_type.load_from_dto(spec_dto)
+    @staticmethod
+    def create_param_spec_from_dto(dto: ParamSpecDTO) -> ParamSpec:
+        param_spec_type = ParamSpecHelper._get_param_spec_type_from_str(dto.type)
+
+        return param_spec_type.load_from_dto(dto)
 
     @staticmethod
     def _get_param_spec_type_from_str(type_: str) -> Type[ParamSpec]:

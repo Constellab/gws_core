@@ -7,7 +7,6 @@
 # Config
 from .config.config import Config as Config
 from .config.config_params import ConfigParams as ConfigParams
-from .config.config_service import ConfigService as ConfigService
 from .config.config_types import ConfigParamsDict as ConfigParamsDict
 from .config.config_types import ConfigSpecs as ConfigSpecs
 # Code params
@@ -83,6 +82,7 @@ from .core.model.base import Base as Base
 from .core.model.db_field import DateTimeUTC as DateTimeUTC
 from .core.model.db_field import JSONField as JSONField
 from .core.model.model import Model as Model
+from .core.model.model_dto import BaseModelDTO as BaseModelDTO
 from .core.model.sys_proc import SysProc as SysProc
 # Core > Service
 from .core.service.external_api_service import \

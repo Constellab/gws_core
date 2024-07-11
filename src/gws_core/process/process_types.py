@@ -17,6 +17,10 @@ class ProcessStatus(Enum):
     PARTIALLY_RUN = "PARTIALLY_RUN"
     WAITING_FOR_CLI_PROCESS = "WAITING_FOR_CLI_PROCESS"
 
+    @classmethod
+    def from_str(cls, status: str) -> ProcessStatus:
+        return ProcessStatus[status.upper()]
+
 
 class ProcessErrorInfo(BaseModelDTO):
     detail: str

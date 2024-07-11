@@ -1,24 +1,18 @@
 
 
-from typing import List
-
-import requests
 from requests.models import Response
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
-from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.service.external_lab_service import ExternalLabService
-from gws_core.core.utils.settings import Settings
-from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
+from gws_core.resource.resource_downloader import ResourceDownloader
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.share.resource.resource_downloader_base import \
     ResourceDownloaderBase
-from gws_core.share.shared_dto import (ShareEntityInfoReponseDTO,
-                                       ShareEntityZippedResponseDTO,
-                                       ShareLinkType)
+from gws_core.share.share_link import ShareLink
+from gws_core.share.shared_dto import ShareLinkType
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
@@ -53,57 +47,19 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
 
         self.link = params['link']
 
-        download_url: str = self.link
-        if self.is_share_resource_link(self.link):
-            download_url = self.prepare_download_from_lab(self.link)
+        resource_downloader = ResourceDownloader(self.message_dispatcher)
 
-        file_downloader = FileDownloader(Settings.get_instance().make_temp_dir(), self.message_dispatcher)
+        zip_resource_link = resource_downloader.check_compatiblity(self.link)
 
         # download the resource file
-        resource_file = file_downloader.download_file(download_url)
+        resource_file = resource_downloader.zip_and_download_resource_as_file(zip_resource_link)
 
         resource = self.create_resource_from_file(resource_file, params['uncompress'])
 
-        if self.is_share_resource_link(self.link):
+        if ShareLink.is_lab_share_resource_link(self.link):
             # set a special origin for the resource
             resource.__origin__ = ResourceOrigin.IMPORTED_FROM_LAB
         return {'resource': resource}
-
-    def prepare_download_from_lab(self, url: str) -> str:
-        """If the link is a share link from a lab, check the compatibility of the resource with the current lab,
-        then zip the resource and return the download url
-        """
-        self.log_info_message(
-            "Downloading the resource from a share link of another lab. Checking compatibility of the resource with the current lab")
-
-        response = requests.get(url, timeout=60)
-
-        if response.status_code != 200:
-            raise Exception("Error while getting information of the resource: " + response.text)
-        shared_entity_info = ShareEntityInfoReponseDTO.from_json(response.json())
-
-        # check if the resource is compatible with the current lab
-        if not isinstance(shared_entity_info.entity_object, list):
-            raise Exception("The resource is not compatible with the current lab")
-
-        resources: List[dict] = shared_entity_info.entity_object
-
-        # check if the resources are compatible with the current lab
-        for resource in resources:
-            TypingManager.check_typing_name_compatibility(resource['resource_typing_name'])
-
-        # Zipping the resource
-        self.log_info_message("The resource is compatible with the lab, zipping the resource")
-
-        response = requests.post(shared_entity_info.zip_entity_route, timeout=60 * 30)
-
-        if response.status_code != 200:
-            raise Exception("Error while zipping the resource: " + response.text)
-
-        zip_response = ShareEntityZippedResponseDTO.from_json(response.json())
-
-        self.log_info_message("Resource zipped, downloading the resource")
-        return zip_response.download_entity_route
 
     def run_after_task(self) -> None:
         """Save share info and mark the resource as received in lab
@@ -112,7 +68,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
 
         # check if the link is a share link from a lab
         if self.is_old_share_resource_link(
-                self.link) or self.is_share_resource_link(
+                self.link) or ShareLink.is_lab_share_resource_link(
                 self.link) and self.resource_loader:
             self.log_info_message(
                 "Marking the resource as received in the origin lab")
@@ -137,15 +93,3 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         TODO to remove once all the labs are updated to v >= 0.6.1
         """
         return link.startswith('https://glab') and link.find('share/resource/download/') != -1
-
-    @classmethod
-    def is_share_resource_link(cls, link: str) -> bool:
-        """Check if the link is a share resource link, it must start with https://glab,
-        contains share/resource/download and end with a token
-        """
-        settings = Settings.get_instance()
-        # specific case for dev env, accept if the link is from this lab
-        if settings.is_local_dev_env():
-            return (link.startswith('https://glab') or link.startswith(settings.get_lab_api_url())) and link.find('share/info/') != -1
-
-        return link.startswith('https://glab') and link.find('share/info/') != -1

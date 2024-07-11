@@ -18,6 +18,8 @@ class ExperimentCreationType(Enum):
     MANUAL = "MANUAL"
     # Created and executed by the system
     AUTO = "AUTO"
+    # Imported from another lab
+    IMPORTED = "IMPORTED"
 
 
 class ExperimentProcessStatus(Enum):

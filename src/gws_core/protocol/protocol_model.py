@@ -1,17 +1,19 @@
 
 
+import re
 from typing import Dict, List, Literal, Optional, Set
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.protocol.protocol_dto import (ConnectorDTO, IOFaceDTO,
-                                            ProcessConfigDTO,
-                                            ProtocolConfigDTO, ProtocolDTO,
+                                            ProcessConfigDTO, ProtocolDTO,
                                             ProtocolFullDTO,
+                                            ProtocolGraphConfigDTO,
                                             ProtocolMinimumDTO)
 from gws_core.protocol.protocol_exception import \
     IOFaceConnectedToTheParentDeleteException
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
+from gws_core.task.plug import Source
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -23,7 +25,6 @@ from ..process.process_model import ProcessModel
 from ..process.process_types import ProcessStatus
 from ..process.protocol_sub_process_builder import (
     ProtocolSubProcessBuilder, SubProcessBuilderReadFromDb)
-from ..user.user import User
 from .protocol_layout import ProtocolLayout
 
 
@@ -340,6 +341,11 @@ class ProtocolModel(ProcessModel):
             instance_name = self.generate_unique_instance_name(
                 process_model.get_process_type().__name__)
 
+        # check instance name, it can contain only letters, numbers and underscores using regex
+        if re.match(r'^\w+$', instance_name) is None:
+            raise BadRequestException(
+                f"Invalid instance name '{instance_name}', it can contain only letters, numbers and underscores")
+
         if instance_name in self._processes:
             raise BadRequestException(
                 f"Process name '{instance_name}' already exists")
@@ -347,8 +353,6 @@ class ProtocolModel(ProcessModel):
             raise BadRequestException(f"Process '{instance_name}' duplicate")
 
         process_model.set_parent_protocol(self)
-        if self.experiment and process_model.experiment is None:
-            process_model.set_experiment(self.experiment)
 
         # set instance name in process and add process
         process_model.instance_name = instance_name
@@ -375,6 +379,27 @@ class ProtocolModel(ProcessModel):
 
         self._check_instance_name(name)
         return self.processes[name]
+
+    def get_process_by_instance_path(self, instance_path: str) -> ProcessModel:
+        """
+        Returns a process by its instance path.
+
+        :return: The process
+        :rtype": Process
+        """
+
+        instance_names = instance_path.split('.')
+
+        process = self.get_process(instance_names[0])
+
+        if len(instance_names) == 1:
+            return process
+
+        # if we need to get a sub process
+        if not isinstance(process, ProtocolModel):
+            raise BadRequestException(f"Process '{process.get_instance_name_context()}' is not a protocol")
+
+        return process.get_process_by_instance_path('.'.join(instance_names[1:]))
 
     def remove_process(self, name: str) -> None:
         self._check_instance_name(name)
@@ -476,6 +501,25 @@ class ProtocolModel(ProcessModel):
             all_next_processes.update(self.parent_protocol.get_all_next_processes(self.instance_name))
 
         return all_next_processes
+
+    def get_all_processes_flatten_sort_by_start_date(self) -> List[ProcessModel]:
+        """Return all the processes of the protocol and its sub protocols, sorted by start date
+
+        :return: all the processes of the protocol and its sub protocols
+        :rtype: List[ProcessModel]
+        """
+        all_processes: List[ProcessModel] = []
+        for process in self.processes.values():
+            all_processes.append(process)
+
+            if isinstance(process, ProtocolModel):
+                all_processes.extend(process.get_all_processes_flatten_sort_by_start_date())
+
+        # sort all processes by end_date, with null end_date at the end
+        all_processes.sort(key=lambda x: x.progress_bar.started_at
+                           if x.progress_bar.started_at else DateHelper.MAX_DATE)
+
+        return all_processes
 
     def get_error_tasks(self) -> List[ProcessModel]:
 
@@ -765,8 +809,8 @@ class ProtocolModel(ProcessModel):
         # Create the input's port
         source_port: InPort = self.inputs.create_port(
             name, target_port.resource_spec)
-        if target_port.resource_model:
-            source_port.resource_model = target_port.resource_model
+        if target_port.get_resource_model():
+            source_port.set_resource_model(target_port.get_resource_model())
 
         # create the interface
         # use _interfaces because this is call during the init
@@ -784,7 +828,7 @@ class ProtocolModel(ProcessModel):
         for key, interface in self.interfaces.items():
             process = self.get_process(interface.process_instance_name)
             port = process.in_port(interface.port_name)
-            port.resource_model = self.inputs.get_resource_model(key)
+            port.set_resource_model(self.inputs.get_resource_model(key))
 
     def is_interfaced_with(self, process_instance_name: str) -> bool:
         """
@@ -886,7 +930,7 @@ class ProtocolModel(ProcessModel):
             process = self.get_process(outerface.process_instance_name)
             port = process.out_port(outerface.port_name)
             # port = outerface.source_port
-            self.outputs.set_resource_model(key, port.resource_model)
+            self.outputs.set_resource_model(key, port.get_resource_model())
 
     def add_outerfaces(self, outerfaces: Dict[str, InterfaceSpec]) -> None:
         for key, spec in outerfaces.items():
@@ -911,8 +955,8 @@ class ProtocolModel(ProcessModel):
         # Create the output's port
         target_port: OutPort = self.outputs.create_port(
             name, source_port.resource_spec)
-        if source_port.resource_model:
-            target_port.resource_model = source_port.resource_model
+        if source_port.get_resource_model():
+            target_port.set_resource_model(source_port.get_resource_model())
 
         # create the interface
         # use _outerfaces because this is call during the init
@@ -988,8 +1032,8 @@ class ProtocolModel(ProcessModel):
         dto.graph = self.to_protocol_config_dto(ignore_source_config=ignore_source_config)
         return dto
 
-    def to_protocol_config_dto(self, ignore_source_config: bool = False) -> ProtocolConfigDTO:
-        return ProtocolConfigDTO(
+    def to_protocol_config_dto(self, ignore_source_config: bool = False) -> ProtocolGraphConfigDTO:
+        return ProtocolGraphConfigDTO(
             nodes={key: process.to_config_dto(ignore_source_config) for key, process in self.processes.items()},
             links=[connector.to_dto() for connector in self.connectors],
             interfaces={key: interface.to_dto() for key, interface in self.interfaces.items()},
@@ -1118,3 +1162,19 @@ class ProtocolModel(ProcessModel):
             if self.experiment.is_running:
                 raise BadRequestException(
                     detail="The experiment is running, you can't update it")
+
+    def get_source_resource_ids(self) -> Set[str]:
+        """
+        :return: return all the resource ids configured in a Source inside this protocol
+        :rtype: Set[str]
+        """
+        resource_ids: Set[str] = set()
+        for process in self.processes.values():
+            if process.is_source_task():
+                resource_id = Source.get_resource_id_from_config(process.config.get_values())
+                if resource_id:
+                    resource_ids.add(resource_id)
+
+            if isinstance(process, ProtocolModel):
+                resource_ids.update(process.get_source_resource_ids())
+        return resource_ids

@@ -1,7 +1,7 @@
 
 
 from abc import abstractmethod
-from typing import Type, final
+from typing import Optional, Type, TypeVar, final
 
 from gws_core.io.io_dto import PortDTO
 
@@ -9,6 +9,9 @@ from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .io_spec import InputSpec, IOSpec, OutputSpec
+
+# For generic Port type
+PortType = TypeVar('PortType', bound='Port')
 
 
 class Port(Base):
@@ -21,6 +24,7 @@ class Port(Base):
 
     name: str
 
+    _resource_id: Optional[str] = None
     _resource_model: ResourceModel = None
     _resource_spec: IOSpec = None
 
@@ -97,19 +101,17 @@ class Port(Base):
 
         return self._resource_spec
 
-    @property
-    def resource_model(self) -> ResourceModel:
-        """
-        Returns the resoruce of the port.
-
-        :return: The resource
-        :rtype: ResourceModel
-        """
-
+    def get_resource_model(self) -> Optional[ResourceModel]:
+        if self._resource_model is None and self._resource_id is not None:
+            self._resource_model = ResourceModel.get_by_id(self._resource_id)
         return self._resource_model
 
-    @resource_model.setter
-    def resource_model(self, resource_model: ResourceModel) -> None:
+    def set_resource_model(self, resource_model: Optional[ResourceModel]) -> None:
+        self._resource_model = resource_model
+        self._resource_id = resource_model.id if resource_model else None
+        self._resource_provided = True
+
+    def set_resource_model_id(self, resource_id: Optional[str]) -> None:
         """
         Sets the resource of the port.
 
@@ -117,8 +119,12 @@ class Port(Base):
         :type resource: ResourceModel
         """
         # mark the resource as provided
+        self._resource_id = resource_id
+        self._resource_model = None
         self._resource_provided = True
-        self._resource_model = resource_model
+
+    def get_resource_model_id(self) -> Optional[str]:
+        return self._resource_id
 
     def resource_type_is_compatible(self, resource_type: Type[Resource]) -> bool:
         """
@@ -136,16 +142,16 @@ class Port(Base):
     def get_resource(self, new_instance: bool = False) -> Resource:
         if self.is_empty:
             return None
-        return self.resource_model.get_resource(new_instance=new_instance)
+        return self.get_resource_model().get_resource(new_instance=new_instance)
 
     def to_dto(self) -> PortDTO:
         return PortDTO(
-            resource_id=self.resource_model.id if self.resource_model else None,
+            resource_id=self._resource_id,
             specs=self.resource_spec.to_dto()
         )
 
     @classmethod
-    def load_from_dto(cls, dto: PortDTO, name: str) -> 'Port':
+    def load_from_dto(cls: Type[PortType], dto: PortDTO, name: str) -> PortType:
         spec_type: Type[IOSpec] = cls._get_io_spec_type()
         specs: IOSpec = spec_type.from_dto(dto.specs)
         return cls(name, specs)

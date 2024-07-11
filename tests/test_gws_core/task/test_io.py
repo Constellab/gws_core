@@ -279,11 +279,11 @@ class TestIO(BaseTestCase):
         experiment = ExperimentRunService.run_experiment(experiment)
 
         person1: ResourceModel = experiment.protocol_model.get_process(
-            'create').out_port('create_person_out').resource_model
+            'create').out_port('create_person_out').get_resource_model()
         same_person: ResourceModel = experiment.protocol_model.get_process(
-            'log').out_port('samePerson').resource_model
+            'log').out_port('samePerson').get_resource_model()
         other_erson: ResourceModel = experiment.protocol_model.get_process(
-            'log').out_port('otherPerson').resource_model
+            'log').out_port('otherPerson').get_resource_model()
 
         self.assertEqual(person1.id, same_person.id)
         self.assertNotEqual(person1, other_erson.id)

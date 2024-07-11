@@ -1,20 +1,17 @@
 
 
-import json
 from typing import List
-
-from typing_extensions import ParamSpec
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.code.task_generator import TaskGenerator
 from gws_core.config.param.param_spec import (BoolParam, FloatParam, IntParam,
-                                              StrParam)
+                                              ParamSpec, StrParam)
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.impl.live.py_live_task import PyLiveTask
 from gws_core.task.task_model import TaskModel
 
 
-class TaskGeneratorService:
+class LiveTaskFactory:
 
     @classmethod
     def generate_task_code_from_live_task_id(cls, task_id: str) -> str:
@@ -45,7 +42,6 @@ class TaskGeneratorService:
         count = 1
         for spec in task.inputs.get_specs().get_specs().values():
             key = f"resource_{count}"
-            spec.get_default_resource_type
             task_generator.add_input_spec(key, spec.get_default_resource_type())
             count = count + 1
 
@@ -120,7 +116,7 @@ class TaskGeneratorService:
         }
 
     @classmethod
-    def get_live_task_type(self, instance_name: str) -> str:
+    def get_live_task_type(cls, instance_name: str) -> str:
         choice = {
             'PyLiveTask': 'PYTHON',
             'PyCondaLiveTask': 'CONDA_PYTHON',

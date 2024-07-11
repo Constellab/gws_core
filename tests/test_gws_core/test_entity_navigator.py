@@ -78,8 +78,8 @@ class TestEntityNavigator(BaseTestCase):
         move_robot_3.refresh()
 
         # Retrieve the models
-        self.exp_1 = experiment_1.get_experiment_model()
-        self.exp_2 = experiment_2.get_experiment_model()
+        self.exp_1 = experiment_1.get_model()
+        self.exp_2 = experiment_2.get_model()
 
         self.exp_1_resource_1 = create_robot.get_output_resource_model('robot')
         self.exp_1_resource_2 = move_robot_1.get_output_resource_model('robot')
@@ -95,7 +95,7 @@ class TestEntityNavigator(BaseTestCase):
 
         move_robot_4.refresh()
 
-        self.exp_3 = experiment_3.get_experiment_model()
+        self.exp_3 = experiment_3.get_model()
         self.exp_3_resource_1 = move_robot_4.get_output_resource_model('robot')
 
     def _create_views(self):

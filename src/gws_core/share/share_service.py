@@ -1,29 +1,36 @@
 
 
-from typing import Type
+from typing import List, Optional, Type
 
 from peewee import JOIN
 
 from gws_core.core.classes.paginator import Paginator
+from gws_core.core.exception.exceptions.unauthorized_exception import \
+    UnauthorizedException
 from gws_core.core.model.model import Model
-from gws_core.core.service.external_lab_service import (
-    ExternalLabService, ExternalLabWithUserInfo)
+from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.logger import Logger
+from gws_core.entity_navigator.entity_navigator import \
+    EntityNavigatorExperiment
 from gws_core.experiment.experiment_interface import IExperiment
+from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file import File
 from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process_interface import IProcess
 from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_dto import ResourceDTO
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_zipper_task import ResourceZipperTask
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import (SharedEntityMode,
-                                       ShareEntityInfoReponseDTO,
-                                       ShareEntityZippedResponseDTO,
-                                       ShareLinkType)
+                                       ShareExperimentInfoReponseDTO,
+                                       ShareLinkType,
+                                       ShareResourceInfoReponseDTO,
+                                       ShareResourceZippedResponseDTO)
 from gws_core.share.shared_entity_info import SharedEntityInfo
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Sink
@@ -83,93 +90,77 @@ class ShareService():
         else:
             raise Exception(f'Entity type {entity_type} is not supported')
 
+    #################################### RESOURCE ####################################
+
     @classmethod
-    def get_share_entity_info(cls, token: str) -> ShareEntityInfoReponseDTO:
+    def get_resource_entity_object_info(cls, token: str) -> ShareResourceInfoReponseDTO:
+        """Method for resource model to get the entity object info
+        """
         shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check_validity(
             token)
+        resource_model = ResourceModel.get_by_id_and_check(shared_entity_link.entity_id)
 
-        model: Model = shared_entity_link.get_model_and_check(
-            shared_entity_link.entity_id, shared_entity_link.entity_type)
+        entity_object: List[ResourceDTO] = [resource_model.to_dto()]
 
-        entity_object: list = None
-        if isinstance(model, ResourceModel):
-            entity_object = [model.to_dto()]
+        # specific case for resource set that contains multiple resource
+        # we need to add all the resource to the zip
+        resource = resource_model.get_resource()
+        if isinstance(resource, ResourceListBase):
+            resource_models = resource.get_resource_models()
+            entity_object.extend([resource_model.to_dto() for resource_model in resource_models])
 
-            # specific case for resource set that contains multiple resource
-            # we need to add all the resource to the zip
-            resource = model.get_resource()
-            if isinstance(resource, ResourceListBase):
-                resource_models = resource.get_resource_models()
-                entity_object.extend([resource_model.to_dto() for resource_model in resource_models])
-        else:
-            raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
-
-        zip_url: str = ExternalLabService.get_current_lab_route(f"share/zip-entity/{token}")
-        return ShareEntityInfoReponseDTO(version=cls.VERSION, entity_type=shared_entity_link.entity_type,
-                                         entity_id=shared_entity_link.entity_id, entity_object=entity_object,
-                                         zip_entity_route=zip_url)
+        zip_url: str = ExternalLabService.get_current_lab_route(f"share/zip-entity/{shared_entity_link.token}")
+        return ShareResourceInfoReponseDTO(version=cls.VERSION, entity_type=shared_entity_link.entity_type,
+                                           entity_id=shared_entity_link.entity_id, entity_object=entity_object,
+                                           zip_entity_route=zip_url)
 
     @classmethod
-    def zip_shared_entity(cls, token: str) -> ShareEntityZippedResponseDTO:
+    def zip_shared_resource(cls, token: str) -> ShareResourceZippedResponseDTO:
         shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check(token)
 
-        zipped_resource: ResourceModel
-        if shared_entity_link.entity_type == ShareLinkType.RESOURCE:
-            zipped_resource = cls.zip_shared_resource(shared_entity_link)
-        else:
+        if shared_entity_link.entity_type != ShareLinkType.RESOURCE:
             raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
+
+        zipped_resource: ResourceModel = cls._zip_resource(shared_entity_link.entity_id, shared_entity_link.created_by)
 
         # generate the link to download the zipped resource
         download_url: str = ExternalLabService.get_current_lab_route(f"share/download/{token}/{zipped_resource.id}")
-        return ShareEntityZippedResponseDTO(
+        return ShareResourceZippedResponseDTO(
             version=cls.VERSION, entity_type=shared_entity_link.entity_type, entity_id=shared_entity_link.entity_id,
             zipped_entity_resource_id=zipped_resource.id, download_entity_route=download_url)
 
     @classmethod
-    def download_zipped_entity(cls, token: str, zipped_entity_id: str) -> str:
-        """Method that is used to download the zipped resource generated by the shared action
-        """
+    def _zip_resource(cls, resource_model_id: str, shared_by: User) -> ResourceModel:
 
-        shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check_validity(token)
+        zippped_resource = cls._find_zipped_resource_from_origin_resource(resource_model_id)
 
-        shared_entity: Model = shared_entity_link.get_model_and_check(
-            shared_entity_link.entity_id, shared_entity_link.entity_type)
+        if zippped_resource:
+            Logger.info(
+                f"Resource {resource_model_id} was already zipped to resource {zippped_resource.id}, using the same zip file.")
+            return zippped_resource
 
-        # retrieve the zipped resource that contains the shared entity
-        zipped_resource: ResourceModel = ResourceModel.get_by_id_and_check(zipped_entity_id)
-        zip_file: Resource = zipped_resource.get_resource()
-
-        if not isinstance(zip_file, File):
-            raise Exception('Zip file is not a file')
-
-        # check that the generated zip resource was generated from the shared entity of the token
-        if zip_file.get_technical_info('origin_entity_id').value != shared_entity.id:
-            raise Exception('Zip file does not contain the shared entity')
-
-        return zip_file.path
-
-    #################################### RESOURCE ####################################
+        with AuthenticateUser(shared_by):
+            return cls.run_zip_resource_exp(resource_model_id, shared_by)
 
     @classmethod
-    def zip_shared_resource(cls, shared_entity_link: ShareLink) -> ResourceModel:
+    def _find_zipped_resource_from_origin_resource(cls, resource_model_id: str) -> Optional[ResourceModel]:
+        """Method that find the zipped resource from the origin resource
+        """
         # check if the resource was already zipped in this lab for the current version of ResourceZipperTask
         typing = TypingManager.get_typing_from_name_and_check(ResourceZipperTask._typing_name)
         task_model: TaskModel = TaskModel.select().where(
             (TaskModel.process_typing_name == typing.typing_name) &
             (TaskModel.status == ProcessStatus.SUCCESS) &
             (TaskModel.brick_version_on_run == typing.brick_version) &
-            (TaskInputModel.resource_model == shared_entity_link.entity_id)) \
+            (TaskInputModel.resource_model == resource_model_id)) \
             .join(TaskInputModel, JOIN.LEFT_OUTER) \
             .first()
 
         # if the resource was already zipped
         if task_model:
-            Logger.info(
-                f"Resource {shared_entity_link.entity_id} was already zipped by task {task_model.id}, using the same zip file.")
             return task_model.outputs.get_resource_model(ResourceZipperTask.output_name)
 
-        with AuthenticateUser(shared_entity_link.created_by):
-            return cls.run_zip_resource_exp(shared_entity_link.entity_id, shared_entity_link.created_by)
+        return None
 
     @classmethod
     def run_zip_resource_exp(cls, id_: str, shared_by: User) -> ResourceModel:
@@ -195,3 +186,107 @@ class ShareService():
         sink.refresh()
 
         return sink.get_input_resource_model(Sink.input_name)
+
+    # TODO THE zipped_entity_id is NOT REQUIRED anymore, can use the get from above
+    @classmethod
+    def download_zipped_resource(cls, token: str, zipped_entity_id: str) -> str:
+        """Method that is used to download the zipped resource generated by the shared action
+        """
+
+        shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check_validity(token)
+
+        if shared_entity_link.entity_type != ShareLinkType.RESOURCE:
+            raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
+
+        shared_entity: Model = shared_entity_link.get_model_and_check(
+            shared_entity_link.entity_id, shared_entity_link.entity_type)
+
+        # retrieve the zipped resource that contains the shared entity
+        zipped_resource: ResourceModel = ResourceModel.get_by_id_and_check(zipped_entity_id)
+        zip_file: Resource = zipped_resource.get_resource()
+
+        if not isinstance(zip_file, File):
+            raise Exception('Zip file is not a file')
+
+        # check that the generated zip resource was generated from the shared entity of the token
+        if zip_file.get_technical_info('origin_entity_id').value != shared_entity.id:
+            raise Exception('Zip file does not contain the shared entity')
+
+        return zip_file.path
+
+    #################################### EXPERIMENT ####################################
+
+    @classmethod
+    def get_experiment_entity_object_info(cls, token: str) -> ShareExperimentInfoReponseDTO:
+        shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check_validity(
+            token)
+
+        # generate the link to download the zipped resource
+        download_url: str = ExternalLabService.get_current_lab_route(
+            f"share/experiment/{shared_entity_link.token}/resource/[RESOURCE_ID]/zip")
+        return ShareExperimentInfoReponseDTO(
+            version=cls.VERSION,
+            entity_type=shared_entity_link.entity_type,
+            entity_id=shared_entity_link.entity_id,
+            entity_object=ExperimentService.export_experiment(shared_entity_link.entity_id),
+            resource_route=download_url,
+            token=token,
+            origin=ExternalLabService.get_current_lab_info(shared_entity_link.created_by)
+        )
+
+    @classmethod
+    def zip_shared_experiment_resource(cls, token: str, resource_id: str) -> ShareResourceZippedResponseDTO:
+
+        shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check(token)
+
+        if shared_entity_link.entity_type != ShareLinkType.EXPERIMENT:
+            raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
+
+        cls._check_resource_is_in_experiment(shared_entity_link.entity_id, resource_id)
+
+        zipped_resource: ResourceModel = cls._zip_resource(resource_id, shared_entity_link.created_by)
+
+        # generate the link to download the zipped resource
+        download_url: str = ExternalLabService.get_current_lab_route(
+            f"share/experiment/{token}/resource/{resource_id}/download")
+        return ShareResourceZippedResponseDTO(
+            version=cls.VERSION, entity_type=shared_entity_link.entity_type, entity_id=shared_entity_link.entity_id,
+            zipped_entity_resource_id=zipped_resource.id, download_entity_route=download_url)
+
+    @classmethod
+    def download_experiment_resource(cls, token: str, resource_id: str) -> str:
+        """Method that is used to download the zipped resource generated by the shared action
+        """
+
+        shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check_validity(token)
+
+        if shared_entity_link.entity_type != ShareLinkType.EXPERIMENT:
+            raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
+
+        cls._check_resource_is_in_experiment(shared_entity_link.entity_id, resource_id)
+
+        # retrieve the zipped resource
+        zipped_resource = cls._find_zipped_resource_from_origin_resource(resource_id)
+
+        if not zipped_resource:
+            raise Exception('The resource was not zipped')
+
+        zip_file: Resource = zipped_resource.get_resource()
+
+        if not isinstance(zip_file, File):
+            raise Exception('Zip file is not a file')
+
+        return zip_file.path
+
+    @classmethod
+    def _check_resource_is_in_experiment(cls, experiment_id: str, resource_id: str) -> None:
+        # check that the resource was generated by the experimen tor used as input of the experiment
+
+        experiment = ExperimentService.get_by_id_and_check(experiment_id)
+        experiment_navigator = EntityNavigatorExperiment(experiment)
+
+        if experiment_navigator.get_next_resources().get_as_nav_set().has_entity(resource_id) or \
+                experiment_navigator.get_previous_resources().get_as_nav_set().has_entity(resource_id):
+            return
+
+        raise UnauthorizedException('The resource {resource_id} was not generated by the shared experiment')

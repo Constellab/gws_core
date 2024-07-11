@@ -78,7 +78,7 @@ class TestFile(BaseTestCase):
         self.assertEqual(file.read(), 'Hello')
 
         # Check that the file model is saved and correct
-        file_model: ResourceModel = process._process_model.out_port('file').resource_model
+        file_model: ResourceModel = process._process_model.out_port('file').get_resource_model()
         self.assertTrue(file_model.is_saved())
         self.assertEqual(file.path, file_model.fs_node_model.path)
 
@@ -108,7 +108,7 @@ class TestFile(BaseTestCase):
         create.refresh()
         write.refresh()
         robot: Robot = create.get_output('robot')
-        file_model: ResourceModel = write._process_model.out_port('file').resource_model
+        file_model: ResourceModel = write._process_model.out_port('file').get_resource_model()
 
         # check that the file model is create and valid
         self.assertIsNotNone(file_model.id)

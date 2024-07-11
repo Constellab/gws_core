@@ -4,7 +4,7 @@ import os
 from json import load
 from typing import Dict, List, Type
 
-from gws_core.core.service.external_lab_service import ExternalLabWithUserInfo
+from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File

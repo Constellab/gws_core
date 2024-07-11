@@ -21,7 +21,7 @@ class TestProcessService(BaseTestCase):
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
         Logger.clear_logger()
         # initialize the logger associated to the experiment
-        Logger(Settings.build_log_dir(True), level='INFO', experiment_id=experiment.get_experiment_model().id)
+        Logger(Settings.build_log_dir(True), level='INFO', experiment_id=experiment.get_model().id)
 
         protocol: IProtocol = experiment.get_protocol()
 
