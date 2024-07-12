@@ -32,6 +32,7 @@ from gws_core.share.shared_dto import (SharedEntityMode,
                                        ShareResourceInfoReponseDTO,
                                        ShareResourceZippedResponseDTO)
 from gws_core.share.shared_entity_info import SharedEntityInfo
+from gws_core.share.shared_experiment import SharedExperiment
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Sink
 from gws_core.task.task_input_model import TaskInputModel
@@ -87,6 +88,8 @@ class ShareService():
         """
         if entity_type == ShareLinkType.RESOURCE:
             return SharedResource
+        elif entity_type == ShareLinkType.EXPERIMENT:
+            return SharedExperiment
         else:
             raise Exception(f'Entity type {entity_type} is not supported')
 

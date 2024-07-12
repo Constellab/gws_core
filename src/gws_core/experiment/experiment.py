@@ -284,6 +284,12 @@ class Experiment(ModelWithUser, ModelWithProject, NavigableEntity):
         return self.status == ExperimentStatus.RUNNING or self.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS
 
     @property
+    def is_running_or_waiting(self) -> bool:
+        """Consider running if the Experiment status is RUNNING or WAITING_FOR_CLI_PROCESS
+        """
+        return self.is_running or self.status == ExperimentStatus.IN_QUEUE
+
+    @property
     def is_error(self) -> bool:
         """Consider running if the Experiment status is RUNNING or WAITING_FOR_CLI_PROCESS
         """

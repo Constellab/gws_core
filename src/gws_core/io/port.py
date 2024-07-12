@@ -64,7 +64,7 @@ class Port(Base):
 
     @property
     def is_empty(self) -> bool:
-        return self._resource_model is None
+        return self._resource_id is None
 
     @property
     def is_constant_out(self) -> bool:

@@ -9,7 +9,6 @@ from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.settings import Settings
 from gws_core.model.typing_manager import TypingManager
 from gws_core.share.share_link import ShareLink
-from gws_core.share.share_service import ShareService
 from gws_core.share.shared_dto import (ShareResourceInfoReponseDTO,
                                        ShareResourceZippedResponseDTO)
 

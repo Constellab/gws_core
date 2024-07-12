@@ -109,6 +109,8 @@ class ShareLink(ModelWithUser):
         if entity:
             if isinstance(entity, ResourceModel):
                 link_dto.entity_name = entity.name
+            elif isinstance(entity, Experiment):
+                link_dto.entity_name = entity.title
             link_dto.status = 'SUCCESS'
         else:
             link_dto.status = 'ERROR'

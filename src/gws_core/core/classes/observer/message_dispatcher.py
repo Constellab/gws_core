@@ -2,7 +2,7 @@
 
 import time
 from threading import Timer
-from typing import List
+from typing import List, Optional
 
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.progress_bar.progress_bar import ProgressBar
@@ -30,6 +30,9 @@ class MessageDispatcher:
     # Min level of message to be notified
     message_level: MessageLevel = None
 
+    # Prefix for all the messages
+    prefix: str = None
+
     _observers: List[MessageObserver] = None
 
     # list of the messages that are waiting to be dispatched by the timer
@@ -43,13 +46,22 @@ class MessageDispatcher:
     # store the thread when is it executing (after the timer and before it is finished)
     _running_dispatch_timers: List[Timer] = []
 
-    def __init__(self, interval_time_merging_message=0.1, interval_time_dispatched_buffer=1,
-                 log_level: MessageLevel = MessageLevel.INFO):
+    # when set, the message dispatcher will forward the message to the parent dispatcher
+    # after prefix and log level modification
+    _parent_dispatcher: 'MessageDispatcher' = None
+
+    def __init__(self, interval_time_merging_message=0.1,
+                 interval_time_dispatched_buffer=1,
+                 log_level: MessageLevel = MessageLevel.INFO,
+                 prefix: str = None,
+                 parent_dispatcher: 'MessageDispatcher' = None):
         self._observers = []
         self._waiting_messages = []
         self.interval_time_merging_message = interval_time_merging_message
         self.interval_time_dispatched_buffer = interval_time_dispatched_buffer
         self.message_level = log_level
+        self.prefix = prefix
+        self._parent_dispatcher = parent_dispatcher
 
     def attach(self, observer: MessageObserver) -> None:
         """Attach the listener method and return an id to detach it later
@@ -59,6 +71,8 @@ class MessageDispatcher:
         :return: _description_
         :rtype: int
         """
+        if self.has_parent_dispatcher():
+            raise Exception("Cannot attach an observer to a sub dispatcher")
         self._observers.append(observer)
 
     def attach_progress_bar(self, progress_bar: ProgressBar) -> ProgressBarMessageObserver:
@@ -80,45 +94,60 @@ class MessageDispatcher:
         """
         Trigger an update in each subscriber.
         """
-        self.notify_message(DispatchedMessage.create_progress_message(progress, message))
+        self._build_mand_notify_message(message, MessageLevel.PROGRESS, progress)
 
     def notify_info_message(self, message: str) -> None:
         """
         Trigger an info in each subscriber.
         """
-        self.notify_message(DispatchedMessage.create_info_message(message))
+        self._build_mand_notify_message(message, MessageLevel.INFO)
 
     def notify_warning_message(self, message: str) -> None:
         """
         Trigger a warning in each subscriber.
         """
-        self.notify_message(DispatchedMessage.create_warning_message(message))
+        self._build_mand_notify_message(message, MessageLevel.WARNING)
 
     def notify_error_message(self, message: str) -> None:
         """
         Trigger a error in each subscriber.
         """
-        self.notify_message(DispatchedMessage.create_error_message(message))
+        self._build_mand_notify_message(message, MessageLevel.ERROR)
 
     def notify_success_message(self, message: str) -> None:
         """
         Trigger a success in each subscriber.
         """
-        self.notify_message(DispatchedMessage.create_success_message(message))
+        self._build_mand_notify_message(message, MessageLevel.SUCCESS)
 
     def notify_debug_message(self, message: str) -> None:
         """
         Trigger a debug in each subscriber.
         """
-        self.notify_message(DispatchedMessage.create_debug_message(message))
+        self._build_mand_notify_message(message, MessageLevel.DEBUG)
+
+    def _build_mand_notify_message(self, message: str, level: MessageLevel,
+                                   progress: Optional[float] = None) -> None:
+        """
+        Trigger a message in each subscriber.
+        """
+        if self.prefix is not None:
+            message = f"{self.prefix} {message}"
+        self.notify_message(DispatchedMessage(status=level, message=message, progress=progress))
 
     def notify_message(self, message: DispatchedMessage) -> None:
         """
         Trigger a message in each subscriber.
         """
-
+        if not message.is_valid():
+            return
         # if the message level is lower than the min level, we don't notify it
         if message.status.get_int_value() < self.message_level.get_int_value():
+            return
+
+        # if there is a parent dispatcher, we forward the message to it
+        if self.has_parent_dispatcher():
+            self._parent_dispatcher.notify_message(message)
             return
 
         # if there is no dispatched time, then directly dispatch the message
@@ -195,3 +224,19 @@ class MessageDispatcher:
 
     def has_observers(self):
         return len(self._observers) > 0
+
+    def has_parent_dispatcher(self) -> bool:
+        return self._parent_dispatcher is not None
+
+    def create_sub_dispatcher(self, log_level:  Optional[MessageLevel] = None, prefix: Optional[str] = None):
+        """
+        Create a sub dispatcher with the same configuration as the current dispatcher.
+        The message will be forwarded to the parent dispatcher after prefix and log level modification.
+        This is useful to override the prefix or the log level for a specific part of the code without
+        affecting the parent dispatcher.
+        """
+        return MessageDispatcher(interval_time_merging_message=self.interval_time_merging_message,
+                                 interval_time_dispatched_buffer=self.interval_time_dispatched_buffer,
+                                 log_level=log_level or self.message_level,
+                                 prefix=prefix or self.prefix,
+                                 parent_dispatcher=self)

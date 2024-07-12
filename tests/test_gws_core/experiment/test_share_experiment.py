@@ -18,6 +18,7 @@ from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
 from gws_core.share.shared_experiment import SharedExperiment
+from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
@@ -131,6 +132,7 @@ class TestShareExperiment(BaseTestCase):
             self.assertIsNotNone(new_source_output)
             self.assertEqual(new_source_output.origin, ResourceOrigin.IMPORTED_FROM_LAB)
             self.assertNotEqual(new_source_output.id, input_robot_model.id)
+            self.assertTrue(new_source_output.flagged)
             # check that the source config id and the source config where update with the new resource id
             self.assertEqual(new_source.source_config_id, new_source_output.id)
             self.assertEqual(new_source.config.get_value(Source.config_name), new_source_output.id)
@@ -146,6 +148,8 @@ class TestShareExperiment(BaseTestCase):
             self.assertEqual(new_resource_1.origin, ResourceOrigin.GENERATED)
             self.assertEqual(new_resource_1.task_model.id, new_protocol_model.get_process('move').id)
             self.assertEqual(new_resource_1.experiment.id, new_experiment.id)
+            self.assertEqual(new_resource_1.project.id, new_experiment.project.id)
+            self.assertFalse(new_resource_1.flagged)
             self.assertNotEqual(new_resource_1.id, initial_resource_1.id)
             self.assertEqual(new_resource_1.resource_typing_name, initial_resource_1.resource_typing_name)
 
@@ -153,6 +157,7 @@ class TestShareExperiment(BaseTestCase):
             new_generator_process = new_protocol_model.get_process('generate')
             new_resource_set = new_generator_process.out_port("set").get_resource_model()
             self.assertIsNotNone(new_resource_set)
+            self.assertTrue(new_resource_set.flagged)
             resource_set: ResourceSet = new_resource_set.get_resource()
             self.assertIsInstance(resource_set, ResourceSet)
             self.assertEqual(len(resource_set.get_resources()), 2)
@@ -162,11 +167,12 @@ class TestShareExperiment(BaseTestCase):
 
             # Check taht the ShareExperiment was created
             self.assertIsNotNone(SharedExperiment.get_and_check_entity_origin(new_experiment.id))
+            self.assertIsNotNone(SharedResource.get_and_check_entity_origin(new_source_output.id))
 
             ######################  Re-run the share without all resources ######################
             task_runner = TaskRunner(ExperimentDownloader, params={
                 'link': share_link.get_link(),
-                'resource_mode': 'Output only'
+                'resource_mode': 'Outputs only'
             })
 
             outputs = task_runner.run()

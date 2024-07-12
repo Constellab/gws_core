@@ -5,10 +5,12 @@ from typing import Dict, List, Literal, Set
 import requests
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
+from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.service.external_lab_service import ExternalLabService
+from gws_core.core.utils.utils import Utils
 from gws_core.experiment.experiement_loader import ExperimentLoader
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_zipper import ZipExperimentInfo
@@ -28,12 +30,15 @@ from gws_core.share.shared_dto import (SharedEntityMode,
                                        ShareExperimentInfoReponseDTO,
                                        ShareLinkType)
 from gws_core.share.shared_experiment import SharedExperiment
+from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Source
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import CurrentUserService
+
+ExperimentDownloaderMode = Literal['Inputs and outputs', 'Inputs only', 'Outputs only', 'All', 'None']
 
 
 @task_decorator(unique_name="ExperimentDownloader", human_name="Download an experiment",
@@ -47,12 +52,9 @@ class ExperimentDownloader(Task):
 
     config_specs: ConfigSpecs = {
         'link': StrParam(human_name='Resource link', short_description='Link to download the resource'),
-        'resource_mode': StrParam(human_name='Resource mode', short_description='Resource mode',
-                                  allowed_values=['Input and output', 'Input only', 'Output only', 'All', 'None'])
+        'resource_mode': StrParam(human_name='Resource mode', short_description='Mode for downloading resource of the experiment',
+                                  allowed_values=Utils.get_literal_values(ExperimentDownloaderMode))
     }
-
-    LINK_PARAM_NAME = 'link'
-    UNCOMPRESS_PARAM_NAME = 'uncompress'
 
     share_entity: ShareExperimentInfoReponseDTO
     resource_loaders: List[ResourceLoader]
@@ -61,6 +63,8 @@ class ExperimentDownloader(Task):
     INIT_EXP_PERCENT = 10
     DOWNLOAD_RESOURCE_PERCENT = 80
     BUILD_EXP_PERCENT = 10
+
+    OUTPUT_NAME = 'experiment'
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
@@ -71,14 +75,14 @@ class ExperimentDownloader(Task):
 
         self.share_entity = self.get_experiment_info(link)
 
-        self.update_progress_value(self.INIT_EXP_PERCENT)
+        self.update_progress_value(self.INIT_EXP_PERCENT, 'Experiment information retrieved')
 
         exp_info = self.share_entity.entity_object
         resource_ids = self.get_resource_to_download(exp_info.protocol.data.graph, params['resource_mode'])
 
         resources = self.download_resources(resource_ids, self.share_entity)
 
-        self.update_progress_value(self.DOWNLOAD_RESOURCE_PERCENT)
+        self.update_progress_value(self.INIT_EXP_PERCENT + self.DOWNLOAD_RESOURCE_PERCENT, 'Resources downloaded')
 
         experiment_loader = self.load_experiment(exp_info)
 
@@ -109,8 +113,7 @@ class ExperimentDownloader(Task):
         return experiment_loader
 
     def get_resource_to_download(
-            self, protocol_graph_dto: ProtocolGraphConfigDTO,
-            mode: Literal['Input and output', 'Input only', 'Output only', 'All', 'None']) -> Set[str]:
+            self, protocol_graph_dto: ProtocolGraphConfigDTO, mode: ExperimentDownloaderMode) -> Set[str]:
 
         self.log_info_message(f"Getting the resources to download with option '{mode}'")
 
@@ -121,9 +124,9 @@ class ExperimentDownloader(Task):
 
         if mode == 'All':
             return protocol_graph.get_all_resource_ids()
-        elif mode == 'Input only':
+        elif mode == 'Inputs only':
             return protocol_graph.get_input_resource_ids()
-        elif mode == 'Output only':
+        elif mode == 'Outputs only':
             return protocol_graph.get_output_resource_ids()
         else:
             return protocol_graph.get_input_and_output_resource_ids()
@@ -139,32 +142,36 @@ class ExperimentDownloader(Task):
 
         i = 1
         for resource_id in resource_ids:
-            current_percent = self.INIT_EXP_PERCENT + (i / nb_resources) * self.DOWNLOAD_RESOURCE_PERCENT
-            self.update_progress_value(current_percent,  f"[Resource n°{i}] Downloading the resource.")
+            # create a sub dispatcher to define a prefix
+            sub_dispatcher = self.message_dispatcher.create_sub_dispatcher(prefix=f"[Resource n°{i}]")
+            current_percent = self.INIT_EXP_PERCENT + ((i - 1) / nb_resources) * self.DOWNLOAD_RESOURCE_PERCENT
+            sub_dispatcher.notify_progress_value(current_percent,  "Downloading the resource.")
 
             url = share_entity.get_resource_route(resource_id)
-            resources[resource_id] = self.download_resource(url, i)
-            i += 1
+            resources[resource_id] = self.download_resource(url, sub_dispatcher)
 
+            current_percent = self.INIT_EXP_PERCENT + ((i) / nb_resources) * self.DOWNLOAD_RESOURCE_PERCENT
+            sub_dispatcher.notify_progress_value(current_percent, "Resource loaded")
+
+            i += 1
         return resources
 
-    def download_resource(self, download_url: str, index: int) -> Resource:
+    def download_resource(self, download_url: str, message_dispatcher: MessageDispatcher) -> Resource:
 
-        resource_downloader = ResourceDownloader(self.message_dispatcher)
+        resource_downloader = ResourceDownloader(message_dispatcher)
 
         # download the resource file
         download_route = resource_downloader.call_zip_resource(download_url)
 
         resource_file = resource_downloader.download_resource(download_route)
 
-        self.log_info_message(f"[Resource n°{index}] Loading the resource")
+        message_dispatcher.notify_info_message("Loading the resource")
         resource_loader = ResourceLoader.from_compress_file(resource_file)
 
         # store the loader to clean at the end
         self.resource_loaders.append(resource_loader)
 
         resource = resource_loader.load_resource()
-        self.log_info_message(f"[Resource n°{index}] Resource loaded")
 
         return resource
 
@@ -192,6 +199,11 @@ class ExperimentDownloader(Task):
                 resource_model = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.IMPORTED_FROM_LAB)
                 resource_models[resource_id] = resource_model
 
+                # save the origin for the input resource
+                SharedResource.create_from_lab_info(resource_model.id, SharedEntityMode.RECEIVED,
+                                                    self.share_entity.origin,
+                                                    CurrentUserService.get_and_check_current_user())
+
         # then we save other resources
         # we sort the process by start date to save the resources in the right order
         for process_model in protocol_model.get_all_processes_flatten_sort_by_start_date():
@@ -203,7 +215,14 @@ class ExperimentDownloader(Task):
                 if old_resource_id:
                     # retrieve the resource from the already saved resources
                     # set the resource model in the input port
-                    in_port.set_resource_model(resource_models.get(old_resource_id))
+                    resource_model = resource_models.get(old_resource_id)
+                    in_port.set_resource_model(resource_model)
+
+                    # if the resource is an output, flag it
+                    if resource_model and isinstance(process_model, TaskModel) and process_model.is_sink_task():
+                        resource_model.flagged = True
+                        resource_model.save()
+
                 else:
                     in_port.set_resource_model(None)
 
@@ -274,3 +293,10 @@ class ExperimentDownloader(Task):
             if response.status_code != 200:
                 self.log_error_message(
                     "Error while marking the resource as received: " + response.text)
+
+    @classmethod
+    def build_config(cls, link: str, mode: ExperimentDownloaderMode) -> ConfigParamsDict:
+        return {
+            'link': link,
+            'resource_mode': mode
+        }

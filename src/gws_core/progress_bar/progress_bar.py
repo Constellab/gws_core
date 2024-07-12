@@ -213,10 +213,8 @@ class ProgressBar(Model):
         # check if we update the progres
         value = self._update_progress_value(value)
         if message:
-            # perc = value/self.get_max_value()
             perc = value
-            self._add_message("{:1.1f}%: {}".format(
-                perc, message), MessageLevel.PROGRESS)
+            self._add_message(f"{perc:1.1f}%: {message}", MessageLevel.PROGRESS)
 
     def get_messages(self) -> List[ProgressBarMessageDTO]:
         return ProgressBarMessageDTO.from_json_list(self.data["messages"])

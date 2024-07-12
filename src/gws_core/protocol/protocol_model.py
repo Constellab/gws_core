@@ -1159,9 +1159,9 @@ class ProtocolModel(ProcessModel):
         if self.experiment:
             self.experiment.check_is_updatable()
 
-            if self.experiment.is_running:
+            if self.experiment.is_running_or_waiting:
                 raise BadRequestException(
-                    detail="The experiment is running, you can't update it")
+                    detail="The experiment is running or in queue, you can't update it")
 
     def get_source_resource_ids(self) -> Set[str]:
         """

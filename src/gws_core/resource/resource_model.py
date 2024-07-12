@@ -411,7 +411,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
     @classmethod
     def save_from_resource(
             cls, resource: Resource, origin: ResourceOrigin = ResourceOrigin.GENERATED, experiment: Experiment = None,
-            task_model: TaskModel = None, port_name: str = None) -> ResourceModel:
+            task_model: TaskModel = None, port_name: str = None, flagged: bool = False) -> ResourceModel:
         """Create the ResourceModel from the Resource and save it
         """
         resource_model = cls.from_resource(
@@ -589,7 +589,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
         return self.fs_node_model is not None or (resource_type is not None and resource_type._is_exportable)
 
     def is_manually_generated(self) -> bool:
-        return self.origin == ResourceOrigin.UPLOADED
+        return self.origin == ResourceOrigin.UPLOADED or self.origin == ResourceOrigin.IMPORTED_FROM_LAB
 
     def get_entity_name(self) -> str:
         return self.name

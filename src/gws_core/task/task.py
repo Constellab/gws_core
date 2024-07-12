@@ -130,7 +130,7 @@ class Task(Process):
         return self.output_specs.get_spec(spec_name).get_default_resource_type()
 
     @final
-    def update_progress_value(self, value: float, message: str = None) -> None:
+    def update_progress_value(self, value: float, message: str) -> None:
         """Update the progress value
 
         :param value: value between 0 and 100 of the progress
@@ -152,9 +152,9 @@ class Task(Process):
         :param message: message to store in the progress
         :type message: str
         """
-        message = DispatchedMessage(status=type_, message=message)
+        dispatched_message = DispatchedMessage(status=type_, message=message)
 
-        self.message_dispatcher.notify_message(message)
+        self.message_dispatcher.notify_message(dispatched_message)
 
     @final
     def log_debug_message(self, message: str):

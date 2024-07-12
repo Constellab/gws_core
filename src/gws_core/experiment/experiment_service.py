@@ -4,7 +4,6 @@ from typing import Dict, List, Optional, Type
 
 from peewee import ModelSelect
 
-from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.experiment.experiment_zipper import (ZipExperiment,
@@ -18,7 +17,6 @@ from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
-from gws_core.user.user import User
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
