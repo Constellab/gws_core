@@ -92,6 +92,12 @@ class StringHelper():
         return enum_class(str_value)
 
     @staticmethod
+    def get_enum_values(enum_class: Type) -> list:
+        """Get all the values of an enum
+        """
+        return [e.value for e in enum_class]
+
+    @staticmethod
     def is_alphanumeric(str_: str) -> bool:
         """Check if a string is alphanumeric with underscore"""
         if str_ is None:
