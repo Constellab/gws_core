@@ -316,7 +316,8 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
 
         return ResourceFactory.create_resource(self.get_and_check_resource_type(),
                                                kv_store=self.get_kv_store(), data=self.data,
-                                               resource_model_id=self.id, name=self.name)
+                                               resource_model_id=self.id, name=self.name,
+                                               style=self.style)
 
     @classmethod
     def from_resource(cls, resource: Resource, origin: ResourceOrigin = ResourceOrigin.GENERATED,
@@ -330,10 +331,9 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
         """
 
         # If the origin is not uploaded, then the experiment and the task must be provided
-        if origin not in [ResourceOrigin.UPLOADED, ResourceOrigin.S3_PROJECT_STORAGE]:
+        if origin not in [ResourceOrigin.UPLOADED, ResourceOrigin.S3_PROJECT_STORAGE, ResourceOrigin.IMPORTED_FROM_LAB]:
             if experiment is None or task_model is None:
-                raise Exception(
-                    "To create a GENERATED resource, you must provide the experiment and the task")
+                raise Exception(f"To create a {origin} resource, you must provide the experiment and the task")
 
         resource_model: ResourceModel = ResourceModel()
         resource_model.set_resource_typing_name(resource._typing_name)
@@ -391,8 +391,8 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
             node.file_store_id = local_file_store.id
 
         # Verify if a node with same path already exists
-        fs_node_model: FSNodeModel = FSNodeModel.find_by_path(node.path)
-        if fs_node_model:
+        fs_node_model = FSNodeModel.find_by_path(node.path)
+        if fs_node_model is not None:
             raise Exception(
                 f"Attempting to save a new File or Folder resource with path '{node.path}' that already exists in the database. Another resource with the same path already exists.")
 
@@ -401,17 +401,17 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
         resource.file_store_id = node.file_store_id
 
         # create the node model
-        fs_node_model: FSNodeModel = FSNodeModel()
-        fs_node_model.path = node.path
-        fs_node_model.file_store_id = node.file_store_id
-        fs_node_model.size = node.get_size()
-        fs_node_model.is_symbolic_link = node.is_symbolic_link
-        self.fs_node_model = fs_node_model
+        new_fs_node_model = FSNodeModel()
+        new_fs_node_model.path = node.path
+        new_fs_node_model.file_store_id = node.file_store_id
+        new_fs_node_model.size = node.get_size()
+        new_fs_node_model.is_symbolic_link = node.is_symbolic_link
+        self.fs_node_model = new_fs_node_model
 
     @classmethod
     def save_from_resource(
             cls, resource: Resource, origin: ResourceOrigin = ResourceOrigin.GENERATED, experiment: Experiment = None,
-            task_model: TaskModel = None, port_name: str = None) -> ResourceModel:
+            task_model: TaskModel = None, port_name: str = None, flagged: bool = False) -> ResourceModel:
         """Create the ResourceModel from the Resource and save it
         """
         resource_model = cls.from_resource(
@@ -589,13 +589,32 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
         return self.fs_node_model is not None or (resource_type is not None and resource_type._is_exportable)
 
     def is_manually_generated(self) -> bool:
-        return self.origin == ResourceOrigin.UPLOADED
+        return self.origin == ResourceOrigin.UPLOADED or self.origin == ResourceOrigin.IMPORTED_FROM_LAB
 
     def get_entity_name(self) -> str:
         return self.name
 
     def get_entity_type(self) -> EntityType:
         return EntityType.RESOURCE
+
+    # TODO TO SEE
+    # @classmethod
+    # def new_without_content(cls, resource_typing_name: str, name: str, experiment: Experiment,
+    #                         task_model: TaskModel, port_name: str) -> ResourceModel:
+
+    #     resource_model: ResourceModel = ResourceModel()
+    #     # mark the content of the resource as deleted
+    #     resource_model.content_is_deleted = True
+    #     resource_model.set_resource_typing_name(resource_typing_name)
+    #     resource_model.origin = ResourceOrigin.GENERATED
+    #     resource_model.experiment = experiment
+    #     resource_model.project = experiment.project
+    #     resource_model.task_model = task_model
+    #     resource_model.generated_by_port_name = port_name
+    #     resource_model.flagged = False
+    #     resource_model.name = name
+    #     resource_model.fs_node_model = None
+    #     # resource_model.
 
     class Meta:
         table_name = 'gws_resource'

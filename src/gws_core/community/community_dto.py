@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.io.io_spec import IOSpecDTO
 
 
 class CommunityLiveTaskSpaceDTO(BaseModelDTO):
@@ -19,6 +20,11 @@ class CommunityLiveTaskDTO(BaseModelDTO):
     description: Optional[object] = None
 
 
+class CommunityLiveTaskIOSpecDTO(BaseModelDTO):
+    # TODO type to improve, it is not standard
+    specs: Dict[str, IOSpecDTO]
+
+
 class CommunityLiveTaskVersionDTO(BaseModelDTO):
     id: str
     version: int
@@ -26,8 +32,8 @@ class CommunityLiveTaskVersionDTO(BaseModelDTO):
     environment: Optional[str]
     params: Optional[List[str]]
     code: str
-    input_specs: Optional[Dict]
-    output_specs: Optional[Dict]
+    input_specs: Optional[CommunityLiveTaskIOSpecDTO]
+    output_specs: Optional[CommunityLiveTaskIOSpecDTO]
     config_specs: Optional[Dict]
     live_task: CommunityLiveTaskDTO
 
@@ -36,6 +42,12 @@ class CommunityCreateLiveTaskDTO(BaseModelDTO):
     title: str
     type: str
     space: Any
+
+
+class CommunityGetLiveTasksBody(BaseModelDTO):
+    spacesFilter: List[str] = []
+    titleFilter: str = ''
+    personalOnly: bool = False
 
 
 class CommunityLiveTaskVersionCreateResDTO(BaseModelDTO):

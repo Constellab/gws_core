@@ -1,21 +1,13 @@
 
 
 from abc import abstractmethod
-from typing import Dict, Optional, Type
+from typing import Dict, Optional
 
 from gws_core.model.typing import Typing
-from gws_core.protocol.protocol import Protocol
-from gws_core.protocol.protocol_dto import (ProcessConfigDTO,
-                                            ProtocolConfigDTO,
-                                            ProtocolMinimumDTO)
-from gws_core.task.task import Task
+from gws_core.process.process_types import ProcessMinimumDTO
+from gws_core.protocol.protocol_dto import ProtocolMinimumDTO
 
-from ..config.config_types import ConfigParamsDict
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
-from ..model.typing_manager import TypingManager
 from ..task.task_model import TaskModel
-from .process import Process
 from .process_model import ProcessModel
 
 
@@ -25,10 +17,6 @@ class ProtocolSubProcessBuilder():
 
     @abstractmethod
     def instantiate_processes(self) -> Dict[str, ProcessModel]:
-        pass
-
-    @abstractmethod
-    def instantiate_process(self, instance_name: str) -> ProcessModel:
         pass
 
 
@@ -45,12 +33,11 @@ class SubProcessBuilderReadFromDb(ProtocolSubProcessBuilder):
 
     def instantiate_processes(self) -> Dict[str, ProcessModel]:
         processes: Dict[str, ProcessModel] = {}
-        for instance_name in self.protocol_config.nodes.keys():
-            processes[instance_name] = self.instantiate_process(instance_name)
+        for instance_name, process_dto in self.protocol_config.nodes.items():
+            processes[instance_name] = self.instantiate_process(process_dto)
         return processes
 
-    def instantiate_process(self, instance_name: str) -> ProcessModel:
-        process_dto = self.protocol_config.nodes[instance_name]
+    def instantiate_process(self, process_dto: ProcessMinimumDTO) -> ProcessModel:
         proc_id: str = process_dto.id
 
         proc_type_str: str = process_dto.process_typing_name
@@ -68,56 +55,3 @@ class SubProcessBuilderReadFromDb(ProtocolSubProcessBuilder):
             return ProtocolModel.get_by_id_and_check(process_id)
         else:
             return TaskModel.get_by_id_and_check(process_id)
-
-
-class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
-    """Factory used to force creation of a processes when building a protocol
-    It requires a ProcessConfigDict instead of a ProcessMinimumDict.
-    For protocol, it creates an empty protocol
-    """
-
-    protocol_config: ProtocolConfigDTO
-
-    def __init__(self, protocol_config: ProtocolConfigDTO) -> None:
-        super().__init__()
-        self.protocol_config = protocol_config
-
-    def instantiate_processes(self) -> Dict[str, ProcessModel]:
-        processes: Dict[str, ProcessModel] = {}
-        for instance_name in self.protocol_config.nodes.keys():
-            processes[instance_name] = self.instantiate_process(instance_name)
-        return processes
-
-    def instantiate_process(self, instance_name: str) -> ProcessModel:
-        process_dto = self.protocol_config.nodes[instance_name]
-        process_type_str: str = process_dto.process_typing_name
-        process_type: Type[Process] = TypingManager.get_and_check_type_from_name(process_type_str)
-
-        return self._create_new_process(process_type=process_type, instance_name=instance_name,
-                                        process_dto=process_dto)
-
-    def _create_new_process(self, process_type: Type[Process],
-                            instance_name: str, process_dto: ProcessConfigDTO) -> ProcessModel:
-        """Method to instantiate a new process and configure it
-        """
-        from ..process.process_factory import ProcessFactory
-
-        config_params: ConfigParamsDict = {}
-        # Configure the process
-        if process_dto.config:
-            config_params = process_dto.config.values
-
-        if issubclass(process_type, Task):
-            return ProcessFactory.create_task_model_from_type(process_type, config_params, instance_name,
-                                                              process_dto.inputs,
-                                                              process_dto.outputs,
-                                                              process_dto.name)
-        elif issubclass(process_type, Protocol):
-            # create an empty protocol, it will be filled with graph later
-            return ProcessFactory.create_protocol_empty(instance_name, process_dto.name,
-                                                        process_type)
-        else:
-            name = process_type.__name__ if process_type.__name__ is not None else str(
-                process_type)
-            raise BadRequestException(
-                f"The type {name} is not a Process nor a Protocol. It must extend the on of the classes")

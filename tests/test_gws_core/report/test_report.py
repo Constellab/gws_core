@@ -151,14 +151,14 @@ class TestReport(BaseTestCase):
         self.assertEqual(resource_views[0]['resource_id'], robot_model.id)
 
         # verify that the report was automatically associated with the experiment
-        self.assertEqual(ReportExperiment.find_by_pk(experiment.get_experiment_model().id, report.id).count(), 1)
+        self.assertEqual(ReportExperiment.find_by_pk(experiment.get_model().id, report.id).count(), 1)
 
         with self.assertRaises(Exception):
             # Check that we cannot remove the experiment because of the view
-            ReportService.remove_experiment(report.id, experiment.get_experiment_model().id)
+            ReportService.remove_experiment(report.id, experiment.get_model().id)
 
         # remove the view from the report
         ReportService.update_content(report.id, RichText.create_rich_text_dto([]))
 
         # Check that we cannot remove the experiment because of the view
-        ReportService.remove_experiment(report.id, experiment.get_experiment_model().id)
+        ReportService.remove_experiment(report.id, experiment.get_model().id)

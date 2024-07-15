@@ -12,6 +12,7 @@ from gws_core.model.typing_dto import SimpleTypingDTO, TypingFullDTO
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
 from gws_core.process.process_types import ProcessMinimumDTO
+from gws_core.progress_bar.progress_bar_dto import ProgressBarConfigDTO
 from gws_core.protocol.protocol_layout import ProtocolLayoutDTO
 
 
@@ -31,7 +32,7 @@ class IOFaceDTO(BaseModelDTO):
     port_name: str
 
 
-class ProtocolConfigDTO(BaseModelDTO):
+class ProtocolGraphConfigDTO(BaseModelDTO):
     nodes: Dict[str, 'ProcessConfigDTO']
     links: List[ConnectorDTO]
     interfaces: Dict[str, IOFaceDTO]
@@ -45,18 +46,20 @@ class ProcessConfigDTO(BaseModelDTO):
     instance_name: str
     config: ConfigSimpleDTO
     name: str
-    brick_version: str
+    brick_version_on_create: str
+    brick_version_on_run: str
     inputs: IODTO
     outputs: IODTO
     status: str
     process_type: SimpleTypingDTO
     style: TypingStyle
+    progress_bar: ProgressBarConfigDTO
     # for sub protocol, recursive graph
-    graph: Optional[ProtocolConfigDTO] = None
+    graph: Optional[ProtocolGraphConfigDTO] = None
 
 
 # call this method to set the type of the recursive graph
-ProtocolConfigDTO.model_rebuild()
+ProtocolGraphConfigDTO.model_rebuild()
 
 
 class ProtocolMinimumDTO(BaseModelDTO):

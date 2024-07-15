@@ -10,6 +10,7 @@ from gws_core.impl.json.json_dict import JSONDict
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
 from gws_core.impl.table.table import Table
 from gws_core.impl.text.text import Text
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
@@ -28,7 +29,8 @@ class ResourceFactory():
     def create_resource(cls, resource_type: Type[Resource],
                         kv_store: KVStore, data: Dict[str, Any],
                         resource_model_id: str = None, name: str = None,
-                        tags: List[Tag] = None) -> Resource:
+                        tags: List[Tag] = None,
+                        style: TypingStyle = None) -> Resource:
         resource: Resource = resource_type()
 
         if resource_model_id:
@@ -40,6 +42,9 @@ class ResourceFactory():
 
         if tags:
             resource.tags.add_tags(tags)
+
+        if style:
+            resource.style = style
 
         cls._send_fields_to_resource(resource, kv_store=kv_store, data=data)
 

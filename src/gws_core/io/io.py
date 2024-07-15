@@ -15,10 +15,9 @@ from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .io_exception import ResourceNotCompatibleException
-from .port import InPort, OutPort, Port
+from .port import InPort, OutPort, PortType
 
-# For generic Port type
-PortType = TypeVar('PortType', bound=Port)
+IOType = TypeVar('IOType', bound='IO')
 
 
 class IO(Base, Generic[PortType]):
@@ -175,22 +174,22 @@ class IO(Base, Generic[PortType]):
             raise ResourceNotCompatibleException(port_name=port_name, resource_type=resource_type,
                                                  spec=port.resource_spec)
 
-        port.resource_model = resource_model
+        port.set_resource_model(resource_model)
 
     def get_resource_models(self) -> Dict[str, ResourceModel]:
         """Get the resource_model of a port
         """
         resource_models: Dict[str, ResourceModel] = {}
         for port_name, port in self._ports.items():
-            if port.resource_model:
-                resource_models[port_name] = port.resource_model
+            if port.get_resource_model():
+                resource_models[port_name] = port.get_resource_model()
         return resource_models
 
     def get_resource_model(self, port_name: str) -> ResourceModel:
         """Get the resource_model of a port
         """
         port: PortType = self.get_port(port_name)
-        return port.resource_model
+        return port.get_resource_model()
 
     def has_resource_model(self, resource_model_id: str, include_sub_resouces: bool = False) -> bool:
         """_summary_
@@ -204,8 +203,8 @@ class IO(Base, Generic[PortType]):
         :rtype: bool
         """
         for port in self._ports.values():
-            if port.resource_model:
-                if port.resource_model.id == resource_model_id:
+            if port.get_resource_model():
+                if port.get_resource_model_id() == resource_model_id:
                     return True
 
                 if include_sub_resouces:
@@ -218,12 +217,12 @@ class IO(Base, Generic[PortType]):
     ################################################### JSON ########################################
 
     @classmethod
-    def load_from_json(cls, io_json: dict) -> 'IO':
+    def load_from_json(cls: Type[IOType], io_json: dict) -> IOType:
         return cls.load_from_dto(IODTO.from_json(io_json))
 
     @classmethod
-    def load_from_dto(cls, io_dto: IODTO) -> 'IO':
-        io: IO = cls(type_=io_dto.type, additional_info=io_dto.additional_info)
+    def load_from_dto(cls: Type[IOType], io_dto: IODTO) -> IOType:
+        io: IOType = cls(type_=io_dto.type, additional_info=io_dto.additional_info)
 
         # To create an InPort or OutPort
         port_type: Type[PortType] = io._get_port_type()
@@ -232,16 +231,15 @@ class IO(Base, Generic[PortType]):
             port: PortType = port_type.load_from_dto(port_dto, key)
 
             if port_dto.resource_id:
-                resource_model: ResourceModel = ResourceModel.get_by_id(port_dto.resource_id)
-                port.resource_model = resource_model
+                port.set_resource_model_id(port_dto.resource_id)
 
             io.add_port(key, port)
 
         return io
 
     @classmethod
-    def load_from_specs(cls, specs: IOSpecs) -> 'IO':
-        io: IO = cls(type_=specs.get_type(), additional_info=specs.get_additional_info())
+    def load_from_specs(cls: Type[IOType], specs: IOSpecs) -> IOType:
+        io: IOType = cls(type_=specs.get_type(), additional_info=specs.get_additional_info())
 
         # create the input ports from the Task input specs
         for key, value in specs.get_specs().items():

@@ -33,12 +33,21 @@ class ConfigSpecsHelper():
         return json_
 
     @classmethod
-    def config_specs_from_json(cls, dict: Dict[str, Any]) -> ConfigSpecs:
+    def config_specs_from_json(cls, dict_: Dict[str, Any]) -> ConfigSpecs:
         """Create a config specs from a json
         """
         config_specs: ConfigSpecs = {}
-        for key, value in dict.items():
+        for key, value in dict_.items():
             config_specs[key] = ParamSpecHelper.create_param_spec_from_json(value)
+        return config_specs
+
+    @classmethod
+    def config_specs_from_dto(cls, dict_: Dict[str, ParamSpecDTO]) -> ConfigSpecs:
+        """Create a config specs from a dto
+        """
+        config_specs: ConfigSpecs = {}
+        for key, value in dict_.items():
+            config_specs[key] = ParamSpecHelper.create_param_spec_from_dto(value)
         return config_specs
 
     @classmethod

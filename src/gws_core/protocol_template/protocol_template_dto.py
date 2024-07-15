@@ -4,7 +4,7 @@ from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
-from gws_core.protocol.protocol_dto import ProtocolConfigDTO
+from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 
 
 class ProtocolTemplateDTO(ModelWithUserDTO):
@@ -20,4 +20,4 @@ class ProtocolTemplateExportDTO(BaseModelDTO):
     name: str
     version: int
     description: Optional[dict]
-    data: ProtocolConfigDTO
+    data: ProtocolGraphConfigDTO

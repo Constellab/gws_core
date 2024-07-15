@@ -1,7 +1,8 @@
 
 
+from enum import Enum
 from re import split, sub
-from typing import List, Union
+from typing import List
 
 from numpy import NaN
 from pandas import DataFrame
@@ -11,6 +12,17 @@ from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.table.table import Table
 
 from ....core.utils.utils import Utils
+
+
+class TableOperationUnknownColumnOption(Enum):
+    """Options for unknown column in operation"""
+
+    # Throw an error if the column is unknown
+    ERROR = 'Error'
+    # Set the result to NaN if 1 column is unknown
+    SET_RESULT_TO_NAN = 'Set result to NaN'
+    # Replace the unknown columns with 0
+    REPLACE_WITH_0 = 'Replace unknown columns with 0'
 
 
 class TableOperationHelper():
@@ -70,16 +82,17 @@ class TableOperationHelper():
         return result_table
 
     @staticmethod
-    def row_operation(source: Table, operations: Union[str, List[str]], keep_original_rows: bool) -> Table:
+    def row_operation(source: Table, operations: List[str], keep_original_rows: bool) -> Table:
         t_table = source.transpose()
         result_transposed = TableOperationHelper.column_operations(t_table, operations, keep_original_rows)
         return result_transposed.transpose(infer_objects=True)
 
     @staticmethod
-    def column_mass_operations(table: Table, operation_df: DataFrame,
-                               operation_name_column: str = None, operation_calculations_column: str = None,
-                               error_on_unknown_column: bool = False,
-                               keep_original_columns: bool = False) -> Table:
+    def column_mass_operations(
+            table: Table, operation_df: DataFrame, operation_name_column: str = None,
+            operation_calculations_column: str = None,
+            replace_unknown_column: TableOperationUnknownColumnOption = TableOperationUnknownColumnOption.SET_RESULT_TO_NAN,
+            keep_original_columns: bool = False) -> Table:
         """Call multiple operations on table, the operations must be stored in a DataFrame.
 
         :param table: _description_
@@ -90,9 +103,8 @@ class TableOperationHelper():
         :type operation_name_column: str, optional
         :param operation_column: name of the column that contains operation (takes second column if none), defaults to None
         :type operation_column: str, optional
-        :param error_on_unknown_column: If False, the unknow column are replace with 0 in the calculations,
-                                        If True an error is thrown if a column in the calculation does not exist, defaults to False
-        :type error_on_unknown_column: str, optional
+        :param replace_unknown_column: Option to handle unknown columns, defaults to False
+        :type replace_unknown_column: TableOperationUnknownColumnOption, optional
         :param keep_original_columns: If True, the original columns used for the calculations are added at the end of the table.
                                       Otherwise, only the calculated columns are kept, defaults to False
         :type keep_original_columns: str, optional
@@ -121,20 +133,20 @@ class TableOperationHelper():
                 raise Exception(
                     f"The operation operation column '{operation_calculations_column}' does not exist in the operation table, please check your configuration")
 
-        for index, row in operation_df.iterrows():
+        for _, row in operation_df.iterrows():
             operation: str = str(row.iloc[operation_calculations_column])
 
             # if we throw an error if the column is unknown, don't touch the operation
-            if error_on_unknown_column:
+            if replace_unknown_column == TableOperationUnknownColumnOption.ERROR:
                 clean_operation = operation
-            else:
-                # remove the unknown columns
-                # clean_operation = TableOperationHelper._clean_operation_unknown_columns(operation, table)
-
+            elif replace_unknown_column == TableOperationUnknownColumnOption.SET_RESULT_TO_NAN:
                 if TableOperationHelper._operation_contains_unknown_column(operation, table):
                     clean_operation = f"'{TableOperationHelper._NaN_str}'"
                 else:
                     clean_operation = operation
+            else:
+                # remove the unknown columns
+                clean_operation = TableOperationHelper._clean_operation_unknown_columns(operation, table)
 
             # create the operation
             operations.append(f"{row.iloc[operation_name_column]} = {clean_operation}")

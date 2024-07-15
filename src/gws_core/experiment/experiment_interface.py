@@ -100,7 +100,7 @@ class IExperiment:
     def delete(self) -> None:
         ExperimentService.delete_experiment(self._experiment.id)
 
-    def get_experiment_model(self) -> Experiment:
+    def get_model(self) -> Experiment:
         return self._experiment
 
     def is_running(self) -> bool:
@@ -120,6 +120,8 @@ class IExperiment:
         TagService.add_tags_to_entity(EntityType.EXPERIMENT, self._experiment.id,
                                       tags)
 
-    def refresh(self) -> None:
+    def refresh(self) -> 'IExperiment':
         self._experiment = self._experiment.refresh()
         self._protocol.refresh()
+
+        return self

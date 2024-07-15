@@ -129,7 +129,7 @@ class TestResourceSet(BaseTestCase):
         self.assertTrue(resource_set.resource_exists('Robot 3'))
 
         # check that the reset cleared the correct resources
-        experiment.get_experiment_model().reset()
+        experiment.get_model().reset()
         self.assertEqual(ResourceModel.select().count(), resource_count)
 
     def test_resource_set_exporter(self):

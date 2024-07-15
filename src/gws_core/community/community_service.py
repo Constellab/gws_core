@@ -52,13 +52,13 @@ class CommunityService:
     @classmethod
     def get_community_available_live_tasks(
             cls, spaces_filter: List[str],
-            title_filter: str, personalOnly: bool, page: int, number_of_items_per_page: int) -> Any:
+            title_filter: str, personal_only: bool, page: int, number_of_items_per_page: int) -> Any:
         if cls.community_api_url is None:
             return None
         url = f"{cls.community_api_url}/live-task/available/for-lab?page={page}&size={number_of_items_per_page}"
         try:
             response = ExternalApiService.post(
-                url, {'titleFilter': title_filter, 'spacesFilter': spaces_filter, 'personalOnly': personalOnly},
+                url, {'titleFilter': title_filter, 'spacesFilter': spaces_filter, 'personalOnly': personal_only},
                 cls._get_request_header(),
                 raise_exception_if_error=True)
         except BaseHTTPException as err:
@@ -109,8 +109,7 @@ class CommunityService:
         except BaseHTTPException as err:
             err.detail = f"Can't create community live task from the lab. Error : {err.detail}"
             raise err
-        res = response.json()
-        return res
+        return CommunityLiveTaskVersionCreateResDTO.from_json(response.json())
 
     @classmethod
     def fork_community_live_task(cls, version_file: dict, form_data: CommunityCreateLiveTaskDTO, live_task_version_id:
@@ -127,8 +126,7 @@ class CommunityService:
         except BaseHTTPException as err:
             err.detail = f"Can't create community live task from the lab. Error : {err.detail}"
             raise err
-        res = response.json()
-        return res
+        return CommunityLiveTaskVersionCreateResDTO.from_json(response.json())
 
     @classmethod
     def create_community_live_task_version(
@@ -144,8 +142,7 @@ class CommunityService:
         except BaseHTTPException as err:
             err.detail = f"Can't create community live task version from the lab. Error : {err.detail}"
             raise err
-        res = response.json()
-        return res
+        return CommunityLiveTaskVersionCreateResDTO.from_json(response.json())
 
     @classmethod
     def _get_request_header(cls) -> Dict[str, str]:

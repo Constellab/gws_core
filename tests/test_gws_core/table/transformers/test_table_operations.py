@@ -5,8 +5,8 @@ from unittest import TestCase
 from pandas import DataFrame, isna
 
 from gws_core import Table
-from gws_core.impl.table.helper.table_operation_helper import \
-    TableOperationHelper
+from gws_core.impl.table.helper.table_operation_helper import (
+    TableOperationHelper, TableOperationUnknownColumnOption)
 
 
 # test_table_operations
@@ -61,11 +61,16 @@ class TestTableOperations(TestCase):
         self.assertEqual(result_table.nb_columns, 5)
 
         # Test with unknown column in operation Z
-        operation_df = DataFrame({'Operation_name': ['R0'], 'Operation': ['A + (Z - B) * 2']})
+        operation_df = DataFrame({'Operation_name': ['R0'], 'Operation': ['A + Z']})
 
-        result_table = TableOperationHelper.column_mass_operations(table, operation_df)
-
+        result_table = TableOperationHelper.column_mass_operations(
+            table, operation_df, replace_unknown_column=TableOperationUnknownColumnOption.SET_RESULT_TO_NAN)
         # The result should be NaN
         self.assertEqual(result_table.nb_columns, 1)
         # check if all element of R0 columns are NaN
         self.assertTrue(all(isna(list(result_table.get_data()['R0']))))
+
+        # replace unknown column with 0
+        result_table = TableOperationHelper.column_mass_operations(
+            table, operation_df, replace_unknown_column=TableOperationUnknownColumnOption.REPLACE_WITH_0)
+        self.assertEqual(list(result_table.get_data()['R0']), [1, 2, 3])

@@ -137,11 +137,11 @@ class ResourceExporter(Converter):
     @final
     def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> File:
         # Create a new temp_dir to create the file here
-        self.__temp_dir: str = Settings.get_instance().make_temp_dir()
+        temp_dir: str = self.create_tmp_dir()
 
         result: FSNode
         try:
-            result = self.export_to_path(source, self.__temp_dir, params, target_type)
+            result = self.export_to_path(source, temp_dir, params, target_type)
         except Exception as err:
             raise Exception(
                 f"Cannot export the resource '{source.name}' using exporter '{self._typing_name}' to a file, error : {err}")

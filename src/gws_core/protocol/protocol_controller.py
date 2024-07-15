@@ -1,7 +1,7 @@
 
 
 import threading
-from typing import Any, AnyStr, Dict, List, Optional
+from typing import Any, Optional
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
@@ -21,6 +21,7 @@ from gws_core.protocol_template.protocol_template_dto import \
     ProtocolTemplateDTO
 
 from ..community.community_dto import (CommunityCreateLiveTaskDTO,
+                                       CommunityGetLiveTasksBody,
                                        CommunityLiveTaskDTO)
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
@@ -59,6 +60,7 @@ def add_process(id_: str,
             protocol_id=id_,
             process_typing_name=process_typing_name
         ).to_dto()
+
 
 @core_app.post("/protocol/{id_}/duplicate-process/{process_instance_name}", tags=["Protocol"],
                summary="Duplicate process in protocol")
@@ -101,16 +103,14 @@ def get_community_available_space(_=Depends(AuthService.check_user_access_token)
                summary="Get community live-tasks available for the protocol")
 def get_community_available_live_tasks(page: int,
                                        number_of_items_per_page: int,
-                                       body: Dict[AnyStr, Any],
+                                       body: CommunityGetLiveTasksBody,
                                        _=Depends(AuthService.check_user_access_token)) -> Any:
     """
     Add a constellab community live task to a protocol
     """
-    spaces_filter = body.get(str.encode('spacesFilter'), [])
-    title_filter = body.get(str.encode('titleFilter'), '')
-    personalOnly = body.get(str.encode('personalOnly'), False)
     return ProtocolService.get_community_available_live_tasks(
-        spaces_filter, title_filter, personalOnly, page, number_of_items_per_page)
+        body.spacesFilter, body.titleFilter, body.personalOnly,
+        page, number_of_items_per_page)
 
 
 @core_app.get("/protocol/get-current-live-task/{live_task_version_id}", tags=["Protocol"],

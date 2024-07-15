@@ -5,8 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, final
 
-from peewee import (BooleanField, CharField, DoubleField, ForeignKeyField,
-                    ModelSelect)
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
@@ -285,6 +284,12 @@ class Experiment(ModelWithUser, ModelWithProject, NavigableEntity):
         return self.status == ExperimentStatus.RUNNING or self.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS
 
     @property
+    def is_running_or_waiting(self) -> bool:
+        """Consider running if the Experiment status is RUNNING or WAITING_FOR_CLI_PROCESS
+        """
+        return self.is_running or self.status == ExperimentStatus.IN_QUEUE
+
+    @property
     def is_error(self) -> bool:
         """Consider running if the Experiment status is RUNNING or WAITING_FOR_CLI_PROCESS
         """
@@ -438,7 +443,7 @@ class Experiment(ModelWithUser, ModelWithProject, NavigableEntity):
 
     def export_protocol(self) -> ExperimentProtocolDTO:
         return ExperimentProtocolDTO(
-            version=2,  # version of the protocol json format
+            version=3,  # version of the protocol json format
             data=self.protocol_model.to_config_dto()
         )
 

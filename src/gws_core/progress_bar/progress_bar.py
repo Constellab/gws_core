@@ -10,7 +10,8 @@ from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.progress_bar.progress_bar_dto import (
-    ProgressBarDTO, ProgressBarMessageDTO, ProgressBarMessageWithTypeDTO)
+    ProgressBarConfigDTO, ProgressBarDTO, ProgressBarMessageDTO,
+    ProgressBarMessageWithTypeDTO)
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
@@ -212,10 +213,8 @@ class ProgressBar(Model):
         # check if we update the progres
         value = self._update_progress_value(value)
         if message:
-            # perc = value/self.get_max_value()
             perc = value
-            self._add_message("{:1.1f}%: {}".format(
-                perc, message), MessageLevel.PROGRESS)
+            self._add_message(f"{perc:1.1f}%: {message}", MessageLevel.PROGRESS)
 
     def get_messages(self) -> List[ProgressBarMessageDTO]:
         return ProgressBarMessageDTO.from_json_list(self.data["messages"])
@@ -285,3 +284,22 @@ class ProgressBar(Model):
             elapsed_time=self.get_elapsed_time(),
             second_start=self.second_start,
         )
+
+    def to_config_dto(self) -> ProgressBarConfigDTO:
+        return ProgressBarConfigDTO(
+            started_at=self.started_at,
+            ended_at=self.ended_at,
+            current_value=self.current_value,
+            elapsed_time=self.get_elapsed_time(),
+            second_start=self.second_start,
+        )
+
+    @classmethod
+    def from_config_dto(cls, dto: ProgressBarConfigDTO) -> 'ProgressBar':
+        progress_bar = ProgressBar()
+        progress_bar.started_at = dto.started_at
+        progress_bar.ended_at = dto.ended_at
+        progress_bar.current_value = dto.current_value
+        progress_bar.elapsed_time = dto.elapsed_time
+        progress_bar.second_start = dto.second_start
+        return progress_bar

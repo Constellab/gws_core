@@ -40,3 +40,6 @@ class DispatchedMessage():
     @staticmethod
     def create_debug_message(message: str) -> 'DispatchedMessage':
         return DispatchedMessage(status=MessageLevel.DEBUG, message=message)
+
+    def is_valid(self) -> bool:
+        return self.message is not None

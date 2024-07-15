@@ -274,7 +274,7 @@ class TestTag(BaseTestCase):
         self.assertTrue(output_tag_exp.is_propagable)
         self.assertEqual(output_tag_exp.origins.count_origins(), 1)
         self.assertTrue(output_tag_exp.origins.has_origin(
-            TagOriginType.EXPERIMENT_PROPAGATED, i_experiment.get_experiment_model().id))
+            TagOriginType.EXPERIMENT_PROPAGATED, i_experiment.get_model().id))
 
         # Check task tags
         ouput_tag_task_propagable = first_output.tags.get_tag(task_tag_propagable.key, task_tag_propagable.value)
@@ -316,7 +316,7 @@ class TestTag(BaseTestCase):
         i_experiment.run()
         tag_robot.refresh()
 
-        experiment_id = i_experiment.get_experiment_model().id
+        experiment_id = i_experiment.get_model().id
 
         # Check that the first output has the tag of first input + exp + 2 tag from task
         resource_model = tag_robot.get_output_resource_model('robot')
@@ -371,7 +371,7 @@ class TestTag(BaseTestCase):
         create_robot = i_protocol.add_process(RobotCreate, 'create')
         i_experiment.run()
         exp_1_output = create_robot.refresh().get_output_resource_model('robot')
-        exp_1 = i_experiment.get_experiment_model()
+        exp_1 = i_experiment.get_model()
 
         i_experiment_2: IExperiment = IExperiment()
         i_protocol_2: IProtocol = i_experiment_2.get_protocol()
@@ -379,7 +379,7 @@ class TestTag(BaseTestCase):
         i_protocol_2.add_source('source', exp_1_output.id, move_robot << 'robot')
         i_experiment_2.run()
         exp_2_output = move_robot.refresh().get_output_resource_model('robot')
-        exp_2 = i_experiment_2.get_experiment_model()
+        exp_2 = i_experiment_2.get_model()
 
         # generate a view from this resource
         view_result = ResourceService.get_and_call_view_on_resource_model(exp_2_output.id, 'view_as_json', {}, True)

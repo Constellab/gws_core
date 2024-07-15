@@ -9,6 +9,8 @@ from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.dispatched_message import DispatchedMessage
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_level import MessageLevel
+from gws_core.core.utils.settings import Settings
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_register_decorator import typing_registrator
 from gws_core.model.typing_style import TypingStyle
@@ -57,6 +59,9 @@ class Task(Process):
     # Current status of the task, do not update
     _status_: Literal['CHECK_BEFORE_RUN', 'RUN', 'RUN_AFTER_TASK']
 
+    # list of temporary directories created by the task to be deleted after the task is run
+    _temp_dirs: list[str]
+
     def __init__(self):
         """
         Constructor, please do not overwrite this method, use the init method instead
@@ -72,6 +77,7 @@ class Task(Process):
         self._status_ = None
         self.message_dispatcher = None
         self.style = None
+        self._temp_dirs = []
 
     def init(self) -> None:
         """
@@ -107,6 +113,10 @@ class Task(Process):
         This can be overwritten to perform action after the task run. This method is called after the
         resources are saved. This method is useful to delete temporary objects (like files) to clear the server after the task is run.
         """
+        # delete temporary directories
+        for tmp_dir in self._temp_dirs:
+            self.log_debug_message(f"Deleting temporary directorie '{tmp_dir}'")
+            FileHelper.delete_dir(tmp_dir)
 
     @final
     def get_default_output_spec_type(self, spec_name: str) -> Type[Resource]:
@@ -120,7 +130,7 @@ class Task(Process):
         return self.output_specs.get_spec(spec_name).get_default_resource_type()
 
     @final
-    def update_progress_value(self, value: float, message: str = None) -> None:
+    def update_progress_value(self, value: float, message: str) -> None:
         """Update the progress value
 
         :param value: value between 0 and 100 of the progress
@@ -142,9 +152,9 @@ class Task(Process):
         :param message: message to store in the progress
         :type message: str
         """
-        message = DispatchedMessage(status=type_, message=message)
+        dispatched_message = DispatchedMessage(status=type_, message=message)
 
-        self.message_dispatcher.notify_message(message)
+        self.message_dispatcher.notify_message(dispatched_message)
 
     @final
     def log_debug_message(self, message: str):
@@ -185,3 +195,15 @@ class Task(Process):
     def get_brick_name(cls) -> str:
         typing_name = TypingNameObj.from_typing_name(cls._typing_name)
         return typing_name.brick_name
+
+    def create_tmp_dir(self) -> str:
+        """
+        Create a temporary directory.
+        This directory will be deleted after the task is run.
+        Output file or folder are moved out of this directory before it is deleted.
+        :param prefix: prefix of the directory
+        :return: path of the created directory
+        """
+        tmp_dir = Settings.make_temp_dir()
+        self._temp_dirs.append(tmp_dir)
+        return tmp_dir

@@ -4,7 +4,6 @@ from typing import Any, Dict, List
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
-from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.openai.smart_task_base import SmartTaskBase
@@ -64,8 +63,8 @@ The variable named 'output_path' contains the absolute path of the output png fi
         table: Table = task_inputs["source"]
 
         # execute the live code
-        self.temp_dir = Settings.make_temp_dir()
-        self.ouput_path = self.temp_dir + "/output.png"
+        temp_dir = self.create_tmp_dir()
+        self.ouput_path = temp_dir + "/output.png"
 
         # all variable accessible in the generated code
         return {"source": table.get_data(), 'output_path': self.ouput_path}
@@ -89,6 +88,3 @@ targets = [File(output_path)]"""
         generated_text.name = "Plot code"
 
         return {'target': File(self.ouput_path), 'generated_code': generated_text}
-
-    def run_after_task(self) -> None:
-        FileHelper.delete_dir(self.temp_dir)

@@ -3,8 +3,6 @@
 from typing import List
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
-from gws_core.core.utils.settings import Settings
-from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.live.base.env_live_task import EnvLiveTask
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
@@ -45,8 +43,6 @@ class PyLiveTask(Task):
             human_name="Python code snippet",
             short_description="Python code snippet to run"), }
 
-    working_dir: str = None
-
     CONFIG_PARAMS_NAME = 'params'
     CONFIG_CODE_NAME = 'code'
 
@@ -63,13 +59,13 @@ class PyLiveTask(Task):
         # add the params to the code
         code_with_params = f"{str_params}{code}"
 
-        self.working_dir = Settings.make_temp_dir()
+        working_dir = self.create_tmp_dir()
 
         resource_list: ResourceList = inputs.get('source')
 
         # execute the live code
         init_globals = {'self': self, 'sources': resource_list.get_resources(),
-                        "working_dir": self.working_dir, **globals()}
+                        "working_dir": working_dir, **globals()}
 
         result = LiveCodeHelper.run_python_code(code_with_params, init_globals)
 
@@ -79,9 +75,6 @@ class PyLiveTask(Task):
             raise Exception("The 'targets' variable is None")
 
         return {'target': ResourceList(targets)}
-
-    def run_after_task(self) -> None:
-        FileHelper.delete_dir(self.working_dir)
 
     @classmethod
     def build_config_params_dict(cls, code: str, params: List[str]) -> ConfigParamsDict:

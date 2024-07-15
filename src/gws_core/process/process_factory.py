@@ -1,14 +1,11 @@
 
 
-from typing import Dict, List, Type
+from typing import Dict, List, Optional, Type
 
-from gws_core.core.utils.logger import Logger
 from gws_core.io.io_dto import IODTO
 from gws_core.model.typing_style import TypingStyle
-from gws_core.protocol.protocol_dto import ProtocolConfigDTO
-from gws_core.protocol.protocol_layout import ProtocolLayout
+from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
-from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug import Sink, Source
 
@@ -26,7 +23,6 @@ from ..task.task_model import TaskModel
 from .process import Process
 from .process_model import ProcessModel
 from .process_types import ProcessStatus
-from .protocol_sub_process_builder import SubProcessBuilderCreate
 
 
 class ProcessFactory():
@@ -39,13 +35,37 @@ class ProcessFactory():
     @classmethod
     def create_task_model_from_type(
             cls, task_type: Type[Task],
-            config_params: ConfigParamsDict = None,
-            instance_name: str = None,
-            inputs_dto: IODTO = None,
-            outputs_dto: IODTO = None,
-            name: str = None,
-            community_live_task_version_id: str = None,
-            style: TypingStyle = None) -> TaskModel:
+            config_params: Optional[ConfigParamsDict] = None,
+            instance_name: Optional[str] = None,
+            inputs_dto: Optional[IODTO] = None,
+            outputs_dto: Optional[IODTO] = None,
+            name: Optional[str] = None,
+            community_live_task_version_id: Optional[str] = None,
+            style: Optional[TypingStyle] = None) -> TaskModel:
+        """
+        Create a task model from a task type. The specs are created from the task type.
+
+        :param task_type: _description_
+        :type task_type: Type[Task]
+        :param config_params: _description_, defaults to None
+        :type config_params: Optional[ConfigParamsDict], optional
+        :param instance_name: _description_, defaults to None
+        :type instance_name: Optional[str], optional
+        :param inputs_dto: If provided, override the input spec of the task (useful for dynamic IO), defaults to None
+        :type inputs_dto: Optional[IODTO], optional
+        :param outputs_dto: If provided, override the output spec of the task (useful for dynamic IO), defaults to None
+        :type outputs_dto: Optional[IODTO], optional
+        :param name: _description_, defaults to None
+        :type name: Optional[str], optional
+        :param community_live_task_version_id: _description_, defaults to None
+        :type community_live_task_version_id: Optional[str], optional
+        :param style: _description_, defaults to None
+        :type style: Optional[TypingStyle], optional
+        :raises BadRequestException: _description_
+        :raises BadRequestException: _description_
+        :return: _description_
+        :rtype: TaskModel
+        """
         if not issubclass(task_type, Task):
             name = task_type.__name__ if task_type.__name__ is not None else str(
                 task_type)
@@ -57,7 +77,18 @@ class ProcessFactory():
                 f"The task {task_type.full_classname()} is not register. Did you add the @task_decorator decorator on your task class ?")
 
         task_model: TaskModel = TaskModel()
-        task_model.set_process_type(task_type, inputs_dto, outputs_dto)
+        task_model.set_process_type(task_type)
+
+        # handle input and outputs
+        if inputs_dto is not None:
+            task_model.set_inputs_from_dto(inputs_dto, reset=True)
+        else:
+            task_model.set_inputs_from_specs(task_type.input_specs)
+
+        if outputs_dto is not None:
+            task_model.set_outputs_from_dto(outputs_dto, reset=True)
+        else:
+            task_model.set_outputs_from_specs(task_type.output_specs)
 
         # Set the community_live_task_version_id if provided
         task_model.community_live_task_version_id = community_live_task_version_id
@@ -65,17 +96,6 @@ class ProcessFactory():
         config: Config = Config()
         config.set_specs(task_type.config_specs)
         if config_params:
-            # Specific case for the source, to set the source_config id is provided
-            if task_type == Source and config_params.get(Source.config_name):
-                # check if the resource exists
-                resource_id: str = config_params.get(Source.config_name)
-                if ResourceModel.get_by_id(resource_id):
-                    task_model.source_config_id = config_params.get(
-                        Source.config_name)
-                else:
-                    # clear the resource_id
-                    config_params[Source.config_name] = None
-
             config.set_values(config_params)
 
         cls._init_process_model(process_model=task_model,
@@ -92,6 +112,19 @@ class ProcessFactory():
             typing_name=typing_name)
         return cls.create_task_model_from_type(
             task_type=task_type, config_params=config_params, instance_name=instance_name)
+
+    @classmethod
+    def create_task_model_from_config_dto(cls, task_config_dto: ProcessConfigDTO) -> TaskModel:
+        """Create a task model from a ProcessConfigDTO. The task is fully created from the dto and
+        the process type is not used. It can create a task where the type does not exist in the system.
+
+        :param task_config_dto: object containing the task configuration
+        :type task_config_dto: ProcessConfigDTO
+        :return: The task model
+        :rtype: TaskModel
+        """
+        task_model: TaskModel = TaskModel()
+        return cls._init_process_model_from_config_dto(task_model, task_config_dto)
 
     ############################################### PROTOCOL FROM TYPE #################################################
 
@@ -115,9 +148,8 @@ class ProcessFactory():
             protocol_model: ProtocolModel = ProtocolModel()
             protocol_model.set_process_type(protocol_type)
 
-            config: Config = Config()
             cls._init_process_model(
-                process_model=protocol_model, config=config,
+                process_model=protocol_model,
                 instance_name=instance_name, name=name)
 
             protocol: Protocol = protocol_type.instantiate_protocol()
@@ -190,52 +222,19 @@ class ProcessFactory():
 
         return protocol_model
 
-    ############################################### PROTOCOL FROM GRAPH #################################################
-
     @classmethod
-    def create_protocol_model_from_graph(cls, graph: ProtocolConfigDTO) -> ProtocolModel:
+    def create_empty_protocol_model_from_config_dto(cls, protocol_config_dto: ProcessConfigDTO) -> ProtocolModel:
+        """Create a protocol model from a ProcessConfigDTO. The protocol is fully created from the dto and
+        the process type is not used. It can create a protocol where the type does not exist in the system.
+
+        Warning, it does not initialize the graph.
+        :param task_config_dto: object containing the task configuration
+        :type task_config_dto: ProcessConfigDTO
+        :return: The task model
+        :rtype: TaskModel
         """
-        Create a new instance from a existing graph
-
-        :return: The protocol
-        :rtype": Protocol
-        """
-
-        # create an empty protocol
-        protocol: ProtocolModel = cls.create_protocol_empty()
-
-        cls._create_protocol_model_from_graph_recur(
-            protocol=protocol, graph=graph)
-        return protocol
-
-    @classmethod
-    def _create_protocol_model_from_graph_recur(cls, protocol: ProtocolModel,
-                                                graph: ProtocolConfigDTO) -> ProtocolModel:
-        """
-        Create a new instance from a existing graph
-
-        :return: The protocol
-        :rtype": Protocol
-        """
-
-        protocol.init_processes_from_graph(SubProcessBuilderCreate(graph))
-
-        # call the method recursively for each sub protocol
-        for key, process in protocol.processes.items():
-            if isinstance(process, ProtocolModel):
-                cls._create_protocol_model_from_graph_recur(
-                    protocol=process, graph=graph.nodes[key].graph)
-
-        # Init the iofaces and connectors afterward because its needs the child to init correctly
-        protocol.add_interfaces_from_dto(graph.interfaces)
-        protocol.add_outerfaces_from_dto(graph.outerfaces)
-        protocol.init_connectors_from_graph(graph.links)
-
-        # set layout
-        if graph.layout is not None:
-            protocol.layout = ProtocolLayout(graph.layout)
-
-        return protocol
+        protocol_model: ProtocolModel = ProtocolModel()
+        return cls._init_process_model_from_config_dto(protocol_model, protocol_config_dto)
 
     ############################################### PROTOCOL EMPTY #################################################
 
@@ -249,7 +248,7 @@ class ProcessFactory():
         protocol_model.set_process_type(protocol_type)
 
         cls._init_process_model(
-            process_model=protocol_model, config=Config(),
+            process_model=protocol_model,
             instance_name=instance_name, name=name)
 
         # create the protocol from a statis protocol class
@@ -284,36 +283,53 @@ class ProcessFactory():
             process_type=process_type, config_params=config_params, instance_name=instance_name)
 
     @classmethod
-    def create_process_model_from_process_model(
-            cls, process_model: ProcessModel, instance_name: str = None) -> ProcessModel:
-        if isinstance(process_model, TaskModel):
-            return cls.create_task_model_from_type(
-                process_model.get_process_type(),
-                process_model.config.get_values(),
-                instance_name,
-                inputs_dto=process_model.to_config_dto().inputs,
-                outputs_dto=process_model.to_config_dto().outputs,
-                style=process_model.style,
-                community_live_task_version_id=process_model.community_live_task_version_id,
-                name=process_model.name + " (copy)"
-                )
-        else:
-            return cls.create_protocol_model_from_graph(process_model)
+    def _init_process_model_from_config_dto(cls, process_model: ProcessModel,
+                                            process_config_dto: ProcessConfigDTO) -> ProcessModel:
+        process_model.process_typing_name = process_config_dto.process_typing_name
+        process_model.set_inputs_from_dto(process_config_dto.inputs)
+        process_model.set_outputs_from_dto(process_config_dto.outputs)
+        process_model.brick_version_on_create = process_config_dto.brick_version_on_create
+        process_model.brick_version_on_run = process_config_dto.brick_version_on_run
+
+        cls._init_process_model(process_model=process_model,
+                                config=Config.from_simple_dto(process_config_dto.config),
+                                status=ProcessStatus.from_str(process_config_dto.status),
+                                instance_name=process_config_dto.instance_name,
+                                name=process_config_dto.name,
+                                style=process_config_dto.style,
+                                progress_bar=ProgressBar.from_config_dto(process_config_dto.progress_bar))
+
+        return process_model
 
     @classmethod
-    def _init_process_model(
-            cls, process_model: ProcessModel, config: Config,
-            instance_name: str = None, name: str = None,
-            style: TypingStyle = None) -> None:
+    def _init_process_model(cls, process_model: ProcessModel,
+                            config: Optional[Config] = None,
+                            status: Optional[ProcessStatus] = None,
+                            instance_name: Optional[str] = None,
+                            name: Optional[str] = None,
+                            style: Optional[TypingStyle] = None,
+                            progress_bar: Optional[ProgressBar] = None) -> None:
 
-        process_model.status = ProcessStatus.DRAFT
+        if status is not None:
+            process_model.status = status
+        else:
+            process_model.status = ProcessStatus.DRAFT
+
         # Set the config
-        process_model.config = config
+        if config is not None:
+            process_model.set_config(config)
+        else:
+            process_model.set_config(Config())
 
         # Set the progress_bar
-        progress_bar: ProgressBar = ProgressBar(
-            process_id=process_model.id, process_typing_name=process_model.process_typing_name)
-        process_model.progress_bar = progress_bar
+        if progress_bar is not None:
+            progress_bar.process_id = process_model.id
+            progress_bar.process_typing_name = process_model.process_typing_name
+            process_model.progress_bar = progress_bar
+        else:
+            progress_bar: ProgressBar = ProgressBar(
+                process_id=process_model.id, process_typing_name=process_model.process_typing_name)
+            process_model.progress_bar = progress_bar
 
         if instance_name is not None:
             process_model.instance_name = instance_name
@@ -327,34 +343,7 @@ class ProcessFactory():
         if style is not None:
             process_model.style = style
 
-    ############################################### PROCESS  #################################################
-
-    @classmethod
-    def copy_process(cls, process_model: ProcessModel) -> ProtocolModel:
-        if isinstance(process_model, TaskModel):
-            return cls.copy_task(process_model)
-        else:
-            return cls.copy_protocol(process_model)
-
-    @classmethod
-    def copy_task(cls, task_model: TaskModel) -> TaskModel:
-        return cls.create_task_model_from_type(
-            task_model.get_process_type(),
-            task_model.config.get_values(),
-            task_model.instance_name)
-
-    @classmethod
-    def copy_protocol(cls, protocol_model: ProtocolModel) -> ProtocolModel:
-        """Copy a protocol, copy sub nodes,copy interface, outerface and connecter
-
-        :param protocol_model: [description]
-        :type protocol_model: ProtocolModel
-        :return: [description]
-        :rtype: ProtocolModel
-        """
-        return cls.create_protocol_model_from_graph(protocol_model.to_protocol_config_dto())
-
-      ############################################### SPECIFIC #################################################
+    ############################################### SPECIFIC #################################################
 
     @classmethod
     def create_source(cls, resouce_id: str) -> TaskModel:

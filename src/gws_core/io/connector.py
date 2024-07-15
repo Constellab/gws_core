@@ -71,14 +71,14 @@ class Connector:
             return False
 
         # if the resource was already propagated, we don't propagate it again
-        if self.right_port.resource_provided and self.right_port.resource_model == self.left_port.resource_model:
+        if self.right_port.resource_provided and self.right_port.get_resource_model_id() == self.left_port.get_resource_model_id():
             return False
 
         # Get the resource from the output port
-        resource = self.left_port.resource_model
+        resource = self.left_port.get_resource_model()
 
         # Set the resource to the input port
-        self.right_port.resource_model = resource
+        self.right_port.set_resource_model(resource)
 
         return True
 

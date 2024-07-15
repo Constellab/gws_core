@@ -174,6 +174,18 @@ class Config(ModelWithUser):
             values=self.get_values() if not ignore_values else {}
         )
 
+    @classmethod
+    def from_simple_dto(cls, config_dto: ConfigSimpleDTO) -> 'Config':
+        """
+        Import the config from a dto
+        """
+
+        config = Config()
+        config.set_specs(ConfigSpecsHelper.config_specs_from_dto(config_dto.specs))
+        config.set_values(config_dto.values)
+
+        return config
+
     def copy(self) -> 'Config':
         """Copy the config to a new Config with a new Id
         """

@@ -2,6 +2,7 @@
 
 from typing import Any, List, Literal, Optional, Set, Type, Union
 
+from gws_core.config.param.param_types import ParamValue
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
@@ -12,7 +13,8 @@ from gws_core.impl.live.py_live_task import PyLiveTask
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
 from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
-from gws_core.protocol.protocol_dto import ProtocolConfigDTO
+from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
+from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactory
 from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
                                                ProtocolLayout,
                                                ProtocolLayoutDTO)
@@ -27,7 +29,7 @@ from gws_core.streamlit.streamlit_live_task import StreamlitLiveTask
 from gws_core.task.plug import Sink, Source
 from gws_core.user.current_user_service import CurrentUserService
 
-from ..code.task_generator_service import TaskGeneratorService
+from ..code.live_task_factory import LiveTaskFactory
 from ..community.community_dto import (CommunityCreateLiveTaskDTO,
                                        CommunityLiveTaskDTO,
                                        CommunityLiveTaskVersionCreateResDTO,
@@ -90,7 +92,6 @@ class ProtocolService():
         return cls.add_process_to_protocol(protocol_model=protocol_model, process_type=process_typing.get_type(),
                                            instance_name=instance_name, config_params=config_params)
 
-
     @classmethod
     @transaction()
     def duplicate_process_to_protocol_id(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdate:
@@ -105,14 +106,24 @@ class ProtocolService():
         if process_model is None:
             raise BadRequestException("The process does not exist in the protocol")
 
-        duplicate_process_model: ProcessModel = ProcessFactory.create_process_model_from_process_model(process_model)
+        duplicate_process_model: ProcessModel = None
+        if isinstance(process_model, TaskModel):
+            duplicate_process_model = ProcessFactory.create_task_model_from_type(
+                task_type=process_model.get_process_type(),
+                config_params=process_model.config.get_values(),
+                inputs_dto=process_model.to_config_dto().inputs,
+                outputs_dto=process_model.to_config_dto().outputs,
+                style=process_model.style,
+                community_live_task_version_id=process_model.community_live_task_version_id,
+                name=process_model.name + " (copy)"
+            )
+        else:
+            duplicate_process_model = ProtocolGraphFactory.create_protocol_model_from_type(process_model)
 
         if duplicate_process_model is None:
             raise BadRequestException("The process does not exist in the protocol")
 
-
         return cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=duplicate_process_model)
-
 
     @classmethod
     @transaction()
@@ -438,7 +449,7 @@ class ProtocolService():
     @classmethod
     @transaction()
     def copy_protocol(cls, protocol_model: ProtocolModel) -> ProtocolModel:
-        new_protocol_model: ProtocolModel = ProcessFactory.copy_protocol(
+        new_protocol_model: ProtocolModel = ProtocolGraphFactory.copy_protocol(
             protocol_model)
         new_protocol_model.save_full()
         new_protocol_model.reset()
@@ -458,21 +469,7 @@ class ProtocolService():
 
         update_dto: ProtocolUpdate = ProtocolUpdate(protocol=protocol_model, process=process_model)
 
-        # set config value and save
-        process_model.config.set_values(config_values)
-        process_model.config.save()
-
-        # For task of type Source, we store the resource id in task table
-        if isinstance(process_model, TaskModel) and process_model.is_source_task():
-            resource_model_id = Source.get_resource_id_from_config(
-                config_values)
-
-            if resource_model_id is not None:
-                process_model.source_config_id = ResourceModel.get_by_id_and_check(
-                    resource_model_id).id
-            else:
-                process_model.source_config_id = None
-            process_model.save()
+        cls.configure_process_model(process_model, config_values)
 
         if process_model.is_auto_run():
             protocol_model.run_auto_run_processes()
@@ -480,7 +477,27 @@ class ProtocolService():
 
         return update_dto
 
+    @classmethod
+    @transaction()
+    def configure_process_model(cls, process_model: ProcessModel, config_values: ConfigParamsDict) -> ProtocolUpdate:
+        # set config value and save
+        process_model.set_config_values(config_values)
+        process_model.config.save()
+        # also save the process model because it might have some changes
+        return process_model.save()
+
+    @classmethod
+    @transaction()
+    def set_process_model_config_value(cls, process_model: ProcessModel,
+                                       param_name: str, value: ParamValue) -> ProtocolUpdate:
+        # set config value and save
+        process_model.set_config_value(param_name, value)
+        process_model.config.save()
+        # also save the process model because it might have some changes
+        return process_model.save()
+
     ########################## SPECIFIC PROCESS #####################
+
     @classmethod
     def add_source_to_protocol_id(
             cls, protocol_id: str, resource_id: str) -> ProtocolUpdate:
@@ -730,8 +747,8 @@ class ProtocolService():
                 f"The template is not compatible with the current version. {err}")
 
     @classmethod
-    def create_protocol_model_from_graph(cls, graph: ProtocolConfigDTO) -> ProtocolModel:
-        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_graph(
+    def create_protocol_model_from_graph(cls, graph: ProtocolGraphConfigDTO) -> ProtocolModel:
+        protocol: ProtocolModel = ProtocolGraphFactory.create_protocol_model_from_type(
             graph=graph)
 
         protocol.save_full()
@@ -791,6 +808,7 @@ class ProtocolService():
         )
         protocol_update = cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=process_model)
 
+        # TODO TO IMPROVE WHEN UPDATING LIVE TASK CONFIG
         for port in list(protocol_update.process.inputs.ports.keys()):
             protocol_update = cls.delete_dynamic_input_port_of_process(
                 protocol_id, protocol_update.process.instance_name, port)
@@ -799,13 +817,11 @@ class ProtocolService():
             protocol_update = cls.delete_dynamic_output_port_of_process(
                 protocol_id, protocol_update.process.instance_name, port)
 
-        for io_spec in list(community_live_task_version.input_specs['specs'].values()):
-            io_spec = IOSpecDTO.from_json(io_spec)
+        for io_spec in list(community_live_task_version.input_specs.specs.values()):
             protocol_update = cls.add_dynamic_input_port_to_process(
                 protocol_id, protocol_update.process.instance_name, io_spec)
 
-        for io_spec in list(community_live_task_version.output_specs['specs'].values()):
-            io_spec = IOSpecDTO.from_json(io_spec)
+        for io_spec in list(community_live_task_version.output_specs.specs.values()):
             protocol_update = cls.add_dynamic_output_port_to_process(
                 protocol_id, protocol_update.process.instance_name, io_spec)
 
@@ -820,9 +836,9 @@ class ProtocolService():
     @transaction()
     def get_community_available_live_tasks(
             cls, spaces_filter: List[str],
-            title_filter: str, personalOnly: bool, page: int, number_of_items_per_page: int) -> Any:
+            title_filter: str, personal_only: bool, page: int, number_of_items_per_page: int) -> Any:
         return CommunityService.get_community_available_live_tasks(
-            spaces_filter, title_filter, personalOnly, page, number_of_items_per_page)
+            spaces_filter, title_filter, personal_only, page, number_of_items_per_page)
 
     @classmethod
     def get_community_live_task(cls, live_task_version_id: str) -> CommunityLiveTaskDTO:
@@ -831,16 +847,16 @@ class ProtocolService():
     @classmethod
     def create_community_live_task(
             cls, process_id: str, form_data: CommunityCreateLiveTaskDTO) -> CommunityLiveTaskVersionCreateResDTO:
-        version_file = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
+        version_file = LiveTaskFactory.generate_live_task_file_from_live_task_id(process_id)
         return CommunityService.create_community_live_task(version_file, form_data)
 
     @classmethod
     def fork_community_live_task(cls, process_id: str, form_data: CommunityCreateLiveTaskDTO, live_task_version_id: str) -> CommunityLiveTaskVersionCreateResDTO:
-        version_file = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
+        version_file = LiveTaskFactory.generate_live_task_file_from_live_task_id(process_id)
         return CommunityService.fork_community_live_task(version_file, form_data, live_task_version_id)
 
     @classmethod
     def create_community_live_task_version(
             cls, process_id: str, live_task_id: str) -> CommunityLiveTaskVersionCreateResDTO:
-        version_file = TaskGeneratorService.generate_live_task_file_from_live_task_id(process_id)
+        version_file = LiveTaskFactory.generate_live_task_file_from_live_task_id(process_id)
         return CommunityService.create_community_live_task_version(version_file, live_task_id)

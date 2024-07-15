@@ -7,7 +7,6 @@
 # Config
 from .config.config import Config as Config
 from .config.config_params import ConfigParams as ConfigParams
-from .config.config_service import ConfigService as ConfigService
 from .config.config_types import ConfigParamsDict as ConfigParamsDict
 from .config.config_types import ConfigSpecs as ConfigSpecs
 # Code params
@@ -83,6 +82,7 @@ from .core.model.base import Base as Base
 from .core.model.db_field import DateTimeUTC as DateTimeUTC
 from .core.model.db_field import JSONField as JSONField
 from .core.model.model import Model as Model
+from .core.model.model_dto import BaseModelDTO as BaseModelDTO
 from .core.model.sys_proc import SysProc as SysProc
 # Core > Service
 from .core.service.external_api_service import \
@@ -327,6 +327,8 @@ from .protocol.protocol_spec import ConnectorSpec as ConnectorSpec
 from .protocol.protocol_spec import InterfaceSpec as InterfaceSpec
 from .protocol.protocol_spec import ProcessSpec as ProcessSpec
 from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
+# Report
+from .report.report import Report as Report
 # Report task
 from .report.task.report_resource import ReportResource as ReportResource
 # Resource
@@ -386,8 +388,6 @@ from .task.converter.importer import importer_decorator as importer_decorator
 # Task
 from .task.plug import Sink as Sink
 from .task.plug import Source as Source
-from .task.plug import Switch2 as Switch2
-from .task.plug import Wait as Wait
 from .task.task import CheckBeforeTaskResult as CheckBeforeTaskResult
 from .task.task import Task as Task
 from .task.task_decorator import task_decorator as task_decorator

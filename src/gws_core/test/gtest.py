@@ -1,7 +1,17 @@
 
 
+from multiprocessing import Process
+from time import sleep
+
+import requests
+
+from gws_core.app import App
+from gws_core.core.utils.settings import Settings
+from gws_core.impl.robot.robot_resource import Robot
 from gws_core.project.project import Project
 from gws_core.project.project_dto import ProjectLevelStatus
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.user import User
 from gws_core.user.user_group import UserGroup
 
@@ -33,3 +43,48 @@ class GTest(Console):
                     first_name="Test",
                     last_name="User",
                     group=UserGroup.USER)
+
+    @classmethod
+    def save_robot_resource(cls) -> ResourceModel:
+        """
+        Save a robot resource
+        """
+        robot = Robot.empty()
+        return ResourceModel.save_from_resource(robot, origin=ResourceOrigin.UPLOADED)
+
+
+class TestStartUvicornApp():
+    """ Context to support with statement start the uvicorn api server in tests.
+    It automatically starts the server when entering the context and stops it when exiting.
+    """
+
+    process: Process = None
+
+    def __enter__(self):
+        # Registrer the lab start. Use a new thread to prevent blocking the start
+        self.process = Process(target=App.start_uvicorn_app)
+        self.process.start()
+
+        health_check_route = f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/health-check"
+
+        # Wait for the server to start
+        i = 0
+        while i < 10:
+            try:
+                response = requests.get(health_check_route, timeout=1)
+                if response.status_code == 200:
+                    return
+            except Exception:
+                pass
+            i += 1
+            sleep(1)
+
+        raise Exception("Server not started")
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # force kill the thread
+        self.process.terminate()
+
+        # raise the exception if exists
+        if exc_value:
+            raise exc_value

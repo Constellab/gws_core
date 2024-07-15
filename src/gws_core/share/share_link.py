@@ -1,6 +1,6 @@
 
 
-from typing import Type
+from typing import List, Optional, Tuple, Type
 
 from peewee import CharField
 
@@ -11,6 +11,7 @@ from gws_core.core.model.db_field import DateTimeUTC
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.settings import Settings
+from gws_core.experiment.experiment import Experiment
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.share.shared_dto import ShareLinkDTO, ShareLinkType
 
@@ -54,7 +55,7 @@ class ShareLink(ModelWithUser):
         return shared_entity_link
 
     @classmethod
-    def find_by_entity_type_and_id(cls, entity_type: ShareLinkType, entity_id: str) -> 'ShareLink':
+    def find_by_entity_type_and_id(cls, entity_type: ShareLinkType, entity_id: str) -> Optional['ShareLink']:
         """Method that find a shared entity link by its entity id and type
         """
         return cls.get_or_none((cls.entity_type == entity_type) & (cls.entity_id == entity_id))
@@ -84,6 +85,8 @@ class ShareLink(ModelWithUser):
 
         if entity_type == ShareLinkType.RESOURCE:
             return ResourceModel
+        elif entity_type == ShareLinkType.EXPERIMENT:
+            return Experiment
         else:
             raise BadRequestException(f"Entity type {entity_type} is not supported")
 
@@ -97,7 +100,7 @@ class ShareLink(ModelWithUser):
             entity_id=self.entity_id,
             entity_type=self.entity_type,
             valid_until=self.valid_until,
-            link=f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/info/{self.token}",
+            link=self.get_link(),
             status='SUCCESS',
         )
 
@@ -106,13 +109,44 @@ class ShareLink(ModelWithUser):
         if entity:
             if isinstance(entity, ResourceModel):
                 link_dto.entity_name = entity.name
+            elif isinstance(entity, Experiment):
+                link_dto.entity_name = entity.title
             link_dto.status = 'SUCCESS'
         else:
             link_dto.status = 'ERROR'
 
         return link_dto
 
+    def get_link(self) -> str:
+        if self.entity_type == ShareLinkType.RESOURCE:
+            return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/info/{self.token}"
+        elif self.entity_type == ShareLinkType.EXPERIMENT:
+            return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/experiment/{self.token}"
+
+    @classmethod
+    def is_lab_share_resource_link(cls, link: str) -> bool:
+        return cls._is_lab_share_entity_link(link) and link.find('share/info/') != -1
+
+    @classmethod
+    def is_lab_share_experiment_link(cls, link: str) -> bool:
+        return cls._is_lab_share_entity_link(link) and link.find('share/experiment/') != -1
+
+    @classmethod
+    def _is_lab_share_entity_link(cls, link: str) -> bool:
+        settings = Settings.get_instance()
+
+        # specific case for dev env, accept if the link is from this lab
+        if settings.is_local_dev_env():
+            if not link.startswith('https://glab') and not link.startswith(settings.get_lab_api_url()):
+                return False
+        else:
+            if not link.startswith('https://glab'):
+                return False
+
+        return link.find(settings.core_api_route_path()) != -1
+
     # generate unique key with entity_id and entity_type
+
     class Meta:
         table_name = 'gws_share_link'
         indexes = (

@@ -55,7 +55,7 @@ class TestProtocolService(BaseTestCase):
 
         # check that the robot_move received the resource because Source was run
         process_model = process_model.refresh()
-        self.assertEqual(process_model.in_port('robot').resource_model.id, resource_model.id)
+        self.assertEqual(process_model.in_port('robot').get_resource_model_id(), resource_model.id)
 
         # Check that the connector was created
         self.assertEqual(len(protocol_model.connectors), 1)
@@ -131,7 +131,7 @@ class TestProtocolService(BaseTestCase):
 
         experiment = IExperiment(TestNestedProtocol)
         experiment.run()
-        self.assertTrue(experiment.get_experiment_model().is_success)
+        self.assertTrue(experiment.get_model().is_success)
 
         # reset a process of the sub protocol
         main_protocol: IProtocol = experiment.get_protocol()
@@ -177,7 +177,7 @@ class TestProtocolService(BaseTestCase):
         # rerun the experiment and check that it is successfull
         experiment.refresh()
         experiment.run()
-        self.assertTrue(experiment.get_experiment_model().is_success)
+        self.assertTrue(experiment.get_model().is_success)
         main_protocol = experiment.get_protocol()
         self.assertTrue(main_protocol.get_model().is_success)
 

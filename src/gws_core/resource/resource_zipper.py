@@ -5,13 +5,14 @@ from json import dump
 from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.core.service.external_lab_service import (
-    ExternalLabService, ExternalLabWithUserInfo)
+from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node_model import FSNodeModel
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
@@ -31,6 +32,7 @@ class ZipResource(BaseModelDTO):
     parent_resource_id: Optional[str]
     kvstore_dir_name: Optional[str]
     tags: List[TagDTO]
+    style: Optional[TypingStyle] = None
 
     # Name of the file or directory if the resource is a FsNode
     fs_node_name: Optional[str]
@@ -73,6 +75,8 @@ class ResourceZipper():
         )
 
     def add_resource(self, resource: Resource) -> None:
+        if not resource._model_id:
+            raise Exception('Resource must have a model id')
         self.add_resource_model(resource._model_id)
 
     def add_resource_model(self, resource_id: str, parent_resource_id: str = None) -> None:
@@ -91,7 +95,8 @@ class ResourceZipper():
             parent_resource_id=parent_resource_id,
             kvstore_dir_name=None,
             fs_node_name=None,
-            tags=tags_dict
+            tags=tags_dict,
+            style=resource_model.style
         )
 
         resource_index = self._get_next_resource_index()

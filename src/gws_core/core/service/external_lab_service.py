@@ -1,28 +1,12 @@
 
 
-from typing import Optional
-
 from requests.models import Response
 
-from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.service.external_api_service import ExternalApiService
+from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.core.utils.settings import Settings
 from gws_core.share.shared_dto import ShareLinkType
 from gws_core.user.user import User
-
-
-class ExternalLabWithUserInfo(BaseModelDTO):
-    """Class that contains information a lab when 2 labs communicate with each other"""
-    lab_id: str
-    lab_name: str
-    lab_api_url: str
-
-    user_id: str
-    user_firstname: str
-    user_lastname: str
-
-    space_id: Optional[str]
-    space_name: Optional[str]
 
 
 class ExternalLabService():

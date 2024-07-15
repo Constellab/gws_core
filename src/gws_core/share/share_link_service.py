@@ -42,7 +42,7 @@ class ShareLinkService:
         """Method that generate a share link for a given entity
         """
 
-        existing_link: ShareLink = ShareLink.find_by_entity_type_and_id(
+        existing_link = ShareLink.find_by_entity_type_and_id(
             entity_type=share_dto.entity_type, entity_id=share_dto.entity_id)
 
         if existing_link:

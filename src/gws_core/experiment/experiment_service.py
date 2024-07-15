@@ -6,6 +6,8 @@ from peewee import ModelSelect
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
+from gws_core.experiment.experiment_zipper import (ZipExperiment,
+                                                   ZipExperimentInfo)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.report.report import ReportExperiment
@@ -42,19 +44,19 @@ class ExperimentService():
 
     @classmethod
     @transaction()
-    def create_experiment_from_dto(cls, experiment_DTO: ExperimentSaveDTO) -> Experiment:
+    def create_experiment_from_dto(cls, experiment_dto: ExperimentSaveDTO) -> Experiment:
 
         protocol_template: ProtocolTemplate = None
-        if experiment_DTO.protocol_template_id:
+        if experiment_dto.protocol_template_id:
             protocol_template = ProtocolTemplate.get_by_id_and_check(
-                experiment_DTO.protocol_template_id)
-        elif experiment_DTO.protocol_template_json and isinstance(experiment_DTO.protocol_template_json, dict):
+                experiment_dto.protocol_template_id)
+        elif experiment_dto.protocol_template_json and isinstance(experiment_dto.protocol_template_json, dict):
             protocol_template = ProtocolTemplate.from_export_dto_dict(
-                experiment_DTO.protocol_template_json)
+                experiment_dto.protocol_template_json)
 
         return cls.create_experiment(
-            project_id=experiment_DTO.project_id,
-            title=experiment_DTO.title,
+            project_id=experiment_dto.project_id,
+            title=experiment_dto.title,
             protocol_template=protocol_template,
             creation_type=ExperimentCreationType.MANUAL
         )
@@ -537,3 +539,24 @@ class ExperimentService():
                 intermediate_resources.append(resource)
 
         return intermediate_resources
+
+    ################################### EXPORT / IMPORT ##############################
+
+    @classmethod
+    def export_experiment(cls, experiment_id: str) -> ZipExperimentInfo:
+        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
+
+        experimeny_zip = ZipExperiment(
+            id=experiment.id,
+            title=experiment.title,
+            description=experiment.description,
+            status=experiment.status,
+            project=experiment.project.to_dto() if experiment.project is not None else None,
+            error_info=experiment.error_info
+        )
+
+        return ZipExperimentInfo(
+            zip_version=1,
+            experiment=experimeny_zip,
+            protocol=experiment.export_protocol(),
+        )

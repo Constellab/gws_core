@@ -4,11 +4,8 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_param import RichTextParam
-from gws_core.impl.rich_text.rich_text_types import (RichTextBlockType,
-                                                     RichTextFigureData)
-from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.report.template.report_template import ReportTemplate
 from gws_core.report.template.report_template_param import ReportTemplateParam
@@ -59,36 +56,4 @@ class CreateENote(Task):
 
         return {
             'enote': enote_resource
-        }
-
-
-# TODO to delete
-@task_decorator(
-    unique_name="AddParagraph",
-)
-class AddParagraph(Task):
-    """
-    Create a note that can be exported to a report.
-    """
-
-    input_specs: InputSpecs = InputSpecs({
-        'enote': InputSpec(ENoteResource, human_name='E-note', short_description='E-note to add paragraph to'),
-    })
-
-    output_specs: OutputSpecs = OutputSpecs({
-        'enote': OutputSpec(ENoteResource, human_name='E-note', short_description='New e-note')
-    })
-
-    config_specs: ConfigSpecs = {
-        'text': StrParam(human_name='Paragraph', default_value='Hellow'),
-    }
-
-    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        enote: ENoteResource = inputs['enote']
-        text: str = params['text']
-
-        enote.add_paragraph(text)
-
-        return {
-            'enote': enote
         }

@@ -8,6 +8,10 @@ from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
+from gws_core.experiment.experiment_downloader_service import \
+    ExperimentDownloaderService
+from gws_core.experiment.task.experiment_downloader import \
+    ExperimentDownloaderMode
 
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
@@ -234,3 +238,17 @@ def unarchive(id_: str,
 def delete_intermediate_resources(id_: str,
                                   _=Depends(AuthService.check_user_access_token)) -> None:
     return ExperimentService.delete_intermediate_resources(id_)
+
+    ################################### CREATE EXPERIMENT FROM LINK ##############################
+
+
+class ImportExpDto(BaseModelDTO):
+    url: str
+    mode: ExperimentDownloaderMode
+
+
+@core_app.post("/experiment/import-from-lab", tags=["Share"],
+               summary="Import an experiment from another lab")
+def import_from_lab(import_dto: ImportExpDto,
+                    _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
+    return ExperimentDownloaderService.import_from_lab(import_dto.url, import_dto.mode).to_dto()

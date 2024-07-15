@@ -2,19 +2,22 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Literal, Optional
+from typing import List, Literal, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
+from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.experiment.experiment_zipper import ZipExperimentInfo
+from gws_core.resource.resource_dto import ResourceDTO
 from gws_core.user.user_dto import UserDTO
 
 
 class ShareLinkType(Enum):
     RESOURCE = "RESOURCE"
+    EXPERIMENT = "EXPERIMENT"
+
 
 # Define if the resource is shared as a sender or a receiver
-
-
 class SharedEntityMode(Enum):
     SENT = "SENT"
     RECEIVED = "RECEIVED"
@@ -51,12 +54,25 @@ class ShareEntityInfoReponseDTO(BaseModelDTO):
     version: int
     entity_type: ShareLinkType
     entity_id: str
-    entity_object: Any
+
+
+class ShareResourceInfoReponseDTO(ShareEntityInfoReponseDTO):
+    entity_object: List[ResourceDTO]
     # full route to call to zip the entity
     zip_entity_route: str
 
 
-class ShareEntityZippedResponseDTO(BaseModelDTO):
+class ShareExperimentInfoReponseDTO(ShareEntityInfoReponseDTO):
+    entity_object: ZipExperimentInfo
+    resource_route: str
+    token: str
+    origin: ExternalLabWithUserInfo
+
+    def get_resource_route(self, resource_id: str) -> str:
+        return self.resource_route.replace('[RESOURCE_ID]', resource_id)
+
+
+class ShareResourceZippedResponseDTO(BaseModelDTO):
     version: int
     entity_type: ShareLinkType
     entity_id: str

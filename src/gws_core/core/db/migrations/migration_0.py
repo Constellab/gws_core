@@ -130,11 +130,11 @@ class Migration039(BrickMigration):
             try:
                 output_resources: Dict[str, ResourceModel] = {}
                 for port_name, port in process_model.outputs.ports.items():
-                    output_resources[port_name] = port.resource_model
+                    output_resources[port_name] = port.get_resource_model()
 
                 input_resources: Dict[str, ResourceModel] = {}
                 for port_name, port in process_model.inputs.ports.items():
-                    input_resources[port_name] = port.resource_model
+                    input_resources[port_name] = port.get_resource_model()
 
                 # update io specs
                 process_model.set_process_type(process_model.get_process_type())
@@ -142,13 +142,13 @@ class Migration039(BrickMigration):
                 # set port output from output_resources
                 for port_name, port in process_model.outputs.ports.items():
                     if port_name in output_resources:
-                        port.resource_model = output_resources[port_name]
+                        port.set_resource_model(output_resources[port_name])
                 process_model.data["outputs"] = process_model.outputs.to_dto().to_json_dict()
 
                 # set port input from input_resources
                 for port_name, port in process_model.inputs.ports.items():
                     if port_name in input_resources:
-                        port.resource_model = input_resources[port_name]
+                        port.set_resource_model(input_resources[port_name])
 
                 process_model.data["inputs"] = process_model.inputs.to_dto().to_json_dict()
 
@@ -286,7 +286,7 @@ class Migration0313(BrickMigration):
                     resource_model_id = resource_model.id if resource_model.parent_resource_id is None else resource_model.parent_resource_id
                     # loop thourgh task output and check if the resource correspond to the resource in the port
                     for port_name, port in resource_model.task_model.outputs.ports.items():
-                        if port.resource_model and port.resource_model.id == resource_model_id:
+                        if port.get_resource_model() and port.get_resource_model_id() == resource_model_id:
                             resource_model.generated_by_port_name = port_name
                             break
 

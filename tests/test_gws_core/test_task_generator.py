@@ -1,6 +1,6 @@
 
 
-from gws_core.code.task_generator_service import TaskGeneratorService
+from gws_core.code.live_task_factory import LiveTaskFactory
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.live.py_live_task import PyLiveTask
 from gws_core.process.process_factory import ProcessFactory
@@ -30,7 +30,7 @@ targets = [table]
             PyLiveTask.CONFIG_PARAMS_NAME: ["a = 1", "b = '2'", "c = 3", "d = True"],
         }, instance_name='test_task_generator')
 
-        result = TaskGeneratorService.generate_task_code_from_live_task(task_model)
+        result = LiveTaskFactory.generate_task_code_from_live_task(task_model)
 
         # print(result)
 

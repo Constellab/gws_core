@@ -3,8 +3,9 @@
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam, StrParam
-from gws_core.impl.table.helper.table_operation_helper import \
-    TableOperationHelper
+from gws_core.core.utils.string_helper import StringHelper
+from gws_core.impl.table.helper.table_operation_helper import (
+    TableOperationHelper, TableOperationUnknownColumnOption)
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.task.task import Task
@@ -94,10 +95,12 @@ class TableColumnMassOperations(Task):
             default_value=False, human_name='Keep original columns',
             short_description="If true, the original columns of the Table will be added at the end of the Table. If false, only the calculcation columns are kept.",
             visibility='protected'),
-        'error_on_unknown_column':
-        BoolParam(
-            default_value=False, human_name='Error on unknown column',
-            short_description="If true, an error will be raised if a column is not found. If false, the result will be 'NaN'.",
+        'unknown_column_option':
+        StrParam(
+            default_value=TableOperationUnknownColumnOption.SET_RESULT_TO_NAN.value,
+            human_name='Action on unknown column',
+            short_description="Option to apply when an unknown column is found in the operation table.",
+            allowed_values=StringHelper.get_enum_values(TableOperationUnknownColumnOption),
             visibility='protected')}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -105,11 +108,15 @@ class TableColumnMassOperations(Task):
         table: Table = inputs['table']
         operation_table: Table = inputs['operation_table']
 
+        unknown_column_option: str = params.get('unknown_column_option')
+        option: TableOperationUnknownColumnOption = StringHelper.to_enum(
+            TableOperationUnknownColumnOption, unknown_column_option)
+
         result = TableOperationHelper.column_mass_operations(
             table, operation_table.get_data(),
             operation_name_column=params.get('name_column'),
             operation_calculations_column=params.get('calculations_column'),
-            error_on_unknown_column=params.get('error_on_unknown_column'),
+            replace_unknown_column=option,
             keep_original_columns=params.get('keep_original_columns'),
         )
         return {'target': result}

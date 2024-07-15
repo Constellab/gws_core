@@ -1,11 +1,12 @@
 
 
-from gws_core import BaseTestCase, IExperiment, IProcess, IProtocol, Wait
+from gws_core import BaseTestCase, IExperiment, IProcess, IProtocol
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.process.process_service import ProcessService
+from gws_core.task.plug import Wait
 
 
 # test_process_service
@@ -20,7 +21,7 @@ class TestProcessService(BaseTestCase):
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
         Logger.clear_logger()
         # initialize the logger associated to the experiment
-        Logger(Settings.build_log_dir(True), level='INFO', experiment_id=experiment.get_experiment_model().id)
+        Logger(Settings.build_log_dir(True), level='INFO', experiment_id=experiment.get_model().id)
 
         protocol: IProtocol = experiment.get_protocol()
 

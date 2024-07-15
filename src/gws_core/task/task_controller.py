@@ -75,7 +75,7 @@ def fix_protocol(protocol: ProtocolModel):
                 continue
 
             # set the input of the process
-            port.resource_model = task_input.resource_model
+            port.set_resource_model(task_input.resource_model)
             process.data["inputs"] = process.inputs.to_json()
 
             # set the output of the previous process
@@ -87,7 +87,7 @@ def fix_protocol(protocol: ProtocolModel):
                     f"No connector found for {process.instance_name}:{task_input.port_name}, in protocol {protocol.id}")
                 continue
 
-            connector.left_port.resource_model = task_input.resource_model
+            connector.left_port.set_resource_model(task_input.resource_model)
             connector.left_process.data["outputs"] = connector.left_process.outputs.to_json(
             )
 

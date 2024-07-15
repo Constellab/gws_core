@@ -8,7 +8,7 @@ from gws_core.core.model.model_dto import BaseModelDTO
 class UserCredentialsDTO(BaseModelDTO):
     email: str
     password: str
-    captcha: Optional[str]
+    captcha: Optional[str] = None
 
 
 class UserCredentials2Fa(BaseModelDTO):

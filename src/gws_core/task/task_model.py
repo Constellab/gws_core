@@ -4,9 +4,9 @@ from typing import Any, Dict, List, Type
 
 from peewee import CharField, ForeignKeyField, ModelSelect
 
+from gws_core.config.config import Config
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
-from gws_core.io.io_dto import IODTO
 from gws_core.process.process import Process
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
@@ -14,6 +14,7 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_list import TagList
+from gws_core.task.plug import Source
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
@@ -22,7 +23,6 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.exception.gws_exceptions import GWSException
 from ..core.utils.logger import Logger
 from ..core.utils.reflector_helper import ReflectorHelper
-from ..io.io import Inputs, Outputs
 from ..io.io_exception import InvalidOutputsException
 from ..io.port import Port
 from ..process.process_exception import (CheckBeforeTaskStopException,
@@ -61,44 +61,16 @@ class TaskModel(ProcessModel):
     # cache to store the list of tags of all inputs
     _input_resource_tags: List[Tag] = None
 
-    def set_process_type(self, process_type: Type[Process],
-                         inputs_dto: IODTO = None,
-                         outputs_dto: IODTO = None) -> None:
+    def set_process_type(self, process_type: Type[Process]) -> None:
         """Method used when creating a new task model, it init the input and output from task specs
 
         :param typing_name: type of the task
         :type typing_name: str
-        :param inputs_dict: If provided, override the input spec of the task (useful for dynamic IO), defaults to None
-        :type inputs_dict: IODict, optional
-        :param outputs_dict: If provided, override the output spec of the task (useful for dynamic IO), defaults to None
-        :type outputs_dict: IODict, optional
         """
         if not issubclass(process_type, Task):
             raise Exception(
                 f"Error while setting the task type. The provided type '{process_type}' is not a subclass of Task")
         super().set_process_type(process_type)
-
-        # task_type: Type[Task] = self.get_process_type()
-
-        # specific case for dynamic IO to init input from json and not task spec
-        if inputs_dto is not None and inputs_dto.type == 'dynamic':
-            self._inputs = Inputs.load_from_dto(inputs_dto)
-            self._inputs.reset()
-        else:
-            self._inputs = Inputs.load_from_specs(process_type.input_specs)
-
-        # Set the data inputs dict
-        self.data["inputs"] = self.inputs.to_json()
-
-        # specific case for dynamic IO to init output from json and not task spec
-        if outputs_dto is not None and outputs_dto.type == 'dynamic':
-            self._outputs = Outputs.load_from_json(outputs_dto)
-            self._outputs.reset()
-        else:
-            self._outputs = Outputs.load_from_specs(process_type.output_specs)
-
-        # Set the data inputs dict
-        self.data["outputs"] = self.outputs.to_json()
 
     def _create_task_instance(self) -> Task:
         return self.get_process_type()()
@@ -226,7 +198,7 @@ class TaskModel(ProcessModel):
         from .task_input_model import TaskInputModel
         for port_name, port in self.inputs.ports.items():
 
-            resource_model: ResourceModel = port.resource_model
+            resource_model: ResourceModel = port.get_resource_model()
 
             if resource_model is None:
                 continue
@@ -292,12 +264,12 @@ class TaskModel(ProcessModel):
                 resource_model = ResourceModel.get_by_id_and_check(
                     resource._model_id)
             else:
-                resource_model = self._save_resource(resource, port.name)
+                resource_model = self.save_output_resource(resource, port.name)
 
             # save the resource model into the output's port (even if it's None)
-            port.resource_model = resource_model
+            port.set_resource_model(resource_model)
 
-    def _save_resource(self, resource: Resource, port_name: str) -> ResourceModel:
+    def save_output_resource(self, resource: Resource, port_name: str) -> ResourceModel:
         """Save the resource
         """
 
@@ -349,7 +321,7 @@ class TaskModel(ProcessModel):
             if not resource_list.__resource_is_constant__(resource.uid):
 
                 # create and save the resource model from the resource
-                resource_model = self._save_resource(resource, port_name)
+                resource_model = self.save_output_resource(resource, port_name)
 
                 resource._model_id = resource_model.id
                 new_children_resources.append(resource_model)
@@ -414,6 +386,56 @@ class TaskModel(ProcessModel):
         """
         entity_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, self.experiment.id)
         return entity_tags.build_tags_propagated(TagOriginType.EXPERIMENT_PROPAGATED, self.experiment.id)
+
+    ################################# CONFIG #################################
+
+    def set_config_value(self, param_name: str, value: Any) -> None:
+        """Set a value of the config
+
+        :param param_name: [description]
+        :type param_name: str
+        :param value: [description]
+        :type value: Any
+        """
+        super().set_config_value(param_name, value)
+        self._on_new_config()
+
+    def set_config_values(self, config_values: ConfigParamsDict) -> None:
+        """Set the config values
+
+        :param config_values: [description]
+        :type config_values: Dict[str, Any]
+        """
+        super().set_config_values(config_values)
+        self._on_new_config()
+
+    def set_config(self, config: Config) -> None:
+        """Set the config
+
+        :param config: [description]
+        :type config: ConfigParamsDict
+        """
+        super().set_config(config)
+        self._on_new_config()
+
+    def _on_new_config(self) -> None:
+        """Method called when the config of the task is changed to
+        update the source_config_id if the task is a source task
+        """
+
+        if self.is_source_task():
+            resource_model_id = Source.get_resource_id_from_config(
+                self.config.get_values())
+
+            if resource_model_id is not None:
+                resource = ResourceModel.get_by_id(resource_model_id)
+
+                if resource is not None:
+                    self.source_config_id = resource.id
+            else:
+                self.source_config_id = None
+
+    ################################# OTHER #################################
 
     def mark_as_started(self):
         if self.is_running:

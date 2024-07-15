@@ -80,7 +80,7 @@ class TestFolder(BaseTestCase):
 
         # Check that the file model is saved and correct
         file_model: ResourceModel = process._process_model.out_port(
-            'folder').resource_model
+            'folder').get_resource_model()
         self.assertTrue(file_model.is_saved())
         self.assertEqual(folder.path, file_model.fs_node_model.path)
 
