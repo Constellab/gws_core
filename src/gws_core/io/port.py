@@ -25,6 +25,7 @@ class Port(Base):
     name: str
 
     _resource_id: Optional[str] = None
+    # use to cache the resource model
     _resource_model: ResourceModel = None
     _resource_spec: IOSpec = None
 
@@ -32,6 +33,7 @@ class Port(Base):
     _resource_provided: bool = False
 
     def __init__(self, name: str, _resource_spec: IOSpec):
+        self._resource_id = None
         self._resource_model = None
         self.name = name
         self._resource_spec = _resource_spec
@@ -87,6 +89,7 @@ class Port(Base):
         return self.resource_spec.get_default_resource_type()
 
     def reset(self):
+        self._resource_id = None
         self._resource_model = None
         self._resource_provided = False
 

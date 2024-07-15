@@ -58,13 +58,13 @@ class IProcess:
         """Set the param value
         """
         ProtocolService.set_process_model_config_value(
-            self._process_model.config, param_name, value)
+            self._process_model, param_name, value)
 
     def set_config_params(self, config_params: ConfigParamsDict) -> None:
         """Set the config param values
         """
         ProtocolService.configure_process_model(
-            self._process_model.config, config_params)
+            self._process_model, config_params)
 
     def get_param(self, name: str) -> Any:
         return self._process_model.config.get_value(name)

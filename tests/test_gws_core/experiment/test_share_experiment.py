@@ -27,8 +27,8 @@ from gws_core.test.base_test_case import BaseTestCase
 from gws_core.test.gtest import GTest, TestStartUvicornApp
 
 
-@task_decorator(unique_name="RobotsGenerator")
-class RobotsGenerator(Task):
+@task_decorator(unique_name="RobotsGeneratorShare")
+class RobotsGeneratorShare(Task):
 
     input_specs: InputSpecs = InputSpecs({"robot": InputSpec(Robot)})
     output_specs: OutputSpecs = OutputSpecs({'set': OutputSpec(ResourceSet)})
@@ -62,7 +62,7 @@ class TestShareExperiment(BaseTestCase):
             protocol = experiment.get_protocol()
 
             move = protocol.add_process(RobotMove, 'move', config_params={'moving_step': 100})
-            generate = protocol.add_process(RobotsGenerator, 'generate')
+            generate = protocol.add_process(RobotsGeneratorShare, 'generate')
 
             # Source > Move > RobotsGenerator > Sink
             source = protocol.add_source('source', input_robot_model.id, move << 'robot')

@@ -143,7 +143,6 @@ class Converter(Task):
             cls, params=params, input_=source)
 
         result = converter_runner.run()
-        converter_runner.run_after_task()
         return result
 
     @final
