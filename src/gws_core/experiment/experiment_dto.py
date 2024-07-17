@@ -24,7 +24,7 @@ class ExperimentSaveDTO(BaseModelDTO):
 class RunningProcessInfo(BaseModelDTO):
     id: str
     title: str
-    last_message: ProgressBarMessageDTO
+    last_message: Optional[ProgressBarMessageDTO]
     progression: float
 
 
