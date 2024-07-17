@@ -458,7 +458,7 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
                 if next_resource.task_model:
                     self._propagate_tags(
                         tags=tags, entity=next_resource,
-                        new_origin_type=TagOriginType.TASK_PROPAGATED, new_origin_id=resource.task_model.id,
+                        new_origin_type=TagOriginType.TASK_PROPAGATED, new_origin_id=next_resource.task_model.id,
                         entity_tags_cache=entity_tags_cache)
             next_resources.propagate_tags(tags, entity_tags_cache)
 
