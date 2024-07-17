@@ -8,6 +8,7 @@ from mypy_boto3_s3.type_defs import ListObjectsV2OutputTypeDef, ObjectTypeDef
 
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
@@ -166,9 +167,22 @@ class S3ServerService:
 
     @classmethod
     def delete_objects(cls, bucket_name: str, keys: List[str]) -> None:
+        """Delete multiple objects, ignore if the object does not exist
+
+        :param bucket_name: _description_
+        :type bucket_name: str
+        :param keys: _description_
+        :type keys: List[str]
+        """
 
         resources: List[ResourceModel] = []
         for key in keys:
+
+            resource = cls._get_object(bucket_name, key)
+            if resource is None:
+                Logger.warning(f"Object {key} not found in bucket {bucket_name}, skipping deletion.")
+                continue
+
             resources.append(cls._get_and_check_before_delete_object(bucket_name, key))
 
         with S3ServerContext(bucket_name):
@@ -212,7 +226,7 @@ class S3ServerService:
         if cls._is_project_doc_bucket(bucket_name):
             cls._get_and_check_project_bucket(bucket_name, key)
 
-        resource: ResourceModel = cls._get_object(bucket_name, key)
+        resource = cls._get_object(bucket_name, key)
 
         if resource is None:
             raise S3ServerNoSuchKey(bucket_name, key)
