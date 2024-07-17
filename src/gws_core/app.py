@@ -81,23 +81,11 @@ class App:
         # Configure the CORS
         CorsConfig.configure_app_cors(app)
 
-        # configure the context middleware
-        cls.app.add_middleware(
-            ContextMiddleware
-        )
-
         # Registrer the lab start. Use a new thread to prevent blocking the start
         th = Thread(target=SystemService.register_lab_start)
         th.start()
 
-        # api routes
-        cls.app.mount("/core-api/", core_app)
-        # TODO To remove once central uses space-api (we can do that once all lab are on v0.5.0)
-        cls.app.mount("/central-api/", space_app)
-        cls.app.mount("/space-api/", space_app)
-        cls.app.mount("/s3-server/", s3_server_app)
-
-        uvicorn.run(cls.app, host='0.0.0.0', port=int(port))
+        cls.start_uvicorn_app(port)
 
     @classmethod
     def start_uvicorn_app(cls, port: int = 3000):
