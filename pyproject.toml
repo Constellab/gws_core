@@ -1,5 +1,28 @@
 [project]
 name = "gws-core"
+description = 'Kernel brick of Constellab data lab'
+version = "0.8.2"
+requires-python = '~=3.10'
+readme = 'README.md'
+authors = [
+  { name = 'Gencovery', email='contact@gencovery.com' },
+]
+
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Environment :: Console',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+    'Operating System :: POSIX :: Linux',
+    'Operating System :: POSIX :: Linux :: Ubuntu 22.04',
+    'Programming Language :: Cython',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3 :: Only',
+    'Programming Language :: Python :: 3.10',
+    'Topic :: Scientific/Engineering'
+]
+
 [build-system]
 requires = [
     "setuptools>=42",
