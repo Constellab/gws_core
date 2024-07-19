@@ -1,11 +1,13 @@
 
 
+from typing import List
+
 from gws_core import BaseTestCase
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.project.project import Project
-from gws_core.project.project_dto import SpaceProject
+from gws_core.project.project_dto import ProjectLevelStatus, SpaceProject
 from gws_core.project.project_service import ProjectService
 
 
@@ -101,3 +103,104 @@ class TestProject(BaseTestCase):
         # check that the project was removed from experiment
         experiment = experiment.refresh()
         self.assertIsNone(experiment.project)
+
+    def test_project_sync(self):
+
+        # delete all projects
+        Project.delete().execute()
+
+        space_projects: List[SpaceProject] = [
+            SpaceProject.from_json({
+                "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
+                "code": "Root",
+                "title": "Root project",
+                "levelStatus": "PARENT",
+                "children": [
+                    {
+                        "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f2",
+                        "code": "WP1",
+                        "title": "Work package 1",
+                        "levelStatus": "LEAF",
+                    },
+                    {
+                        "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f4",
+                        "code": "WP2",
+                        "title": "Work package 2",
+                        "levelStatus": "LEAF",
+                    }
+                ]
+            }),
+            SpaceProject.from_json({
+                "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f5",
+                "code": "Root 2",
+                "title": "Root project 2",
+                "levelStatus": "LEAF",
+            }),
+        ]
+
+        ProjectService.synchronize_projects(space_projects)
+
+        self.assertEqual(Project.select().count(), 4)
+        root_1 = Project.get_by_id_and_check("caf61803-70e5-4ac3-9adb-53a35f65a2f1")
+        self.assertEqual(root_1.code, 'Root')
+        self.assertEqual(root_1.level_status, ProjectLevelStatus.PARENT)
+        self.assertEqual(len(root_1.children), 2)
+        self.assertEqual(root_1.children[0].id, 'caf61803-70e5-4ac3-9adb-53a35f65a2f2')
+        self.assertEqual(root_1.children[0].code, 'WP1')
+        self.assertEqual(root_1.children[0].level_status, ProjectLevelStatus.LEAF)
+        self.assertEqual(root_1.children[1].id, 'caf61803-70e5-4ac3-9adb-53a35f65a2f4')
+        self.assertEqual(root_1.children[1].code, 'WP2')
+        self.assertEqual(root_1.children[1].level_status, ProjectLevelStatus.LEAF)
+
+        new_projects: List[SpaceProject] = [
+            SpaceProject.from_json({
+                "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
+                "code": "Root new",  # code updated
+                "title": "Root project",
+                "levelStatus": "PARENT",
+                "children": [
+                    {
+                        "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f2",
+                        "code": "WP1 new",  # code updated
+                        "title": "Work package 1",
+                        "levelStatus": "LEAF",
+                    },
+                    # child removed
+                    # new child
+                    {
+                        "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f6",
+                        "code": "New child",
+                        "title": "New child",
+                        "levelStatus": "LEAF",
+                    }
+                ]
+            }),
+            # root 2 removed
+            # new root 3
+            SpaceProject.from_json({
+                "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f7",
+                "code": "Root 3",
+                "title": "Root project 3",
+                "levelStatus": "LEAF",
+            }),
+        ]
+
+        ProjectService.synchronize_projects(new_projects)
+
+        self.assertEqual(Project.select().count(), 4)
+        new_root_1 = Project.get_by_id_and_check("caf61803-70e5-4ac3-9adb-53a35f65a2f1")
+        self.assertEqual(new_root_1.code, 'Root new')
+        self.assertEqual(new_root_1.level_status, ProjectLevelStatus.PARENT)
+        self.assertEqual(len(new_root_1.children), 2)
+        self.assertEqual(new_root_1.children[0].id, 'caf61803-70e5-4ac3-9adb-53a35f65a2f2')
+        self.assertEqual(new_root_1.children[0].code, 'WP1 new')
+        self.assertEqual(new_root_1.children[0].level_status, ProjectLevelStatus.LEAF)
+        self.assertEqual(new_root_1.children[1].id, 'caf61803-70e5-4ac3-9adb-53a35f65a2f6')
+        self.assertEqual(new_root_1.children[1].code, 'New child')
+        self.assertEqual(new_root_1.children[1].level_status, ProjectLevelStatus.LEAF)
+
+        # check WP2 and root 1 were deleted
+        self.assertIsNone(Project.get_by_id("caf61803-70e5-4ac3-9adb-53a35f65a2f4"))
+        self.assertIsNone(Project.get_by_id("caf61803-70e5-4ac3-9adb-53a35f65a2f5"))
+        # check root 3 was created
+        self.assertIsNotNone(Project.get_by_id("caf61803-70e5-4ac3-9adb-53a35f65a2f7"))

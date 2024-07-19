@@ -140,7 +140,7 @@ def get_users(_=Depends(AuthSpace.check_space_api_key_and_user)) -> List[UserFul
 ##################################################### PROJECT #####################################################
 
 @space_app.post("/project", tags=["Project"])
-def create_project(project: SpaceProject, _=Depends(AuthSpace.check_space_api_key_and_user)) -> None:
+def create_project(project: SpaceProject, _=Depends(AuthSpace.check_space_api_key)) -> None:
     """
     Register a space project to the lab
 
@@ -150,7 +150,7 @@ def create_project(project: SpaceProject, _=Depends(AuthSpace.check_space_api_ke
 
 
 @space_app.delete("/project/{id_}", tags=["Project"])
-def delete_project(id_: str, _=Depends(AuthSpace.check_space_api_key_and_user)) -> None:
+def delete_project(id_: str, _=Depends(AuthSpace.check_space_api_key)) -> None:
     """
     Remove a project from the lab
 

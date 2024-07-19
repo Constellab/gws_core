@@ -49,14 +49,14 @@ class Project(Model):
 
         return cls.select().where(cls.parent.is_null())
 
-    def get_hierarchy_as_list(self) -> List['Project']:
+    def get_with_children_as_list(self) -> List['Project']:
         """
-        Get all projects and children as a list.
+        Get current project and children as a list.
         """
 
         children = [self]
         for child in self.children:
-            children += child.get_hierarchy_as_list()
+            children += child.get_with_children_as_list()
 
         return children
 

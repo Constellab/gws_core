@@ -1,6 +1,6 @@
 
 
-from typing import List
+from typing import List, Type
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -18,7 +18,7 @@ from .project_dto import SpaceProject
 
 class ProjectService():
 
-    entity_with_projects: List[ModelWithProject] = [Experiment, Report, ResourceModel]
+    entity_with_projects: List[Type[ModelWithProject]] = [Experiment, Report, ResourceModel]
 
     @classmethod
     def get_project_trees(cls) -> List[Project]:
@@ -34,12 +34,27 @@ class ProjectService():
 
         try:
             space_projects = SpaceService.get_all_lab_projects()
-            for space_project in space_projects:
-                cls.synchronize_space_project(space_project)
+            cls.synchronize_projects(space_projects)
+
             Logger.info(f"{len(space_projects)} projects synchronized from space")
         except Exception as err:
             Logger.error(f"Error while synchronizing projects from space: {err}")
             raise err
+
+    @classmethod
+    def synchronize_projects(cls, space_projects: List[SpaceProject]) -> None:
+        """Method that synchronize a list of projects from space into the lab
+        """
+
+        for space_project in space_projects:
+            cls.synchronize_space_project(space_project)
+
+        # check the root projects to delete
+        root_projects: List[Project] = list(Project.get_roots())
+        space_project_ids = [space_project.id for space_project in space_projects]
+        for root_project in root_projects:
+            if root_project.id not in space_project_ids:
+                cls.delete_project(root_project.id)
 
     @classmethod
     def synchronize_space_project(cls, project: SpaceProject) -> None:
@@ -53,7 +68,7 @@ class ProjectService():
         """Method that synchronize a project from space into the lab
         """
 
-        lab_project: Project = Project.get_by_id(project.id)
+        lab_project = Project.get_by_id(project.id)
 
         if lab_project is None:
             lab_project = Project()
@@ -80,12 +95,12 @@ class ProjectService():
     def delete_project(cls, project_id: str) -> None:
         """Method that delete a project from the lab
         """
-        project: Project = Project.get_by_id(project_id)
+        project = Project.get_by_id(project_id)
 
         if project is None:
             return
 
-        projects = project.get_hierarchy_as_list()
+        projects = project.get_with_children_as_list()
 
         # check if one of the sync experiment is attached to the project
         if Experiment.select().where((Experiment.project.in_(projects)) & (Experiment.last_sync_at.is_null(False))).count() > 0:
