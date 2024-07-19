@@ -19,6 +19,7 @@ from gws_core.impl.s3.s3_server_context import S3ServerContext
 from gws_core.impl.s3.s3_server_exception import (S3ServerException,
                                                   S3ServerNoSuchKey)
 from gws_core.project.project import Project
+from gws_core.project.project_service import ProjectService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_model_search_builder import \
@@ -256,12 +257,29 @@ class S3ServerService:
                                     message='Invalid key',
                                     bucket_name=bucket_name, key=key_or_prefix)
 
-        project: Project = Project.get_by_id(key_parts[2])
+        return cls._get_project(key_parts[2])
+
+    @classmethod
+    def _get_project(cls, project_id: str) -> Project:
+        """Get a project by id
+        """
+        project = Project.get_by_id(project_id)
+
+        if project is None:
+            # if the project is not found, try to sync it
+            try:
+                Logger.info(f"Project {project_id} not found in lab, trying to sync it")
+                ProjectService.synchronize_project(project_id)
+
+                # if sync is success to the new project
+                project = Project.get_by_id(project_id)
+            except Exception as e:
+                Logger.error(f"Error while synchronizing project {project_id}. Error {str(e)}")
 
         if project is None:
             raise S3ServerException(status_code=400, code='invalid_project_id',
-                                    message='Project not found in lab, try to sync the lab projects',
-                                    bucket_name=bucket_name, key=key_or_prefix)
+                                    message='Project not found in data hub, try to sync the lab projects',
+                                    bucket_name='', key='')
 
         return project
 

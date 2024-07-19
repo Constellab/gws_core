@@ -42,6 +42,14 @@ class ProjectService():
             raise err
 
     @classmethod
+    def synchronize_project(cls, project_id: str) -> None:
+        """
+        Synchronize a project from space
+        """
+        space_root_project = SpaceService.get_lab_root_project(project_id)
+        cls.synchronize_space_project(space_root_project)
+
+    @classmethod
     def synchronize_projects(cls, space_projects: List[SpaceProject]) -> None:
         """Method that synchronize a list of projects from space into the lab
         """

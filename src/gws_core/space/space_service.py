@@ -188,6 +188,23 @@ class SpaceService():
         return SpaceProject.from_json_list(response.json())
 
     @classmethod
+    def get_lab_root_project(cls, id_: str) -> SpaceProject:
+        """
+        Call the space api to get the a project for this lab
+        """
+        space_api_url: str = cls._get_space_api_url(f"{cls._external_labs_route}/project/{id_}/root-tree")
+
+        try:
+            response = ExternalApiService.get(space_api_url, cls._get_request_header(),
+                                              raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't retrieve project for the lab. Error : {err.detail}"
+            raise err
+
+        # get response and parse it to a list of spaceProject
+        return SpaceProject.from_json(response.json())
+
+    @classmethod
     def get_all_lab_users(cls) -> List[UserFullDTO]:
         """
         Call the space api to get the list of users for this lab
