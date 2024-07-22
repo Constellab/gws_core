@@ -2,7 +2,6 @@
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
-from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.io.dynamic_io import DynamicInputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -16,7 +15,7 @@ from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("StreamlitLiveTask", human_name="Streamlite live task",
+@task_decorator("StreamlitLiveTask", human_name="Streamlit live task",
                 short_description="Live task to generate a streamlit app dashboard",
                 style=StreamlitResource.copy_style(
                     icon_technical_name='code', icon_type=TypingIconType.MATERIAL_ICON))
