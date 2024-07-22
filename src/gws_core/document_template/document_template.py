@@ -4,21 +4,21 @@ from typing import final
 
 from peewee import CharField
 
+from gws_core.core.model.db_field import BaseDTOField
+from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.document_template.document_template_dto import \
+    DocumentTemplateDTO
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
-from gws_core.report.template.report_template_dto import ReportTemplateDTO
-
-from ...core.model.db_field import BaseDTOField
-from ...core.model.model_with_user import ModelWithUser
 
 
 @final
-class ReportTemplate(ModelWithUser):
+class DocumentTemplate(ModelWithUser):
     title = CharField()
 
     content: RichTextDTO = BaseDTOField(RichTextDTO, null=True)
 
-    _table_name = 'gws_report_template'
+    _table_name = 'gws_document_template'
 
     def get_content_as_rich_text(self) -> RichText:
         return RichText(self.content)
@@ -26,8 +26,8 @@ class ReportTemplate(ModelWithUser):
     def update_content_rich_text(self, rich_text: RichText) -> None:
         self.content = rich_text.get_content()
 
-    def to_dto(self) -> ReportTemplateDTO:
-        return ReportTemplateDTO(
+    def to_dto(self) -> DocumentTemplateDTO:
+        return DocumentTemplateDTO(
             id=self.id,
             created_at=self.created_at,
             created_by=self.created_by.to_dto(),
@@ -37,4 +37,4 @@ class ReportTemplate(ModelWithUser):
         )
 
     class Meta:
-        table_name = 'gws_report_template'
+        table_name = 'gws_document_template'

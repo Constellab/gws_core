@@ -5,6 +5,7 @@ from typing import Callable, List
 from peewee import ModelSelect
 
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.rich_text.rich_text import RichText
@@ -14,7 +15,6 @@ from gws_core.impl.rich_text.rich_text_types import (
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.project.project import Project
 from gws_core.report.report_view_model import ReportViewModel
-from gws_core.report.template.report_template import ReportTemplate
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_types import exluded_views_in_report
@@ -52,7 +52,7 @@ class ReportService():
         report.project = Project.get_by_id_and_check(report_dto.project_id) if report_dto.project_id else None
 
         if report_dto.template_id:
-            template: ReportTemplate = ReportTemplate.get_by_id_and_check(report_dto.template_id)
+            template: DocumentTemplate = DocumentTemplate.get_by_id_and_check(report_dto.template_id)
             report.content = template.content
         else:
             # Set default content for report

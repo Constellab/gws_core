@@ -4,13 +4,13 @@ from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 
 
-class ReportTemplateDTO(ModelWithUserDTO):
+class DocumentTemplateDTO(ModelWithUserDTO):
     title: str
 
 
-class CreateReportTemplateDTO(BaseModelDTO):
+class CreateDocumentTemplateDTO(BaseModelDTO):
     title: str
 
 
-class CreateReportTemplateFromReportDTO(BaseModelDTO):
+class CreateDocumentTemplateFromReportDTO(BaseModelDTO):
     report_id: str

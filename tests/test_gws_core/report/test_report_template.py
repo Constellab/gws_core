@@ -1,22 +1,16 @@
 
 
+from gws_core.document_template.document_template_service import \
+    DocumentTemplateService
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
-from gws_core.report.template.report_template_service import \
-    ReportTemplateService
 from gws_core.test.base_test_case import BaseTestCase
 
 
-# test_report_template
-class TestReportTemplate(BaseTestCase):
+# test_document_template
+class TestDocumentTemplate(BaseTestCase):
 
     def test_create_empty(self):
-        report_template = ReportTemplateService.create_empty('title')
-        self.assertEqual(report_template.title, 'title')
-        self.assertIsInstance(report_template.content, RichTextDTO)
-        self.assertEqual(report_template.content.blocks, [])
-
-    # def test_create_from_report(self):
-    #     report = self.create_report()
-    #     report_template = self.create_report_template_from_report(report.id)
-    #     self.assertEqual(report_template.title, report.title)
-    #     self.assertEqual(report_template.content, report.content)
+        document_template = DocumentTemplateService.create_empty('title')
+        self.assertEqual(document_template.title, 'title')
+        self.assertIsInstance(document_template.content, RichTextDTO)
+        self.assertEqual(document_template.content.blocks, [])

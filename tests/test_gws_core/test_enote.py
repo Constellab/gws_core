@@ -3,6 +3,7 @@
 from PIL import Image
 
 from gws_core.core.utils.settings import Settings
+from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.impl.enote.create_enote import CreateENote
 from gws_core.impl.enote.enote_resource import ENoteResource
 from gws_core.impl.enote.generate_report_from_enote import \
@@ -19,7 +20,6 @@ from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
 from gws_core.report.report import Report
 from gws_core.report.task.report_resource import ReportResource
-from gws_core.report.template.report_template import ReportTemplate
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
@@ -61,13 +61,13 @@ class TestEnote(BaseTestCase):
         figure_data = self._create_report_image('test')
         template_rich_text.add_figure(figure_data)
 
-        report_template = ReportTemplate(title="My template", content=template_rich_text.get_content())
-        report_template.save()
+        doc_template = DocumentTemplate(title="My template", content=template_rich_text.get_content())
+        doc_template.save()
 
         # Test create e-note from template
         task_runner = TaskRunner(CreateENote, params={
             "title": "",
-            "template": report_template.id,
+            "template": doc_template.id,
         })
 
         outputs = task_runner.run()

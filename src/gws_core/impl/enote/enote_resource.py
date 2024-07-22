@@ -385,9 +385,9 @@ class ENoteResource(ResourceSet):
 
     def append_report_rich_text(self, rich_text: RichText) -> None:
         """
-        Append a rich text (that comes from a report, report template or RichTextParam) to the e-note.
+        Append a rich text (that comes from a report, document template or RichTextParam) to the e-note.
 
-        :param rich_text: rich text to append to the e-note (from a report, report template or RichTextParam)
+        :param rich_text: rich text to append to the e-note (from a report, document template or RichTextParam)
         :type rich_text: RichText
         :return: the e-note
         :rtype: _type_

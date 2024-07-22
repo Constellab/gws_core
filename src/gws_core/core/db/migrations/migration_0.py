@@ -15,6 +15,7 @@ from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.model.model import Model
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.credentials.credentials import Credentials
+from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
@@ -34,7 +35,6 @@ from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.report.report import Report
-from gws_core.report.template.report_template import ReportTemplate
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -921,7 +921,7 @@ class Migration080Beta1(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(Report.get_db())
         migrator.drop_column_if_exists(Report, 'old_content')
-        migrator.drop_column_if_exists(ReportTemplate, "old_content")
+        migrator.drop_column_if_exists(DocumentTemplate, "old_content")
         migrator.drop_column_if_exists(Experiment, "old_description")
         migrator.drop_column_if_exists(ProtocolTemplate, "old_description")
         migrator.drop_column_if_exists(Typing, "icon")
@@ -974,3 +974,15 @@ class Migration080(BrickMigration):
 
         # delete all virtual environments
         VEnvService.delete_all_venvs()
+
+
+@brick_migration('0.8.4', short_description='Rename report template to document table.')
+class Migration084(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(DocumentTemplate.get_db())
+
+        migrator.rename_table_if_exists(DocumentTemplate, "gws_report_template")
+        migrator.migrate()

@@ -65,6 +65,12 @@ class SqlMigrator:
         self.migrator.database.drop_tables([model_type])
         return True
 
+    def rename_table_if_exists(self, model_type: Type[BaseModel], old_name: str) -> bool:
+        if model_type.table_exists():
+            return False
+        self._operations.append(self.migrator.rename_table(old_name, model_type.get_table_name()))
+        return True
+
     def migrate(self) -> None:
         for operation in self._operations:
             operation.run()

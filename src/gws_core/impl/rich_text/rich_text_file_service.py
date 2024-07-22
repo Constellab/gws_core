@@ -21,7 +21,7 @@ class RichTextUploadImageResultDTO(BaseModelDTO):
 
 
 class RichTextFileService():
-    """Service to store file assosicated to a rich text (report, report template, RichTextParam)
+    """Service to store file assosicated to a rich text (report, document template, RichTextParam)
 
     :return: [description]
     :rtype: [type]

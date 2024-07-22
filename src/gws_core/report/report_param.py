@@ -51,7 +51,7 @@ class ReportParam(ParamSpec[str]):
         report: Report = None
         if value and isinstance(value, str):
 
-            # retrieve the report template and return it
+            # retrieve the document template and return it
             report = Report.get_by_id(value)
             if report is None:
                 raise Exception(f"Report with id '{value}' not found")

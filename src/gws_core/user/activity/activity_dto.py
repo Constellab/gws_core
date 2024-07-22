@@ -25,7 +25,7 @@ class ActivityObjectType(Enum):
     PROCESS = "PROCESS"
     USER = "USER"
     REPORT = "REPORT"
-    REPORT_TEMPLATE = "REPORT_TEMPLATE"
+    DOCUMENT_TEMPLATE = "DOCUMENT_TEMPLATE"
 
 
 class ActivityDTO(ModelDTO):
