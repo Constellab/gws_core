@@ -255,9 +255,9 @@ class ExperimentDownloader(Task):
                 else:
                     out_port.set_resource_model(None)
 
-            # for Source process, set the source config id and update the config
+            # for Source process, update the config with new resource id
             if isinstance(process_model, TaskModel) and process_model.is_source_task():
-                new_resource = resource_models.get(process_model.source_config_id)
+                new_resource = process_model.out_port(Source.output_name).get_resource_model()
                 new_resource_id = new_resource.id if new_resource else None
                 process_model.set_config_value(Source.config_name, new_resource_id)
 
