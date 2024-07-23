@@ -72,7 +72,7 @@ class PyLiveTask(Task):
         targets = result.get("targets", None)
 
         if targets is None:
-            raise Exception("The 'targets' variable is None")
+            targets = []
 
         return {'target': ResourceList(targets)}
 
