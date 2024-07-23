@@ -7,6 +7,7 @@ from typing import List
 
 from fastapi import status
 from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 
@@ -45,6 +46,8 @@ class ExceptionHandler():
             return cls._handle_expected_exception(request, exception)
         elif isinstance(exception, HTTPException):
             return cls._handle_http_exception(request, exception)
+        elif isinstance(exception, ValidationError):
+            return cls._handle_validation_exception(request, exception)
         else:
             return cls._handle_unexcepted_exception(request, exception)
 
@@ -77,7 +80,7 @@ class ExceptionHandler():
             status_code=exception.status_code, code=unique_code, detail=detail, instance_id=exception.instance_id,
             show_as=exception.show_as, headers=exception.headers)
 
-    @ classmethod
+    @classmethod
     def _handle_http_exception(cls, request: Request, exception: HTTPException) -> ExceptionResponse:
         """Handle the HTTP scarlett exceptions
 
@@ -95,6 +98,42 @@ class ExceptionHandler():
 
         return ExceptionResponse(status_code=exception.status_code, code=code,
                                  detail=exception.detail,
+                                 instance_id=instance_id)
+
+    @classmethod
+    def _handle_validation_exception(cls, request: Request, exception: ValidationError) -> ExceptionResponse:
+        """Handle the validation exception (error 422) it logs the stack trace and return a formated object
+
+        Arguments:
+            request {Request} -- [description]
+            exception {ValidationError} -- [description]
+
+        Returns:
+            ExceptionResponse -- [description]
+        """
+
+        Logger.log_exception_stack_trace(exception)
+
+        instance_id: str = cls.generate_instance_id()
+        code = cls.generate_unique_code_from_exception()
+
+        # Log short information with instance id (the stack trace is automatically printed)
+        route_info: str = f" - Route: {request.url}" if request is not None else ""
+        Logger.error(
+            f"Validation exception - {code}{route_info} - {str(exception)} - Instance id : {instance_id}")
+
+        # return only the first error
+        errors = exception.errors()
+        detail = "Validation error : "
+        if errors:
+            first_error = errors[0]
+            detail += f"{first_error['msg']} - Field : {'.'.join([str(x) for x in first_error['loc']])}"
+        else:
+            detail += str(exception)
+
+        return ExceptionResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                 code=code,
+                                 detail=detail,
                                  instance_id=instance_id)
 
     @classmethod
