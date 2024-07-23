@@ -47,13 +47,14 @@ class ProcessConfigDTO(BaseModelDTO):
     config: ConfigSimpleDTO
     name: str
     brick_version_on_create: str
-    brick_version_on_run: str
     inputs: IODTO
     outputs: IODTO
     status: str
     process_type: SimpleTypingDTO
     style: TypingStyle
-    progress_bar: ProgressBarConfigDTO
+    # provided when run
+    brick_version_on_run: Optional[str] = None
+    progress_bar: Optional[ProgressBarConfigDTO] = None
     # for sub protocol, recursive graph
     graph: Optional[ProtocolGraphConfigDTO] = None
 

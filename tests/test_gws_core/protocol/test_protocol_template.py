@@ -10,6 +10,8 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
+from gws_core.protocol_template.protocol_template_factory import \
+    ProtocolTemplateFactory
 from gws_core.protocol_template.protocol_template_service import \
     ProtocolTemplateService
 from gws_core.resource.resource import Resource
@@ -173,3 +175,179 @@ class TestProtocolTemplate(BaseTestCase):
         protocol_3 = experiment.protocol_model
         self.assertEqual(len(protocol_3.processes), 5)
         self.assertEqual(len(protocol_3.connectors), 4)
+
+    def test_serialization(self):
+        # create a chain
+        proto = ProtocolService.create_protocol_model_from_type(
+            TestNestedProtocol)
+
+        # create a template
+        template = ProtocolService.create_protocol_template_from_id(
+            protocol_id=proto.id, name='test_protocol_template')
+
+        template_str = template.to_export_dto().to_json_str()
+        new_template = ProtocolTemplateFactory.from_export_dto_str(template_str)
+        self.assert_json(new_template.name, template.name)
+        self.assert_json(new_template.version, template.version)
+        self.assert_json(new_template.description, template.description)
+        self.assert_json(new_template.to_export_dto().data.to_json_dict(), template.to_export_dto().data.to_json_dict())
+
+    def test_migration(self):
+
+        # Simple protocol Source > TableTransposer on v1
+        old_protocol_template = {
+            "id": "123",
+            "version": 1,
+            "name": "test",
+            "description": None,
+            "data": {
+                "nodes": {
+                    "TableTransposer": {
+                        "process_typing_name": "TASK.gws_core.TableTransposer",
+                        "instance_name": "TableTransposer",
+                        "config": {
+                            "specs": {},
+                            "values": {}
+                        },
+                        "brick_version": "0.4.5",
+                        "inputs": {
+                            "ports": {
+                                "source": {
+                                    "resource_id": "9a9f94d8-091d-406e-ad1e-fd5c3da3efda",
+                                    "specs": {
+                                        "resource_types": [
+                                            {
+                                                "typing_name": "RESOURCE.gws_core.Table",
+                                                "brick_version": "0.5.11",
+                                                "human_name": "Table"
+                                            }
+                                        ],
+                                        "is_optional": False,
+                                        "human_name": "Table",
+                                        "short_description": "2d excel like table"
+                                    }
+                                }
+                            },
+                            "type": "normal",
+                            "additional_info": {}
+                        },
+                        "outputs": {
+                            "ports": {
+                                "target": {
+                                    "resource_id": "6d566157-d472-4d0d-bbf4-e34a281cfb3b",
+                                    "specs": {
+                                        "resource_types": [
+                                            {
+                                                "typing_name": "RESOURCE.gws_core.Table",
+                                                "brick_version": "0.5.11",
+                                                "human_name": "Table"
+                                            }
+                                        ],
+                                        "is_optional": False,
+                                        "human_name": "Table",
+                                        "short_description": "2d excel like table",
+                                                             "sub_class": False,
+                                                             "is_constant": False
+                                    }
+                                }
+                            },
+                            "type": "normal",
+                            "additional_info": {}
+                        },
+                        "status": "SUCCESS",
+                        "name": "Table transposer",
+                        "process_type": {
+                            "human_name": "Table transposer",
+                            "short_description": "Transposes the table"
+                        }
+                    },
+                    "Source": {
+                        "process_typing_name": "TASK.gws_core.Source",
+                        "instance_name": "Source",
+                        "config": {
+                            "specs": {
+                                "resource_id": {
+                                    "type": "str",
+                                    "optional": True,
+                                    "visibility": "public",
+                                    "additional_info": {
+                                        "min_length": None,
+                                        "max_length": None
+                                    },
+                                    "short_description": "The id of the resource"
+                                }
+                            },
+                            "values": {
+                                "resource_id": "9a9f94d8-091d-406e-ad1e-fd5c3da3efda"
+                            }
+                        },
+                        "brick_version": "0.4.5",
+                        "inputs": {
+                            "ports": {},
+                            "type": "normal",
+                            "additional_info": {}
+                        },
+                        "outputs": {
+                            "ports": {
+                                "resource": {
+                                    "resource_id": "9a9f94d8-091d-406e-ad1e-fd5c3da3efda",
+                                    "specs": {
+                                        "resource_types": [
+                                            {
+                                                "typing_name": "RESOURCE.gws_core.Resource",
+                                                "brick_version": "0.5.11",
+                                                "human_name": "Resource"
+                                            }
+                                        ],
+                                        "is_optional": False,
+                                        "human_name": "Resource",
+                                        "short_description": "Loaded resource",
+                                                             "sub_class": True,
+                                                             "is_constant": True
+                                    }
+                                }
+                            },
+                            "type": "normal",
+                            "additional_info": {}
+                        },
+                        "status": "SUCCESS",
+                        "name": "Source",
+                        "process_type": {
+                            "human_name": "Source",
+                            "short_description": ""
+                        }
+                    },
+                },
+                "links": [
+                    {
+                        "from": {
+                            "node": "Source",
+                            "port": "resource"
+                        },
+                        "to": {
+                            "node": "TableTransposer",
+                            "port": "source"
+                        }
+                    }
+                ],
+                "interfaces": {},
+                "outerfaces": {},
+                "layout": {
+                    "process_layouts": {
+                        "TableTransposer": {
+                            "x": 348,
+                            "y": 125
+                        },
+                        "Source": {
+                            "x": 62,
+                            "y": 105
+                        }
+                    },
+                    "interface_layouts": {},
+                    "outerface_layouts": {}
+                }
+            }
+        }
+
+        new_protocol_template = ProtocolTemplateFactory.from_export_dto_dict(old_protocol_template)
+        self.assertEqual(new_protocol_template.version, 3)

@@ -1,9 +1,12 @@
 
 
 from fastapi import UploadFile
+
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.protocol.protocol_model import ProtocolModel
+from gws_core.protocol_template.protocol_template_factory import \
+    ProtocolTemplateFactory
 from gws_core.protocol_template.protocol_template_search_builder import \
     ProtocolTemplateSearchBuilder
 
@@ -16,12 +19,12 @@ class ProtocolTemplateService():
     def create_from_protocol(cls, protocol: ProtocolModel,
                              name: str, description: dict = None) -> ProtocolTemplate:
 
-        protocol_template = ProtocolTemplate.from_protocol_model(protocol, name, description)
+        protocol_template = ProtocolTemplateFactory.from_protocol_model(protocol, name, description)
         return protocol_template.save()
 
     @classmethod
     def create_from_file(cls, file: UploadFile) -> ProtocolTemplate:
-        protocol_template = ProtocolTemplate.from_export_dto_str_bytes(file.file.read())
+        protocol_template = ProtocolTemplateFactory.from_export_dto_str(file.file.read().decode('utf-8'))
         return protocol_template.save()
 
     @classmethod

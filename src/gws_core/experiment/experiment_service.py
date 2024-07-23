@@ -10,6 +10,8 @@ from gws_core.experiment.experiment_zipper import (ZipExperiment,
                                                    ZipExperimentInfo)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
+from gws_core.protocol_template.protocol_template_factory import \
+    ProtocolTemplateFactory
 from gws_core.report.report import ReportExperiment
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.plug import Sink
@@ -51,7 +53,7 @@ class ExperimentService():
             protocol_template = ProtocolTemplate.get_by_id_and_check(
                 experiment_dto.protocol_template_id)
         elif experiment_dto.protocol_template_json and isinstance(experiment_dto.protocol_template_json, dict):
-            protocol_template = ProtocolTemplate.from_export_dto_dict(
+            protocol_template = ProtocolTemplateFactory.from_export_dto_dict(
                 experiment_dto.protocol_template_json)
 
         return cls.create_experiment(

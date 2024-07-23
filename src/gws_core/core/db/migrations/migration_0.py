@@ -34,6 +34,8 @@ from gws_core.project.project import Project
 from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
+from gws_core.protocol_template.protocol_template_factory import \
+    ProtocolTemplateFactory
 from gws_core.report.report import Report
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
@@ -976,7 +978,7 @@ class Migration080(BrickMigration):
         VEnvService.delete_all_venvs()
 
 
-@brick_migration('0.8.4', short_description='Rename report template to document table.')
+@brick_migration('0.8.4', short_description='Rename report template to document table. Migrate template protocol')
 class Migration084(BrickMigration):
 
     @classmethod
@@ -986,3 +988,11 @@ class Migration084(BrickMigration):
 
         migrator.rename_table_if_exists(DocumentTemplate, "gws_report_template")
         migrator.migrate()
+
+        protocol_templates: List[ProtocolTemplate] = list(
+            ProtocolTemplate.select().where(ProtocolTemplate.version == 1))
+
+        for protocol_template in protocol_templates:
+            protocol_template.data = ProtocolTemplateFactory.migrate_data_from_1_to_3(protocol_template.data)
+            protocol_template.version = 3
+            protocol_template.save(skip_hook=True)

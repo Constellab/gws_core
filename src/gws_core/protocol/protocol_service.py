@@ -21,6 +21,8 @@ from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
 from gws_core.protocol.protocol_spec import ConnectorSpec
 from gws_core.protocol.protocol_update import ProtocolUpdate
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
+from gws_core.protocol_template.protocol_template_factory import \
+    ProtocolTemplateFactory
 from gws_core.protocol_template.protocol_template_service import \
     ProtocolTemplateService
 from gws_core.resource.resource_model import ResourceModel
@@ -763,7 +765,7 @@ class ProtocolService():
             raise BadRequestException(
                 "Cannot download a protocol without experiment")
 
-        return ProtocolTemplate.from_protocol_model(protocol_model,
+        return ProtocolTemplateFactory.from_protocol_model(protocol_model,
                                                     protocol_model.experiment.title,
                                                     protocol_model.experiment.description)
 

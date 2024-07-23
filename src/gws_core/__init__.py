@@ -327,6 +327,11 @@ from .protocol.protocol_spec import ConnectorSpec as ConnectorSpec
 from .protocol.protocol_spec import InterfaceSpec as InterfaceSpec
 from .protocol.protocol_spec import ProcessSpec as ProcessSpec
 from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
+# Protocol template
+from .protocol_template.protocol_template import \
+    ProtocolTemplate as ProtocolTemplate
+from .protocol_template.protocol_template_factory import \
+    ProtocolTemplateFactory as ProtocolTemplateFactory
 # Report
 from .report.report import Report as Report
 # Report task

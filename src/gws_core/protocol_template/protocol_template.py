@@ -3,13 +3,9 @@ from typing import Any, Dict
 
 from peewee import CharField, IntegerField
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from gws_core.core.model.db_field import JSONField
-from gws_core.core.utils.logger import Logger
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactory
-from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol_template.protocol_template_dto import (
     ProtocolTemplateDTO, ProtocolTemplateExportDTO)
 
@@ -22,6 +18,8 @@ class ProtocolTemplate(ModelWithUser):
     :param ModelWithUser: _description_
     :type ModelWithUser: _type_
     """
+
+    CURRENT_VERSION = 3
 
     name = CharField(max_length=255)
 
@@ -70,43 +68,3 @@ class ProtocolTemplate(ModelWithUser):
     def get_protocol_config_dto(self) -> ProtocolGraphConfigDTO:
         protocol_model = ProtocolGraphFactory.create_protocol_model_from_type(self.get_template())
         return protocol_model.to_protocol_config_dto()
-
-    @classmethod
-    def from_protocol_model(
-            cls, protocol_model: ProtocolModel, name: str, description: dict = None) -> 'ProtocolTemplate':
-        protocol_template = ProtocolTemplate()
-        # retrieve the protocol config, without the source task config
-        protocol_template.set_template(protocol_model.to_protocol_config_dto(ignore_source_config=True))
-        protocol_template.name = name
-        protocol_template.description = description
-        return protocol_template
-
-    @classmethod
-    def from_export_dto_dict(cls, export_dict: dict) -> 'ProtocolTemplate':
-        protocol_template_dto: ProtocolTemplateExportDTO
-        try:
-            protocol_template_dto = ProtocolTemplateExportDTO.from_json(export_dict)
-        except Exception as e:
-            Logger.error(f"Error while reading the protocol template file: {e}")
-            raise BadRequestException(f"The protocol template file is not valid : {e}")
-        return cls.from_export_dto(protocol_template_dto)
-
-    @classmethod
-    def from_export_dto_str_bytes(cls, export_dict: Any) -> 'ProtocolTemplate':
-        protocol_template_dto: ProtocolTemplateExportDTO
-        try:
-            protocol_template_dto = ProtocolTemplateExportDTO.from_json(export_dict)
-        except Exception as e:
-            Logger.error(f"Error while reading the protocol template file: {e}")
-            raise BadRequestException(f"The protocol template file is not valid : {e}")
-        return cls.from_export_dto(protocol_template_dto)
-
-    @classmethod
-    def from_export_dto(cls, export_dto: ProtocolTemplateExportDTO) -> 'ProtocolTemplate':
-        protocol_template = ProtocolTemplate()
-        protocol_template.name = export_dto.name
-        protocol_template.description = export_dto.description
-        protocol_template.version = export_dto.version
-        protocol_template.set_template(export_dto.data)
-
-        return protocol_template

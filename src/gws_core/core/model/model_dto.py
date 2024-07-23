@@ -1,6 +1,7 @@
 
 
 from datetime import datetime
+from json import dumps
 from typing import Dict, Generic, List, Type, TypeVar
 
 from fastapi.encoders import jsonable_encoder
@@ -24,7 +25,7 @@ class BaseModelDTO(BaseModel):
         """
         Convert a ModelDTO to a json string.
         """
-        return self.model_dump_json()
+        return dumps(self.to_json_dict())
 
     @classmethod
     def from_json(cls: Type[BaseModelDTOType], json_: dict) -> BaseModelDTOType:
