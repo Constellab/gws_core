@@ -36,6 +36,9 @@ class Project(Model):
     def to_tree_dto(self) -> ProjectTreeDTO:
         children = [child.to_tree_dto() for child in self.children]
 
+        # sort children by code
+        children.sort(key=lambda x: x.code)
+
         return ProjectTreeDTO(
             **self.to_dto().to_json_dict(),
             children=children
@@ -47,7 +50,7 @@ class Project(Model):
         Get all root projects.
         """
 
-        return cls.select().where(cls.parent.is_null())
+        return cls.select().where(cls.parent.is_null()).order_by(cls.code)
 
     def get_with_children_as_list(self) -> List['Project']:
         """
