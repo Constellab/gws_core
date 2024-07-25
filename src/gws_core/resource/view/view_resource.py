@@ -10,6 +10,7 @@ from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.view.any_view import AnyView
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_decorator import view
+from gws_core.resource.view.view_dto import ViewDTO
 from gws_core.resource.view.view_runner import ViewRunner
 
 
@@ -77,4 +78,17 @@ class ViewResource(Resource):
                                                                           dict(view_config_values or {}))
         # disable the pagination of the view because it contains only the data of 1 page
         view_.disable_pagination()
-        return ViewResource(view_.to_dto(config_params).to_json_dict())
+        return ViewResource.from_view_dto(view_.to_dto(config_params))
+
+    @staticmethod
+    def from_view_dto(view_dto: ViewDTO, ) -> 'ViewResource':
+        """Create a view resource directly from the view dto object
+
+        :param view_: view object to use
+        :type view_: View
+        :param view_config_values: config value of the view when call to_json_dict, defaults to None
+        :type view_config_values: ConfigParamsDict, optional
+        :return: _description_
+        :rtype: ViewResource
+        """
+        return ViewResource(view_dto.to_json_dict())

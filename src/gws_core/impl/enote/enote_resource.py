@@ -160,7 +160,27 @@ class ENoteResource(ResourceSet):
         :type parameter_name: str, optional
         """
         view_resource = ViewResource.from_view(view_, view_config_values)
+        self._add_view_resource(view_resource, view_config_values, title, caption, parameter_name)
 
+    def _add_view_resource(self, view_resource: ViewResource,
+                           view_config_values: ConfigParamsDict = None,
+                           title: str = None, caption: str = None,
+                           parameter_name: str = None) -> None:
+        """
+        Add a view resource to the e-note content.
+
+        :param view: view to add
+        :type view: View
+        :param view_config_values: config value of the view when call to_json_dict, defaults to None
+        :type view_config_values: ConfigParamsDict, optional
+        :param title: title of the view, defaults to None
+        :type title: str, optional
+        :param caption: caption of the view, defaults to None
+        :type caption: str, optional
+        :param parameter_name: if provided, the view replace the provided variable.
+                              If not, the view is append at the end of the enote, defaults to None
+        :type parameter_name: str, optional
+        """
         self.add_resource(view_resource, view_resource.uid, create_new_resource=True)
 
         self._add_view(view_resource.uid, ViewHelper.DEFAULT_VIEW_NAME,
@@ -503,6 +523,14 @@ class ENoteResource(ResourceSet):
                                             title=view_data['title'],
                                             caption=view_data['caption'],
                                             create_new_resource=False)
+            elif block.type == RichTextBlockType.FILE_VIEW:
+                # convert the file view to a ViewResource
+                file_view_data: RichTextViewFileData = block.data
+                view_result = RichTextFileService.get_file_view(object_type, object_id, file_view_data['filename'])
+
+                view_resource = ViewResource.from_view_dto(view_result.view)
+                self._add_view_resource(view_resource, view_config_values=None,
+                                        title=file_view_data["title"], caption=file_view_data["caption"])
 
             else:
                 self.append_block(block)
@@ -586,8 +614,8 @@ class ENoteResource(ResourceSet):
 
         # get the file destination for the report
         destination_file_path = RichTextFileService.get_uploaded_file_path(RichTextObjectType.REPORT,
-                                                                         report_id,
-                                                                         file.get_base_name())
+                                                                           report_id,
+                                                                           file.get_base_name())
 
         RichTextFileService.create_object_dir(RichTextObjectType.REPORT, report_id)
 
