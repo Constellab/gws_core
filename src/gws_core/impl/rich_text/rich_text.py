@@ -8,9 +8,10 @@ from gws_core.impl.rich_text.rich_text_paragraph_text import \
     RichTextParagraphText
 from gws_core.impl.rich_text.rich_text_types import (
     RichTextBlock, RichTextBlockType, RichTextDTO,
-    RichTextENoteResourceViewData, RichTextFigureData, RichTextParagraphData,
-    RichTextParagraphHeaderData, RichTextParagraphHeaderLevel,
-    RichTextResourceViewData, RichTextViewFileData)
+    RichTextENoteResourceViewData, RichTextFigureData, RichTextFileData,
+    RichTextParagraphData, RichTextParagraphHeaderData,
+    RichTextParagraphHeaderLevel, RichTextResourceViewData,
+    RichTextViewFileData)
 from gws_core.resource.r_field.serializable_r_field import \
     SerializableObjectJson
 
@@ -303,6 +304,19 @@ class RichText(SerializableObjectJson):
         """Add a figure to the rich text content
         """
         block: RichTextBlock = self.create_block(self.generate_id(), RichTextBlockType.FIGURE, figure_data)
+        self._append_or_insert_block_at_parameter(block, parameter_name)
+        return block
+
+    ##################################### FILE #########################################
+
+    def get_files_data(self) -> List[RichTextFileData]:
+        return [block.data for block in self.get_blocks_by_type(RichTextBlockType.FILE)]
+
+    def add_file(self, file_data: RichTextFileData,
+                 parameter_name: str = None) -> RichTextBlock:
+        """Add a file to the rich text content
+        """
+        block: RichTextBlock = self.create_block(self.generate_id(), RichTextBlockType.FILE, file_data)
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 

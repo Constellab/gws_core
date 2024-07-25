@@ -1,5 +1,6 @@
 
 
+import os
 from copy import deepcopy
 from typing import Dict, List, Type
 
@@ -22,6 +23,10 @@ from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
+from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_file_service import (
+    RichTextFileService, RichTextObjectType)
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.impl.shell.virtual_env.venv_service import VEnvService
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor import Monitor
@@ -978,7 +983,7 @@ class Migration080(BrickMigration):
         VEnvService.delete_all_venvs()
 
 
-@brick_migration('0.8.4', short_description='Rename report template to document table. Migrate template protocol')
+@brick_migration('0.8.4', short_description='Rename report template to document table. Migrate template protocol. Migrate report image')
 class Migration084(BrickMigration):
 
     @classmethod
@@ -996,3 +1001,29 @@ class Migration084(BrickMigration):
             protocol_template.data = ProtocolTemplateFactory.migrate_data_from_1_to_3(protocol_template.data)
             protocol_template.version = 3
             protocol_template.save(skip_hook=True)
+
+        # migrate report images
+        reports: List[Report] = list(Report.select())
+        for report in reports:
+            cls._migrate_rich_text_image(report.content, RichTextObjectType.REPORT, report.id)
+
+        # migrate document images
+        document_templates: List[DocumentTemplate] = list(DocumentTemplate.select())
+        for document_template in document_templates:
+            cls._migrate_rich_text_image(document_template.content,
+                                         RichTextObjectType.DOCUMENT_TEMPLATE, document_template.id)
+
+    @classmethod
+    def _migrate_rich_text_image(
+            cls, rich_text_dto: RichTextDTO, object_type: RichTextObjectType, object_id: str) -> None:
+
+        rich_text = RichText(rich_text_dto)
+        for figure in rich_text.get_figures_data():
+            new_dir = RichTextFileService.get_object_dir_path(object_type, object_id)
+
+            FileHelper.create_dir_if_not_exist(new_dir)
+            new_path = os.path.join(new_dir, figure['filename'])
+            old_path = os.path.join(RichTextFileService._get_dir_path(), figure['filename'])
+
+            if not FileHelper.exists_on_os(new_path):
+                FileHelper.copy_file(old_path, new_path)

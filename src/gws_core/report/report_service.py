@@ -9,7 +9,8 @@ from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
+from gws_core.impl.rich_text.rich_text_file_service import (
+    RichTextFileService, RichTextObjectType)
 from gws_core.impl.rich_text.rich_text_types import (
     RichTextBlockType, RichTextDTO, RichTextParagraphHeaderLevel,
     RichTextResourceViewData, RichTextViewFileData)
@@ -56,6 +57,13 @@ class ReportService():
         if report_dto.template_id:
             template: DocumentTemplate = DocumentTemplate.get_by_id_and_check(report_dto.template_id)
             report.content = template.content
+
+            # copy the storage of the document template to the report
+            RichTextFileService.copy_object_dir(RichTextObjectType.DOCUMENT_TEMPLATE,
+                                                template.id,
+                                                RichTextObjectType.REPORT,
+                                                report.id)
+
         else:
             # Set default content for report
             report.content = RichText.create_rich_text_dto(
@@ -203,8 +211,16 @@ class ReportService():
         return report
 
     @classmethod
-    @transaction()
     def delete(cls, report_id: str) -> None:
+        # delete the object in the database
+        cls._delete_report_db(report_id)
+
+        # if transaction is successful, delete the object in the file system
+        RichTextFileService.delete_object_dir(RichTextObjectType.REPORT, report_id)
+
+    @classmethod
+    @transaction()
+    def _delete_report_db(cls, report_id: str) -> None:
         report: Report = cls._get_and_check_before_update(report_id)
 
         Report.delete_by_id(report_id)
@@ -336,7 +352,12 @@ class ReportService():
         file_paths: List[str] = []
 
         for figure in rich_text.get_figures_data():
-            file_paths.append(RichTextFileService.get_file_path(figure['filename']))
+            file_paths.append(RichTextFileService.get_figure_file_path(RichTextObjectType.REPORT, report.id,
+                                                                       figure['filename']))
+
+        for file in rich_text.get_files_data():
+            file_paths.append(RichTextFileService.get_uploaded_file_path(RichTextObjectType.REPORT, report.id,
+                                                                         file['name']))
 
         # set the resource views in the json object
         for resource_view in rich_text.get_resource_views_data():
@@ -354,7 +375,9 @@ class ReportService():
             data: RichTextViewFileData = file_view_block.data
 
             # retrieve the file view
-            view_result_dto = RichTextFileService.get_file_view(data["filename"])
+            view_result_dto = RichTextFileService.get_file_view(RichTextObjectType.REPORT,
+                                                                report.id,
+                                                                data["filename"])
             save_report_dto.resource_views[data["id"]] = view_result_dto
 
             # replace the block info with the new data to have a simpler object in space

@@ -450,6 +450,23 @@ class FileHelper():
         return f'{size:.1f} EB'
 
     @staticmethod
+    def generate_unique_fs_node_for_dir(fs_node_name: str, dir_path: str) -> str:
+        """
+        Generate a unique fs node name for a list of node names.
+        Append _1, _2... before the extension if the str is already in the list.
+        Useful to avoid name collision when adding a file to a directory.
+
+        :param fs_node_name: name of the new fs node
+        :type fs_node_name: str
+        :param dir_path: path to the directory
+        :type dir_path: str
+        :return: unique fs node name (= fs_node_name if not in the list, else fs_node_name_1, fs_node_name_2...)
+        :rtype: str
+        """
+        list_fs_node_names = os.listdir(dir_path)
+        return FileHelper.generate_unique_fs_node_for_list(list_fs_node_names, fs_node_name)
+
+    @staticmethod
     def generate_unique_fs_node_for_list(list_fs_node_names: List[str], fs_node_name: str) -> str:
         """
         Generate a unique fs node name for a list of node names.

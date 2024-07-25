@@ -12,7 +12,8 @@ from gws_core.impl.enote.merge_enotes import MergeENotes
 from gws_core.impl.enote.update_enote import UpdatENote
 from gws_core.impl.file.file import File
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
+from gws_core.impl.rich_text.rich_text_file_service import (
+    RichTextFileService, RichTextObjectType, RichTextUploadFileResultDTO)
 from gws_core.impl.rich_text.rich_text_types import (RichTextBlockType,
                                                      RichTextFigureData)
 from gws_core.impl.robot.robot_resource import Robot
@@ -54,14 +55,19 @@ class TestEnote(BaseTestCase):
         self.assertEqual(enote.get_block_at_index(0).data["text"], "This is a test paragraph")
 
     def test_create_enote_from_template(self):
+
+        doc_template = DocumentTemplate(title="My template")
         template_rich_text = RichText()
         template_rich_text.add_paragraph("This is a test paragraph")
 
         # add figure to the template
-        figure_data = self._create_report_image('test')
+        figure_data = self._create_document_template_image(doc_template.id, 'test')
         template_rich_text.add_figure(figure_data)
 
-        doc_template = DocumentTemplate(title="My template", content=template_rich_text.get_content())
+        file_data = self._create_document_template_file(doc_template.id, 'hello.txt')
+        template_rich_text.add_file(file_data)
+
+        doc_template.content = template_rich_text.get_content()
         doc_template.save()
 
         # Test create e-note from template
@@ -77,10 +83,17 @@ class TestEnote(BaseTestCase):
         self.assertEqual(enote.title, "My template")
         self.assertEqual(enote.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
         self.assertEqual(enote.get_block_at_index(0).data["text"], "This is a test paragraph")
-        # check that the image existe and is in the e-note resource set
+
+        # check that the image exists
         self.assertEqual(enote.get_block_at_index(1).type, RichTextBlockType.FIGURE)
         self.assertEqual(enote.get_block_at_index(1).data['title'], 'test')
-        self.assertEqual(len(enote.get_resources()), 1)
+
+        # check that the file exists
+        self.assertEqual(enote.get_block_at_index(2).type, RichTextBlockType.FILE)
+        self.assertEqual(enote.get_block_at_index(2).data['name'], 'hello.txt')
+
+        # the enote should have 2 resources (1 for the figure, 1 for the file)
+        self.assertEqual(len(enote.get_resources()), 2)
 
     def test_update_enote(self):
         base_enote = ENoteResource(title="My custom note")
@@ -129,6 +142,11 @@ class TestEnote(BaseTestCase):
         self.assertIsInstance(report, ReportResource)
         self.assertEqual(report.get_content().get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
         self.assertEqual(report.get_content().get_block_at_index(0).data["text"], "This is a test paragraph")
+        self.assertEqual(report.get_content().get_block_at_index(1).type, RichTextBlockType.FIGURE)
+        # the first view was attached to a resource, it should generate a RESOURCE_VIEW
+        self.assertEqual(report.get_content().get_block_at_index(2).type, RichTextBlockType.RESOURCE_VIEW)
+        # the second view was not attached to a resource, it should generate a FILE_VIEW
+        self.assertEqual(report.get_content().get_block_at_index(3).type, RichTextBlockType.FILE_VIEW)
 
         report_db = Report.get_by_id_and_check(report.report_id)
         self.assertIsNotNone(report_db)
@@ -184,17 +202,14 @@ class TestEnote(BaseTestCase):
         filename = f"{temp_dir}/temp.png"
         img.save(filename)
 
-        file = File(filename)
-        # simulate that the file is already saved
-        file._model_id = '1234'
-        return file
+        return File(filename)
 
-    def _create_report_image(self, title: str = None) -> RichTextFigureData:
+    def _create_document_template_image(self, document_template_id: str, title: str = None) -> RichTextFigureData:
         # create an image with a red pixel and save it in report storage
         img = self._create_image()
 
         # add the image to the template
-        result = RichTextFileService.save_image(img, 'png')
+        result = RichTextFileService.save_image(RichTextObjectType.DOCUMENT_TEMPLATE, document_template_id, img, 'png')
         return {
             "filename": result.filename,
             "width": result.width,
@@ -204,6 +219,12 @@ class TestEnote(BaseTestCase):
             "title": title,
             "caption": None,
         }
+
+    def _create_document_template_file(
+            self, document_template_id: str, filename: str = None) -> RichTextUploadFileResultDTO:
+        # write the file
+        return RichTextFileService.write_file(
+            RichTextObjectType.DOCUMENT_TEMPLATE, document_template_id, 'hello', filename, 'w')
 
     def _create_resource(self) -> Resource:
         resource_model = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)

@@ -21,6 +21,7 @@ class RichTextBlockType(Enum):
     VIDEO = 'video'
     FORMULA = 'formula'
     TABLE = 'table'
+    FILE = 'file'
 
 
 class RichTextBlock(BaseModelDTO):
@@ -109,10 +110,14 @@ class RichTextViewFileData(TypedDict):
     caption: Optional[str]
 
 
-################################ BLOCK DATA ################################
 class RichTextVariableData(TypedDict):
     """Object representing a variable in a rich text"""
     name: str
     description: str
     value: Any
     type: Literal['string']
+
+
+class RichTextFileData(TypedDict):
+    name: str
+    size: int  # in bytes

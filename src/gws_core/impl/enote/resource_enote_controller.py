@@ -10,8 +10,8 @@ from gws_core.resource.view.view_dto import CallViewResultDTO
 from gws_core.user.auth_service import AuthService
 
 
-@core_app.get("/resource-enote/{id_}/resource/{filename}/image", tags=["ENote"],
-              summary="Get the image of an enote resource")
+@core_app.get("/resource-enote/{id_}/resource/{filename}/file", tags=["ENote"],
+              summary="Get the file of an enote resource")
 def get_enote_image(id_: str,
                     filename: str,
                     _=Depends(AuthService.check_user_access_token)) -> FileResponse:

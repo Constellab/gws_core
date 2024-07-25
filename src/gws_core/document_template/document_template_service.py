@@ -6,6 +6,8 @@ from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.document_template.document_template_search_builder import \
     ReportTemplateSearchBuilder
 from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_file_service import (
+    RichTextFileService, RichTextObjectType)
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.report.report import Report
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
@@ -26,10 +28,17 @@ class DocumentTemplateService():
 
     @classmethod
     @transaction()
-    def create_from_report(cls, doc_id: str) -> DocumentTemplate:
-        report: Report = Report.get_by_id_and_check(doc_id)
+    def create_from_report(cls, report_id: str) -> DocumentTemplate:
+        report: Report = Report.get_by_id_and_check(report_id)
 
-        return cls._create(report.title, report.content)
+        document_template = cls._create(report.title, report.content)
+
+        # copy the storage of the report to the document template
+        RichTextFileService.copy_object_dir(RichTextObjectType.REPORT, report_id,
+                                            RichTextObjectType.DOCUMENT_TEMPLATE,
+                                            document_template.id)
+
+        return document_template
 
     @classmethod
     @transaction()
@@ -69,8 +78,16 @@ class DocumentTemplateService():
         return document.save()
 
     @classmethod
-    @transaction()
     def delete(cls, doc_id: str) -> None:
+        # delete the object in the database
+        cls._delete_in_db(doc_id)
+
+        # if transaction is successful, delete the object in the file system
+        RichTextFileService.delete_object_dir(RichTextObjectType.DOCUMENT_TEMPLATE, doc_id)
+
+    @classmethod
+    @transaction()
+    def _delete_in_db(cls, doc_id: str) -> None:
 
         DocumentTemplate.delete_by_id(doc_id)
 

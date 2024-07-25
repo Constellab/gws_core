@@ -8,12 +8,14 @@ from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file import File
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
+from gws_core.impl.rich_text.rich_text_file_service import (
+    RichTextFileService, RichTextObjectType)
 from gws_core.impl.rich_text.rich_text_types import (
     RichTextBlock, RichTextBlockType, RichTextENoteResourceViewData,
-    RichTextFigureData, RichTextParagraphHeaderLevel, RichTextResourceViewData,
-    RichTextViewFileData)
+    RichTextFigureData, RichTextFileData, RichTextParagraphHeaderLevel,
+    RichTextResourceViewData, RichTextViewFileData)
 from gws_core.impl.rich_text.rich_text_view import RichTextView
 from gws_core.model.typing_style import TypingStyle
 from gws_core.report.report import Report
@@ -196,8 +198,8 @@ class ENoteResource(ResourceSet):
 
     ########################################################### FIGURE ###########################################################
 
-    def add_figure(self, image_path: str, title: str = None, caption: str = None,
-                   parameter_name: str = None) -> None:
+    def add_figure_from_path(self, image_path: str, title: str = None, caption: str = None,
+                             parameter_name: str = None) -> None:
         """
         Add a figure to the e-note content.
 
@@ -273,6 +275,63 @@ class ENoteResource(ResourceSet):
         :return: the figure as a File resource
         :rtype: File
         """
+        return self.get_file(filename)
+
+    ########################################################### FILE ###########################################################
+
+    def add_file_from_path(self, file_path: str, parameter_name: str = None) -> None:
+        """
+        Add a file to the e-note content.
+
+        :param file_path: path of the file
+        :type file_path: str
+        :param parameter_name: if provided, the file replace the provided variable.
+                                If not, the file is append at the end of the enote, defaults to None
+        :type parameter_name: str, optional
+        """
+
+        file = File(file_path)
+
+        self.add_file(file, parameter_name, create_new_resource=True)
+
+    def add_file(self, file: File, parameter_name: str = None,
+                 create_new_resource: bool = False) -> None:
+        """
+        Add a file to the e-note content.
+
+        :param file: file to add
+        :type file: File
+        :param parameter_name: if provided, the file replace the provided variable.
+                                If not, the file is append at the end of the enote, defaults to None
+        :type parameter_name: str, optional
+        :param create_new_resource: if True, a new resource is created with the file.
+                                    If False, the file is used as a resource.
+                                    Set False if the File resource already exist ans saved on the lab, defaults to True
+        :type create_new_resource: bool, optional
+        """
+
+        filename = file.get_base_name()
+
+        if self.resource_exists(filename):
+            raise ValueError(f"The file {filename} already exists in the e-note")
+
+        self._rich_text.add_file({
+            "name": filename,
+            "size": file.get_size(),
+        }, parameter_name=parameter_name)
+
+        self.add_resource(file, filename, create_new_resource=create_new_resource)
+
+    def get_file(self, filename: str) -> File:
+        """
+        Get the file of the enote as a File resource.
+
+        :param filename: filename of the file
+        :type filename: str
+        :raises ValueError: The resource must be a File object
+        :return: the file as a File resource
+        :rtype: File
+        """
         file: Resource = self.get_resource(filename)
 
         if not isinstance(file, File):
@@ -280,16 +339,16 @@ class ENoteResource(ResourceSet):
 
         return file
 
-    def get_figure_path(self, filename: str) -> str:
+    def get_file_path(self, filename: str) -> str:
         """
-        Get the path of the figure file.
+        Get the path of the file.
 
-        :param filename: filename of the figure
+        :param filename: filename of the file
         :type filename: str
-        :return: path of the figure file
+        :return: path of the file
         :rtype: str
         """
-        return self.get_figure(filename).path
+        return self.get_file(filename).path
 
     ############################# Block #############################
 
@@ -368,30 +427,53 @@ class ENoteResource(ResourceSet):
         for block in enote.get_blocks():
             if block.type == RichTextBlockType.FIGURE:
                 # add the figure manually (including the resource)
-                self.add_figure_file(enote.get_figure(block.data['filename']),
-                                     title=block.data['title'], caption=block.data['caption'],
+                figure_data: RichTextFigureData = block.data
+                self.add_figure_file(enote.get_file(figure_data['filename']),
+                                     title=figure_data['title'], caption=figure_data['caption'],
                                      create_new_resource=False)
+            elif block.type == RichTextBlockType.FILE:
+                # add the file manually (including the resource)
+                file_data: RichTextFileData = block.data
+                self.add_file(enote.get_file(file_data['name']), create_new_resource=False)
+
             elif block.type == RichTextBlockType.ENOTE_VIEW:
-                data: RichTextENoteResourceViewData = block.data
                 # add the view manually (including the resource)
-                self.add_view_from_resource(enote.get_resource(data['sub_resource_key']),
-                                            view_method_name=data['view_method_name'],
-                                            config_values=data['view_config'],
-                                            title=data['title'],
-                                            caption=data['caption'],
+                view_data: RichTextENoteResourceViewData = block.data
+                self.add_view_from_resource(enote.get_resource(view_data['sub_resource_key']),
+                                            view_method_name=view_data['view_method_name'],
+                                            config_values=view_data['view_config'],
+                                            title=view_data['title'],
+                                            caption=view_data['caption'],
                                             create_new_resource=False)
 
             else:
                 self._rich_text.append_block(block)
 
+    def append_basic_rich_text(self, rich_text: RichText) -> None:
+        """Append a basic rich content to this e-note content.
+        It does not support file, figure, or views
+
+        :param rich_text: rich text to append
+        :type rich_text: RichText
+        """
+        # add the block 1 by 1 to the enote
+        for block in rich_text.get_blocks():
+            self.append_block(block)
+
     ############################# Reports #############################
 
-    def append_report_rich_text(self, rich_text: RichText) -> None:
+    def append_report_rich_text(self, rich_text: RichText,
+                                object_type: RichTextObjectType,
+                                object_id: str) -> None:
         """
         Append a rich text (that comes from a report, document template or RichTextParam) to the e-note.
 
         :param rich_text: rich text to append to the e-note (from a report, document template or RichTextParam)
         :type rich_text: RichText
+        :param object_type: type of the object that has the rich text
+        :type object_type: RichTextObjectType
+        :param object_id: id of the object that has the rich text
+        :type object_id: str
         :return: the e-note
         :rtype: _type_
         """
@@ -399,20 +481,27 @@ class ENoteResource(ResourceSet):
         for block in rich_text.get_blocks():
             # specific case for the figure
             if block.type == RichTextBlockType.FIGURE:
+                figure_data: RichTextFigureData = block.data
 
                 # get the path of the figure, to add the figure to enote
-                filename = RichTextFileService.get_file_path(block.data['filename'])
+                filename = RichTextFileService.get_object_file_path(object_type, object_id,
+                                                                    figure_data['filename'])
                 # add the figure manually
-                self.add_figure(filename, block.data['title'], block.data['caption'])
+                self.add_figure_from_path(filename, figure_data['title'], figure_data['caption'])
+            elif block.type == RichTextBlockType.FILE:
+                # add the file manually
+                file_data: RichTextFileData = block.data
+                filename = RichTextFileService.get_object_file_path(object_type, object_id, file_data['name'])
+                self.add_file_from_path(filename)
             elif block.type == RichTextBlockType.RESOURCE_VIEW:
-                resource_model = ResourceModel.get_by_id_and_check(block.data['resource_id'])
                 # add the view manually
-                data: RichTextResourceViewData = block.data
+                view_data: RichTextResourceViewData = block.data
+                resource_model = ResourceModel.get_by_id_and_check(view_data['resource_id'])
                 self.add_view_from_resource(resource_model.get_resource(),
-                                            view_method_name=data['view_method_name'],
-                                            config_values=data['view_config'],
-                                            title=data['title'],
-                                            caption=data['caption'],
+                                            view_method_name=view_data['view_method_name'],
+                                            config_values=view_data['view_config'],
+                                            title=view_data['title'],
+                                            caption=view_data['caption'],
                                             create_new_resource=False)
 
             else:
@@ -429,12 +518,12 @@ class ENoteResource(ResourceSet):
         report_dto = ReportSaveDTO(title=title or self.title)
         report: Report = ReportService.create(report_dto)
 
-        report_rich_text = self.export_as_report_rich_text()
+        report_rich_text = self._export_as_report_rich_text(report.id)
 
         # save the content to the report
         return ReportService.update_content(report.id, report_rich_text.get_content())
 
-    def export_as_report_rich_text(self) -> RichText:
+    def _export_as_report_rich_text(self, report_id: str) -> RichText:
         """
         Convert the enote rich text to a report rich text.
 
@@ -448,20 +537,25 @@ class ENoteResource(ResourceSet):
             # specific case for the figure
             if block.type == RichTextBlockType.FIGURE:
                 # add the figure manually
-                figure_data = self._convert_figure_for_report_rich_text(block.data)
+                figure_data = self._convert_figure_for_report_rich_text(block.data, report_id)
                 report_rich_text.add_figure(figure_data)
+            elif block.type == RichTextBlockType.FILE:
+                # add the file manually
+                file_data = self._convert_file_for_report_rich_text(block.data, report_id)
+                report_rich_text.add_file(file_data)
             elif block.type == RichTextBlockType.ENOTE_VIEW:
                 # add the view manually
-                self._add_enote_view_to_report_rich_text(block.data, report_rich_text)
+                self._add_enote_view_to_report_rich_text(block.data, report_rich_text, report_id)
             else:
                 report_rich_text.append_block(block)
 
         return report_rich_text
 
-    def _convert_figure_for_report_rich_text(self, enote_figure: RichTextFigureData) -> RichTextFigureData:
+    def _convert_figure_for_report_rich_text(
+            self, enote_figure: RichTextFigureData, report_id: str) -> RichTextFigureData:
         """Method to convert a enote figure to a report figure. It saves the figure in the report storage.
         """
-        figure_file = self.get_figure(enote_figure['filename'])
+        figure_file = self.get_file(enote_figure['filename'])
         image: Image.Image = None
         try:
             image = Image.open(figure_file.path)
@@ -469,7 +563,8 @@ class ENoteResource(ResourceSet):
             raise Exception(f'The file {figure_file.path} is not an image')
 
         # add the figure to report storage
-        result = RichTextFileService.save_image(image, figure_file.extension)
+        result = RichTextFileService.save_image(RichTextObjectType.REPORT, report_id,
+                                                image, figure_file.extension)
 
         # add the figure manually
         return {
@@ -482,8 +577,28 @@ class ENoteResource(ResourceSet):
             "caption": enote_figure['caption'],
         }
 
+    def _convert_file_for_report_rich_text(
+            self, enote_file: RichTextFileData, report_id: str) -> RichTextFileData:
+        """Method to convert a enote figure to a report figure. It saves the figure in the report storage.
+        """
+        # retrieve the file
+        file = self.get_file(enote_file['name'])
+
+        # get the file destination for the report
+        destination_file_path = RichTextFileService.get_uploaded_file_path(RichTextObjectType.REPORT,
+                                                                         report_id,
+                                                                         file.get_base_name())
+
+        RichTextFileService.create_object_dir(RichTextObjectType.REPORT, report_id)
+
+        # copy the file to the destination
+        FileHelper.copy_file(file.path, destination_file_path)
+
+        # the object is the same as the enote
+        return enote_file
+
     def _add_enote_view_to_report_rich_text(self, enote_view: RichTextENoteResourceViewData,
-                                            report_rich_text: RichText) -> None:
+                                            report_rich_text: RichText, report_id: str) -> None:
 
         # retrieve the resource model from the resource
         resource = self.get_resource(enote_view['sub_resource_key'])
@@ -494,7 +609,7 @@ class ENoteResource(ResourceSet):
             report_rich_text.add_resource_view(view_data)
         else:
             # add the view manually from a json file (without the resource)
-            view_data_2 = self._convert_file_view_for_report_rich_text(enote_view)
+            view_data_2 = self._convert_file_view_for_report_rich_text(enote_view, report_id)
             report_rich_text.add_file_view(view_data_2)
 
     def _convert_view_for_report_rich_text(self, enote_view: RichTextENoteResourceViewData) -> RichTextResourceViewData:
@@ -513,26 +628,27 @@ class ENoteResource(ResourceSet):
         return view_result.view_config.to_rich_text_resource_view()
 
     def _convert_file_view_for_report_rich_text(
-            self, enote_view: RichTextENoteResourceViewData) -> RichTextViewFileData:
+            self, enote_view: RichTextENoteResourceViewData, report_id: str) -> RichTextViewFileData:
 
         # retrieve the resource model from the resource
         resource = self.get_resource(enote_view['sub_resource_key'])
 
         view_runner: ViewRunner = ViewRunner(resource, enote_view['view_method_name'], enote_view["view_config"])
 
-        view = view_runner.generate_view()
+        view_ = view_runner.generate_view()
         # call the view to dict
         view_dto = view_runner.call_view_to_dto()
 
         view_result = CallViewResult(view_dto,
                                      resource_id=None,
                                      view_config=None,
-                                     title=view.get_title() or resource.name or "View",
+                                     title=view_.get_title() or resource.name or "View",
                                      view_type=view_dto.type,
-                                     style=view.get_style() or view_runner.get_metadata_style())
+                                     style=view_.get_style() or view_runner.get_metadata_style())
 
         # save the json as a file
-        filename = RichTextFileService.save_file_view(view_result.to_dto())
+        filename = RichTextFileService.save_file_view(RichTextObjectType.REPORT, report_id,
+                                                      view_result.to_dto())
 
         return {
             "id": enote_view['id'],

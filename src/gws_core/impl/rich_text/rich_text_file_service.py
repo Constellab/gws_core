@@ -1,6 +1,8 @@
 
 
 import os
+from enum import Enum
+from typing import Any
 
 from fastapi import UploadFile
 from PIL import Image
@@ -21,17 +23,37 @@ class RichTextUploadImageResultDTO(BaseModelDTO):
     height: int
 
 
+class RichTextUploadFileResultDTO(BaseModelDTO):
+    name: str
+    size: int  # in bytes
+
+
+class RichTextObjectType(Enum):
+    REPORT = 'report'
+    DOCUMENT_TEMPLATE = 'document_template'
+
+
 class RichTextFileService():
-    """Service to store file assosicated to a rich text (report, document template, RichTextParam)
+    """Service to store file assosicated to a rich text (report, document template)
+
+    Files are stored in the 'report' directory in the data directory
+    For each object (report, document template), a directory (from id) is created to store the files
+
+    Path example : data_dir/report/report/{report_id}/filename
 
     :return: [description]
     :rtype: [type]
     """
 
-    _dir_name = 'report'
+    MAIN_DIR = 'report'
+
+    FILE_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
+
+    ########################################### IMAGE ###########################################
 
     @classmethod
-    def upload_image(cls, file: UploadFile) -> RichTextUploadImageResultDTO:
+    def upload_image(cls, object_type: RichTextObjectType, object_id: str,
+                     file: UploadFile) -> RichTextUploadImageResultDTO:
         image: Image.Image = None
         try:
             image = Image.open(file.file)
@@ -45,10 +67,11 @@ class RichTextFileService():
         else:
             extension = FileHelper.get_extension(file.filename)
 
-        return cls.save_image(image, extension)
+        return cls.save_image(object_type, object_id, image, extension)
 
     @classmethod
-    def save_image(cls, image: Image.Image, extension: str) -> RichTextUploadImageResultDTO:
+    def save_image(cls, object_type: RichTextObjectType, object_id: str,
+                   image: Image.Image, extension: str) -> RichTextUploadImageResultDTO:
         """
         Method to save the image of a report to the file system
 
@@ -61,10 +84,10 @@ class RichTextFileService():
         """
         image_size = image.size
 
-        filename = f"{StringHelper.generate_uuid()}_{str(DateHelper.now_utc_as_milliseconds())}.{extension}"
+        filename = cls._generate_filename(extension)
 
-        dest_dir = cls._get_dir_path()
-        file_path = os.path.join(dest_dir, filename)
+        cls.create_object_dir(object_type, object_id)
+        file_path = cls.get_object_file_path(object_type, object_id, filename)
 
         image.save(file_path)
         image.close()
@@ -76,42 +99,99 @@ class RichTextFileService():
         )
 
     @classmethod
-    def get_file_view(cls, filename: str) -> CallViewResultDTO:
-        file_path = cls.get_file_path(filename)
+    def get_figure_file_path(cls, object_type: RichTextObjectType, object_id: str, filename: str) -> str:
+        return cls.get_object_file_path(object_type, object_id, filename)
+
+    ########################################### FILE VIEW ###########################################
+
+    @classmethod
+    def get_file_view(cls, object_type: RichTextObjectType, object_id: str,
+                      filename: str) -> CallViewResultDTO:
+        file_path = cls.get_object_file_path(object_type, object_id, filename)
 
         with open(file_path, 'r', encoding='utf-8') as file:
             return CallViewResultDTO.from_json_str(file.read())
 
     @classmethod
-    def save_file_view(cls, view_result: CallViewResultDTO) -> str:
-        return cls.save_str_to_file(view_result.to_json_str(), 'json')
+    def save_file_view(cls, object_type: RichTextObjectType, object_id: str,
+                       view_result: CallViewResultDTO) -> str:
+        cls.create_object_dir(object_type, object_id)
+        filename = cls._generate_filename('json')
 
-    @classmethod
-    def save_str_to_file(cls, text: str, extension: str) -> str:
-
-        filename = f"{StringHelper.generate_uuid()}_{str(DateHelper.now_utc_as_milliseconds())}.{extension}"
-
-        dest_dir = cls._get_dir_path()
-        file_path = os.path.join(dest_dir, filename)
+        file_path = cls.get_object_file_path(object_type, object_id, filename)
 
         with open(file_path, 'w', encoding='utf-8') as file:
-            file.write(text)
+            file.write(view_result.to_json_str())
 
         return filename
 
-    @classmethod
-    def delete_file(cls, file_name: str) -> None:
-
-        file_path = cls.get_file_path(file_name)
-        FileHelper.delete_file(file_path)
+    ########################################### FILE ###########################################
 
     @classmethod
-    def get_file_path(cls, filename: str) -> str:
-        return os.path.join(cls._get_dir_path(), filename)
+    def upload_file(cls, object_type: RichTextObjectType, object_id: str, upload_file: UploadFile) -> RichTextUploadFileResultDTO:
+
+        if upload_file.size > cls.FILE_MAX_SIZE:
+            raise BadRequestException('The file is too large, the maximum size is 10 MB')
+
+        return cls.write_file(object_type, object_id, upload_file.file.read(), upload_file.filename, 'wb')
+
+    @classmethod
+    def write_file(cls, object_type: RichTextObjectType, object_id: str,
+                   file_content: Any, filename: str, mode: str) -> RichTextUploadFileResultDTO:
+        cls.create_object_dir(object_type, object_id)
+
+        # generate a unique name for the file for the object
+        filename = FileHelper.generate_unique_fs_node_for_dir(filename,
+                                                              cls.get_object_dir_path(object_type, object_id))
+
+        # write the file
+        file_path = cls.get_object_file_path(object_type, object_id, filename)
+        with open(file_path, mode, encoding='utf-8') as file:
+            file.write(file_content)
+
+        return RichTextUploadFileResultDTO(
+            name=filename,
+            size=FileHelper.get_size(file_path)
+        )
+
+    @classmethod
+    def get_uploaded_file_path(cls, object_type: RichTextObjectType, object_id: str, filename: str) -> str:
+        return cls.get_object_file_path(object_type, object_id, filename)
+
+    ########################################### GENERIC ###########################################
+
+    @classmethod
+    def get_object_file_path(cls, object_type: RichTextObjectType, object_id: str, filename: str) -> str:
+        return os.path.join(cls.get_object_dir_path(object_type, object_id), filename)
+
+    @classmethod
+    def get_object_dir_path(cls, object_type: RichTextObjectType, object_id: str) -> str:
+        return os.path.join(cls._get_dir_path(), object_type.value, object_id)
+
+    @classmethod
+    def create_object_dir(cls, object_type: RichTextObjectType, object_id: str) -> None:
+        FileHelper.create_dir_if_not_exist(cls.get_object_dir_path(object_type, object_id))
+
+    @classmethod
+    def _generate_filename(cls, extension: str) -> str:
+        return f"{StringHelper.generate_uuid()}_{str(DateHelper.now_utc_as_milliseconds())}.{extension}"
 
     @classmethod
     def _get_dir_path(cls) -> str:
-        dir_ = os.path.join(Settings.get_instance().get_data_dir(), cls._dir_name)
+        dir_ = os.path.join(Settings.get_instance().get_data_dir(), cls.MAIN_DIR)
 
         FileHelper.create_dir_if_not_exist(dir_)
         return dir_
+
+    @classmethod
+    def delete_object_dir(cls, object_type: RichTextObjectType, object_id: str) -> None:
+        FileHelper.delete_dir(cls.get_object_dir_path(object_type, object_id))
+
+    @classmethod
+    def copy_object_dir(cls, source_object_type: RichTextObjectType,
+                        source_object_id: str,
+                        target_object_type: RichTextObjectType,
+                        target_object_id: str) -> None:
+        source_dir = cls.get_object_dir_path(source_object_type, source_object_id)
+        target_dir = cls.get_object_dir_path(target_object_type, target_object_id)
+        FileHelper.copy_dir(source_dir, target_dir)

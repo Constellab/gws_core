@@ -48,7 +48,7 @@ class UpdatENote(Task):
         if section_title is not None:
             enote_resource.add_header(section_title, RichTextParagraphHeaderLevel.HEADER_1)
 
-        enote_resource.append_report_rich_text(enote_param)
+        enote_resource.append_basic_rich_text(enote_param)
 
         return {
             'enote': enote_resource

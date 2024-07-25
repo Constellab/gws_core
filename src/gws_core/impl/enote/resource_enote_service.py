@@ -20,7 +20,7 @@ class ResourceENoteService():
         if not isinstance(enote, ENoteResource):
             raise BadRequestException('The resource is not an eNote')
 
-        return enote.get_figure_path(filename)
+        return enote.get_file_path(filename)
 
     @classmethod
     def call_view_method(cls, enote_resource_model_id: str, sub_resource_key: str,
