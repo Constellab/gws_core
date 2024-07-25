@@ -1,6 +1,6 @@
 
 
-from typing import Any, List, final
+from typing import Any, List, Optional, final
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -16,7 +16,7 @@ from .view_types import ViewSpecs, ViewType
 class View:
 
     _type: ViewType = ViewType.VIEW
-    _title: str = None
+    _title: Optional[str] = None
     _technical_info: TechnicalInfoDict
     _style: TypingStyle = None
 
@@ -54,7 +54,7 @@ class View:
         """ Set title """
         self._title = title
 
-    def get_title(self) -> str:
+    def get_title(self) -> Optional[str]:
         """ Get title """
         return self._title
 
@@ -163,3 +163,7 @@ class View:
         """Generate range list like 0,1,2...length
         """
         return list(range(0, length))
+
+    @classmethod
+    def get_specs(cls) -> ViewSpecs:
+        return cls._specs

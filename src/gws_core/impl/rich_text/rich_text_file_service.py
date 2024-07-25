@@ -12,6 +12,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.resource.view.view_dto import CallViewResultDTO
 
 
 class RichTextUploadImageResultDTO(BaseModelDTO):
@@ -62,7 +63,7 @@ class RichTextFileService():
 
         filename = f"{StringHelper.generate_uuid()}_{str(DateHelper.now_utc_as_milliseconds())}.{extension}"
 
-        dest_dir = cls._init_dir()
+        dest_dir = cls._get_dir_path()
         file_path = os.path.join(dest_dir, filename)
 
         image.save(file_path)
@@ -75,17 +76,34 @@ class RichTextFileService():
         )
 
     @classmethod
+    def get_file_view(cls, filename: str) -> CallViewResultDTO:
+        file_path = cls.get_file_path(filename)
+
+        with open(file_path, 'r', encoding='utf-8') as file:
+            return CallViewResultDTO.from_json_str(file.read())
+
+    @classmethod
+    def save_file_view(cls, view_result: CallViewResultDTO) -> str:
+        return cls.save_str_to_file(view_result.to_json_str(), 'json')
+
+    @classmethod
+    def save_str_to_file(cls, text: str, extension: str) -> str:
+
+        filename = f"{StringHelper.generate_uuid()}_{str(DateHelper.now_utc_as_milliseconds())}.{extension}"
+
+        dest_dir = cls._get_dir_path()
+        file_path = os.path.join(dest_dir, filename)
+
+        with open(file_path, 'w', encoding='utf-8') as file:
+            file.write(text)
+
+        return filename
+
+    @classmethod
     def delete_file(cls, file_name: str) -> None:
 
         file_path = cls.get_file_path(file_name)
         FileHelper.delete_file(file_path)
-
-    @classmethod
-    def _init_dir(cls) -> str:
-        dir_ = cls._get_dir_path()
-
-        FileHelper.create_dir_if_not_exist(dir_)
-        return dir_
 
     @classmethod
     def get_file_path(cls, filename: str) -> str:
@@ -93,4 +111,7 @@ class RichTextFileService():
 
     @classmethod
     def _get_dir_path(cls) -> str:
-        return os.path.join(Settings.get_instance().get_data_dir(), cls._dir_name)
+        dir_ = os.path.join(Settings.get_instance().get_data_dir(), cls._dir_name)
+
+        FileHelper.create_dir_if_not_exist(dir_)
+        return dir_

@@ -10,7 +10,7 @@ from gws_core.resource.view_config.view_config import ViewConfig
 
 class CallViewResult():
     view: ViewDTO
-    resource_id: str
+    resource_id: Optional[str]
     view_config: Optional[ViewConfig]
     title: str
     view_type: ViewType

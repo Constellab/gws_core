@@ -73,7 +73,8 @@ class ViewResource(Resource):
             raise Exception("The view object must be an instance of View")
 
         # create a new config for the view to_dict method based on view specs
-        config_params: ConfigParams = ParamSpecHelper.build_config_params(view_._specs, dict(view_config_values or {}))
+        config_params: ConfigParams = ParamSpecHelper.build_config_params(view_.get_specs(),
+                                                                          dict(view_config_values or {}))
         # disable the pagination of the view because it contains only the data of 1 page
         view_.disable_pagination()
         return ViewResource(view_.to_dto(config_params).to_json_dict())

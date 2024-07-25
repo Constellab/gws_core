@@ -9,6 +9,7 @@ from gws_core.core_controller import core_app
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text_file_service import (
     RichTextFileService, RichTextUploadImageResultDTO)
+from gws_core.resource.view.view_dto import CallViewResultDTO
 from gws_core.user.auth_service import AuthService
 
 
@@ -23,3 +24,9 @@ def get_image(filename: str,
               _=Depends(AuthService.check_user_access_token)) -> FileResponse:
     file_path = RichTextFileService.get_file_path(filename)
     return FileHelper.create_file_response(file_path, filename=filename)
+
+
+@core_app.get("/rich-text/file-view/{filename}", tags=["Report"], summary="Get a file view content")
+def get_file_view(filename: str,
+                  _=Depends(AuthService.check_user_access_token)) -> CallViewResultDTO:
+    return RichTextFileService.get_file_view(filename)

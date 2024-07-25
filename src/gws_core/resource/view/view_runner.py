@@ -47,7 +47,7 @@ class ViewRunner():
 
         # set view name if not defined
         if view.get_title() is None:
-            title = self.resource.name
+            title = self.resource.get_name_or_default()
             if view_metadata.human_name:
                 title += " - " + view_metadata.human_name
             view.set_title(title)
@@ -62,7 +62,7 @@ class ViewRunner():
 
     def call_view_to_dto(self) -> ViewDTO:
         if self._view is None:
-            raise Exception("You must call generate_view_on_resource before call_view_to_dict")
+            self.generate_view()
 
         # create a new config for the view to_dict method based on view specs
         config_params: ConfigParams = ParamSpecHelper.build_config_params(self._view._specs, dict(self.config_params))

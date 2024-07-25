@@ -29,7 +29,7 @@ class ViewDTO(BaseModelDTO):
 
 class CallViewResultDTO(BaseModelDTO):
     view: ViewDTO
-    resource_id: str
+    resource_id: Optional[str]
     view_config: Optional[ViewConfigDTO]
     title: str
     view_type: ViewType

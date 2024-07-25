@@ -2,6 +2,8 @@
 
 from typing import Any, Dict, List, Literal, Optional
 
+from typing_extensions import TypedDict
+
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.experiment.experiment_dto import ExperimentDTO
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
@@ -48,3 +50,10 @@ class LabActivityReponseDTO(BaseModelDTO):
     queued_experiments: int
     last_activity: Optional[ActivityDTO]
     dev_env_running: bool
+
+
+class SpaceReportRichTextFileViewData(TypedDict):
+    """Object representing a file view in a rich text for a report transfered to space """
+    id: str
+    title: Optional[str]
+    caption: Optional[str]

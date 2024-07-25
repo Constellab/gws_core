@@ -51,11 +51,6 @@ class Robot(Resource):
         position_value = self.position[1] if position == 'latitude' else self.position[0]
         return JSONView({"position": position, "value": position_value})
 
-    @view(view_type=TableView, human_name="View as csv")
-    def view_as_csv(self, params: ConfigParams) -> TableView:
-        dataframe: DataFrame = DataFrame.from_dict(self.to_dict())
-        return TableView(dataframe)
-
     @view(view_type=TextView, human_name="View as text")
     def view_as_string(self, params: ConfigParams) -> TextView:
         str_ = json.dumps(self.to_dict())

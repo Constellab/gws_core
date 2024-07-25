@@ -4,6 +4,7 @@ from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import (RichTextBlock,
                                                      RichTextBlockType,
                                                      RichTextDTO,
+                                                     RichTextParagraphData,
                                                      RichTextResourceViewData)
 from gws_core.test.base_test_case_light import BaseTestCaseLight
 
@@ -128,6 +129,19 @@ class TestRichText(BaseTestCaseLight):
         rich_text.replace_resource_views_with_parameters()
         # TODO check to improve
         self.assertEqual(rich_text.get_content().blocks[4].type, RichTextBlockType.PARAGRAPH)
+
+    def test_replace_data(self):
+
+        rich_text: RichText = RichText()
+        block = rich_text.add_paragraph("Introduction")
+
+        new_data: RichTextParagraphData = {
+            "text": "NewContent"
+        }
+        rich_text.replace_block_data_by_id(block.id, new_data)
+
+        self.assertEqual(rich_text.get_content().blocks[0].data["text"], "NewContent")
+        self.assertEqual(len(rich_text.get_blocks()), 1)
 
     def test_is_empty(self):
         rich_text = RichText()

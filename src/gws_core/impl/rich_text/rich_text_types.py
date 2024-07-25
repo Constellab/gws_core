@@ -9,7 +9,9 @@ from gws_core.core.model.model_dto import BaseModelDTO
 class RichTextBlockType(Enum):
     """List the special block type that can be used in rich text """
     FIGURE = 'figure'
-    RESOURCE_VIEW = 'resourceView'
+    RESOURCE_VIEW = 'resourceView'  # view of a resource
+    FILE_VIEW = 'fileView'  # independant view stored in a file (without resource)
+    ENOTE_VIEW = 'enoteView'  # view of a resource in an enote
     PARAGRAPH = 'paragraph'
     HEADER = 'header'
     QUOTE = 'quote'
@@ -81,7 +83,7 @@ class RichTextResourceViewData(TypedDict):
     id: str
     view_config_id: str
     resource_id: str
-    experiment_id: str
+    experiment_id: Optional[str]
     view_method_name: str
     view_config: Dict[str, Any]
     title: Optional[str]
@@ -95,6 +97,14 @@ class RichTextENoteResourceViewData(TypedDict):
     sub_resource_key: str
     view_method_name: str
     view_config: Dict[str, Any]
+    title: Optional[str]
+    caption: Optional[str]
+
+
+class RichTextViewFileData(TypedDict):
+    """Object representing a independant view in a rich text, the view is not associated with a resource"""
+    id: str
+    filename: str
     title: Optional[str]
     caption: Optional[str]
 

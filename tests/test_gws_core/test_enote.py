@@ -112,7 +112,11 @@ class TestEnote(BaseTestCase):
         enote = ENoteResource(title="My custom note")
         enote.add_paragraph("This is a test paragraph")
         enote.add_figure_file(self._create_enote_image(), title='test', create_new_resource=False)
-        enote.add_default_view_from_resource(self._create_resource(), title='view', create_new_resource=True)
+        enote.add_default_view_from_resource(self._create_resource(), title='view', create_new_resource=False)
+
+        # add a view from a resource that is not saved
+        robot = Robot.empty()
+        enote.add_default_view_from_resource(robot, title='view', create_new_resource=True)
 
         # Test generate report from e-note
         task_runner = TaskRunner(GenerateReportFromENote, inputs={
@@ -161,7 +165,7 @@ class TestEnote(BaseTestCase):
         self.assertEqual(merged_enote.get_block_at_index(1).data["text"], "This is a second paragraph")
         self.assertEqual(merged_enote.get_block_at_index(2).type, RichTextBlockType.FIGURE)
         self.assertEqual(merged_enote.get_block_at_index(2).data['title'], 'figure')
-        self.assertEqual(merged_enote.get_block_at_index(3).type, RichTextBlockType.RESOURCE_VIEW)
+        self.assertEqual(merged_enote.get_block_at_index(3).type, RichTextBlockType.ENOTE_VIEW)
         self.assertEqual(merged_enote.get_block_at_index(3).data['title'], 'view')
 
         # the merged enote contains the figure and view resources

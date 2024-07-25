@@ -116,6 +116,14 @@ class Resource(Base):
         """
         return self._human_name
 
+    def get_name_or_default(self) -> str:
+        """Get the name of the resource or the default name if the name is None
+
+        :return: [description]
+        :rtype: [type]
+        """
+        return self.name or self.get_default_name()
+
     def add_technical_info(self, technical_info: TechnicalInfo) -> None:
         """Add technical information on the resource. Technical info are useful to set additional information on the resource.
 

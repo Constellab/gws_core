@@ -11,7 +11,8 @@ from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (
-    RichTextDTO, RichTextParagraphHeaderLevel, RichTextResourceViewData)
+    RichTextBlockType, RichTextDTO, RichTextParagraphHeaderLevel,
+    RichTextResourceViewData, RichTextViewFileData)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.project.project import Project
 from gws_core.report.report_view_model import ReportViewModel
@@ -20,7 +21,8 @@ from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_types import exluded_views_in_report
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
-from gws_core.space.space_dto import SaveReportToSpaceDTO
+from gws_core.space.space_dto import (SaveReportToSpaceDTO,
+                                      SpaceReportRichTextFileViewData)
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.task.task_input_model import TaskInputModel
@@ -221,7 +223,7 @@ class ReportService():
     def _validate(cls, report_id: str, project_id: str = None) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
 
-        rich_text = RichText(report.content)
+        rich_text = report.get_content_as_rich_text()
         if rich_text.is_empty():
             raise BadRequestException('The report is empty')
 
@@ -328,7 +330,7 @@ class ReportService():
             resource_views={}
         )
 
-        rich_text = RichText(report.content)
+        rich_text = report.get_content_as_rich_text()
 
         # retrieve all the figures file path
         file_paths: List[str] = []
@@ -345,6 +347,24 @@ class ReportService():
                 resource_view["view_method_name"],
                 resource_view["view_config"])
             save_report_dto.resource_views[resource_view["id"]] = view_result.to_dto()
+
+        # set the file views in the json object
+        for file_view_block in rich_text.get_blocks_by_type(RichTextBlockType.FILE_VIEW):
+
+            data: RichTextViewFileData = file_view_block.data
+
+            # retrieve the file view
+            view_result_dto = RichTextFileService.get_file_view(data["filename"])
+            save_report_dto.resource_views[data["id"]] = view_result_dto
+
+            # replace the block info with the new data to have a simpler object in space
+            new_data: SpaceReportRichTextFileViewData = {
+                "id": data["id"],
+                "title": data.get("title"),
+                "caption": data.get("caption")
+            }
+            rich_text.replace_block_data_by_id(file_view_block.id, new_data)
+
         # Save the experiment in space
         SpaceService.save_report(report.project.id, save_report_dto, file_paths)
 
@@ -523,7 +543,7 @@ class ReportService():
         report_views: List[ReportViewModel] = ReportViewModel.get_by_report(report.id)
 
         # extract the views id from the rich text
-        rich_text_views: List[RichTextResourceViewData] = RichText(report.content).get_resource_views_data()
+        rich_text_views: List[RichTextResourceViewData] = report.get_content_as_rich_text().get_resource_views_data()
 
         report_tags: EntityTagList = EntityTagList.find_by_entity(EntityType.REPORT, report.id)
 
