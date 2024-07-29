@@ -1,14 +1,15 @@
 
-from typing import Any, Optional
+from typing import Optional, Type
 
-from gws_core.config.param.param_spec import ParamSpec
+from gws_core.config.param.model_param import ModelParam
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
 from gws_core.config.param.param_types import ParamSpecVisibilty
-from gws_core.core.classes.validator import StrValidator
+from gws_core.core.model.model import Model
+from gws_core.report.report import Report
 
 
 @param_spec_decorator()
-class ReportParam(ParamSpec[str]):
+class ReportParam(ModelParam):
     """ Report params spec. When used, the end user will be able to select a report
     from the list of report available in the lab.
 
@@ -45,26 +46,10 @@ class ReportParam(ParamSpec[str]):
     def get_str_type(cls) -> str:
         return "report_param"
 
-    def build(self, value: Any) -> dict:
-        from gws_core.report.report import Report
-        from gws_core.report.task.report_resource import ReportResource
-        report: Report = None
-        if value and isinstance(value, str):
+    def get_model_type(self) -> Type[Model]:
+        """Override this method to return the model type to use
 
-            # retrieve the document template and return it
-            report = Report.get_by_id(value)
-            if report is None:
-                raise Exception(f"Report with id '{value}' not found")
-
-        return ReportResource(report_id=report.id) if report else None
-
-    def validate(self, value: Any) -> str:
-        from gws_core.report.task.report_resource import ReportResource
-        if isinstance(value, ReportResource):
-            return value.report_id
-        # if this is the credentials object, retrieve the name
-        if isinstance(value, dict) and 'id' in value:
-            value = value['id']
-
-        validator = StrValidator()
-        return validator.validate(value)
+        :return: The model type
+        :rtype: Type[Model]
+        """
+        return Report

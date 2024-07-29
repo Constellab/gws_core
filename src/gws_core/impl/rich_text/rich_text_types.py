@@ -37,6 +37,17 @@ class RichTextDTO(BaseModelDTO):
     blocks: List[RichTextBlock]
 
 
+class RichTextObjectType(Enum):
+    """Different object that use the rich text editor
+
+    :param Enum: _description_
+    :type Enum: _type_
+    """
+    REPORT = 'report'
+    DOCUMENT_TEMPLATE = 'document_template'
+    ENOTE = 'enote'
+
+
 ################################ BLOCK DATA ################################
 
 class RichTextParagraphData(TypedDict):

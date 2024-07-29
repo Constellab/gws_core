@@ -68,7 +68,7 @@ from .core.db.db_manager import AbstractDbManager as AbstractDbManager
 from .core.db.db_migration import brick_migration as brick_migration
 from .core.db.pool_db import PoolDb as PoolDb
 from .core.db.version import Version as Version
-# Transction
+# Core > Transaction
 from .core.decorator.transaction import transaction as transaction
 # Core > Exception
 from .core.exception.exception_handler import \
@@ -113,6 +113,16 @@ from .credentials.credentials_type import \
 from .credentials.credentials_type import \
     CredentialsDataS3 as CredentialsDataS3
 from .credentials.credentials_type import CredentialsType as CredentialsType
+# Document template
+from .document_template.document_template import \
+    DocumentTemplate as DocumentTemplate
+from .document_template.document_template_service import \
+    DocumentTemplateService as DocumentTemplateService
+# Document template > task
+from .document_template.task.document_template_param import \
+    DocumentTemplateParam as DocumentTemplateParam
+from .document_template.task.document_template_resource import \
+    DocumentTemplateResource as DocumentTemplateResource
 # Experiment
 from .experiment.experiment import Experiment as Experiment
 from .experiment.experiment_dto import ExperimentSaveDTO as ExperimentSaveDTO
@@ -334,7 +344,9 @@ from .protocol_template.protocol_template_factory import \
     ProtocolTemplateFactory as ProtocolTemplateFactory
 # Report
 from .report.report import Report as Report
+from .report.report_service import ReportService as ReportService
 # Report task
+from .report.task.report_param import ReportParam as ReportParam
 from .report.task.report_resource import ReportResource as ReportResource
 # Resource
 from .resource.kv_store import KVStore as KVStore

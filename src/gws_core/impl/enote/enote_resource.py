@@ -7,15 +7,16 @@ from PIL import Image
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_file_service import (
-    RichTextFileService, RichTextObjectType)
+from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (
     RichTextBlock, RichTextBlockType, RichTextENoteResourceViewData,
-    RichTextFigureData, RichTextFileData, RichTextParagraphHeaderLevel,
-    RichTextResourceViewData, RichTextViewFileData)
+    RichTextFigureData, RichTextFileData, RichTextObjectType,
+    RichTextParagraphHeaderLevel, RichTextResourceViewData,
+    RichTextViewFileData)
 from gws_core.impl.rich_text.rich_text_view import RichTextView
 from gws_core.model.typing_style import TypingStyle
 from gws_core.report.report import Report
@@ -181,6 +182,7 @@ class ENoteResource(ResourceSet):
                               If not, the view is append at the end of the enote, defaults to None
         :type parameter_name: str, optional
         """
+        view_resource.name = title
         self.add_resource(view_resource, view_resource.uid, create_new_resource=True)
 
         self._add_view(view_resource.uid, ViewHelper.DEFAULT_VIEW_NAME,
@@ -480,15 +482,13 @@ class ENoteResource(ResourceSet):
         for block in rich_text.get_blocks():
             self.append_block(block)
 
-    ############################# Reports #############################
-
-    def append_report_rich_text(self, rich_text: RichText,
-                                object_type: RichTextObjectType,
-                                object_id: str) -> None:
+    def append_advanced_rich_text(self, rich_text: RichText,
+                                  object_type: RichTextObjectType,
+                                  object_id: str) -> None:
         """
-        Append a rich text (that comes from a report, document template or RichTextParam) to the e-note.
+        Append a rich text (that comes from a report or document template) to the e-note.
 
-        :param rich_text: rich text to append to the e-note (from a report, document template or RichTextParam)
+        :param rich_text: rich text to append to the e-note (from a report or document template)
         :type rich_text: RichText
         :param object_type: type of the object that has the rich text
         :type object_type: RichTextObjectType
@@ -497,6 +497,9 @@ class ENoteResource(ResourceSet):
         :return: the e-note
         :rtype: _type_
         """
+        if object_type == RichTextObjectType.ENOTE:
+            raise ValueError("Please use append_enote to append an e-note to another e-note")
+
         # add the block 1 by 1 to the enote
         for block in rich_text.get_blocks():
             # specific case for the figure
@@ -534,6 +537,8 @@ class ENoteResource(ResourceSet):
 
             else:
                 self.append_block(block)
+
+    ############################# Reports #############################
 
     def export_as_report(self, title: str = None) -> Report:
         """
@@ -689,4 +694,44 @@ class ENoteResource(ResourceSet):
 
     @view(view_type=RichTextView, human_name="View e-note", short_description="View e-note content", default_view=True)
     def view_enote(self, config: ConfigParamsDict = None) -> RichTextView:
-        return RichTextView(self.title, self._rich_text)
+        return RichTextView(self.title, self._rich_text,
+                            object_type=RichTextObjectType.ENOTE,
+                            object_id=self._model_id)
+
+    ############################# Constructors #############################
+
+    @staticmethod
+    def from_document_template(document_template: DocumentTemplate,
+                               title: str = None) -> "ENoteResource":
+        """Create a e-note from a document template.
+
+        :param document_template: document template to create the e-note from
+        :type document_template: DocumentTemplate
+        :param title: title of the e-note. If none the title of document template is used, defaults to None
+        :type title: str, optional
+        :return: the e-note
+        :rtype: ENoteResource
+        """
+        enote = ENoteResource()
+        rich_text = RichText(document_template.content)
+        enote.append_advanced_rich_text(rich_text, RichTextObjectType.DOCUMENT_TEMPLATE, document_template.id)
+        enote.title = title or document_template.title
+        return enote
+
+    @staticmethod
+    def from_report(report: Report,
+                    title: str = None) -> "ENoteResource":
+        """Create a e-note from a report.
+
+        :param report: report to create the e-note from
+        :type report: Report
+        :param title: title of the e-note. If none the title of report is used, defaults to None
+        :type title: str, optional
+        :return: the e-note
+        :rtype: ENoteResource
+        """
+        enote = ENoteResource()
+        rich_text = RichText(report.content)
+        enote.append_advanced_rich_text(rich_text, RichTextObjectType.REPORT, report.id)
+        enote.title = title or report.title
+        return enote

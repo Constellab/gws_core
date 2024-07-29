@@ -8,8 +8,9 @@ from fastapi.responses import FileResponse
 from gws_core.core_controller import core_app
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text_file_service import (
-    RichTextFileService, RichTextObjectType, RichTextUploadFileResultDTO,
+    RichTextFileService, RichTextUploadFileResultDTO,
     RichTextUploadImageResultDTO)
+from gws_core.impl.rich_text.rich_text_types import RichTextObjectType
 from gws_core.resource.view.view_dto import CallViewResultDTO
 from gws_core.user.auth_service import AuthService
 

@@ -6,9 +6,9 @@ from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.document_template.document_template_search_builder import \
     ReportTemplateSearchBuilder
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_file_service import (
-    RichTextFileService, RichTextObjectType)
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
+from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
+                                                     RichTextObjectType)
 from gws_core.report.report import Report
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)

@@ -4,11 +4,11 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.document_template.document_template import DocumentTemplate
-from gws_core.document_template.document_template_param import \
+from gws_core.document_template.task.document_template_param import \
     DocumentTemplateParam
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_file_service import RichTextObjectType
 from gws_core.impl.rich_text.rich_text_param import RichTextParam
+from gws_core.impl.rich_text.rich_text_types import RichTextObjectType
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.task.task import Task
@@ -47,14 +47,13 @@ class CreateENote(Task):
         enote_param: RichText = params['enote']
 
         enote_resource = ENoteResource()
-
         enote_resource.title = title or 'New e-note'
+
         if enote_param and not enote_param.is_empty():
             enote_resource.append_basic_rich_text(enote_param)
         elif template is not None:
-            rich_text = RichText(template.content)
-            enote_resource.append_report_rich_text(rich_text, RichTextObjectType.DOCUMENT_TEMPLATE, template.id)
-            enote_resource.title = title or template.title
+            enote_resource = ENoteResource.from_document_template(template,
+                                                                  title=title if title else None)
 
         return {
             'enote': enote_resource

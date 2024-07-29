@@ -9,11 +9,11 @@ from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_file_service import (
-    RichTextFileService, RichTextObjectType)
+from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (
-    RichTextBlockType, RichTextDTO, RichTextParagraphHeaderLevel,
-    RichTextResourceViewData, RichTextViewFileData)
+    RichTextBlockType, RichTextDTO, RichTextObjectType,
+    RichTextParagraphHeaderLevel, RichTextResourceViewData,
+    RichTextViewFileData)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.project.project import Project
 from gws_core.report.report_view_model import ReportViewModel

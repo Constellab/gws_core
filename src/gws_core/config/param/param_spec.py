@@ -6,7 +6,6 @@ from typing import Any, Generic, List, Optional, TypeVar
 from typing_extensions import TypedDict
 
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
-from gws_core.core.utils.logger import Logger
 
 from ...core.classes.validator import (BoolValidator, DictValidator,
                                        FloatValidator, IntValidator,

@@ -1,26 +1,21 @@
 
-from typing import Any, Optional
+from abc import abstractmethod
+from typing import Any, Optional, Type
 
 from gws_core.config.param.param_spec import ParamSpec
-from gws_core.config.param.param_spec_decorator import param_spec_decorator
 from gws_core.config.param.param_types import ParamSpecVisibilty
 from gws_core.core.classes.validator import StrValidator
-from gws_core.document_template.document_template import DocumentTemplate
+from gws_core.core.model.model import Model
 
 
-@param_spec_decorator()
-class DocumentTemplateParam(ParamSpec[str]):
-    """ Document template params spec. When used, the end user will be able to select a document template
-    from the list of document template available in the lab.
-
-    The accessible value will be document template.
-
+class ModelParam(ParamSpec[str]):
+    """ Abstract param spec to select an model from the DB and return it in the task
     """
 
     def __init__(self,
                  optional: bool = False,
                  visibility: ParamSpecVisibilty = "public",
-                 human_name: Optional[str] = "Select document template",
+                 human_name: Optional[str] = "Select object",
                  short_description: Optional[str] = None,
                  ):
         """
@@ -42,23 +37,29 @@ class DocumentTemplateParam(ParamSpec[str]):
             short_description=short_description,
         )
 
-    @classmethod
-    def get_str_type(cls) -> str:
-        return "document_template_param"
+    @abstractmethod
+    def get_model_type(self) -> Type[Model]:
+        """Override this method to return the model type to use
 
-    def build(self, value: Any) -> dict:
-        document_template: DocumentTemplate = None
+        :return: The model type
+        :rtype: Type[Model]
+        """
+
+    def build(self, value: Any) -> Optional[Model]:
+        model_type = self.get_model_type()
+        model: Optional[Model] = None
         if value and isinstance(value, str):
 
             # retrieve the document template and return it
-            document_template = DocumentTemplate.get_by_id(value)
-            if document_template is None:
-                raise Exception(f"Document template with id '{value}' not found")
+            model = model_type.get_by_id(value)
+            if model is None:
+                raise Exception(f"Object '{model_type.classname()}' with id '{value}' not found")
 
-        return document_template
+        return model
 
     def validate(self, value: Any) -> str:
-        if isinstance(value, DocumentTemplate):
+        model_type = self.get_model_type()
+        if isinstance(value, model_type):
             return value.id
         # if this is the credentials object, retrieve the name
         if isinstance(value, dict) and 'id' in value:

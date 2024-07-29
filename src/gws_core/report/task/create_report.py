@@ -4,7 +4,7 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.document_template.document_template import DocumentTemplate
-from gws_core.document_template.document_template_param import \
+from gws_core.document_template.task.document_template_param import \
     DocumentTemplateParam
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs

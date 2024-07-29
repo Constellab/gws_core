@@ -2,6 +2,7 @@
 
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_types import RichTextObjectType
 from gws_core.impl.rich_text.rich_text_view import RichTextView
 from gws_core.model.typing_style import TypingStyle
 from gws_core.report.report import Report
@@ -65,4 +66,7 @@ class ReportResource(Resource):
 
     @view(view_type=RichTextView, human_name="View report", short_description="View report content", default_view=True)
     def view_report(self, config: ConfigParamsDict = None) -> RichTextView:
-        return RichTextView(self.get_report().title, self.get_content(), self.report_id)
+        return RichTextView(self.get_report().title,
+                            self.get_content(),
+                            object_type=RichTextObjectType.REPORT,
+                            object_id=self.report_id)

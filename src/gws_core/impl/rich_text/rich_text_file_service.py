@@ -14,6 +14,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.rich_text.rich_text_types import RichTextObjectType
 from gws_core.resource.view.view_dto import CallViewResultDTO
 
 
@@ -26,11 +27,6 @@ class RichTextUploadImageResultDTO(BaseModelDTO):
 class RichTextUploadFileResultDTO(BaseModelDTO):
     name: str
     size: int  # in bytes
-
-
-class RichTextObjectType(Enum):
-    REPORT = 'report'
-    DOCUMENT_TEMPLATE = 'document_template'
 
 
 class RichTextFileService():
@@ -166,6 +162,9 @@ class RichTextFileService():
 
     @classmethod
     def get_object_dir_path(cls, object_type: RichTextObjectType, object_id: str) -> str:
+        if object_type == RichTextObjectType.ENOTE:
+            raise BadRequestException('The object type ENOTE does ont use the file service')
+
         return os.path.join(cls._get_dir_path(), object_type.value, object_id)
 
     @classmethod

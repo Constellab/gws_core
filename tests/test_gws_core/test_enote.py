@@ -13,9 +13,10 @@ from gws_core.impl.enote.update_enote import UpdatENote
 from gws_core.impl.file.file import File
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import (
-    RichTextFileService, RichTextObjectType, RichTextUploadFileResultDTO)
+    RichTextFileService, RichTextUploadFileResultDTO)
 from gws_core.impl.rich_text.rich_text_types import (RichTextBlockType,
-                                                     RichTextFigureData)
+                                                     RichTextFigureData,
+                                                     RichTextObjectType)
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
