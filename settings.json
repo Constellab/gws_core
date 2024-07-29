@@ -12,7 +12,7 @@
         "gws_core:testdata_dir" : "${CURRENT_DIR}/tests/testdata"
     },
     "technical_info": {
-      "FRONT_VERSION": "1.4.2",
+      "FRONT_VERSION": "1.4.3",
       "GLAB_VERSION": "2.0.0"
     },
     "environment":{
