@@ -1024,5 +1024,5 @@ class Migration084(BrickMigration):
             new_path = os.path.join(new_dir, figure['filename'])
             old_path = os.path.join(RichTextFileService._get_dir_path(), figure['filename'])
 
-            if not FileHelper.exists_on_os(new_path):
+            if FileHelper.exists_on_os(old_path) and not FileHelper.exists_on_os(new_path):
                 FileHelper.copy_file(old_path, new_path)
