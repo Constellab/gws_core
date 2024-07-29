@@ -2,6 +2,7 @@
 
 from typing import Callable, Optional, Type
 
+from gws_core.core.model.base import Base
 from gws_core.core.model.base_typing import BaseTyping
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
@@ -30,7 +31,7 @@ def typing_registrator(unique_name: str,
     :type hide: bool, optional
     """
 
-    def decorator(object_class: Type[BaseTyping]):
+    def decorator(object_class: Type[Base]):
         register_typing_class(object_class=object_class,
                               object_type=object_type, unique_name=unique_name,
                               human_name="", short_description="", hide=hide, style=style)
@@ -40,7 +41,7 @@ def typing_registrator(unique_name: str,
 
 # Save the Typing to the TypingManager and set the typing_name class property
 def register_typing_class(
-        object_class: Type[BaseTyping],
+        object_class: Type[Base],
         object_type: TypingObjectType,
         unique_name: str,
         human_name: str,
@@ -94,14 +95,15 @@ def register_typing_class(
 
     TypingManager.register_typing(typing, object_class)
 
-    object_class.__set_typing_name__(typing.typing_name)
-    object_class.__set_human_name__(human_name)
-    object_class.__set_short_description__(short_description)
+    if issubclass(object_class, BaseTyping):
+        object_class.__set_typing_name__(typing.typing_name)
+        object_class.__set_human_name__(human_name)
+        object_class.__set_short_description__(short_description)
 
 
 # Method to register gws object like Resource, Task and Protocol
 def register_gws_typing_class(
-        object_class: Type[BaseTyping],
+        object_class: Type[Base],
         object_type: TypingObjectType,
         unique_name: str,
         human_name: str,
