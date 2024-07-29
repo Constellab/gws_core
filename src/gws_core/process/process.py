@@ -3,20 +3,15 @@
 from abc import abstractmethod
 from typing import List, Type, final
 
+from gws_core.core.model.base_typing import BaseTyping
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
 
-from ..core.model.base import Base
-from ..user.user_group import UserGroup
 
-
-class Process(Base):
+class Process(BaseTyping):
 
     # Provided at the Class level automatically by the Decorator
     # //!\\ Do not modify theses values
-    _typing_name: str = None
-    _human_name: str = None
-    _short_description: str = None
     # For specific tasks, the process is automatically run when added or reset
     # Set only on specific tasks when you know what you are doing
     __auto_run__: bool = False

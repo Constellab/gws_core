@@ -54,7 +54,7 @@ class ResourceZipperTask(Task):
         else:
             shared_by = CurrentUserService.get_and_check_current_user()
 
-        origin_entity_id = inputs['source']._model_id
+        origin_entity_id = inputs['source'].get_model_id()
         resource_zipper = ResourceZipper(shared_by)
         resource_zipper.add_resource_model(origin_entity_id)
         resource_zipper.close_zip()

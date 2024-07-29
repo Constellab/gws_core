@@ -4,6 +4,7 @@ import os
 from copy import deepcopy
 from typing import Dict, TypeVar, Union, final
 
+from gws_core.core.model.base_typing import BaseTyping
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import (TypingIconColor, TypingIconType,
@@ -17,7 +18,6 @@ from gws_core.tag.tag_list_field import TagListField
 from ..config.config_params import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..core.model.base import Base
 from ..core.utils.reflector_helper import ReflectorHelper
 from ..impl.json.json_view import JSONView
 from ..model.typing_register_decorator import typing_registrator
@@ -34,7 +34,7 @@ ResourceType = TypeVar('ResourceType', bound='Resource')
 
 @typing_registrator(unique_name="Resource", object_type="RESOURCE",
                     style=TypingStyle.default_resource())
-class Resource(Base):
+class Resource(BaseTyping):
 
     uid: str = UUIDRField(searchable=True)
     name: str
@@ -47,16 +47,15 @@ class Resource(Base):
     # provide tags to this attribute to save them on resource generation
     tags: TagList = TagListField()
 
+    # Set by the resource parent on creation
+    # //!\\ Do not modify theses values
+    __model_id__: str = None
+    __kv_store__: KVStore = None
+    __origin__: ResourceOrigin = None
+
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values
-    _typing_name: str = None
-    _human_name: str = None
-    _short_description: str = None
-    _is_exportable: bool = False
-    # Set by the resource parent on creation
-    _model_id: str = None
-    _kv_store: KVStore = None
-    __origin__: ResourceOrigin = None
+    __is_exportable__: bool = False
 
     def __init__(self):
         """
@@ -64,10 +63,10 @@ class Resource(Base):
         Leave the constructor without parameters.
         """
 
-        # check that the class level property _typing_name is set
-        if self._typing_name == CONST_RESOURCE_TYPING_NAME and type(self) != Resource:  # pylint: disable=unidiomatic-typecheck
+        # check that the class level property typing_name is set
+        if self.get_typing_name() == CONST_RESOURCE_TYPING_NAME and type(self) != Resource:  # pylint: disable=unidiomatic-typecheck
             raise BadRequestException(
-                f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the resource class with @ResourceDecorator")
+                f"The resource {self.full_classname()} is not decorated with @resource_decorator, it can't be instantiate. Please decorate the resource class with @ResourceDecorator")
 
         # init the default name
         self.name = None
@@ -114,7 +113,7 @@ class Resource(Base):
         :return: [description]
         :rtype: [type]
         """
-        return self._human_name
+        return self.get_human_name()
 
     def get_name_or_default(self) -> str:
         """Get the name of the resource or the default name if the name is None
@@ -159,7 +158,8 @@ class Resource(Base):
         :rtype: Resource
         """
         clone: Resource = type(self)()
-        clone._model_id = self._model_id
+        clone.__set_model_id__(self.get_model_id())
+        # TODO copy other attributes (like tags, style, etc)
 
         # get the r_fields of the resource
         r_fields: Dict[str, BaseRField] = self.__get_resource_r_fields__()
@@ -189,11 +189,11 @@ class Resource(Base):
         attr = super().__getattribute__(name)
 
         if isinstance(attr, BaseRField):
-            if name in self._kv_store:
+            if name in self.__kv_store__:
                 if isinstance(attr, FileRField):
-                    value = attr.deserialize(os.path.join(self._kv_store.full_file_dir, self._kv_store.get(name)))
+                    value = attr.deserialize(os.path.join(self.__kv_store__.full_file_dir, self.__kv_store__.get(name)))
                 else:
-                    value = attr.deserialize(self._kv_store.get(name))
+                    value = attr.deserialize(self.__kv_store__.get(name))
                 setattr(self, name, value)
                 return value
             else:
@@ -203,11 +203,23 @@ class Resource(Base):
 
         # lazy load the tags
         elif isinstance(attr, TagListField):
-            tag_list = attr.load_tags(self._model_id)
+            tag_list = attr.load_tags(self.get_model_id())
             setattr(self, name, tag_list)
             return tag_list
 
         return attr
+
+    @final
+    def get_model_id(self) -> str:
+        """Get the id of the resource model in the database.
+        It is provided by the system for input resources of a task.
+
+        :return: model id
+        :rtype: str
+        """
+        return self.__model_id__
+
+    ############################################### CLASS METHODS ####################################################
 
     @classmethod
     def copy_style(cls, icon_technical_name: str = None,
@@ -228,5 +240,50 @@ class Resource(Base):
         :return: _description_
         :rtype: TypingStyle
         """
-        style = TypingManager.get_typing_from_name_and_check(cls._typing_name).style
+        style = TypingManager.get_typing_from_name_and_check(cls.get_typing_name()).style
         return style.clone_with_overrides(icon_technical_name, icon_type, background_color, icon_color)
+
+    ############################################### SYSTEM METHODS ####################################################
+
+    @final
+    def __set_model_id__(self, model_id: str) -> None:
+        """Set the model id of the resource
+        This method is called by the system when the resource is created,
+        you should not call this method yourself
+
+        :param model_id: model id
+        :type model_id: str
+        """
+        self.__model_id__ = model_id
+
+    @final
+    def __set_kv_store__(self, kv_store: KVStore) -> None:
+        """Set the kv_store of the resource
+        This method is called by the system when the resource is created,
+        you should not call this method yourself
+
+        :param kv_store: kv_store
+        :type kv_store: KVStore
+        """
+        self.__kv_store__ = kv_store
+
+    @final
+    def __set_origin__(self, origin: ResourceOrigin) -> None:
+        """ Override the origin of the resource, this is used to set a special origin to the resource.
+        Use only when you know what you are doing.
+
+        :param origin: origin
+        :type origin: ResourceOrigin
+        """
+        self.__origin__ = origin
+
+    @final
+    @classmethod
+    def __set_is_exportable__(cls, is_exportable: bool) -> None:
+        """Set the resource as exportable. This method is called by the system when the resource is created,
+        you should not call this method yourself
+
+        :param is_exportable: is_exportable
+        :type is_exportable: bool
+        """
+        cls.__is_exportable__ = is_exportable

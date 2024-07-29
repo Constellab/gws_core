@@ -534,7 +534,7 @@ class ExperimentService():
         for resource in not_flagged_resources:
             # check if the resource is used a input of sink
             task_input_model = TaskInputModel.get_by_resource_model_and_task_type(
-                resource.id, Sink._typing_name)
+                resource.id, Sink.get_typing_name())
 
             # if the resource is not used as input of a sink, it is an intermediate resource
             if not task_input_model:

@@ -143,7 +143,7 @@ class TestRField(BaseTestCase):
         resource_serialized = r_field.serialize(robot)
         resource_deserilized: Robot = r_field.deserialize(resource_serialized)
 
-        self.assertEqual(robot._model_id, resource_deserilized._model_id)
+        self.assertEqual(robot.get_model_id(), resource_deserilized.get_model_id())
         self.assertEqual(robot.age, resource_deserilized.age)
         self.assertEqual(robot.position, resource_deserilized.position)
         self.assertEqual(robot.weight, resource_deserilized.weight)

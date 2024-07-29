@@ -62,7 +62,7 @@ class TaskTyping(Typing):
             # get all the class types between base_type and Resource
             parent_classes: List[Type[Resource]] = Utils.get_parent_classes(related_model_type, Resource)
             # add typing name to the set
-            parent_typing_names = parent_typing_names.union([parent._typing_name for parent in parent_classes])
+            parent_typing_names = parent_typing_names.union([parent.get_typing_name() for parent in parent_classes])
 
         return cls.related_model_typing_name.in_(parent_typing_names)
 

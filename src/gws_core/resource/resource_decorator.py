@@ -110,7 +110,7 @@ def get_resource_default_style(resource_class: Type[Resource]) -> TypingStyle:
     if not parent_class or not issubclass(parent_class, Resource):
         return TypingStyle.default_resource()
 
-    parent_typing = TypingManager.get_typing_from_name(parent_class._typing_name)
+    parent_typing = TypingManager.get_typing_from_name(parent_class.get_typing_name())
     if parent_typing and parent_typing.style:
         return parent_typing.style
     return TypingStyle.default_resource()

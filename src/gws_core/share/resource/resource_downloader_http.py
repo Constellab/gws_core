@@ -1,7 +1,5 @@
 
 
-from requests.models import Response
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
@@ -16,6 +14,7 @@ from gws_core.share.shared_dto import ShareLinkType
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
+from requests.models import Response
 
 
 @task_decorator(unique_name="ResourceDownloaderHttp", human_name="Download resource from external source",
@@ -58,7 +57,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
 
         if ShareLink.is_lab_share_resource_link(self.link):
             # set a special origin for the resource
-            resource.__origin__ = ResourceOrigin.IMPORTED_FROM_LAB
+            resource.__set_origin__(ResourceOrigin.IMPORTED_FROM_LAB)
         return {'resource': resource}
 
     def run_after_task(self) -> None:

@@ -50,7 +50,7 @@ class JSONExporter(ResourceExporter):
             short_description="True to indent and prettify the JSON file, False otherwise")}
 
     def export_to_path(self, source: JSONDict, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
-        file_name = params.get_value('file_name', type(self)._human_name)
+        file_name = params.get_value('file_name', type(self).get_human_name())
         file_format = FileHelper.clean_extension(params.get_value('file_format', 'json'))
         file_path = os.path.join(dest_dir, file_name + '.' + file_format)
 

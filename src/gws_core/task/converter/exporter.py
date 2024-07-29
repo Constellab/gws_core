@@ -5,8 +5,6 @@ import traceback
 from abc import abstractmethod
 from typing import Callable, Type, final
 
-from typing_extensions import TypedDict
-
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
@@ -14,6 +12,7 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
+from typing_extensions import TypedDict
 
 from ...brick.brick_service import BrickService
 from ...config.config_params import ConfigParams
@@ -88,11 +87,11 @@ def exporter_decorator(
                     f"Error in the exporter_decorator of class {task_class.__name__}. The target_type must be an File or child class")
                 return task_class
 
-            human_name_computed = human_name or source_type._human_name + ' exporter'
-            short_description_computed = short_description or f"Export {source_type._human_name} to a file"
+            human_name_computed = human_name or source_type.get_human_name() + ' exporter'
+            short_description_computed = short_description or f"Export {source_type.get_human_name()} to a file"
 
             # mark the resource as exportable
-            source_type._is_exportable = True
+            source_type.__set_is_exportable__(True)
 
             # register the task
             decorate_converter(
@@ -144,11 +143,11 @@ class ResourceExporter(Converter):
             result = self.export_to_path(source, temp_dir, params, target_type)
         except Exception as err:
             raise Exception(
-                f"Cannot export the resource '{source.name}' using exporter '{self._typing_name}' to a file, error : {err}")
+                f"Cannot export the resource '{source.name}' using exporter '{self.get_typing_name()}' to a file, error : {err}")
 
         if not isinstance(result, FSNode):
             raise Exception(
-                f"Cannot export the resource '{source.name}' using exporter '{self._typing_name}' to a file, the result is not a FSNode")
+                f"Cannot export the resource '{source.name}' using exporter '{self.get_typing_name()}' to a file, the result is not a FSNode")
 
         # if the result is a folder, zip it
         if isinstance(result, Folder):
@@ -161,7 +160,7 @@ class ResourceExporter(Converter):
             return result
         else:
             raise Exception(
-                f"Cannot export the resource '{source.name}' using exporter '{self._typing_name}' to a file, the result is not a File nor a Folder")
+                f"Cannot export the resource '{source.name}' using exporter '{self.get_typing_name()}' to a file, the result is not a File nor a Folder")
 
     @abstractmethod
     def export_to_path(

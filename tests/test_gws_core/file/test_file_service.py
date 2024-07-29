@@ -52,9 +52,9 @@ class TestFileService(BaseTestCase):
             upload_file = self._create_upload_file("test.txt", "test")
 
             # upload the file
-            file_model = FsNodeService.upload_file(upload_file, File._typing_name)
+            file_model = FsNodeService.upload_file(upload_file, File.get_typing_name())
 
-            self.assertEqual(file_model.resource_typing_name, File._typing_name)
+            self.assertEqual(file_model.resource_typing_name, File.get_typing_name())
 
             # Download the file
             file_response = FsNodeService.download_file(fs_node_id=file_model.id)
@@ -78,10 +78,10 @@ class TestFileService(BaseTestCase):
             uploaded_files.append(self._create_upload_file("hello/subHello/test2.txt", "test2"))
 
             # Upload the folder
-            folder_model = FsNodeService.upload_folder(Folder._typing_name, uploaded_files)
+            folder_model = FsNodeService.upload_folder(Folder.get_typing_name(), uploaded_files)
 
             folder_model_path = folder_model.fs_node_model.path
-            self.assertEqual(folder_model.resource_typing_name, Folder._typing_name)
+            self.assertEqual(folder_model.resource_typing_name, Folder.get_typing_name())
             self.assertTrue(FileHelper.is_dir(folder_model_path))
             self.assertTrue(FileHelper.is_file(os.path.join(folder_model_path, "test.txt")))
             self.assertTrue(FileHelper.is_dir(os.path.join(folder_model_path, "subHello")))

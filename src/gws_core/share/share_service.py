@@ -150,7 +150,7 @@ class ShareService():
         """Method that find the zipped resource from the origin resource
         """
         # check if the resource was already zipped in this lab for the current version of ResourceZipperTask
-        typing = TypingManager.get_typing_from_name_and_check(ResourceZipperTask._typing_name)
+        typing = TypingManager.get_typing_from_name_and_check(ResourceZipperTask.get_typing_name())
         task_model: TaskModel = TaskModel.select().where(
             (TaskModel.process_typing_name == typing.typing_name) &
             (TaskModel.status == ProcessStatus.SUCCESS) &

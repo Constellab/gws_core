@@ -55,7 +55,7 @@ class TestResourceModel(BaseTestCase):
 
         # Search on name resource typing name
         search_dict.filtersCriteria = [
-            {"key": "resource_typing_name", "operator": "EQ", "value": ForSearch._typing_name}]
+            {"key": "resource_typing_name", "operator": "EQ", "value": ForSearch.get_typing_name()}]
         self.search(search_dict, 2)
 
         # Search on name ResourceOrigin
@@ -104,7 +104,7 @@ class TestResourceModel(BaseTestCase):
         self.assertNotIsInstance(resource_model.get_resource(), SubFile)
 
         ResourceService.update_resource_type(
-            resource_model.id, SubFile._typing_name)
+            resource_model.id, SubFile.get_typing_name())
 
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
             resource_model.id)

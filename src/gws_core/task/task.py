@@ -1,9 +1,7 @@
 
 
 from abc import abstractmethod
-from typing import Literal, Optional, Type, final
-
-from typing_extensions import TypedDict
+from typing import List, Literal, Optional, Type, final
 
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.dispatched_message import DispatchedMessage
@@ -14,6 +12,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_register_decorator import typing_registrator
 from gws_core.model.typing_style import TypingStyle
+from typing_extensions import TypedDict
 
 from ..config.config_params import ConfigParams
 from ..config.config_types import ConfigSpecs
@@ -57,10 +56,10 @@ class Task(Process):
     style: TypingStyle
 
     # Current status of the task, do not update
-    _status_: Literal['CHECK_BEFORE_RUN', 'RUN', 'RUN_AFTER_TASK']
+    __status__: Literal['CHECK_BEFORE_RUN', 'RUN', 'RUN_AFTER_TASK']
 
     # list of temporary directories created by the task to be deleted after the task is run
-    _temp_dirs: list[str]
+    __temp_dirs__: List[str]
 
     def __init__(self):
         """
@@ -70,14 +69,14 @@ class Task(Process):
 
         super().__init__()
 
-        # check that the class level property _typing_name is set
-        if self._typing_name is None:
+        # check that the class level property typing_name is set
+        if self.get_typing_name() is None:
             raise BadRequestException(
                 f"The task {self.full_classname()} is not decorated with @task_decorator, it can't be instantiate. Please decorate the task class with @task_decorator")
-        self._status_ = None
+        self.__status__ = None
         self.message_dispatcher = None
         self.style = None
-        self._temp_dirs = []
+        self.__temp_dirs__ = []
 
     def init(self) -> None:
         """
@@ -114,7 +113,7 @@ class Task(Process):
         resources are saved. This method is useful to delete temporary objects (like files) to clear the server after the task is run.
         """
         # delete temporary directories
-        for tmp_dir in self._temp_dirs:
+        for tmp_dir in self.__temp_dirs__:
             self.log_debug_message(f"Deleting temporary directorie '{tmp_dir}'")
             FileHelper.delete_dir(tmp_dir)
 
@@ -138,7 +137,7 @@ class Task(Process):
         :param message: if provided a message is stored on the progress
         :type message: str
         """
-        if self._status_ != 'RUN':
+        if self.__status__ != 'RUN':
             raise BadRequestException(
                 "The progress value can only be updated in run method")
 
@@ -193,7 +192,7 @@ class Task(Process):
     @final
     @classmethod
     def get_brick_name(cls) -> str:
-        typing_name = TypingNameObj.from_typing_name(cls._typing_name)
+        typing_name = TypingNameObj.from_typing_name(cls.get_typing_name())
         return typing_name.brick_name
 
     def create_tmp_dir(self) -> str:
@@ -205,5 +204,18 @@ class Task(Process):
         :return: path of the created directory
         """
         tmp_dir = Settings.make_temp_dir()
-        self._temp_dirs.append(tmp_dir)
+        self.__temp_dirs__.append(tmp_dir)
         return tmp_dir
+
+    ############################################### SYSTEM METHODS ####################################################
+
+    @final
+    def __set_status__(self, status: Literal['CHECK_BEFORE_RUN', 'RUN', 'RUN_AFTER_TASK']) -> None:
+        """Set the model id of the resource
+        This method is called by the system when the resource is created,
+        you should not call this method yourself
+
+        :param model_id: model id
+        :type model_id: str
+        """
+        self.__status__ = status

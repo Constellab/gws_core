@@ -44,7 +44,7 @@ class ResourceSetExporter(ResourceExporter):
                 fs_nodes.append(resource)
                 continue
 
-            resource_typing_name = resource._typing_name
+            resource_typing_name = resource.get_typing_name()
             if resource_typing_name not in exporters:
                 try:
                     exporter_typing: TaskTyping = ConverterService.get_resource_exporter_from_name(
@@ -61,7 +61,7 @@ class ResourceSetExporter(ResourceExporter):
             # skip the exporter if 1 config is not optional
             if not ConfigSpecsHelper.all_config_are_optional(exporter.config_specs):
                 Logger.info(
-                    f"Skipping exporter {exporter._typing_name} because it has required config")
+                    f"Skipping exporter {exporter.get_typing_name()} because it has required config")
 
             # call the exporter without config
             fs_nodes.append(exporter.call(resource, params={}))

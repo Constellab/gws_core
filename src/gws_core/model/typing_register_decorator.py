@@ -1,7 +1,8 @@
 
 
-from typing import Callable, Type
+from typing import Callable, Optional, Type
 
+from gws_core.core.model.base_typing import BaseTyping
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.core.utils.utils import Utils
@@ -9,7 +10,6 @@ from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
 
 from ..brick.brick_helper import BrickHelper
-from ..core.model.base import Base
 from ..model.typing import Typing
 from ..model.typing_dto import TypingObjectType
 from .typing_manager import TypingManager
@@ -30,7 +30,7 @@ def typing_registrator(unique_name: str,
     :type hide: bool, optional
     """
 
-    def decorator(object_class: Type[Base]):
+    def decorator(object_class: Type[BaseTyping]):
         register_typing_class(object_class=object_class,
                               object_type=object_type, unique_name=unique_name,
                               human_name="", short_description="", hide=hide, style=style)
@@ -38,9 +38,9 @@ def typing_registrator(unique_name: str,
     return decorator
 
 
-# Save the Typing to the TypingManager and set the _typing_name class property
+# Save the Typing to the TypingManager and set the typing_name class property
 def register_typing_class(
-        object_class: Type[Base],
+        object_class: Type[BaseTyping],
         object_type: TypingObjectType,
         unique_name: str,
         human_name: str,
@@ -94,20 +94,20 @@ def register_typing_class(
 
     TypingManager.register_typing(typing, object_class)
 
-    object_class._typing_name = typing.typing_name
-    object_class._human_name = human_name
-    object_class._short_description = short_description
+    object_class.__set_typing_name__(typing.typing_name)
+    object_class.__set_human_name__(human_name)
+    object_class.__set_short_description__(short_description)
 
 
 # Method to register gws object like Resource, Task and Protocol
 def register_gws_typing_class(
-        object_class: Type[Base],
+        object_class: Type[BaseTyping],
         object_type: TypingObjectType,
         unique_name: str,
         human_name: str,
         short_description,
         hide: bool = False,
-        style: TypingStyle = None,
+        style: Optional[TypingStyle] = None,
         object_sub_type: str = None,
         related_model_typing_name: str = None,
         deprecated_since: str = None,

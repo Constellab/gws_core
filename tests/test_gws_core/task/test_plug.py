@@ -26,7 +26,7 @@ class TestPlug(BaseTestCase):
         outputs: TaskOutputs = task_tester.run()
 
         robot_o: Robot = outputs['resource']
-        self.assertEqual(robot_o._model_id, robot_model.id)
+        self.assertEqual(robot_o.get_model_id(), robot_model.id)
 
     def test_sink(self):
         i_experiment: IExperiment = IExperiment()
@@ -40,7 +40,7 @@ class TestPlug(BaseTestCase):
 
         # check that the resource used in the sink was marked as output
         resource = create.refresh().get_output('robot')
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource._model_id)
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource.get_model_id())
         self.assertEqual(resource_model.flagged, True)
 
     def test_switch(self):

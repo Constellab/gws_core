@@ -76,7 +76,7 @@ class TaskRunner():
         inputs: TaskInputs = self._get_and_check_input()
 
         task: Task = self._get_task_instance()
-        task._status_ = 'CHECK_BEFORE_RUN'
+        task.__set_status__('CHECK_BEFORE_RUN')
 
         result = None
         try:
@@ -98,7 +98,7 @@ class TaskRunner():
         """
         inputs: TaskInputs = self._get_and_check_input()
         task: Task = self._get_task_instance()
-        task._status_ = 'RUN'
+        task.__set_status__('RUN')
 
         try:
             task_outputs: TaskOutputs = task.run(self._config_params, inputs)
@@ -114,7 +114,7 @@ class TaskRunner():
 
     def run_after_task(self) -> None:
         task: Task = self._get_task_instance()
-        task._status_ = 'RUN_AFTER_TASK'
+        task.__set_status__('RUN_AFTER_TASK')
 
         try:
             task.run_after_task()

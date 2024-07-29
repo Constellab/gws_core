@@ -132,7 +132,7 @@ class StreamlitResource(ResourceList):
 
         # add the resources as input of the streamlit app
         resources: List[FSNode] = self.get_resources()
-        streamlit_app.set_input_resources([resource._model_id for resource in resources])
+        streamlit_app.set_input_resources([resource.get_model_id() for resource in resources])
 
         streamlit_app.set_params(self._params)
         url = streamlit_app.generate_app()

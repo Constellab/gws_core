@@ -119,7 +119,7 @@ class InputSpecs(IOSpecs):
             resource: Resource = inputs[key]
             if not spec.is_compatible_with_resource_type(type(resource)):
                 invalid_input_text = invalid_input_text + \
-                    f"The input '{spec.human_name}' expected a '{spec.get_resources_human_names()}' but the provided resource is a '{resource._human_name}'. Please provide a valid resource."
+                    f"The input '{spec.human_name}' expected a '{spec.get_resources_human_names()}' but the provided resource is a '{resource.get_human_name()}'. Please provide a valid resource."
 
             # validate the resource through the spec
             spec.validate_resource(resource)
@@ -219,7 +219,7 @@ class OutputSpecs(IOSpecs):
                     resource=None
                 )
 
-            auto_convert_message = f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' was automatically converted to '{type(converted_resource)._human_name}'."
+            auto_convert_message = f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' was automatically converted to '{type(converted_resource).get_human_name()}'."
             output_resource = converted_resource
 
         # Check resource is compatible with specs

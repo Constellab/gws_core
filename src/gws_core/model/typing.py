@@ -154,8 +154,8 @@ class Typing(Model):
 
         parent_class: Type[Base] = model_t.__base__
 
-        # If the parent class has the attribute _typing_name, it means that this is a typing
-        if hasattr(parent_class, "_typing_name"):
+        # If the parent class has the attribute typing_name, it means that this is a typing
+        if hasattr(parent_class, "__typing_name__"):
             # retrieve the typing of the parent class
             return Typing.get_by_model_type(parent_class)
         return None

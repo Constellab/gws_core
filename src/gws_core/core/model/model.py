@@ -38,9 +38,6 @@ class Model(BaseModel, PeeweeModel):
     created_at = DateTimeUTC(default=DateHelper.now_utc)
     last_modified_at = DateTimeUTC(default=DateHelper.now_utc)
 
-    # Provided at the Class level automatically by the @TypingDecorator
-    _typing_name: str = None
-
     _json_ignore_fields: List[str] = []
     _is_saved: bool = False
 

@@ -129,7 +129,7 @@ class ResourceListBase(Resource):
         if isinstance(resource, ResourceListBase):
             raise Exception('ResourceSet does not support nested')
 
-        if not create_new_resource and resource._model_id is None:
+        if not create_new_resource and resource.get_model_id() is None:
             raise Exception(
                 "The create_new_resource option was set to False but the resource is not saved in the database")
 

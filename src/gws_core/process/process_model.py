@@ -182,9 +182,9 @@ class ProcessModel(ModelWithUser):
         self.set_experiment(parent_protocol.experiment)
 
     def set_process_type(self, process_type: Type[Process]) -> None:
-        self.process_typing_name = process_type._typing_name
+        self.process_typing_name = process_type.get_typing_name()
         self.brick_version_on_create = self._get_type_brick_version()
-        self.name = process_type._human_name
+        self.name = process_type.get_human_name()
 
     def set_inputs_from_specs(self, inputs_specs: IOSpecs) -> None:
         """Set the inputs from specs
@@ -427,12 +427,12 @@ class ProcessModel(ModelWithUser):
     def is_source_task(self) -> bool:
         """return true if the process is of type Source
         """
-        return self.process_typing_name == Source._typing_name
+        return self.process_typing_name == Source.get_typing_name()
 
     def is_sink_task(self) -> bool:
         """return true if the process is of type Sink
         """
-        return self.process_typing_name == Sink._typing_name
+        return self.process_typing_name == Sink.get_typing_name()
 
     def is_auto_run(self) -> bool:
         """Return true if the process is of type Source

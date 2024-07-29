@@ -64,7 +64,7 @@ class ResourceList(ResourceListBase):
 
     def __set_r_field__(self) -> None:
         """ set _resource_ids with key = resource_name and value = resource_id"""
-        self._resource_ids = [resource._model_id for resource in self._resources]
+        self._resource_ids = [resource.get_model_id() for resource in self._resources]
 
     def add_resource(self, resource: Resource,
                      create_new_resource: bool = True) -> None:

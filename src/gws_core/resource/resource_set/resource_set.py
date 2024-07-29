@@ -35,7 +35,7 @@ class ResourceSet(ResourceListBase):
             for resource_name, id in self._resource_ids.items():
                 # search the resource with same id and set it in _resources
                 for resource in resources:
-                    if resource._model_id == id:
+                    if resource.get_model_id() == id:
                         self._resources[resource_name] = resource
                         break
 
@@ -62,7 +62,7 @@ class ResourceSet(ResourceListBase):
     def __set_r_field__(self) -> None:
         """ set _resource_ids with key = resource_name and value = resource_id"""
         self._resource_ids = {
-            name: resource._model_id for name, resource in self._resources.items()}
+            name: resource.get_model_id() for name, resource in self._resources.items()}
 
     def add_resource(self, resource: Resource,
                      unique_name: str = None,

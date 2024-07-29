@@ -36,7 +36,7 @@ class ConverterService:
 
         # Create an experiment containing 1 source, 1 importer , 1 sink
         experiment: IExperiment = IExperiment(
-            None, title=f"{resource_type._human_name} importer")
+            None, title=f"{resource_type.get_human_name()} importer")
         protocol: IProtocol = experiment.get_protocol()
 
         # Add the importer and the connector
@@ -71,14 +71,15 @@ class ConverterService:
         """return the Task exporter typing for the resource type.
         The one that is closest to class in herarchy
         """
-        if not resource_type._is_exportable:
+        if not resource_type.__is_exportable__:
             raise BadRequestException(
                 "The resource must be an exportable resource. This means that an exporter task must exist on for this resource")
 
         task_typings: List[TaskTyping] = TaskTyping.get_by_related_resource(resource_type, "EXPORTER")
 
         if len(task_typings) == 0:
-            raise BadRequestException(f"Can't find the exporters for the resource type {resource_type._human_name}")
+            raise BadRequestException(
+                f"Can't find the exporters for the resource type {resource_type.get_human_name()}")
 
         # sort the list to have the most specific exporter first and generic last
         task_typings.sort(key=lambda x: len(x.get_ancestors()), reverse=True)

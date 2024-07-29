@@ -529,7 +529,7 @@ class ProtocolService():
         if protocol_model.experiment:
             cls._check_experiment_circular_reference(resource_id, protocol_model.experiment.id)
         return cls.add_process_connected_to_input(
-            protocol_id, Source._typing_name, process_name, input_port_name, {Source.config_name: resource_id})
+            protocol_id, Source.get_typing_name(), process_name, input_port_name, {Source.config_name: resource_id})
 
     @classmethod
     def _check_experiment_circular_reference(cls, new_resource_id: str, experiment_id: str) -> None:
@@ -550,7 +550,7 @@ class ProtocolService():
         """ Add a sink task to the protocol. And add connector from process to sink
         """
 
-        return cls.add_process_connected_to_output(protocol_id, Sink._typing_name, process_name, output_port_name)
+        return cls.add_process_connected_to_output(protocol_id, Sink.get_typing_name(), process_name, output_port_name)
 
     @classmethod
     @transaction()
@@ -568,10 +568,10 @@ class ProtocolService():
         existing_out_port: Port = existing_process.out_port(output_port_name)
 
         viewer_config = {
-            Viewer.resource_config_name: existing_out_port.get_default_resource_type()._typing_name}
+            Viewer.resource_config_name: existing_out_port.get_default_resource_type().get_typing_name()}
 
         return cls.add_process_connected_to_output(
-            protocol_id, Viewer._typing_name, process_name, output_port_name,
+            protocol_id, Viewer.get_typing_name(), process_name, output_port_name,
             viewer_config)
 
     ########################## LAYOUT #####################
@@ -766,8 +766,8 @@ class ProtocolService():
                 "Cannot download a protocol without experiment")
 
         return ProtocolTemplateFactory.from_protocol_model(protocol_model,
-                                                    protocol_model.experiment.title,
-                                                    protocol_model.experiment.description)
+                                                           protocol_model.experiment.title,
+                                                           protocol_model.experiment.description)
 
     ########################## COMMUNITY #####################
 

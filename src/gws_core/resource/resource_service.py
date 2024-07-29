@@ -95,7 +95,7 @@ class ResourceService():
         if not Utils.issubclass(file_type, Resource):
             raise BadRequestException('The type must be a Resource')
 
-        resource_model.set_resource_typing_name(file_type._typing_name)
+        resource_model.set_resource_typing_name(file_type.get_typing_name())
 
         # check that the resource can be loaded and is valid
         resource: Resource = resource_model.get_resource()

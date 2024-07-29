@@ -235,7 +235,7 @@ class TestView(BaseTestCase):
         view_config = {'view_method_name': 'a_view_test', 'config_values': {
             "page": 1, "page_size": 5000}, }
         viewer = i_protocol.add_process(Viewer, 'viewer', {
-            Viewer.resource_config_name: resource._typing_name, 'view_config': view_config})
+            Viewer.resource_config_name: resource.get_typing_name(), 'view_config': view_config})
 
         i_protocol.add_source('source', resource_model.id, viewer << Viewer.input_name)
         i_experiment.run()

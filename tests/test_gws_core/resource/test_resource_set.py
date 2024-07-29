@@ -117,7 +117,7 @@ class TestResourceSet(BaseTestCase):
 
         # test the view, reload the resource to simulate real view
         resource_set = ResourceModel.get_by_id_and_check(
-            resource_set._model_id).get_resource()
+            resource_set.get_model_id()).get_resource()
 
         self.assertEqual(
             len(resource_set.view_resources_list({}).to_dto({}).data), 2)

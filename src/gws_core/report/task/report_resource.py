@@ -51,7 +51,7 @@ class ReportResource(Resource):
     def add_view(self, resource: Resource, view_method_name: str, config_values: ConfigParamsDict = None,
                  title: str = None, caption: str = None, variable_name: str = None) -> None:
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
-            resource._model_id, view_method_name, config_values, True)
+            resource.get_model_id(), view_method_name, config_values, True)
 
         rich_text: RichText = self.get_content()
         rich_text.add_resource_view(view_result.view_config.to_rich_text_resource_view(title, caption), variable_name)

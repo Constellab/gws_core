@@ -30,7 +30,7 @@ class TestProtocolService(BaseTestCase):
         protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
 
         process_model: ProcessModel = ProtocolService.add_process_to_protocol_id(
-            protocol_model.id, RobotMove._typing_name).process
+            protocol_model.id, RobotMove.get_typing_name()).process
 
         protocol_model = protocol_model.refresh()
         self.assertEqual(protocol_model.get_process(
@@ -79,7 +79,7 @@ class TestProtocolService(BaseTestCase):
         protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
 
         process_model: ProcessModel = ProtocolService.add_process_to_protocol_id(
-            protocol_model.id, RobotMove._typing_name).process
+            protocol_model.id, RobotMove.get_typing_name()).process
 
         # Test add view task
         viewer_model = ProtocolService.add_viewer_to_process_output(
@@ -90,7 +90,7 @@ class TestProtocolService(BaseTestCase):
         self.assertEqual(viewer_model.get_process_type(), Viewer)
         # check that the view task was pre-configured with the robot type
         self.assertEqual(viewer_model.config.get_value(
-            Viewer.resource_config_name), Robot._typing_name)
+            Viewer.resource_config_name), Robot.get_typing_name())
 
         # Check that the connector was created
         self.assertEqual(len(protocol_model.connectors), 1)
@@ -99,9 +99,9 @@ class TestProtocolService(BaseTestCase):
         protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
 
         create: ProcessModel = ProtocolService.add_process_to_protocol_id(
-            protocol_model.id, RobotCreate._typing_name).process
+            protocol_model.id, RobotCreate.get_typing_name()).process
         move: ProcessModel = ProtocolService.add_process_to_protocol_id(
-            protocol_model.id, RobotMove._typing_name).process
+            protocol_model.id, RobotMove.get_typing_name()).process
 
         ProtocolService.add_connector_to_protocol_id(
             protocol_model.id, create.instance_name, 'robot', move.instance_name, 'robot')
@@ -245,7 +245,7 @@ class TestProtocolService(BaseTestCase):
         protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
 
         process_model: ProcessModel = ProtocolService.add_process_to_protocol_id(
-            protocol_model.id, RobotMove._typing_name).process
+            protocol_model.id, RobotMove.get_typing_name()).process
 
         ProtocolService.duplicate_process_to_protocol_id(
             protocol_model.id, process_model.instance_name)

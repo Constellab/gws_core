@@ -37,7 +37,7 @@ class TestTaskTransformer(BaseTestCase):
 
         # create and run
         transformers: List[TransformerDict] = [
-            {'typing_name': RobotTransform._typing_name, 'config_values': {'age': age_config}}]
+            {'typing_name': RobotTransform.get_typing_name(), 'config_values': {'age': age_config}}]
         resource_model: ResourceModel = TransformerService.create_and_run_transformer_experiment(
             transformers, robot_model.id)
 
@@ -52,11 +52,11 @@ class TestTaskTransformer(BaseTestCase):
         age_config = 99
 
         transformers: List[TransformerDict] = [{
-            'typing_name': RobotTransform._typing_name,
+            'typing_name': RobotTransform.get_typing_name(),
             'config_values': {'age': 5}
         },
             {
-            'typing_name': RobotTransform._typing_name,
+            'typing_name': RobotTransform.get_typing_name(),
             'config_values': {'age': age_config}
         }]
 

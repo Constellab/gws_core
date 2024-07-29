@@ -24,7 +24,7 @@ class ProtocolGraph():
         resource_ids: Set[str] = set()
 
         for node in self.graph.nodes.values():
-            if node.process_typing_name == Source._typing_name:
+            if node.process_typing_name == Source.get_typing_name():
                 resource_id = Source.get_resource_id_from_config(node.config.values)
                 if resource_id:
                     resource_ids.add(resource_id)
@@ -35,7 +35,7 @@ class ProtocolGraph():
         resource_ids: Set[str] = set()
 
         for node in self.graph.nodes.values():
-            if node.process_typing_name == Sink._typing_name:
+            if node.process_typing_name == Sink.get_typing_name():
                 resource_id = node.inputs.ports[Sink.input_name].resource_id
                 if resource_id:
                     resource_ids.add(resource_id)

@@ -27,7 +27,7 @@ class TestExporter(BaseTestCase):
         resource_model: ResourceModel = ResourceModel.save_from_resource(json_, origin=ResourceOrigin.UPLOADED)
 
         file_model: ResourceModel = ConverterService.call_exporter(
-            resource_model.id, JSONExporter._typing_name, {})
+            resource_model.id, JSONExporter.get_typing_name(), {})
 
         file: File = file_model.get_resource()
         self.assertTrue(FileHelper.exists_on_os(file.path))

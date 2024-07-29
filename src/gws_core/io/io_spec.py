@@ -66,13 +66,13 @@ class IOSpec:
         if human_name is not None:
             self.human_name = human_name
         else:
-            self.human_name = default_type._human_name
+            self.human_name = default_type.get_human_name()
 
         # set the short description with a default value
         if short_description is not None:
             self.short_description = short_description
         else:
-            self.short_description = default_type._short_description
+            self.short_description = default_type.get_short_description()
 
     def check_resource_types(self):
         for resource_type in self.resource_types:
@@ -120,7 +120,7 @@ class IOSpec:
         return tuple(self.resource_types)
 
     def get_resources_human_names(self) -> str:
-        list_str = [(resource_type._human_name if resource_type else 'None')
+        list_str = [(resource_type.get_human_name() if resource_type else 'None')
                     for resource_type in self.resource_types]
 
         if len(list_str) == 1:
@@ -174,7 +174,7 @@ class IOSpec:
 
         for resource_type in self.resource_types:
             typing = TypingManager.get_typing_from_name_and_check(
-                resource_type._typing_name)
+                resource_type.get_typing_name())
 
             spec_dto.resource_types.append(typing.to_ref_dto())
         return spec_dto

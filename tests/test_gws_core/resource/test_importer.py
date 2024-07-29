@@ -22,20 +22,20 @@ class TestImporterResource(ResourceImporter):
 class TestImporter(BaseTestCase):
 
     def test_get_import_specs(self):
-        importers: Paginator[TaskTyping] = TypingService.search_importers(File._typing_name, 'weirdformatfile',
+        importers: Paginator[TaskTyping] = TypingService.search_importers(File.get_typing_name(), 'weirdformatfile',
                                                                           SearchParams(), 0, 1000)
 
         self.assertEqual(len(importers.results), 1)
         self.assertTrue(len([x for x in importers.results if x.get_type() == TestImporterResource]) == 1)
 
-        importers = TypingService.search_importers(File._typing_name, 'anotherweirdformatfile',
+        importers = TypingService.search_importers(File.get_typing_name(), 'anotherweirdformatfile',
                                                    SearchParams(), 0, 1000)
         self.assertEqual(len(importers.results), 0)
 
         # test with ignore extension activated
         search_params = SearchParams(
             filtersCriteria=[{'key': 'importer_ignore_extension', 'value': True, 'operator': 'EQ'}])
-        importers = TypingService.search_importers(File._typing_name, 'anotherweirdformatfile',
+        importers = TypingService.search_importers(File.get_typing_name(), 'anotherweirdformatfile',
                                                    search_params, 0, 1000)
         self.assertTrue(len(importers.results) > 0)
 
@@ -45,7 +45,7 @@ class TestImporter(BaseTestCase):
         resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
 
         # import the table file into a Table
-        result: ResourceModel = ConverterService.call_importer(resource_model.id, TableImporter._typing_name,  {})
+        result: ResourceModel = ConverterService.call_importer(resource_model.id, TableImporter.get_typing_name(),  {})
 
         self.assertEqual(result.origin, ResourceOrigin.GENERATED)
         table: Table = result.get_resource()

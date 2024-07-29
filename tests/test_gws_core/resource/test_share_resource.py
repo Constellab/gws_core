@@ -174,7 +174,7 @@ class TestShareResource(BaseTestCase):
         self.assertIsNotNone(table)
         original_table: Table = original_resource_set.get_resource('table')
         # check that this is a new resource
-        self.assertNotEqual(original_table._model_id, table._model_id)
+        self.assertNotEqual(original_table.get_model_id(), table.get_model_id())
         self.assertTrue(original_table.equals(table))
 
         # check the file
@@ -183,7 +183,7 @@ class TestShareResource(BaseTestCase):
         self.assertEqual('test', file.read())
         original_file = original_resource_set.get_resource('file')
         # check that this is a new resource
-        self.assertNotEqual(original_file._model_id, file._model_id)
+        self.assertNotEqual(original_file.get_model_id(), file.get_model_id())
 
     def test_share_resource_list(self):
         # Generate a resource list
@@ -211,7 +211,7 @@ class TestShareResource(BaseTestCase):
         self.assertIsNotNone(table)
         original_table: Table = original_resource_list[0]
         # check that this is a new resource
-        self.assertNotEqual(original_table._model_id, table._model_id)
+        self.assertNotEqual(original_table.get_model_id(), table.get_model_id())
         self.assertTrue(original_table.equals(table))
 
         # check the file
@@ -220,4 +220,4 @@ class TestShareResource(BaseTestCase):
         self.assertEqual('test', file.read())
         original_file = original_resource_list[1]
         # check that this is a new resource
-        self.assertNotEqual(original_file._model_id, file._model_id)
+        self.assertNotEqual(original_file.get_model_id(), file.get_model_id())

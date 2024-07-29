@@ -3,9 +3,6 @@
 import copy
 from typing import Any, Dict, List, Type
 
-from pandas import DataFrame
-from plotly.graph_objs import Figure
-
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
 from gws_core.impl.table.table import Table
@@ -16,6 +13,8 @@ from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.tag.tag import Tag
+from pandas import DataFrame
+from plotly.graph_objs import Figure
 
 
 class ResourceFactory():
@@ -35,7 +34,7 @@ class ResourceFactory():
 
         if resource_model_id:
             # Pass the model id to the resource
-            resource._model_id = resource_model_id
+            resource.__set_model_id__(resource_model_id)
 
         if name:
             resource.name = name
@@ -60,10 +59,9 @@ class ResourceFactory():
         :type resource: ResourceType
         """
 
-        properties: Dict[str,
-                         BaseRField] = resource.__get_resource_r_fields__()
+        properties: Dict[str, BaseRField] = resource.__get_resource_r_fields__()
 
-        resource._kv_store = kv_store
+        resource.__set_kv_store__(kv_store)
 
         # for each BaseRField of the resource, set the value form the data or kvstore
         for key, r_field in properties.items():

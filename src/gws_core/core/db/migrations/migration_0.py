@@ -4,9 +4,6 @@ import os
 from copy import deepcopy
 from typing import Dict, List, Type
 
-from peewee import BigIntegerField, CharField
-from peewee import Model as PeeweeModel
-
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.brick.brick_model import BrickModel
 from gws_core.config.config import Config
@@ -57,6 +54,8 @@ from gws_core.user.activity.activity import Activity
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.user import User
+from peewee import BigIntegerField, CharField
+from peewee import Model as PeeweeModel
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -185,7 +184,7 @@ class Migration0310(BrickMigration):
         migrator.migrate()
 
         task_models: List[TaskModel] = list(TaskModel.select().where(
-            TaskModel.process_typing_name == Source._typing_name))
+            TaskModel.process_typing_name == Source.get_typing_name()))
 
         # Update source config in task models
         for task_model in task_models:
@@ -283,7 +282,7 @@ class Migration0313(BrickMigration):
                 task_input_model: TaskInputModel = TaskInputModel.get_by_resource_model(
                     resource_model.id).first()
                 # if the resource is used a input of a Sink task or the resource was uploaded
-                if (task_input_model is not None and task_input_model.task_model.process_typing_name == Sink._typing_name) or \
+                if (task_input_model is not None and task_input_model.task_model.process_typing_name == Sink.get_typing_name()) or \
                         resource_model.origin == ResourceOrigin.UPLOADED:
                     resource_model.flagged = True
 
@@ -481,14 +480,14 @@ class Migration043(BrickMigration):
 
                 for key, r_field in properties.items():
                     if isinstance(r_field, FileRField):
-                        value = resource._kv_store.get(key)
+                        value = resource.__kv_store__.get(key)
                         # if this is a path, we store only the name of the file
                         if FileHelper.exists_on_os(value):
                             # unlock the kv_store to update it directly
-                            resource._kv_store._lock = False
-                            resource._kv_store[key] = FileHelper.get_name(
+                            resource.__kv_store__._lock = False
+                            resource.__kv_store__[key] = FileHelper.get_name(
                                 value)
-                            resource._kv_store._lock = True
+                            resource.__kv_store__._lock = True
 
                 resource_model.save()
             except Exception as exception:
@@ -581,7 +580,7 @@ class Migration050Beta1(BrickMigration):
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
         resource_models: List[ResourceModel] = list(
-            ResourceModel.get_by_types_and_sub([FSNode._typing_name]))
+            ResourceModel.get_by_types_and_sub([FSNode.get_typing_name()]))
 
         for resource_model in resource_models:
             try:

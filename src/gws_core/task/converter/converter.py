@@ -77,7 +77,7 @@ def get_converter_default_style(resource_type: Type[Resource]) -> TypingStyle:
     """Get the default style for a task, use the first input style or the first output style
     """
 
-    typing = TypingManager.get_typing_from_name(resource_type._typing_name)
+    typing = TypingManager.get_typing_from_name(resource_type.get_typing_name())
     if typing and typing.style:
         return typing.style
 

@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, final
 
-from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
-                    ForeignKeyField, ModelDelete, ModelSelect)
-
 from gws_core.core.model.db_field import BaseDTOField, JSONField
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
@@ -22,6 +19,8 @@ from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_list import TagList
+from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
+                    ForeignKeyField, ModelDelete, ModelSelect)
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -44,9 +43,6 @@ from .resource_factory import ResourceFactory
 if TYPE_CHECKING:
     from ..experiment.experiment import Experiment
     from ..task.task_model import TaskModel
-
-# Typing names generated for the class Resource
-CONST_RESOURCE_MODEL_TYPING_NAME = "MODEL.gws_core.ResourceModel"
 
 
 class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
@@ -104,11 +100,6 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
 
         if not self.is_saved() and not self.data:
             self.data = {}
-
-        # check that the class level property _typing_name is set
-        if self._typing_name == CONST_RESOURCE_MODEL_TYPING_NAME and type(self) != ResourceModel:  # pylint: disable=unidiomatic-typecheck
-            raise BadRequestException(
-                f"The resource model {self.full_classname()} is not decorated with @TypingDecorator, it can't be instantiate. Please decorate the class with @TypingDecorator")
 
     ########################################## MODEL METHODS ######################################
 
@@ -193,7 +184,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
             type_}.union(Utils.get_all_subclasses(type_))
         # get the typing names
         resource_typing_names = [
-            resource_type._typing_name for resource_type in resource_types]
+            resource_type.get_typing_name() for resource_type in resource_types]
         # select the resource model with the typing name
         return ResourceModel.select().where(ResourceModel.resource_typing_name.in_(resource_typing_names))
 
@@ -250,7 +241,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
         """
 
         # If the main resource class is provided, return None because all the classes will be retrieved
-        if Resource._typing_name in typing_names:
+        if Resource.get_typing_name() in typing_names:
             return None
 
         # Retrieve all type of typing_names
@@ -265,7 +256,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
 
         # Get the typing names
         all_typing_names: List[str] = [
-            resource_type._typing_name for resource_type in all_types]
+            resource_type.get_typing_name() for resource_type in all_types]
 
         return ResourceModel.resource_typing_name.in_(all_typing_names)
 
@@ -286,10 +277,6 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
             ResourceModel.resource_typing_name == old_typing_name).execute()
 
     ########################################## RESOURCE ######################################
-
-    @property
-    def typing_name(self) -> str:
-        return self._typing_name
 
     @final
     def get_resource(self, new_instance: bool = False) -> Resource:
@@ -321,7 +308,8 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
 
     @classmethod
     def from_resource(cls, resource: Resource, origin: ResourceOrigin = ResourceOrigin.GENERATED,
-                      experiment: Experiment = None, task_model: TaskModel = None, port_name: str = None) -> ResourceModel:
+                      experiment: Optional[Experiment] = None, task_model: Optional[TaskModel] = None,
+                      port_name: str = None) -> ResourceModel:
         """Create a new ResourceModel from a resource
 
         Don't set the resource here so it is regenerate on next get (avoid using same instance)
@@ -336,7 +324,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
                 raise Exception(f"To create a {origin} resource, you must provide the experiment and the task")
 
         resource_model: ResourceModel = ResourceModel()
-        resource_model.set_resource_typing_name(resource._typing_name)
+        resource_model.set_resource_typing_name(resource.get_typing_name())
         resource_model.origin = resource.__origin__ or origin
         if experiment:
             resource_model.experiment = experiment
@@ -356,7 +344,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
             Logger.log_exception_stack_trace(err)
 
         if name is None:
-            name = resource._human_name
+            name = resource.get_human_name()
         resource_model.name = name
 
         style_override = resource.style
@@ -373,7 +361,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
         # set the resource model id in the resource
         # it can be useful for the resource to have access to the model id
         # in the run_after_task method for example
-        resource._model_id = resource_model.id
+        resource.__set_model_id__(resource_model.id)
 
         return resource_model
 
@@ -586,7 +574,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
     def is_downloadable(self) -> bool:
         # the resource is downloadable if it's a file or if the export_to_path is defined
         resource_type: Type[Resource] = self.get_resource_type()
-        return self.fs_node_model is not None or (resource_type is not None and resource_type._is_exportable)
+        return self.fs_node_model is not None or (resource_type is not None and resource_type.__is_exportable__)
 
     def is_manually_generated(self) -> bool:
         return self.origin == ResourceOrigin.UPLOADED or self.origin == ResourceOrigin.IMPORTED_FROM_LAB

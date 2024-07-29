@@ -112,7 +112,7 @@ def decorate_task(
     elif not style.background_color or not style.icon_color:
         style.copy_from_style(get_task_default_style(task_class))
 
-    related_resource_typing_name = related_resource._typing_name if related_resource else None
+    related_resource_typing_name = related_resource.get_typing_name() if related_resource else None
 
     register_gws_typing_class(object_class=task_class,
                               object_type="TASK",
@@ -134,11 +134,11 @@ def get_task_default_style(task_class: Type[Task]) -> TypingStyle:
     default_typing_name = None
     first_input = task_class.input_specs.get_first_spec()
     if first_input:
-        default_typing_name = first_input.get_default_resource_type()._typing_name
+        default_typing_name = first_input.get_default_resource_type().get_typing_name()
     else:
         first_output = task_class.output_specs.get_first_spec()
         if first_output:
-            default_typing_name = first_output.get_default_resource_type()._typing_name
+            default_typing_name = first_output.get_default_resource_type().get_typing_name()
 
     if default_typing_name:
         typing = TypingManager.get_typing_from_name(default_typing_name)

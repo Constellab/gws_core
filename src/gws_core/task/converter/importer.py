@@ -76,8 +76,8 @@ def importer_decorator(
                 return task_class
 
             task_class._supported_extensions = supported_extensions
-            human_name_computed = human_name or target_type._human_name + ' importer'
-            short_description_computed = short_description or f"Import file to {target_type._human_name}"
+            human_name_computed = human_name or target_type.get_human_name() + ' importer'
+            short_description_computed = short_description or f"Import file to {target_type.get_human_name()}"
 
             # register the task
             decorate_converter(
@@ -134,7 +134,7 @@ class ResourceImporter(Converter):
             target: Resource = self.import_from_path(source, params, target_type)
         except Exception as err:
             raise Exception(
-                f"Cannot import file '{source.path}' using importer : '{self._typing_name}' because of the following error: {err}")
+                f"Cannot import file '{source.path}' using importer : '{self.get_typing_name()}' because of the following error: {err}")
 
         if target.name is None:
             # set the target name = FsNode name without extension

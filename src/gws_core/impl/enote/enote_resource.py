@@ -214,7 +214,7 @@ class ENoteResource(ResourceSet):
         resource = self.get_resource(resource_key)
 
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
-            resource._model_id, view_name, config, False)
+            resource.get_model_id(), view_name, config, False)
 
         return view_result.to_dto()
 
@@ -636,7 +636,7 @@ class ENoteResource(ResourceSet):
         # retrieve the resource model from the resource
         resource = self.get_resource(enote_view['sub_resource_key'])
 
-        if resource._model_id is not None:
+        if resource.get_model_id() is not None:
             # add the view manually from the resource and config
             view_data = self._convert_view_for_report_rich_text(enote_view)
             report_rich_text.add_resource_view(view_data)
@@ -651,12 +651,12 @@ class ENoteResource(ResourceSet):
         # retrieve the resource model from the resource
         resource = self.get_resource(enote_view['sub_resource_key'])
 
-        if not resource._model_id:
+        if not resource.get_model_id():
             raise ValueError(
                 f"The resource {enote_view['sub_resource_key']} of the e-note was not saved on the database.")
 
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
-            resource._model_id, enote_view['view_method_name'], enote_view["view_config"], True)
+            resource.get_model_id(), enote_view['view_method_name'], enote_view["view_config"], True)
 
         return view_result.view_config.to_rich_text_resource_view()
 
@@ -696,7 +696,7 @@ class ENoteResource(ResourceSet):
     def view_enote(self, config: ConfigParamsDict = None) -> RichTextView:
         return RichTextView(self.title, self._rich_text,
                             object_type=RichTextObjectType.ENOTE,
-                            object_id=self._model_id)
+                            object_id=self.get_model_id())
 
     ############################# Constructors #############################
 

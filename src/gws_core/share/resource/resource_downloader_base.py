@@ -95,6 +95,6 @@ class ResourceDownloaderBase(Task):
         self.log_info_message("Storing the resource origin info")
         resources: List[Resource] = self.resource_loader.get_all_generated_resources()
         for resource in resources:
-            SharedResource.create_from_lab_info(resource._model_id, SharedEntityMode.RECEIVED,
+            SharedResource.create_from_lab_info(resource.get_model_id(), SharedEntityMode.RECEIVED,
                                                 self.resource_loader.get_origin_info(),
                                                 CurrentUserService.get_and_check_current_user())

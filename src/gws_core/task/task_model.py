@@ -262,7 +262,7 @@ class TaskModel(ProcessModel):
                 # If the port is mark as is_constant_out, we don't create a new resource
                 # We use the same resource
                 resource_model = ResourceModel.get_by_id_and_check(
-                    resource._model_id)
+                    resource.get_model_id())
             else:
                 resource_model = self.save_output_resource(resource, port.name)
 
@@ -323,17 +323,17 @@ class TaskModel(ProcessModel):
                 # create and save the resource model from the resource
                 resource_model = self.save_output_resource(resource, port_name)
 
-                resource._model_id = resource_model.id
+                resource.__set_model_id__(resource_model.id)
                 new_children_resources.append(resource_model)
             else:
                 # verify that the resource exists
-                if resource._model_id is None:
+                if resource.get_model_id() is None:
                     raise Exception(
                         f"The resource with '{resource.name or resource.uid}' was added to a ResourceList with create_new_resource set to False but the resource does not exists in the system. It seems it wasn't saved in the database before, is it a new resource ?")
                 # case when the resource is a constant and we don't create a new resource
                 # if the resource is not listed in task input, error
                 # Accept the resource if it is a sub resource of a input resource set
-                if not self.inputs.has_resource_model(resource._model_id, include_sub_resouces=True):
+                if not self.inputs.has_resource_model(resource.get_model_id(), include_sub_resouces=True):
                     raise BadRequestException(GWSException.INVALID_LINKED_RESOURCE.value,
                                               unique_code=GWSException.INVALID_LINKED_RESOURCE.name,
                                               detail_args={'port_name': port_name})

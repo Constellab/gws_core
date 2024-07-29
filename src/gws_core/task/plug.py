@@ -83,7 +83,7 @@ class Sink(Task):
             from ..resource.resource_model import ResourceModel
             resource: Resource = inputs.get(Sink.input_name)
             resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
-                resource._model_id)
+                resource.get_model_id())
             resource_model.flagged = True
             resource_model.save()
 

@@ -100,7 +100,7 @@ class TestFolder(BaseTestCase):
         # Call extractor
         sub_file_model: ResourceModel = ConverterService.call_file_extractor(folder_model_id=folder_model.id,
                                                                              sub_path='test.txt',
-                                                                             fs_node_typing_name=File._typing_name)
+                                                                             fs_node_typing_name=File.get_typing_name())
 
         # Check that the file was extracted from folder
         self.assertEqual(sub_file_model.fs_node_model.is_symbolic_link, True)
