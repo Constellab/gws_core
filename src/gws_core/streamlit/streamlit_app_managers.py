@@ -25,11 +25,11 @@ class StreamlitAppManager():
     """
 
     # interval in second to check if the app is still used
-    CHECK_RUNNING_INTERVAL = 30
+    CHECK_RUNNING_INTERVAL = 5
 
     # number of successive check when there is not connection to the main app
     # before killing it
-    SUCCESSIVE_CHECK_BEFORE_KILL = 3
+    SUCCESSIVE_CHECK_BEFORE_KILL = 10
 
     MAIN_APP_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                       "_main_streamlit_app.py")
@@ -212,25 +212,7 @@ class StreamlitAppManager():
         # get the list of the connections
         connections = psutil.net_connections(kind='inet')
 
-        # count the number of connections
-        cons = []
-        count_established = 0
-        count_listen = 0
-        for conn in connections:
-            if conn.pid == cls.main_app_process.pid:
-                if conn.status == 'ESTABLISHED':
-                    count_established += 1
-                elif conn.status == 'LISTEN':
-                    count_listen += 1
-                cons.append(conn)
-
-        # specific case on the first apps, it seems to have only one established connection
-        if count_established == 1:
-            return count_established
-
-        # to count otherwise, we substract the listen connections, if lower than 0, we return 0
-        count = count_established - count_listen
-        return count if count > 0 else 0
+        return len([x for x in connections if x.pid == cls.main_app_process.pid and x.status == 'ESTABLISHED'])
 
     ############################# OTHERS ####################################
 
