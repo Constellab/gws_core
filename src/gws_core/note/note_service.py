@@ -1,6 +1,6 @@
 
 
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.document.document_dto import DocumentSaveDTO
@@ -14,6 +14,7 @@ from gws_core.impl.rich_text.rich_text_types import (RichTextBlockType,
                                                      RichTextResourceViewData,
                                                      RichTextViewFileData)
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.note.note import Note
 from gws_core.project.project import Project
 from gws_core.report.report_experiment import ReportExperiment
 from gws_core.report.report_view_model import ReportViewModel
@@ -40,147 +41,103 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.exception.gws_exceptions import GWSException
 from ..experiment.experiment import Experiment
 from ..space.space_service import SpaceService
-from .report import Report
 
 
-class ReportService():
+class NoteService():
 
     @classmethod
     def get_document_service(cls) -> DocumentService:
-        return DocumentService(DocumentType.REPORT,
-                               Report, RichTextObjectType.REPORT,
-                               ActivityObjectType.REPORT)
+        return DocumentService(DocumentType.NOTE,
+                               Note, RichTextObjectType.NOTE,
+                               ActivityObjectType.NOTE)
 
     @classmethod
     @transaction()
-    def create(cls, report_dto: DocumentSaveDTO, experiment_ids: List[str] = None) -> Report:
+    def create(cls, note_dto: DocumentSaveDTO) -> Note:
         document_service = cls.get_document_service()
 
-        report: Report = document_service.create(report_dto)
-
-        if experiment_ids is not None:
-            # Create the ReportExperiment
-            for experiment_id in experiment_ids:
-                cls.add_experiment(report.id, experiment_id)
-
-        return report
+        return document_service.create(note_dto)
 
     @classmethod
-    def update_title(cls, report_id: str, title: str) -> Report:
+    def update_title(cls, note_id: str, title: str) -> Note:
         document_service = cls.get_document_service()
-        return document_service.update_title(report_id, title)
+        return document_service.update_title(note_id, title)
 
     @classmethod
-    def update_project(cls, report_id: str, project_id: str) -> Report:
+    def update_project(cls, note_id: str, project_id: str) -> Note:
         document_service = cls.get_document_service()
-        report: Report = document_service.get_and_check_before_update(report_id)
+        note: Note = document_service.get_and_check_before_update(note_id)
 
-        report = cls._update_report_project(report, project_id)
+        note = cls._update_project(note, project_id)
 
-        report = report.save()
+        note = note.save()
 
         ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                            object_type=ActivityObjectType.REPORT,
-                                            object_id=report.id)
+                                            object_type=ActivityObjectType.NOTE,
+                                            object_id=note.id)
 
-        return report
+        return note
 
     @classmethod
     @transaction()
-    def _update_report_project(cls, report: Report, project_id: str) -> Report:
+    def _update_project(cls, note: Note, project_id: Optional[str]) -> Note:
         # update project
         if project_id:
             project = Project.get_by_id_and_check(project_id)
-            if report.last_sync_at is not None and project != report.project:
+            if note.last_sync_at is not None and project != note.project:
                 raise BadRequestException(
-                    "You can't change the project of a report that has been synced. You must unlink it from the project first.")
-            report.project = project
+                    "You can't change the project of a note that has been synced. You must unlink it from the project first.")
+            note.project = project
 
         # if the project was removed
-        if project_id is None and report.project is not None:
+        if project_id is None and note.project is not None:
 
-            if report.last_sync_at is not None:
-                cls._unsynchronize_with_space(report, report.project.id)
-            report.project = None
+            if note.last_sync_at is not None:
+                cls._unsynchronize_with_space(note, note.project.id)
+            note.project = None
 
-        # check that all linked experiment are in same project
-        experiments: List[Experiment] = cls.get_experiments_by_report(report.id)
-
-        for experiment in experiments:
-            exp_project_id = experiment.project.id if experiment.project else None
-            if exp_project_id != project_id:
-                ExperimentService.update_experiment_project(experiment.id,
-                                                            project_id, check_report=False)
-
-        return report
+        return note
 
     @classmethod
     @transaction()
-    def update_content(cls, report_id: str, report_content: RichTextDTO) -> Report:
+    def update_content(cls, note_id: str, note_content: RichTextDTO) -> Note:
         document_service = cls.get_document_service()
-        report: Report = document_service.get_and_check_before_update(report_id)
+        note: Note = document_service.get_and_check_before_update(note_id)
 
-        report.content = report_content
-        # refresh ReportResource table
-        cls._refresh_report_views_and_tags(report)
+        note.content = note_content
 
-        report = report.save()
+        note = note.save()
         ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                            object_type=ActivityObjectType.REPORT,
-                                            object_id=report.id)
+                                            object_type=ActivityObjectType.NOTE,
+                                            object_id=note.id)
 
-        return report
-
-    @classmethod
-    @transaction()
-    def add_view_to_content(cls, report_id: str, view_config_id: str) -> Report:
-        document_service = cls.get_document_service()
-        report: Report = document_service.get_and_check_before_update(report_id)
-
-        view_config: ViewConfig = ViewConfigService.get_by_id(view_config_id)
-
-        if view_config.view_type in exluded_views_in_report:
-            raise BadRequestException("You can't add this type of view to a report")
-
-        # create the json object for the rich text
-        view_content: RichTextResourceViewData = view_config.to_rich_text_resource_view()
-
-        # get the rich text and add the resource view
-        rich_text = report.get_content_as_rich_text()
-        rich_text.add_resource_view(view_content)
-
-        report = cls.update_content(report_id, rich_text.get_content())
-
-        # if the view is linked to an experiment, link it to the report
-        if view_config.experiment:
-            cls.add_experiment(report_id, view_config.experiment.id, False)
-
-        return report
+        return note
 
     @classmethod
-    def delete(cls, report_id: str) -> None:
+    def delete(cls, note_id: str) -> None:
         # delete the object in the database
-        cls._delete_report_db(report_id)
+        cls._delete_note_db(note_id)
 
         # if transaction is successful, delete the object in the file system
-        RichTextFileService.delete_object_dir(RichTextObjectType.REPORT, report_id)
+        RichTextFileService.delete_object_dir(RichTextObjectType.NOTE, note_id)
 
     @classmethod
     @transaction()
-    def _delete_report_db(cls, report_id: str) -> None:
+    def _delete_note_db(cls, note_id: str) -> None:
         document_service = cls.get_document_service()
-        report: Report = document_service.get_and_check_before_update(report_id)
+        note: Note = document_service.get_and_check_before_update(note_id)
 
-        Report.delete_by_id(report_id)
-        EntityTagList.delete_by_entity(EntityType.REPORT, report_id)
+        Note.delete_by_id(note_id)
+        EntityTagList.delete_by_entity(EntityType.NOTE, note_id)
 
-        # if the report was sync with space, delete it in space too
-        if report.last_sync_at is not None and report.project is not None:
-            SpaceService.delete_report(report.project.id, report.id)
+        # if the note was sync with space, delete it in space too
+        if note.last_sync_at is not None and note.project is not None:
+            # TODO
+            SpaceService.delete_report(note.project.id, note.id)
 
         ActivityService.add(ActivityType.DELETE,
                             object_type=ActivityObjectType.REPORT,
-                            object_id=report_id)
+                            object_id=note_id)
 
     @classmethod
     @transaction()
@@ -484,50 +441,6 @@ class ReportService():
         # retrieve the resources associated with the experiments
         resources = ResourceService.get_experiments_resources(experiment_ids)
         return resources
-
-    @classmethod
-    def _refresh_report_views_and_tags(cls, report: Report) -> None:
-        """Method to refresh the associated views of a report. It will remove unassociated resources and
-        add the new ones.
-        It also refresh the tags of the report based on the tags of the associated views
-        """
-
-        report_views: List[ReportViewModel] = ReportViewModel.get_by_report(report.id)
-
-        # extract the views id from the rich text
-        rich_text_views: List[RichTextResourceViewData] = report.get_content_as_rich_text().get_resource_views_data()
-
-        report_tags: EntityTagList = EntityTagList.find_by_entity(EntityType.REPORT, report.id)
-
-        rich_text_view_ids = {
-            rich_text_view.get('view_config_id') for rich_text_view in rich_text_views
-            if 'view_config_id' in rich_text_view}
-
-        # detect which views were removed and unassociate resource
-        for report_view in report_views:
-            if report_view.view.id not in rich_text_view_ids:
-                report_view.delete_instance()
-                # remove the tags of the view from the report
-                view_tags = EntityTagList.find_by_entity(EntityType.VIEW, report_view.view.id)
-                propagated_tags = view_tags.build_tags_propagated(TagOriginType.VIEW_PROPAGATED, report_view.view.id)
-                report_tags.delete_tags(propagated_tags)
-
-        # detect which views were added
-        report_view_ids = {report_view.view.id for report_view in report_views}
-        for rich_text_view in rich_text_views:
-            if rich_text_view.get('view_config_id') is None:
-                continue
-            if rich_text_view.get('view_config_id') not in report_view_ids:
-                # create the link in DB
-                view_config = ViewConfig.get_by_id(rich_text_view.get('view_config_id'))
-
-                if view_config:
-                    ReportViewModel(report=report, view=view_config).save()
-                    # add the tags of the view to the report
-                    view_tags = EntityTagList.find_by_entity(EntityType.VIEW, view_config.id)
-                    propagated_tags = view_tags.build_tags_propagated(TagOriginType.VIEW_PROPAGATED, view_config.id)
-                    report_tags.add_tags(propagated_tags)
-                    report_view_ids.add(view_config.id)
 
     ################################################# ARCHIVE ########################################
 

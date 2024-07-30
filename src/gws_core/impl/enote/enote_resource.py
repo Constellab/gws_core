@@ -7,6 +7,7 @@ from PIL import Image
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.document.document_dto import DocumentSaveDTO
 from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -20,7 +21,6 @@ from gws_core.impl.rich_text.rich_text_types import (
 from gws_core.impl.rich_text.rich_text_view import RichTextView
 from gws_core.model.typing_style import TypingStyle
 from gws_core.report.report import Report
-from gws_core.report.report_dto import ReportSaveDTO
 from gws_core.report.report_service import ReportService
 from gws_core.resource.r_field.primitive_r_field import StrRField
 from gws_core.resource.r_field.serializable_r_field import SerializableRField
@@ -548,7 +548,7 @@ class ENoteResource(ResourceSet):
         """
         if not title and not self.title:
             raise ValueError("The e-note title is empty")
-        report_dto = ReportSaveDTO(title=title or self.title)
+        report_dto = DocumentSaveDTO(title=title or self.title)
         report: Report = ReportService.create(report_dto)
 
         report_rich_text = self._export_as_report_rich_text(report.id)

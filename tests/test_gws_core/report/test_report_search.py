@@ -2,7 +2,7 @@
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.report.report_dto import ReportSaveDTO
+from gws_core.document.document_dto import DocumentSaveDTO
 from gws_core.report.report_service import ReportService
 from gws_core.test.base_test_case import BaseTestCase
 
@@ -11,8 +11,8 @@ from gws_core.test.base_test_case import BaseTestCase
 class TestReportSearch(BaseTestCase):
 
     def test_report_search(self):
-        report_1 = ReportService.create(ReportSaveDTO(title='The first report'))
-        ReportService.create(ReportSaveDTO(title='Another text to explain experiment'))
+        report_1 = ReportService.create(DocumentSaveDTO(title='The first report'))
+        ReportService.create(DocumentSaveDTO(title='Another text to explain experiment'))
 
         search_dict: SearchParams = SearchParams()
 

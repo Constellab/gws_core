@@ -3,12 +3,12 @@
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
+from gws_core.document.document_dto import DocumentSaveDTO
 from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.document_template.task.document_template_param import \
     DocumentTemplateParam
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
-from gws_core.report.report_dto import ReportSaveDTO
 from gws_core.report.report_service import ReportService
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
@@ -51,7 +51,7 @@ class CreateReport(Task):
                 title = template.title
             else:
                 title = 'New generated report'
-        report_dto = ReportSaveDTO(title=title, template_id=template.id if template else None)
+        report_dto = DocumentSaveDTO(title=title, template_id=template.id if template else None)
 
         report = ReportService.create(report_dto)
 

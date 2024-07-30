@@ -26,6 +26,7 @@ class ActivityObjectType(Enum):
     USER = "USER"
     REPORT = "REPORT"
     DOCUMENT_TEMPLATE = "DOCUMENT_TEMPLATE"
+    NOTE = "NOTE"
 
 
 class ActivityDTO(ModelDTO):

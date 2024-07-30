@@ -14,6 +14,7 @@ class EntityType(Enum):
     REPORT = "REPORT"
     PROTOCOL_TEMPLATE = 'PROTOCOL_TEMPLATE'
     PROJECT = 'PROJECT'
+    NOTE = 'NOTE'
 
     @staticmethod
     def get_human_name(entity_type: 'EntityType', capitalize: bool = False, plurial: bool = False) -> str:
@@ -49,13 +50,18 @@ class NavigableEntity():
 
     id: str
 
+    @classmethod
     @abstractmethod
-    def get_entity_type(self) -> EntityType:
+    def get_entity_type(cls) -> EntityType:
         pass
 
     @abstractmethod
     def get_entity_name(self) -> str:
         pass
+
+    @classmethod
+    def get_entity_type_human_name(cls) -> str:
+        return EntityType.get_human_name(cls.get_entity_type())
 
     def entity_is_validated(self) -> bool:
         return False

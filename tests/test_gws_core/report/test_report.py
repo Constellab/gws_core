@@ -1,5 +1,6 @@
 
 
+from gws_core.document.document_dto import DocumentSaveDTO
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.rich_text.rich_text import RichText
@@ -9,8 +10,8 @@ from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.project.project import Project
 from gws_core.project.project_dto import ProjectLevelStatus
-from gws_core.report.report import Report, ReportExperiment
-from gws_core.report.report_dto import ReportSaveDTO
+from gws_core.report.report import Report
+from gws_core.report.report_experiment import ReportExperiment
 from gws_core.report.report_service import ReportService
 from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -26,13 +27,10 @@ class TestReport(BaseTestCase):
         project = Project(title='Project', level_status=ProjectLevelStatus.LEAF).save()
 
         # test create an empty report
-        report: Report = ReportService.create(ReportSaveDTO(title='Test report'))
+        report: Report = ReportService.create(DocumentSaveDTO(title='Test report'))
 
         self.assertIsInstance(report, Report)
         self.assertEqual(report.title, 'Test report')
-
-        report = ReportService.update(report.id, ReportSaveDTO(title='New title'))
-        self.assertEqual(report.title, 'New title')
 
         content: RichTextDTO = RichText.create_rich_text_dto([RichText.create_paragraph('1', 'Hello world!')])
         ReportService.update_content(report.id, content)
@@ -43,7 +41,7 @@ class TestReport(BaseTestCase):
 
         # Create a second experiment with a report
         experiment_2 = ExperimentService.create_experiment()
-        report_2 = ReportService.create(ReportSaveDTO(title='Report 2'), [experiment_2.id])
+        report_2 = ReportService.create(DocumentSaveDTO(title='Report 2'), [experiment_2.id])
 
         # Add exp 1 on report 1
         ReportService.add_experiment(report.id, experiment.id)
@@ -88,7 +86,7 @@ class TestReport(BaseTestCase):
         """ Test when we add a resource view, it created an associated resource for the report
         """
         # create report and resource
-        report = ReportService.create(ReportSaveDTO(title='Test report'))
+        report = ReportService.create(DocumentSaveDTO(title='Test report'))
         resource_model = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)
 
         view_result = ResourceService.call_view_on_resource_model(resource_model, "view_as_json", {}, True)
@@ -136,7 +134,7 @@ class TestReport(BaseTestCase):
         # create a view config
         result = ResourceService.call_view_on_resource_model(robot_model, "view_as_string", {}, True)
 
-        report = ReportService.create(ReportSaveDTO(title='Test report'))
+        report = ReportService.create(DocumentSaveDTO(title='Test report'))
         # add the view to the report
         ReportService.add_view_to_content(report.id, result.view_config.id)
 

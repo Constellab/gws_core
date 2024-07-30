@@ -8,7 +8,8 @@ from gws_core.entity_navigator.entity_navigator_deep import NavigableEntitySet
 from gws_core.entity_navigator.entity_navigator_type import (
     EntityType, GenericNavigableEntity, NavigableEntity, all_entity_types)
 from gws_core.experiment.experiment import Experiment
-from gws_core.report.report import Report, ReportExperiment
+from gws_core.report.report import Report
+from gws_core.report.report_experiment import ReportExperiment
 from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_config.view_config import ViewConfig

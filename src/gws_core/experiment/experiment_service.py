@@ -12,7 +12,7 @@ from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.protocol_template.protocol_template_factory import \
     ProtocolTemplateFactory
-from gws_core.report.report import ReportExperiment
+from gws_core.report.report_experiment import ReportExperiment
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.plug import Sink
 from gws_core.task.task_input_model import TaskInputModel

@@ -1,5 +1,6 @@
 
 
+from gws_core.document.document_dto import DocumentSaveDTO
 from gws_core.entity_navigator.entity_navigator import (
     EntityNavigatorExperiment, EntityNavigatorReport, EntityNavigatorResource,
     EntityNavigatorView)
@@ -11,7 +12,6 @@ from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.report.report import Report
-from gws_core.report.report_dto import ReportSaveDTO
 from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
@@ -104,7 +104,7 @@ class TestEntityNavigator(BaseTestCase):
         self.exp_1_resource_1_view_1 = view_result.view_config
 
     def _create_report(self):
-        report_1 = ReportService.create(ReportSaveDTO(title='test_report'))
+        report_1 = ReportService.create(DocumentSaveDTO(title='test_report'))
 
         ReportService.add_experiment(report_1.id, self.exp_1.id)
         ReportService.add_view_to_content(report_1.id, self.exp_1_resource_1_view_1.id)

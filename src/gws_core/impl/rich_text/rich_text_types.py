@@ -46,6 +46,7 @@ class RichTextObjectType(Enum):
     REPORT = 'report'
     DOCUMENT_TEMPLATE = 'document_template'
     ENOTE = 'enote'
+    NOTE = 'note'
 
 
 ################################ BLOCK DATA ################################

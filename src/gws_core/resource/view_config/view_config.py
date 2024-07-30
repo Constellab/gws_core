@@ -63,7 +63,8 @@ class ViewConfig(ModelWithUser, NavigableEntity):
     def get_entity_name(self) -> str:
         return self.title
 
-    def get_entity_type(self) -> EntityType:
+    @classmethod
+    def get_entity_type(cls) -> EntityType:
         return EntityType.VIEW
 
     @transaction()

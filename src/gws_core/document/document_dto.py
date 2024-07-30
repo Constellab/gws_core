@@ -10,7 +10,7 @@ from gws_core.project.project_dto import ProjectDTO
 from gws_core.user.user_dto import UserDTO
 
 
-class ReportSaveDTO(BaseModelDTO):
+class DocumentSaveDTO(BaseModelDTO):
     title: str = None
     project_id: Optional[str] = None
     template_id: Optional[str] = None
@@ -19,7 +19,7 @@ class ReportSaveDTO(BaseModelDTO):
         arbitrary_types_allowed = True
 
 
-class ReportDTO(ModelWithUserDTO):
+class DocumentDTO(ModelWithUserDTO):
     title: str
     project: Optional[ProjectDTO]
     is_validated: bool
@@ -30,5 +30,5 @@ class ReportDTO(ModelWithUserDTO):
     is_archived: bool
 
 
-class ReportFullDTO(ReportDTO):
+class DocumentFullDTO(DocumentDTO):
     content: RichTextDTO
