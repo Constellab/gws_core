@@ -2,8 +2,6 @@
 
 from typing import List
 
-from peewee import BooleanField, CharField, Expression, ModelSelect
-
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.model.db_field import JSONField
@@ -14,6 +12,7 @@ from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO,
                                   EntityTagValueFormat, TagOriginDTO,
                                   TagOriginType)
 from gws_core.tag.tag_helper import TagHelper
+from peewee import BooleanField, CharField, Expression, ModelSelect
 
 
 class EntityTag(Model):
@@ -42,7 +41,8 @@ class EntityTag(Model):
         return TagHelper.convert_str_value_to_type(self.tag_value, self.value_format)
 
     def set_value(self, value: TagValueType) -> None:
-        checked_value = TagHelper.check_and_convert_value(value, self.value_format)
+        checked_value = TagHelper.check_and_convert_value(
+            value, self.value_format)
         self.tag_value = TagHelper.convert_value_to_str(checked_value)
 
     def origin_is_user(self) -> bool:
@@ -117,7 +117,8 @@ class EntityTag(Model):
 
     @classmethod
     def delete_by_entity(cls, entity_id: str, entity_type: EntityType) -> None:
-        cls.delete().where((cls.entity_id == entity_id) & (cls.entity_type == entity_type.value)).execute()
+        cls.delete().where((cls.entity_id == entity_id) & (
+            cls.entity_type == entity_type.value)).execute()
 
     ###################################### SELECT ######################################
     @classmethod
@@ -171,6 +172,14 @@ class EntityTag(Model):
             (cls.entity_type == entity_type.value) &
             (cls.entity_id.in_(entity_ids))
         ))
+
+    @classmethod
+    def find_by_entity_type_and_tag(cls, entity_type: EntityType, tag: Tag) -> ModelSelect:
+        return cls.select().where(
+            (cls.entity_type == entity_type.value) &
+            (cls.tag_key == tag.key) &
+            (cls.tag_value == tag.value)
+        )
 
     @classmethod
     def after_all_tables_init(cls):

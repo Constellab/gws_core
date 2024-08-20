@@ -164,6 +164,9 @@ class TestTag(BaseTestCase):
         experiment_2: Experiment = ExperimentService.create_experiment()
         TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment_2.id, tag)
 
+        result = TagService.get_entities_by_tag(EntityType.EXPERIMENT, tag)
+        self.assertEqual(len(result), 2)
+
         search_dict: SearchParams = SearchParams()
 
         # search with only second tag

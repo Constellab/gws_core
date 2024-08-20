@@ -67,14 +67,17 @@ class CredentialsParam(ParamSpec[str]):
         return "credentials_param"
 
     def build(self, value: Any) -> dict:
-        # retrieve the credentials and return it
+        if not value:
+            return None
 
+        # retrieve the credentials and return it
         credentials: Credentials = Credentials.find_by_name(value)
         if credentials is None:
             raise Exception(f"Credentials {value} not found")
 
         if self.credentials_type is not None and credentials.type != self.credentials_type:
-            raise Exception(f"Credentials {value} is not of type {self.credentials_type}")
+            raise Exception(
+                f"Credentials {value} is not of type {self.credentials_type}")
 
         json_: CredentialsDataBase = {
             "__meta__": credentials.to_dto().to_json_dict(),

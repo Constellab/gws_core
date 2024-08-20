@@ -5,6 +5,7 @@ from typing import List
 from peewee import ModelSelect
 
 from gws_core.core.classes.paginator import Paginator
+from gws_core.core.model.model import Model
 from gws_core.entity_navigator.entity_navigator import EntityNavigator
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
@@ -12,6 +13,8 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.entity_with_tag_search_builder import \
+    EntityWithTagSearchBuilder
 from gws_core.tag.tag_dto import (NewTagDTO, TagOriginDetailDTO, TagOriginType,
                                   TagPropagationImpactDTO)
 from gws_core.tag.tag_value_model import TagValueModel
@@ -52,7 +55,8 @@ class TagService():
                       tag_value: str,
                       page: int = 0,
                       number_of_items_per_page: int = 20) -> Paginator[TagValueModel]:
-        model_select: ModelSelect = TagValueModel.search_by_value(tag_key, tag_value)
+        model_select: ModelSelect = TagValueModel.search_by_value(
+            tag_key, tag_value)
         return Paginator(model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
@@ -110,6 +114,19 @@ class TagService():
     ################################# TAGGABLE MODEL #################################
 
     @classmethod
+    def get_entities_by_tag(cls, entity_type: EntityType,
+                            tag: Tag) -> List[Model]:
+        search_builder = EntityWithTagSearchBuilder(
+            EntityType.get_entity_model_type(entity_type),
+            entity_type)
+
+        search_builder.add_tag_filter(tag)
+
+        model_select = search_builder.build_search()
+
+        return list(model_select)
+
+    @classmethod
     @transaction()
     def add_tag_to_entity(cls, entity_type: EntityType, entity_id: str,
                           tag: Tag) -> EntityTag:
@@ -118,7 +135,8 @@ class TagService():
         entity_tags = EntityTagList.find_by_entity(entity_type, entity_id)
 
         if not tag.origin_is_defined():
-            tag.origins.add_origin(TagOriginType.USER, CurrentUserService.get_and_check_current_user().id)
+            tag.origins.add_origin(
+                TagOriginType.USER, CurrentUserService.get_and_check_current_user().id)
 
         return entity_tags.add_tag(tag)
 
@@ -131,7 +149,8 @@ class TagService():
 
         for tag in tags:
             if not tag.origin_is_defined():
-                tag.origins.add_origin(TagOriginType.USER, CurrentUserService.get_and_check_current_user().id)
+                tag.origins.add_origin(
+                    TagOriginType.USER, CurrentUserService.get_and_check_current_user().id)
 
         return entity_tags.add_tags(tags)
 
@@ -140,7 +159,8 @@ class TagService():
     def add_tag_dict_to_entity(cls, entity_type: EntityType, entity_id: str,
                                tag_dicts: List[NewTagDTO], propagate: bool) -> List[EntityTag]:
 
-        tags = [Tag(key=tag_dict.key, value=tag_dict.value, is_propagable=propagate) for tag_dict in tag_dicts]
+        tags = [Tag(key=tag_dict.key, value=tag_dict.value,
+                    is_propagable=propagate) for tag_dict in tag_dicts]
 
         if propagate:
             return cls.add_tags_to_entity_and_propagate(entity_type, entity_id, tags)
@@ -175,7 +195,8 @@ class TagService():
             return
 
         if not current_tag.origin_is_user():
-            raise BadRequestException("You can't delete a tag that is not created by a user")
+            raise BadRequestException(
+                "You can't delete a tag that is not created by a user")
 
         current_tag = entity_tags.get_tag(tag_to_delete)
 
@@ -184,7 +205,8 @@ class TagService():
             entity_tags.delete_tag(tag_to_delete)
 
             if current_tag.is_propagable:
-                entity_nav = EntityNavigator.from_entity_id(entity_type, entity_id)
+                entity_nav = EntityNavigator.from_entity_id(
+                    entity_type, entity_id)
                 entity_nav.delete_propagated_tags([tag_to_delete])
 
     @classmethod

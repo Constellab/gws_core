@@ -123,13 +123,25 @@ from .document_template.task.document_template_param import \
     DocumentTemplateParam as DocumentTemplateParam
 from .document_template.task.document_template_resource import \
     DocumentTemplateResource as DocumentTemplateResource
+# EntityNavigator
+from .entity_navigator.entity_navigator import \
+    EntityNavigator as EntityNavigator
+from .entity_navigator.entity_navigator_service import \
+    EntityNavigatorService as EntityNavigatorService
+from .entity_navigator.entity_navigator_type import EntityType as EntityType
 # Experiment
 from .experiment.experiment import Experiment as Experiment
 from .experiment.experiment_dto import ExperimentSaveDTO as ExperimentSaveDTO
+from .experiment.experiment_enums import \
+    ExperimentCreationType as ExperimentCreationType
+from .experiment.experiment_enums import \
+    ExperimentProcessStatus as ExperimentProcessStatus
 from .experiment.experiment_enums import ExperimentStatus as ExperimentStatus
 from .experiment.experiment_interface import IExperiment as IExperiment
 from .experiment.experiment_run_service import \
     ExperimentRunService as ExperimentRunService
+from .experiment.experiment_search_builder import \
+    ExperimentSearchBuilder as ExperimentSearchBuilder
 from .experiment.experiment_service import \
     ExperimentService as ExperimentService
 from .experiment.queue import Job as Job
@@ -393,8 +405,10 @@ from .space.mail_service import MailService as MailService
 from .streamlit.streamlit_resource import \
     StreamlitResource as StreamlitResource
 # Tag
+from .tag.entity_tag import EntityTag as EntityTag
 from .tag.tag import Tag as Tag
 from .tag.tag_helper import TagHelper as TagHelper
+from .tag.tag_service import TagService as TagService
 # Task > Converter
 from .task.converter.converter import Converter as Converter
 from .task.converter.converter import ConverterRunner as ConverterRunner

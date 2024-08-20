@@ -103,6 +103,9 @@ class IExperiment:
     def get_model(self) -> Experiment:
         return self._experiment
 
+    def get_model_id(self) -> str:
+        return self._experiment.id
+
     def is_running(self) -> bool:
         return self._experiment.is_running
 
