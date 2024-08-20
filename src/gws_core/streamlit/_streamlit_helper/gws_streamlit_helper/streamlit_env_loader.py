@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Optional
 
 import streamlit as st
 
@@ -10,19 +11,26 @@ class StreamlitEnvLoader:
     Inside the with statement the gws environment is loaded and the current user is set.
     """
 
+    user_id: str = None
+    dev_mode: bool = False
+
+    def __init__(self, user_id: str, dev_mode: bool = False) -> None:
+        self.user_id = user_id
+        self.dev_mode = dev_mode
+
     def __enter__(self):
 
         self._load_env()
 
         from gws_core import CurrentUserService, User
 
-        # check the user id
-        user_id = st.query_params.get('gws_user_id')
-        if not user_id:
-            st.error('User id not provided')
-            st.stop()
+        user: Optional[User] = None
 
-        user = User.get_by_id(user_id)
+        if self.dev_mode:
+            user = User.get_sysuser()
+        else:
+            user = User.get_by_id(self.user_id)
+
         if not user:
             st.error('User not found')
             st.stop()

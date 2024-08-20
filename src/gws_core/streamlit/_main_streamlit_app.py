@@ -50,6 +50,8 @@ def load_sources(source_ids: List[str]) -> List['Resource']:
 parser = argparse.ArgumentParser()
 parser.add_argument('--gws_token', type=str, default=None)
 parser.add_argument('--app_dir', type=str, default=None)
+parser.add_argument('--dev_mode', type=bool, default=False)
+parser.add_argument('--dev_config_file', type=str, default=None)
 args = parser.parse_args()
 
 # Configure Streamlit
@@ -59,43 +61,58 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# retreive the token from query params
-url_token = st.query_params.get('gws_token')
-if url_token != args.gws_token:
-    st.error('Invalid token')
-    st.stop()
+app_config_file: str = None
+user_id: str = None
 
-app_config_dir = args.app_dir
-if not app_config_dir:
-    st.error('App dir not provided')
-    st.stop()
+dev_mode: bool = args.dev_mode
+if not dev_mode:
+    # retreive the token from query params
+    url_token = st.query_params.get('gws_token')
+    if url_token != args.gws_token:
+        st.error('Invalid token')
+        st.stop()
 
-if not os.path.exists(app_config_dir):
-    st.error(f"App dir not found: {app_config_dir}")
-    st.stop()
+    app_config_dir = args.app_dir
+    if not app_config_dir:
+        st.error('App dir not provided')
+        st.stop()
 
-# check the app path
-app_id = st.query_params.get('gws_app_id')
-if not app_id:
-    st.error('App id not provided')
-    st.stop()
+    if not os.path.exists(app_config_dir):
+        st.error(f"Config dir not found: {app_config_dir}")
+        st.stop()
 
-# check if the app id folder exists
-app_config_folder = os.path.join(app_config_dir, app_id)
-if not os.path.exists(app_config_folder) or not os.path.isdir(app_config_folder):
-    st.error('App config folder not found or is not a folder')
-    st.stop()
+    # check the app path
+    app_id = st.query_params.get('gws_app_id')
+    if not app_id:
+        st.error('App id not provided')
+        st.stop()
 
-app_config_file = os.path.join(app_config_folder, APP_CONFIG_FILENAME)
-if not os.path.exists(app_config_file):
-    st.error('App config file not found')
-    st.stop()
+    # check if the app id folder exists
+    app_config_folder = os.path.join(app_config_dir, app_id)
+    if not os.path.exists(app_config_folder) or not os.path.isdir(app_config_folder):
+        st.error('App config folder not found or is not a folder')
+        st.stop()
 
-# check the user id
-user_id = st.query_params.get('gws_user_id')
-if not user_id:
-    st.error('User id not provided')
-    st.stop()
+    app_config_file = os.path.join(app_config_folder, APP_CONFIG_FILENAME)
+    if not os.path.exists(app_config_file):
+        st.error('App config file not found')
+        st.stop()
+
+    # check the user id
+    user_id = st.query_params.get('gws_user_id')
+    if not user_id:
+        st.error('User id not provided')
+        st.stop()
+else:
+    app_config_file = args.dev_config_file
+    if not app_config_file:
+        st.error('Dev config file not provided')
+        st.stop()
+
+    if not os.path.exists(app_config_file):
+        st.error(f"Dev config file not found: {app_config_file}")
+        st.stop()
+
 
 # Add custom css to hide the streamlit menu
 st.markdown("""
@@ -127,15 +144,25 @@ try:
         str_json = file_path.read()
         config = StreamlitConfigDTO.model_validate_json(str_json)
 
-    if not os.path.exists(config.app_dir_path) or not os.path.isdir(config.app_dir_path):
-        st.error(f"App dir not found: {config.app_dir_path}")
+    app_dir_abs_path = config.app_dir_path
+
+    # if the app dir path is not absolute (usually on dev mode), make it absolute
+    if not os.path.isabs(config.app_dir_path):
+        # make the path absolute relative to the config file
+        config_file_dir = os.path.dirname(app_config_file)
+        app_dir_abs_path = os.path.join(config_file_dir, config.app_dir_path)
+        print(
+            f"app_dir_path is not absolute, making it absolute relative to the config file directory: {config_file_dir}. Absolute path: {app_dir_abs_path}")
+
+    if not os.path.exists(app_dir_abs_path) or not os.path.isdir(app_dir_abs_path):
+        st.error(f"App dir not found: {app_dir_abs_path}")
         st.stop()
 
     # load the folder as module if not already in sys path
-    if config.app_dir_path not in sys.path:
-        sys.path.insert(0, config.app_dir_path)
+    if app_dir_abs_path not in sys.path:
+        sys.path.insert(0, app_dir_abs_path)
 
-    app_main_path = os.path.join(config.app_dir_path, APP_MAIN_FILENAME)
+    app_main_path = os.path.join(app_dir_abs_path, APP_MAIN_FILENAME)
 
     if not os.path.exists(app_main_path):
         st.error(
@@ -150,7 +177,7 @@ try:
 
     # Load gws environment and log the user
     from gws_streamlit_helper import StreamlitEnvLoader
-    with StreamlitEnvLoader():
+    with StreamlitEnvLoader(user_id, dev_mode):
 
         # load resources
         sources = load_sources(config.source_ids)
