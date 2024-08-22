@@ -1,0 +1,21 @@
+from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
+                      OutputSpecs, Task, TaskInputs, TaskOutputs,
+                      task_decorator)
+
+
+@task_decorator("{{name}}"{{humanName}}{{shortDescription}})
+class {{name}}(Task):
+    """
+    Task description (supports markdown)
+    """
+
+    input_specs = InputSpecs()
+    output_specs = OutputSpecs()
+
+    config_specs = {}
+
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        """ Run the task """
+
+        # return the output
+        return {}

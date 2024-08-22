@@ -4,7 +4,7 @@ import os
 import subprocess
 import traceback
 from multiprocessing import Process
-from typing import List
+from typing import List, Optional
 
 from gws_core.core.service.front_service import FrontService
 from gws_core.process.process_exception import ProcessRunException
@@ -215,9 +215,7 @@ class ExperimentRunService():
 
     @classmethod
     def _create_cli(cls, experiment: Experiment, user: User,
-                    process_model: ProcessModel = None) -> SysProc:
-        settings: Settings = Settings.get_instance()
-        cwd_dir = settings.get_cwd()
+                    process_model: Optional[ProcessModel] = None) -> SysProc:
 
         # set the user in the context to make the update works
         CurrentUserService.set_current_user(user)
@@ -230,23 +228,35 @@ class ExperimentRunService():
             raise BadRequestException(
                 f"A CLI process was already created to run the process {process_model.id}")
 
-        cmd = [
-            "python3",
-            os.path.join(cwd_dir, "manage.py"),
-            "--run-experiment",
+        settings = Settings.get_instance()
+        gws_core_path = settings.get_brick("gws_core").path
+
+        options: List[str] = [
             "--experiment-id", experiment.id,
-            "--user-id", user.id
+            "--user-id", user.id,
+            "--log-level", Logger.level,
         ]
 
+        if settings.is_test:
+            options.append("--test")
+
+        command: str
         if process_model:
-            cmd.extend([
+            options.extend([
                 "--protocol-model-id", process_model.parent_protocol_id,
                 "--process-instance-name", process_model.instance_name
             ])
+            command = "run-process"
 
-        if settings.is_test:
-            # add test option to tell the sub process is a test
-            cmd.extend(["--test", "a"])
+        else:
+            command = "run-experiment"
+
+        cmd = [
+            "python3",
+            os.path.join(gws_core_path, 'gws_cli', 'gws_cli', "main_cli.py"),
+            "server",
+            command,
+        ] + options
 
         sproc = SysProc.popen(
             cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)

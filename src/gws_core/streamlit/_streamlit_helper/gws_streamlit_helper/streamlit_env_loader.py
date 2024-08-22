@@ -56,5 +56,6 @@ class StreamlitEnvLoader:
                 sys.path.insert(0, core_lib_path)
 
                 from gws_core import Settings, manage
-                manage.AppManager.root_cwd = Settings.get_main_app_folder()
-                manage.AppManager.init_gws_env(log_level='INFO')
+                manage.AppManager.init_gws_env(
+                    main_setting_file_path=Settings.get_instance().get_main_settings_file_path(),
+                    log_level='INFO')

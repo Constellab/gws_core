@@ -6,9 +6,10 @@ from copy import Error
 from typing import List
 from unittest.suite import TestSuite
 
-import click
+from gws_core.brick.brick_service import BrickService
 from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core.lab.system_service import SystemService
 from gws_core.model.typing_manager import TypingManager
 from gws_core.settings_loader import SettingsLoader
 from gws_core.user.current_user_service import CurrentUserService
@@ -19,17 +20,17 @@ from .core.db.db_manager_service import DbManagerService
 from .core.exception.exceptions import BadRequestException
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
-from .lab.system_service import SystemService
 from .notebook.notebook import Notebook
 
 
 class AppManager:
 
-    root_cwd: str = None
-
     @classmethod
-    def init_gws_env(cls, log_level: str, experiment_id: str = None,
-                     show_sql: bool = False, is_test: bool = False) -> Settings:
+    def init_gws_env(cls, main_setting_file_path: str,
+                     log_level: str,
+                     experiment_id: str = None,
+                     show_sql: bool = False,
+                     is_test: bool = False) -> Settings:
 
         log_dir = Settings.build_log_dir(is_test=is_test)
 
@@ -40,7 +41,8 @@ class AppManager:
             Logger.print_sql_queries()
 
         # Load all brick settings and load bricks
-        settings_loader = SettingsLoader(root_cwd=cls.root_cwd, is_test=is_test)
+        settings_loader = SettingsLoader(main_settings_file_path=main_setting_file_path,
+                                         is_test=is_test)
         settings_loader.load_settings()
 
         # Init the db
@@ -52,8 +54,10 @@ class AppManager:
         return settings_loader.settings
 
     @classmethod
-    def start_app(cls, port: str, log_level: str, show_sql: bool) -> None:
-        cls.init_gws_env(log_level=log_level, show_sql=show_sql)
+    def start_app(cls, main_setting_file_path: str,
+                  port: str, log_level: str, show_sql: bool) -> None:
+        cls.init_gws_env(main_setting_file_path=main_setting_file_path,
+                         log_level=log_level, show_sql=show_sql)
 
         Logger.info(
             f"Starting server in {('prod' if Settings.is_prod_mode() else 'dev')} mode with {Settings.get_lab_environment()} lab env.")
@@ -62,42 +66,35 @@ class AppManager:
         App.start(port=int(port))
 
     @classmethod
-    def run_test(cls, test: str, log_level: str, show_sql: bool) -> None:
+    def run_test(cls, brick_dir: str, tests: List[str], log_level: str, show_sql: bool) -> None:
         if App.is_running:
             raise BadRequestException(
                 "Cannot run tests while the Application is running.")
 
-        if not test:
+        if not tests:
             raise BadRequestException(
                 "Please provide a test to run. The input must be as follow: [BRICK_NAME]/[TEST_NAME] where [BRICK_NAME] is the name of the brick and [TEST_NAME] is the name of the test file (only the name, not the path).")
 
-        settings = cls.init_gws_env(log_level=log_level, show_sql=show_sql, is_test=True)
+        brick_path = BrickService.get_parent_brick_folder(brick_dir)
+        if not brick_path:
+            raise BadRequestException(
+                f"The provided path '{brick_dir}' is not in a valid brick directory.")
 
-        if test in ["*", "all"]:
-            test = "test*"
-        tests: List[str] = test.split(' ')
+        settings_file = os.path.join(brick_path, SettingsLoader.SETTINGS_JSON_FILE)
+
+        cls.init_gws_env(main_setting_file_path=settings_file,
+                         log_level=log_level,
+                         show_sql=show_sql,
+                         is_test=True)
+
+        if len(tests) == 1 and tests[0] in ["*", "all"]:
+            tests = ["test*"]
+
         loader = unittest.TestLoader()
         test_suite = TestSuite()
 
         for test_file in tests:
-            tab = test_file.split("/")
-            if len(tab) > 2:
-                raise BadRequestException(
-                    f"The input '{test_file}' is not valid. The input must be as follow: [BRICK_NAME]/[TEST_NAME] where [BRICK_NAME] is the name of the brick and [TEST_NAME] is the name of the test file (only the name, not the path).")
-            # if the brick name is provided
-            if len(tab) > 1:
-                bricks = settings.get_bricks()
-                brick_name = tab[0]
-                test_file = tab[1]
-                if brick_name not in bricks:
-                    raise BadRequestException(
-                        f"The brick '{brick_name}' is not found. It is maybe not loaded on this lab.")
-                brick_dir = bricks[brick_name].path
-            else:
-                test_file = tab[0]
-                brick_dir = settings.get_cwd()
-
-            brick_test_folder = os.path.join(brick_dir, "tests")
+            brick_test_folder = os.path.join(brick_path, "tests")
             test_suite.addTests(loader.discover(brick_test_folder,
                                                 pattern=test_file+".py",
                                                 ))
@@ -105,93 +102,65 @@ class AppManager:
         # check if there are any tests discovered
         if test_suite.countTestCases() == 0:
             raise Error(
-                f"No tests discovered for input '{test}'. The input must be as follow: [BRICK_NAME]/[TEST_NAME] where [BRICK_NAME] is the name of the brick and [TEST_NAME] is the name of the test file (only the name, not the path).")
+                f"No tests discovered for input '{tests}'. The input must be as follow: [BRICK_NAME]/[TEST_NAME] where [BRICK_NAME] is the name of the brick and [TEST_NAME] is the name of the test file (only the name, not the path).")
 
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
 
     @classmethod
-    def run_experiment(cls, experiment_id: str,
-                       protocol_model_id: str, process_instance_name: str,
-                       user_id: str, log_level: str, show_sql: bool, is_test: bool) -> None:
-        cls.init_gws_env(log_level=log_level, experiment_id=experiment_id,
-                         show_sql=show_sql, is_test=is_test)
-
-        if experiment_id is None:
-            raise BadRequestException("Please provide an experiment id to run the experiment")
-        if user_id is None:
-            raise BadRequestException("Please provide a user id to run the experiment")
+    def run_experiment(cls,
+                       main_setting_file_path: str,
+                       experiment_id: str,
+                       user_id: str,
+                       log_level: str,
+                       show_sql: bool,
+                       is_test: bool) -> None:
+        cls.init_gws_env(main_setting_file_path=main_setting_file_path,
+                         log_level=log_level,
+                         experiment_id=experiment_id,
+                         show_sql=show_sql,
+                         is_test=is_test)
 
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
         CurrentUserService.set_current_user(user)
 
-        if protocol_model_id and process_instance_name:
-            ExperimentRunService.run_experiment_process_in_cli(experiment_id, protocol_model_id, process_instance_name)
-        else:
-            ExperimentRunService.run_experiment_in_cli(experiment_id)
+        ExperimentRunService.run_experiment_in_cli(experiment_id)
 
     @classmethod
-    def run_notebook(cls, log_level: str) -> None:
-        cls.init_gws_env(log_level=log_level)
+    def run_process(cls,
+                    main_setting_file_path: str,
+                    experiment_id: str,
+                    protocol_model_id: str,
+                    process_instance_name: str,
+                    user_id: str,
+                    log_level: str,
+                    show_sql: bool,
+                    is_test: bool) -> None:
+        cls.init_gws_env(main_setting_file_path=main_setting_file_path,
+                         log_level=log_level,
+                         experiment_id=experiment_id,
+                         show_sql=show_sql,
+                         is_test=is_test)
+
+        # Authenticate the user
+        user: User = User.get_by_id_and_check(user_id)
+        CurrentUserService.set_current_user(user)
+
+        ExperimentRunService.run_experiment_process_in_cli(experiment_id, protocol_model_id, process_instance_name)
+
+    @classmethod
+    def run_notebook(cls, main_settings_path: str, log_level: str) -> None:
+        cls.init_gws_env(main_setting_file_path=main_settings_path, log_level=log_level)
         Notebook.init_complete()
 
     @classmethod
-    def reset_environment(cls, reset_dev_env_key: str) -> None:
-        if reset_dev_env_key != "reset-dev-env":
-            raise Exception("Invalid input. Please type 'reset-dev-env' to reset the dev environment.")
+    def reset_environment(cls) -> None:
         # Init the db
         DbManagerService.init_all_db()
         SystemService.reset_dev_envionment(check_user=False)
 
 
-def load_settings(cwd: str) -> None:
-    print("[WARNING] manage.load_settings() is deprecated, please remove it and use manage.start_app() instead")
-    start_app(cwd)
-
-
-def start_app(cwd: str) -> None:
-    AppManager.root_cwd = cwd
-    _start_app_console()
-
-
-def start_notebook(cwd: str, log_level: str = 'INFO') -> None:
-    AppManager.root_cwd = cwd
-    AppManager.run_notebook(log_level=log_level)
-
-
-@click.command(context_settings=dict(
-    ignore_unknown_options=True,
-    allow_extra_args=True
-))
-@click.pass_context
-@click.option('--test', default="",
-              help='The name test file to launch (regular expression). Enter "all" to launch all the tests')
-@click.option('--run-experiment', is_flag=True, default=False,
-              help='When set, this start a new process to run the experiment')
-@click.option('--runserver', is_flag=True, help='Starts the server')
-@click.option('--port', default="3000", help='Server port', show_default=True)
-@click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
-@click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
-@click.option('--reset_env', help='Reset environment')
-@click.option('--experiment-id', help='Experiment id')
-@click.option('--user-id', help='User id')
-@click.option('--protocol-model-id', help='Protocol model id')
-@click.option('--process-instance-name', help='Process instance name')
-def _start_app_console(_, test: str, run_experiment: bool, runserver: bool,
-                       port: str, log_level: str, show_sql: bool, reset_env: bool,
-                       experiment_id: str, user_id: str,
-                       protocol_model_id: str, process_instance_name: str) -> None:
-    if runserver:
-        AppManager.start_app(port=port, log_level=log_level, show_sql=show_sql)
-    elif run_experiment:
-        AppManager.run_experiment(experiment_id=experiment_id,
-                                  protocol_model_id=protocol_model_id, process_instance_name=process_instance_name,
-                                  user_id=user_id,
-                                  log_level=log_level, show_sql=show_sql, is_test=bool(test))
-    elif test:
-        AppManager.run_test(test=test, log_level=log_level, show_sql=show_sql)
-    elif reset_env:
-        AppManager.reset_environment(reset_env)
-    else:
-        Logger.error("Nothing to do. Please provide a valid command like --runserver, --test or --reset_env")
+# TODO improve path
+def start_notebook(main_settings_path: str = "/lab/.sys/app/settings.json", log_level: str = 'INFO') -> None:
+    AppManager.run_notebook(main_settings_path=main_settings_path, log_level=log_level)

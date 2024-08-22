@@ -4,13 +4,12 @@ import importlib
 import os
 import traceback
 from time import time
-from typing import Any, Dict, List
-
-from typing_extensions import TypedDict
+from typing import Any, Dict, List, Optional
 
 from gws_core.brick.brick_dto import BrickInfo, BrickMessageStatus
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from typing_extensions import TypedDict
 
 from ..core.utils.logger import Logger
 from ..core.utils.utils import Utils
@@ -196,3 +195,18 @@ class BrickService():
         """
         return os.path.exists(os.path.join(path, cls.SETTINGS_JSON_FILE)) and \
             os.path.exists(os.path.join(path, cls.SOURCE_FOLDER))
+
+    @classmethod
+    def get_parent_brick_folder(cls, path: str) -> Optional[str]:
+        """Get the parent brick folder of a file or folder path
+
+        :param path: path to a file or folder
+        :type path: str
+        :return: the path to the parent brick folder, None if no parent brick folder was found
+        :rtype: str
+        """
+        while path != '/':
+            if cls.folder_is_brick(path):
+                return path
+            path = os.path.dirname(path)
+        return None

@@ -25,7 +25,7 @@ class SettingsDTO(BaseModelDTO):
     lab_dev_api_url: str
     lab_environment: str
     virtual_host: str
-    cwd: str
+    main_settings_file_path: str
     log_dir: str
     data_dir: str
     file_store_dir: str

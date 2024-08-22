@@ -86,6 +86,28 @@ class StringHelper():
         return pascal_case_string
 
     @staticmethod
+    def to_snake_case(text: str) -> str:
+        """Convert a text to snake case
+        Ex 'TestClass2Build' -> 'test_class2_build'
+        """
+        if text is None:
+            return None
+
+        # Replace spaces or hyphens with underscores
+        text = re.sub(r'[\s\-]+', '_', text)
+
+        # Insert underscores before uppercase letters (except the first one)
+        text = re.sub(r'(?<!^)(?=[A-Z])', '_', text)
+
+        # Convert the entire string to lowercase
+        text = text.lower()
+
+        # Remove double (or more) underscores
+        text = re.sub(r'_{2,}', '_', text)
+
+        return text
+
+    @staticmethod
     def to_enum(enum_class: Type, str_value: str) -> Any:
         """Convert a string to an enum value
         """

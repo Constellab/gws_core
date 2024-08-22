@@ -123,7 +123,7 @@ def register_gws_typing_class(
     if not unique_name or not StringHelper.is_alphanumeric(unique_name):
         BrickService.log_brick_error(
             object_class,
-            f"The unique name '{unique_name}' for typing object {human_name} is not valid. It must contains only alpha numeric characters and '_'")
+            f"The unique name '{unique_name}' for typing object {human_name} is not valid. It must contains only alpha numeric characters and '_'.")
         return
 
     # provide the style default value

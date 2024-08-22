@@ -34,3 +34,6 @@ class TestStringHelper(TestCase):
 
     def test_replace_accents(self):
         self.assertEqual(StringHelper.replace_accent_with_letter('àéèïìòùÉÊ'), 'aeeiiouEE')
+
+    def test_to_snake_case(self):
+        self.assertEqual(StringHelper.to_snake_case('TestClass2_Build one'), 'test_class2_build_one')

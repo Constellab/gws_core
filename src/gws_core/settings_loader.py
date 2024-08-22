@@ -37,21 +37,22 @@ class SettingsLoader:
     GIT_INSTALLATION_FILE = ".gws-git-installation.json"
     SETTINGS_JSON_FILE = "settings.json"
 
-    root_cwd: str = None
+    main_settings_file_path: str = None
     is_test: bool = False
 
     settings: Settings = None
 
-    def __init__(self, root_cwd: str, is_test: bool = False) -> None:
-        self.root_cwd = root_cwd
+    def __init__(self, main_settings_file_path: str,
+                 is_test: bool = False) -> None:
+        self.main_settings_file_path = main_settings_file_path
         self.is_test = is_test
 
     def load_settings(self) -> None:
         self.settings = Settings.init()
+        self.settings.set_main_settings_file_path(self.main_settings_file_path)
         self.settings.set_data("is_test", self.is_test)
         self._init()
 
-        self.settings.set_cwd(self.root_cwd)
         self.settings.set_pip_freeze(self.pip_freeze().split())
         # save the settings
         self.settings.save()
@@ -65,10 +66,10 @@ class SettingsLoader:
         # read settings file
         settings: dict = None
         try:
-            settings = self._read_brick_settings(self.root_cwd)
+            settings = self._read_settings_file(self.main_settings_file_path)
         except Exception as err:
             Logger.error(
-                f"Error: cannot parse the main settings file under '{self.root_cwd}'")
+                f"Error: cannot parse the main settings file '{self.main_settings_file_path}'")
             raise err
 
         bricks = settings["environment"].get("bricks", [])
@@ -166,8 +167,8 @@ class SettingsLoader:
         bricks = settings_data["environment"].get("bricks", [])
         self._load_brick_dependencies(bricks, parent_name=brick_name)
 
-    def _read_brick_settings(self, brick_path: str) -> dict:
-        file_path = os.path.join(brick_path, self.SETTINGS_JSON_FILE)
+    def _read_settings_file(self, setting_file_path) -> dict:
+        file_path = os.path.join(setting_file_path)
         with open(file_path, 'r', encoding='utf-8') as fp:
             return json.load(fp)
 

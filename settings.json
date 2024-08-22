@@ -48,7 +48,8 @@
                   {"name": "streamlit", "version": "1.36.0"},
                   {"name": "beautifulsoup4", "version": "4.12.3"},
                   {"name": "grpcio", "version": "1.64.1"},
-                  {"name": "ujson", "version": "5.10.0"}
+                  {"name": "ujson", "version": "5.10.0"},
+                  {"name": "typer", "version": "0.12.3"}
                 ]
             }
         ],

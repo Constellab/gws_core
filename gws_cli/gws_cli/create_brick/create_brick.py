@@ -4,21 +4,13 @@ import json
 import os
 import shutil
 
-import click
-
 __cdir__ = os.path.dirname(os.path.abspath(__file__))
 
 skeleton_name = 'brick_skeleton'
 user_bricks_folder = '/lab/user/bricks'
 
 
-@click.command(context_settings=dict(
-    ignore_unknown_options=False,
-    allow_extra_args=False
-))
-@click.pass_context
-@click.option('--name', '-n', help='Brick name')
-def main(ctx, name: str = None):
+def create_brick(name: str):
     name = name.lower().replace(" ", "_").replace("-", "_")
 
     skeleton_dir = os.path.join(__cdir__, skeleton_name)
@@ -82,7 +74,3 @@ def update_code(dest_dir: str, name: str):
         text = text.replace(skeleton_name, name)
     with open(file, 'w', encoding='UTF-8') as f:
         f.write(text)
-
-
-if __name__ == "__main__":
-    main()

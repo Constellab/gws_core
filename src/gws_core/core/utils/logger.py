@@ -60,9 +60,11 @@ class Logger:
     SEPARATOR = " - "
     FILE_NAME_DATE_FORMAT = "%Y-%m-%d"
 
-    _logger: PythonLogger = None
+    _logger: Optional[PythonLogger] = None
     _file_path: str = None
     _experiment_id: str = None
+
+    level: LoggerLevel = "INFO"
 
     _waiting_messages: list = []
 
@@ -83,6 +85,7 @@ class Logger:
 
         if level is None:
             level = "INFO"
+        Logger.level = level
 
         if level not in ["ERROR", "INFO", "DEBUG"]:
             raise BadRequestException(

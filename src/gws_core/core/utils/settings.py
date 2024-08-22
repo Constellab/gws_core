@@ -17,6 +17,7 @@ from gws_core.user.user_dto import SpaceDict
 from .date_helper import DateHelper
 from .string_helper import StringHelper
 
+# TODO RENAME FILE
 __SETTINGS_DIR__ = "/conf/settings"
 __SETTINGS_NAME__ = "settings.json"
 
@@ -306,12 +307,11 @@ class Settings():
     def get_maria_db_backup_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "backups")
 
-    def get_cwd(self) -> str:
-        """ Returns the current working directory of the Application (i.e. the main brick directory) """
-        return self.data["cwd"]
+    def get_main_settings_file_path(self) -> str:
+        return self.data["main_settings_file_path"]
 
-    def set_cwd(self, cwd: str):
-        self.data["cwd"] = cwd
+    def set_main_settings_file_path(self, main_settings_file_path: str):
+        self.data["main_settings_file_path"] = main_settings_file_path
 
     def get_data(self, k: str, default=None) -> str:
         if k == "session_key":
@@ -384,6 +384,9 @@ class Settings():
 
     def get_bricks(self) -> Dict[str, BrickInfo]:
         return BrickInfo.from_record(self.data.get("bricks", {}))
+
+    def get_brick(self, brick_name: str) -> Union[BrickInfo, None]:
+        return self.get_bricks().get(brick_name)
 
     def add_brick(self, brick_info: BrickInfo) -> None:
         if 'bricks' not in self.data:
@@ -548,7 +551,7 @@ class Settings():
             lab_dev_api_url=self.get_lab_dev_api_url(),
             lab_environment=self.get_lab_environment(),
             virtual_host=self.get_virtual_host(),
-            cwd=self.get_cwd(),
+            main_settings_file_path=self.get_main_settings_file_path(),
             log_dir=self.get_log_dir(),
             data_dir=self.get_data_dir(),
             file_store_dir=self.get_file_store_dir(),
