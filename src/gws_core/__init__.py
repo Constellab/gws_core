@@ -4,6 +4,8 @@
 
 # pylint: disable=useless-import-alias
 
+# Brick
+from .brick.brick_service import BrickService as BrickService
 # Config
 from .config.config import Config as Config
 from .config.config_params import ConfigParams as ConfigParams

@@ -6,10 +6,11 @@ import traceback
 from time import time
 from typing import Any, Dict, List, Optional
 
+from typing_extensions import TypedDict
+
 from gws_core.brick.brick_dto import BrickInfo, BrickMessageStatus
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from typing_extensions import TypedDict
 
 from ..core.utils.logger import Logger
 from ..core.utils.utils import Utils
@@ -210,3 +211,19 @@ class BrickService():
                 return path
             path = os.path.dirname(path)
         return None
+
+    @classmethod
+    def get_brick_folder(cls, brick_name: str) -> Optional[str]:
+        """Get the brick folder of a file or folder path
+
+        :param path: path to a file or folder
+        :type path: str
+        :return: the path to the brick folder, None if no brick folder was found
+        :rtype: str
+        """
+        spec = importlib.util.find_spec(brick_name)
+
+        if spec is not None:
+            return os.path.dirname(spec.origin)
+        else:
+            raise Exception(f"Cannot find brick {brick_name}")
