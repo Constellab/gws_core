@@ -6,7 +6,10 @@
     "configurations": [
         // configuration to start the gws
         {
-            "args": ["server", "run", "--settings-path=/lab/.sys/app/settings.json"],
+            "args": [
+                "server",
+                "run"
+            ],
             "name": "Starts GWS server",
             "type": "debugpy",
             "request": "launch",
@@ -15,50 +18,52 @@
         },
         // configuration to start the gws
         {
-            "args": ["--runserver", "--log_level=DEBUG"],
+            "args": [
+                "server",
+                "run",
+                "--log-level=DEBUG"
+            ],
             "name": "Starts GWS server - DEBUG log",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/manage.py",
+            "program": "${workspaceFolder}/gws_cli/gws_cli/main_cli.py",
             "console": "integratedTerminal"
         },
         // config to run test on GWS
         {
-            "args": ["--test", "all"],
+            "args": [
+                "server",
+                "test",
+                "all"
+            ],
             "name": "Test all",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/manage.py",
+            "program": "${workspaceFolder}/gws_cli/gws_cli/main_cli.py",
             "console": "integratedTerminal"
         },
         // config to run test on GWS
         {
-            "args": ["--test", "${input:testFileName}"],
+            "args": [
+                "server",
+                "test",
+                "${input:testFileName}"
+            ],
             "name": "Test single",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/manage.py",
+            "program": "${workspaceFolder}/gws_cli/gws_cli/main_cli.py",
             "console": "integratedTerminal",
         },
-        // reset the dev env
         {
-          "args": ["reset-dev-env"],
-          "name": "Reset dev env",
-          "type": "debugpy",
-          "request": "launch",
-          "program": "/lab/user/bricks/gws_core/cli/main_cli.py",
-          "console": "integratedTerminal",
-      },
-      {
-        "name": "Client s3",
-        "type": "debugpy",
-        "request": "launch",
-        "program": "/lab/user/bricks/gws_core/test_s3/test_s3_client.py",
-        "console": "integratedTerminal",
-        "justMyCode": false
-    },
+            "name": "Client s3",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/lab/user/bricks/gws_core/test_s3/test_s3_client.py",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
     ],
-
     "inputs": [
         {
             "id": "testFileName",

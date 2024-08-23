@@ -1,8 +1,7 @@
 
 import typer
+from gws_cli.generate_task.create_task import create_task
 from typing_extensions import Annotated
-
-from gws_cli.create_task.create_task import create_task
 
 app = typer.Typer()
 

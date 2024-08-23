@@ -102,7 +102,6 @@ from .core.utils.logger import Logger as Logger
 from .core.utils.numeric_helper import NumericHelper as NumericHelper
 from .core.utils.package_helper import PackageHelper as PackageHelper
 from .core.utils.requests import Requests as Requests
-from .core.utils.serializer import Serializer as Serializer
 from .core.utils.settings import Settings as Settings
 from .core.utils.string_helper import StringHelper as StringHelper
 from .core.utils.utils import Utils as Utils

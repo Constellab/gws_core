@@ -1,6 +1,6 @@
 
 import typer
-from gws_cli.create_brick.create_brick import create_brick
+from gws_cli.generate_brick.create_brick import create_brick
 from typing_extensions import Annotated
 
 app = typer.Typer()

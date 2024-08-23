@@ -3,15 +3,14 @@ import os
 import subprocess
 
 import typer
-from typing_extensions import Annotated
-
 from gws_core import BrickService
+from typing_extensions import Annotated
 
 app = typer.Typer()
 
 
 @app.command("run-dev")
-def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the config file app to run.")]):
+def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the json config file app to run.")]):
 
     gws_core_path = BrickService.get_brick_folder("gws_core")
     main_app_path = os.path.join(gws_core_path, 'streamlit/_main_streamlit_app.py')
