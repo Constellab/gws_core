@@ -72,15 +72,12 @@ class AppManager:
                 "Cannot run tests while the Application is running.")
 
         if not tests:
-            raise BadRequestException(
-                "Please provide a test to run. The input must be as follow: [BRICK_NAME]/[TEST_NAME] where [BRICK_NAME] is the name of the brick and [TEST_NAME] is the name of the test file (only the name, not the path).")
+            raise BadRequestException("Please provide a test to run.")
 
-        brick_path = BrickService.get_parent_brick_folder(brick_dir)
-        if not brick_path:
-            raise BadRequestException(
-                f"The provided path '{brick_dir}' is not in a valid brick directory.")
+        settings_file = os.path.join(brick_dir, SettingsLoader.SETTINGS_JSON_FILE)
 
-        settings_file = os.path.join(brick_path, SettingsLoader.SETTINGS_JSON_FILE)
+        if not os.path.exists(settings_file):
+            raise BadRequestException(f"'settings.json' file not found in the brick '{brick_dir}'.")
 
         cls.init_gws_env(main_setting_file_path=settings_file,
                          log_level=log_level,
@@ -93,16 +90,19 @@ class AppManager:
         loader = unittest.TestLoader()
         test_suite = TestSuite()
 
+        brick_test_folder = os.path.join(brick_dir, "tests")
+
+        if not os.path.exists(brick_test_folder):
+            raise Error(f"'tests' folder not found in brick '{brick_dir}'.")
+
         for test_file in tests:
-            brick_test_folder = os.path.join(brick_path, "tests")
-            test_suite.addTests(loader.discover(brick_test_folder,
-                                                pattern=test_file+".py",
-                                                ))
+            pattern = test_file + ".py" if not test_file.endswith(".py") else test_file
+            test_suite.addTests(loader.discover(brick_test_folder, pattern=pattern))
 
         # check if there are any tests discovered
         if test_suite.countTestCases() == 0:
             raise Error(
-                f"No tests discovered for input '{tests}'. The input must be as follow: [BRICK_NAME]/[TEST_NAME] where [BRICK_NAME] is the name of the brick and [TEST_NAME] is the name of the test file (only the name, not the path).")
+                f"No tests discovered for input '{tests}' in brick '{brick_dir}'. Please verify that you provided the name of the tests file (not the path). The test file must start with 'test'.")
 
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
@@ -161,6 +161,5 @@ class AppManager:
         SystemService.reset_dev_envionment(check_user=False)
 
 
-# TODO improve path
 def start_notebook(main_settings_path: str = "/lab/.sys/app/settings.json", log_level: str = 'INFO') -> None:
     AppManager.run_notebook(main_settings_path=main_settings_path, log_level=log_level)

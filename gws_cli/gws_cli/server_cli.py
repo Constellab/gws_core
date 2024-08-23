@@ -5,6 +5,7 @@ from typing import List
 import typer
 from typing_extensions import Annotated
 
+from gws_core import BrickService
 from gws_core.manage import AppManager
 
 app = typer.Typer()
@@ -41,13 +42,22 @@ def run(
 @app.command("test")
 def test(
         test_name: Annotated[List[str], typer.Argument(help="The name test file to launch (regular expression). Enter 'all' to launch all the tests.")],
-        brick_dir: Annotated[str, typer.Option("--brick-dir", help="Path of the brick folder to test. Default to current folder.")] = None,
+        brick_name: Annotated[str, typer.Option("--brick-name", help="Name of the brick to test. If not provided, use brick of current folder.")] = None,
         log_level: LogLevelAnnotation = LogLevel.INFO,
         show_sql: ShowSqlAnnotation = False):
 
-    if not brick_dir:
+    brick_dir: str
+    if brick_name:
+        brick_dir = BrickService.get_brick_folder(brick_name)
+        print(f"Running tests for brick '{brick_dir}'")
+    else:
         print("No brick dir provided. Using current directory.")
-        brick_dir = os.getcwd()
+        brick_dir = BrickService.get_parent_brick_folder(os.getcwd())
+        if not brick_dir:
+            typer.echo(
+                "The current folder is not inside a brick, please run the command inside a brick folder of provide a brick name.",
+                err=True)
+            raise typer.Abort()
 
     AppManager.run_test(
         brick_dir=brick_dir,

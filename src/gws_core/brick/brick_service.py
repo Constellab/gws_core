@@ -213,13 +213,8 @@ class BrickService():
         return None
 
     @classmethod
-    def get_brick_folder(cls, brick_name: str) -> Optional[str]:
-        """Get the brick folder of a file or folder path
-
-        :param path: path to a file or folder
-        :type path: str
-        :return: the path to the brick folder, None if no brick folder was found
-        :rtype: str
+    def get_brick_src_folder(cls, brick_name: str) -> str:
+        """Get the folder of the brick source code
         """
         spec = importlib.util.find_spec(brick_name)
 
@@ -227,3 +222,9 @@ class BrickService():
             return os.path.dirname(spec.origin)
         else:
             raise Exception(f"Cannot find brick {brick_name}")
+
+    @classmethod
+    def get_brick_folder(cls, brick_name: str) -> str:
+        """Get the folder of the brick
+        """
+        return cls.get_parent_brick_folder(cls.get_brick_src_folder(brick_name))
