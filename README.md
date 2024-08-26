@@ -62,21 +62,21 @@ pip install openpyxl==3.1.4 awesome-slugify==1.6.5 fastapi==0.111.0 pydantic==2.
 ▶️ To start the server :
 
 ```bash
-python3 manage.py --runserver
+gws server run
 ```
 
 🕵️ To run a given unit test
 
 ```bash
-python3 manage.py --test [TEST_FILE_NAME]
+gws server test [TEST_FILE_NAME]
 ```
 
-Replace `[TEST_FILE_NAME]` with the name of the test file (without `.py`) in the tests folder.
+Replace `[TEST_FILE_NAME]` with the name of the test file (without `.py`) in the tests folder. Execute this command in the folder of the brick.
 
 🕵️ To run the whole test suite, use the following command:
 
 ```bash
-python3 manage.py --test all
+gws server test all
 ```
 
 📌 VSCode users can use the predefined run configuration in `.vscode/launch.json`.
