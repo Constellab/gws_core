@@ -13,5 +13,4 @@ def reset_dev_env():
         typer.echo("The data was not deleted.")
         raise typer.Abort()
 
-    # load_gws_core()
     AppManager.reset_environment()
