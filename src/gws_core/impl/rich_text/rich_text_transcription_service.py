@@ -142,7 +142,30 @@ The generated JSON must validate this schema.
                             }
                         },
                         "required": ["type", "command", "data"]
-                    }
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": ["formula"]
+                            },
+                            "command": {
+                                "type": "string",
+                                "enum": ["math formula"]
+                            },
+                            "data": {
+                                "type": "object",
+                                "properties": {
+                                    "formula": {
+                                        "type": "string",
+                                        "description": "The mathemathical formula using KaTeX syntax."
+                                    }
+                                }
+                            },
+                        },
+                        "required": ["type", "command", "data"]
+                    },
                 ]
         }
     }
@@ -179,7 +202,7 @@ The generated JSON must validate this schema.
         # transcribe the audio file
         transcription_text = OpenAiHelper.call_whisper(file_path)
 
-        Logger.debug(f"Transcription text: {transcription_text}")
+        Logger.debug(f"[RichTextTranscriptionService] Transcription text: {transcription_text}")
 
         try:
             return cls.transcribe_text_to_rich_text(transcription_text)
@@ -195,7 +218,7 @@ The generated JSON must validate this schema.
         # apply the command in the transcription using the prompt
         transcription_dict = cls.apply_command_in_transcription(text)
 
-        Logger.debug(f"Transcription dict: {transcription_dict}")
+        Logger.debug(f"[RichTextTranscriptionService] Transcription dict: {transcription_dict}")
 
         transcriptions: List[TranscriptionOutput] = TranscriptionOutput.from_json_list(transcription_dict)
 
@@ -255,5 +278,7 @@ The generated JSON must validate this schema.
                 RichTextParagraphHeaderLevel.from_int(transcription.data.get('level', 1)))
         elif transcription.type == 'list':
             return rich_text.add_list(transcription.data)
+        elif transcription.type == 'formula':
+            return rich_text.add_formula(transcription.data.get('formula'))
         else:
             return None

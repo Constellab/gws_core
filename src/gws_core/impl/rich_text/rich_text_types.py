@@ -169,6 +169,10 @@ class RichTextTimestampData(TypedDict):
     format: Literal['DATE', 'DATE_TIME', 'DATE_TIME_WITH_SECONDS', 'TIME_WITH_SECONDS', 'FROM_NOW']
 
 
+class RichTextFormulaData(TypedDict):
+    formula: str
+
+
 class RichTextFileData(TypedDict):
     name: str
     size: int  # in bytes

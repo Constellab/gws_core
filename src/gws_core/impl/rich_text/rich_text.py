@@ -9,7 +9,7 @@ from gws_core.impl.rich_text.rich_text_paragraph_text import \
 from gws_core.impl.rich_text.rich_text_types import (
     RichTextBlock, RichTextBlockType, RichTextDTO,
     RichTextENoteResourceViewData, RichTextFigureData, RichTextFileData,
-    RichTextParagraphData, RichTextParagraphHeaderData,
+    RichTextFormulaData, RichTextParagraphData, RichTextParagraphHeaderData,
     RichTextParagraphHeaderLevel, RichTextParagraphListData,
     RichTextResourceViewData, RichTextTimestampData, RichTextViewFileData)
 from gws_core.resource.r_field.serializable_r_field import \
@@ -329,13 +329,30 @@ class RichText(SerializableObjectJson):
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
+    ##################################### FORMULA #########################################
+
+    def add_formula(self, formula: str,
+                    parameter_name: str = None) -> RichTextBlock:
+        """Add a math formula to the rich text content
+
+        :param formula_data: math formula using the KaTeX syntax
+        :type formula_data: str
+        :param parameter_name: name of the parameter where to insert the block. If None, the block is appended
+        :type parameter_name: str, optional
+        :return: _description_
+        :rtype: RichTextBlock
+        """
+        block: RichTextBlock = self.create_formula(self.generate_id(), formula)
+        self._append_or_insert_block_at_parameter(block, parameter_name)
+        return block
+
     ##################################### FILE #########################################
 
     def add_timestamp(self, timestamp_data: RichTextTimestampData,
                       parameter_name: str = None) -> RichTextBlock:
         """Add a timestamp to the rich text content
         """
-        block: RichTextBlock = self.create_block(self.generate_id(), RichTextBlockType.TIMESTAMP, timestamp_data)
+        block: RichTextBlock = self.create_timestamp(self.generate_id(), timestamp_data)
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
@@ -432,6 +449,22 @@ class RichText(SerializableObjectJson):
         """Create a timestamp block
         """
         return cls.create_block(id_, RichTextBlockType.TIMESTAMP, data)
+
+    @classmethod
+    def create_formula(cls, id_: str, formula: str) -> RichTextBlock:
+        """_summary_
+
+        :param id_: id of the block
+        :type id_: str
+        :param formula: math formula using the KaTeX syntax
+        :type formula: str
+        :return: block
+        :rtype: RichTextBlock
+        """
+        data: RichTextFormulaData = {
+            'formula': formula
+        }
+        return cls.create_block(id_, RichTextBlockType.FORMULA, data)
 
     @classmethod
     def create_block(cls, id_: str, block_type: RichTextBlockType, data: Any) -> RichTextBlock:
