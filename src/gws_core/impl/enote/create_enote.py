@@ -8,7 +8,6 @@ from gws_core.document_template.task.document_template_param import \
     DocumentTemplateParam
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_param import RichTextParam
-from gws_core.impl.rich_text.rich_text_types import RichTextObjectType
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.task.task import Task
@@ -20,8 +19,8 @@ from .enote_resource import ENoteResource
 
 @task_decorator(
     unique_name="CreateENote",
-    human_name="Create e-note",
-    short_description="Create an empty e-note or from a document template",
+    human_name="Create note resource",
+    short_description="Create an empty note resource or from a document template",
 )
 class CreateENote(Task):
     """
@@ -31,13 +30,13 @@ class CreateENote(Task):
     input_specs: InputSpecs = InputSpecs()
 
     output_specs: OutputSpecs = OutputSpecs({
-        'enote': OutputSpec(ENoteResource, human_name='E-note', short_description='New e-note')
+        'enote': OutputSpec(ENoteResource, human_name='Note resource', short_description='New note resource')
     })
 
     config_specs: ConfigSpecs = {
         'template': DocumentTemplateParam(optional=True),
-        'title': StrParam(human_name='Title', short_description='Title of the e-note', default_value='New e-note'),
-        'enote': RichTextParam(human_name='E-note', short_description='E-note content, this overrides the template',
+        'title': StrParam(human_name='Title', short_description='Title of the note resource', default_value='New note resource'),
+        'enote': RichTextParam(human_name='Note resource', short_description='Note resource content, this overrides the template',
                                optional=True)
     }
 
@@ -47,7 +46,7 @@ class CreateENote(Task):
         enote_param: RichText = params['enote']
 
         enote_resource = ENoteResource()
-        enote_resource.title = title or 'New e-note'
+        enote_resource.title = title or 'New note resource'
 
         if enote_param and not enote_param.is_empty():
             enote_resource.append_basic_rich_text(enote_param)

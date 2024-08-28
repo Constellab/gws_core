@@ -18,26 +18,26 @@ from .enote_resource import ENoteResource
 
 @task_decorator(
     unique_name="UpdatENote",
-    human_name="Update e-note",
-    short_description="Append content to an existing e-note",
+    human_name="Update note resource",
+    short_description="Append content to an existing note resource",
 )
 class UpdatENote(Task):
     """
-    Append content to an existing e-note.
+    Append content to an existing note resource.
     """
 
     input_specs: InputSpecs = InputSpecs({
-        'enote': InputSpec(ENoteResource, human_name='E-note')
+        'enote': InputSpec(ENoteResource, human_name='Note resource')
     })
 
     output_specs: OutputSpecs = OutputSpecs({
-        'enote': OutputSpec(ENoteResource, human_name='E-note')
+        'enote': OutputSpec(ENoteResource, human_name='Note resource')
     })
 
     config_specs: ConfigSpecs = {
         'section-title': StrParam(optional=True, human_name='Section title',
                                   short_description='Title of the new section'),
-        'enote': RichTextParam(human_name='E-note', short_description='Content to append to the input e-note')
+        'enote': RichTextParam(human_name='Note resource', short_description='Content to append to the input note resource')
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

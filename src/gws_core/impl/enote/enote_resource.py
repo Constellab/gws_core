@@ -38,7 +38,7 @@ from gws_core.resource.view.view_result import CallViewResult
 from gws_core.resource.view.view_runner import ViewRunner
 
 
-@resource_decorator("ENoteResource", human_name="E-note resource",
+@resource_decorator("ENoteResource", human_name="Note resource",
                     short_description="Resource that contains a rich text that can be exported to a report",
                     style=TypingStyle.material_icon("sticky_note_2", background_color="#f6f193"),)
 class ENoteResource(ResourceSet):
@@ -67,7 +67,7 @@ class ENoteResource(ResourceSet):
 
     def add_paragraph(self, paragraph: str) -> None:
         """
-        Add a paragraph to the e-note content.
+        Add a paragraph to the note resource content.
 
         :param paragraph: paragraph to add
         :type paragraph: str
@@ -75,12 +75,12 @@ class ENoteResource(ResourceSet):
         self._rich_text.add_paragraph(paragraph)
 
     def add_blank_line(self) -> None:
-        """Add a blank line to the e-note content."""
+        """Add a blank line to the note resource content."""
         self._rich_text.add_paragraph('')
 
     def add_header(self, header: str, level: RichTextParagraphHeaderLevel) -> None:
         """
-        Add a header to the e-note content.
+        Add a header to the note resource content.
 
         :param header: header to add
         :type header: str
@@ -95,7 +95,7 @@ class ENoteResource(ResourceSet):
                                        title: str = None, caption: str = None,
                                        parameter_name: str = None,
                                        create_new_resource: bool = False) -> None:
-        """Add a default view to the e-note content.
+        """Add a default view to the note resource content.
 
         :param resource: resource to call the view on
         :type resource: Resource
@@ -117,7 +117,7 @@ class ENoteResource(ResourceSet):
                                caption: str = None,
                                parameter_name: str = None,
                                create_new_resource: bool = False) -> None:
-        """Add a view to the e-note content.
+        """Add a view to the note resource content.
         To get the information of the views, once you opened the view in the application, you can
         click on View settings > Show view configuration
 
@@ -146,7 +146,7 @@ class ENoteResource(ResourceSet):
                  title: str = None, caption: str = None,
                  parameter_name: str = None) -> None:
         """
-        Add a view to the e-note content.
+        Add a view to the note resource content.
 
         :param view: view to add
         :type view: View
@@ -168,7 +168,7 @@ class ENoteResource(ResourceSet):
                            title: str = None, caption: str = None,
                            parameter_name: str = None) -> None:
         """
-        Add a view resource to the e-note content.
+        Add a view resource to the note resource content.
 
         :param view: view to add
         :type view: View
@@ -223,7 +223,7 @@ class ENoteResource(ResourceSet):
     def add_figure_from_path(self, image_path: str, title: str = None, caption: str = None,
                              parameter_name: str = None) -> None:
         """
-        Add a figure to the e-note content.
+        Add a figure to the note resource content.
 
         :param image_path: path of the image file
         :type image_path: str
@@ -242,7 +242,7 @@ class ENoteResource(ResourceSet):
     def add_figure_file(self, file: File, title: str = None, caption: str = None,
                         parameter_name: str = None, create_new_resource: bool = False) -> None:
         """
-        Add a figure to the e-note content.
+        Add a figure to the note resource content.
 
         :param file: file of the image
         :type file: File
@@ -303,7 +303,7 @@ class ENoteResource(ResourceSet):
 
     def add_file_from_path(self, file_path: str, parameter_name: str = None) -> None:
         """
-        Add a file to the e-note content.
+        Add a file to the note resource content.
 
         :param file_path: path of the file
         :type file_path: str
@@ -319,7 +319,7 @@ class ENoteResource(ResourceSet):
     def add_file(self, file: File, parameter_name: str = None,
                  create_new_resource: bool = False) -> None:
         """
-        Add a file to the e-note content.
+        Add a file to the note resource content.
 
         :param file: file to add
         :type file: File
@@ -335,7 +335,7 @@ class ENoteResource(ResourceSet):
         filename = file.get_base_name()
 
         if self.resource_exists(filename):
-            raise ValueError(f"The file {filename} already exists in the e-note")
+            raise ValueError(f"The file {filename} already exists in the note resource")
 
         self._rich_text.add_file({
             "name": filename,
@@ -387,7 +387,7 @@ class ENoteResource(ResourceSet):
 
     def get_blocks(self) -> List[RichTextBlock]:
         """
-        Get the blocks of the e-note
+        Get the blocks of the note resource
 
         :return: list of blocks
         :rtype: List[RichTextBlock]
@@ -396,7 +396,7 @@ class ENoteResource(ResourceSet):
 
     def get_blocks_by_type(self, block_type: RichTextBlockType) -> List[RichTextBlock]:
         """
-        Get the blocks of the e-note by type
+        Get the blocks of the note resource by type
 
         :param block_type: type of the block
         :type block_type: RichTextBlockType
@@ -441,9 +441,9 @@ class ENoteResource(ResourceSet):
     ############################# Other #############################
 
     def append_enote(self, enote: "ENoteResource") -> None:
-        """Append the content of another e-note at the end of this e-note content.
+        """Append the content of another note resource at the end of this note resource content.
 
-        :param enote: e-note to append
+        :param enote: note resource to append
         :type enote: ENoteResource
         """
         for block in enote.get_blocks():
@@ -472,7 +472,7 @@ class ENoteResource(ResourceSet):
                 self._rich_text.append_block(block)
 
     def append_basic_rich_text(self, rich_text: RichText) -> None:
-        """Append a basic rich content to this e-note content.
+        """Append a basic rich content to this note resource content.
         It does not support file, figure, or views
 
         :param rich_text: rich text to append
@@ -486,19 +486,19 @@ class ENoteResource(ResourceSet):
                                   object_type: RichTextObjectType,
                                   object_id: str) -> None:
         """
-        Append a rich text (that comes from a report or document template) to the e-note.
+        Append a rich text (that comes from a report or document template) to the note resource.
 
-        :param rich_text: rich text to append to the e-note (from a report or document template)
+        :param rich_text: rich text to append to the note resource (from a report or document template)
         :type rich_text: RichText
         :param object_type: type of the object that has the rich text
         :type object_type: RichTextObjectType
         :param object_id: id of the object that has the rich text
         :type object_id: str
-        :return: the e-note
+        :return: the note resource
         :rtype: _type_
         """
         if object_type == RichTextObjectType.ENOTE:
-            raise ValueError("Please use append_enote to append an e-note to another e-note")
+            raise ValueError("Please use append_enote to append an note resource to another note resource")
 
         # add the block 1 by 1 to the enote
         for block in rich_text.get_blocks():
@@ -547,7 +547,7 @@ class ENoteResource(ResourceSet):
         :return: The report
         """
         if not title and not self.title:
-            raise ValueError("The e-note title is empty")
+            raise ValueError("The note resource title is empty")
         report_dto = ReportSaveDTO(title=title or self.title)
         report: Report = ReportService.create(report_dto)
 
@@ -653,7 +653,7 @@ class ENoteResource(ResourceSet):
 
         if not resource.get_model_id():
             raise ValueError(
-                f"The resource {enote_view['sub_resource_key']} of the e-note was not saved on the database.")
+                f"The resource {enote_view['sub_resource_key']} of the note resource was not saved on the database.")
 
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
             resource.get_model_id(), enote_view['view_method_name'], enote_view["view_config"], True)
@@ -692,7 +692,7 @@ class ENoteResource(ResourceSet):
 
     ############################# Views #############################
 
-    @view(view_type=RichTextView, human_name="View e-note", short_description="View e-note content", default_view=True)
+    @view(view_type=RichTextView, human_name="View note resource", short_description="View note resource content", default_view=True)
     def view_enote(self, config: ConfigParamsDict = None) -> RichTextView:
         return RichTextView(self.title, self._rich_text,
                             object_type=RichTextObjectType.ENOTE,
@@ -703,13 +703,13 @@ class ENoteResource(ResourceSet):
     @staticmethod
     def from_document_template(document_template: DocumentTemplate,
                                title: str = None) -> "ENoteResource":
-        """Create a e-note from a document template.
+        """Create a note resource from a document template.
 
-        :param document_template: document template to create the e-note from
+        :param document_template: document template to create the note resource from
         :type document_template: DocumentTemplate
-        :param title: title of the e-note. If none the title of document template is used, defaults to None
+        :param title: title of the note resource. If none the title of document template is used, defaults to None
         :type title: str, optional
-        :return: the e-note
+        :return: the note resource
         :rtype: ENoteResource
         """
         enote = ENoteResource()
@@ -721,13 +721,13 @@ class ENoteResource(ResourceSet):
     @staticmethod
     def from_report(report: Report,
                     title: str = None) -> "ENoteResource":
-        """Create a e-note from a report.
+        """Create a note resource from a report.
 
-        :param report: report to create the e-note from
+        :param report: report to create the note resource from
         :type report: Report
-        :param title: title of the e-note. If none the title of report is used, defaults to None
+        :param title: title of the note resource. If none the title of report is used, defaults to None
         :type title: str, optional
-        :return: the e-note
+        :return: the note resource
         :rtype: ENoteResource
         """
         enote = ENoteResource()

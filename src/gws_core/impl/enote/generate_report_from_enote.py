@@ -13,15 +13,15 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 from .enote_resource import ENoteResource
 
 
-@task_decorator("GenerateReportFromENote", human_name="Generate report from e-note",
-                short_description="Task to generate a report from an e-note")
+@task_decorator("GenerateReportFromENote", human_name="Generate report from note resource",
+                short_description="Task to generate a report from an note resource")
 class GenerateReportFromENote(Task):
     """
     Generate a report from the note content.
     """
 
     input_specs: InputSpecs = InputSpecs({
-        'enote': InputSpec(ENoteResource, human_name='E-note')
+        'enote': InputSpec(ENoteResource, human_name='Note resource')
     })
 
     output_specs: OutputSpecs = OutputSpecs({
@@ -29,7 +29,7 @@ class GenerateReportFromENote(Task):
     })
 
     config_specs: ConfigSpecs = {
-        'title': StrParam(human_name='Report title', short_description='This overides the e-note title',
+        'title': StrParam(human_name='Report title', short_description='This overides the note resource title',
                           optional=True)
     }
 

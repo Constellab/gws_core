@@ -16,26 +16,28 @@ from .enote_resource import ENoteResource
 
 @task_decorator(
     unique_name="MergeENotes",
-    human_name="Merge e-notes",
-    short_description="Merge multiple e-notes into one",
+    human_name="Merge Note resources",
+    short_description="Merge multiple Note resources into one",
 )
 class MergeENotes(Task):
     """
-    Append content to an existing e-note.
+    Append content to an existing note resource.
     """
 
     input_specs: InputSpecs = DynamicInputs({
-        'source': InputSpec(ENoteResource, human_name='E-note')
-    }, additionnal_port_spec=InputSpec(ENoteResource, human_name='E-note'))
+        'source': InputSpec(ENoteResource, human_name='Note resource')
+    }, additionnal_port_spec=InputSpec(ENoteResource, human_name='Note resource'))
 
     output_specs: OutputSpecs = OutputSpecs({
-        'enote': OutputSpec(ENoteResource, human_name='E-note')
+        'enote': OutputSpec(ENoteResource, human_name='Note resource')
     })
 
     config_specs: ConfigSpecs = {
-        'title': StrParam(human_name='Title', short_description='Title of the new e-note, if empty the first e-note title is used',
-                          default_value=''),
-    }
+        'title':
+        StrParam(
+            human_name='Title',
+            short_description='Title of the new note resource, if empty the first note resource title is used',
+            default_value=''), }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # prepare the input
@@ -46,7 +48,7 @@ class MergeENotes(Task):
         index = 1
         for resource in resource_list:
             if not isinstance(resource, ENoteResource):
-                raise ValueError(f"Input {index} is not an e-note")
+                raise ValueError(f"Input {index} is not an note resource")
 
             if index == 1:
                 enote_resource.title = params['title'] or resource.title

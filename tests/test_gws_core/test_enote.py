@@ -71,7 +71,7 @@ class TestEnote(BaseTestCase):
         doc_template.content = template_rich_text.get_content()
         doc_template.save()
 
-        # Test create e-note from template
+        # Test create note resource from template
         task_runner = TaskRunner(CreateENote, params={
             "title": "",
             "template": doc_template.id,
@@ -100,7 +100,7 @@ class TestEnote(BaseTestCase):
         base_enote = ENoteResource(title="My custom note")
         base_enote.add_paragraph("This is a test paragraph")
 
-        # Test update e-note
+        # Test update note resource
         rich_text = RichText()
         rich_text.add_paragraph("This is a new paragraph")
 
@@ -132,7 +132,7 @@ class TestEnote(BaseTestCase):
         robot = Robot.empty()
         enote.add_default_view_from_resource(robot, title='view', create_new_resource=True)
 
-        # Test generate report from e-note
+        # Test generate report from note resource
         task_runner = TaskRunner(GenerateReportFromENote, inputs={
             "enote": enote
         })
@@ -154,10 +154,10 @@ class TestEnote(BaseTestCase):
 
     def test_merge_enote(self):
         # Test merge enote
-        first_enote = ENoteResource(title="First e-note")
+        first_enote = ENoteResource(title="First note resource")
         first_enote.add_paragraph("This is a first paragraph")
 
-        second_enote = ENoteResource(title="Second e-note")
+        second_enote = ENoteResource(title="Second note resource")
         second_enote.add_paragraph("This is a second paragraph")
         second_enote.add_figure_file(self._create_enote_image(), title='figure', create_new_resource=False)
         second_enote.add_default_view_from_resource(self._create_resource(), title='view', create_new_resource=False)

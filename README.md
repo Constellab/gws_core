@@ -28,7 +28,7 @@ This repository is the core library for Constellab data lab. It provides the ach
 - Managing pipelines and data.
 - Providing classes for data and database manipulation.
 
-It also include standard ```Resources``` (like Table, File, Folder, PlotlyResource, E-note...) and ```Tasks``` (for manipulating theses resources). You can find the list of theses ```Resources``` and ```Tasks``` in the ```gws_core``` documentation.
+It also include standard ```Resources``` (like Table, File, Folder, PlotlyResource, Note resource...) and ```Tasks``` (for manipulating theses resources). You can find the list of theses ```Resources``` and ```Tasks``` in the ```gws_core``` documentation.
 
 ## 📄 Documentation
 
