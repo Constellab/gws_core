@@ -11,7 +11,7 @@ from gws_core.impl.rich_text.rich_text_types import (
     RichTextENoteResourceViewData, RichTextFigureData, RichTextFileData,
     RichTextParagraphData, RichTextParagraphHeaderData,
     RichTextParagraphHeaderLevel, RichTextParagraphListData,
-    RichTextResourceViewData, RichTextViewFileData)
+    RichTextResourceViewData, RichTextTimestampData, RichTextViewFileData)
 from gws_core.resource.r_field.serializable_r_field import \
     SerializableObjectJson
 
@@ -329,6 +329,16 @@ class RichText(SerializableObjectJson):
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
+    ##################################### FILE #########################################
+
+    def add_timestamp(self, timestamp_data: RichTextTimestampData,
+                      parameter_name: str = None) -> RichTextBlock:
+        """Add a timestamp to the rich text content
+        """
+        block: RichTextBlock = self.create_block(self.generate_id(), RichTextBlockType.TIMESTAMP, timestamp_data)
+        self._append_or_insert_block_at_parameter(block, parameter_name)
+        return block
+
     ##################################### OTHERS #########################################
 
     def get_content(self) -> RichTextDTO:
@@ -416,6 +426,12 @@ class RichText(SerializableObjectJson):
             data['items'] = []
 
         return cls.create_block(id_, RichTextBlockType.LIST, data)
+
+    @classmethod
+    def create_timestamp(cls, id_: str, data: RichTextTimestampData) -> RichTextBlock:
+        """Create a timestamp block
+        """
+        return cls.create_block(id_, RichTextBlockType.TIMESTAMP, data)
 
     @classmethod
     def create_block(cls, id_: str, block_type: RichTextBlockType, data: Any) -> RichTextBlock:

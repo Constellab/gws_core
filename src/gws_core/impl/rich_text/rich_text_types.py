@@ -22,6 +22,7 @@ class RichTextBlockType(Enum):
     FORMULA = 'formula'
     TABLE = 'table'
     FILE = 'file'
+    TIMESTAMP = 'timestamp'
 
 
 class RichTextBlock(BaseModelDTO):
@@ -160,6 +161,12 @@ class RichTextVariableData(TypedDict):
     description: str
     value: Any
     type: Literal['string']
+
+
+class RichTextTimestampData(TypedDict):
+    """Object representing a variable in a rich text"""
+    timestamp: str
+    format: Literal['DATE', 'DATE_TIME', 'DATE_TIME_WITH_SECONDS', 'TIME_WITH_SECONDS', 'FROM_NOW']
 
 
 class RichTextFileData(TypedDict):
