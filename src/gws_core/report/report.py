@@ -62,7 +62,7 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
             raise BadRequestException(GWSException.REPORT_VALIDATED.value, GWSException.REPORT_VALIDATED.name)
         if self.is_archived:
             raise BadRequestException(
-                detail="The report is archived, please unachived it to update it")
+                detail="The note is archived, please unachived it to update it")
 
     def to_dto(self) -> ReportDTO:
         return ReportDTO(

@@ -298,7 +298,7 @@ class ExperimentService():
 
             if len(synced_associated_reports) > 0:
                 raise BadRequestException(
-                    "You can't unsynchronize an experiment that has associated reports synced in space. Please unsync the reports first.")
+                    "You can't unsynchronize an experiment that has associated notes synced in space. Please unsync the notes first.")
 
         # Delete the experiment in space
         SpaceService.delete_experiment(project_id, experiment.id)

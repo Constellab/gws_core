@@ -148,7 +148,7 @@ class ReportService():
             project = Project.get_by_id_and_check(project_id)
             if report.last_sync_at is not None and project != report.project:
                 raise BadRequestException(
-                    "You can't change the project of report that has been synced. You must unlink it from the project first.")
+                    "You can't change the project of note that has been synced. You must unlink it from the project first.")
             report.project = project
 
         # if the project was removed
@@ -218,7 +218,7 @@ class ReportService():
         view_config: ViewConfig = ViewConfigService.get_by_id(view_config_id)
 
         if view_config.view_type in exluded_views_in_report:
-            raise BadRequestException("You can't add this type of view to a report")
+            raise BadRequestException("You can't add this type of view to a note")
 
         # create the json object for the rich text
         view_content: RichTextResourceViewData = view_config.to_rich_text_resource_view()
@@ -266,14 +266,14 @@ class ReportService():
 
         rich_text = report.get_content_as_rich_text()
         if rich_text.is_empty():
-            raise BadRequestException('The report is empty')
+            raise BadRequestException('The note is empty')
 
         # set the project if it is provided
         if project_id is not None:
             report.project = Project.get_by_id_and_check(project_id)
 
         if report.project is None:
-            raise BadRequestException("The report must be associated to a project to be validated")
+            raise BadRequestException("The note must be associated to a project to be validated")
 
         if report.project.children.count() > 0:
             raise BadRequestException(
@@ -633,7 +633,7 @@ class ReportService():
         report: Report = Report.get_by_id_and_check(report_id)
 
         if report.is_archived:
-            raise BadRequestException('The report is already archived')
+            raise BadRequestException('The note is already archived')
 
         ActivityService.add(
             ActivityType.ARCHIVE,
@@ -648,7 +648,7 @@ class ReportService():
         report: Report = Report.get_by_id_and_check(report_id)
 
         if not report.is_archived:
-            raise BadRequestException('The report is not archived')
+            raise BadRequestException('The note is not archived')
 
         ActivityService.add(
             ActivityType.UNARCHIVE,
