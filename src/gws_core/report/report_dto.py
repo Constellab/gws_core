@@ -32,3 +32,8 @@ class ReportDTO(ModelWithUserDTO):
 
 class ReportFullDTO(ReportDTO):
     content: RichTextDTO
+
+
+class ReportInsertTemplateDTO(BaseModelDTO):
+    block_index: int
+    document_template_id: str

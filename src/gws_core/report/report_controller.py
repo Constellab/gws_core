@@ -10,7 +10,7 @@ from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from ..core.classes.search_builder import SearchParams
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
-from .report_dto import ReportDTO, ReportSaveDTO
+from .report_dto import ReportDTO, ReportInsertTemplateDTO, ReportSaveDTO
 from .report_service import ReportService
 
 
@@ -50,6 +50,14 @@ def update_project(report_id: str,
 @core_app.put("/report/{report_id}/content", tags=["Report"], summary="Update a report content")
 def update_content(report_id: str, content: RichTextDTO, _=Depends(AuthService.check_user_access_token)) -> RichTextDTO:
     return ReportService.update_content(report_id, content).content
+
+
+@core_app.put("/report/{report_id}/content/insert-template", tags=["Report"],
+              summary="Insert a document template in the report")
+def insert_template(report_id: str,
+                    data: ReportInsertTemplateDTO,
+                    _=Depends(AuthService.check_user_access_token)) -> RichTextDTO:
+    return ReportService.insert_template(report_id, data).content
 
 
 @core_app.put("/report/{report_id}/content/add-view/{view_config_id}", tags=["Report"],

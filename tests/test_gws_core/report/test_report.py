@@ -1,5 +1,7 @@
 
 
+from gws_core.document_template.document_template_service import \
+    DocumentTemplateService
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.rich_text.rich_text import RichText
@@ -10,7 +12,7 @@ from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.project.project import Project
 from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.report.report import Report, ReportExperiment
-from gws_core.report.report_dto import ReportSaveDTO
+from gws_core.report.report_dto import ReportInsertTemplateDTO, ReportSaveDTO
 from gws_core.report.report_service import ReportService
 from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -162,3 +164,33 @@ class TestReport(BaseTestCase):
 
         # Check that we cannot remove the experiment because of the view
         ReportService.remove_experiment(report.id, experiment.get_model().id)
+
+    def test_insert_document_template(self):
+        # prepare the data
+        document_template = DocumentTemplateService.create_empty('title')
+        rich_text = RichText()
+        rich_text.add_paragraph('First paragraph')
+        rich_text.add_paragraph('Second paragraph')
+        DocumentTemplateService.update_content(document_template.id, rich_text.get_content())
+
+        report = ReportService.create(ReportSaveDTO(title='Test report'))
+        report_rich_text = RichText()
+        report_rich_text.add_paragraph('Start report')
+        report_rich_text.add_paragraph('End report')
+        ReportService.update_content(report.id, report_rich_text.get_content())
+
+        # inser the document template in the report
+        data = ReportInsertTemplateDTO(block_index=1, document_template_id=document_template.id)
+        ReportService.insert_template(report.id, data)
+
+        report = report.refresh()
+        report_rich_text = report.get_content_as_rich_text()
+
+        expected_blocks = [
+            {"id": "1", "type": "paragraph", "data": {"text": "Start report"}},
+            {"id": "2", "type": "paragraph", "data": {"text": "First paragraph"}},
+            {"id": "3", "type": "paragraph", "data": {"text": "Second paragraph"}},
+            {"id": "4", "type": "paragraph", "data": {"text": "End report"}}
+        ]
+
+        self.assert_json(report_rich_text.get_content_as_json().get('blocks'), expected_blocks, ['id'])

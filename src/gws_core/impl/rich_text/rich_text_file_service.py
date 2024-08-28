@@ -193,4 +193,11 @@ class RichTextFileService():
                         target_object_id: str) -> None:
         source_dir = cls.get_object_dir_path(source_object_type, source_object_id)
         target_dir = cls.get_object_dir_path(target_object_type, target_object_id)
-        FileHelper.copy_dir(source_dir, target_dir)
+
+        if not FileHelper.exists_on_os(source_dir):
+            return
+
+        if FileHelper.exists_on_os(target_dir):
+            FileHelper.copy_dir_content_to_dir(source_dir, target_dir)
+        else:
+            FileHelper.copy_dir(source_dir, target_dir)

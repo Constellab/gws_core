@@ -60,7 +60,7 @@ class RichText(SerializableObjectJson):
 
         return len(self.get_blocks()) - 1
 
-    def _insert_block_at_index(self, index: int, block: RichTextBlock) -> None:
+    def insert_block_at_index(self, index: int, block: RichTextBlock) -> None:
         """Insert an element in the rich text content at the given index
         """
 
@@ -173,15 +173,15 @@ class RichText(SerializableObjectJson):
 
                 if result.before:
                     before_paragraph = self.create_paragraph(self.generate_id(), result.before)
-                    self._insert_block_at_index(block_index, before_paragraph)
+                    self.insert_block_at_index(block_index, before_paragraph)
                     block_index += 1
 
-                self._insert_block_at_index(block_index, view_block)
+                self.insert_block_at_index(block_index, view_block)
                 block_index += 1
 
                 if result.after:
                     after_paragraph = self.create_paragraph(self.generate_id(), result.after)
-                    self._insert_block_at_index(block_index, after_paragraph)
+                    self.insert_block_at_index(block_index, after_paragraph)
                     block_index += 1
 
             else:

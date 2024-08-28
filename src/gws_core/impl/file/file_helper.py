@@ -410,6 +410,20 @@ class FileHelper():
             cls.copy_file(source_path, destination_path)
 
     @classmethod
+    def copy_dir_content_to_dir(cls, source_dir_path: PathType, destination_dir_path: PathType) -> None:
+        """
+        Copy the content of a directory to another directory
+
+        :param source_dir_path: source directory path
+        :type source_dir_path: PathType
+        :param destination_dir_path: destination directory path
+        :type destination_dir_path: PathType
+        """
+        for child in os.listdir(cls.get_path(source_dir_path)):
+            cls.copy_node(os.path.join(source_dir_path, child),
+                          os.path.join(destination_dir_path, child))
+
+    @classmethod
     def move_file_or_dir(cls, source_path: PathType, destination_path: PathType) -> None:
         """
         Move a file or a directory from source to destination

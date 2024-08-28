@@ -39,7 +39,7 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..experiment.experiment import Experiment
-from ..report.report_dto import ReportSaveDTO
+from ..report.report_dto import ReportInsertTemplateDTO, ReportSaveDTO
 from ..report.report_search_builder import ReportSearchBuilder
 from ..space.space_service import SpaceService
 from .report import Report, ReportExperiment
@@ -183,6 +183,31 @@ class ReportService():
                                             object_type=ActivityObjectType.REPORT,
                                             object_id=report.id)
 
+        return report
+
+    @classmethod
+    @transaction()
+    def insert_template(cls, report_id: str, data: ReportInsertTemplateDTO) -> Report:
+        report: Report = cls._get_and_check_before_update(report_id)
+
+        template: DocumentTemplate = DocumentTemplate.get_by_id_and_check(data.document_template_id)
+
+        report_rich_text = report.get_content_as_rich_text()
+        template_rich_text = template.get_content_as_rich_text()
+
+        index = data.block_index
+        for block in template_rich_text.get_blocks():
+            report_rich_text.insert_block_at_index(index, block)
+            index += 1
+
+        report = cls.update_content(report_id, report_rich_text.get_content())
+
+        # copy the storage of the document template to the report
+        # copy after to avoid copy if error during update_content
+        RichTextFileService.copy_object_dir(RichTextObjectType.DOCUMENT_TEMPLATE,
+                                            template.id,
+                                            RichTextObjectType.REPORT,
+                                            report.id)
         return report
 
     @classmethod
