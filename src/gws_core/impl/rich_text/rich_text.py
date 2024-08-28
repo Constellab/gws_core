@@ -10,8 +10,8 @@ from gws_core.impl.rich_text.rich_text_types import (
     RichTextBlock, RichTextBlockType, RichTextDTO,
     RichTextENoteResourceViewData, RichTextFigureData, RichTextFileData,
     RichTextParagraphData, RichTextParagraphHeaderData,
-    RichTextParagraphHeaderLevel, RichTextResourceViewData,
-    RichTextViewFileData)
+    RichTextParagraphHeaderLevel, RichTextParagraphListData,
+    RichTextResourceViewData, RichTextViewFileData)
 from gws_core.resource.r_field.serializable_r_field import \
     SerializableObjectJson
 
@@ -297,6 +297,15 @@ class RichText(SerializableObjectJson):
         self.append_block(block)
         return block
 
+    ##################################### LIST #########################################
+
+    def add_list(self, data: RichTextParagraphListData) -> RichTextBlock:
+        """Add a list to the rich text content
+        """
+        block = self.create_list(self.generate_id(), data)
+        self.append_block(block)
+        return block
+
     ##################################### FIGURE #########################################
 
     def add_figure(self, figure_data: RichTextFigureData,
@@ -396,6 +405,19 @@ class RichText(SerializableObjectJson):
         return cls.create_block(id_, RichTextBlockType.HEADER, header_data)
 
     @classmethod
+    def create_list(cls, id_: str, data: RichTextParagraphListData) -> RichTextBlock:
+        """Create a list block
+        """
+        if not data:
+            raise ValueError('The list data is empty')
+        if not data.get('style'):
+            raise ValueError('The list style is empty')
+        if not data.get('items'):
+            data['items'] = []
+
+        return cls.create_block(id_, RichTextBlockType.LIST, data)
+
+    @classmethod
     def create_block(cls, id_: str, block_type: RichTextBlockType, data: Any) -> RichTextBlock:
         """Create a block
         """
@@ -409,6 +431,6 @@ class RichText(SerializableObjectJson):
     def create_rich_text_dto(cls, blocks: List[RichTextBlock]) -> RichTextDTO:
         return RichTextDTO(
             blocks=blocks,
-            version="2.9.0",
+            version="2.30.2",
             time=int(datetime.now().timestamp() * 1000)
         )

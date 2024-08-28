@@ -34,8 +34,11 @@ class OpenAiChat():
     def _add_message(self, role: Literal['system', 'user', 'assistant'], content: str):
         self._messages.append({'role': role, 'content': content})
 
-    def add_assistant_message(self, content: str):
+    def add_assistant_message(self, content: str) -> None:
         self._add_message('assistant', content)
+
+    def add_user_message(self, content: str) -> None:
+        self._add_message('user', content)
 
     def get_last_assistant_message(self, extract_code: bool) -> Optional[str]:
         for message in reversed(self._messages):

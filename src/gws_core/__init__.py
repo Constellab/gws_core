@@ -287,6 +287,7 @@ from .impl.text.text_view import SimpleTextView as SimpleTextView
 from .impl.text.text_view import TextView as TextView
 from .impl.text.text_view import TextViewData as TextViewData
 # View
+from .impl.view.audio_view import AudioView as AudioView
 from .impl.view.barplot_view import BarPlotView as BarPlotView
 from .impl.view.boxplot_view import BoxPlotView as BoxPlotView
 from .impl.view.heatmap_view import HeatmapView as HeatmapView

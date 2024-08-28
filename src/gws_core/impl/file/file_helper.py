@@ -199,6 +199,10 @@ class FileHelper():
                                            "jfif", "webp", "avif", "apng", "ico"]
 
     @classmethod
+    def is_audio(cls, path: PathType) -> bool:
+        return cls.get_extension(path) in ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a', 'aiff', 'alac']
+
+    @classmethod
     def is_file(cls, path: PathType) -> bool:
         return os.path.isfile(path)
 
@@ -217,6 +221,18 @@ class FileHelper():
             return mimetypes.types_map.get('.' + ext)
         else:
             return None
+
+    @classmethod
+    def get_extension_from_content_type(cls, content_type: str) -> str:
+        """
+        Return the extension of a file from its content type
+
+        :param content_type: content type of the file
+        :type content_type: str
+        :return: extension of the file
+        :rtype: str
+        """
+        return mimetypes.guess_extension(content_type)
 
     @classmethod
     def get_path(cls, path: PathType) -> Path:

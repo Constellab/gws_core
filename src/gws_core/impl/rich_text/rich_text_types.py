@@ -64,6 +64,17 @@ class RichTextParagraphHeaderLevel(Enum):
     HEADER_2 = 3
     HEADER_3 = 4
 
+    @classmethod
+    def from_int(cls, level: int) -> 'RichTextParagraphHeaderLevel':
+        if not isinstance(level, int):
+            return cls.HEADER_1
+        if level == 1:
+            return cls.HEADER_1
+        elif level == 2:
+            return cls.HEADER_2
+        else:
+            return cls.HEADER_3
+
 
 class RichTextParagraphHeaderData(TypedDict):
     """Object representing a paragraph block data in a rich text
@@ -73,6 +84,28 @@ class RichTextParagraphHeaderData(TypedDict):
     """
     text: str
     level: int
+
+
+class RichTextParagraphListItemData(TypedDict):
+    """Object representing a list block data in a rich text
+
+    :param TypedDict: [description]
+    :type TypedDict: [type]
+    """
+
+    content: str
+    items: List["RichTextParagraphListItemData"]
+
+
+class RichTextParagraphListData(TypedDict):
+    """Object representing a list block data in a rich text
+
+    :param TypedDict: [description]
+    :type TypedDict: [type]
+    """
+
+    style: Literal['ordered', 'unordered']
+    items: List[RichTextParagraphListItemData]
 
 
 class RichTextFigureData(TypedDict):

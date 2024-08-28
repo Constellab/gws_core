@@ -1,6 +1,8 @@
 
 
 from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_transcription_service import \
+    RichTextTranscriptionService
 from gws_core.impl.rich_text.rich_text_types import (RichTextBlock,
                                                      RichTextBlockType,
                                                      RichTextDTO,
@@ -168,3 +170,29 @@ class TestRichText(BaseTestCaseLight):
             )
         ]))
         self.assertTrue(rich_text.is_empty())
+
+    def test_text_transcription(self):
+        """Test the text transcription to rich text (with commands)
+        """
+        transcription_text = "Bonjour je m'appelle Jean. Enchanté de vous rencontrer. Titre présentation. Sous-titre détails de la commande. Liste banane, pomme, sous-élément pépin, peau, fin sous-élément poire fin liste. Nous allons faire la recette."
+
+        result = RichTextTranscriptionService.transcribe_text_to_rich_text(transcription_text)
+
+        expected_blocks = [
+            {"id": "1", "type": "paragraph", "data": {"text": "Bonjour je m\'appelle Jean. Enchanté de vous rencontrer."}},
+            {"id": "2", "type": "header", "data": {"text": "Présentation", "level": 2}},
+            {"id": "3", "type": "header", "data": {"text": "Détails de la commande", "level": 3}},
+            {"id": "4", "type": "list", "data": {
+                "items": [
+                    {"content": "banane", "items": []},
+                    {"content": "pomme", "items": [
+                        {"content": "pépin", "items": []},
+                        {"content": "peau", "items": []}
+                    ]},
+                    {"content": "poire", "items": []}
+                ],
+                "style": "unordered"}
+             },
+            {"id": "5", "type": "paragraph", "data": {"text": "Nous allons faire la recette."}}]
+
+        self.assert_json(result.get_content_as_json().get('blocks'), expected_blocks, ['id'])

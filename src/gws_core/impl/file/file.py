@@ -4,6 +4,7 @@ import os
 from typing import Any, AnyStr, List
 
 from gws_core.config.param.param_spec import IntParam
+from gws_core.impl.view.audio_view import AudioView
 from gws_core.impl.view.html_view import HTMLView
 from gws_core.impl.view.image_view import ImageView
 from gws_core.model.typing_style import TypingStyle
@@ -73,6 +74,9 @@ class File(FSNode):
     def is_readable(self) -> bool:
         return self.extension not in [
             "exe", "dll", "so", "pyc", "pyo", "xlsx", "xls", "doc", "docx", "pdf", "zip", "gz"]
+
+    def is_audio(self):
+        return FileHelper.is_audio(self.path)
 
     @property
     def mime(self):
@@ -227,6 +231,8 @@ class File(FSNode):
         # specific extension
         if self.is_image():
             return ImageView.from_local_file(self.path)
+        if self.is_audio():
+            return AudioView.from_local_file(self.path)
         if self.extension == 'html':
             return HTMLView(self.read())
 

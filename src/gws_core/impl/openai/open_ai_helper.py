@@ -1,17 +1,20 @@
 
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from openai import OpenAI
 
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.openai.open_ai_types import OpenAiChatMessage
 
 
 class OpenAiHelper():
 
     generate_code_rules = "Don't prompt the method signature. Write comments for the code. Generate only 1 block of code between ``` characters."
+
+    whiper_max_file_size = 10 * 1024 * 1024  # 10MB
 
     @classmethod
     def call_gpt(cls, chat_messages: List[OpenAiChatMessage]) -> str:
@@ -25,7 +28,7 @@ class OpenAiHelper():
         client = OpenAI(api_key=Settings.get_open_ai_api_key())
 
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
             messages=chat_messages
         )
 
@@ -88,3 +91,29 @@ class OpenAiHelper():
     @classmethod
     def describe_outputs_text_for_context(cls, output_description: str) -> str:
         return f"You must assigne the result to the following output variables : {output_description}."
+
+    @classmethod
+    def call_whisper(cls, audio_file_path: str, prompt: Optional[str] = None) -> str:
+        """Call whisper to transcribe an audio file
+
+        :param audio_file_path: path to the audio file
+        :type audio_file_path: str
+        :return: the transcription
+        :rtype: str
+        """
+        if not FileHelper.exists_on_os(audio_file_path):
+            raise FileNotFoundError(f"The file '{audio_file_path}' does not exist.")
+
+        if FileHelper.get_size(audio_file_path) > cls.whiper_max_file_size:
+            raise Exception(f"The file '{audio_file_path}' is too large. The maximum file size is 10MB.")
+
+        client = OpenAI(api_key=Settings.get_open_ai_api_key())
+
+        with open(audio_file_path, "rb") as audio_file:
+            transcription = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                prompt=prompt,
+            )
+
+        return transcription.text

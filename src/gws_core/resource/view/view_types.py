@@ -38,6 +38,7 @@ class ViewType(Enum):
     PLOTLY = "plotly-view"
     RICH_TEXT = "rich-text-view"
     STREAMLIT = "streamlit-view"
+    AUDIO = "audio-view"
 
     def get_typing_style(self) -> TypingStyle:
         """Return the default typing style for the view type
@@ -90,6 +91,8 @@ class ViewType(Enum):
             style = TypingStyle.material_icon("text_snippet", background_color="#f6f193")
         elif self == ViewType.STREAMLIT:
             style = TypingStyle.material_icon("dashboard", background_color='#ff4b4b')
+        elif self == ViewType.AUDIO:
+            style = TypingStyle.material_icon("audiotrack", background_color="#f6995c")
         else:
             style = TypingStyle.default_view()
 
@@ -145,6 +148,8 @@ class ViewType(Enum):
             return "Rich text"
         elif self == ViewType.STREAMLIT:
             return "Streamlit"
+        elif self == ViewType.AUDIO:
+            return "Audio"
         else:
             return "Unknown"
 
@@ -152,4 +157,4 @@ class ViewType(Enum):
 # List of view type that cannot be used in a report
 exluded_views_in_report = [
     ViewType.VIEW, ViewType.FOLDER, ViewType.RESOURCES_LIST_VIEW, ViewType.EMPTY,
-    ViewType.RICH_TEXT, ViewType.STREAMLIT]
+    ViewType.RICH_TEXT, ViewType.STREAMLIT, ViewType.AUDIO]
