@@ -45,6 +45,9 @@ class EntityTagList():
     def get_tags(self) -> List[EntityTag]:
         return self._tags
 
+    def get_tags_as_dict(self) -> dict:
+        return {tag.tag_key: tag.get_tag_value() for tag in self._tags}
+
     def get_propagable_tags(self) -> List[EntityTag]:
         return [tag for tag in self._tags if tag.is_propagable]
 

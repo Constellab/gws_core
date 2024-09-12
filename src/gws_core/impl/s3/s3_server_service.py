@@ -1,10 +1,11 @@
 
 
 from os import path
-from typing import ByteString, List, Optional
+from typing import Any, ByteString, Dict, List, Optional
 
 from fastapi.responses import FileResponse
-from mypy_boto3_s3.type_defs import ListObjectsV2OutputTypeDef, ObjectTypeDef
+from mypy_boto3_s3.type_defs import (ListObjectsV2OutputTypeDef, ObjectTypeDef,
+                                     TagTypeDef)
 
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.date_helper import DateHelper
@@ -38,6 +39,15 @@ class S3ServerService:
     # defaumlt bucket name for projects storage
     PROJECTS_BUCKET_NAME = 'projects-storage'
 
+    # Mandatory and not updatable tags for the S3 server object
+    STORAGE_TAG_NAME = 'storage'
+    BUCKET_TAG_NAME = 'bucket'
+    KEY_TAG_NAME = 'key'
+
+    # Optional tags pass in the upload request to set data on the object (not saved as tag)
+    FOLDER_TAG_NAME = 'folder'
+    NAME_TAG_NAME = 'name'
+
     @classmethod
     def create_bucket(cls, bucket_name: str) -> None:
         if not cls._is_project_doc_bucket(bucket_name):
@@ -65,38 +75,40 @@ class S3ServerService:
                 'Marker': '',
                 'MaxKeys': max_keys,
                 'IsTruncated': False,
-                'Contents': bucket_objects
+                'Contents': bucket_objects,
             }
 
     @classmethod
     @transaction()
     def upload_object(cls, bucket_name: str,
-                      key: str, data: ByteString) -> None:
+                      key: str, data: ByteString,
+                      tags: Dict[str, str] = None) -> None:
         """Upload an object to the bucket
         """
-
-        project: Project = None
-        if cls._is_project_doc_bucket(bucket_name):
-            project = cls._get_and_check_project_bucket(bucket_name, key)
-        else:
-            # for now we allow only project documents to be uploaded
-            raise S3ServerException(status_code=400, code='invalid_bucket_name',
-                                    message='Invalid bucket name, only project storage is allowed for now',
-                                    bucket_name=bucket_name, key=key)
 
         # check if it already exists
         resource_model = cls._get_object(bucket_name, key)
 
         if resource_model:
-            cls._update_object(bucket_name, key, data, resource_model)
+            cls._update_object(bucket_name, key, data, resource_model, tags)
         else:
-            cls._create_object(bucket_name, key, data, project)
+            cls._create_object(bucket_name, key, data, tags)
 
     @classmethod
     def _create_object(cls, bucket_name: str,
                        key: str, data: ByteString,
-                       project: Project) -> None:
+                       tags: Dict[str, str] = None) -> None:
         with S3ServerContext(bucket_name, key):
+
+            project: Project = None
+            if cls._is_project_doc_bucket(bucket_name):
+                project = cls._get_and_check_project_bucket(bucket_name, tags.get(cls.FOLDER_TAG_NAME))
+            else:
+                # for now we allow only project documents to be uploaded
+                raise S3ServerException(status_code=400, code='invalid_bucket_name',
+                                        message='Invalid bucket name, only project storage is allowed for now',
+                                        bucket_name=bucket_name, key=key)
+
             # create a file in a temp folder
             temp_folder = Settings.make_temp_dir()
 
@@ -112,7 +124,10 @@ class S3ServerService:
                 bucket_name) else ResourceOrigin.UPLOADED
 
             resource_model = ResourceModel.from_resource(file, resource_origin)
-            resource_model.name = FileHelper.get_name_with_extension(key)
+            if tags.get(cls.NAME_TAG_NAME):
+                resource_model.name = tags[cls.NAME_TAG_NAME]
+            else:
+                resource_model.name = FileHelper.get_name_with_extension(key)
             resource_model.project = project
 
             resource_model = resource_model.save_full()
@@ -120,15 +135,22 @@ class S3ServerService:
             resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource_model.id)
 
             # Add the tags, make sure they are not propagable
-            origins = TagOrigins(TagOriginType.S3, 's3')
-            resource_tags.add_tag(Tag('storage', 's3', is_propagable=False, origins=origins))
-            resource_tags.add_tag(Tag('bucket', bucket_name, is_propagable=False, origins=origins))
-            resource_tags.add_tag(Tag('key', key, is_propagable=False, origins=origins))
+            origins = cls.get_tag_origin()
+            resource_tags.add_tag(Tag(cls.STORAGE_TAG_NAME, 's3', is_propagable=False, origins=origins))
+            resource_tags.add_tag(Tag(cls.BUCKET_TAG_NAME, bucket_name, is_propagable=False, origins=origins))
+            resource_tags.add_tag(Tag(cls.KEY_TAG_NAME, key, is_propagable=False, origins=origins))
+
+            # add the additional tags
+            if tags:
+                cleaned_tags = cls.get_additional_tags(tags)
+                for key, value in cleaned_tags.items():
+                    resource_tags.add_tag(Tag(key, value, is_propagable=False, origins=origins))
 
     @classmethod
     def _update_object(cls, bucket_name: str,
                        key: str, data: ByteString,
-                       resource_model: ResourceModel) -> None:
+                       resource_model: ResourceModel,
+                       tags: Dict[str, str] = None) -> None:
         with S3ServerContext(bucket_name, key):
 
             if not resource_model.fs_node_model:
@@ -137,17 +159,29 @@ class S3ServerService:
 
             ResourceService.check_if_resource_is_used(resource_model)
 
-            # override the file
-            file_path = resource_model.fs_node_model.path
-            with open(file_path, 'wb') as write_file:
-                write_file.write(data)
+            if data:
+                # override the file
+                file_path = resource_model.fs_node_model.path
+                with open(file_path, 'wb') as write_file:
+                    write_file.write(data)
 
-            # refresh the size of the file
-            resource_model.fs_node_model.size = FileHelper.get_size(file_path)
-            resource_model.fs_node_model.save()
+                # refresh the size of the file
+                resource_model.fs_node_model.size = FileHelper.get_size(file_path)
+                resource_model.fs_node_model.save()
+
             # update the last modified date
             resource_model.last_modified_at = DateHelper.now_utc()
+
+            # update project if provided
+            if tags.get(cls.FOLDER_TAG_NAME):
+                resource_model.project = cls._get_project_and_check(tags.get(cls.FOLDER_TAG_NAME))
+
+            # update the name if provided
+            resource_model.name = tags.get(cls.NAME_TAG_NAME, resource_model.name)
             resource_model.save()
+
+            # update other tags
+            cls.update_object_tags(bucket_name, key, tags)
 
     @classmethod
     def get_object(cls, bucket_name: str, key: str) -> FileResponse:
@@ -223,10 +257,6 @@ class S3ServerService:
     def _get_object_and_check(cls, bucket_name: str, key: str) -> ResourceModel:
         """Get an object from the bucket
         """
-
-        if cls._is_project_doc_bucket(bucket_name):
-            cls._get_and_check_project_bucket(bucket_name, key)
-
         resource = cls._get_object(bucket_name, key)
 
         if resource is None:
@@ -241,26 +271,23 @@ class S3ServerService:
         return bucket_name == cls.PROJECTS_BUCKET_NAME
 
     @classmethod
-    def _get_and_check_project_bucket(cls, bucket_name: str, key_or_prefix: str) -> Project:
+    def _get_and_check_project_bucket(cls, bucket_name: str, project_tag: str) -> Project:
         """Get a project bucket
         """
         if not cls._is_project_doc_bucket(bucket_name):
             raise S3ServerException(status_code=400, code='invalid_bucket_name',
                                     message='Invalid bucket name',
-                                    bucket_name=bucket_name, key=key_or_prefix)
+                                    bucket_name=bucket_name)
 
-        # extract the project name from the key
-        # format of the key : <space_id>/<root_project_id>/<project_id>/documents/<file_name>
-        key_parts = key_or_prefix.split('/')
-        if len(key_parts) < 3:
+        if not project_tag:
             raise S3ServerException(status_code=400, code='invalid_key',
-                                    message='Invalid key',
-                                    bucket_name=bucket_name, key=key_or_prefix)
+                                    message='Missing folder in the tags',
+                                    bucket_name=bucket_name)
 
-        return cls._get_project(key_parts[2])
+        return cls._get_project_and_check(project_tag)
 
     @classmethod
-    def _get_project(cls, project_id: str) -> Project:
+    def _get_project_and_check(cls, project_id: str) -> Project:
         """Get a project by id
         """
         project = Project.get_by_id(project_id)
@@ -291,7 +318,7 @@ class S3ServerService:
                                     message='Resource has no key tag', bucket_name='')
         return {
             'Key': entity_tag.tag_value,
-            'LastModified': resource.last_modified_at,
+            'LastModified': DateHelper.to_iso_str(resource.last_modified_at),
             'ETag': '',
             'Size': resource.fs_node_model.size,
             'Owner': {
@@ -308,8 +335,8 @@ class S3ServerService:
         """
         search_builder = ResourceModelSearchBuilder()
 
-        search_builder.add_tag_filter(Tag('storage', 's3'))
-        search_builder.add_tag_filter(Tag('bucket', bucket_name))
+        search_builder.add_tag_filter(Tag(cls.STORAGE_TAG_NAME, 's3'))
+        search_builder.add_tag_filter(Tag(cls.BUCKET_TAG_NAME, bucket_name))
 
         search_builder.add_expression(ResourceModel.fs_node_model.is_null(False))
 
@@ -319,11 +346,89 @@ class S3ServerService:
             search_builder.add_expression(ResourceModel.origin == ResourceOrigin.UPLOADED)
 
         if key:
-            search_builder.add_tag_filter(Tag('key', key))
+            search_builder.add_tag_filter(Tag(cls.KEY_TAG_NAME, key))
 
         if prefix:
             if not prefix.endswith('/'):
                 prefix += '/'
-            search_builder.add_tag_filter(Tag('key', prefix), 'START_WITH')
+            search_builder.add_tag_filter(Tag(cls.KEY_TAG_NAME, prefix), 'START_WITH')
 
         return search_builder
+
+    ##################################################### TAGGING #####################################################
+
+    @classmethod
+    def get_object_tags(cls, bucket_name: str, key: str) -> Any:
+        """Get the tags of an object
+        """
+        resource = cls._get_object_and_check(bucket_name, key)
+
+        tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource.id).get_tags()
+
+        s3_tags: List[TagTypeDef] = []
+        for tag in tags:
+            s3_tags.append({
+                'Key': tag.tag_key,
+                'Value': tag.tag_value
+            })
+
+        if resource.project:
+            s3_tags.append({'Key': cls.FOLDER_TAG_NAME, 'Value': resource.project.id})
+        s3_tags.append({'Key': cls.NAME_TAG_NAME, 'Value': resource.name})
+
+        return {
+            "VersionId": "1",
+            'TagSet': {"Tag": s3_tags},
+            'ResponseMetadata': None
+        }
+
+    @classmethod
+    def update_object_tags(cls, bucket_name: str, key: str, tags: Dict[str, str]) -> None:
+        """Update the tags of an object
+        """
+        resource = cls._get_object_and_check(bucket_name, key)
+        entity_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource.id)
+
+        # delete all additional tags
+        additional_current_tags = cls.get_additional_tags(entity_tags.get_tags_as_dict())
+        for key, value in additional_current_tags.items():
+            entity_tags.delete_tag(Tag(key, value))
+
+        # add the new tags
+        additional_new_tags = cls.get_additional_tags(tags)
+        for key, value in additional_new_tags.items():
+            entity_tags.add_tag(Tag(key, value, origins=cls.get_tag_origin()))
+
+    @classmethod
+    def get_additional_tags(cls, tags: Dict[str, str]) -> Dict[str, str]:
+        """Return the additional tags to save on the object, it removes the predefined tags
+        """
+        cleaned_tags = {}
+        for key, value in tags.items():
+            # skip predefined tags
+            if key in [cls.STORAGE_TAG_NAME, cls.BUCKET_TAG_NAME, cls.KEY_TAG_NAME,
+                       cls.FOLDER_TAG_NAME, cls.NAME_TAG_NAME]:
+                continue
+            cleaned_tags[key] = value
+        return cleaned_tags
+
+    @classmethod
+    def get_tag_origin(cls) -> TagOrigins:
+        """Get the origin of a tag
+        """
+        return TagOrigins(TagOriginType.S3, 's3')
+
+    ##################################################### OTHER METHODS #####################################################
+
+    @staticmethod
+    def convert_query_param_string_to_dict(query_param: str) -> dict:
+        """
+        Convert a query parameter string to a dictionary
+
+        :param query_param: the query parameter string
+        :return: the dictionary
+        """
+        if not query_param:
+            return {}
+
+        return dict([param.split('=') for param in query_param.split('&')])

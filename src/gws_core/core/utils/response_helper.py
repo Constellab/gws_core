@@ -72,3 +72,19 @@ class ResponseHelper():
     @staticmethod
     def create_xml_response_from_json(json_: Any) -> Response:
         return ResponseHelper.create_xml_response(XMLHelper.dict_to_xml(json_))
+        # return ResponseHelper.create_xml_response(
+        #     '<?xml version="1.0" encoding="utf-8"?>\n<Tagging><VersionId>null</VersionId><TagSet><Key>key</Key><Value>c4daa057-1b06-4b05-9409-bb0ed7a012bf_1726063810413.csv</Value></TagSet></Tagging>')
+#         return ResponseHelper.create_xml_response("""
+# <Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+#     <TagSet>
+#         <Tag>
+#             <Key>tag1</Key>
+#             <Value>val1</Value>
+#         </Tag>
+#         <Tag>
+#             <Key>tag2</Key>
+#             <Value>val2</Value>
+#         </Tag>
+#     </TagSet>
+# </Tagging>"""
+        #   )

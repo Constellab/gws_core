@@ -69,23 +69,19 @@ class TestS3Server(BaseTestCase):
     def _test_project_storage(self, project_id: str):
         s3_client = self._create_client()
 
-        key = f'space-id/root-project-id/{project_id}/documents/test.py'
-        s3_client.upload_file(self.current_file_abspath, Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Key=key)
+        key = 'test.py'
+        s3_client.upload_file(self.current_file_abspath, Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Key=key, ExtraArgs={
+                              'Tagging': f"{S3ServerService.FOLDER_TAG_NAME}={project_id}&{S3ServerService.NAME_TAG_NAME}=test.py"})
 
         # check resources
         resources: List[ResourceModel] = list(ResourceModel.select())
         self.assertEqual(len(resources), 1)
         self.assertEqual(resources[0].origin, ResourceOrigin.S3_PROJECT_STORAGE)
         self.assertEqual(resources[0].name, 'test.py')
+        self.assertEqual(resources[0].project.id, project_id)
 
         # test list objects
         result = s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
-        self.assertEqual(len(result['Contents']), 1)
-        self.assertEqual(result['Contents'][0]['Key'], key)
-
-        # test list with prefix
-        prefix = f'space-id/root-project-id/{project_id}'
-        result = s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Prefix=prefix)
         self.assertEqual(len(result['Contents']), 1)
         self.assertEqual(result['Contents'][0]['Key'], key)
 

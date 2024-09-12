@@ -4,7 +4,7 @@ from typing import List, Union
 
 from fastapi import Depends, Request
 from fastapi.params import Query
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import Response
 
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.core.utils.xml_helper import XMLHelper
@@ -12,13 +12,21 @@ from gws_core.impl.s3.s3_server_auth import S3ServerAuth
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
 from gws_core.impl.s3.s3_server_service import S3ServerService
 
+TAG_HEADER = 'x-amz-tagging'
+
 # Controller that act like a simple s3 server. To develop a new route
 # trigger the s3 request from the client and check the request structure in
 # s3_server_fastapi_app.all_http_exception_handler HTTP handler.
+# Also use doc : https://docs.aws.amazon.com/AmazonS3/latest/API/API_Operations.html
 
 
 @s3_server_app.get("/health-check")
 def health_check() -> bool:
+    return True
+
+
+@s3_server_app.get("v1/health-check")
+def health_check_v1() -> bool:
     return True
 
 
@@ -27,10 +35,10 @@ def health_check() -> bool:
 @s3_server_app.post("/v1/{bucket}/")
 async def post(bucket: str,
                request: Request,
+               delete: str = Query(None, alias='delete'),
                x_id: str = Query(None, alias='x-id'),
                _=Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
-
-    if x_id == 'DeleteObjects':
+    if x_id == 'DeleteObjects' or delete == '':
         # Method to delete multiple objects
         # return await delete_objectjj(bucket, request)
         xml_content = await request.body()
@@ -54,28 +62,39 @@ def create_bucket(bucket: str,
                   _=Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
 
     S3ServerService.create_bucket(bucket)
-
     return ResponseHelper.create_xml_response('')
 
 
 # use async to await the body of the request
 @s3_server_app.put("/v1/{bucket}/{key:path}")
 async def upload_object(
-        bucket: str, key: str,
+        bucket: str,
+        key: str,
         request: Request,
         _=Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
-
-    if not key:
-        S3ServerService.create_bucket(bucket)
-    else:
+    if key:
         file_bytes = await request.body()
-        S3ServerService.upload_object(bucket, key, file_bytes)
-    return ResponseHelper.create_xml_response('')
+        tags = S3ServerService.convert_query_param_string_to_dict(request.headers.get(TAG_HEADER))
+        S3ServerService.upload_object(bucket, key, file_bytes, tags)
+        return ResponseHelper.create_xml_response('')
+    else:
+        S3ServerService.create_bucket(bucket)
+        return ResponseHelper.create_xml_response('')
 
 
 @s3_server_app.get("/v1/{bucket}/{key:path}")
 def download_object(bucket: str, key: str,
-                    _=Depends(S3ServerAuth.check_s3_server_auth)) -> FileResponse:
+                    tagging: str = Query(None, alias='tagging'),
+                    max_keys: int = Query(1000, alias='max-keys'),
+                    prefix: str = Query(None, alias='prefix'),
+                    _=Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
+    if key and tagging == '':
+        tags = S3ServerService.get_object_tags(bucket, key)
+        return ResponseHelper.create_xml_response_from_json({'root': tags})
+    if not key:
+        result = S3ServerService.list_objects(bucket,
+                                              prefix=prefix, max_keys=max_keys)
+        return ResponseHelper.create_xml_response_from_json({'root': result})
     return S3ServerService.get_object(bucket, key)
 
 
