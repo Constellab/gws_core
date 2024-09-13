@@ -7,7 +7,7 @@ from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_enums import ExperimentCreationType
 from gws_core.experiment.experiment_zipper import (ZipExperiment,
                                                    ZipExperimentInfo)
-from gws_core.project.project import Project
+from gws_core.folder.space_folder import SpaceFolder
 from gws_core.protocol.protocol_dto import ExperimentProtocolDTO
 from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactory
 from gws_core.protocol.protocol_model import ProtocolModel
@@ -50,14 +50,14 @@ class ExperimentLoader():
         experiment.description = zip_experiment.description
         experiment.status = zip_experiment.status
 
-        if zip_experiment.project is not None:
-            project = Project.get_by_id(zip_experiment.project.id)
+        if zip_experiment.folder is not None:
+            folder = SpaceFolder.get_by_id(zip_experiment.folder.id)
 
-            if project is None:
+            if folder is None:
                 self._message_dispatcher.notify_info_message(
-                    f"Project '{zip_experiment.project.code}' not found, skipping linking experiment to project.")
+                    f"Folder '{zip_experiment.folder.title}' not found, skipping linking experiment to folder.")
             else:
-                experiment.project = project
+                experiment.folder = folder
 
         if zip_experiment.error_info is not None:
             experiment.set_error_info(zip_experiment.error_info)

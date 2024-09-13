@@ -4,13 +4,12 @@ from gws_core.document_template.document_template_service import \
     DocumentTemplateService
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import (RichTextBlockType,
                                                      RichTextDTO)
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
-from gws_core.project.project import Project
-from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.report.report import Report, ReportExperiment
 from gws_core.report.report_dto import ReportInsertTemplateDTO, ReportSaveDTO
 from gws_core.report.report_service import ReportService
@@ -25,7 +24,7 @@ from gws_core.test.base_test_case import BaseTestCase
 class TestReport(BaseTestCase):
 
     def test_report(self):
-        project = Project(title='Project', level_status=ProjectLevelStatus.LEAF).save()
+        folder = SpaceFolder(title='Folder').save()
 
         # test create an empty report
         report: Report = ReportService.create(ReportSaveDTO(title='Test report'))
@@ -71,10 +70,10 @@ class TestReport(BaseTestCase):
         # Try to validate report_2, but there should be an error because the experiment is not validated
         self.assertRaises(Exception, ReportService._validate, report_2.id)
         experiment_2.is_validated = True
-        experiment_2.project = project
+        experiment_2.folder = folder
         experiment_2.save()
 
-        report_2 = ReportService._validate(report_2.id, project.id)
+        report_2 = ReportService._validate(report_2.id, folder.id)
         self.assertTrue(report_2.is_validated)
 
         # Try to update report_2

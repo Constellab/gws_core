@@ -7,9 +7,8 @@ import requests
 
 from gws_core.app import App
 from gws_core.core.utils.settings import Settings
+from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.robot.robot_resource import Robot
-from gws_core.project.project import Project
-from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.user import User
@@ -26,13 +25,12 @@ class GTest(Console):
     """
 
     @classmethod
-    def create_default_project(cls) -> Project:
+    def create_default_folder(cls) -> SpaceFolder:
         """
-        Get a default Project
+        Get a default folder
         """
-        return Project(title="Default project",
-                       description="Project description",
-                       level_status=ProjectLevelStatus.LEAF).save()
+        return SpaceFolder(title="Default folder",
+                           description="Folder description").save()
 
     @classmethod
     def get_test_user(cls) -> User:

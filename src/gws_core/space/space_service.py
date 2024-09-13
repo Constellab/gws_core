@@ -17,7 +17,7 @@ from gws_core.user.user_dto import UserFullDTO, UserSpace
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings
-from ..project.project_dto import SpaceProject
+from ..folder.space_folder_dto import ExternalSpaceFolder
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from ..user.user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
@@ -101,9 +101,9 @@ class SpaceService():
         return True
 
     @classmethod
-    def save_experiment(cls, project_id: str, save_experiment_dto: SaveExperimentToSpaceDTO) -> None:
+    def save_experiment(cls, folder_id: str, save_experiment_dto: SaveExperimentToSpaceDTO) -> None:
         space_api_url: str = cls._get_space_api_url(
-            f"{cls._external_labs_route}/project/{project_id}/experiment")
+            f"{cls._external_labs_route}/folder/{folder_id}/experiment")
 
         try:
             return ExternalApiService.put(space_api_url, save_experiment_dto, cls._get_request_header(),
@@ -113,9 +113,9 @@ class SpaceService():
             raise err
 
     @classmethod
-    def delete_experiment(cls, project_id: str, experiment_id: str) -> None:
+    def delete_experiment(cls, folder_id: str, experiment_id: str) -> None:
         space_api_url: str = cls._get_space_api_url(
-            f"{cls._external_labs_route}/project/{project_id}/experiment/{experiment_id}")
+            f"{cls._external_labs_route}/folder/{folder_id}/experiment/{experiment_id}")
 
         try:
             return ExternalApiService.delete(space_api_url, cls._get_request_header(),
@@ -126,10 +126,10 @@ class SpaceService():
             raise err
 
     @classmethod
-    def save_report(cls, project_id: str, report: SaveReportToSpaceDTO,
+    def save_report(cls, folder_id: str, report: SaveReportToSpaceDTO,
                     file_paths: List[str]) -> None:
         space_api_url: str = cls._get_space_api_url(
-            f"{cls._external_labs_route}/project/{project_id}/report/v2")
+            f"{cls._external_labs_route}/folder/{folder_id}/report/v2")
 
         # convert the file paths to file object supported by the form data request
         files = []
@@ -150,9 +150,9 @@ class SpaceService():
             raise err
 
     @classmethod
-    def delete_report(cls, project_id: str, report_id: str) -> None:
+    def delete_report(cls, folder_id: str, report_id: str) -> None:
         space_api_url: str = cls._get_space_api_url(
-            f"{cls._external_labs_route}/project/{project_id}/report/{report_id}")
+            f"{cls._external_labs_route}/folder/{folder_id}/report/{report_id}")
         try:
             return ExternalApiService.delete(space_api_url, cls._get_request_header(),
                                              raise_exception_if_error=True)
@@ -170,39 +170,39 @@ class SpaceService():
     #################################### SYNCHRONIZATION ####################################
 
     @classmethod
-    def get_all_lab_projects(cls) -> List[SpaceProject]:
+    def get_all_lab_folders(cls) -> List[ExternalSpaceFolder]:
         """
-        Call the space api to get the list of project for this lab
+        Call the space api to get the list of folder for this lab
         """
         space_api_url: str = cls._get_space_api_url(
-            f"{cls._external_labs_route}/project/all-trees")
+            f"{cls._external_labs_route}/folder/all-trees")
 
         try:
             response = ExternalApiService.get(space_api_url, cls._get_request_header(),
                                               raise_exception_if_error=True)
         except BaseHTTPException as err:
-            err.detail = f"Can't retrieve projects for the lab. Error : {err.detail}"
+            err.detail = f"Can't retrieve folders for the lab. Error : {err.detail}"
             raise err
 
-        # get response and parse it to a list of spaceProject
-        return SpaceProject.from_json_list(response.json())
+        # get response and parse it to a list of spaceFolder
+        return ExternalSpaceFolder.from_json_list(response.json())
 
     @classmethod
-    def get_lab_root_project(cls, id_: str) -> SpaceProject:
+    def get_lab_root_folder(cls, id_: str) -> ExternalSpaceFolder:
         """
-        Call the space api to get the a project for this lab
+        Call the space api to get the a folder for this lab
         """
-        space_api_url: str = cls._get_space_api_url(f"{cls._external_labs_route}/project/{id_}/root-tree")
+        space_api_url: str = cls._get_space_api_url(f"{cls._external_labs_route}/folder/{id_}/root-tree")
 
         try:
             response = ExternalApiService.get(space_api_url, cls._get_request_header(),
                                               raise_exception_if_error=True)
         except BaseHTTPException as err:
-            err.detail = f"Can't retrieve project for the lab. Error : {err.detail}"
+            err.detail = f"Can't retrieve folder for the lab. Error : {err.detail}"
             raise err
 
-        # get response and parse it to a list of spaceProject
-        return SpaceProject.from_json(response.json())
+        # get response and parse it to a list of spaceFolder
+        return ExternalSpaceFolder.from_json(response.json())
 
     @classmethod
     def get_all_lab_users(cls) -> List[UserFullDTO]:

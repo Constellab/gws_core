@@ -8,14 +8,14 @@ from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.experiment.experiment_enums import (ExperimentCreationType,
                                                   ExperimentProcessStatus,
                                                   ExperimentStatus)
+from gws_core.folder.space_folder_dto import SpaceFolderDTO
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
-from gws_core.project.project_dto import ProjectDTO
 from gws_core.user.user_dto import UserDTO
 
 
 # DTO to create/update an experiment
 class ExperimentSaveDTO(BaseModelDTO):
-    project_id: Optional[str] = None
+    folder_id: Optional[str] = None
     title: str = None
     protocol_template_id: Optional[str] = None
     protocol_template_json: Optional[dict] = None
@@ -31,7 +31,7 @@ class RunningProcessInfo(BaseModelDTO):
 class RunningExperimentInfoDTO(BaseModelDTO):
     id: str
     title: str = None
-    project: Optional[ProjectDTO]
+    folder: Optional[SpaceFolderDTO]
     running_tasks: List[RunningProcessInfo]
 
 
@@ -47,7 +47,7 @@ class ExperimentDTO(ModelWithUserDTO):
     last_sync_by: Optional[UserDTO]
     last_sync_at: Optional[datetime]
     is_archived: bool
-    project: Optional[ProjectDTO]
+    folder: Optional[SpaceFolderDTO]
     pid_status: ExperimentProcessStatus
 
 

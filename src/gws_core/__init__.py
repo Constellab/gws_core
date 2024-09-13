@@ -148,6 +148,8 @@ from .experiment.experiment_service import \
 from .experiment.queue import Job as Job
 from .experiment.queue import Queue as Queue
 from .experiment.queue_service import QueueService as QueueService
+# Folder
+from .folder.space_folder import SpaceFolder as SpaceFolder
 # Extension
 # Impl > ENote
 from .impl.enote.enote_resource import ENoteResource as ENoteResource
@@ -337,8 +339,6 @@ from .process.process_model import ProcessModel as ProcessModel
 from .progress_bar.progress_bar import ProgressBar as ProgressBar
 from .progress_bar.progress_bar_service import \
     ProgressBarService as ProgressBarService
-# Project
-from .project.project import Project as Project
 # Protocol
 from .protocol.protocol import Protocol as Protocol
 from .protocol.protocol_decorator import \

@@ -107,9 +107,9 @@ def create_an_experiment(experiment: ExperimentSaveDTO,
 ###################################### UPDATE  ################################
 
 
-@core_app.put("/experiment/{id_}/validate/{project_id}", tags=["Experiment"], summary="Validate an experiment")
+@core_app.put("/experiment/{id_}/validate/{folder_id}", tags=["Experiment"], summary="Validate an experiment")
 def validate_an_experiment(id_: str,
-                           project_id: str = None,
+                           folder_id: str = None,
                            _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
     """
     Validate a protocol
@@ -117,7 +117,7 @@ def validate_an_experiment(id_: str,
     - **id_**: the id_ of the experiment
     """
 
-    return ExperimentService.validate_experiment_by_id(id_, project_id=project_id).to_dto()
+    return ExperimentService.validate_experiment_by_id(id_, folder_id=folder_id).to_dto()
 
 
 @core_app.put("/experiment/{id_}/title", tags=["Experiment"],
@@ -128,22 +128,22 @@ def update_title(id_: str,
     return ExperimentService.update_experiment_title(id_, body["title"]).to_dto()
 
 
-class UpdateProject(BaseModelDTO):
-    project_id: Optional[str]
+class UpdateFolder(BaseModelDTO):
+    folder_id: Optional[str]
 
 
-@core_app.put("/experiment/{id_}/project", tags=["Experiment"], summary="Update the project of an experiment")
-def update_experiment_project(id_: str,
-                              project: UpdateProject,
-                              _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
+@core_app.put("/experiment/{id_}/folder", tags=["Experiment"], summary="Update the folder of an experiment")
+def update_experiment_folder(id_: str,
+                             folder: UpdateFolder,
+                             _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
     """
-    Update the project of an experiment
+    Update the folder of an experiment
 
     - **id_**: the id_ of the experiment
-    - **project_id**: the id_ of the project
+    - **folder_id**: the id_ of the folder
     """
 
-    return ExperimentService.update_experiment_project(id_, project.project_id).to_dto()
+    return ExperimentService.update_experiment_folder(id_, folder.folder_id).to_dto()
 
 
 @core_app.put("/experiment/{id_}/description", tags=["Experiment"], summary="Update an experiment's description")

@@ -10,7 +10,7 @@ from gws_core.tag.tag import Tag
 from gws_core.tag.tag_service import TagService
 
 from ..experiment.experiment_run_service import ExperimentRunService
-from ..project.project import Project
+from ..folder.space_folder import SpaceFolder
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_interface import IProtocol
 from .experiment import Experiment
@@ -31,7 +31,7 @@ class IExperiment:
     _protocol: IProtocol
 
     def __init__(
-            self, protocol_type: Type[Protocol] = None, project: Project = None, title: str = '',
+            self, protocol_type: Type[Protocol] = None, folder: SpaceFolder = None, title: str = '',
             creation_type: ExperimentCreationType = ExperimentCreationType.AUTO):
         """This create an experiment in the database with the provided Task or Protocol
 
@@ -39,8 +39,8 @@ class IExperiment:
                             If this is a task, it will be wrapped in a protocol
                             If none it will create an empty protocol in the experiment
         :type process_type: Type[Process]
-        :param project: experiment title, defaults to ''
-        :type project: str, optional
+        :param folder: experiment title, defaults to ''
+        :type folder: str, optional
         :param title: experiment title, defaults to ''
         :type title: str, optional
         :param creation_type: type of the created experiment, defaults to ExperimentExecutionType.AUTO
@@ -50,13 +50,13 @@ class IExperiment:
 
         if protocol_type is None:
             self._experiment = ExperimentService.create_experiment(
-                title=title, project_id=project, creation_type=creation_type)
+                title=title, folder_id=folder, creation_type=creation_type)
         else:
             if not isclass(protocol_type) or not issubclass(protocol_type, Protocol):
                 raise Exception(
                     f"The provided process_type '{str(protocol_type)}' is not a process")
             self._experiment = ExperimentService.create_experiment_from_protocol_type(
-                protocol_type=protocol_type, title=title, project=project, creation_type=creation_type)
+                protocol_type=protocol_type, title=title, folder=folder, creation_type=creation_type)
 
         # Init the IProtocol
         self._protocol = IProtocol(self._experiment.protocol_model)

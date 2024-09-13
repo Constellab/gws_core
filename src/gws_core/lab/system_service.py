@@ -13,6 +13,7 @@ from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_enums import ExperimentStatus
 from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.file.local_file_store import LocalFileStore
@@ -21,7 +22,6 @@ from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.lab.system_dto import LabInfoDTO, LabSystemConfig
 from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_types import ProcessErrorInfo
-from gws_core.project.project_service import ProjectService
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.space.space_service import SpaceService
@@ -311,12 +311,12 @@ class SystemService:
         Logger.info('Ending the garbage collector')
 
     @classmethod
-    def synchronize_with_space(cls, sync_users: bool = True, sync_projects: bool = True) -> None:
+    def synchronize_with_space(cls, sync_users: bool = True, sync_folders: bool = True) -> None:
         if sync_users:
             UserService.synchronize_all_space_users()
 
-        if sync_projects:
-            ProjectService.synchronize_all_space_projects()
+        if sync_folders:
+            SpaceFolderService.synchronize_all_space_folders()
         Logger.info('Synchronization with space done')
 
     @classmethod

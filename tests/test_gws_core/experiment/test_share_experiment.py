@@ -57,8 +57,8 @@ class TestShareExperiment(BaseTestCase):
             input_robot_model = GTest.save_robot_resource()
 
             # Create and run an experiment
-            project = GTest.create_default_project()
-            experiment = IExperiment(title='Test experiment', project=project)
+            folder = GTest.create_default_folder()
+            experiment = IExperiment(title='Test experiment', folder=folder)
             protocol = experiment.get_protocol()
 
             move = protocol.add_process(RobotMove, 'move', config_params={'moving_step': 100})
@@ -98,7 +98,7 @@ class TestShareExperiment(BaseTestCase):
             new_experiment = experiment_resource.get_experiment()
 
             self.assertEqual(new_experiment.title, initial_experiment_model.title)
-            self.assertEqual(new_experiment.project.id, project.id)
+            self.assertEqual(new_experiment.folder.id, folder.id)
             self.assertEqual(new_experiment.status, initial_experiment_model.status)
             self.assertEqual(new_experiment.creation_type, ExperimentCreationType.IMPORTED)
 
@@ -148,7 +148,7 @@ class TestShareExperiment(BaseTestCase):
             self.assertEqual(new_resource_1.origin, ResourceOrigin.GENERATED)
             self.assertEqual(new_resource_1.task_model.id, new_protocol_model.get_process('move').id)
             self.assertEqual(new_resource_1.experiment.id, new_experiment.id)
-            self.assertEqual(new_resource_1.project.id, new_experiment.project.id)
+            self.assertEqual(new_resource_1.folder.id, new_experiment.folder.id)
             self.assertFalse(new_resource_1.flagged)
             self.assertNotEqual(new_resource_1.id, initial_resource_1.id)
             self.assertEqual(new_resource_1.resource_typing_name, initial_resource_1.resource_typing_name)

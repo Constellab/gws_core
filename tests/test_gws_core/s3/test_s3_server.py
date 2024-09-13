@@ -16,11 +16,10 @@ from gws_core.credentials.credentials_dto import SaveCredentialDTO
 from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import (CredentialsDataS3,
                                                    CredentialsType)
+from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
 from gws_core.impl.s3.s3_server_service import S3ServerService
-from gws_core.project.project import Project
-from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.test.base_test_case import BaseTestCase
@@ -35,7 +34,7 @@ class TestS3Server(BaseTestCase):
     current_file_abspath = os.path.abspath(__file__)
 
     def test_s3(self):
-        project: Project = Project(code='S3', title='S3', level_status=ProjectLevelStatus.LEAF).save()
+        folder: SpaceFolder = SpaceFolder(code='S3', title='S3').save()
 
         proc = self._start_s3_server()
 
@@ -46,7 +45,7 @@ class TestS3Server(BaseTestCase):
             self._test_auth()
 
             # Test CRUD
-            self._test_project_storage(project_id=project.id)
+            self._test_folder_storage(folder_id=folder.id)
 
         finally:
             # stop the server
@@ -54,58 +53,58 @@ class TestS3Server(BaseTestCase):
 
     def _test_auth(self):
         s3_client = self._create_client()
-        s3_client.create_bucket(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
+        s3_client.create_bucket(Bucket=S3ServerService.FOLDERS_BUCKET_NAME)
 
         # test wrong access key
         s3_client = self._create_client(access_key_id='wrong_access_key')
         with self.assertRaises(Exception):
-            s3_client.create_bucket(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
+            s3_client.create_bucket(Bucket=S3ServerService.FOLDERS_BUCKET_NAME)
 
         # test wrong secret key
         s3_client = self._create_client(secret_key='wrong_secret_key')
         with self.assertRaises(Exception):
-            s3_client.create_bucket(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
+            s3_client.create_bucket(Bucket=S3ServerService.FOLDERS_BUCKET_NAME)
 
-    def _test_project_storage(self, project_id: str):
+    def _test_folder_storage(self, folder_id: str):
         s3_client = self._create_client()
 
         key = 'test.py'
-        s3_client.upload_file(self.current_file_abspath, Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Key=key, ExtraArgs={
-                              'Tagging': f"{S3ServerService.FOLDER_TAG_NAME}={project_id}&{S3ServerService.NAME_TAG_NAME}=test.py"})
+        s3_client.upload_file(self.current_file_abspath, Bucket=S3ServerService.FOLDERS_BUCKET_NAME, Key=key, ExtraArgs={
+                              'Tagging': f"{S3ServerService.FOLDER_TAG_NAME}={folder_id}&{S3ServerService.NAME_TAG_NAME}=test.py"})
 
         # check resources
         resources: List[ResourceModel] = list(ResourceModel.select())
         self.assertEqual(len(resources), 1)
-        self.assertEqual(resources[0].origin, ResourceOrigin.S3_PROJECT_STORAGE)
+        self.assertEqual(resources[0].origin, ResourceOrigin.S3_FOLDER_STORAGE)
         self.assertEqual(resources[0].name, 'test.py')
-        self.assertEqual(resources[0].project.id, project_id)
+        self.assertEqual(resources[0].folder.id, folder_id)
 
         # test list objects
-        result = s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
+        result = s3_client.list_objects_v2(Bucket=S3ServerService.FOLDERS_BUCKET_NAME)
         self.assertEqual(len(result['Contents']), 1)
         self.assertEqual(result['Contents'][0]['Key'], key)
 
         # test list with wrong prefix
-        prefix = 'space-id/root-project-id2/tt'
-        result = s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Prefix=prefix)
+        prefix = 'space-id/root-folder-id2/tt'
+        result = s3_client.list_objects_v2(Bucket=S3ServerService.FOLDERS_BUCKET_NAME, Prefix=prefix)
         self.assertTrue('Contents' not in result)
 
         # test download file
         destination_folder = Settings.make_temp_dir()
         file_path = os.path.join(destination_folder, 'test.py')
-        s3_client.download_file(Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Key=key, Filename=file_path)
+        s3_client.download_file(Bucket=S3ServerService.FOLDERS_BUCKET_NAME, Key=key, Filename=file_path)
         self.assertTrue(FileHelper.exists_on_os(file_path))
         self.assertTrue(FileHelper.get_size(file_path) > 0)
 
         # test delete file
-        s3_client.delete_object(Bucket=S3ServerService.PROJECTS_BUCKET_NAME, Key=key)
+        s3_client.delete_object(Bucket=S3ServerService.FOLDERS_BUCKET_NAME, Key=key)
 
         # check resources
         resources = list(ResourceModel.select())
         self.assertEqual(len(resources), 0)
 
         # test list objects
-        result = s3_client.list_objects_v2(Bucket=S3ServerService.PROJECTS_BUCKET_NAME)
+        result = s3_client.list_objects_v2(Bucket=S3ServerService.FOLDERS_BUCKET_NAME)
         self.assertTrue('Contents' not in result)
 
     def _create_client(self, access_key_id: str = None, secret_key: str = None) -> S3Client:

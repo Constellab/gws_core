@@ -8,6 +8,7 @@ from gws_core import (BaseTestCase, Experiment, ExperimentSaveDTO,
                       ProtocolModel, ResourceModel, TaskModel)
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.robot.robot_protocol import (RobotSimpleTravel,
                                                 RobotWorldTravelProto)
 from gws_core.impl.robot.robot_resource import Robot
@@ -16,8 +17,6 @@ from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessStatus
-from gws_core.project.project import Project
-from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.task.plug import Sink
 from gws_core.test.gtest import GTest
@@ -28,16 +27,16 @@ class TestExperiment(BaseTestCase):
 
     def test_create_empty(self):
 
-        project = Project(title="Project", level_status=ProjectLevelStatus.LEAF)
-        project.save()
-        experiment_dto = ExperimentSaveDTO(title="Experiment title", project_id=project.id)
+        folder = SpaceFolder(title="Froject")
+        folder.save()
+        experiment_dto = ExperimentSaveDTO(title="Experiment title", folder_id=folder.id)
         experiment = ExperimentService.create_experiment_from_dto(
             experiment_dto)
 
         self.assertIsNotNone(experiment.id)
         self.assertEqual(experiment.title, 'Experiment title')
         self.assertIsNotNone(experiment.protocol_model.id)
-        self.assertEqual(experiment.project.id, project.id)
+        self.assertEqual(experiment.folder.id, folder.id)
 
         ExperimentService.update_experiment_description(
             experiment.id, {"test": "ok"})
@@ -45,9 +44,9 @@ class TestExperiment(BaseTestCase):
         self.assert_json(experiment.description, {"test": "ok"})
 
     def test_run(self):
-        # test setting the project to the experiment
-        project = Project(title="First project", level_status=ProjectLevelStatus.LEAF)
-        project.save()
+        # test setting the folder to the experiment
+        folder = SpaceFolder(title="First folder")
+        folder.save()
 
         experiment_count = Experiment.select().count()
         task_count = TaskModel.select().count()
@@ -59,7 +58,7 @@ class TestExperiment(BaseTestCase):
         proto1 = RobotService.create_robot_simple_travel()
 
         experiment = ExperimentService.create_experiment_from_protocol_model(
-            protocol_model=proto1, title="My exp title", project=project)
+            protocol_model=proto1, title="My exp title", folder=folder)
 
         self.assertEqual(Experiment.select().count(), experiment_count + 1)
 
@@ -95,9 +94,9 @@ class TestExperiment(BaseTestCase):
 
         # Test the configuration on fly_1 process (west 2000)
         move_1 = experiment.protocol_model.get_process('move_1')
-        # check that the resource was associated to the project
+        # check that the resource was associated to the folder
         robot1_model = move_1.inputs.get_resource_model('robot')
-        self.assertEqual(robot1_model.project.id, project.id)
+        self.assertEqual(robot1_model.folder.id, folder.id)
         robot1: Robot = robot1_model.get_resource()
 
         robot2: Robot = move_1.outputs.get_resource_model('robot').get_resource()
@@ -108,18 +107,18 @@ class TestExperiment(BaseTestCase):
         self.assertIsInstance(spec, IOSpec)
         self.assertEqual(spec.resource_types, [Robot])
 
-        # Test update the project of the experiment
-        project2 = Project(title="Second project", level_status=ProjectLevelStatus.LEAF)
-        project2.save()
+        # Test update the folder of the experiment
+        folder2 = SpaceFolder(title="Second folder")
+        folder2.save()
 
-        ExperimentService.update_experiment_project(experiment.id, project2.id)
+        ExperimentService.update_experiment_folder(experiment.id, folder2.id)
         robot1_model = robot1_model.refresh()
-        self.assertEqual(robot1_model.project.id, project2.id)
+        self.assertEqual(robot1_model.folder.id, folder2.id)
 
-        # Test remove the project
-        ExperimentService.update_experiment_project(experiment.id, None)
+        # Test remove the folder
+        ExperimentService.update_experiment_folder(experiment.id, None)
         robot1_model = robot1_model.refresh()
-        self.assertIsNone(robot1_model.project)
+        self.assertIsNone(robot1_model.folder)
 
     def test_run_through_cli(self):
 

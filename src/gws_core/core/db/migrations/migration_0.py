@@ -2,22 +2,20 @@
 
 import os
 from copy import deepcopy
-from typing import Dict, List, Type
+from typing import Dict, List
+
+from peewee import BigIntegerField, CharField
 
 from gws_core.brick.brick_helper import BrickHelper
-from gws_core.brick.brick_model import BrickModel
 from gws_core.config.config import Config
 from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.db.sql_migrator import SqlMigrator
-from gws_core.core.model.model import Model
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.credentials.credentials import Credentials
 from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.experiment.experiment import Experiment
+from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
-from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.rich_text.rich_text import RichText
@@ -32,8 +30,6 @@ from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar
-from gws_core.project.project import Project
-from gws_core.project.project_dto import ProjectLevelStatus
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.protocol_template.protocol_template_factory import \
@@ -47,6 +43,7 @@ from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.tag.tag_key_model import TagKeyModel
+from gws_core.tag.tag_value_model import TagValueModel
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
@@ -54,8 +51,6 @@ from gws_core.user.activity.activity import Activity
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.user import User
-from peewee import BigIntegerField, CharField
-from peewee import Model as PeeweeModel
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -374,20 +369,6 @@ class Migration0316(BrickMigration):
         migrator.migrate()
 
 
-@brick_migration('0.3.18', short_description='Add layout to ProtocolModel. Refactor project')
-class Migration0318(BrickMigration):
-
-    @classmethod
-    def migrate(cls, from_version: Version, to_version: Version) -> None:
-
-        migrator: SqlMigrator = SqlMigrator(ProtocolModel.get_db())
-        migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.layout)
-        migrator.add_column_if_not_exists(Project, Project.code)
-        migrator.add_column_if_not_exists(Project, Project.parent)
-        migrator.drop_column_if_exists(Project, 'description')
-        migrator.migrate()
-
-
 @brick_migration('0.4.1', short_description='Add started_at and finished_at to ProcessModel, refactor progress bar')
 class Migration041(BrickMigration):
 
@@ -610,7 +591,7 @@ class Migration050(BrickMigration):
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
         migrator: SqlMigrator = SqlMigrator(ResourceModel.get_db())
-        migrator.add_column_if_not_exists(ResourceModel, ResourceModel.project)
+        migrator.add_column_if_not_exists(ResourceModel, ResourceModel.folder)
         migrator.migrate()
 
         resource_models: List[ResourceModel] = list(ResourceModel.select())
@@ -618,8 +599,8 @@ class Migration050(BrickMigration):
         for resource_model in resource_models:
 
             try:
-                if resource_model.experiment and resource_model.experiment.project:
-                    resource_model.project = resource_model.experiment.project
+                if resource_model.experiment and resource_model.experiment.folder:
+                    resource_model.folder = resource_model.experiment.folder
                     resource_model.save()
             except Exception as exception:
                 Logger.error(
@@ -729,84 +710,6 @@ class Migration057(BrickMigration):
             except Exception as exception:
                 Logger.error(
                     f'Error while setting process type for process id {process_model.id} : {exception}')
-
-
-class ReportResourceModel(PeeweeModel):
-    class Meta:
-        table_name = 'gws_report_resource'
-        database = GwsCoreDbManager.get_db()
-
-
-class Comment(PeeweeModel):
-
-    class Meta:
-        table_name = "gws_comment"
-        database = GwsCoreDbManager.get_db()
-
-
-@brick_migration('0.6.2', short_description='Add level status in project, remove generic column data, archived and hash')
-class Migration062(BrickMigration):
-
-    @classmethod
-    def migrate(cls, from_version: Version, to_version: Version) -> None:
-
-        migrator: SqlMigrator = SqlMigrator(Project.get_db())
-        # migrator.add_column_if_not_exists(Project, Project.level_status)
-        migrator.add_column_if_not_exists(Project, EnumField(
-            choices=ProjectLevelStatus, default=ProjectLevelStatus.LEAF), Project.level_status.column_name)
-        # remove default
-        migrator.alter_column_type(Project, Project.level_status.column_name, EnumField(
-            choices=ProjectLevelStatus, max_length=20))
-
-        migrator.drop_table_if_exists(Comment)
-        migrator.drop_table_if_exists(ReportResourceModel)
-        migrator.migrate()
-
-        # remove generic column data, archived and hash
-        models: List[Type[Model]] = Model.inheritors()
-        # list of models to exclude (that use data column)
-        exclude_data = [
-            BrickModel.get_table_name(),
-            Config.get_table_name(),
-            Credentials.get_table_name(),
-            Experiment.get_table_name(),
-            FileStore.get_table_name(),
-            Monitor.get_table_name(),
-            Typing.get_table_name(),
-            TaskModel.get_table_name(),
-            ProtocolModel.get_table_name(),
-            ProgressBar.get_table_name(),
-            ProtocolTemplate.get_table_name(),
-            ResourceModel.get_table_name()]
-        exclude_archive = [Experiment.get_table_name(), TaskModel.get_table_name(), ProtocolModel.get_table_name(),
-                           Report.get_table_name(), ResourceModel.get_table_name()]
-        migrator = SqlMigrator(Model.get_db())
-
-        for model in models:
-            if not model.get_table_name() or not model.get_table_name().startswith('gws') or model.get_table_name().startswith('biota'):
-                continue
-
-            if model.get_table_name() not in exclude_data:
-                try:
-                    migrator.drop_column_if_exists(model, 'data')
-                except Exception as exception:
-                    Logger.error(
-                        f'Error while removing data column for model {model.__name__} : {exception}')
-
-            if model.get_table_name() not in exclude_archive:
-                try:
-                    migrator.drop_column_if_exists(model, 'is_archived')
-                except Exception as exception:
-                    Logger.error(
-                        f'Error while removing archived column for model {model.__name__} : {exception}')
-
-            try:
-                migrator.drop_column_if_exists(model, 'hash')
-            except Exception as exception:
-                Logger.error(
-                    f'Error while removing hash column for model {model.__name__} : {exception}')
-
-        migrator.migrate()
 
 
 @brick_migration('0.7.3', short_description='Rename view config flagged to favorite and add run_brick_version to process_model. Simplify resource origin')
@@ -974,7 +877,7 @@ class Migration080(BrickMigration):
         migrator.drop_column_if_exists(ViewConfig, 'tags')
 
         migrator.add_column_if_not_exists(ResourceModel, ResourceModel.content_is_deleted)
-        migrator.alter_column_type(Project, Project.title.column_name, CharField(null=False, max_length=100))
+        migrator.alter_column_type(SpaceFolder, SpaceFolder.title.column_name, CharField(null=False, max_length=100))
 
         migrator.migrate()
 
@@ -1026,3 +929,25 @@ class Migration084(BrickMigration):
 
             if FileHelper.exists_on_os(old_path) and not FileHelper.exists_on_os(new_path):
                 FileHelper.copy_file(old_path, new_path)
+
+
+@brick_migration('0.10.0', short_description='Rename project to folder.')
+class Migration0100(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        migrator: SqlMigrator = SqlMigrator(SpaceFolder.get_db())
+        migrator.rename_table_if_exists(SpaceFolder, 'gws_project')
+        migrator.rename_column_if_exists(Experiment, 'project_id', 'folder_id')
+        migrator.rename_column_if_exists(Report, 'project_id', 'folder_id')
+        migrator.rename_column_if_exists(ResourceModel, 'project_id', 'folder_id')
+        migrator.drop_column_if_exists(SpaceFolder, 'code')
+        migrator.drop_column_if_exists(SpaceFolder, 'level_status')
+        migrator.migrate()
+
+        ResourceModel.update(origin=ResourceOrigin.S3_FOLDER_STORAGE).where(
+            ResourceModel.origin == "S3_PROJECT_STORAGE").execute()
+
+        TagValueModel.update(tag_value='data-hub-storage').where(
+            TagValueModel.tag_value == "projects-storage").execute()

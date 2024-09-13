@@ -28,10 +28,10 @@ class ViewConfigSearchBuilder(EntityWithTagSearchBuilder):
     def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
         if filter_['key'] == 'include_not_favorite':
             return None
-        elif filter_['key'] == 'project':
-            # Handle the project filters, get all experiment of this project and filter by experiment
+        elif filter_['key'] == 'folder':
+            # Handle the folder filters, get all experiment of this folder and filter by experiment
             experiments: List[Experiment] = list(Experiment.select().where(
-                Experiment.project.in_(filter_['value'])))
+                Experiment.folder.in_(filter_['value'])))
             return ViewConfig.experiment.in_(experiments)
         elif filter_['key'] == 'view_type':
             # consider table and tabular the same

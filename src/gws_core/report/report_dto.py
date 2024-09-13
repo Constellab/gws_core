@@ -5,14 +5,14 @@ from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
+from gws_core.folder.space_folder_dto import SpaceFolderDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
-from gws_core.project.project_dto import ProjectDTO
 from gws_core.user.user_dto import UserDTO
 
 
 class ReportSaveDTO(BaseModelDTO):
     title: str = None
-    project_id: Optional[str] = None
+    folder_id: Optional[str] = None
     template_id: Optional[str] = None
 
     class Config:
@@ -21,7 +21,7 @@ class ReportSaveDTO(BaseModelDTO):
 
 class ReportDTO(ModelWithUserDTO):
     title: str
-    project: Optional[ProjectDTO]
+    folder: Optional[SpaceFolderDTO]
     is_validated: bool
     validated_at: Optional[datetime]
     validated_by: Optional[UserDTO]

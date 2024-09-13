@@ -3,8 +3,8 @@ from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.experiment.experiment_enums import ExperimentStatus
+from gws_core.folder.space_folder_dto import SpaceFolderDTO
 from gws_core.process.process_types import ProcessErrorInfo
-from gws_core.project.project_dto import ProjectDTO
 from gws_core.protocol.protocol_dto import ExperimentProtocolDTO
 
 
@@ -13,7 +13,7 @@ class ZipExperiment(BaseModelDTO):
     title: str
     description: Optional[dict]
     status: ExperimentStatus
-    project: Optional[ProjectDTO]
+    folder: Optional[SpaceFolderDTO]
     error_info: Optional[ProcessErrorInfo]
 
 

@@ -39,12 +39,12 @@ def update_title(report_id: str,
     return ReportService.update_title(report_id, body["title"]).to_dto()
 
 
-@core_app.put("/report/{report_id}/project", tags=["Report"],
-              summary="Update the project of a report")
-def update_project(report_id: str,
-                   body: dict,
-                   _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
-    return ReportService.update_project(report_id, body["project_id"]).to_dto()
+@core_app.put("/report/{report_id}/folder", tags=["Report"],
+              summary="Update the folder of a report")
+def update_folder(report_id: str,
+                  body: dict,
+                  _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
+    return ReportService.update_folder(report_id, body["folder_id"]).to_dto()
 
 
 @core_app.put("/report/{report_id}/content", tags=["Report"], summary="Update a report content")
@@ -87,10 +87,10 @@ def remove_experiment(
     ReportService.remove_experiment(report_id, experiment_id)
 
 
-@core_app.put("/report/{report_id}/validate/{project_id}", tags=["Report"], summary="Validate the report")
-def validate(report_id: str, project_id: Optional[str] = None,
+@core_app.put("/report/{report_id}/validate/{folder_id}", tags=["Report"], summary="Validate the report")
+def validate(report_id: str, folder_id: Optional[str] = None,
              _=Depends(AuthService.check_user_access_token)) -> ReportDTO:
-    return ReportService.validate_and_send_to_space(report_id, project_id).to_dto()
+    return ReportService.validate_and_send_to_space(report_id, folder_id).to_dto()
 
 
 @core_app.put('/report/{report_id}/sync-with-space', tags=["Report"], summary="Sync the report with space")

@@ -14,7 +14,7 @@ class EntityType(Enum):
     VIEW = "VIEW"
     REPORT = "REPORT"
     PROTOCOL_TEMPLATE = 'PROTOCOL_TEMPLATE'
-    PROJECT = 'PROJECT'
+    FOLDER = 'FOLDER'
 
     @staticmethod
     def get_human_name(entity_type: 'EntityType', capitalize: bool = False, plurial: bool = False) -> str:
@@ -29,8 +29,8 @@ class EntityType(Enum):
             human_name = 'Report'
         elif entity_type == EntityType.PROTOCOL_TEMPLATE:
             human_name = 'Protocol Template'
-        elif entity_type == EntityType.PROJECT:
-            human_name = 'Project'
+        elif entity_type == EntityType.FOLDER:
+            human_name = 'Folder'
         else:
             human_name = 'Unknown'
 
@@ -44,7 +44,7 @@ class EntityType(Enum):
     @staticmethod
     def get_entity_model_type(entity_type: 'EntityType') -> Type[Model]:
         from gws_core.experiment.experiment import Experiment
-        from gws_core.project.project import Project
+        from gws_core.folder.space_folder import SpaceFolder
         from gws_core.protocol_template.protocol_template import \
             ProtocolTemplate
         from gws_core.report.report import Report
@@ -60,8 +60,8 @@ class EntityType(Enum):
             return Report
         elif entity_type == EntityType.PROTOCOL_TEMPLATE:
             return ProtocolTemplate
-        elif entity_type == EntityType.PROJECT:
-            return Project
+        elif entity_type == EntityType.FOLDER:
+            return SpaceFolder
 
         raise Exception(f"Unknown entity type {entity_type}")
 

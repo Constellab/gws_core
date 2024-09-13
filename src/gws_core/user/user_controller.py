@@ -117,7 +117,7 @@ def get_all_users(_=Depends(AuthService.check_user_access_token)) -> List[UserDT
 @core_app.post("/user/synchronize", tags=["User"])
 def synchronize_users(_=Depends(AuthService.check_user_access_token)) -> None:
     """
-    Synchronize the projects from space
+    Synchronize the folders from space
     """
 
     UserService.synchronize_all_space_users()

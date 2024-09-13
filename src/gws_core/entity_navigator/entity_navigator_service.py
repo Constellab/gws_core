@@ -154,13 +154,13 @@ class EntityNavigatorService:
 
     @classmethod
     @transaction()
-    def delete_resource(cls, resource_id: str, allow_s3_project_storage: bool = False) -> None:
+    def delete_resource(cls, resource_id: str, allow_s3_folder_storage: bool = False) -> None:
         """Delete the resource
         """
 
         resource = ResourceService.get_by_id_and_check(resource_id)
 
-        if resource.origin == ResourceOrigin.S3_PROJECT_STORAGE and not allow_s3_project_storage:
+        if resource.origin == ResourceOrigin.S3_FOLDER_STORAGE and not allow_s3_folder_storage:
             raise BadRequestException(
                 "Cannot delete the resource because it is an S3 resource")
 

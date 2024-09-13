@@ -11,9 +11,9 @@ from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
+from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
-from gws_core.project.model_with_project import ModelWithProject
 from gws_core.report.report_dto import ReportDTO, ReportFullDTO
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
@@ -22,17 +22,17 @@ from ..core.model.base_model import BaseModel
 from ..core.model.db_field import BaseDTOField, DateTimeUTC
 from ..core.model.model_with_user import ModelWithUser
 from ..experiment.experiment import Experiment
+from ..folder.space_folder import SpaceFolder
 from ..lab.lab_config_model import LabConfigModel
-from ..project.project import Project
 
 
 @final
-class Report(ModelWithUser, ModelWithProject, NavigableEntity):
+class Report(ModelWithUser, ModelWithFolder, NavigableEntity):
     title = CharField()
 
     content: RichTextDTO = BaseDTOField(RichTextDTO, null=True)
 
-    project: Project = ForeignKeyField(Project, null=True)
+    folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
 
     lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
 
@@ -72,7 +72,7 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
             created_by=self.created_by.to_dto(),
             last_modified_by=self.last_modified_by.to_dto(),
             title=self.title,
-            project=self.project.to_dto() if self.project else None,
+            folder=self.folder.to_dto() if self.folder else None,
             is_validated=self.is_validated,
             validated_at=self.validated_at,
             validated_by=self.validated_by.to_dto() if self.validated_by else None,
@@ -89,7 +89,7 @@ class Report(ModelWithUser, ModelWithProject, NavigableEntity):
             created_by=self.created_by.to_dto(),
             last_modified_by=self.last_modified_by.to_dto(),
             title=self.title,
-            project=self.project.to_dto() if self.project else None,
+            folder=self.folder.to_dto() if self.folder else None,
             is_validated=self.is_validated,
             validated_at=self.validated_at,
             validated_by=self.validated_by.to_dto() if self.validated_by else None,

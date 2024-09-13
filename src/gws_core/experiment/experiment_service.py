@@ -25,8 +25,8 @@ from ..core.classes.search_builder import SearchBuilder, SearchParams
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..experiment.experiment_search_builder import ExperimentSearchBuilder
+from ..folder.space_folder import SpaceFolder
 from ..process.process_factory import ProcessFactory
-from ..project.project import Project
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_model import ProtocolModel
 from ..protocol.protocol_service import ProtocolService
@@ -57,7 +57,7 @@ class ExperimentService():
                 experiment_dto.protocol_template_json)
 
         return cls.create_experiment(
-            project_id=experiment_dto.project_id,
+            folder_id=experiment_dto.folder_id,
             title=experiment_dto.title,
             protocol_template=protocol_template,
             creation_type=ExperimentCreationType.MANUAL
@@ -65,7 +65,7 @@ class ExperimentService():
 
     @classmethod
     @transaction()
-    def create_experiment(cls, project_id: str = None, title: str = "",
+    def create_experiment(cls, folder_id: str = None, title: str = "",
                           protocol_template: ProtocolTemplate = None,
                           creation_type: ExperimentCreationType = ExperimentCreationType.MANUAL) -> Experiment:
         protocol_model: ProtocolModel = None
@@ -77,11 +77,11 @@ class ExperimentService():
         else:
             protocol_model = ProcessFactory.create_protocol_empty()
 
-        project = Project.get_by_id_and_check(project_id) if project_id else None
+        folder = SpaceFolder.get_by_id_and_check(folder_id) if folder_id else None
 
         experiment = cls.create_experiment_from_protocol_model(
             protocol_model=protocol_model,
-            project=project,
+            folder=folder,
             title=title,
             description=description,
             creation_type=creation_type
@@ -98,7 +98,7 @@ class ExperimentService():
     @classmethod
     @transaction()
     def create_experiment_from_protocol_model(
-            cls, protocol_model: ProtocolModel, project: Project = None, title: str = "", description: Dict = None,
+            cls, protocol_model: ProtocolModel, folder: SpaceFolder = None, title: str = "", description: Dict = None,
             creation_type: ExperimentCreationType = ExperimentCreationType.MANUAL) -> Experiment:
         if not isinstance(protocol_model, ProtocolModel):
             raise BadRequestException(
@@ -106,7 +106,7 @@ class ExperimentService():
         experiment = Experiment()
         experiment.title = title.strip()
         experiment.description = description
-        experiment.project = project
+        experiment.folder = folder
         experiment.creation_type = creation_type
 
         experiment = experiment.save()
@@ -119,13 +119,13 @@ class ExperimentService():
     @classmethod
     def create_experiment_from_protocol_type(
             cls, protocol_type: Type[Protocol],
-            project: Project = None, title: str = "", creation_type: ExperimentCreationType = ExperimentCreationType.
+            folder: SpaceFolder = None, title: str = "", creation_type: ExperimentCreationType = ExperimentCreationType.
             MANUAL) -> Experiment:
 
         protocol_model: ProtocolModel = ProtocolService.create_protocol_model_from_type(
             protocol_type=protocol_type)
         return cls.create_experiment_from_protocol_model(
-            protocol_model=protocol_model, project=project, title=title, creation_type=creation_type)
+            protocol_model=protocol_model, folder=folder, title=title, creation_type=creation_type)
 
     ################################### UPDATE ##############################
 
@@ -144,13 +144,13 @@ class ExperimentService():
         return experiment
 
     @classmethod
-    def update_experiment_project(cls, experiment_id: str, project_id: Optional[str],
-                                  check_report: bool = True) -> Experiment:
+    def update_experiment_folder(cls, experiment_id: str, folder_id: Optional[str],
+                                 check_report: bool = True) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         experiment.check_is_updatable()
 
-        experiment = cls._update_experiment_project(experiment, project_id, check_reports=check_report)
+        experiment = cls._update_experiment_folder(experiment, folder_id, check_reports=check_report)
 
         ActivityService.add_or_update_async(ActivityType.UPDATE,
                                             object_type=ActivityObjectType.EXPERIMENT,
@@ -160,45 +160,45 @@ class ExperimentService():
 
     @classmethod
     @transaction()
-    def _update_experiment_project(cls, experiment: Experiment,
-                                   new_project_id: Optional[str],
-                                   check_reports: bool) -> Experiment:
-        project_changed = False
-        project_removed = False
-        old_project: Project = experiment.project
+    def _update_experiment_folder(cls, experiment: Experiment,
+                                  new_folder_id: Optional[str],
+                                  check_reports: bool) -> Experiment:
+        folder_changed = False
+        folder_removed = False
+        old_folder: SpaceFolder = experiment.folder
 
-        new_project: Project = None
-        # update the project
-        if new_project_id:
-            new_project = Project.get_by_id_and_check(new_project_id)
+        new_folder: SpaceFolder = None
+        # update the folder
+        if new_folder_id:
+            new_folder = SpaceFolder.get_by_id_and_check(new_folder_id)
 
-            if experiment.last_sync_at is not None and new_project != experiment.project:
+            if experiment.last_sync_at is not None and new_folder != experiment.folder:
                 raise BadRequestException(
-                    "You can't change the project of an experiment that has been synced. Please unlink the experiment from the project first.")
+                    "You can't change the folder of an experiment that has been synced. Please unlink the experiment from the folder first.")
 
-            if experiment.project != new_project:
-                project_changed = True
+            if experiment.folder != new_folder:
+                folder_changed = True
 
-        if experiment.project is not None and new_project_id is None:
-            project_removed = True
+        if experiment.folder is not None and new_folder_id is None:
+            folder_removed = True
 
-        experiment.project = new_project
+        experiment.folder = new_folder
 
         # update experiment
         experiment = experiment.save()
 
-        # update generated resources project
-        if project_changed or project_removed:
+        # update generated resources folder
+        if folder_changed or folder_removed:
             resources: List[ResourceModel] = ResourceModel.get_by_experiment(
                 experiment.id)
             for resource in resources:
-                resource.project = experiment.project
+                resource.folder = experiment.folder
                 resource.save()
 
-        # if the project was removed
-        if project_removed:
+        # if the folder was removed
+        if folder_removed:
             if experiment.last_sync_at is not None:
-                cls._unsynchronize_with_space(experiment, old_project.id,
+                cls._unsynchronize_with_space(experiment, old_folder.id,
                                               check_reports=check_reports)
 
         return experiment
@@ -231,12 +231,12 @@ class ExperimentService():
 
     @classmethod
     @transaction()
-    def validate_experiment_by_id(cls, id: str, project_id: str = None) -> Experiment:
+    def validate_experiment_by_id(cls, id: str, folder_id: str = None) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
 
-        # set the project if it is provided
-        if project_id is not None:
-            experiment.project = Project.get_by_id_and_check(project_id)
+        # set the folder if it is provided
+        if folder_id is not None:
+            experiment.folder = SpaceFolder.get_by_id_and_check(folder_id)
 
         return cls.validate_experiment(experiment)
 
@@ -268,9 +268,9 @@ class ExperimentService():
         #     Logger.info('Skipping sending experiment to space as we are running in LOCAL')
         #     return experiment
 
-        if experiment.project is None:
+        if experiment.folder is None:
             raise BadRequestException(
-                "The experiment must be linked to a project before validating it")
+                "The experiment must be linked to a folder before validating it")
 
         experiment.last_sync_at = DateHelper.now_utc()
         experiment.last_sync_by = CurrentUserService.get_and_check_current_user()
@@ -285,12 +285,12 @@ class ExperimentService():
         )
         # Save the experiment in space
         SpaceService.save_experiment(
-            experiment.project.id, save_experiment_dto)
+            experiment.folder.id, save_experiment_dto)
         return experiment
 
     @classmethod
     @transaction()
-    def _unsynchronize_with_space(cls, experiment: Experiment, project_id: str,
+    def _unsynchronize_with_space(cls, experiment: Experiment, folder_id: str,
                                   check_reports: bool) -> Experiment:
 
         if check_reports:
@@ -301,7 +301,7 @@ class ExperimentService():
                     "You can't unsynchronize an experiment that has associated notes synced in space. Please unsync the notes first.")
 
         # Delete the experiment in space
-        SpaceService.delete_experiment(project_id, experiment.id)
+        SpaceService.delete_experiment(folder_id, experiment.id)
 
         # clear sync info
         experiment.last_sync_at = None
@@ -438,7 +438,7 @@ class ExperimentService():
         return RunningExperimentInfoDTO(
             id=experiment.id,
             title=experiment.title,
-            project=experiment.project.to_dto() if experiment.project else None,
+            folder=experiment.folder.to_dto() if experiment.folder else None,
             running_tasks=running_tasks,
         )
 
@@ -454,7 +454,7 @@ class ExperimentService():
         new_experiment: Experiment = cls.create_experiment_from_protocol_model(
             protocol_model=ProtocolService.copy_protocol(
                 experiment.protocol_model),
-            project=experiment.project,
+            folder=experiment.folder,
             title=experiment.title + " copy",
         )
 
@@ -472,9 +472,9 @@ class ExperimentService():
         experiment.delete_instance()
 
         # if the experiment was sync with space, delete it in space too
-        if experiment.last_sync_at is not None and experiment.project is not None:
+        if experiment.last_sync_at is not None and experiment.folder is not None:
             SpaceService.delete_experiment(
-                experiment.project.id, experiment.id)
+                experiment.folder.id, experiment.id)
 
         ActivityService.add(activity_type=ActivityType.DELETE,
                             object_type=ActivityObjectType.EXPERIMENT,
@@ -553,7 +553,7 @@ class ExperimentService():
             title=experiment.title,
             description=experiment.description,
             status=experiment.status,
-            project=experiment.project.to_dto() if experiment.project is not None else None,
+            folder=experiment.folder.to_dto() if experiment.folder is not None else None,
             error_info=experiment.error_info
         )
 

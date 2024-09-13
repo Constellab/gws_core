@@ -44,13 +44,13 @@ def garbage_collector(_=Depends(AuthService.check_user_access_token)) -> None:
 
 class SynchronizeDTO(BaseModelDTO):
     sync_users: bool
-    sync_projects: bool
+    sync_folders: bool
 
 
 @core_app.post("/system/synchronize",  tags=["System"], summary="Synchronise info with space")
 def synchronize(sync_dto: SynchronizeDTO,
                 _=Depends(AuthService.check_user_access_token)) -> None:
-    SystemService.synchronize_with_space(sync_users=sync_dto.sync_users, sync_projects=sync_dto.sync_projects)
+    SystemService.synchronize_with_space(sync_users=sync_dto.sync_users, sync_folders=sync_dto.sync_folders)
 
 
 @core_app.get("/system/settings",  tags=["System"], summary="Get settings")

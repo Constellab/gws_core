@@ -4,23 +4,24 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, final
 
+from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
+                    ForeignKeyField, ModelDelete, ModelSelect)
+
 from gws_core.core.model.db_field import BaseDTOField, JSONField
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
+from gws_core.folder.model_with_folder import ModelWithFolder
+from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dto import TypingRefDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
-from gws_core.project.model_with_project import ModelWithProject
-from gws_core.project.project import Project
 from gws_core.resource.resource_dto import (ResourceDTO, ResourceOrigin,
                                             ResourceSimpleDTO)
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_list import TagList
-from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
-                    ForeignKeyField, ModelDelete, ModelSelect)
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -45,7 +46,7 @@ if TYPE_CHECKING:
     from ..task.task_model import TaskModel
 
 
-class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
+class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     """
     ResourceModel class.
@@ -62,7 +63,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
 
     experiment: Experiment = DeferredForeignKey(
         'Experiment', null=True, index=True)
-    project: Project = ForeignKeyField(Project, null=True, index=True)
+    folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True, index=True)
     task_model: TaskModel = DeferredForeignKey(
         'TaskModel', null=True, index=True)
 
@@ -319,7 +320,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
         """
 
         # If the origin is not uploaded, then the experiment and the task must be provided
-        if origin not in [ResourceOrigin.UPLOADED, ResourceOrigin.S3_PROJECT_STORAGE, ResourceOrigin.IMPORTED_FROM_LAB]:
+        if origin not in [ResourceOrigin.UPLOADED, ResourceOrigin.S3_FOLDER_STORAGE, ResourceOrigin.IMPORTED_FROM_LAB]:
             if experiment is None or task_model is None:
                 raise Exception(f"To create a {origin} resource, you must provide the experiment and the task")
 
@@ -328,7 +329,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
         resource_model.origin = resource.__origin__ or origin
         if experiment:
             resource_model.experiment = experiment
-            resource_model.project = experiment.project
+            resource_model.folder = experiment.folder
         resource_model.task_model = task_model
         resource_model.generated_by_port_name = port_name
         # by default only the uploaded resource are showed in databox
@@ -545,7 +546,7 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
             type_status=type_status,
             flagged=self.flagged,
             experiment=self.experiment.to_simple_dto() if self.experiment else None,
-            project=self.project.to_dto() if self.project else None,
+            folder=self.folder.to_dto() if self.folder else None,
             style=style,
         )
 
@@ -584,25 +585,6 @@ class ResourceModel(ModelWithUser, ModelWithProject, NavigableEntity):
 
     def get_entity_type(self) -> EntityType:
         return EntityType.RESOURCE
-
-    # TODO TO SEE
-    # @classmethod
-    # def new_without_content(cls, resource_typing_name: str, name: str, experiment: Experiment,
-    #                         task_model: TaskModel, port_name: str) -> ResourceModel:
-
-    #     resource_model: ResourceModel = ResourceModel()
-    #     # mark the content of the resource as deleted
-    #     resource_model.content_is_deleted = True
-    #     resource_model.set_resource_typing_name(resource_typing_name)
-    #     resource_model.origin = ResourceOrigin.GENERATED
-    #     resource_model.experiment = experiment
-    #     resource_model.project = experiment.project
-    #     resource_model.task_model = task_model
-    #     resource_model.generated_by_port_name = port_name
-    #     resource_model.flagged = False
-    #     resource_model.name = name
-    #     resource_model.fs_node_model = None
-    #     # resource_model.
 
     class Meta:
         table_name = 'gws_resource'

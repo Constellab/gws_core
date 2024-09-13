@@ -8,10 +8,10 @@ from starlette.exceptions import HTTPException
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.folder.space_folder_dto import ExternalSpaceFolder
+from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.lab.system_dto import SettingsDTO
-from gws_core.project.project_dto import SpaceProject
-from gws_core.project.project_service import ProjectService
 from gws_core.space.space_dto import LabActivityReponseDTO
 from gws_core.user.activity.activity_service import ActivityService
 
@@ -137,26 +137,25 @@ def get_users(_=Depends(AuthSpace.check_space_api_key_and_user)) -> List[UserFul
     return [user.to_full_dto() for user in users]
 
 
-##################################################### PROJECT #####################################################
-
-@space_app.post("/project", tags=["Project"])
-def create_project(project: SpaceProject, _=Depends(AuthSpace.check_space_api_key)) -> None:
+##################################################### FOLDER #####################################################
+@space_app.post("/folder", tags=["Folder"])
+def create_folder(folder: ExternalSpaceFolder, _=Depends(AuthSpace.check_space_api_key)) -> None:
     """
-    Register a space project to the lab
-
-    """
-
-    ProjectService.synchronize_space_project(project)
-
-
-@space_app.delete("/project/{id_}", tags=["Project"])
-def delete_project(id_: str, _=Depends(AuthSpace.check_space_api_key)) -> None:
-    """
-    Remove a project from the lab
+    Register a space folder to the lab
 
     """
 
-    ProjectService.delete_project(id_)
+    SpaceFolderService.synchronize_space_folder(folder)
+
+
+@space_app.delete("/folder/{id_}", tags=["Folder"])
+def delete_folder(id_: str, _=Depends(AuthSpace.check_space_api_key)) -> None:
+    """
+    Remove a folder from the lab
+
+    """
+
+    SpaceFolderService.delete_folder(id_)
 
 
 ############################################### EXPERIMENT #####################################################

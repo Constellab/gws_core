@@ -8,6 +8,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (
@@ -15,7 +16,6 @@ from gws_core.impl.rich_text.rich_text_types import (
     RichTextParagraphHeaderLevel, RichTextResourceViewData,
     RichTextViewFileData)
 from gws_core.lab.lab_config_model import LabConfigModel
-from gws_core.project.project import Project
 from gws_core.report.report_view_model import ReportViewModel
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
@@ -52,7 +52,7 @@ class ReportService():
     def create(cls, report_dto: ReportSaveDTO, experiment_ids: List[str] = None) -> Report:
         report = Report()
         report.title = report_dto.title
-        report.project = Project.get_by_id_and_check(report_dto.project_id) if report_dto.project_id else None
+        report.folder = SpaceFolder.get_by_id_and_check(report_dto.folder_id) if report_dto.folder_id else None
 
         if report_dto.template_id:
             template: DocumentTemplate = DocumentTemplate.get_by_id_and_check(report_dto.template_id)
@@ -102,7 +102,7 @@ class ReportService():
 
         report.title = report_dto.title.strip()
 
-        cls._update_report_project(report, report_dto.project_id)
+        cls._update_report_folder(report, report_dto.folder_id)
 
         report = report.save()
 
@@ -127,10 +127,10 @@ class ReportService():
         return report
 
     @classmethod
-    def update_project(cls, report_id: str, project_id: str) -> Report:
+    def update_folder(cls, report_id: str, folder_id: str) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
 
-        report = cls._update_report_project(report, project_id)
+        report = cls._update_report_folder(report, folder_id)
 
         report = report.save()
 
@@ -142,30 +142,30 @@ class ReportService():
 
     @classmethod
     @transaction()
-    def _update_report_project(cls, report: Report, project_id: str) -> Report:
-        # update project
-        if project_id:
-            project = Project.get_by_id_and_check(project_id)
-            if report.last_sync_at is not None and project != report.project:
+    def _update_report_folder(cls, report: Report, folder_id: str) -> Report:
+        # update folder
+        if folder_id:
+            folder = SpaceFolder.get_by_id_and_check(folder_id)
+            if report.last_sync_at is not None and folder != report.folder:
                 raise BadRequestException(
-                    "You can't change the project of note that has been synced. You must unlink it from the project first.")
-            report.project = project
+                    "You can't change the folder of note that has been synced. You must unlink it from the folder first.")
+            report.folder = folder
 
-        # if the project was removed
-        if project_id is None and report.project is not None:
+        # if the folder was removed
+        if folder_id is None and report.folder is not None:
 
             if report.last_sync_at is not None:
-                cls._unsynchronize_with_space(report, report.project.id)
-            report.project = None
+                cls._unsynchronize_with_space(report, report.folder.id)
+            report.folder = None
 
-        # check that all linked experiment are in same project
+        # check that all linked experiment are in same folder
         experiments: List[Experiment] = cls.get_experiments_by_report(report.id)
 
         for experiment in experiments:
-            exp_project_id = experiment.project.id if experiment.project else None
-            if exp_project_id != project_id:
-                ExperimentService.update_experiment_project(experiment.id,
-                                                            project_id, check_report=False)
+            exp_folder_id = experiment.folder.id if experiment.folder else None
+            if exp_folder_id != folder_id:
+                ExperimentService.update_experiment_folder(experiment.id,
+                                                           folder_id, check_report=False)
 
         return report
 
@@ -252,8 +252,8 @@ class ReportService():
         EntityTagList.delete_by_entity(EntityType.REPORT, report_id)
 
         # if the report was sync with space, delete it in space too
-        if report.last_sync_at is not None and report.project is not None:
-            SpaceService.delete_report(report.project.id, report.id)
+        if report.last_sync_at is not None and report.folder is not None:
+            SpaceService.delete_report(report.folder.id, report.id)
 
         ActivityService.add(ActivityType.DELETE,
                             object_type=ActivityObjectType.REPORT,
@@ -261,30 +261,30 @@ class ReportService():
 
     @classmethod
     @transaction()
-    def _validate(cls, report_id: str, project_id: str = None) -> Report:
+    def _validate(cls, report_id: str, folder_id: str = None) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
 
         rich_text = report.get_content_as_rich_text()
         if rich_text.is_empty():
             raise BadRequestException('The note is empty')
 
-        # set the project if it is provided
-        if project_id is not None:
-            report.project = Project.get_by_id_and_check(project_id)
+        # set the folder if it is provided
+        if folder_id is not None:
+            report.folder = SpaceFolder.get_by_id_and_check(folder_id)
 
-        if report.project is None:
-            raise BadRequestException("The note must be associated to a project to be validated")
+        if report.folder is None:
+            raise BadRequestException("The note must be associated to a folder to be validated")
 
-        if report.project.children.count() > 0:
+        if report.folder.children.count() > 0:
             raise BadRequestException(
-                "The experiment must be associated with a leaf project (project with no children)")
+                "The experiment must be associated with a leaf folder (folder with no children)")
 
-        # check that all linked experiment are validated and are in same project
+        # check that all linked experiment are validated and are in same folder
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
         for experiment in experiments:
-            if experiment.project and experiment.project.id != report.project.id:
-                raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.value,
-                                          GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.name, {'title': experiment.title})
+            if experiment.folder and experiment.folder.id != report.folder.id:
+                raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_OTHER_FOLDER.value,
+                                          GWSException.REPORT_VALIDATION_EXP_OTHER_FOLDER.name, {'title': experiment.title})
 
         # refresh the associated resource (for precaution)
         cls._refresh_report_views_and_tags(report)
@@ -312,7 +312,7 @@ class ReportService():
         # validate experiment that were not validated
         for experiment in experiments:
             if not experiment.is_validated:
-                experiment.project = report.project
+                experiment.folder = report.folder
                 ExperimentService.validate_experiment(experiment)
 
         report.validate()
@@ -325,8 +325,8 @@ class ReportService():
 
     @classmethod
     @transaction()
-    def validate_and_send_to_space(cls, report_id: str, project_id: str = None) -> Report:
-        report = cls._validate(report_id, project_id)
+    def validate_and_send_to_space(cls, report_id: str, folder_id: str = None) -> Report:
+        report = cls._validate(report_id, folder_id)
 
         report = cls._synchronize_with_space(report)
 
@@ -353,8 +353,8 @@ class ReportService():
         #     Logger.info('Skipping sending report to space as we are running in LOCAL')
         #     return report
 
-        if report.project is None:
-            raise BadRequestException("The experiment must be linked to a project before validating it")
+        if report.folder is None:
+            raise BadRequestException("The experiment must be linked to a folder before validating it")
 
         report.last_sync_at = DateHelper.now_utc()
         report.last_sync_by = CurrentUserService.get_and_check_current_user()
@@ -414,14 +414,14 @@ class ReportService():
             rich_text.replace_block_data_by_id(file_view_block.id, new_data)
 
         # Save the experiment in space
-        SpaceService.save_report(report.project.id, save_report_dto, file_paths)
+        SpaceService.save_report(report.folder.id, save_report_dto, file_paths)
 
         return report
 
     @classmethod
-    def _unsynchronize_with_space(cls, report: Report, project_id: str) -> Report:
+    def _unsynchronize_with_space(cls, report: Report, folder_id: str) -> Report:
         # delete the report in space
-        SpaceService.delete_report(project_id=project_id, report_id=report.id)
+        SpaceService.delete_report(folder_id=folder_id, report_id=report.id)
 
         report.last_sync_at = None
         report.last_sync_by = None
@@ -449,17 +449,17 @@ class ReportService():
 
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
-        # check projects
-        if report.project is None:
-            # if the report is not associated with a project, associate it with the project of the experiment
-            if experiment.project is not None:
-                report.project = experiment.project
+        # check folders
+        if report.folder is None:
+            # if the report is not associated with a folder, associate it with the folder of the experiment
+            if experiment.folder is not None:
+                report.folder = experiment.folder
                 report.save()
         else:
-            # check if the report project is the same as the experiment project
-            if experiment.project is not None and report.project.id != experiment.project.id:
-                raise BadRequestException(GWSException.REPORT_ADD_EXP_OTHER_PROJECT.value,
-                                          GWSException.REPORT_ADD_EXP_OTHER_PROJECT.name)
+            # check if the report folder is the same as the experiment folder
+            if experiment.folder is not None and report.folder.id != experiment.folder.id:
+                raise BadRequestException(GWSException.REPORT_ADD_EXP_OTHER_FOLDER.value,
+                                          GWSException.REPORT_ADD_EXP_OTHER_FOLDER.name)
 
         ReportExperiment.create_obj(experiment, report).save()
 

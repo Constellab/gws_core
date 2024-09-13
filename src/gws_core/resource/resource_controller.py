@@ -142,16 +142,16 @@ def update_flagged(id_: str,
     return ResourceService.update_flagged(id_, body["flagged"]).to_dto()
 
 
-class UpdateProject(BaseModelDTO):
-    project_id: Optional[str]
+class UpdateFolder(BaseModelDTO):
+    folder_id: Optional[str]
 
 
-@core_app.put("/resource/{id_}/project", tags=["Resource"],
-              summary="Update the project of a resource")
-def update_project(id_: str,
-                   project: UpdateProject,
-                   _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
-    return ResourceService.update_project(id_, project.project_id).to_dto()
+@core_app.put("/resource/{id_}/folder", tags=["Resource"],
+              summary="Update the folder of a resource")
+def update_folder(id_: str,
+                  folder: UpdateFolder,
+                  _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
+    return ResourceService.update_folder(id_, folder.folder_id).to_dto()
 
 ############################# TRANSFORMER ###########################
 

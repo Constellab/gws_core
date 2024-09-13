@@ -14,13 +14,13 @@ from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
 from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.folder.space_folder import SpaceFolder
+from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.s3_server_context import S3ServerContext
 from gws_core.impl.s3.s3_server_exception import (S3ServerException,
                                                   S3ServerNoSuchKey)
-from gws_core.project.project import Project
-from gws_core.project.project_service import ProjectService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_model_search_builder import \
@@ -36,8 +36,8 @@ class S3ServerService:
     """Class to manage file upload to this lab as an S3 server
     """
 
-    # defaumlt bucket name for projects storage
-    PROJECTS_BUCKET_NAME = 'projects-storage'
+    # defaumlt bucket name for folders storage
+    FOLDERS_BUCKET_NAME = 'data-hub-storage'
 
     # Mandatory and not updatable tags for the S3 server object
     STORAGE_TAG_NAME = 'storage'
@@ -50,9 +50,9 @@ class S3ServerService:
 
     @classmethod
     def create_bucket(cls, bucket_name: str) -> None:
-        if not cls._is_project_doc_bucket(bucket_name):
+        if not cls._is_folder_doc_bucket(bucket_name):
             raise S3ServerException(status_code=400, code='invalid_bucket_name',
-                                    message='Invalid bucket name, only project storage is allowed for now',
+                                    message='Invalid bucket name, only folder storage is allowed for now',
                                     bucket_name=bucket_name)
 
     @classmethod
@@ -100,13 +100,13 @@ class S3ServerService:
                        tags: Dict[str, str] = None) -> None:
         with S3ServerContext(bucket_name, key):
 
-            project: Project = None
-            if cls._is_project_doc_bucket(bucket_name):
-                project = cls._get_and_check_project_bucket(bucket_name, tags.get(cls.FOLDER_TAG_NAME))
+            folder: SpaceFolder = None
+            if cls._is_folder_doc_bucket(bucket_name):
+                folder = cls._get_and_check_folder_bucket(bucket_name, tags.get(cls.FOLDER_TAG_NAME))
             else:
-                # for now we allow only project documents to be uploaded
+                # for now we allow only folder documents to be uploaded
                 raise S3ServerException(status_code=400, code='invalid_bucket_name',
-                                        message='Invalid bucket name, only project storage is allowed for now',
+                                        message='Invalid bucket name, only folder storage is allowed for now',
                                         bucket_name=bucket_name, key=key)
 
             # create a file in a temp folder
@@ -120,7 +120,7 @@ class S3ServerService:
             # make a resource from the file
             file = File(file_path)
 
-            resource_origin = ResourceOrigin.S3_PROJECT_STORAGE if cls._is_project_doc_bucket(
+            resource_origin = ResourceOrigin.S3_FOLDER_STORAGE if cls._is_folder_doc_bucket(
                 bucket_name) else ResourceOrigin.UPLOADED
 
             resource_model = ResourceModel.from_resource(file, resource_origin)
@@ -128,7 +128,7 @@ class S3ServerService:
                 resource_model.name = tags[cls.NAME_TAG_NAME]
             else:
                 resource_model.name = FileHelper.get_name_with_extension(key)
-            resource_model.project = project
+            resource_model.folder = folder
 
             resource_model = resource_model.save_full()
 
@@ -172,9 +172,9 @@ class S3ServerService:
             # update the last modified date
             resource_model.last_modified_at = DateHelper.now_utc()
 
-            # update project if provided
+            # update folder if provided
             if tags.get(cls.FOLDER_TAG_NAME):
-                resource_model.project = cls._get_project_and_check(tags.get(cls.FOLDER_TAG_NAME))
+                resource_model.folder = cls._get_folder_and_check(tags.get(cls.FOLDER_TAG_NAME))
 
             # update the name if provided
             resource_model.name = tags.get(cls.NAME_TAG_NAME, resource_model.name)
@@ -198,7 +198,7 @@ class S3ServerService:
         resource: ResourceModel = cls._get_and_check_before_delete_object(bucket_name, key)
 
         with S3ServerContext(bucket_name, key):
-            EntityNavigatorService.delete_resource(resource_id=resource.id, allow_s3_project_storage=True)
+            EntityNavigatorService.delete_resource(resource_id=resource.id, allow_s3_folder_storage=True)
 
     @classmethod
     def delete_objects(cls, bucket_name: str, keys: List[str]) -> None:
@@ -222,7 +222,7 @@ class S3ServerService:
 
         with S3ServerContext(bucket_name):
             for resource in resources:
-                EntityNavigatorService.delete_resource(resource_id=resource.id, allow_s3_project_storage=True)
+                EntityNavigatorService.delete_resource(resource_id=resource.id, allow_s3_folder_storage=True)
 
     @classmethod
     def _get_and_check_before_delete_object(cls, bucket_name: str, key: str) -> ResourceModel:
@@ -265,50 +265,50 @@ class S3ServerService:
         return resource
 
     @classmethod
-    def _is_project_doc_bucket(cls, bucket_name: str) -> bool:
-        """Check if the bucket is the project document bucket
+    def _is_folder_doc_bucket(cls, bucket_name: str) -> bool:
+        """Check if the bucket is the folder document bucket
         """
-        return bucket_name == cls.PROJECTS_BUCKET_NAME
+        return bucket_name == cls.FOLDERS_BUCKET_NAME
 
     @classmethod
-    def _get_and_check_project_bucket(cls, bucket_name: str, project_tag: str) -> Project:
-        """Get a project bucket
+    def _get_and_check_folder_bucket(cls, bucket_name: str, folder_tag: str) -> SpaceFolder:
+        """Get a folder bucket
         """
-        if not cls._is_project_doc_bucket(bucket_name):
+        if not cls._is_folder_doc_bucket(bucket_name):
             raise S3ServerException(status_code=400, code='invalid_bucket_name',
                                     message='Invalid bucket name',
                                     bucket_name=bucket_name)
 
-        if not project_tag:
+        if not folder_tag:
             raise S3ServerException(status_code=400, code='invalid_key',
                                     message='Missing folder in the tags',
                                     bucket_name=bucket_name)
 
-        return cls._get_project_and_check(project_tag)
+        return cls._get_folder_and_check(folder_tag)
 
     @classmethod
-    def _get_project_and_check(cls, project_id: str) -> Project:
-        """Get a project by id
+    def _get_folder_and_check(cls, folder_id: str) -> SpaceFolder:
+        """Get a folder by id
         """
-        project = Project.get_by_id(project_id)
+        folder = SpaceFolder.get_by_id(folder_id)
 
-        if project is None:
-            # if the project is not found, try to sync it
+        if folder is None:
+            # if the folder is not found, try to sync it
             try:
-                Logger.info(f"Project {project_id} not found in lab, trying to sync it")
-                ProjectService.synchronize_project(project_id)
+                Logger.info(f"Folder {folder_id} not found in lab, trying to sync it")
+                SpaceFolderService.synchronize_folder(folder_id)
 
-                # if sync is success to the new project
-                project = Project.get_by_id(project_id)
+                # if sync is success to the new folder
+                folder = SpaceFolder.get_by_id(folder_id)
             except Exception as e:
-                Logger.error(f"Error while synchronizing project {project_id}. Error {str(e)}")
+                Logger.error(f"Error while synchronizing folder {folder_id}. Error {str(e)}")
 
-        if project is None:
-            raise S3ServerException(status_code=400, code='invalid_project_id',
-                                    message='Project not found in data hub, try to sync the lab projects',
+        if folder is None:
+            raise S3ServerException(status_code=400, code='invalid_folder_id',
+                                    message='Folder not found in data hub, try to sync the lab folders',
                                     bucket_name='', key='')
 
-        return project
+        return folder
 
     @classmethod
     def _resource_to_s3_object(cls, resource: ResourceModel) -> ObjectTypeDef:
@@ -340,8 +340,8 @@ class S3ServerService:
 
         search_builder.add_expression(ResourceModel.fs_node_model.is_null(False))
 
-        if cls._is_project_doc_bucket(bucket_name):
-            search_builder.add_expression(ResourceModel.origin == ResourceOrigin.S3_PROJECT_STORAGE)
+        if cls._is_folder_doc_bucket(bucket_name):
+            search_builder.add_expression(ResourceModel.origin == ResourceOrigin.S3_FOLDER_STORAGE)
         else:
             search_builder.add_expression(ResourceModel.origin == ResourceOrigin.UPLOADED)
 
@@ -372,8 +372,8 @@ class S3ServerService:
                 'Value': tag.tag_value
             })
 
-        if resource.project:
-            s3_tags.append({'Key': cls.FOLDER_TAG_NAME, 'Value': resource.project.id})
+        if resource.folder:
+            s3_tags.append({'Key': cls.FOLDER_TAG_NAME, 'Value': resource.folder.id})
         s3_tags.append({'Key': cls.NAME_TAG_NAME, 'Value': resource.name})
 
         return {

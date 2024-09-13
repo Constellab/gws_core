@@ -13,9 +13,9 @@ from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
 from gws_core.experiment.experiment_dto import (ExperimentDTO,
                                                 ExperimentSimpleDTO)
+from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
-from gws_core.project.model_with_project import ModelWithProject
 from gws_core.protocol.protocol_dto import ExperimentProtocolDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.user.current_user_service import CurrentUserService
@@ -26,7 +26,7 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
-from ..project.project import Project
+from ..folder.space_folder import SpaceFolder
 from ..resource.resource_model import ResourceModel
 from ..user.user import User
 from .experiment_enums import (ExperimentCreationType, ExperimentProcessStatus,
@@ -38,23 +38,9 @@ if TYPE_CHECKING:
 
 
 @final
-class Experiment(ModelWithUser, ModelWithProject, NavigableEntity):
-    """
-    Experiment class.
+class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
 
-    :property project: The project of the experiment
-    :type project: `gws.project.Project`
-    :property protocol: The the protocol of the experiment
-    :type protocol: `gws_core.protocol.protocol.Protocol`
-    :property created_by: The user who created the experiment. This user may be different from the user who runs the experiment.
-    :type created_by: `gws.user.User`
-    :property score: The score of the experiment
-    :type score: `float`
-    :property is_validated: True if the experiment is validated, False otherwise. Defaults to False.
-    :type is_validated: `bool`
-    """
-
-    project: Project = ForeignKeyField(Project, null=True)
+    folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
 
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
@@ -238,13 +224,13 @@ class Experiment(ModelWithUser, ModelWithProject, NavigableEntity):
             raise BadRequestException(GWSException.EXPERIMENT_VALIDATE_RUNNING.value,
                                       unique_code=GWSException.EXPERIMENT_VALIDATE_RUNNING.name)
 
-        if self.project is None:
+        if self.folder is None:
             raise BadRequestException(
-                "The experiment must be linked to a project before validating it")
+                "The experiment must be linked to a folder before validating it")
 
-        if self.project.children.count() > 0:
+        if self.folder.children.count() > 0:
             raise BadRequestException(
-                "The experiment must be associated with a leaf project (project with no children)")
+                "The experiment must be associated with a leaf folder (folder with no children)")
 
         self.is_validated = True
         self.validated_at = DateHelper.now_utc()
@@ -431,7 +417,7 @@ class Experiment(ModelWithUser, ModelWithProject, NavigableEntity):
             last_sync_by=self.last_sync_by.to_dto() if self.last_sync_by else None,
             last_sync_at=self.last_sync_at,
             is_archived=self.is_archived,
-            project=self.project.to_dto() if self.project else None,
+            folder=self.folder.to_dto() if self.folder else None,
             pid_status=self.get_process_status()
         )
 

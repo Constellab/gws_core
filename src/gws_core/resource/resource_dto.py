@@ -6,10 +6,10 @@ from typing import Optional
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.experiment.experiment_dto import ExperimentSimpleDTO
+from gws_core.folder.space_folder_dto import SpaceFolderDTO
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
 from gws_core.model.typing_dto import TypingRefDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
-from gws_core.project.project_dto import ProjectDTO
 
 
 class ResourceOrigin(Enum):
@@ -19,8 +19,8 @@ class ResourceOrigin(Enum):
     GENERATED = "GENERATED"
     # If the resource was imported manually by the user from another lab
     IMPORTED_FROM_LAB = "IMPORTED_FROM_LAB"
-    # For project DOCUMENT where this lab work as a S3 server
-    S3_PROJECT_STORAGE = "S3_PROJECT_STORAGE"
+    # For folder DOCUMENT where this lab work as a S3 server
+    S3_FOLDER_STORAGE = "S3_FOLDER_STORAGE"
 
 
 class ResourceDTO(ModelWithUserDTO):
@@ -34,7 +34,7 @@ class ResourceDTO(ModelWithUserDTO):
     type_status: TypingStatus
     flagged: bool
     experiment: Optional[ExperimentSimpleDTO]
-    project: Optional[ProjectDTO]
+    folder: Optional[SpaceFolderDTO]
     style: TypingStyle
 
 
