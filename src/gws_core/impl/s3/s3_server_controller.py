@@ -71,7 +71,15 @@ async def upload_object(
         bucket: str,
         key: str,
         request: Request,
+        tagging: str = Query(None, alias='tagging'),
         _=Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
+    # update tags
+    if key and tagging == '':
+        file_bytes = await request.body()
+        body = XMLHelper.xml_to_dict(file_bytes.decode('utf-8'))
+        S3ServerService.update_object_tags(bucket, key, body.get('Tagging', {}))
+        return ResponseHelper.create_xml_response('')
+    # upload object
     if key:
         file_bytes = await request.body()
         tags = S3ServerService.convert_query_param_string_to_dict(request.headers.get(TAG_HEADER))
@@ -90,11 +98,11 @@ def download_object(bucket: str, key: str,
                     _=Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
     if key and tagging == '':
         tags = S3ServerService.get_object_tags(bucket, key)
-        return ResponseHelper.create_xml_response_from_json({'root': tags})
+        return ResponseHelper.create_xml_response_from_json({'Tagging': tags})
     if not key:
         result = S3ServerService.list_objects(bucket,
                                               prefix=prefix, max_keys=max_keys)
-        return ResponseHelper.create_xml_response_from_json({'root': result})
+        return ResponseHelper.create_xml_response_from_json({'Tagging': result})
     return S3ServerService.get_object(bucket, key)
 
 

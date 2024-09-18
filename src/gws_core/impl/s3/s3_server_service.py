@@ -19,6 +19,7 @@ from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.s3_server_context import S3ServerContext
+from gws_core.impl.s3.s3_server_dto import S3GetTagResponse, S3UpdateTagRequest
 from gws_core.impl.s3.s3_server_exception import (S3ServerException,
                                                   S3ServerNoSuchKey)
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -52,7 +53,7 @@ class S3ServerService:
     def create_bucket(cls, bucket_name: str) -> None:
         if not cls._is_folder_doc_bucket(bucket_name):
             raise S3ServerException(status_code=400, code='invalid_bucket_name',
-                                    message='Invalid bucket name, only folder storage is allowed for now',
+                                    message=f"Invalid bucket name, only '{cls.FOLDERS_BUCKET_NAME}' is allowed for now",
                                     bucket_name=bucket_name)
 
     @classmethod
@@ -105,9 +106,10 @@ class S3ServerService:
                 folder = cls._get_and_check_folder_bucket(bucket_name, tags.get(cls.FOLDER_TAG_NAME))
             else:
                 # for now we allow only folder documents to be uploaded
-                raise S3ServerException(status_code=400, code='invalid_bucket_name',
-                                        message='Invalid bucket name, only folder storage is allowed for now',
-                                        bucket_name=bucket_name, key=key)
+                raise S3ServerException(
+                    status_code=400, code='invalid_bucket_name',
+                    message=f"Invalid bucket name, only '{cls.FOLDERS_BUCKET_NAME}' is allowed for now",
+                    bucket_name=bucket_name, key=key)
 
             # create a file in a temp folder
             temp_folder = Settings.make_temp_dir()
@@ -124,11 +126,11 @@ class S3ServerService:
                 bucket_name) else ResourceOrigin.UPLOADED
 
             resource_model = ResourceModel.from_resource(file, resource_origin)
-            if tags.get(cls.NAME_TAG_NAME):
-                resource_model.name = tags[cls.NAME_TAG_NAME]
-            else:
+            cls._update_resource_from_tags(resource_model, tags)
+
+            # set default name of resource if not set in tags
+            if not resource_model.name:
                 resource_model.name = FileHelper.get_name_with_extension(key)
-            resource_model.folder = folder
 
             resource_model = resource_model.save_full()
 
@@ -172,16 +174,12 @@ class S3ServerService:
             # update the last modified date
             resource_model.last_modified_at = DateHelper.now_utc()
 
-            # update folder if provided
-            if tags.get(cls.FOLDER_TAG_NAME):
-                resource_model.folder = cls._get_folder_and_check(tags.get(cls.FOLDER_TAG_NAME))
+            resource_model = cls._update_resource_from_tags(resource_model, tags)
 
-            # update the name if provided
-            resource_model.name = tags.get(cls.NAME_TAG_NAME, resource_model.name)
             resource_model.save()
 
             # update other tags
-            cls.update_object_tags(bucket_name, key, tags)
+            cls.update_object_tags_dict(bucket_name, key, tags)
 
     @classmethod
     def get_object(cls, bucket_name: str, key: str) -> FileResponse:
@@ -358,7 +356,7 @@ class S3ServerService:
     ##################################################### TAGGING #####################################################
 
     @classmethod
-    def get_object_tags(cls, bucket_name: str, key: str) -> Any:
+    def get_object_tags(cls, bucket_name: str, key: str) -> S3GetTagResponse:
         """Get the tags of an object
         """
         resource = cls._get_object_and_check(bucket_name, key)
@@ -383,7 +381,27 @@ class S3ServerService:
         }
 
     @classmethod
-    def update_object_tags(cls, bucket_name: str, key: str, tags: Dict[str, str]) -> None:
+    def update_object_tags(cls, bucket_name: str, key: str, tags: S3UpdateTagRequest) -> None:
+        """Update the tags of an object
+        """
+        if not tags.get('TagSet') or 'Tag' not in tags['TagSet']:
+            raise S3ServerException(status_code=400, code='invalid_tags',
+                                    message='Invalid tags', bucket_name=bucket_name, key=key)
+
+        tags_list = tags['TagSet']['Tag']
+        # when there is only 1 tag, it is not a list
+        if not isinstance(tags_list, list):
+            tags_list = [tags_list]
+
+        tags_dict = {}
+        for tag in tags_list:
+            tags_dict[tag['Key']] = tag['Value']
+
+        with S3ServerContext(bucket_name, key):
+            cls.update_object_tags_dict(bucket_name, key, tags_dict)
+
+    @classmethod
+    def update_object_tags_dict(cls, bucket_name: str, key: str, tags: Dict[str, str]) -> None:
         """Update the tags of an object
         """
         resource = cls._get_object_and_check(bucket_name, key)
@@ -399,9 +417,25 @@ class S3ServerService:
         for key, value in additional_new_tags.items():
             entity_tags.add_tag(Tag(key, value, origins=cls.get_tag_origin()))
 
+        resource = cls._update_resource_from_tags(resource, tags)
+        resource.save()
+
+    @classmethod
+    def _update_resource_from_tags(cls, resource: ResourceModel, tags: Dict[str, str]) -> ResourceModel:
+        """Update a resource from the tags
+        """
+        if tags.get(cls.FOLDER_TAG_NAME):
+            folder = cls._get_folder_and_check(tags[cls.FOLDER_TAG_NAME])
+            resource.folder = folder
+
+        if tags.get(cls.NAME_TAG_NAME):
+            resource.name = tags[cls.NAME_TAG_NAME]
+
+        return resource
+
     @classmethod
     def get_additional_tags(cls, tags: Dict[str, str]) -> Dict[str, str]:
-        """Return the additional tags to save on the object, it removes the predefined tags
+        """Return the additional tags to save on the object, it skips the predefined tags
         """
         cleaned_tags = {}
         for key, value in tags.items():
