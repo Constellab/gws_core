@@ -1,6 +1,7 @@
 
 
-from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.classes.search_builder import (SearchFilterCriteria,
+                                                  SearchOperator, SearchParams)
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_enums import ExperimentStatus
 from gws_core.experiment.experiment_service import ExperimentService
@@ -28,20 +29,25 @@ class TestExperimentSearch(BaseTestCase):
         search_dict: SearchParams = SearchParams()
 
         # Test title search
-        search_dict.filtersCriteria = [{"key": "title", "operator": "CONTAINS", "value": "eriment"}]
+        search_dict.set_filters_criteria([SearchFilterCriteria(
+            key="title", operator=SearchOperator.CONTAINS, value="eriment")])
         self.search(search_dict, 1)
 
         # Test status search
-        search_dict.filtersCriteria = [
-            {"key": "status", "operator": "EQ", "value": ExperimentStatus.SUCCESS.value}]
+        search_dict.set_filters_criteria([
+            SearchFilterCriteria(
+                key="status", operator=SearchOperator.EQ,
+                value=ExperimentStatus.SUCCESS.value)])
         self.search(search_dict, 1)
 
         # Test validate search
-        search_dict.filtersCriteria = [{"key": "is_validated", "operator": "EQ", "value": True}]
+        search_dict.set_filters_criteria([SearchFilterCriteria(
+            key="is_validated", operator=SearchOperator.EQ, value=True)])
         self.search(search_dict, 1)
 
         # Test with folder
-        search_dict.filtersCriteria = [{"key": "folder", "operator": "IN", "value": [folder.id]}]
+        search_dict.set_filters_criteria([SearchFilterCriteria(
+            key="folder", operator=SearchOperator.IN, value=[folder.id])])
         self.search(search_dict, 1)
 
     def search(self, search_dict: SearchParams, expected_nb_of_result: int) -> None:

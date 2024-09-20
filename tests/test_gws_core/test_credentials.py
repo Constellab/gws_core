@@ -1,7 +1,8 @@
 
 
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
-from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.classes.search_builder import (SearchFilterCriteria,
+                                                  SearchOperator, SearchParams)
 from gws_core.credentials.credentials import Credentials
 from gws_core.credentials.credentials_dto import SaveCredentialDTO
 from gws_core.credentials.credentials_param import CredentialsParam
@@ -40,14 +41,14 @@ class TestCredentials(BaseTestCase):
         CredentialsService.create(save_dto2)
 
         # test search by name
-        search_dict: SearchParams = SearchParams()
-        search_dict.filtersCriteria = [{"key": "name", "operator": "CONTAINS", "value": "est"}]
+        search_dict: SearchParams = SearchParams(
+            filtersCriteria=[SearchFilterCriteria(key="name", operator="CONTAINS", value="est")])
         search_result = CredentialsService.search(search_dict)
         self.assertEqual(search_result.page_info.total_number_of_items, 1)
         self.assertEqual(search_result.results[0].name, "test2")
 
         # Test search by name and type
-        search_dict.filtersCriteria.append({"key": "type", "operator": "EQ", "value": CredentialsType.OTHER})
+        search_dict.add_filter_criteria(key="type", operator=SearchOperator.EQ, value=CredentialsType.OTHER)
         search_result = CredentialsService.search(search_dict)
         self.assertEqual(search_result.page_info.total_number_of_items, 1)
         self.assertEqual(search_result.results[0].name, "test2")

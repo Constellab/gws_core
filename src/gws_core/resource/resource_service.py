@@ -2,8 +2,6 @@
 
 from typing import List, Optional, Type
 
-from peewee import ModelSelect
-
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
@@ -24,6 +22,7 @@ from gws_core.share.resource.resource_downloader_http import \
     ResourceDownloaderHttp
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Sink
+from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
@@ -297,7 +296,7 @@ class ResourceService():
             'include_children_resource')
 
         # if the criteria is not provided or False, we don't include the children
-        if criteria is None or not criteria['value']:
+        if criteria is None or not criteria.value:
             search_builder.add_expression(
                 ResourceModel.parent_resource_id.is_null())
         search.remove_filter_criteria('include_children_resource')
@@ -307,7 +306,7 @@ class ResourceService():
         # Otherwise, not filter
         include_non_output: SearchFilterCriteria = search.get_filter_criteria(
             'include_not_flagged')
-        if include_non_output is None or not include_non_output['value']:
+        if include_non_output is None or not include_non_output.value:
             search_builder.add_expression(ResourceModel.flagged == True)
         search.remove_filter_criteria('include_not_flagged')
 

@@ -2,7 +2,8 @@
 
 from gws_core import BaseTestCase, Tag, TagHelper
 from gws_core.config.config_params import ConfigParams
-from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.classes.search_builder import (SearchFilterCriteria,
+                                                  SearchOperator, SearchParams)
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
@@ -170,47 +171,47 @@ class TestTag(BaseTestCase):
         search_dict: SearchParams = SearchParams()
 
         # search with only second tag
-        search_dict.filtersCriteria = [
-            {"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json([other_tag])}]
+        search_dict.set_filters_criteria([SearchFilterCriteria(
+            key="tags", operator=SearchOperator.EQ, value=TagHelper.tags_to_json([other_tag]))])
         paginator = ExperimentService.search(search_dict)
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, experiment.id)
 
         # search with only second tag value contains
-        search_dict.filtersCriteria = [
-            {"key": "tags", "operator": "CONTAINS", "value": TagHelper.tags_to_json([Tag('second_key', 'cond_val')])}]
+        search_dict.set_filters_criteria([
+            SearchFilterCriteria(
+                key="tags", operator=SearchOperator.CONTAINS,
+                value=TagHelper.tags_to_json([Tag('second_key', 'cond_val')]))])
         paginator = ExperimentService.search(search_dict)
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, experiment.id)
 
         # search with both tags
-        search_dict.filtersCriteria = [
-            {"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json([tag, other_tag])}]
+        search_dict.set_filters_criteria([
+            SearchFilterCriteria(
+                key="tags", operator=SearchOperator.EQ, value=TagHelper.tags_to_json(
+                    [tag, other_tag]))])
         paginator = ExperimentService.search(search_dict)
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, experiment.id)
 
         # test search with int value
         TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('int_tag', 1))
-        search_dict.filtersCriteria = [
-            {"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json([Tag('int_tag', 1)])}]
+        search_dict.set_filters_criteria([
+            SearchFilterCriteria(
+                key="tags", operator=SearchOperator.EQ, value=TagHelper.tags_to_json(
+                    [Tag('int_tag', 1)]))])
         paginator = ExperimentService.search(search_dict)
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, experiment.id)
 
-        # test search with float value
-        # TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('float_tag', 1.1))
-        # search_dict.filtersCriteria = [
-        #     {"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json([Tag('float_tag', 1.1)])}]
-        # paginator = ExperimentService.search(search_dict)
-        # self.assertEqual(paginator.page_info.total_number_of_items, 1)
-        # self.assertEqual(paginator.results[0].id, experiment.id)
-
         # test search with datetime value
         now = DateHelper.now_utc()
         TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('datetime_tag', now))
-        search_dict.filtersCriteria = [{"key": "tags", "operator": "EQ", "value": TagHelper.tags_to_json(
-            [Tag('datetime_tag', DateHelper.to_iso_str(now))])}]
+        search_dict.set_filters_criteria([
+            SearchFilterCriteria(
+                key="tags", operator=SearchOperator.EQ, value=TagHelper.tags_to_json(
+                    [Tag('datetime_tag', DateHelper.to_iso_str(now))]))])
         paginator = ExperimentService.search(search_dict)
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, experiment.id)
@@ -339,6 +340,7 @@ class TestTag(BaseTestCase):
         # generate a report and add the view
         report = ReportService.create(ReportSaveDTO(title='test_report'))
 
+        ReportService.add_experiment(report.id, experiment_id)
         ReportService.add_view_to_content(report.id, view_result.view_config.id)
 
         # Check that the tags are propagated

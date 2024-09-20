@@ -1,11 +1,11 @@
 
 
-from typing import Any, Callable, List, Literal, Optional, Type
+from enum import Enum
+from typing import Any, Callable, List, Optional, Type
 
 from peewee import (Expression, Field, FloatField, IntegerField, ModelSelect,
                     Ordering)
 from playhouse.mysql_ext import Match
-from typing_extensions import TypedDict
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -15,28 +15,53 @@ from gws_core.core.model.model_dto import BaseModelDTO
 from ..model.model import Model
 from .expression_builder import ExpressionBuilder
 
-SearchOperatorStr = Literal["EQ", "NEQ",  "LT", "LE", "GT", "GE", "CONTAINS", "IN", "NOT_IN", "NULL", "NOT_NULL",
-                            "START_WITH", "END_WITH", "MATCH", "BETWEEN"]
 
-SearchOrderStr = Literal["ASC", "DESC"]
-SearchOrderNullOption = Literal["LAST", "FIRST"]
+class SearchOperator(Enum):
+    EQ = "EQ"
+    NEQ = "NEQ"
+    LT = "LT"
+    LE = "LE"
+    GT = "GT"
+    GE = "GE"
+    CONTAINS = "CONTAINS"
+    IN = "IN"
+    NOT_IN = "NOT_IN"
+    NULL = "NULL"
+    NOT_NULL = "NOT_NULL"
+    START_WITH = "START_WITH"
+    END_WITH = "END_WITH"
+    MATCH = "MATCH"
+    BETWEEN = "BETWEEN"
 
 
-class SearchFilterCriteria(TypedDict):
+class SearchDirection(Enum):
+    ASC = "ASC"
+    DESC = "DESC"
+
+
+class SearchOrderNullOption(Enum):
+    LAST = "LAST"
+    FIRST = "FIRST"
+
+
+class SearchFilterCriteria(BaseModelDTO):
     key: str
-    operator: SearchOperatorStr
+    operator: SearchOperator
     value: Any
 
 
-class SearchSortCriteria(TypedDict):
+class SearchSortCriteria(BaseModelDTO):
     key: str
-    order: SearchOrderStr
-    nullOption: Optional[SearchOrderNullOption]
+    direction: SearchDirection
+    nullManagement: Optional[SearchOrderNullOption] = SearchOrderNullOption.LAST
 
 
-class SearchJoin(TypedDict):
-    table: Type[Model]
+class SearchJoin(BaseModelDTO):
+    table_type: Any
     on: Expression
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class SearchParams(BaseModelDTO):
@@ -48,18 +73,18 @@ class SearchParams(BaseModelDTO):
     filtersCriteria: List[SearchFilterCriteria] = []
     sortsCriteria: Optional[List[SearchSortCriteria]] = []
 
-    def add_filter_criteria(self, key: str, operator: SearchOperatorStr, value: Any) -> None:
-        self.filtersCriteria.append({'key': key, 'operator': operator, 'value': value})
+    def add_filter_criteria(self, key: str, operator: SearchOperator, value: Any) -> None:
+        self.filtersCriteria.append(SearchFilterCriteria(key=key, operator=operator, value=value))
 
     def remove_filter_criteria(self, key: str) -> None:
-        self.filtersCriteria = list(filter(lambda x: x["key"] != key, self.filtersCriteria))
+        self.filtersCriteria = list(filter(lambda x: x.key != key, self.filtersCriteria))
 
-    def override_filter_criteria(self, key: str, operator: SearchOperatorStr, value: Any) -> None:
+    def override_filter_criteria(self, key: str, operator: SearchOperator, value: Any) -> None:
         self.remove_filter_criteria(key)
-        self.filtersCriteria.append({'key': key, 'operator': operator, 'value': value})
+        self.filtersCriteria.append(SearchFilterCriteria(key=key, operator=operator, value=value))
 
     def get_filter_criteria(self, key: str) -> SearchFilterCriteria:
-        criterias = [x for x in self.filtersCriteria if x["key"] == key]
+        criterias = [x for x in self.filtersCriteria if x.key == key]
 
         if len(criterias) == 0:
             return None
@@ -75,7 +100,10 @@ class SearchParams(BaseModelDTO):
         if criteria is None:
             return None
 
-        return criteria["value"]
+        return criteria.value
+
+    def set_filters_criteria(self, filters: List[SearchFilterCriteria]) -> None:
+        self.filtersCriteria = filters
 
 
 class SearchBuilder:
@@ -123,7 +151,7 @@ class SearchBuilder:
         model_select: ModelSelect = self._model_type.select()
 
         for join in self._joins:
-            model_select = model_select.join(join['table'], on=join['on'])
+            model_select = model_select.join(join.table_type, on=join.on)
 
         if filter_expression is not None:
             model_select = model_select.where(filter_expression)
@@ -153,7 +181,7 @@ class SearchBuilder:
         return self
 
     def add_join(self, table: Type[Model], on: Expression = None) -> 'SearchBuilder':
-        self._joins.append({'table': table, 'on': on})
+        self._joins.append(SearchJoin(table_type=table, on=on))
         return self
 
     def _add_search_filter_query(self, filters: List[SearchFilterCriteria]) -> None:
@@ -163,12 +191,12 @@ class SearchBuilder:
                 self.add_expression(expression)
 
     def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
-        field: Field = self._get_model_field(filter_["key"])
+        field: Field = self._get_model_field(filter_.key)
 
         # convert the value in the correct format
-        value = self.convert_value(field, filter_["value"])
+        value = self.convert_value(field, filter_.value)
 
-        return self._get_expression(filter_["operator"], field, value)
+        return self._get_expression(filter_.operator, field, value)
 
     def _add_search_ordering(self, orders: List[SearchSortCriteria]) -> None:
         if not orders:
@@ -183,14 +211,14 @@ class SearchBuilder:
 
     def convert_order_to_peewee_ordering(self, order: SearchSortCriteria) -> Ordering:
         """Convert a search order criteria to a peewee ordering"""
-        field: Field = self._get_model_field(order["key"])
+        field: Field = self._get_model_field(order.key)
 
-        null_option: str = order.get('nullOption', 'LAST')
+        null_option: SearchOrderNullOption = order.nullManagement or SearchOrderNullOption.LAST
 
-        if order["order"] == "DESC":
-            return field.desc(nulls=null_option)
+        if order.direction == SearchDirection.DESC:
+            return field.desc(nulls=null_option.value)
         else:
-            return field.asc(nulls=null_option)
+            return field.asc(nulls=null_option.value)
 
     def _get_model_field(self, key: str) -> Field:
         """Retrieve the peewee field of the model base on field name
@@ -234,34 +262,34 @@ class SearchBuilder:
         else:
             return None
 
-    def _get_expression(self, operator: SearchOperatorStr, field: Field, value: Any) -> Expression:
-        if operator == 'EQ':
+    def _get_expression(self, operator: SearchOperator, field: Field, value: Any) -> Expression:
+        if operator == SearchOperator.EQ:
             return field == value
-        elif operator == 'NEQ':
+        elif operator == SearchOperator.NEQ:
             return field != value
-        elif operator == 'LT':
+        elif operator == SearchOperator.LT:
             return field < value
-        elif operator == 'LE':
+        elif operator == SearchOperator.LE:
             return field <= value
-        elif operator == 'GT':
+        elif operator == SearchOperator.GT:
             return field > value
-        elif operator == 'GE':
+        elif operator == SearchOperator.GE:
             return field >= value
-        elif operator == 'CONTAINS':
+        elif operator == SearchOperator.CONTAINS:
             return field.contains(value)
-        elif operator == 'START_WITH':
+        elif operator == SearchOperator.START_WITH:
             return field.startswith(value)
-        elif operator == 'END_WITH':
+        elif operator == SearchOperator.END_WITH:
             return field.endswith(value)
-        elif operator == 'IN':
+        elif operator == SearchOperator.IN:
             return field.in_(value)
-        elif operator == 'NOT_IN':
+        elif operator == SearchOperator.NOT_IN:
             return field.not_in(value)
-        elif operator == 'NULL':
+        elif operator == SearchOperator.NULL:
             return field.is_null(True)
-        elif operator == 'NOT_NULL':
+        elif operator == SearchOperator.NOT_NULL:
             return field.is_null(False)
-        elif operator == 'MATCH':
+        elif operator == SearchOperator.MATCH:
             return Match((field), value, modifier='IN BOOLEAN MODE')
-        elif operator == 'BETWEEN':
+        elif operator == SearchOperator.BETWEEN:
             return field.between(value[0], value[1])

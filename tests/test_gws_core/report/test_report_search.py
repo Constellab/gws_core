@@ -1,7 +1,8 @@
 
 
 from gws_core.core.classes.paginator import Paginator
-from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.classes.search_builder import (SearchFilterCriteria,
+                                                  SearchOperator, SearchParams)
 from gws_core.report.report_dto import ReportSaveDTO
 from gws_core.report.report_service import ReportService
 from gws_core.test.base_test_case import BaseTestCase
@@ -17,7 +18,8 @@ class TestReportSearch(BaseTestCase):
         search_dict: SearchParams = SearchParams()
 
         # Test title search
-        search_dict.filtersCriteria = [{"key": "title", "operator": "CONTAINS", "value": "first"}]
+        search_dict.set_filters_criteria([SearchFilterCriteria(
+            key="title", operator=SearchOperator.CONTAINS, value="first")])
         self._search(search_dict, 1)
 
         # test search name

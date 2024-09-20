@@ -11,7 +11,7 @@ from gws_core.tag.tag_key_model import TagKeyModel
 from peewee import Expression, Field
 
 from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
-                                           SearchOperatorStr)
+                                           SearchOperator)
 from ..tag.tag_helper import TagHelper
 
 
@@ -32,7 +32,7 @@ class EntityWithTagSearchBuilder(SearchBuilder):
 
     def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags
-        if filter_['key'] == 'tags':
+        if filter_.key == 'tags':
             return self.handle_tag_filter(filter_)
 
         return super().convert_filter_to_expression(filter_)
@@ -40,15 +40,15 @@ class EntityWithTagSearchBuilder(SearchBuilder):
     def handle_tag_filter(self, filter_: SearchFilterCriteria) -> Expression:
         """Handle the tag filter
         """
-        tags = TagHelper.tags_dict_to_list(filter_['value'])
+        tags = TagHelper.tags_dict_to_list(filter_.value)
 
         for tag in tags:
-            self.add_tag_filter(tag, filter_['operator'])
+            self.add_tag_filter(tag, filter_.operator)
 
         # return none because expression is already added with the join
         return None
 
-    def add_tag_filter(self, tag: Tag, value_operator: SearchOperatorStr = 'EQ',
+    def add_tag_filter(self, tag: Tag, value_operator: SearchOperator = SearchOperator.EQ,
                        error_if_key_not_exists: bool = False) -> None:
 
         if error_if_key_not_exists:

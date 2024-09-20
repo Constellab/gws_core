@@ -3,7 +3,6 @@
 from typing import List, Literal, Optional
 
 from fastapi.param_functions import Depends
-
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.model.typing_dto import TypingDTO, TypingObjectType
@@ -45,14 +44,14 @@ def get_by_object_type(object_type: TypingObjectType,
 
 
 @core_app.post("/typing/advanced-search", tags=["Typing"], summary="Search typings")
-def advanced_search(search_dict: SearchParams,
+def advanced_search(search_params: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
                     _=Depends(AuthService.check_user_access_token)) -> PageDTO[TypingDTO]:
     """
     Advanced search for typing
     """
-    return TypingService.search(search_dict, page, number_of_items_per_page).to_dto()
+    return TypingService.search(search_params, page, number_of_items_per_page).to_dto()
 
 
 class SearchWithResourceTypes(BaseModelDTO):

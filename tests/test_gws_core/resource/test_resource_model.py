@@ -5,7 +5,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, IExperiment, ITask,
                       Task, TaskInputs, TaskModel, TaskOutputs,
                       resource_decorator, task_decorator)
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
-                                                  SearchParams)
+                                                  SearchOperator, SearchParams)
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.test.data_provider import DataProvider
@@ -54,31 +54,33 @@ class TestResourceModel(BaseTestCase):
         search_dict: SearchParams = SearchParams()
 
         # Search on name resource typing name
-        search_dict.filtersCriteria = [
-            {"key": "resource_typing_name", "operator": "EQ", "value": ForSearch.get_typing_name()}]
+        search_dict.set_filters_criteria([
+            SearchFilterCriteria(
+                key="resource_typing_name", operator=SearchOperator.EQ,
+                value=ForSearch.get_typing_name())])
         self.search(search_dict, 2)
 
         # Search on name ResourceOrigin
-        search_dict.filtersCriteria = [
-            {"key": "origin", "operator": "EQ", "value": ResourceOrigin.GENERATED.value}]
+        search_dict.set_filters_criteria([
+            SearchFilterCriteria(key="origin", operator=SearchOperator.EQ, value=ResourceOrigin.GENERATED.value)])
         self.search(search_dict, 1)
 
         # Search on Experiment
-        search_dict.filtersCriteria = [
-            {"key": "experiment", "operator": "EQ", "value": experiment._experiment.id}]
+        search_dict.set_filters_criteria([
+            SearchFilterCriteria(key="experiment", operator=SearchOperator.EQ, value=experiment._experiment.id)])
         self.search(search_dict, 1)
 
         # Search on Task
-        search_dict.filtersCriteria = [
-            {"key": "task_model", "operator": "EQ", "value": task._process_model.id}]
+        search_dict.set_filters_criteria([
+            SearchFilterCriteria(key="task_model", operator=SearchOperator.EQ, value=task._process_model.id)])
         self.search(search_dict, 1)
 
         # Search on Data with full text
-        search_dict.filtersCriteria = [self._get_data_filter("information")]
+        search_dict.set_filters_criteria([self._get_data_filter("information")])
         self.search(search_dict, 1)
-        search_dict.filtersCriteria = [self._get_data_filter("great")]
+        search_dict.set_filters_criteria([self._get_data_filter("great")])
         self.search(search_dict, 2)
-        search_dict.filtersCriteria = [self._get_data_filter("gre*")]
+        search_dict.set_filters_criteria([self._get_data_filter("gre*")])
         self.search(search_dict, 2)
 
     def search(self, search_dict: SearchParams, expected_nb_of_result: int) -> None:
@@ -111,10 +113,10 @@ class TestResourceModel(BaseTestCase):
         self.assertIsInstance(resource_model.get_resource(), SubFile)
 
     def _get_tag_filter(self, value: str) -> SearchFilterCriteria:
-        return {'key': 'tags', 'operator': 'CONTAINS', 'value': value}
+        return SearchFilterCriteria(key='tags', operator=SearchOperator.CONTAINS, value=value)
 
     def _get_data_filter(self, value: str) -> SearchFilterCriteria:
-        return {'key': 'data', 'operator': 'MATCH', 'value': value}
+        return SearchFilterCriteria(key='data', operator=SearchOperator.MATCH, value=value)
 
     def _create_resource(
             self, text: str,

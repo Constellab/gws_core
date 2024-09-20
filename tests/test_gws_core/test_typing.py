@@ -6,7 +6,8 @@ from gws_core import (BaseTestCase, File, ProcessSpec, Protocol,
                       ProtocolTyping, ResourceTyping, Sink, TaskTyping,
                       protocol_decorator, transformer_decorator)
 from gws_core.core.classes.paginator import Paginator
-from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.classes.search_builder import (SearchFilterCriteria,
+                                                  SearchOperator, SearchParams)
 from gws_core.impl.robot.robot_protocol import RobotTravelProto
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotEat
@@ -136,35 +137,35 @@ class TestTyping(BaseTestCase):
         self.assertIsInstance(typing, ProtocolTyping)
 
     def test_typing_search(self):
-        search_dict: SearchParams = SearchParams()
+        search_params: SearchParams = SearchParams()
 
         # Search on name brick
-        search_dict.filtersCriteria = [
-            {'key': 'brick', "operator": "EQ", "value": "gws_core"}]
-        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        search_params.set_filters_criteria([SearchFilterCriteria(
+            key='brick', operator=SearchOperator.EQ, value="gws_core")])
+        paginator: Paginator[Typing] = TypingService.search(search_params)
         self.assertTrue(paginator.page_info.number_of_items_per_page > 0)
         # Check that there is no Hide element
         self.assertEqual(
             len([x for x in paginator.results if x.hide == True]), 0)
 
         # Search on text
-        search_dict.filtersCriteria = [
-            {'key': 'text', "operator": "CONTAINS", "value": "filetra"}]
-        paginator = TypingService.search(search_dict)
+        search_params.set_filters_criteria([SearchFilterCriteria(
+            key='text', operator=SearchOperator.CONTAINS, value="filetra")])
+        paginator = TypingService.search(search_params)
         # Test that it found the FileTransformer
         self.assertTrue(
             len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
-        search_dict.filtersCriteria = [
-            {'key': 'text', "operator": "CONTAINS", "value": "possib"}]
-        paginator = TypingService.search(search_dict)
+        search_params.set_filters_criteria([SearchFilterCriteria(
+            key='text', operator=SearchOperator.CONTAINS, value="possib")])
+        paginator = TypingService.search(search_params)
         # Test that it found the FileTransformer
         self.assertTrue(
             len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
 
-        search_dict.filtersCriteria = [
-            {'key': 'text', "operator": "CONTAINS", "value": "FileTransformer"}]
-        paginator = TypingService.search(search_dict)
+        search_params.set_filters_criteria([SearchFilterCriteria(
+            key='text', operator=SearchOperator.CONTAINS, value="FileTransformer")])
+        paginator = TypingService.search(search_params)
         # Test that it found the FileTransformer
         self.assertTrue(
             len([x for x in paginator.results if x.unique_name == 'FileTransformer']) > 0)
@@ -180,15 +181,23 @@ class TestTyping(BaseTestCase):
         search_dict: SearchParams = SearchParams()
 
         # Test with deprecated typing, it should not be found
-        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "CreateSimpleRobot2Deprecated"},
-                                       {'key': 'include_deprecated', "operator": "EQ", "value": False}]
+        search_dict.set_filters_criteria([
+            SearchFilterCriteria(
+                key='text', operator=SearchOperator.MATCH,
+                value="CreateSimpleRobot2Deprecated"),
+            SearchFilterCriteria(
+                key='include_deprecated', operator=SearchOperator.EQ, value=False)])
         paginator: Paginator[Typing] = TypingService.search(search_dict)
         # Test that it found the FileTransformer
         self.assertEqual(paginator.page_info.total_number_of_items, 0)
 
         # Test with deprecated typing and found option, it should be found
-        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "CreateSimpleRobot2Deprecated"},
-                                       {'key': 'include_deprecated', "operator": "EQ", "value": True}]
+        search_dict.set_filters_criteria([
+            SearchFilterCriteria(
+                key='text', operator=SearchOperator.MATCH,
+                value="CreateSimpleRobot2Deprecated"),
+            SearchFilterCriteria(
+                key='include_deprecated', operator=SearchOperator.EQ, value=True)])
         paginator = TypingService.search(search_dict)
         # Test that it found the FileTransformer
         self.assertTrue(len([x for x in paginator.results
