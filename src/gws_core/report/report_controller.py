@@ -2,7 +2,6 @@
 from typing import List, Optional
 
 from fastapi.param_functions import Depends
-
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.experiment.experiment_dto import ExperimentDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
