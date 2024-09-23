@@ -10,18 +10,18 @@ from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
-from .enote_resource import ENoteResource
+from .note_resource import NoteResource
 
 
-@task_decorator("GenerateReportFromENote", human_name="Generate report from note resource",
-                short_description="Task to generate a report from an note resource")
-class GenerateReportFromENote(Task):
+@task_decorator("GenerateLabNote", human_name="Generate lab note from note resource",
+                short_description="Task to generate a lab note from an note resource")
+class GenerateLabNote(Task):
     """
     Generate a report from the note content.
     """
 
     input_specs: InputSpecs = InputSpecs({
-        'enote': InputSpec(ENoteResource, human_name='Note resource')
+        'note': InputSpec(NoteResource, human_name='Note resource')
     })
 
     output_specs: OutputSpecs = OutputSpecs({
@@ -34,9 +34,9 @@ class GenerateReportFromENote(Task):
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        enote_resource: ENoteResource = inputs['enote']
+        note_resource: NoteResource = inputs['note']
 
-        report = enote_resource.export_as_report(params['title'])
+        report = note_resource.export_as_report(params['title'])
 
         return {
             'report': ReportResource(report.id)

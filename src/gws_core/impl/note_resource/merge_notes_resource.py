@@ -11,25 +11,25 @@ from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
-from .enote_resource import ENoteResource
+from .note_resource import NoteResource
 
 
 @task_decorator(
-    unique_name="MergeENotes",
-    human_name="Merge Note resources",
-    short_description="Merge multiple Note resources into one",
+    unique_name="MergeNoteResources",
+    human_name="Merge note resources",
+    short_description="Merge multiple note resources into one",
 )
-class MergeENotes(Task):
+class MergeNoteResources(Task):
     """
     Append content to an existing note resource.
     """
 
     input_specs: InputSpecs = DynamicInputs({
-        'source': InputSpec(ENoteResource, human_name='Note resource')
-    }, additionnal_port_spec=InputSpec(ENoteResource, human_name='Note resource'))
+        'source': InputSpec(NoteResource, human_name='Note resource')
+    }, additionnal_port_spec=InputSpec(NoteResource, human_name='Note resource'))
 
     output_specs: OutputSpecs = OutputSpecs({
-        'enote': OutputSpec(ENoteResource, human_name='Note resource')
+        'note': OutputSpec(NoteResource, human_name='Note resource')
     })
 
     config_specs: ConfigSpecs = {
@@ -43,19 +43,19 @@ class MergeENotes(Task):
         # prepare the input
         resource_list: ResourceList = inputs["source"]
 
-        enote_resource = ENoteResource()
+        note_resource = NoteResource()
 
         index = 1
         for resource in resource_list:
-            if not isinstance(resource, ENoteResource):
+            if not isinstance(resource, NoteResource):
                 raise ValueError(f"Input {index} is not an note resource")
 
             if index == 1:
-                enote_resource.title = params['title'] or resource.title
+                note_resource.title = params['title'] or resource.title
 
-            enote_resource.append_enote(resource)
+            note_resource.append_note_resource(resource)
             index += 1
 
         return {
-            'enote': enote_resource
+            'note': note_resource
         }

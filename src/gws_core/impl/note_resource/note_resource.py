@@ -13,8 +13,8 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (
-    RichTextBlock, RichTextBlockType, RichTextENoteResourceViewData,
-    RichTextFigureData, RichTextFileData, RichTextObjectType,
+    RichTextBlock, RichTextBlockType, RichTextFigureData, RichTextFileData,
+    RichTextNoteResourceViewData, RichTextObjectType,
     RichTextParagraphHeaderLevel, RichTextResourceViewData,
     RichTextViewFileData)
 from gws_core.impl.rich_text.rich_text_view import RichTextView
@@ -38,10 +38,10 @@ from gws_core.resource.view.view_result import CallViewResult
 from gws_core.resource.view.view_runner import ViewRunner
 
 
-@resource_decorator("ENoteResource", human_name="Note resource",
-                    short_description="Resource that contains a rich text that can be exported to a report",
+@resource_decorator("NoteResource", human_name="Note resource",
+                    short_description="Resource that contains a rich text that can be exported to a lab note",
                     style=TypingStyle.material_icon("sticky_note_2", background_color="#f6f193"),)
-class ENoteResource(ResourceSet):
+class NoteResource(ResourceSet):
 
     title: str = StrRField()
     _rich_text: RichText = SerializableRField(RichText)
@@ -104,7 +104,7 @@ class ENoteResource(ResourceSet):
         :param caption: view caption, defaults to None
         :type caption: str, optional
         :param parameter_name: if provided, the view replace the provided variable.
-                            if not, the view is append at the end of the enote, defaults to None
+                            if not, the view is append at the end of the note, defaults to None
         :type parameter_name: str, optional
         """
         self.add_view_from_resource(resource, ViewHelper.DEFAULT_VIEW_NAME, None,
@@ -132,10 +132,10 @@ class ENoteResource(ResourceSet):
         :param caption: view caption, defaults to None
         :type caption: str, optional
         :param parameter_name: if provided, the view replace the provided parameter.
-                            if not, the view is append at the end of the enote, defaults to None
+                            if not, the view is append at the end of the note, defaults to None
         :type parameter_name: str, optional
         """
-        # store the resource in the enote
+        # store the resource in the note
         self.add_resource(resource, resource.uid,
                           create_new_resource=create_new_resource)
 
@@ -157,7 +157,7 @@ class ENoteResource(ResourceSet):
         :param caption: caption of the view, defaults to None
         :type caption: str, optional
         :param parameter_name: if provided, the view replace the provided variable.
-                              If not, the view is append at the end of the enote, defaults to None
+                              If not, the view is append at the end of the note, defaults to None
         :type parameter_name: str, optional
         """
         view_resource = ViewResource.from_view(view_, view_config_values)
@@ -179,7 +179,7 @@ class ENoteResource(ResourceSet):
         :param caption: caption of the view, defaults to None
         :type caption: str, optional
         :param parameter_name: if provided, the view replace the provided variable.
-                              If not, the view is append at the end of the enote, defaults to None
+                              If not, the view is append at the end of the note, defaults to None
         :type parameter_name: str, optional
         """
         view_resource.name = title
@@ -193,7 +193,7 @@ class ENoteResource(ResourceSet):
                   view_config_values: ConfigParamsDict = None,
                   title: str = None, caption: str = None,
                   parameter_name: str = None) -> None:
-        rich_text_view: RichTextENoteResourceViewData = {
+        rich_text_view: RichTextNoteResourceViewData = {
             "id": StringHelper.generate_uuid() + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
             "sub_resource_key": resource_key,
             "view_method_name": view_method_name,
@@ -201,7 +201,7 @@ class ENoteResource(ResourceSet):
             "title": title or "",
             "caption": caption or "",
         }
-        self._rich_text.add_enote_resource_view(rich_text_view, parameter_name)
+        self._rich_text.add_note_resource_view(rich_text_view, parameter_name)
 
     def call_view_on_resource(self, resource_key: str, view_name: str, config: ConfigParamsDict) -> CallViewResultDTO:
         """Call a view method on the resource.
@@ -232,7 +232,7 @@ class ENoteResource(ResourceSet):
         :param caption: caption of the figure, defaults to None
         :type caption: str, optional
         :param parameter_name: if provided, the figure replace the provided variable.
-                              If not, the figure is append at the end of the enote, defaults to None
+                              If not, the figure is append at the end of the note, defaults to None
         :type parameter_name: str, optional
         """
         file = File(image_path)
@@ -251,7 +251,7 @@ class ENoteResource(ResourceSet):
         :param caption: caption of the figure, defaults to None
         :type caption: str, optional
         :param parameter_name: if provided, the figure replace the provided variable.
-                                If not, the figure is append at the end of the enote, defaults to None
+                                If not, the figure is append at the end of the note, defaults to None
         :type parameter_name: str, optional
         :param create_new_resource: if True, a new resource is created with the file.
                                     If False, the file is used as a resource.
@@ -289,7 +289,7 @@ class ENoteResource(ResourceSet):
 
     def get_figure(self, filename: str) -> File:
         """
-        Get the figure of the enote as a File  resource.
+        Get the figure of the note as a File  resource.
 
         :param filename: filename of the figure
         :type filename: str
@@ -308,7 +308,7 @@ class ENoteResource(ResourceSet):
         :param file_path: path of the file
         :type file_path: str
         :param parameter_name: if provided, the file replace the provided variable.
-                                If not, the file is append at the end of the enote, defaults to None
+                                If not, the file is append at the end of the note, defaults to None
         :type parameter_name: str, optional
         """
 
@@ -324,7 +324,7 @@ class ENoteResource(ResourceSet):
         :param file: file to add
         :type file: File
         :param parameter_name: if provided, the file replace the provided variable.
-                                If not, the file is append at the end of the enote, defaults to None
+                                If not, the file is append at the end of the note, defaults to None
         :type parameter_name: str, optional
         :param create_new_resource: if True, a new resource is created with the file.
                                     If False, the file is used as a resource.
@@ -346,7 +346,7 @@ class ENoteResource(ResourceSet):
 
     def get_file(self, filename: str) -> File:
         """
-        Get the file of the enote as a File resource.
+        Get the file of the note as a File resource.
 
         :param filename: filename of the file
         :type filename: str
@@ -376,7 +376,7 @@ class ENoteResource(ResourceSet):
 
     def append_block(self, block: RichTextBlock) -> int:
         """
-        Append a block to the enote
+        Append a block to the note
 
         :param block: block to add
         :type block: RichTextBlock
@@ -440,28 +440,28 @@ class ENoteResource(ResourceSet):
 
     ############################# Other #############################
 
-    def append_enote(self, enote: "ENoteResource") -> None:
+    def append_note_resource(self, note: "NoteResource") -> None:
         """Append the content of another note resource at the end of this note resource content.
 
-        :param enote: note resource to append
-        :type enote: ENoteResource
+        :param note: note resource to append
+        :type note: NoteResource
         """
-        for block in enote.get_blocks():
+        for block in note.get_blocks():
             if block.type == RichTextBlockType.FIGURE:
                 # add the figure manually (including the resource)
                 figure_data: RichTextFigureData = block.data
-                self.add_figure_file(enote.get_file(figure_data['filename']),
+                self.add_figure_file(note.get_file(figure_data['filename']),
                                      title=figure_data['title'], caption=figure_data['caption'],
                                      create_new_resource=False)
             elif block.type == RichTextBlockType.FILE:
                 # add the file manually (including the resource)
                 file_data: RichTextFileData = block.data
-                self.add_file(enote.get_file(file_data['name']), create_new_resource=False)
+                self.add_file(note.get_file(file_data['name']), create_new_resource=False)
 
-            elif block.type == RichTextBlockType.ENOTE_VIEW:
+            elif block.type == RichTextBlockType.NOTE_RESOURCE_VIEW:
                 # add the view manually (including the resource)
-                view_data: RichTextENoteResourceViewData = block.data
-                self.add_view_from_resource(enote.get_resource(view_data['sub_resource_key']),
+                view_data: RichTextNoteResourceViewData = block.data
+                self.add_view_from_resource(note.get_resource(view_data['sub_resource_key']),
                                             view_method_name=view_data['view_method_name'],
                                             config_values=view_data['view_config'],
                                             title=view_data['title'],
@@ -478,7 +478,7 @@ class ENoteResource(ResourceSet):
         :param rich_text: rich text to append
         :type rich_text: RichText
         """
-        # add the block 1 by 1 to the enote
+        # add the block 1 by 1 to the note
         for block in rich_text.get_blocks():
             self.append_block(block)
 
@@ -497,16 +497,16 @@ class ENoteResource(ResourceSet):
         :return: the note resource
         :rtype: _type_
         """
-        if object_type == RichTextObjectType.ENOTE:
-            raise ValueError("Please use append_enote to append an note resource to another note resource")
+        if object_type == RichTextObjectType.NOTE_RESOURCE:
+            raise ValueError("Please use append_note to append an note resource to another note resource")
 
-        # add the block 1 by 1 to the enote
+        # add the block 1 by 1 to the note
         for block in rich_text.get_blocks():
             # specific case for the figure
             if block.type == RichTextBlockType.FIGURE:
                 figure_data: RichTextFigureData = block.data
 
-                # get the path of the figure, to add the figure to enote
+                # get the path of the figure, to add the figure to note
                 filename = RichTextFileService.get_object_file_path(object_type, object_id,
                                                                     figure_data['filename'])
                 # add the figure manually
@@ -558,7 +558,7 @@ class ENoteResource(ResourceSet):
 
     def _export_as_report_rich_text(self, report_id: str) -> RichText:
         """
-        Convert the enote rich text to a report rich text.
+        Convert the note rich text to a report rich text.
 
         :return: the report rich text
         :rtype: RichText
@@ -576,19 +576,19 @@ class ENoteResource(ResourceSet):
                 # add the file manually
                 file_data = self._convert_file_for_report_rich_text(block.data, report_id)
                 report_rich_text.add_file(file_data)
-            elif block.type == RichTextBlockType.ENOTE_VIEW:
+            elif block.type == RichTextBlockType.NOTE_RESOURCE_VIEW:
                 # add the view manually
-                self._add_enote_view_to_report_rich_text(block.data, report_rich_text, report_id)
+                self._add_note_view_to_report_rich_text(block.data, report_rich_text, report_id)
             else:
                 report_rich_text.append_block(block)
 
         return report_rich_text
 
     def _convert_figure_for_report_rich_text(
-            self, enote_figure: RichTextFigureData, report_id: str) -> RichTextFigureData:
-        """Method to convert a enote figure to a report figure. It saves the figure in the report storage.
+            self, note_figure: RichTextFigureData, report_id: str) -> RichTextFigureData:
+        """Method to convert a note figure to a report figure. It saves the figure in the report storage.
         """
-        figure_file = self.get_file(enote_figure['filename'])
+        figure_file = self.get_file(note_figure['filename'])
         image: Image.Image = None
         try:
             image = Image.open(figure_file.path)
@@ -606,16 +606,16 @@ class ENoteResource(ResourceSet):
             "height": result.height,
             "naturalWidth": result.width,
             "naturalHeight": result.height,
-            "title": enote_figure['title'],
-            "caption": enote_figure['caption'],
+            "title": note_figure['title'],
+            "caption": note_figure['caption'],
         }
 
     def _convert_file_for_report_rich_text(
-            self, enote_file: RichTextFileData, report_id: str) -> RichTextFileData:
-        """Method to convert a enote figure to a report figure. It saves the figure in the report storage.
+            self, note_file: RichTextFileData, report_id: str) -> RichTextFileData:
+        """Method to convert a note figure to a report figure. It saves the figure in the report storage.
         """
         # retrieve the file
-        file = self.get_file(enote_file['name'])
+        file = self.get_file(note_file['name'])
 
         # get the file destination for the report
         destination_file_path = RichTextFileService.get_uploaded_file_path(RichTextObjectType.REPORT,
@@ -627,46 +627,46 @@ class ENoteResource(ResourceSet):
         # copy the file to the destination
         FileHelper.copy_file(file.path, destination_file_path)
 
-        # the object is the same as the enote
-        return enote_file
+        # the object is the same as the note
+        return note_file
 
-    def _add_enote_view_to_report_rich_text(self, enote_view: RichTextENoteResourceViewData,
-                                            report_rich_text: RichText, report_id: str) -> None:
+    def _add_note_view_to_report_rich_text(self, note_view: RichTextNoteResourceViewData,
+                                           report_rich_text: RichText, report_id: str) -> None:
 
         # retrieve the resource model from the resource
-        resource = self.get_resource(enote_view['sub_resource_key'])
+        resource = self.get_resource(note_view['sub_resource_key'])
 
         if resource.get_model_id() is not None:
             # add the view manually from the resource and config
-            view_data = self._convert_view_for_report_rich_text(enote_view)
+            view_data = self._convert_view_for_report_rich_text(note_view)
             report_rich_text.add_resource_view(view_data)
         else:
             # add the view manually from a json file (without the resource)
-            view_data_2 = self._convert_file_view_for_report_rich_text(enote_view, report_id)
+            view_data_2 = self._convert_file_view_for_report_rich_text(note_view, report_id)
             report_rich_text.add_file_view(view_data_2)
 
-    def _convert_view_for_report_rich_text(self, enote_view: RichTextENoteResourceViewData) -> RichTextResourceViewData:
-        """Method to convert a enote view to a report view.
+    def _convert_view_for_report_rich_text(self, note_view: RichTextNoteResourceViewData) -> RichTextResourceViewData:
+        """Method to convert a note view to a report view.
         """
         # retrieve the resource model from the resource
-        resource = self.get_resource(enote_view['sub_resource_key'])
+        resource = self.get_resource(note_view['sub_resource_key'])
 
         if not resource.get_model_id():
             raise ValueError(
-                f"The resource {enote_view['sub_resource_key']} of the note resource was not saved on the database.")
+                f"The resource {note_view['sub_resource_key']} of the note resource was not saved on the database.")
 
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
-            resource.get_model_id(), enote_view['view_method_name'], enote_view["view_config"], True)
+            resource.get_model_id(), note_view['view_method_name'], note_view["view_config"], True)
 
         return view_result.view_config.to_rich_text_resource_view()
 
     def _convert_file_view_for_report_rich_text(
-            self, enote_view: RichTextENoteResourceViewData, report_id: str) -> RichTextViewFileData:
+            self, note_view: RichTextNoteResourceViewData, report_id: str) -> RichTextViewFileData:
 
         # retrieve the resource model from the resource
-        resource = self.get_resource(enote_view['sub_resource_key'])
+        resource = self.get_resource(note_view['sub_resource_key'])
 
-        view_runner: ViewRunner = ViewRunner(resource, enote_view['view_method_name'], enote_view["view_config"])
+        view_runner: ViewRunner = ViewRunner(resource, note_view['view_method_name'], note_view["view_config"])
 
         view_ = view_runner.generate_view()
         # call the view to dict
@@ -684,25 +684,25 @@ class ENoteResource(ResourceSet):
                                                       view_result.to_dto())
 
         return {
-            "id": enote_view['id'],
+            "id": note_view['id'],
             "filename": filename,
-            "title": enote_view['title'],
-            "caption": enote_view['caption'],
+            "title": note_view['title'],
+            "caption": note_view['caption'],
         }
 
     ############################# Views #############################
 
     @view(view_type=RichTextView, human_name="View note resource", short_description="View note resource content", default_view=True)
-    def view_enote(self, config: ConfigParamsDict = None) -> RichTextView:
+    def view_note(self, config: ConfigParamsDict = None) -> RichTextView:
         return RichTextView(self.title, self._rich_text,
-                            object_type=RichTextObjectType.ENOTE,
+                            object_type=RichTextObjectType.NOTE_RESOURCE,
                             object_id=self.get_model_id())
 
     ############################# Constructors #############################
 
     @staticmethod
     def from_document_template(document_template: DocumentTemplate,
-                               title: str = None) -> "ENoteResource":
+                               title: str = None) -> "NoteResource":
         """Create a note resource from a document template.
 
         :param document_template: document template to create the note resource from
@@ -710,17 +710,17 @@ class ENoteResource(ResourceSet):
         :param title: title of the note resource. If none the title of document template is used, defaults to None
         :type title: str, optional
         :return: the note resource
-        :rtype: ENoteResource
+        :rtype: NoteResource
         """
-        enote = ENoteResource()
+        note = NoteResource()
         rich_text = RichText(document_template.content)
-        enote.append_advanced_rich_text(rich_text, RichTextObjectType.DOCUMENT_TEMPLATE, document_template.id)
-        enote.title = title or document_template.title
-        return enote
+        note.append_advanced_rich_text(rich_text, RichTextObjectType.DOCUMENT_TEMPLATE, document_template.id)
+        note.title = title or document_template.title
+        return note
 
     @staticmethod
     def from_report(report: Report,
-                    title: str = None) -> "ENoteResource":
+                    title: str = None) -> "NoteResource":
         """Create a note resource from a report.
 
         :param report: report to create the note resource from
@@ -728,10 +728,10 @@ class ENoteResource(ResourceSet):
         :param title: title of the note resource. If none the title of report is used, defaults to None
         :type title: str, optional
         :return: the note resource
-        :rtype: ENoteResource
+        :rtype: NoteResource
         """
-        enote = ENoteResource()
+        note = NoteResource()
         rich_text = RichText(report.content)
-        enote.append_advanced_rich_text(rich_text, RichTextObjectType.REPORT, report.id)
-        enote.title = title or report.title
-        return enote
+        note.append_advanced_rich_text(rich_text, RichTextObjectType.REPORT, report.id)
+        note.title = title or report.title
+        return note

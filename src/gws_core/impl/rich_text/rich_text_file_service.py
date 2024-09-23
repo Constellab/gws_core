@@ -162,8 +162,8 @@ class RichTextFileService():
 
     @classmethod
     def get_object_dir_path(cls, object_type: RichTextObjectType, object_id: str) -> str:
-        if object_type == RichTextObjectType.ENOTE:
-            raise BadRequestException('The object type ENOTE does ont use the file service')
+        if object_type == RichTextObjectType.NOTE_RESOURCE:
+            raise BadRequestException('The object type note resource does ont use the file service')
 
         return os.path.join(cls._get_dir_path(), object_type.value, object_id)
 

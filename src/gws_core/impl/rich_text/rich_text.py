@@ -7,9 +7,9 @@ from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.rich_text.rich_text_paragraph_text import \
     RichTextParagraphText
 from gws_core.impl.rich_text.rich_text_types import (
-    RichTextBlock, RichTextBlockType, RichTextDTO,
-    RichTextENoteResourceViewData, RichTextFigureData, RichTextFileData,
-    RichTextFormulaData, RichTextParagraphData, RichTextParagraphHeaderData,
+    RichTextBlock, RichTextBlockType, RichTextDTO, RichTextFigureData,
+    RichTextFileData, RichTextFormulaData, RichTextNoteResourceViewData,
+    RichTextParagraphData, RichTextParagraphHeaderData,
     RichTextParagraphHeaderLevel, RichTextParagraphListData,
     RichTextResourceViewData, RichTextTimestampData, RichTextViewFileData)
 from gws_core.resource.r_field.serializable_r_field import \
@@ -251,17 +251,19 @@ class RichText(SerializableObjectJson):
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
-    def add_enote_resource_view(self, resource_view: RichTextENoteResourceViewData,
-                                parameter_name: str = None) -> RichTextBlock:
+    def add_note_resource_view(self, resource_view: RichTextNoteResourceViewData,
+                               parameter_name: str = None) -> RichTextBlock:
         """
-        Add a view to a rich text content used in enote. This requires the enote to call the view
+        Add a view to a rich text content used in note. This requires the note to call the view
 
         :param resource_view: view to add
-        :type resource_view: RichTextENoteResourceViewData
+        :type resource_view: RichTextNoteResourceViewData
         :param parameter_name: name of the parameter where to insert the block. If None, the block is appended
         :type parameter_name: str, optional
         """
-        block: RichTextBlock = self.create_block(self.generate_id(), RichTextBlockType.ENOTE_VIEW, resource_view)
+        block: RichTextBlock = self.create_block(
+            self.generate_id(),
+            RichTextBlockType.NOTE_RESOURCE_VIEW, resource_view)
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 

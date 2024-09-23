@@ -14,15 +14,15 @@ from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
-from .enote_resource import ENoteResource
+from .note_resource import NoteResource
 
 
 @task_decorator(
-    unique_name="CreateENote",
+    unique_name="CreateNoteResource",
     human_name="Create note resource",
     short_description="Create an empty note resource or from a document template",
 )
-class CreateENote(Task):
+class CreateNoteResource(Task):
     """
     Create a note that can be exported to a report.
     """
@@ -30,30 +30,30 @@ class CreateENote(Task):
     input_specs: InputSpecs = InputSpecs()
 
     output_specs: OutputSpecs = OutputSpecs({
-        'enote': OutputSpec(ENoteResource, human_name='Note resource', short_description='New note resource')
+        'note': OutputSpec(NoteResource, human_name='Note resource', short_description='New note resource')
     })
 
     config_specs: ConfigSpecs = {
         'template': DocumentTemplateParam(optional=True),
         'title': StrParam(human_name='Title', short_description='Title of the note resource', default_value='New note resource'),
-        'enote': RichTextParam(human_name='Note resource', short_description='Note resource content, this overrides the template',
-                               optional=True)
+        'note': RichTextParam(human_name='Note resource', short_description='Note resource content, this overrides the template',
+                              optional=True)
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         template: DocumentTemplate = params['template']
         title: str = params['title']
-        enote_param: RichText = params['enote']
+        note_param: RichText = params['note']
 
-        enote_resource = ENoteResource()
-        enote_resource.title = title or 'New note resource'
+        note_resource = NoteResource()
+        note_resource.title = title or 'New note resource'
 
-        if enote_param and not enote_param.is_empty():
-            enote_resource.append_basic_rich_text(enote_param)
+        if note_param and not note_param.is_empty():
+            note_resource.append_basic_rich_text(note_param)
         elif template is not None:
-            enote_resource = ENoteResource.from_document_template(template,
-                                                                  title=title if title else None)
+            note_resource = NoteResource.from_document_template(template,
+                                                                title=title if title else None)
 
         return {
-            'enote': enote_resource
+            'note': note_resource
         }

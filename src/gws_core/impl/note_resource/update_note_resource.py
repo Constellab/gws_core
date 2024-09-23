@@ -13,43 +13,43 @@ from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
-from .enote_resource import ENoteResource
+from .note_resource import NoteResource
 
 
 @task_decorator(
-    unique_name="UpdatENote",
+    unique_name="UpdatNoteResource",
     human_name="Update note resource",
     short_description="Append content to an existing note resource",
 )
-class UpdatENote(Task):
+class UpdatNoteResource(Task):
     """
     Append content to an existing note resource.
     """
 
     input_specs: InputSpecs = InputSpecs({
-        'enote': InputSpec(ENoteResource, human_name='Note resource')
+        'note': InputSpec(NoteResource, human_name='Note resource')
     })
 
     output_specs: OutputSpecs = OutputSpecs({
-        'enote': OutputSpec(ENoteResource, human_name='Note resource')
+        'note': OutputSpec(NoteResource, human_name='Note resource')
     })
 
     config_specs: ConfigSpecs = {
         'section-title': StrParam(optional=True, human_name='Section title',
                                   short_description='Title of the new section'),
-        'enote': RichTextParam(human_name='Note resource', short_description='Content to append to the input note resource')
+        'note': RichTextParam(human_name='Note resource', short_description='Content to append to the input note resource')
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        enote_resource: ENoteResource = inputs['enote']
+        note_resource: NoteResource = inputs['note']
         section_title: str = params['section-title']
-        enote_param: RichText = params['enote']
+        note_param: RichText = params['note']
 
         if section_title is not None:
-            enote_resource.add_header(section_title, RichTextParagraphHeaderLevel.HEADER_1)
+            note_resource.add_header(section_title, RichTextParagraphHeaderLevel.HEADER_1)
 
-        enote_resource.append_basic_rich_text(enote_param)
+        note_resource.append_basic_rich_text(note_param)
 
         return {
-            'enote': enote_resource
+            'note': note_resource
         }

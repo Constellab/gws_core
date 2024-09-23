@@ -150,9 +150,6 @@ from .experiment.queue import Queue as Queue
 from .experiment.queue_service import QueueService as QueueService
 # Folder
 from .folder.space_folder import SpaceFolder as SpaceFolder
-# Extension
-# Impl > ENote
-from .impl.enote.enote_resource import ENoteResource as ENoteResource
 # Impl > File
 from .impl.file.file import File as File
 from .impl.file.file_helper import FileHelper as FileHelper
@@ -179,6 +176,9 @@ from .impl.live.r_conda_live_task import RCondaLiveTask as RCondaLiveTask
 from .impl.live.r_mamba_live_task import RMambaLiveTask as RMambaLiveTask
 # Impl > Network
 from .impl.network.network_view import NetworkView as NetworkView
+# Extension
+# Impl > Note resource
+from .impl.note_resource.note_resource import NoteResource as NoteResource
 # Impl > open ai
 from .impl.openai.open_ai_chat import OpenAiChat as OpenAiChat
 from .impl.openai.open_ai_chat_param import OpenAiChatParam as OpenAiChatParam

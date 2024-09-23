@@ -11,7 +11,7 @@ class RichTextBlockType(Enum):
     FIGURE = 'figure'
     RESOURCE_VIEW = 'resourceView'  # view of a resource
     FILE_VIEW = 'fileView'  # independant view stored in a file (without resource)
-    ENOTE_VIEW = 'enoteView'  # view of a resource in an enote
+    NOTE_RESOURCE_VIEW = 'noteResourceView'  # view of a resource in an note
     PARAGRAPH = 'paragraph'
     HEADER = 'header'
     QUOTE = 'quote'
@@ -46,7 +46,7 @@ class RichTextObjectType(Enum):
     """
     REPORT = 'report'
     DOCUMENT_TEMPLATE = 'document_template'
-    ENOTE = 'enote'
+    NOTE_RESOURCE = 'note_resource'
 
 
 ################################ BLOCK DATA ################################
@@ -136,10 +136,10 @@ class RichTextResourceViewData(TypedDict):
     caption: Optional[str]
 
 
-class RichTextENoteResourceViewData(TypedDict):
-    """Object representing a resource view in an enote rich text"""
+class RichTextNoteResourceViewData(TypedDict):
+    """Object representing a resource view in an note rich text"""
     id: str
-    # key in the enote of the sub resource to call view on
+    # key in the note of the sub resource to call view on
     sub_resource_key: str
     view_method_name: str
     view_config: Dict[str, Any]
