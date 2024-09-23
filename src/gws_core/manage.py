@@ -6,7 +6,6 @@ from copy import Error
 from typing import List
 from unittest.suite import TestSuite
 
-from gws_core.brick.brick_service import BrickService
 from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.lab.system_service import SystemService

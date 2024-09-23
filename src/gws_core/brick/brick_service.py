@@ -6,11 +6,11 @@ import traceback
 from time import time
 from typing import Any, Dict, List, Optional
 
-from typing_extensions import TypedDict
-
 from gws_core.brick.brick_dto import BrickInfo, BrickMessageStatus
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.utils.settings import Settings
+from typing_extensions import TypedDict
 
 from ..core.utils.logger import Logger
 from ..core.utils.utils import Utils
@@ -224,7 +224,23 @@ class BrickService():
             raise Exception(f"Cannot find brick {brick_name}")
 
     @classmethod
-    def get_brick_folder(cls, brick_name: str) -> str:
-        """Get the folder of the brick
+    def find_brick_folder(cls, brick_name: str) -> str:
+        """Find the folder of the brick by searching in the user bricks folder and the system bricks folder
         """
-        return cls.get_parent_brick_folder(cls.get_brick_src_folder(brick_name))
+        user_bricks_folder = Settings.get_user_bricks_folder()
+        sys_bricks_folder = Settings.get_sys_bricks_folder()
+
+        brick_path: str
+
+        if os.path.exists(os.path.join(user_bricks_folder, brick_name)):
+            brick_path = os.path.join(user_bricks_folder, brick_name)
+        elif os.path.exists(os.path.join(sys_bricks_folder, brick_name)):
+            brick_path = os.path.join(sys_bricks_folder, brick_name)
+        else:
+            raise Exception(
+                f"Cannot find brick {brick_name} in bricks folder : '{user_bricks_folder}' or '{sys_bricks_folder}'")
+
+        if not cls.folder_is_brick(brick_path):
+            raise Exception(f"The folder '{brick_path}' found for brick '{brick_name}' is not a brick")
+
+        return brick_path

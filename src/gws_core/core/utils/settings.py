@@ -244,6 +244,10 @@ class Settings():
         return os.path.join(cls._get_system_folder(), ".env")
 
     @classmethod
+    def get_sys_bricks_folder(cls) -> str:
+        return os.path.join(cls._get_system_folder(), "bricks")
+
+    @classmethod
     def get_gws_core_db_config(cls) -> DbConfig:
         return {
             "host":  os.environ.get("GWS_CORE_DB_HOST"),

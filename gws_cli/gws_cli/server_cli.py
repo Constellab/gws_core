@@ -3,10 +3,9 @@ from enum import Enum
 from typing import List
 
 import typer
-from typing_extensions import Annotated
-
 from gws_core import BrickService
 from gws_core.manage import AppManager
+from typing_extensions import Annotated
 
 app = typer.Typer()
 
@@ -48,7 +47,7 @@ def test(
 
     brick_dir: str
     if brick_name:
-        brick_dir = BrickService.get_brick_folder(brick_name)
+        brick_dir = BrickService.find_brick_folder(brick_name)
         print(f"Running tests for brick '{brick_dir}'")
     else:
         print("No brick dir provided. Using current directory.")
