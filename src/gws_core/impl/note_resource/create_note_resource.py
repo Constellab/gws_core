@@ -24,7 +24,7 @@ from .note_resource import NoteResource
 )
 class CreateNoteResource(Task):
     """
-    Create a note that can be exported to a report.
+    Create a note that can be exported to a note.
     """
 
     input_specs: InputSpecs = InputSpecs()

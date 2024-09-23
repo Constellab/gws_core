@@ -162,7 +162,7 @@ class EntityTagList():
     def support_multiple_origins(self) -> bool:
         """Return true if the entity support multiple origins for a tag
         """
-        return self._entity_type in [EntityType.REPORT]
+        return self._entity_type in [EntityType.NOTE]
 
     #################################### CLASS METHODS ####################################
 

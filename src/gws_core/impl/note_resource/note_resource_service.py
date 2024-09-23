@@ -15,21 +15,21 @@ class NoteResourceService():
     def get_file_path(cls, note_resource_model_id: str, filename: str) -> str:
         resource_model = ResourceModel.get_by_id_and_check(note_resource_model_id)
 
-        note: Resource = resource_model.get_resource()
+        note_resource: Resource = resource_model.get_resource()
 
-        if not isinstance(note, NoteResource):
+        if not isinstance(note_resource, NoteResource):
             raise BadRequestException('The resource is not an note')
 
-        return note.get_file_path(filename)
+        return note_resource.get_file_path(filename)
 
     @classmethod
     def call_view_method(cls, note_resource_model_id: str, sub_resource_key: str,
                          view_name: str, config: ConfigParamsDict) -> CallViewResultDTO:
         resource_model = ResourceModel.get_by_id_and_check(note_resource_model_id)
 
-        note: Resource = resource_model.get_resource()
+        note_resource: Resource = resource_model.get_resource()
 
-        if not isinstance(note, NoteResource):
+        if not isinstance(note_resource, NoteResource):
             raise BadRequestException('The resource is not an note')
 
-        return note.call_view_on_resource(sub_resource_key, view_name, config)
+        return note_resource.call_view_on_resource(sub_resource_key, view_name, config)

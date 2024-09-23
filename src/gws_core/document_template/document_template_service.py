@@ -4,12 +4,12 @@ from peewee import ModelSelect
 
 from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.document_template.document_template_search_builder import \
-    ReportTemplateSearchBuilder
+    NoteTemplateSearchBuilder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
                                                      RichTextObjectType)
-from gws_core.report.report import Report
+from gws_core.note.note import Note
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
@@ -28,13 +28,13 @@ class DocumentTemplateService():
 
     @classmethod
     @transaction()
-    def create_from_report(cls, report_id: str) -> DocumentTemplate:
-        report: Report = Report.get_by_id_and_check(report_id)
+    def create_from_note(cls, note_id: str) -> DocumentTemplate:
+        note: Note = Note.get_by_id_and_check(note_id)
 
-        document_template = cls._create(report.title, report.content)
+        document_template = cls._create(note.title, note.content)
 
-        # copy the storage of the report to the document template
-        RichTextFileService.copy_object_dir(RichTextObjectType.REPORT, report_id,
+        # copy the storage of the note to the document template
+        RichTextFileService.copy_object_dir(RichTextObjectType.NOTE, note_id,
                                             RichTextObjectType.DOCUMENT_TEMPLATE,
                                             document_template.id)
 
@@ -70,10 +70,10 @@ class DocumentTemplateService():
 
     @classmethod
     @transaction()
-    def update_content(cls, doc_id: str, report_content: RichTextDTO) -> DocumentTemplate:
+    def update_content(cls, doc_id: str, note_content: RichTextDTO) -> DocumentTemplate:
         document: DocumentTemplate = cls.get_by_id_and_check(doc_id)
 
-        document.content = report_content
+        document.content = note_content
 
         return document.save()
 
@@ -107,7 +107,7 @@ class DocumentTemplateService():
                page: int = 0,
                number_of_items_per_page: int = 20) -> Paginator[DocumentTemplate]:
 
-        search_builder: SearchBuilder = ReportTemplateSearchBuilder()
+        search_builder: SearchBuilder = NoteTemplateSearchBuilder()
 
         model_select: ModelSelect = search_builder.add_search_params(search).build_search()
         return Paginator(

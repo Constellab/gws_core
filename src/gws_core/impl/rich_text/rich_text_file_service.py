@@ -30,18 +30,18 @@ class RichTextUploadFileResultDTO(BaseModelDTO):
 
 
 class RichTextFileService():
-    """Service to store file assosicated to a rich text (report, document template)
+    """Service to store file assosicated to a rich text (note, document template)
 
-    Files are stored in the 'report' directory in the data directory
-    For each object (report, document template), a directory (from id) is created to store the files
+    Files are stored in the 'note' directory in the data directory
+    For each object (note, document template), a directory (from id) is created to store the files
 
-    Path example : data_dir/report/report/{report_id}/filename
+    Path example : data_dir/note/note/{note_id}/filename
 
     :return: [description]
     :rtype: [type]
     """
 
-    MAIN_DIR = 'report'
+    MAIN_DIR = 'note'
 
     FILE_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
 
@@ -69,7 +69,7 @@ class RichTextFileService():
     def save_image(cls, object_type: RichTextObjectType, object_id: str,
                    image: Image.Image, extension: str) -> RichTextUploadImageResultDTO:
         """
-        Method to save the image of a report to the file system
+        Method to save the image of a note to the file system
 
         :param image: _description_
         :type image: Image.Image

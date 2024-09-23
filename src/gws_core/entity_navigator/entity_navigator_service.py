@@ -13,13 +13,13 @@ from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_exception import (
     ResourceUnknownUsedInAnotherExperimentException,
-    ResourceUnknownUsedInReportException)
+    ResourceUnknownUsedInNoteException)
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.note.note import Note
+from gws_core.note.note_service import NoteService
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.protocol.protocol_update import ProtocolUpdate
-from gws_core.report.report import Report
-from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 
@@ -124,9 +124,9 @@ class EntityNavigatorService:
                 raise ResourceUnknownUsedInAnotherExperimentException(
                     experiments[0].get_short_name(), experiments[0].id)
 
-            reports: List[Report] = reset_result.impacted_entities.get_entity_by_type(EntityType.REPORT)
-            if len(reports) > 0:
-                raise ResourceUnknownUsedInReportException(reports[0].title, reports[0].id)
+            notes: List[Note] = reset_result.impacted_entities.get_entity_by_type(EntityType.NOTE)
+            if len(notes) > 0:
+                raise ResourceUnknownUsedInNoteException(notes[0].title, notes[0].id)
 
             raise BadRequestException(
                 "Can't reset the process because the experiment output is used elsewhere")
@@ -188,7 +188,7 @@ class EntityNavigatorService:
         :rtype: ImpactResult
         """
         next_entities = entity_navigator.get_next_entities_recursive(
-            [EntityType.EXPERIMENT, EntityType.REPORT], include_current_entities=include_current_entities)
+            [EntityType.EXPERIMENT, EntityType.NOTE], include_current_entities=include_current_entities)
 
         return ImpactResult(
             impacted_entities=next_entities
@@ -199,11 +199,11 @@ class EntityNavigatorService:
     def _delete_next_entities(cls, entities: NavigableEntitySet) -> None:
         """Delete the entities
         """
-        cls._check_validated_entities(entities, [EntityType.EXPERIMENT, EntityType.REPORT])
+        cls._check_validated_entities(entities, [EntityType.EXPERIMENT, EntityType.NOTE])
 
-        reports = entities.get_entities_from_deepest_level(EntityType.REPORT)
-        for report in reports:
-            ReportService.delete(report.id)
+        notes = entities.get_entities_from_deepest_level(EntityType.NOTE)
+        for note in notes:
+            NoteService.delete(note.id)
 
         # TODO to improve because this is not perfect if I have 3 experiment.
         # Exp 1: output --> A

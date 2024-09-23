@@ -9,10 +9,10 @@ from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.experiment.experiment_zipper import (ZipExperiment,
                                                    ZipExperimentInfo)
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.note.note import NoteExperiment
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.protocol_template.protocol_template_factory import \
     ProtocolTemplateFactory
-from gws_core.report.report import ReportExperiment
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.plug import Sink
 from gws_core.task.task_input_model import TaskInputModel
@@ -145,12 +145,12 @@ class ExperimentService():
 
     @classmethod
     def update_experiment_folder(cls, experiment_id: str, folder_id: Optional[str],
-                                 check_report: bool = True) -> Experiment:
+                                 check_note: bool = True) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         experiment.check_is_updatable()
 
-        experiment = cls._update_experiment_folder(experiment, folder_id, check_reports=check_report)
+        experiment = cls._update_experiment_folder(experiment, folder_id, check_notes=check_note)
 
         ActivityService.add_or_update_async(ActivityType.UPDATE,
                                             object_type=ActivityObjectType.EXPERIMENT,
@@ -162,7 +162,7 @@ class ExperimentService():
     @transaction()
     def _update_experiment_folder(cls, experiment: Experiment,
                                   new_folder_id: Optional[str],
-                                  check_reports: bool) -> Experiment:
+                                  check_notes: bool) -> Experiment:
         folder_changed = False
         folder_removed = False
         old_folder: SpaceFolder = experiment.folder
@@ -199,7 +199,7 @@ class ExperimentService():
         if folder_removed:
             if experiment.last_sync_at is not None:
                 cls._unsynchronize_with_space(experiment, old_folder.id,
-                                              check_reports=check_reports)
+                                              check_notes=check_notes)
 
         return experiment
 
@@ -291,12 +291,12 @@ class ExperimentService():
     @classmethod
     @transaction()
     def _unsynchronize_with_space(cls, experiment: Experiment, folder_id: str,
-                                  check_reports: bool) -> Experiment:
+                                  check_notes: bool) -> Experiment:
 
-        if check_reports:
-            synced_associated_reports = ReportExperiment.find_synced_reports_by_experiment(experiment.id)
+        if check_notes:
+            synced_associated_notes = NoteExperiment.find_synced_notes_by_experiment(experiment.id)
 
-            if len(synced_associated_reports) > 0:
+            if len(synced_associated_notes) > 0:
                 raise BadRequestException(
                     "You can't unsynchronize an experiment that has associated notes synced in space. Please unsync the notes first.")
 

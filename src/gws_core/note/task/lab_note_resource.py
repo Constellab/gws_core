@@ -5,8 +5,8 @@ from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextObjectType
 from gws_core.impl.rich_text.rich_text_view import RichTextView
 from gws_core.model.typing_style import TypingStyle
-from gws_core.report.report import Report
-from gws_core.report.report_service import ReportService
+from gws_core.note.note import Note
+from gws_core.note.note_service import NoteService
 from gws_core.resource.r_field.primitive_r_field import StrRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
@@ -15,28 +15,28 @@ from gws_core.resource.view.view_decorator import view
 from gws_core.resource.view.view_result import CallViewResult
 
 
-@resource_decorator("ReportResource", human_name="Report resource", short_description="Report resource",
-                    style=TypingStyle.material_icon("report", background_color="#735f32"))
-class ReportResource(Resource):
+@resource_decorator("LabNoteResource", human_name="Lab note resource", short_description="Lab note resource",
+                    style=TypingStyle.material_icon("note", background_color="#735f32"))
+class LabNoteResource(Resource):
 
-    report_id: str = StrRField()
+    note_id: str = StrRField()
 
-    _report: Report = None
+    _note: Note = None
     _content: RichText = None
 
-    def __init__(self, report_id: str = None):
+    def __init__(self, note_id: str = None):
         super().__init__()
-        self.report_id = report_id
+        self.note_id = note_id
 
     def get_content(self) -> RichText:
         if self._content is None:
-            self._content = self.get_report().get_content_as_rich_text()
+            self._content = self.get_note().get_content_as_rich_text()
         return self._content
 
-    def get_report(self) -> Report:
-        if self._report is None:
-            self._report = Report.get_by_id_and_check(self.report_id)
-        return self._report
+    def get_note(self) -> Note:
+        if self._note is None:
+            self._note = Note.get_by_id_and_check(self.note_id)
+        return self._note
 
     def replace_variable(self, variable_name: str, value: str) -> None:
         rich_text: RichText = self.get_content()
@@ -58,15 +58,15 @@ class ReportResource(Resource):
         self._content = rich_text
 
     def update_title(self, title: str) -> None:
-        self._report = ReportService.update_title(self.report_id, title)
+        self._note = NoteService.update_title(self.note_id, title)
 
     def save(self):
-        report = ReportService.update_content(self.report_id, self.get_content().get_content())
-        self._content = report.get_content_as_rich_text()
+        note = NoteService.update_content(self.note_id, self.get_content().get_content())
+        self._content = note.get_content_as_rich_text()
 
-    @view(view_type=RichTextView, human_name="View report", short_description="View report content", default_view=True)
-    def view_report(self, config: ConfigParamsDict = None) -> RichTextView:
-        return RichTextView(self.get_report().title,
+    @view(view_type=RichTextView, human_name="View note", short_description="View note content", default_view=True)
+    def view_note(self, config: ConfigParamsDict = None) -> RichTextView:
+        return RichTextView(self.get_note().title,
                             self.get_content(),
-                            object_type=RichTextObjectType.REPORT,
-                            object_id=self.report_id)
+                            object_type=RichTextObjectType.NOTE,
+                            object_id=self.note_id)

@@ -7,8 +7,8 @@ from gws_core import (BaseTestCase, ConfigParams, IntParam, JSONView, Resource,
                       view)
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.experiment.experiment_interface import IExperiment
-from gws_core.report.report_dto import ReportSaveDTO
-from gws_core.report.report_service import ReportService
+from gws_core.note.note_dto import NoteSaveDTO
+from gws_core.note.note_service import NoteService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.any_view import AnyView
@@ -215,10 +215,10 @@ class TestView(BaseTestCase):
         views_to_delete = ViewConfigService.get_old_views_to_delete()
         self.assertEqual(len([x for x in views_to_delete if x.id == view_config.id]), 0)
 
-        # unflag the view and associate it to a report and check that it is not listed in the views to delete
+        # unflag the view and associate it to a note and check that it is not listed in the views to delete
         ViewConfigService.update_favorite(view_config.id, False)
-        report_1 = ReportService.create(ReportSaveDTO(title='test_report'))
-        ReportService.add_view_to_content(report_1.id, view_config.id)
+        note_1 = NoteService.create(NoteSaveDTO(title='test_note'))
+        NoteService.add_view_to_content(note_1.id, view_config.id)
         views_to_delete = ViewConfigService.get_old_views_to_delete()
         self.assertEqual(len([x for x in views_to_delete if x.id == view_config.id]), 0)
 

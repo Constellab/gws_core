@@ -14,7 +14,7 @@ from gws_core.entity_navigator.entity_navigator_type import (EntityType,
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
-from gws_core.report.report_dto import ReportDTO, ReportFullDTO
+from gws_core.note.note_dto import NoteDTO, NoteFullDTO
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
@@ -27,7 +27,7 @@ from ..lab.lab_config_model import LabConfigModel
 
 
 @final
-class Report(ModelWithUser, ModelWithFolder, NavigableEntity):
+class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
     title = CharField()
 
     content: RichTextDTO = BaseDTOField(RichTextDTO, null=True)
@@ -46,7 +46,7 @@ class Report(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     is_archived = BooleanField(default=False, index=True)
 
-    _table_name = 'gws_report'
+    _table_name = 'gws_note'
 
     def get_content_as_rich_text(self) -> RichText:
         return RichText(self.content)
@@ -55,17 +55,17 @@ class Report(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.content = rich_text.get_content()
 
     def check_is_updatable(self) -> None:
-        """Throw an error if the report is not updatable
+        """Throw an error if the note is not updatable
         """
         # check experiment status
         if self.is_validated:
-            raise BadRequestException(GWSException.REPORT_VALIDATED.value, GWSException.REPORT_VALIDATED.name)
+            raise BadRequestException(GWSException.NOTE_VALIDATED.value, GWSException.NOTE_VALIDATED.name)
         if self.is_archived:
             raise BadRequestException(
                 detail="The note is archived, please unachived it to update it")
 
-    def to_dto(self) -> ReportDTO:
-        return ReportDTO(
+    def to_dto(self) -> NoteDTO:
+        return NoteDTO(
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
@@ -81,8 +81,8 @@ class Report(ModelWithUser, ModelWithFolder, NavigableEntity):
             is_archived=self.is_archived
         )
 
-    def to_full_dto(self) -> ReportFullDTO:
-        return ReportFullDTO(
+    def to_full_dto(self) -> NoteFullDTO:
+        return NoteFullDTO(
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
@@ -105,7 +105,7 @@ class Report(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.validated_by = CurrentUserService.get_and_check_current_user()
         self.lab_config = LabConfigModel.get_current_config()
 
-    def archive(self, archive: bool) -> 'Report':
+    def archive(self, archive: bool) -> 'Note':
 
         if self.is_archived == archive:
             return self
@@ -116,17 +116,17 @@ class Report(ModelWithUser, ModelWithFolder, NavigableEntity):
         return self.title
 
     def get_entity_type(self) -> EntityType:
-        return EntityType.REPORT
+        return EntityType.NOTE
 
     def entity_is_validated(self) -> bool:
         return self.is_validated
 
     class Meta:
-        table_name = 'gws_report'
+        table_name = 'gws_note'
 
 
-class ReportExperiment(BaseModel):
-    """Many to Many relation between Report <-> Experiment
+class NoteExperiment(BaseModel):
+    """Many to Many relation between Note <-> Experiment
 
     :param BaseModel: [description]
     :type BaseModel: [type]
@@ -135,45 +135,45 @@ class ReportExperiment(BaseModel):
     """
 
     experiment = ForeignKeyField(Experiment, on_delete='CASCADE')
-    report = ForeignKeyField(Report, on_delete='CASCADE')
+    note = ForeignKeyField(Note, on_delete='CASCADE')
 
-    _table_name = 'gws_report_experiment'
+    _table_name = 'gws_note_experiment'
 
     ############################################# CLASS METHODS ########################################
 
     @classmethod
-    def create_obj(cls, experiment: Experiment, report: Report) -> 'ReportExperiment':
-        report_exp: 'ReportExperiment' = ReportExperiment()
-        report_exp.experiment = experiment
-        report_exp.report = report
-        return report_exp
+    def create_obj(cls, experiment: Experiment, note: Note) -> 'NoteExperiment':
+        note_exp: 'NoteExperiment' = NoteExperiment()
+        note_exp.experiment = experiment
+        note_exp.note = note
+        return note_exp
 
     @classmethod
-    def delete_obj(cls, experiment_id: str, report_id: str) -> None:
-        return cls.delete().where((cls.experiment == experiment_id) & (cls.report == report_id)).execute()
+    def delete_obj(cls, experiment_id: str, note_id: str) -> None:
+        return cls.delete().where((cls.experiment == experiment_id) & (cls.note == note_id)).execute()
 
     @classmethod
-    def find_by_pk(cls, experiment_id: str, report_id: str) -> ModelSelect:
-        return cls.select().where((cls.experiment == experiment_id) & (cls.report == report_id))
+    def find_by_pk(cls, experiment_id: str, note_id: str) -> ModelSelect:
+        return cls.select().where((cls.experiment == experiment_id) & (cls.note == note_id))
 
     @classmethod
-    def find_reports_by_experiments(cls, experiment_id: List[str]) -> List[Report]:
-        list_: List[ReportExperiment] = list(cls.select().where(cls.experiment.in_(experiment_id)))
+    def find_notes_by_experiments(cls, experiment_id: List[str]) -> List[Note]:
+        list_: List[NoteExperiment] = list(cls.select().where(cls.experiment.in_(experiment_id)))
 
-        return [x.report for x in list_]
+        return [x.note for x in list_]
 
     @classmethod
-    def find_synced_reports_by_experiment(cls, experiment_id: str) -> List[Report]:
-        list_: List[ReportExperiment] = list(cls.select().where(
-            (cls.experiment == experiment_id) & (cls.report.last_sync_at.is_null(False)))
-            .join(Report)
+    def find_synced_notes_by_experiment(cls, experiment_id: str) -> List[Note]:
+        list_: List[NoteExperiment] = list(cls.select().where(
+            (cls.experiment == experiment_id) & (cls.note.last_sync_at.is_null(False)))
+            .join(Note)
         )
 
-        return [x.report for x in list_]
+        return [x.note for x in list_]
 
     @classmethod
-    def find_experiments_by_report(cls, report_id: str) -> List[Experiment]:
-        list_: List[ReportExperiment] = list(cls.select().where(cls.report == report_id))
+    def find_experiments_by_note(cls, note_id: str) -> List[Experiment]:
+        list_: List[NoteExperiment] = list(cls.select().where(cls.note == note_id))
 
         return [x.experiment for x in list_]
 
@@ -187,5 +187,5 @@ class ReportExperiment(BaseModel):
         return super().save(*args, force_insert=True, **kwargs)
 
     class Meta:
-        table_name = 'gws_report_experiment'
-        primary_key = CompositeKey("experiment", "report")
+        table_name = 'gws_note_experiment'
+        primary_key = CompositeKey("experiment", "note")

@@ -8,7 +8,7 @@ from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment import Experiment
 from gws_core.folder.model_with_folder import ModelWithFolder
-from gws_core.report.report import Report
+from gws_core.note.note import Note
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.space.space_service import SpaceService
 
@@ -18,7 +18,7 @@ from .space_folder_dto import ExternalSpaceFolder
 
 class SpaceFolderService():
 
-    entity_with_folders: List[Type[ModelWithFolder]] = [Experiment, Report, ResourceModel]
+    entity_with_folders: List[Type[ModelWithFolder]] = [Experiment, Note, ResourceModel]
 
     @classmethod
     def get_folder_trees(cls) -> List[SpaceFolder]:
@@ -113,10 +113,10 @@ class SpaceFolderService():
             raise BadRequestException(detail=GWSException.DELETE_FOLDER_WITH_EXPERIMENTS.value,
                                       unique_code=GWSException.DELETE_FOLDER_WITH_EXPERIMENTS.name)
 
-        # check if one of the report is attached to the folder
-        if Report.select().where((Report.folder.in_(folders)) & (Report.last_sync_at.is_null(False))).count() > 0:
-            raise BadRequestException(detail=GWSException.DELETE_FOLDER_WITH_REPORTS.value,
-                                      unique_code=GWSException.DELETE_FOLDER_WITH_REPORTS.name)
+        # check if one of the note is attached to the folder
+        if Note.select().where((Note.folder.in_(folders)) & (Note.last_sync_at.is_null(False))).count() > 0:
+            raise BadRequestException(detail=GWSException.DELETE_FOLDER_WITH_NOTES.value,
+                                      unique_code=GWSException.DELETE_FOLDER_WITH_NOTES.name)
 
         # Clear all objects that are using the folder
         for entity in cls.entity_with_folders:

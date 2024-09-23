@@ -154,7 +154,7 @@ class ViewType(Enum):
             return "Unknown"
 
 
-# List of view type that cannot be used in a report
-exluded_views_in_report = [
+# List of view type that cannot be used in a note
+exluded_views_in_note = [
     ViewType.VIEW, ViewType.FOLDER, ViewType.RESOURCES_LIST_VIEW, ViewType.EMPTY,
     ViewType.RICH_TEXT, ViewType.STREAMLIT, ViewType.AUDIO]

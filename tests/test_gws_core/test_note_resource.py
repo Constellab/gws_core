@@ -19,8 +19,8 @@ from gws_core.impl.rich_text.rich_text_types import (RichTextBlockType,
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
-from gws_core.report.report import Report
-from gws_core.report.task.report_resource import ReportResource
+from gws_core.note.note import Note
+from gws_core.note.task.lab_note_resource import LabNoteResource
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
@@ -121,7 +121,7 @@ class TestNoteResource(BaseTestCase):
         self.assertEqual(updated_note.get_block_at_index(2).type, RichTextBlockType.PARAGRAPH)
         self.assertEqual(updated_note.get_block_at_index(2).data["text"], "This is a new paragraph")
 
-    def test_generate_report_from_note(self):
+    def test_generate_note_from_note(self):
         note = NoteResource(title="My custom note")
         note.add_paragraph("This is a test paragraph")
         note.add_figure_file(self._create_note_image(), title='test', create_new_resource=False)
@@ -131,25 +131,25 @@ class TestNoteResource(BaseTestCase):
         robot = Robot.empty()
         note.add_default_view_from_resource(robot, title='view', create_new_resource=True)
 
-        # Test generate report from note resource
+        # Test generate note from note resource
         task_runner = TaskRunner(GenerateLabNote, inputs={
             "note": note
         })
 
         outputs = task_runner.run()
 
-        report: ReportResource = outputs['report']
-        self.assertIsInstance(report, ReportResource)
-        self.assertEqual(report.get_content().get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(report.get_content().get_block_at_index(0).data["text"], "This is a test paragraph")
-        self.assertEqual(report.get_content().get_block_at_index(1).type, RichTextBlockType.FIGURE)
+        note: LabNoteResource = outputs['note']
+        self.assertIsInstance(note, LabNoteResource)
+        self.assertEqual(note.get_content().get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
+        self.assertEqual(note.get_content().get_block_at_index(0).data["text"], "This is a test paragraph")
+        self.assertEqual(note.get_content().get_block_at_index(1).type, RichTextBlockType.FIGURE)
         # the first view was attached to a resource, it should generate a RESOURCE_VIEW
-        self.assertEqual(report.get_content().get_block_at_index(2).type, RichTextBlockType.RESOURCE_VIEW)
+        self.assertEqual(note.get_content().get_block_at_index(2).type, RichTextBlockType.RESOURCE_VIEW)
         # the second view was not attached to a resource, it should generate a FILE_VIEW
-        self.assertEqual(report.get_content().get_block_at_index(3).type, RichTextBlockType.FILE_VIEW)
+        self.assertEqual(note.get_content().get_block_at_index(3).type, RichTextBlockType.FILE_VIEW)
 
-        report_db = Report.get_by_id_and_check(report.report_id)
-        self.assertIsNotNone(report_db)
+        note_db = Note.get_by_id_and_check(note.note_id)
+        self.assertIsNotNone(note_db)
 
     def test_merge_note(self):
         # Test merge note
@@ -205,7 +205,7 @@ class TestNoteResource(BaseTestCase):
         return File(filename)
 
     def _create_document_template_image(self, document_template_id: str, title: str = None) -> RichTextFigureData:
-        # create an image with a red pixel and save it in report storage
+        # create an image with a red pixel and save it in note storage
         img = self._create_image()
 
         # add the image to the template

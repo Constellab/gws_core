@@ -28,13 +28,14 @@ from gws_core.lab.monitor.monitor import Monitor
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
+from gws_core.note.note import Note, NoteExperiment
+from gws_core.note.note_view_model import NoteViewModel
 from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol_template.protocol_template import ProtocolTemplate
 from gws_core.protocol_template.protocol_template_factory import \
     ProtocolTemplateFactory
-from gws_core.report.report import Report
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -98,15 +99,15 @@ class Migration033(BrickMigration):
         migrator.migrate()
 
 
-@brick_migration('0.3.8', short_description='Create lab config column in report table')
+@brick_migration('0.3.8', short_description='Create lab config column in note table')
 class Migration038(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        migrator: SqlMigrator = SqlMigrator(Report.get_db())
+        migrator: SqlMigrator = SqlMigrator(Note.get_db())
 
-        migrator.add_column_if_not_exists(Report, Report.lab_config)
+        migrator.add_column_if_not_exists(Note, Note.lab_config)
         migrator.migrate()
 
 
@@ -244,7 +245,7 @@ class Migration0312(BrickMigration):
                 Logger.log_exception_stack_trace(err)
 
 
-@brick_migration('0.3.13', short_description='Update orgin values of resources, add show_in_databox and generated_by_port_name columns. Add validated info to experiment and report')
+@brick_migration('0.3.13', short_description='Update orgin values of resources, add show_in_databox and generated_by_port_name columns. Add validated info to experiment and note')
 class Migration0313(BrickMigration):
 
     @classmethod
@@ -257,8 +258,8 @@ class Migration0313(BrickMigration):
             ResourceModel, ResourceModel.generated_by_port_name)
         migrator.add_column_if_not_exists(Experiment, Experiment.validated_at)
         migrator.add_column_if_not_exists(Experiment, Experiment.validated_by)
-        migrator.add_column_if_not_exists(Report, Report.validated_at)
-        migrator.add_column_if_not_exists(Report, Report.validated_by)
+        migrator.add_column_if_not_exists(Note, Note.validated_at)
+        migrator.add_column_if_not_exists(Note, Note.validated_by)
         migrator.migrate()
 
         # retrieve all resource of type  ResourceListBase or children
@@ -298,7 +299,7 @@ class Migration0313(BrickMigration):
                     f'Error while migrating resource {resource_model.id} : {err}')
                 Logger.log_exception_stack_trace(err)
 
-        # update validated info to experiment and report
+        # update validated info to experiment and note
         experiment_models: List[Experiment] = list(Experiment.select())
         for experiment_model in experiment_models:
             if experiment_model.is_validated:
@@ -306,12 +307,12 @@ class Migration0313(BrickMigration):
                 experiment_model.validated_by = experiment_model.last_modified_by
                 experiment_model.save()
 
-        report_models: List[Report] = list(Report.select())
-        for report_model in report_models:
-            if report_model.is_validated:
-                report_model.validated_at = report_model.last_modified_at
-                report_model.validated_by = report_model.last_modified_by
-                report_model.save()
+        note_models: List[Note] = list(Note.select())
+        for note_model in note_models:
+            if note_model.is_validated:
+                note_model.validated_at = note_model.last_modified_at
+                note_model.validated_by = note_model.last_modified_by
+                note_model.save()
 
 
 @brick_migration('0.3.14', short_description='Update table meta (tags)')
@@ -322,7 +323,7 @@ class Migration0314(BrickMigration):
         # migration deprecated, tags are now stored in the resource model
 
 
-@brick_migration('0.3.15', short_description='Add last_sync info to Experiment and Report')
+@brick_migration('0.3.15', short_description='Add last_sync info to Experiment and Note')
 class Migration0315(BrickMigration):
 
     @classmethod
@@ -331,8 +332,8 @@ class Migration0315(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(Experiment.get_db())
         migrator.add_column_if_not_exists(Experiment, Experiment.last_sync_at)
         migrator.add_column_if_not_exists(Experiment, Experiment.last_sync_by)
-        migrator.add_column_if_not_exists(Report, Report.last_sync_at)
-        migrator.add_column_if_not_exists(Report, Report.last_sync_by)
+        migrator.add_column_if_not_exists(Note, Note.last_sync_at)
+        migrator.add_column_if_not_exists(Note, Note.last_sync_by)
         migrator.migrate()
 
         experiments: List[Experiment] = list(
@@ -342,12 +343,12 @@ class Migration0315(BrickMigration):
             experiment.last_sync_by = experiment.last_modified_by
             experiment.save()
 
-        reports: List[Report] = list(
-            Report.select().where(Report.is_validated == True))
-        for report in reports:
-            report.last_sync_at = report.last_modified_at
-            report.last_sync_by = report.last_modified_by
-            report.save()
+        notes: List[Note] = list(
+            Note.select().where(Note.is_validated == True))
+        for note in notes:
+            note.last_sync_at = note.last_modified_at
+            note.last_sync_by = note.last_modified_by
+            note.save()
 
 
 @brick_migration('0.3.16', short_description='Add tag to ViewConfig. Set tag length to varchar 255')
@@ -828,8 +829,8 @@ class Migration080Beta1(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        migrator: SqlMigrator = SqlMigrator(Report.get_db())
-        migrator.drop_column_if_exists(Report, 'old_content')
+        migrator: SqlMigrator = SqlMigrator(Note.get_db())
+        migrator.drop_column_if_exists(Note, 'old_content')
         migrator.drop_column_if_exists(DocumentTemplate, "old_content")
         migrator.drop_column_if_exists(Experiment, "old_description")
         migrator.drop_column_if_exists(ProtocolTemplate, "old_description")
@@ -885,7 +886,7 @@ class Migration080(BrickMigration):
         VEnvService.delete_all_venvs()
 
 
-@brick_migration('0.8.4', short_description='Rename report template to document table. Migrate template protocol. Migrate report image')
+@brick_migration('0.8.4', short_description='Rename note template to document table. Migrate template protocol. Migrate note image')
 class Migration084(BrickMigration):
 
     @classmethod
@@ -893,7 +894,7 @@ class Migration084(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(DocumentTemplate.get_db())
 
-        migrator.rename_table_if_exists(DocumentTemplate, "gws_report_template")
+        migrator.rename_table_if_exists(DocumentTemplate, "gws_note_template")
         migrator.migrate()
 
         protocol_templates: List[ProtocolTemplate] = list(
@@ -904,10 +905,10 @@ class Migration084(BrickMigration):
             protocol_template.version = 3
             protocol_template.save(skip_hook=True)
 
-        # migrate report images
-        reports: List[Report] = list(Report.select())
-        for report in reports:
-            cls._migrate_rich_text_image(report.content, RichTextObjectType.REPORT, report.id)
+        # migrate note images
+        notes: List[Note] = list(Note.select())
+        for note in notes:
+            cls._migrate_rich_text_image(note.content, RichTextObjectType.NOTE, note.id)
 
         # migrate document images
         document_templates: List[DocumentTemplate] = list(DocumentTemplate.select())
@@ -939,15 +940,31 @@ class Migration0100(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(SpaceFolder.get_db())
         migrator.rename_table_if_exists(SpaceFolder, 'gws_project')
+        migrator.rename_table_if_exists(Note, 'gws_report')
+        migrator.rename_table_if_exists(NoteExperiment, 'gws_report_experiment')
+        migrator.rename_table_if_exists(NoteViewModel, 'gws_report_view')
         migrator.rename_column_if_exists(Experiment, 'project_id', 'folder_id')
-        migrator.rename_column_if_exists(Report, 'project_id', 'folder_id')
         migrator.rename_column_if_exists(ResourceModel, 'project_id', 'folder_id')
         migrator.drop_column_if_exists(SpaceFolder, 'code')
         migrator.drop_column_if_exists(SpaceFolder, 'level_status')
         migrator.migrate()
+
+        migrator_2: SqlMigrator = SqlMigrator(SpaceFolder.get_db())
+        migrator_2.rename_column_if_exists(Note, 'project_id', 'folder_id')
+        migrator_2.migrate()
+
+        # use manual query, rename column doesn't work for primary key
+        if NoteExperiment.column_exists('report_id'):
+            NoteExperiment.get_db().execute_sql('ALTER TABLE gws_note_experiment CHANGE report_id note_id VARCHAR(36) NOT NULL')
+
+        if NoteViewModel.column_exists('report_id'):
+            NoteViewModel.get_db().execute_sql('ALTER TABLE gws_note_view CHANGE report_id note_id VARCHAR(36) NOT NULL')
 
         ResourceModel.update(origin=ResourceOrigin.S3_FOLDER_STORAGE).where(
             ResourceModel.origin == "S3_PROJECT_STORAGE").execute()
 
         TagValueModel.update(tag_value='data-hub-storage').where(
             TagValueModel.tag_value == "projects-storage").execute()
+
+        Activity.update(object_type=ActivityObjectType.NOTE.value).where(
+            Activity.object_type == "NOTE").execute()

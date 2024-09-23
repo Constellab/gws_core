@@ -1,7 +1,7 @@
 
 
 from gws_core.entity_navigator.entity_navigator import (
-    EntityNavigatorExperiment, EntityNavigatorReport, EntityNavigatorResource,
+    EntityNavigatorExperiment, EntityNavigatorNote, EntityNavigatorResource,
     EntityNavigatorView)
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
@@ -9,10 +9,10 @@ from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
+from gws_core.note.note import Note
+from gws_core.note.note_dto import NoteSaveDTO
+from gws_core.note.note_service import NoteService
 from gws_core.protocol.protocol_interface import IProtocol
-from gws_core.report.report import Report
-from gws_core.report.report_dto import ReportSaveDTO
-from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view_config.view_config import ViewConfig
@@ -34,19 +34,19 @@ class TestEntityNavigator(BaseTestCase):
 
     exp_1_resource_1_view_1: ViewConfig
 
-    # report associated to exp_1
-    # report uses view exp_1_resource_1_view_1
-    report_1: Report
+    # note associated to exp_1
+    # note uses view exp_1_resource_1_view_1
+    note_1: Note
 
     def test_entity_navigator(self):
         self._create_experiments()
         self._create_views()
-        self._create_report()
+        self._create_note()
 
         self._test_experiment_navigation()
         self._test_resource_navigation()
         self._test_view_navigation()
-        self._test_report_navigation()
+        self._test_note_navigation()
         self._test_recursive_navigation()
         self._test_entity_nav_service()
 
@@ -103,13 +103,13 @@ class TestEntityNavigator(BaseTestCase):
                                                                   'view_as_json', {}, True)
         self.exp_1_resource_1_view_1 = view_result.view_config
 
-    def _create_report(self):
-        report_1 = ReportService.create(ReportSaveDTO(title='test_report'))
+    def _create_note(self):
+        note_1 = NoteService.create(NoteSaveDTO(title='test_note'))
 
-        ReportService.add_experiment(report_1.id, self.exp_1.id)
-        ReportService.add_view_to_content(report_1.id, self.exp_1_resource_1_view_1.id)
+        NoteService.add_experiment(note_1.id, self.exp_1.id)
+        NoteService.add_view_to_content(note_1.id, self.exp_1_resource_1_view_1.id)
 
-        self.report_1 = report_1.refresh()
+        self.note_1 = note_1.refresh()
 
     def _test_experiment_navigation(self):
         # Test get next experiment of experiment 1
@@ -159,16 +159,16 @@ class TestEntityNavigator(BaseTestCase):
         prev_resources = exp_nav.get_previous_resources().get_entities_list()
         self.assertEqual(len(prev_resources), 0)
 
-        # Test get next report of experiment 1
+        # Test get next note of experiment 1
         exp_nav = EntityNavigatorExperiment(self.exp_1)
-        next_reports = exp_nav.get_next_reports().get_entities_list()
-        self.assertEqual(len(next_reports), 1)
-        self.assertEqual(next_reports[0].id, self.report_1.id)
+        next_notes = exp_nav.get_next_notes().get_entities_list()
+        self.assertEqual(len(next_notes), 1)
+        self.assertEqual(next_notes[0].id, self.note_1.id)
 
-        # Test get next report of experiment 2
+        # Test get next note of experiment 2
         exp_nav = EntityNavigatorExperiment(self.exp_2)
-        next_reports = exp_nav.get_next_reports().get_entities_list()
-        self.assertEqual(len(next_reports), 0)
+        next_notes = exp_nav.get_next_notes().get_entities_list()
+        self.assertEqual(len(next_notes), 0)
 
         # Test get next view of experiment 1
         exp_nav = EntityNavigatorExperiment(self.exp_1)
@@ -225,25 +225,25 @@ class TestEntityNavigator(BaseTestCase):
         next_views = resource_nav.get_next_views().get_entities_list()
         self.assertEqual(len(next_views), 0)
 
-        # Test next report of resource 1 exp 1
+        # Test next note of resource 1 exp 1
         resource_nav = EntityNavigatorResource(self.exp_1_resource_1)
-        next_reports = resource_nav.get_next_reports().get_entities_list()
-        self.assertEqual(len(next_reports), 1)
-        # Report 1
-        self.assertIsNotNone(len([x for x in next_reports if x.id == self.report_1.id]))
+        next_notes = resource_nav.get_next_notes().get_entities_list()
+        self.assertEqual(len(next_notes), 1)
+        # Note 1
+        self.assertIsNotNone(len([x for x in next_notes if x.id == self.note_1.id]))
 
-        # Test next report of resource 2 exp 1
+        # Test next note of resource 2 exp 1
         resource_nav = EntityNavigatorResource(self.exp_1_resource_2)
-        next_reports = resource_nav.get_next_reports().get_entities_list()
-        self.assertEqual(len(next_reports), 0)
+        next_notes = resource_nav.get_next_notes().get_entities_list()
+        self.assertEqual(len(next_notes), 0)
 
     def _test_view_navigation(self):
         view_nav = EntityNavigatorView(self.exp_1_resource_1_view_1)
 
-        # Test next report of view 1
-        next_reports = view_nav.get_next_reports().get_entities_list()
-        self.assertEqual(len(next_reports), 1)
-        self.assertIsNotNone(len([x for x in next_reports if x.id == self.report_1.id]))
+        # Test next note of view 1
+        next_notes = view_nav.get_next_notes().get_entities_list()
+        self.assertEqual(len(next_notes), 1)
+        self.assertIsNotNone(len([x for x in next_notes if x.id == self.note_1.id]))
 
         # Test get previous resources of view 1
         prev_resources = view_nav.get_previous_resources().get_entities_list()
@@ -255,22 +255,22 @@ class TestEntityNavigator(BaseTestCase):
         self.assertEqual(len(prev_exps), 1)
         self.assertIsNotNone(len([x for x in prev_exps if x.id == self.exp_1.id]))
 
-    def _test_report_navigation(self):
+    def _test_note_navigation(self):
 
-        report_nav = EntityNavigatorReport(self.report_1)
+        note_nav = EntityNavigatorNote(self.note_1)
 
-        # Test get previous experiment of report 1
-        prev_exps = report_nav.get_previous_experiments().get_entities_list()
+        # Test get previous experiment of note 1
+        prev_exps = note_nav.get_previous_experiments().get_entities_list()
         self.assertEqual(len(prev_exps), 1)
         self.assertIsNotNone(len([x for x in prev_exps if x.id == self.exp_1.id]))
 
-        # Test get previous view of report 1
-        prev_views = report_nav.get_previous_views().get_entities_list()
+        # Test get previous view of note 1
+        prev_views = note_nav.get_previous_views().get_entities_list()
         self.assertEqual(len(prev_views), 1)
         self.assertIsNotNone(len([x for x in prev_views if x.id == self.exp_1_resource_1_view_1.id]))
 
-        # Test get previous resource of report 1
-        prev_resources = report_nav.get_previous_resources().get_entities_list()
+        # Test get previous resource of note 1
+        prev_resources = note_nav.get_previous_resources().get_entities_list()
         self.assertEqual(len(prev_resources), 1)
         self.assertIsNotNone(len([x for x in prev_resources if x.id == self.exp_1_resource_1.id]))
 
@@ -309,12 +309,12 @@ class TestEntityNavigator(BaseTestCase):
         result = EntityNavigatorService.check_impact_for_experiment_reset(self.exp_1.id)
         self.assertTrue(result.has_entities())
         self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.EXPERIMENT)), 2)
-        self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.REPORT)), 1)
+        self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.NOTE)), 1)
 
         result = EntityNavigatorService.check_impact_for_experiment_reset(self.exp_2.id)
         self.assertTrue(result.has_entities())
         self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.EXPERIMENT)), 1)
-        self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.REPORT)), 0)
+        self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.NOTE)), 0)
 
         result = EntityNavigatorService.check_impact_for_experiment_reset(self.exp_3.id)
         self.assertFalse(result.has_entities())
@@ -326,6 +326,6 @@ class TestEntityNavigator(BaseTestCase):
         self.assertIsNone(Experiment.get_by_id(self.exp_1.id))
         self.assertIsNone(ResourceModel.get_by_id(self.exp_1_resource_1.id))
         self.assertIsNone(ResourceModel.get_by_id(self.exp_1_resource_2.id))
-        self.assertIsNone(Report.get_by_id(self.report_1.id))
+        self.assertIsNone(Note.get_by_id(self.note_1.id))
         self.assertIsNone(Experiment.get_by_id(self.exp_2.id))
         self.assertIsNone(Experiment.get_by_id(self.exp_3.id))

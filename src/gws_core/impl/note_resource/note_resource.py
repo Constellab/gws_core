@@ -19,9 +19,9 @@ from gws_core.impl.rich_text.rich_text_types import (
     RichTextViewFileData)
 from gws_core.impl.rich_text.rich_text_view import RichTextView
 from gws_core.model.typing_style import TypingStyle
-from gws_core.report.report import Report
-from gws_core.report.report_dto import ReportSaveDTO
-from gws_core.report.report_service import ReportService
+from gws_core.note.note import Note
+from gws_core.note.note_dto import NoteSaveDTO
+from gws_core.note.note_service import NoteService
 from gws_core.resource.r_field.primitive_r_field import StrRField
 from gws_core.resource.r_field.serializable_r_field import SerializableRField
 from gws_core.resource.resource import Resource
@@ -486,9 +486,9 @@ class NoteResource(ResourceSet):
                                   object_type: RichTextObjectType,
                                   object_id: str) -> None:
         """
-        Append a rich text (that comes from a report or document template) to the note resource.
+        Append a rich text (that comes from a note or document template) to the note resource.
 
-        :param rich_text: rich text to append to the note resource (from a report or document template)
+        :param rich_text: rich text to append to the note resource (from a note or document template)
         :type rich_text: RichText
         :param object_type: type of the object that has the rich text
         :type object_type: RichTextObjectType
@@ -538,55 +538,55 @@ class NoteResource(ResourceSet):
             else:
                 self.append_block(block)
 
-    ############################# Reports #############################
+    ############################# Notes #############################
 
-    def export_as_report(self, title: str = None) -> Report:
+    def export_as_lab_note(self, title: str = None) -> Note:
         """
-        Export the note as a report. The report is automatically saved in the database.
-        :param report_title: The title of the report
-        :return: The report
+        Export the note as a note. The note is automatically saved in the database.
+        :param note_title: The title of the note
+        :return: The note
         """
         if not title and not self.title:
             raise ValueError("The note resource title is empty")
-        report_dto = ReportSaveDTO(title=title or self.title)
-        report: Report = ReportService.create(report_dto)
+        note_dto = NoteSaveDTO(title=title or self.title)
+        note: Note = NoteService.create(note_dto)
 
-        report_rich_text = self._export_as_report_rich_text(report.id)
+        note_rich_text = self._export_as_lab_note_rich_text(note.id)
 
-        # save the content to the report
-        return ReportService.update_content(report.id, report_rich_text.get_content())
+        # save the content to the note
+        return NoteService.update_content(note.id, note_rich_text.get_content())
 
-    def _export_as_report_rich_text(self, report_id: str) -> RichText:
+    def _export_as_lab_note_rich_text(self, note_id: str) -> RichText:
         """
-        Convert the note rich text to a report rich text.
+        Convert the note rich text to a note rich text.
 
-        :return: the report rich text
+        :return: the note rich text
         :rtype: RichText
         """
-        report_rich_text = RichText()
+        note_rich_text = RichText()
 
-        # add the block 1 by 1 to the report
+        # add the block 1 by 1 to the note
         for block in self._rich_text.get_blocks():
             # specific case for the figure
             if block.type == RichTextBlockType.FIGURE:
                 # add the figure manually
-                figure_data = self._convert_figure_for_report_rich_text(block.data, report_id)
-                report_rich_text.add_figure(figure_data)
+                figure_data = self._convert_figure_for_lab_note_rich_text(block.data, note_id)
+                note_rich_text.add_figure(figure_data)
             elif block.type == RichTextBlockType.FILE:
                 # add the file manually
-                file_data = self._convert_file_for_report_rich_text(block.data, report_id)
-                report_rich_text.add_file(file_data)
+                file_data = self._convert_file_for_lab_note_rich_text(block.data, note_id)
+                note_rich_text.add_file(file_data)
             elif block.type == RichTextBlockType.NOTE_RESOURCE_VIEW:
                 # add the view manually
-                self._add_note_view_to_report_rich_text(block.data, report_rich_text, report_id)
+                self._add_note_view_to_note_rich_text(block.data, note_rich_text, note_id)
             else:
-                report_rich_text.append_block(block)
+                note_rich_text.append_block(block)
 
-        return report_rich_text
+        return note_rich_text
 
-    def _convert_figure_for_report_rich_text(
-            self, note_figure: RichTextFigureData, report_id: str) -> RichTextFigureData:
-        """Method to convert a note figure to a report figure. It saves the figure in the report storage.
+    def _convert_figure_for_lab_note_rich_text(
+            self, note_figure: RichTextFigureData, note_id: str) -> RichTextFigureData:
+        """Method to convert a note figure to a note figure. It saves the figure in the note storage.
         """
         figure_file = self.get_file(note_figure['filename'])
         image: Image.Image = None
@@ -595,8 +595,8 @@ class NoteResource(ResourceSet):
         except Exception:
             raise Exception(f'The file {figure_file.path} is not an image')
 
-        # add the figure to report storage
-        result = RichTextFileService.save_image(RichTextObjectType.REPORT, report_id,
+        # add the figure to note storage
+        result = RichTextFileService.save_image(RichTextObjectType.NOTE, note_id,
                                                 image, figure_file.extension)
 
         # add the figure manually
@@ -610,19 +610,19 @@ class NoteResource(ResourceSet):
             "caption": note_figure['caption'],
         }
 
-    def _convert_file_for_report_rich_text(
-            self, note_file: RichTextFileData, report_id: str) -> RichTextFileData:
-        """Method to convert a note figure to a report figure. It saves the figure in the report storage.
+    def _convert_file_for_lab_note_rich_text(
+            self, note_file: RichTextFileData, note_id: str) -> RichTextFileData:
+        """Method to convert a note figure to a note figure. It saves the figure in the note storage.
         """
         # retrieve the file
         file = self.get_file(note_file['name'])
 
-        # get the file destination for the report
-        destination_file_path = RichTextFileService.get_uploaded_file_path(RichTextObjectType.REPORT,
-                                                                           report_id,
+        # get the file destination for the note
+        destination_file_path = RichTextFileService.get_uploaded_file_path(RichTextObjectType.NOTE,
+                                                                           note_id,
                                                                            file.get_base_name())
 
-        RichTextFileService.create_object_dir(RichTextObjectType.REPORT, report_id)
+        RichTextFileService.create_object_dir(RichTextObjectType.NOTE, note_id)
 
         # copy the file to the destination
         FileHelper.copy_file(file.path, destination_file_path)
@@ -630,23 +630,23 @@ class NoteResource(ResourceSet):
         # the object is the same as the note
         return note_file
 
-    def _add_note_view_to_report_rich_text(self, note_view: RichTextNoteResourceViewData,
-                                           report_rich_text: RichText, report_id: str) -> None:
+    def _add_note_view_to_note_rich_text(self, note_view: RichTextNoteResourceViewData,
+                                         note_rich_text: RichText, note_id: str) -> None:
 
         # retrieve the resource model from the resource
         resource = self.get_resource(note_view['sub_resource_key'])
 
         if resource.get_model_id() is not None:
             # add the view manually from the resource and config
-            view_data = self._convert_view_for_report_rich_text(note_view)
-            report_rich_text.add_resource_view(view_data)
+            view_data = self._convert_view_for_lab_note_rich_text(note_view)
+            note_rich_text.add_resource_view(view_data)
         else:
             # add the view manually from a json file (without the resource)
-            view_data_2 = self._convert_file_view_for_report_rich_text(note_view, report_id)
-            report_rich_text.add_file_view(view_data_2)
+            view_data_2 = self._convert_file_view_for_lab_note_rich_text(note_view, note_id)
+            note_rich_text.add_file_view(view_data_2)
 
-    def _convert_view_for_report_rich_text(self, note_view: RichTextNoteResourceViewData) -> RichTextResourceViewData:
-        """Method to convert a note view to a report view.
+    def _convert_view_for_lab_note_rich_text(self, note_view: RichTextNoteResourceViewData) -> RichTextResourceViewData:
+        """Method to convert a note view to a note view.
         """
         # retrieve the resource model from the resource
         resource = self.get_resource(note_view['sub_resource_key'])
@@ -660,8 +660,8 @@ class NoteResource(ResourceSet):
 
         return view_result.view_config.to_rich_text_resource_view()
 
-    def _convert_file_view_for_report_rich_text(
-            self, note_view: RichTextNoteResourceViewData, report_id: str) -> RichTextViewFileData:
+    def _convert_file_view_for_lab_note_rich_text(
+            self, note_view: RichTextNoteResourceViewData, note_id: str) -> RichTextViewFileData:
 
         # retrieve the resource model from the resource
         resource = self.get_resource(note_view['sub_resource_key'])
@@ -680,7 +680,7 @@ class NoteResource(ResourceSet):
                                      style=view_.get_style() or view_runner.get_metadata_style())
 
         # save the json as a file
-        filename = RichTextFileService.save_file_view(RichTextObjectType.REPORT, report_id,
+        filename = RichTextFileService.save_file_view(RichTextObjectType.NOTE, note_id,
                                                       view_result.to_dto())
 
         return {
@@ -719,19 +719,19 @@ class NoteResource(ResourceSet):
         return note
 
     @staticmethod
-    def from_report(report: Report,
-                    title: str = None) -> "NoteResource":
-        """Create a note resource from a report.
+    def from_note(note: Note,
+                  title: str = None) -> "NoteResource":
+        """Create a note resource from a note.
 
-        :param report: report to create the note resource from
-        :type report: Report
-        :param title: title of the note resource. If none the title of report is used, defaults to None
+        :param note: note to create the note resource from
+        :type note: Note
+        :param title: title of the note resource. If none the title of note is used, defaults to None
         :type title: str, optional
         :return: the note resource
         :rtype: NoteResource
         """
         note = NoteResource()
-        rich_text = RichText(report.content)
-        note.append_advanced_rich_text(rich_text, RichTextObjectType.REPORT, report.id)
-        note.title = title or report.title
+        rich_text = RichText(note.content)
+        note.append_advanced_rich_text(rich_text, RichTextObjectType.NOTE, note.id)
+        note.title = title or note.title
         return note

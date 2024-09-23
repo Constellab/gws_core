@@ -14,9 +14,9 @@ from gws_core.impl.robot.robot_resource import Robot, RobotFood
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotEat, RobotMove
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.note.note_dto import NoteSaveDTO
+from gws_core.note.note_service import NoteService
 from gws_core.protocol.protocol_interface import IProtocol
-from gws_core.report.report_dto import ReportSaveDTO
-from gws_core.report.report_service import ReportService
 from gws_core.resource.resource_service import ResourceService
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOrigins
@@ -306,7 +306,7 @@ class TestTag(BaseTestCase):
         # Check tag experiment is propagated
         self.assertTrue(second_output.tags.has_tag(tag_exp))
 
-    def test_tag_propagation_view_report(self):
+    def test_tag_propagation_view_note(self):
         propagable_tag = Tag('robot_tag_propagable', 'robot_value', is_propagable=True)
 
         i_experiment: IExperiment = IExperiment()
@@ -337,17 +337,17 @@ class TestTag(BaseTestCase):
         self.assertEqual(tag.origins.count_origins(), 1)
         self.assertTrue(tag.origins.has_origin(TagOriginType.RESOURCE_PROPAGATED, resource_model.id))
 
-        # generate a report and add the view
-        report = ReportService.create(ReportSaveDTO(title='test_report'))
+        # generate a note and add the view
+        note = NoteService.create(NoteSaveDTO(title='test_note'))
 
-        ReportService.add_experiment(report.id, experiment_id)
-        ReportService.add_view_to_content(report.id, view_result.view_config.id)
+        NoteService.add_experiment(note.id, experiment_id)
+        NoteService.add_view_to_content(note.id, view_result.view_config.id)
 
         # Check that the tags are propagated
-        report_tags = EntityTagList.find_by_entity(EntityType.REPORT, report.id)
-        self.assertEqual(len(report_tags.get_tags()), 1)
-        self.assertTrue(report_tags.has_tag(propagable_tag))
-        tag = report_tags.get_tag(propagable_tag).to_simple_tag()
+        note_tags = EntityTagList.find_by_entity(EntityType.NOTE, note.id)
+        self.assertEqual(len(note_tags.get_tags()), 1)
+        self.assertTrue(note_tags.has_tag(propagable_tag))
+        tag = note_tags.get_tag(propagable_tag).to_simple_tag()
         self.assertTrue(tag.is_propagable)
 
         # it should have 2 origin, the view and the experiment
@@ -355,19 +355,19 @@ class TestTag(BaseTestCase):
         self.assertTrue(tag.origins.has_origin(TagOriginType.VIEW_PROPAGATED, view_result.view_config.id))
         self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, experiment_id))
 
-        # if we remove the view from the report, the tag should be kept with 1 origin
-        ReportService.update_content(report.id, RichText.create_rich_text_dto([]))
+        # if we remove the view from the note, the tag should be kept with 1 origin
+        NoteService.update_content(note.id, RichText.create_rich_text_dto([]))
 
-        report_tags = EntityTagList.find_by_entity(EntityType.REPORT, report.id)
-        self.assertEqual(len(report_tags.get_tags()), 1)
-        tag = report_tags.get_tag(propagable_tag).to_simple_tag()
+        note_tags = EntityTagList.find_by_entity(EntityType.NOTE, note.id)
+        self.assertEqual(len(note_tags.get_tags()), 1)
+        tag = note_tags.get_tag(propagable_tag).to_simple_tag()
         self.assertEqual(tag.origins.count_origins(), 1)
         self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, experiment_id))
 
-        # Unlink the experiment from the report, it should delete the tag
-        ReportService.remove_experiment(report.id, experiment_id)
-        report_tags = EntityTagList.find_by_entity(EntityType.REPORT, report.id)
-        self.assertEqual(len(report_tags.get_tags()), 0)
+        # Unlink the experiment from the note, it should delete the tag
+        NoteService.remove_experiment(note.id, experiment_id)
+        note_tags = EntityTagList.find_by_entity(EntityType.NOTE, note.id)
+        self.assertEqual(len(note_tags.get_tags()), 0)
 
     def test_tag_propagation_after(self):
         i_experiment: IExperiment = IExperiment()
@@ -390,15 +390,15 @@ class TestTag(BaseTestCase):
         view_result = ResourceService.get_and_call_view_on_resource_model(exp_2_output.id, 'view_as_json', {}, True)
         exp_2_output_view = view_result.view_config
 
-        # generate a report and add the view
-        exp_2_report = ReportService.create(ReportSaveDTO(title='test_report'))
-        ReportService.add_view_to_content(exp_2_report.id, exp_2_output_view.id)
+        # generate a note and add the view
+        exp_2_note = NoteService.create(NoteSaveDTO(title='test_note'))
+        NoteService.add_view_to_content(exp_2_note.id, exp_2_output_view.id)
 
         # Now add a tag to the first experiment and check that it is propagated
         new_tag = Tag('manual_tag', 'new_value', is_propagable=True, origins=TagOrigins(TagOriginType.USER, 'user_id'))
         TagService.add_tags_to_entity_and_propagate(EntityType.EXPERIMENT, exp_1.id, [new_tag])
 
-        self._check_propagation_exp_1(exp_1.id, exp_1_output.id, exp_2_output.id, exp_2.id, exp_2_report.id,
+        self._check_propagation_exp_1(exp_1.id, exp_1_output.id, exp_2_output.id, exp_2.id, exp_2_note.id,
                                       exp_2_output_view.id, 1, new_tag, True)
 
         # add a tag to exp2
@@ -410,28 +410,28 @@ class TestTag(BaseTestCase):
         exp_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, exp_1)
         self.assertEqual(exp_tags.has_tag(new_tag_2), False)
 
-        # check that the report has the tag with 2 origins (view and exp2)
-        report_tags = EntityTagList.find_by_entity(EntityType.REPORT, exp_2_report.id)
-        self.assertEqual(report_tags.has_tag(new_tag_2), True)
-        tag = report_tags.get_tag(new_tag_2).to_simple_tag()
+        # check that the note has the tag with 2 origins (view and exp2)
+        note_tags = EntityTagList.find_by_entity(EntityType.NOTE, exp_2_note.id)
+        self.assertEqual(note_tags.has_tag(new_tag_2), True)
+        tag = note_tags.get_tag(new_tag_2).to_simple_tag()
         self.assertEqual(tag.origins.count_origins(), 2)
 
         # Delete propagated tag 1
         TagService.delete_tag_from_entity(EntityType.EXPERIMENT, exp_1.id, new_tag.key, new_tag.value)
 
-        self._check_propagation_exp_1(exp_1.id, exp_1_output.id, exp_2_output.id, exp_2.id, exp_2_report.id,
+        self._check_propagation_exp_1(exp_1.id, exp_1_output.id, exp_2_output.id, exp_2.id, exp_2_note.id,
                                       exp_2_output_view.id, 0, new_tag, False)
 
         # Delete propagated tag 2
         TagService.delete_tag_from_entity(EntityType.EXPERIMENT, exp_2.id, new_tag_2.key, new_tag_2.value)
 
-        # check that the report does not have the tag
-        report_tags = EntityTagList.find_by_entity(EntityType.REPORT, exp_2_report.id)
-        self.assertEqual(report_tags.has_tag(new_tag_2), False)
+        # check that the note does not have the tag
+        note_tags = EntityTagList.find_by_entity(EntityType.NOTE, exp_2_note.id)
+        self.assertEqual(note_tags.has_tag(new_tag_2), False)
 
     def _check_propagation_exp_1(self, exp_1: str, exp_1_output: str, exp_2_output: str,
-                                 exp_2: str, exp_2_report: str, exp_2_output_view: str,
-                                 report_origin_count: int,
+                                 exp_2: str, exp_2_note: str, exp_2_output_view: str,
+                                 note_origin_count: int,
                                  tag: Tag, should_exist: bool):
         # Check that the tags are propagated
         exp_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, exp_1)
@@ -453,10 +453,10 @@ class TestTag(BaseTestCase):
         view_tags = EntityTagList.find_by_entity(EntityType.VIEW, exp_2_output_view)
         self.assertEqual(view_tags.has_tag(tag), should_exist)
 
-        # check that report has the tag with 1 origins (view)
-        report_tags = EntityTagList.find_by_entity(EntityType.REPORT, exp_2_report)
-        self.assertEqual(report_tags.has_tag(tag), should_exist)
+        # check that note has the tag with 1 origins (view)
+        note_tags = EntityTagList.find_by_entity(EntityType.NOTE, exp_2_note)
+        self.assertEqual(note_tags.has_tag(tag), should_exist)
 
         if should_exist:
-            tag = report_tags.get_tag(tag).to_simple_tag()
-            self.assertEqual(tag.origins.count_origins(), report_origin_count)
+            tag = note_tags.get_tag(tag).to_simple_tag()
+            self.assertEqual(tag.origins.count_origins(), note_origin_count)

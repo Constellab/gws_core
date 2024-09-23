@@ -10,7 +10,7 @@ from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.user.user_dto import UserDTO
 
 
-class ReportSaveDTO(BaseModelDTO):
+class NoteSaveDTO(BaseModelDTO):
     title: str = None
     folder_id: Optional[str] = None
     template_id: Optional[str] = None
@@ -19,7 +19,7 @@ class ReportSaveDTO(BaseModelDTO):
         arbitrary_types_allowed = True
 
 
-class ReportDTO(ModelWithUserDTO):
+class NoteDTO(ModelWithUserDTO):
     title: str
     folder: Optional[SpaceFolderDTO]
     is_validated: bool
@@ -30,10 +30,10 @@ class ReportDTO(ModelWithUserDTO):
     is_archived: bool
 
 
-class ReportFullDTO(ReportDTO):
+class NoteFullDTO(NoteDTO):
     content: RichTextDTO
 
 
-class ReportInsertTemplateDTO(BaseModelDTO):
+class NoteInsertTemplateDTO(BaseModelDTO):
     block_index: int
     document_template_id: str

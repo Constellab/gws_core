@@ -12,7 +12,7 @@ class EntityType(Enum):
     EXPERIMENT = "EXPERIMENT"
     RESOURCE = "RESOURCE"
     VIEW = "VIEW"
-    REPORT = "REPORT"
+    NOTE = "NOTE"
     PROTOCOL_TEMPLATE = 'PROTOCOL_TEMPLATE'
     FOLDER = 'FOLDER'
 
@@ -25,8 +25,8 @@ class EntityType(Enum):
             human_name = 'Resource'
         elif entity_type == EntityType.VIEW:
             human_name = 'View'
-        elif entity_type == EntityType.REPORT:
-            human_name = 'Report'
+        elif entity_type == EntityType.NOTE:
+            human_name = 'Note'
         elif entity_type == EntityType.PROTOCOL_TEMPLATE:
             human_name = 'Protocol Template'
         elif entity_type == EntityType.FOLDER:
@@ -45,9 +45,9 @@ class EntityType(Enum):
     def get_entity_model_type(entity_type: 'EntityType') -> Type[Model]:
         from gws_core.experiment.experiment import Experiment
         from gws_core.folder.space_folder import SpaceFolder
+        from gws_core.note.note import Note
         from gws_core.protocol_template.protocol_template import \
             ProtocolTemplate
-        from gws_core.report.report import Report
         from gws_core.resource.resource_model import ResourceModel
         from gws_core.resource.view_config.view_config import ViewConfig
         if entity_type == EntityType.EXPERIMENT:
@@ -56,8 +56,8 @@ class EntityType(Enum):
             return ResourceModel
         elif entity_type == EntityType.VIEW:
             return ViewConfig
-        elif entity_type == EntityType.REPORT:
-            return Report
+        elif entity_type == EntityType.NOTE:
+            return Note
         elif entity_type == EntityType.PROTOCOL_TEMPLATE:
             return ProtocolTemplate
         elif entity_type == EntityType.FOLDER:
@@ -67,7 +67,7 @@ class EntityType(Enum):
 
 
 all_entity_types = [EntityType.EXPERIMENT, EntityType.RESOURCE,
-                    EntityType.VIEW, EntityType.REPORT]
+                    EntityType.VIEW, EntityType.NOTE]
 
 
 class NavigableEntity():

@@ -2,6 +2,8 @@
 
 from typing import List, Optional, Type
 
+from peewee import ModelSelect
+
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
@@ -15,14 +17,13 @@ from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.view.view_dto import ResourceViewMetadatalDTO, ViewDTO
 from gws_core.resource.view.view_result import CallViewResult
 from gws_core.resource.view.view_runner import ViewRunner
-from gws_core.resource.view.view_types import exluded_views_in_report
+from gws_core.resource.view.view_types import exluded_views_in_note
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.share.resource.resource_downloader_http import \
     ResourceDownloaderHttp
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Sink
-from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
@@ -224,7 +225,7 @@ class ResourceService():
                            save_view_config: bool = False) -> ViewDTO:
         resource_model: ResourceModel = cls.get_by_id_and_check(resource_model_id)
         view = cls.call_view_on_resource_model(resource_model, view_name, config_values, save_view_config).view
-        if view.type in list(map(lambda x: x.value, exluded_views_in_report)):
+        if view.type in list(map(lambda x: x.value, exluded_views_in_note)):
             raise BadRequestException(
                 f"View '{view_name}' is not supported to be exported as a file.")
         return view

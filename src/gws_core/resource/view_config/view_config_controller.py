@@ -71,15 +71,15 @@ def search(search_dict: SearchParams,
                                     page, number_of_items_per_page).to_dto()
 
 
-@core_app.post("/view-config/search/report/{report_id}", tags=["View config"],
-               summary="Search available view config for a report")
-def search_for_report(report_id: str,
-                      search_dict: SearchParams,
-                      page: Optional[int] = 1,
-                      number_of_items_per_page: Optional[int] = 20,
-                      _=Depends(AuthService.check_user_access_token)) -> PageDTO[ViewConfigDTO]:
-    return ViewConfigService.search_by_report(report_id, search_dict,
-                                              page, number_of_items_per_page).to_dto()
+@core_app.post("/view-config/search/note/{note_id}", tags=["View config"],
+               summary="Search available view config for a note")
+def search_for_note(note_id: str,
+                    search_dict: SearchParams,
+                    page: Optional[int] = 1,
+                    number_of_items_per_page: Optional[int] = 20,
+                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[ViewConfigDTO]:
+    return ViewConfigService.search_by_note(note_id, search_dict,
+                                            page, number_of_items_per_page).to_dto()
 
 ############################# VIEW TYPE  ###########################
 

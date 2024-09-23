@@ -8,8 +8,8 @@ from gws_core.entity_navigator.entity_navigator_deep import NavigableEntitySet
 from gws_core.entity_navigator.entity_navigator_type import (
     EntityType, GenericNavigableEntity, NavigableEntity, all_entity_types)
 from gws_core.experiment.experiment import Experiment
-from gws_core.report.report import Report, ReportExperiment
-from gws_core.report.report_view_model import ReportViewModel
+from gws_core.note.note import Note, NoteExperiment
+from gws_core.note.note_view_model import NoteViewModel
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -57,8 +57,8 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         if EntityType.RESOURCE in requested_entities:
             next_entities.update(self.get_next_resources().get_entities_as_set())
 
-        if EntityType.REPORT in requested_entities:
-            next_entities.update(self.get_next_reports().get_entities_as_set())
+        if EntityType.NOTE in requested_entities:
+            next_entities.update(self.get_next_notes().get_entities_as_set())
 
         if EntityType.VIEW in requested_entities:
             next_entities.update(self.get_next_views().get_entities_as_set())
@@ -106,10 +106,10 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
                 requested_entities, loaded_entities, self.get_next_resources(),
                 EntityNavigatorResource, deep_level)
 
-        if EntityType.REPORT in requested_entities:
+        if EntityType.NOTE in requested_entities:
             self._get_next_entities_type_recursive(
-                requested_entities, loaded_entities, self.get_next_reports(),
-                EntityNavigatorReport, deep_level)
+                requested_entities, loaded_entities, self.get_next_notes(),
+                EntityNavigatorNote, deep_level)
 
         if EntityType.VIEW in requested_entities:
             self._get_next_entities_type_recursive(
@@ -175,10 +175,10 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
                 requested_entities, loaded_entities, self.get_previous_resources(),
                 EntityNavigatorResource, deep_level)
 
-        if EntityType.REPORT in requested_entities:
+        if EntityType.NOTE in requested_entities:
             self._get_previous_entities_type_recursive(
-                requested_entities, loaded_entities, self.get_previous_reports(),
-                EntityNavigatorReport, deep_level)
+                requested_entities, loaded_entities, self.get_previous_notes(),
+                EntityNavigatorNote, deep_level)
 
         if EntityType.VIEW in requested_entities:
             self._get_previous_entities_type_recursive(
@@ -204,8 +204,8 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
         return loaded_entities
 
-    def get_next_reports(self) -> 'EntityNavigatorReport':
-        return EntityNavigatorReport(set())
+    def get_next_notes(self) -> 'EntityNavigatorNote':
+        return EntityNavigatorNote(set())
 
     def get_next_views(self) -> 'EntityNavigatorView':
         return EntityNavigatorView(set())
@@ -216,8 +216,8 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
     def get_next_experiments(self) -> 'EntityNavigatorExperiment':
         return EntityNavigatorExperiment(set())
 
-    def get_previous_reports(self) -> 'EntityNavigatorReport':
-        return EntityNavigatorReport(set())
+    def get_previous_notes(self) -> 'EntityNavigatorNote':
+        return EntityNavigatorNote(set())
 
     def get_previous_views(self) -> 'EntityNavigatorView':
         return EntityNavigatorView(set())
@@ -290,10 +290,10 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
     def from_entity_id(cls, entity_type: EntityType, entity_id: str) -> 'EntityNavigator':
         if entity_type == EntityType.EXPERIMENT:
             return EntityNavigatorExperiment(Experiment.get_by_id_and_check(entity_id))
-        elif entity_type == EntityType.REPORT:
-            return EntityNavigatorView(Report.get_by_id_and_check(entity_id))
+        elif entity_type == EntityType.NOTE:
+            return EntityNavigatorView(Note.get_by_id_and_check(entity_id))
         elif entity_type == EntityType.VIEW:
-            return EntityNavigatorReport(ViewConfig.get_by_id_and_check(entity_id))
+            return EntityNavigatorNote(ViewConfig.get_by_id_and_check(entity_id))
         elif entity_type == EntityType.RESOURCE:
             return EntityNavigatorResource(ResourceModel.get_by_id_and_check(entity_id))
 
@@ -302,9 +302,9 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
 class EntityNavigatorExperiment(EntityNavigator[Experiment]):
 
-    def get_next_reports(self) -> 'EntityNavigatorReport':
-        reports = set(ReportExperiment.find_reports_by_experiments(self._get_entities_ids()))
-        return EntityNavigatorReport(reports)
+    def get_next_notes(self) -> 'EntityNavigatorNote':
+        notes = set(NoteExperiment.find_notes_by_experiments(self._get_entities_ids()))
+        return EntityNavigatorNote(notes)
 
     def get_next_views(self) -> 'EntityNavigatorView':
         return self.get_next_resources().get_next_views()
@@ -339,13 +339,13 @@ class EntityNavigatorExperiment(EntityNavigator[Experiment]):
                                      entity_tags_cache=entity_tags_cache)
             next_resources.propagate_tags(tags, entity_tags_cache)
 
-            # Propagate to reports
-            next_reports = self.get_next_reports()
-            for report in next_reports.get_entities_list():
-                self._propagate_tags(tags=tags, entity=report,
+            # Propagate to notes
+            next_notes = self.get_next_notes()
+            for note in next_notes.get_entities_list():
+                self._propagate_tags(tags=tags, entity=note,
                                      new_origin_type=TagOriginType.EXPERIMENT_PROPAGATED, new_origin_id=experiment.id,
                                      entity_tags_cache=entity_tags_cache)
-            next_reports.propagate_tags(tags, entity_tags_cache)
+            next_notes.propagate_tags(tags, entity_tags_cache)
 
     def delete_propagated_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None):
 
@@ -359,19 +359,19 @@ class EntityNavigatorExperiment(EntityNavigator[Experiment]):
                     origin_id=experiment.id, entity_tags_cache=entity_tags_cache)
             next_resources.delete_propagated_tags(tags, entity_tags_cache)
 
-            # Propagate to reports
-            next_reports = self.get_next_reports()
-            for report in next_reports.get_entities_list():
+            # Propagate to notes
+            next_notes = self.get_next_notes()
+            for note in next_notes.get_entities_list():
                 self._delete_propagated_tags(
-                    tags=tags, entity=report, origin_type=TagOriginType.EXPERIMENT_PROPAGATED,
+                    tags=tags, entity=note, origin_type=TagOriginType.EXPERIMENT_PROPAGATED,
                     origin_id=experiment.id, entity_tags_cache=entity_tags_cache)
-            next_reports.delete_propagated_tags(tags, entity_tags_cache)
+            next_notes.delete_propagated_tags(tags, entity_tags_cache)
 
 
 class EntityNavigatorResource(EntityNavigator[ResourceModel]):
 
-    def get_next_reports(self) -> 'EntityNavigatorReport':
-        return self.get_next_views().get_next_reports()
+    def get_next_notes(self) -> 'EntityNavigatorNote':
+        return self.get_next_views().get_next_notes()
 
     def get_next_views(self) -> 'EntityNavigatorView':
         views = set(ViewConfig.get_by_resources(self._get_entities_ids()))
@@ -486,13 +486,13 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
 
 class EntityNavigatorView(EntityNavigator[ViewConfig]):
 
-    def get_next_reports(self) -> 'EntityNavigatorReport':
+    def get_next_notes(self) -> 'EntityNavigatorNote':
 
-        report_views: List[ReportViewModel] = list(ReportViewModel.get_by_views(self._get_entities_ids()))
+        note_views: List[NoteViewModel] = list(NoteViewModel.get_by_views(self._get_entities_ids()))
 
-        reports = set([report_view.report for report_view in report_views])
+        notes = set([note_view.note for note_view in note_views])
 
-        return EntityNavigatorReport(reports)
+        return EntityNavigatorNote(notes)
 
     def get_previous_resources(self) -> 'EntityNavigatorResource':
         resource_ids: List[str] = [view.resource_model.id for view in self._entities if view.resource_model is not None]
@@ -510,32 +510,32 @@ class EntityNavigatorView(EntityNavigator[ViewConfig]):
     def propagate_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None) -> None:
 
         for view in self._entities:
-            # Propagate to next reports
-            next_reports = self.get_next_reports()
-            for report in next_reports.get_entities_list():
-                self._propagate_tags(tags=tags, entity=report,
+            # Propagate to next notes
+            next_notes = self.get_next_notes()
+            for note in next_notes.get_entities_list():
+                self._propagate_tags(tags=tags, entity=note,
                                      new_origin_type=TagOriginType.VIEW_PROPAGATED, new_origin_id=view.id,
                                      entity_tags_cache=entity_tags_cache)
-            next_reports.propagate_tags(tags, entity_tags_cache)
+            next_notes.propagate_tags(tags, entity_tags_cache)
 
     def delete_propagated_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None):
 
         for view in self._entities:
-            # Propagate to next reports
-            next_reports = self.get_next_reports()
-            for report in next_reports.get_entities_list():
+            # Propagate to next notes
+            next_notes = self.get_next_notes()
+            for note in next_notes.get_entities_list():
                 self._delete_propagated_tags(
-                    tags=tags, entity=report, origin_type=TagOriginType.VIEW_PROPAGATED,
+                    tags=tags, entity=note, origin_type=TagOriginType.VIEW_PROPAGATED,
                     origin_id=view.id, entity_tags_cache=entity_tags_cache)
-            next_reports.delete_propagated_tags(tags, entity_tags_cache)
+            next_notes.delete_propagated_tags(tags, entity_tags_cache)
 
 
-class EntityNavigatorReport(EntityNavigator[Report]):
+class EntityNavigatorNote(EntityNavigator[Note]):
 
     def get_previous_views(self) -> 'EntityNavigatorView':
-        report_views: List[ReportViewModel] = list(ReportViewModel.get_by_reports(self._get_entities_ids()))
+        note_views: List[NoteViewModel] = list(NoteViewModel.get_by_notes(self._get_entities_ids()))
 
-        return EntityNavigatorView({report_view.view for report_view in report_views})
+        return EntityNavigatorView({note_view.view for note_view in note_views})
 
     def get_previous_resources(self) -> 'EntityNavigatorResource':
         return self.get_previous_views().get_previous_resources()

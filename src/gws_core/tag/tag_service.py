@@ -261,7 +261,7 @@ class TagService():
         entity_nav = EntityNavigator.from_entity_id(entity_type, entity_id)
         # The tags can't be propagated to EXPERIMENT
         next_entities = entity_nav.get_next_entities_recursive(
-            [EntityType.RESOURCE, EntityType.VIEW, EntityType.REPORT], include_current_entities=True)
+            [EntityType.RESOURCE, EntityType.VIEW, EntityType.NOTE], include_current_entities=True)
 
         return TagPropagationImpactDTO(
             tags=[tag.to_dto() for tag in tags],

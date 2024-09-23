@@ -5,22 +5,22 @@ from gws_core.config.param.model_param import ModelParam
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
 from gws_core.config.param.param_types import ParamSpecVisibilty
 from gws_core.core.model.model import Model
-from gws_core.report.report import Report
+from gws_core.note.note import Note
 
 
 @param_spec_decorator()
-class ReportParam(ModelParam):
-    """ Report params spec. When used, the end user will be able to select a report
-    from the list of report available in the lab.
+class NoteParam(ModelParam):
+    """ Note params spec. When used, the end user will be able to select a note
+    from the list of note available in the lab.
 
-    The accessible value will be ReportResource.
+    The accessible value will be NoteResource.
 
     """
 
     def __init__(self,
                  optional: bool = False,
                  visibility: ParamSpecVisibilty = "public",
-                 human_name: Optional[str] = "Select report",
+                 human_name: Optional[str] = "Select note",
                  short_description: Optional[str] = None,
                  ):
         """
@@ -44,7 +44,7 @@ class ReportParam(ModelParam):
 
     @classmethod
     def get_str_type(cls) -> str:
-        return "report_param"
+        return "note_param"
 
     def get_model_type(self) -> Type[Model]:
         """Override this method to return the model type to use
@@ -52,4 +52,4 @@ class ReportParam(ModelParam):
         :return: The model type
         :rtype: Type[Model]
         """
-        return Report
+        return Note

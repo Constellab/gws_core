@@ -10,7 +10,7 @@ from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.model.typing_style import TypingStyle
-from gws_core.report.report_view_model import ReportViewModel
+from gws_core.note.note_view_model import NoteViewModel
 from gws_core.resource.view.view_dto import ViewTypeDTO
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -20,7 +20,7 @@ from ...core.classes.paginator import Paginator
 from ...core.classes.search_builder import SearchBuilder, SearchParams
 from ..resource_model import ResourceModel
 from ..view.view import View
-from ..view.view_types import ViewType, exluded_views_in_report
+from ..view.view_types import ViewType, exluded_views_in_note
 from .view_config import ViewConfig
 from .view_config_search_builder import ViewConfigSearchBuilder
 
@@ -89,9 +89,9 @@ class ViewConfigService():
 
     @classmethod
     def get_old_views_to_delete(cls) -> List[ViewConfig]:
-        """ return the 100 oldest view config that are not favorite and not used in a report"""
-        return list(ViewConfig.select().left_outer_join(ReportViewModel).where(
-            (ViewConfig.is_favorite == False) & (ReportViewModel.report.is_null(True))).order_by(
+        """ return the 100 oldest view config that are not favorite and not used in a note"""
+        return list(ViewConfig.select().left_outer_join(NoteViewModel).where(
+            (ViewConfig.is_favorite == False) & (NoteViewModel.note.is_null(True))).order_by(
             ViewConfig.last_modified_at.asc()).limit(100))
 
     @classmethod
@@ -117,19 +117,19 @@ class ViewConfigService():
         return cls._search(search_builder, search, page, number_of_items_per_page)
 
     @classmethod
-    def search_by_report(cls, report_id: str, search: SearchParams,
-                         page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
-        from ...report.report_service import ReportService
+    def search_by_note(cls, note_id: str, search: SearchParams,
+                       page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
+        from ...note.note_service import NoteService
 
         search_builder: SearchBuilder = ViewConfigSearchBuilder()
 
-        # retrieve resources associated to the report's experiments
+        # retrieve resources associated to the note's experiments
         # It retrieves the resources used as input or output of the experiments
-        resources: List[ResourceModel] = ReportService.get_resources_of_associated_experiments(report_id)
+        resources: List[ResourceModel] = NoteService.get_resources_of_associated_experiments(note_id)
         search_builder.add_expression(ViewConfig.resource_model.in_(resources))
 
         # exclude the type of view that are not useful in historic
-        search_builder.add_expression(ViewConfig.view_type.not_in(exluded_views_in_report))
+        search_builder.add_expression(ViewConfig.view_type.not_in(exluded_views_in_note))
 
         return cls._search(search_builder, search, page, number_of_items_per_page)
 

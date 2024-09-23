@@ -9,7 +9,7 @@ from gws_core.resource.view.view_types import ViewType
 
 class RichTextView(View):
     """
-    Class rich text view. Useful to show report content.
+    Class rich text view. Useful to show note content.
 
     The view model is:
     ```

@@ -328,6 +328,12 @@ from .model.typing_manager import TypingManager as TypingManager
 from .model.typing_style import TypingIconColor as TypingIconColor
 from .model.typing_style import TypingIconType as TypingIconType
 from .model.typing_style import TypingStyle as TypingStyle
+# Note
+from .note.note import Note as Note
+from .note.note_service import NoteService as NoteService
+from .note.task.lab_note_resource import LabNoteResource as LabNoteResource
+# Note task
+from .note.task.note_param import NoteParam as NoteParam
 # Core > Notebook
 from .notebook.notebook import Notebook as Notebook
 # Process
@@ -356,12 +362,6 @@ from .protocol_template.protocol_template import \
     ProtocolTemplate as ProtocolTemplate
 from .protocol_template.protocol_template_factory import \
     ProtocolTemplateFactory as ProtocolTemplateFactory
-# Report
-from .report.report import Report as Report
-from .report.report_service import ReportService as ReportService
-# Report task
-from .report.task.report_param import ReportParam as ReportParam
-from .report.task.report_resource import ReportResource as ReportResource
 # Resource
 from .resource.kv_store import KVStore as KVStore
 from .resource.r_field.dict_r_field import DictRField as DictRField

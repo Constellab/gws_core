@@ -3,36 +3,36 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
-from gws_core.report.report import Report
-from gws_core.report.task.report_param import ReportParam
+from gws_core.note.note import Note
+from gws_core.note.task.note_param import NoteParam
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
-from .report_resource import ReportResource
+from .lab_note_resource import LabNoteResource
 
 
 @task_decorator(
-    unique_name="SelectReport",
-    short_description="Select a report",
+    unique_name="SelectNote",
+    short_description="Select a note",
 )
-class SelectReport(Task):
+class SelectNote(Task):
     """
-    Task to select an existing report and return a ReportResource to access and modify the report.
+    Task to select an existing note and return a NoteResource to access and modify the note.
     """
 
     input_specs: InputSpecs = InputSpecs()
 
     output_specs: OutputSpecs = OutputSpecs({
-        'report': OutputSpec(ReportResource, human_name='Report', short_description='Select a report')
+        'note': OutputSpec(LabNoteResource, human_name='Note', short_description='Select a note')
     })
 
     config_specs: ConfigSpecs = {
-        'report': ReportParam(),
+        'note': NoteParam(),
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        report: Report = params['report']
+        note: Note = params['note']
         return {
-            'report': ReportResource(report_id=report.id)
+            'note': LabNoteResource(note_id=note.id)
         }

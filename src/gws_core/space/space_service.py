@@ -11,7 +11,7 @@ from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
 from gws_core.space.space_dto import (LabStartDTO, SaveExperimentToSpaceDTO,
-                                      SaveReportToSpaceDTO, SpaceSendMailDTO)
+                                      SaveNoteToSpaceDTO, SpaceSendMailDTO)
 from gws_core.user.user_dto import UserFullDTO, UserSpace
 
 from ..core.exception.exceptions import BadRequestException
@@ -126,10 +126,10 @@ class SpaceService():
             raise err
 
     @classmethod
-    def save_report(cls, folder_id: str, report: SaveReportToSpaceDTO,
-                    file_paths: List[str]) -> None:
+    def save_note(cls, folder_id: str, note: SaveNoteToSpaceDTO,
+                  file_paths: List[str]) -> None:
         space_api_url: str = cls._get_space_api_url(
-            f"{cls._external_labs_route}/folder/{folder_id}/report/v2")
+            f"{cls._external_labs_route}/folder/{folder_id}/note/v2")
 
         # convert the file paths to file object supported by the form data request
         files = []
@@ -141,23 +141,23 @@ class SpaceService():
 
         try:
             return ExternalApiService.put_form_data(
-                space_api_url, data=report,
+                space_api_url, data=note,
                 headers=cls._get_request_header(),
                 files=files,
                 raise_exception_if_error=True)
         except BaseHTTPException as err:
-            err.detail = f"Can't save the report in space. Error : {err.detail}"
+            err.detail = f"Can't save the note in space. Error : {err.detail}"
             raise err
 
     @classmethod
-    def delete_report(cls, folder_id: str, report_id: str) -> None:
+    def delete_note(cls, folder_id: str, note_id: str) -> None:
         space_api_url: str = cls._get_space_api_url(
-            f"{cls._external_labs_route}/folder/{folder_id}/report/{report_id}")
+            f"{cls._external_labs_route}/folder/{folder_id}/note/{note_id}")
         try:
             return ExternalApiService.delete(space_api_url, cls._get_request_header(),
                                              raise_exception_if_error=True)
         except BaseHTTPException as err:
-            err.detail = f"Can't delete the report in space. Error : {err.detail}"
+            err.detail = f"Can't delete the note in space. Error : {err.detail}"
             raise err
 
     @classmethod

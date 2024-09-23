@@ -24,7 +24,7 @@ class ActivityObjectType(Enum):
     EXPERIMENT = "EXPERIMENT"
     PROCESS = "PROCESS"
     USER = "USER"
-    REPORT = "REPORT"
+    NOTE = "NOTE"
     DOCUMENT_TEMPLATE = "DOCUMENT_TEMPLATE"
 
 

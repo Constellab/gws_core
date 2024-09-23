@@ -82,12 +82,12 @@ class ResourceUnknownUsedInAnotherExperimentException(BadRequestException):
             })
 
 
-class ResourceUnknownUsedInReportException(BadRequestException):
-    def __init__(self, report_name: str, report_id: str) -> None:
+class ResourceUnknownUsedInNoteException(BadRequestException):
+    def __init__(self, note_name: str, note_id: str) -> None:
         super().__init__(
             GWSException.RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP.value,
             unique_code=GWSException.RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP.name,
             detail_args={
-                "experiment": report_name,
-                "experiment_url": FrontService.get_report_url(report_id)
+                "experiment": note_name,
+                "experiment_url": FrontService.get_note_url(note_id)
             })

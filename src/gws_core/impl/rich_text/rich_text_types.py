@@ -44,7 +44,7 @@ class RichTextObjectType(Enum):
     :param Enum: _description_
     :type Enum: _type_
     """
-    REPORT = 'report'
+    NOTE = 'note'
     DOCUMENT_TEMPLATE = 'document_template'
     NOTE_RESOURCE = 'note_resource'
 

@@ -5,7 +5,7 @@ from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.document_template.document_template_dto import (
-    CreateDocumentTemplateDTO, CreateDocumentTemplateFromReportDTO,
+    CreateDocumentTemplateDTO, CreateDocumentTemplateFromNoteDTO,
     DocumentTemplateDTO)
 from gws_core.document_template.document_template_service import \
     DocumentTemplateService
@@ -21,11 +21,11 @@ def create_empty(data: CreateDocumentTemplateDTO, _=Depends(AuthService.check_us
     return DocumentTemplateService.create_empty(data.title).to_dto()
 
 
-@core_app.post("/document-template/from-report", tags=["Document template"],
-               summary="Create a document template from a report")
-def create_from_report(
-        data: CreateDocumentTemplateFromReportDTO, _=Depends(AuthService.check_user_access_token)) -> DocumentTemplateDTO:
-    return DocumentTemplateService.create_from_report(data.report_id).to_dto()
+@core_app.post("/document-template/from-note", tags=["Document template"],
+               summary="Create a document template from a note")
+def create_from_note(
+        data: CreateDocumentTemplateFromNoteDTO, _=Depends(AuthService.check_user_access_token)) -> DocumentTemplateDTO:
+    return DocumentTemplateService.create_from_note(data.note_id).to_dto()
 
 
 @core_app.put("/document-template/{doc_id}/title", tags=["Document template"],
@@ -43,7 +43,7 @@ def update_content(
     return DocumentTemplateService.update_content(doc_id, content).content
 
 
-@core_app.delete("/document-template/{doc_id}", tags=["Document template"], summary="Delete a reporttemplate ")
+@core_app.delete("/document-template/{doc_id}", tags=["Document template"], summary="Delete a notetemplate ")
 def delete(doc_id: str, _=Depends(AuthService.check_user_access_token)) -> None:
     DocumentTemplateService.delete(doc_id)
 
@@ -57,7 +57,7 @@ def get_by_id(id_: str, _=Depends(AuthService.check_user_access_token)) -> Docum
 
 
 @core_app.get("/document-template/{id_}/content", tags=["Document template"],
-              summary="Get a report", response_model=None)
+              summary="Get a note", response_model=None)
 def get_content(id_: str, _=Depends(AuthService.check_user_access_token)) -> RichTextDTO:
     return DocumentTemplateService.get_by_id_and_check(id_).content
 

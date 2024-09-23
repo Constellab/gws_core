@@ -12,5 +12,5 @@ class CreateDocumentTemplateDTO(BaseModelDTO):
     title: str
 
 
-class CreateDocumentTemplateFromReportDTO(BaseModelDTO):
-    report_id: str
+class CreateDocumentTemplateFromNoteDTO(BaseModelDTO):
+    note_id: str

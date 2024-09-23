@@ -40,8 +40,8 @@ class FrontService():
         return FrontService.get_app_url() + '/experiment/' + experiment_id
 
     @staticmethod
-    def get_report_url(report_id: str) -> str:
-        return FrontService.get_app_url() + '/report/' + report_id
+    def get_note_url(note_id: str) -> str:
+        return FrontService.get_app_url() + '/note/' + note_id
 
     @staticmethod
     def get_resource_url(resource_id: str) -> str:
