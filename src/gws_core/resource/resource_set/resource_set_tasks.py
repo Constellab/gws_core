@@ -6,12 +6,13 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import StrParam
-from gws_core.io.dynamic_io import DynamicInputs
+from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -26,7 +27,7 @@ class ResourceStacker(Task):
 
     config_specs: ConfigSpecs = {'keys': ParamSet(
         {'key': StrParam(human_name="Resource key", short_description="The key of the resource to stack", optional=True)},
-        optional=True
+        optional=True, human_name="Resource keys", short_description="The keys of the resources to stack"
     )}
     input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = OutputSpecs({'resource_set': OutputSpec(ResourceSet)})
@@ -43,10 +44,11 @@ class ResourceStacker(Task):
         for resource in resource_list:
             if resource is not None:
 
-                if isinstance(resource, ResourceSet):
+                if isinstance(resource, ResourceListBase):
                     # prevent nesting resource sets
-                    self.log_info_message(f'Adding sub resource set for resource {str(i + 1)}')
-                    for _, sub_resource in resource.get_resources().items():
+                    self.log_info_message(
+                        f'Flatten sub resource for resource {str(i + 1)} because it is a resource list or set')
+                    for sub_resource in resource.get_resources_as_set():
                         resource_set.add_resource(sub_resource, create_new_resource=False)
                 else:
                     resource_key = configs[i]['key'] if len(
@@ -68,14 +70,24 @@ class ResourcePicker(Task):
     input_specs: InputSpecs = InputSpecs({
         "resource_set": InputSpec(ResourceSet),
     })
-    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(Resource, sub_class=True, is_constant=True)})
+    output_specs: OutputSpecs = DynamicOutputs(
+        additionnal_port_spec=OutputSpec(Resource, sub_class=True, is_constant=True))
 
-    config_specs = {
-        'resource_name': StrParam(human_name="Resource name", short_description="The name of the resource to pick")
-    }
+    config_specs: ConfigSpecs = {'keys': ParamSet(
+        {'key': StrParam(human_name="Resource key", short_description="The key of the resource to pick")},
+        optional=False, human_name="Resource keys", short_description="The keys of the resources to pick"
+    )}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+
         resource_set: ResourceSet = inputs.get('resource_set')
-        resource_name = params['resource_name']
-        resource = resource_set.get_resource(resource_name)
-        return {'resource': resource}
+        configs: List[dict] = params.get_value('keys')
+
+        resource_list = ResourceList()
+
+        for config in configs:
+            if config.get('key'):
+                resource = resource_set.get_resource(config['key'])
+                resource_list.add_resource(resource)
+
+        return {'target': resource_list}
