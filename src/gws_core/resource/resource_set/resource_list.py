@@ -62,6 +62,20 @@ class ResourceList(ResourceListBase):
         """
         return set(self.get_resources())
 
+    def get_resource_by_name(self, name: str) -> Resource | None:
+        """
+        Return the first resource with the given name
+
+        :param name: name of the resource
+        :type name: str
+        :return: resource
+        :rtype: Resource
+        """
+        for resource in self.get_resources():
+            if resource.name == name:
+                return resource
+        return None
+
     def __set_r_field__(self) -> None:
         """ set _resource_ids with key = resource_name and value = resource_id"""
         self._resource_ids = [resource.get_model_id() for resource in self._resources]

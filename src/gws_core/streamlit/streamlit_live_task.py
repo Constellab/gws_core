@@ -9,6 +9,8 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingIconType
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
+from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
@@ -30,6 +32,9 @@ class StreamlitLiveTask(Task):
     Here is the documentation of the live task: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/env-live-task/c6acb3c3-2a7c-44cd-8fb2-ea1beccdbdcc
 
     More information about streamlit: https://streamlit.io
+
+    If a resource list or set is provided, the resources will be flatten and added to the streamlit app.
+    The order of the resources of a resource set will not be kept.
     """
 
     input_specs: InputSpecs = DynamicInputs(
@@ -50,9 +55,23 @@ class StreamlitLiveTask(Task):
         # build the streamlit resource with the code and the resources
         streamlit_resource = StreamlitResource(code)
         resource_list: ResourceList = inputs.get('source')
+        i = 1
         for resource in resource_list.get_resources():
             if resource:
-                streamlit_resource.add_resource(resource, create_new_resource=False)
+                # prevent nesting resource sets
+                if isinstance(resource, ResourceListBase):
+                    if (isinstance(resource, ResourceSet)):
+                        self.log_warning_message(
+                            f'Flatten sub resource for resource {resource.name} ({str(i + 1)}) because it is a resource set. The order of the resources will not be kept.')
+                    else:
+                        self.log_warning_message(
+                            f'Flatten sub resource for resource {resource.name} ({str(i + 1)}) because it is a resource list.')
+                    for sub_resource in resource.get_resources_as_set():
+                        streamlit_resource.add_resource(sub_resource, create_new_resource=False)
+                else:
+                    streamlit_resource.add_resource(resource, create_new_resource=False)
+
+            i += 1
 
         return {'streamlit_app': streamlit_resource}
 
