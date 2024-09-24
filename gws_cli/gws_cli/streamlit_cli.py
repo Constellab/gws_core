@@ -3,15 +3,16 @@ import os
 import subprocess
 
 import typer
-from typing_extensions import Annotated
-
 from gws_core import BrickService
+from typing_extensions import Annotated
 
 app = typer.Typer()
 
 
 @app.command("run-dev")
-def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the json config file app to run.")]):
+def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the json config file app to run.")],
+            server_run_on_save: Annotated[bool, typer.Option("--server.runOnSave", help="Refresh the server on save.",
+                                                             is_flag=True)] = True):
 
     gws_core_path = BrickService.get_brick_src_folder("gws_core")
     main_app_path = os.path.join(gws_core_path, 'streamlit/_main_streamlit_app.py')
@@ -28,7 +29,7 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the js
         "run",
         main_app_path,
         "--server.port", "8501",
-        "--server.allowRunOnSave", "true",
+        "--server.runOnSave", str(server_run_on_save).lower(),
         "--",
         "--dev_mode", "true",
         "--dev_config_file", config_file_path
