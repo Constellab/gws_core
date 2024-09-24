@@ -176,12 +176,11 @@ class MessageDispatcher:
         else:
             self._waiting_messages.append(message)
 
-        self._lauch_dispatch_timer()
+        self._launch_dispatch_timer()
         self._last_notify_time = time.perf_counter()
 
-    # launche a timer to dispatch the message after a delay
-
-    def _lauch_dispatch_timer(self):
+    # launch a timer to dispatch the message after a delay
+    def _launch_dispatch_timer(self):
         if self._waiting_dispatch_timer is None:
             self._waiting_dispatch_timer = Timer(self.interval_time_dispatched_buffer,
                                                  self._dispatch_waiting_messages_after_timer)
@@ -197,8 +196,9 @@ class MessageDispatcher:
 
         self._dispatch_waiting_messages()
 
-        # remove the running dispatch timer
-        self._running_dispatch_timers.remove(current_dispatch_timer)
+        if current_dispatch_timer is not None:
+            # remove the running dispatch timer
+            self._running_dispatch_timers.remove(current_dispatch_timer)
 
     def _dispatch_waiting_messages(self):
         # directly copy and clear the array because the observer update can take some times
