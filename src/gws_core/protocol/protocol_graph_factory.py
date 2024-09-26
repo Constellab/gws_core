@@ -5,6 +5,7 @@ from typing import Dict, Literal, Type
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.utils.logger import Logger
 from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process import Process
 from gws_core.process.process_factory import ProcessFactory
@@ -113,9 +114,15 @@ class ProtocolGraphFactory():
         :return: The protocol
         :rtype": Protocol
         """
-        protocol: ProtocolModel = ProcessFactory.create_protocol_empty()
+        try:
+            protocol: ProtocolModel = ProcessFactory.create_protocol_empty()
 
-        return cls._create_protocol_model_from_graph_recur(protocol, graph, mode='type')
+            return cls._create_protocol_model_from_graph_recur(protocol, graph, mode='type')
+        except Exception as err:
+            # log stacktrace
+            Logger.log_exception_stack_trace(err)
+            raise BadRequestException(
+                f"The template is not compatible with the current version. {err}")
 
     @classmethod
     def create_protocol_model_from_config(cls, protocol_config_dto: ProcessConfigDTO) -> ProtocolModel:

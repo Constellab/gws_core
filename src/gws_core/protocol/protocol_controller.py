@@ -351,6 +351,16 @@ def add_viewer_to_process_ouput(id_: str,
             protocol_id=id_, process_name=process_name, output_port_name=output_port_name).to_dto()
 
 
+@core_app.post("/protocol/{id_}/add-template/{protocol_template_id}", tags=["Protocol"],
+               summary="Add a viewer link a process' output")
+def add_protocol_template_to_protocol(id_: str,
+                                      protocol_template_id: str,
+                                      _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+    with update_lock:
+        return ProtocolService.add_protocol_template_to_protocol(
+            protocol_id=id_, protocol_template_id=protocol_template_id).to_dto()
+
+
 ########################## LAYOUT #####################
 @core_app.put("/protocol/{id_}/layout", tags=["Protocol"],
               summary="Save the layout of a protocol")

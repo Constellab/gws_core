@@ -574,6 +574,27 @@ class ProtocolService():
             protocol_id, Viewer.get_typing_name(), process_name, output_port_name,
             viewer_config)
 
+    @classmethod
+    @transaction()
+    def add_protocol_template_to_protocol(
+            cls, protocol_id: str, protocol_template_id: str) -> ProtocolUpdate:
+        """Insert a sub protocol in the protocol from a template.
+        """
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
+            protocol_id)
+
+        protocol_template: ProtocolTemplate = ProtocolTemplateService.get_by_id_and_check(
+            protocol_template_id)
+
+        # create the sub protocol from the template
+        sub_protocol = ProtocolGraphFactory.create_protocol_model_from_type(
+            protocol_template.get_template())
+
+        # replace Source and Sink with iofaces
+        sub_protocol.replace_io_process_with_ioface()
+
+        return cls.add_process_model_to_protocol(protocol_model, sub_protocol)
+
     ########################## LAYOUT #####################
 
     @classmethod
@@ -740,13 +761,7 @@ class ProtocolService():
 
     @classmethod
     def create_protocol_model_from_template(cls, protocol_template: ProtocolTemplate) -> ProtocolModel:
-        try:
-            return cls.create_protocol_model_from_graph(protocol_template.get_template())
-        except Exception as err:
-            # log stacktrace
-            Logger.log_exception_stack_trace(err)
-            raise BadRequestException(
-                f"The template is not compatible with the current version. {err}")
+        return cls.create_protocol_model_from_graph(protocol_template.get_template())
 
     @classmethod
     def create_protocol_model_from_graph(cls, graph: ProtocolGraphConfigDTO) -> ProtocolModel:

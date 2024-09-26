@@ -1178,3 +1178,48 @@ class ProtocolModel(ProcessModel):
             if isinstance(process, ProtocolModel):
                 resource_ids.update(process.get_source_resource_ids())
         return resource_ids
+
+    def replace_io_process_with_ioface(self):
+        """Method to replace each Source process with an interface
+        and each Sink process with an outerface. It does not replace on sub protocols
+        """
+        new_interfaces: Dict[str, IOFaceDTO] = {}
+        new_outerfaces: Dict[str, IOFaceDTO] = {}
+
+        processes_to_remove: List[str] = []
+
+        for process in self.processes.values():
+            if process.is_source_task():
+
+                # convert the output connexions of Source process to interfaces
+                connectors = self._get_connectors_linked_to_process(process)
+                i = 0
+                for connector in connectors:
+                    interface_name = f"{process.instance_name}_{str(i)}"
+                    new_interfaces[interface_name] = IOFaceDTO(
+                        name=interface_name, process_instance_name=connector.right_process.instance_name,
+                        port_name=connector.right_port.name)
+
+                    i += 1
+
+                processes_to_remove.append(process.instance_name)
+            elif process.is_sink_task():
+
+                # convert the input connexions of Sink process to outerfaces
+                connectors = self._get_connectors_linked_to_process(process)
+                i = 0
+                for connector in connectors:
+                    outerface_name = f"{process.instance_name}_{str(i)}"
+                    new_outerfaces[outerface_name] = IOFaceDTO(
+                        name=outerface_name, process_instance_name=connector.left_process.instance_name,
+                        port_name=connector.left_port.name)
+
+                    i += 1
+                processes_to_remove.append(process.instance_name)
+
+        # remove the process before adding the interfaces, so the ports are not used
+        for process_name in processes_to_remove:
+            self.remove_process(process_name)
+
+        self.add_interfaces_from_dto(new_interfaces)
+        self.add_outerfaces_from_dto(new_outerfaces)

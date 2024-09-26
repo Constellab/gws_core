@@ -5,9 +5,11 @@ from gws_core.config.config_types import ConfigSpecs
 from gws_core.experiment.experiment_dto import ExperimentSaveDTO
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
-from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.protocol_template.protocol_template_factory import \
@@ -191,6 +193,39 @@ class TestProtocolTemplate(BaseTestCase):
         self.assert_json(new_template.version, template.version)
         self.assert_json(new_template.description, template.description)
         self.assert_json(new_template.to_export_dto().data.to_json_dict(), template.to_export_dto().data.to_json_dict())
+
+    def test_add_protocol_template_to_protocol(self):
+        i_experiment = IExperiment()
+
+        protocol = i_experiment.get_protocol()
+
+        process = protocol.add_process(RobotMove, 'robotMove')
+        protocol.add_source('source', None, process << 'robot')
+        protocol.add_sink('sink', process >> 'robot')
+
+        # create protocol template
+        template = ProtocolService.create_protocol_template_from_id(protocol.get_model().id, 'test_template')
+
+        # Create an empty experiment
+        experiment_2 = IExperiment()
+
+        # Add the protocol template to the experiment
+        protocol_model_2 = experiment_2.get_protocol().get_model()
+        protocol_update = ProtocolService.add_protocol_template_to_protocol(protocol_model_2.id, template.id)
+
+        # Check that the protocol template is added to the protocol
+        protocol_2: IProtocol = experiment_2.get_protocol().refresh()
+        sub_protocol: ProtocolModel = protocol_2.get_process(protocol_update.process.instance_name).get_model()
+
+        self.assertIsInstance(sub_protocol, ProtocolModel)
+        self.assertEqual(len(sub_protocol.inputs.ports), 1)
+        self.assertEqual(len(sub_protocol.outputs.ports), 1)
+        self.assertEqual(len(sub_protocol.interfaces), 1)
+        self.assertEqual(len(sub_protocol.outerfaces), 1)
+        self.assertEqual(len(sub_protocol.processes), 1)
+        sub_process = sub_protocol.get_process('robotMove')
+        self.assertIsNotNone(sub_process)
+        self.assertEqual(sub_process.get_process_type(), RobotMove)
 
     def test_migration(self):
 

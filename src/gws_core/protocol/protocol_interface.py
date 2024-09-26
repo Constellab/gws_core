@@ -209,8 +209,9 @@ class IProtocol(IProcess):
         :return: [description]
         :rtype: ITask
         """
+        config = {Source.config_name: resource_model_id} if resource_model_id else {}
         source: IProcess = self.add_process(
-            Source, instance_name, {Source.config_name: resource_model_id})
+            Source, instance_name, config)
         self.add_connector(source >> Source.output_name, in_port)
         return source
 
