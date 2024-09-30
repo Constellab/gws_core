@@ -218,6 +218,7 @@ class TestProtocolTemplate(BaseTestCase):
         sub_protocol: ProtocolModel = protocol_2.get_process(protocol_update.process.instance_name).get_model()
 
         self.assertIsInstance(sub_protocol, ProtocolModel)
+        self.assertEqual(sub_protocol.name, 'test_template')
         self.assertEqual(len(sub_protocol.inputs.ports), 1)
         self.assertEqual(len(sub_protocol.outputs.ports), 1)
         self.assertEqual(len(sub_protocol.interfaces), 1)

@@ -587,8 +587,7 @@ class ProtocolService():
             protocol_template_id)
 
         # create the sub protocol from the template
-        sub_protocol = ProtocolGraphFactory.create_protocol_model_from_type(
-            protocol_template.get_template())
+        sub_protocol = protocol_template.generate_protocol_model()
 
         # replace Source and Sink with iofaces
         sub_protocol.replace_io_process_with_ioface()
