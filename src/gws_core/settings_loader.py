@@ -72,9 +72,16 @@ class SettingsLoader:
                 f"Error: cannot parse the main settings file '{self.main_settings_file_path}'")
             raise err
 
-        bricks = settings["environment"].get("bricks", [])
+        # load the main brick
+        main_brick_name = settings.get("name")
+        if not main_brick_name:
+            raise Exception(
+                f"Error: missing 'name' in the main settings file '{self.main_settings_file_path}'")
+        self.load_brick(settings['name'], parent_name=None)
+
         # load all the bricks dependencies
-        self._load_brick_dependencies(bricks, parent_name=None)
+        bricks = settings["environment"].get("bricks", [])
+        self._load_brick_dependencies(bricks, parent_name=main_brick_name)
 
         # in dev mode also load bricks from the user bricks folder
         if Settings.is_dev_mode():
