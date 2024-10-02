@@ -51,14 +51,20 @@ def get_a_protocol(id_: str,
 def add_process(id_: str,
                 process_typing_name: str,
                 _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
-    """
-    Add a process to a protocol
-    """
-
     with update_lock:
         return ProtocolService.add_process_to_protocol_id(
             protocol_id=id_,
             process_typing_name=process_typing_name
+        ).to_dto()
+
+
+@core_app.post("/protocol/{id_}/add-empty-protocol", tags=["Protocol"],
+               summary="Add an empty protocol to a protocol")
+def add_empty_protocol(id_: str,
+                       _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+    with update_lock:
+        return ProtocolService.add_empty_protocol_to_protocol_id(
+            protocol_id=id_,
         ).to_dto()
 
 
@@ -282,6 +288,28 @@ def configure_process(id_: str,
             protocol_id=id_, process_instance_name=process_instance_name, config_values=config_values).to_dto()
 
 ########################## INTERFACE / OUTERFACE #####################
+
+
+@core_app.post("/protocol/{id_}/interface/{target_process_name}/{target_port_name}", tags=["Protocol"],
+               summary="Add an interface")
+def add_interface(id_: str,
+                  target_process_name: str,
+                  target_port_name: str,
+                  _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+    with update_lock:
+        return ProtocolService.add_interface_to_protocol_id(
+            id_, target_process_name, target_port_name).to_dto()
+
+
+@core_app.post("/protocol/{id_}/outerface/{target_process_name}/{target_port_name}", tags=["Protocol"],
+               summary="Add an outerface")
+def add_outerface(id_: str,
+                  target_process_name: str,
+                  target_port_name: str,
+                  _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+    with update_lock:
+        return ProtocolService.add_outerface_to_protocol_id(
+            id_, target_process_name, target_port_name).to_dto()
 
 
 @core_app.delete("/protocol/{id_}/interface/{interface_name}", tags=["Protocol"],

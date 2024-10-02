@@ -3,7 +3,6 @@
 from typing import Any, List, Literal, Optional, Set, Type, Union
 
 from gws_core.config.param.param_types import ParamValue
-from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.entity_navigator.entity_navigator_type import EntityType
@@ -13,6 +12,7 @@ from gws_core.impl.live.py_live_task import PyLiveTask
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
 from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
+from gws_core.io.ioface import IOface
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactory
 from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
@@ -126,6 +126,14 @@ class ProtocolService():
             raise BadRequestException("The process does not exist in the protocol")
 
         return cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=duplicate_process_model)
+
+    @classmethod
+    @transaction()
+    def add_empty_protocol_to_protocol_id(cls, protocol_id: str) -> ProtocolUpdate:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
+            protocol_id)
+
+        return cls.add_empty_protocol_to_protocol(protocol_model=protocol_model)
 
     @classmethod
     @transaction()
@@ -318,12 +326,15 @@ class ProtocolService():
 
     @classmethod
     def _on_protocol_object_updated(cls, protocol_model: ProtocolModel, process_model: ProcessModel = None,
-                                    connector: Connector = None, protocol_updated: bool = False) -> ProtocolUpdate:
+                                    connector: Connector = None, ioface: IOface = None,
+                                    protocol_updated: bool = False) -> ProtocolUpdate:
         """Called when a process or connector is updated.
         """
         protocol_update = ProtocolUpdate(protocol=protocol_model, process=process_model,
-                                         connector=connector, protocol_updated=protocol_updated)
+                                         connector=connector, ioface=ioface,
+                                         protocol_updated=protocol_updated)
 
+        # refresh the protocol status for auto run processes, or run partially
         current_status = protocol_model.status
         protocol_model.refresh_status()
         if current_status != protocol_model.status:
@@ -404,23 +415,55 @@ class ProtocolService():
     ########################## INTERFACE & OUTERFACE #####################
 
     @classmethod
+    def add_interface_to_protocol_id(
+            cls, protocol_model_id: str,
+            target_process_name: str, target_port_name: str) -> ProtocolUpdate:
+        protocol_model = cls.get_by_id_and_check(protocol_model_id)
+        return cls.add_interface_to_protocol(
+            protocol_model, protocol_model.generate_interface_name(),
+            target_process_name, target_port_name)
+
+    @classmethod
     def add_interface_to_protocol(
-            cls, protocol_model: ProtocolModel, name: str, target_process_name: str, target_port_name: str) -> ProtocolUpdate:
+            cls, protocol_model: ProtocolModel, name: str,
+            target_process_name: str, target_port_name: str) -> ProtocolUpdate:
         protocol_model.check_is_updatable()
-        protocol_model.add_interface(
+
+        if protocol_model.is_root_process():
+            raise BadRequestException(
+                "Cannot add an interface to the root protocol")
+        ioface = protocol_model.add_interface(
             name, target_process_name, target_port_name)
         protocol_model.save_graph()
-        return cls._on_protocol_object_updated(protocol_model=protocol_model)
+        return cls._on_protocol_object_updated(protocol_model=protocol_model,
+                                               ioface=ioface,
+                                               protocol_updated=True)
+
+    @classmethod
+    def add_outerface_to_protocol_id(
+            cls, protocol_id: str,
+            source_process_name: str, source_port_name: str) -> ProtocolUpdate:
+        protocol_model = cls.get_by_id_and_check(protocol_id)
+        return cls.add_outerface_to_protocol(
+            protocol_model, protocol_model.generate_outerface_name(),
+            source_process_name, source_port_name)
 
     @classmethod
     def add_outerface_to_protocol(
-            cls, protocol_model: ProtocolModel, name: str, source_process_name: str, source_port_name: str) -> ProtocolUpdate:
+            cls, protocol_model: ProtocolModel, name: str,
+            source_process_name: str, source_port_name: str) -> ProtocolUpdate:
         protocol_model.check_is_updatable()
-        protocol_model.add_outerface(
+
+        if protocol_model.is_root_process():
+            raise BadRequestException(
+                "Cannot add an outerface to the root protocol")
+        ioface = protocol_model.add_outerface(
             name, source_process_name, source_port_name)
         protocol_model.save_graph()
 
-        return cls._on_protocol_object_updated(protocol_model=protocol_model)
+        return cls._on_protocol_object_updated(protocol_model=protocol_model,
+                                               ioface=ioface,
+                                               protocol_updated=True)
 
     @classmethod
     def delete_interface_of_protocol_id(cls, protocol_id: str, interface_name: str) -> ProtocolUpdate:
@@ -433,7 +476,7 @@ class ProtocolService():
         protocol_model.remove_interface(interface_name)
         protocol_model.save_graph()
 
-        return cls._on_protocol_object_updated(protocol_model=protocol_model)
+        return cls._on_protocol_object_updated(protocol_model=protocol_model, protocol_updated=True)
 
     @classmethod
     def delete_outerface_of_protocol_id(cls, protocol_id: str, outerface_name: str) -> ProtocolUpdate:
@@ -446,7 +489,7 @@ class ProtocolService():
         protocol_model.remove_outerface(outerface_name)
         protocol_model.save_graph()
 
-        return cls._on_protocol_object_updated(protocol_model=protocol_model)
+        return cls._on_protocol_object_updated(protocol_model=protocol_model, protocol_updated=True)
 
     @classmethod
     @transaction()

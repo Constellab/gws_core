@@ -41,6 +41,8 @@ class Source(Task):
 
     __auto_run__: bool = True
 
+    __enable_in_sub_protocol__: bool = False
+
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         r_id: str = params.get_value(Source.config_name)
         if not r_id:
@@ -75,6 +77,8 @@ class Sink(Task):
     }
 
     __auto_run__: bool = True
+
+    __enable_in_sub_protocol__: bool = False
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

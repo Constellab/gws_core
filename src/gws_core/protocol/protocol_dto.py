@@ -92,6 +92,7 @@ class ExperimentProtocolDTO(BaseModelDTO):
 class ProtocolUpdateDTO(BaseModelDTO):
     process: Optional[ProcessDTO]
     link: Optional[ConnectorDTO]
+    ioface: Optional[IOFaceDTO]
     protocol_updated: bool
     protocol: Optional[ProtocolDTO]
     sub_protocols: Optional[List[ProtocolDTO]]

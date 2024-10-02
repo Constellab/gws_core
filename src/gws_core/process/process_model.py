@@ -439,6 +439,11 @@ class ProcessModel(ModelWithUser):
         """
         return self.get_process_type().__auto_run__
 
+    def is_enable_in_sub_protocol(self) -> bool:
+        """Return true if the process is enable in sub protocol
+        """
+        return self.get_process_type().__enable_in_sub_protocol__
+
     def get_last_message(self) -> Optional[ProgressBarMessageDTO]:
         """Return the last message of the process
         """
@@ -635,3 +640,6 @@ class ProcessModel(ModelWithUser):
     def mark_as_waiting_for_cli_process(self):
         self.status = ProcessStatus.WAITING_FOR_CLI_PROCESS
         self.save()
+
+    def is_root_process(self) -> bool:
+        return self.parent_protocol_id is None
