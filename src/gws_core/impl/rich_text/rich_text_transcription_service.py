@@ -34,6 +34,7 @@ There might be no command in the transcription, return a default paragraph block
 If there is no text in the transcription, return an empy array.
 If you don't recognize a command or have a doubt, return a default paragraph block.
 An end of the command might be written by the user (like 'end title'), but it's not mandatory.
+Don't write the name of the command in the transcription, only the content.
 Don't change the text of the transcription, only the structure, keep the original language.
 Return only the json array without carry return, not the full response.
 
