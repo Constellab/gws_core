@@ -315,6 +315,10 @@ class ProtocolModel(ProcessModel):
         :param instance_name: Unique name of the process. If none, the name is generated
         :type instance_name: str
         """
+        if not self.is_root_process() and not process_model.is_enable_in_sub_protocol():
+            raise BadRequestException(
+                f"The process '{process_model.name}' cannot be added to a sub protocol")
+
         # be sure to have loaded the protocol before adding a process
         self._load_from_graph()
 
@@ -796,13 +800,18 @@ class ProtocolModel(ProcessModel):
             self.add_interface(
                 key, spec.process_instance_name, spec.port_name)
 
-    def add_interface(self, name: str, process_name: str, port_name: str) -> None:
+    def add_interface(self, name: str, process_name: str, port_name: str) -> IOface:
         # to support lazy loading
         self._load_from_graph()
         self._check_port(process_name, port_name, "IN")
-        self._add_interface(name, process_name, port_name)
 
-    def _add_interface(self, name: str, process_name: str, port_name: str) -> None:
+        if name in self.interfaces:
+            raise BadRequestException(
+                f"The protocol '{self.get_instance_name_context()}' already has an interface named '{name}'")
+
+        return self._add_interface(name, process_name, port_name)
+
+    def _add_interface(self, name: str, process_name: str, port_name: str) -> IOface:
         target_process = self._processes[process_name]
         target_port = target_process.in_port(port_name)
 
@@ -819,6 +828,7 @@ class ProtocolModel(ProcessModel):
             process_instance_name=process_name,
             port_name=port_name
         )
+        return self._interfaces[name]
 
     def _propagate_interfaces(self):
         """
@@ -909,6 +919,11 @@ class ProtocolModel(ProcessModel):
 
         return False
 
+    def generate_interface_name(self) -> str:
+        """Generate a unique interface name
+        """
+        return self._generate_unique_io_name(self.interfaces, "interface")
+
     ############################### OUTERFACE #################################
 
     @property
@@ -942,13 +957,18 @@ class ProtocolModel(ProcessModel):
             self.add_outerface(
                 key, spec.process_instance_name, spec.port_name)
 
-    def add_outerface(self, name: str, process_name: str, port_name: str) -> None:
+    def add_outerface(self, name: str, process_name: str, port_name: str) -> IOface:
         # to support lazy loading
         self._load_from_graph()
         self._check_port(process_name, port_name, "OUT")
-        self._add_outerface(name, process_name, port_name)
 
-    def _add_outerface(self, name: str, process_name: str, port_name: str) -> None:
+        if name in self.outerfaces:
+            raise BadRequestException(
+                f"The protocol '{self.get_instance_name_context()}' already has an outerface named '{name}'")
+
+        return self._add_outerface(name, process_name, port_name)
+
+    def _add_outerface(self, name: str, process_name: str, port_name: str) -> IOface:
         source_process = self._processes[process_name]
         source_port = source_process.out_port(port_name)
 
@@ -965,6 +985,7 @@ class ProtocolModel(ProcessModel):
             process_instance_name=process_name,
             port_name=port_name
         )
+        return self._outerfaces[name]
 
     def is_outerfaced_with(self, process_instance_name: str) -> bool:
         """
@@ -1024,6 +1045,11 @@ class ProtocolModel(ProcessModel):
         self.outputs.remove_port(name)
         if self.layout:
             self.layout.remove_outerface(name)
+
+    def generate_outerface_name(self) -> str:
+        """Generate a unique outerface name
+        """
+        return self._generate_unique_io_name(self.outerfaces, "outerface")
 
     ############################### JSON #################################
 
@@ -1223,3 +1249,17 @@ class ProtocolModel(ProcessModel):
 
         self.add_interfaces_from_dto(new_interfaces)
         self.add_outerfaces_from_dto(new_outerfaces)
+
+    def _generate_unique_io_name(self, io_dict: Dict[str, IOface],
+                                 name: str) -> str:
+        """Generate a unique name for an io dict
+        """
+
+        if not name in io_dict:
+            return name
+
+        count: int = 1
+        while f"{name}_{count}" in io_dict:
+            count += 1
+
+        return f"{name}_{count}"

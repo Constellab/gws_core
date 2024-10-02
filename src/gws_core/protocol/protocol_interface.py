@@ -11,13 +11,11 @@ from gws_core.task.plug import Sink, Source
 
 from ..config.config_types import ConfigParamsDict
 from ..config.param.param_types import ParamValue
-from ..io.port import InPort, OutPort
 from ..process.process import Process
 from ..process.process_interface import IProcess
 from ..process.process_model import ProcessModel
 from ..task.task import Task
 from ..task.task_interface import ITask
-from ..task.task_model import TaskModel
 from .protocol import Protocol
 from .protocol_model import ProtocolModel
 from .protocol_service import ProtocolService

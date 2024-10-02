@@ -16,6 +16,10 @@ class Process(BaseTyping):
     # Set only on specific tasks when you know what you are doing
     __auto_run__: bool = False
 
+    # For specific tasks, it prevent the process for being added to a sub protocol
+    # Set only on specific tasks when you know what you are doing
+    __enable_in_sub_protocol__: bool = True
+
     @classmethod
     @abstractmethod
     def get_input_specs(cls) -> InputSpecs:
