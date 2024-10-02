@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 import sys
-from typing import Dict, List, Literal
+from typing import Dict, List, Literal, Optional
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.utils.logger import Logger
@@ -72,12 +72,8 @@ class SettingsLoader:
                 f"Error: cannot parse the main settings file '{self.main_settings_file_path}'")
             raise err
 
-        # load the main brick
-        main_brick_name = settings.get("name")
-        if not main_brick_name:
-            raise Exception(
-                f"Error: missing 'name' in the main settings file '{self.main_settings_file_path}'")
-        self.load_brick(settings['name'], parent_name=None)
+        # load the main brick, if the settings.json is in a brick
+        main_brick_name: str = self.load_main_brick(settings)
 
         # load all the bricks dependencies
         bricks = settings["environment"].get("bricks", [])
@@ -101,6 +97,22 @@ class SettingsLoader:
                 else:
                     Logger.warning(
                         f"{Settings.get_user_bricks_folder()} folder should only contain bricks, please remove '{folder}' file or directory.")
+
+    def load_main_brick(self, settings: dict) -> Optional[str]:
+        """Load the main brick is the main settings.json is in a brick folder
+        """
+        main_brick_name: str = None
+        settings_dir = os.path.dirname(self.main_settings_file_path)
+        if BrickService.folder_is_brick(settings_dir):
+            main_brick_name = settings.get("name")
+            if not main_brick_name:
+                raise Exception(
+                    f"Error: missing 'name' in the main settings file '{self.main_settings_file_path}'")
+
+            self.load_brick(settings['name'], parent_name=None)
+            return main_brick_name
+
+        return None
 
     def load_brick(self, brick_name: str, parent_name: str = None) -> None:
 
