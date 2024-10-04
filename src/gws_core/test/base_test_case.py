@@ -1,6 +1,6 @@
 
 
-from ..experiment.queue_service import QueueService
+from ..scenario.queue_service import QueueService
 from .base_test_case_light import BaseTestCaseLight
 from .gtest import GTest
 

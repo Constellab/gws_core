@@ -1,6 +1,6 @@
 
 
-from gws_core import (BaseTestCase, IExperiment, IProcess, IProtocol, ITask,
+from gws_core import (BaseTestCase, IProcess, IProtocol, IScenario, ITask,
                       ProtocolModel)
 from gws_core.impl.robot.robot_protocol import (RobotSuperTravelProto,
                                                 RobotTravelProto)
@@ -10,14 +10,14 @@ from gws_core.protocol.protocol_exception import \
     IOFaceConnectedToTheParentDeleteException
 
 
-# test_iexperiment
-class TestIExperiment(BaseTestCase):
+# test_iscenario
+class TestIScenario(BaseTestCase):
 
-    def test_iexperiment(self):
+    def test_iscenario(self):
 
-        experiment: IExperiment = IExperiment()
+        scenario: IScenario = IScenario()
 
-        protocol: IProtocol = experiment.get_protocol()
+        protocol: IProtocol = scenario.get_protocol()
         create: IProcess = protocol.add_process(RobotCreate, 'create')
 
         # Verify that the process was created in the DB
@@ -47,7 +47,7 @@ class TestIExperiment(BaseTestCase):
         robot_travel_2: IProtocol = protocol.get_process('robot_travel')
         self.assertIsInstance(robot_travel_2, IProtocol)
 
-        experiment.run()
+        scenario.run()
         sub_proto = protocol.get_process('sub_proto')
         sub_move = sub_proto.get_process('sub_move')
         robot_travel = protocol.get_process('robot_travel')
@@ -71,10 +71,10 @@ class TestIExperiment(BaseTestCase):
         move_1 = robot_travel.get_process('move_1')
         self.assertIsInstance(move_1, ITask)
 
-    def test_iexperiment_remove(self):
-        experiment: IExperiment = IExperiment(RobotSuperTravelProto)
+    def test_iscenario_remove(self):
+        scenario: IScenario = IScenario(RobotSuperTravelProto)
 
-        super_travel: IProtocol = experiment.get_protocol()
+        super_travel: IProtocol = scenario.get_protocol()
         super_travel_model: ProtocolModel = super_travel.get_model()
         sub_travel: IProtocol = super_travel.get_process('sub_travel')
         move_1: IProcess = sub_travel.get_process('move_1')
@@ -109,7 +109,7 @@ class TestIExperiment(BaseTestCase):
         self._test_super_travel_after_remove(super_travel_db)
 
     def _test_super_travel_after_remove(self, super_travel_model: ProtocolModel):
-        """Method used by the test_iexperiment_remove to test the protocol model after removes
+        """Method used by the test_iscenario_remove to test the protocol model after removes
 
         :param protocol_model: [description]
         :type protocol_model: ProtocolModel

@@ -2,14 +2,15 @@
 
 from typing import List
 
+from peewee import Expression
+
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
                                                   SearchOperator)
 from gws_core.entity_navigator.entity_navigator_type import EntityType
-from gws_core.experiment.experiment import Experiment
 from gws_core.resource.view.view_types import ViewType
+from gws_core.scenario.scenario import Scenario
 from gws_core.tag.entity_with_tag_search_builder import \
     EntityWithTagSearchBuilder
-from peewee import Expression
 
 from .view_config import ViewConfig
 
@@ -29,10 +30,10 @@ class ViewConfigSearchBuilder(EntityWithTagSearchBuilder):
         if filter_.key == 'include_not_favorite':
             return None
         elif filter_.key == 'folder':
-            # Handle the folder filters, get all experiment of this folder and filter by experiment
-            experiments: List[Experiment] = list(Experiment.select().where(
-                Experiment.folder.in_(filter_.value)))
-            return ViewConfig.experiment.in_(experiments)
+            # Handle the folder filters, get all scenario of this folder and filter by scenario
+            scenarios: List[Scenario] = list(Scenario.select().where(
+                Scenario.folder.in_(filter_.value)))
+            return ViewConfig.scenario.in_(scenarios)
         elif filter_.key == 'view_type':
             # consider table and tabular the same
             if ViewType.TABLE.value == filter_.value:

@@ -11,10 +11,7 @@ from gws_core.core.model.model import Model
 from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.logger import Logger
-from gws_core.entity_navigator.entity_navigator import \
-    EntityNavigatorExperiment
-from gws_core.experiment.experiment_interface import IExperiment
-from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.entity_navigator.entity_navigator import EntityNavigatorScenario
 from gws_core.impl.file.file import File
 from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process_interface import IProcess
@@ -24,16 +21,17 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceDTO
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
-from gws_core.resource.resource_zipper_task import ResourceZipperTask
+from gws_core.resource.task.resource_zipper_task import ResourceZipperTask
+from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.share.share_link_service import ShareLinkService
-from gws_core.share.shared_dto import (SharedEntityMode,
-                                       ShareExperimentInfoReponseDTO,
-                                       ShareLinkType,
+from gws_core.share.shared_dto import (SharedEntityMode, ShareLinkType,
                                        ShareResourceInfoReponseDTO,
-                                       ShareResourceZippedResponseDTO)
+                                       ShareResourceZippedResponseDTO,
+                                       ShareScenarioInfoReponseDTO)
 from gws_core.share.shared_entity_info import SharedEntityInfo
-from gws_core.share.shared_experiment import SharedExperiment
 from gws_core.share.shared_resource import SharedResource
+from gws_core.share.shared_scenario import SharedScenario
 from gws_core.task.plug import Sink
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
@@ -88,8 +86,8 @@ class ShareService():
         """
         if entity_type == ShareLinkType.RESOURCE:
             return SharedResource
-        elif entity_type == ShareLinkType.EXPERIMENT:
-            return SharedExperiment
+        elif entity_type == ShareLinkType.SCENARIO:
+            return SharedScenario
         else:
             raise Exception(f'Entity type {entity_type} is not supported')
 
@@ -172,9 +170,9 @@ class ShareService():
 
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(id_)
 
-        experiment: IExperiment = IExperiment(
+        scenario: IScenario = IScenario(
             None, title=f"{resource_model.name} zipper")
-        protocol: IProtocol = experiment.get_protocol()
+        protocol: IProtocol = scenario.get_protocol()
 
         # Add the importer and the connector
         zipper: IProcess = protocol.add_process(ResourceZipperTask, 'zipper', {'shared_by_id': shared_by.id})
@@ -185,7 +183,7 @@ class ShareService():
         # Add sink and connect it
         sink = protocol.add_sink('sink', zipper >> ResourceZipperTask.output_name, False)
 
-        experiment.run(auto_delete_if_error=True)
+        scenario.run(auto_delete_if_error=True)
         sink.refresh()
 
         return sink.get_input_resource_model(Sink.input_name)
@@ -217,56 +215,56 @@ class ShareService():
 
         return zip_file.path
 
-    #################################### EXPERIMENT ####################################
+    #################################### SCENARIO ####################################
 
     @classmethod
-    def get_experiment_entity_object_info(cls, token: str) -> ShareExperimentInfoReponseDTO:
+    def get_scenario_entity_object_info(cls, token: str) -> ShareScenarioInfoReponseDTO:
         shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check_validity(
             token)
 
         # generate the link to download the zipped resource
         download_url: str = ExternalLabService.get_current_lab_route(
-            f"share/experiment/{shared_entity_link.token}/resource/[RESOURCE_ID]/zip")
-        return ShareExperimentInfoReponseDTO(
+            f"share/scenario/{shared_entity_link.token}/resource/[RESOURCE_ID]/zip")
+        return ShareScenarioInfoReponseDTO(
             version=cls.VERSION,
             entity_type=shared_entity_link.entity_type,
             entity_id=shared_entity_link.entity_id,
-            entity_object=ExperimentService.export_experiment(shared_entity_link.entity_id),
+            entity_object=ScenarioService.export_scenario(shared_entity_link.entity_id),
             resource_route=download_url,
             token=token,
             origin=ExternalLabService.get_current_lab_info(shared_entity_link.created_by)
         )
 
     @classmethod
-    def zip_shared_experiment_resource(cls, token: str, resource_id: str) -> ShareResourceZippedResponseDTO:
+    def zip_shared_scenario_resource(cls, token: str, resource_id: str) -> ShareResourceZippedResponseDTO:
 
         shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check(token)
 
-        if shared_entity_link.entity_type != ShareLinkType.EXPERIMENT:
+        if shared_entity_link.entity_type != ShareLinkType.SCENARIO:
             raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
 
-        cls._check_resource_is_in_experiment(shared_entity_link.entity_id, resource_id)
+        cls._check_resource_is_in_scenario(shared_entity_link.entity_id, resource_id)
 
         zipped_resource: ResourceModel = cls._zip_resource(resource_id, shared_entity_link.created_by)
 
         # generate the link to download the zipped resource
         download_url: str = ExternalLabService.get_current_lab_route(
-            f"share/experiment/{token}/resource/{resource_id}/download")
+            f"share/scenario/{token}/resource/{resource_id}/download")
         return ShareResourceZippedResponseDTO(
             version=cls.VERSION, entity_type=shared_entity_link.entity_type, entity_id=shared_entity_link.entity_id,
             zipped_entity_resource_id=zipped_resource.id, download_entity_route=download_url)
 
     @classmethod
-    def download_experiment_resource(cls, token: str, resource_id: str) -> str:
+    def download_scenario_resource(cls, token: str, resource_id: str) -> str:
         """Method that is used to download the zipped resource generated by the shared action
         """
 
         shared_entity_link: ShareLink = ShareLinkService.find_by_token_and_check_validity(token)
 
-        if shared_entity_link.entity_type != ShareLinkType.EXPERIMENT:
+        if shared_entity_link.entity_type != ShareLinkType.SCENARIO:
             raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
 
-        cls._check_resource_is_in_experiment(shared_entity_link.entity_id, resource_id)
+        cls._check_resource_is_in_scenario(shared_entity_link.entity_id, resource_id)
 
         # retrieve the zipped resource
         zipped_resource = cls._find_zipped_resource_from_origin_resource(resource_id)
@@ -282,14 +280,14 @@ class ShareService():
         return zip_file.path
 
     @classmethod
-    def _check_resource_is_in_experiment(cls, experiment_id: str, resource_id: str) -> None:
-        # check that the resource was generated by the experimen tor used as input of the experiment
+    def _check_resource_is_in_scenario(cls, scenario_id: str, resource_id: str) -> None:
+        # check that the resource was generated by the experimen tor used as input of the scenario
 
-        experiment = ExperimentService.get_by_id_and_check(experiment_id)
-        experiment_navigator = EntityNavigatorExperiment(experiment)
+        scenario = ScenarioService.get_by_id_and_check(scenario_id)
+        scenario_navigator = EntityNavigatorScenario(scenario)
 
-        if experiment_navigator.get_next_resources().get_as_nav_set().has_entity(resource_id) or \
-                experiment_navigator.get_previous_resources().get_as_nav_set().has_entity(resource_id):
+        if scenario_navigator.get_next_resources().get_as_nav_set().has_entity(resource_id) or \
+                scenario_navigator.get_previous_resources().get_as_nav_set().has_entity(resource_id):
             return
 
-        raise UnauthorizedException('The resource {resource_id} was not generated by the shared experiment')
+        raise UnauthorizedException('The resource {resource_id} was not generated by the shared scenario')

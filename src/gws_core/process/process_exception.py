@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 class ProcessRunException(BadRequestException):
     """Generic exception to raised from another exception during the process run
-    It show the original error and provided debug information about the process and experiment
+    It show the original error and provided debug information about the process and scenario
 
     :param BadRequestException: [description]
     :type BadRequestException: [type]

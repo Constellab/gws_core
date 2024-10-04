@@ -3,7 +3,6 @@ from typing import List
 
 from gws_core import (BaseTestCase, File, IntRField, ListRField, ResourceModel,
                       StrRField)
-from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.process.process_interface import IProcess
@@ -11,6 +10,7 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.technical_info import TechnicalInfo
+from gws_core.scenario.scenario_interface import IScenario
 
 
 @resource_decorator(unique_name="TestResourceFields")
@@ -36,11 +36,11 @@ class TestResource(BaseTestCase):
 
     def test_resource(self):
 
-        i_experiment = IExperiment()
-        i_experiment.get_protocol().add_process(RobotCreate, instance_name="create")
-        i_experiment.run()
+        i_scenario = IScenario()
+        i_scenario.get_protocol().add_process(RobotCreate, instance_name="create")
+        i_scenario.run()
 
-        create: IProcess = i_experiment.get_protocol().get_process('create')
+        create: IProcess = i_scenario.get_protocol().get_process('create')
 
         # Check that the resource model was generated
         resource_model: ResourceModel = create.get_output_resource_model('robot')

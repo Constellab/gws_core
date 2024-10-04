@@ -7,14 +7,14 @@ from typing import List, Literal, Optional
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
-from gws_core.experiment.experiment_zipper import ZipExperimentInfo
 from gws_core.resource.resource_dto import ResourceDTO
+from gws_core.scenario.scenario_zipper import ZipScenarioInfo
 from gws_core.user.user_dto import UserDTO
 
 
 class ShareLinkType(Enum):
     RESOURCE = "RESOURCE"
-    EXPERIMENT = "EXPERIMENT"
+    SCENARIO = "SCENARIO"
 
 
 # Define if the resource is shared as a sender or a receiver
@@ -62,8 +62,8 @@ class ShareResourceInfoReponseDTO(ShareEntityInfoReponseDTO):
     zip_entity_route: str
 
 
-class ShareExperimentInfoReponseDTO(ShareEntityInfoReponseDTO):
-    entity_object: ZipExperimentInfo
+class ShareScenarioInfoReponseDTO(ShareEntityInfoReponseDTO):
+    entity_object: ZipScenarioInfo
     resource_route: str
     token: str
     origin: ExternalLabWithUserInfo

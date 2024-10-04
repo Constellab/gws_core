@@ -14,18 +14,18 @@ class TestActivity(BaseTestCase):
     def test_activity(self):
 
         ActivityService.add(
-            ActivityType.CREATE, object_type=ActivityObjectType.EXPERIMENT, object_id="test")
+            ActivityType.CREATE, object_type=ActivityObjectType.SCENARIO, object_id="test")
 
         sleep(1.5)
 
         ActivityService.add(
-            ActivityType.DELETE, object_type=ActivityObjectType.EXPERIMENT, object_id="test")
+            ActivityType.DELETE, object_type=ActivityObjectType.SCENARIO, object_id="test")
 
         last_activity = ActivityService.get_last_activity()
 
         self.assertIsNotNone(last_activity)
         self.assertEqual(last_activity.activity_type, ActivityType.DELETE)
-        self.assertEqual(last_activity.object_type, ActivityObjectType.EXPERIMENT)
+        self.assertEqual(last_activity.object_type, ActivityObjectType.SCENARIO)
         self.assertEqual(last_activity.object_id, "test")
         self.assertIsNotNone(last_activity.user)
         self.assertIsNotNone(last_activity.to_dto())
@@ -33,7 +33,7 @@ class TestActivity(BaseTestCase):
         sleep(1.5)
         # test add_or_update
         activity = ActivityService.add_or_update(
-            ActivityType.DELETE, object_type=ActivityObjectType.EXPERIMENT, object_id="test")
+            ActivityType.DELETE, object_type=ActivityObjectType.SCENARIO, object_id="test")
 
         # this should have been updated
         self.assertEqual(activity.id, last_activity.id)
@@ -41,7 +41,7 @@ class TestActivity(BaseTestCase):
 
         # test add_or_update with other object_id
         activity = ActivityService.add_or_update(
-            ActivityType.DELETE, object_type=ActivityObjectType.EXPERIMENT, object_id="test2")
+            ActivityType.DELETE, object_type=ActivityObjectType.SCENARIO, object_id="test2")
 
         # this should have been created
         self.assertNotEqual(activity.id, last_activity.id)

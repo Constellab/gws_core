@@ -43,7 +43,7 @@ class ViewConfigService():
 
         view_config: ViewConfig = ViewConfig(
             resource_model=resource_model,
-            experiment=resource_model.experiment,
+            scenario=resource_model.scenario,
             title=view.get_title() or resource_model.name,
             view_name=view_meta_data.method_name,
             view_type=view.get_type(),
@@ -123,9 +123,9 @@ class ViewConfigService():
 
         search_builder: SearchBuilder = ViewConfigSearchBuilder()
 
-        # retrieve resources associated to the note's experiments
-        # It retrieves the resources used as input or output of the experiments
-        resources: List[ResourceModel] = NoteService.get_resources_of_associated_experiments(note_id)
+        # retrieve resources associated to the note's scenarios
+        # It retrieves the resources used as input or output of the scenarios
+        resources: List[ResourceModel] = NoteService.get_resources_of_associated_scenarios(note_id)
         search_builder.add_expression(ViewConfig.resource_model.in_(resources))
 
         # exclude the type of view that are not useful in historic

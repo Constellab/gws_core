@@ -5,7 +5,6 @@ from time import sleep
 from gws_core import ResourceModel
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
-from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.connector import Connector
@@ -15,6 +14,7 @@ from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.view.viewer import Viewer
+from gws_core.scenario.scenario_interface import IScenario
 from gws_core.task.plug import Sink, Source
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.user.current_user_service import CurrentUserService
@@ -129,12 +129,12 @@ class TestProtocolService(BaseTestCase):
 
     def test_reset_process(self):
 
-        experiment = IExperiment(TestNestedProtocol)
-        experiment.run()
-        self.assertTrue(experiment.get_model().is_success)
+        scenario = IScenario(TestNestedProtocol)
+        scenario.run()
+        self.assertTrue(scenario.get_model().is_success)
 
         # reset a process of the sub protocol
-        main_protocol: IProtocol = experiment.get_protocol()
+        main_protocol: IProtocol = scenario.get_protocol()
         sub_protocol: IProtocol = main_protocol.get_process('mini_proto')
 
         # Get resources and check that they exist
@@ -174,21 +174,21 @@ class TestProtocolService(BaseTestCase):
         self.assertIsNotNone(ResourceModel.get_by_id(sub_resource_to_keep.id))
         self.assertIsNone(ResourceModel.get_by_id(sub_resource_to_clear.id))
 
-        # rerun the experiment and check that it is successfull
-        experiment.refresh()
-        experiment.run()
-        self.assertTrue(experiment.get_model().is_success)
-        main_protocol = experiment.get_protocol()
+        # rerun the scenario and check that it is successfull
+        scenario.refresh()
+        scenario.run()
+        self.assertTrue(scenario.get_model().is_success)
+        main_protocol = scenario.get_protocol()
         self.assertTrue(main_protocol.get_model().is_success)
 
-        # Test using the output resource in another experiment and the first process should not be resettable
+        # Test using the output resource in another scenario and the first process should not be resettable
         # retrieve the main resource
         main_resource: ResourceModel = main_protocol.get_process(
             'p5').get_output_resource_model('robot')
 
-        experiment2 = IExperiment()
-        robot_mode = experiment2.get_protocol().add_task(RobotMove, 'robot')
-        experiment2.get_protocol().add_source(
+        scenario2 = IScenario()
+        robot_mode = scenario2.get_protocol().add_task(RobotMove, 'robot')
+        scenario2.get_protocol().add_source(
             'source', main_resource.id, robot_mode << 'robot')
 
         reset_impact = EntityNavigatorService.check_impact_for_process_reset(
@@ -196,8 +196,8 @@ class TestProtocolService(BaseTestCase):
         self.assertTrue(reset_impact.has_entities)
 
     def test_run_protocol_process(self):
-        experiment = IExperiment()
-        i_protocol = experiment.get_protocol()
+        scenario = IScenario()
+        i_protocol = scenario.get_protocol()
         protocol_id = i_protocol.get_model().id
         p0 = i_protocol.add_process(RobotCreate, 'p0')
         p1 = i_protocol.add_process(RobotMove, 'p1')
@@ -209,7 +209,7 @@ class TestProtocolService(BaseTestCase):
 
         # Run process p0
         ProtocolService.run_process(protocol_id, 'p0')
-        experiment.refresh()
+        scenario.refresh()
 
         count = 0
         while count < 30:

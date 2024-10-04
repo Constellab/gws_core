@@ -7,11 +7,11 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.folder.space_folder_dto import ExternalSpaceFolder
 from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.lab.system_dto import SettingsDTO
+from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.space.space_dto import LabActivityReponseDTO
 from gws_core.user.activity.activity_service import ActivityService
 
@@ -158,20 +158,20 @@ def delete_folder(id_: str, _=Depends(AuthSpace.check_space_api_key)) -> None:
     SpaceFolderService.delete_folder(id_)
 
 
-############################################### EXPERIMENT #####################################################
+############################################### SCENARIO #####################################################
 
-@space_app.get("/lab/global-activity", tags=["Experiment"])
+@space_app.get("/lab/global-activity", tags=["Scenario"])
 def lab_activity(_=Depends(AuthSpace.check_space_api_key)) -> LabActivityReponseDTO:
     """
-    Count the number of running or queued experiments
+    Count the number of running or queued scenarios
 
     """
 
     last_activity = ActivityService.get_last_activity()
 
     return LabActivityReponseDTO(
-        running_experiments=ExperimentService.count_running_or_queued_experiments(),
-        queued_experiments=ExperimentService.count_queued_experiments(),
+        running_scenarios=ScenarioService.count_running_or_queued_scenarios(),
+        queued_scenarios=ScenarioService.count_queued_scenarios(),
         last_activity=last_activity.to_dto() if last_activity is not None else None,
         dev_env_running=DevEnvService.dev_env_is_running()
     )

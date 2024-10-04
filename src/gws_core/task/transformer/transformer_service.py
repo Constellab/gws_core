@@ -6,12 +6,12 @@ from gws_core.task.transformer.transformer import Transformer
 
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...experiment.experiment_interface import IExperiment
 from ...model.typing_manager import TypingManager
 from ...process.process_interface import IProcess
 from ...protocol.protocol_interface import IProtocol
 from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel
+from ...scenario.scenario_interface import IScenario
 from ..converter.converter import Converter
 from ..plug import Sink, Source
 from ..task import Task
@@ -21,7 +21,7 @@ from .transformer_type import TransformerDict
 class TransformerService():
 
     @classmethod
-    def create_and_run_transformer_experiment(cls, transformers: List[TransformerDict],
+    def create_and_run_transformer_scenario(cls, transformers: List[TransformerDict],
                                               resource_model_id: str) -> ResourceModel:
 
         if not transformers or len(transformers) == 0:
@@ -32,10 +32,10 @@ class TransformerService():
             resource_model_id)
         resource_type: Type[Resource] = resource_model.get_and_check_resource_type()
 
-        # Create an experiment containing 1 source, X transformers task , 1 sink
-        experiment: IExperiment = IExperiment(
+        # Create an scenario containing 1 source, X transformers task , 1 sink
+        scenario: IScenario = IScenario(
             None, title=f"{resource_type.get_human_name()} transformation")
-        protocol: IProtocol = experiment.get_protocol()
+        protocol: IProtocol = scenario.get_protocol()
 
         # create the source and save last process to create connectors later
         last_process: IProcess = protocol.add_process(
@@ -61,16 +61,16 @@ class TransformerService():
         # add sink and sink connector
         protocol.add_sink('sink', last_process >> Transformer.output_name)
 
-        #  run the experiment
+        #  run the scenario
         try:
-            experiment.run()
+            scenario.run()
         except Exception as exception:
-            # delete experiment if there was an error
-            experiment.delete()
+            # delete scenario if there was an error
+            scenario.delete()
             raise exception
 
         # return the resource model of the sink process
-        return experiment.get_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
+        return scenario.get_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
 
     @classmethod
     def call_transformers(cls, resource: Resource,

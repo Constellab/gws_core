@@ -18,6 +18,6 @@ def advanced_search(search_dict: SearchParams,
                     number_of_items_per_page: Optional[int] = 20,
                     _=Depends(AuthService.check_user_access_token)) -> PageDTO[ActivityDTO]:
     """
-    Advanced search on experiment
+    Advanced search on scenario
     """
     return ActivityService.search(search_dict, page, number_of_items_per_page).to_dto()

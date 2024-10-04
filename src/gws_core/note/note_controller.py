@@ -4,8 +4,8 @@ from typing import List, Optional
 from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import PageDTO
-from gws_core.experiment.experiment_dto import ExperimentDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_core.scenario.scenario_dto import ScenarioDTO
 
 from ..core.classes.search_builder import SearchParams
 from ..core_controller import core_app
@@ -14,16 +14,16 @@ from .note_dto import NoteDTO, NoteInsertTemplateDTO, NoteSaveDTO
 from .note_service import NoteService
 
 
-@core_app.post("/note", tags=["Note"], summary="Create a note for an experiment")
+@core_app.post("/note", tags=["Note"], summary="Create a note for an scenario")
 def create(note_dto: NoteSaveDTO, _=Depends(AuthService.check_user_access_token)) -> NoteDTO:
     return NoteService.create(note_dto).to_dto()
 
 
-@core_app.post("/note/experiment/{experiment_id}", tags=["Note"], summary="Create a note for an experiment")
-def create_for_experiment(experiment_id: str,
+@core_app.post("/note/scenario/{scenario_id}", tags=["Note"], summary="Create a note for an scenario")
+def create_for_scenario(scenario_id: str,
                           note_dto: NoteSaveDTO,
                           _=Depends(AuthService.check_user_access_token)) -> NoteDTO:
-    return NoteService.create(note_dto, [experiment_id]).to_dto()
+    return NoteService.create(note_dto, [scenario_id]).to_dto()
 
 
 @core_app.put("/note/{note_id}", tags=["Note"], summary="Update a note information")
@@ -73,18 +73,18 @@ def delete(note_id: str, _=Depends(AuthService.check_user_access_token)) -> None
 
 
 @core_app.put(
-    "/note/{note_id}/add-experiment/{experiment_id}", tags=["Note"],
-    summary="Add an experiment to the note")
-def add_experiment(note_id: str, experiment_id: str, _=Depends(AuthService.check_user_access_token)) -> ExperimentDTO:
-    return NoteService.add_experiment(note_id, experiment_id).to_dto()
+    "/note/{note_id}/add-scenario/{scenario_id}", tags=["Note"],
+    summary="Add an scenario to the note")
+def add_scenario(note_id: str, scenario_id: str, _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+    return NoteService.add_scenario(note_id, scenario_id).to_dto()
 
 
 @core_app.delete(
-    "/note/{note_id}/remove-experiment/{experiment_id}", tags=["Note"],
-    summary="Remove an experiment")
-def remove_experiment(
-        note_id: str, experiment_id: str, _=Depends(AuthService.check_user_access_token)) -> None:
-    NoteService.remove_experiment(note_id, experiment_id)
+    "/note/{note_id}/remove-scenario/{scenario_id}", tags=["Note"],
+    summary="Remove an scenario")
+def remove_scenario(
+        note_id: str, scenario_id: str, _=Depends(AuthService.check_user_access_token)) -> None:
+    NoteService.remove_scenario(note_id, scenario_id)
 
 
 @core_app.put("/note/{note_id}/validate/{folder_id}", tags=["Note"], summary="Validate the note")
@@ -112,19 +112,19 @@ def get_content(id_: str, _=Depends(AuthService.check_user_access_token)) -> Ric
     return NoteService.get_by_id_and_check(id_).content
 
 
-@core_app.get("/note/experiment/{experiment_id}", tags=["Note"],
-              summary="Find notes of an experiment")
-def get_by_experiment(experiment_id: str, _=Depends(AuthService.check_user_access_token)) -> List[NoteDTO]:
-    notes = NoteService.get_by_experiment(experiment_id)
+@core_app.get("/note/scenario/{scenario_id}", tags=["Note"],
+              summary="Find notes of an scenario")
+def get_by_scenario(scenario_id: str, _=Depends(AuthService.check_user_access_token)) -> List[NoteDTO]:
+    notes = NoteService.get_by_scenario(scenario_id)
     return [note.to_dto() for note in notes]
 
 
-@core_app.get("/note/{note_id}/experiments", tags=["Note"],
-              summary="Find experiments of a note")
-def get_experiment_by_note(
-        note_id: str, _=Depends(AuthService.check_user_access_token)) -> List[ExperimentDTO]:
-    experiments = NoteService.get_experiments_by_note(note_id)
-    return [experiment.to_dto() for experiment in experiments]
+@core_app.get("/note/{note_id}/scenarios", tags=["Note"],
+              summary="Find scenarios of a note")
+def get_scenario_by_note(
+        note_id: str, _=Depends(AuthService.check_user_access_token)) -> List[ScenarioDTO]:
+    scenarios = NoteService.get_scenarios_by_note(note_id)
+    return [scenario.to_dto() for scenario in scenarios]
 
 
 @core_app.post("/note/search", tags=["Note"], summary="Advanced search for notes")
@@ -133,7 +133,7 @@ def advanced_search(search_dict: SearchParams,
                     number_of_items_per_page: Optional[int] = 20,
                     _=Depends(AuthService.check_user_access_token)) -> PageDTO[NoteDTO]:
     """
-    Advanced search on experiment
+    Advanced search on scenario
     """
 
     return NoteService.search(search_dict, page, number_of_items_per_page).to_dto()

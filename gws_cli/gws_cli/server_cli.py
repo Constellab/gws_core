@@ -3,9 +3,10 @@ from enum import Enum
 from typing import List
 
 import typer
+from typing_extensions import Annotated
+
 from gws_core import BrickService
 from gws_core.manage import AppManager
-from typing_extensions import Annotated
 
 app = typer.Typer()
 
@@ -65,17 +66,17 @@ def test(
         show_sql=show_sql)
 
 
-@app.command("run-experiment")
+@app.command("run-scenario")
 def run_exp(
-        experiment_id: Annotated[str, typer.Option("--experiment-id", help="Id of the experiment to run.")],
-        user_id: Annotated[str, typer.Option("--user-id", help="Id of the user that run the experiment.")],
+        scenario_id: Annotated[str, typer.Option("--scenario-id", help="Id of the scenario to run.")],
+        user_id: Annotated[str, typer.Option("--user-id", help="Id of the user that run the scenario.")],
         main_setting_file_path: MainSettingFilePathAnnotation = MAIN_SETTINGS_FILE_DEFAULT_PATH,
         log_level: LogLevelAnnotation = LogLevel.INFO,
         show_sql: ShowSqlAnnotation = False,
         is_test: IsTestAnnotation = False):
-    AppManager.run_experiment(
+    AppManager.run_scenario(
         main_setting_file_path=main_setting_file_path,
-        experiment_id=experiment_id,
+        scenario_id=scenario_id,
         user_id=user_id,
         log_level=log_level.value,
         show_sql=show_sql,
@@ -84,7 +85,7 @@ def run_exp(
 
 @app.command("run-process")
 def run_process(
-        experiment_id: Annotated[str, typer.Option("--experiment-id", help="Id of the experiment to run.")],
+        scenario_id: Annotated[str, typer.Option("--scenario-id", help="Id of the scenario to run.")],
         protocol_model_id: Annotated[str, typer.Option("--protocol-model-id", help="Id of the protocol model.")],
         process_instance_name: Annotated[str, typer.Option("--process-instance-name", help="Name of the process instance.")],
         user_id: Annotated[str, typer.Option("--user-id", help="Id of the user that run the process.")],
@@ -94,7 +95,7 @@ def run_process(
         is_test: IsTestAnnotation = False):
     AppManager.run_process(
         main_setting_file_path=main_setting_file_path,
-        experiment_id=experiment_id,
+        scenario_id=scenario_id,
         protocol_model_id=protocol_model_id,
         process_instance_name=process_instance_name,
         user_id=user_id,

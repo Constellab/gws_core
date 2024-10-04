@@ -36,8 +36,8 @@ class FrontTheme(BaseModelDTO):
 class FrontService():
 
     @staticmethod
-    def get_experiment_url(experiment_id: str) -> str:
-        return FrontService.get_app_url() + '/experiment/' + experiment_id
+    def get_scenario_url(scenario_id: str) -> str:
+        return FrontService.get_app_url() + '/scenario/' + scenario_id
 
     @staticmethod
     def get_note_url(note_id: str) -> str:

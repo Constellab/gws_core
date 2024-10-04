@@ -8,9 +8,9 @@ from gws_core.core.classes.paginator import Paginator
 from gws_core.core.model.model import Model
 from gws_core.entity_navigator.entity_navigator import EntityNavigator
 from gws_core.entity_navigator.entity_navigator_type import EntityType
-from gws_core.experiment.experiment import Experiment
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_config.view_config import ViewConfig
+from gws_core.scenario.scenario import Scenario
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.entity_with_tag_search_builder import \
@@ -259,7 +259,7 @@ class TagService():
         """Check the impact of the propagation of the given tags
         """
         entity_nav = EntityNavigator.from_entity_id(entity_type, entity_id)
-        # The tags can't be propagated to EXPERIMENT
+        # The tags can't be propagated to SCENARIO
         next_entities = entity_nav.get_next_entities_recursive(
             [EntityType.RESOURCE, EntityType.VIEW, EntityType.NOTE], include_current_entities=True)
 
@@ -301,10 +301,10 @@ class TagService():
             task_model = TaskModel.get_by_id_and_check(tag_origin.origin_id)
             if task_model:
                 origin_detail.origin_object = task_model.name
-        elif tag_origin.origin_type == TagOriginType.EXPERIMENT_PROPAGATED:
-            experiment = Experiment.get_by_id(tag_origin.origin_id)
-            if experiment:
-                origin_detail.origin_object = experiment.title
+        elif tag_origin.origin_type == TagOriginType.SCENARIO_PROPAGATED:
+            scenario = Scenario.get_by_id(tag_origin.origin_id)
+            if scenario:
+                origin_detail.origin_object = scenario.title
         elif tag_origin.origin_type == TagOriginType.RESOURCE_PROPAGATED:
             resource = ResourceModel.get_by_id(tag_origin.origin_id)
             if resource:

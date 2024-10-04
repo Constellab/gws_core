@@ -2,8 +2,8 @@
 
 import time
 
-from gws_core import (BaseTestCase, Experiment, ExperimentService,
-                      ExperimentStatus, Queue, QueueService)
+from gws_core import (BaseTestCase, Queue, QueueService, Scenario,
+                      ScenarioService, ScenarioStatus)
 from gws_core.impl.robot.robot_protocol import RobotSimpleTravel
 from gws_core.impl.robot.robot_service import RobotService
 from gws_core.test.gtest import GTest
@@ -15,59 +15,59 @@ class TestQueue(BaseTestCase):
     def test_queue(self):
 
         queue: Queue = Queue().save()
-        self.assertEqual(Experiment.count_running_or_queued_experiments(), 0)
+        self.assertEqual(Scenario.count_running_or_queued_scenarios(), 0)
         self.assertEqual(queue.length(), 0)
 
         proto1 = RobotService.create_robot_world_travel()
-        experiment1: Experiment = ExperimentService.create_experiment_from_protocol_model(
+        scenario1: Scenario = ScenarioService.create_scenario_from_protocol_model(
             protocol_model=proto1)
-        Queue.add_job(user=GTest.user, experiment=experiment1)
+        Queue.add_job(user=GTest.user, scenario=scenario1)
 
-        experiment1 = experiment1.refresh()
-        self.assertEqual(experiment1.status, ExperimentStatus.IN_QUEUE)
+        scenario1 = scenario1.refresh()
+        self.assertEqual(scenario1.status, ScenarioStatus.IN_QUEUE)
 
         self.assertEqual(Queue.length(), 1)
         job1 = queue.pop_first()
         self.assertEqual(Queue.length(), 0)
-        self.assertEqual(experiment1.id, job1.experiment.id)
+        self.assertEqual(scenario1.id, job1.scenario.id)
 
-        Queue.add_job(user=GTest.user, experiment=experiment1)
+        Queue.add_job(user=GTest.user, scenario=scenario1)
         self.assertEqual(Queue.length(), 1)
-        Queue.remove_experiment(experiment1.id)
+        Queue.remove_scenario(scenario1.id)
         self.assertEqual(Queue.length(), 0)
 
-        experiment1 = experiment1.refresh()
-        self.assertEqual(experiment1.status, ExperimentStatus.DRAFT)
+        scenario1 = scenario1.refresh()
+        self.assertEqual(scenario1.status, ScenarioStatus.DRAFT)
 
     def test_queue_run(self):
         # init the ticking, tick each second
         QueueService.init(tick_interval=3)
 
-        experiment2: Experiment = ExperimentService.create_experiment_from_protocol_type(
+        scenario2: Scenario = ScenarioService.create_scenario_from_protocol_type(
             RobotSimpleTravel)
 
-        experiment3: Experiment = ExperimentService.create_experiment_from_protocol_type(
+        scenario3: Scenario = ScenarioService.create_scenario_from_protocol_type(
             RobotSimpleTravel)
 
-        QueueService._add_job(user=GTest.user, experiment=experiment2)
-        QueueService._add_job(user=GTest.user, experiment=experiment3)
+        QueueService._add_job(user=GTest.user, scenario=scenario2)
+        QueueService._add_job(user=GTest.user, scenario=scenario3)
 
         self.assertEqual(Queue.length(), 2)
-        self._wait_for_experiments()
+        self._wait_for_scenarios()
         self.assertEqual(Queue.length(), 0)
 
-        experiment2 = experiment2.refresh()
-        experiment3 = experiment3.refresh()
-        self.assertEqual(experiment2.status, ExperimentStatus.SUCCESS)
-        self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
+        scenario2 = scenario2.refresh()
+        scenario3 = scenario3.refresh()
+        self.assertEqual(scenario2.status, ScenarioStatus.SUCCESS)
+        self.assertEqual(scenario3.status, ScenarioStatus.SUCCESS)
 
-    def _wait_for_experiments(self) -> None:
+    def _wait_for_scenarios(self) -> None:
 
         wait_count = 0
-        # Wait until the queue is clear and there is not experiment that is running
-        while Queue.length() > 0 or Experiment.count_running_or_queued_experiments() > 0:
-            print("Waiting 5 secs for cli experiments to finish ...")
+        # Wait until the queue is clear and there is not scenario that is running
+        while Queue.length() > 0 or Scenario.count_running_or_queued_scenarios() > 0:
+            print("Waiting 5 secs for cli scenarios to finish ...")
             time.sleep(5)
             if wait_count >= 10:
-                raise Exception("The experiment queue is not empty")
+                raise Exception("The scenario queue is not empty")
             wait_count += 1

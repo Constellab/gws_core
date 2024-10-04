@@ -6,19 +6,19 @@ from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
                       OutputSpecs, Task, TaskInputs, TaskOutputs,
                       task_decorator)
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.experiment.experiment_enums import ExperimentCreationType
-from gws_core.experiment.experiment_interface import IExperiment
-from gws_core.experiment.task.experiment_downloader import ExperimentDownloader
-from gws_core.experiment.task.experiment_resource import ExperimentResource
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_set import ResourceSet
+from gws_core.scenario.scenario_enums import ScenarioCreationType
+from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.task.scenario_downloader import ScenarioDownloader
+from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
-from gws_core.share.shared_experiment import SharedExperiment
 from gws_core.share.shared_resource import SharedResource
+from gws_core.share.shared_scenario import SharedScenario
 from gws_core.task.plug import Sink, Source
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
@@ -47,19 +47,19 @@ class RobotsGeneratorShare(Task):
         return {'set': resource_set}
 
 
-# test_share_experiment
-class TestShareExperiment(BaseTestCase):
+# test_share_scenario
+class TestShareScenario(BaseTestCase):
 
-    def test_share_experiment(self):
-        # activate uvicorn, so the ExperimentDownloader can request the API
+    def test_share_scenario(self):
+        # activate uvicorn, so the ScenarioDownloader can request the API
         with TestStartUvicornApp():
 
             input_robot_model = GTest.save_robot_resource()
 
-            # Create and run an experiment
+            # Create and run an scenario
             folder = GTest.create_default_folder()
-            experiment = IExperiment(title='Test experiment', folder=folder)
-            protocol = experiment.get_protocol()
+            scenario = IScenario(title='Test scenario', folder=folder)
+            protocol = scenario.get_protocol()
 
             move = protocol.add_process(RobotMove, 'move', config_params={'moving_step': 100})
             generate = protocol.add_process(RobotsGeneratorShare, 'generate')
@@ -68,9 +68,9 @@ class TestShareExperiment(BaseTestCase):
             source = protocol.add_source('source', input_robot_model.id, move << 'robot')
             protocol.add_connector(move >> 'robot', generate << 'robot')
             sink = protocol.add_sink('sink', generate >> 'set')
-            experiment.run()
+            scenario.run()
 
-            initial_experiment_model = experiment.refresh().get_model()
+            initial_scenario_model = scenario.refresh().get_model()
             initial_protocol_model: ProtocolModel = protocol.refresh().get_model()
             source_process_model = source.refresh().get_model()
             move_process_model = move.refresh().get_model()
@@ -79,30 +79,30 @@ class TestShareExperiment(BaseTestCase):
 
             # generate share link
             share_dto = GenerateShareLinkDTO(
-                entity_id=experiment.get_model().id,
-                entity_type=ShareLinkType.EXPERIMENT,
+                entity_id=scenario.get_model().id,
+                entity_type=ShareLinkType.SCENARIO,
                 valid_until=DateHelper.now_utc() + timedelta(days=1)
             )
 
             share_link = ShareLinkService.generate_share_link(share_dto)
 
-            task_runner = TaskRunner(ExperimentDownloader, params={
+            task_runner = TaskRunner(ScenarioDownloader, params={
                 'link': share_link.get_link(),
                 'resource_mode': 'All'
             })
 
             outputs = task_runner.run()
 
-            experiment_resource: ExperimentResource = outputs['experiment']
+            scenario_resource: ScenarioResource = outputs['scenario']
 
-            new_experiment = experiment_resource.get_experiment()
+            new_scenario = scenario_resource.get_scenario()
 
-            self.assertEqual(new_experiment.title, initial_experiment_model.title)
-            self.assertEqual(new_experiment.folder.id, folder.id)
-            self.assertEqual(new_experiment.status, initial_experiment_model.status)
-            self.assertEqual(new_experiment.creation_type, ExperimentCreationType.IMPORTED)
+            self.assertEqual(new_scenario.title, initial_scenario_model.title)
+            self.assertEqual(new_scenario.folder.id, folder.id)
+            self.assertEqual(new_scenario.status, initial_scenario_model.status)
+            self.assertEqual(new_scenario.creation_type, ScenarioCreationType.IMPORTED)
 
-            new_protocol_model = new_experiment.protocol_model
+            new_protocol_model = new_scenario.protocol_model
 
             # Check the protocol
             self.assertEqual(len(new_protocol_model.processes), 4)
@@ -147,8 +147,8 @@ class TestShareExperiment(BaseTestCase):
             self.assertIsNotNone(new_resource_1)
             self.assertEqual(new_resource_1.origin, ResourceOrigin.GENERATED)
             self.assertEqual(new_resource_1.task_model.id, new_protocol_model.get_process('move').id)
-            self.assertEqual(new_resource_1.experiment.id, new_experiment.id)
-            self.assertEqual(new_resource_1.folder.id, new_experiment.folder.id)
+            self.assertEqual(new_resource_1.scenario.id, new_scenario.id)
+            self.assertEqual(new_resource_1.folder.id, new_scenario.folder.id)
             self.assertFalse(new_resource_1.flagged)
             self.assertNotEqual(new_resource_1.id, initial_resource_1.id)
             self.assertEqual(new_resource_1.resource_typing_name, initial_resource_1.resource_typing_name)
@@ -163,26 +163,26 @@ class TestShareExperiment(BaseTestCase):
             self.assertEqual(len(resource_set.get_resources()), 2)
 
             # Check that the task input model where created
-            self.assertEqual(TaskInputModel.get_by_experiment(new_experiment.id).count(), 3)
+            self.assertEqual(TaskInputModel.get_by_scenario(new_scenario.id).count(), 3)
 
-            # Check taht the ShareExperiment was created
-            self.assertIsNotNone(SharedExperiment.get_and_check_entity_origin(new_experiment.id))
+            # Check taht the ShareScenario was created
+            self.assertIsNotNone(SharedScenario.get_and_check_entity_origin(new_scenario.id))
             self.assertIsNotNone(SharedResource.get_and_check_entity_origin(new_source_output.id))
 
             ######################  Re-run the share without all resources ######################
-            task_runner = TaskRunner(ExperimentDownloader, params={
+            task_runner = TaskRunner(ScenarioDownloader, params={
                 'link': share_link.get_link(),
                 'resource_mode': 'Outputs only'
             })
 
             outputs = task_runner.run()
 
-            experiment_resource_2: ExperimentResource = outputs['experiment']
-            new_experiment_2 = experiment_resource_2.get_experiment()
-            new_protocol_2 = new_experiment_2.protocol_model
+            scenario_resource_2: ScenarioResource = outputs['scenario']
+            new_scenario_2 = scenario_resource_2.get_scenario()
+            new_protocol_2 = new_scenario_2.protocol_model
             # Check that the task input model where created
-            self.assertNotEqual(new_experiment_2.id, new_experiment.id)
-            self.assertEqual(TaskInputModel.get_by_experiment(new_experiment_2.id).count(), 1)
+            self.assertNotEqual(new_scenario_2.id, new_scenario.id)
+            self.assertEqual(TaskInputModel.get_by_scenario(new_scenario_2.id).count(), 1)
 
             # the source task should not be configured as only the output resources are imported
             new_source_2: TaskModel = new_protocol_2.get_process('source')

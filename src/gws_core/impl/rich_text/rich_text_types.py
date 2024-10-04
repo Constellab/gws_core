@@ -129,7 +129,7 @@ class RichTextResourceViewData(TypedDict):
     id: str
     view_config_id: str
     resource_id: str
-    experiment_id: Optional[str]
+    scenario_id: Optional[str]
     view_method_name: str
     view_config: Dict[str, Any]
     title: Optional[str]

@@ -2,23 +2,23 @@
 from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.experiment.experiment_enums import ExperimentStatus
 from gws_core.folder.space_folder_dto import SpaceFolderDTO
 from gws_core.process.process_types import ProcessErrorInfo
-from gws_core.protocol.protocol_dto import ExperimentProtocolDTO
+from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
+from gws_core.scenario.scenario_enums import ScenarioStatus
 
 
-class ZipExperiment(BaseModelDTO):
+class ZipScenario(BaseModelDTO):
     id: str
     title: str
     description: Optional[dict]
-    status: ExperimentStatus
+    status: ScenarioStatus
     folder: Optional[SpaceFolderDTO]
     error_info: Optional[ProcessErrorInfo]
 
 
-class ZipExperimentInfo(BaseModelDTO):
+class ZipScenarioInfo(BaseModelDTO):
     """ Content of the info.json file in the zip file when a resource is zipped"""
     zip_version: int
-    experiment: ZipExperiment
-    protocol: ExperimentProtocolDTO
+    scenario: ZipScenario
+    protocol: ScenarioProtocolDTO

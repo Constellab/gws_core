@@ -2,13 +2,12 @@
 
 from typing import Set
 
-from gws_core import (BaseTestCase, Experiment, ExperimentService,
-                      ExperimentStatus, ProtocolModel, ProtocolService,
-                      TaskModel)
-from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core import (BaseTestCase, ProtocolModel, ProtocolService, Scenario,
+                      ScenarioService, ScenarioStatus, TaskModel)
 from gws_core.impl.robot.robot_resource import Robot, RobotFood
 from gws_core.process.process_model import ProcessModel
 from gws_core.process.process_types import ProcessStatus
+from gws_core.scenario.scenario_run_service import ScenarioRunService
 
 from ..protocol_examples import (TestNestedProtocol,
                                  TestRobotWithSugarProtocol,
@@ -29,13 +28,13 @@ class TestProtocol(BaseTestCase):
         query = ProtocolModel.select()
         self.assertEqual(len(query), count+1)
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+        scenario: Scenario = ScenarioService.create_scenario_from_protocol_model(
             protocol_model=proto)
 
-        experiment = ExperimentRunService.run_experiment(experiment=experiment)
+        scenario = ScenarioRunService.run_scenario(scenario=scenario)
 
-        self.assertEqual(len(experiment.task_models), 7)
-        self.assertEqual(experiment.status, ExperimentStatus.SUCCESS)
+        self.assertEqual(len(scenario.task_models), 7)
+        self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
 
     def test_advanced_protocol(self):
 
@@ -62,12 +61,12 @@ class TestProtocol(BaseTestCase):
         p2 = mini_proto.get_process("p2")
         self.assertTrue(mini_proto.is_outerfaced_with(p2.instance_name))
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+        scenario: Scenario = ScenarioService.create_scenario_from_protocol_model(
             protocol_model=super_proto)
 
         self.assertEqual(ProtocolModel.select().count(), count+2)
 
-        experiment = ExperimentRunService.run_experiment(experiment=experiment)
+        scenario = ScenarioRunService.run_scenario(scenario=scenario)
 
         super_proto = ProtocolModel.get_by_id(super_proto.id)
 
@@ -83,12 +82,12 @@ class TestProtocol(BaseTestCase):
         protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(
             TestRobotWithSugarProtocol)
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+        scenario: Scenario = ScenarioService.create_scenario_from_protocol_model(
             protocol_model=protocol)
 
-        experiment = ExperimentRunService.run_experiment(experiment=experiment)
+        scenario = ScenarioRunService.run_scenario(scenario=scenario)
 
-        eat_1: TaskModel = experiment.protocol_model.get_process('eat_1')
+        eat_1: TaskModel = scenario.protocol_model.get_process('eat_1')
         food: RobotFood = eat_1.inputs.get_resource_model('food')
 
         self.assertIsNotNone(food)
@@ -104,7 +103,7 @@ class TestProtocol(BaseTestCase):
         self.assertEqual(robot_output.weight, robot_input.weight + (2 * 10))
 
         # Check that the eat_2 was called even if the food input (optional) is not plug
-        eat_2: TaskModel = experiment.protocol_model.get_process('eat_2')
+        eat_2: TaskModel = scenario.protocol_model.get_process('eat_2')
         robot_output_2: Robot = eat_2.outputs.get_resource_model(
             'robot').get_resource()
         # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input

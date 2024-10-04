@@ -6,7 +6,6 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
-from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
@@ -16,6 +15,7 @@ from gws_core.impl.shell.virtual_env.venv_dto import (VEnsStatusDTO,
                                                       VEnvBasicInfoDTO,
                                                       VEnvCompleteInfoDTO,
                                                       VEnvCreationInfo)
+from gws_core.scenario.scenario_service import ScenarioService
 
 
 class VEnvService():
@@ -104,12 +104,12 @@ class VEnvService():
         )
 
     @classmethod
-    def delete_venv(cls, venv_name: str, check_running_experiment: bool = False) -> None:
+    def delete_venv(cls, venv_name: str, check_running_scenario: bool = False) -> None:
         """
         Delete a virtual environment.
         """
-        if check_running_experiment and ExperimentService.count_of_running_experiments() > 0:
-            raise BadRequestException('Cannot delete a venv while an experiment is running.')
+        if check_running_scenario and ScenarioService.count_of_running_scenarios() > 0:
+            raise BadRequestException('Cannot delete a venv while an scenario is running.')
         venv_folder = os.path.join(Settings.get_global_env_dir(), venv_name)
         FileHelper.delete_dir(venv_folder)
 
@@ -118,6 +118,6 @@ class VEnvService():
         """
         Delete all virtual environments.
         """
-        if ExperimentService.count_of_running_experiments() > 0:
-            raise BadRequestException('Cannot delete a venv while an experiment is running.')
+        if ScenarioService.count_of_running_scenarios() > 0:
+            raise BadRequestException('Cannot delete a venv while an scenario is running.')
         FileHelper.delete_dir_content(Settings.get_global_env_dir())

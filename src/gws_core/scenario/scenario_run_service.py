@@ -12,7 +12,7 @@ from gws_core.process.process_model import ProcessModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.space.mail_service import MailService
-from gws_core.space.space_dto import SendExperimentFinishMailData
+from gws_core.space.space_dto import SendScenarioFinishMailData
 from gws_core.task.task_model import TaskModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
@@ -22,119 +22,119 @@ from ..core.exception.gws_exceptions import GWSException
 from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
-from ..experiment.experiment_exception import ExperimentRunException
 from ..user.activity.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
-from .experiment import Experiment
-from .experiment_enums import ExperimentStatus
+from .scenario import Scenario
+from .scenario_enums import ScenarioStatus
+from .scenario_exception import ScenarioRunException
 
 
-class ExperimentRunService():
-    """Service used to run experiment
+class ScenarioRunService():
+    """Service used to run scenario
     """
 
     @classmethod
-    def run_experiment_in_cli(cls, experiment_id: str) -> None:
-        """Method called by the cli sub process to run the experiment
+    def run_scenario_in_cli(cls, scenario_id: str) -> None:
+        """Method called by the cli sub process to run the scenario
         """
-        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
+        scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
         try:
-            if experiment.status != ExperimentStatus.WAITING_FOR_CLI_PROCESS:
+            if scenario.status != ScenarioStatus.WAITING_FOR_CLI_PROCESS:
                 raise Exception(
-                    f"Cannot run the experiment {experiment.id} as its status was changed before process could run it")
+                    f"Cannot run the scenario {scenario.id} as its status was changed before process could run it")
 
         except Exception as err:
-            error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + str(err)
+            error_text = GWSException.SCENARIO_ERROR_BEFORE_RUN.value + str(err)
             Logger.error(error_text)
-            experiment.mark_as_error(ProcessErrorInfo(
+            scenario.mark_as_error(ProcessErrorInfo(
                 detail=error_text,
-                unique_code=GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
+                unique_code=GWSException.SCENARIO_ERROR_BEFORE_RUN.name,
                 context=None,
                 instance_id=None))
-        cls.run_experiment(experiment)
+        cls.run_scenario(scenario)
 
     @classmethod
-    def run_experiment(cls, experiment: Experiment) -> Experiment:
+    def run_scenario(cls, scenario: Scenario) -> Scenario:
         """
-        Run the experiment
+        Run the scenario
         """
         try:
-            cls._check_experiment_before_start(experiment)
+            cls._check_scenario_before_start(scenario)
 
-            experiment.mark_as_started(os.getpid())
+            scenario.mark_as_started(os.getpid())
 
-            Logger.info(f"Running experiment : {experiment.id}")
+            Logger.info(f"Running scenario : {scenario.id}")
 
             ActivityService.add(
-                ActivityType.RUN_EXPERIMENT,
-                object_type=ActivityObjectType.EXPERIMENT,
-                object_id=experiment.id,
+                ActivityType.RUN_SCENARIO,
+                object_type=ActivityObjectType.SCENARIO,
+                object_id=scenario.id,
             )
 
-            experiment.protocol_model.run()
+            scenario.protocol_model.run()
 
-            experiment = experiment.refresh()
-            experiment.mark_as_success()
+            scenario = scenario.refresh()
+            scenario.mark_as_success()
 
-            cls._send_experiment_finished_mail(experiment)
+            cls._send_scenario_finished_mail(scenario)
 
-            return experiment
+            return scenario
         except Exception as err:
-            exception: ExperimentRunException = ExperimentRunException.from_exception(
-                experiment=experiment, exception=err)
+            exception: ScenarioRunException = ScenarioRunException.from_exception(
+                scenario=scenario, exception=err)
             error = ProcessErrorInfo(detail=exception.get_detail_with_args(), unique_code=exception.unique_code,
                                      context=None, instance_id=exception.instance_id)
-            experiment = experiment.refresh()
-            experiment.mark_as_error(error)
+            scenario = scenario.refresh()
+            scenario.mark_as_error(error)
 
-            cls._send_experiment_finished_mail(experiment)
+            cls._send_scenario_finished_mail(scenario)
             raise exception
 
     @classmethod
-    def run_experiment_process_in_cli(cls, experiment_id: str, protocol_model_id: str, process_name: str) -> None:
-        """Method called by the cli sub process to run the experiment
+    def run_scenario_process_in_cli(cls, scenario_id: str, protocol_model_id: str, process_name: str) -> None:
+        """Method called by the cli sub process to run the scenario
         """
         try:
-            experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
+            scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
             protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
                 protocol_model_id)
 
             process_model = protocol_model.get_process(process_name)
 
-            if experiment.status != ExperimentStatus.WAITING_FOR_CLI_PROCESS:
+            if scenario.status != ScenarioStatus.WAITING_FOR_CLI_PROCESS:
                 raise Exception(
-                    f"Cannot run the experiment {experiment.id} as its status was changed before process could run it")
+                    f"Cannot run the scenario {scenario.id} as its status was changed before process could run it")
 
             if process_model.status != ProcessStatus.WAITING_FOR_CLI_PROCESS:
                 raise Exception(
                     f"Cannot run the process {process_model.id} as its status was changed before process could run it")
 
         except Exception as err:
-            error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + str(err)
+            error_text = GWSException.SCENARIO_ERROR_BEFORE_RUN.value + str(err)
             Logger.error(error_text)
-            experiment.mark_as_error(ProcessErrorInfo(detail=error_text,
-                                                      unique_code=GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
+            scenario.mark_as_error(ProcessErrorInfo(detail=error_text,
+                                                      unique_code=GWSException.SCENARIO_ERROR_BEFORE_RUN.name,
                                                       context=None, instance_id=None))
-        cls._run_experiment_process(experiment, protocol_model, process_name)
+        cls._run_scenario_process(scenario, protocol_model, process_name)
 
     @classmethod
-    def _run_experiment_process(cls, experiment: Experiment, protocol_model: ProtocolModel,
-                                process_instance_name: str) -> Experiment:
+    def _run_scenario_process(cls, scenario: Scenario, protocol_model: ProtocolModel,
+                                process_instance_name: str) -> Scenario:
         try:
 
             process_model = protocol_model.get_process(process_instance_name)
 
-            cls._check_experiment_before_start(experiment)
+            cls._check_scenario_before_start(scenario)
 
             if not protocol_model.process_is_ready(process_model):
                 raise BadRequestException(
                     "The process cannot be run because it is not ready. Where the previous process run and are the inputs provided ?")
 
             Logger.info(
-                f"Running experiment process : {experiment.id}, protocol: {protocol_model.id}, process: {process_instance_name}")
+                f"Running scenario process : {scenario.id}, protocol: {protocol_model.id}, process: {process_instance_name}")
 
             ActivityService.add(
                 ActivityType.RUN_PROCESS,
@@ -142,13 +142,13 @@ class ExperimentRunService():
                 object_id=process_model.id,
             )
 
-            experiment.mark_as_started(os.getpid())
+            scenario.mark_as_started(os.getpid())
 
             protocol_model.run_process(process_instance_name)
             protocol_model = protocol_model.refresh()
             protocol_model.refresh_status()
 
-            return experiment
+            return scenario
 
         except Exception as err:
             exception: ProcessRunException = ProcessRunException.from_exception(
@@ -158,41 +158,41 @@ class ExperimentRunService():
             raise exception
 
     @classmethod
-    def _check_experiment_before_start(cls, experiment: Experiment) -> None:
+    def _check_scenario_before_start(cls, scenario: Scenario) -> None:
         user = CurrentUserService.get_and_check_current_user()
 
-        # check experiment status
-        experiment.check_is_runnable()
+        # check scenario status
+        scenario.check_is_runnable()
 
     @classmethod
-    def create_cli_for_experiment(cls, experiment: Experiment, user: User) -> SysProc:
+    def create_cli_for_scenario(cls, scenario: Scenario, user: User) -> SysProc:
         """
-        Run an experiment in a non-blocking way through the cli.
+        Run an scenario in a non-blocking way through the cli.
 
-        :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
+        :param user: The user who is running the scenario. If not provided, the system will try the get the currently authenticated user
         :type user: `gws.user.User`
         """
 
         try:
-            return cls._create_cli(experiment, user)
+            return cls._create_cli(scenario, user)
         except Exception as err:
             traceback.print_exc()
-            exception: ExperimentRunException = ExperimentRunException.from_exception(
-                experiment=experiment, exception=err)
-            experiment.mark_as_error(ProcessErrorInfo(detail=exception.get_detail_with_args(),
+            exception: ScenarioRunException = ScenarioRunException.from_exception(
+                scenario=scenario, exception=err)
+            scenario.mark_as_error(ProcessErrorInfo(detail=exception.get_detail_with_args(),
                                                       unique_code=exception.unique_code,
                                                       context=None, instance_id=exception.instance_id))
             raise exception
 
     @classmethod
-    def create_cli_for_experiment_process(cls, experiment: Experiment,
+    def create_cli_for_scenario_process(cls, scenario: Scenario,
                                           protocol_model: ProtocolModel,
                                           process_instance_name: str,
                                           user: User) -> SysProc:
         """
-        Run an experiment in a non-blocking way through the cli.
+        Run an scenario in a non-blocking way through the cli.
 
-        :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
+        :param user: The user who is running the scenario. If not provided, the system will try the get the currently authenticated user
         :type user: `gws.user.User`
         """
 
@@ -203,26 +203,26 @@ class ExperimentRunService():
                 "The process cannot be run because it is not ready. Where the previous process run and are the inputs provided ?")
 
         try:
-            return cls._create_cli(experiment, user, process_model)
+            return cls._create_cli(scenario, user, process_model)
         except Exception as err:
             traceback.print_exc()
-            exception: ExperimentRunException = ExperimentRunException.from_exception(
-                experiment=experiment, exception=err)
-            experiment.mark_as_error(ProcessErrorInfo(detail=exception.get_detail_with_args(),
+            exception: ScenarioRunException = ScenarioRunException.from_exception(
+                scenario=scenario, exception=err)
+            scenario.mark_as_error(ProcessErrorInfo(detail=exception.get_detail_with_args(),
                                                       unique_code=exception.unique_code,
                                                       context=None, instance_id=exception.instance_id))
             raise exception
 
     @classmethod
-    def _create_cli(cls, experiment: Experiment, user: User,
+    def _create_cli(cls, scenario: Scenario, user: User,
                     process_model: Optional[ProcessModel] = None) -> SysProc:
 
         # set the user in the context to make the update works
         CurrentUserService.set_current_user(user)
 
-        if experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS:
+        if scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS:
             raise BadRequestException(
-                f"A CLI process was already created to run the experiment {experiment.id}")
+                f"A CLI process was already created to run the scenario {scenario.id}")
 
         if process_model and process_model.status == ProcessStatus.WAITING_FOR_CLI_PROCESS:
             raise BadRequestException(
@@ -232,7 +232,7 @@ class ExperimentRunService():
         gws_core_path = settings.get_brick("gws_core").path
 
         options: List[str] = [
-            "--experiment-id", experiment.id,
+            "--scenario-id", scenario.id,
             "--user-id", user.id,
             "--log-level", Logger.level,
         ]
@@ -249,7 +249,7 @@ class ExperimentRunService():
             command = "run-process"
 
         else:
-            command = "run-experiment"
+            command = "run-scenario"
 
         cmd = [
             "python3",
@@ -261,123 +261,123 @@ class ExperimentRunService():
         sproc = SysProc.popen(
             cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
 
-        # Mark that a process is created for the experiment, but it is not started yet
-        experiment.mark_as_waiting_for_cli_process(sproc.pid)
+        # Mark that a process is created for the scenario, but it is not started yet
+        scenario.mark_as_waiting_for_cli_process(sproc.pid)
 
         if process_model:
             # Mark also the process as waiting for cli process
             process_model.mark_as_waiting_for_cli_process()
 
         Logger.info(
-            f"Experiment process run_through_cli {str(cmd)}")
+            f"Scenario process run_through_cli {str(cmd)}")
         Logger.info(
-            f"""The experiment logs are not shown in the console, because it is run in another linux process ({experiment.pid}).
+            f"""The scenario logs are not shown in the console, because it is run in another linux process ({scenario.pid}).
             To view them check the logs marked as {Logger.SUB_PROCESS_TEXT} in the today's log file : {Logger.get_file_path()}""")
         return sproc
 
     @classmethod
-    def stop_experiment(cls, id: str) -> Experiment:
-        experiment: Experiment = Experiment.get_by_id_and_check(id)
+    def stop_scenario(cls, id: str) -> Scenario:
+        scenario: Scenario = Scenario.get_by_id_and_check(id)
 
-        experiment.check_is_stopable()
+        scenario.check_is_stopable()
 
         # try to kill the pid if possible
         try:
-            if experiment.pid is not None:
-                cls._kill_experiment_pid(experiment.pid)
+            if scenario.pid is not None:
+                cls._kill_scenario_pid(scenario.pid)
         except Exception as err:
             Logger.error(str(err))
 
-        # mark the experiment as error
+        # mark the scenario as error
         error = ProcessErrorInfo(
-            detail=f"Experiment manually stopped by {CurrentUserService.get_and_check_current_user().full_name}",
-            unique_code="EXPERIMENT_STOPPED_MANUALLY",
+            detail=f"Scenario manually stopped by {CurrentUserService.get_and_check_current_user().full_name}",
+            unique_code="SCENARIO_STOPPED_MANUALLY",
             context=None,
             instance_id=None
         )
-        experiment.mark_as_error(error)
+        scenario.mark_as_error(error)
 
         # mark all the running tasks as error
-        task_models: List[TaskModel] = experiment.get_running_tasks()
+        task_models: List[TaskModel] = scenario.get_running_tasks()
         for task_model in task_models:
             exception = ProcessRunException(task_model, error.detail,
                                             error.unique_code, "Task error", None)
             task_model.mark_as_error_and_parent(exception)
 
         ActivityService.add(
-            ActivityType.STOP_EXPERIMENT,
-            object_type=ActivityObjectType.EXPERIMENT,
-            object_id=experiment.id
+            ActivityType.STOP_SCENARIO,
+            object_type=ActivityObjectType.SCENARIO,
+            object_id=scenario.id
         )
 
-        return experiment
+        return scenario
 
     @classmethod
-    def _kill_experiment_pid(cls, experiment_pid: int) -> None:
+    def _kill_scenario_pid(cls, scenario_pid: int) -> None:
         """
-        Kill the experiment through HTTP context if it is running
+        Kill the scenario through HTTP context if it is running
 
-        This is only possible if the experiment has been started through the cli
+        This is only possible if the scenario has been started through the cli
         """
 
-        if not experiment_pid or experiment_pid == 0:
+        if not scenario_pid or scenario_pid == 0:
             raise BadRequestException(
-                f"The experiment pid is {experiment_pid}")
+                f"The scenario pid is {scenario_pid}")
         try:
-            sproc = SysProc.from_pid(experiment_pid)
+            sproc = SysProc.from_pid(scenario_pid)
         except Exception as err:
             raise BadRequestException(
-                f"No such process found or its access is denied (pid = {experiment_pid}). Error: {err}") from err
+                f"No such process found or its access is denied (pid = {scenario_pid}). Error: {err}") from err
 
         # Don't kill if the process is already a zombie
         if sproc.is_zombie():
             return
 
         try:
-            # Gracefully stops the experiment and exits!
+            # Gracefully stops the scenario and exits!
             sproc.kill_with_children()
             sproc.wait()
         except Exception as err:
             raise BadRequestException(
-                f"Cannot kill the experiment (pid = {experiment_pid}). Error: {err}") from err
+                f"Cannot kill the scenario (pid = {scenario_pid}). Error: {err}") from err
 
     @classmethod
-    def stop_all_running_experiment(cls) -> None:
-        experiments: List[Experiment] = cls.get_all_running_experiments()
-        for experiment in experiments:
+    def stop_all_running_scenario(cls) -> None:
+        scenarios: List[Scenario] = cls.get_all_running_scenarios()
+        for scenario in scenarios:
             try:
-                cls.stop_experiment(experiment.id)
+                cls.stop_scenario(scenario.id)
             except Exception as err:
                 Logger.error(
-                    f'Could not stop experiment {experiment.id}. {str(err)}')
+                    f'Could not stop scenario {scenario.id}. {str(err)}')
 
     @classmethod
-    def get_all_running_experiments(cls) -> List[Experiment]:
+    def get_all_running_scenarios(cls) -> List[Scenario]:
         return list(
-            Experiment.select().where(
-                (Experiment.status == ExperimentStatus.RUNNING) |
-                (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS)))
+            Scenario.select().where(
+                (Scenario.status == ScenarioStatus.RUNNING) |
+                (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS)))
 
     @classmethod
-    def _send_experiment_finished_mail(cls, experiment: Experiment) -> None:
-        if not Settings.get_instance().is_prod_mode() or not experiment.is_manual():
+    def _send_scenario_finished_mail(cls, scenario: Scenario) -> None:
+        if not Settings.get_instance().is_prod_mode() or not scenario.is_manual():
             return
         try:
-            elapsed_time = experiment.protocol_model.progress_bar.get_last_execution_time()
+            elapsed_time = scenario.protocol_model.progress_bar.get_last_execution_time()
 
             # if the last execution was runned in under 5 minutes, don't send an email
             if elapsed_time < 1000 * 60 * 5:
                 return
 
             user: User = CurrentUserService.get_and_check_current_user()
-            experiment_dto = SendExperimentFinishMailData(
-                title=experiment.title,
-                status=experiment.status.value,
-                experiment_link=FrontService.get_experiment_url(experiment_id=experiment.id)
+            scenario_dto = SendScenarioFinishMailData(
+                title=scenario.title,
+                status=scenario.status.value,
+                scenario_link=FrontService.get_scenario_url(scenario_id=scenario.id)
             )
 
-            MailService.send_experiment_finished_mail(user.id, experiment_dto)
+            MailService.send_scenario_finished_mail(user.id, scenario_dto)
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             Logger.error(
-                f"Error while sending the experiment finished mail : {err}")
+                f"Error while sending the scenario finished mail : {err}")

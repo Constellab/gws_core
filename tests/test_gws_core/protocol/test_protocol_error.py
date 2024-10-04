@@ -1,18 +1,18 @@
 
 
 from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
-                      ExperimentService, InputSpec, InputSpecs, OutputSpec,
-                      OutputSpecs, ProcessFactory, ProcessModel, ProcessSpec,
-                      Protocol, ProtocolModel, ProtocolService, Resource, Task,
-                      TaskInputs, TaskOutputs, protocol_decorator,
-                      resource_decorator, task_decorator)
+                      InputSpec, InputSpecs, OutputSpec, OutputSpecs,
+                      ProcessFactory, ProcessModel, ProcessSpec, Protocol,
+                      ProtocolModel, ProtocolService, Resource,
+                      ScenarioService, Task, TaskInputs, TaskOutputs,
+                      protocol_decorator, resource_decorator, task_decorator)
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
-from gws_core.experiment.experiment_exception import ExperimentRunException
-from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.protocol.protocol_exception import ProtocolBuildException
+from gws_core.scenario.scenario_exception import ScenarioRunException
+from gws_core.scenario.scenario_run_service import ScenarioRunService
 
 #################### Error during the task ################
 
@@ -94,35 +94,35 @@ class TestProtocolBuildError(Protocol):
 class TestProtocolError(BaseTestCase):
 
     def test_error_on_task(self):
-        """Test an experiment with a task that throws an exception """
+        """Test an scenario with a task that throws an exception """
 
         protocol = ProtocolService.create_protocol_model_from_type(
             TestErrorProtocol)
 
-        experiment = ExperimentService.create_experiment_from_protocol_model(
+        scenario = ScenarioService.create_scenario_from_protocol_model(
             protocol)
 
-        # check that the experiment end up in error and get exception
-        exception: ExperimentRunException
+        # check that the scenario end up in error and get exception
+        exception: ScenarioRunException
         try:
-            ExperimentRunService.run_experiment(experiment=experiment)
-        except ExperimentRunException as err:
+            ScenarioRunService.run_scenario(scenario=scenario)
+        except ScenarioRunException as err:
             exception = err
         else:
-            self.fail('Run experiment shoud have raised ExperimentRunException')
+            self.fail('Run scenario shoud have raised ScenarioRunException')
 
-        # Check that experiment is in error status
-        experiment = ExperimentService.get_by_id_and_check(experiment.id)
-        self.assertTrue(experiment.is_error)
-        self.assertIsNotNone(experiment.get_error_info())
+        # Check that scenario is in error status
+        scenario = ScenarioService.get_by_id_and_check(scenario.id)
+        self.assertTrue(scenario.is_error)
+        self.assertIsNotNone(scenario.get_error_info())
         # Check that the instance_id and unique_code where copied from base exception
         self.assertEqual(
-            experiment.get_error_info().instance_id, exception.instance_id)
+            scenario.get_error_info().instance_id, exception.instance_id)
         self.assertEqual(
-            experiment.get_error_info().unique_code, exception.unique_code)
+            scenario.get_error_info().unique_code, exception.unique_code)
 
         # Check that main protocol is in error status
-        protocol = experiment.protocol_model
+        protocol = scenario.protocol_model
         self.assertTrue(protocol.is_error)
         self.assertIsNotNone(protocol.get_error_info())
         self.assertEqual(
@@ -168,27 +168,27 @@ class TestProtocolError(BaseTestCase):
         protocol = ProtocolService.create_protocol_model_from_type(
             CheckBeforeTaskErrorProtocol)
 
-        experiment = ExperimentService.create_experiment_from_protocol_model(
+        scenario = ScenarioService.create_scenario_from_protocol_model(
             protocol)
 
-        # check that the experiment end up in error and get exception
-        exception: ExperimentRunException
+        # check that the scenario end up in error and get exception
+        exception: ScenarioRunException
         try:
-            ExperimentRunService.run_experiment(experiment=experiment)
-        except ExperimentRunException as err:
+            ScenarioRunService.run_scenario(scenario=scenario)
+        except ScenarioRunException as err:
             exception = err
         else:
-            self.fail('Run experiment shoud have raised ExperimentRunException')
+            self.fail('Run scenario shoud have raised ScenarioRunException')
 
-        # Check that experiment is in error status
-        experiment = ExperimentService.get_by_id_and_check(experiment.id)
-        self.assertTrue(experiment.is_error)
-        self.assertIsNotNone(experiment.error_info)
+        # Check that scenario is in error status
+        scenario = ScenarioService.get_by_id_and_check(scenario.id)
+        self.assertTrue(scenario.is_error)
+        self.assertIsNotNone(scenario.error_info)
         # Check that the instance_id and unique_code where copied from base exception
         self.assertEqual(
-            experiment.error_info['instance_id'], exception.instance_id)
+            scenario.error_info['instance_id'], exception.instance_id)
         self.assertEqual(
-            experiment.error_info['unique_code'], exception.unique_code)
+            scenario.error_info['unique_code'], exception.unique_code)
 
     def test_protocol_build_error(self):
         """Test an error happens during protocol build
@@ -199,4 +199,4 @@ class TestProtocolError(BaseTestCase):
         except ProtocolBuildException:
             pass
         else:
-            self.fail('Run experiment shoud have raisedd ProtocolBuildException')
+            self.fail('Run scenario shoud have raisedd ProtocolBuildException')

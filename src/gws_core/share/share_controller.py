@@ -7,11 +7,10 @@ from gws_core.core.model.model_dto import PageDTO
 from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.core_controller import core_app
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.share.shared_dto import (ShareEntityInfoDTO,
-                                       ShareExperimentInfoReponseDTO,
-                                       ShareLinkType,
+from gws_core.share.shared_dto import (ShareEntityInfoDTO, ShareLinkType,
                                        ShareResourceInfoReponseDTO,
-                                       ShareResourceZippedResponseDTO)
+                                       ShareResourceZippedResponseDTO,
+                                       ShareScenarioInfoReponseDTO)
 from gws_core.user.auth_service import AuthService
 
 from .share_service import ShareService
@@ -60,26 +59,26 @@ def old_download_resource(token: str) -> FileResponse:
     raise Exception("The shared link is deprecated, please regenerate it in the new gws_core v0.6.1 or more")
 
 
-################################ EXPERIMENT ################################
+################################ SCENARIO ################################
 
-# Open zip the resource of a shared experiment
-@core_app.get("/share/experiment/{token}", tags=["Share"],
-              summary="Get info of the shared experiment")
-def get_share_experiment_info(token: str) -> ShareExperimentInfoReponseDTO:
-    return ShareService.get_experiment_entity_object_info(token)
+# Open zip the resource of a shared scenario
+@core_app.get("/share/scenario/{token}", tags=["Share"],
+              summary="Get info of the shared scenario")
+def get_share_scenario_info(token: str) -> ShareScenarioInfoReponseDTO:
+    return ShareService.get_scenario_entity_object_info(token)
 
-# Open zip the resource of a shared experiment
+# Open zip the resource of a shared scenario
 
 
-@core_app.post("/share/experiment/{token}/resource/{resource_id}/zip", tags=["Share"],
-               summary="Zip the resource of a shared experiment")
-def zip_experiment_resource(token: str, resource_id: str) -> ShareResourceZippedResponseDTO:
-    return ShareService.zip_shared_experiment_resource(token, resource_id)
+@core_app.post("/share/scenario/{token}/resource/{resource_id}/zip", tags=["Share"],
+               summary="Zip the resource of a shared scenario")
+def zip_scenario_resource(token: str, resource_id: str) -> ShareResourceZippedResponseDTO:
+    return ShareService.zip_shared_scenario_resource(token, resource_id)
 
 
 # Open route to download a resource
-@core_app.get("/share/experiment/{token}/resource/{resource_id}/download",
-              tags=["Share"], summary="Download the resource of a shared experiment")
-def download_experiment_resource(token: str, resource_id: str) -> FileResponse:
-    file_path = ShareService.download_experiment_resource(token, resource_id)
+@core_app.get("/share/scenario/{token}/resource/{resource_id}/download",
+              tags=["Share"], summary="Download the resource of a shared scenario")
+def download_scenario_resource(token: str, resource_id: str) -> FileResponse:
+    file_path = ShareService.download_scenario_resource(token, resource_id)
     return FileHelper.create_file_response(file_path)

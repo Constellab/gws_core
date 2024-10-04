@@ -229,7 +229,7 @@ class S3ServerService:
         if result.has_entities():
             raise S3ServerException(
                 status_code=400, code='delete_impact',
-                message='Cannot delete the resource because it is used in an next experiment or a note.',
+                message='Cannot delete the resource because it is used in an next scenario or a note.',
                 bucket_name=bucket_name, key=key)
         return resource
 

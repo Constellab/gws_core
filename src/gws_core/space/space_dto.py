@@ -5,11 +5,11 @@ from typing import Any, Dict, List, Literal, Optional
 from typing_extensions import TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.experiment.experiment_dto import ExperimentDTO
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
 from gws_core.note.note_dto import NoteFullDTO
-from gws_core.protocol.protocol_dto import ExperimentProtocolDTO
+from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
 from gws_core.resource.view.view_dto import CallViewResultDTO
+from gws_core.scenario.scenario_dto import ScenarioDTO
 from gws_core.user.activity.activity_dto import ActivityDTO
 
 
@@ -17,37 +17,37 @@ class LabStartDTO(BaseModelDTO):
     lab_config: LabConfigModelDTO
 
 
-class SaveExperimentToSpaceDTO(BaseModelDTO):
-    experiment: ExperimentDTO
-    protocol: ExperimentProtocolDTO
+class SaveScenarioToSpaceDTO(BaseModelDTO):
+    scenario: ScenarioDTO
+    protocol: ScenarioProtocolDTO
     lab_config: LabConfigModelDTO
 
 
 class SaveNoteToSpaceDTO(BaseModelDTO):
     note: NoteFullDTO
-    experiment_ids: List[str]
+    scenario_ids: List[str]
     lab_config: LabConfigModelDTO
     resource_views: Dict[str, CallViewResultDTO]
 
 
 class SpaceSendMailDTO(BaseModelDTO):
     receiver_ids: List[str]
-    mail_template: Literal['experiment-finished', 'generic']
+    mail_template: Literal['scenario-finished', 'generic']
     data: Optional[Any]
     subject: Optional[str]  # if provided, it override the template subject
 
 
-class SendExperimentFinishMailData(BaseModelDTO):
-    """Experiment info when send finish mail
+class SendScenarioFinishMailData(BaseModelDTO):
+    """Scenario info when send finish mail
     """
     title: str
     status: str
-    experiment_link: str
+    scenario_link: str
 
 
 class LabActivityReponseDTO(BaseModelDTO):
-    running_experiments: int
-    queued_experiments: int
+    running_scenarios: int
+    queued_scenarios: int
     last_activity: Optional[ActivityDTO]
     dev_env_running: bool
 

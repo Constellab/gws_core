@@ -1,7 +1,7 @@
 
 
-from gws_core import (BaseTestCase, Experiment, ExperimentService, Paginator,
-                      ProtocolModel)
+from gws_core import (BaseTestCase, Paginator, ProtocolModel, Scenario,
+                      ScenarioService)
 from gws_core.impl.robot.robot_service import RobotService
 
 
@@ -11,12 +11,12 @@ class TestPaginator(BaseTestCase):
     def test_paginator(self):
 
         protocol: ProtocolModel = RobotService.create_robot_world_travel()
-        ExperimentService.create_experiment_from_protocol_model(
+        ScenarioService.create_scenario_from_protocol_model(
             protocol_model=protocol, title="My title")
 
-        query = Experiment.select().order_by(Experiment.created_at.desc())
+        query = Scenario.select().order_by(Scenario.created_at.desc())
 
-        paginator: Paginator[Experiment] = Paginator(
+        paginator: Paginator[Scenario] = Paginator(
             query, page=0, nb_of_items_per_page=20)
 
         # Test the paginator values
@@ -31,5 +31,5 @@ class TestPaginator(BaseTestCase):
         self.assertEqual(paginator_dto.is_first_page, True)
         self.assertEqual(paginator_dto.is_last_page, True)
 
-        # Test the experiment values
+        # Test the scenario values
         self.assertEqual(paginator_dto.objects[0].title, 'My title')

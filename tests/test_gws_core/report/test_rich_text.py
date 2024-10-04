@@ -94,7 +94,7 @@ class TestRichText(BaseTestCaseLight):
         view: RichTextResourceViewData = {
             "id": "1",
             "resource_id": "1",
-            "experiment_id": "1",
+            "scenario_id": "1",
             "view_method_name": "test_view",
             "view_config": {},
             "title": "title",

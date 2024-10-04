@@ -9,7 +9,6 @@ from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
                       resource_decorator, task_decorator)
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.settings import Settings
-from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.robot.robot_resource import Robot
@@ -23,6 +22,7 @@ from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.resource_set.resource_set_exporter import \
     ResourceSetExporter
 from gws_core.resource.resource_set.resource_set_tasks import ResourceStacker
+from gws_core.scenario.scenario_interface import IScenario
 from gws_core.task.task_runner import TaskRunner
 from gws_core.test.base_test_case import BaseTestCase
 
@@ -76,17 +76,17 @@ class TestResourceSet(BaseTestCase):
     def test_resource_set(self):
 
         resource_count = ResourceModel.select().count()
-        experiment: IExperiment = IExperiment()
-        protocol: IProtocol = experiment.get_protocol()
-        robot_create = experiment.get_protocol().add_process(RobotCreate, 'create')
+        scenario: IScenario = IScenario()
+        protocol: IProtocol = scenario.get_protocol()
+        robot_create = scenario.get_protocol().add_process(RobotCreate, 'create')
         robot_generator = protocol.add_process(RobotsGenerator, 'generator')
         robot_add = protocol.add_process(RobotsAdd, 'add')
-        experiment.get_protocol().add_connectors([
+        scenario.get_protocol().add_connectors([
             (robot_create >> 'robot', robot_generator << 'robot_i'),
             (robot_generator >> 'set', robot_add << 'set')
         ])
 
-        experiment.run()
+        scenario.run()
 
         robot_generator.refresh()
         robot_create.refresh()
@@ -129,7 +129,7 @@ class TestResourceSet(BaseTestCase):
         self.assertTrue(resource_set.resource_exists('Robot 3'))
 
         # check that the reset cleared the correct resources
-        experiment.get_model().reset()
+        scenario.get_model().reset()
         self.assertEqual(ResourceModel.select().count(), resource_count)
 
     def test_resource_set_exporter(self):

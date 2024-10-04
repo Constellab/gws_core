@@ -124,10 +124,10 @@ class TaskModel(ProcessModel):
         return list(ResourceModel.select().where(ResourceModel.task_model == self))
 
     @classmethod
-    def get_experiment_source_tasks(cls, experiment_ids: List[str]) -> ModelSelect:
-        """Return all the Source task Model of the experiment
+    def get_scenario_source_tasks(cls, scenario_ids: List[str]) -> ModelSelect:
+        """Return all the Source task Model of the scenario
         """
-        return cls.select().where((cls.experiment.in_(experiment_ids)) & (cls.source_config_id.is_null(False)))
+        return cls.select().where((cls.scenario.in_(scenario_ids)) & (cls.source_config_id.is_null(False)))
 
     ################################# RUN #############################
 
@@ -210,7 +210,7 @@ class TaskModel(ProcessModel):
             # Create the Input resource to save the resource use as input
             input_resource: TaskInputModel = TaskInputModel()
             input_resource.resource_model = resource_model
-            input_resource.experiment = self.experiment
+            input_resource.scenario = self.scenario
             input_resource.task_model = self
 
             parent = self.parent_protocol
@@ -294,13 +294,13 @@ class TaskModel(ProcessModel):
             for tag in resource.tags.get_tags():
                 tag.origins.set_origins(TagOriginType.TASK, self.id)
 
-        # propagate the tag from input resources and experiment
+        # propagate the tag from input resources and scenario
         resource.tags.add_tags(self._get_input_resource_tags())
-        resource.tags.add_tags(self._get_experiment_tags())
+        resource.tags.add_tags(self._get_scenario_tags())
 
         # create and save the resource model from the resource
         resource_model = ResourceModel.save_from_resource(
-            resource, origin=ResourceOrigin.GENERATED, experiment=self.experiment, task_model=self, port_name=port_name)
+            resource, origin=ResourceOrigin.GENERATED, scenario=self.scenario, task_model=self, port_name=port_name)
 
         # update the parent of new children resource
         if isinstance(resource, ResourceListBase):
@@ -381,11 +381,11 @@ class TaskModel(ProcessModel):
 
         return self._input_resource_tags
 
-    def _get_experiment_tags(self) -> List[Tag]:
-        """Return all the tags of the experiment
+    def _get_scenario_tags(self) -> List[Tag]:
+        """Return all the tags of the scenario
         """
-        entity_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, self.experiment.id)
-        return entity_tags.build_tags_propagated(TagOriginType.EXPERIMENT_PROPAGATED, self.experiment.id)
+        entity_tags = EntityTagList.find_by_entity(EntityType.SCENARIO, self.scenario.id)
+        return entity_tags.build_tags_propagated(TagOriginType.SCENARIO_PROPAGATED, self.scenario.id)
 
     ################################# CONFIG #################################
 

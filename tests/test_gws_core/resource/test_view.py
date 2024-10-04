@@ -6,7 +6,6 @@ from gws_core import (BaseTestCase, ConfigParams, IntParam, JSONView, Resource,
                       ResourceService, StrParam, TextView, resource_decorator,
                       view)
 from gws_core.config.config_types import ConfigSpecs
-from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.note.note_dto import NoteSaveDTO
 from gws_core.note.note_service import NoteService
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -20,6 +19,7 @@ from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view.viewer import Viewer
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
+from gws_core.scenario.scenario_interface import IScenario
 
 
 # test_view
@@ -228,9 +228,9 @@ class TestView(BaseTestCase):
         resource: Resource = ResourceViewTestSub()
         resource_model: ResourceModel = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.UPLOADED)
 
-        # create an experiment with the view task
-        i_experiment = IExperiment()
-        i_protocol = i_experiment.get_protocol()
+        # create an scenario with the view task
+        i_scenario = IScenario()
+        i_protocol = i_scenario.get_protocol()
 
         view_config = {'view_method_name': 'a_view_test', 'config_values': {
             "page": 1, "page_size": 5000}, }
@@ -238,7 +238,7 @@ class TestView(BaseTestCase):
             Viewer.resource_config_name: resource.get_typing_name(), 'view_config': view_config})
 
         i_protocol.add_source('source', resource_model.id, viewer << Viewer.input_name)
-        i_experiment.run()
+        i_scenario.run()
 
         # check that view config was saved
         view_configs: List[ViewConfig] = list(ViewConfig.get_by_resource(resource_model.id))

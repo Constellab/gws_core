@@ -110,10 +110,10 @@ class ProtocolModel(ProcessModel):
         self.refresh_graph_from_dump()
         return self.save()
 
-    def set_experiment(self, experiment):
-        super().set_experiment(experiment)
+    def set_scenario(self, scenario):
+        super().set_scenario(scenario)
         for process in self.processes.values():
-            process.set_experiment(experiment)
+            process.set_scenario(scenario)
 
     @transaction()
     def delete_instance(self, *args, **kwargs):
@@ -170,8 +170,8 @@ class ProtocolModel(ProcessModel):
         if self.is_running or self.is_finished:
             return
         self._propagate_interfaces()
-        if not self.experiment:
-            raise BadRequestException("No experiment defined")
+        if not self.scenario:
+            raise BadRequestException("No scenario defined")
         super()._run_before_task()
 
     def _run(self) -> None:
@@ -1155,14 +1155,14 @@ class ProtocolModel(ProcessModel):
                     self.parent_protocol.is_finished or self.parent_protocol.is_partially_run):
                 self.parent_protocol.refresh_status()
 
-            # when we reached the root protocol, mark the experiment as partially run
-            if not self.parent_protocol and self.experiment:
-                if self.is_partially_run and not self.experiment.is_partially_run:
-                    self.experiment.mark_as_partially_run()
-                elif self.is_draft and not self.experiment.is_draft:
-                    self.experiment.mark_as_draft()
-                elif self.is_success and not self.experiment.is_success:
-                    self.experiment.mark_as_success()
+            # when we reached the root protocol, mark the scenario as partially run
+            if not self.parent_protocol and self.scenario:
+                if self.is_partially_run and not self.scenario.is_partially_run:
+                    self.scenario.mark_as_partially_run()
+                elif self.is_draft and not self.scenario.is_draft:
+                    self.scenario.mark_as_draft()
+                elif self.is_success and not self.scenario.is_success:
+                    self.scenario.mark_as_success()
 
     def _mark_as_partially_run(self):
         if self.is_partially_run:
@@ -1182,12 +1182,12 @@ class ProtocolModel(ProcessModel):
 
     def check_is_updatable(self, error_if_finished: bool = True) -> None:
         super().check_is_updatable(error_if_finished)
-        if self.experiment:
-            self.experiment.check_is_updatable()
+        if self.scenario:
+            self.scenario.check_is_updatable()
 
-            if self.experiment.is_running_or_waiting:
+            if self.scenario.is_running_or_waiting:
                 raise BadRequestException(
-                    detail="The experiment is running or in queue, you can't update it")
+                    detail="The scenario is running or in queue, you can't update it")
 
     def get_source_resource_ids(self) -> Set[str]:
         """

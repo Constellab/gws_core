@@ -20,7 +20,7 @@ from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view_config.view_config_dto import ViewConfigDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 
-from ...experiment.experiment import Experiment
+from ...scenario.scenario import Scenario
 from ..resource_model import ResourceModel
 
 
@@ -31,7 +31,7 @@ class ViewConfig(ModelWithUser, NavigableEntity):
     view_name = CharField()
     config: Config = ForeignKeyField(Config, null=True, backref='+')
 
-    experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, on_delete='CASCADE')
+    scenario: Scenario = ForeignKeyField(Scenario, null=True, index=True, on_delete='CASCADE')
     resource_model: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
 
     is_favorite = BooleanField(default=False)
@@ -52,7 +52,7 @@ class ViewConfig(ModelWithUser, NavigableEntity):
             view_name=self.view_name,
             is_favorite=self.is_favorite,
             config_values=self.get_config_values(),
-            experiment=self.experiment.to_simple_dto() if self.experiment else None,
+            scenario=self.scenario.to_simple_dto() if self.scenario else None,
             resource=self.resource_model.to_simple_dto() if self.resource_model else None,
             style=self.style if self.style else self.view_type.get_typing_style()
         )
@@ -83,7 +83,7 @@ class ViewConfig(ModelWithUser, NavigableEntity):
             "id": self.id + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
             "view_config_id": self.id,
             "resource_id": self.resource_model.id,
-            "experiment_id": self.experiment.id if self.experiment else None,
+            "scenario_id": self.scenario.id if self.scenario else None,
             "view_method_name": self.view_name,
             "view_config": self.get_config_values(),
             "title": title or self.title,

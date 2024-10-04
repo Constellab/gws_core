@@ -7,11 +7,11 @@ from peewee import JOIN, ModelSelect
 from gws_core.entity_navigator.entity_navigator_deep import NavigableEntitySet
 from gws_core.entity_navigator.entity_navigator_type import (
     EntityType, GenericNavigableEntity, NavigableEntity, all_entity_types)
-from gws_core.experiment.experiment import Experiment
-from gws_core.note.note import Note, NoteExperiment
+from gws_core.note.note import Note, NoteScenario
 from gws_core.note.note_view_model import NoteViewModel
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_config.view_config import ViewConfig
+from gws_core.scenario.scenario import Scenario
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_dto import TagOriginType
@@ -51,8 +51,8 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
         next_entities = set()
 
-        if EntityType.EXPERIMENT in requested_entities:
-            next_entities.update(self.get_next_experiments().get_entities_as_set())
+        if EntityType.SCENARIO in requested_entities:
+            next_entities.update(self.get_next_scenarios().get_entities_as_set())
 
         if EntityType.RESOURCE in requested_entities:
             next_entities.update(self.get_next_resources().get_entities_as_set())
@@ -96,10 +96,10 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         if self.is_empty():
             return loaded_entities
 
-        if EntityType.EXPERIMENT in requested_entities:
+        if EntityType.SCENARIO in requested_entities:
             self._get_next_entities_type_recursive(
-                requested_entities, loaded_entities, self.get_next_experiments(),
-                EntityNavigatorExperiment, deep_level)
+                requested_entities, loaded_entities, self.get_next_scenarios(),
+                EntityNavigatorScenario, deep_level)
 
         if EntityType.RESOURCE in requested_entities:
             self._get_next_entities_type_recursive(
@@ -165,10 +165,10 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         if self.is_empty():
             return loaded_entities
 
-        if EntityType.EXPERIMENT in requested_entities:
+        if EntityType.SCENARIO in requested_entities:
             self._get_previous_entities_type_recursive(
-                requested_entities, loaded_entities, self.get_previous_experiments(),
-                EntityNavigatorExperiment, deep_level)
+                requested_entities, loaded_entities, self.get_previous_scenarios(),
+                EntityNavigatorScenario, deep_level)
 
         if EntityType.RESOURCE in requested_entities:
             self._get_previous_entities_type_recursive(
@@ -213,8 +213,8 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
     def get_next_resources(self) -> 'EntityNavigatorResource':
         return EntityNavigatorResource(set())
 
-    def get_next_experiments(self) -> 'EntityNavigatorExperiment':
-        return EntityNavigatorExperiment(set())
+    def get_next_scenarios(self) -> 'EntityNavigatorScenario':
+        return EntityNavigatorScenario(set())
 
     def get_previous_notes(self) -> 'EntityNavigatorNote':
         return EntityNavigatorNote(set())
@@ -225,8 +225,8 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
     def get_previous_resources(self) -> 'EntityNavigatorResource':
         return EntityNavigatorResource(set())
 
-    def get_previous_experiments(self) -> 'EntityNavigatorExperiment':
-        return EntityNavigatorExperiment(set())
+    def get_previous_scenarios(self) -> 'EntityNavigatorScenario':
+        return EntityNavigatorScenario(set())
 
     def get_as_nav_set(self) -> NavigableEntitySet:
         return NavigableEntitySet(self._entities, 0)
@@ -288,8 +288,8 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
     @classmethod
     def from_entity_id(cls, entity_type: EntityType, entity_id: str) -> 'EntityNavigator':
-        if entity_type == EntityType.EXPERIMENT:
-            return EntityNavigatorExperiment(Experiment.get_by_id_and_check(entity_id))
+        if entity_type == EntityType.SCENARIO:
+            return EntityNavigatorScenario(Scenario.get_by_id_and_check(entity_id))
         elif entity_type == EntityType.NOTE:
             return EntityNavigatorView(Note.get_by_id_and_check(entity_id))
         elif entity_type == EntityType.VIEW:
@@ -300,42 +300,42 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         raise Exception(f"Entity type {entity_type} not supported")
 
 
-class EntityNavigatorExperiment(EntityNavigator[Experiment]):
+class EntityNavigatorScenario(EntityNavigator[Scenario]):
 
     def get_next_notes(self) -> 'EntityNavigatorNote':
-        notes = set(NoteExperiment.find_notes_by_experiments(self._get_entities_ids()))
+        notes = set(NoteScenario.find_notes_by_scenarios(self._get_entities_ids()))
         return EntityNavigatorNote(notes)
 
     def get_next_views(self) -> 'EntityNavigatorView':
         return self.get_next_resources().get_next_views()
 
     def get_next_resources(self) -> 'EntityNavigatorResource':
-        """Return all the resources generated by the experiments"""
-        resources = set(ResourceModel.get_by_experiments(self._get_entities_ids()))
+        """Return all the resources generated by the scenarios"""
+        resources = set(ResourceModel.get_by_scenarios(self._get_entities_ids()))
         return EntityNavigatorResource(resources)
 
-    def get_next_experiments(self) -> 'EntityNavigatorExperiment':
-        return self.get_next_resources().get_next_experiments()
+    def get_next_scenarios(self) -> 'EntityNavigatorScenario':
+        return self.get_next_resources().get_next_scenarios()
 
     def get_previous_resources(self) -> 'EntityNavigatorResource':
-        task_models: List[TaskModel] = list(TaskModel.get_experiment_source_tasks(self._get_entities_ids()))
+        task_models: List[TaskModel] = list(TaskModel.get_scenario_source_tasks(self._get_entities_ids()))
 
         resource_ids: List[str] = [task.source_config_id for task in task_models if task.source_config_id is not None]
 
         return EntityNavigatorResource(ResourceModel.get_by_ids(resource_ids))
 
-    def get_previous_experiments(self) -> 'EntityNavigatorExperiment':
-        return self.get_previous_resources().get_previous_experiments()
+    def get_previous_scenarios(self) -> 'EntityNavigatorScenario':
+        return self.get_previous_resources().get_previous_scenarios()
 
     def propagate_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None) -> None:
 
-        for experiment in self._entities:
+        for scenario in self._entities:
 
             # Propagate to resources
             next_resources = self.get_next_resources()
             for resource in next_resources.get_entities_list():
                 self._propagate_tags(tags=tags, entity=resource,
-                                     new_origin_type=TagOriginType.EXPERIMENT_PROPAGATED, new_origin_id=experiment.id,
+                                     new_origin_type=TagOriginType.SCENARIO_PROPAGATED, new_origin_id=scenario.id,
                                      entity_tags_cache=entity_tags_cache)
             next_resources.propagate_tags(tags, entity_tags_cache)
 
@@ -343,28 +343,28 @@ class EntityNavigatorExperiment(EntityNavigator[Experiment]):
             next_notes = self.get_next_notes()
             for note in next_notes.get_entities_list():
                 self._propagate_tags(tags=tags, entity=note,
-                                     new_origin_type=TagOriginType.EXPERIMENT_PROPAGATED, new_origin_id=experiment.id,
+                                     new_origin_type=TagOriginType.SCENARIO_PROPAGATED, new_origin_id=scenario.id,
                                      entity_tags_cache=entity_tags_cache)
             next_notes.propagate_tags(tags, entity_tags_cache)
 
     def delete_propagated_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None):
 
-        for experiment in self._entities:
+        for scenario in self._entities:
 
             # Propagate to resources
             next_resources = self.get_next_resources()
             for resource in next_resources.get_entities_list():
                 self._delete_propagated_tags(
-                    tags=tags, entity=resource, origin_type=TagOriginType.EXPERIMENT_PROPAGATED,
-                    origin_id=experiment.id, entity_tags_cache=entity_tags_cache)
+                    tags=tags, entity=resource, origin_type=TagOriginType.SCENARIO_PROPAGATED,
+                    origin_id=scenario.id, entity_tags_cache=entity_tags_cache)
             next_resources.delete_propagated_tags(tags, entity_tags_cache)
 
             # Propagate to notes
             next_notes = self.get_next_notes()
             for note in next_notes.get_entities_list():
                 self._delete_propagated_tags(
-                    tags=tags, entity=note, origin_type=TagOriginType.EXPERIMENT_PROPAGATED,
-                    origin_id=experiment.id, entity_tags_cache=entity_tags_cache)
+                    tags=tags, entity=note, origin_type=TagOriginType.SCENARIO_PROPAGATED,
+                    origin_id=scenario.id, entity_tags_cache=entity_tags_cache)
             next_notes.delete_propagated_tags(tags, entity_tags_cache)
 
 
@@ -398,25 +398,25 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         task_input_models: Set[TaskInputModel] = set(TaskInputModel.get_by_resource_models(self._get_entities_ids()))
         return {task_input.task_model for task_input in task_input_models}
 
-    def get_next_experiments(self) -> 'EntityNavigatorExperiment':
-        """Return all the experiments that use the resource in a source task or as input of a task"""
-        return EntityNavigatorExperiment(list(self.get_next_experiments_select_model()))
+    def get_next_scenarios(self) -> 'EntityNavigatorScenario':
+        """Return all the scenarios that use the resource in a source task or as input of a task"""
+        return EntityNavigatorScenario(list(self.get_next_scenarios_select_model()))
 
-    def get_next_experiments_select_model(self) -> ModelSelect:
-        """Return all the experiments that use the resource in a source task or as input of a task"""
+    def get_next_scenarios_select_model(self) -> ModelSelect:
+        """Return all the scenarios that use the resource in a source task or as input of a task"""
         expression = (TaskInputModel.resource_model.in_(self._get_entities_ids())) | (
             TaskModel.source_config_id.in_(self._get_entities_ids()))
 
-        resource_exp_ids = {resource.experiment.id for resource in self._entities if resource.experiment is not None}
-        # Exclude the experiment that generated the resource from the select
+        resource_exp_ids = {resource.scenario.id for resource in self._entities if resource.scenario is not None}
+        # Exclude the scenario that generated the resource from the select
         if len(resource_exp_ids) > 0:
-            expression = expression & (Experiment.id.not_in(resource_exp_ids))
+            expression = expression & (Scenario.id.not_in(resource_exp_ids))
 
-        # Search experiment where a Source is configured with the resource and where a task takes the resource as input
+        # Search scenario where a Source is configured with the resource and where a task takes the resource as input
             # with this, all case are managed
-        return Experiment.select().where(expression) \
+        return Scenario.select().where(expression) \
             .join(TaskInputModel, JOIN.LEFT_OUTER) \
-            .join(TaskModel, JOIN.LEFT_OUTER, on=(Experiment.id == TaskModel.experiment)) \
+            .join(TaskModel, JOIN.LEFT_OUTER, on=(Scenario.id == TaskModel.scenario)) \
             .distinct()
 
     def get_previous_resources(self) -> 'EntityNavigatorResource':
@@ -430,15 +430,15 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
 
         return EntityNavigatorResource(resources)
 
-    def get_previous_experiments(self) -> 'EntityNavigatorExperiment':
-        """ Return all the experiments that generated the current resources"""
+    def get_previous_scenarios(self) -> 'EntityNavigatorScenario':
+        """ Return all the scenarios that generated the current resources"""
 
-        experiment_ids: List[str] = [resource.experiment.id for resource in self._entities
-                                     if resource.experiment is not None]
+        scenario_ids: List[str] = [resource.scenario.id for resource in self._entities
+                                     if resource.scenario is not None]
 
-        experiments: Set[Experiment] = set(Experiment.get_by_ids(experiment_ids))
+        scenarios: Set[Scenario] = set(Scenario.get_by_ids(scenario_ids))
 
-        return EntityNavigatorExperiment(experiments)
+        return EntityNavigatorScenario(scenarios)
 
     def propagate_tags(self, tags: List[Tag], entity_tags_cache: Dict[NavigableEntity, EntityTagList] = None) -> None:
 
@@ -501,8 +501,8 @@ class EntityNavigatorView(EntityNavigator[ViewConfig]):
 
         return EntityNavigatorResource(resources)
 
-    def get_previous_experiments(self) -> 'EntityNavigatorExperiment':
-        return self.get_previous_resources().get_previous_experiments()
+    def get_previous_scenarios(self) -> 'EntityNavigatorScenario':
+        return self.get_previous_resources().get_previous_scenarios()
 
     def _get_resources(self) -> List[ResourceModel]:
         return [view.resource_model for view in self._entities]
@@ -540,5 +540,5 @@ class EntityNavigatorNote(EntityNavigator[Note]):
     def get_previous_resources(self) -> 'EntityNavigatorResource':
         return self.get_previous_views().get_previous_resources()
 
-    def get_previous_experiments(self) -> 'EntityNavigatorExperiment':
-        return self.get_previous_resources().get_previous_experiments()
+    def get_previous_scenarios(self) -> 'EntityNavigatorScenario':
+        return self.get_previous_resources().get_previous_scenarios()

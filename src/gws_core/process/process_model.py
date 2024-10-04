@@ -27,11 +27,11 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.model.db_field import BaseDTOField, DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..core.utils.logger import Logger
-from ..experiment.experiment import Experiment
 from ..io.io import Inputs, Outputs
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
 from ..progress_bar.progress_bar import ProgressBar
+from ..scenario.scenario import Scenario
 from .process import Process
 from .process_exception import ProcessRunException
 from .process_types import ProcessErrorInfo, ProcessMinimumDTO, ProcessStatus
@@ -48,8 +48,8 @@ class ProcessModel(ModelWithUser):
     """
 
     parent_protocol_id = CharField(max_length=36, null=True, index=True)
-    experiment: Experiment = ForeignKeyField(
-        Experiment, null=True, index=True, backref="+")
+    scenario: Scenario = ForeignKeyField(
+        Scenario, null=True, index=True, backref="+")
     instance_name = CharField(null=True)
     config: Config = ForeignKeyField(Config, null=False, backref='+')
     progress_bar: ProgressBar = ForeignKeyField(
@@ -73,7 +73,7 @@ class ProcessModel(ModelWithUser):
     # name of the process set by the user
     name = CharField(null=True)
 
-    _experiment: Experiment = None
+    _scenario: Scenario = None
     _parent_protocol: ProtocolModel = None
     _inputs: Inputs = None
     _outputs: Outputs = None
@@ -179,7 +179,7 @@ class ProcessModel(ModelWithUser):
             self.parent_protocol_id = parent_protocol.id
         self._parent_protocol = parent_protocol
 
-        self.set_experiment(parent_protocol.experiment)
+        self.set_scenario(parent_protocol.scenario)
 
     def set_process_type(self, process_type: Type[Process]) -> None:
         self.process_typing_name = process_type.get_typing_name()
@@ -224,8 +224,8 @@ class ProcessModel(ModelWithUser):
         typing: Typing = TypingManager.get_typing_from_name_and_check(self.process_typing_name)
         return typing.brick_version
 
-    def set_experiment(self, experiment: Experiment) -> None:
-        self.experiment = experiment
+    def set_scenario(self, scenario: Scenario) -> None:
+        self.scenario = scenario
 
     def get_error_info(self) -> Optional[ProcessErrorInfo]:
         return ProcessErrorInfo.from_json(self.error_info) if self.error_info else None
@@ -497,7 +497,7 @@ class ProcessModel(ModelWithUser):
             created_by=self.created_by.to_dto(),
             last_modified_by=self.last_modified_by.to_dto(),
             parent_protocol_id=self.parent_protocol.id if self.parent_protocol_id else None,
-            experiment_id=self.experiment.id if self.experiment else None,
+            scenario_id=self.scenario.id if self.scenario else None,
             instance_name=self.instance_name,
             config=self.config.to_dto(),
             progress_bar=self.progress_bar.to_dto(),
@@ -628,9 +628,9 @@ class ProcessModel(ModelWithUser):
 
         if self.parent_protocol:
             self.parent_protocol.mark_as_error_and_parent(process_error, new_context)
-        # once we reach the main protocol, we mark the experiment as error
-        elif self.experiment:
-            self.experiment.mark_as_error(ProcessErrorInfo(
+        # once we reach the main protocol, we mark the scenario as error
+        elif self.scenario:
+            self.scenario.mark_as_error(ProcessErrorInfo(
                 detail=process_error.get_error_message(new_context),
                 unique_code=process_error.unique_code,
                 context=new_context,

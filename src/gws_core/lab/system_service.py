@@ -10,9 +10,6 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.logger import Logger
-from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_enums import ExperimentStatus
-from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.fs_node_model import FSNodeModel
@@ -24,6 +21,9 @@ from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.scenario.scenario import Scenario
+from gws_core.scenario.scenario_enums import ScenarioStatus
+from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.space.space_service import SpaceService
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
@@ -35,9 +35,9 @@ from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
 from ..core.model.base_model_service import BaseModelService
 from ..core.utils.settings import Settings
-from ..experiment.queue_service import QueueService
 from ..impl.file.file_helper import FileHelper
 from ..model.model_service import ModelService
+from ..scenario.queue_service import QueueService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from ..user.user_service import UserService
@@ -88,36 +88,36 @@ class SystemService:
 
     @classmethod
     def init_queue_and_monitor(cls) -> None:
-        cls._check_running_experiments()
+        cls._check_running_scenarios()
         MonitorService.init()
         QueueService.init(daemon=True)
 
     @classmethod
-    def _check_running_experiments(cls):
-        # check for all running status experiment, if the process is still running
-        # if not we consider that the experiment is not running
+    def _check_running_scenarios(cls):
+        # check for all running status scenario, if the process is still running
+        # if not we consider that the scenario is not running
 
         try:
             CurrentUserService.set_current_user(User.get_sysuser())
-            experiments: List[Experiment] = list(Experiment.get_running_experiments())
+            scenarios: List[Scenario] = list(Scenario.get_running_scenarios())
 
-            for experiment in experiments:
-                if experiment.get_process_status() != ExperimentStatus.RUNNING:
-                    Logger.info(f"Marking experiment {experiment.id} as stopped because the process is not running")
-                    running_process = experiment.protocol_model.get_running_task()
+            for scenario in scenarios:
+                if scenario.get_process_status() != ScenarioStatus.RUNNING:
+                    Logger.info(f"Marking scenario {scenario.id} as stopped because the process is not running")
+                    running_process = scenario.protocol_model.get_running_task()
 
-                    error_text = "The lab was stopped while the experiment was running. It killed the experiment's process. Marking the experiment as stopped."
+                    error_text = "The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped."
                     if running_process is not None:
                         running_process.mark_as_error_and_parent(ProcessRunException.from_exception(
                             process_model=running_process, exception=Exception(error_text),
                             error_prefix="Lab init"))
                     else:
-                        experiment.mark_as_error(ProcessErrorInfo(
-                            detail="The lab was stopped while the experiment was running. It killed the experiment's process. Marking the experiment as stopped.",
+                        scenario.mark_as_error(ProcessErrorInfo(
+                            detail="The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped.",
                             unique_code="LAB_STOPPED_WHILE_RUNNING", context=None, instance_id=None))
         except Exception as err:
             Logger.error(
-                f'[SystemService] Error while checking running experiments: {err}')
+                f'[SystemService] Error while checking running scenarios: {err}')
             Logger.log_exception_stack_trace(err)
         finally:
             CurrentUserService.set_current_user(None)
@@ -170,12 +170,12 @@ class SystemService:
         Logger.info('Resetting the dev environment')
 
         try:
-            if Experiment.table_exists():
-                # Stop all running experiment
-                ExperimentRunService.stop_all_running_experiment()
+            if Scenario.table_exists():
+                # Stop all running scenario
+                ScenarioRunService.stop_all_running_scenario()
         except Exception as err:
             Logger.error(
-                f"[SystemService] Error while stopping all running experiments: {err}, continue...")
+                f"[SystemService] Error while stopping all running scenarios: {err}, continue...")
             Logger.log_exception_stack_trace(err)
 
         cls.deinit_queue_and_monitor()
@@ -271,9 +271,9 @@ class SystemService:
 
     @classmethod
     def garbage_collector(cls) -> None:
-        if len(ExperimentRunService.get_all_running_experiments()) > 0:
+        if len(ScenarioRunService.get_all_running_scenarios()) > 0:
             raise BadRequestException(
-                'Cannot run the lab cleaning while there are running or waiting experiments')
+                'Cannot run the lab cleaning while there are running or waiting scenarios')
 
         Logger.info('Starting the garbage collector')
 

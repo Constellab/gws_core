@@ -13,7 +13,7 @@ class TestNoteSearch(BaseTestCase):
 
     def test_note_search(self):
         note_1 = NoteService.create(NoteSaveDTO(title='The first note'))
-        NoteService.create(NoteSaveDTO(title='Another text to explain experiment'))
+        NoteService.create(NoteSaveDTO(title='Another text to explain scenario'))
 
         search_dict: SearchParams = SearchParams()
 

@@ -1,6 +1,6 @@
 
 
-from gws_core import BaseTestCase, IExperiment, IProcess, IProtocol
+from gws_core import BaseTestCase, IProcess, IProtocol, IScenario
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
@@ -14,22 +14,22 @@ class TestProcessService(BaseTestCase):
 
     def test_get_log(self):
 
-        # create a simple waiting experiment to let the log be created
-        experiment = IExperiment()
+        # create a simple waiting scenario to let the log be created
+        scenario = IScenario()
 
         # force init the logger
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
         Logger.clear_logger()
-        # initialize the logger associated to the experiment
-        Logger(Settings.build_log_dir(True), level='INFO', experiment_id=experiment.get_model().id)
+        # initialize the logger associated to the scenario
+        Logger(Settings.build_log_dir(True), level='INFO', scenario_id=scenario.get_model().id)
 
-        protocol: IProtocol = experiment.get_protocol()
+        protocol: IProtocol = scenario.get_protocol()
 
         create_robot: IProcess = protocol.add_task(RobotCreate, 'create_robot')
         wait: IProcess = protocol.add_task(Wait, 'wait', {'waiting_time': 1})
         protocol.add_connector(create_robot >> 'robot', wait << 'resource')
 
-        experiment.run()
+        scenario.run()
 
         logs = ProcessService.get_logs_of_process('TASK', wait.refresh()._process_model.id)
         self.assertTrue(len(logs.logs) > 0)

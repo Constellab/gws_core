@@ -10,8 +10,8 @@ from gws_core.core.exception.exceptions.base_http_exception import \
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
-from gws_core.space.space_dto import (LabStartDTO, SaveExperimentToSpaceDTO,
-                                      SaveNoteToSpaceDTO, SpaceSendMailDTO)
+from gws_core.space.space_dto import (LabStartDTO, SaveNoteToSpaceDTO,
+                                      SaveScenarioToSpaceDTO, SpaceSendMailDTO)
 from gws_core.user.user_dto import UserFullDTO, UserSpace
 
 from ..core.exception.exceptions import BadRequestException
@@ -101,28 +101,28 @@ class SpaceService():
         return True
 
     @classmethod
-    def save_experiment(cls, folder_id: str, save_experiment_dto: SaveExperimentToSpaceDTO) -> None:
+    def save_scenario(cls, folder_id: str, save_scenario_dto: SaveScenarioToSpaceDTO) -> None:
         space_api_url: str = cls._get_space_api_url(
-            f"{cls._external_labs_route}/folder/{folder_id}/experiment")
+            f"{cls._external_labs_route}/folder/{folder_id}/scenario")
 
         try:
-            return ExternalApiService.put(space_api_url, save_experiment_dto, cls._get_request_header(),
+            return ExternalApiService.put(space_api_url, save_scenario_dto, cls._get_request_header(),
                                           raise_exception_if_error=True)
         except BaseHTTPException as err:
-            err.detail = f"Can't save the experiment in space. Error : {err.detail}"
+            err.detail = f"Can't save the scenario in space. Error : {err.detail}"
             raise err
 
     @classmethod
-    def delete_experiment(cls, folder_id: str, experiment_id: str) -> None:
+    def delete_scenario(cls, folder_id: str, scenario_id: str) -> None:
         space_api_url: str = cls._get_space_api_url(
-            f"{cls._external_labs_route}/folder/{folder_id}/experiment/{experiment_id}")
+            f"{cls._external_labs_route}/folder/{folder_id}/scenario/{scenario_id}")
 
         try:
             return ExternalApiService.delete(space_api_url, cls._get_request_header(),
                                              raise_exception_if_error=True)
 
         except BaseHTTPException as err:
-            err.detail = f"Can't delete the experiment in space. Error : {err.detail}"
+            err.detail = f"Can't delete the scenario in space. Error : {err.detail}"
             raise err
 
     @classmethod

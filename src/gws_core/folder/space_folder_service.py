@@ -6,10 +6,10 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
-from gws_core.experiment.experiment import Experiment
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.note.note import Note
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.scenario.scenario import Scenario
 from gws_core.space.space_service import SpaceService
 
 from .space_folder import SpaceFolder
@@ -18,7 +18,7 @@ from .space_folder_dto import ExternalSpaceFolder
 
 class SpaceFolderService():
 
-    entity_with_folders: List[Type[ModelWithFolder]] = [Experiment, Note, ResourceModel]
+    entity_with_folders: List[Type[ModelWithFolder]] = [Scenario, Note, ResourceModel]
 
     @classmethod
     def get_folder_trees(cls) -> List[SpaceFolder]:
@@ -108,10 +108,10 @@ class SpaceFolderService():
 
         folders = folder.get_with_children_as_list()
 
-        # check if one of the sync experiment is attached to the folder
-        if Experiment.select().where((Experiment.folder.in_(folders)) & (Experiment.last_sync_at.is_null(False))).count() > 0:
-            raise BadRequestException(detail=GWSException.DELETE_FOLDER_WITH_EXPERIMENTS.value,
-                                      unique_code=GWSException.DELETE_FOLDER_WITH_EXPERIMENTS.name)
+        # check if one of the sync scenario is attached to the folder
+        if Scenario.select().where((Scenario.folder.in_(folders)) & (Scenario.last_sync_at.is_null(False))).count() > 0:
+            raise BadRequestException(detail=GWSException.DELETE_FOLDER_WITH_SCENARIOS.value,
+                                      unique_code=GWSException.DELETE_FOLDER_WITH_SCENARIOS.name)
 
         # check if one of the note is attached to the folder
         if Note.select().where((Note.folder.in_(folders)) & (Note.last_sync_at.is_null(False))).count() > 0:

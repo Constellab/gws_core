@@ -11,8 +11,8 @@ from gws_core.core.model.db_field import DateTimeUTC
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.settings import Settings
-from gws_core.experiment.experiment import Experiment
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.scenario.scenario import Scenario
 from gws_core.share.shared_dto import ShareLinkDTO, ShareLinkType
 
 
@@ -85,8 +85,8 @@ class ShareLink(ModelWithUser):
 
         if entity_type == ShareLinkType.RESOURCE:
             return ResourceModel
-        elif entity_type == ShareLinkType.EXPERIMENT:
-            return Experiment
+        elif entity_type == ShareLinkType.SCENARIO:
+            return Scenario
         else:
             raise BadRequestException(f"Entity type {entity_type} is not supported")
 
@@ -109,7 +109,7 @@ class ShareLink(ModelWithUser):
         if entity:
             if isinstance(entity, ResourceModel):
                 link_dto.entity_name = entity.name
-            elif isinstance(entity, Experiment):
+            elif isinstance(entity, Scenario):
                 link_dto.entity_name = entity.title
             link_dto.status = 'SUCCESS'
         else:
@@ -120,16 +120,16 @@ class ShareLink(ModelWithUser):
     def get_link(self) -> str:
         if self.entity_type == ShareLinkType.RESOURCE:
             return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/info/{self.token}"
-        elif self.entity_type == ShareLinkType.EXPERIMENT:
-            return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/experiment/{self.token}"
+        elif self.entity_type == ShareLinkType.SCENARIO:
+            return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/scenario/{self.token}"
 
     @classmethod
     def is_lab_share_resource_link(cls, link: str) -> bool:
         return cls._is_lab_share_entity_link(link) and link.find('share/info/') != -1
 
     @classmethod
-    def is_lab_share_experiment_link(cls, link: str) -> bool:
-        return cls._is_lab_share_entity_link(link) and link.find('share/experiment/') != -1
+    def is_lab_share_scenario_link(cls, link: str) -> bool:
+        return cls._is_lab_share_entity_link(link) and link.find('share/scenario/') != -1
 
     @classmethod
     def _is_lab_share_entity_link(cls, link: str) -> bool:
