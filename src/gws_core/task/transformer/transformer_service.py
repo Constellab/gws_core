@@ -7,11 +7,11 @@ from gws_core.task.transformer.transformer import Transformer
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...model.typing_manager import TypingManager
-from ...process.process_interface import IProcess
-from ...protocol.protocol_interface import IProtocol
+from ...process.process_proxy import ProcessProxy
+from ...protocol.protocol_proxy import ProtocolProxy
 from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel
-from ...scenario.scenario_interface import IScenario
+from ...scenario.scenario_proxy import ScenarioProxy
 from ..converter.converter import Converter
 from ..plug import Sink, Source
 from ..task import Task
@@ -22,7 +22,7 @@ class TransformerService():
 
     @classmethod
     def create_and_run_transformer_scenario(cls, transformers: List[TransformerDict],
-                                              resource_model_id: str) -> ResourceModel:
+                                            resource_model_id: str) -> ResourceModel:
 
         if not transformers or len(transformers) == 0:
             raise BadRequestException('At least 1 transformer mustbe provided')
@@ -33,12 +33,12 @@ class TransformerService():
         resource_type: Type[Resource] = resource_model.get_and_check_resource_type()
 
         # Create an scenario containing 1 source, X transformers task , 1 sink
-        scenario: IScenario = IScenario(
+        scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{resource_type.get_human_name()} transformation")
-        protocol: IProtocol = scenario.get_protocol()
+        protocol: ProtocolProxy = scenario.get_protocol()
 
         # create the source and save last process to create connectors later
-        last_process: IProcess = protocol.add_process(
+        last_process: ProcessProxy = protocol.add_process(
             Source, 'source', {Source.config_name: resource_model_id})
 
         index: int = 1
@@ -48,7 +48,7 @@ class TransformerService():
             transformer_type: Type[Task] = TypingManager.get_and_check_type_from_name(
                 transformer["typing_name"])
 
-            new_process: IProcess = protocol.add_process(
+            new_process: ProcessProxy = protocol.add_process(
                 transformer_type, f"transformer_{index}", transformer["config_values"])
 
             protocol.add_connector_new(last_process.instance_name, last_process.get_first_outport().name,

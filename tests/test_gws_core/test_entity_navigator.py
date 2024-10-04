@@ -10,12 +10,12 @@ from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.note.note import Note
 from gws_core.note.note_dto import NoteSaveDTO
 from gws_core.note.note_service import NoteService
-from gws_core.protocol.protocol_interface import IProtocol
+from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.scenario.scenario import Scenario
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -52,8 +52,8 @@ class TestEntityNavigator(BaseTestCase):
 
     def _create_scenarios(self):
         # first scenario RobotCreate -> RobotMove
-        scenario_1 = IScenario()
-        i_protocol_1: IProtocol = scenario_1.get_protocol()
+        scenario_1 = ScenarioProxy()
+        i_protocol_1: ProtocolProxy = scenario_1.get_protocol()
         create_robot = i_protocol_1.add_task(RobotCreate, 'create_robot')
         move_robot_1 = i_protocol_1.add_task(RobotMove, 'move_robot')
         i_protocol_1.add_connector(create_robot >> 'robot', move_robot_1 << 'robot')
@@ -66,8 +66,8 @@ class TestEntityNavigator(BaseTestCase):
         robot_2 = move_robot_1.get_output_resource_model('robot')
 
         # second scenario Input -> RobotMove
-        scenario_2 = IScenario()
-        i_protocol_2: IProtocol = scenario_2.get_protocol()
+        scenario_2 = ScenarioProxy()
+        i_protocol_2: ProtocolProxy = scenario_2.get_protocol()
         move_robot_2 = i_protocol_2.add_task(RobotMove, 'move_robot')
         move_robot_3 = i_protocol_2.add_task(RobotMove, 'move_robot_1')
         i_protocol_2.add_source('source_1', robot_1.id, move_robot_2 << 'robot')
@@ -87,8 +87,8 @@ class TestEntityNavigator(BaseTestCase):
         self.exp_2_resource_2 = move_robot_3.get_output_resource_model('robot')
 
         # third scenario exp_2_resource_2 -> RobotMove
-        scenario_3 = IScenario()
-        i_protocol_3: IProtocol = scenario_3.get_protocol()
+        scenario_3 = ScenarioProxy()
+        i_protocol_3: ProtocolProxy = scenario_3.get_protocol()
         move_robot_4 = i_protocol_3.add_task(RobotMove, 'move_robot')
         i_protocol_3.add_source('source_1', self.exp_2_resource_2.id, move_robot_4 << 'robot')
         scenario_3.run()

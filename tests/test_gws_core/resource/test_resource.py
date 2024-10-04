@@ -5,12 +5,12 @@ from gws_core import (BaseTestCase, File, IntRField, ListRField, ResourceModel,
                       StrRField)
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
-from gws_core.process.process_interface import IProcess
+from gws_core.process.process_proxy import ProcessProxy
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.technical_info import TechnicalInfo
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 
 
 @resource_decorator(unique_name="TestResourceFields")
@@ -36,11 +36,11 @@ class TestResource(BaseTestCase):
 
     def test_resource(self):
 
-        i_scenario = IScenario()
+        i_scenario = ScenarioProxy()
         i_scenario.get_protocol().add_process(RobotCreate, instance_name="create")
         i_scenario.run()
 
-        create: IProcess = i_scenario.get_protocol().get_process('create')
+        create: ProcessProxy = i_scenario.get_protocol().get_process('create')
 
         # Check that the resource model was generated
         resource_model: ResourceModel = create.get_output_resource_model('robot')

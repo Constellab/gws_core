@@ -9,7 +9,7 @@ from gws_core import (BaseTestCase, ConfigParams, ProcessFactory,
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.resource.resource_dto import ResourceOrigin
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.task.plug import Source
 from gws_core.test.gtest import GTest
@@ -110,7 +110,7 @@ class TestTask(BaseTestCase):
         To test it, we check that it raised an exception
         """
 
-        scenario: IScenario = IScenario()
+        scenario: ScenarioProxy = ScenarioProxy()
         scenario.get_protocol().add_process(RunAfterTask, 'run')
 
         with self.assertRaises(Exception):
@@ -124,7 +124,7 @@ class TestTask(BaseTestCase):
         robot_model = ResourceModel.save_from_resource(
             Robot.empty(), origin=ResourceOrigin.UPLOADED)
 
-        scenario: IScenario = IScenario()
+        scenario: ScenarioProxy = ScenarioProxy()
         task = scenario.get_protocol().add_task(
             Source, 'source', {Source.config_name: robot_model.id})
 

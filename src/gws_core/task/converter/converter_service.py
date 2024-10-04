@@ -13,10 +13,10 @@ from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...impl.file.file import File
 from ...model.typing_manager import TypingManager
-from ...process.process_interface import IProcess
-from ...protocol.protocol_interface import IProtocol
+from ...process.process_proxy import ProcessProxy
+from ...protocol.protocol_proxy import ProtocolProxy
 from ...resource.resource_model import ResourceModel
-from ...scenario.scenario_interface import IScenario
+from ...scenario.scenario_proxy import ScenarioProxy
 from ...task.converter.importer import ResourceImporter
 from ...task.task_typing import TaskTyping
 
@@ -35,12 +35,12 @@ class ConverterService:
         importer_type: Type[ResourceImporter] = TypingManager.get_and_check_type_from_name(importer_typing_name)
 
         # Create an scenario containing 1 source, 1 importer , 1 sink
-        scenario: IScenario = IScenario(
+        scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{resource_type.get_human_name()} importer")
-        protocol: IProtocol = scenario.get_protocol()
+        protocol: ProtocolProxy = scenario.get_protocol()
 
         # Add the importer and the connector
-        importer: IProcess = protocol.add_process(importer_type, 'importer', config)
+        importer: ProcessProxy = protocol.add_process(importer_type, 'importer', config)
 
         # Add source and connect it
         protocol.add_source('source', resource_model_id, importer << ResourceImporter.input_name)
@@ -93,13 +93,13 @@ class ConverterService:
         resource_model = ResourceModel.get_by_id_and_check(resource_model_id)
 
         # Create an scenario containing 1 source, 1 extractor , 1 sink
-        scenario: IScenario = IScenario(
+        scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{resource_model.name} exporter")
-        protocol: IProtocol = scenario.get_protocol()
+        protocol: ProtocolProxy = scenario.get_protocol()
 
         # Add the importer and the connector
         exporter_type: Type[ResourceExporter] = TypingManager.get_and_check_type_from_name(exporter_typing_name)
-        extractor: IProcess = protocol.add_process(exporter_type, 'exporter', params)
+        extractor: ProcessProxy = protocol.add_process(exporter_type, 'exporter', params)
 
         # Add source and connect it,
         protocol.add_source('source', resource_model_id, extractor << 'source')
@@ -122,13 +122,13 @@ class ConverterService:
         ResourceModel.get_by_id_and_check(folder_model_id)
 
         # Create an scenario containing 1 source, 1 extractor , 1 sink
-        scenario: IScenario = IScenario(
+        scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{FileHelper.get_name(sub_path)} extractor")
-        protocol: IProtocol = scenario.get_protocol()
+        protocol: ProtocolProxy = scenario.get_protocol()
 
         # Add the importer and the connector
-        extractor: IProcess = protocol.add_process(FsNodeExtractor, 'extractor', {
-                                                   'fs_node_path': sub_path, 'fs_node_typing_name': fs_node_typing_name})
+        extractor: ProcessProxy = protocol.add_process(FsNodeExtractor, 'extractor', {
+            'fs_node_path': sub_path, 'fs_node_typing_name': fs_node_typing_name})
 
         # Add source and connect it
         protocol.add_source('source', folder_model_id, extractor << 'source')

@@ -1,6 +1,6 @@
 
 
-from gws_core import BaseTestCase, IProcess, IProtocol, IScenario
+from gws_core import BaseTestCase, ProcessProxy, ProtocolProxy, ScenarioProxy
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
@@ -15,7 +15,7 @@ class TestProcessService(BaseTestCase):
     def test_get_log(self):
 
         # create a simple waiting scenario to let the log be created
-        scenario = IScenario()
+        scenario = ScenarioProxy()
 
         # force init the logger
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
@@ -23,10 +23,10 @@ class TestProcessService(BaseTestCase):
         # initialize the logger associated to the scenario
         Logger(Settings.build_log_dir(True), level='INFO', scenario_id=scenario.get_model().id)
 
-        protocol: IProtocol = scenario.get_protocol()
+        protocol: ProtocolProxy = scenario.get_protocol()
 
-        create_robot: IProcess = protocol.add_task(RobotCreate, 'create_robot')
-        wait: IProcess = protocol.add_task(Wait, 'wait', {'waiting_time': 1})
+        create_robot: ProcessProxy = protocol.add_task(RobotCreate, 'create_robot')
+        wait: ProcessProxy = protocol.add_task(Wait, 'wait', {'waiting_time': 1})
         protocol.add_connector(create_robot >> 'robot', wait << 'resource')
 
         scenario.run()

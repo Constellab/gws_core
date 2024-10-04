@@ -6,12 +6,12 @@ from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
-from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.protocol.protocol_model import ProtocolModel
+from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource import Resource
 from gws_core.scenario.scenario_dto import ScenarioSaveDTO
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.scenario_component.scenario_component_factory import \
     ScenarioComponentFactory
@@ -130,7 +130,7 @@ class TestScenarioComponent(BaseTestCase):
 
     def test_dynamic_io(self):
         """ Test that the component supports dynamic io"""
-        scenario = IScenario()
+        scenario = ScenarioProxy()
 
         protocol = scenario.get_protocol()
 
@@ -195,7 +195,7 @@ class TestScenarioComponent(BaseTestCase):
         self.assert_json(new_template.to_export_dto().data.to_json_dict(), template.to_export_dto().data.to_json_dict())
 
     def test_add_scenario_component_to_protocol(self):
-        i_scenario = IScenario()
+        i_scenario = ScenarioProxy()
 
         protocol = i_scenario.get_protocol()
 
@@ -207,14 +207,14 @@ class TestScenarioComponent(BaseTestCase):
         template = ProtocolService.create_scenario_component_from_id(protocol.get_model().id, 'test_template')
 
         # Create an empty scenario
-        scenario_2 = IScenario()
+        scenario_2 = ScenarioProxy()
 
         # Add the component to the scenario
         protocol_model_2 = scenario_2.get_protocol().get_model()
         protocol_update = ProtocolService.add_scenario_component_to_protocol(protocol_model_2.id, template.id)
 
         # Check that the component is added to the protocol
-        protocol_2: IProtocol = scenario_2.get_protocol().refresh()
+        protocol_2: ProtocolProxy = scenario_2.get_protocol().refresh()
         sub_protocol: ProtocolModel = protocol_2.get_process(protocol_update.process.instance_name).get_model()
 
         self.assertIsInstance(sub_protocol, ProtocolModel)

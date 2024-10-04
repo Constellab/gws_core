@@ -14,15 +14,15 @@ from gws_core.core.utils.logger import Logger
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorScenario
 from gws_core.impl.file.file import File
 from gws_core.model.typing_manager import TypingManager
-from gws_core.process.process_interface import IProcess
+from gws_core.process.process_proxy import ProcessProxy
 from gws_core.process.process_types import ProcessStatus
-from gws_core.protocol.protocol_interface import IProtocol
+from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceDTO
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.task.resource_zipper_task import ResourceZipperTask
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import (SharedEntityMode, ShareLinkType,
@@ -170,12 +170,12 @@ class ShareService():
 
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(id_)
 
-        scenario: IScenario = IScenario(
+        scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{resource_model.name} zipper")
-        protocol: IProtocol = scenario.get_protocol()
+        protocol: ProtocolProxy = scenario.get_protocol()
 
         # Add the importer and the connector
-        zipper: IProcess = protocol.add_process(ResourceZipperTask, 'zipper', {'shared_by_id': shared_by.id})
+        zipper: ProcessProxy = protocol.add_process(ResourceZipperTask, 'zipper', {'shared_by_id': shared_by.id})
 
         # Add source and connect it
         protocol.add_source('source', resource_model.id, zipper << ResourceZipperTask.input_name)

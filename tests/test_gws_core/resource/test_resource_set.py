@@ -15,14 +15,14 @@ from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.impl.table.table import Table
 from gws_core.io.dynamic_io import DynamicInputs
-from gws_core.protocol.protocol_interface import IProtocol
+from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.resource_set.resource_set_exporter import \
     ResourceSetExporter
 from gws_core.resource.resource_set.resource_set_tasks import ResourceStacker
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.task.task_runner import TaskRunner
 from gws_core.test.base_test_case import BaseTestCase
 
@@ -76,8 +76,8 @@ class TestResourceSet(BaseTestCase):
     def test_resource_set(self):
 
         resource_count = ResourceModel.select().count()
-        scenario: IScenario = IScenario()
-        protocol: IProtocol = scenario.get_protocol()
+        scenario: ScenarioProxy = ScenarioProxy()
+        protocol: ProtocolProxy = scenario.get_protocol()
         robot_create = scenario.get_protocol().add_process(RobotCreate, 'create')
         robot_generator = protocol.add_process(RobotsGenerator, 'generator')
         robot_add = protocol.add_process(RobotsAdd, 'add')

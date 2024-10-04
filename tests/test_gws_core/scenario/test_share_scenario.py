@@ -12,7 +12,7 @@ from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.scenario.scenario_enums import ScenarioCreationType
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.task.scenario_downloader import ScenarioDownloader
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.share_link_service import ShareLinkService
@@ -58,7 +58,7 @@ class TestShareScenario(BaseTestCase):
 
             # Create and run an scenario
             folder = GTest.create_default_folder()
-            scenario = IScenario(title='Test scenario', folder=folder)
+            scenario = ScenarioProxy(title='Test scenario', folder=folder)
             protocol = scenario.get_protocol()
 
             move = protocol.add_process(RobotMove, 'move', config_params={'moving_step': 100})

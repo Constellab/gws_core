@@ -3,7 +3,7 @@
 import os
 
 from gws_core import (BaseTestCase, ConfigParams, FileHelper, Folder,
-                      IScenario, OutputSpec, OutputSpecs, Settings, Task,
+                      OutputSpec, OutputSpecs, ScenarioProxy, Settings, Task,
                       TaskInputs, TaskOutputs, task_decorator)
 from gws_core.impl.file.file import File
 from gws_core.impl.file.folder_task import FolderExporter
@@ -67,7 +67,7 @@ class TestFolder(BaseTestCase):
         self.assertTrue(folder.has_node('sub_folder2/test.txt'))
 
     def test_folder_process(self):
-        scenario: IScenario = IScenario()
+        scenario: ScenarioProxy = ScenarioProxy()
         scenario.get_protocol().add_process(CreateFolderTest, 'create_folder')
 
         scenario.run()
