@@ -2,12 +2,12 @@
 
 from gws_core import (CheckBeforeTaskResult, ResourceModel, Source,
                       TaskOutputs, TaskRunner)
-from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.process.process_interface import IProcess
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.scenario.scenario_interface import IScenario
 from gws_core.task.plug import Sink, Switch2
 from gws_core.test.base_test_case import BaseTestCase
 
@@ -29,14 +29,14 @@ class TestPlug(BaseTestCase):
         self.assertEqual(robot_o.get_model_id(), robot_model.id)
 
     def test_sink(self):
-        i_experiment: IExperiment = IExperiment()
-        i_protocol: IProtocol = i_experiment.get_protocol()
+        i_scenario: IScenario = IScenario()
+        i_protocol: IProtocol = i_scenario.get_protocol()
 
         create: IProcess = i_protocol.add_task(RobotCreate, 'create')
         sink: IProcess = i_protocol.add_task(Sink, 'sink')
         i_protocol.add_connector(create >> 'robot', sink << 'resource')
 
-        i_experiment.run()
+        i_scenario.run()
 
         # check that the resource used in the sink was marked as output
         resource = create.refresh().get_output('robot')

@@ -6,9 +6,9 @@ from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
                     ModelSelect)
 
 from ..core.model.base_model import BaseModel
-from ..experiment.experiment import Experiment
 from ..protocol.protocol_model import ProtocolModel
 from ..resource.resource_model import ResourceModel
+from ..scenario.scenario import Scenario
 from ..task.task_model import TaskModel
 
 
@@ -21,8 +21,8 @@ class TaskInputModel(BaseModel):
     :rtype: [type]
     """
 
-    experiment: Experiment = ForeignKeyField(
-        Experiment, null=True, index=True, on_delete='CASCADE')
+    scenario: Scenario = ForeignKeyField(
+        Scenario, null=True, index=True, on_delete='CASCADE')
     task_model: TaskModel = ForeignKeyField(
         TaskModel, null=True, index=True, on_delete='CASCADE')
     protocol_model: ProtocolModel = ForeignKeyField(
@@ -50,11 +50,11 @@ class TaskInputModel(BaseModel):
         return TaskInputModel.select().where(TaskInputModel.resource_model.in_(resource_model_ids))
 
     @classmethod
-    def get_other_experiments(cls, resource_model_ids: List[str], exclude_experiment_id: str) -> ModelSelect:
-        """Method to see if a resource_model is used as input in another experiment
+    def get_other_scenarios(cls, resource_model_ids: List[str], exclude_scenario_id: str) -> ModelSelect:
+        """Method to see if a resource_model is used as input in another scenario
         """
         return TaskInputModel.select().where((TaskInputModel.resource_model.in_(resource_model_ids)) &
-                                             (TaskInputModel.experiment != exclude_experiment_id))
+                                             (TaskInputModel.scenario != exclude_scenario_id))
 
     @classmethod
     def get_by_task_model(cls, task_model_id: str) -> ModelSelect:
@@ -65,22 +65,22 @@ class TaskInputModel(BaseModel):
         return TaskInputModel.select().where(TaskInputModel.task_model.in_(task_model_ids))
 
     @classmethod
-    def get_by_experiment(cls, experiment_id: str) -> ModelSelect:
-        return TaskInputModel.select().where(TaskInputModel.experiment == experiment_id)
+    def get_by_scenario(cls, scenario_id: str) -> ModelSelect:
+        return TaskInputModel.select().where(TaskInputModel.scenario == scenario_id)
 
     @classmethod
-    def get_by_experiments(cls, experiment_ids: List[str]) -> ModelSelect:
-        return TaskInputModel.select().where(TaskInputModel.experiment.in_(experiment_ids))
+    def get_by_scenarios(cls, scenario_ids: List[str]) -> ModelSelect:
+        return TaskInputModel.select().where(TaskInputModel.scenario.in_(scenario_ids))
 
     @classmethod
     def delete_by_task_id(cls, task_id: str) -> int:
         return TaskInputModel.delete().where(TaskInputModel.task_model == task_id).execute()
 
     @classmethod
-    def resource_is_used_by_experiment(cls, resource_model_id: str, experiment_ids: List[str]) -> bool:
-        """Method to see if a resource_model is used as input in one of the experiments """
+    def resource_is_used_by_scenario(cls, resource_model_id: str, scenario_ids: List[str]) -> bool:
+        """Method to see if a resource_model is used as input in one of the scenarios """
         return cls.get_by_resource_model(resource_model_id).where(
-            TaskInputModel.experiment.in_(experiment_ids)).exists()
+            TaskInputModel.scenario.in_(scenario_ids)).exists()
 
     def save(self, *args, **kwargs) -> 'BaseModel':
         """Use force insert because it is a composite key

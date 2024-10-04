@@ -26,7 +26,7 @@ class RobotTransform(Transformer):
 
 class TestTaskTransformer(BaseTestCase):
 
-    def test_create_transformer_experiment(self):
+    def test_create_transformer_scenario(self):
 
         age_config = 99
 
@@ -38,7 +38,7 @@ class TestTaskTransformer(BaseTestCase):
         # create and run
         transformers: List[TransformerDict] = [
             {'typing_name': RobotTransform.get_typing_name(), 'config_values': {'age': age_config}}]
-        resource_model: ResourceModel = TransformerService.create_and_run_transformer_experiment(
+        resource_model: ResourceModel = TransformerService.create_and_run_transformer_scenario(
             transformers, robot_model.id)
 
         self.assertEqual(resource_model.origin, ResourceOrigin.GENERATED)

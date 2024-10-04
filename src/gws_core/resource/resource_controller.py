@@ -158,10 +158,10 @@ def update_folder(id_: str,
 
 @core_app.post("/resource/{resource_model_id}/transform", tags=["Resource"],
                summary="Transform the resource")
-def create_transformer_experiment(transformers: List[TransformerDict], resource_model_id: str,
+def create_transformer_scenario(transformers: List[TransformerDict], resource_model_id: str,
                                   _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
 
-    return TransformerService.create_and_run_transformer_experiment(
+    return TransformerService.create_and_run_transformer_scenario(
         transformers, resource_model_id).to_dto()
 
 ############################# IMPORTER ###########################

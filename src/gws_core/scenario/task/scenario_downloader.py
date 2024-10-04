@@ -11,10 +11,6 @@ from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.utils import Utils
-from gws_core.experiment.experiement_loader import ExperimentLoader
-from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_zipper import ZipExperimentInfo
-from gws_core.experiment.task.experiment_resource import ExperimentResource
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
 from gws_core.model.typing_style import TypingStyle
@@ -25,12 +21,15 @@ from gws_core.resource.resource_downloader import ResourceDownloader
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.scenario.scenario import Scenario
+from gws_core.scenario.scenario_loader import ScenarioLoader
+from gws_core.scenario.scenario_zipper import ZipScenarioInfo
+from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.share_link import ShareLink
-from gws_core.share.shared_dto import (SharedEntityMode,
-                                       ShareExperimentInfoReponseDTO,
-                                       ShareLinkType)
-from gws_core.share.shared_experiment import SharedExperiment
+from gws_core.share.shared_dto import (SharedEntityMode, ShareLinkType,
+                                       ShareScenarioInfoReponseDTO)
 from gws_core.share.shared_resource import SharedResource
+from gws_core.share.shared_scenario import SharedScenario
 from gws_core.task.plug import Source
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
@@ -38,25 +37,25 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import CurrentUserService
 
-ExperimentDownloaderMode = Literal['Inputs and outputs', 'Inputs only', 'Outputs only', 'All', 'None']
+ScenarioDownloaderMode = Literal['Inputs and outputs', 'Inputs only', 'Outputs only', 'All', 'None']
 
 
-@task_decorator(unique_name="ExperimentDownloader", human_name="Download an experiment",
-                short_description="Download an experiment from another lab using a link",
-                style=TypingStyle.material_icon("experiment"))
-class ExperimentDownloader(Task):
+@task_decorator(unique_name="ScenarioDownloader", human_name="Download an scenario",
+                short_description="Download an scenario from another lab using a link",
+                style=TypingStyle.material_icon("scenario"))
+class ScenarioDownloader(Task):
 
     output_specs = OutputSpecs({
-        'experiment': OutputSpec(ExperimentResource, human_name='Experiment')
+        'scenario': OutputSpec(ScenarioResource, human_name='Scenario')
     })
 
     config_specs: ConfigSpecs = {
         'link': StrParam(human_name='Resource link', short_description='Link to download the resource'),
-        'resource_mode': StrParam(human_name='Resource mode', short_description='Mode for downloading resource of the experiment',
-                                  allowed_values=Utils.get_literal_values(ExperimentDownloaderMode))
+        'resource_mode': StrParam(human_name='Resource mode', short_description='Mode for downloading resource of the scenario',
+                                  allowed_values=Utils.get_literal_values(ScenarioDownloaderMode))
     }
 
-    share_entity: ShareExperimentInfoReponseDTO
+    share_entity: ShareScenarioInfoReponseDTO
     resource_loaders: List[ResourceLoader]
 
     # define the percentage of the progress bar for each step
@@ -64,18 +63,18 @@ class ExperimentDownloader(Task):
     DOWNLOAD_RESOURCE_PERCENT = 80
     BUILD_EXP_PERCENT = 10
 
-    OUTPUT_NAME = 'experiment'
+    OUTPUT_NAME = 'scenario'
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         link = params['link']
 
-        if not ShareLink.is_lab_share_experiment_link(link):
-            raise Exception("Invalid link, are you sure this a link of a share experiment from a lab ?")
+        if not ShareLink.is_lab_share_scenario_link(link):
+            raise Exception("Invalid link, are you sure this a link of a share scenario from a lab ?")
 
-        self.share_entity = self.get_experiment_info(link)
+        self.share_entity = self.get_scenario_info(link)
 
-        self.update_progress_value(self.INIT_EXP_PERCENT, 'Experiment information retrieved')
+        self.update_progress_value(self.INIT_EXP_PERCENT, 'Scenario information retrieved')
 
         exp_info = self.share_entity.entity_object
         resource_ids = self.get_resource_to_download(exp_info.protocol.data.graph, params['resource_mode'])
@@ -84,13 +83,13 @@ class ExperimentDownloader(Task):
 
         self.update_progress_value(self.INIT_EXP_PERCENT + self.DOWNLOAD_RESOURCE_PERCENT, 'Resources downloaded')
 
-        experiment_loader = self.load_experiment(exp_info)
+        scenario_loader = self.load_scenario(exp_info)
 
-        experiment = self.build_experiment(experiment_loader, resources)
+        scenario = self.build_scenario(scenario_loader, resources)
 
-        return {'experiment': ExperimentResource(experiment.id)}
+        return {'scenario': ScenarioResource(scenario.id)}
 
-    def get_experiment_info(self, url: str) -> ShareExperimentInfoReponseDTO:
+    def get_scenario_info(self, url: str) -> ShareScenarioInfoReponseDTO:
         """If the link is a share link from a lab, check the compatibility of the resource with the current lab,
         then zip the resource and return the download url
         """
@@ -101,19 +100,19 @@ class ExperimentDownloader(Task):
 
         if response.status_code != 200:
             raise Exception("Error while getting information of the resource: " + response.text)
-        return ShareExperimentInfoReponseDTO.from_json(response.json())
+        return ShareScenarioInfoReponseDTO.from_json(response.json())
 
-    def load_experiment(self, experiment_info: ZipExperimentInfo) -> ExperimentLoader:
+    def load_scenario(self, scenario_info: ZipScenarioInfo) -> ScenarioLoader:
 
-        self.log_info_message("Loading the experiment")
-        experiment_loader = ExperimentLoader(experiment_info, self.message_dispatcher)
+        self.log_info_message("Loading the scenario")
+        scenario_loader = ScenarioLoader(scenario_info, self.message_dispatcher)
 
-        experiment_loader.load_experiment()
+        scenario_loader.load_scenario()
 
-        return experiment_loader
+        return scenario_loader
 
     def get_resource_to_download(
-            self, protocol_graph_dto: ProtocolGraphConfigDTO, mode: ExperimentDownloaderMode) -> Set[str]:
+            self, protocol_graph_dto: ProtocolGraphConfigDTO, mode: ScenarioDownloaderMode) -> Set[str]:
 
         self.log_info_message(f"Getting the resources to download with option '{mode}'")
 
@@ -132,7 +131,7 @@ class ExperimentDownloader(Task):
             return protocol_graph.get_input_and_output_resource_ids()
 
     def download_resources(self, resource_ids: Set[str],
-                           share_entity: ShareExperimentInfoReponseDTO) -> Dict[str, Resource]:
+                           share_entity: ShareScenarioInfoReponseDTO) -> Dict[str, Resource]:
         self.resource_loaders = []
 
         resources: Dict[str, Resource] = {}
@@ -176,15 +175,15 @@ class ExperimentDownloader(Task):
         return resource
 
     @transaction()
-    def build_experiment(self, experiment_load: ExperimentLoader, resources: Dict[str, Resource]) -> Experiment:
+    def build_scenario(self, scenario_load: ScenarioLoader, resources: Dict[str, Resource]) -> Scenario:
 
-        self.log_info_message("Building the experiment")
+        self.log_info_message("Building the scenario")
 
-        experiment = experiment_load.get_experiment()
+        scenario = scenario_load.get_scenario()
 
-        protocol_model = experiment_load.get_protocol_model()
+        protocol_model = scenario_load.get_protocol_model()
 
-        experiment.save()
+        scenario.save()
         protocol_model.save_full()
 
         resource_models: Dict[str, ResourceModel] = {}
@@ -248,7 +247,7 @@ class ExperimentDownloader(Task):
 
                     if output_resource_model is None:
                         raise Exception(
-                            f"Error while building the experiment: Resource '{output_old_resource_id}' not found")
+                            f"Error while building the scenario: Resource '{output_old_resource_id}' not found")
 
                     out_port.set_resource_model(output_resource_model)
 
@@ -265,11 +264,11 @@ class ExperimentDownloader(Task):
 
         # Create the shared entity info
         self.log_info_message("Storing the expeirment origin info")
-        SharedExperiment.create_from_lab_info(experiment.id, SharedEntityMode.RECEIVED,
-                                              self.share_entity.origin,
-                                              CurrentUserService.get_and_check_current_user())
+        SharedScenario.create_from_lab_info(scenario.id, SharedEntityMode.RECEIVED,
+                                            self.share_entity.origin,
+                                            CurrentUserService.get_and_check_current_user())
 
-        return experiment
+        return scenario
 
     def run_after_task(self) -> None:
         super().run_after_task()
@@ -281,21 +280,21 @@ class ExperimentDownloader(Task):
         if self.share_entity:
             self.log_info_message(
                 "Marking the resource as received in the origin lab")
-            # call the origin lab to mark the experiment as received
+            # call the origin lab to mark the scenario as received
             current_lab_info = ExternalLabService.get_current_lab_info(
                 CurrentUserService.get_and_check_current_user())
 
             # retrieve the token which is the last part of the link
             response: requests.Response = ExternalLabService.mark_shared_object_as_received(
                 self.share_entity.origin.lab_api_url,
-                ShareLinkType.EXPERIMENT, self.share_entity.token, current_lab_info)
+                ShareLinkType.SCENARIO, self.share_entity.token, current_lab_info)
 
             if response.status_code != 200:
                 self.log_error_message(
                     "Error while marking the resource as received: " + response.text)
 
     @classmethod
-    def build_config(cls, link: str, mode: ExperimentDownloaderMode) -> ConfigParamsDict:
+    def build_config(cls, link: str, mode: ScenarioDownloaderMode) -> ConfigParamsDict:
         return {
             'link': link,
             'resource_mode': mode

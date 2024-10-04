@@ -5,10 +5,9 @@ from datetime import datetime, timedelta
 
 from pandas import DataFrame
 
-from gws_core import (BaseTestCase, ConfigParams, File, IExperiment,
-                      OutputSpec, OutputSpecs, ResourceModel, ResourceSet,
-                      Settings, Table, Task, TaskInputs, TaskOutputs,
-                      task_decorator)
+from gws_core import (BaseTestCase, ConfigParams, File, IScenario, OutputSpec,
+                      OutputSpecs, ResourceModel, ResourceSet, Settings, Table,
+                      Task, TaskInputs, TaskOutputs, task_decorator)
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_service import ResourceService
@@ -150,10 +149,10 @@ class TestShareResource(BaseTestCase):
 
     def test_share_resource_set(self):
         # Generate a resource set
-        i_experiment: IExperiment = IExperiment()
-        i_experiment.get_protocol().add_process(GenerateResourceSet, 'generate_resource_set')
-        i_experiment.run()
-        i_process = i_experiment.get_protocol().get_process('generate_resource_set')
+        i_scenario: IScenario = IScenario()
+        i_scenario.get_protocol().add_process(GenerateResourceSet, 'generate_resource_set')
+        i_scenario.run()
+        i_process = i_scenario.get_protocol().get_process('generate_resource_set')
         resource_model_id = i_process.get_output_resource_model('resource_set').id
 
         original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
@@ -187,10 +186,10 @@ class TestShareResource(BaseTestCase):
 
     def test_share_resource_list(self):
         # Generate a resource list
-        i_experiment: IExperiment = IExperiment()
-        i_experiment.get_protocol().add_process(GenerateResourceList, 'generate_resource_list')
-        i_experiment.run()
-        i_process = i_experiment.get_protocol().get_process('generate_resource_list')
+        i_scenario: IScenario = IScenario()
+        i_scenario.get_protocol().add_process(GenerateResourceList, 'generate_resource_list')
+        i_scenario.run()
+        i_process = i_scenario.get_protocol().get_process('generate_resource_list')
         resource_model_id = i_process.get_output_resource_model('resource_list').id
 
         original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)

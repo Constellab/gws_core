@@ -5,11 +5,11 @@ from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
-from gws_core.experiment.experiment_dto import ExperimentSimpleDTO
 from gws_core.folder.space_folder_dto import SpaceFolderDTO
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
 from gws_core.model.typing_dto import TypingRefDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
+from gws_core.scenario.scenario_dto import ScenarioSimpleDTO
 
 
 class ResourceOrigin(Enum):
@@ -33,7 +33,7 @@ class ResourceDTO(ModelWithUserDTO):
     has_children: bool
     type_status: TypingStatus
     flagged: bool
-    experiment: Optional[ExperimentSimpleDTO]
+    scenario: Optional[ScenarioSimpleDTO]
     folder: Optional[SpaceFolderDTO]
     style: TypingStyle
 

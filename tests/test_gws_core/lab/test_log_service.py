@@ -26,12 +26,12 @@ class TestLogService(TestCase):
 
         log_content_1 = """{"level": "INFO", "timestamp": "2022-12-01T08:24:46.905469+00:00", "message": "Day 1"}
 INFO - 2022-12-01 09:26:46.906581 - first - log day 1
-INFO - 2022-12-01 09:30:46.947581 - [EXPERIMENT] - second - log day 1
+INFO - 2022-12-01 09:30:46.947581 - [SCENARIO] - second - log day 1
 """
 
         log_content_2 = """{"level": "INFO", "timestamp": "2022-12-02 09:24:46.905469", "message": "Day 2"}
 INFO - 2022-12-02 09:26:46.906581 - first - log day 2
-{"level": "INFO", "timestamp": "2022-12-02T19:30:46.947581+00:00", "message": "second - log day 2", "experiment_id": "1234567890"}
+{"level": "INFO", "timestamp": "2022-12-02T19:30:46.947581+00:00", "message": "second - log day 2", "scenario_id": "1234567890"}
 """
         # create logs files
 
@@ -88,9 +88,9 @@ INFO - 2022-12-02 09:26:46.906581 - first - log day 2
         result: LogsBetweenDates = LogService.get_logs_between_dates(from_date, to_date)
         self.assertEqual(len(result.logs), 6)
 
-        # get only log from experiment
+        # get only log from scenario
         result = LogService.get_logs_between_dates(from_date, to_date,
-                                                   from_experiment_id="1234567890")
+                                                   from_scenario_id="1234567890")
         self.assertEqual(len(result.logs), 2)
 
         # get logs paginated and skip the first log and the last log

@@ -3,7 +3,6 @@
 from gws_core import (ConfigParams, DynamicInputs, DynamicOutputs, InputSpec,
                       OutputSpec, ResourceModel, Table, Task, TaskInputs,
                       TaskOutputs, task_decorator)
-from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing import Typing
@@ -13,6 +12,7 @@ from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -40,7 +40,7 @@ class TestDynamicPorts(BaseTestCase):
         Test update the type of a dynamic port.
         Test delete a dynamic port.
         """
-        protocol: ProtocolModel = ExperimentService.create_experiment().protocol_model
+        protocol: ProtocolModel = ScenarioService.create_scenario().protocol_model
         # add a process with a dynamic port
         process_model: ProcessModel = ProtocolService.add_process_to_protocol(protocol, TestDynamicIO, 'p1').process
 

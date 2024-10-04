@@ -1,23 +1,22 @@
 
 
-from typing import Dict, List, Optional, Union
+from typing import List, Optional, Union
 
 from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
 
 from gws_core.core.decorator.transaction import transaction
-from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.experiment.queue_dto import JobDTO
+from gws_core.scenario.queue_dto import JobDTO
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.logger import Logger
 from ..user.user import User
-from .experiment import Experiment
+from .scenario import Scenario
 
 
 class Queue(Model):
     """
-    Singleton Class representing experiment queue
+    Singleton Class representing scenario queue
 
     :property is_active: True is the queue is active; False otherwise. Defaults to False.
     The queue is automatically set to True on init.
@@ -68,32 +67,32 @@ class Queue(Model):
 
     @classmethod
     @transaction(nested_transaction=True)  # use nested to prevent transaction block in queue tick (from parent call)
-    def add_job(cls, user: User, experiment: Experiment) -> 'Queue':
+    def add_job(cls, user: User, scenario: Scenario) -> 'Queue':
 
-        if Job.experiment_in_queue(experiment.id):
-            raise BadRequestException("The experiment already is in the queue")
+        if Job.scenario_in_queue(scenario.id):
+            raise BadRequestException("The scenario already is in the queue")
 
         queue = cls._get_or_create_instance()
-        if Job.count_experiment_in_queue(queue.id) > queue.max_length:
+        if Job.count_scenario_in_queue(queue.id) > queue.max_length:
             raise BadRequestException("The maximum number of jobs is reached")
 
-        experiment.mark_as_in_queue()
-        job = Job(user=user, experiment=experiment, queue=queue)
+        scenario.mark_as_in_queue()
+        job = Job(user=user, scenario=scenario, queue=queue)
         job.save()
 
         return queue
 
     @classmethod
     @transaction(nested_transaction=True)  # use nested to prevent transaction block in queue tick (from parent call)
-    def remove_experiment(cls, experiment_id: str) -> Experiment:
-        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
+    def remove_scenario(cls, scenario_id: str) -> Scenario:
+        scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
-        if experiment.status != experiment.status.IN_QUEUE:
-            raise BadRequestException('The experiment does not have the queued status')
+        if scenario.status != scenario.status.IN_QUEUE:
+            raise BadRequestException('The scenario does not have the queued status')
 
-        experiment.mark_as_draft()
-        Job.remove_experiment_from_queue(experiment_id)
-        return experiment
+        scenario.mark_as_draft()
+        Job.remove_scenario_from_queue(scenario_id)
+        return scenario
 
     @classmethod
     def length(cls) -> int:
@@ -127,12 +126,12 @@ class Job(Model):
 
     :property user: The user who creates the job
     :type user: `gws.user.User`
-    :property experiment: The experiment to add to the job
-    :type experiment: `gws.experiment.Experiment`
+    :property scenario: The scenario to add to the job
+    :type scenario: `gws.scenario.Scenario`
     """
 
     user: User = ForeignKeyField(User, null=False, backref='+')
-    experiment: Experiment = ForeignKeyField(Experiment, null=False, backref='+', unique=True)
+    scenario: Scenario = ForeignKeyField(Scenario, null=False, backref='+', unique=True)
     queue: Queue = ForeignKeyField(Queue, null=False, backref='+')
     _table_name = "gws_queue_job"
 
@@ -158,16 +157,16 @@ class Job(Model):
         return Job.select().where(cls.queue == queue_id).order_by(cls.created_at.asc())
 
     @classmethod
-    def count_experiment_in_queue(cls, queue_id: str) -> int:
+    def count_scenario_in_queue(cls, queue_id: str) -> int:
         return Job.select().where(cls.queue == queue_id).count()
 
     @classmethod
-    def experiment_in_queue(cls, experiment_id: str) -> bool:
-        return Job.select().where(cls.experiment == experiment_id).count() > 0
+    def scenario_in_queue(cls, scenario_id: str) -> bool:
+        return Job.select().where(cls.scenario == scenario_id).count() > 0
 
     @classmethod
-    def remove_experiment_from_queue(cls, experiment_id: str) -> None:
-        return Job.delete().where(cls.experiment == experiment_id).execute()
+    def remove_scenario_from_queue(cls, scenario_id: str) -> None:
+        return Job.delete().where(cls.scenario == scenario_id).execute()
 
     def to_dto(self) -> JobDTO:
         return JobDTO(
@@ -175,7 +174,7 @@ class Job(Model):
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
             user=self.user.to_dto(),
-            experiment=self.experiment.to_dto(),
+            scenario=self.scenario.to_dto(),
         )
 
     class Meta:

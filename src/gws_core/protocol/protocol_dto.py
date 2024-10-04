@@ -82,7 +82,7 @@ class ProtocolDTO(ProcessDTO):
     data: ProtocolFullDTO
 
 
-class ExperimentProtocolDTO(BaseModelDTO):
+class ScenarioProtocolDTO(BaseModelDTO):
     version: int
     data: ProcessConfigDTO
 

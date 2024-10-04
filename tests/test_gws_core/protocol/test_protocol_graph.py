@@ -1,10 +1,10 @@
 
 
 from gws_core import BaseTestCase
-from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.protocol.protocol_graph import ProtocolGraph
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.scenario.scenario_interface import IScenario
 from gws_core.task.plug import Sink
 from gws_core.test.gtest import GTest
 
@@ -18,11 +18,11 @@ class TestProtocolGraph(BaseTestCase):
 
         resources_count = ResourceModel.select().count()
 
-        # Build the experiment
+        # Build the scenario
         resource_model = GTest.save_robot_resource()
 
-        experiment = IExperiment()
-        protocol = experiment.get_protocol()
+        scenario = IScenario()
+        protocol = scenario.get_protocol()
 
         p0 = protocol.add_process(RobotMove, 'p0')
         sub_proto = protocol.add_process(TestSubProtocol, 'sub_proto')
@@ -31,12 +31,12 @@ class TestProtocolGraph(BaseTestCase):
         protocol.add_source('source', resource_model.id, p0 << 'robot')
         protocol.add_connector(p0 >> 'robot', sub_proto << 'robot')
         sink = protocol.add_sink('sink', sub_proto >> 'robot')
-        experiment.run()
+        scenario.run()
 
         output_model = sink.refresh().get_input_resource_model(Sink.input_name)
 
-        experiment_dto = experiment.refresh().get_model().export_protocol()
-        protocol_graph = ProtocolGraph(experiment_dto.data.graph)
+        scenario_dto = scenario.refresh().get_model().export_protocol()
+        protocol_graph = ProtocolGraph(scenario_dto.data.graph)
 
         # Test the protocol graph
         self.assertEqual(protocol_graph.get_input_resource_ids(), {resource_model.id})

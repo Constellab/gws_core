@@ -1,7 +1,6 @@
 
 from typing import List
 
-from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.robot.robot_protocol import (CreateSimpleRobot,
                                                 MoveSimpleRobot)
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
@@ -10,6 +9,7 @@ from gws_core.protocol.protocol import Protocol
 from gws_core.protocol.protocol_decorator import protocol_decorator
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_spec import ProcessSpec
+from gws_core.scenario.scenario_interface import IScenario
 from gws_core.task.plug import Sink
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
@@ -47,12 +47,12 @@ class RobotMainTravel(Protocol):
 class TestTaskInputModel(BaseTestCase):
 
     def test_task_input_model(self):
-        experiment: IExperiment = IExperiment(RobotMainTravel)
-        experiment.run()
+        scenario: IScenario = IScenario(RobotMainTravel)
+        scenario.run()
 
         ################################ CHECK TASK INPUT ################################
         # Check if the Input resource was set
-        sink: ProcessModel = experiment._experiment.protocol_model.get_process('sink')
+        sink: ProcessModel = scenario._scenario.protocol_model.get_process('sink')
         task_inputs: List[TaskInputModel] = list(
             TaskInputModel.get_by_resource_model(sink.inputs.get_resource_model('resource').id))
         self.assertEqual(len(task_inputs), 1)
@@ -60,31 +60,31 @@ class TestTaskInputModel(BaseTestCase):
         self.assertEqual(task_inputs[0].port_name, "resource")
 
         # Check the TaskInput with a sub process and a resource that is an interface
-        sub_travel: ProtocolModel = experiment._experiment.protocol_model.get_process('sub_travel')
+        sub_travel: ProtocolModel = scenario._scenario.protocol_model.get_process('sub_travel')
         sub_move: TaskModel = sub_travel.get_process('move')
         task_inputs = list(TaskInputModel.get_by_task_model(sub_move.id))
         self.assertEqual(len(task_inputs), 1)
         self.assertEqual(task_inputs[0].is_interface, True)
 
     def test_task_input_model_select(self):
-        # Test the select of input model task and delete by experiment
-        experiment_1: IExperiment = IExperiment(CreateSimpleRobot)
-        experiment_1.run()
+        # Test the select of input model task and delete by scenario
+        scenario_1: IScenario = IScenario(CreateSimpleRobot)
+        scenario_1.run()
 
-        experiment_2: IExperiment = IExperiment(CreateSimpleRobot)
-        experiment_2.run()
+        scenario_2: IScenario = IScenario(CreateSimpleRobot)
+        scenario_2.run()
 
-        task_input: TaskInputModel = TaskInputModel.get_by_experiment(experiment_1._experiment.id).first()
+        task_input: TaskInputModel = TaskInputModel.get_by_scenario(scenario_1._scenario.id).first()
         self.assertIsNotNone(task_input)
-        self.assertEqual(TaskInputModel.get_by_experiment(experiment_1._experiment.id).count(), 1)
+        self.assertEqual(TaskInputModel.get_by_scenario(scenario_1._scenario.id).count(), 1)
         self.assertEqual(TaskInputModel.get_by_resource_model(task_input.resource_model.id).count(), 1)
         self.assertEqual(TaskInputModel.get_by_task_model(task_input.task_model.id).count(), 1)
 
-        # Create another experiment that use the previous resource
-        experiment_3: IExperiment = IExperiment(MoveSimpleRobot)
-        experiment_3.get_protocol().get_process('source').set_param('resource_id', task_input.resource_model.id)
-        experiment_3.run()
-        # Get all the task input where the resource is used in another experiment
-        task_input = TaskInputModel.get_other_experiments(
-            [task_input.resource_model.id], experiment_1._experiment.id).first()
-        self.assertEqual(task_input.experiment.id, experiment_3._experiment.id)
+        # Create another scenario that use the previous resource
+        scenario_3: IScenario = IScenario(MoveSimpleRobot)
+        scenario_3.get_protocol().get_process('source').set_param('resource_id', task_input.resource_model.id)
+        scenario_3.run()
+        # Get all the task input where the resource is used in another scenario
+        task_input = TaskInputModel.get_other_scenarios(
+            [task_input.resource_model.id], scenario_1._scenario.id).first()
+        self.assertEqual(task_input.scenario.id, scenario_3._scenario.id)

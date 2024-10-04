@@ -14,7 +14,7 @@ from gws_core.user.user_dto import UserDTO
 # If S3, the origin_id is the external source id
 # If TASK, (when the task tagged the resource object directly) the origin_id is task model id
 # If TASK_PROPAGATED, the origin_id is task model id that propagated the tag
-# If EXP_PROPAGATED, the origin_id is experiment model id that propagated the tag
+# If EXP_PROPAGATED, the origin_id is scenario model id that propagated the tag
 # If RESOURCE_PROPAGATED, the origin_id is resource model id that propagated the tag
 # If VIEW_PROPAGATED, the origin_id is view config id that propagated the tag
 class TagOriginType(Enum):
@@ -22,7 +22,7 @@ class TagOriginType(Enum):
     S3 = 'S3'
     TASK = 'TASK'
     TASK_PROPAGATED = 'TASK_PROPAGATED'
-    EXPERIMENT_PROPAGATED = 'EXPERIMENT_PROPAGATED'
+    SCENARIO_PROPAGATED = 'SCENARIO_PROPAGATED'
     RESOURCE_PROPAGATED = 'RESOURCE_PROPAGATED'
     VIEW_PROPAGATED = 'VIEW_PROPAGATED'
 

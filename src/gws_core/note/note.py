@@ -21,9 +21,9 @@ from gws_core.user.user import User
 from ..core.model.base_model import BaseModel
 from ..core.model.db_field import BaseDTOField, DateTimeUTC
 from ..core.model.model_with_user import ModelWithUser
-from ..experiment.experiment import Experiment
 from ..folder.space_folder import SpaceFolder
 from ..lab.lab_config_model import LabConfigModel
+from ..scenario.scenario import Scenario
 
 
 @final
@@ -57,7 +57,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
     def check_is_updatable(self) -> None:
         """Throw an error if the note is not updatable
         """
-        # check experiment status
+        # check scenario status
         if self.is_validated:
             raise BadRequestException(GWSException.NOTE_VALIDATED.value, GWSException.NOTE_VALIDATED.name)
         if self.is_archived:
@@ -125,8 +125,8 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
         table_name = 'gws_note'
 
 
-class NoteExperiment(BaseModel):
-    """Many to Many relation between Note <-> Experiment
+class NoteScenario(BaseModel):
+    """Many to Many relation between Note <-> Scenario
 
     :param BaseModel: [description]
     :type BaseModel: [type]
@@ -134,48 +134,48 @@ class NoteExperiment(BaseModel):
     :rtype: [type]
     """
 
-    experiment = ForeignKeyField(Experiment, on_delete='CASCADE')
+    scenario = ForeignKeyField(Scenario, on_delete='CASCADE')
     note = ForeignKeyField(Note, on_delete='CASCADE')
 
-    _table_name = 'gws_note_experiment'
+    _table_name = 'gws_note_scenario'
 
     ############################################# CLASS METHODS ########################################
 
     @classmethod
-    def create_obj(cls, experiment: Experiment, note: Note) -> 'NoteExperiment':
-        note_exp: 'NoteExperiment' = NoteExperiment()
-        note_exp.experiment = experiment
+    def create_obj(cls, scenario: Scenario, note: Note) -> 'NoteScenario':
+        note_exp: 'NoteScenario' = NoteScenario()
+        note_exp.scenario = scenario
         note_exp.note = note
         return note_exp
 
     @classmethod
-    def delete_obj(cls, experiment_id: str, note_id: str) -> None:
-        return cls.delete().where((cls.experiment == experiment_id) & (cls.note == note_id)).execute()
+    def delete_obj(cls, scenario_id: str, note_id: str) -> None:
+        return cls.delete().where((cls.scenario == scenario_id) & (cls.note == note_id)).execute()
 
     @classmethod
-    def find_by_pk(cls, experiment_id: str, note_id: str) -> ModelSelect:
-        return cls.select().where((cls.experiment == experiment_id) & (cls.note == note_id))
+    def find_by_pk(cls, scenario_id: str, note_id: str) -> ModelSelect:
+        return cls.select().where((cls.scenario == scenario_id) & (cls.note == note_id))
 
     @classmethod
-    def find_notes_by_experiments(cls, experiment_id: List[str]) -> List[Note]:
-        list_: List[NoteExperiment] = list(cls.select().where(cls.experiment.in_(experiment_id)))
+    def find_notes_by_scenarios(cls, scenario_id: List[str]) -> List[Note]:
+        list_: List[NoteScenario] = list(cls.select().where(cls.scenario.in_(scenario_id)))
 
         return [x.note for x in list_]
 
     @classmethod
-    def find_synced_notes_by_experiment(cls, experiment_id: str) -> List[Note]:
-        list_: List[NoteExperiment] = list(cls.select().where(
-            (cls.experiment == experiment_id) & (cls.note.last_sync_at.is_null(False)))
+    def find_synced_notes_by_scenario(cls, scenario_id: str) -> List[Note]:
+        list_: List[NoteScenario] = list(cls.select().where(
+            (cls.scenario == scenario_id) & (cls.note.last_sync_at.is_null(False)))
             .join(Note)
         )
 
         return [x.note for x in list_]
 
     @classmethod
-    def find_experiments_by_note(cls, note_id: str) -> List[Experiment]:
-        list_: List[NoteExperiment] = list(cls.select().where(cls.note == note_id))
+    def find_scenarios_by_note(cls, note_id: str) -> List[Scenario]:
+        list_: List[NoteScenario] = list(cls.select().where(cls.note == note_id))
 
-        return [x.experiment for x in list_]
+        return [x.scenario for x in list_]
 
     def save(self, *args, **kwargs) -> 'BaseModel':
         """Use force insert because it is a composite key
@@ -187,5 +187,5 @@ class NoteExperiment(BaseModel):
         return super().save(*args, force_insert=True, **kwargs)
 
     class Meta:
-        table_name = 'gws_note_experiment'
-        primary_key = CompositeKey("experiment", "note")
+        table_name = 'gws_note_scenario'
+        primary_key = CompositeKey("scenario", "note")

@@ -11,12 +11,12 @@ from gws_core.task.plug import Sink
 from ...config.config_types import ConfigParamsDict
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...experiment.experiment_interface import IExperiment
 from ...impl.file.file import File
 from ...model.typing_manager import TypingManager
 from ...process.process_interface import IProcess
 from ...protocol.protocol_interface import IProtocol
 from ...resource.resource_model import ResourceModel
+from ...scenario.scenario_interface import IScenario
 from ...task.converter.importer import ResourceImporter
 from ...task.task_typing import TaskTyping
 
@@ -34,10 +34,10 @@ class ConverterService:
 
         importer_type: Type[ResourceImporter] = TypingManager.get_and_check_type_from_name(importer_typing_name)
 
-        # Create an experiment containing 1 source, 1 importer , 1 sink
-        experiment: IExperiment = IExperiment(
+        # Create an scenario containing 1 source, 1 importer , 1 sink
+        scenario: IScenario = IScenario(
             None, title=f"{resource_type.get_human_name()} importer")
-        protocol: IProtocol = experiment.get_protocol()
+        protocol: IProtocol = scenario.get_protocol()
 
         # Add the importer and the connector
         importer: IProcess = protocol.add_process(importer_type, 'importer', config)
@@ -48,8 +48,8 @@ class ConverterService:
         # Add sink and connect it
         sink = protocol.add_sink('sink', importer >> ResourceImporter.output_name)
 
-        # run the experiment
-        experiment.run(auto_delete_if_error=True)
+        # run the scenario
+        scenario.run(auto_delete_if_error=True)
 
         # return the resource model of the sink process
         sink.refresh()
@@ -92,10 +92,10 @@ class ConverterService:
         # Check that the resource exists
         resource_model = ResourceModel.get_by_id_and_check(resource_model_id)
 
-        # Create an experiment containing 1 source, 1 extractor , 1 sink
-        experiment: IExperiment = IExperiment(
+        # Create an scenario containing 1 source, 1 extractor , 1 sink
+        scenario: IScenario = IScenario(
             None, title=f"{resource_model.name} exporter")
-        protocol: IProtocol = experiment.get_protocol()
+        protocol: IProtocol = scenario.get_protocol()
 
         # Add the importer and the connector
         exporter_type: Type[ResourceExporter] = TypingManager.get_and_check_type_from_name(exporter_typing_name)
@@ -107,8 +107,8 @@ class ConverterService:
         # Add sink and connect it, don't flag the resource
         sink = protocol.add_sink('sink', extractor >> 'target', False)
 
-        # run the experiment
-        experiment.run(auto_delete_if_error=True)
+        # run the scenario
+        scenario.run(auto_delete_if_error=True)
 
         # return the resource model of the sink process
         sink.refresh()
@@ -121,10 +121,10 @@ class ConverterService:
         # Check that the resource exists
         ResourceModel.get_by_id_and_check(folder_model_id)
 
-        # Create an experiment containing 1 source, 1 extractor , 1 sink
-        experiment: IExperiment = IExperiment(
+        # Create an scenario containing 1 source, 1 extractor , 1 sink
+        scenario: IScenario = IScenario(
             None, title=f"{FileHelper.get_name(sub_path)} extractor")
-        protocol: IProtocol = experiment.get_protocol()
+        protocol: IProtocol = scenario.get_protocol()
 
         # Add the importer and the connector
         extractor: IProcess = protocol.add_process(FsNodeExtractor, 'extractor', {
@@ -136,8 +136,8 @@ class ConverterService:
         # Add sink and connect it
         sink = protocol.add_sink('sink', extractor >> 'target')
 
-        #  run the experiment
-        experiment.run(auto_delete_if_error=True)
+        #  run the scenario
+        scenario.run(auto_delete_if_error=True)
 
         # return the resource model of the sink process
         sink.refresh()

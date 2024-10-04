@@ -26,24 +26,24 @@ class LogFileLine(BaseModelDTO):
     level: MessageType
     timestamp: str
     message: str
-    experiment_id: Optional[str] = None
+    scenario_id: Optional[str] = None
     stack_trace: Optional[str] = None
 
 
 class JSONFormatter(logging.Formatter):
 
-    experiment_id: str = None
+    scenario_id: str = None
 
-    def __init__(self, experiment_id: str = None):
+    def __init__(self, scenario_id: str = None):
         super().__init__()
-        self.experiment_id = experiment_id
+        self.scenario_id = scenario_id
 
     def format(self, record) -> str:
         log_data = LogFileLine(
             level=record.levelname,
             timestamp=Logger.get_date(),
             message=record.getMessage(),
-            experiment_id=self.experiment_id,
+            scenario_id=self.scenario_id,
             stack_trace=record.exc_text if record.exc_text else None
         )
         return log_data.to_json_str()
@@ -56,32 +56,32 @@ class Logger:
     It logs into the console and in the log file
     """
 
-    SUB_PROCESS_TEXT = "[EXPERIMENT]"
+    SUB_PROCESS_TEXT = "[SCENARIO]"
     SEPARATOR = " - "
     FILE_NAME_DATE_FORMAT = "%Y-%m-%d"
 
     _logger: Optional[PythonLogger] = None
     _file_path: str = None
-    _experiment_id: str = None
+    _scenario_id: str = None
 
     level: LoggerLevel = "INFO"
 
     _waiting_messages: list = []
 
     def __init__(self, log_dir: str = None,
-                 level: LoggerLevel = "INFO", experiment_id: str = None) -> None:
+                 level: LoggerLevel = "INFO", scenario_id: str = None) -> None:
         """Create the Gencovery logger, it logs into the console and into a file
 
         :param level: level of the logs to show, defaults to "info"
         :type level: error | info | debug, optional
-        :param _experiment_id: set when  gws is runned inside a subprocess to run an experiment, defaults to False
-        :type _experiment_id: bool, optional
+        :param _scenario_id: set when  gws is runned inside a subprocess to run an scenario, defaults to False
+        :type _scenario_id: bool, optional
         """
         if Logger._logger is not None:
             return
             # raise BadRequestException("The logger already exists")
 
-        Logger._experiment_id = experiment_id
+        Logger._scenario_id = scenario_id
 
         if level is None:
             level = "INFO"
@@ -115,13 +115,13 @@ class Logger:
         # this write the log in a file with a json format
         file_handler = TimedRotatingFileHandler(
             Logger._file_path, when="midnight")
-        file_handler.setFormatter(JSONFormatter(Logger._experiment_id))
+        file_handler.setFormatter(JSONFormatter(Logger._scenario_id))
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         # file_handler.setFormatter(formatter)
         Logger._logger.addHandler(file_handler)
 
-        if experiment_id:
-            Logger.info(f"Logger configured for experiment process with log level: {level}")
+        if scenario_id:
+            Logger.info(f"Logger configured for scenario process with log level: {level}")
         else:
             Logger.info(f"Logger configured with log level: {level}")
 
@@ -253,6 +253,6 @@ class Logger:
         """Clear the logger
         """
         Logger._file_path = None
-        Logger._experiment_id = None
+        Logger._scenario_id = None
         Logger._logger.handlers.clear()
         Logger._logger = None

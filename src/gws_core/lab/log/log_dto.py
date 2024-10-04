@@ -11,7 +11,7 @@ class LogDTO(BaseModelDTO):
     level: MessageType
     date_time: datetime
     message: Optional[str]
-    experiment_id: Optional[str]
+    scenario_id: Optional[str]
 
 
 class LogInfo(BaseModelDTO):
@@ -33,5 +33,5 @@ class LogsBetweenDatesDTO(BaseModelDTO):
     logs: List[LogDTO]
     from_date: datetime
     to_date: datetime
-    from_experiment_id: Optional[str]
+    from_scenario_id: Optional[str]
     is_last_page: bool

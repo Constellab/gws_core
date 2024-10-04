@@ -69,7 +69,7 @@ def search(search_dict: SearchParams,
            number_of_items_per_page: Optional[int] = 20,
            _=Depends(AuthService.check_user_access_token)) -> PageDTO[DocumentTemplateDTO]:
     """
-    Advanced search on experiment
+    Advanced search on scenario
     """
 
     return DocumentTemplateService.search(search_dict, page, number_of_items_per_page).to_dto()

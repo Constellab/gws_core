@@ -4,11 +4,11 @@ from typing import List
 
 from gws_core import BaseTestCase
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.folder.space_folder_dto import ExternalSpaceFolder
 from gws_core.folder.space_folder_service import SpaceFolderService
+from gws_core.scenario.scenario import Scenario
+from gws_core.scenario.scenario_service import ScenarioService
 
 
 # test_space_folder
@@ -76,28 +76,28 @@ class TestFolder(BaseTestCase):
         self.assertEqual(len(folder.children), 1)
         self.assertEqual(folder.children[0].title, 'Work package 1')
 
-        # Test deletion, create a sync experiment
-        experiment: Experiment = ExperimentService.create_experiment(folder_id='caf61803-70e5-4ac3-9adb-53a35f65a2f3')
-        experiment.last_sync_at = DateHelper.now_utc()
-        experiment.last_sync_by = experiment.created_by
-        experiment.save()
+        # Test deletion, create a sync scenario
+        scenario: Scenario = ScenarioService.create_scenario(folder_id='caf61803-70e5-4ac3-9adb-53a35f65a2f3')
+        scenario.last_sync_at = DateHelper.now_utc()
+        scenario.last_sync_by = scenario.created_by
+        scenario.save()
 
-        # Should not be able to delete a folder with experiments
+        # Should not be able to delete a folder with scenarios
         with self.assertRaises(Exception):
             SpaceFolderService.delete_folder(folder.id)
 
-        # un-sync the experiment
-        experiment.last_sync_at = None
-        experiment.last_sync_by = None
-        experiment.save()
+        # un-sync the scenario
+        scenario.last_sync_at = None
+        scenario.last_sync_by = None
+        scenario.save()
 
         # Now we should be able to delete the folder
         SpaceFolderService.delete_folder(folder.id)
         self.assertEqual(SpaceFolder.select().count(), 0)
 
-        # check that the folder was removed from experiment
-        experiment = experiment.refresh()
-        self.assertIsNone(experiment.folder)
+        # check that the folder was removed from scenario
+        scenario = scenario.refresh()
+        self.assertIsNone(scenario.folder)
 
     def test_folder_sync(self):
 

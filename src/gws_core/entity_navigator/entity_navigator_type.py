@@ -9,7 +9,7 @@ from gws_core.core.model.model_dto import BaseModelDTO
 
 
 class EntityType(Enum):
-    EXPERIMENT = "EXPERIMENT"
+    SCENARIO = "SCENARIO"
     RESOURCE = "RESOURCE"
     VIEW = "VIEW"
     NOTE = "NOTE"
@@ -19,8 +19,8 @@ class EntityType(Enum):
     @staticmethod
     def get_human_name(entity_type: 'EntityType', capitalize: bool = False, plurial: bool = False) -> str:
         human_name: str = None
-        if entity_type == EntityType.EXPERIMENT:
-            human_name = 'Experiment'
+        if entity_type == EntityType.SCENARIO:
+            human_name = 'Scenario'
         elif entity_type == EntityType.RESOURCE:
             human_name = 'Resource'
         elif entity_type == EntityType.VIEW:
@@ -43,15 +43,15 @@ class EntityType(Enum):
 
     @staticmethod
     def get_entity_model_type(entity_type: 'EntityType') -> Type[Model]:
-        from gws_core.experiment.experiment import Experiment
         from gws_core.folder.space_folder import SpaceFolder
         from gws_core.note.note import Note
         from gws_core.protocol_template.protocol_template import \
             ProtocolTemplate
         from gws_core.resource.resource_model import ResourceModel
         from gws_core.resource.view_config.view_config import ViewConfig
-        if entity_type == EntityType.EXPERIMENT:
-            return Experiment
+        from gws_core.scenario.scenario import Scenario
+        if entity_type == EntityType.SCENARIO:
+            return Scenario
         elif entity_type == EntityType.RESOURCE:
             return ResourceModel
         elif entity_type == EntityType.VIEW:
@@ -66,7 +66,7 @@ class EntityType(Enum):
         raise Exception(f"Unknown entity type {entity_type}")
 
 
-all_entity_types = [EntityType.EXPERIMENT, EntityType.RESOURCE,
+all_entity_types = [EntityType.SCENARIO, EntityType.RESOURCE,
                     EntityType.VIEW, EntityType.NOTE]
 
 

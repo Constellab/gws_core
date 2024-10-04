@@ -2,9 +2,6 @@
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
-from gws_core.experiment.experiment_dto import ExperimentSaveDTO
-from gws_core.experiment.experiment_interface import IExperiment
-from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import OutputSpec
@@ -17,6 +14,9 @@ from gws_core.protocol_template.protocol_template_factory import \
 from gws_core.protocol_template.protocol_template_service import \
     ProtocolTemplateService
 from gws_core.resource.resource import Resource
+from gws_core.scenario.scenario_dto import ScenarioSaveDTO
+from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -96,8 +96,8 @@ class TestProtocolTemplate(BaseTestCase):
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, template_db.id)
 
-        # Test create an experiment from a template
-        experiment = ExperimentService.create_experiment(protocol_template=template_db)
+        # Test create an scenario from a template
+        scenario = ScenarioService.create_scenario(protocol_template=template_db)
 
         # check that protocol and task are created
         self.assertEqual(ProtocolModel.select().count(), init_count_protocol + (count_protocol * 2))
@@ -105,7 +105,7 @@ class TestProtocolTemplate(BaseTestCase):
 
         # get check of created protocol and task, connector,  interface,
         # outerface, config and layout
-        main_proto = experiment.protocol_model
+        main_proto = scenario.protocol_model
         self.assertEqual(len(main_proto.connectors), 2)
         # check config
         self.assertEqual(main_proto.get_process('p5').config.get_value('food_weight'), 1000.0)
@@ -130,9 +130,9 @@ class TestProtocolTemplate(BaseTestCase):
 
     def test_dynamic_io(self):
         """ Test that the protocol template supports dynamic io"""
-        experiment = IExperiment()
+        scenario = IScenario()
 
-        protocol = experiment.get_protocol()
+        protocol = scenario.get_protocol()
 
         process = protocol.add_process(TestProtocolTemplateDynamic, 'dynamic')
         source_1 = protocol.add_process(TestGenerator, 'source_1')
@@ -159,22 +159,22 @@ class TestProtocolTemplate(BaseTestCase):
         template = ProtocolService.create_protocol_template_from_id(
             protocol_id=protocol.get_model().id, name='test_dynamic')
 
-        # Test create an experiment from a template
-        experiment_dto = ExperimentSaveDTO(protocol_template_id=template.id, title='')
-        experiment = ExperimentService.create_experiment_from_dto(experiment_dto)
+        # Test create an scenario from a template
+        scenario_dto = ScenarioSaveDTO(protocol_template_id=template.id, title='')
+        scenario = ScenarioService.create_scenario_from_dto(scenario_dto)
 
         # check that protocol and task are created
-        protocol_2 = experiment.protocol_model
+        protocol_2 = scenario.protocol_model
         self.assertEqual(len(protocol_2.processes), 5)
         self.assertEqual(len(protocol_2.connectors), 4)
 
-        # Test create the same experiment with the template json instead of the template id
+        # Test create the same scenario with the template json instead of the template id
         export_dto = template.to_export_dto()
-        experiment_dto = ExperimentSaveDTO(protocol_template_json=export_dto.to_json_dict(), title='')
-        experiment = ExperimentService.create_experiment_from_dto(experiment_dto)
+        scenario_dto = ScenarioSaveDTO(protocol_template_json=export_dto.to_json_dict(), title='')
+        scenario = ScenarioService.create_scenario_from_dto(scenario_dto)
 
         # check that protocol and task are created
-        protocol_3 = experiment.protocol_model
+        protocol_3 = scenario.protocol_model
         self.assertEqual(len(protocol_3.processes), 5)
         self.assertEqual(len(protocol_3.connectors), 4)
 
@@ -195,9 +195,9 @@ class TestProtocolTemplate(BaseTestCase):
         self.assert_json(new_template.to_export_dto().data.to_json_dict(), template.to_export_dto().data.to_json_dict())
 
     def test_add_protocol_template_to_protocol(self):
-        i_experiment = IExperiment()
+        i_scenario = IScenario()
 
-        protocol = i_experiment.get_protocol()
+        protocol = i_scenario.get_protocol()
 
         process = protocol.add_process(RobotMove, 'robotMove')
         protocol.add_source('source', None, process << 'robot')
@@ -206,15 +206,15 @@ class TestProtocolTemplate(BaseTestCase):
         # create protocol template
         template = ProtocolService.create_protocol_template_from_id(protocol.get_model().id, 'test_template')
 
-        # Create an empty experiment
-        experiment_2 = IExperiment()
+        # Create an empty scenario
+        scenario_2 = IScenario()
 
-        # Add the protocol template to the experiment
-        protocol_model_2 = experiment_2.get_protocol().get_model()
+        # Add the protocol template to the scenario
+        protocol_model_2 = scenario_2.get_protocol().get_model()
         protocol_update = ProtocolService.add_protocol_template_to_protocol(protocol_model_2.id, template.id)
 
         # Check that the protocol template is added to the protocol
-        protocol_2: IProtocol = experiment_2.get_protocol().refresh()
+        protocol_2: IProtocol = scenario_2.get_protocol().refresh()
         sub_protocol: ProtocolModel = protocol_2.get_process(protocol_update.process.instance_name).get_model()
 
         self.assertIsInstance(sub_protocol, ProtocolModel)

@@ -14,7 +14,7 @@ from gws_core.progress_bar.progress_bar_dto import ProgressBarDTO
 
 class ProcessDTO(ModelWithUserDTO):
     parent_protocol_id: Optional[str]
-    experiment_id: Optional[str]
+    scenario_id: Optional[str]
     instance_name: str
     config: ConfigDTO
     progress_bar: ProgressBarDTO

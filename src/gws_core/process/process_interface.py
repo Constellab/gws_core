@@ -32,7 +32,7 @@ class IProcess:
     @property
     def parent_protocol(self) -> Optional[IProtocol]:
         """return the parent protocol of this process.
-        If this is the main protocol (the one linked to the experiment), it returns None
+        If this is the main protocol (the one linked to the scenario), it returns None
         """
         from ..protocol.protocol_interface import IProtocol
 

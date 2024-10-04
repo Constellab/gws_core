@@ -7,9 +7,9 @@ from typing import List
 from unittest.suite import TestSuite
 
 from gws_core.core.utils.logger import Logger
-from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.lab.system_service import SystemService
 from gws_core.model.typing_manager import TypingManager
+from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.settings_loader import SettingsLoader
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
@@ -27,14 +27,14 @@ class AppManager:
     @classmethod
     def init_gws_env(cls, main_setting_file_path: str,
                      log_level: str,
-                     experiment_id: str = None,
+                     scenario_id: str = None,
                      show_sql: bool = False,
                      is_test: bool = False) -> Settings:
 
         log_dir = Settings.build_log_dir(is_test=is_test)
 
         logger_level = Logger.check_log_level(log_level)
-        Logger(log_dir=log_dir, level=logger_level, experiment_id=experiment_id)
+        Logger(log_dir=log_dir, level=logger_level, scenario_id=scenario_id)
 
         if show_sql:
             Logger.print_sql_queries()
@@ -107,16 +107,16 @@ class AppManager:
         test_runner.run(test_suite)
 
     @classmethod
-    def run_experiment(cls,
+    def run_scenario(cls,
                        main_setting_file_path: str,
-                       experiment_id: str,
+                       scenario_id: str,
                        user_id: str,
                        log_level: str,
                        show_sql: bool,
                        is_test: bool) -> None:
         cls.init_gws_env(main_setting_file_path=main_setting_file_path,
                          log_level=log_level,
-                         experiment_id=experiment_id,
+                         scenario_id=scenario_id,
                          show_sql=show_sql,
                          is_test=is_test)
 
@@ -124,12 +124,12 @@ class AppManager:
         user: User = User.get_by_id_and_check(user_id)
         CurrentUserService.set_current_user(user)
 
-        ExperimentRunService.run_experiment_in_cli(experiment_id)
+        ScenarioRunService.run_scenario_in_cli(scenario_id)
 
     @classmethod
     def run_process(cls,
                     main_setting_file_path: str,
-                    experiment_id: str,
+                    scenario_id: str,
                     protocol_model_id: str,
                     process_instance_name: str,
                     user_id: str,
@@ -138,7 +138,7 @@ class AppManager:
                     is_test: bool) -> None:
         cls.init_gws_env(main_setting_file_path=main_setting_file_path,
                          log_level=log_level,
-                         experiment_id=experiment_id,
+                         scenario_id=scenario_id,
                          show_sql=show_sql,
                          is_test=is_test)
 
@@ -146,7 +146,7 @@ class AppManager:
         user: User = User.get_by_id_and_check(user_id)
         CurrentUserService.set_current_user(user)
 
-        ExperimentRunService.run_experiment_process_in_cli(experiment_id, protocol_model_id, process_instance_name)
+        ScenarioRunService.run_scenario_process_in_cli(scenario_id, protocol_model_id, process_instance_name)
 
     @classmethod
     def run_notebook(cls, main_settings_path: str, log_level: str) -> None:

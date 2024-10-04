@@ -14,7 +14,7 @@ from ....core_controller import core_app
               summary="Get the list of virtual environments")
 def get_venv_list(_=Depends(AuthService.check_user_access_token)) -> VEnsStatusDTO:
     """
-    Retrieve a list of running experiments.
+    Retrieve a list of running scenarios.
     """
 
     return VEnvService.get_vens_status()
@@ -43,7 +43,7 @@ def delete_venv(venv_name: VenvNameRequest,
     Delete a virtual environment
     Use body to retrieve the name because the name can be weird
     """
-    VEnvService.delete_venv(venv_name.venv_name, check_running_experiment=True)
+    VEnvService.delete_venv(venv_name.venv_name, check_running_scenario=True)
 
 
 @core_app.delete("/venv", tags=["VEnv"],

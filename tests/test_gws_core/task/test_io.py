@@ -1,14 +1,14 @@
 
 
 from gws_core import (BadRequestException, BaseTestCase, ConfigParams,
-                      Connector, Experiment, ExperimentService, InputSpecs,
-                      OutputSpecs, ProcessFactory, ProcessSpec, Protocol,
-                      ProtocolModel, Resource, ResourceModel, Task, TaskInputs,
-                      TaskModel, TaskOutputs, protocol_decorator,
+                      Connector, InputSpecs, OutputSpecs, ProcessFactory,
+                      ProcessSpec, Protocol, ProtocolModel, Resource,
+                      ResourceModel, Scenario, ScenarioService, Task,
+                      TaskInputs, TaskModel, TaskOutputs, protocol_decorator,
                       resource_decorator, task_decorator)
-from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.io.io_exception import ImcompatiblePortsException
 from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.scenario.scenario_run_service import ScenarioRunService
 
 
 @resource_decorator("Person")
@@ -273,16 +273,16 @@ class TestIO(BaseTestCase):
         """
         protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(
             TestPersonProtocol)
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+        scenario: Scenario = ScenarioService.create_scenario_from_protocol_model(
             protocol)
 
-        experiment = ExperimentRunService.run_experiment(experiment)
+        scenario = ScenarioRunService.run_scenario(scenario)
 
-        person1: ResourceModel = experiment.protocol_model.get_process(
+        person1: ResourceModel = scenario.protocol_model.get_process(
             'create').out_port('create_person_out').get_resource_model()
-        same_person: ResourceModel = experiment.protocol_model.get_process(
+        same_person: ResourceModel = scenario.protocol_model.get_process(
             'log').out_port('samePerson').get_resource_model()
-        other_erson: ResourceModel = experiment.protocol_model.get_process(
+        other_erson: ResourceModel = scenario.protocol_model.get_process(
             'log').out_port('otherPerson').get_resource_model()
 
         self.assertEqual(person1.id, same_person.id)

@@ -7,7 +7,6 @@ from gws_core import (BaseTestCase, ConfigParams, File, FsNodeService,
                       OutputSpec, OutputSpecs, Task, TaskInputs, TaskOutputs,
                       WriteToJsonFile, task_decorator)
 from gws_core.core.utils.settings import Settings
-from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.impl.robot.robot_resource import Robot
@@ -15,6 +14,7 @@ from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.process.process_interface import IProcess
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.scenario.scenario_interface import IScenario
 from gws_core.task.task_interface import ITask
 
 
@@ -65,12 +65,12 @@ class TestFile(BaseTestCase):
     def test_process_file(self):
         """Test that a generated file of a task is moved to file store and check content
         """
-        experiment: IExperiment = IExperiment()
-        experiment.get_protocol().add_process(CreateFileTest, 'create_file')
+        scenario: IScenario = IScenario()
+        scenario.get_protocol().add_process(CreateFileTest, 'create_file')
 
-        experiment.run()
+        scenario.run()
 
-        process: IProcess = experiment.get_protocol().get_process('create_file')
+        process: IProcess = scenario.get_protocol().get_process('create_file')
         file: File = process.get_output('file')
 
         file_store: LocalFileStore = LocalFileStore.get_default_instance()
@@ -94,15 +94,15 @@ class TestFile(BaseTestCase):
         # Chekc that the file doesn't exist at the beginning
         self.assertFalse(file_store.node_name_exists('robot.json'))
 
-        experiment: IExperiment = IExperiment()
-        protocol: IProtocol = experiment.get_protocol()
+        scenario: IScenario = IScenario()
+        protocol: IProtocol = scenario.get_protocol()
         create: ITask = protocol.add_process(RobotCreate, 'create')
         write: ITask = protocol.add_process(WriteToJsonFile, 'write', {'filename': 'robot'})
         protocol.add_connectors([
             (create >> 'robot', write << 'resource'),
         ])
 
-        experiment.run()
+        scenario.run()
 
         # refresh the create
         create.refresh()

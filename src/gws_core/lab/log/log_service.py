@@ -71,7 +71,7 @@ class LogService:
 
     @classmethod
     def get_logs_between_dates(cls, from_date: datetime, to_date: datetime,
-                               from_experiment_id: str = None, nb_of_lines: int = 100) -> LogsBetweenDates:
+                               from_scenario_id: str = None, nb_of_lines: int = 100) -> LogsBetweenDates:
 
         log_lines: List[LogLine] = []
 
@@ -99,7 +99,7 @@ class LogService:
 
             try:
                 log_lines.extend(cls.get_logs_between_dates_same_day(
-                    one_day_from, one_day_to, from_experiment_id, nb_of_lines - len(log_lines)))
+                    one_day_from, one_day_to, from_scenario_id, nb_of_lines - len(log_lines)))
             # skip error : file is not log file
             except BadRequestException:
                 continue
@@ -109,11 +109,11 @@ class LogService:
                 break
 
         return LogsBetweenDates(logs=log_lines, from_date=from_date, to_date=to_date,
-                                from_experiment_id=from_experiment_id, is_last_page=len(log_lines) < nb_of_lines)
+                                from_scenario_id=from_scenario_id, is_last_page=len(log_lines) < nb_of_lines)
 
     @classmethod
     def get_logs_between_dates_same_day(cls, from_date: datetime, to_date: datetime,
-                                        from_experiment_id: str = None, nb_of_lines: int = 100) -> List[LogLine]:
+                                        from_scenario_id: str = None, nb_of_lines: int = 100) -> List[LogLine]:
 
         if not DateHelper.are_same_day(from_date, to_date):
             raise BadRequestException("The dates must be on the same day")
@@ -122,7 +122,7 @@ class LogService:
 
         log_complete_info = cls.get_log_complete_info(log_file_name)
         return log_complete_info.get_log_lines_by_time(
-            from_date, to_date, from_experiment_id, nb_of_lines)
+            from_date, to_date, from_scenario_id, nb_of_lines)
 
     @classmethod
     def get_log_file_path(cls, node_name: str) -> str:

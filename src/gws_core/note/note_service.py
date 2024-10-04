@@ -7,7 +7,6 @@ from peewee import ModelSelect
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.entity_navigator.entity_navigator_type import EntityType
-from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
@@ -22,6 +21,7 @@ from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_types import exluded_views_in_note
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
+from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.space.space_dto import (SaveNoteToSpaceDTO,
                                       SpaceNoteRichTextFileViewData)
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -38,9 +38,9 @@ from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
-from ..experiment.experiment import Experiment
+from ..scenario.scenario import Scenario
 from ..space.space_service import SpaceService
-from .note import Note, NoteExperiment
+from .note import Note, NoteScenario
 from .note_dto import NoteInsertTemplateDTO, NoteSaveDTO
 from .note_search_builder import NoteSearchBuilder
 
@@ -49,7 +49,7 @@ class NoteService():
 
     @classmethod
     @transaction()
-    def create(cls, note_dto: NoteSaveDTO, experiment_ids: List[str] = None) -> Note:
+    def create(cls, note_dto: NoteSaveDTO, scenario_ids: List[str] = None) -> Note:
         note = Note()
         note.title = note_dto.title
         note.folder = SpaceFolder.get_by_id_and_check(note_dto.folder_id) if note_dto.folder_id else None
@@ -85,10 +85,10 @@ class NoteService():
 
         note.save()
 
-        if experiment_ids is not None:
-            # Create the NoteExperiment
-            for experiment_id in experiment_ids:
-                cls.add_experiment(note.id, experiment_id)
+        if scenario_ids is not None:
+            # Create the NoteScenario
+            for scenario_id in scenario_ids:
+                cls.add_scenario(note.id, scenario_id)
 
         ActivityService.add(ActivityType.CREATE,
                             object_type=ActivityObjectType.NOTE,
@@ -158,14 +158,14 @@ class NoteService():
                 cls._unsynchronize_with_space(note, note.folder.id)
             note.folder = None
 
-        # check that all linked experiment are in same folder
-        experiments: List[Experiment] = cls.get_experiments_by_note(note.id)
+        # check that all linked scenario are in same folder
+        scenarios: List[Scenario] = cls.get_scenarios_by_note(note.id)
 
-        for experiment in experiments:
-            exp_folder_id = experiment.folder.id if experiment.folder else None
+        for scenario in scenarios:
+            exp_folder_id = scenario.folder.id if scenario.folder else None
             if exp_folder_id != folder_id:
-                ExperimentService.update_experiment_folder(experiment.id,
-                                                           folder_id, check_note=False)
+                ScenarioService.update_scenario_folder(scenario.id,
+                                                         folder_id, check_note=False)
 
         return note
 
@@ -271,44 +271,44 @@ class NoteService():
 
         if note.folder.children.count() > 0:
             raise BadRequestException(
-                "The experiment must be associated with a leaf folder (folder with no children)")
+                "The scenario must be associated with a leaf folder (folder with no children)")
 
-        # refresh the associated views and experiment (for precaution)
+        # refresh the associated views and scenario (for precaution)
         cls._refresh_note_views_and_tags(note)
 
-        # check that all linked experiment are validated and are in same folder
-        experiments: List[Experiment] = cls.get_experiments_by_note(note_id)
-        for experiment in experiments:
-            if experiment.folder and experiment.folder.id != note.folder.id:
+        # check that all linked scenario are validated and are in same folder
+        scenarios: List[Scenario] = cls.get_scenarios_by_note(note_id)
+        for scenario in scenarios:
+            if scenario.folder and scenario.folder.id != note.folder.id:
                 raise BadRequestException(GWSException.NOTE_VALIDATION_EXP_OTHER_FOLDER.value,
-                                          GWSException.NOTE_VALIDATION_EXP_OTHER_FOLDER.name, {'title': experiment.title})
+                                          GWSException.NOTE_VALIDATION_EXP_OTHER_FOLDER.name, {'title': scenario.title})
 
         # check that all resource views are from resource that
-        # were generated by experiments that are linked to the note
+        # were generated by scenarios that are linked to the note
         resource_views: List[RichTextResourceViewData] = rich_text.get_resource_views_data()
-        experiment_ids = [experiment.id for experiment in experiments]
+        scenario_ids = [scenario.id for scenario in scenarios]
         for resource_view in resource_views:
             resource = ResourceService.get_by_id_and_check(resource_view["resource_id"])
 
             view_name = resource_view.get("title") or resource.name
-            # If the resource was generated by an experiment, check that the experiment is linked to the note
+            # If the resource was generated by an scenario, check that the scenario is linked to the note
             if not resource.is_manually_generated():
-                if not resource.experiment.id in experiment_ids:
+                if not resource.scenario.id in scenario_ids:
                     # get the best name for the error
                     raise BadRequestException(GWSException.NOTE_VALIDATION_RESOURCE_GENERATED_VIEW_OTHER_EXP.value,
                                               GWSException.NOTE_VALIDATION_RESOURCE_GENERATED_VIEW_OTHER_EXP.name,
-                                              {'view_name': view_name, 'exp_title': resource.experiment.title})
+                                              {'view_name': view_name, 'exp_title': resource.scenario.title})
             else:
-                if not TaskInputModel.resource_is_used_by_experiment(resource.id, experiment_ids):
+                if not TaskInputModel.resource_is_used_by_scenario(resource.id, scenario_ids):
                     raise BadRequestException(GWSException.NOTE_VALIDATION_RESOURCE_UPLOADED_VIEW_OTHER_EXP.value,
                                               GWSException.NOTE_VALIDATION_RESOURCE_UPLOADED_VIEW_OTHER_EXP.name,
                                               {'view_name': view_name, 'resource_name': resource.name})
 
-        # validate experiment that were not validated
-        for experiment in experiments:
-            if not experiment.is_validated:
-                experiment.folder = note.folder
-                ExperimentService.validate_experiment(experiment)
+        # validate scenario that were not validated
+        for scenario in scenarios:
+            if not scenario.is_validated:
+                scenario.folder = note.folder
+                ScenarioService.validate_scenario(scenario)
 
         note.validate()
 
@@ -332,12 +332,12 @@ class NoteService():
     def synchronize_with_space_by_id(cls, id: str) -> Note:
         note: Note = cls.get_by_id_and_check(id)
 
-        # retrieve the experiment ids
-        experiments: List[Experiment] = cls.get_experiments_by_note(note.id)
-        # syncronize the experiments that are not validated
-        for experiment in experiments:
-            if not experiment.is_validated:
-                ExperimentService.synchronize_with_space_by_id(experiment.id)
+        # retrieve the scenario ids
+        scenarios: List[Scenario] = cls.get_scenarios_by_note(note.id)
+        # syncronize the scenarios that are not validated
+        for scenario in scenarios:
+            if not scenario.is_validated:
+                ScenarioService.synchronize_with_space_by_id(scenario.id)
 
         note = cls._synchronize_with_space(note)
         return note.save()
@@ -349,19 +349,19 @@ class NoteService():
         #     return note
 
         if note.folder is None:
-            raise BadRequestException("The experiment must be linked to a folder before validating it")
+            raise BadRequestException("The scenario must be linked to a folder before validating it")
 
         note.last_sync_at = DateHelper.now_utc()
         note.last_sync_by = CurrentUserService.get_and_check_current_user()
 
-        # retrieve the experiment ids
-        experiments: List[Experiment] = cls.get_experiments_by_note(note.id)
+        # retrieve the scenario ids
+        scenarios: List[Scenario] = cls.get_scenarios_by_note(note.id)
 
         lab_config: LabConfigModel = note.lab_config or LabConfigModel.get_current_config()
 
         save_note_dto = SaveNoteToSpaceDTO(
             note=note.to_full_dto(),
-            experiment_ids=[experiment.id for experiment in experiments],
+            scenario_ids=[scenario.id for scenario in scenarios],
             lab_config=lab_config.to_dto(),
             resource_views={}
         )
@@ -408,7 +408,7 @@ class NoteService():
             }
             rich_text.replace_block_data_by_id(file_view_block.id, new_data)
 
-        # Save the experiment in space
+        # Save the scenario in space
         SpaceService.save_note(note.folder.id, save_note_dto, file_paths)
 
         return note
@@ -423,62 +423,62 @@ class NoteService():
 
         return note
 
-    ###################################  LINKED EXPERIMENT  ##############################
+    ###################################  LINKED SCENARIO  ##############################
 
     @classmethod
     @transaction()
-    def add_experiment(cls, note_id: str, experiment_id: str) -> Experiment:
+    def add_scenario(cls, note_id: str, scenario_id: str) -> Scenario:
         note: Note = cls._get_and_check_before_update(note_id)
 
-        note_exp: NoteExperiment = NoteExperiment.find_by_pk(experiment_id, note_id).first()
+        note_exp: NoteScenario = NoteScenario.find_by_pk(scenario_id, note_id).first()
 
-        # If the experiment was already added to the note
+        # If the scenario was already added to the note
         if note_exp is not None:
             raise BadRequestException(GWSException.NOTE_EXP_ALREADY_LINKED.value,
                                       GWSException.NOTE_EXP_ALREADY_LINKED.name)
 
-        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
+        scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
         # check folders
         if note.folder is None:
-            # if the note is not associated with a folder, associate it with the folder of the experiment
-            if experiment.folder is not None:
-                note.folder = experiment.folder
+            # if the note is not associated with a folder, associate it with the folder of the scenario
+            if scenario.folder is not None:
+                note.folder = scenario.folder
                 note.save()
         else:
-            # check if the note folder is the same as the experiment folder
-            if experiment.folder is not None and note.folder.id != experiment.folder.id:
+            # check if the note folder is the same as the scenario folder
+            if scenario.folder is not None and note.folder.id != scenario.folder.id:
                 raise BadRequestException(GWSException.NOTE_ADD_EXP_OTHER_FOLDER.value,
                                           GWSException.NOTE_ADD_EXP_OTHER_FOLDER.name)
 
-        NoteExperiment.create_obj(experiment, note).save()
+        NoteScenario.create_obj(scenario, note).save()
 
-        # add the experiment tags to the note
-        experiment_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, experiment.id)
-        propagated_tags = experiment_tags.build_tags_propagated(TagOriginType.EXPERIMENT_PROPAGATED, experiment.id)
+        # add the scenario tags to the note
+        scenario_tags = EntityTagList.find_by_entity(EntityType.SCENARIO, scenario.id)
+        propagated_tags = scenario_tags.build_tags_propagated(TagOriginType.SCENARIO_PROPAGATED, scenario.id)
         note_tags = EntityTagList.find_by_entity(EntityType.NOTE, note.id)
         note_tags.add_tags(propagated_tags)
 
-        return experiment
+        return scenario
 
     @classmethod
-    def remove_experiment(cls, note_id: str, experiment_id: str) -> None:
+    def remove_scenario(cls, note_id: str, scenario_id: str) -> None:
         note = cls._get_and_check_before_update(note_id)
 
         rich_text = note.get_content_as_rich_text()
         note_views = rich_text.get_resource_views_data()
 
-        # if any of the view is from the experiment, raise an error
+        # if any of the view is from the scenario, raise an error
         for note_view in note_views:
-            if note_view.get('experiment_id') == experiment_id:
-                raise BadRequestException(GWSException.NOTE_HAS_A_VIEW_FROM_EXPERIMENT.value,
-                                          GWSException.NOTE_HAS_A_VIEW_FROM_EXPERIMENT.name)
+            if note_view.get('scenario_id') == scenario_id:
+                raise BadRequestException(GWSException.NOTE_HAS_A_VIEW_FROM_SCENARIO.value,
+                                          GWSException.NOTE_HAS_A_VIEW_FROM_SCENARIO.name)
 
-        NoteExperiment.delete_obj(experiment_id, note_id)
+        NoteScenario.delete_obj(scenario_id, note_id)
 
-        # remove the experiment tags from the note
-        experiment_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, experiment_id)
-        propagated_tags = experiment_tags.build_tags_propagated(TagOriginType.EXPERIMENT_PROPAGATED, experiment_id)
+        # remove the scenario tags from the note
+        scenario_tags = EntityTagList.find_by_entity(EntityType.SCENARIO, scenario_id)
+        propagated_tags = scenario_tags.build_tags_propagated(TagOriginType.SCENARIO_PROPAGATED, scenario_id)
         note_tags = EntityTagList.find_by_entity(EntityType.NOTE, note_id)
         note_tags.delete_tags(propagated_tags)
 
@@ -505,16 +505,16 @@ class NoteService():
         return Note.get_by_id_and_check(id)
 
     @classmethod
-    def get_by_experiment(cls, experiment_id: str) -> List[Note]:
-        return list(Note.select().join(NoteExperiment).where(
-            NoteExperiment.experiment == experiment_id).order_by(
+    def get_by_scenario(cls, scenario_id: str) -> List[Note]:
+        return list(Note.select().join(NoteScenario).where(
+            NoteScenario.scenario == scenario_id).order_by(
             Note.last_modified_at.desc()))
 
     @classmethod
-    def get_experiments_by_note(cls, note_id: str) -> List[Experiment]:
-        return list(Experiment.select().join(NoteExperiment).where(
-            NoteExperiment.note == note_id).order_by(
-            Experiment.last_modified_at.desc()))
+    def get_scenarios_by_note(cls, note_id: str) -> List[Scenario]:
+        return list(Scenario.select().join(NoteScenario).where(
+            NoteScenario.note == note_id).order_by(
+            Scenario.last_modified_at.desc()))
 
     @classmethod
     def search(cls,
@@ -554,21 +554,21 @@ class NoteService():
     ################################################# Resource View ########################################
 
     @classmethod
-    def get_resources_of_associated_experiments(cls, note_id: str) -> List[ResourceModel]:
-        """Method to retrieve the resources of the experiments associated with a note.
-        Resources used as input or output of the experiments are returned.
+    def get_resources_of_associated_scenarios(cls, note_id: str) -> List[ResourceModel]:
+        """Method to retrieve the resources of the scenarios associated with a note.
+        Resources used as input or output of the scenarios are returned.
         """
-        # add a filter on experiments of the note
-        experiments = NoteService.get_experiments_by_note(note_id)
+        # add a filter on scenarios of the note
+        scenarios = NoteService.get_scenarios_by_note(note_id)
 
-        if len(experiments) == 0:
-            raise BadRequestException(GWSException.NOTE_NO_LINKED_EXPERIMENT.value,
-                                      GWSException.NOTE_NO_LINKED_EXPERIMENT.name)
+        if len(scenarios) == 0:
+            raise BadRequestException(GWSException.NOTE_NO_LINKED_SCENARIO.value,
+                                      GWSException.NOTE_NO_LINKED_SCENARIO.name)
 
-        experiment_ids = [experiment.id for experiment in experiments]
+        scenario_ids = [scenario.id for scenario in scenarios]
 
-        # retrieve the resources associated with the experiments
-        resources = ResourceService.get_experiments_resources(experiment_ids)
+        # retrieve the resources associated with the scenarios
+        resources = ResourceService.get_scenarios_resources(scenario_ids)
         return resources
 
     @classmethod
@@ -576,7 +576,7 @@ class NoteService():
         """Method to refresh the associated views of a note. It will remove unassociated resources and
         add the new ones.
         It also refresh the tags of the note based on the tags of the associated views
-        It also refresh the associated experiments of the note
+        It also refresh the associated scenarios of the note
         """
 
         note_views: List[NoteViewModel] = NoteViewModel.get_by_note(note.id)
@@ -616,14 +616,14 @@ class NoteService():
                     note_tags.add_tags(propagated_tags)
                     note_view_ids.add(view_config.id)
 
-        # refresh the associated experiments
+        # refresh the associated scenarios
         new_note_views: List[NoteViewModel] = NoteViewModel.get_by_note(note.id)
-        associated_experiment = NoteExperiment.find_experiments_by_note(note.id)
+        associated_scenario = NoteScenario.find_scenarios_by_note(note.id)
 
-        # detect which experiment were added
+        # detect which scenario were added
         for new_view in new_note_views:
-            if new_view.view.experiment and new_view.view.experiment not in associated_experiment:
-                NoteExperiment.create_obj(new_view.view.experiment, note).save()
+            if new_view.view.scenario and new_view.view.scenario not in associated_scenario:
+                NoteScenario.create_obj(new_view.view.scenario, note).save()
 
     ################################################# ARCHIVE ########################################
 

@@ -2,15 +2,15 @@
 
 from abc import abstractmethod
 
-from gws_core import (BaseTestCase, ConfigParams, Experiment,
-                      ExperimentService, ProcessFactory, ProtocolModel,
-                      ProtocolService, ResourceModel, Task, TaskInputs,
-                      TaskModel, TaskOutputs, task_decorator)
-from gws_core.experiment.experiment_interface import IExperiment
-from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core import (BaseTestCase, ConfigParams, ProcessFactory,
+                      ProtocolModel, ProtocolService, ResourceModel, Scenario,
+                      ScenarioService, Task, TaskInputs, TaskModel,
+                      TaskOutputs, task_decorator)
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.task.plug import Source
 from gws_core.test.gtest import GTest
 
@@ -56,15 +56,15 @@ class TestTask(BaseTestCase):
 
         p2.config.set_value('food_weight', '5.6')
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+        scenario: Scenario = ScenarioService.create_scenario_from_protocol_model(
             protocol_model=proto)
 
-        self.assertEqual(experiment.created_by, GTest.user)
+        self.assertEqual(scenario.created_by, GTest.user)
 
-        experiment = ExperimentRunService.run_experiment(experiment=experiment)
+        scenario = ScenarioRunService.run_scenario(scenario=scenario)
 
         # Refresh the processes
-        protocol: ProtocolModel = experiment.protocol_model
+        protocol: ProtocolModel = scenario.protocol_model
         self.assertEqual(protocol.created_by, GTest.user)
 
         p0 = protocol.get_process("p0")
@@ -103,33 +103,33 @@ class TestTask(BaseTestCase):
         self.assertTrue(
             len(p0.progress_bar.data["messages"]) >= 2)
 
-        experiment.to_dto()
+        scenario.to_dto()
 
     def test_after_run(self):
         """Test that the after run method is called
         To test it, we check that it raised an exception
         """
 
-        experiment: IExperiment = IExperiment()
-        experiment.get_protocol().add_process(RunAfterTask, 'run')
+        scenario: IScenario = IScenario()
+        scenario.get_protocol().add_process(RunAfterTask, 'run')
 
         with self.assertRaises(Exception):
-            experiment.run()
+            scenario.run()
 
     def test_source_task(self):
         """
         Test that the use of a resource in a Source config is saved in the database so we can retrieve which
-        Source task uses a resource. Even if the experiment that uses the resource was not runned.
+        Source task uses a resource. Even if the scenario that uses the resource was not runned.
         """
         robot_model = ResourceModel.save_from_resource(
             Robot.empty(), origin=ResourceOrigin.UPLOADED)
 
-        experiment: IExperiment = IExperiment()
-        task = experiment.get_protocol().add_task(
+        scenario: IScenario = IScenario()
+        task = scenario.get_protocol().add_task(
             Source, 'source', {Source.config_name: robot_model.id})
 
         tasks = (list(TaskModel.select().where(TaskModel.source_config_id == robot_model.id)))
-        # Check that the use of the robot in the experiment was saved
+        # Check that the use of the robot in the scenario was saved
 
         self.assertEqual(len(tasks), 1)
         self.assertEqual(tasks[0].id, task.get_model().id)

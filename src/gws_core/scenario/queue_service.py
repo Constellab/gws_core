@@ -12,10 +12,10 @@ from ..core.exception.exceptions import NotFoundException
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.utils.logger import Logger
-from ..experiment.experiment_run_service import ExperimentRunService
 from ..user.current_user_service import CurrentUserService
-from .experiment import Experiment, ExperimentStatus
 from .queue import Job, Queue
+from .scenario import Scenario, ScenarioStatus
+from .scenario_run_service import ScenarioRunService
 
 TICK_INTERVAL_SECONDS = 60   # 60 sec
 
@@ -54,7 +54,7 @@ class QueueService():
 
     @classmethod
     def _tick(cls):
-        """Method called a each tick to run experiment from the queue
+        """Method called a each tick to run scenario from the queue
 
         :param verbose: [description], defaults to False
         :type verbose: bool, optional
@@ -73,14 +73,14 @@ class QueueService():
 
     @classmethod
     def _check_and_run_queue(cls):
-        """Get the first experiment from the queue and run it if possible
+        """Get the first scenario from the queue and run it if possible
 
         :param verbose: [description]
         :type verbose: [type]
         :raises BadRequestException: [description]
         """
-        Logger.debug("Checking experiment queue ...")
-        if Experiment.count_running_experiments() > 0:
+        Logger.debug("Checking scenario queue ...")
+        if Scenario.count_running_scenarios() > 0:
             # -> busy: we will test later!
             Logger.debug("The lab is busy! Retry later")
             return
@@ -89,29 +89,29 @@ class QueueService():
         if not job:
             return
 
-        # tester que l'experiment est bien à jour
-        experiment: Experiment = job.experiment
+        # tester que l'scenario est bien à jour
+        scenario: Scenario = job.scenario
 
         Logger.debug(
-            f"Experiment {experiment.id}, is_running = {experiment.is_running}")
+            f"Scenario {scenario.id}, is_running = {scenario.is_running}")
 
         try:
-            sproc = ExperimentRunService.create_cli_for_experiment(
-                experiment=experiment, user=job.user)
+            sproc = ScenarioRunService.create_cli_for_scenario(
+                scenario=scenario, user=job.user)
 
             if sproc:
-                # wait for the experiment to finish in a separate thread
+                # wait for the scenario to finish in a separate thread
                 thread = threading.Thread(
-                    target=cls._wait_experiment_finish, args=(sproc,))
+                    target=cls._wait_scenario_finish, args=(sproc,))
                 thread.start()
         except Exception as err:
             Logger.error(
-                f"An error occured while runnig the experiment. Error: {err}.")
+                f"An error occured while runnig the scenario. Error: {err}.")
             raise err
 
     @classmethod
-    def add_experiment_to_queue(cls, experiment_id: str) -> Experiment:
-        """Add the experiment to the queue and run it when ready
+    def add_scenario_to_queue(cls, scenario_id: str) -> Scenario:
+        """Add the scenario to the queue and run it when ready
 
 
         :param id: [description]
@@ -119,41 +119,41 @@ class QueueService():
         :raises NotFoundException: [description]
         :raises BadRequestException: [description]
         :return: [description]
-        :rtype: Experiment
+        :rtype: Scenario
         """
 
-        experiment: Experiment = None
+        scenario: Scenario = None
         try:
-            experiment = Experiment.get(Experiment.id == experiment_id)
+            scenario = Scenario.get(Scenario.id == scenario_id)
         except Exception as err:
             raise NotFoundException(
-                detail=f"Experiment '{experiment_id}' is not found") from err
+                detail=f"Scenario '{scenario_id}' is not found") from err
 
-        if Job.experiment_in_queue(experiment.id):
-            raise BadRequestException("The experiment already is in the queue")
+        if Job.scenario_in_queue(scenario.id):
+            raise BadRequestException("The scenario already is in the queue")
 
-        # check experiment status
-        experiment.check_is_runnable()
+        # check scenario status
+        scenario.check_is_runnable()
 
-        if experiment.is_running or experiment.status == ExperimentStatus.IN_QUEUE:
+        if scenario.is_running or scenario.status == ScenarioStatus.IN_QUEUE:
             raise BadRequestException(
-                "The experiment is already running or in the queue")
+                "The scenario is already running or in the queue")
 
         # reset the processes that are in error
         EntityNavigatorService.reset_error_processes_of_protocol(
-            experiment.protocol_model)
+            scenario.protocol_model)
 
         user = CurrentUserService.get_and_check_current_user()
-        cls._add_job(user=user, experiment=experiment, auto_start=True)
-        return experiment
+        cls._add_job(user=user, scenario=scenario, auto_start=True)
+        return scenario
 
     @classmethod
-    def _add_job(cls, user: User, experiment: Experiment, auto_start: bool = False):
-        queue: Queue = Queue.add_job(user=user, experiment=experiment)
+    def _add_job(cls, user: User, scenario: Scenario, auto_start: bool = False):
+        queue: Queue = Queue.add_job(user=user, scenario=scenario)
         if auto_start:
             if queue.is_active:
-                # > manally trigger the experiment if possible!
-                if not Experiment.count_running_experiments():
+                # > manally trigger the scenario if possible!
+                if not Scenario.count_running_scenarios():
                     cls._tick()
             else:
                 cls.init()
@@ -163,15 +163,15 @@ class QueueService():
         return Queue.get_jobs()
 
     @classmethod
-    def _wait_experiment_finish(cls, proc: SysProc):
+    def _wait_scenario_finish(cls, proc: SysProc):
         proc.wait()
-        # force a tick to run the next experiment if possible
+        # force a tick to run the next scenario if possible
         cls._tick()
 
     @classmethod
-    def experiment_is_in_queue(cls, experiment_id: str) -> bool:
-        return Job.experiment_in_queue(experiment_id)
+    def scenario_is_in_queue(cls, scenario_id: str) -> bool:
+        return Job.scenario_in_queue(scenario_id)
 
     @classmethod
-    def remove_experiment_from_queue(cls, experiment_id: str) -> Experiment:
-        return Queue.remove_experiment(experiment_id)
+    def remove_scenario_from_queue(cls, scenario_id: str) -> Scenario:
+        return Queue.remove_scenario(scenario_id)

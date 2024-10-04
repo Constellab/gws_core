@@ -11,12 +11,11 @@ from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
-from gws_core.experiment.experiment_dto import (ExperimentDTO,
-                                                ExperimentSimpleDTO)
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
-from gws_core.protocol.protocol_dto import ExperimentProtocolDTO
+from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
+from gws_core.scenario.scenario_dto import ScenarioDTO, ScenarioSimpleDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.user.current_user_service import CurrentUserService
 
@@ -29,8 +28,8 @@ from ..core.model.model_with_user import ModelWithUser
 from ..folder.space_folder import SpaceFolder
 from ..resource.resource_model import ResourceModel
 from ..user.user import User
-from .experiment_enums import (ExperimentCreationType, ExperimentProcessStatus,
-                               ExperimentStatus)
+from .scenario_enums import (ScenarioCreationType, ScenarioProcessStatus,
+                             ScenarioStatus)
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
@@ -38,16 +37,16 @@ if TYPE_CHECKING:
 
 
 @final
-class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
+class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
 
-    status: ExperimentStatus = EnumField(choices=ExperimentStatus,
-                                         default=ExperimentStatus.DRAFT)
+    status: ScenarioStatus = EnumField(choices=ScenarioStatus,
+                                       default=ScenarioStatus.DRAFT)
     error_info = JSONField(null=True)
-    creation_type: ExperimentCreationType = EnumField(choices=ExperimentCreationType,
-                                                      default=ExperimentCreationType.MANUAL,
-                                                      max_length=20)
+    creation_type: ScenarioCreationType = EnumField(choices=ScenarioCreationType,
+                                                    default=ScenarioCreationType.MANUAL,
+                                                    max_length=20)
 
     title = CharField(max_length=50)
     description = JSONField(null=True)
@@ -64,7 +63,7 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
     is_archived = BooleanField(default=False, index=True)
     data: Dict[str, Any] = JSONField(null=True)
 
-    _table_name = 'gws_experiment'
+    _table_name = 'gws_scenario'
 
     # cache of the _protocol
     _protocol: ProtocolModel = None
@@ -92,7 +91,7 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
         from ..protocol.protocol_model import ProtocolModel
 
         if self._protocol is None:
-            self._protocol = ProtocolModel.get((ProtocolModel.experiment == self)
+            self._protocol = ProtocolModel.get((ProtocolModel.scenario == self)
                                                & (ProtocolModel.parent_protocol_id.is_null()))
 
         return self._protocol
@@ -107,7 +106,7 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
             return []
 
         return list(TaskModel.select().where(
-            TaskModel.experiment == self))
+            TaskModel.scenario == self))
 
     @property
     def resources(self) -> List[ResourceModel]:
@@ -118,10 +117,10 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
         if not self.is_saved():
             return []
 
-        return list(ResourceModel.select().where(ResourceModel.experiment == self))
+        return list(ResourceModel.select().where(ResourceModel.scenario == self))
 
     def get_short_name(self) -> str:
-        """Method to get a readable to quickly distinguish the experiment, (used in error message)
+        """Method to get a readable to quickly distinguish the scenario, (used in error message)
 
         :return: [description]
         :rtype: str
@@ -131,27 +130,27 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
     def get_running_tasks(self) -> List[TaskModel]:
         from ..task.task_model import TaskModel
         return list(TaskModel.select().where(
-            (TaskModel.experiment == self) &
+            (TaskModel.scenario == self) &
             (TaskModel.status.in_([ProcessStatus.RUNNING, ProcessStatus.WAITING_FOR_CLI_PROCESS]))))
 
     def get_entity_name(self) -> str:
         return self.title
 
     def get_entity_type(self) -> EntityType:
-        return EntityType.EXPERIMENT
+        return EntityType.SCENARIO
 
     def entity_is_validated(self) -> bool:
         return self.is_validated
 
     def is_manual(self) -> bool:
-        return self.creation_type == ExperimentCreationType.MANUAL
+        return self.creation_type == ScenarioCreationType.MANUAL
 
     ########################################## MODEL METHODS ######################################
 
     @transaction()
-    def archive(self, archive: bool) -> 'Experiment':
+    def archive(self, archive: bool) -> 'Scenario':
         """
-        Archive the experiment
+        Archive the scenario
         """
 
         if self.is_archived == archive:
@@ -162,38 +161,38 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
         return self.save()
 
     @classmethod
-    def count_running_experiments(cls) -> int:
+    def count_running_scenarios(cls) -> int:
         """
-        :return: the count of experiment in progress or waiting for a cli process
+        :return: the count of scenario in progress or waiting for a cli process
         :rtype: `int`
         """
 
-        return cls.get_running_experiments().count()
+        return cls.get_running_scenarios().count()
 
     @classmethod
-    def get_running_experiments(cls) -> ModelSelect:
+    def get_running_scenarios(cls) -> ModelSelect:
         """
-        :return: the count of experiment in progress or waiting for a cli process
+        :return: the count of scenario in progress or waiting for a cli process
         :rtype: `int`
         """
 
-        return Experiment.select().where((Experiment.status == ExperimentStatus.RUNNING) |
-                                         (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS))
+        return Scenario.select().where((Scenario.status == ScenarioStatus.RUNNING) |
+                                       (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS))
 
     @classmethod
-    def count_running_or_queued_experiments(cls) -> int:
-        return Experiment.select().where((Experiment.status == ExperimentStatus.RUNNING) |
-                                         (Experiment.status == ExperimentStatus.IN_QUEUE) |
-                                         (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS)).count()
+    def count_running_or_queued_scenarios(cls) -> int:
+        return Scenario.select().where((Scenario.status == ScenarioStatus.RUNNING) |
+                                       (Scenario.status == ScenarioStatus.IN_QUEUE) |
+                                       (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS)).count()
 
     @classmethod
-    def count_queued_experiments(cls) -> int:
-        return Experiment.select().where((Experiment.status == ExperimentStatus.IN_QUEUE)).count()
+    def count_queued_scenarios(cls) -> int:
+        return Scenario.select().where((Scenario.status == ScenarioStatus.IN_QUEUE)).count()
 
     @transaction()
-    def reset(self) -> 'Experiment':
+    def reset(self) -> 'Scenario':
         """
-        Reset the experiment.
+        Reset the scenario.
 
         :return: True if it is reset, False otherwise
         :rtype: `bool`
@@ -201,10 +200,10 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.check_is_updatable()
 
         if not self.is_saved():
-            raise BadRequestException("Can't reset an experiment not saved before")
+            raise BadRequestException("Can't reset an scenario not saved before")
 
         if self.is_running:
-            raise BadRequestException("Can't reset a running experiment")
+            raise BadRequestException("Can't reset a running scenario")
 
         if self.protocol_model:
             self.protocol_model.reset()
@@ -215,22 +214,22 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
     @transaction()
     def validate(self) -> None:
         """
-        Validate the experiment
+        Validate the scenario
         """
 
         if self.is_validated:
             return
         if self.is_running:
-            raise BadRequestException(GWSException.EXPERIMENT_VALIDATE_RUNNING.value,
-                                      unique_code=GWSException.EXPERIMENT_VALIDATE_RUNNING.name)
+            raise BadRequestException(GWSException.SCENARIO_VALIDATE_RUNNING.value,
+                                      unique_code=GWSException.SCENARIO_VALIDATE_RUNNING.name)
 
         if self.folder is None:
             raise BadRequestException(
-                "The experiment must be linked to a folder before validating it")
+                "The scenario must be linked to a folder before validating it")
 
         if self.folder.children.count() > 0:
             raise BadRequestException(
-                "The experiment must be associated with a leaf folder (folder with no children)")
+                "The scenario must be associated with a leaf folder (folder with no children)")
 
         self.is_validated = True
         self.validated_at = DateHelper.now_utc()
@@ -244,7 +243,7 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
             self.protocol_model.delete_instance()
 
         super().delete_instance(*args, **kwargs)
-        EntityTagList.delete_by_entity(EntityType.EXPERIMENT, self.id)
+        EntityTagList.delete_by_entity(EntityType.SCENARIO, self.id)
 
     @classmethod
     def after_table_creation(cls) -> None:
@@ -255,68 +254,68 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     @property
     def is_success(self) -> bool:
-        return self.status == ExperimentStatus.SUCCESS
+        return self.status == ScenarioStatus.SUCCESS
 
     @property
     def is_finished(self) -> bool:
-        """Consider finished if the Experiment status is SUCCESS or ERROR
+        """Consider finished if the Scenario status is SUCCESS or ERROR
         """
         return self.is_success or self.is_error
 
     @property
     def is_running(self) -> bool:
-        """Consider running if the Experiment status is RUNNING or WAITING_FOR_CLI_PROCESS
+        """Consider running if the Scenario status is RUNNING or WAITING_FOR_CLI_PROCESS
         """
-        return self.status == ExperimentStatus.RUNNING or self.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS
+        return self.status == ScenarioStatus.RUNNING or self.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS
 
     @property
     def is_running_or_waiting(self) -> bool:
-        """Consider running if the Experiment status is RUNNING or WAITING_FOR_CLI_PROCESS
+        """Consider running if the Scenario status is RUNNING or WAITING_FOR_CLI_PROCESS
         """
-        return self.is_running or self.status == ExperimentStatus.IN_QUEUE
+        return self.is_running or self.status == ScenarioStatus.IN_QUEUE
 
     @property
     def is_error(self) -> bool:
-        """Consider running if the Experiment status is RUNNING or WAITING_FOR_CLI_PROCESS
+        """Consider running if the Scenario status is RUNNING or WAITING_FOR_CLI_PROCESS
         """
-        return self.status == ExperimentStatus.ERROR
+        return self.status == ScenarioStatus.ERROR
 
     @property
     def is_draft(self) -> bool:
-        return self.status == ExperimentStatus.DRAFT
+        return self.status == ScenarioStatus.DRAFT
 
     @property
     def is_partially_run(self) -> bool:
-        return self.status == ExperimentStatus.PARTIALLY_RUN
+        return self.status == ScenarioStatus.PARTIALLY_RUN
 
     def mark_as_in_queue(self):
-        self.status = ExperimentStatus.IN_QUEUE
+        self.status = ScenarioStatus.IN_QUEUE
         self.save()
 
     def mark_as_waiting_for_cli_process(self, pid: int):
-        """Mark that a process is created for the experiment, but it is not started yet
+        """Mark that a process is created for the scenario, but it is not started yet
 
         :param pid: pid of the linux process
         :type pid: int
         """
-        self.status = ExperimentStatus.WAITING_FOR_CLI_PROCESS
+        self.status = ScenarioStatus.WAITING_FOR_CLI_PROCESS
         self.pid = pid
         self.save()
 
     def mark_as_started(self, pid: int):
-        self.status = ExperimentStatus.RUNNING
+        self.status = ScenarioStatus.RUNNING
         self.lab_config = LabConfigModel.get_current_config()
         self.pid = pid
         self.save()
 
     def mark_as_success(self):
         self.pid = None
-        self.status = ExperimentStatus.SUCCESS
+        self.status = ScenarioStatus.SUCCESS
         self.save()
 
     def mark_as_draft(self):
         self.pid = None
-        self.status = ExperimentStatus.DRAFT
+        self.status = ScenarioStatus.DRAFT
         self.lab_config = None
         self.set_error_info(None)
         self.save()
@@ -325,12 +324,12 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
         if self.is_error:
             return
         self.pid = None
-        self.status = ExperimentStatus.ERROR
+        self.status = ScenarioStatus.ERROR
         self.set_error_info(error_info)
         self.save()
 
     def mark_as_partially_run(self) -> None:
-        self.status = ExperimentStatus.PARTIALLY_RUN
+        self.status = ScenarioStatus.PARTIALLY_RUN
         self.set_error_info(None)
         self.save()
 
@@ -341,21 +340,21 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.error_info = error_info.to_json_dict() if error_info else None
 
     def check_is_runnable(self) -> None:
-        """Throw an error if the experiment is not runnable
+        """Throw an error if the scenario is not runnable
         """
 
-        # check experiment status
+        # check scenario status
         if self.is_archived:
-            raise BadRequestException("The experiment is archived")
+            raise BadRequestException("The scenario is archived")
         if self.is_validated:
-            raise BadRequestException("The experiment is validated")
-        if self.status == ExperimentStatus.RUNNING:
-            raise BadRequestException("The experiment is already running")
+            raise BadRequestException("The scenario is validated")
+        if self.status == ScenarioStatus.RUNNING:
+            raise BadRequestException("The scenario is already running")
         if self.is_success:
-            raise BadRequestException("The experiment is already finished")
+            raise BadRequestException("The scenario is already finished")
 
         # if this is a start and stop, we check that the lab
-        # is in the same version as the experiment
+        # is in the same version as the scenario
         if not self.is_draft and self.lab_config:
             current_lab_config = LabConfigModel.get_current_config()
             if not current_lab_config.is_compatible_with(self.lab_config):
@@ -363,42 +362,42 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
                                           unique_code=GWSException.EXP_CONTINUE_LAB_INCOMPATIBLE.name)
 
     def check_is_stopable(self) -> None:
-        """Throw an error if the experiment is not stopable
+        """Throw an error if the scenario is not stopable
         """
 
-        # check experiment status
+        # check scenario status
         if not self.is_running:
             raise BadRequestException(
-                detail=f"Experiment '{self.id}' is not running")
+                detail=f"Scenario '{self.id}' is not running")
 
     def check_is_updatable(self) -> None:
-        """Throw an error if the experiment is not updatable
+        """Throw an error if the scenario is not updatable
         """
 
-        # check experiment status
+        # check scenario status
         if self.is_validated:
             raise BadRequestException(
-                detail="The experiment is validated, you can't update it")
+                detail="The scenario is validated, you can't update it")
         if self.is_archived:
             raise BadRequestException(
-                detail="The experiment is archived, please unachived it to update it")
+                detail="The scenario is archived, please unachived it to update it")
 
-    def get_process_status(self) -> ExperimentProcessStatus:
+    def get_process_status(self) -> ScenarioProcessStatus:
         if self.pid == None or not self.is_running:
-            return ExperimentProcessStatus.NONE
+            return ScenarioProcessStatus.NONE
         try:
             process = SysProc.from_pid(self.pid)
             if process.is_alive():
-                return ExperimentProcessStatus.RUNNING
+                return ScenarioProcessStatus.RUNNING
             else:
-                return ExperimentProcessStatus.UNEXPECTED_STOPPED
+                return ScenarioProcessStatus.UNEXPECTED_STOPPED
         except Exception:
-            return ExperimentProcessStatus.UNEXPECTED_STOPPED
+            return ScenarioProcessStatus.UNEXPECTED_STOPPED
 
     ########################### TO JSON ##################################
 
-    def to_dto(self) -> ExperimentDTO:
-        return ExperimentDTO(
+    def to_dto(self) -> ScenarioDTO:
+        return ScenarioDTO(
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
@@ -421,17 +420,17 @@ class Experiment(ModelWithUser, ModelWithFolder, NavigableEntity):
             pid_status=self.get_process_status()
         )
 
-    def to_simple_dto(self) -> ExperimentSimpleDTO:
-        return ExperimentSimpleDTO(
+    def to_simple_dto(self) -> ScenarioSimpleDTO:
+        return ScenarioSimpleDTO(
             id=self.id,
             title=self.title
         )
 
-    def export_protocol(self) -> ExperimentProtocolDTO:
-        return ExperimentProtocolDTO(
+    def export_protocol(self) -> ScenarioProtocolDTO:
+        return ScenarioProtocolDTO(
             version=3,  # version of the protocol json format
             data=self.protocol_model.to_config_dto()
         )
 
     class Meta:
-        table_name = 'gws_experiment'
+        table_name = 'gws_scenario'

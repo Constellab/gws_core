@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, List
 
-from gws_core.space.space_dto import (SendExperimentFinishMailData,
+from gws_core.space.space_dto import (SendScenarioFinishMailData,
                                       SpaceSendMailDTO)
 from gws_core.space.space_service import SpaceService
 from gws_core.user.current_user_service import CurrentUserService
@@ -12,7 +12,7 @@ class MailService:
 
     @classmethod
     def send_mail_to_current_user(cls, mail_content: str, subject: str) -> bool:
-        """Send a email to the current connected user (or user that is running the experiment)
+        """Send a email to the current connected user (or user that is running the scenario)
 
         :param mail_content: content of the mail (supports HTML)
         :type mail_content: str
@@ -78,7 +78,7 @@ class MailService:
         return True
 
     @classmethod
-    def send_experiment_finished_mail(cls, user_id: str, experiment: SendExperimentFinishMailData) -> bool:
-        return cls._send_mail(receivers_ids=[user_id], mail_template="experiment-finished", data={
-            "experiment": experiment
+    def send_scenario_finished_mail(cls, user_id: str, scenario: SendScenarioFinishMailData) -> bool:
+        return cls._send_mail(receivers_ids=[user_id], mail_template="scenario-finished", data={
+            "scenario": scenario
         })

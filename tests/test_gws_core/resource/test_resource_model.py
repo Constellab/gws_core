@@ -1,6 +1,6 @@
 
 
-from gws_core import (BaseTestCase, ConfigParams, File, IExperiment, ITask,
+from gws_core import (BaseTestCase, ConfigParams, File, IScenario, ITask,
                       OutputSpec, OutputSpecs, Resource, ResourceModel, RField,
                       Task, TaskInputs, TaskModel, TaskOutputs,
                       resource_decorator, task_decorator)
@@ -41,10 +41,10 @@ class SubFile(File):
 class TestResourceModel(BaseTestCase):
 
     def test_search(self):
-        # Create an experiment and a task
-        experiment: IExperiment = IExperiment()
-        experiment.get_protocol().add_process(ForSearchCreate, 'facto')
-        task: ITask = experiment.get_protocol().get_process('facto')
+        # Create an scenario and a task
+        scenario: IScenario = IScenario()
+        scenario.get_protocol().add_process(ForSearchCreate, 'facto')
+        task: ITask = scenario.get_protocol().get_process('facto')
 
         self._create_resource(
             'this is information about a great banana',
@@ -65,9 +65,9 @@ class TestResourceModel(BaseTestCase):
             SearchFilterCriteria(key="origin", operator=SearchOperator.EQ, value=ResourceOrigin.GENERATED.value)])
         self.search(search_dict, 1)
 
-        # Search on Experiment
+        # Search on Scenario
         search_dict.set_filters_criteria([
-            SearchFilterCriteria(key="experiment", operator=SearchOperator.EQ, value=experiment._experiment.id)])
+            SearchFilterCriteria(key="scenario", operator=SearchOperator.EQ, value=scenario._scenario.id)])
         self.search(search_dict, 1)
 
         # Search on Task
@@ -128,5 +128,5 @@ class TestResourceModel(BaseTestCase):
 
         if task:
             resource_model.task_model = task
-            resource_model.experiment = task.experiment
+            resource_model.scenario = task.scenario
         return resource_model.save()

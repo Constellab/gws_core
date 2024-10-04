@@ -23,7 +23,7 @@ def get_process_logs(process_type: ProcessType,
                      from_page_date: datetime = None,
                      _=Depends(AuthService.check_user_access_token)) -> LogsBetweenDatesDTO:
     """
-    Retrieve a list of running experiments.
+    Retrieve a list of running scenarios.
     """
 
     return ProcessService.get_logs_of_process(process_type, id, from_page_date).to_dto()
@@ -35,7 +35,7 @@ def download_process_logs(process_type: ProcessType,
                           id: str,
                           _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
     """
-    Retrieve a list of running experiments.
+    Retrieve a list of running scenarios.
     """
 
     logs: LogsBetweenDates = ProcessService.get_logs_of_process(process_type, id)
@@ -50,7 +50,7 @@ def get_process_monitors(process_type: ProcessType,
                          body: GetMonitorTimezoneDTO,
                          _=Depends(AuthService.check_user_access_token)) -> MonitorBetweenDateGraphicsDTO:
     """
-    Retrieve a list of running experiments.
+    Retrieve a list of running scenarios.
     """
     timezone_number = body.timezone_number if body.timezone_number else 0
     return ProcessService.get_monitor_of_process(process_type, id, timezone_number)

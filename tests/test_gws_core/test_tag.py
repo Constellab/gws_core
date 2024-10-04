@@ -6,9 +6,6 @@ from gws_core.core.classes.search_builder import (SearchFilterCriteria,
                                                   SearchOperator, SearchParams)
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
-from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_interface import IExperiment
-from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.robot.robot_resource import Robot, RobotFood
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotEat, RobotMove
@@ -18,6 +15,9 @@ from gws_core.note.note_dto import NoteSaveDTO
 from gws_core.note.note_service import NoteService
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.resource.resource_service import ResourceService
+from gws_core.scenario.scenario import Scenario
+from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOrigins
 from gws_core.tag.tag_dto import EntityTagValueFormat, TagOriginType
@@ -56,40 +56,40 @@ class TestTag(BaseTestCase):
         self.assertTrue(tag.origins.is_user_origin())
 
         # add an automatic origin, this should overide the user origin
-        self.assertTrue(tag.origins.add_origin(TagOriginType.EXPERIMENT_PROPAGATED, 'exp_id'))
+        self.assertTrue(tag.origins.add_origin(TagOriginType.SCENARIO_PROPAGATED, 'exp_id'))
         self.assertEqual(tag.origins.count_origins(), 1)
-        self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, 'exp_id'))
+        self.assertTrue(tag.origins.has_origin(TagOriginType.SCENARIO_PROPAGATED, 'exp_id'))
 
         # add a second origin
         self.assertTrue(tag.origins.add_origin(TagOriginType.TASK_PROPAGATED, 'task_id'))
         self.assertEqual(tag.origins.count_origins(), 2)
-        self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, 'exp_id'))
+        self.assertTrue(tag.origins.has_origin(TagOriginType.SCENARIO_PROPAGATED, 'exp_id'))
         self.assertTrue(tag.origins.has_origin(TagOriginType.TASK_PROPAGATED, 'task_id'))
 
         # add a user origin (should not be added because there is already an automatic origin)
         self.assertFalse(tag.origins.add_origin(TagOriginType.USER, 'user_id'))
         self.assertEqual(tag.origins.count_origins(), 2)
-        self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, 'exp_id'))
+        self.assertTrue(tag.origins.has_origin(TagOriginType.SCENARIO_PROPAGATED, 'exp_id'))
         self.assertTrue(tag.origins.has_origin(TagOriginType.TASK_PROPAGATED, 'task_id'))
 
         # remove an origin
-        tag.origins.remove_origin(TagOriginType.EXPERIMENT_PROPAGATED, 'exp_id')
+        tag.origins.remove_origin(TagOriginType.SCENARIO_PROPAGATED, 'exp_id')
         self.assertEqual(tag.origins.count_origins(), 1)
-        self.assertFalse(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, 'exp_id'))
+        self.assertFalse(tag.origins.has_origin(TagOriginType.SCENARIO_PROPAGATED, 'exp_id'))
 
     def test_add_tag(self):
-        experiment: Experiment = ExperimentService.create_experiment()
+        scenario: Scenario = ScenarioService.create_scenario()
 
         expected_tag = Tag('test', 'value')
 
         # Add the tag to the model and check that is was added in DB
-        tag = TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, expected_tag)
-        self.assertEqual(tag.entity_type, EntityType.EXPERIMENT)
-        self.assertEqual(tag.entity_id, experiment.id)
+        tag = TagService.add_tag_to_entity(EntityType.SCENARIO, scenario.id, expected_tag)
+        self.assertEqual(tag.entity_type, EntityType.SCENARIO)
+        self.assertEqual(tag.entity_id, scenario.id)
         self.assertEqual(tag.tag_key, 'test')
         self.assertEqual(tag.tag_value, 'value')
 
-        entity_tags = TagService.find_by_entity_id(EntityType.EXPERIMENT, experiment.id)
+        entity_tags = TagService.find_by_entity_id(EntityType.SCENARIO, scenario.id)
         self.assertTrue(len(entity_tags.get_tags()), 0)
         self.assertTrue(entity_tags.has_tag(expected_tag))
 
@@ -97,20 +97,20 @@ class TestTag(BaseTestCase):
         self.assertTrue(TagValueModel.tag_value_exists('test', 'value'))
 
         # add int tag
-        tag = TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('test_int', 1))
+        tag = TagService.add_tag_to_entity(EntityType.SCENARIO, scenario.id, Tag('test_int', 1))
         self.assertEqual(tag.get_tag_value(), 1)
         self.assertEqual(TagValueModel.get_tag_value_model('test_int', 1).get_tag_value(), 1)
         self.assertEqual(TagKeyModel.find_by_key('test_int').value_format, EntityTagValueFormat.INTEGER)
 
         # add float tag
-        tag = TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('test_float', 1.1))
+        tag = TagService.add_tag_to_entity(EntityType.SCENARIO, scenario.id, Tag('test_float', 1.1))
         self.assertEqual(tag.get_tag_value(), 1.1)
         self.assertEqual(TagValueModel.get_tag_value_model('test_float', 1.1).get_tag_value(), 1.1)
         self.assertEqual(TagKeyModel.find_by_key('test_float').value_format, EntityTagValueFormat.FLOAT)
 
         # add datetime tag
         now = DateHelper.now_utc()
-        tag = TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('test_datetime', now))
+        tag = TagService.add_tag_to_entity(EntityType.SCENARIO, scenario.id, Tag('test_datetime', now))
         self.assertEqual(tag.get_tag_value(), now)
         self.assertEqual(TagValueModel.get_tag_value_model('test_datetime', now).get_tag_value(), now)
         self.assertEqual(TagKeyModel.find_by_key('test_datetime').value_format, EntityTagValueFormat.DATETIME)
@@ -123,8 +123,8 @@ class TestTag(BaseTestCase):
         TagService.create_tag(tag.key, tag.value)
         TagService.create_tag(other_tag.key, other_tag.value)
 
-        experiment: Experiment = ExperimentService.create_experiment()
-        TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, tag)
+        scenario: Scenario = ScenarioService.create_scenario()
+        TagService.add_tag_to_entity(EntityType.SCENARIO, scenario.id, tag)
 
         # test update the tag
         new_tag = Tag('newtag', 'newvalue')
@@ -134,9 +134,9 @@ class TestTag(BaseTestCase):
         self.assertFalse(TagValueModel.tag_value_exists(tag.key, tag.value))
         self.assertTrue(TagValueModel.tag_value_exists(tag.key, new_tag.value))
 
-        experiment_tags = TagService.find_by_entity_id(EntityType.EXPERIMENT, experiment.id)
-        self.assertFalse(experiment_tags.has_tag(tag))
-        self.assertTrue(experiment_tags.has_tag(new_tag))
+        scenario_tags = TagService.find_by_entity_id(EntityType.SCENARIO, scenario.id)
+        self.assertFalse(scenario_tags.has_tag(tag))
+        self.assertTrue(scenario_tags.has_tag(new_tag))
 
         # Test delete tag
         TagService.delete_registered_tag(new_tag.key, new_tag.value)
@@ -144,8 +144,8 @@ class TestTag(BaseTestCase):
         # Check that the tag model was delete (because there is no more values)
         self.assertFalse(TagValueModel.tag_value_exists(new_tag.key, new_tag.value))
 
-        experiment_tags = TagService.find_by_entity_id(EntityType.EXPERIMENT, experiment.id)
-        self.assertFalse(experiment_tags.has_tag(new_tag))
+        scenario_tags = TagService.find_by_entity_id(EntityType.SCENARIO, scenario.id)
+        self.assertFalse(scenario_tags.has_tag(new_tag))
 
         # Remove the last value of the TagModel and check that it was deleted (because it is the last value)
         TagService.delete_registered_tag(other_tag.key, other_tag.value)
@@ -156,16 +156,16 @@ class TestTag(BaseTestCase):
         tag = Tag('first_key', 'first_value')
         other_tag = Tag('second_key', 'second_value')
 
-        # experiment 1 tagged with the 2 tags
-        experiment: Experiment = ExperimentService.create_experiment()
-        TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, tag)
-        TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, other_tag)
+        # scenario 1 tagged with the 2 tags
+        scenario: Scenario = ScenarioService.create_scenario()
+        TagService.add_tag_to_entity(EntityType.SCENARIO, scenario.id, tag)
+        TagService.add_tag_to_entity(EntityType.SCENARIO, scenario.id, other_tag)
 
-        # experiment 2 tagged only with the first tag
-        experiment_2: Experiment = ExperimentService.create_experiment()
-        TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment_2.id, tag)
+        # scenario 2 tagged only with the first tag
+        scenario_2: Scenario = ScenarioService.create_scenario()
+        TagService.add_tag_to_entity(EntityType.SCENARIO, scenario_2.id, tag)
 
-        result = TagService.get_entities_by_tag(EntityType.EXPERIMENT, tag)
+        result = TagService.get_entities_by_tag(EntityType.SCENARIO, tag)
         self.assertEqual(len(result), 2)
 
         search_dict: SearchParams = SearchParams()
@@ -173,48 +173,48 @@ class TestTag(BaseTestCase):
         # search with only second tag
         search_dict.set_filters_criteria([SearchFilterCriteria(
             key="tags", operator=SearchOperator.EQ, value=TagHelper.tags_to_json([other_tag]))])
-        paginator = ExperimentService.search(search_dict)
+        paginator = ScenarioService.search(search_dict)
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
-        self.assertEqual(paginator.results[0].id, experiment.id)
+        self.assertEqual(paginator.results[0].id, scenario.id)
 
         # search with only second tag value contains
         search_dict.set_filters_criteria([
             SearchFilterCriteria(
                 key="tags", operator=SearchOperator.CONTAINS,
                 value=TagHelper.tags_to_json([Tag('second_key', 'cond_val')]))])
-        paginator = ExperimentService.search(search_dict)
+        paginator = ScenarioService.search(search_dict)
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
-        self.assertEqual(paginator.results[0].id, experiment.id)
+        self.assertEqual(paginator.results[0].id, scenario.id)
 
         # search with both tags
         search_dict.set_filters_criteria([
             SearchFilterCriteria(
                 key="tags", operator=SearchOperator.EQ, value=TagHelper.tags_to_json(
                     [tag, other_tag]))])
-        paginator = ExperimentService.search(search_dict)
+        paginator = ScenarioService.search(search_dict)
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
-        self.assertEqual(paginator.results[0].id, experiment.id)
+        self.assertEqual(paginator.results[0].id, scenario.id)
 
         # test search with int value
-        TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('int_tag', 1))
+        TagService.add_tag_to_entity(EntityType.SCENARIO, scenario.id, Tag('int_tag', 1))
         search_dict.set_filters_criteria([
             SearchFilterCriteria(
                 key="tags", operator=SearchOperator.EQ, value=TagHelper.tags_to_json(
                     [Tag('int_tag', 1)]))])
-        paginator = ExperimentService.search(search_dict)
+        paginator = ScenarioService.search(search_dict)
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
-        self.assertEqual(paginator.results[0].id, experiment.id)
+        self.assertEqual(paginator.results[0].id, scenario.id)
 
         # test search with datetime value
         now = DateHelper.now_utc()
-        TagService.add_tag_to_entity(EntityType.EXPERIMENT, experiment.id, Tag('datetime_tag', now))
+        TagService.add_tag_to_entity(EntityType.SCENARIO, scenario.id, Tag('datetime_tag', now))
         search_dict.set_filters_criteria([
             SearchFilterCriteria(
                 key="tags", operator=SearchOperator.EQ, value=TagHelper.tags_to_json(
                     [Tag('datetime_tag', DateHelper.to_iso_str(now))]))])
-        paginator = ExperimentService.search(search_dict)
+        paginator = ScenarioService.search(search_dict)
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
-        self.assertEqual(paginator.results[0].id, experiment.id)
+        self.assertEqual(paginator.results[0].id, scenario.id)
 
     def test_tag_propagation_exp(self):
 
@@ -234,9 +234,9 @@ class TestTag(BaseTestCase):
         task_tag_propagable = Tag('robot_tag_propagable', 'robot_value', is_propagable=True)
         task_tag_not_propagable = Tag('robot_tag_not_propagable', 'robot_value', is_propagable=True)
 
-        i_experiment: IExperiment = IExperiment()
-        i_experiment.add_tags([tag_exp, tag_exp_not_propagable])
-        i_protocol: IProtocol = i_experiment.get_protocol()
+        i_scenario: IScenario = IScenario()
+        i_scenario.add_tags([tag_exp, tag_exp_not_propagable])
+        i_protocol: IProtocol = i_scenario.get_protocol()
 
         tag_robot = i_protocol.add_process(TagRobot, 'move')
         first_robot = Robot.empty()
@@ -250,7 +250,7 @@ class TestTag(BaseTestCase):
 
         i_protocol.add_connector(tag_robot >> 'robot', eat << 'robot')
 
-        i_experiment.run()
+        i_scenario.run()
 
         # Check that the tags are propagated
         tag_robot.refresh()
@@ -272,13 +272,13 @@ class TestTag(BaseTestCase):
         self.assertEqual(output_tag_a.origins.count_origins(), 1)
         self.assertTrue(output_tag_a.origins.has_origin(TagOriginType.TASK_PROPAGATED, tag_robot._process_model.id))
 
-        # Check tag experiment is propagated and values
+        # Check tag scenario is propagated and values
         output_tag_exp = first_output.tags.get_tag(tag_exp.key, tag_exp.value)
         self.assertIsNotNone(output_tag_exp)
         self.assertTrue(output_tag_exp.is_propagable)
         self.assertEqual(output_tag_exp.origins.count_origins(), 1)
         self.assertTrue(output_tag_exp.origins.has_origin(
-            TagOriginType.EXPERIMENT_PROPAGATED, i_experiment.get_model().id))
+            TagOriginType.SCENARIO_PROPAGATED, i_scenario.get_model().id))
 
         # Check task tags
         ouput_tag_task_propagable = first_output.tags.get_tag(task_tag_propagable.key, task_tag_propagable.value)
@@ -303,24 +303,24 @@ class TestTag(BaseTestCase):
         self.assertTrue(second_output.tags.has_tag(tag_b))
         self.assertTrue(second_output.tags.has_tag(task_tag_propagable))
 
-        # Check tag experiment is propagated
+        # Check tag scenario is propagated
         self.assertTrue(second_output.tags.has_tag(tag_exp))
 
     def test_tag_propagation_view_note(self):
         propagable_tag = Tag('robot_tag_propagable', 'robot_value', is_propagable=True)
 
-        i_experiment: IExperiment = IExperiment()
-        i_experiment.add_tags([propagable_tag])
-        i_protocol: IProtocol = i_experiment.get_protocol()
+        i_scenario: IScenario = IScenario()
+        i_scenario.add_tags([propagable_tag])
+        i_protocol: IProtocol = i_scenario.get_protocol()
 
         tag_robot = i_protocol.add_process(RobotEat, 'tag')
         first_robot = Robot.empty()
         tag_robot.set_input('robot', first_robot)
 
-        i_experiment.run()
+        i_scenario.run()
         tag_robot.refresh()
 
-        experiment_id = i_experiment.get_model().id
+        scenario_id = i_scenario.get_model().id
 
         # Check that the first output has the tag of first input + exp + 2 tag from task
         resource_model = tag_robot.get_output_resource_model('robot')
@@ -340,7 +340,7 @@ class TestTag(BaseTestCase):
         # generate a note and add the view
         note = NoteService.create(NoteSaveDTO(title='test_note'))
 
-        NoteService.add_experiment(note.id, experiment_id)
+        NoteService.add_scenario(note.id, scenario_id)
         NoteService.add_view_to_content(note.id, view_result.view_config.id)
 
         # Check that the tags are propagated
@@ -350,10 +350,10 @@ class TestTag(BaseTestCase):
         tag = note_tags.get_tag(propagable_tag).to_simple_tag()
         self.assertTrue(tag.is_propagable)
 
-        # it should have 2 origin, the view and the experiment
+        # it should have 2 origin, the view and the scenario
         self.assertEqual(tag.origins.count_origins(), 2)
         self.assertTrue(tag.origins.has_origin(TagOriginType.VIEW_PROPAGATED, view_result.view_config.id))
-        self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, experiment_id))
+        self.assertTrue(tag.origins.has_origin(TagOriginType.SCENARIO_PROPAGATED, scenario_id))
 
         # if we remove the view from the note, the tag should be kept with 1 origin
         NoteService.update_content(note.id, RichText.create_rich_text_dto([]))
@@ -362,29 +362,29 @@ class TestTag(BaseTestCase):
         self.assertEqual(len(note_tags.get_tags()), 1)
         tag = note_tags.get_tag(propagable_tag).to_simple_tag()
         self.assertEqual(tag.origins.count_origins(), 1)
-        self.assertTrue(tag.origins.has_origin(TagOriginType.EXPERIMENT_PROPAGATED, experiment_id))
+        self.assertTrue(tag.origins.has_origin(TagOriginType.SCENARIO_PROPAGATED, scenario_id))
 
-        # Unlink the experiment from the note, it should delete the tag
-        NoteService.remove_experiment(note.id, experiment_id)
+        # Unlink the scenario from the note, it should delete the tag
+        NoteService.remove_scenario(note.id, scenario_id)
         note_tags = EntityTagList.find_by_entity(EntityType.NOTE, note.id)
         self.assertEqual(len(note_tags.get_tags()), 0)
 
     def test_tag_propagation_after(self):
-        i_experiment: IExperiment = IExperiment()
-        i_protocol: IProtocol = i_experiment.get_protocol()
+        i_scenario: IScenario = IScenario()
+        i_protocol: IProtocol = i_scenario.get_protocol()
 
         create_robot = i_protocol.add_process(RobotCreate, 'create')
-        i_experiment.run()
+        i_scenario.run()
         exp_1_output = create_robot.refresh().get_output_resource_model('robot')
-        exp_1 = i_experiment.get_model()
+        exp_1 = i_scenario.get_model()
 
-        i_experiment_2: IExperiment = IExperiment()
-        i_protocol_2: IProtocol = i_experiment_2.get_protocol()
+        i_scenario_2: IScenario = IScenario()
+        i_protocol_2: IProtocol = i_scenario_2.get_protocol()
         move_robot = i_protocol_2.add_process(RobotMove, 'move')
         i_protocol_2.add_source('source', exp_1_output.id, move_robot << 'robot')
-        i_experiment_2.run()
+        i_scenario_2.run()
         exp_2_output = move_robot.refresh().get_output_resource_model('robot')
-        exp_2 = i_experiment_2.get_model()
+        exp_2 = i_scenario_2.get_model()
 
         # generate a view from this resource
         view_result = ResourceService.get_and_call_view_on_resource_model(exp_2_output.id, 'view_as_json', {}, True)
@@ -394,9 +394,9 @@ class TestTag(BaseTestCase):
         exp_2_note = NoteService.create(NoteSaveDTO(title='test_note'))
         NoteService.add_view_to_content(exp_2_note.id, exp_2_output_view.id)
 
-        # Now add a tag to the first experiment and check that it is propagated
+        # Now add a tag to the first scenario and check that it is propagated
         new_tag = Tag('manual_tag', 'new_value', is_propagable=True, origins=TagOrigins(TagOriginType.USER, 'user_id'))
-        TagService.add_tags_to_entity_and_propagate(EntityType.EXPERIMENT, exp_1.id, [new_tag])
+        TagService.add_tags_to_entity_and_propagate(EntityType.SCENARIO, exp_1.id, [new_tag])
 
         self._check_propagation_exp_1(exp_1.id, exp_1_output.id, exp_2_output.id, exp_2.id, exp_2_note.id,
                                       exp_2_output_view.id, 1, new_tag, True)
@@ -404,10 +404,10 @@ class TestTag(BaseTestCase):
         # add a tag to exp2
         new_tag_2 = Tag('manual_tag_2', 'new_value', is_propagable=True,
                         origins=TagOrigins(TagOriginType.USER, 'user_id'))
-        TagService.add_tags_to_entity_and_propagate(EntityType.EXPERIMENT, exp_2.id, [new_tag_2])
+        TagService.add_tags_to_entity_and_propagate(EntityType.SCENARIO, exp_2.id, [new_tag_2])
 
         # check that exp1 does not have the tag
-        exp_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, exp_1)
+        exp_tags = EntityTagList.find_by_entity(EntityType.SCENARIO, exp_1)
         self.assertEqual(exp_tags.has_tag(new_tag_2), False)
 
         # check that the note has the tag with 2 origins (view and exp2)
@@ -417,13 +417,13 @@ class TestTag(BaseTestCase):
         self.assertEqual(tag.origins.count_origins(), 2)
 
         # Delete propagated tag 1
-        TagService.delete_tag_from_entity(EntityType.EXPERIMENT, exp_1.id, new_tag.key, new_tag.value)
+        TagService.delete_tag_from_entity(EntityType.SCENARIO, exp_1.id, new_tag.key, new_tag.value)
 
         self._check_propagation_exp_1(exp_1.id, exp_1_output.id, exp_2_output.id, exp_2.id, exp_2_note.id,
                                       exp_2_output_view.id, 0, new_tag, False)
 
         # Delete propagated tag 2
-        TagService.delete_tag_from_entity(EntityType.EXPERIMENT, exp_2.id, new_tag_2.key, new_tag_2.value)
+        TagService.delete_tag_from_entity(EntityType.SCENARIO, exp_2.id, new_tag_2.key, new_tag_2.value)
 
         # check that the note does not have the tag
         note_tags = EntityTagList.find_by_entity(EntityType.NOTE, exp_2_note.id)
@@ -434,7 +434,7 @@ class TestTag(BaseTestCase):
                                  note_origin_count: int,
                                  tag: Tag, should_exist: bool):
         # Check that the tags are propagated
-        exp_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, exp_1)
+        exp_tags = EntityTagList.find_by_entity(EntityType.SCENARIO, exp_1)
         self.assertEqual(exp_tags.has_tag(tag), should_exist)
 
         # check that resource 1 has the tag
@@ -446,7 +446,7 @@ class TestTag(BaseTestCase):
         self.assertEqual(resource_tags.has_tag(tag), should_exist)
 
         # check that exp2 does not have the tag
-        exp_tags = EntityTagList.find_by_entity(EntityType.EXPERIMENT, exp_2)
+        exp_tags = EntityTagList.find_by_entity(EntityType.SCENARIO, exp_2)
         self.assertEqual(exp_tags.has_tag(tag), False)
 
         # check that view has the tag

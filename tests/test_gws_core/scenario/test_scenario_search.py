@@ -2,29 +2,29 @@
 
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
                                                   SearchOperator, SearchParams)
-from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_enums import ExperimentStatus
-from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.folder.space_folder import SpaceFolder
+from gws_core.scenario.scenario import Scenario
+from gws_core.scenario.scenario_enums import ScenarioStatus
+from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.test.gtest import GTest
 
 
-# test_experiment_search
-class TestExperimentSearch(BaseTestCase):
+# test_scenario_search
+class TestScenarioSearch(BaseTestCase):
 
     def test_search(self):
-        experiment_1 = ExperimentService.create_experiment(
-            title="My first experiment title world")
+        scenario_1 = ScenarioService.create_scenario(
+            title="My first scenario title world")
 
-        experiment_2: Experiment = ExperimentService.create_experiment(
+        scenario_2: Scenario = ScenarioService.create_scenario(
             title="The second one world")
-        experiment_2.mark_as_success()
+        scenario_2.mark_as_success()
 
         folder: SpaceFolder = GTest.create_default_folder()
-        experiment_2.folder = folder
-        experiment_2.is_validated = True
-        experiment_2.save()
+        scenario_2.folder = folder
+        scenario_2.is_validated = True
+        scenario_2.save()
 
         search_dict: SearchParams = SearchParams()
 
@@ -37,7 +37,7 @@ class TestExperimentSearch(BaseTestCase):
         search_dict.set_filters_criteria([
             SearchFilterCriteria(
                 key="status", operator=SearchOperator.EQ,
-                value=ExperimentStatus.SUCCESS.value)])
+                value=ScenarioStatus.SUCCESS.value)])
         self.search(search_dict, 1)
 
         # Test validate search
@@ -51,5 +51,5 @@ class TestExperimentSearch(BaseTestCase):
         self.search(search_dict, 1)
 
     def search(self, search_dict: SearchParams, expected_nb_of_result: int) -> None:
-        paginator = ExperimentService.search(search_dict).to_dto()
+        paginator = ScenarioService.search(search_dict).to_dto()
         self.assertEqual(paginator.total_number_of_items, expected_nb_of_result)

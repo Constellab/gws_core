@@ -12,7 +12,6 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.document_template.document_template import DocumentTemplate
-from gws_core.experiment.experiment import Experiment
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
@@ -28,7 +27,7 @@ from gws_core.lab.monitor.monitor import Monitor
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
-from gws_core.note.note import Note, NoteExperiment
+from gws_core.note.note import Note, NoteScenario
 from gws_core.note.note_view_model import NoteViewModel
 from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar
@@ -43,6 +42,9 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view_config.view_config import ViewConfig
+from gws_core.scenario.queue import Job
+from gws_core.scenario.scenario import Scenario
+from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
 from gws_core.task.plug import Sink, Source
@@ -72,16 +74,16 @@ class Migration022(BrickMigration):
         migrator.migrate()
 
 
-@brick_migration('0.2.3', short_description='Create LabConfigModel table and add lab_config_id to experiment')
+@brick_migration('0.2.3', short_description='Create LabConfigModel table and add lab_config_id to scenario')
 class Migration023(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
         LabConfigModel.create_table()
 
-        migrator: SqlMigrator = SqlMigrator(Experiment.get_db())
+        migrator: SqlMigrator = SqlMigrator(Scenario.get_db())
 
-        migrator.add_column_if_not_exists(Experiment, Experiment.lab_config)
+        migrator.add_column_if_not_exists(Scenario, Scenario.lab_config)
         migrator.migrate()
 
 
@@ -245,7 +247,7 @@ class Migration0312(BrickMigration):
                 Logger.log_exception_stack_trace(err)
 
 
-@brick_migration('0.3.13', short_description='Update orgin values of resources, add show_in_databox and generated_by_port_name columns. Add validated info to experiment and note')
+@brick_migration('0.3.13', short_description='Update orgin values of resources, add show_in_databox and generated_by_port_name columns. Add validated info to scenario and note')
 class Migration0313(BrickMigration):
 
     @classmethod
@@ -256,8 +258,8 @@ class Migration0313(BrickMigration):
         migrator.add_column_if_not_exists(ResourceModel, ResourceModel.flagged)
         migrator.add_column_if_not_exists(
             ResourceModel, ResourceModel.generated_by_port_name)
-        migrator.add_column_if_not_exists(Experiment, Experiment.validated_at)
-        migrator.add_column_if_not_exists(Experiment, Experiment.validated_by)
+        migrator.add_column_if_not_exists(Scenario, Scenario.validated_at)
+        migrator.add_column_if_not_exists(Scenario, Scenario.validated_by)
         migrator.add_column_if_not_exists(Note, Note.validated_at)
         migrator.add_column_if_not_exists(Note, Note.validated_by)
         migrator.migrate()
@@ -268,10 +270,10 @@ class Migration0313(BrickMigration):
 
             try:
                 # update orgin values
-                # if resource_model.experiment is not None:
-                #     if resource_model.experiment.type == ExperimentType.IMPORTER:
+                # if resource_model.scenario is not None:
+                #     if resource_model.scenario.type == ScenarioType.IMPORTER:
                 #         resource_model.origin = ResourceOrigin.GENERATED
-                #     elif resource_model.experiment.type == ExperimentType.TRANSFORMER:
+                #     elif resource_model.scenario.type == ScenarioType.TRANSFORMER:
                 #         resource_model.origin = ResourceOrigin.GENERATED
 
                 # set show_in_databox
@@ -299,13 +301,13 @@ class Migration0313(BrickMigration):
                     f'Error while migrating resource {resource_model.id} : {err}')
                 Logger.log_exception_stack_trace(err)
 
-        # update validated info to experiment and note
-        experiment_models: List[Experiment] = list(Experiment.select())
-        for experiment_model in experiment_models:
-            if experiment_model.is_validated:
-                experiment_model.validated_at = experiment_model.last_modified_at
-                experiment_model.validated_by = experiment_model.last_modified_by
-                experiment_model.save()
+        # update validated info to scenario and note
+        scenario_models: List[Scenario] = list(Scenario.select())
+        for scenario_model in scenario_models:
+            if scenario_model.is_validated:
+                scenario_model.validated_at = scenario_model.last_modified_at
+                scenario_model.validated_by = scenario_model.last_modified_by
+                scenario_model.save()
 
         note_models: List[Note] = list(Note.select())
         for note_model in note_models:
@@ -323,25 +325,25 @@ class Migration0314(BrickMigration):
         # migration deprecated, tags are now stored in the resource model
 
 
-@brick_migration('0.3.15', short_description='Add last_sync info to Experiment and Note')
+@brick_migration('0.3.15', short_description='Add last_sync info to Scenario and Note')
 class Migration0315(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        migrator: SqlMigrator = SqlMigrator(Experiment.get_db())
-        migrator.add_column_if_not_exists(Experiment, Experiment.last_sync_at)
-        migrator.add_column_if_not_exists(Experiment, Experiment.last_sync_by)
+        migrator: SqlMigrator = SqlMigrator(Scenario.get_db())
+        migrator.add_column_if_not_exists(Scenario, Scenario.last_sync_at)
+        migrator.add_column_if_not_exists(Scenario, Scenario.last_sync_by)
         migrator.add_column_if_not_exists(Note, Note.last_sync_at)
         migrator.add_column_if_not_exists(Note, Note.last_sync_by)
         migrator.migrate()
 
-        experiments: List[Experiment] = list(
-            Experiment.select().where(Experiment.is_validated == True))
-        for experiment in experiments:
-            experiment.last_sync_at = experiment.last_modified_at
-            experiment.last_sync_by = experiment.last_modified_by
-            experiment.save()
+        scenarios: List[Scenario] = list(
+            Scenario.select().where(Scenario.is_validated == True))
+        for scenario in scenarios:
+            scenario.last_sync_at = scenario.last_modified_at
+            scenario.last_sync_by = scenario.last_modified_by
+            scenario.save()
 
         notes: List[Note] = list(
             Note.select().where(Note.is_validated == True))
@@ -364,7 +366,7 @@ class Migration0316(BrickMigration):
         migrator.rename_column_if_exists(
             ResourceModel, 'show_in_databox', 'flagged')
         migrator.alter_column_type(
-            Experiment, Experiment.tags.column_name, CharField(null=True, max_length=255))
+            Scenario, Scenario.tags.column_name, CharField(null=True, max_length=255))
         migrator.alter_column_type(
             ResourceModel, ResourceModel.tags.column_name, CharField(null=True, max_length=255))
         migrator.migrate()
@@ -600,8 +602,8 @@ class Migration050(BrickMigration):
         for resource_model in resource_models:
 
             try:
-                if resource_model.experiment and resource_model.experiment.folder:
-                    resource_model.folder = resource_model.experiment.folder
+                if resource_model.scenario and resource_model.scenario.folder:
+                    resource_model.folder = resource_model.scenario.folder
                     resource_model.save()
             except Exception as exception:
                 Logger.error(
@@ -660,13 +662,13 @@ class Migration057(BrickMigration):
             (Activity.object_type == "gws_core.protocol.protocol_model.ProtocolModel") &
             (Activity.activity_type == "CREATE")).execute()
 
-        Activity.update(object_type=ActivityObjectType.EXPERIMENT.value).where(
-            Activity.object_type == "gws_core.experiment.experiment.Experiment").execute()
+        Activity.update(object_type=ActivityObjectType.SCENARIO.value).where(
+            Activity.object_type == "gws_core.scenario.scenario.Scenario").execute()
 
         Activity.update(object_type=ActivityType.VALIDATE.value).where(
-            Activity.activity_type == "VALIDATE_EXPERIMENT").execute()
+            Activity.activity_type == "VALIDATE_SCENARIO").execute()
 
-        Activity.update(activity_type=ActivityType.RUN_EXPERIMENT.value).where(
+        Activity.update(activity_type=ActivityType.RUN_SCENARIO.value).where(
             Activity.activity_type == "START").execute()
 
         Activity.update(object_type=ActivityObjectType.USER.value).where(
@@ -725,7 +727,7 @@ class Migration073(BrickMigration):
         migrator.rename_column_if_exists(ProtocolModel, 'brick_version', 'brick_version_on_create')
         migrator.add_column_if_not_exists(TaskModel, TaskModel.brick_version_on_run)
         migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.brick_version_on_run)
-        migrator.add_column_if_not_exists(Experiment, Experiment.creation_type)
+        migrator.add_column_if_not_exists(Scenario, Scenario.creation_type)
         migrator.migrate()
 
         process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
@@ -737,11 +739,11 @@ class Migration073(BrickMigration):
         ResourceModel.update(origin=ResourceOrigin.GENERATED).where(
             ResourceModel.origin.in_(["IMPORTED", "EXPORTED", "TRANSFORMED", "ACTIONS"])).execute()
 
-        if Experiment.column_exists('type'):
-            Experiment.get_db().execute_sql('UPDATE gws_experiment SET creation_type = "MANUAL" WHERE type = "EXPERIMENT"')
-            Experiment.get_db().execute_sql('UPDATE gws_experiment SET creation_type = "AUTO" WHERE type in ("TRANSFORMER", "IMPORTER", "EXPORTER", "FS_NODE_EXTRACTOR", "RESOURCE_DOWNLOADER", "ACTIONS")')
-            migrator = SqlMigrator(Experiment.get_db())
-            migrator.drop_column_if_exists(Experiment, 'type')
+        if Scenario.column_exists('type'):
+            Scenario.get_db().execute_sql('UPDATE gws_scenario SET creation_type = "MANUAL" WHERE type = "SCENARIO"')
+            Scenario.get_db().execute_sql('UPDATE gws_scenario SET creation_type = "AUTO" WHERE type in ("TRANSFORMER", "IMPORTER", "EXPORTER", "FS_NODE_EXTRACTOR", "RESOURCE_DOWNLOADER", "ACTIONS")')
+            migrator = SqlMigrator(Scenario.get_db())
+            migrator.drop_column_if_exists(Scenario, 'type')
             migrator.migrate()
 
 
@@ -780,7 +782,7 @@ class Migration075(BrickMigration):
             protocol_model.save(skip_hook=True)
 
         # fix old activity type
-        Activity.update(activity_type=ActivityType.STOP_EXPERIMENT.value).where(
+        Activity.update(activity_type=ActivityType.STOP_SCENARIO.value).where(
             Activity.activity_type == "STOP").execute()
 
     @classmethod
@@ -832,7 +834,7 @@ class Migration080Beta1(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(Note.get_db())
         migrator.drop_column_if_exists(Note, 'old_content')
         migrator.drop_column_if_exists(DocumentTemplate, "old_content")
-        migrator.drop_column_if_exists(Experiment, "old_description")
+        migrator.drop_column_if_exists(Scenario, "old_description")
         migrator.drop_column_if_exists(ProtocolTemplate, "old_description")
         migrator.drop_column_if_exists(Typing, "icon")
         migrator.add_column_if_not_exists(Typing, Typing.style)
@@ -864,15 +866,15 @@ class Migration080(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        migrator: SqlMigrator = SqlMigrator(Experiment.get_db())
-        migrator.drop_column_if_exists(Experiment, 'score')
+        migrator: SqlMigrator = SqlMigrator(Scenario.get_db())
+        migrator.drop_column_if_exists(Scenario, 'score')
 
         migrator.drop_column_if_exists(Monitor, 'external_disk_total')
         migrator.drop_column_if_exists(Monitor, 'external_disk_usage_used')
         migrator.drop_column_if_exists(Monitor, 'external_disk_usage_percent')
         migrator.drop_column_if_exists(Monitor, 'external_disk_usage_free')
 
-        migrator.drop_column_if_exists(Experiment, 'tags')
+        migrator.drop_column_if_exists(Scenario, 'tags')
         migrator.drop_column_if_exists(ProtocolTemplate, 'tags')
         migrator.drop_column_if_exists(ResourceModel, 'tags')
         migrator.drop_column_if_exists(ViewConfig, 'tags')
@@ -941,24 +943,37 @@ class Migration0100(BrickMigration):
         migrator: SqlMigrator = SqlMigrator(ResourceModel.get_db())
         migrator.rename_table_if_exists(SpaceFolder, 'gws_project')
         migrator.rename_table_if_exists(Note, 'gws_report')
-        migrator.rename_table_if_exists(NoteExperiment, 'gws_report_experiment')
+        migrator.rename_table_if_exists(NoteScenario, 'gws_report_experiment')
         migrator.rename_table_if_exists(NoteViewModel, 'gws_report_view')
-        migrator.rename_column_if_exists(Experiment, 'project_id', 'folder_id')
-        migrator.rename_column_if_exists(ResourceModel, 'project_id', 'folder_id')
+        migrator.rename_table_if_exists(Scenario, 'gws_experiment')
+        migrator.rename_table_if_exists(SharedScenario, 'gws_shared_experiment')
         migrator.migrate()
 
         migrator_2: SqlMigrator = SqlMigrator(ResourceModel.get_db())
-        migrator_2.rename_column_if_exists(Note, 'project_id', 'folder_id')
-        migrator_2.drop_column_if_exists(SpaceFolder, 'code')
         migrator_2.drop_column_if_exists(SpaceFolder, 'level_status')
+        migrator_2.drop_column_if_exists(SpaceFolder, 'code')
+        # rename all project id
+        migrator_2.rename_column_if_exists(Note, 'project_id', 'folder_id')
+        migrator_2.rename_column_if_exists(Scenario, 'project_id', 'folder_id')
+        migrator_2.rename_column_if_exists(ResourceModel, 'project_id', 'folder_id')
+        # rename all scenario_id
+        migrator_2.rename_column_if_exists(ProtocolModel, 'experiment_id', 'scenario_id')
+        migrator_2.rename_column_if_exists(TaskModel, 'experiment_id', 'scenario_id')
+        migrator_2.rename_column_if_exists(Job, 'experiment_id', 'scenario_id')
+        migrator_2.rename_column_if_exists(ResourceModel, 'experiment_id', 'scenario_id')
+        migrator_2.rename_column_if_exists(TaskInputModel, 'experiment_id', 'scenario_id')
+        migrator_2.rename_column_if_exists(ViewConfig, 'experiment_id', 'scenario_id')
         migrator_2.migrate()
 
         # use manual query, rename column doesn't work for primary key
-        if NoteExperiment.column_exists('report_id'):
-            NoteExperiment.get_db().execute_sql('ALTER TABLE gws_note_experiment CHANGE report_id note_id VARCHAR(36) NOT NULL')
+        if NoteScenario.column_exists('report_id'):
+            NoteScenario.get_db().execute_sql('ALTER TABLE gws_note_scenario CHANGE report_id note_id VARCHAR(36) NOT NULL')
 
         if NoteViewModel.column_exists('report_id'):
             NoteViewModel.get_db().execute_sql('ALTER TABLE gws_note_view CHANGE report_id note_id VARCHAR(36) NOT NULL')
+
+        if NoteScenario.column_exists('experiment_id'):
+            NoteScenario.get_db().execute_sql('ALTER TABLE gws_note_scenario CHANGE experiment_id scenario_id VARCHAR(36) NOT NULL')
 
         ResourceModel.update(origin=ResourceOrigin.S3_FOLDER_STORAGE).where(
             ResourceModel.origin == "S3_PROJECT_STORAGE").execute()
