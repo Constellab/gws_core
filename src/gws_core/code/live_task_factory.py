@@ -82,9 +82,9 @@ class LiveTaskFactory:
         task: TaskModel = TaskModel.get_by_id_and_check(task_id)
         values = task.config.get_and_check_values()
         code = task.config.get_value("code")
-        params = []
+        params = ''
         if values.get("params") is not None:
-            params = task.config.get_value("params")
+            params = '\n'.join(task.config.get_value("params"))
         env = ""
         if values.get("env") is not None:
             env = task.config.get_value("env")

@@ -6,6 +6,10 @@
 
 # Brick
 from .brick.brick_service import BrickService as BrickService
+# Code > LiveTaskFactory
+from .code.live_task_factory import LiveTaskFactory as LiveTaskFactory
+# Community
+from .community.community_service import CommunityService as CommunityService
 # Config
 from .config.config import Config as Config
 from .config.config_params import ConfigParams as ConfigParams

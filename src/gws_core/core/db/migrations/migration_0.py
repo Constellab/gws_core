@@ -938,19 +938,19 @@ class Migration0100(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        migrator: SqlMigrator = SqlMigrator(SpaceFolder.get_db())
+        migrator: SqlMigrator = SqlMigrator(ResourceModel.get_db())
         migrator.rename_table_if_exists(SpaceFolder, 'gws_project')
         migrator.rename_table_if_exists(Note, 'gws_report')
         migrator.rename_table_if_exists(NoteExperiment, 'gws_report_experiment')
         migrator.rename_table_if_exists(NoteViewModel, 'gws_report_view')
         migrator.rename_column_if_exists(Experiment, 'project_id', 'folder_id')
         migrator.rename_column_if_exists(ResourceModel, 'project_id', 'folder_id')
-        migrator.drop_column_if_exists(SpaceFolder, 'code')
-        migrator.drop_column_if_exists(SpaceFolder, 'level_status')
         migrator.migrate()
 
-        migrator_2: SqlMigrator = SqlMigrator(SpaceFolder.get_db())
+        migrator_2: SqlMigrator = SqlMigrator(ResourceModel.get_db())
         migrator_2.rename_column_if_exists(Note, 'project_id', 'folder_id')
+        migrator_2.drop_column_if_exists(SpaceFolder, 'code')
+        migrator_2.drop_column_if_exists(SpaceFolder, 'level_status')
         migrator_2.migrate()
 
         # use manual query, rename column doesn't work for primary key

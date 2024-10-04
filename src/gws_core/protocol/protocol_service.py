@@ -787,11 +787,17 @@ class ProtocolService():
 
     @classmethod
     @transaction()
-    def add_community_live_task_version_to_protocol_id(
+    def add_live_task_to_protocol_id_by_live_task_version_id(
             cls, protocol_id: str, live_task_version_id: str) -> ProtocolUpdate:
-
         community_live_task_version: CommunityLiveTaskVersionDTO = CommunityService.get_community_live_task_version(
             live_task_version_id)
+
+        return cls.add_community_live_task_version_to_protocol_id(protocol_id, community_live_task_version)
+
+    @classmethod
+    @transaction()
+    def add_community_live_task_version_to_protocol_id(
+            cls, protocol_id: str, community_live_task_version: CommunityLiveTaskVersionDTO) -> ProtocolUpdate:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
@@ -799,16 +805,20 @@ class ProtocolService():
 
         live_task_type: Type[Process] = process_typing.get_type()
 
+        params = []
+        if community_live_task_version.params and len(community_live_task_version.params) > 0:
+            params = community_live_task_version.params.splitlines()
+
         # setting config params
         config_params: ConfigParamsDict
         if issubclass(live_task_type, PyLiveTask):
             config_params = live_task_type.build_config_params_dict(
                 code=community_live_task_version.code,
-                params=community_live_task_version.params)
+                params=params)
         elif issubclass(live_task_type, EnvLiveTask):
             config_params = live_task_type.build_config_params_dict(
                 code=community_live_task_version.code,
-                params=community_live_task_version.params,
+                params=params,
                 env=community_live_task_version.environment)
         elif issubclass(live_task_type, StreamlitLiveTask):
             config_params = live_task_type.build_config_params_dict(code=community_live_task_version.code)
@@ -825,21 +835,23 @@ class ProtocolService():
         protocol_update = cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=process_model)
 
         # TODO TO IMPROVE WHEN UPDATING LIVE TASK CONFIG
-        for port in list(protocol_update.process.inputs.ports.keys()):
-            protocol_update = cls.delete_dynamic_input_port_of_process(
-                protocol_id, protocol_update.process.instance_name, port)
+        if protocol_update.process.inputs.is_dynamic:
+            for port in list(protocol_update.process.inputs.ports.keys()):
+                protocol_update = cls.delete_dynamic_input_port_of_process(
+                    protocol_id, protocol_update.process.instance_name, port)
 
-        for port in list(protocol_update.process.outputs.ports.keys()):
-            protocol_update = cls.delete_dynamic_output_port_of_process(
-                protocol_id, protocol_update.process.instance_name, port)
+            for io_spec in list(community_live_task_version.input_specs.specs.values()):
+                protocol_update = cls.add_dynamic_input_port_to_process(
+                    protocol_id, protocol_update.process.instance_name, io_spec)
 
-        for io_spec in list(community_live_task_version.input_specs.specs.values()):
-            protocol_update = cls.add_dynamic_input_port_to_process(
-                protocol_id, protocol_update.process.instance_name, io_spec)
+        if protocol_update.process.outputs.is_dynamic:
+            for port in list(protocol_update.process.outputs.ports.keys()):
+                protocol_update = cls.delete_dynamic_output_port_of_process(
+                    protocol_id, protocol_update.process.instance_name, port)
 
-        for io_spec in list(community_live_task_version.output_specs.specs.values()):
-            protocol_update = cls.add_dynamic_output_port_to_process(
-                protocol_id, protocol_update.process.instance_name, io_spec)
+            for io_spec in list(community_live_task_version.output_specs.specs.values()):
+                protocol_update = cls.add_dynamic_output_port_to_process(
+                    protocol_id, protocol_update.process.instance_name, io_spec)
 
         return protocol_update
 

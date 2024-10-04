@@ -87,7 +87,7 @@ def add_community_live_task(id_: str,
     Add a constellab community live task to a protocol
     """
     with update_lock:
-        return ProtocolService.add_community_live_task_version_to_protocol_id(id_, live_task_version_id).to_dto()
+        return ProtocolService.add_live_task_to_protocol_id_by_live_task_version_id(id_, live_task_version_id).to_dto()
 
 
 @core_app.post("/protocol/get-community-available-spaces", tags=["Protocol"],
