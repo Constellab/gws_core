@@ -9,14 +9,14 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
-from gws_core.protocol_template.protocol_template_factory import \
-    ProtocolTemplateFactory
-from gws_core.protocol_template.protocol_template_service import \
-    ProtocolTemplateService
 from gws_core.resource.resource import Resource
 from gws_core.scenario.scenario_dto import ScenarioSaveDTO
 from gws_core.scenario.scenario_interface import IScenario
 from gws_core.scenario.scenario_service import ScenarioService
+from gws_core.scenario_component.scenario_component_factory import \
+    ScenarioComponentFactory
+from gws_core.scenario_component.scenario_component_service import \
+    ScenarioComponentService
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -26,8 +26,8 @@ from gws_core.test.base_test_case import BaseTestCase
 from ..protocol_examples import TestNestedProtocol
 
 
-@task_decorator("TestProtocolTemplateDynamic")
-class TestProtocolTemplateDynamic(Task):
+@task_decorator("TestScenarioComponentDynamic")
+class TestScenarioComponentDynamic(Task):
 
     input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = DynamicOutputs()
@@ -47,10 +47,10 @@ class TestGenerator(Task):
         return {}
 
 
-# test_protocol_template
-class TestProtocolTemplate(BaseTestCase):
+# test_scenario_component
+class TestScenarioComponent(BaseTestCase):
 
-    def test_protocol_template(self):
+    def test_scenario_component(self):
 
         init_count_protocol = ProtocolModel.select().count()
         init_count_task = TaskModel.select().count()
@@ -69,35 +69,35 @@ class TestProtocolTemplate(BaseTestCase):
         count_task = TaskModel.select().count() - init_count_task
 
         # create a template
-        template = ProtocolService.create_protocol_template_from_id(
-            protocol_id=proto.id, name='test_protocol_template')
+        template = ProtocolService.create_scenario_component_from_id(
+            protocol_id=proto.id, name='test_scenario_component')
 
         # get the template
-        template_db = ProtocolTemplateService.get_by_id_and_check(template.id)
+        template_db = ScenarioComponentService.get_by_id_and_check(template.id)
 
-        self.assertEqual(template_db.name, 'test_protocol_template')
-        self.assertIsNotNone(template_db.get_template().nodes)
+        self.assertEqual(template_db.name, 'test_scenario_component')
+        self.assertIsNotNone(template_db.get_graph().nodes)
         # check the sub protocol is in the template
-        self.assertIsNotNone(template_db.get_template().nodes['mini_proto'].graph)
-        self.assertIsNotNone(template_db.get_template().links)
-        self.assertIsNotNone(template_db.get_template().layout)
+        self.assertIsNotNone(template_db.get_graph().nodes['mini_proto'].graph)
+        self.assertIsNotNone(template_db.get_graph().links)
+        self.assertIsNotNone(template_db.get_graph().layout)
         self.assertIsNotNone(template_db.to_export_dto())
         self.assertIsNotNone(template_db.get_protocol_config_dto())
 
         # update the template
-        ProtocolTemplateService.update(id=template.id, name='new_name')
+        ScenarioComponentService.update(id=template.id, name='new_name')
 
         # get the template
         template_db = template_db.refresh()
         self.assertEqual(template_db.name, 'new_name')
 
         # test search
-        paginator = ProtocolTemplateService.search_by_name('ew_na')
+        paginator = ScenarioComponentService.search_by_name('ew_na')
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, template_db.id)
 
         # Test create an scenario from a template
-        scenario = ScenarioService.create_scenario(protocol_template=template_db)
+        scenario = ScenarioService.create_scenario(scenario_component=template_db)
 
         # check that protocol and task are created
         self.assertEqual(ProtocolModel.select().count(), init_count_protocol + (count_protocol * 2))
@@ -122,19 +122,19 @@ class TestProtocolTemplate(BaseTestCase):
         self.assertIsInstance(p1, TaskModel)
 
         # delete the template
-        ProtocolTemplateService.delete(template.id)
+        ScenarioComponentService.delete(template.id)
 
         # check that the template is deleted
         with self.assertRaises(Exception):
-            ProtocolTemplateService.get_by_id_and_check(template.id)
+            ScenarioComponentService.get_by_id_and_check(template.id)
 
     def test_dynamic_io(self):
-        """ Test that the protocol template supports dynamic io"""
+        """ Test that the component supports dynamic io"""
         scenario = IScenario()
 
         protocol = scenario.get_protocol()
 
-        process = protocol.add_process(TestProtocolTemplateDynamic, 'dynamic')
+        process = protocol.add_process(TestScenarioComponentDynamic, 'dynamic')
         source_1 = protocol.add_process(TestGenerator, 'source_1')
         source_2 = protocol.add_process(TestGenerator, 'source_2')
 
@@ -156,11 +156,11 @@ class TestProtocolTemplate(BaseTestCase):
             i += 1
 
         # create a template
-        template = ProtocolService.create_protocol_template_from_id(
+        template = ProtocolService.create_scenario_component_from_id(
             protocol_id=protocol.get_model().id, name='test_dynamic')
 
         # Test create an scenario from a template
-        scenario_dto = ScenarioSaveDTO(protocol_template_id=template.id, title='')
+        scenario_dto = ScenarioSaveDTO(scenario_component_id=template.id, title='')
         scenario = ScenarioService.create_scenario_from_dto(scenario_dto)
 
         # check that protocol and task are created
@@ -170,7 +170,7 @@ class TestProtocolTemplate(BaseTestCase):
 
         # Test create the same scenario with the template json instead of the template id
         export_dto = template.to_export_dto()
-        scenario_dto = ScenarioSaveDTO(protocol_template_json=export_dto.to_json_dict(), title='')
+        scenario_dto = ScenarioSaveDTO(scenario_component_json=export_dto.to_json_dict(), title='')
         scenario = ScenarioService.create_scenario_from_dto(scenario_dto)
 
         # check that protocol and task are created
@@ -184,17 +184,17 @@ class TestProtocolTemplate(BaseTestCase):
             TestNestedProtocol)
 
         # create a template
-        template = ProtocolService.create_protocol_template_from_id(
-            protocol_id=proto.id, name='test_protocol_template')
+        template = ProtocolService.create_scenario_component_from_id(
+            protocol_id=proto.id, name='test_scenario_component')
 
         template_str = template.to_export_dto().to_json_str()
-        new_template = ProtocolTemplateFactory.from_export_dto_str(template_str)
+        new_template = ScenarioComponentFactory.from_export_dto_str(template_str)
         self.assert_json(new_template.name, template.name)
         self.assert_json(new_template.version, template.version)
         self.assert_json(new_template.description, template.description)
         self.assert_json(new_template.to_export_dto().data.to_json_dict(), template.to_export_dto().data.to_json_dict())
 
-    def test_add_protocol_template_to_protocol(self):
+    def test_add_scenario_component_to_protocol(self):
         i_scenario = IScenario()
 
         protocol = i_scenario.get_protocol()
@@ -203,17 +203,17 @@ class TestProtocolTemplate(BaseTestCase):
         protocol.add_source('source', None, process << 'robot')
         protocol.add_sink('sink', process >> 'robot')
 
-        # create protocol template
-        template = ProtocolService.create_protocol_template_from_id(protocol.get_model().id, 'test_template')
+        # create component
+        template = ProtocolService.create_scenario_component_from_id(protocol.get_model().id, 'test_template')
 
         # Create an empty scenario
         scenario_2 = IScenario()
 
-        # Add the protocol template to the scenario
+        # Add the component to the scenario
         protocol_model_2 = scenario_2.get_protocol().get_model()
-        protocol_update = ProtocolService.add_protocol_template_to_protocol(protocol_model_2.id, template.id)
+        protocol_update = ProtocolService.add_scenario_component_to_protocol(protocol_model_2.id, template.id)
 
-        # Check that the protocol template is added to the protocol
+        # Check that the component is added to the protocol
         protocol_2: IProtocol = scenario_2.get_protocol().refresh()
         sub_protocol: ProtocolModel = protocol_2.get_process(protocol_update.process.instance_name).get_model()
 
@@ -231,7 +231,7 @@ class TestProtocolTemplate(BaseTestCase):
     def test_migration(self):
 
         # Simple protocol Source > TableTransposer on v1
-        old_protocol_template = {
+        old_scenario_component = {
             "id": "123",
             "version": 1,
             "name": "test",
@@ -385,5 +385,5 @@ class TestProtocolTemplate(BaseTestCase):
             }
         }
 
-        new_protocol_template = ProtocolTemplateFactory.from_export_dto_dict(old_protocol_template)
-        self.assertEqual(new_protocol_template.version, 3)
+        new_scenario_component = ScenarioComponentFactory.from_export_dto_dict(old_scenario_component)
+        self.assertEqual(new_scenario_component.version, 3)

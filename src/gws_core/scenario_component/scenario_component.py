@@ -7,18 +7,13 @@ from gws_core.core.model.db_field import JSONField
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactory
 from gws_core.protocol.protocol_model import ProtocolModel
-from gws_core.protocol_template.protocol_template_dto import (
-    ProtocolTemplateDTO, ProtocolTemplateExportDTO)
+from gws_core.scenario_component.scenario_component_dto import (
+    ScenarioComponentDTO, ScenarioComponentExportDTO)
 
 from ..core.model.model_with_user import ModelWithUser
 
 
-class ProtocolTemplate(ModelWithUser):
-    """ Entity to store template of protocol
-
-    :param ModelWithUser: _description_
-    :type ModelWithUser: _type_
-    """
+class ScenarioComponent(ModelWithUser):
 
     CURRENT_VERSION = 3
 
@@ -26,11 +21,11 @@ class ProtocolTemplate(ModelWithUser):
 
     description = JSONField(null=True)
 
-    # version number of the protocol template
+    # version number of the scenario component
     version = IntegerField(null=False, default=1)
     data: Dict[str, Any] = JSONField(null=True)
 
-    _table_name = "gws_protocol_template"
+    _table_name = "gws_scenario_component"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -38,14 +33,14 @@ class ProtocolTemplate(ModelWithUser):
         if not self.is_saved() and not self.data:
             self.data = {}
 
-    def get_template(self) -> ProtocolGraphConfigDTO:
+    def get_graph(self) -> ProtocolGraphConfigDTO:
         return ProtocolGraphConfigDTO.from_json(self.data)
 
-    def set_template(self, template: ProtocolGraphConfigDTO):
-        self.data = template.to_json_dict()
+    def set_graph(self, graph: ProtocolGraphConfigDTO):
+        self.data = graph.to_json_dict()
 
-    def to_dto(self) -> ProtocolTemplateDTO:
-        return ProtocolTemplateDTO(
+    def to_dto(self) -> ScenarioComponentDTO:
+        return ScenarioComponentDTO(
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
@@ -56,9 +51,9 @@ class ProtocolTemplate(ModelWithUser):
             description=self.description
         )
 
-    def to_export_dto(self) -> ProtocolTemplateExportDTO:
-        # create a new protocol to refresh the template info ()
-        return ProtocolTemplateExportDTO(
+    def to_export_dto(self) -> ScenarioComponentExportDTO:
+        # create a new protocol to refresh the component info ()
+        return ScenarioComponentExportDTO(
             id=self.id,
             name=self.name,
             version=self.version,
@@ -71,7 +66,7 @@ class ProtocolTemplate(ModelWithUser):
         return protocol_model.to_protocol_config_dto()
 
     def generate_protocol_model(self) -> ProtocolModel:
-        protocol_model = ProtocolGraphFactory.create_protocol_model_from_type(self.get_template())
+        protocol_model = ProtocolGraphFactory.create_protocol_model_from_type(self.get_graph())
 
         protocol_model.name = self.name
 

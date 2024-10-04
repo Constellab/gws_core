@@ -32,9 +32,6 @@ from gws_core.note.note_view_model import NoteViewModel
 from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar
 from gws_core.protocol.protocol_model import ProtocolModel
-from gws_core.protocol_template.protocol_template import ProtocolTemplate
-from gws_core.protocol_template.protocol_template_factory import \
-    ProtocolTemplateFactory
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -44,6 +41,9 @@ from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.scenario.queue import Job
 from gws_core.scenario.scenario import Scenario
+from gws_core.scenario_component.scenario_component import ScenarioComponent
+from gws_core.scenario_component.scenario_component_factory import \
+    ScenarioComponentFactory
 from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
@@ -769,11 +769,11 @@ class Migration075(BrickMigration):
                     process_model.name = process_model.instance_name
                 process_model.save(skip_hook=True)
 
-        # migrate protocol template to new name
-        protocol_templates: List[ProtocolTemplate] = list(ProtocolTemplate.select())
-        for protocol_template in protocol_templates:
-            cls.migrate_protocol_template_recur(protocol_template.data)
-            protocol_template.save(skip_hook=True)
+        # migrate component to new name
+        scenario_components: List[ScenarioComponent] = list(ScenarioComponent.select())
+        for scenario_component in scenario_components:
+            cls.migrate_scenario_component_recur(scenario_component.data)
+            scenario_component.save(skip_hook=True)
 
         # simplify the json stored for interface and outerface
         protocol_models: List[ProtocolModel] = list(ProtocolModel.select())
@@ -786,7 +786,7 @@ class Migration075(BrickMigration):
             Activity.activity_type == "STOP").execute()
 
     @classmethod
-    def migrate_protocol_template_recur(cls, protocol_graph: dict) -> None:
+    def migrate_scenario_component_recur(cls, protocol_graph: dict) -> None:
         for process_dto in protocol_graph["nodes"].values():
             if "name" not in process_dto:
                 process_dto["name"] = process_dto["human_name"]
@@ -803,7 +803,7 @@ class Migration075(BrickMigration):
                 del process_dto["short_description"]
 
             if process_dto.get('graph') is not None and "nodes" in process_dto["graph"]:
-                cls.migrate_protocol_template_recur(process_dto["graph"])
+                cls.migrate_scenario_component_recur(process_dto["graph"])
         cls.migrate_protocol_iofaces(protocol_graph)
 
     @classmethod
@@ -835,7 +835,7 @@ class Migration080Beta1(BrickMigration):
         migrator.drop_column_if_exists(Note, 'old_content')
         migrator.drop_column_if_exists(DocumentTemplate, "old_content")
         migrator.drop_column_if_exists(Scenario, "old_description")
-        migrator.drop_column_if_exists(ProtocolTemplate, "old_description")
+        migrator.drop_column_if_exists(ScenarioComponent, "old_description")
         migrator.drop_column_if_exists(Typing, "icon")
         migrator.add_column_if_not_exists(Typing, Typing.style)
         migrator.add_column_if_not_exists(ViewConfig, ViewConfig.style)
@@ -845,10 +845,10 @@ class Migration080Beta1(BrickMigration):
 
         migrator.migrate()
 
-        protocol_templates: List[ProtocolTemplate] = list(ProtocolTemplate.select())
-        for protocol_template in protocol_templates:
-            cls.migrate_template_data(protocol_template.data)
-            protocol_template.save(skip_hook=True)
+        scenario_components: List[ScenarioComponent] = list(ScenarioComponent.select())
+        for scenario_component in scenario_components:
+            cls.migrate_template_data(scenario_component.data)
+            scenario_component.save(skip_hook=True)
 
     @classmethod
     def migrate_template_data(cls, graph: dict) -> None:
@@ -875,7 +875,7 @@ class Migration080(BrickMigration):
         migrator.drop_column_if_exists(Monitor, 'external_disk_usage_free')
 
         migrator.drop_column_if_exists(Scenario, 'tags')
-        migrator.drop_column_if_exists(ProtocolTemplate, 'tags')
+        migrator.drop_column_if_exists(ScenarioComponent, 'tags')
         migrator.drop_column_if_exists(ResourceModel, 'tags')
         migrator.drop_column_if_exists(ViewConfig, 'tags')
 
@@ -899,13 +899,13 @@ class Migration084(BrickMigration):
         migrator.rename_table_if_exists(DocumentTemplate, "gws_note_template")
         migrator.migrate()
 
-        protocol_templates: List[ProtocolTemplate] = list(
-            ProtocolTemplate.select().where(ProtocolTemplate.version == 1))
+        scenario_components: List[ScenarioComponent] = list(
+            ScenarioComponent.select().where(ScenarioComponent.version == 1))
 
-        for protocol_template in protocol_templates:
-            protocol_template.data = ProtocolTemplateFactory.migrate_data_from_1_to_3(protocol_template.data)
-            protocol_template.version = 3
-            protocol_template.save(skip_hook=True)
+        for scenario_component in scenario_components:
+            scenario_component.data = ScenarioComponentFactory.migrate_data_from_1_to_3(scenario_component.data)
+            scenario_component.version = 3
+            scenario_component.save(skip_hook=True)
 
         # migrate note images
         notes: List[Note] = list(Note.select())
@@ -934,7 +934,7 @@ class Migration084(BrickMigration):
                 FileHelper.copy_file(old_path, new_path)
 
 
-@brick_migration('0.10.0', short_description='Rename project to folder.')
+@brick_migration('0.10.0', short_description='Rename project, report, experiment, protocol template.')
 class Migration0100(BrickMigration):
 
     @classmethod
@@ -947,6 +947,7 @@ class Migration0100(BrickMigration):
         migrator.rename_table_if_exists(NoteViewModel, 'gws_report_view')
         migrator.rename_table_if_exists(Scenario, 'gws_experiment')
         migrator.rename_table_if_exists(SharedScenario, 'gws_shared_experiment')
+        migrator.rename_table_if_exists(ScenarioComponent, 'gws_protocol_template')
         migrator.migrate()
 
         migrator_2: SqlMigrator = SqlMigrator(ResourceModel.get_db())

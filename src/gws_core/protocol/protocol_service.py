@@ -19,14 +19,14 @@ from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
                                                ProtocolLayoutDTO)
 from gws_core.protocol.protocol_spec import ConnectorSpec
 from gws_core.protocol.protocol_update import ProtocolUpdate
-from gws_core.protocol_template.protocol_template import ProtocolTemplate
-from gws_core.protocol_template.protocol_template_factory import \
-    ProtocolTemplateFactory
-from gws_core.protocol_template.protocol_template_service import \
-    ProtocolTemplateService
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view.viewer import Viewer
 from gws_core.scenario.scenario_run_service import ScenarioRunService
+from gws_core.scenario_component.scenario_component import ScenarioComponent
+from gws_core.scenario_component.scenario_component_factory import \
+    ScenarioComponentFactory
+from gws_core.scenario_component.scenario_component_service import \
+    ScenarioComponentService
 from gws_core.streamlit.streamlit_live_task import StreamlitLiveTask
 from gws_core.task.plug import Sink, Source
 from gws_core.user.current_user_service import CurrentUserService
@@ -619,18 +619,18 @@ class ProtocolService():
 
     @classmethod
     @transaction()
-    def add_protocol_template_to_protocol(
-            cls, protocol_id: str, protocol_template_id: str) -> ProtocolUpdate:
+    def add_scenario_component_to_protocol(
+            cls, protocol_id: str, scenario_component_id: str) -> ProtocolUpdate:
         """Insert a sub protocol in the protocol from a template.
         """
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
-        protocol_template: ProtocolTemplate = ProtocolTemplateService.get_by_id_and_check(
-            protocol_template_id)
+        scenario_component: ScenarioComponent = ScenarioComponentService.get_by_id_and_check(
+            scenario_component_id)
 
         # create the sub protocol from the template
-        sub_protocol = protocol_template.generate_protocol_model()
+        sub_protocol = scenario_component.generate_protocol_model()
 
         # replace Source and Sink with iofaces
         sub_protocol.replace_io_process_with_ioface()
@@ -794,16 +794,16 @@ class ProtocolService():
     ########################## PROTOCOL TEMPLATE #####################
 
     @classmethod
-    def create_protocol_template_from_id(
-            cls, protocol_id: str, name: str, description: dict = None) -> ProtocolTemplate:
+    def create_scenario_component_from_id(
+            cls, protocol_id: str, name: str, description: dict = None) -> ScenarioComponent:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
-        return ProtocolTemplateService.create_from_protocol(protocol=protocol_model,
-                                                            name=name, description=description)
+        return ScenarioComponentService.create_from_protocol(protocol=protocol_model,
+                                                             name=name, description=description)
 
     @classmethod
-    def create_protocol_model_from_template(cls, protocol_template: ProtocolTemplate) -> ProtocolModel:
-        return cls.create_protocol_model_from_graph(protocol_template.get_template())
+    def create_protocol_model_from_template(cls, scenario_component: ScenarioComponent) -> ProtocolModel:
+        return cls.create_protocol_model_from_graph(scenario_component.get_graph())
 
     @classmethod
     def create_protocol_model_from_graph(cls, graph: ProtocolGraphConfigDTO) -> ProtocolModel:
@@ -814,7 +814,7 @@ class ProtocolService():
         return protocol
 
     @classmethod
-    def generate_protocol_template(cls, protocol_id: str) -> ProtocolTemplate:
+    def generate_scenario_component(cls, protocol_id: str) -> ScenarioComponent:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
@@ -822,9 +822,9 @@ class ProtocolService():
             raise BadRequestException(
                 "Cannot download a protocol without scenario")
 
-        return ProtocolTemplateFactory.from_protocol_model(protocol_model,
-                                                           protocol_model.scenario.title,
-                                                           protocol_model.scenario.description)
+        return ScenarioComponentFactory.from_protocol_model(protocol_model,
+                                                            protocol_model.scenario.title,
+                                                            protocol_model.scenario.description)
 
     ########################## COMMUNITY #####################
 
