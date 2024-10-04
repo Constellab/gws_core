@@ -11,11 +11,11 @@ from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
-from gws_core.process.process_interface import IProcess
-from gws_core.protocol.protocol_interface import IProtocol
+from gws_core.process.process_proxy import ProcessProxy
+from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.scenario.scenario_interface import IScenario
-from gws_core.task.task_interface import ITask
+from gws_core.scenario.scenario_proxy import ScenarioProxy
+from gws_core.task.task_proxy import TaskProxy
 
 
 @task_decorator("CreateFileTest")
@@ -65,12 +65,12 @@ class TestFile(BaseTestCase):
     def test_process_file(self):
         """Test that a generated file of a task is moved to file store and check content
         """
-        scenario: IScenario = IScenario()
+        scenario: ScenarioProxy = ScenarioProxy()
         scenario.get_protocol().add_process(CreateFileTest, 'create_file')
 
         scenario.run()
 
-        process: IProcess = scenario.get_protocol().get_process('create_file')
+        process: ProcessProxy = scenario.get_protocol().get_process('create_file')
         file: File = process.get_output('file')
 
         file_store: LocalFileStore = LocalFileStore.get_default_instance()
@@ -94,10 +94,10 @@ class TestFile(BaseTestCase):
         # Chekc that the file doesn't exist at the beginning
         self.assertFalse(file_store.node_name_exists('robot.json'))
 
-        scenario: IScenario = IScenario()
-        protocol: IProtocol = scenario.get_protocol()
-        create: ITask = protocol.add_process(RobotCreate, 'create')
-        write: ITask = protocol.add_process(WriteToJsonFile, 'write', {'filename': 'robot'})
+        scenario: ScenarioProxy = ScenarioProxy()
+        protocol: ProtocolProxy = scenario.get_protocol()
+        create: TaskProxy = protocol.add_process(RobotCreate, 'create')
+        write: TaskProxy = protocol.add_process(WriteToJsonFile, 'write', {'filename': 'robot'})
         protocol.add_connectors([
             (create >> 'robot', write << 'resource'),
         ])

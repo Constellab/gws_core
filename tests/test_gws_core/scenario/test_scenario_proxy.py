@@ -1,7 +1,7 @@
 
 
-from gws_core import (BaseTestCase, IProcess, IProtocol, IScenario, ITask,
-                      ProtocolModel)
+from gws_core import (BaseTestCase, ProcessProxy, ProtocolModel, ProtocolProxy,
+                      ScenarioProxy, TaskProxy)
 from gws_core.impl.robot.robot_protocol import (RobotSuperTravelProto,
                                                 RobotTravelProto)
 from gws_core.impl.robot.robot_resource import Robot
@@ -15,17 +15,17 @@ class TestIScenario(BaseTestCase):
 
     def test_iscenario(self):
 
-        scenario: IScenario = IScenario()
+        scenario: ScenarioProxy = ScenarioProxy()
 
-        protocol: IProtocol = scenario.get_protocol()
-        create: IProcess = protocol.add_process(RobotCreate, 'create')
+        protocol: ProtocolProxy = scenario.get_protocol()
+        create: ProcessProxy = protocol.add_process(RobotCreate, 'create')
 
         # Verify that the process was created in the DB
         self.assertIsNotNone(create.get_model().id)
 
         # create manually a sub proto
-        sub_proto: IProtocol = protocol.add_empty_protocol('sub_proto')
-        sub_move: IProcess = sub_proto.add_process(
+        sub_proto: ProtocolProxy = protocol.add_empty_protocol('sub_proto')
+        sub_move: ProcessProxy = sub_proto.add_process(
             RobotMove, 'sub_move', {'moving_step': 20})
         # test parent of sub_move
         self.assertEqual(sub_move.parent_protocol.instance_name, 'sub_proto')
@@ -34,7 +34,7 @@ class TestIScenario(BaseTestCase):
         sub_proto.add_outerface('new_robot_o', sub_move.instance_name, 'robot')
 
         # Add a RobotTravel protocol
-        robot_travel: IProtocol = protocol.add_protocol(
+        robot_travel: ProtocolProxy = protocol.add_protocol(
             RobotTravelProto, 'robot_travel')
 
         # Add main protocol connectors
@@ -44,8 +44,8 @@ class TestIScenario(BaseTestCase):
         ])
 
         # test the get process
-        robot_travel_2: IProtocol = protocol.get_process('robot_travel')
-        self.assertIsInstance(robot_travel_2, IProtocol)
+        robot_travel_2: ProtocolProxy = protocol.get_process('robot_travel')
+        self.assertIsInstance(robot_travel_2, ProtocolProxy)
 
         scenario.run()
         sub_proto = protocol.get_process('sub_proto')
@@ -69,15 +69,15 @@ class TestIScenario(BaseTestCase):
 
         # test that robot_travel has a sub process
         move_1 = robot_travel.get_process('move_1')
-        self.assertIsInstance(move_1, ITask)
+        self.assertIsInstance(move_1, TaskProxy)
 
     def test_iscenario_remove(self):
-        scenario: IScenario = IScenario(RobotSuperTravelProto)
+        scenario: ScenarioProxy = ScenarioProxy(RobotSuperTravelProto)
 
-        super_travel: IProtocol = scenario.get_protocol()
+        super_travel: ProtocolProxy = scenario.get_protocol()
         super_travel_model: ProtocolModel = super_travel.get_model()
-        sub_travel: IProtocol = super_travel.get_process('sub_travel')
-        move_1: IProcess = sub_travel.get_process('move_1')
+        sub_travel: ProtocolProxy = super_travel.get_process('sub_travel')
+        move_1: ProcessProxy = sub_travel.get_process('move_1')
 
         # Try to remove the interface of sub travel, it should raise an exception
         # because the input of sub_travel is connected
@@ -98,13 +98,13 @@ class TestIScenario(BaseTestCase):
         super_travel.delete_process('sub_travel')
         self.assertRaises(Exception, super_travel.get_process, 'sub_travel')
         # Test also that the process of sub_travel was delete form DB
-        self.assertRaises(Exception, ITask.get_by_id, move_1.get_model().id)
+        self.assertRaises(Exception, TaskProxy.get_by_id, move_1.get_model().id)
 
         # Test info in protocol model
         self._test_super_travel_after_remove(super_travel_model)
 
         # Verify that the DB was updated
-        super_travel_db: ProtocolModel = IProtocol.get_by_id(
+        super_travel_db: ProtocolModel = ProtocolProxy.get_by_id(
             super_travel_model.id).get_model()
         self._test_super_travel_after_remove(super_travel_db)
 

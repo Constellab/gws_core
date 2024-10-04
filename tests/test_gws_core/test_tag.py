@@ -13,10 +13,10 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.note.note_dto import NoteSaveDTO
 from gws_core.note.note_service import NoteService
-from gws_core.protocol.protocol_interface import IProtocol
+from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource_service import ResourceService
 from gws_core.scenario.scenario import Scenario
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOrigins
@@ -234,9 +234,9 @@ class TestTag(BaseTestCase):
         task_tag_propagable = Tag('robot_tag_propagable', 'robot_value', is_propagable=True)
         task_tag_not_propagable = Tag('robot_tag_not_propagable', 'robot_value', is_propagable=True)
 
-        i_scenario: IScenario = IScenario()
+        i_scenario: ScenarioProxy = ScenarioProxy()
         i_scenario.add_tags([tag_exp, tag_exp_not_propagable])
-        i_protocol: IProtocol = i_scenario.get_protocol()
+        i_protocol: ProtocolProxy = i_scenario.get_protocol()
 
         tag_robot = i_protocol.add_process(TagRobot, 'move')
         first_robot = Robot.empty()
@@ -309,9 +309,9 @@ class TestTag(BaseTestCase):
     def test_tag_propagation_view_note(self):
         propagable_tag = Tag('robot_tag_propagable', 'robot_value', is_propagable=True)
 
-        i_scenario: IScenario = IScenario()
+        i_scenario: ScenarioProxy = ScenarioProxy()
         i_scenario.add_tags([propagable_tag])
-        i_protocol: IProtocol = i_scenario.get_protocol()
+        i_protocol: ProtocolProxy = i_scenario.get_protocol()
 
         tag_robot = i_protocol.add_process(RobotEat, 'tag')
         first_robot = Robot.empty()
@@ -370,16 +370,16 @@ class TestTag(BaseTestCase):
         self.assertEqual(len(note_tags.get_tags()), 0)
 
     def test_tag_propagation_after(self):
-        i_scenario: IScenario = IScenario()
-        i_protocol: IProtocol = i_scenario.get_protocol()
+        i_scenario: ScenarioProxy = ScenarioProxy()
+        i_protocol: ProtocolProxy = i_scenario.get_protocol()
 
         create_robot = i_protocol.add_process(RobotCreate, 'create')
         i_scenario.run()
         exp_1_output = create_robot.refresh().get_output_resource_model('robot')
         exp_1 = i_scenario.get_model()
 
-        i_scenario_2: IScenario = IScenario()
-        i_protocol_2: IProtocol = i_scenario_2.get_protocol()
+        i_scenario_2: ScenarioProxy = ScenarioProxy()
+        i_protocol_2: ProtocolProxy = i_scenario_2.get_protocol()
         move_robot = i_protocol_2.add_process(RobotMove, 'move')
         i_protocol_2.add_source('source', exp_1_output.id, move_robot << 'robot')
         i_scenario_2.run()

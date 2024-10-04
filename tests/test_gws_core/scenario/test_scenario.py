@@ -16,7 +16,7 @@ from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_service import ProtocolService
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.task.plug import Sink
 from gws_core.test.gtest import GTest
@@ -273,7 +273,7 @@ class TestScenario(BaseTestCase):
 
     def test_get_by_input_resource(self):
 
-        scenario = IScenario()
+        scenario = ScenarioProxy()
         protocol = scenario.get_protocol()
         i_create = protocol.add_process(RobotCreate, 'create', {})
         sink = protocol.add_sink('sink', i_create >> 'robot')
@@ -283,7 +283,7 @@ class TestScenario(BaseTestCase):
         robot_model = sink.refresh().get_input_resource_model(Sink.input_name)
 
         # create an scenario that uses this resource
-        scenario_2 = IScenario()
+        scenario_2 = ScenarioProxy()
         protocol_2 = scenario_2.get_protocol()
         i_move = protocol_2.add_process(RobotMove, 'move', {})
         i_move_2 = protocol_2.add_process(RobotMove, 'move2', {})
@@ -343,7 +343,7 @@ class TestScenario(BaseTestCase):
 
     def test_delete_intermediate_resources(self):
 
-        scenario = IScenario()
+        scenario = ScenarioProxy()
         protocol = scenario.get_protocol()
         i_create = protocol.add_process(RobotCreate, 'create')
         move_1 = protocol.add_process(RobotMove, 'move_1')

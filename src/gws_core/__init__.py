@@ -325,8 +325,8 @@ from .notebook.notebook import Notebook as Notebook
 # Process
 from .process.process import Process as Process
 from .process.process_factory import ProcessFactory as ProcessFactory
-from .process.process_interface import IProcess as IProcess
 from .process.process_model import ProcessModel as ProcessModel
+from .process.process_proxy import ProcessProxy as ProcessProxy
 # Progress Bar
 from .progress_bar.progress_bar import ProgressBar as ProgressBar
 from .progress_bar.progress_bar_service import \
@@ -335,8 +335,8 @@ from .progress_bar.progress_bar_service import \
 from .protocol.protocol import Protocol as Protocol
 from .protocol.protocol_decorator import \
     protocol_decorator as protocol_decorator
-from .protocol.protocol_interface import IProtocol as IProtocol
 from .protocol.protocol_model import ProtocolModel as ProtocolModel
+from .protocol.protocol_proxy import ProtocolProxy as ProtocolProxy
 from .protocol.protocol_service import ProtocolService as ProtocolService
 from .protocol.protocol_spec import ConnectorPartSpec as ConnectorPartSpec
 from .protocol.protocol_spec import ConnectorSpec as ConnectorSpec
@@ -397,7 +397,7 @@ from .scenario.scenario_enums import \
 from .scenario.scenario_enums import \
     ScenarioProcessStatus as ScenarioProcessStatus
 from .scenario.scenario_enums import ScenarioStatus as ScenarioStatus
-from .scenario.scenario_interface import IScenario as IScenario
+from .scenario.scenario_proxy import ScenarioProxy as ScenarioProxy
 from .scenario.scenario_run_service import \
     ScenarioRunService as ScenarioRunService
 from .scenario.scenario_search_builder import \
@@ -428,10 +428,10 @@ from .task.task import Task as Task
 from .task.task_decorator import task_decorator as task_decorator
 from .task.task_file_downloader import TaskFileDownloader as TaskFileDownloader
 from .task.task_helper import TaskHelper as TaskHelper
-from .task.task_interface import ITask as ITask
 from .task.task_io import TaskInputs as TaskInputs
 from .task.task_io import TaskOutputs as TaskOutputs
 from .task.task_model import TaskModel as TaskModel
+from .task.task_proxy import TaskProxy as TaskProxy
 from .task.task_runner import TaskRunner as TaskRunner
 from .task.task_service import TaskService as TaskService
 from .task.task_typing import TaskTyping as TaskTyping

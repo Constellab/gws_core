@@ -1,6 +1,6 @@
 
 from gws_core.scenario.scenario import Scenario
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.task.scenario_downloader import (ScenarioDownloader,
                                                         ScenarioDownloaderMode)
 from gws_core.scenario.task.scenario_resource import ScenarioResource
@@ -25,7 +25,7 @@ class ScenarioDownloaderService():
         """
 
         # Create an scenario containing 1 scenario downloader , 1 sink
-        scenario: IScenario = IScenario(None, title="Import scenario")
+        scenario: ScenarioProxy = ScenarioProxy(None, title="Import scenario")
         protocol = scenario.get_protocol()
 
         # Add the importer and the connector

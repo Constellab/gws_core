@@ -9,8 +9,8 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.folder.space_folder import SpaceFolder
-from gws_core.process.process_interface import IProcess
-from gws_core.protocol.protocol_interface import IProtocol
+from gws_core.process.process_proxy import ProcessProxy
+from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.task.resource_downloader_http import \
@@ -21,7 +21,7 @@ from gws_core.resource.view.view_runner import ViewRunner
 from gws_core.resource.view.view_types import exluded_views_in_note
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.plug import Sink
 
@@ -328,11 +328,11 @@ class ResourceService():
 
         file_name = link.split('/')[-1]
         # Create an scenario containing 1 resource downloader , 1 sink
-        scenario: IScenario = IScenario(None, title=f"Download {file_name}")
-        protocol: IProtocol = scenario.get_protocol()
+        scenario: ScenarioProxy = ScenarioProxy(None, title=f"Download {file_name}")
+        protocol: ProtocolProxy = scenario.get_protocol()
 
         # Add the importer and the connector
-        downloader: IProcess = protocol.add_process(ResourceDownloaderHttp, 'downloader', {
+        downloader: ProcessProxy = protocol.add_process(ResourceDownloaderHttp, 'downloader', {
             ResourceDownloaderHttp.LINK_PARAM_NAME: link,
             ResourceDownloaderHttp.UNCOMPRESS_PARAM_NAME: uncompress_options
         })

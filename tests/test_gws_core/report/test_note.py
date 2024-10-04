@@ -15,7 +15,7 @@ from gws_core.note.note_view_model import NoteViewModel
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.test.base_test_case import BaseTestCase
 
@@ -127,7 +127,7 @@ class TestNote(BaseTestCase):
     # test to have a view config to a note
     def test_add_view_config_to_note(self):
         # generate a resource from an scenario
-        scenario = IScenario()
+        scenario = ScenarioProxy()
         scenario.get_protocol().add_process(RobotCreate, 'create')
         scenario.run()
 

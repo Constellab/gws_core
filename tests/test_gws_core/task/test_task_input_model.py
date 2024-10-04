@@ -9,7 +9,7 @@ from gws_core.protocol.protocol import Protocol
 from gws_core.protocol.protocol_decorator import protocol_decorator
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_spec import ProcessSpec
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.task.plug import Sink
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
@@ -47,7 +47,7 @@ class RobotMainTravel(Protocol):
 class TestTaskInputModel(BaseTestCase):
 
     def test_task_input_model(self):
-        scenario: IScenario = IScenario(RobotMainTravel)
+        scenario: ScenarioProxy = ScenarioProxy(RobotMainTravel)
         scenario.run()
 
         ################################ CHECK TASK INPUT ################################
@@ -68,10 +68,10 @@ class TestTaskInputModel(BaseTestCase):
 
     def test_task_input_model_select(self):
         # Test the select of input model task and delete by scenario
-        scenario_1: IScenario = IScenario(CreateSimpleRobot)
+        scenario_1: ScenarioProxy = ScenarioProxy(CreateSimpleRobot)
         scenario_1.run()
 
-        scenario_2: IScenario = IScenario(CreateSimpleRobot)
+        scenario_2: ScenarioProxy = ScenarioProxy(CreateSimpleRobot)
         scenario_2.run()
 
         task_input: TaskInputModel = TaskInputModel.get_by_scenario(scenario_1._scenario.id).first()
@@ -81,7 +81,7 @@ class TestTaskInputModel(BaseTestCase):
         self.assertEqual(TaskInputModel.get_by_task_model(task_input.task_model.id).count(), 1)
 
         # Create another scenario that use the previous resource
-        scenario_3: IScenario = IScenario(MoveSimpleRobot)
+        scenario_3: ScenarioProxy = ScenarioProxy(MoveSimpleRobot)
         scenario_3.get_protocol().get_process('source').set_param('resource_id', task_input.resource_model.id)
         scenario_3.run()
         # Get all the task input where the resource is used in another scenario

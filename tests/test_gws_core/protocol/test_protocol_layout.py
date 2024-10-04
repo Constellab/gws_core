@@ -1,6 +1,6 @@
 
 
-from gws_core import BaseTestCase, IScenario
+from gws_core import BaseTestCase, ScenarioProxy
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
                                                ProtocolLayout,
@@ -13,7 +13,7 @@ from gws_core.protocol.protocol_service import ProtocolService
 class TestProtocolLayout(BaseTestCase):
 
     def test_protocol_layout(self):
-        scenario = IScenario()
+        scenario = ScenarioProxy()
 
         i_protocol = scenario.get_protocol()
 

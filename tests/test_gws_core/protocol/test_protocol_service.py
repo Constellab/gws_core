@@ -10,12 +10,12 @@ from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.connector import Connector
 from gws_core.process.process_model import ProcessModel
-from gws_core.protocol.protocol_interface import IProtocol
 from gws_core.protocol.protocol_model import ProtocolModel
+from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.view.viewer import Viewer
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.task.plug import Sink, Source
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.user.current_user_service import CurrentUserService
@@ -130,13 +130,13 @@ class TestProtocolService(BaseTestCase):
 
     def test_reset_process(self):
 
-        scenario = IScenario(TestNestedProtocol)
+        scenario = ScenarioProxy(TestNestedProtocol)
         scenario.run()
         self.assertTrue(scenario.get_model().is_success)
 
         # reset a process of the sub protocol
-        main_protocol: IProtocol = scenario.get_protocol()
-        sub_protocol: IProtocol = main_protocol.get_process('mini_proto')
+        main_protocol: ProtocolProxy = scenario.get_protocol()
+        sub_protocol: ProtocolProxy = main_protocol.get_process('mini_proto')
 
         # Get resources and check that they exist
         main_resource_to_clear: ResourceModel = main_protocol.get_process(
@@ -187,7 +187,7 @@ class TestProtocolService(BaseTestCase):
         main_resource: ResourceModel = main_protocol.get_process(
             'p5').get_output_resource_model('robot')
 
-        scenario2 = IScenario()
+        scenario2 = ScenarioProxy()
         robot_mode = scenario2.get_protocol().add_task(RobotMove, 'robot')
         scenario2.get_protocol().add_source(
             'source', main_resource.id, robot_mode << 'robot')
@@ -197,7 +197,7 @@ class TestProtocolService(BaseTestCase):
         self.assertTrue(reset_impact.has_entities)
 
     def test_run_protocol_process(self):
-        scenario = IScenario()
+        scenario = ScenarioProxy()
         i_protocol = scenario.get_protocol()
         protocol_id = i_protocol.get_model().id
         p0 = i_protocol.add_process(RobotCreate, 'p0')

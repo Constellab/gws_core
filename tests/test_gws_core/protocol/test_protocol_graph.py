@@ -4,7 +4,7 @@ from gws_core import BaseTestCase
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.protocol.protocol_graph import ProtocolGraph
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.task.plug import Sink
 from gws_core.test.gtest import GTest
 
@@ -21,7 +21,7 @@ class TestProtocolGraph(BaseTestCase):
         # Build the scenario
         resource_model = GTest.save_robot_resource()
 
-        scenario = IScenario()
+        scenario = ScenarioProxy()
         protocol = scenario.get_protocol()
 
         p0 = protocol.add_process(RobotMove, 'p0')

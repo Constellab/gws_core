@@ -5,9 +5,10 @@ from datetime import datetime, timedelta
 
 from pandas import DataFrame
 
-from gws_core import (BaseTestCase, ConfigParams, File, IScenario, OutputSpec,
-                      OutputSpecs, ResourceModel, ResourceSet, Settings, Table,
-                      Task, TaskInputs, TaskOutputs, task_decorator)
+from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec,
+                      OutputSpecs, ResourceModel, ResourceSet, ScenarioProxy,
+                      Settings, Table, Task, TaskInputs, TaskOutputs,
+                      task_decorator)
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_service import ResourceService
@@ -149,7 +150,7 @@ class TestShareResource(BaseTestCase):
 
     def test_share_resource_set(self):
         # Generate a resource set
-        i_scenario: IScenario = IScenario()
+        i_scenario: ScenarioProxy = ScenarioProxy()
         i_scenario.get_protocol().add_process(GenerateResourceSet, 'generate_resource_set')
         i_scenario.run()
         i_process = i_scenario.get_protocol().get_process('generate_resource_set')
@@ -186,7 +187,7 @@ class TestShareResource(BaseTestCase):
 
     def test_share_resource_list(self):
         # Generate a resource list
-        i_scenario: IScenario = IScenario()
+        i_scenario: ScenarioProxy = ScenarioProxy()
         i_scenario.get_protocol().add_process(GenerateResourceList, 'generate_resource_list')
         i_scenario.run()
         i_process = i_scenario.get_protocol().get_process('generate_resource_list')

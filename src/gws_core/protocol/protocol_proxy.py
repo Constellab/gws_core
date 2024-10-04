@@ -12,16 +12,16 @@ from gws_core.task.plug import Sink, Source
 from ..config.config_types import ConfigParamsDict
 from ..config.param.param_types import ParamValue
 from ..process.process import Process
-from ..process.process_interface import IProcess
 from ..process.process_model import ProcessModel
+from ..process.process_proxy import ProcessProxy
 from ..task.task import Task
-from ..task.task_interface import ITask
+from ..task.task_proxy import TaskProxy
 from .protocol import Protocol
 from .protocol_model import ProtocolModel
 from .protocol_service import ProtocolService
 
 
-class IProtocol(IProcess):
+class ProtocolProxy(ProcessProxy):
     """This class can be used in a Jupyter Notebook to create and configure a protocol
 
     To create it use the add_protocol method on another protocol
@@ -40,7 +40,7 @@ class IProtocol(IProcess):
 
     def add_process(
             self, process_type: Type[Process],
-            instance_name: str, config_params: ConfigParamsDict = None) -> IProcess:
+            instance_name: str, config_params: ConfigParamsDict = None) -> ProcessProxy:
         """Add a process (task or protocol) to this protocol. This process is automatically saved in the database"""
 
         # Check and create the process model
@@ -48,7 +48,7 @@ class IProtocol(IProcess):
             raise Exception(
                 f"The provided process_type '{str(process_type)}' is not a process")
 
-        i_process: IProcess
+        i_process: ProcessProxy
         if issubclass(process_type, Task):
             i_process = self.add_task(
                 process_type, instance_name, config_params)
@@ -58,33 +58,33 @@ class IProtocol(IProcess):
 
         return i_process
 
-    def add_task(self, task_type: Type[Task], instance_name: str, config_params: ConfigParamsDict = None) -> ITask:
+    def add_task(self, task_type: Type[Task], instance_name: str, config_params: ConfigParamsDict = None) -> TaskProxy:
         """Add a task to this
         """
         protocol_update: ProtocolUpdate = ProtocolService.add_process_to_protocol(
             protocol_model=self._process_model, process_type=task_type, instance_name=instance_name,
             config_params=config_params)
 
-        return ITask(protocol_update.process)
+        return TaskProxy(protocol_update.process)
 
-    def add_empty_protocol(self, instance_name: str) -> 'IProtocol':
+    def add_empty_protocol(self, instance_name: str) -> 'ProtocolProxy':
         """Add an empty protocol to this protocol
         """
         protocol_update: ProtocolUpdate = ProtocolService.add_empty_protocol_to_protocol(
             self._process_model, instance_name)
-        return IProtocol(protocol_update.process)
+        return ProtocolProxy(protocol_update.process)
 
     def add_protocol(self, protocol_type: Type[Protocol],
-                     instance_name: str, config_params: ConfigParamsDict = None) -> 'IProtocol':
+                     instance_name: str, config_params: ConfigParamsDict = None) -> 'ProtocolProxy':
         """Add a protocol from a protocol type
         """
         protocol_update: ProtocolUpdate = ProtocolService.add_process_to_protocol(
             protocol_model=self._process_model, process_type=protocol_type,
             instance_name=instance_name, config_params=config_params)
 
-        return IProtocol(protocol_update.process)
+        return ProtocolProxy(protocol_update.process)
 
-    def get_process(self, instance_name: str) -> IProcess:
+    def get_process(self, instance_name: str) -> ProcessProxy:
         """retreive a protocol or a task in this protocol
 
         :param instance_name: [description]
@@ -96,9 +96,9 @@ class IProtocol(IProcess):
         process: ProcessModel = self._process_model.get_process(instance_name)
 
         if isinstance(process, ProtocolModel):
-            return IProtocol(process)
+            return ProtocolProxy(process)
         else:
-            return ITask(process)
+            return TaskProxy(process)
 
     def delete_process(self, instance_name: str) -> None:
         ProtocolService.delete_process_of_protocol(
@@ -196,7 +196,7 @@ class IProtocol(IProcess):
 
     ############################################### Specific processes ####################################
 
-    def add_source(self, instance_name: str, resource_model_id: str, in_port: Tuple[ProcessModel, str]) -> ITask:
+    def add_source(self, instance_name: str, resource_model_id: str, in_port: Tuple[ProcessModel, str]) -> TaskProxy:
         """Add a Source task to the protocol and connected it to the in_port
         :param instance_name: instance name of the task
         :type instance_name: str
@@ -208,12 +208,12 @@ class IProtocol(IProcess):
         :rtype: ITask
         """
         config = {Source.config_name: resource_model_id} if resource_model_id else {}
-        source: IProcess = self.add_process(
+        source: ProcessProxy = self.add_process(
             Source, instance_name, config)
         self.add_connector(source >> Source.output_name, in_port)
         return source
 
-    def add_sink(self, instance_name: str, out_port: Tuple[ProcessModel, str], flag_resource: bool = True) -> ITask:
+    def add_sink(self, instance_name: str, out_port: Tuple[ProcessModel, str], flag_resource: bool = True) -> TaskProxy:
         """Add a sink task to the protocol that receive the out_port resource
 
         :param instance_name: instance name of the task
@@ -232,6 +232,6 @@ class IProtocol(IProcess):
     ############################################### CLASS METHODS ####################################
 
     @ classmethod
-    def get_by_id(cls, id: str) -> 'IProtocol':
+    def get_by_id(cls, id: str) -> 'ProtocolProxy':
         protocol_model: ProtocolModel = ProtocolService.get_by_id_and_check(id)
-        return IProtocol(protocol_model)
+        return ProtocolProxy(protocol_model)

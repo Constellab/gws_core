@@ -1,9 +1,9 @@
 
 
-from gws_core import (BaseTestCase, ConfigParams, File, IScenario, ITask,
-                      OutputSpec, OutputSpecs, Resource, ResourceModel, RField,
-                      Task, TaskInputs, TaskModel, TaskOutputs,
-                      resource_decorator, task_decorator)
+from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec,
+                      OutputSpecs, Resource, ResourceModel, RField,
+                      ScenarioProxy, Task, TaskInputs, TaskModel, TaskOutputs,
+                      TaskProxy, resource_decorator, task_decorator)
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
                                                   SearchOperator, SearchParams)
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -42,9 +42,9 @@ class TestResourceModel(BaseTestCase):
 
     def test_search(self):
         # Create an scenario and a task
-        scenario: IScenario = IScenario()
+        scenario: ScenarioProxy = ScenarioProxy()
         scenario.get_protocol().add_process(ForSearchCreate, 'facto')
-        task: ITask = scenario.get_protocol().get_process('facto')
+        task: TaskProxy = scenario.get_protocol().get_process('facto')
 
         self._create_resource(
             'this is information about a great banana',

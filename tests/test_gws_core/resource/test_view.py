@@ -19,7 +19,7 @@ from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view.viewer import Viewer
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
-from gws_core.scenario.scenario_interface import IScenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 
 
 # test_view
@@ -229,7 +229,7 @@ class TestView(BaseTestCase):
         resource_model: ResourceModel = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.UPLOADED)
 
         # create an scenario with the view task
-        i_scenario = IScenario()
+        i_scenario = ScenarioProxy()
         i_protocol = i_scenario.get_protocol()
 
         view_config = {'view_method_name': 'a_view_test', 'config_values': {
