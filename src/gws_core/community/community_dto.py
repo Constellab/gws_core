@@ -30,7 +30,7 @@ class CommunityLiveTaskVersionDTO(BaseModelDTO):
     version: int
     type: str
     environment: Optional[str]
-    params: Optional[str]
+    params: Optional[str] | Optional[List[str]]
     code: str
     input_specs: Optional[CommunityLiveTaskIOSpecDTO]
     output_specs: Optional[CommunityLiveTaskIOSpecDTO]
