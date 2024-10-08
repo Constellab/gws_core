@@ -52,4 +52,4 @@ class CommunityGetLiveTasksBody(BaseModelDTO):
 
 class CommunityLiveTaskVersionCreateResDTO(BaseModelDTO):
     id: str
-    live_task_version: Optional[str] = None
+    live_task_version: str
