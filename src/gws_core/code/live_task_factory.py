@@ -13,6 +13,8 @@ from gws_core.task.task_model import TaskModel
 
 class LiveTaskFactory:
 
+    current_json_version = 2
+
     @classmethod
     def generate_task_code_from_live_task_id(cls, task_id: str) -> str:
         task: TaskModel = TaskModel.get_by_id_and_check(task_id)
@@ -104,7 +106,7 @@ class LiveTaskFactory:
                 })
 
         return {
-            "json_version": 1,
+            "json_version": cls.current_json_version,
             "params": params,
             "code": code,
             "environment": env,

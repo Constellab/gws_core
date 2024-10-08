@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+from gws_core.code.live_task_factory import LiveTaskFactory
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
 
@@ -27,7 +28,7 @@ class CommunityService:
         """
         if cls.community_api_url is None:
             return None
-        url = f"{cls.community_api_url}/live-task/{live_task_version_id}/version/latest/for-lab/"
+        url = f"{cls.community_api_url}/live-task/{live_task_version_id}/version/latest/for-lab/{LiveTaskFactory().current_json_version}"
         try:
             # response = ExternalApiService.get(f"{cls.community_api_url}/live-task/version/{live_task_version_id}/",
             #                                   raise_exception_if_error=True)
@@ -86,7 +87,7 @@ class CommunityService:
         """
         if cls.community_api_url is None:
             return None
-        url = f"{cls.community_api_url}/live-task/for-lab/version/{live_task_version_id}"
+        url = f"{cls.community_api_url}/live-task/for-lab/version/{live_task_version_id}/{LiveTaskFactory().current_json_version}"
         try:
             response = ExternalApiService.get(url, cls._get_request_header(), raise_exception_if_error=True)
         except BaseHTTPException as err:
