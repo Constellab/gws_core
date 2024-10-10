@@ -17,8 +17,8 @@ from gws_core.user.user_dto import UserDTO
 class ScenarioSaveDTO(BaseModelDTO):
     folder_id: Optional[str] = None
     title: str = None
-    protocol_template_id: Optional[str] = None
-    protocol_template_json: Optional[dict] = None
+    scenario_template_id: Optional[str] = None
+    scenario_template_json: Optional[dict] = None
 
 
 class RunningProcessInfo(BaseModelDTO):

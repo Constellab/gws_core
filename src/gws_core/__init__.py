@@ -342,11 +342,6 @@ from .protocol.protocol_spec import ConnectorSpec as ConnectorSpec
 from .protocol.protocol_spec import InterfaceSpec as InterfaceSpec
 from .protocol.protocol_spec import ProcessSpec as ProcessSpec
 from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
-# Protocol template
-from .protocol_template.protocol_template import \
-    ProtocolTemplate as ProtocolTemplate
-from .protocol_template.protocol_template_factory import \
-    ProtocolTemplateFactory as ProtocolTemplateFactory
 # Resource
 from .resource.kv_store import KVStore as KVStore
 from .resource.r_field.dict_r_field import DictRField as DictRField
@@ -402,6 +397,11 @@ from .scenario.scenario_run_service import \
 from .scenario.scenario_search_builder import \
     ScenarioSearchBuilder as ScenarioSearchBuilder
 from .scenario.scenario_service import ScenarioService as ScenarioService
+# Scenario template
+from .scenario_template.scenario_template import \
+    ScenarioTemplate as ScenarioTemplate
+from .scenario_template.scenario_template_factory import \
+    ScenarioTemplateFactory as ScenarioTemplateFactory
 # Space
 from .space.mail_service import MailService as MailService
 # Streamlit

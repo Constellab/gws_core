@@ -13,7 +13,7 @@ class EntityType(Enum):
     RESOURCE = "RESOURCE"
     VIEW = "VIEW"
     NOTE = "NOTE"
-    PROTOCOL_TEMPLATE = 'PROTOCOL_TEMPLATE'
+    SCENARIO_TEMPLATE = 'SCENARIO_TEMPLATE'
     FOLDER = 'FOLDER'
 
     @staticmethod
@@ -27,8 +27,8 @@ class EntityType(Enum):
             human_name = 'View'
         elif entity_type == EntityType.NOTE:
             human_name = 'Note'
-        elif entity_type == EntityType.PROTOCOL_TEMPLATE:
-            human_name = 'Protocol Template'
+        elif entity_type == EntityType.SCENARIO_TEMPLATE:
+            human_name = 'Scenario template'
         elif entity_type == EntityType.FOLDER:
             human_name = 'Folder'
         else:
@@ -45,11 +45,11 @@ class EntityType(Enum):
     def get_entity_model_type(entity_type: 'EntityType') -> Type[Model]:
         from gws_core.folder.space_folder import SpaceFolder
         from gws_core.note.note import Note
-        from gws_core.protocol_template.protocol_template import \
-            ProtocolTemplate
         from gws_core.resource.resource_model import ResourceModel
         from gws_core.resource.view_config.view_config import ViewConfig
         from gws_core.scenario.scenario import Scenario
+        from gws_core.scenario_template.scenario_template import \
+            ScenarioTemplate
         if entity_type == EntityType.SCENARIO:
             return Scenario
         elif entity_type == EntityType.RESOURCE:
@@ -58,8 +58,8 @@ class EntityType(Enum):
             return ViewConfig
         elif entity_type == EntityType.NOTE:
             return Note
-        elif entity_type == EntityType.PROTOCOL_TEMPLATE:
-            return ProtocolTemplate
+        elif entity_type == EntityType.SCENARIO_TEMPLATE:
+            return ScenarioTemplate
         elif entity_type == EntityType.FOLDER:
             return SpaceFolder
 

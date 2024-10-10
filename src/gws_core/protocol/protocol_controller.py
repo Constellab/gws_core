@@ -17,8 +17,8 @@ from gws_core.protocol.protocol_dto import (AddConnectorDTO, ProtocolDTO,
                                             ProtocolUpdateDTO)
 from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
                                                ProtocolLayoutDTO)
-from gws_core.protocol_template.protocol_template_dto import \
-    ProtocolTemplateDTO
+from gws_core.scenario_template.scenario_template_dto import \
+    ScenarioTemplateDTO
 
 from ..community.community_dto import (CommunityCreateLiveTaskDTO,
                                        CommunityGetLiveTasksBody,
@@ -379,14 +379,14 @@ def add_viewer_to_process_ouput(id_: str,
             protocol_id=id_, process_name=process_name, output_port_name=output_port_name).to_dto()
 
 
-@core_app.post("/protocol/{id_}/add-template/{protocol_template_id}", tags=["Protocol"],
+@core_app.post("/protocol/{id_}/add-template/{scenario_template_id}", tags=["Protocol"],
                summary="Add a viewer link a process' output")
-def add_protocol_template_to_protocol(id_: str,
-                                      protocol_template_id: str,
+def add_scenario_template_to_protocol(id_: str,
+                                      scenario_template_id: str,
                                       _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
-        return ProtocolService.add_protocol_template_to_protocol(
-            protocol_id=id_, protocol_template_id=protocol_template_id).to_dto()
+        return ProtocolService.add_scenario_template_to_protocol(
+            protocol_id=id_, scenario_template_id=scenario_template_id).to_dto()
 
 
 ########################## LAYOUT #####################
@@ -507,7 +507,7 @@ def rename_process(id_: str,
 ########################## TEMPLATE #####################
 
 
-class CreateProtocolTemplate(BaseModelDTO):
+class CreateScenarioTemplate(BaseModelDTO):
     name: str = None
     description: Optional[dict] = None
 
@@ -515,14 +515,14 @@ class CreateProtocolTemplate(BaseModelDTO):
 @core_app.post("/protocol/{id_}/template", tags=["Protocol"],
                summary="Create a template from a protocol")
 def create_template(id_: str,
-                    template: CreateProtocolTemplate,
-                    _=Depends(AuthService.check_user_access_token)) -> ProtocolTemplateDTO:
-    return ProtocolService.create_protocol_template_from_id(id_, template.name, template.description).to_dto()
+                    template: CreateScenarioTemplate,
+                    _=Depends(AuthService.check_user_access_token)) -> ScenarioTemplateDTO:
+    return ProtocolService.create_scenario_template_from_id(id_, template.name, template.description).to_dto()
 
 
 @core_app.get("/protocol/{id_}/template/download", tags=["Protocol"],
               summary="Download a template from a protocol")
 def download_template(id_: str,
                       _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
-    template = ProtocolService.generate_protocol_template(id_)
+    template = ProtocolService.generate_scenario_template(id_)
     return ResponseHelper.create_file_response_from_str(template.to_export_dto().json(), template.name + '.json')

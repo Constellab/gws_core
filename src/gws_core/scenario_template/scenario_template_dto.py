@@ -7,15 +7,15 @@ from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 
 
-class ProtocolTemplateDTO(ModelWithUserDTO):
+class ScenarioTemplateDTO(ModelWithUserDTO):
     name: str
     version: int
     description: Optional[dict]
 
-# DTO used when downloading a protocol template
+# DTO used when downloading a scenario template
 
 
-class ProtocolTemplateExportDTO(BaseModelDTO):
+class ScenarioTemplateExportDTO(BaseModelDTO):
     id: str
     name: str
     version: int

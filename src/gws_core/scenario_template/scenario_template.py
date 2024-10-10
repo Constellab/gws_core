@@ -7,13 +7,13 @@ from gws_core.core.model.db_field import JSONField
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactory
 from gws_core.protocol.protocol_model import ProtocolModel
-from gws_core.protocol_template.protocol_template_dto import (
-    ProtocolTemplateDTO, ProtocolTemplateExportDTO)
+from gws_core.scenario_template.scenario_template_dto import (
+    ScenarioTemplateDTO, ScenarioTemplateExportDTO)
 
 from ..core.model.model_with_user import ModelWithUser
 
 
-class ProtocolTemplate(ModelWithUser):
+class ScenarioTemplate(ModelWithUser):
     """ Entity to store template of protocol
 
     :param ModelWithUser: _description_
@@ -26,11 +26,11 @@ class ProtocolTemplate(ModelWithUser):
 
     description = JSONField(null=True)
 
-    # version number of the protocol template
+    # version number of the scenario template
     version = IntegerField(null=False, default=1)
     data: Dict[str, Any] = JSONField(null=True)
 
-    _table_name = "gws_protocol_template"
+    _table_name = "gws_scenario_template"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,8 +44,8 @@ class ProtocolTemplate(ModelWithUser):
     def set_template(self, template: ProtocolGraphConfigDTO):
         self.data = template.to_json_dict()
 
-    def to_dto(self) -> ProtocolTemplateDTO:
-        return ProtocolTemplateDTO(
+    def to_dto(self) -> ScenarioTemplateDTO:
+        return ScenarioTemplateDTO(
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
@@ -56,9 +56,9 @@ class ProtocolTemplate(ModelWithUser):
             description=self.description
         )
 
-    def to_export_dto(self) -> ProtocolTemplateExportDTO:
+    def to_export_dto(self) -> ScenarioTemplateExportDTO:
         # create a new protocol to refresh the template info ()
-        return ProtocolTemplateExportDTO(
+        return ScenarioTemplateExportDTO(
             id=self.id,
             name=self.name,
             version=self.version,

@@ -8,11 +8,11 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.note.note import NoteScenario
-from gws_core.protocol_template.protocol_template import ProtocolTemplate
-from gws_core.protocol_template.protocol_template_factory import \
-    ProtocolTemplateFactory
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario_zipper import ZipScenario, ZipScenarioInfo
+from gws_core.scenario_template.scenario_template import ScenarioTemplate
+from gws_core.scenario_template.scenario_template_factory import \
+    ScenarioTemplateFactory
 from gws_core.task.plug import Sink
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
@@ -47,32 +47,32 @@ class ScenarioService():
     @transaction()
     def create_scenario_from_dto(cls, scenario_dto: ScenarioSaveDTO) -> Scenario:
 
-        protocol_template: ProtocolTemplate = None
-        if scenario_dto.protocol_template_id:
-            protocol_template = ProtocolTemplate.get_by_id_and_check(
-                scenario_dto.protocol_template_id)
-        elif scenario_dto.protocol_template_json and isinstance(scenario_dto.protocol_template_json, dict):
-            protocol_template = ProtocolTemplateFactory.from_export_dto_dict(
-                scenario_dto.protocol_template_json)
+        scenario_template: ScenarioTemplate = None
+        if scenario_dto.scenario_template_id:
+            scenario_template = ScenarioTemplate.get_by_id_and_check(
+                scenario_dto.scenario_template_id)
+        elif scenario_dto.scenario_template_json and isinstance(scenario_dto.scenario_template_json, dict):
+            scenario_template = ScenarioTemplateFactory.from_export_dto_dict(
+                scenario_dto.scenario_template_json)
 
         return cls.create_scenario(
             folder_id=scenario_dto.folder_id,
             title=scenario_dto.title,
-            protocol_template=protocol_template,
+            scenario_template=scenario_template,
             creation_type=ScenarioCreationType.MANUAL
         )
 
     @classmethod
     @transaction()
     def create_scenario(cls, folder_id: str = None, title: str = "",
-                          protocol_template: ProtocolTemplate = None,
-                          creation_type: ScenarioCreationType = ScenarioCreationType.MANUAL) -> Scenario:
+                        scenario_template: ScenarioTemplate = None,
+                        creation_type: ScenarioCreationType = ScenarioCreationType.MANUAL) -> Scenario:
         protocol_model: ProtocolModel = None
 
         description: Dict = None
-        if protocol_template is not None:
-            description = protocol_template.description
-            protocol_model = ProtocolService.create_protocol_model_from_template(protocol_template)
+        if scenario_template is not None:
+            description = scenario_template.description
+            protocol_model = ProtocolService.create_protocol_model_from_template(scenario_template)
         else:
             protocol_model = ProcessFactory.create_protocol_empty()
 
@@ -144,7 +144,7 @@ class ScenarioService():
 
     @classmethod
     def update_scenario_folder(cls, scenario_id: str, folder_id: Optional[str],
-                                 check_note: bool = True) -> Scenario:
+                               check_note: bool = True) -> Scenario:
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
         scenario.check_is_updatable()
@@ -160,8 +160,8 @@ class ScenarioService():
     @classmethod
     @transaction()
     def _update_scenario_folder(cls, scenario: Scenario,
-                                  new_folder_id: Optional[str],
-                                  check_notes: bool) -> Scenario:
+                                new_folder_id: Optional[str],
+                                check_notes: bool) -> Scenario:
         folder_changed = False
         folder_removed = False
         old_folder: SpaceFolder = scenario.folder
@@ -396,8 +396,8 @@ class ScenarioService():
 
     @classmethod
     def get_next_scenarios_of_resource(cls, resource_id: str,
-                                         page: int = 0,
-                                         number_of_items_per_page: int = 20) -> Paginator[Scenario]:
+                                       page: int = 0,
+                                       number_of_items_per_page: int = 20) -> Paginator[Scenario]:
         """ Return the list of scenario that used the resource as input
 
         :param resource_id: _description_
