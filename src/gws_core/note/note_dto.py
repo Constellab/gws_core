@@ -36,4 +36,4 @@ class NoteFullDTO(NoteDTO):
 
 class NoteInsertTemplateDTO(BaseModelDTO):
     block_index: int
-    document_template_id: str
+    note_template_id: str

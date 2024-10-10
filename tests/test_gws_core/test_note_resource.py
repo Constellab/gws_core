@@ -3,7 +3,6 @@
 from PIL import Image
 
 from gws_core.core.utils.settings import Settings
-from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.impl.file.file import File
 from gws_core.impl.note_resource.create_note_resource import CreateNoteResource
 from gws_core.impl.note_resource.generate_lab_note import GenerateLabNote
@@ -21,6 +20,7 @@ from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
 from gws_core.note.note import Note
 from gws_core.note.task.lab_note_resource import LabNoteResource
+from gws_core.note_template.note_template import NoteTemplate
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
@@ -56,15 +56,15 @@ class TestNoteResource(BaseTestCase):
 
     def test_create_note_from_template(self):
 
-        doc_template = DocumentTemplate(title="My template")
+        doc_template = NoteTemplate(title="My template")
         template_rich_text = RichText()
         template_rich_text.add_paragraph("This is a test paragraph")
 
         # add figure to the template
-        figure_data = self._create_document_template_image(doc_template.id, 'test')
+        figure_data = self._create_note_template_image(doc_template.id, 'test')
         template_rich_text.add_figure(figure_data)
 
-        file_data = self._create_document_template_file(doc_template.id, 'hello.txt')
+        file_data = self._create_note_template_file(doc_template.id, 'hello.txt')
         template_rich_text.add_file(file_data)
 
         doc_template.content = template_rich_text.get_content()
@@ -204,12 +204,12 @@ class TestNoteResource(BaseTestCase):
 
         return File(filename)
 
-    def _create_document_template_image(self, document_template_id: str, title: str = None) -> RichTextFigureData:
+    def _create_note_template_image(self, note_template_id: str, title: str = None) -> RichTextFigureData:
         # create an image with a red pixel and save it in note storage
         img = self._create_image()
 
         # add the image to the template
-        result = RichTextFileService.save_image(RichTextObjectType.DOCUMENT_TEMPLATE, document_template_id, img, 'png')
+        result = RichTextFileService.save_image(RichTextObjectType.NOTE_TEMPLATE, note_template_id, img, 'png')
         return {
             "filename": result.filename,
             "width": result.width,
@@ -220,11 +220,11 @@ class TestNoteResource(BaseTestCase):
             "caption": None,
         }
 
-    def _create_document_template_file(
-            self, document_template_id: str, filename: str = None) -> RichTextUploadFileResultDTO:
+    def _create_note_template_file(
+            self, note_template_id: str, filename: str = None) -> RichTextUploadFileResultDTO:
         # write the file
         return RichTextFileService.write_file(
-            RichTextObjectType.DOCUMENT_TEMPLATE, document_template_id, 'hello', filename, 'w')
+            RichTextObjectType.NOTE_TEMPLATE, note_template_id, 'hello', filename, 'w')
 
     def _create_resource(self) -> Resource:
         resource_model = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)

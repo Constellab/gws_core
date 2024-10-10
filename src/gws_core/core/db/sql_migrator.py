@@ -61,10 +61,6 @@ class SqlMigrator:
         self._operations.append(self.migrator.add_index(model_type.get_table_name(), columns, unique))
         return True
 
-    def drop_table_if_exists(self, model_type: Type[BaseModel]) -> bool:
-        self.migrator.database.drop_tables([model_type])
-        return True
-
     def rename_table_if_exists(self, model_type: Type[BaseModel], old_name: str) -> bool:
         if model_type.table_exists():
             return False
@@ -74,3 +70,24 @@ class SqlMigrator:
     def migrate(self) -> None:
         for operation in self._operations:
             operation.run()
+
+    ############################### CLASS METHODS ####################################
+    # thoses methods are executed directly, no need to create an instance of the class and call the method
+
+    @classmethod
+    def drop_table_if_exists(cls, db: DatabaseProxy, model_type: Type[BaseModel]) -> bool:
+        db.drop_tables([model_type])
+        return True
+
+    @classmethod
+    def rename_resource_typing_name(cls, db: DatabaseProxy, old_typing_name: str, new_typing_name: str) -> None:
+        db.execute_sql(
+            f"UPDATE gws_resource SET resource_typing_name = '{new_typing_name}' where resource_typing_name = '{old_typing_name}'")
+        db.execute_sql(f"UPDATE gws_task SET data = REPLACE(data, '{old_typing_name}', '{new_typing_name}')")
+
+    @classmethod
+    def rename_process_typing_name(cls, db: DatabaseProxy, old_typing_name: str, new_typing_name: str) -> None:
+        db.execute_sql(
+            f"UPDATE gws_task SET process_typing_name = '{new_typing_name}' where process_typing_name = '{old_typing_name}'")
+        db.execute_sql(
+            f"UPDATE gws_protocol SET process_typing_name = '{new_typing_name}' where process_typing_name = '{old_typing_name}'")

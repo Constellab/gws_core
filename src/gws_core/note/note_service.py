@@ -5,7 +5,6 @@ from typing import Callable, List
 from peewee import ModelSelect
 
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.rich_text import RichText
@@ -16,6 +15,7 @@ from gws_core.impl.rich_text.rich_text_types import (
     RichTextViewFileData)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.note.note_view_model import NoteViewModel
+from gws_core.note_template.note_template import NoteTemplate
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_types import exluded_views_in_note
@@ -55,11 +55,11 @@ class NoteService():
         note.folder = SpaceFolder.get_by_id_and_check(note_dto.folder_id) if note_dto.folder_id else None
 
         if note_dto.template_id:
-            template: DocumentTemplate = DocumentTemplate.get_by_id_and_check(note_dto.template_id)
+            template: NoteTemplate = NoteTemplate.get_by_id_and_check(note_dto.template_id)
             note.content = template.content
 
-            # copy the storage of the document template to the note
-            RichTextFileService.copy_object_dir(RichTextObjectType.DOCUMENT_TEMPLATE,
+            # copy the storage of the note template to the note
+            RichTextFileService.copy_object_dir(RichTextObjectType.NOTE_TEMPLATE,
                                                 template.id,
                                                 RichTextObjectType.NOTE,
                                                 note.id)
@@ -165,7 +165,7 @@ class NoteService():
             exp_folder_id = scenario.folder.id if scenario.folder else None
             if exp_folder_id != folder_id:
                 ScenarioService.update_scenario_folder(scenario.id,
-                                                         folder_id, check_note=False)
+                                                       folder_id, check_note=False)
 
         return note
 
@@ -190,7 +190,7 @@ class NoteService():
     def insert_template(cls, note_id: str, data: NoteInsertTemplateDTO) -> Note:
         note: Note = cls._get_and_check_before_update(note_id)
 
-        template: DocumentTemplate = DocumentTemplate.get_by_id_and_check(data.document_template_id)
+        template: NoteTemplate = NoteTemplate.get_by_id_and_check(data.note_template_id)
 
         note_rich_text = note.get_content_as_rich_text()
         template_rich_text = template.get_content_as_rich_text()
@@ -202,9 +202,9 @@ class NoteService():
 
         note = cls.update_content(note_id, note_rich_text.get_content())
 
-        # copy the storage of the document template to the note
+        # copy the storage of the note template to the note
         # copy after to avoid copy if error during update_content
-        RichTextFileService.copy_object_dir(RichTextObjectType.DOCUMENT_TEMPLATE,
+        RichTextFileService.copy_object_dir(RichTextObjectType.NOTE_TEMPLATE,
                                             template.id,
                                             RichTextObjectType.NOTE,
                                             note.id)

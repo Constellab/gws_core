@@ -118,16 +118,6 @@ from .credentials.credentials_type import \
 from .credentials.credentials_type import \
     CredentialsDataS3 as CredentialsDataS3
 from .credentials.credentials_type import CredentialsType as CredentialsType
-# Document template
-from .document_template.document_template import \
-    DocumentTemplate as DocumentTemplate
-from .document_template.document_template_service import \
-    DocumentTemplateService as DocumentTemplateService
-# Document template > task
-from .document_template.task.document_template_param import \
-    DocumentTemplateParam as DocumentTemplateParam
-from .document_template.task.document_template_resource import \
-    DocumentTemplateResource as DocumentTemplateResource
 # EntityNavigator
 from .entity_navigator.entity_navigator import \
     EntityNavigator as EntityNavigator
@@ -320,6 +310,15 @@ from .note.note_service import NoteService as NoteService
 from .note.task.lab_note_resource import LabNoteResource as LabNoteResource
 # Note task
 from .note.task.note_param import NoteParam as NoteParam
+# Note template
+from .note_template.note_template import NoteTemplate as NoteTemplate
+from .note_template.note_template_service import \
+    NoteTemplateService as NoteTemplateService
+# Note template > task
+from .note_template.task.note_template_param import \
+    NoteTemplateParam as NoteTemplateParam
+from .note_template.task.note_template_resource import \
+    NoteTemplateResource as NoteTemplateResource
 # Core > Notebook
 from .notebook.notebook import Notebook as Notebook
 # Process

@@ -21,8 +21,8 @@ def create(note_dto: NoteSaveDTO, _=Depends(AuthService.check_user_access_token)
 
 @core_app.post("/note/scenario/{scenario_id}", tags=["Note"], summary="Create a note for an scenario")
 def create_for_scenario(scenario_id: str,
-                          note_dto: NoteSaveDTO,
-                          _=Depends(AuthService.check_user_access_token)) -> NoteDTO:
+                        note_dto: NoteSaveDTO,
+                        _=Depends(AuthService.check_user_access_token)) -> NoteDTO:
     return NoteService.create(note_dto, [scenario_id]).to_dto()
 
 
@@ -53,7 +53,7 @@ def update_content(note_id: str, content: RichTextDTO, _=Depends(AuthService.che
 
 
 @core_app.put("/note/{note_id}/content/insert-template", tags=["Note"],
-              summary="Insert a document template in the note")
+              summary="Insert a note template in the note")
 def insert_template(note_id: str,
                     data: NoteInsertTemplateDTO,
                     _=Depends(AuthService.check_user_access_token)) -> RichTextDTO:

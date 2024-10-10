@@ -5,22 +5,22 @@ from gws_core.config.param.model_param import ModelParam
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
 from gws_core.config.param.param_types import ParamSpecVisibilty
 from gws_core.core.model.model import Model
-from gws_core.document_template.document_template import DocumentTemplate
+from gws_core.note_template.note_template import NoteTemplate
 
 
 @param_spec_decorator()
-class DocumentTemplateParam(ModelParam):
-    """ Document template params spec. When used, the end user will be able to select a document template
-    from the list of document template available in the lab.
+class NoteTemplateParam(ModelParam):
+    """ Note template params spec. When used, the end user will be able to select a note template
+    from the list of note template available in the lab.
 
-    The accessible value will be document template.
+    The accessible value will be note template.
 
     """
 
     def __init__(self,
                  optional: bool = False,
                  visibility: ParamSpecVisibilty = "public",
-                 human_name: Optional[str] = "Select document template",
+                 human_name: Optional[str] = "Select note template",
                  short_description: Optional[str] = None,
                  ):
         """
@@ -44,7 +44,7 @@ class DocumentTemplateParam(ModelParam):
 
     @classmethod
     def get_str_type(cls) -> str:
-        return "document_template_param"
+        return "note_template_param"
 
     def get_model_type(self) -> Type[Model]:
         """Override this method to return the model type to use
@@ -52,4 +52,4 @@ class DocumentTemplateParam(ModelParam):
         :return: The model type
         :rtype: Type[Model]
         """
-        return DocumentTemplate
+        return NoteTemplate

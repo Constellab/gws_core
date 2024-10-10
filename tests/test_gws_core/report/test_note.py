@@ -1,7 +1,5 @@
 
 
-from gws_core.document_template.document_template_service import \
-    DocumentTemplateService
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import (RichTextBlockType,
@@ -12,6 +10,7 @@ from gws_core.note.note import Note, NoteScenario
 from gws_core.note.note_dto import NoteInsertTemplateDTO, NoteSaveDTO
 from gws_core.note.note_service import NoteService
 from gws_core.note.note_view_model import NoteViewModel
+from gws_core.note_template.note_template_service import NoteTemplateService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
@@ -164,13 +163,13 @@ class TestNote(BaseTestCase):
         # Check that we cannot remove the scenario because of the view
         NoteService.remove_scenario(note.id, scenario.get_model().id)
 
-    def test_insert_document_template(self):
+    def test_insert_note_template(self):
         # prepare the data
-        document_template = DocumentTemplateService.create_empty('title')
+        note_template = NoteTemplateService.create_empty('title')
         rich_text = RichText()
         rich_text.add_paragraph('First paragraph')
         rich_text.add_paragraph('Second paragraph')
-        DocumentTemplateService.update_content(document_template.id, rich_text.get_content())
+        NoteTemplateService.update_content(note_template.id, rich_text.get_content())
 
         note = NoteService.create(NoteSaveDTO(title='Test note'))
         note_rich_text = RichText()
@@ -178,8 +177,8 @@ class TestNote(BaseTestCase):
         note_rich_text.add_paragraph('End note')
         NoteService.update_content(note.id, note_rich_text.get_content())
 
-        # inser the document template in the note
-        data = NoteInsertTemplateDTO(block_index=1, document_template_id=document_template.id)
+        # inser the note template in the note
+        data = NoteInsertTemplateDTO(block_index=1, note_template_id=note_template.id)
         NoteService.insert_template(note.id, data)
 
         note = note.refresh()

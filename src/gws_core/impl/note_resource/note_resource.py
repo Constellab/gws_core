@@ -7,7 +7,6 @@ from PIL import Image
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
-from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text import RichText
@@ -22,6 +21,7 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.note.note import Note
 from gws_core.note.note_dto import NoteSaveDTO
 from gws_core.note.note_service import NoteService
+from gws_core.note_template.note_template import NoteTemplate
 from gws_core.resource.r_field.primitive_r_field import StrRField
 from gws_core.resource.r_field.serializable_r_field import SerializableRField
 from gws_core.resource.resource import Resource
@@ -486,9 +486,9 @@ class NoteResource(ResourceSet):
                                   object_type: RichTextObjectType,
                                   object_id: str) -> None:
         """
-        Append a rich text (that comes from a note or document template) to the note resource.
+        Append a rich text (that comes from a note or note template) to the note resource.
 
-        :param rich_text: rich text to append to the note resource (from a note or document template)
+        :param rich_text: rich text to append to the note resource (from a note or note template)
         :type rich_text: RichText
         :param object_type: type of the object that has the rich text
         :type object_type: RichTextObjectType
@@ -701,21 +701,21 @@ class NoteResource(ResourceSet):
     ############################# Constructors #############################
 
     @staticmethod
-    def from_document_template(document_template: DocumentTemplate,
-                               title: str = None) -> "NoteResource":
-        """Create a note resource from a document template.
+    def from_note_template(note_template: NoteTemplate,
+                           title: str = None) -> "NoteResource":
+        """Create a note resource from a note template.
 
-        :param document_template: document template to create the note resource from
-        :type document_template: DocumentTemplate
-        :param title: title of the note resource. If none the title of document template is used, defaults to None
+        :param note_template: note template to create the note resource from
+        :type note_template: NoteTemplate
+        :param title: title of the note resource. If none the title of note template is used, defaults to None
         :type title: str, optional
         :return: the note resource
         :rtype: NoteResource
         """
         note = NoteResource()
-        rich_text = RichText(document_template.content)
-        note.append_advanced_rich_text(rich_text, RichTextObjectType.DOCUMENT_TEMPLATE, document_template.id)
-        note.title = title or document_template.title
+        rich_text = RichText(note_template.content)
+        note.append_advanced_rich_text(rich_text, RichTextObjectType.NOTE_TEMPLATE, note_template.id)
+        note.title = title or note_template.title
         return note
 
     @staticmethod

@@ -3,13 +3,12 @@
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
-from gws_core.document_template.document_template import DocumentTemplate
-from gws_core.document_template.task.document_template_param import \
-    DocumentTemplateParam
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.note.note_dto import NoteSaveDTO
 from gws_core.note.note_service import NoteService
+from gws_core.note_template.note_template import NoteTemplate
+from gws_core.note_template.task.note_template_param import NoteTemplateParam
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -38,12 +37,12 @@ class CreateLabNote(Task):
     })
 
     config_specs: ConfigSpecs = {
-        'template': DocumentTemplateParam(optional=True),
+        'template': NoteTemplateParam(optional=True),
         'title': StrParam(human_name='Title', short_description='Title of the note', optional=True),
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        template: DocumentTemplate = params['template']
+        template: NoteTemplate = params['template']
         title: str = params['title']
 
         if not title:

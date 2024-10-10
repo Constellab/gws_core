@@ -6,19 +6,18 @@ from peewee import CharField
 
 from gws_core.core.model.db_field import BaseDTOField
 from gws_core.core.model.model_with_user import ModelWithUser
-from gws_core.document_template.document_template_dto import \
-    DocumentTemplateDTO
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_core.note_template.note_template_dto import NoteTemplateDTO
 
 
 @final
-class DocumentTemplate(ModelWithUser):
+class NoteTemplate(ModelWithUser):
     title = CharField()
 
     content: RichTextDTO = BaseDTOField(RichTextDTO, null=True)
 
-    _table_name = 'gws_document_template'
+    _table_name = 'gws_note_template'
 
     def get_content_as_rich_text(self) -> RichText:
         return RichText(self.content)
@@ -26,8 +25,8 @@ class DocumentTemplate(ModelWithUser):
     def update_content_rich_text(self, rich_text: RichText) -> None:
         self.content = rich_text.get_content()
 
-    def to_dto(self) -> DocumentTemplateDTO:
-        return DocumentTemplateDTO(
+    def to_dto(self) -> NoteTemplateDTO:
+        return NoteTemplateDTO(
             id=self.id,
             created_at=self.created_at,
             created_by=self.created_by.to_dto(),
@@ -37,4 +36,4 @@ class DocumentTemplate(ModelWithUser):
         )
 
     class Meta:
-        table_name = 'gws_document_template'
+        table_name = 'gws_note_template'

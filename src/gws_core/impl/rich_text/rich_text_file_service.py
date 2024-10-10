@@ -30,10 +30,10 @@ class RichTextUploadFileResultDTO(BaseModelDTO):
 
 
 class RichTextFileService():
-    """Service to store file assosicated to a rich text (note, document template)
+    """Service to store file assosicated to a rich text (note, note template)
 
     Files are stored in the 'note' directory in the data directory
-    For each object (note, document template), a directory (from id) is created to store the files
+    For each object (note, note template), a directory (from id) is created to store the files
 
     Path example : data_dir/note/note/{note_id}/filename
 

@@ -50,7 +50,7 @@ class ModelParam(ParamSpec[str]):
         model: Optional[Model] = None
         if value and isinstance(value, str):
 
-            # retrieve the document template and return it
+            # retrieve the note template and return it
             model = model_type.get_by_id(value)
             if model is None:
                 raise Exception(f"Object '{model_type.classname()}' with id '{value}' not found")

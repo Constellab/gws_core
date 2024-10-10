@@ -45,7 +45,7 @@ class RichTextObjectType(Enum):
     :type Enum: _type_
     """
     NOTE = 'note'
-    DOCUMENT_TEMPLATE = 'document_template'
+    NOTE_TEMPLATE = 'note_template'
     NOTE_RESOURCE = 'note_resource'
 
 

@@ -11,7 +11,6 @@ from gws_core.config.config import Config
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.document_template.document_template import DocumentTemplate
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
@@ -29,6 +28,7 @@ from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
 from gws_core.note.note import Note, NoteScenario
 from gws_core.note.note_view_model import NoteViewModel
+from gws_core.note_template.note_template import NoteTemplate
 from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar
 from gws_core.protocol.protocol_model import ProtocolModel
@@ -833,7 +833,7 @@ class Migration080Beta1(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(Note.get_db())
         migrator.drop_column_if_exists(Note, 'old_content')
-        migrator.drop_column_if_exists(DocumentTemplate, "old_content")
+        migrator.drop_column_if_exists(NoteTemplate, "old_content")
         migrator.drop_column_if_exists(Scenario, "old_description")
         migrator.drop_column_if_exists(ProtocolTemplate, "old_description")
         migrator.drop_column_if_exists(Typing, "icon")
@@ -894,9 +894,9 @@ class Migration084(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        migrator: SqlMigrator = SqlMigrator(DocumentTemplate.get_db())
+        migrator: SqlMigrator = SqlMigrator(NoteTemplate.get_db())
 
-        migrator.rename_table_if_exists(DocumentTemplate, "gws_note_template")
+        migrator.rename_table_if_exists(NoteTemplate, "gws_note_template")
         migrator.migrate()
 
         protocol_templates: List[ProtocolTemplate] = list(
@@ -913,10 +913,10 @@ class Migration084(BrickMigration):
             cls._migrate_rich_text_image(note.content, RichTextObjectType.NOTE, note.id)
 
         # migrate document images
-        document_templates: List[DocumentTemplate] = list(DocumentTemplate.select())
-        for document_template in document_templates:
-            cls._migrate_rich_text_image(document_template.content,
-                                         RichTextObjectType.DOCUMENT_TEMPLATE, document_template.id)
+        note_templates: List[NoteTemplate] = list(NoteTemplate.select())
+        for note_template in note_templates:
+            cls._migrate_rich_text_image(note_template.content,
+                                         RichTextObjectType.NOTE_TEMPLATE, note_template.id)
 
     @classmethod
     def _migrate_rich_text_image(
@@ -947,6 +947,7 @@ class Migration0100(BrickMigration):
         migrator.rename_table_if_exists(NoteViewModel, 'gws_report_view')
         migrator.rename_table_if_exists(Scenario, 'gws_experiment')
         migrator.rename_table_if_exists(SharedScenario, 'gws_shared_experiment')
+        migrator.rename_table_if_exists(NoteTemplate, 'gws_document_template')
         migrator.migrate()
 
         migrator_2: SqlMigrator = SqlMigrator(ResourceModel.get_db())
@@ -983,3 +984,19 @@ class Migration0100(BrickMigration):
 
         Activity.update(object_type=ActivityObjectType.NOTE.value).where(
             Activity.object_type == "NOTE").execute()
+
+        # rename document_template_param to note_template_param
+        Config.get_db().execute_sql("UPDATE gws_config SET data = REPLACE(data, 'document_template_param', 'note_template_param')")
+        Config.get_db().execute_sql("UPDATE gws_task SET data = REPLACE(data, 'DocumentTemplateResource', 'NoteTemplateResource')")
+
+        # rename report to note in objects
+        Config.get_db().execute_sql("UPDATE gws_config SET data = REPLACE(data, 'report_param', 'note_param')")
+
+        resource_renames = {
+            'RESOURCE.gws_core.ReportResource': 'RESOURCE.gws_core.NoteResource',
+            'RESOURCE.gws_core.ENoteResource': 'RESOURCE.gws_core.NoteResource',
+            'RESOURCE.gws_core.DocumentTemplateResource': 'RESOURCE.gws_core.NoteTemplateResource',
+        }
+
+        for old_typing_name, new_typing_name in resource_renames.items():
+            SqlMigrator.rename_resource_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
