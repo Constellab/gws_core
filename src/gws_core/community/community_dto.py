@@ -53,3 +53,4 @@ class CommunityGetLiveTasksBody(BaseModelDTO):
 class CommunityLiveTaskVersionCreateResDTO(BaseModelDTO):
     id: str
     live_task_version: str
+    title: str
