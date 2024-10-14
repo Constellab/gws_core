@@ -6,36 +6,36 @@ from unittest import TestCase
 
 from pandas import DataFrame, read_csv
 
-from gws_core import File, PyCondaLiveTask, Task, TaskRunner
+from gws_core import File, PyCondaAgent, Task, TaskRunner
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.live.py_mamba_live_task import PyMambaLiveTask
-from gws_core.impl.live.py_pipenv_live_task import PyPipenvLiveTask
-from gws_core.impl.live.r_conda_live_task import RCondaLiveTask
-from gws_core.impl.live.r_mamba_live_task import RMambaLiveTask
+from gws_core.impl.live.py_mamba_agent import PyMambaAgent
+from gws_core.impl.live.py_pipenv_agent import PyPipenvAgent
+from gws_core.impl.live.r_conda_agent import RCondaAgent
+from gws_core.impl.live.r_mamba_agent import RMambaAgent
 
 
-# test_env_live_task
-class TestEnvLiveTask(TestCase):
+# test_env_agent
+class TestEnvAgent(TestCase):
 
-    def test_pip_env_live_task(self):
-        self._test_default_config(PyPipenvLiveTask)
+    def test_pip_env_agent(self):
+        self._test_default_config(PyPipenvAgent)
 
-    def test_conda_env_live_task(self):
-        self._test_default_config(PyCondaLiveTask)
+    def test_conda_env_agent(self):
+        self._test_default_config(PyCondaAgent)
 
-    def test_r_conda_env_live_task(self):
-        self._test_default_config(RCondaLiveTask)
+    def test_r_conda_env_agent(self):
+        self._test_default_config(RCondaAgent)
 
-    def test_mamba_env_live_task(self):
-        self._test_default_config(PyMambaLiveTask)
+    def test_mamba_env_agent(self):
+        self._test_default_config(PyMambaAgent)
 
-    def test_r_mamba_env_live_task(self):
-        self._test_default_config(RMambaLiveTask)
+    def test_r_mamba_env_agent(self):
+        self._test_default_config(RMambaAgent)
 
     def _test_default_config(self, task_type: Type[Task]):
-        """Test the default env live task config template to be sure it is valid
+        """Test the default env agent config template to be sure it is valid
         """
 
         # create a csv file
@@ -60,14 +60,14 @@ class TestEnvLiveTask(TestCase):
 
         FileHelper.delete_dir(temp_dir)
 
-    def test_live_task_with_exception(self):
+    def test_agent_with_exception(self):
         tester = TaskRunner(
             params={
                 "code": """
 raise Exception('This is not working')
 """,
             },
-            task_type=PyPipenvLiveTask
+            task_type=PyPipenvAgent
         )
 
         logger = tester.add_log_observer()

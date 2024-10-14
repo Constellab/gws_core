@@ -7,29 +7,29 @@ from gws_core.code.task_generator import TaskGenerator
 from gws_core.config.param.param_spec import (BoolParam, FloatParam, IntParam,
                                               ParamSpec, StrParam)
 from gws_core.core.utils.numeric_helper import NumericHelper
-from gws_core.impl.live.py_live_task import PyLiveTask
+from gws_core.impl.live.py_agent import PyAgent
 from gws_core.task.task_model import TaskModel
 
 
-class LiveTaskFactory:
+class AgentFactory:
 
     current_json_version = 2
 
     @classmethod
-    def generate_task_code_from_live_task_id(cls, task_id: str) -> str:
+    def generate_task_code_from_agent_id(cls, task_id: str) -> str:
         task: TaskModel = TaskModel.get_by_id_and_check(task_id)
 
-        if task.get_process_type() != PyLiveTask:
-            raise Exception(f"The task {task_id} is not a python live task")
+        if task.get_process_type() != PyAgent:
+            raise Exception(f"The task {task_id} is not a python agent")
 
-        return cls.generate_task_code_from_live_task(task)
+        return cls.generate_task_code_from_agent(task)
 
     @classmethod
-    def generate_task_code_from_live_task(cls, task: TaskModel) -> str:
+    def generate_task_code_from_agent(cls, task: TaskModel) -> str:
 
         task_generator: TaskGenerator = TaskGenerator(task.instance_name)
 
-        code: str = task.config.get_value(PyLiveTask.CONFIG_CODE_NAME)
+        code: str = task.config.get_value(PyAgent.CONFIG_CODE_NAME)
 
         cleaned_code: str = ''
         for code_line in code.splitlines():
@@ -53,7 +53,7 @@ class LiveTaskFactory:
             task_generator.add_output_spec(key, spec.get_default_resource_type())
             count = count + 1
 
-        params: List[str] = task.config.get_value(PyLiveTask.CONFIG_PARAMS_NAME)
+        params: List[str] = task.config.get_value(PyAgent.CONFIG_PARAMS_NAME)
         for param_line in params:
             if not param_line or '=' not in param_line or '#' in param_line or param_line[0] == '#':
                 continue
@@ -80,7 +80,7 @@ class LiveTaskFactory:
         return task_generator.generate_code()
 
     @classmethod
-    def generate_live_task_file_from_live_task_id(cls, task_id: str) -> dict:
+    def generate_agent_file_from_agent_id(cls, task_id: str) -> dict:
         task: TaskModel = TaskModel.get_by_id_and_check(task_id)
         values = task.config.get_and_check_values()
         code = task.config.get_value("code")
@@ -114,18 +114,18 @@ class LiveTaskFactory:
             "output_specs": outputs,
             "config_specs": {},
             "bricks": bricks,
-            "task_type": cls.get_live_task_type(task.instance_name),
+            "task_type": cls.get_agent_type(task.instance_name),
         }
 
     @classmethod
-    def get_live_task_type(cls, instance_name: str) -> str:
+    def get_agent_type(cls, instance_name: str) -> str:
         choice = {
-            'PyLiveTask': 'PYTHON',
-            'PyCondaLiveTask': 'CONDA_PYTHON',
-            'PyMambaLiveTask': 'MAMBA_PYTHON',
-            'PyPipenvLiveTask': 'PIP_PYTHON',
-            'RCondaLiveTask': 'CONDA_R',
-            'RMambaLiveTask': 'MAMBA_R',
-            'StreamlitLiveTask': 'STREAMLIT',
+            'PyAgent': 'PYTHON',
+            'PyCondaAgent': 'CONDA_PYTHON',
+            'PyMambaAgent': 'MAMBA_PYTHON',
+            'PyPipenvAgent': 'PIP_PYTHON',
+            'RCondaAgent': 'CONDA_R',
+            'RMambaAgent': 'MAMBA_R',
+            'StreamlitAgent': 'STREAMLIT',
         }
         return choice[instance_name.split('_')[0]]

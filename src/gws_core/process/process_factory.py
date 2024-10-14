@@ -40,7 +40,7 @@ class ProcessFactory():
             inputs_dto: Optional[IODTO] = None,
             outputs_dto: Optional[IODTO] = None,
             name: Optional[str] = None,
-            community_live_task_version_id: Optional[str] = None,
+            community_agent_version_id: Optional[str] = None,
             style: Optional[TypingStyle] = None) -> TaskModel:
         """
         Create a task model from a task type. The specs are created from the task type.
@@ -57,8 +57,8 @@ class ProcessFactory():
         :type outputs_dto: Optional[IODTO], optional
         :param name: _description_, defaults to None
         :type name: Optional[str], optional
-        :param community_live_task_version_id: _description_, defaults to None
-        :type community_live_task_version_id: Optional[str], optional
+        :param community_agent_version_id: _description_, defaults to None
+        :type community_agent_version_id: Optional[str], optional
         :param style: _description_, defaults to None
         :type style: Optional[TypingStyle], optional
         :raises BadRequestException: _description_
@@ -90,8 +90,8 @@ class ProcessFactory():
         else:
             task_model.set_outputs_from_specs(task_type.output_specs)
 
-        # Set the community_live_task_version_id if provided
-        task_model.community_live_task_version_id = community_live_task_version_id
+        # Set the community_agent_version_id if provided
+        task_model.community_agent_version_id = community_agent_version_id
 
         config: Config = Config()
         config.set_specs(task_type.config_specs)
@@ -261,11 +261,11 @@ class ProcessFactory():
             cls, process_type: Type[Process],
             config_params: ConfigParamsDict = None,
             instance_name: str = None,
-            community_live_task_version_id: str = None) -> TaskModel:
+            community_agent_version_id: str = None) -> TaskModel:
         if issubclass(process_type, Task):
             return cls.create_task_model_from_type(
                 process_type, config_params, instance_name,
-                community_live_task_version_id=community_live_task_version_id)
+                community_agent_version_id=community_agent_version_id)
         elif issubclass(process_type, Protocol):
             return cls.create_protocol_model_from_type(process_type, config_params, instance_name)
         else:

@@ -54,7 +54,7 @@ class TaskModel(ProcessModel):
     source_config_id: str = ForeignKeyField(
         ResourceModel, null=True, index=True, lazy_load=False)
 
-    community_live_task_version_id: str = CharField(null=True, max_length=36, default="")
+    community_agent_version_id: str = CharField(null=True, max_length=36, default="")
 
     _table_name = 'gws_task'
 
@@ -455,5 +455,5 @@ class TaskModel(ProcessModel):
 
     def to_dto(self):
         res = super().to_dto()
-        res.community_live_task_version_id = self.community_live_task_version_id
+        res.community_agent_version_id = self.community_agent_version_id
         return res

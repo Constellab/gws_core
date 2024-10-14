@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from pandas import DataFrame
 
-from gws_core.impl.live.py_live_task import PyLiveTask
+from gws_core.impl.live.py_agent import PyAgent
 from gws_core.impl.openai.open_ai_types import OpenAiChatDict
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
 from gws_core.impl.plotly.table_smart_plotly import SmartPlotly
@@ -49,11 +49,11 @@ target = px.scatter(source, x="A", y="B")```"""
         self.assertIsInstance(target, PlotlyResource)
 
         # check the generated code
-        # Try to execute the code in a python live task
+        # Try to execute the code in a python agent
         code: Text = outputs["generated_code"]
 
         tester = TaskRunner(
-            task_type=PyLiveTask,
+            task_type=PyAgent,
             inputs={
                 'source': table,
             },

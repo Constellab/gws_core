@@ -22,7 +22,7 @@ from gws_core.streamlit.streamlit_view import StreamlitView
                     style=TypingStyle.material_icon("dashboard", background_color='#ff4b4b'))
 class StreamlitResource(ResourceList):
     """
-    Resource that contains a streamlit dashboard. See Streamlite live task to see how to generate it.
+    Resource that contains a streamlit dashboard. See Streamlite agent to see how to generate it.
     """
 
     _streamlit_app_code: str = StrRField()

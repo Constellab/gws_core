@@ -2,19 +2,19 @@
 
 from pandas import DataFrame
 
-from gws_core import BaseTestCase, PyLiveTask, Table, TaskRunner, Text
+from gws_core import BaseTestCase, PyAgent, Table, TaskRunner, Text
 
 
-# test_py_live_task
-class TestLiveTask(BaseTestCase):
+# test_py_agent
+class TestAgent(BaseTestCase):
 
     def test_default_config(self):
-        """Test the default py live task config template to be sure it is valid
+        """Test the default py agent config template to be sure it is valid
         """
         data = DataFrame({'col1': [0, 1], 'col2': [0, 2]})
         tester = TaskRunner(
             inputs={'source': Table(data)},
-            task_type=PyLiveTask
+            task_type=PyAgent
         )
 
         outputs = tester.run()
@@ -25,7 +25,7 @@ class TestLiveTask(BaseTestCase):
         expected_table = Table(data.T)
         self.assertTrue(table.equals(expected_table))
 
-    def test_live_task(self):
+    def test_agent(self):
         tester = TaskRunner(
             params={
                 "code": """
@@ -45,7 +45,7 @@ targets = [df]
             inputs={
                 'source': Table(data=DataFrame({'col1': [0, 1], 'col2': [0, 2]}))
             },
-            task_type=PyLiveTask
+            task_type=PyAgent
         )
 
         outputs = tester.run()
@@ -56,7 +56,7 @@ targets = [df]
         expected_table = Table(DataFrame({'col1': [1, 2], 'col2': [0, 4]}))
         self.assertTrue(table.equals(expected_table))
 
-    def test_live_task_shell_with_subproc(self):
+    def test_agent_shell_with_subproc(self):
         tester = TaskRunner(
             params={
                 "code": """
@@ -68,14 +68,14 @@ targets = [Text(data=result.stdout)]
                 """,
                 "params": []
             },
-            task_type=PyLiveTask
+            task_type=PyAgent
         )
 
         outputs = tester.run()
         text = outputs["target"]
         self.assertTrue(isinstance(text, Text))
 
-    def test_live_task_shell_with_shellproxy(self):
+    def test_agent_shell_with_shellproxy(self):
         tester = TaskRunner(
             params={
                 "code": """
@@ -91,7 +91,7 @@ targets = [Text(data=data)]
                 """,
                 "params": []
             },
-            task_type=PyLiveTask
+            task_type=PyAgent
         )
 
         outputs = tester.run()
@@ -99,7 +99,7 @@ targets = [Text(data=data)]
         self.assertTrue(isinstance(text, Text))
         self.assertEqual(text.get_data().strip(), 'constellab')
 
-    def test_live_task_with_exception(self):
+    def test_agent_with_exception(self):
         tester = TaskRunner(
             params={
                 "code": """
@@ -107,7 +107,7 @@ raise Exception('This is not working')
 """,
                 "params": []
             },
-            task_type=PyLiveTask
+            task_type=PyAgent
         )
 
         error = False

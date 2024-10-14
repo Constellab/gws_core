@@ -73,8 +73,8 @@ The 'source' dict has the following schema :
         if output is None:
             raise Exception("The code did not generate any output")
 
-        # make the output code compatible with the live task
-        live_task_code = f"""
+        # make the output code compatible with the agent
+        agent_code = f"""
 from gws_core import JSONDict
 # retrieve the json for the generated code
 source = sources[0].get_data()
@@ -85,7 +85,7 @@ targets = [JSONDict(target)]
 
         result = JSONDict(output)
 
-        generated_text = Text(live_task_code)
+        generated_text = Text(agent_code)
         generated_text.name = "JSON transformation code"
 
         return {'target': result, 'generated_code': generated_text}

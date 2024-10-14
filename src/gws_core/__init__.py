@@ -6,8 +6,8 @@
 
 # Brick
 from .brick.brick_service import BrickService as BrickService
-# Code > LiveTaskFactory
-from .code.live_task_factory import LiveTaskFactory as LiveTaskFactory
+# Code > AgentFactory
+from .code.agent_factory import AgentFactory as AgentFactory
 # Community
 from .community.community_service import CommunityService as CommunityService
 # Config
@@ -143,13 +143,13 @@ from .impl.json.json_tasks import JSONExporter as JSONExporter
 from .impl.json.json_tasks import JSONImporter as JSONImporter
 # Impl > JSONView
 from .impl.json.json_view import JSONView as JSONView
-# Impl > LiveTask
-from .impl.live.py_conda_live_task import PyCondaLiveTask as PyCondaLiveTask
-from .impl.live.py_live_task import PyLiveTask as PyLiveTask
-from .impl.live.py_mamba_live_task import PyMambaLiveTask as PyMambaLiveTask
-from .impl.live.py_pipenv_live_task import PyPipenvLiveTask as PyPipenvLiveTask
-from .impl.live.r_conda_live_task import RCondaLiveTask as RCondaLiveTask
-from .impl.live.r_mamba_live_task import RMambaLiveTask as RMambaLiveTask
+# Impl > Agent
+from .impl.live.py_agent import PyAgent as PyAgent
+from .impl.live.py_conda_agent import PyCondaAgent as PyCondaAgent
+from .impl.live.py_mamba_agent import PyMambaAgent as PyMambaAgent
+from .impl.live.py_pipenv_agent import PyPipenvAgent as PyPipenvAgent
+from .impl.live.r_conda_agent import RCondaAgent as RCondaAgent
+from .impl.live.r_mamba_agent import RMambaAgent as RMambaAgent
 # Impl > Network
 from .impl.network.network_view import NetworkView as NetworkView
 # Extension

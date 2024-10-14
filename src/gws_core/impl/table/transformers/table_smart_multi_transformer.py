@@ -90,9 +90,9 @@ There are {len(resource_list)} dataframes in the list.
         if not isinstance(output, list):
             raise Exception("The output must be a list of pandas DataFrame")
 
-        # make the output code compatible with the live task
+        # make the output code compatible with the agent
         # Only print the code that is generated
-        live_task_code = f"""
+        agent_code = f"""
 ##################### LIVE TASK CODE #####################
 from gws_core import Table
 # keep the original table
@@ -103,7 +103,7 @@ source = [s.get_data() for s in sources]
 targets = [Table(t) for t in target]
 ##################### LIVE TASK CODE #####################
 """
-        self.log_info_message(live_task_code)
+        self.log_info_message(agent_code)
 
         resource_list = ResourceList()
 

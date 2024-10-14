@@ -74,8 +74,8 @@ The variable named 'output_path' contains the absolute path of the output png fi
         if not FileHelper.exists_on_os(self.ouput_path) or not FileHelper.is_file(self.ouput_path):
             raise Exception("The output must be a file")
 
-        # make the output code compatible with the live task
-        live_task_code = f"""
+        # make the output code compatible with the agent
+        agent_code = f"""
 from gws_core import File
 import os
 source = sources[0].get_data()
@@ -84,7 +84,7 @@ output_path = os.path.join(working_dir, 'output.png')
 {generated_code}
 targets = [File(output_path)]"""
 
-        generated_text = Text(live_task_code)
+        generated_text = Text(agent_code)
         generated_text.name = "Plot code"
 
         return {'target': File(self.ouput_path), 'generated_code': generated_text}

@@ -1,4 +1,4 @@
-# This is a snippet template for a Python live task.
+# This is a snippet template for a Python agent.
 import pandas
 
 # Do the job here ...

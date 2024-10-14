@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from gws_core.code.live_task_factory import LiveTaskFactory
+from gws_core.code.agent_factory import AgentFactory
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
 
@@ -8,9 +8,9 @@ from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
-from .community_dto import (CommunityCreateLiveTaskDTO, CommunityLiveTaskDTO,
-                            CommunityLiveTaskVersionCreateResDTO,
-                            CommunityLiveTaskVersionDTO)
+from .community_dto import (CommunityAgentDTO,
+                            CommunityAgentVersionCreateResDTO,
+                            CommunityAgentVersionDTO, CommunityCreateAgentDTO)
 
 
 class CommunityService:
@@ -22,21 +22,19 @@ class CommunityService:
     user_id_header_key: str = 'User'
 
     @classmethod
-    def get_community_live_task_version(cls, live_task_version_id: str) -> CommunityLiveTaskVersionDTO:
+    def get_community_agent_version(cls, agent_version_id: str) -> CommunityAgentVersionDTO:
         """
         Get a community by its id
         """
         if cls.community_api_url is None:
             return None
-        url = f"{cls.community_api_url}/live-task/{live_task_version_id}/version/latest/for-lab/{LiveTaskFactory().current_json_version}"
+        url = f"{cls.community_api_url}/agent/{agent_version_id}/version/latest/for-lab/{AgentFactory().current_json_version}"
         try:
-            # response = ExternalApiService.get(f"{cls.community_api_url}/live-task/version/{live_task_version_id}/",
-            #                                   raise_exception_if_error=True)
             response = ExternalApiService.get(url, cls._get_request_header(), raise_exception_if_error=True)
         except BaseHTTPException as err:
-            err.detail = f"Can't retrieve community live tasks for the lab. Error : {err.detail}"
+            err.detail = f"Can't retrieve community agents for the lab. Error : {err.detail}"
             raise err
-        return CommunityLiveTaskVersionDTO.from_json(response.json())
+        return CommunityAgentVersionDTO.from_json(response.json())
 
     @classmethod
     def get_community_available_space(cls) -> Any:
@@ -51,19 +49,19 @@ class CommunityService:
         return response.json()
 
     @classmethod
-    def get_community_available_live_tasks(
+    def get_community_available_agents(
             cls, spaces_filter: List[str],
             title_filter: str, personal_only: bool, page: int, number_of_items_per_page: int) -> Any:
         if cls.community_api_url is None:
             return None
-        url = f"{cls.community_api_url}/live-task/available/for-lab?page={page}&size={number_of_items_per_page}"
+        url = f"{cls.community_api_url}/agent/available/for-lab?page={page}&size={number_of_items_per_page}"
         try:
             response = ExternalApiService.post(
                 url, {'titleFilter': title_filter, 'spacesFilter': spaces_filter, 'personalOnly': personal_only},
                 cls._get_request_header(),
                 raise_exception_if_error=True)
         except BaseHTTPException as err:
-            err.detail = f"Can't retrieve community live tasks for the lab. Error : {err.detail}"
+            err.detail = f"Can't retrieve community agents for the lab. Error : {err.detail}"
             raise err
         res_parsed = response.json()
         return {
@@ -81,26 +79,26 @@ class CommunityService:
         }
 
     @classmethod
-    def get_community_live_task(cls, live_task_version_id: str) -> CommunityLiveTaskDTO:
+    def get_community_agent(cls, agent_version_id: str) -> CommunityAgentDTO:
         """
-        Get a community live task by comunity live task version id
+        Get a community agent by comunity agent version id
         """
         if cls.community_api_url is None:
             return None
-        url = f"{cls.community_api_url}/live-task/for-lab/version/{live_task_version_id}/{LiveTaskFactory().current_json_version}"
+        url = f"{cls.community_api_url}/agent/for-lab/version/{agent_version_id}/{AgentFactory().current_json_version}"
         try:
             response = ExternalApiService.get(url, cls._get_request_header(), raise_exception_if_error=True)
         except BaseHTTPException as err:
-            err.detail = f"Can't retrieve community live tasks for the lab. Error : {err.detail}"
+            err.detail = f"Can't retrieve community agents for the lab. Error : {err.detail}"
             raise err
-        return CommunityLiveTaskDTO.from_json(response.json())
+        return CommunityAgentDTO.from_json(response.json())
 
     @classmethod
-    def create_community_live_task(
-            cls, version_file: dict, form_data: CommunityCreateLiveTaskDTO) -> CommunityLiveTaskVersionCreateResDTO:
+    def create_community_agent(
+            cls, version_file: dict, form_data: CommunityCreateAgentDTO) -> CommunityAgentVersionCreateResDTO:
         if cls.community_api_url is None:
             return None
-        url = f"{cls.community_api_url}/live-task/for-lab"
+        url = f"{cls.community_api_url}/agent/for-lab"
         try:
             response = ExternalApiService.post(url,
                                                {'versionFile': version_file, 'title': form_data.title,
@@ -108,16 +106,16 @@ class CommunityService:
                                                cls._get_request_header(),
                                                raise_exception_if_error=True)
         except BaseHTTPException as err:
-            err.detail = f"Can't create community live task from the lab. Error : {err.detail}"
+            err.detail = f"Can't create community agent from the lab. Error : {err.detail}"
             raise err
-        return CommunityLiveTaskVersionCreateResDTO.from_json(response.json())
+        return CommunityAgentVersionCreateResDTO.from_json(response.json())
 
     @classmethod
-    def fork_community_live_task(cls, version_file: dict, form_data: CommunityCreateLiveTaskDTO, live_task_version_id:
-                                 str) -> CommunityLiveTaskVersionCreateResDTO:
+    def fork_community_agent(cls, version_file: dict, form_data: CommunityCreateAgentDTO, agent_version_id:
+                             str) -> CommunityAgentVersionCreateResDTO:
         if cls.community_api_url is None:
             return None
-        url = f"{cls.community_api_url}/live-task/for-lab/fork/{live_task_version_id}"
+        url = f"{cls.community_api_url}/agent/for-lab/fork/{agent_version_id}"
         try:
             response = ExternalApiService.post(url,
                                                {'versionFile': version_file, 'title': form_data.title,
@@ -125,25 +123,25 @@ class CommunityService:
                                                cls._get_request_header(),
                                                raise_exception_if_error=True)
         except BaseHTTPException as err:
-            err.detail = f"Can't create community live task from the lab. Error : {err.detail}"
+            err.detail = f"Can't create community agent from the lab. Error : {err.detail}"
             raise err
-        return CommunityLiveTaskVersionCreateResDTO.from_json(response.json())
+        return CommunityAgentVersionCreateResDTO.from_json(response.json())
 
     @classmethod
-    def create_community_live_task_version(
-            cls, version_file: dict, live_task_id: str) -> CommunityLiveTaskVersionCreateResDTO:
+    def create_community_agent_version(
+            cls, version_file: dict, agent_id: str) -> CommunityAgentVersionCreateResDTO:
         if cls.community_api_url is None:
             return None
-        url = f"{cls.community_api_url}/live-task/for-lab/version/{live_task_id}"
+        url = f"{cls.community_api_url}/agent/for-lab/version/{agent_id}"
         try:
             response = ExternalApiService.post(
                 url, {'versionFile': version_file},
                 cls._get_request_header(),
                 raise_exception_if_error=True)
         except BaseHTTPException as err:
-            err.detail = f"Can't create community live task version from the lab. Error : {err.detail}"
+            err.detail = f"Can't create community agent version from the lab. Error : {err.detail}"
             raise err
-        return CommunityLiveTaskVersionCreateResDTO.from_json(response.json())
+        return CommunityAgentVersionCreateResDTO.from_json(response.json())
 
     @classmethod
     def _get_request_header(cls) -> Dict[str, str]:

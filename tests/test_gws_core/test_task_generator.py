@@ -1,8 +1,8 @@
 
 
-from gws_core.code.live_task_factory import LiveTaskFactory
+from gws_core.code.agent_factory import AgentFactory
 from gws_core.core.utils.string_helper import StringHelper
-from gws_core.impl.live.py_live_task import PyLiveTask
+from gws_core.impl.live.py_agent import PyAgent
 from gws_core.process.process_factory import ProcessFactory
 from gws_core.test.base_test_case import BaseTestCase
 
@@ -21,16 +21,16 @@ self.log_info_message('Transposing table')
 # Transpose the input table
 table: Table = sources[0].transpose()
 
-# set the new table a output or the live task
+# set the new table a output or the agent
 targets = [table]
 """
 
-        task_model = ProcessFactory.create_task_model_from_type(PyLiveTask, config_params={
-            PyLiveTask.CONFIG_CODE_NAME: code,
-            PyLiveTask.CONFIG_PARAMS_NAME: ["a = 1", "b = '2'", "c = 3", "d = True"],
+        task_model = ProcessFactory.create_task_model_from_type(PyAgent, config_params={
+            PyAgent.CONFIG_CODE_NAME: code,
+            PyAgent.CONFIG_PARAMS_NAME: ["a = 1", "b = '2'", "c = 3", "d = True"],
         }, instance_name='test_task_generator')
 
-        result = LiveTaskFactory.generate_task_code_from_live_task(task_model)
+        result = AgentFactory.generate_task_code_from_agent(task_model)
 
         # print(result)
 
@@ -54,7 +54,7 @@ class TestTaskGenerator(Task):
                 # Transpose the input table
                 table: Table = sources[0].transpose()
 
-                # set the new table a output or the live task
+                # set the new table a output or the agent
                 targets = [table]"""
 
         self.assertEqual(StringHelper.remove_whitespaces(result), StringHelper.remove_whitespaces(expected_result))

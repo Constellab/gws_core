@@ -747,7 +747,7 @@ class Migration073(BrickMigration):
             migrator.migrate()
 
 
-@brick_migration('0.7.5', short_description='Add name to process model. Migrate protocol IOFaces. Add community live task version id column to Task model')
+@brick_migration('0.7.5', short_description='Add name to process model. Migrate protocol IOFaces. Add community agent version id column to Task model')
 class Migration075(BrickMigration):
 
     @classmethod
@@ -755,7 +755,7 @@ class Migration075(BrickMigration):
 
         migrator: SqlMigrator = SqlMigrator(TaskModel.get_db())
         migrator.add_column_if_not_exists(TaskModel, TaskModel.name)
-        migrator.add_column_if_not_exists(TaskModel, TaskModel.community_live_task_version_id)
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.community_agent_version_id)
         migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.name)
         migrator.migrate()
 
@@ -1001,3 +1001,17 @@ class Migration0100(BrickMigration):
 
         for old_typing_name, new_typing_name in resource_renames.items():
             SqlMigrator.rename_resource_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+
+        # rename live tasks to agents
+        agent_renames = {
+            'TASK.gws_core.PyLiveTask': 'TASK.gws_core.PyAgent',
+            'TASK.gws_core.PyCondaLiveTask': 'TASK.gws_core.PyCondaAgent',
+            'TASK.gws_core.PyMambaLiveTask': 'TASK.gws_core.PyMambaAgent',
+            'TASK.gws_core.PyPipenvLiveTask': 'TASK.gws_core.PyPipenvAgent',
+            'TASK.gws_core.RCondaLiveTask': 'TASK.gws_core.RCondaAgent',
+            'TASK.gws_core.RMambaLiveTask': 'TASK.gws_core.RMambaAgent',
+            'TASK.gws_core.StreamlitLiveTask': 'TASK.gws_core.StreamlitAgent',
+        }
+
+        for old_typing_name, new_typing_name in agent_renames.items():
+            SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)

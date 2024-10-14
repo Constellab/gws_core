@@ -36,7 +36,7 @@ class SmartTaskBase(Task):
 
     generated_code_output = OutputSpec(
         Text, human_name='Generated code',
-        short_description='Modified generated code that can be used in a python live task directly.')
+        short_description='Modified generated code that can be used in a python agent directly.')
 
     config_specs: ConfigSpecs = {
         'prompt': OpenAiChatParam()

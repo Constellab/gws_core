@@ -20,9 +20,9 @@ from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
 from gws_core.scenario_template.scenario_template_dto import \
     ScenarioTemplateDTO
 
-from ..community.community_dto import (CommunityCreateLiveTaskDTO,
-                                       CommunityGetLiveTasksBody,
-                                       CommunityLiveTaskDTO)
+from ..community.community_dto import (CommunityAgentDTO,
+                                       CommunityCreateAgentDTO,
+                                       CommunityGetAgentsBody)
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
 from .protocol_service import ProtocolService
@@ -84,80 +84,80 @@ def duplicate_process(id_: str,
         ).to_dto()
 
 
-@core_app.post("/protocol/{id_}/add-community-live-task/{live_task_version_id}", tags=["Protocol"],
-               summary="Add a community live-task to a protocol")
-def add_community_live_task(id_: str,
-                            live_task_version_id: str,
-                            _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+@core_app.post("/protocol/{id_}/add-community-agent/{agent_version_id}", tags=["Protocol"],
+               summary="Add a community agent to a protocol")
+def add_community_agent(id_: str,
+                        agent_version_id: str,
+                        _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     """
-    Add a constellab community live task to a protocol
+    Add a constellab community agent to a protocol
     """
     with update_lock:
-        return ProtocolService.add_live_task_to_protocol_id_by_live_task_version_id(id_, live_task_version_id).to_dto()
+        return ProtocolService.add_agent_to_protocol_id_by_agent_version_id(id_, agent_version_id).to_dto()
 
 
 @core_app.post("/protocol/get-community-available-spaces", tags=["Protocol"],
                summary="Get community spaces available for the protocol")
 def get_community_available_space(_=Depends(AuthService.check_user_access_token)) -> Any:
     """
-    Add a constellab community live task to a protocol
+    Add a constellab community agent to a protocol
     """
     return ProtocolService.get_community_available_space()
 
 
-@core_app.post("/protocol/get-community-available-live-tasks", tags=["Protocol"],
-               summary="Get community live-tasks available for the protocol")
-def get_community_available_live_tasks(page: int,
-                                       number_of_items_per_page: int,
-                                       body: CommunityGetLiveTasksBody,
-                                       _=Depends(AuthService.check_user_access_token)) -> Any:
+@core_app.post("/protocol/get-community-available-agents", tags=["Protocol"],
+               summary="Get community agents available for the protocol")
+def get_community_available_agents(page: int,
+                                   number_of_items_per_page: int,
+                                   body: CommunityGetAgentsBody,
+                                   _=Depends(AuthService.check_user_access_token)) -> Any:
     """
-    Add a constellab community live task to a protocol
+    Add a constellab community agent to a protocol
     """
-    return ProtocolService.get_community_available_live_tasks(
+    return ProtocolService.get_community_available_agents(
         body.spacesFilter, body.titleFilter, body.personalOnly,
         page, number_of_items_per_page)
 
 
-@core_app.get("/protocol/get-current-live-task/{live_task_version_id}", tags=["Protocol"],
-              summary="Get community live task by live task version id")
-def get_community_live_task(live_task_version_id: str,
-                            _=Depends(AuthService.check_user_access_token)) -> CommunityLiveTaskDTO:
-    return ProtocolService.get_community_live_task(live_task_version_id)
+@core_app.get("/protocol/get-current-agent/{agent_version_id}", tags=["Protocol"],
+              summary="Get community agent by agent version id")
+def get_community_agent(agent_version_id: str,
+                        _=Depends(AuthService.check_user_access_token)) -> CommunityAgentDTO:
+    return ProtocolService.get_community_agent(agent_version_id)
 
 
-@core_app.post("/protocol/{id}/create-community-live-task", tags=["Protocol"],
-               summary="Create a community live-task in community")
-def create_community_live_task(id: str,
-                               form_data: CommunityCreateLiveTaskDTO,
-                               _=Depends(AuthService.check_user_access_token)) -> Any:
+@core_app.post("/protocol/{id}/create-community-agent", tags=["Protocol"],
+               summary="Create a community agent in community")
+def create_community_agent(id: str,
+                           form_data: CommunityCreateAgentDTO,
+                           _=Depends(AuthService.check_user_access_token)) -> Any:
     """
-    Create a constellab community live task
+    Create a constellab community agent
     """
-    return ProtocolService.create_community_live_task(id, form_data)
+    return ProtocolService.create_community_agent(id, form_data)
 
 
-@core_app.post("/protocol/{id}/fork-community-live-task/{live_task_version_id}", tags=["Protocol"],
-               summary="Fork into a new community live-task")
-def fork_community_live_task(id: str,
-                             form_data: CommunityCreateLiveTaskDTO,
-                             live_task_version_id: str,
-                             _=Depends(AuthService.check_user_access_token)) -> Any:
+@core_app.post("/protocol/{id}/fork-community-agent/{agent_version_id}", tags=["Protocol"],
+               summary="Fork into a new community agent")
+def fork_community_agent(id: str,
+                         form_data: CommunityCreateAgentDTO,
+                         agent_version_id: str,
+                         _=Depends(AuthService.check_user_access_token)) -> Any:
     """
-    Create a constellab community live task
+    Create a constellab community agent
     """
-    return ProtocolService.fork_community_live_task(id, form_data, live_task_version_id)
+    return ProtocolService.fork_community_agent(id, form_data, agent_version_id)
 
 
-@core_app.post("/protocol/{id}/add-version-to-community-live-task/{live_task_id}", tags=["Protocol"],
-               summary="Create a community live-task in community")
-def create_new_community_live_task_version(id: str,
-                                           live_task_id: str,
-                                           _=Depends(AuthService.check_user_access_token)) -> Any:
+@core_app.post("/protocol/{id}/add-version-to-community-agent/{agent_id}", tags=["Protocol"],
+               summary="Create a community agent in community")
+def create_new_community_agent_version(id: str,
+                                       agent_id: str,
+                                       _=Depends(AuthService.check_user_access_token)) -> Any:
     """
-    Create a new constellab community live task version
+    Create a new constellab community agent version
     """
-    return ProtocolService.create_community_live_task_version(id, live_task_id)
+    return ProtocolService.create_community_agent_version(id, agent_id)
 
 
 @core_app.post("/protocol/{id_}/add-process/{process_typing_name}/connected-to-output/{process_name}/{port_name}",

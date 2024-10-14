@@ -3,7 +3,7 @@
 from typing import List
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
-from gws_core.impl.live.base.env_live_task import EnvLiveTask
+from gws_core.impl.live.base.env_agent import EnvAgent
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.model.typing_style import TypingStyle
@@ -17,26 +17,26 @@ from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("PyLiveTask", human_name="Python live task",
-                short_description="Live task to run Python snippets directly in the global environment. The input data and parameters are passed in memory to the snippet.",
+@task_decorator("PyAgent", human_name="Python agent",
+                short_description="Agent to run Python snippets directly in the global environment. The input data and parameters are passed in memory to the snippet.",
                 style=TypingStyle.material_icon("code"))
-class PyLiveTask(Task):
+class PyAgent(Task):
     """
-    Python live tasks allow to execute any Python code snippets on the fly.
+    Python agents allow to execute any Python code snippets on the fly.
 
-    Live tasks are fast and efficient tools to develop, test, use and share code snippets.
+    Agents are fast and efficient tools to develop, test, use and share code snippets.
 
     **Warning**: It is recommended to use code snippets comming from trusted sources.
 
-    Here is the general documentation for live task (including how to use the parameters): https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779
+    Here is the general documentation for agent (including how to use the parameters): https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779
 
-    Here is the documentation of the live task: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/env-live-task/c6acb3c3-2a7c-44cd-8fb2-ea1beccdbdcc
+    Here is the documentation of the agent: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/env-agent/c6acb3c3-2a7c-44cd-8fb2-ea1beccdbdcc
     """
 
     input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = DynamicOutputs()
     config_specs: ConfigSpecs = {
-        'params': EnvLiveTask.get_list_param_config(),
+        'params': EnvAgent.get_list_param_config(),
         'code':
         PythonCodeParam(
             default_value=LiveCodeHelper.get_python_template(),

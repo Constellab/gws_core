@@ -78,8 +78,8 @@ Only build the figure object, do not display the figure using 'show' method.
         # convert the plotly figure to a json dict
         plotly_resource = PlotlyResource(target)
 
-        # make the output code compatible with the live task
-        live_task_code = f"""
+        # make the output code compatible with the agent
+        agent_code = f"""
 from gws_core import File, PlotlyResource
 import os
 # get DataFrame from the source
@@ -88,7 +88,7 @@ source = sources[0].get_data()
 # save the figure as resource
 targets = [PlotlyResource(target)]"""
 
-        generated_text = Text(live_task_code)
+        generated_text = Text(agent_code)
         generated_text.name = "Interactive plot code"
 
         return {'target': plotly_resource, 'generated_code': generated_text}

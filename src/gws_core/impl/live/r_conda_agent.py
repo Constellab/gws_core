@@ -4,7 +4,7 @@ from typing import List
 
 from gws_core.config.param.code_param.r_code_param import RCodeParam
 from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
-from gws_core.impl.live.base.env_live_task import EnvLiveTask
+from gws_core.impl.live.base.env_agent import EnvAgent
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
 from gws_core.model.typing_style import TypingStyle
@@ -14,26 +14,26 @@ from ...task.task_decorator import task_decorator
 
 
 @task_decorator(
-    "RCondaLiveTask", human_name="R conda env live task",
-    short_description="Live task to run R snippets in conda a shell environment.",
+    "RCondaAgent", human_name="R conda env agent",
+    short_description="Agent to run R snippets in conda a shell environment.",
     style=TypingStyle.material_icon("code"))
-class RCondaLiveTask(EnvLiveTask):
+class RCondaAgent(EnvAgent):
     """
-    Conda-based R live tasks allow to execute R snippets on the fly in isolated conda environments.
+    Conda-based R agents allow to execute R snippets on the fly in isolated conda environments.
 
-    Live tasks are fast and efficient tools to develop, test, use and share code snippets.
+    Agents are fast and efficient tools to develop, test, use and share code snippets.
 
     **Warning**: It is recommended to use code snippets comming from trusted sources.
 
-    Here is the general documentation for live task (including how to use the parameters): https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779
+    Here is the general documentation for agent (including how to use the parameters): https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779
 
-    Here is the documentation of the live task: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/env-live-task/c6acb3c3-2a7c-44cd-8fb2-ea1beccdbdcc
+    Here is the documentation of the agent: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/env-agent/c6acb3c3-2a7c-44cd-8fb2-ea1beccdbdcc
     """
 
     SNIPPET_FILE_EXTENSION: str = "R"
 
     config_specs: ConfigSpecs = {
-        'params': EnvLiveTask.get_list_param_config(),
+        'params': EnvAgent.get_list_param_config(),
         'env': YamlCodeParam(
             default_value=LiveCodeHelper.get_r_conda_env_file_template(),
             human_name="Conda environment (YAML)", short_description="YAML configuration of the R conda environment"

@@ -17,19 +17,19 @@ from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("StreamlitLiveTask", human_name="Streamlit live task",
-                short_description="Live task to generate a streamlit app dashboard",
+@task_decorator("StreamlitAgent", human_name="Streamlit agent",
+                short_description="Agent to generate a streamlit app dashboard",
                 style=StreamlitResource.copy_style(
                     icon_technical_name='code', icon_type=TypingIconType.MATERIAL_ICON))
-class StreamlitLiveTask(Task):
+class StreamlitAgent(Task):
     """
-    Live task to generate a streamlit app dashboard.
+    Agent to generate a streamlit app dashboard.
 
     **Warning**: It is recommended to use code snippets comming from trusted sources.
 
-    Here is the general documentation for live task (including how to use the parameters): https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779
+    Here is the general documentation for agent (including how to use the parameters): https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779
 
-    Here is the documentation of the live task: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/live-task/env-live-task/c6acb3c3-2a7c-44cd-8fb2-ea1beccdbdcc
+    Here is the documentation of the agent: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/env-agent/c6acb3c3-2a7c-44cd-8fb2-ea1beccdbdcc
 
     More information about streamlit: https://streamlit.io
 

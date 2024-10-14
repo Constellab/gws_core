@@ -60,7 +60,7 @@ class LiveCodeHelper:
 
     @classmethod
     def get_streamlit_template(cls) -> str:
-        return cls._read_template("streamlit_live_task_template.py", 'code')
+        return cls._read_template("streamlit_agent_template.py", 'code')
 
     @classmethod
     def get_pip_env_file_template(cls) -> str:

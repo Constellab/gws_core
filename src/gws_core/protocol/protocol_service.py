@@ -6,8 +6,8 @@ from gws_core.config.param.param_types import ParamValue
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.entity_navigator.entity_navigator_type import EntityType
-from gws_core.impl.live.base.env_live_task import EnvLiveTask
-from gws_core.impl.live.py_live_task import PyLiveTask
+from gws_core.impl.live.base.env_agent import EnvAgent
+from gws_core.impl.live.py_agent import PyAgent
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
 from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
@@ -27,15 +27,15 @@ from gws_core.scenario_template.scenario_template_factory import \
     ScenarioTemplateFactory
 from gws_core.scenario_template.scenario_template_service import \
     ScenarioTemplateService
-from gws_core.streamlit.streamlit_live_task import StreamlitLiveTask
+from gws_core.streamlit.streamlit_agent import StreamlitAgent
 from gws_core.task.plug import Sink, Source
 from gws_core.user.current_user_service import CurrentUserService
 
-from ..code.live_task_factory import LiveTaskFactory
-from ..community.community_dto import (CommunityCreateLiveTaskDTO,
-                                       CommunityLiveTaskDTO,
-                                       CommunityLiveTaskVersionCreateResDTO,
-                                       CommunityLiveTaskVersionDTO)
+from ..code.agent_factory import AgentFactory
+from ..community.community_dto import (CommunityAgentDTO,
+                                       CommunityAgentVersionCreateResDTO,
+                                       CommunityAgentVersionDTO,
+                                       CommunityCreateAgentDTO)
 from ..community.community_service import CommunityService
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
@@ -116,7 +116,7 @@ class ProtocolService():
                 inputs_dto=process_model.to_config_dto().inputs,
                 outputs_dto=process_model.to_config_dto().outputs,
                 style=process_model.style,
-                community_live_task_version_id=process_model.community_live_task_version_id,
+                community_agent_version_id=process_model.community_agent_version_id,
                 name=process_model.name + " (copy)"
             )
         else:
@@ -830,50 +830,50 @@ class ProtocolService():
 
     @classmethod
     @transaction()
-    def add_live_task_to_protocol_id_by_live_task_version_id(
-            cls, protocol_id: str, live_task_version_id: str) -> ProtocolUpdate:
-        community_live_task_version: CommunityLiveTaskVersionDTO = CommunityService.get_community_live_task_version(
-            live_task_version_id)
+    def add_agent_to_protocol_id_by_agent_version_id(
+            cls, protocol_id: str, agent_version_id: str) -> ProtocolUpdate:
+        community_agent_version: CommunityAgentVersionDTO = CommunityService.get_community_agent_version(
+            agent_version_id)
 
-        return cls.add_community_live_task_version_to_protocol_id(protocol_id, community_live_task_version)
+        return cls.add_community_agent_version_to_protocol_id(protocol_id, community_agent_version)
 
     @classmethod
     @transaction()
-    def add_community_live_task_version_to_protocol_id(
-            cls, protocol_id: str, community_live_task_version: CommunityLiveTaskVersionDTO) -> ProtocolUpdate:
+    def add_community_agent_version_to_protocol_id(
+            cls, protocol_id: str, community_agent_version: CommunityAgentVersionDTO) -> ProtocolUpdate:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
-        process_typing: Typing = TypingManager.get_typing_from_name_and_check(community_live_task_version.type)
+        process_typing: Typing = TypingManager.get_typing_from_name_and_check(community_agent_version.type)
 
-        live_task_type: Type[Process] = process_typing.get_type()
+        agent_type: Type[Process] = process_typing.get_type()
 
         params = []
-        if community_live_task_version.params and len(community_live_task_version.params) > 0:
-            params = community_live_task_version.params.splitlines()
+        if community_agent_version.params and len(community_agent_version.params) > 0:
+            params = community_agent_version.params.splitlines()
 
         # setting config params
         config_params: ConfigParamsDict
-        if issubclass(live_task_type, PyLiveTask):
-            config_params = live_task_type.build_config_params_dict(
-                code=community_live_task_version.code,
+        if issubclass(agent_type, PyAgent):
+            config_params = agent_type.build_config_params_dict(
+                code=community_agent_version.code,
                 params=params)
-        elif issubclass(live_task_type, EnvLiveTask):
-            config_params = live_task_type.build_config_params_dict(
-                code=community_live_task_version.code,
+        elif issubclass(agent_type, EnvAgent):
+            config_params = agent_type.build_config_params_dict(
+                code=community_agent_version.code,
                 params=params,
-                env=community_live_task_version.environment)
-        elif issubclass(live_task_type, StreamlitLiveTask):
-            config_params = live_task_type.build_config_params_dict(code=community_live_task_version.code)
+                env=community_agent_version.environment)
+        elif issubclass(agent_type, StreamlitAgent):
+            config_params = agent_type.build_config_params_dict(code=community_agent_version.code)
         else:
-            raise BadRequestException("The live task type is not supported")
+            raise BadRequestException("The agent type is not supported")
 
         # create the process and add it to the protocol
         process_model: ProcessModel = ProcessFactory.create_task_model_from_type(
             task_type=process_typing.get_type(),
             config_params=config_params,
-            community_live_task_version_id=community_live_task_version.id,
-            name=community_live_task_version.live_task.title
+            community_agent_version_id=community_agent_version.id,
+            name=community_agent_version.agent.title
         )
         protocol_update = cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=process_model)
 
@@ -883,7 +883,7 @@ class ProtocolService():
                 protocol_update = cls.delete_dynamic_input_port_of_process(
                     protocol_id, protocol_update.process.instance_name, port)
 
-            for io_spec in list(community_live_task_version.input_specs.specs.values()):
+            for io_spec in list(community_agent_version.input_specs.specs.values()):
                 protocol_update = cls.add_dynamic_input_port_to_process(
                     protocol_id, protocol_update.process.instance_name, io_spec)
 
@@ -892,7 +892,7 @@ class ProtocolService():
                 protocol_update = cls.delete_dynamic_output_port_of_process(
                     protocol_id, protocol_update.process.instance_name, port)
 
-            for io_spec in list(community_live_task_version.output_specs.specs.values()):
+            for io_spec in list(community_agent_version.output_specs.specs.values()):
                 protocol_update = cls.add_dynamic_output_port_to_process(
                     protocol_id, protocol_update.process.instance_name, io_spec)
 
@@ -905,29 +905,29 @@ class ProtocolService():
 
     @classmethod
     @transaction()
-    def get_community_available_live_tasks(
+    def get_community_available_agents(
             cls, spaces_filter: List[str],
             title_filter: str, personal_only: bool, page: int, number_of_items_per_page: int) -> Any:
-        return CommunityService.get_community_available_live_tasks(
+        return CommunityService.get_community_available_agents(
             spaces_filter, title_filter, personal_only, page, number_of_items_per_page)
 
     @classmethod
-    def get_community_live_task(cls, live_task_version_id: str) -> CommunityLiveTaskDTO:
-        return CommunityService.get_community_live_task(live_task_version_id)
+    def get_community_agent(cls, agent_version_id: str) -> CommunityAgentDTO:
+        return CommunityService.get_community_agent(agent_version_id)
 
     @classmethod
-    def create_community_live_task(
-            cls, process_id: str, form_data: CommunityCreateLiveTaskDTO) -> CommunityLiveTaskVersionCreateResDTO:
-        version_file = LiveTaskFactory.generate_live_task_file_from_live_task_id(process_id)
-        return CommunityService.create_community_live_task(version_file, form_data)
+    def create_community_agent(
+            cls, process_id: str, form_data: CommunityCreateAgentDTO) -> CommunityAgentVersionCreateResDTO:
+        version_file = AgentFactory.generate_agent_file_from_agent_id(process_id)
+        return CommunityService.create_community_agent(version_file, form_data)
 
     @classmethod
-    def fork_community_live_task(cls, process_id: str, form_data: CommunityCreateLiveTaskDTO, live_task_version_id: str) -> CommunityLiveTaskVersionCreateResDTO:
-        version_file = LiveTaskFactory.generate_live_task_file_from_live_task_id(process_id)
-        return CommunityService.fork_community_live_task(version_file, form_data, live_task_version_id)
+    def fork_community_agent(cls, process_id: str, form_data: CommunityCreateAgentDTO, agent_version_id: str) -> CommunityAgentVersionCreateResDTO:
+        version_file = AgentFactory.generate_agent_file_from_agent_id(process_id)
+        return CommunityService.fork_community_agent(version_file, form_data, agent_version_id)
 
     @classmethod
-    def create_community_live_task_version(
-            cls, process_id: str, live_task_id: str) -> CommunityLiveTaskVersionCreateResDTO:
-        version_file = LiveTaskFactory.generate_live_task_file_from_live_task_id(process_id)
-        return CommunityService.create_community_live_task_version(version_file, live_task_id)
+    def create_community_agent_version(
+            cls, process_id: str, agent_id: str) -> CommunityAgentVersionCreateResDTO:
+        version_file = AgentFactory.generate_agent_file_from_agent_id(process_id)
+        return CommunityService.create_community_agent_version(version_file, agent_id)

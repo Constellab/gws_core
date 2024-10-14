@@ -1,4 +1,4 @@
-# This is a snippet template for a R live task.
+# This is a snippet template for a R agent.
 
 # Read the source csv file with header, row names and comma separator
 csv <- read.csv(source_paths[1], header = TRUE, sep = ",", row.names = 1)

@@ -81,8 +81,8 @@ The dataframe has {table.nb_rows} rows and {table.nb_columns} columns.
         if not isinstance(output, DataFrame):
             raise Exception("The output must be a pandas DataFrame")
 
-        # make the output code compatible with the live task
-        live_task_code = f"""
+        # make the output code compatible with the agent
+        agent_code = f"""
 from gws_core import Table
 # keep the original table
 source_table = sources[0]
@@ -101,17 +101,17 @@ table_target = Table(target)
         if params.get_value("keep_columns_tags"):
             # copy the tags from the source table to the target table
             result.copy_column_tags_by_name(source)
-            # update the live task code to copy the tags
-            live_task_code += "\ntable_target.copy_column_tags_by_name(source_table)"
+            # update the agent code to copy the tags
+            agent_code += "\ntable_target.copy_column_tags_by_name(source_table)"
 
         if params.get_value("keep_rows_tags"):
             result.copy_row_tags_by_name(source)
-            live_task_code += "\ntable_target.copy_row_tags_by_name(source_table)"
+            agent_code += "\ntable_target.copy_row_tags_by_name(source_table)"
 
         # set an the output as array
-        live_task_code += "\ntargets = [table_target]"
+        agent_code += "\ntargets = [table_target]"
 
-        generated_text = Text(live_task_code)
+        generated_text = Text(agent_code)
         generated_text.name = "Table transformation code"
 
         return {'target': result, 'generated_code': generated_text}

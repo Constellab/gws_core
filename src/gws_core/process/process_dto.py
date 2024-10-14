@@ -32,5 +32,5 @@ class ProcessDTO(ModelWithUserDTO):
     type_status: TypingStatus
     process_type: Optional[SimpleTypingDTO] = None
     name: Optional[str] = None
-    community_live_task_version_id: Optional[str] = None
+    community_agent_version_id: Optional[str] = None
     style: TypingStyle = None

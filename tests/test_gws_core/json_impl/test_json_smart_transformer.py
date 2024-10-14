@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.impl.json.json_smart_transformer import JsonSmartTransformer
-from gws_core.impl.live.py_live_task import PyLiveTask
+from gws_core.impl.live.py_agent import PyAgent
 from gws_core.impl.openai.open_ai_types import OpenAiChatDict
 from gws_core.impl.text.text import Text
 from gws_core.task.task_runner import TaskRunner
@@ -57,11 +57,11 @@ target['scores'] = filtered_scores```"""
         self.assertTrue(target.equals(expected_json))
 
         # check the generated code
-        # Try to execute the code in a python live task
+        # Try to execute the code in a python agent
         code: Text = outputs["generated_code"]
 
         tester = TaskRunner(
-            task_type=PyLiveTask,
+            task_type=PyAgent,
             inputs={
                 'source': json_dict,
             },
