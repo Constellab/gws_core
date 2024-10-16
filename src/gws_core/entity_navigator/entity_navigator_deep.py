@@ -1,7 +1,5 @@
 
-from typing import Iterable, List, Union
-
-from pyparsing import Set
+from typing import Iterable, List, Set, Union
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.entity_navigator.entity_navigator_type import (EntityNavGroupDTO,
