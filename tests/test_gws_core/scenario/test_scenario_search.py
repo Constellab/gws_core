@@ -30,7 +30,7 @@ class TestScenarioSearch(BaseTestCase):
 
         # Test title search
         search_dict.set_filters_criteria([SearchFilterCriteria(
-            key="title", operator=SearchOperator.CONTAINS, value="eriment")])
+            key="title", operator=SearchOperator.CONTAINS, value="enario")])
         self.search(search_dict, 1)
 
         # Test status search
