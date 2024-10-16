@@ -93,7 +93,7 @@ There are {len(resource_list)} dataframes in the list.
         # make the output code compatible with the agent
         # Only print the code that is generated
         agent_code = f"""
-##################### LIVE TASK CODE #####################
+##################### AGENT CODE #####################
 from gws_core import Table
 # keep the original table
 # retrieve the dataframe for the generated code
@@ -101,7 +101,7 @@ source = [s.get_data() for s in sources]
 {generated_code}
 # convert the dataframe to a table
 targets = [Table(t) for t in target]
-##################### LIVE TASK CODE #####################
+##################### AGENT CODE #####################
 """
         self.log_info_message(agent_code)
 

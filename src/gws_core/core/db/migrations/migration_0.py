@@ -965,6 +965,7 @@ class Migration0100(BrickMigration):
         migrator_2.rename_column_if_exists(ResourceModel, 'experiment_id', 'scenario_id')
         migrator_2.rename_column_if_exists(TaskInputModel, 'experiment_id', 'scenario_id')
         migrator_2.rename_column_if_exists(ViewConfig, 'experiment_id', 'scenario_id')
+        migrator_2.rename_column_if_exists(TaskModel, 'community_live_task_version_id', 'community_agent_version_id')
         migrator_2.migrate()
 
         # use manual query, rename column doesn't work for primary key

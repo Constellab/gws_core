@@ -877,7 +877,7 @@ class ProtocolService():
         )
         protocol_update = cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=process_model)
 
-        # TODO TO IMPROVE WHEN UPDATING LIVE TASK CONFIG
+        # TODO TO IMPROVE WHEN UPDATING AGENT CONFIG
         if protocol_update.process.inputs.is_dynamic:
             for port in list(protocol_update.process.inputs.ports.keys()):
                 protocol_update = cls.delete_dynamic_input_port_of_process(
