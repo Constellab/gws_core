@@ -114,18 +114,18 @@ class AgentFactory:
             "output_specs": outputs,
             "config_specs": {},
             "bricks": bricks,
-            "task_type": cls.get_agent_type(task.instance_name),
+            "task_type": cls.get_agent_type(task.process_typing_name),
         }
 
     @classmethod
-    def get_agent_type(cls, instance_name: str) -> str:
+    def get_agent_type(cls, typing_name: str) -> str:
         choice = {
-            'PyAgent': 'PYTHON',
-            'PyCondaAgent': 'CONDA_PYTHON',
-            'PyMambaAgent': 'MAMBA_PYTHON',
-            'PyPipenvAgent': 'PIP_PYTHON',
-            'RCondaAgent': 'CONDA_R',
-            'RMambaAgent': 'MAMBA_R',
-            'StreamlitAgent': 'STREAMLIT',
+            'TASK.gws_core.PyAgent': 'PYTHON',
+            'TASK.gws_core.PyCondaAgent': 'CONDA_PYTHON',
+            'TASK.gws_core.PyMambaAgent': 'MAMBA_PYTHON',
+            'TASK.gws_core.PyPipenvAgent': 'PIP_PYTHON',
+            'TASK.gws_core.RCondaAgent': 'CONDA_R',
+            'TASK.gws_core.RMambaAgent': 'MAMBA_R',
+            'TASK.gws_core.StreamlitAgent': 'STREAMLIT',
         }
-        return choice[instance_name.split('_')[0]]
+        return choice[typing_name]
