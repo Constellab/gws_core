@@ -3,7 +3,6 @@
 from typing import List, Optional
 
 import requests
-
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.settings import Settings
@@ -27,7 +26,11 @@ class ResourceDownloader():
         else:
             self.message_dispatcher = message_dispatcher
 
-    def check_compatiblity(self, resource_info_url) -> str:
+    def check_compatiblity(self, resource_info_url: str) -> str:
+        # if the link is not a share link from a lab, return the link, do not check compatibility
+        if not ShareLink.is_lab_share_resource_link(resource_info_url):
+            return resource_info_url
+
         self.message_dispatcher.notify_info_message(
             "Downloading the resource from a share link of another lab. Checking compatibility of the resource with the current lab")
 
@@ -35,7 +38,7 @@ class ResourceDownloader():
 
         if response.status_code != 200:
             raise Exception("Error while getting information of the resource: " + response.text)
-        shared_entity_info = ShareResourceInfoReponseDTO.from_json(response.json())
+        shared_entity_info = ShareResourceInfoReponseDTO.from_json(response.c())
 
         # check if the resource is compatible with the current lab
         if not isinstance(shared_entity_info.entity_object, list):
