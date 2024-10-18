@@ -45,6 +45,7 @@ from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_factory import \
     ScenarioTemplateFactory
 from gws_core.share.shared_scenario import SharedScenario
+from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
 from gws_core.task.plug import Sink, Source
@@ -1016,3 +1017,18 @@ class Migration0100(BrickMigration):
 
         for old_typing_name, new_typing_name in agent_renames.items():
             SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+
+    @brick_migration('0.10.1', short_description='Migrate tags and user activity')
+    class Migration0101(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            EntityTag.get_db().execute_sql("UPDATE gws_entity_tag SET entity_type = 'SCENARIO' WHERE entity_type = 'EXPERIMENT'")
+            EntityTag.get_db().execute_sql("UPDATE gws_entity_tag SET entity_type = 'NOTE' WHERE entity_type = 'REPORT'")
+            EntityTag.get_db().execute_sql("UPDATE gws_entity_tag SET origins = REPLACE(origins, 'EXPERIMENT_PROPAGATED', 'SCENARIO_PROPAGATED')")
+            Activity.get_db().execute_sql("UPDATE gws_user_activity SET activity_type = 'RUN_SCENARIO' where activity_type = 'RUN_EXPERIMENT'")
+            Activity.get_db().execute_sql("UPDATE gws_user_activity SET activity_type = 'DELETE_SCENARIO_INTERMEDIATE_RESOURCES' where activity_type = 'DELETE_EXPERIMENT_INTERMEDIATE_RESOURCES'")
+            Activity.get_db().execute_sql("UPDATE gws_user_activity SET activity_type = 'STOP_SCENARIO' where activity_type = 'STOP_EXPERIMENT'")
+            Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'SCENARIO' where object_type = 'EXPERIMENT'")
+            Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'NOTE_TEMPLATE' where object_type = 'DOCUMENT_TEMPLATE'")
+            Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'NOTE' where object_type = 'REPORT'")
