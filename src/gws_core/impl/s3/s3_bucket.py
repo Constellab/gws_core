@@ -96,7 +96,7 @@ class S3Bucket():
 
         if local_file_path is None:
             temp_dir = Settings.make_temp_dir()
-            local_file_path = f"{temp_dir}/{object_key}"
+            local_file_path = f"{temp_dir}/{FileHelper.get_name_with_extension(object_key)}"
 
         upload_progress: S3BucketActionProgress = {
             'transfered_bytes': 0,
@@ -114,7 +114,8 @@ class S3Bucket():
 
         bucket.download_file(self.bucket_name, object_key, local_file_path,
                              Callback=lambda chunk: self._upload_progress_callback(
-                                 chunk, total_size, start_time, upload_progress, 'Downloaded'))
+                                 chunk, total_size, start_time, upload_progress, 'Downloaded')
+                             )
 
         duration = DateHelper.get_duration_pretty_text(
             time.time() - start_time)
