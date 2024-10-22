@@ -69,6 +69,12 @@ class ResourceSearchInput():
         self.search_builder.add_parent_filter(parent_id)
         return self
 
+    def add_is_archived_filter(self, is_archived: bool) -> "ResourceSearchInput":
+        """Filter the search query by a specific archived status
+        """
+        self.search_builder.add_is_archived_filter(is_archived)
+        return self
+
     def add_expression(self, expression: Expression) -> "ResourceSearchInput":
         """Add a peewee expression to the search query
         """

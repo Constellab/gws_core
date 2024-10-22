@@ -6,4 +6,4 @@ from gws_core.streamlit import ResourceSearchInput
 
 st.title("Hello World")
 
-ResourceSearchInput().add_resource_type_filter(Table).add_flagged_filter(True).select()
+ResourceSearchInput().add_resource_type_filter(Table).add_flagged_filter(True).add_is_archived_filter(False)
