@@ -6,8 +6,10 @@ from typing import Any, Callable, List, Optional, Type
 from peewee import (Expression, Field, FloatField, IntegerField, ModelSelect,
                     Ordering)
 from playhouse.mysql_ext import Match
+from typing_extensions import TypeVar
 
 from gws_core.core.classes.enum_field import EnumField
+from gws_core.core.classes.paginator import Paginator
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -106,6 +108,9 @@ class SearchParams(BaseModelDTO):
         self.filtersCriteria = filters
 
 
+SearchBuilderType = TypeVar('SearchBuilderType', bound='SearchBuilder')
+
+
 class SearchBuilder:
     """Builder to make dynamic search query with And operator
 
@@ -161,26 +166,32 @@ class SearchBuilder:
 
         return model_select
 
-    def add_search_params(self, search: SearchParams) -> 'SearchBuilder':
+    def search_all(self) -> List[Model]:
+        return list(self.build_search())
+
+    def search_page(self, page: int = 0, number_of_items_per_page: int = 20) -> Paginator:
+        return Paginator(self.build_search(), page, number_of_items_per_page)
+
+    def add_search_params(self: SearchBuilderType, search: SearchParams) -> SearchBuilderType:
         self._add_search_filter_query(search.filtersCriteria)
 
         self._add_search_ordering(search.sortsCriteria)
 
         return self
 
-    def add_expression(self, expression: Expression) -> 'SearchBuilder':
+    def add_expression(self: SearchBuilderType, expression: Expression) -> SearchBuilderType:
         self._query_builder.add_expression(expression)
         return self
 
-    def add_ordering(self, order: Ordering) -> 'SearchBuilder':
+    def add_ordering(self: SearchBuilderType, order: Ordering) -> SearchBuilderType:
         self._orderings.append(order)
         return self
 
-    def set_ordering(self, orders: List[Ordering]) -> 'SearchBuilder':
+    def set_ordering(self: SearchBuilderType, orders: List[Ordering]) -> SearchBuilderType:
         self._orderings = orders
         return self
 
-    def add_join(self, table: Type[Model], on: Expression = None) -> 'SearchBuilder':
+    def add_join(self: SearchBuilderType, table: Type[Model], on: Expression = None) -> SearchBuilderType:
         self._joins.append(SearchJoin(table_type=table, on=on))
         return self
 

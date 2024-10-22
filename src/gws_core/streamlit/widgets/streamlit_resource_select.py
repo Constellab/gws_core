@@ -83,6 +83,4 @@ class ResourceSearchInput():
 
     # function with list of labels
     def _search_resources(self, searchterm: str) -> List[ResourceModel]:
-        self.search_builder.add_name_filter(searchterm)
-
-        return list(self.search_builder.build_search())
+        return self.search_builder.add_name_filter(searchterm).search_all()

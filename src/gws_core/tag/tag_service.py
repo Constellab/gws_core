@@ -120,11 +120,8 @@ class TagService():
             EntityType.get_entity_model_type(entity_type),
             entity_type)
 
-        search_builder.add_tag_filter(tag)
+        return search_builder.add_tag_filter(tag).search_all()
 
-        model_select = search_builder.build_search()
-
-        return list(model_select)
 
     @classmethod
     @transaction()

@@ -2,15 +2,17 @@
 
 from typing import Type
 
+from peewee import Expression, Field
+
 from gws_core.core.model.model import Model
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_dto import EntityTagValueFormat
 from gws_core.tag.tag_key_model import TagKeyModel
-from peewee import Expression, Field
 
-from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
+from ..core.classes.search_builder import (SearchBuilder, SearchBuilderType,
+                                           SearchFilterCriteria,
                                            SearchOperator)
 from ..tag.tag_helper import TagHelper
 
@@ -33,11 +35,11 @@ class EntityWithTagSearchBuilder(SearchBuilder):
     def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags
         if filter_.key == 'tags':
-            return self.handle_tag_filter(filter_)
+            return self._handle_tag_filter(filter_)
 
         return super().convert_filter_to_expression(filter_)
 
-    def handle_tag_filter(self, filter_: SearchFilterCriteria) -> Expression:
+    def _handle_tag_filter(self, filter_: SearchFilterCriteria) -> Expression:
         """Handle the tag filter
         """
         tags = TagHelper.tags_dict_to_list(filter_.value)
@@ -48,8 +50,8 @@ class EntityWithTagSearchBuilder(SearchBuilder):
         # return none because expression is already added with the join
         return None
 
-    def add_tag_filter(self, tag: Tag, value_operator: SearchOperator = SearchOperator.EQ,
-                       error_if_key_not_exists: bool = False) -> None:
+    def add_tag_filter(self: SearchBuilderType, tag: Tag, value_operator: SearchOperator = SearchOperator.EQ,
+                       error_if_key_not_exists: bool = False) -> SearchBuilderType:
 
         if error_if_key_not_exists:
             tag_model: TagKeyModel = TagKeyModel.find_by_key(tag.key)
@@ -69,7 +71,9 @@ class EntityWithTagSearchBuilder(SearchBuilder):
                                         (self._get_expression(value_operator, entity_alias.tag_value, tag.value))
                                         ))
 
-    def get_tag_value_column_filter(self, entity_type: Type[EntityTag], value_format: EntityTagValueFormat) -> Field:
+        return self
+
+    def _get_tag_value_column_filter(self, entity_type: Type[EntityTag], value_format: EntityTagValueFormat) -> Field:
         return entity_type.tag_value
         # if value_format == EntityTagValueFormat.STRING:
         #     return entity_type.tag_value
