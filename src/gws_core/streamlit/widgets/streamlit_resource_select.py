@@ -1,5 +1,6 @@
 from typing import List, Optional, Type
 
+import streamlit as st
 from peewee import Expression
 from streamlit_searchbox import st_searchbox
 
@@ -17,12 +18,15 @@ class ResourceSearchInput():
     def __init__(self):
         self.search_builder = ResourceSearchBuilder()
 
-    def select(self, placeholder: str = 'Search for resource') -> Optional[ResourceModel]:
+    def select(self, placeholder: str = 'Search for resource',
+               key: str = "searchbox") -> Optional[ResourceModel]:
 
         selected_resource: ResourceModel = st_searchbox(
             self._search_resources,
-            key="resource_searchbox",
+            key=key,
             placeholder=placeholder,
+            # TODO cache the search results
+            default_options=self.search_builder.search_all(),
         )
 
         return selected_resource
