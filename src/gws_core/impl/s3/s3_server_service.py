@@ -24,8 +24,7 @@ from gws_core.impl.s3.s3_server_exception import (S3ServerException,
                                                   S3ServerNoSuchKey)
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.resource_model_search_builder import \
-    ResourceModelSearchBuilder
+from gws_core.resource.resource_search_builder import ResourceSearchBuilder
 from gws_core.resource.resource_service import ResourceService
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -328,10 +327,10 @@ class S3ServerService:
 
     @classmethod
     def _get_s3_expression_builder(cls, bucket_name: str,
-                                   key: str = None, prefix: str = None) -> ResourceModelSearchBuilder:
+                                   key: str = None, prefix: str = None) -> ResourceSearchBuilder:
         """Method to get the expression builder to filter resource model by bucket, key...
         """
-        search_builder = ResourceModelSearchBuilder()
+        search_builder = ResourceSearchBuilder()
 
         search_builder.add_tag_filter(Tag(cls.STORAGE_TAG_NAME, 's3'))
         search_builder.add_tag_filter(Tag(cls.BUCKET_TAG_NAME, bucket_name))

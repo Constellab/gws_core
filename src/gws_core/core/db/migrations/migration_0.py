@@ -4,8 +4,6 @@ import os
 from copy import deepcopy
 from typing import Dict, List
 
-from peewee import BigIntegerField, CharField
-
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
 from gws_core.core.classes.enum_field import EnumField
@@ -55,6 +53,7 @@ from gws_core.user.activity.activity import Activity
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.user import User
+from peewee import BigIntegerField, CharField
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -1032,3 +1031,10 @@ class Migration0100(BrickMigration):
             Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'SCENARIO' where object_type = 'EXPERIMENT'")
             Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'NOTE_TEMPLATE' where object_type = 'DOCUMENT_TEMPLATE'")
             Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'NOTE' where object_type = 'REPORT'")
+
+    @brick_migration('0.10.2', short_description='Migrate share link')
+    class Migration0102(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            EntityTag.get_db().execute_sql("UPDATE gws_share_link SET entity_type = 'SCENARIO' WHERE entity_type = 'EXPERIMENT'")

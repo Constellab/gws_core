@@ -31,8 +31,12 @@ class ScenarioProxy:
     _protocol: ProtocolProxy
 
     def __init__(
-            self, protocol_type: Type[Protocol] = None, folder: SpaceFolder = None, title: str = '',
-            creation_type: ScenarioCreationType = ScenarioCreationType.AUTO):
+            self,
+            protocol_type: Type[Protocol] = None,
+            folder: SpaceFolder = None,
+            title: str = '',
+            creation_type: ScenarioCreationType = ScenarioCreationType.AUTO,
+            scenario_id: str = None) -> None:
         """This create an scenario in the database with the provided Task or Protocol
 
         :param process_type: Can be the type of a Protocol or a Task.
@@ -45,8 +49,15 @@ class ScenarioProxy:
         :type title: str, optional
         :param creation_type: type of the created scenario, defaults to ScenarioExecutionType.AUTO
         :type creation_type: ScenarioExecutionType, optional
+        :param scenario_id: If provided, other parameters are ignored, it loads an existing scenario, defaults to None
+        :type scenario_id: str, optional
         :raises Exception: [description]
         """
+
+        if scenario_id is not None:
+            self._scenario = ScenarioService.get_by_id_and_check(scenario_id)
+            self._protocol = ProtocolProxy(self._scenario.protocol_model)
+            return
 
         if protocol_type is None:
             self._scenario = ScenarioService.create_scenario(
@@ -60,6 +71,17 @@ class ScenarioProxy:
 
         # Init the IProtocol
         self._protocol = ProtocolProxy(self._scenario.protocol_model)
+
+    @staticmethod
+    def from_existing_scenario(scenario_id: str) -> 'ScenarioProxy':
+        """Create a ScenarioProxy from an existing scenario
+
+        :param scenario_id: id of the scenario
+        :type scenario_id: str
+        :return: [description]
+        :rtype: ScenarioProxy
+        """
+        return ScenarioProxy(scenario_id=scenario_id)
 
     def get_protocol(self) -> ProtocolProxy:
         """retrieve the main protocol of the scenario
@@ -93,6 +115,11 @@ class ScenarioProxy:
 
         if process.exitcode != 0:
             raise Exception("Error in during the execution of the scenario")
+
+    def add_to_queue(self) -> None:
+        from gws_core.scenario.queue_service import QueueService
+
+        QueueService.add_scenario_to_queue(self._scenario.id)
 
     def stop(self) -> None:
         ScenarioRunService.stop_scenario(self._scenario.id)

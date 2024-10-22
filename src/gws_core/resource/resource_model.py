@@ -586,5 +586,8 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     def get_entity_type(self) -> EntityType:
         return EntityType.RESOURCE
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         table_name = 'gws_resource'
