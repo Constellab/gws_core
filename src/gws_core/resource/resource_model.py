@@ -269,14 +269,6 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     def get_resource_by_scenario_and_flag(cls, scenario_id: str, flagged: bool) -> ModelSelect:
         return ResourceModel.select().where(ResourceModel.scenario == scenario_id,
                                             ResourceModel.flagged == flagged)
-
-    @classmethod
-    def replace_resource_typing_name(cls, old_typing_name: str, new_typing_name: str) -> None:
-        """Replace the typing name of all the resource models
-        """
-        ResourceModel.update(resource_typing_name=new_typing_name).where(
-            ResourceModel.resource_typing_name == old_typing_name).execute()
-
     ########################################## RESOURCE ######################################
 
     @final

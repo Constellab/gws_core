@@ -4,6 +4,8 @@ import os
 from copy import deepcopy
 from typing import Dict, List
 
+from peewee import BigIntegerField, CharField
+
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
 from gws_core.core.classes.enum_field import EnumField
@@ -53,7 +55,6 @@ from gws_core.user.activity.activity import Activity
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.user import User
-from peewee import BigIntegerField, CharField
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -1038,3 +1039,26 @@ class Migration0100(BrickMigration):
         @classmethod
         def migrate(cls, from_version: Version, to_version: Version) -> None:
             EntityTag.get_db().execute_sql("UPDATE gws_share_link SET entity_type = 'SCENARIO' WHERE entity_type = 'EXPERIMENT'")
+
+            # rename resource and agent in scenario template
+            resource_renames = {
+                'RESOURCE.gws_core.ReportResource': 'RESOURCE.gws_core.NoteResource',
+                'RESOURCE.gws_core.ENoteResource': 'RESOURCE.gws_core.NoteResource',
+                'RESOURCE.gws_core.DocumentTemplateResource': 'RESOURCE.gws_core.NoteTemplateResource',
+            }
+
+            for old_typing_name, new_typing_name in resource_renames.items():
+                SqlMigrator.rename_resource_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+
+            agent_renames = {
+                'TASK.gws_core.PyLiveTask': 'TASK.gws_core.PyAgent',
+                'TASK.gws_core.PyCondaLiveTask': 'TASK.gws_core.PyCondaAgent',
+                'TASK.gws_core.PyMambaLiveTask': 'TASK.gws_core.PyMambaAgent',
+                'TASK.gws_core.PyPipenvLiveTask': 'TASK.gws_core.PyPipenvAgent',
+                'TASK.gws_core.RCondaLiveTask': 'TASK.gws_core.RCondaAgent',
+                'TASK.gws_core.RMambaLiveTask': 'TASK.gws_core.RMambaAgent',
+                'TASK.gws_core.StreamlitLiveTask': 'TASK.gws_core.StreamlitAgent',
+            }
+
+            for old_typing_name, new_typing_name in agent_renames.items():
+                SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
