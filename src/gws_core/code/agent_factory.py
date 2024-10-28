@@ -4,6 +4,7 @@ from typing import List
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.code.task_generator import TaskGenerator
+from gws_core.community.community_dto import CommunityAgentFileDTO
 from gws_core.config.param.param_spec import (BoolParam, FloatParam, IntParam,
                                               ParamSpec, StrParam)
 from gws_core.core.utils.numeric_helper import NumericHelper
@@ -80,7 +81,7 @@ class AgentFactory:
         return task_generator.generate_code()
 
     @classmethod
-    def generate_agent_file_from_agent_id(cls, task_id: str) -> dict:
+    def generate_agent_file_from_agent_id(cls, task_id: str, protocol_id: str = None) -> CommunityAgentFileDTO:
         task: TaskModel = TaskModel.get_by_id_and_check(task_id)
         values = task.config.get_and_check_values()
         code = task.config.get_value("code")
@@ -97,15 +98,13 @@ class AgentFactory:
         bricks = []
 
         for brick_version in brick_versions:
-            brick_name = brick_version.name
-            brick_version = brick_version.version
-            if brick_name in code:
+            if brick_version.name in code:
                 bricks.append({
-                    "name": brick_name,
-                    "version": brick_version
+                    "name": brick_version.name,
+                    "version": brick_version.version
                 })
 
-        return {
+        return CommunityAgentFileDTO.from_json({
             "json_version": cls.current_json_version,
             "params": params,
             "code": code,
@@ -115,7 +114,8 @@ class AgentFactory:
             "config_specs": {},
             "bricks": bricks,
             "task_type": cls.get_agent_type(task.process_typing_name),
-        }
+            "style": task.to_dto().style
+        })
 
     @classmethod
     def get_agent_type(cls, typing_name: str) -> str:
