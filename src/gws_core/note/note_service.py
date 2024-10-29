@@ -10,9 +10,9 @@ from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (
-    RichTextBlockType, RichTextDTO, RichTextObjectType,
-    RichTextParagraphHeaderLevel, RichTextResourceViewData,
-    RichTextViewFileData)
+    RichTextBlockModificationWithUserDTO, RichTextBlockType, RichTextDTO,
+    RichTextModificationType, RichTextObjectType, RichTextParagraphHeaderLevel,
+    RichTextResourceViewData, RichTextUserDTO, RichTextViewFileData)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.note.note_view_model import NoteViewModel
 from gws_core.note_template.note_template import NoteTemplate
@@ -31,6 +31,7 @@ from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
 from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.user_service import UserService
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
@@ -174,7 +175,9 @@ class NoteService():
     def update_content(cls, note_id: str, note_content: RichTextDTO) -> Note:
         note: Note = cls._get_and_check_before_update(note_id)
 
+        note.modifications = SpaceService.get_modifications(note.content, note_content, note.modifications)
         note.content = note_content
+
         # refresh NoteResource table
         cls._refresh_note_views_and_tags(note)
 
@@ -656,3 +659,73 @@ class NoteService():
             object_id=note_id
         )
         return note.archive(False)
+
+    ################################################# HISTORY ########################################
+
+    @classmethod
+    def get_note_history(cls, note_id: str) -> List[RichTextBlockModificationWithUserDTO]:
+        note: Note = Note.get_by_id_and_check(note_id)
+
+        if not note.modifications:
+            return []
+
+        modifications: List[RichTextBlockModificationWithUserDTO] = []
+
+        for modif in note.modifications.modifications:
+            user = UserService.get_by_id_and_check(modif.user_id)
+            modifications.append(RichTextBlockModificationWithUserDTO(
+                user=RichTextUserDTO(
+                    id=user.id,
+                    firstname=user.first_name,
+                    lastname=user.last_name,
+                    photo=user.photo
+                ),
+                user_id=modif.user_id,
+                block_id=modif.block_id,
+                block_type=modif.block_type.value,
+                block_value=modif.block_value,
+                differences=modif.differences,
+                id=modif.id,
+                type=modif.type.value,
+                index=modif.index,
+                old_index=modif.old_index,
+                time=modif.time
+            ))
+
+        return modifications
+
+    @classmethod
+    def get_undo_content(cls, note_id: str, modification_id: str) -> RichTextDTO:
+        note: Note = Note.get_by_id_and_check(note_id)
+
+        return SpaceService.get_undo_content(note.content, note.modifications, modification_id)
+
+    @classmethod
+    @transaction()
+    def rollback_content(cls, note_id: str, modification_id: str) -> Note:
+        note: Note = Note.get_by_id_and_check(note_id)
+
+        if note.is_archived:
+            raise BadRequestException('You cannot rollback an archived note')
+
+        rollbacked_content = cls.get_undo_content(note_id, modification_id)
+
+        modification_index = note.modifications.modifications.index(
+            next((modif for modif in note.modifications.modifications if modif.id == modification_id), None))
+
+        modif_type = note.modifications.modifications[modification_index].type
+
+        if not modif_type == RichTextModificationType.DELETED and not modif_type == RichTextModificationType.MOVED:
+            modification_index = modification_index + 1
+
+        note.modifications.modifications = note.modifications.modifications[:modification_index]
+        note.content = rollbacked_content
+
+        cls._refresh_note_views_and_tags(note)
+
+        note = note.save()
+        ActivityService.add_or_update_async(ActivityType.UPDATE,
+                                            object_type=ActivityObjectType.NOTE,
+                                            object_id=note.id)
+
+        return note

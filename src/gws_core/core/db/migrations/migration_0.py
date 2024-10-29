@@ -1032,3 +1032,12 @@ class Migration0100(BrickMigration):
             Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'SCENARIO' where object_type = 'EXPERIMENT'")
             Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'NOTE_TEMPLATE' where object_type = 'DOCUMENT_TEMPLATE'")
             Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'NOTE' where object_type = 'REPORT'")
+
+    @brick_migration('0.10.2', short_description='Migrate note')
+    class Migration0102(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            migrator: SqlMigrator = SqlMigrator(Note.get_db())
+            migrator.add_column_if_not_exists(Note, Note.modifications)
+            migrator.migrate()

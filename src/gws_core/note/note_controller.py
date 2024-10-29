@@ -4,7 +4,8 @@ from typing import List, Optional
 from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import PageDTO
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_core.impl.rich_text.rich_text_types import (
+    RichTextBlockModificationWithUserDTO, RichTextDTO)
 from gws_core.scenario.scenario_dto import ScenarioDTO
 
 from ..core.classes.search_builder import SearchParams
@@ -171,3 +172,22 @@ def archive(id_: str, _=Depends(AuthService.check_user_access_token)) -> NoteDTO
 @core_app.put("/note/{id_}/unarchive", tags=["Note"], summary="Unarchive a note")
 def unarchive(id_: str, _=Depends(AuthService.check_user_access_token)) -> NoteDTO:
     return NoteService.unarchive_note(id_).to_dto()
+
+
+################################################# HISTORY ########################################
+@core_app.get("/note/{note_id}/history", tags=["Note"], summary="Get the history of a note")
+def get_history(
+        note_id: str, _=Depends(AuthService.check_user_access_token)) -> List[RichTextBlockModificationWithUserDTO]:
+    return NoteService.get_note_history(note_id)
+
+
+@core_app.get(
+    "/note/{note_id}/history/undo-content/{modification_id}", tags=["Note"],
+    summary="Get a note past content by modification id")
+def get_undo_content(note_id: str, modification_id: str, _=Depends(AuthService.check_user_access_token)) -> RichTextDTO:
+    return NoteService.get_undo_content(note_id, modification_id)
+
+
+@core_app.put("/note/{note_id}/history/rollback/{modification_id}", tags=["Note"], summary="Rollback a note content")
+def rollback_content(note_id: str, modification_id: str, _=Depends(AuthService.check_user_access_token)) -> NoteDTO:
+    return NoteService.rollback_content(note_id, modification_id).to_dto()
