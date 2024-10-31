@@ -99,7 +99,8 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
             last_sync_at=self.last_sync_at,
             last_sync_by=self.last_sync_by.to_dto() if self.last_sync_by else None,
             is_archived=self.is_archived,
-            content=self.content
+            content=self.content,
+            modifications=self.modifications
         )
 
     def validate(self) -> None:
