@@ -302,7 +302,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     @classmethod
     def from_resource(cls, resource: Resource, origin: ResourceOrigin = ResourceOrigin.GENERATED,
                       scenario: Optional[Scenario] = None, task_model: Optional[TaskModel] = None,
-                      port_name: str = None) -> ResourceModel:
+                      port_name: str = None, flagged: bool = None) -> ResourceModel:
         """Create a new ResourceModel from a resource
 
         Don't set the resource here so it is regenerate on next get (avoid using same instance)
@@ -324,8 +324,12 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             resource_model.folder = scenario.folder
         resource_model.task_model = task_model
         resource_model.generated_by_port_name = port_name
-        # by default only the uploaded resource are showed in databox
-        resource_model.flagged = resource_model.is_manually_generated()
+
+        if flagged is not None:
+            resource_model.flagged = flagged
+        else:
+            # by default only the uploaded resource are showed in databox
+            resource_model.flagged = resource_model.is_manually_generated()
 
         # Get the name of the resource, and set it in the resource model
         name: str = None
@@ -392,11 +396,13 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     @classmethod
     def save_from_resource(
             cls, resource: Resource, origin: ResourceOrigin = ResourceOrigin.GENERATED, scenario: Scenario = None,
-            task_model: TaskModel = None, port_name: str = None, flagged: bool = False) -> ResourceModel:
+            task_model: TaskModel = None, port_name: str = None, flagged: bool = None) -> ResourceModel:
         """Create the ResourceModel from the Resource and save it
         """
+        # FIX is flagged and export ResourceOrigin
         resource_model = cls.from_resource(
-            resource, origin=origin, scenario=scenario, task_model=task_model, port_name=port_name).save_full()
+            resource, origin=origin, scenario=scenario, task_model=task_model, port_name=port_name,
+            flagged=flagged).save_full()
 
         if resource.tags and isinstance(resource.tags, TagList):
             # Add tags
