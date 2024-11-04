@@ -12,6 +12,7 @@ from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
 from gws_core.io.io_spec import IOSpecDTO
+from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
 from gws_core.protocol.protocol_dto import (AddConnectorDTO, ProtocolDTO,
                                             ProtocolUpdateDTO)
@@ -503,6 +504,17 @@ def rename_process(id_: str,
     with update_lock:
         return ProtocolService.rename_process(id_, process_name,
                                               new_name.new_name).to_dto()
+
+
+@core_app.put("/protocol/{id_}/process/{process_name}/style", tags=["Protocol"],
+              summary="Update the style of a process of a protocol")
+def update_process_style(id_: str,
+                         process_name: str,
+                         style: TypingStyle,
+                         _=Depends(AuthService.check_user_access_token)) -> ProcessDTO:
+    with update_lock:
+        return ProtocolService.update_process_style(id_, process_name,
+                                                    style).to_dto()
 
 ########################## TEMPLATE #####################
 

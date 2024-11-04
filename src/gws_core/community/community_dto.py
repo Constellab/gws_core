@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.io.io_spec import IOSpecDTO
+from gws_core.model.typing_style import TypingStyle
 
 
 class CommunityAgentSpaceDTO(BaseModelDTO):
@@ -18,6 +19,20 @@ class CommunityAgentDTO(BaseModelDTO):
     created_by: Optional[object] = None
     latest_publish_version: int
     description: Optional[object] = None
+    latest_style: Optional[TypingStyle] = None
+
+
+class CommunityAgentFileDTO(BaseModelDTO):
+    json_version: int
+    params: str
+    code: str
+    environment: str
+    input_specs: Dict
+    output_specs: Dict
+    config_specs: Dict
+    bricks: List[Dict]
+    task_type: str
+    style: TypingStyle
 
 
 class CommunityAgentIOSpecDTO(BaseModelDTO):
@@ -36,6 +51,7 @@ class CommunityAgentVersionDTO(BaseModelDTO):
     output_specs: Optional[CommunityAgentIOSpecDTO]
     config_specs: Optional[Dict]
     agent: CommunityAgentDTO
+    style: Optional[TypingStyle] = None
 
 
 class CommunityCreateAgentDTO(BaseModelDTO):

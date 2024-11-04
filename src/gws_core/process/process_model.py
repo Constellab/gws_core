@@ -460,6 +460,19 @@ class ProcessModel(ModelWithUser):
 
         return self.progress_bar.current_value
 
+    def get_style(self) -> TypingStyle:
+        """Return the style of the process
+        """
+        process_typing: Typing = self.get_process_typing()
+
+        if self.style:
+            return self.style
+
+        if process_typing:
+            return process_typing.style
+
+        return TypingStyle.default_task()
+
     ########################### JSON #################################
 
     def to_minimum_dto(self) -> ProcessMinimumDTO:
@@ -477,18 +490,13 @@ class ProcessModel(ModelWithUser):
         process_typing: Typing = self.get_process_typing()
         process_type_dto: SimpleTypingDTO = None
         type_status: TypingStatus = TypingStatus.OK
-        style: TypingStyle = self.style
+        style: TypingStyle = self.get_style()
 
         if process_typing:
             process_type_dto = process_typing.to_simple_dto()
             type_status = process_typing.get_type_status()
-            if style is None:
-                style = process_typing.style
         else:
             type_status = TypingStatus.UNAVAILABLE
-
-        if style is None:
-            style = TypingStyle.default_task()
 
         return ProcessDTO(
             id=self.id,

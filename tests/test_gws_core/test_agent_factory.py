@@ -1,5 +1,6 @@
 from gws_core.code.agent_factory import AgentFactory
-from gws_core.community.community_dto import CommunityAgentVersionDTO
+from gws_core.community.community_dto import (CommunityAgentFileDTO,
+                                              CommunityAgentVersionDTO)
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.streamlit.streamlit_agent import StreamlitAgent
@@ -34,10 +35,10 @@ class TestAgentFactory(BaseTestCase):
 
         streamlit_process = protocol_model.get_process(streamlit_base_process_name)
 
-        agent_dict = AgentFactory().generate_agent_file_from_agent_id(streamlit_process.id)
+        agent_dict: CommunityAgentFileDTO = AgentFactory().generate_agent_file_from_agent_id(streamlit_process.id)
 
-        self.assertEqual(agent_dict['code'], community_agent_version.code)
-        self.assertEqual(agent_dict['config_specs'], community_agent_version.config_specs)
-        self.assertEqual(agent_dict['params'], community_agent_version.params)
-        self.assertIsNotNone(agent_dict['bricks'])
-        self.assertEqual(agent_dict['task_type'] == 'STREAMLIT', True)
+        self.assertEqual(agent_dict.code, community_agent_version.code)
+        self.assertEqual(agent_dict.config_specs, community_agent_version.config_specs)
+        self.assertEqual(agent_dict.params, community_agent_version.params)
+        self.assertIsNotNone(agent_dict.bricks)
+        self.assertEqual(agent_dict.task_type == 'STREAMLIT', True)
