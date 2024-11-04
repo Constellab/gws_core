@@ -672,7 +672,7 @@ class NoteService():
         modifications: List[RichTextBlockModificationWithUserDTO] = []
 
         for modif in note.modifications.modifications:
-            user = UserService.get_by_id_and_check(modif.user_id)
+            user = UserService.get_by_id_and_check(modif.userId)
             modifications.append(RichTextBlockModificationWithUserDTO(
                 user=RichTextUserDTO(
                     id=user.id,
@@ -680,15 +680,15 @@ class NoteService():
                     lastname=user.last_name,
                     photo=user.photo
                 ),
-                user_id=modif.user_id,
-                block_id=modif.block_id,
-                block_type=modif.block_type.value,
-                block_value=modif.block_value,
+                userId=modif.userId,
+                blockId=modif.blockId,
+                blockType=modif.blockType.value,
+                blockValue=modif.blockValue,
                 differences=modif.differences,
                 id=modif.id,
                 type=modif.type.value,
                 index=modif.index,
-                old_index=modif.old_index,
+                oldIndex=modif.oldIndex,
                 time=modif.time
             ))
 

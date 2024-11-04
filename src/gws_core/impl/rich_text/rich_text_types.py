@@ -201,14 +201,14 @@ class RichTextBlockModificationDTO(BaseModelDTO):
     """Object representing a modification of a block in a rich text"""
     id: str
     time: datetime
-    block_id: str
-    block_type: RichTextBlockType
+    blockId: str
+    blockType: RichTextBlockType
     differences: Optional[List[RichTextModificationDifferenceDTO]] = None
-    block_value: Optional[Dict[str, Any]] = None
+    blockValue: Optional[Dict[str, Any]] = None
     type: RichTextModificationType
     index: int
-    old_index: Optional[int] = None
-    user_id: str
+    oldIndex: Optional[int] = None
+    userId: str
 
 
 class RichTextUserDTO(BaseModelDTO):
@@ -219,7 +219,7 @@ class RichTextUserDTO(BaseModelDTO):
 
 
 class RichTextBlockModificationWithUserDTO(RichTextBlockModificationDTO):
-    block_type: str
+    blockType: str
     type: str
     user: RichTextUserDTO
 
