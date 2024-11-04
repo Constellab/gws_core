@@ -625,6 +625,7 @@ class NoteService():
         for new_view in new_note_views:
             if new_view.view.scenario and new_view.view.scenario not in associated_scenario:
                 NoteScenario.create_obj(new_view.view.scenario, note).save()
+                associated_scenario.append(new_view.view.scenario)
 
     ################################################# ARCHIVE ########################################
 
