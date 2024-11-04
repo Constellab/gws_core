@@ -6,11 +6,12 @@ import traceback
 from time import time
 from typing import Any, Dict, List, Optional
 
+from typing_extensions import TypedDict
+
 from gws_core.brick.brick_dto import BrickInfo, BrickMessageStatus
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.settings import Settings
-from typing_extensions import TypedDict
 
 from ..core.utils.logger import Logger
 from ..core.utils.utils import Utils
@@ -169,6 +170,8 @@ class BrickService():
         :param brick_path: _description_
         :type brick_path: str
         """
+
+        start_time = time()
         _, files = Utils.walk_dir(os.path.join(brick_path, cls.SOURCE_FOLDER))
 
         # loop through each file in the brick source folder
@@ -187,6 +190,11 @@ class BrickService():
                 traceback.print_exc()
                 # stop the brick load and go to next brick
                 break
+
+        cls.log_brick_message(
+            brick_name=brick_name,
+            message=f"Brick loaded in {round(time() - start_time, 2)}s",
+            status='INFO')
 
     @classmethod
     def folder_is_brick(cls, path: str) -> bool:
