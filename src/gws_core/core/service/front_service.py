@@ -45,7 +45,11 @@ class FrontService():
 
     @staticmethod
     def get_resource_url(resource_id: str) -> str:
-        return FrontService.get_app_url() + '/databox/resource/' + resource_id
+        return FrontService.get_app_url() + '/resource/' + resource_id
+
+    @staticmethod
+    def get_view_url(view_id: str) -> str:
+        return FrontService.get_app_url() + '/view/' + view_id
 
     @staticmethod
     def get_auto_login_url(expires_in: int) -> str:
