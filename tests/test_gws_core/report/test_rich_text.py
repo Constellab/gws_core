@@ -1,13 +1,10 @@
 
 
+from gws_core import (RichTextBlock, RichTextBlockType, RichTextDTO,
+                      RichTextParagraphData, RichTextResourceViewData)
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_transcription_service import \
     RichTextTranscriptionService
-from gws_core.impl.rich_text.rich_text_types import (RichTextBlock,
-                                                     RichTextBlockType,
-                                                     RichTextDTO,
-                                                     RichTextParagraphData,
-                                                     RichTextResourceViewData)
 from gws_core.test.base_test_case_light import BaseTestCaseLight
 
 

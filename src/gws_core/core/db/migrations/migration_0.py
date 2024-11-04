@@ -1062,8 +1062,30 @@ class Migration0100(BrickMigration):
 
             for old_typing_name, new_typing_name in agent_renames.items():
                 SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
-                
+
+    @brick_migration('0.10.3', short_description='Migrate note and note template images')
+    class Migration0103(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            FileHelper.create_dir_if_not_exist('/data/note')
+            FileHelper.create_dir_if_not_exist('/data/note/note')
+            FileHelper.create_dir_if_not_exist('/data/note/note_template')
+
+            if FileHelper.exists_on_os('/data/report/report'):
+                FileHelper.move_file_or_dir('/data/report/report', '/data/note/note')
+
+            if FileHelper.exists_on_os('/data/report/document_template'):
+                FileHelper.move_file_or_dir('/data/report/document_template', '/data/note/note_template')
+
+            task_rename = {
+                'TASK.gws_core.CreateENote': 'TASK.gws_core.CreateNoteResource',
+                'TASK.gws_core.GenerateReportFromENote': 'TASK.gws_core.GenerateLabNote',
+            }
+
+            for old_typing_name, new_typing_name in task_rename.items():
+                SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+
             migrator: SqlMigrator = SqlMigrator(Note.get_db())
             migrator.add_column_if_not_exists(Note, Note.modifications)
             migrator.migrate()
-
