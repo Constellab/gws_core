@@ -36,20 +36,90 @@ class FrontTheme(BaseModelDTO):
 class FrontService():
 
     @staticmethod
-    def get_scenario_url(scenario_id: str) -> str:
-        return FrontService.get_app_url() + '/scenario/' + scenario_id
+    def get_scenarios_list_url() -> str:
+        return FrontService.get_app_url() + '/scenario'
 
     @staticmethod
-    def get_note_url(note_id: str) -> str:
-        return FrontService.get_app_url() + '/note/' + note_id
+    def get_scenario_url(scenario_id: str) -> str:
+        return FrontService.get_scenarios_list_url() + '/' + scenario_id
+
+    @staticmethod
+    def get_resources_list_url() -> str:
+        return FrontService.get_app_url() + '/resource'
 
     @staticmethod
     def get_resource_url(resource_id: str) -> str:
-        return FrontService.get_app_url() + '/resource/' + resource_id
+        return FrontService.get_resources_list_url() + '/' + resource_id
+
+    @staticmethod
+    def get_views_list_url() -> str:
+        return FrontService.get_app_url() + '/view'
 
     @staticmethod
     def get_view_url(view_id: str) -> str:
-        return FrontService.get_app_url() + '/view/' + view_id
+        return FrontService.get_views_list_url() + '/' + view_id
+
+    @staticmethod
+    def get_scenario_templates_list_url() -> str:
+        return FrontService.get_app_url() + '/scenario-template'
+
+    @staticmethod
+    def get_scenario_template_url(template_id: str) -> str:
+        return FrontService.get_scenario_templates_list_url() + '/' + template_id
+
+    ############################################### NOTE ###############################################
+
+    @staticmethod
+    def get_notes_list_url() -> str:
+        return FrontService.get_app_url() + '/note'
+
+    @staticmethod
+    def get_note_url(note_id: str) -> str:
+        return FrontService.get_notes_list_url() + '/' + note_id
+
+    @staticmethod
+    def get_note_templates_list_url() -> str:
+        return FrontService.get_app_url() + '/note-template'
+
+    @staticmethod
+    def get_note_template_url(template_id: str) -> str:
+        return FrontService.get_note_templates_list_url() + '/' + template_id
+
+    ############################################### MONITORING ###############################################
+
+    @staticmethod
+    def get_monitoring_dashboard_url() -> str:
+        return FrontService.get_app_url() + '/monitoring'
+
+    @staticmethod
+    def get_monitoring_lab_url() -> str:
+        return FrontService.get_monitoring_dashboard_url() + '/usage'
+
+    @staticmethod
+    def get_monitoring_tags_url() -> str:
+        return FrontService.get_monitoring_dashboard_url() + '/tags'
+
+    @staticmethod
+    def get_monitoring_virtual_envs_url() -> str:
+        return FrontService.get_monitoring_dashboard_url() + '/virtual-envs'
+
+    @staticmethod
+    def get_monitoring_logs_url() -> str:
+        return FrontService.get_monitoring_dashboard_url() + '/logs'
+
+    @staticmethod
+    def get_monitoring_credentials_url() -> str:
+        return FrontService.get_monitoring_dashboard_url() + '/credentials'
+
+    @staticmethod
+    def get_monitoring_activity_url() -> str:
+        return FrontService.get_monitoring_dashboard_url() + '/activity'
+
+    @staticmethod
+    def get_monitoring_other_url() -> str:
+        return FrontService.get_monitoring_dashboard_url() + '/other'
+
+    ############################################### OTHER URLS ###############################################
 
     @staticmethod
     def get_auto_login_url(expires_in: int) -> str:
