@@ -92,7 +92,7 @@ class ViewType(Enum):
         elif self == ViewType.STREAMLIT:
             style = TypingStyle.material_icon("dashboard", background_color='#ff4b4b')
         elif self == ViewType.AUDIO:
-            style = TypingStyle.material_icon("audiotrack", background_color="#f6995c")
+            style = TypingStyle.material_icon("volume_up", background_color="#f6995c")
         else:
             style = TypingStyle.default_view()
 
