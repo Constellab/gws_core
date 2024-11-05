@@ -8,7 +8,7 @@ from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
-from .community_dto import (CommunityAgentDTO,
+from .community_dto import (CommunityAgentDTO, CommunityAgentFileDTO,
                             CommunityAgentVersionCreateResDTO,
                             CommunityAgentVersionDTO, CommunityCreateAgentDTO)
 
@@ -95,13 +95,13 @@ class CommunityService:
 
     @classmethod
     def create_community_agent(
-            cls, version_file: dict, form_data: CommunityCreateAgentDTO) -> CommunityAgentVersionCreateResDTO:
+            cls, version_file: CommunityAgentFileDTO, form_data: CommunityCreateAgentDTO) -> CommunityAgentVersionCreateResDTO:
         if cls.community_api_url is None:
             return None
         url = f"{cls.community_api_url}/agent/for-lab"
         try:
             response = ExternalApiService.post(url,
-                                               {'versionFile': version_file, 'title': form_data.title,
+                                               {'versionFile': version_file.to_json_dict(), 'title': form_data.title,
                                                 'type': form_data.type, 'space': form_data.space},
                                                cls._get_request_header(),
                                                raise_exception_if_error=True)
@@ -111,14 +111,14 @@ class CommunityService:
         return CommunityAgentVersionCreateResDTO.from_json(response.json())
 
     @classmethod
-    def fork_community_agent(cls, version_file: dict, form_data: CommunityCreateAgentDTO, agent_version_id:
-                             str) -> CommunityAgentVersionCreateResDTO:
+    def fork_community_agent(cls, version_file: CommunityAgentFileDTO, form_data: CommunityCreateAgentDTO,
+                             agent_version_id: str) -> CommunityAgentVersionCreateResDTO:
         if cls.community_api_url is None:
             return None
         url = f"{cls.community_api_url}/agent/for-lab/fork/{agent_version_id}"
         try:
             response = ExternalApiService.post(url,
-                                               {'versionFile': version_file, 'title': form_data.title,
+                                               {'versionFile': version_file.to_json_dict(), 'title': form_data.title,
                                                 'type': form_data.type, 'space': form_data.space},
                                                cls._get_request_header(),
                                                raise_exception_if_error=True)
@@ -129,13 +129,13 @@ class CommunityService:
 
     @classmethod
     def create_community_agent_version(
-            cls, version_file: dict, agent_id: str) -> CommunityAgentVersionCreateResDTO:
+            cls, version_file: CommunityAgentFileDTO, agent_id: str) -> CommunityAgentVersionCreateResDTO:
         if cls.community_api_url is None:
             return None
         url = f"{cls.community_api_url}/agent/for-lab/version/{agent_id}"
         try:
             response = ExternalApiService.post(
-                url, {'versionFile': version_file},
+                url, {'versionFile': version_file.to_json_dict()},
                 cls._get_request_header(),
                 raise_exception_if_error=True)
         except BaseHTTPException as err:

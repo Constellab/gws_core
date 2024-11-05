@@ -76,9 +76,7 @@ class CredentialsService():
 
         search_builder: SearchBuilder = CredentialsSearchBuilder()
 
-        model_select: ModelSelect = search_builder.add_search_params(search).build_search()
-        return Paginator(
-            model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+        return search_builder.add_search_params(search).search_page(page, number_of_items_per_page)
 
     @classmethod
     def get_credentials_data(cls, credentials_id: str, user_credentials: UserCredentialsDTO) -> dict:

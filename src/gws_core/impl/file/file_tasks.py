@@ -59,28 +59,40 @@ class FsNodeExtractor(Task):
     """
 
     input_specs = InputSpecs({"source": InputSpec(Folder)})
-    output_specs = OutputSpecs({"target": OutputSpec(FSNode)})
+    output_specs = OutputSpecs({"target": OutputSpec(FSNode, sub_class=True)})
 
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {
-        "fs_node_path": StrParam(), "fs_node_typing_name": StrParam()}
+        "fs_node_path": StrParam(human_name="Sub path for the FSNode to extract",
+                                 short_description="Path to the sub file or folder to extract"),
+        "fs_node_typing_name": StrParam(human_name="FSNode typing name",
+                                        short_description="Override typing name of the FSNode to create. Leave empty to infer from the path",
+                                        optional=True)}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        # retrieve resource type
-        _type: Type[FSNode] = TypingManager.get_and_check_type_from_name(
-            params.get('fs_node_typing_name'))
-
         path: str = params.get('fs_node_path')
 
         folder: Folder = inputs['source']
 
         full_path = os.path.join(folder.path, path)
 
-        # check the resource type is correct
-        if FileHelper.is_dir(full_path) and not Utils.issubclass(_type, Folder):
-            raise Exception('The provided type is not a folder')
-        if FileHelper.is_file(full_path) and not Utils.issubclass(_type, File):
-            raise Exception('The provided type is not a file')
+        _type: Type[FSNode]
+
+        # if the typing name was provided
+        if params.get('fs_node_typing_name'):
+            # retrieve resource type
+            _type = TypingManager.get_and_check_type_from_name(
+                params.get('fs_node_typing_name'))
+
+            if not Utils.issubclass(_type, FSNode):
+                raise Exception('The provided type is not a sub type of FSNode')
+
+        elif FileHelper.is_dir(full_path):
+            _type = Folder
+        elif FileHelper.is_file(full_path):
+            _type = File
+        else:
+            raise Exception('The provided path is not a file or a folder')
 
         fs_node: FSNode = _type(full_path)
         # mark the node as symbolic link. The node will not be deleted when resource is deleted

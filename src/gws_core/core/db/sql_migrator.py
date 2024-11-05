@@ -84,6 +84,8 @@ class SqlMigrator:
         db.execute_sql(
             f"UPDATE gws_resource SET resource_typing_name = '{new_typing_name}' where resource_typing_name = '{old_typing_name}'")
         db.execute_sql(f"UPDATE gws_task SET data = REPLACE(data, '{old_typing_name}', '{new_typing_name}')")
+        db.execute_sql(
+            f"UPDATE gws_scenario_template SET data = REPLACE(data, '{old_typing_name}', '{new_typing_name}')")
 
     @classmethod
     def rename_process_typing_name(cls, db: DatabaseProxy, old_typing_name: str, new_typing_name: str) -> None:
@@ -91,3 +93,6 @@ class SqlMigrator:
             f"UPDATE gws_task SET process_typing_name = '{new_typing_name}' where process_typing_name = '{old_typing_name}'")
         db.execute_sql(
             f"UPDATE gws_protocol SET process_typing_name = '{new_typing_name}' where process_typing_name = '{old_typing_name}'")
+
+        db.execute_sql(
+            f"UPDATE gws_scenario_template SET data = REPLACE(data, '{old_typing_name}', '{new_typing_name}')")

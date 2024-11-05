@@ -52,6 +52,9 @@ class ProcessProxy:
     def get_model(self) -> ProcessModel:
         return self._process_model
 
+    def get_model_id(self) -> str:
+        return self._process_model.id
+
     ############################################### CONFIG #########################################
 
     def set_param(self, param_name: str, value: ParamValue) -> None:

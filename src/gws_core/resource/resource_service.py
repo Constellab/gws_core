@@ -34,7 +34,7 @@ from ..core.exception.gws_exceptions import GWSException
 from ..model.typing_manager import TypingManager
 from ..task.task_input_model import TaskInputModel
 from .resource_model import Resource, ResourceModel
-from .resource_model_search_builder import ResourceModelSearchBuilder
+from .resource_search_builder import ResourceSearchBuilder
 from .view.view_helper import ViewHelper
 from .view.view_meta_data import ResourceViewMetaData
 
@@ -290,7 +290,7 @@ class ResourceService():
     def search(cls, search: SearchParams,
                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
 
-        search_builder: SearchBuilder = ResourceModelSearchBuilder()
+        search_builder: SearchBuilder = ResourceSearchBuilder()
 
         # Handle the children resource
         criteria: SearchFilterCriteria = search.get_filter_criteria(
@@ -311,9 +311,7 @@ class ResourceService():
             search_builder.add_expression(ResourceModel.flagged == True)
         search.remove_filter_criteria('include_not_flagged')
 
-        model_select: ModelSelect = search_builder.add_search_params(search).build_search()
-        return Paginator(
-            model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+        return search_builder.add_search_params(search).search_page(page, number_of_items_per_page)
 
     ############################# SHARED RESOURCE ###########################
 

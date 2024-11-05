@@ -12,6 +12,7 @@ from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
 from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
 from gws_core.io.ioface import IOface
+from gws_core.model.typing_style import TypingStyle
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactory
 from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
@@ -33,6 +34,7 @@ from gws_core.user.current_user_service import CurrentUserService
 
 from ..code.agent_factory import AgentFactory
 from ..community.community_dto import (CommunityAgentDTO,
+                                       CommunityAgentFileDTO,
                                        CommunityAgentVersionCreateResDTO,
                                        CommunityAgentVersionDTO,
                                        CommunityCreateAgentDTO)
@@ -791,6 +793,16 @@ class ProtocolService():
 
         return process_model
 
+    @classmethod
+    def update_process_style(cls, protocol_id, process_instance_name: str,
+                             style: TypingStyle) -> ProcessModel:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+        process_model: ProcessModel = protocol_model.get_process(process_instance_name)
+        process_model.style = style
+        process_model.save()
+
+        return process_model
+
     ########################## PROTOCOL TEMPLATE #####################
 
     @classmethod
@@ -873,7 +885,8 @@ class ProtocolService():
             task_type=process_typing.get_type(),
             config_params=config_params,
             community_agent_version_id=community_agent_version.id,
-            name=community_agent_version.agent.title
+            name=community_agent_version.agent.title,
+            style=community_agent_version.style
         )
         protocol_update = cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=process_model)
 
@@ -918,16 +931,16 @@ class ProtocolService():
     @classmethod
     def create_community_agent(
             cls, process_id: str, form_data: CommunityCreateAgentDTO) -> CommunityAgentVersionCreateResDTO:
-        version_file = AgentFactory.generate_agent_file_from_agent_id(process_id)
+        version_file: CommunityAgentFileDTO = AgentFactory.generate_agent_file_from_agent_id(process_id)
         return CommunityService.create_community_agent(version_file, form_data)
 
     @classmethod
     def fork_community_agent(cls, process_id: str, form_data: CommunityCreateAgentDTO, agent_version_id: str) -> CommunityAgentVersionCreateResDTO:
-        version_file = AgentFactory.generate_agent_file_from_agent_id(process_id)
+        version_file: CommunityAgentFileDTO = AgentFactory.generate_agent_file_from_agent_id(process_id)
         return CommunityService.fork_community_agent(version_file, form_data, agent_version_id)
 
     @classmethod
     def create_community_agent_version(
             cls, process_id: str, agent_id: str) -> CommunityAgentVersionCreateResDTO:
-        version_file = AgentFactory.generate_agent_file_from_agent_id(process_id)
+        version_file: CommunityAgentFileDTO = AgentFactory.generate_agent_file_from_agent_id(process_id)
         return CommunityService.create_community_agent_version(version_file, agent_id)

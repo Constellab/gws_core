@@ -10,10 +10,10 @@ from gws_core.protocol.protocol_exception import \
     IOFaceConnectedToTheParentDeleteException
 
 
-# test_iscenario
-class TestIScenario(BaseTestCase):
+# test_scenario_proxy
+class TestScenarioProxy(BaseTestCase):
 
-    def test_iscenario(self):
+    def test_scenario_proxy(self):
 
         scenario: ScenarioProxy = ScenarioProxy()
 
@@ -71,7 +71,14 @@ class TestIScenario(BaseTestCase):
         move_1 = robot_travel.get_process('move_1')
         self.assertIsInstance(move_1, TaskProxy)
 
-    def test_iscenario_remove(self):
+        # load existing scenario in a new scenario proxy
+        scenario_2: ScenarioProxy = ScenarioProxy.from_existing_scenario(
+            scenario.get_model_id())
+        protocol_2: ProtocolProxy = scenario_2.get_protocol()
+        self.assertEqual(scenario_2.get_model().id, scenario.get_model_id())
+        self.assertEqual(protocol_2.get_model().id, protocol.get_model_id())
+
+    def test_scenario_proxy_remove(self):
         scenario: ScenarioProxy = ScenarioProxy(RobotSuperTravelProto)
 
         super_travel: ProtocolProxy = scenario.get_protocol()
@@ -109,7 +116,7 @@ class TestIScenario(BaseTestCase):
         self._test_super_travel_after_remove(super_travel_db)
 
     def _test_super_travel_after_remove(self, super_travel_model: ProtocolModel):
-        """Method used by the test_iscenario_remove to test the protocol model after removes
+        """Method used by the test_scenario_proxy_remove to test the protocol model after removes
 
         :param protocol_model: [description]
         :type protocol_model: ProtocolModel

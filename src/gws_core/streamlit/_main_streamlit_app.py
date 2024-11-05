@@ -176,7 +176,7 @@ try:
     module = importlib.util.module_from_spec(spec)
 
     # Load gws environment and log the user
-    from gws_streamlit_helper import StreamlitEnvLoader
+    from gws_streamlit_helper.streamlit_env_loader import StreamlitEnvLoader
     with StreamlitEnvLoader(user_id, dev_mode):
 
         # load resources

@@ -1033,11 +1033,37 @@ class Migration0100(BrickMigration):
             Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'NOTE_TEMPLATE' where object_type = 'DOCUMENT_TEMPLATE'")
             Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'NOTE' where object_type = 'REPORT'")
 
-    @brick_migration('0.10.2', short_description='Migrate note')
+    @brick_migration('0.10.2', short_description='Migrate share link')
     class Migration0102(BrickMigration):
 
         @classmethod
         def migrate(cls, from_version: Version, to_version: Version) -> None:
+            EntityTag.get_db().execute_sql("UPDATE gws_share_link SET entity_type = 'SCENARIO' WHERE entity_type = 'EXPERIMENT'")
+
+            # rename resource and agent in scenario template
+            resource_renames = {
+                'RESOURCE.gws_core.ReportResource': 'RESOURCE.gws_core.NoteResource',
+                'RESOURCE.gws_core.ENoteResource': 'RESOURCE.gws_core.NoteResource',
+                'RESOURCE.gws_core.DocumentTemplateResource': 'RESOURCE.gws_core.NoteTemplateResource',
+            }
+
+            for old_typing_name, new_typing_name in resource_renames.items():
+                SqlMigrator.rename_resource_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+
+            agent_renames = {
+                'TASK.gws_core.PyLiveTask': 'TASK.gws_core.PyAgent',
+                'TASK.gws_core.PyCondaLiveTask': 'TASK.gws_core.PyCondaAgent',
+                'TASK.gws_core.PyMambaLiveTask': 'TASK.gws_core.PyMambaAgent',
+                'TASK.gws_core.PyPipenvLiveTask': 'TASK.gws_core.PyPipenvAgent',
+                'TASK.gws_core.RCondaLiveTask': 'TASK.gws_core.RCondaAgent',
+                'TASK.gws_core.RMambaLiveTask': 'TASK.gws_core.RMambaAgent',
+                'TASK.gws_core.StreamlitLiveTask': 'TASK.gws_core.StreamlitAgent',
+            }
+
+            for old_typing_name, new_typing_name in agent_renames.items():
+                SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+                
             migrator: SqlMigrator = SqlMigrator(Note.get_db())
             migrator.add_column_if_not_exists(Note, Note.modifications)
             migrator.migrate()
+

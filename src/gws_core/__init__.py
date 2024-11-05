@@ -306,6 +306,7 @@ from .model.typing_style import TypingIconType as TypingIconType
 from .model.typing_style import TypingStyle as TypingStyle
 # Note
 from .note.note import Note as Note
+from .note.note_search_builder import NoteSearchBuilder as NoteSearchBuilder
 from .note.note_service import NoteService as NoteService
 from .note.task.lab_note_resource import LabNoteResource as LabNoteResource
 # Note task
@@ -363,6 +364,8 @@ from .resource.resource_decorator import \
     resource_decorator as resource_decorator
 from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_r_field import ResourceRField as ResourceRField
+from .resource.resource_search_builder import \
+    ResourceSearchBuilder as ResourceSearchBuilder
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set.resource_list import ResourceList as ResourceList
 from .resource.resource_set.resource_set import ResourceSet as ResourceSet
