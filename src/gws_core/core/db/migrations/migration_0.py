@@ -1073,10 +1073,14 @@ class Migration0100(BrickMigration):
             FileHelper.create_dir_if_not_exist('/data/note/note_template')
 
             if FileHelper.exists_on_os('/data/report/report'):
-                FileHelper.move_file_or_dir('/data/report/report', '/data/note/note')
+                FileHelper.copy_dir_content_to_dir('/data/report/report', '/data/note/note')
+                FileHelper.delete_dir('/data/report/report')
 
             if FileHelper.exists_on_os('/data/report/document_template'):
-                FileHelper.move_file_or_dir('/data/report/document_template', '/data/note/note_template')
+                FileHelper.copy_dir_content_to_dir('/data/report/document_template', '/data/note/note_template')
+                FileHelper.delete_dir('/data/report/document_template')
+
+            FileHelper.delete_dir('/data/report')
 
             task_rename = {
                 'TASK.gws_core.CreateENote': 'TASK.gws_core.CreateNoteResource',
