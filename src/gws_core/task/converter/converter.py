@@ -31,6 +31,7 @@ def decorate_converter(task_class: Type['Converter'],
                        short_description: str = "",
                        hide: bool = False,
                        style: TypingStyle = None,
+                       output_sub_class: bool = False,
                        deprecated_since: str = None,
                        deprecated_message: str = None,
                        deprecated: TypingDeprecated = None) -> None:
@@ -50,7 +51,7 @@ def decorate_converter(task_class: Type['Converter'],
     task_class.input_specs = InputSpecs(
         {Converter.input_name: InputSpec(source_type)})
     task_class.output_specs = OutputSpecs(
-        {Converter.output_name: OutputSpec(target_type)})
+        {Converter.output_name: OutputSpec(target_type, sub_class=output_sub_class)})
 
     main_resource_type = target_type if task_type == 'IMPORTER' else source_type
     if not style:

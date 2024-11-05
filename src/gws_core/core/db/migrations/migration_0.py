@@ -1085,6 +1085,7 @@ class Migration0100(BrickMigration):
             task_rename = {
                 'TASK.gws_core.CreateENote': 'TASK.gws_core.CreateNoteResource',
                 'TASK.gws_core.GenerateReportFromENote': 'TASK.gws_core.GenerateLabNote',
+                'TASK.gws_core.FileUncompressTask': 'TASK.gws_core.FileDecompressTask',
             }
 
             for old_typing_name, new_typing_name in task_rename.items():

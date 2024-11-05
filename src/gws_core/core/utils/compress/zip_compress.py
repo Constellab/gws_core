@@ -52,3 +52,9 @@ class ZipCompress(Compress):
         """Return true if the file can be uncompressed by this class
         """
         return file_path.endswith('.zip')
+
+    @classmethod
+    def get_supported_extensions(cls) -> set:
+        """Return the list of supported extensions
+        """
+        return {'zip'}

@@ -51,6 +51,12 @@ class TarCompress(Compress):
         """
         return file_path.endswith('.tar')
 
+    @classmethod
+    def get_supported_extensions(cls) -> set:
+        """Return the list of supported extensions
+        """
+        return {'tar'}
+
 
 class TarGzCompress(TarCompress):
     """Class to compress and uncompress tar.gz file.
@@ -68,3 +74,9 @@ class TarGzCompress(TarCompress):
         """Return true if the file can be uncompressed by this class
         """
         return file_path.endswith('.tar.gz')
+
+    @classmethod
+    def get_supported_extensions(cls) -> set:
+        """Return the list of supported extensions
+        """
+        return {'tar.gz'}

@@ -1,6 +1,6 @@
 
 from abc import abstractmethod
-from typing import List, Optional, Type
+from typing import List, Optional, Set, Type
 
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -56,6 +56,12 @@ class Compress:
         return False
 
     @classmethod
+    def get_supported_extensions(cls) -> Set[str]:
+        """Return the list of supported extensions for this compress class without '.'
+        """
+        return set()
+
+    @classmethod
     @abstractmethod
     def decompress(cls, file_path: str, destination_folder: str) -> None:
         """
@@ -97,6 +103,18 @@ class Compress:
         """
         compress: Type[Compress] = Compress._get_compress_class_from_extension(file_path)
         return compress is not None
+
+    @staticmethod
+    def get_all_supported_extensions() -> Set[str]:
+        """Return the list of all supported extensions without '.'
+        """
+        compress: List[Type[Compress]] = Compress._get_child_classes()
+        extensions: Set[str] = set()
+
+        for compress_class in compress:
+            extensions.update(compress_class.get_supported_extensions())
+
+        return extensions
 
     @staticmethod
     def _get_compress_class_from_extension(file_path: str) -> Optional[Type['Compress']]:
