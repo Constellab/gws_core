@@ -1062,3 +1062,8 @@ class Migration0100(BrickMigration):
 
             for old_typing_name, new_typing_name in agent_renames.items():
                 SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+                
+            migrator: SqlMigrator = SqlMigrator(Note.get_db())
+            migrator.add_column_if_not_exists(Note, Note.modifications)
+            migrator.migrate()
+

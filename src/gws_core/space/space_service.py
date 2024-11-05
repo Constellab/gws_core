@@ -9,6 +9,8 @@ from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
+                                                     RichTextModificationsDTO)
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
 from gws_core.space.space_dto import (LabStartDTO, SaveNoteToSpaceDTO,
                                       SaveScenarioToSpaceDTO, SpaceSendMailDTO)
@@ -159,6 +161,40 @@ class SpaceService():
         except BaseHTTPException as err:
             err.detail = f"Can't delete the note in space. Error : {err.detail}"
             raise err
+
+    @classmethod
+    def get_modifications(
+            cls, old_content: RichTextDTO, new_content: RichTextDTO,
+            old_modifications: Optional[RichTextModificationsDTO] = None) -> RichTextModificationsDTO:
+        space_api_url: str = cls._get_space_api_url(
+            f"{cls._external_labs_route}/modifications")
+        try:
+            response = ExternalApiService.post(space_api_url, {
+                'oldContent': old_content.to_json_dict(),
+                'newContent': new_content.to_json_dict(),
+                'oldModifications': old_modifications.to_json_dict() if old_modifications else None,
+                'userId': CurrentUserService.get_current_user().id
+            }, cls._get_request_header(), raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't get note modifications. Error : {err.detail}"
+            raise err
+        return RichTextModificationsDTO.from_json(response.json())
+
+    @classmethod
+    def get_undo_content(
+            cls, content: RichTextDTO, modifications: RichTextModificationsDTO, modification_id: str) -> RichTextDTO:
+        space_api_url: str = cls._get_space_api_url(
+            f"{cls._external_labs_route}/undo-content")
+        try:
+            response = ExternalApiService.post(space_api_url, {
+                'content': content.to_json_dict(),
+                'modifications': modifications.to_json_dict(),
+                'modificationId': modification_id,
+            }, cls._get_request_header(), raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't get note modifications. Error : {err.detail}"
+            raise err
+        return RichTextDTO.from_json(response.json())
 
     @classmethod
     def send_mail(cls, send_mail_dto: SpaceSendMailDTO) -> Response:

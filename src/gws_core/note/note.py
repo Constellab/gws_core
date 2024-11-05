@@ -1,6 +1,6 @@
 
 
-from typing import List, final
+from typing import Dict, List, final
 
 from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
                     ModelSelect)
@@ -13,7 +13,8 @@ from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
+                                                     RichTextModificationsDTO)
 from gws_core.note.note_dto import NoteDTO, NoteFullDTO
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
@@ -45,6 +46,8 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
     last_sync_by = ForeignKeyField(User, null=True, backref='+')
 
     is_archived = BooleanField(default=False, index=True)
+
+    modifications: RichTextModificationsDTO = BaseDTOField(RichTextModificationsDTO, null=True)
 
     _table_name = 'gws_note'
 
@@ -96,7 +99,8 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
             last_sync_at=self.last_sync_at,
             last_sync_by=self.last_sync_by.to_dto() if self.last_sync_by else None,
             is_archived=self.is_archived,
-            content=self.content
+            content=self.content,
+            modifications=self.modifications
         )
 
     def validate(self) -> None:

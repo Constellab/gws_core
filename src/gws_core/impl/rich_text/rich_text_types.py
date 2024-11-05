@@ -1,9 +1,11 @@
 
 
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.user.user_dto import UserDTO
 
 
 class RichTextBlockType(Enum):
@@ -176,3 +178,52 @@ class RichTextFormulaData(TypedDict):
 class RichTextFileData(TypedDict):
     name: str
     size: int  # in bytes
+
+
+################################ BLOCK DATA ################################
+class RichTextModificationType(Enum):
+    """List the possible modification type in a rich text"""
+    CREATED = 'CREATED'
+    UPDATED = 'UPDATED'
+    DELETED = 'DELETED'
+    MOVED = 'MOVED'
+
+
+class RichTextModificationDifferenceDTO(BaseModelDTO):
+    index: int
+    count: int
+    added: bool
+    removed: bool
+    value: str
+
+
+class RichTextBlockModificationDTO(BaseModelDTO):
+    """Object representing a modification of a block in a rich text"""
+    id: str
+    time: datetime
+    blockId: str
+    blockType: RichTextBlockType
+    differences: Optional[List[RichTextModificationDifferenceDTO]] = None
+    blockValue: Optional[Dict[str, Any]] = None
+    type: RichTextModificationType
+    index: int
+    oldIndex: Optional[int] = None
+    userId: str
+
+
+class RichTextUserDTO(BaseModelDTO):
+    id: str
+    firstname: str
+    lastname: str
+    photo: Optional[str] = None
+
+
+class RichTextBlockModificationWithUserDTO(RichTextBlockModificationDTO):
+    blockType: str
+    type: str
+    user: RichTextUserDTO
+
+
+class RichTextModificationsDTO(BaseModelDTO):
+    version: int = 1
+    modifications: List[RichTextBlockModificationDTO] = []
