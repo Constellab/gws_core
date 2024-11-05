@@ -6,11 +6,10 @@ import traceback
 from time import time
 from typing import Any, Dict, List, Optional
 
-from typing_extensions import TypedDict
-
 from gws_core.brick.brick_dto import BrickInfo, BrickMessageStatus
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.settings import Settings
 
 from ..core.utils.logger import Logger
@@ -20,7 +19,7 @@ from .brick_helper import BrickHelper
 from .brick_model import BrickModel
 
 
-class WaitingMessage(TypedDict):
+class WaitingMessage(BaseModelDTO):
     brick_name: str
     message: str
     status: BrickMessageStatus
@@ -68,8 +67,8 @@ class BrickService():
 
     @classmethod
     def log_brick_message(cls, brick_name: str, message: str, status: BrickMessageStatus) -> None:
-        brick_message: WaitingMessage = {"brick_name": brick_name,
-                                         "message": message, "status": status, "timestamp": time()}
+        brick_message: WaitingMessage = WaitingMessage(brick_name=brick_name,
+                                                       message=message, status=status, timestamp=time())
 
         if SystemStatus.app_is_initialized:
             cls._log_brick_message(brick_message)
@@ -82,22 +81,22 @@ class BrickService():
         cls._log_message(brick_message)
 
         brick_model: BrickModel = cls._get_brick_model(
-            brick_message['brick_name'])
+            brick_message.brick_name)
 
         if not brick_model:
             Logger.error(
-                f"Can't log brick message because brick '{brick_message['brick_name']}' was not found")
+                f"Can't log brick message because brick '{brick_message.brick_name}' was not found")
             return
         brick_model.add_message(
-            brick_message['message'], brick_message['status'], brick_message['timestamp'])
+            brick_message.message, brick_message.status, brick_message.timestamp)
         brick_model.save()
 
     @classmethod
     def _log_message(cls, brick_message: WaitingMessage) -> None:
-        message = f"Brick '{brick_message['brick_name']}'. {brick_message['message']}'"
-        if brick_message['status'] == 'INFO':
+        message = f"Brick '{brick_message.brick_name}'. {brick_message.message}'"
+        if brick_message.status == 'INFO':
             Logger.info(message)
-        elif brick_message['status'] == 'WARNING':
+        elif brick_message.status == 'WARNING':
             Logger.warning(message)
         else:
             Logger.error(message)
@@ -200,7 +199,6 @@ class BrickService():
     def folder_is_brick(cls, path: str) -> bool:
         """return true if the provided folder is a brick.
         If the folder contains a settings.json and a src folder it is a brick
-
         """
         return os.path.exists(os.path.join(path, cls.SETTINGS_JSON_FILE)) and \
             os.path.exists(os.path.join(path, cls.SOURCE_FOLDER))

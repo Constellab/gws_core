@@ -141,6 +141,13 @@ class SettingsLoader:
             self._save_brick(brick_module)
             return
 
+        # inside src folder, a folder with the brick name should be present
+        if not os.path.exists(os.path.join(brick_path, self.SOURCE_FOLDER_NAME, brick_name)):
+            brick_module.error = f"Folder '{brick_name}' is not found in the '{self.SOURCE_FOLDER_NAME}' folder, the brick code must be inside '{self.SOURCE_FOLDER_NAME}/{brick_name}' folder. Skipping brick."
+            Logger.error(brick_module.error)
+            self._save_brick(brick_module)
+            return
+
         # read settings file
         file_path = os.path.join(brick_path, "settings.json")
         with open(file_path, 'r', encoding='utf-8') as fp:
