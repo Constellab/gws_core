@@ -32,7 +32,7 @@ from gws_core.share.shared_dto import (SharedEntityMode, ShareLinkType,
 from gws_core.share.shared_entity_info import SharedEntityInfo
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
-from gws_core.task.plug import Sink
+from gws_core.task.plug import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import AuthenticateUser
@@ -178,15 +178,15 @@ class ShareService():
         zipper: ProcessProxy = protocol.add_process(ResourceZipperTask, 'zipper', {'shared_by_id': shared_by.id})
 
         # Add source and connect it
-        protocol.add_source('source', resource_model.id, zipper << ResourceZipperTask.input_name)
+        protocol.add_resource('source', resource_model.id, zipper << ResourceZipperTask.input_name)
 
-        # Add sink and connect it
-        sink = protocol.add_sink('sink', zipper >> ResourceZipperTask.output_name, False)
+        # Add output task and connect it
+        output_task = protocol.add_output('output', zipper >> ResourceZipperTask.output_name, False)
 
         scenario.run(auto_delete_if_error=True)
-        sink.refresh()
+        output_task.refresh()
 
-        return sink.get_input_resource_model(Sink.input_name)
+        return output_task.get_input_resource_model(OutputTask.input_name)
 
     # TODO THE zipped_entity_id is NOT REQUIRED anymore, can use the get from above
     @classmethod

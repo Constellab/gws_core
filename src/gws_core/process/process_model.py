@@ -18,7 +18,7 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
-from gws_core.task.plug import Sink, Source
+from gws_core.task.plug import InputTask, OutputTask
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField
@@ -424,18 +424,18 @@ class ProcessModel(ModelWithUser):
     def get_process_typing(self) -> Typing:
         return TypingManager.get_typing_from_name(self.process_typing_name)
 
-    def is_source_task(self) -> bool:
-        """return true if the process is of type Source
+    def is_input_task(self) -> bool:
+        """return true if the process is of type InputTask
         """
-        return self.process_typing_name == Source.get_typing_name()
+        return self.process_typing_name == InputTask.get_typing_name()
 
-    def is_sink_task(self) -> bool:
-        """return true if the process is of type Sink
+    def is_output_task(self) -> bool:
+        """return true if the process is of type OutputTask
         """
-        return self.process_typing_name == Sink.get_typing_name()
+        return self.process_typing_name == OutputTask.get_typing_name()
 
     def is_auto_run(self) -> bool:
-        """Return true if the process is of type Source
+        """Return true if the process is automatically run when added to a protocol
         """
         return self.get_process_type().__auto_run__
 
@@ -526,11 +526,11 @@ class ProcessModel(ModelWithUser):
             style=style
         )
 
-    def to_config_dto(self, ignore_source_config: bool = False) -> ProcessConfigDTO:
+    def to_config_dto(self, ignore_input_task_config: bool = False) -> ProcessConfigDTO:
         """Return the config DTO
 
-        :param ignore_source_config: if true, the config values of Source task is ignored, defaults to False
-        :type ignore_source_config: bool, optional
+        :param ignore_input_task_config: if true, the config values of input task task is ignored, defaults to False
+        :type ignore_input_task_config: bool, optional
         :return: _description_
         :rtype: ProcessConfigDTO
         """
@@ -541,7 +541,7 @@ class ProcessModel(ModelWithUser):
             raise Exception(
                 f"Could not find the process typing {self.process_typing_name}")
 
-        ignore_config_values = ignore_source_config and self.is_source_task()
+        ignore_config_values = ignore_input_task_config and self.is_input_task()
 
         return ProcessConfigDTO(
             process_typing_name=self.process_typing_name,

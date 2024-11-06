@@ -5,9 +5,10 @@ from typing import List, Tuple, Type
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.utils.logger import Logger
 from gws_core.protocol.protocol_spec import ConnectorSpec
 from gws_core.protocol.protocol_update import ProtocolUpdate
-from gws_core.task.plug import Sink, Source
+from gws_core.task.plug import InputTask, OutputTask
 
 from ..config.config_types import ConfigParamsDict
 from ..config.param.param_types import ParamValue
@@ -196,6 +197,23 @@ class ProtocolProxy(ProcessProxy):
 
     ############################################### Specific processes ####################################
 
+    def add_resource(self, instance_name: str, resource_model_id: str, in_port: Tuple[ProcessModel, str]) -> TaskProxy:
+        """Add a resource to the protocol and connected it to the in_port
+        :param instance_name: instance name of the task
+        :type instance_name: str
+        :param resource_model_id: the id of the resource model the source will provided as input
+        :type resource_model_id: str
+        :param in_port: the in port that should receive the resource
+        :type in_port: InPort
+        :return: [description]
+        :rtype: ITask
+        """
+        config = {InputTask.config_name: resource_model_id} if resource_model_id else {}
+        source: ProcessProxy = self.add_process(
+            InputTask, instance_name, config)
+        self.add_connector(source >> InputTask.output_name, in_port)
+        return source
+
     def add_source(self, instance_name: str, resource_model_id: str, in_port: Tuple[ProcessModel, str]) -> TaskProxy:
         """Add a Source task to the protocol and connected it to the in_port
         :param instance_name: instance name of the task
@@ -207,31 +225,49 @@ class ProtocolProxy(ProcessProxy):
         :return: [description]
         :rtype: ITask
         """
-        config = {Source.config_name: resource_model_id} if resource_model_id else {}
-        source: ProcessProxy = self.add_process(
-            Source, instance_name, config)
-        self.add_connector(source >> Source.output_name, in_port)
-        return source
+        Logger.warning(
+            "The add_source method is deprecated, please use add_resource instead")
+        return self.add_resource(instance_name, resource_model_id, in_port)
 
-    def add_sink(self, instance_name: str, out_port: Tuple[ProcessModel, str], flag_resource: bool = True) -> TaskProxy:
-        """Add a sink task to the protocol that receive the out_port resource
+    def add_output(
+            self, instance_name: str, out_port: Tuple[ProcessModel, str],
+            flag_resource: bool = True) -> TaskProxy:
+        """Add an output task to the protocol that receive the out_port resource
 
         :param instance_name: instance name of the task
         :type instance_name: str
-        :param out_port: out_port connect to connect to the sink
+        :param out_port: out_port connect to connect to the output task
         :type out_port: OutPort
         :param flag_resource: flag the resource, defaults to True
         :type flag_resource: bool, optional
         :return: [description]
         :rtype: ITask
         """
-        sink = self.add_process(Sink, instance_name, {Sink.flag_config_name: flag_resource})
-        self.add_connector(out_port, sink << Sink.input_name)
-        return sink
+        output_task = self.add_process(OutputTask, instance_name, {OutputTask.flag_config_name: flag_resource})
+        self.add_connector(out_port, output_task << OutputTask.input_name)
+        return output_task
+
+    # TODO v0.11.0 to remove
+    def add_sink(self, instance_name: str, out_port: Tuple[ProcessModel, str],
+                 flag_resource: bool = True) -> TaskProxy:
+        """Add an output task to the protocol that receive the out_port resource
+
+        :param instance_name: instance name of the task
+        :type instance_name: str
+        :param out_port: out_port connect to connect to the output task
+        :type out_port: OutPort
+        :param flag_resource: flag the resource, defaults to True
+        :type flag_resource: bool, optional
+        :return: [description]
+        :rtype: ITask
+        """
+        Logger.warning(
+            "The add_sink method is deprecated, please use add_output instead")
+        return self.add_output(instance_name, out_port, flag_resource)
 
     ############################################### CLASS METHODS ####################################
 
-    @ classmethod
+    @classmethod
     def get_by_id(cls, id: str) -> 'ProtocolProxy':
         protocol_model: ProtocolModel = ProtocolService.get_by_id_and_check(id)
         return ProtocolProxy(protocol_model)

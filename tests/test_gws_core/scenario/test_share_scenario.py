@@ -19,7 +19,7 @@ from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
-from gws_core.task.plug import Sink, Source
+from gws_core.task.plug import InputTask, OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.task.task_runner import TaskRunner
@@ -64,10 +64,10 @@ class TestShareScenario(BaseTestCase):
             move = protocol.add_process(RobotMove, 'move', config_params={'moving_step': 100})
             generate = protocol.add_process(RobotsGeneratorShare, 'generate')
 
-            # Source > Move > RobotsGenerator > Sink
-            source = protocol.add_source('source', input_robot_model.id, move << 'robot')
+            # Input > Move > RobotsGenerator > Output
+            source = protocol.add_resource('source', input_robot_model.id, move << 'robot')
             protocol.add_connector(move >> 'robot', generate << 'robot')
-            sink = protocol.add_sink('sink', generate >> 'set')
+            output = protocol.add_output('output', generate >> 'set')
             scenario.run()
 
             initial_scenario_model = scenario.refresh().get_model()
@@ -75,7 +75,7 @@ class TestShareScenario(BaseTestCase):
             source_process_model = source.refresh().get_model()
             move_process_model = move.refresh().get_model()
             generate_process_model = generate.refresh().get_model()
-            sink_process_model = sink.refresh().get_model()
+            output_process_model = output.refresh().get_model()
 
             # generate share link
             share_dto = GenerateShareLinkDTO(
@@ -124,18 +124,18 @@ class TestShareScenario(BaseTestCase):
             self.assertEqual(new_protocol_model.get_process('generate').process_typing_name,
                              generate_process_model.process_typing_name)
 
-            self.assertEqual(new_protocol_model.get_process('sink').process_typing_name,
-                             sink_process_model.process_typing_name)
+            self.assertEqual(new_protocol_model.get_process('output').process_typing_name,
+                             output_process_model.process_typing_name)
 
             # Check the source resource
-            new_source_output = new_source.out_port(Source.output_name).get_resource_model()
+            new_source_output = new_source.out_port(InputTask.output_name).get_resource_model()
             self.assertIsNotNone(new_source_output)
             self.assertEqual(new_source_output.origin, ResourceOrigin.IMPORTED_FROM_LAB)
             self.assertNotEqual(new_source_output.id, input_robot_model.id)
             self.assertTrue(new_source_output.flagged)
             # check that the source config id and the source config where update with the new resource id
             self.assertEqual(new_source.source_config_id, new_source_output.id)
-            self.assertEqual(new_source.config.get_value(Source.config_name), new_source_output.id)
+            self.assertEqual(new_source.config.get_value(InputTask.config_name), new_source_output.id)
 
             # Check the resources
             new_move_process = new_protocol_model.get_process('move')
@@ -187,9 +187,9 @@ class TestShareScenario(BaseTestCase):
             # the source task should not be configured as only the output resources are imported
             new_source_2: TaskModel = new_protocol_2.get_process('source')
             self.assertIsNone(new_source_2.source_config_id)
-            self.assertIsNone(new_source_2.out_port(Source.output_name).get_resource_model())
+            self.assertIsNone(new_source_2.out_port(InputTask.output_name).get_resource_model())
 
             # the output resource should be imported
-            new_output_process = new_protocol_2.get_process('sink')
-            new_output_resource = new_output_process.in_port(Sink.input_name).get_resource_model()
+            new_output_process = new_protocol_2.get_process('output')
+            new_output_resource = new_output_process.in_port(OutputTask.input_name).get_resource_model()
             self.assertIsNotNone(new_output_resource)

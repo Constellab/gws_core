@@ -20,11 +20,11 @@ from .task import CheckBeforeTaskResult, Task
 from .task_decorator import task_decorator
 
 
-@task_decorator(unique_name="Source", human_name="Source", short_description="Select a resource from the databox",
+@task_decorator(unique_name="InputTask", human_name="Input", short_description="Select a resource",
                 style=TypingStyle.material_icon("login"))
-class Source(Task):
+class InputTask(Task):
     """
-    Source task.
+    Input task.
 
     A source task is used to load and transfer a resource. No more action is done.
     """
@@ -44,10 +44,10 @@ class Source(Task):
     __enable_in_sub_protocol__: bool = False
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        r_id: str = params.get_value(Source.config_name)
+        r_id: str = params.get_value(InputTask.config_name)
         if not r_id:
             raise BadRequestException(
-                'Source error, the resource was not provided')
+                'The resource was not provided in the configuration')
 
         # retrieve the resource model based and id and resource type
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(r_id)
@@ -56,16 +56,16 @@ class Source(Task):
 
     @staticmethod
     def get_resource_id_from_config(config: ConfigParamsDict) -> Optional[str]:
-        return config.get(Source.config_name, None)
+        return config.get(InputTask.config_name, None)
 
 
-@task_decorator(unique_name="Sink", human_name="Output",
+@task_decorator(unique_name="OutputTask", human_name="Output",
                 style=TypingStyle.material_icon("logout"))
-class Sink(Task):
+class OutputTask(Task):
     """
-    Sink task.
+    Output task.
 
-    A sink task is used to recieve a resource. The resource is flagged to show in databox.
+    An output task is used to recieve a resource. The resource is flagged to show resources list.
     """
 
     input_name: str = 'resource'
@@ -83,9 +83,9 @@ class Sink(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         if params.get_value('flag_resource', False):
-            # mark the resource to show in databox as it is an output
+            # mark the resource to show in list as it is an output
             from ..resource.resource_model import ResourceModel
-            resource: Resource = inputs.get(Sink.input_name)
+            resource: Resource = inputs.get(OutputTask.input_name)
             resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
                 resource.get_model_id())
             resource_model.flagged = True

@@ -237,7 +237,7 @@ class TestView(BaseTestCase):
         viewer = i_protocol.add_process(Viewer, 'viewer', {
             Viewer.resource_config_name: resource.get_typing_name(), 'view_config': view_config})
 
-        i_protocol.add_source('source', resource_model.id, viewer << Viewer.input_name)
+        i_protocol.add_resource('source', resource_model.id, viewer << Viewer.input_name)
         i_scenario.run()
 
         # check that view config was saved

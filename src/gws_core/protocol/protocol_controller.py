@@ -5,7 +5,6 @@ from typing import Any, Optional
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
-
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
@@ -337,35 +336,35 @@ def delete_outerface(id_: str,
 
 @core_app.post("/protocol/{id_}/add-source/{resource_id}/{process_name}/{input_port_name}", tags=["Protocol"],
                summary="Add a configured source link to a process' input")
-def add_source_to_process_input(id_: str,
-                                resource_id: str,
-                                process_name: str,
-                                input_port_name: str,
-                                _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+def add_input_resource_to_process_input(id_: str,
+                                        resource_id: str,
+                                        process_name: str,
+                                        input_port_name: str,
+                                        _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
-        return ProtocolService.add_source_to_process_input(
+        return ProtocolService.add_input_resource_to_process_input(
             protocol_id=id_, resource_id=resource_id, process_name=process_name,
             input_port_name=input_port_name).to_dto()
 
 
 @core_app.post("/protocol/{id_}/add-source/{resource_id}", tags=["Protocol"],
                summary="Add a configured source link to a process' input")
-def add_source_to_protocol(id_: str,
-                           resource_id: str,
-                           _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+def add_input_resource_to_protocol(id_: str,
+                                   resource_id: str,
+                                   _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
-        return ProtocolService.add_source_to_protocol_id(
+        return ProtocolService.add_input_resource_to_protocol_id(
             protocol_id=id_, resource_id=resource_id).to_dto()
 
 
-@core_app.post("/protocol/{id_}/add-sink/{process_name}/{output_port_name}", tags=["Protocol"],
-               summary="Add a sink link a process' output")
-def add_sink_to_process_ouput(id_: str,
-                              process_name: str,
-                              output_port_name: str,
-                              _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+@core_app.post("/protocol/{id_}/add-output/{process_name}/{output_port_name}", tags=["Protocol"],
+               summary="Add an output task link a process' output")
+def add_output_task_to_process_ouput(id_: str,
+                                     process_name: str,
+                                     output_port_name: str,
+                                     _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
-        return ProtocolService.add_sink_to_process_ouput(
+        return ProtocolService.add_output_task_to_process_ouput(
             protocol_id=id_, process_name=process_name, output_port_name=output_port_name).to_dto()
 
 

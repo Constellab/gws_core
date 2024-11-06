@@ -108,7 +108,7 @@ class ScenarioTemplateFactory:
             if node.get('graph'):
                 cls.migrate_data_from_1_to_3(node["graph"])
 
-            if node.get('process_typing_name') == 'TASK.gws_core.Source':
+            if node.get('process_typing_name') == 'TASK.gws_core.InputTask':
                 node['config']['values']['resource_id'] = None
 
         return graph

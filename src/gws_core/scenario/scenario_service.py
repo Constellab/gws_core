@@ -13,7 +13,7 @@ from gws_core.scenario.scenario_zipper import ZipScenario, ZipScenarioInfo
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_factory import \
     ScenarioTemplateFactory
-from gws_core.task.plug import Sink
+from gws_core.task.plug import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
@@ -483,7 +483,7 @@ class ScenarioService():
     @transaction()
     def delete_intermediate_resources(cls, scenario_id: str) -> None:
         """Delete the intermediate resources of an scenario
-        An intermediate resource is a resource that is not used as input of a sink and not flagged
+        An intermediate resource is a resource that is not used as input or output and not flagged
 
         :param scenario_id: id of the scenario
         :type scenario_id: str
@@ -516,7 +516,7 @@ class ScenarioService():
     @classmethod
     def get_intermediate_results(cls, scenario_id: str) -> List[ResourceModel]:
         """Retrieve the list of intermediate resources of an scenario
-        A resource is considered as intermediate if it is not used as input of a sink and not flagged
+        A resource is considered as intermediate if it is not used as output and not flagged
 
         :param scenario_id: id of the scenario
         :type scenario_id: str
@@ -529,11 +529,11 @@ class ScenarioService():
 
         intermediate_resources: List[ResourceModel] = []
         for resource in not_flagged_resources:
-            # check if the resource is used a input of sink
+            # check if the resource is used as output
             task_input_model = TaskInputModel.get_by_resource_model_and_task_type(
-                resource.id, Sink.get_typing_name())
+                resource.id, OutputTask.get_typing_name())
 
-            # if the resource is not used as input of a sink, it is an intermediate resource
+            # if the resource is not used as output, it is an intermediate resource
             if not task_input_model:
                 intermediate_resources.append(resource)
 

@@ -13,7 +13,7 @@ from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel
 from ...scenario.scenario_proxy import ScenarioProxy
 from ..converter.converter import Converter
-from ..plug import Sink, Source
+from ..plug import InputTask, OutputTask
 from ..task import Task
 from .transformer_type import TransformerDict
 
@@ -32,14 +32,14 @@ class TransformerService():
             resource_model_id)
         resource_type: Type[Resource] = resource_model.get_and_check_resource_type()
 
-        # Create an scenario containing 1 source, X transformers task , 1 sink
+        # Create an scenario containing 1 source, X transformers task , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{resource_type.get_human_name()} transformation")
         protocol: ProtocolProxy = scenario.get_protocol()
 
         # create the source and save last process to create connectors later
         last_process: ProcessProxy = protocol.add_process(
-            Source, 'source', {Source.config_name: resource_model_id})
+            InputTask, 'source', {InputTask.config_name: resource_model_id})
 
         index: int = 1
 
@@ -58,8 +58,8 @@ class TransformerService():
             last_process = new_process
             index += 1
 
-        # add sink and sink connector
-        protocol.add_sink('sink', last_process >> Transformer.output_name)
+        # add output task
+        protocol.add_output('output', last_process >> Transformer.output_name)
 
         #  run the scenario
         try:
@@ -69,8 +69,8 @@ class TransformerService():
             scenario.delete()
             raise exception
 
-        # return the resource model of the sink process
-        return scenario.get_model().protocol_model.get_process('sink').inputs.get_resource_model(Sink.input_name)
+        # return the resource model of the output process
+        return scenario.get_model().protocol_model.get_process('output').inputs.get_resource_model(OutputTask.input_name)
 
     @classmethod
     def call_transformers(cls, resource: Resource,

@@ -11,7 +11,7 @@ from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_run_service import ScenarioRunService
-from gws_core.task.plug import Source
+from gws_core.task.plug import InputTask
 from gws_core.test.gtest import GTest
 
 from ..protocol_examples import TestSimpleProtocol
@@ -116,17 +116,17 @@ class TestTask(BaseTestCase):
         with self.assertRaises(Exception):
             scenario.run()
 
-    def test_source_task(self):
+    def test_input_task(self):
         """
-        Test that the use of a resource in a Source config is saved in the database so we can retrieve which
-        Source task uses a resource. Even if the scenario that uses the resource was not runned.
+        Test that the use of a resource in a source config is saved in the database so we can retrieve which
+        Input task uses a resource. Even if the scenario that uses the resource was not runned.
         """
         robot_model = ResourceModel.save_from_resource(
             Robot.empty(), origin=ResourceOrigin.UPLOADED)
 
         scenario: ScenarioProxy = ScenarioProxy()
         task = scenario.get_protocol().add_task(
-            Source, 'source', {Source.config_name: robot_model.id})
+            InputTask, 'source', {InputTask.config_name: robot_model.id})
 
         tasks = (list(TaskModel.select().where(TaskModel.source_config_id == robot_model.id)))
         # Check that the use of the robot in the scenario was saved

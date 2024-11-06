@@ -7,7 +7,7 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 from gws_core.resource.view.viewer import Viewer
-from gws_core.task.plug import Sink, Source
+from gws_core.task.plug import InputTask, OutputTask
 
 from ..config.config import Config
 from ..config.config_types import ConfigParamsDict
@@ -347,11 +347,11 @@ class ProcessFactory():
 
     @classmethod
     def create_source(cls, resouce_id: str) -> TaskModel:
-        return cls.create_task_model_from_type(Source, {Source.config_name: resouce_id})
+        return cls.create_task_model_from_type(InputTask, {InputTask.config_name: resouce_id})
 
     @classmethod
-    def create_sink(cls) -> TaskModel:
-        return cls.create_task_model_from_type(Sink)
+    def create_output_task(cls) -> TaskModel:
+        return cls.create_task_model_from_type(OutputTask)
 
     @classmethod
     def create_viewer(cls, resource_typing_name: str) -> TaskModel:

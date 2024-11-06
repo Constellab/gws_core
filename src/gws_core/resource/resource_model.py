@@ -328,7 +328,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         if flagged is not None:
             resource_model.flagged = flagged
         else:
-            # by default only the uploaded resource are showed in databox
+            # by default only the uploaded resource are showed in list
             resource_model.flagged = resource_model.is_manually_generated()
 
         # Get the name of the resource, and set it in the resource model

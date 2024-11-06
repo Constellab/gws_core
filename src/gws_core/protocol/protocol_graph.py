@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Set
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.protocol.protocol_dto import (ProcessConfigDTO,
                                             ProtocolGraphConfigDTO)
-from gws_core.task.plug import Sink, Source
+from gws_core.task.plug import InputTask, OutputTask
 
 
 class ResourceTaskOrigin(BaseModelDTO):
@@ -24,8 +24,8 @@ class ProtocolGraph():
         resource_ids: Set[str] = set()
 
         for node in self.graph.nodes.values():
-            if node.process_typing_name == Source.get_typing_name():
-                resource_id = Source.get_resource_id_from_config(node.config.values)
+            if node.process_typing_name == InputTask.get_typing_name():
+                resource_id = InputTask.get_resource_id_from_config(node.config.values)
                 if resource_id:
                     resource_ids.add(resource_id)
 
@@ -35,8 +35,8 @@ class ProtocolGraph():
         resource_ids: Set[str] = set()
 
         for node in self.graph.nodes.values():
-            if node.process_typing_name == Sink.get_typing_name():
-                resource_id = node.inputs.ports[Sink.input_name].resource_id
+            if node.process_typing_name == OutputTask.get_typing_name():
+                resource_id = node.inputs.ports[OutputTask.input_name].resource_id
                 if resource_id:
                     resource_ids.add(resource_id)
 

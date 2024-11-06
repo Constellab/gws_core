@@ -10,7 +10,7 @@ from gws_core.protocol.protocol_decorator import protocol_decorator
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_spec import ProcessSpec
 from gws_core.scenario.scenario_proxy import ScenarioProxy
-from gws_core.task.plug import Sink
+from gws_core.task.plug import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase
@@ -35,11 +35,11 @@ class RobotMainTravel(Protocol):
         sub_travel: ProcessSpec = self.add_process(RobotSuperTravelProto, "sub_travel")
 
         # define the protocol output
-        sink: ProcessSpec = self.add_process(Sink, 'sink')
+        output: ProcessSpec = self.add_process(OutputTask, 'output')
 
         self.add_connectors([
             (facto >> 'robot', sub_travel << 'robot'),
-            (sub_travel >> 'robot', sink << 'resource'),
+            (sub_travel >> 'robot', output << 'resource'),
         ])
 
 
@@ -52,9 +52,9 @@ class TestTaskInputModel(BaseTestCase):
 
         ################################ CHECK TASK INPUT ################################
         # Check if the Input resource was set
-        sink: ProcessModel = scenario._scenario.protocol_model.get_process('sink')
+        output: ProcessModel = scenario._scenario.protocol_model.get_process('output')
         task_inputs: List[TaskInputModel] = list(
-            TaskInputModel.get_by_resource_model(sink.inputs.get_resource_model('resource').id))
+            TaskInputModel.get_by_resource_model(output.inputs.get_resource_model('resource').id))
         self.assertEqual(len(task_inputs), 1)
         self.assertEqual(task_inputs[0].is_interface, False)
         self.assertEqual(task_inputs[0].port_name, "resource")

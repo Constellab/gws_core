@@ -48,7 +48,7 @@ from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
-from gws_core.task.plug import Sink, Source
+from gws_core.task.plug import InputTask, OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.user.activity.activity import Activity
@@ -183,11 +183,11 @@ class Migration0310(BrickMigration):
         migrator.migrate()
 
         task_models: List[TaskModel] = list(TaskModel.select().where(
-            TaskModel.process_typing_name == Source.get_typing_name()))
+            TaskModel.process_typing_name == InputTask.get_typing_name()))
 
         # Update source config in task models
         for task_model in task_models:
-            resource_id = Source.get_resource_id_from_config(
+            resource_id = InputTask.get_resource_id_from_config(
                 task_model.config.get_values())
 
             if resource_id is not None:
@@ -280,8 +280,8 @@ class Migration0313(BrickMigration):
                 # set show_in_databox
                 task_input_model: TaskInputModel = TaskInputModel.get_by_resource_model(
                     resource_model.id).first()
-                # if the resource is used a input of a Sink task or the resource was uploaded
-                if (task_input_model is not None and task_input_model.task_model.process_typing_name == Sink.get_typing_name()) or \
+                # if the resource is an output or the resource was uploaded
+                if (task_input_model is not None and task_input_model.task_model.process_typing_name == OutputTask.get_typing_name()) or \
                         resource_model.origin == ResourceOrigin.UPLOADED:
                     resource_model.flagged = True
 
@@ -1086,6 +1086,8 @@ class Migration0100(BrickMigration):
                 'TASK.gws_core.CreateENote': 'TASK.gws_core.CreateNoteResource',
                 'TASK.gws_core.GenerateReportFromENote': 'TASK.gws_core.GenerateLabNote',
                 'TASK.gws_core.FileUncompressTask': 'TASK.gws_core.FileDecompressTask',
+                'TASK.gws_core.Source': InputTask.get_typing_name(),
+                'TASK.gws_core.Sink': OutputTask.get_typing_name(),
             }
 
             for old_typing_name, new_typing_name in task_rename.items():

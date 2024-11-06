@@ -14,7 +14,7 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_list import TagList
-from gws_core.task.plug import Source
+from gws_core.task.plug import InputTask
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
@@ -49,7 +49,7 @@ class TaskModel(ProcessModel):
     :type config_specs: dict
     """
 
-    # Only for task of type Source, this is to store the resource used in config
+    # Only for task of type Input, this is to store the resource used in config
     # with lazy load = false, the Resource is not Loaded, it only contains the id
     source_config_id: str = ForeignKeyField(
         ResourceModel, null=True, index=True, lazy_load=False)
@@ -124,8 +124,8 @@ class TaskModel(ProcessModel):
         return list(ResourceModel.select().where(ResourceModel.task_model == self))
 
     @classmethod
-    def get_scenario_source_tasks(cls, scenario_ids: List[str]) -> ModelSelect:
-        """Return all the Source task Model of the scenario
+    def get_scenario_input_tasks(cls, scenario_ids: List[str]) -> ModelSelect:
+        """Return all the Input task Model of the scenario
         """
         return cls.select().where((cls.scenario.in_(scenario_ids)) & (cls.source_config_id.is_null(False)))
 
@@ -423,8 +423,8 @@ class TaskModel(ProcessModel):
         update the source_config_id if the task is a source task
         """
 
-        if self.is_source_task():
-            resource_model_id = Source.get_resource_id_from_config(
+        if self.is_input_task():
+            resource_model_id = InputTask.get_resource_id_from_config(
                 self.config.get_values())
 
             if resource_model_id is not None:

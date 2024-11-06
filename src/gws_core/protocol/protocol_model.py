@@ -13,7 +13,7 @@ from gws_core.protocol.protocol_dto import (ConnectorDTO, IOFaceDTO,
 from gws_core.protocol.protocol_exception import \
     IOFaceConnectedToTheParentDeleteException
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
-from gws_core.task.plug import Source
+from gws_core.task.plug import InputTask
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -1189,25 +1189,25 @@ class ProtocolModel(ProcessModel):
                 raise BadRequestException(
                     detail="The scenario is running or in queue, you can't update it")
 
-    def get_source_resource_ids(self) -> Set[str]:
+    def get_input_resource_ids(self) -> Set[str]:
         """
-        :return: return all the resource ids configured in a Source inside this protocol
+        :return: return all the resource ids configured as input of this protocol
         :rtype: Set[str]
         """
         resource_ids: Set[str] = set()
         for process in self.processes.values():
-            if process.is_source_task():
-                resource_id = Source.get_resource_id_from_config(process.config.get_values())
+            if process.is_input_task():
+                resource_id = InputTask.get_resource_id_from_config(process.config.get_values())
                 if resource_id:
                     resource_ids.add(resource_id)
 
             if isinstance(process, ProtocolModel):
-                resource_ids.update(process.get_source_resource_ids())
+                resource_ids.update(process.get_input_resource_ids())
         return resource_ids
 
     def replace_io_process_with_ioface(self):
-        """Method to replace each Source process with an interface
-        and each Sink process with an outerface. It does not replace on sub protocols
+        """Method to replace each Input process with an interface
+        and each Output process with an outerface. It does not replace on sub protocols
         """
         new_interfaces: Dict[str, IOFaceDTO] = {}
         new_outerfaces: Dict[str, IOFaceDTO] = {}
@@ -1215,9 +1215,9 @@ class ProtocolModel(ProcessModel):
         processes_to_remove: List[str] = []
 
         for process in self.processes.values():
-            if process.is_source_task():
+            if process.is_input_task():
 
-                # convert the output connexions of Source process to interfaces
+                # convert the output connexions of Input process to interfaces
                 connectors = self._get_connectors_linked_to_process(process)
                 i = 0
                 for connector in connectors:
@@ -1229,9 +1229,9 @@ class ProtocolModel(ProcessModel):
                     i += 1
 
                 processes_to_remove.append(process.instance_name)
-            elif process.is_sink_task():
+            elif process.is_output_task():
 
-                # convert the input connexions of Sink process to outerfaces
+                # convert the input connexions of Output process to outerfaces
                 connectors = self._get_connectors_linked_to_process(process)
                 i = 0
                 for connector in connectors:

@@ -149,10 +149,10 @@ class TestScenarioTemplate(BaseTestCase):
         protocol.add_connector(source_1 >> 'resource', process << keys[0])
         protocol.add_connector(source_2 >> 'resource', process << keys[1])
 
-        # connect all dynamic output to a sink
+        # connect all dynamic output to a output
         i = 0
         for output_port in process.get_model().outputs.ports.keys():
-            protocol.add_sink(f'target_{i}', process >> output_port)
+            protocol.add_output(f'target_{i}', process >> output_port)
             i += 1
 
         # create a template
@@ -200,8 +200,8 @@ class TestScenarioTemplate(BaseTestCase):
         protocol = i_scenario.get_protocol()
 
         process = protocol.add_process(RobotMove, 'robotMove')
-        protocol.add_source('source', None, process << 'robot')
-        protocol.add_sink('sink', process >> 'robot')
+        protocol.add_resource('source', None, process << 'robot')
+        protocol.add_output('output', process >> 'robot')
 
         # create scenario template
         template = ProtocolService.create_scenario_template_from_id(protocol.get_model().id, 'test_template')
@@ -230,7 +230,7 @@ class TestScenarioTemplate(BaseTestCase):
 
     def test_migration(self):
 
-        # Simple protocol Source > TableTransposer on v1
+        # Simple protocol Input > TableTransposer on v1
         old_scenario_template = {
             "id": "123",
             "version": 1,
@@ -297,9 +297,9 @@ class TestScenarioTemplate(BaseTestCase):
                             "short_description": "Transposes the table"
                         }
                     },
-                    "Source": {
-                        "process_typing_name": "TASK.gws_core.Source",
-                        "instance_name": "Source",
+                    "input_1": {
+                        "process_typing_name": "TASK.gws_core.InputTask",
+                        "instance_name": "input_1",
                         "config": {
                             "specs": {
                                 "resource_id": {
@@ -347,9 +347,9 @@ class TestScenarioTemplate(BaseTestCase):
                             "additional_info": {}
                         },
                         "status": "SUCCESS",
-                        "name": "Source",
+                        "name": "Input",
                         "process_type": {
-                            "human_name": "Source",
+                            "human_name": "Input",
                             "short_description": ""
                         }
                     },
@@ -357,7 +357,7 @@ class TestScenarioTemplate(BaseTestCase):
                 "links": [
                     {
                         "from": {
-                            "node": "Source",
+                            "node": "input_1",
                             "port": "resource"
                         },
                         "to": {
@@ -374,7 +374,7 @@ class TestScenarioTemplate(BaseTestCase):
                             "x": 348,
                             "y": 125
                         },
-                        "Source": {
+                        "input_1": {
                             "x": 62,
                             "y": 105
                         }

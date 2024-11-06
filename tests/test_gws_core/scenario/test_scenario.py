@@ -18,7 +18,7 @@ from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_run_service import ScenarioRunService
-from gws_core.task.plug import Sink
+from gws_core.task.plug import OutputTask
 from gws_core.test.gtest import GTest
 
 
@@ -276,19 +276,19 @@ class TestScenario(BaseTestCase):
         scenario = ScenarioProxy()
         protocol = scenario.get_protocol()
         i_create = protocol.add_process(RobotCreate, 'create', {})
-        sink = protocol.add_sink('sink', i_create >> 'robot')
+        output = protocol.add_output('output', i_create >> 'robot')
         scenario.run()
 
         # generate a resource
-        robot_model = sink.refresh().get_input_resource_model(Sink.input_name)
+        robot_model = output.refresh().get_input_resource_model(OutputTask.input_name)
 
         # create an scenario that uses this resource
         scenario_2 = ScenarioProxy()
         protocol_2 = scenario_2.get_protocol()
         i_move = protocol_2.add_process(RobotMove, 'move', {})
         i_move_2 = protocol_2.add_process(RobotMove, 'move2', {})
-        protocol_2.add_source('source', robot_model.id, i_move << 'robot')
-        protocol_2.add_source('source_2', robot_model.id, i_move_2 << 'robot')
+        protocol_2.add_resource('source', robot_model.id, i_move << 'robot')
+        protocol_2.add_resource('source_2', robot_model.id, i_move_2 << 'robot')
         scenario_2.run()
 
         # retrieve the scenarios that uses this scenario
@@ -350,7 +350,7 @@ class TestScenario(BaseTestCase):
         move_2 = protocol.add_process(RobotMove, 'move_2')
         protocol.add_connector(i_create >> 'robot', move_1 << 'robot')
         protocol.add_connector(move_1 >> 'robot', move_2 << 'robot')
-        sink = protocol.add_sink('sink', move_2 >> 'robot')
+        output = protocol.add_output('output', move_2 >> 'robot')
         scenario.run()
 
         # flag the output of i_create
