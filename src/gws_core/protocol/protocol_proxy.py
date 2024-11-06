@@ -14,7 +14,7 @@ from ..config.config_types import ConfigParamsDict
 from ..config.param.param_types import ParamValue
 from ..process.process import Process
 from ..process.process_model import ProcessModel
-from ..process.process_proxy import ProcessProxy
+from ..process.process_proxy import ProcessProxy, ProcessWithPort
 from ..task.task import Task
 from ..task.task_proxy import TaskProxy
 from .protocol import Protocol
@@ -107,13 +107,16 @@ class ProtocolProxy(ProcessProxy):
 
     ####################################### CONNECTORS #########################################
 
-    def add_connector(self, out_port: Tuple[ProcessModel, str], in_port: Tuple[ProcessModel, str]) -> None:
+    def add_connector(self, out_port: ProcessWithPort, in_port: ProcessWithPort) -> None:
         """Add a connector between to process of this protocol
 
-        Exemple : protocol.add_connector(create >> 'robot', sub_proto << 'robot_i')
+        Exemple :
+        protocol.add_connector(create.get_output_port('robot'), sub_proto.get_input_port('robot_i'))
+        OR
+        protocol.add_connector(create >> 'robot', sub_proto << 'robot_i')
         """
         self.add_connector_new(
-            out_port[0].instance_name, out_port[1], in_port[0].instance_name, in_port[1])
+            out_port.process_instance_name, out_port.port_name, in_port.process_instance_name, in_port.port_name)
 
     def add_connector_new(self, from_process_name: str, from_port_name: str,
                           to_process_name: str, to_port_name: str) -> None:
@@ -125,19 +128,19 @@ class ProtocolProxy(ProcessProxy):
         ProtocolService.add_connector_to_protocol(self._process_model, from_process_name, from_port_name,
                                                   to_process_name, to_port_name)
 
-    def add_connectors(self, connectors: List[Tuple[Tuple[ProcessModel, str],  Tuple[ProcessModel, str]]]) -> None:
+    def add_connectors(self, connectors: List[Tuple[ProcessWithPort,  ProcessWithPort]]) -> None:
         """Add multiple connector inside the protocol
 
         Exemple : protocol.add_connectors([
             (create >> 'robot', sub_proto << 'robot_i'),
-            (sub_proto >> 'robot_o', robot_travel << 'robot')
+            (sub_proto.get_output_port('robot_o'), robot_travel.get_input_port('robot'))
         ])
         """
         new_connectors: List[ConnectorSpec] = []
         for connector in connectors:
             new_connectors.append({
-                "from_process": connector[0][0].instance_name, "to_process": connector[1][0].instance_name,
-                "from_port": connector[0][1], "to_port": connector[1][1]})
+                "from_process": connector[0].process_instance_name, "to_process": connector[1].process_instance_name,
+                "from_port": connector[0].port_name, "to_port": connector[1].port_name})
 
         ProtocolService.add_connectors_to_protocol(
             self._process_model, new_connectors)
@@ -197,13 +200,14 @@ class ProtocolProxy(ProcessProxy):
 
     ############################################### Specific processes ####################################
 
-    def add_resource(self, instance_name: str, resource_model_id: str, in_port: Tuple[ProcessModel, str]) -> TaskProxy:
+    def add_resource(
+            self, instance_name: str, resource_model_id: str, in_port: ProcessWithPort = None) -> TaskProxy:
         """Add a resource to the protocol and connected it to the in_port
         :param instance_name: instance name of the task
         :type instance_name: str
         :param resource_model_id: the id of the resource model the source will provided as input
         :type resource_model_id: str
-        :param in_port: the in port that should receive the resource
+        :param in_port: the in port that should receive the resource. If None, the resource is added to the protocol without connection
         :type in_port: InPort
         :return: [description]
         :rtype: ITask
@@ -211,10 +215,12 @@ class ProtocolProxy(ProcessProxy):
         config = {InputTask.config_name: resource_model_id} if resource_model_id else {}
         source: ProcessProxy = self.add_process(
             InputTask, instance_name, config)
-        self.add_connector(source >> InputTask.output_name, in_port)
+
+        if in_port:
+            self.add_connector(source >> InputTask.output_name, in_port)
         return source
 
-    def add_source(self, instance_name: str, resource_model_id: str, in_port: Tuple[ProcessModel, str]) -> TaskProxy:
+    def add_source(self, instance_name: str, resource_model_id: str, in_port: ProcessWithPort) -> TaskProxy:
         """Add a Source task to the protocol and connected it to the in_port
         :param instance_name: instance name of the task
         :type instance_name: str
@@ -230,7 +236,7 @@ class ProtocolProxy(ProcessProxy):
         return self.add_resource(instance_name, resource_model_id, in_port)
 
     def add_output(
-            self, instance_name: str, out_port: Tuple[ProcessModel, str],
+            self, instance_name: str, out_port: ProcessWithPort,
             flag_resource: bool = True) -> TaskProxy:
         """Add an output task to the protocol that receive the out_port resource
 
@@ -248,7 +254,7 @@ class ProtocolProxy(ProcessProxy):
         return output_task
 
     # TODO v0.11.0 to remove
-    def add_sink(self, instance_name: str, out_port: Tuple[ProcessModel, str],
+    def add_sink(self, instance_name: str, out_port: ProcessWithPort,
                  flag_resource: bool = True) -> TaskProxy:
         """Add an output task to the protocol that receive the out_port resource
 
