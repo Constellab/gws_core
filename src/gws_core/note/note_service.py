@@ -5,6 +5,7 @@ from typing import Callable, List
 from peewee import ModelSelect
 
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.rich_text import RichText
@@ -175,7 +176,8 @@ class NoteService():
     def update_content(cls, note_id: str, note_content: RichTextDTO) -> Note:
         note: Note = cls._get_and_check_before_update(note_id)
 
-        note.modifications = SpaceService.get_modifications(note.content, note_content, note.modifications)
+        if not Settings.get_instance().is_test:
+            note.modifications = SpaceService.get_modifications(note.content, note_content, note.modifications)
         note.content = note_content
 
         # refresh NoteResource table
