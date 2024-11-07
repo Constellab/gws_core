@@ -1095,4 +1095,11 @@ class Migration0100(BrickMigration):
 
             migrator: SqlMigrator = SqlMigrator(Note.get_db())
             migrator.add_column_if_not_exists(Note, Note.modifications)
+
             migrator.migrate()
+            #
+            #  delete unique index on gw_fs_node path and update path to 1024
+            FSNodeModel.get_db().execute_sql("ALTER TABLE gws_fs_node ADD path_2 varchar(1024) NULL")
+            FSNodeModel.get_db().execute_sql("UPDATE gws_fs_node set path_2 = path")
+            FSNodeModel.get_db().execute_sql("ALTER TABLE gws_fs_node DROP COLUMN path")
+            FSNodeModel.get_db().execute_sql("ALTER TABLE gws_fs_node CHANGE path_2 path varchar(1024) NOT NULL")

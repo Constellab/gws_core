@@ -23,8 +23,10 @@ class TestSystemService(BaseTestCase):
         FileHelper.create_empty_file_if_not_exist(unused_file)
 
         # create unused file in filestore
+        unused_file_2_tmp_path = os.path.join(temp_dir, "unused_file_2.txt")
+        FileHelper.create_empty_file_if_not_exist(unused_file_2_tmp_path)
         local_file_store: LocalFileStore = LocalFileStore.get_default_instance()
-        unused_file_2: File = local_file_store.create_empty_file("unused_file.txt")
+        unused_file_2: File = local_file_store.add_file_from_path(unused_file_2_tmp_path)
 
         # create simple table
         table = Table(DataFrame({"col1": [1, 2, 3], "col2": [4, 5, 6]}))
@@ -32,7 +34,8 @@ class TestSystemService(BaseTestCase):
 
         # create a file resource
         test_file_path = FileHelper.create_empty_file_if_not_exist(os.path.join(temp_dir, "test_file_1.txt"))
-        file_model = FsNodeService.add_file_to_default_store(File(test_file_path))
+        new_file: File = File(test_file_path)
+        file_model = FsNodeService.create_fs_node_model(new_file)
         self.assertTrue(FileHelper.exists_on_os(file_model.fs_node_model.path))
 
         # call garbage collector

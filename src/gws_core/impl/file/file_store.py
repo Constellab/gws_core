@@ -1,12 +1,11 @@
 
 
-from abc import abstractclassmethod, abstractmethod
+from abc import abstractmethod
 from io import IOBase
 from tempfile import SpooledTemporaryFile
 from typing import Any, Dict, Type, Union
 
 from gws_core.core.model.db_field import JSONField
-from gws_core.impl.file.folder import Folder
 
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
@@ -30,14 +29,14 @@ class FileStore(Model):
             self.data = {}
 
     @abstractmethod
-    def add_node_from_path(self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = FSNode) -> FSNode:
+    def add_node_from_path(self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = None) -> FSNode:
         """Copy a node (file or directory) from the path to the store.
 
         :param source_file_path: path of the file or directory to move to file store
         :type source_file_path: str
         :param dest_file_name: Name of the file or directory once in the store. If not provided, use the source node name (make it unique if already exists) defaults to None
         :type dest_file_name: str, optional
-        :param file_type: type of the node to create, defaults to FsNode
+        :param file_type: type of the node to create, defaults to None
         :type node_type: Type[FsNode], optional
         :rtype: File
         """
@@ -78,14 +77,6 @@ class FileStore(Model):
         raise BadRequestException('Not implemented')
 
     @abstractmethod
-    def create_empty_file(self, file_name: str, file_type: Type[File] = File) -> File:
-        pass
-
-    @abstractmethod
-    def create_empty_folder(self, folder_name: str, folder_type: Type[Folder] = Folder) -> Folder:
-        pass
-
-    @abstractmethod
     def delete_node_path(self, node_path: str) -> None:
         pass
 
@@ -111,6 +102,19 @@ class FileStore(Model):
         raise BadRequestException('Not implemented')
 
     @abstractmethod
+    def get_node_by_path(self, node_path: str = None, node_type: Type[FSNode] = None) -> FSNode:
+        """ Get a node by its path
+
+        :param node_path: _description_, defaults to None
+        :type node_path: str, optional
+        :param node_type: _description_, defaults to FSNode
+        :type node_type: Type[FSNode], optional
+        :raises BadRequestException: _description_
+        :return: _description_
+        :rtype: FSNode
+        """
+
+    @abstractmethod
     def _get_path_from_node_name(self, node_name: str) -> str:
         """return the complete path of a node in the store
 
@@ -118,22 +122,6 @@ class FileStore(Model):
         :type file_name: str
         :rtype: str
         """
-        raise BadRequestException('Not implemented')
-
-    @classmethod
-    @abstractclassmethod
-    def open(cls, file, mode):
-        """
-        Open a file. Must be implemented by the child class.
-
-        :param file: The file to open
-        :type file: `gws.file.File`
-        :param mode: Mode (see native Python `open` function)
-        :type mode: `str`
-        :return: The file object
-        :rtype: Python `file-like-object` or `stream`.
-        """
-
         raise BadRequestException('Not implemented')
 
     @property

@@ -89,7 +89,7 @@ class TestResourceModel(BaseTestCase):
             paginator.total_number_of_items, expected_nb_of_result)
 
     def test_upload_and_delete(self):
-        file: File = DataProvider.get_iris_file()
+        file: File = DataProvider.get_new_empty_file()
 
         resource_model: ResourceModel = ResourceModel.save_from_resource(
             file, origin=ResourceOrigin.UPLOADED)
@@ -98,7 +98,7 @@ class TestResourceModel(BaseTestCase):
         self.assertIsNone(ResourceModel.get_by_id(resource_model.id))
 
     def test_update_type(self):
-        file: File = DataProvider.get_iris_file()
+        file: File = DataProvider.get_new_empty_file()
 
         resource_model: ResourceModel = ResourceModel.save_from_resource(
             file, origin=ResourceOrigin.UPLOADED)
@@ -108,7 +108,7 @@ class TestResourceModel(BaseTestCase):
         ResourceService.update_resource_type(
             resource_model.id, SubFile.get_typing_name())
 
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
+        resource_model = ResourceModel.get_by_id_and_check(
             resource_model.id)
         self.assertIsInstance(resource_model.get_resource(), SubFile)
 

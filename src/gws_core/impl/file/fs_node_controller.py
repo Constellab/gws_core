@@ -32,6 +32,7 @@ def upload_file(file: UploadFile = FastAPIFile(...),
 
     return FsNodeService.upload_file(
         upload_file=file, typing_name=typing_name[0]).to_dto()
+    return a
 
 
 @core_app.post("/fs-node/upload-folder/{folder_typing_name}", tags=["Fs node"], summary="Upload a folder")

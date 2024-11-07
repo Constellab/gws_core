@@ -45,7 +45,7 @@ class TestImporter(BaseTestCase):
         self.assertTrue(len(importers.results) > 0)
 
     def test_importer(self):
-        file = File(path=DataProvider.get_iris_file().path)
+        file = DataProvider.get_new_empty_file()
 
         resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
 

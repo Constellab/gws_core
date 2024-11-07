@@ -1,14 +1,18 @@
 
 
 import os
+import shutil
 from pathlib import Path
 from typing import List, Type
 
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from typing_extensions import Buffer
+
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
@@ -54,43 +58,39 @@ class FsNodeService():
     def upload_file(cls, upload_file: UploadFile, typing_name: str) -> ResourceModel:
         """Upload a file to the store and create the resource.
         """
-
-        file_store: FileStore = LocalFileStore.get_default_instance()
         file_type: Type[File] = TypingManager.get_and_check_type_from_name(typing_name)
 
-        # retrieve the name of the file without the folder if there are some
-        filename = FileHelper.get_name_with_extension(upload_file.filename)
-        file: File = file_store.add_from_temp_file(
-            upload_file.file, filename, file_type)
+        temp_dir = Settings.make_temp_dir()
+        # create the file in the temp dir
+        file_path = cls.create_tmp_file(upload_file.file, os.path.join(temp_dir, upload_file.filename))
 
-        # Call the check resource on file
+        file: File = file_type(file_path)
+
         try:
-            error = file.check_resource()
-        except Exception as err:
-            error = str(err)
-            Logger.log_exception_stack_trace(err)
-        if error is not None and len(error):
-            file_store.delete_node(file)
-            raise BadRequestException(GWSException.INVALID_FILE_ON_UPLOAD.value,
-                                      GWSException.INVALID_FILE_ON_UPLOAD.name, {'error': error})
 
-        return cls.create_fs_node_model(file)
+            # Call the check resource on file
+            try:
+                error = file.check_resource()
+            except Exception as err:
+                error = str(err)
+                Logger.log_exception_stack_trace(err)
+            if error is not None and len(error):
+                raise BadRequestException(GWSException.INVALID_FILE_ON_UPLOAD.value,
+                                          GWSException.INVALID_FILE_ON_UPLOAD.name, {'error': error})
 
-    @classmethod
-    def add_file_to_default_store(cls, file: File, dest_file_name: str = None) -> ResourceModel:
-        file_store: LocalFileStore = LocalFileStore.get_default_instance()
-        return cls._add_file_to_store(file=file, store=file_store, dest_file_name=dest_file_name)
-
-    @classmethod
-    def add_file_to_store(cls, file: File, store_id: str, dest_file_name: str = None) -> ResourceModel:
-        file_store: LocalFileStore = FileStore.get_by_id_and_check(store_id)
-        return cls._add_file_to_store(file=file, store=file_store, dest_file_name=dest_file_name)
+            return cls.create_fs_node_model(file)
+        finally:
+            FileHelper.delete_dir(temp_dir)
 
     @classmethod
-    def _add_file_to_store(cls, file: File, store: FileStore, dest_file_name: str = None) -> ResourceModel:
-        new_file: File = store.add_file_from_path(
-            source_file_path=file.path, dest_file_name=dest_file_name)
-        return cls.create_fs_node_model(new_file)
+    def create_tmp_file(cls, upload_file: Buffer, file_path: str) -> str:
+        # create parent dir if not exist
+        FileHelper.create_dir_if_not_exist(FileHelper.get_dir(file_path))
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(upload_file, buffer)
+
+        return file_path
 
 ############################# FS NODE  ###########################
 
@@ -100,7 +100,6 @@ class FsNodeService():
 
 
 ############################# FOLDER ###########################
-
 
     @classmethod
     @transaction()
@@ -114,46 +113,31 @@ class FsNodeService():
         if not Utils.issubclass(folder_type, Folder):
             raise BadRequestException('The type is not a sub class of Folder')
 
-        # retrieve the folder name
-        path: Path = FileHelper.get_path(files[0].filename)
-        folder_name: str = path.parts[0]
+        temp_dir = Settings.make_temp_dir()
 
-        # create the folder
-        file_store: FileStore = LocalFileStore.get_default_instance()
-        folder_model: ResourceModel = cls.create_empty_folder(
-            folder_name, file_store, folder_type)
-        folder: Folder = folder_model.get_resource()
-
-        # Add all the file under the create folder
-        for file in files:
-            file_path: Path = FileHelper.get_path(file.filename)
-            # replace the initial folder name with the name of the generated folder
-            new_file_path = os.path.join(
-                folder.get_default_name(), *file_path.parts[1:])
-            # use file.file to access temporary file
-            file_store.add_from_temp_file(file.file, new_file_path)
-
-        # Call the check resource on the folder
         try:
-            error = folder.check_resource()
-        except Exception as err:
-            error = str(err)
-            Logger.log_exception_stack_trace(err)
-        if error is not None and len(error):
-            file_store.delete_node(folder)
-            raise BadRequestException(GWSException.INVALID_FOLDER_ON_UPLOAD.value,
-                                      GWSException.INVALID_FOLDER_ON_UPLOAD.name, {'error': error})
+            # retrieve the folder name
+            path: Path = FileHelper.get_path(files[0].filename)
+            folder_name: str = path.parts[0]
 
-        # Recalculate and set the folder size after all the files are set in folder
-        folder_model.fs_node_model.size = folder.get_size()
-        folder_model.fs_node_model.save()
+            # Add all the file under the create folder
+            for file in files:
+                cls.create_tmp_file(file.file, os.path.join(temp_dir, file.filename))
 
-        return folder_model
+            folder: Folder = folder_type(os.path.join(temp_dir, folder_name))
+            try:
+                # Call the check resource on the folder
+                error = folder.check_resource()
+            except Exception as err:
+                error = str(err)
+                Logger.log_exception_stack_trace(err)
+            if error is not None and len(error):
+                raise BadRequestException(GWSException.INVALID_FOLDER_ON_UPLOAD.value,
+                                          GWSException.INVALID_FOLDER_ON_UPLOAD.name, {'error': error})
 
-    @classmethod
-    def create_empty_folder(cls, path: str, store: FileStore, folder_type: Type[Folder] = Folder) -> ResourceModel:
-        folder = store.create_empty_folder(path, folder_type)
-        return cls.create_fs_node_model(folder)
+            return cls.create_fs_node_model(folder)
+        finally:
+            FileHelper.delete_dir(temp_dir)
 
     @classmethod
     def call_folder_sub_file_view(cls, resource_id: str, sub_file_path: str) -> CallViewResult:
@@ -187,7 +171,6 @@ class FsNodeService():
 
 
 ############################# FILE TYPE ###########################
-
 
     @classmethod
     def get_file_types(cls) -> List[FileTyping]:

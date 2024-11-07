@@ -121,10 +121,14 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         """
         Delete the content of the resource, the data, the kv store and the fs node
         """
+        fs_node_model = self.fs_node_model
+
         self.content_is_deleted = True
+        self.fs_node_model = None
         self.save()
-        if self.fs_node_model:
-            self.fs_node_model.delete_instance()
+
+        if fs_node_model:
+            fs_node_model.delete_instance()
         # TODO to improve, if there is an error, the kvstore is not restored
         self.remove_kv_store()
         return self
@@ -231,6 +235,10 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return ResourceModel.select().where(ResourceModel.task_model.in_(task_model_ids))
 
     @classmethod
+    def find_by_fs_node_id(cls, fs_node_id: str) -> Optional['ResourceModel']:
+        return cls.select().where(cls.fs_node_model == fs_node_id).first()
+
+    @classmethod
     def delete_list(cls, resource_model_ids: str) -> ModelDelete:
         return ResourceModel.delete().where(ResourceModel.id.in_(resource_model_ids))
 
@@ -331,6 +339,9 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             # by default only the uploaded resource are showed in list
             resource_model.flagged = resource_model.is_manually_generated()
 
+        if isinstance(resource, FSNode):
+            resource_model.init_fs_node_model(resource)
+
         # Get the name of the resource, and set it in the resource model
         name: str = None
         try:
@@ -349,9 +360,6 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             style_override.fill_empty_values()
             resource_model.style = style_override
 
-        if isinstance(resource, FSNode):
-            resource_model.init_fs_node_model(resource, name)
-
         # synchronize the model fields with the resource fields
         resource_model.receive_fields_from_resource(resource)
 
@@ -362,36 +370,59 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
         return resource_model
 
-    def init_fs_node_model(self, resource: FSNode, name: str):
-        node: FSNode
+    def init_fs_node_model(self, resource: FSNode) -> FSNode:
 
         local_file_store = LocalFileStore.get_default_instance()
-        if not local_file_store.node_exists(resource):
-            # Move the node to the LocalFileStore and create fs node model
-            node = LocalFileStore.get_default_instance().add_node_from_path(resource.path, name)
+
+        # for symbolic link, the file must be in the file store
+        if resource.is_symbolic_link:
+            if not local_file_store.node_exists(resource):
+                raise Exception(
+                    f"Attempting to save a new symbolic link resource with path '{resource.path}' that does not exist in the file store. Please check that the path of the symbolic link is correct and that the target file or folder exists.")
+
         else:
+            # For normal node, the file must not be in the file store
+            if local_file_store.node_exists(resource):
+                raise Exception(
+                    f"Attempting to save a new File or Folder resource with path '{resource.path}' that already exists in the file store. Please do not create file directly in file store. And the path of the output File or Folder must not be the same as the path of an input File or Folder, if this is required, please set 'is_symbolic_link' to True on File or Folder.")
 
-            # On uploaded resource, the node is already in the file store, no need to add it
-            node = resource
-            node.file_store_id = local_file_store.id
+            new_node_path = local_file_store.generate_new_node_path(resource.get_base_name())
+            new_node_name = FileHelper.get_name_with_extension(new_node_path)
 
-        # Verify if a node with same path already exists
-        fs_node_model = FSNodeModel.find_by_path(node.path)
-        if fs_node_model is not None:
-            raise Exception(
-                f"Attempting to save a new File or Folder resource with path '{node.path}' that already exists in the database. Another resource with the same path already exists.")
+            # Verify if a node with same path already exists
+            existing_node: FSNodeModel = FSNodeModel.find_by_path(new_node_path)
+            # if the path exist in DB but not in the file store, it means that the file was manually deleted
+            # so we consider it as deleted
+            if existing_node is not None and not local_file_store.node_name_exists(new_node_name):
+                # mark the resource contet of the node as deleted
+                resource_model_to_delete = ResourceModel.find_by_fs_node_id(existing_node.id)
 
-        # update the resource path and file store
-        resource.path = node.path
-        resource.file_store_id = node.file_store_id
+                # mark the content of the resource as deleted
+                if resource_model_to_delete is not None:
+                    Logger.info(
+                        f"Detecting that the fs node of the resource '{resource_model_to_delete.id}' was deleted. Marking the content as deleted.")
+                    resource_model_to_delete.delete_resource_content()
+                # this should not happen, but if it does, we delete the node
+                else:
+                    existing_node.delete_instance()
+
+            # Move the node to the LocalFileStore using the new generated name
+            new_node: FSNode = local_file_store.add_node_from_path(
+                resource.path, new_node_name)
+
+            # update the resource path and file store
+            resource.path = new_node.path
+            resource.file_store_id = new_node.file_store_id
 
         # create the node model
         new_fs_node_model = FSNodeModel()
-        new_fs_node_model.path = node.path
-        new_fs_node_model.file_store_id = node.file_store_id
-        new_fs_node_model.size = node.get_size()
-        new_fs_node_model.is_symbolic_link = node.is_symbolic_link
+        new_fs_node_model.path = resource.path
+        new_fs_node_model.file_store_id = resource.file_store_id
+        new_fs_node_model.size = resource.get_size()
+        new_fs_node_model.is_symbolic_link = resource.is_symbolic_link
         self.fs_node_model = new_fs_node_model
+
+        return resource
 
     @classmethod
     def save_from_resource(

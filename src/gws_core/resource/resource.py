@@ -2,7 +2,7 @@
 
 import os
 from copy import deepcopy
-from typing import Dict, TypeVar, Union, final
+from typing import Dict, Optional, TypeVar, final
 
 from gws_core.core.model.base_typing import BaseTyping
 from gws_core.impl.file.file_r_field import FileRField
@@ -142,7 +142,7 @@ class Resource(BaseTyping):
         """
         return self.technical_info.get(key)
 
-    def check_resource(self) -> Union[str, None]:
+    def check_resource(self) -> Optional[str]:
         """You can redefine this method to define custom logic to check this resource.
         If there is a problem with the resource, return a string that define the error, otherwise return None
         This method is called on output resources of a task. If there is an error returned, the task will be set to error and next proceses will not be run.
