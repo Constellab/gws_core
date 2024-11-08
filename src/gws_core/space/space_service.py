@@ -87,6 +87,7 @@ class SpaceService():
         """
         Call the space api to mark the lab as started
         """
+        cls._check_dev_mode()
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/start")
 
@@ -104,6 +105,8 @@ class SpaceService():
 
     @classmethod
     def save_scenario(cls, folder_id: str, save_scenario_dto: SaveScenarioToSpaceDTO) -> None:
+        cls._check_dev_mode()
+
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/folder/{folder_id}/scenario")
 
@@ -116,6 +119,8 @@ class SpaceService():
 
     @classmethod
     def delete_scenario(cls, folder_id: str, scenario_id: str) -> None:
+        cls._check_dev_mode()
+
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/folder/{folder_id}/scenario/{scenario_id}")
 
@@ -130,6 +135,8 @@ class SpaceService():
     @classmethod
     def save_note(cls, folder_id: str, note: SaveNoteToSpaceDTO,
                   file_paths: List[str]) -> None:
+        cls._check_dev_mode()
+
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/folder/{folder_id}/note/v2")
 
@@ -153,6 +160,8 @@ class SpaceService():
 
     @classmethod
     def delete_note(cls, folder_id: str, note_id: str) -> None:
+        cls._check_dev_mode()
+
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/folder/{folder_id}/note/{note_id}")
         try:
@@ -166,6 +175,7 @@ class SpaceService():
     def get_modifications(
             cls, old_content: RichTextDTO, new_content: RichTextDTO,
             old_modifications: Optional[RichTextModificationsDTO] = None) -> RichTextModificationsDTO:
+
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/modifications")
         try:
@@ -198,6 +208,8 @@ class SpaceService():
 
     @classmethod
     def send_mail(cls, send_mail_dto: SpaceSendMailDTO) -> Response:
+        cls._check_dev_mode()
+
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/send-mail")
         return ExternalApiService.post(space_api_url, send_mail_dto, cls._get_request_header(),
@@ -210,6 +222,8 @@ class SpaceService():
         """
         Call the space api to get the list of folder for this lab
         """
+        cls._check_dev_mode()
+
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/folder/all-trees")
 
@@ -228,6 +242,8 @@ class SpaceService():
         """
         Call the space api to get the a folder for this lab
         """
+        cls._check_dev_mode()
+
         space_api_url: str = cls._get_space_api_url(f"{cls._external_labs_route}/folder/{id_}/root-tree")
 
         try:
@@ -245,6 +261,8 @@ class SpaceService():
         """
         Call the space api to get the list of users for this lab
         """
+        cls._check_dev_mode()
+
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/user")
 
@@ -258,19 +276,18 @@ class SpaceService():
         return UserFullDTO.from_json_list(response.json())
 
     @classmethod
+    def _check_dev_mode(cls) -> None:
+        if Settings.is_dev_mode():
+            raise BadRequestException(
+                "The action is disabled in dev environment")
+
+    @classmethod
     def _get_space_api_url(cls, route: str) -> str:
         """
         Build an URL to call the space API
         """
 
         space_api_url = Settings.get_space_api_url()
-        if space_api_url is None:
-            if Settings.is_dev_mode():
-                raise BadRequestException(
-                    "The space routes are desactivated in dev and test environment")
-            else:
-                raise BadRequestException(
-                    'The space_API_URL environment variable is not set')
         return space_api_url + '/' + route
 
     @classmethod
