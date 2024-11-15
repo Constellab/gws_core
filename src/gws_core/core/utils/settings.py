@@ -109,6 +109,24 @@ class Settings():
         return cls.get_lab_prod_api_url() if cls.is_prod_mode() else cls.get_lab_dev_api_url()
 
     @classmethod
+    def get_dashboard_dev_url(cls) -> str:
+        """
+
+        :return: the url of the dev dashboard when using 'gws streamlit run-dev' command
+        :rtype: str
+        """
+        return f"https://dashboard-dev.{cls.get_virtual_host()}"
+
+    @classmethod
+    def get_dashboard_dev_port(cls) -> str:
+        """
+
+        :return: the port used by the dev dashboard when using 'gws streamlit run-dev' command
+        :rtype: str
+        """
+        return "8501"
+
+    @classmethod
     def core_api_route_path(cls) -> str:
         return "core-api"
 

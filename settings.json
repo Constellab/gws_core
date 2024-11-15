@@ -13,7 +13,7 @@
     },
     "technical_info": {
       "FRONT_VERSION": "2.0.1",
-      "GLAB_VERSION": "2.3.0"
+      "GLAB_VERSION": "2.4.0"
     },
     "environment":{
         "pip":[
