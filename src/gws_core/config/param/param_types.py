@@ -15,13 +15,15 @@ ParamValueType = Type[ParamValue]
 ParamSpecVisibilty = Literal["public", "protected", "private"]
 
 
-class ParamSpecDTO(BaseModelDTO):
+class ParamSpecSimpleDTO(BaseModelDTO):
     type: str
     optional: bool
     visibility: ParamSpecVisibilty
     default_value: Optional[ParamValue] = None
-    unit: Optional[str] = None
+    additional_info: dict = {}
+
+
+class ParamSpecDTO(ParamSpecSimpleDTO):
     human_name: Optional[str] = None
     short_description: Optional[str] = None
     allowed_values: Optional[List[ParamValue]] = None
-    additional_info: dict = {}

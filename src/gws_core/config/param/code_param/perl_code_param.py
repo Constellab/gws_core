@@ -1,11 +1,12 @@
 
 
-from gws_core.config.param.param_spec_decorator import param_spec_decorator
+from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
+                                                        param_spec_decorator)
 
 from ..param_spec import TextParam
 
 
-@param_spec_decorator()
+@param_spec_decorator(type=ParamaSpecType.LAB_SPECIFIC)
 class PerlCodeParam(TextParam):
     """Param for perl code. It shows a simple perl IDE
       in the interface to provide code for perl.

@@ -1,13 +1,17 @@
 
 
+import ast
 import os
 from copy import deepcopy
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from peewee import BigIntegerField, CharField
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
+from gws_core.config.param.dynamic_param import DynamicParam
+from gws_core.config.param.param_spec import ListParam
+from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.utils.date_helper import DateHelper
@@ -16,6 +20,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
+from gws_core.impl.live.base.env_agent import EnvAgent
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
@@ -32,6 +37,7 @@ from gws_core.note_template.note_template import NoteTemplate
 from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar
 from gws_core.protocol.protocol_model import ProtocolModel
+from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -1062,8 +1068,73 @@ class Migration0100(BrickMigration):
 
             for old_typing_name, new_typing_name in agent_renames.items():
                 SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
-                
+
             migrator: SqlMigrator = SqlMigrator(Note.get_db())
             migrator.add_column_if_not_exists(Note, Note.modifications)
             migrator.migrate()
 
+    @brick_migration('0.10.3', short_description='Migrate angets params')
+    class Migration0103(BrickMigration):
+
+        @classmethod
+        def get_var_type(cls, var) -> str:
+            if isinstance(var, bool):
+                return 'bool'
+            if isinstance(var, int):
+                return 'int'
+            if isinstance(var, float):
+                return 'float'
+            if isinstance(var, str):
+                return 'str'
+            if isinstance(var, list):
+                return 'list'
+            if isinstance(var, dict):
+                return 'dict'
+            raise ValueError(f'Unknown type {type(var)}')
+
+        @classmethod
+        def migrate_agent(cls, agent: ProcessModel) -> None:
+            if agent.config.param_exists('params') and isinstance(agent.config.get_spec('params'), ListParam):
+                print(f'Migrating agent {agent.id}')
+                params = agent.config.get_value('params')
+
+                new_params = {}
+                for param in params:
+                    key, val = param.split('=')
+                    new_params[key] = ast.literal_eval(val)
+
+                dynamic_param: DynamicParam = EnvAgent.get_dynamic_param_config()
+
+                for key, val in new_params.items():
+                    type_ = cls.get_var_type(val)
+                    param_spec_dto = DynamicParam.get_param_spec_from_type(type_).to_dto()
+                    dynamic_param.add_spec(key, param_spec_dto)
+
+                agent.config.update_spec('params', dynamic_param)
+
+                agent.config.set_value('params', new_params)
+                agent.config.save()
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
+            agents = []
+            for process_model in process_models:
+                if process_model.process_typing_name in [
+                    'TASK.gws_core.PyAgent', 'TASK.gws_core.PyCondaAgent', 'TASK.gws_core.PyMambaAgent',
+                    'TASK.gws_core.PyPipenvAgent', 'TASK.gws_core.RCondaAgent', 'TASK.gws_core.RMambaAgent',
+                        'TASK.gws_core.StreamlitAgent']:
+                    agents.append(process_model)
+
+            print(f'Found {len(agents)} agents to migrate')
+            for agent in agents:
+                cls.migrate_agent(agent)
+
+            configs: List[Config] = list(Config.select())
+            for config in configs:
+                for key in config.data['specs']:
+                    spec = config.get_spec(key)
+                    if spec.allowed_values is not None:
+                        spec.additional_info['allowed_values'] = spec.allowed_values
+                        config.update_spec(key, spec)
+                config.save()

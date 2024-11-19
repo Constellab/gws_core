@@ -54,6 +54,12 @@ class Config(ModelWithUser):
             spec_json[key] = spec.to_dto().to_json_dict()
         self.data["specs"] = spec_json
 
+    def update_spec(self, name, spec: ParamSpec) -> None:
+        self.data["specs"][name] = spec.to_dto().to_json_dict()
+        specs = self.get_specs()
+        specs[name] = spec
+        self.set_specs(specs)
+
     def get_spec(self, param_name: str) -> ParamSpec:
         self._check_param(param_name)
 

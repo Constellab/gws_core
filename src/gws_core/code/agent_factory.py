@@ -14,7 +14,7 @@ from gws_core.task.task_model import TaskModel
 
 class AgentFactory:
 
-    current_json_version = 2
+    current_json_version = 3
 
     @classmethod
     def generate_task_code_from_agent_id(cls, task_id: str) -> str:
@@ -27,7 +27,7 @@ class AgentFactory:
 
     @classmethod
     def generate_task_code_from_agent(cls, task: TaskModel) -> str:
-
+        # TODO : Change params part
         task_generator: TaskGenerator = TaskGenerator(task.instance_name)
 
         code: str = task.config.get_value(PyAgent.CONFIG_CODE_NAME)
@@ -81,13 +81,18 @@ class AgentFactory:
         return task_generator.generate_code()
 
     @classmethod
-    def generate_agent_file_from_agent_id(cls, task_id: str, protocol_id: str = None) -> CommunityAgentFileDTO:
+    def generate_agent_file_from_agent_id(cls, task_id: str) -> CommunityAgentFileDTO:
         task: TaskModel = TaskModel.get_by_id_and_check(task_id)
         values = task.config.get_and_check_values()
         code = task.config.get_value("code")
-        params = ''
+        params = None
         if values.get("params") is not None:
-            params = '\n'.join(task.config.get_value("params"))
+            specs = task.config.get_spec('params').to_simple_dto().to_json_dict()['additional_info']['specs']
+            params_values = task.config.get_value("params")
+            params = {
+                "specs": specs,
+                "values": params_values
+            }
         env = ""
         if values.get("env") is not None:
             env = task.config.get_value("env")

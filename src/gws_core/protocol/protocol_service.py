@@ -1,8 +1,13 @@
 
 
-from typing import Any, List, Literal, Optional, Set, Type, Union
+from typing import (Any, Dict, List, Literal, Optional, Set, Type, Union,
+                    get_type_hints)
 
-from gws_core.config.param.param_types import ParamValue
+from gws_core.config.config_dto import ConfigSimpleDTO
+from gws_core.config.param.dynamic_param import DynamicParam
+from gws_core.config.param.param_spec import ParamSpec
+from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.config.param.param_types import ParamSpecDTO, ParamValue
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.entity_navigator.entity_navigator_type import EntityType
@@ -864,7 +869,6 @@ class ProtocolService():
         if community_agent_version.params and len(community_agent_version.params) > 0:
             params = community_agent_version.params.splitlines()
 
-        # setting config params
         config_params: ConfigParamsDict
         if issubclass(agent_type, PyAgent):
             config_params = agent_type.build_config_params_dict(
@@ -944,3 +948,163 @@ class ProtocolService():
             cls, process_id: str, agent_id: str) -> CommunityAgentVersionCreateResDTO:
         version_file: CommunityAgentFileDTO = AgentFactory.generate_agent_file_from_agent_id(process_id)
         return CommunityService.create_community_agent_version(version_file, agent_id)
+
+    ########################## DYNAMIC PARAM #####################
+    @classmethod
+    def add_dynamic_param_spec_of_process(
+            cls, protocol_id: str, process_name: str, param_name: str, spec_dto: ParamSpecDTO) -> ConfigSimpleDTO:
+
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        process_model = protocol_model.get_process(process_name)
+
+        process_model.check_is_updatable()
+
+        dynamic_param_spec: DynamicParam = cls.get_process_dynamic_param_spec(process_model=process_model)
+
+        if isinstance(dynamic_param_spec, DynamicParam):
+            dynamic_param_spec.add_spec(param_name, spec_dto)
+        else:
+            raise BadRequestException("The process does not support adding dynamic param specs")
+
+        process_model.config.update_spec('params', dynamic_param_spec)
+
+        process_model.config = process_model.config.save()
+
+        process_model.save()
+
+        return process_model.config.to_simple_dto()
+
+    @classmethod
+    def update_dynamic_param_spec_of_process(
+            cls, protocol_id: str, process_name: str, param_name: str, spec_dto: ParamSpecDTO) -> ConfigSimpleDTO:
+
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        process_model = protocol_model.get_process(process_name)
+
+        process_model.check_is_updatable()
+
+        dynamic_param_spec: DynamicParam = cls.get_process_dynamic_param_spec(process_model=process_model)
+
+        if spec_dto.type != dynamic_param_spec.specs[param_name].get_str_type():
+            value = process_model.config.get_value('params')
+            if param_name in value:
+                value[param_name] = spec_dto.default_value
+                process_model.config.set_value('params', value)
+
+        dynamic_param_spec.update_spec(param_name, spec_dto)
+
+        process_model.config.update_spec('params', dynamic_param_spec)
+
+        process_model.config = process_model.config.save()
+
+        process_model.save()
+
+        return process_model.config.to_simple_dto()
+
+    @classmethod
+    def rename_and_update_dynamic_param_spec_of_process(
+        cls, protocol_id: str, process_name: str, param_name: str, new_param_name: str, spec_dto: ParamSpecDTO
+    ) -> ConfigSimpleDTO:
+
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        process_model = protocol_model.get_process(process_name)
+
+        process_model.check_is_updatable()
+
+        dynamic_param_spec: DynamicParam = cls.get_process_dynamic_param_spec(process_model=process_model)
+
+        value = process_model.config.get_value('params')
+        if spec_dto.type != dynamic_param_spec.specs[param_name].get_str_type():
+            if param_name in value:
+                value[new_param_name] = spec_dto.default_value
+        del value[param_name]
+        process_model.config.set_value('params', value)
+
+        dynamic_param_spec.rename_and_update_spec(param_name, new_param_name, spec_dto)
+
+        process_model.config.update_spec('params', dynamic_param_spec)
+
+        process_model.config = process_model.config.save()
+
+        process_model.save()
+
+        return process_model.config.to_simple_dto()
+
+    @classmethod
+    def remove_dynamic_param_spec_of_process(
+            cls, protocol_id: str, process_name: str, param_name: str) -> ConfigSimpleDTO:
+
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        process_model = protocol_model.get_process(process_name)
+
+        process_model.check_is_updatable()
+
+        dynamic_param_spec: DynamicParam = cls.get_process_dynamic_param_spec(process_model=process_model)
+
+        dynamic_param_spec.remove_spec(param_name)
+
+        process_model.config.update_spec('params', dynamic_param_spec)
+
+        if param_name in process_model.config.data['values']:
+            del process_model.config.data['values'][param_name]
+
+        process_model.config = process_model.config.save()
+
+        process_model.save()
+
+        return process_model.config.to_simple_dto()
+
+    @classmethod
+    def get_process_dynamic_param_spec(cls, process_model: ProcessModel) -> DynamicParam:
+
+        dynamic_param_spec: DynamicParam = DynamicParam.load_from_dto(
+            ParamSpecDTO.from_json(process_model.config.data.get('specs').get('params')))
+
+        if dynamic_param_spec is None:
+            raise BadRequestException("The process does not support dynamic params")
+
+        return dynamic_param_spec
+
+    @classmethod
+    def get_simple_param_spec_types(cls) -> Dict:
+        list_type: List[type[ParamSpec]] = ParamSpecHelper.get_simple_param_spec_types()
+        res = {}
+        for t in list_type:
+            annotations = get_type_hints(t)
+            attributs_infos: Dict[str, Any] = {}
+            for name, type_ in annotations.items():
+                if name.isupper():
+                    continue
+                is_optional = type(None) in getattr(type_, '__args__', [])
+                value = getattr(t, name, None)
+                if name == "additional_info":
+                    additional_info_attributs_infos = {}
+                    additional_info_attributs_infos_annotations = get_type_hints(type_.__args__[0])
+                    for additional_info_name, additional_info_type in additional_info_attributs_infos_annotations.items():
+                        additional_info_is_optional = type(None) in getattr(additional_info_type, '__args__', [])
+                        additional_info_value = getattr(value, additional_info_name, None)
+                        additional_info_attributs_infos[additional_info_name] = {
+                            "type": str(additional_info_type.__name__).lower()
+                            if not additional_info_is_optional else str(f"{additional_info_type.__args__[0].__name__}").lower(),
+                            "optional": additional_info_is_optional, "value": additional_info_value}
+                    attributs_infos[name] = additional_info_attributs_infos
+                else:
+                    type_name: str = ''
+                    if type_.__name__ == "Literal":
+                        type_name = 'list'
+                        value = list(type_.__args__)
+                    elif name == "default_value":
+                        type_name = t.get_str_type()
+                    else:
+                        type_name = type_.__name__ if not is_optional else f"{type_.__args__[0].__name__}"
+                    attributs_infos[name] = {
+                        "type": str(type_name).lower(),
+                        "optional": is_optional,
+                        "value": value
+                    }
+            res[t.get_str_type()] = attributs_infos
+        return res

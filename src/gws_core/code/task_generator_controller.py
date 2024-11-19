@@ -20,11 +20,11 @@ def generate_task_code_from_agent(id: str,
     return ResponseHelper.create_file_response_from_str(code, 'task_code.py')
 
 
-@core_app.post("/task-generator/agent-file/{protocol_id}/{id}", tags=["Task generator"],
+@core_app.post("/task-generator/agent-file/{id}", tags=["Task generator"],
                summary="generate agent task file from agent")
-def generate_agent_file_from_agent(protocol_id: str, id: str,
+def generate_agent_file_from_agent(id: str,
                                    _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
-    code: CommunityAgentFileDTO = AgentFactory.generate_agent_file_from_agent_id(id, protocol_id)
+    code: CommunityAgentFileDTO = AgentFactory.generate_agent_file_from_agent_id(id)
 
     # create a file response
     return ResponseHelper.create_file_response_from_object(code, 'agent_file.json')

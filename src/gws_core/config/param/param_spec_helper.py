@@ -10,7 +10,10 @@ from ..config_exceptions import MissingConfigsException
 from ..config_params import ConfigParams
 from ..config_types import ConfigParamsDict, ConfigSpecs
 from .param_spec import ParamSpec
-from .param_spec_decorator import PARAM_SPEC_TYPES_LIST
+from .param_spec_decorator import (LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST,
+                                   NESTED_PARAM_SPEC_TYPES_LIST,
+                                   PARAM_SPEC_TYPES_LIST,
+                                   SIMPLE_PARAM_SPEC_TYPES_LIST)
 
 
 class ParamSpecHelper():
@@ -100,12 +103,12 @@ class ParamSpecHelper():
 
     @staticmethod
     def create_param_spec_from_dto(dto: ParamSpecDTO) -> ParamSpec:
-        param_spec_type = ParamSpecHelper._get_param_spec_type_from_str(dto.type)
+        param_spec_type = ParamSpecHelper.get_param_spec_type_from_str(dto.type)
 
         return param_spec_type.load_from_dto(dto)
 
     @staticmethod
-    def _get_param_spec_type_from_str(type_: str) -> Type[ParamSpec]:
+    def get_param_spec_type_from_str(type_: str) -> Type[ParamSpec]:
         param_spec_types = ParamSpecHelper._get_param_spec_types()
         for param_spec_type in param_spec_types:
             if param_spec_type.get_str_type() == type_:
@@ -116,6 +119,18 @@ class ParamSpecHelper():
     @staticmethod
     def _get_param_spec_types() -> List[Type[ParamSpec]]:
         return PARAM_SPEC_TYPES_LIST
+
+    @staticmethod
+    def get_simple_param_spec_types() -> List[Type[ParamSpec]]:
+        return SIMPLE_PARAM_SPEC_TYPES_LIST
+
+    @staticmethod
+    def get_lab_specific_param_spec_types() -> List[Type[ParamSpec]]:
+        return LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST
+
+    @staticmethod
+    def get_nested_param_spec_types() -> List[Type[ParamSpec]]:
+        return NESTED_PARAM_SPEC_TYPES_LIST
 
     @staticmethod
     def mandatory_values_are_set(param_specs: ConfigSpecs,

@@ -9,7 +9,7 @@ from gws_core.core.utils.utils import Utils
 
 from ..exception.exceptions import BadRequestException
 
-ValidatorType = Literal["bool", "int", "float", "str", "list", "dict"]
+ValidatorType = Literal["bool", "int", "float", "str", "list", "dict", "dynamic"]
 
 
 class Validator:
@@ -28,7 +28,7 @@ class Validator:
     _type: Type = None
     _allowed_values: list = None
 
-    _valid_types = ["bool", "int", "float", "str", "list", "dict"]
+    _valid_types = ["bool", "int", "float", "str", "list", "dict", "dynamic"]
 
     def __init__(self, type_: ValidatorType = None, allowed_values: list = None):
         self.set_type(type_)
@@ -51,6 +51,8 @@ class Validator:
         elif type_ == list or type_ == "list":
             self._type = list
         elif type_ == dict or type_ == "dict":
+            self._type = dict
+        elif type_ == "dynamic":
             self._type = dict
         else:
             raise BadRequestException("Invalid type")

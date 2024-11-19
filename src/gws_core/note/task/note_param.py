@@ -2,13 +2,14 @@
 from typing import Optional, Type
 
 from gws_core.config.param.model_param import ModelParam
-from gws_core.config.param.param_spec_decorator import param_spec_decorator
+from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
+                                                        param_spec_decorator)
 from gws_core.config.param.param_types import ParamSpecVisibilty
 from gws_core.core.model.model import Model
 from gws_core.note.note import Note
 
 
-@param_spec_decorator()
+@param_spec_decorator(type=ParamaSpecType.LAB_SPECIFIC)
 class NoteParam(ModelParam):
     """ Note params spec. When used, the end user will be able to select a note
     from the list of note available in the lab.

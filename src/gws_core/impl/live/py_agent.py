@@ -1,6 +1,6 @@
 
 
-from typing import List
+from typing import Any, Dict, List
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.impl.live.base.env_agent import EnvAgent
@@ -36,7 +36,7 @@ class PyAgent(Task):
     input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = DynamicOutputs()
     config_specs: ConfigSpecs = {
-        'params': EnvAgent.get_list_param_config(),
+        'params': EnvAgent.get_dynamic_param_config(),
         'code':
         PythonCodeParam(
             default_value=LiveCodeHelper.get_python_template(),
@@ -48,11 +48,8 @@ class PyAgent(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
-        params = params.get_value('params')
-
-        # convert param to string and leave empty if no params so it does not offset the
-        # line number of the code
-        str_params = "\n".join(params)
+        dynamic_params: Dict[str, Any] = params.get_value('params')
+        str_params = f"params = {str(dynamic_params)}"
         if len(params) > 0:
             str_params = str_params + "\n"
 
@@ -77,5 +74,5 @@ class PyAgent(Task):
         return {'target': ResourceList(targets)}
 
     @classmethod
-    def build_config_params_dict(cls, code: str, params: List[str]) -> ConfigParamsDict:
+    def build_config_params_dict(cls, code: str, params: Dict[str, Any]) -> ConfigParamsDict:
         return {'code': code, "params": params}

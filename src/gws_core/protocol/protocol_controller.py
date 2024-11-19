@@ -1,11 +1,13 @@
 
 
 import threading
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 
+from gws_core.config.config_dto import ConfigSimpleDTO
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
@@ -33,6 +35,12 @@ from .protocol_service import ProtocolService
 # before the first one is finished so this will break the protocol processes.
 # this is not the best solution but it's a quick fix
 update_lock = threading.Lock()
+
+
+@core_app.get("/protocol/get-simple-param-spec-types", tags=["Protocol"],
+              summary="Get simple param spec types")
+def get_simple_param_spec_types(_=Depends(AuthService.check_user_access_token)) -> Dict:
+    return ProtocolService.get_simple_param_spec_types()
 
 
 @core_app.get("/protocol/{id_}", tags=["Protocol"], summary="Get a protocol")
@@ -538,3 +546,54 @@ def download_template(id_: str,
                       _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
     template = ProtocolService.generate_scenario_template(id_)
     return ResponseHelper.create_file_response_from_str(template.to_export_dto().json(), template.name + '.json')
+
+
+########################## DYNAMIC PARAM #####################
+@core_app.post("/protocol/{id_}/process/{process_name}/dynamic-param-spec/{param_name}", tags=["Protocol"],
+               summary="Add a dynamic param of a process")
+def add_dynamic_param_spec_of_process(id_: str,
+                                      process_name: str,
+                                      param_name: str,
+                                      spec_dto: ParamSpecDTO,
+                                      _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
+
+    with update_lock:
+        return ProtocolService.add_dynamic_param_spec_of_process(
+            id_, process_name, param_name, spec_dto)
+
+
+@core_app.put("/protocol/{id_}/process/{process_name}/dynamic-param-spec/{param_name}", tags=["Protocol"],
+              summary="Update a dynamic param of a process")
+def update_dynamic_param_spec_of_process(id_: str,
+                                         process_name: str,
+                                         param_name: str,
+                                         spec_dto: ParamSpecDTO,
+                                         _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
+
+    with update_lock:
+        return ProtocolService.update_dynamic_param_spec_of_process(
+            id_, process_name, param_name, spec_dto)
+
+
+@core_app.put(
+    "/protocol/{id_}/process/{process_name}/dynamic-param-spec/{param_name}/rename-and-update/{new_param_name}",
+    tags=["Protocol"],
+    summary="Rename and update a dynamic param of a process")
+def rename_and_update_dynamic_param_spec_of_process(
+        id_: str, process_name: str, param_name: str, new_param_name: str, spec_dto: ParamSpecDTO,
+        _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
+    with update_lock:
+        return ProtocolService.rename_and_update_dynamic_param_spec_of_process(
+            id_, process_name, param_name, new_param_name, spec_dto)
+
+
+@core_app.delete("/protocol/{id_}/process/{process_name}/dynamic-param-spec/{param_name}", tags=["Protocol"],
+                 summary="Remove a dynamic param of a process")
+def remove_dynamic_param_spec_of_process(id_: str,
+                                         process_name: str,
+                                         param_name: str,
+                                         _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
+
+    with update_lock:
+        return ProtocolService.remove_dynamic_param_spec_of_process(
+            id_, process_name, param_name)

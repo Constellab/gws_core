@@ -87,7 +87,7 @@ class RobotWait(Task):
                 short_description="This task emulates the fly of the robot. It inherites the Move task.",
                 hide=True)
 class RobotFly(RobotMove):
-    config_specs = {'moving_step': FloatParam(default_value=1000.0, unit="km"), 'direction': StrParam(
+    config_specs = {'moving_step': FloatParam(default_value=1000.0), 'direction': StrParam(
         default_value="west", allowed_values=["north", "south", "east", "west"], short_description="The flying direction")}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
