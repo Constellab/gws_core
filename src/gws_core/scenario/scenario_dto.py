@@ -6,6 +6,7 @@ from typing import List, Optional
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.folder.space_folder_dto import SpaceFolderDTO
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.scenario.scenario_enums import (ScenarioCreationType,
                                               ScenarioProcessStatus,
@@ -37,7 +38,7 @@ class RunningScenarioInfoDTO(BaseModelDTO):
 
 class ScenarioDTO(ModelWithUserDTO):
     title: str
-    description: Optional[dict]
+    description: Optional[RichTextDTO]
     creation_type: ScenarioCreationType
     protocol: dict
     status: ScenarioStatus

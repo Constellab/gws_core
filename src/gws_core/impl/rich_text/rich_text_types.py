@@ -5,7 +5,6 @@ from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.user.user_dto import UserDTO
 
 
 class RichTextBlockType(Enum):
@@ -35,8 +34,8 @@ class RichTextBlock(BaseModelDTO):
 
 
 class RichTextDTO(BaseModelDTO):
-    version: str
-    time: int
+    version: int
+    editorVersion: str
     blocks: List[RichTextBlock]
 
 
@@ -178,6 +177,20 @@ class RichTextFormulaData(TypedDict):
 class RichTextFileData(TypedDict):
     name: str
     size: int  # in bytes
+
+
+class RichTextListItem(TypedDict):
+    """Object representing a list item in a rich text"""
+    content: str
+    items: List["RichTextListItem"]
+    meta: dict
+
+
+class RichTextListData(TypedDict):
+    """Object representing a list in a rich text"""
+    style: Literal['ordered', 'unordered', 'checklist']
+    items: List["RichTextListItem"]
+    meta: dict
 
 
 ################################ BLOCK DATA ################################

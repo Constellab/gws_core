@@ -1,9 +1,9 @@
 
 
-from datetime import datetime
 from typing import Any, List, Optional, Set
 
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.impl.rich_text.rich_text_migrator import TeRichTextMigrator
 from gws_core.impl.rich_text.rich_text_paragraph_text import \
     RichTextParagraphText
 from gws_core.impl.rich_text.rich_text_types import (
@@ -22,23 +22,38 @@ class RichText(SerializableObjectJson):
     :return: [description]
     :rtype: [type]
     """
+    CURRENT_VERION = 2
+    CURRENT_EDITOR_VERSION = '2.30.2'
 
-    _content: RichTextDTO
+    version: int
+    editor_version: str
 
-    def __init__(self, rich_text_content: Optional[RichTextDTO] = None) -> None:
-        if rich_text_content is None:
-            self._content = self.create_rich_text_dto([])
+    blocks: List[RichTextBlock]
+
+    def __init__(self, rich_text_dto: Optional[RichTextDTO] = None,
+                 target_version: int = None) -> None:
+
+        if target_version is None:
+            target_version = RichText.CURRENT_VERION
+
+        if rich_text_dto is None:
+            rich_text_dto = self.create_rich_text_dto([])
         else:
-            if not isinstance(rich_text_content, RichTextDTO):
+            if not isinstance(rich_text_dto, RichTextDTO):
                 raise Exception('The rich text content is not valid')
 
             # create a copy of the DTO so the rich text manipulation doesn't affect the original DTO
-            self._content = rich_text_content.model_copy(deep=True)
+            rich_text_dto = rich_text_dto.model_copy(deep=True)
+
+        migrated_rich_text = TeRichTextMigrator.migrate(rich_text_dto, target_version)
+        self.version = migrated_rich_text.version
+        self.editor_version = migrated_rich_text.editorVersion
+        self.blocks = migrated_rich_text.blocks
 
     ##################################### BLOCK #########################################
 
     def get_blocks(self) -> List[RichTextBlock]:
-        return self._content.blocks
+        return self.blocks
 
     def get_blocks_by_type(self, block_type: RichTextBlockType) -> List[RichTextBlock]:
         """Get the blocks of the given type
@@ -56,7 +71,7 @@ class RichText(SerializableObjectJson):
         """
         if not block.id or self.get_block_by_id(block.id) is not None:
             block.id = self.generate_id()
-        self._content.blocks.append(block)
+        self.blocks.append(block)
 
         return len(self.get_blocks()) - 1
 
@@ -67,26 +82,26 @@ class RichText(SerializableObjectJson):
         if index < 0 or index > len(self.get_blocks()):
             raise Exception('The index is not valid')
 
-        self._content.blocks.insert(index, block)
+        self.blocks.insert(index, block)
 
     def _remove_block_at_index(self, block_index: int) -> RichTextBlock:
         """Remove an element from the rich text content
         """
-        return self._content.blocks.pop(block_index)
+        return self.blocks.pop(block_index)
 
     def replace_block_at_index(self, index: int, block: RichTextBlock) -> None:
         """Replace a block at the given index
         """
         if index < 0 or index > len(self.get_blocks()):
             raise Exception('The index is not valid')
-        self._content.blocks[index] = block
+        self.blocks[index] = block
 
     def get_block_at_index(self, index: int) -> RichTextBlock:
         """Get the block at the given index
         """
         if index < 0 or index > len(self.get_blocks()):
             raise Exception('The index is not valid')
-        return self._content.blocks[index]
+        return self.blocks[index]
 
     def replace_block_by_id(self, block_id: str, block: RichTextBlock) -> None:
         """Replace a block by its id
@@ -360,17 +375,21 @@ class RichText(SerializableObjectJson):
 
     ##################################### OTHERS #########################################
 
-    def get_content(self) -> RichTextDTO:
-        return self._content
+    def to_dto(self) -> RichTextDTO:
+        return RichTextDTO(
+            version=self.version,
+            editorVersion=self.editor_version,
+            blocks=self.blocks
+        )
 
-    def get_content_as_json(self) -> dict:
-        return self._content.to_json_dict()
+    def to_dto_json_dict(self) -> dict:
+        return self.to_dto().to_json_dict()
 
     def is_empty(self) -> bool:
-        if self._content is None or not self._content.blocks or len(self._content.blocks) == 0:
+        if not self.blocks or len(self.blocks) == 0:
             return True
 
-        for block in self._content.blocks:
+        for block in self.blocks:
             if block.type != RichTextBlockType.PARAGRAPH:
                 return False
             if 'text' in block.data and block.data['text']:
@@ -397,7 +416,7 @@ class RichText(SerializableObjectJson):
         :return: _description_
         :rtype: Union[Dict, List, str, bool, float]
         """
-        return self._content.to_json_dict()
+        return self.to_dto_json_dict()
 
     @classmethod
     def deserialize(cls, data: dict) -> 'RichText':
@@ -482,6 +501,6 @@ class RichText(SerializableObjectJson):
     def create_rich_text_dto(cls, blocks: List[RichTextBlock]) -> RichTextDTO:
         return RichTextDTO(
             blocks=blocks,
-            version="2.30.2",
-            time=int(datetime.now().timestamp() * 1000)
+            version=RichText.CURRENT_VERION,
+            editorVersion=RichText.CURRENT_EDITOR_VERSION,
         )

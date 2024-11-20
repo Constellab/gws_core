@@ -1,6 +1,6 @@
 
 
-from typing import Dict, List, final
+from typing import List, final
 
 from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
                     ModelSelect)
@@ -13,6 +13,7 @@ from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_field import RichTextField
 from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
                                                      RichTextModificationsDTO)
 from gws_core.note.note_dto import NoteDTO, NoteFullDTO
@@ -31,7 +32,7 @@ from ..scenario.scenario import Scenario
 class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
     title = CharField()
 
-    content: RichTextDTO = BaseDTOField(RichTextDTO, null=True)
+    content: RichTextDTO = RichTextField(null=True)
 
     folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
 
@@ -55,7 +56,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
         return RichText(self.content)
 
     def update_content_rich_text(self, rich_text: RichText) -> None:
-        self.content = rich_text.get_content()
+        self.content = rich_text.to_dto()
 
     def check_is_updatable(self) -> None:
         """Throw an error if the note is not updatable

@@ -558,7 +558,7 @@ class NoteResource(ResourceSet):
         note_rich_text = self._export_as_lab_note_rich_text(note.id)
 
         # save the content to the note
-        return NoteService.update_content(note.id, note_rich_text.get_content())
+        return NoteService.update_content(note.id, note_rich_text.to_dto())
 
     def _export_as_lab_note_rich_text(self, note_id: str) -> RichText:
         """

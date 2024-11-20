@@ -81,4 +81,4 @@ def transcribe_audio(file: UploadFile = FastAPIFile(...),
     """ Transcribe an audio file to a rich text
     """
 
-    return RichTextTranscriptionService.transcribe_uploaded_audio_to_rich_text(file).get_content()
+    return RichTextTranscriptionService.transcribe_uploaded_audio_to_rich_text(file).to_dto()

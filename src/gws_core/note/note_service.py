@@ -176,7 +176,7 @@ class NoteService():
     def update_content(cls, note_id: str, note_content: RichTextDTO) -> Note:
         note: Note = cls._get_and_check_before_update(note_id)
 
-        if not Settings.get_instance().is_test:
+        if not Settings.get_instance().is_test and not Settings.get_instance().is_local_env():
             note.modifications = SpaceService.get_modifications(note.content, note_content, note.modifications)
         note.content = note_content
 
@@ -205,7 +205,7 @@ class NoteService():
             note_rich_text.insert_block_at_index(index, block)
             index += 1
 
-        note = cls.update_content(note_id, note_rich_text.get_content())
+        note = cls.update_content(note_id, note_rich_text.to_dto())
 
         # copy the storage of the note template to the note
         # copy after to avoid copy if error during update_content
@@ -232,7 +232,7 @@ class NoteService():
         rich_text = note.get_content_as_rich_text()
         rich_text.add_resource_view(view_content)
 
-        return cls.update_content(note_id, rich_text.get_content())
+        return cls.update_content(note_id, rich_text.to_dto())
 
     @classmethod
     def delete(cls, note_id: str) -> None:

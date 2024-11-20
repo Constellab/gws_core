@@ -8,6 +8,7 @@ from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.live.base.env_agent import EnvAgent
 from gws_core.impl.live.py_agent import PyAgent
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
 from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
@@ -810,7 +811,7 @@ class ProtocolService():
 
     @classmethod
     def create_scenario_template_from_id(
-            cls, protocol_id: str, name: str, description: dict = None) -> ScenarioTemplate:
+            cls, protocol_id: str, name: str, description: RichTextDTO = None) -> ScenarioTemplate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
         return ScenarioTemplateService.create_from_protocol(protocol=protocol_model,

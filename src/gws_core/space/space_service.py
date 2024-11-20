@@ -191,8 +191,8 @@ class SpaceService():
         return RichTextModificationsDTO.from_json(response.json())
 
     @classmethod
-    def get_undo_content(
-            cls, content: RichTextDTO, modifications: RichTextModificationsDTO, modification_id: str) -> RichTextDTO:
+    def get_undo_content(cls, content: RichTextDTO, modifications: RichTextModificationsDTO,
+                         modification_id: str) -> RichTextDTO:
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/undo-content")
         try:

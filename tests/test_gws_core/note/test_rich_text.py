@@ -84,7 +84,7 @@ class TestRichText(BaseTestCaseLight):
 
         rich_text.set_parameter('test2', 'test2_value')
         self.assertEqual(
-            rich_text.get_content().blocks[2].data["text"],
+            rich_text.to_dto().blocks[2].data["text"],
             'Place for <te-variable-inline data-jsondata=\'{"name": "test2", "description": "", "type": "string", "value": "test2_value"}\'></te-variable-inline> variable')
 
         # test views
@@ -100,19 +100,19 @@ class TestRichText(BaseTestCaseLight):
         }
 
         # add the resource view in the rich text at a specific variable
-        block_count = len(rich_text.get_content().blocks)
+        block_count = len(rich_text.to_dto().blocks)
         rich_text.add_resource_view(view, 'figure_1')
         # no block should be added
-        self.assertEqual(len(rich_text.get_content().blocks), block_count)
-        self.assertEqual(rich_text.get_content().blocks[3].type, RichTextBlockType.RESOURCE_VIEW)
+        self.assertEqual(len(rich_text.to_dto().blocks), block_count)
+        self.assertEqual(rich_text.to_dto().blocks[3].type, RichTextBlockType.RESOURCE_VIEW)
 
         # add the resource view in the rich text at a specific variable
         # this should split the block in 3 blocks
         rich_text.add_resource_view(view, 'figure_2')
-        self.assertEqual(rich_text.get_content().blocks[4].data["text"], 'Variable : ')
-        self.assertEqual(rich_text.get_content().blocks[5].type, RichTextBlockType.RESOURCE_VIEW)
-        self.assertEqual(rich_text.get_content().blocks[6].data["text"], ' super')
-        self.assertEqual(rich_text.get_content().blocks[7].data["text"], 'End')
+        self.assertEqual(rich_text.to_dto().blocks[4].data["text"], 'Variable : ')
+        self.assertEqual(rich_text.to_dto().blocks[5].type, RichTextBlockType.RESOURCE_VIEW)
+        self.assertEqual(rich_text.to_dto().blocks[6].data["text"], ' super')
+        self.assertEqual(rich_text.to_dto().blocks[7].data["text"], 'End')
 
         # test replace block
         rich_text.replace_block_at_index(0, RichTextBlock(
@@ -122,12 +122,12 @@ class TestRichText(BaseTestCaseLight):
                 "text": "NewContent"
             }
         ))
-        rich_text.get_content().blocks[0].type = RichTextBlockType.PARAGRAPH
+        rich_text.to_dto().blocks[0].type = RichTextBlockType.PARAGRAPH
 
         # test replace views block with variables
         rich_text.replace_resource_views_with_parameters()
         # TODO check to improve
-        self.assertEqual(rich_text.get_content().blocks[4].type, RichTextBlockType.PARAGRAPH)
+        self.assertEqual(rich_text.to_dto().blocks[4].type, RichTextBlockType.PARAGRAPH)
 
     def test_replace_data(self):
 
@@ -139,7 +139,7 @@ class TestRichText(BaseTestCaseLight):
         }
         rich_text.replace_block_data_by_id(block.id, new_data)
 
-        self.assertEqual(rich_text.get_content().blocks[0].data["text"], "NewContent")
+        self.assertEqual(rich_text.to_dto().blocks[0].data["text"], "NewContent")
         self.assertEqual(len(rich_text.get_blocks()), 1)
 
     def test_is_empty(self):
@@ -192,4 +192,4 @@ class TestRichText(BaseTestCaseLight):
              },
             {"id": "5", "type": "paragraph", "data": {"text": "Nous allons faire la recette."}}]
 
-        self.assert_json(result.get_content_as_json().get('blocks'), expected_blocks, ['id'])
+        self.assert_json(result.to_dto_json_dict().get('blocks'), expected_blocks, ['id'])

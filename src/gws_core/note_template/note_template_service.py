@@ -50,7 +50,7 @@ class NoteTemplateService():
         rich_text.replace_resource_views_with_parameters()
 
         # Set default content for document
-        document.content = rich_text.get_content()
+        document.content = rich_text.to_dto()
 
         document.save()
 

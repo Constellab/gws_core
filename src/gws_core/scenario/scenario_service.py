@@ -6,6 +6,7 @@ from peewee import ModelSelect
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.note.note import NoteScenario
 from gws_core.resource.resource_model import ResourceModel
@@ -69,7 +70,7 @@ class ScenarioService():
                         creation_type: ScenarioCreationType = ScenarioCreationType.MANUAL) -> Scenario:
         protocol_model: ProtocolModel = None
 
-        description: Dict = None
+        description: RichTextDTO = None
         if scenario_template is not None:
             description = scenario_template.description
             protocol_model = ProtocolService.create_protocol_model_from_template(scenario_template)
@@ -97,7 +98,8 @@ class ScenarioService():
     @classmethod
     @transaction()
     def create_scenario_from_protocol_model(
-            cls, protocol_model: ProtocolModel, folder: SpaceFolder = None, title: str = "", description: Dict = None,
+            cls, protocol_model: ProtocolModel, folder: SpaceFolder = None, title: str = "",
+            description: RichTextDTO = None,
             creation_type: ScenarioCreationType = ScenarioCreationType.MANUAL) -> Scenario:
         if not isinstance(protocol_model, ProtocolModel):
             raise BadRequestException(
@@ -203,7 +205,7 @@ class ScenarioService():
         return scenario
 
     @classmethod
-    def update_scenario_description(cls, id_: str, description: Dict) -> Scenario:
+    def update_scenario_description(cls, id_: str, description: RichTextDTO) -> Scenario:
         scenario: Scenario = Scenario.get_by_id_and_check(id_)
 
         scenario.check_is_updatable()

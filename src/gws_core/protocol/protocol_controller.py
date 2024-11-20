@@ -11,6 +11,7 @@ from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
@@ -521,7 +522,7 @@ def update_process_style(id_: str,
 
 class CreateScenarioTemplate(BaseModelDTO):
     name: str = None
-    description: Optional[dict] = None
+    description: Optional[RichTextDTO] = None
 
 
 @core_app.post("/protocol/{id_}/template", tags=["Protocol"],

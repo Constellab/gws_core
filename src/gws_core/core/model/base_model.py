@@ -125,6 +125,16 @@ class BaseModel(Base, PeeweeModel):
         return len([x for x in indexes if x.name == index_name]) > 0
 
     @classmethod
+    def execute_sql(cls, query: str):
+        """
+        Execute a raw SQL query. Can use the [TABLE_NAME] to replace by the table name
+
+        :param query: The query to execute
+        :type query: `str`
+        """
+        cls.get_db().execute_sql(query.replace("[TABLE_NAME]", cls.get_table_name()))
+
+    @classmethod
     def get_db(cls) -> DatabaseProxy:
         return cls.get_db_manager().db
 
