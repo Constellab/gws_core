@@ -177,7 +177,7 @@ class SpaceService():
             old_modifications: Optional[RichTextModificationsDTO] = None) -> RichTextModificationsDTO:
 
         space_api_url: str = cls._get_space_api_url(
-            f"{cls._external_labs_route}/modifications")
+            f"{cls._external_labs_route}/rich-text/compare")
         try:
             response = ExternalApiService.post(space_api_url, {
                 'oldContent': old_content.to_json_dict(),
@@ -194,7 +194,7 @@ class SpaceService():
     def get_undo_content(cls, content: RichTextDTO, modifications: RichTextModificationsDTO,
                          modification_id: str) -> RichTextDTO:
         space_api_url: str = cls._get_space_api_url(
-            f"{cls._external_labs_route}/undo-content")
+            f"{cls._external_labs_route}/rich-text/previous-version")
         try:
             response = ExternalApiService.post(space_api_url, {
                 'content': content.to_json_dict(),
