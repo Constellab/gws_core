@@ -51,7 +51,7 @@ class CommunityAgentVersionDTO(BaseModelDTO):
     version: int
     type: str
     environment: Optional[str]
-    params: Optional[str]
+    params: Optional[Dict[str, Any]]
     code: str
     input_specs: Optional[CommunityAgentIOSpecDTO]
     output_specs: Optional[CommunityAgentIOSpecDTO]

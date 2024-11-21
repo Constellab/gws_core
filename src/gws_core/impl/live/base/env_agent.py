@@ -228,7 +228,7 @@ with open('{target_paths_filename}', 'w') as f:
             short_description="Please give one parameter definition per line (https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779#parameters)")
 
     @classmethod
-    def build_config_params_dict(cls, code: str, params: List[str], env: str) -> ConfigParamsDict:
+    def build_config_params_dict(cls, code: str, params: Dict[str, Any], env: str) -> ConfigParamsDict:
         return {'code': code, "params": params, "env": env}
 
     @classmethod

@@ -865,9 +865,9 @@ class ProtocolService():
 
         agent_type: Type[Process] = process_typing.get_type()
 
-        params = []
-        if community_agent_version.params and len(community_agent_version.params) > 0:
-            params = community_agent_version.params.splitlines()
+        params = {}
+        if community_agent_version.params:
+            params = community_agent_version.params['values']
 
         config_params: ConfigParamsDict
         if issubclass(agent_type, PyAgent):
@@ -892,6 +892,12 @@ class ProtocolService():
             name=community_agent_version.agent.title,
             style=community_agent_version.style
         )
+
+        dynamic_param_spec: DynamicParam = cls.get_process_dynamic_param_spec(process_model=process_model)
+        for param_name, param_value in community_agent_version.params['specs'].items():
+            dynamic_param_spec.add_spec(param_name, ParamSpecDTO.from_json(param_value))
+        process_model.config.update_spec('params', dynamic_param_spec)
+
         protocol_update = cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=process_model)
 
         # TODO TO IMPROVE WHEN UPDATING AGENT CONFIG
