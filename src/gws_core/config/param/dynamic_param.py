@@ -105,7 +105,7 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
         if param_name in self.specs:
             raise BadRequestException(f"Spec with name {param_name} already exists")
 
-        spec: ParamSpec[Any] = ParamSpecHelper.get_param_spec_type_from_str(spec_dto.type).load_from_dto(spec_dto)
+        spec: ParamSpec[Any] = self.get_spec_from_dto(spec_dto)
 
         self.specs[param_name] = spec
 
@@ -113,7 +113,7 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
         if param_name not in self.specs:
             raise BadRequestException(f"Spec with name {param_name} not found")
 
-        spec: ParamSpec[Any] = ParamSpecHelper.get_param_spec_type_from_str(spec_dto.type).load_from_dto(spec_dto)
+        spec: ParamSpec[Any] = self.get_spec_from_dto(spec_dto)
 
         self.specs[param_name] = spec
 
@@ -124,7 +124,7 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
         if new_param_name in self.specs:
             raise BadRequestException(f"Spec with name {new_param_name} already exists")
 
-        spec: ParamSpec[Any] = ParamSpecHelper.get_param_spec_type_from_str(spec_dto.type).load_from_dto(spec_dto)
+        spec: ParamSpec[Any] = self.get_spec_from_dto(spec_dto)
 
         self.specs[new_param_name] = spec
 
@@ -138,6 +138,13 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
 
         if self.additional_info is not None and 'specs' in self.additional_info:
             del self.additional_info['specs'][param_name]
+
+    def get_spec_from_dto(self, spec_dto: ParamSpecDTO) -> ParamSpec:
+        spec = ParamSpecHelper.get_param_spec_type_from_str(spec_dto.type).load_from_dto(spec_dto)
+        if 'allowed_values' in spec.additional_info and spec.additional_info['allowed_values'] is not None and len(
+                spec.additional_info['allowed_values']) == 0:
+            spec.additional_info['allowed_values'] = None
+        return spec
 
     @staticmethod
     def get_param_spec_from_type(type_: str) -> ParamSpec:

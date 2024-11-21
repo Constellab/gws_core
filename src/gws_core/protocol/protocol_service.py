@@ -1076,8 +1076,9 @@ class ProtocolService():
         return dynamic_param_spec
 
     @classmethod
-    def get_simple_param_spec_types(cls) -> Dict:
+    def get_dynamic_param_allowed_param_spec_types(cls) -> Dict:
         list_type: List[type[ParamSpec]] = ParamSpecHelper.get_simple_param_spec_types()
+        list_type.extend(ParamSpecHelper.get_lab_specific_param_spec_types())
         res = {}
         for t in list_type:
             annotations = get_type_hints(t)
