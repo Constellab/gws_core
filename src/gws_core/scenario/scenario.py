@@ -247,11 +247,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         super().delete_instance(*args, **kwargs)
         EntityTagList.delete_by_entity(EntityType.SCENARIO, self.id)
 
-    @classmethod
-    def after_table_creation(cls) -> None:
-        super().after_table_creation()
-        cls.create_full_text_index(['title', 'description'], 'I_F_EXP_TIDESC')
-
     ########################### STATUS MANAGEMENT ##################################
 
     @property

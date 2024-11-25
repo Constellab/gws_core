@@ -1109,3 +1109,13 @@ class Migration0100(BrickMigration):
                 "update [TABLE_NAME] set description = null where description = 'null' or description = ''")
             Note.execute_sql("update [TABLE_NAME] set content = null where content = 'null' or content = ''")
             NoteTemplate.execute_sql("update [TABLE_NAME] set content = null where content = 'null' or content = ''")
+
+    @brick_migration('0.10.4', short_description='Delete scenario full text indexe')
+    class Migration0104(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            migrator: SqlMigrator = SqlMigrator(Note.get_db())
+
+            migrator.drop_index_if_exists(Scenario, 'I_F_EXP_TIDESC')
+            migrator.migrate()

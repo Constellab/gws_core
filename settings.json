@@ -4,7 +4,7 @@
     "author"        : "Gencovery",
     "author_email"  : "admin@gencovery.com",
     "description"   : "Kernel brick of Constellab data lab",
-    "version"       : "0.10.3",
+    "version"       : "0.10.4",
     "app_dir"       : "./",
     "app_host"      : "0.0.0.0",
     "app_port"      : 3000,
