@@ -7,6 +7,8 @@ from gws_core import (BaseTestCase, ProcessModel, ProtocolModel, ResourceModel,
                       Scenario, ScenarioSaveDTO, ScenarioService,
                       ScenarioStatus, TaskModel)
 from gws_core.folder.space_folder import SpaceFolder
+from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.impl.robot.robot_protocol import (RobotSimpleTravel,
                                                 RobotWorldTravelProto)
 from gws_core.impl.robot.robot_resource import Robot
@@ -38,10 +40,15 @@ class TestScenario(BaseTestCase):
         self.assertIsNotNone(scenario.protocol_model.id)
         self.assertEqual(scenario.folder.id, folder.id)
 
+        rich_text = RichText()
+        rich_text.add_paragraph("test")
         ScenarioService.update_scenario_description(
-            scenario.id, {"test": "ok"})
+            scenario.id, rich_text.to_dto())
         scenario = ScenarioService.get_by_id_and_check(scenario.id)
-        self.assert_json(scenario.description, {"test": "ok"})
+
+        rich_text = RichText(scenario.description)
+        paragraph = rich_text.get_block_at_index(0)
+        self.assert_json(paragraph.data, {"text": "test"})
 
     def test_run(self):
         # test setting the folder to the scenario
@@ -90,7 +97,7 @@ class TestScenario(BaseTestCase):
         self.assertIsNone(scenario.pid)
 
         # refresh scenario
-        scenario: Scenario = Scenario.get_by_id_and_check(scenario.id)
+        scenario = Scenario.get_by_id_and_check(scenario.id)
 
         # Test the configuration on fly_1 process (west 2000)
         move_1 = scenario.protocol_model.get_process('move_1')
