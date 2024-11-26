@@ -57,7 +57,7 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
         for key, val in self.specs.items():
 
             if key not in value:
-                raise BadRequestException(f"The key '{key}' is required in the values dict")
+                value[key] = None
 
             if not isinstance(val, ParamSpec):
                 raise BadRequestException(f"The value of key '{key}' must be a ParamSpec")

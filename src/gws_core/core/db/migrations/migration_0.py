@@ -1101,7 +1101,13 @@ class Migration0100(BrickMigration):
                 new_params = {}
                 for param in params:
                     key, val = param.split('=')
-                    new_params[key] = ast.literal_eval(val)
+
+                    val_str = f'\'{val}\'' if isinstance(val, str) else str(val)
+
+                    if ',' in val_str and '[' not in val_str and '{' not in val_str:
+                        val_str = f'[{val_str}]'
+
+                    new_params[key] = ast.literal_eval(val_str)
 
                 dynamic_param: DynamicParam = EnvAgent.get_dynamic_param_config()
 
@@ -1126,15 +1132,30 @@ class Migration0100(BrickMigration):
                         'TASK.gws_core.StreamlitAgent']:
                     agents.append(process_model)
 
-            print(f'Found {len(agents)} agents to migrate')
             for agent in agents:
                 cls.migrate_agent(agent)
 
             configs: List[Config] = list(Config.select())
+
             for config in configs:
                 for key in config.data['specs']:
-                    spec = config.get_spec(key)
-                    if spec.allowed_values is not None:
-                        spec.additional_info['allowed_values'] = spec.allowed_values
-                        config.update_spec(key, spec)
+                    spec_json = config.data['specs'][key]
+
+                    if 'allowed_values' in spec_json and 'additional_info' in spec_json and spec_json['allowed_values'] is not None:
+                        spec_json['additional_info']['allowed_values'] = spec_json['allowed_values']
+                        del spec_json['allowed_values']
+
+                    if 'type' in spec_json and spec_json['type'] == 'dynamic':
+                        specs = spec_json['additional_info']['specs']
+                        for spec_key in specs:
+                            spec = specs[spec_key]
+                            if 'allowed_values' in spec and 'additional_info' in spec and spec['type'] in ['str', 'int',
+                                                                                                           'float'] and 'allowed_values' not in spec['additional_info']:
+                                spec['additional_info']['allowed_values'] = spec['allowed_values']
+                                del spec['allowed_values']
+
+                            spec_json['additional_info']['specs'][spec_key] = spec
+
+                    config.data['specs'][key] = spec_json
+
                 config.save()

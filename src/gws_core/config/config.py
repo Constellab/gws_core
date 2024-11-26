@@ -60,6 +60,9 @@ class Config(ModelWithUser):
         specs[name] = spec
         self.set_specs(specs)
 
+    def has_spec(self, param_name: str) -> bool:
+        return param_name in self.get_specs()
+
     def get_spec(self, param_name: str) -> ParamSpec:
         self._check_param(param_name)
 

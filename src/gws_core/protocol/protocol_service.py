@@ -18,6 +18,7 @@ from gws_core.io.io import IO
 from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
 from gws_core.io.ioface import IOface
 from gws_core.model.typing_style import TypingStyle
+from gws_core.process.process_dto import ProcessDTO
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactory
 from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
@@ -328,7 +329,6 @@ class ProtocolService():
 
         # if the process is fast, this is useful to return the finished process
         # sleep(4)
-
         return ProtocolUpdate(protocol=protocol_model.refresh(), protocol_updated=True)
 
     @classmethod
@@ -531,7 +531,34 @@ class ProtocolService():
 
     @classmethod
     @transaction()
+    def update_code_params_visitility(cls, protocol_id: str, process_instance_name: str) -> ProcessDTO:
+
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+        process_model: ProcessModel = protocol_model.get_process(process_instance_name)
+
+        if EnvAgent.ENV_CONFIG_NAME in process_model.config.get_specs():
+            env_spec = process_model.config.get_spec(EnvAgent.ENV_CONFIG_NAME)
+            env_spec.visibility = 'public' if env_spec.visibility == 'private' else 'private'
+            process_model.config.update_spec(EnvAgent.ENV_CONFIG_NAME, env_spec)
+
+        if EnvAgent.CODE_CONFIG_NAME in process_model.config.get_specs():
+            code_spec = process_model.config.get_spec(EnvAgent.CODE_CONFIG_NAME)
+            code_spec.visibility = 'public' if code_spec.visibility == 'private' else 'private'
+            process_model.config.update_spec(EnvAgent.CODE_CONFIG_NAME, code_spec)
+
+        process_model.config.save()
+        return process_model.to_dto()
+
+    @classmethod
+    @transaction()
     def configure_process_model(cls, process_model: ProcessModel, config_values: ConfigParamsDict) -> ProtocolUpdate:
+
+        # check if code and env params value needs to be added
+        for key in process_model.config.get_specs():
+            spec = process_model.config.get_spec(key)
+            if spec.visibility == 'private' and key not in config_values and key in process_model.config.get_values():
+                config_values[key] = process_model.config.get_value(key)
+
         # set config value and save
         process_model.set_config_values(config_values)
         process_model.config.save()
@@ -896,7 +923,16 @@ class ProtocolService():
         dynamic_param_spec: DynamicParam = cls.get_process_dynamic_param_spec(process_model=process_model)
         for param_name, param_value in community_agent_version.params['specs'].items():
             dynamic_param_spec.add_spec(param_name, ParamSpecDTO.from_json(param_value))
-        process_model.config.update_spec('params', dynamic_param_spec)
+        process_model.config.update_spec(EnvAgent.PARAMS_CONFIG_NAME, dynamic_param_spec)
+
+        config_code_spec = process_model.config.get_spec(EnvAgent.CODE_CONFIG_NAME)
+        config_code_spec.visibility = 'private'
+        process_model.config.update_spec(EnvAgent.CODE_CONFIG_NAME, config_code_spec)
+
+        if (issubclass(agent_type, EnvAgent)):
+            config_env_spec = process_model.config.get_spec(EnvAgent.ENV_CONFIG_NAME)
+            config_env_spec.visibility = 'private'
+            process_model.config.update_spec(EnvAgent.ENV_CONFIG_NAME, config_env_spec)
 
         protocol_update = cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=process_model)
 
@@ -973,7 +1009,7 @@ class ProtocolService():
         else:
             raise BadRequestException("The process does not support adding dynamic param specs")
 
-        process_model.config.update_spec('params', dynamic_param_spec)
+        process_model.config.update_spec(EnvAgent.PARAMS_CONFIG_NAME, dynamic_param_spec)
 
         process_model.config = process_model.config.save()
 
@@ -994,14 +1030,14 @@ class ProtocolService():
         dynamic_param_spec: DynamicParam = cls.get_process_dynamic_param_spec(process_model=process_model)
 
         if spec_dto.type != dynamic_param_spec.specs[param_name].get_str_type():
-            value = process_model.config.get_value('params')
+            value = process_model.config.get_value(EnvAgent.PARAMS_CONFIG_NAME)
             if param_name in value:
                 value[param_name] = spec_dto.default_value
-                process_model.config.set_value('params', value)
+                process_model.config.set_value(EnvAgent.PARAMS_CONFIG_NAME, value)
 
         dynamic_param_spec.update_spec(param_name, spec_dto)
 
-        process_model.config.update_spec('params', dynamic_param_spec)
+        process_model.config.update_spec(EnvAgent.PARAMS_CONFIG_NAME, dynamic_param_spec)
 
         process_model.config = process_model.config.save()
 
@@ -1022,16 +1058,16 @@ class ProtocolService():
 
         dynamic_param_spec: DynamicParam = cls.get_process_dynamic_param_spec(process_model=process_model)
 
-        value = process_model.config.get_value('params')
-        if spec_dto.type != dynamic_param_spec.specs[param_name].get_str_type():
-            if param_name in value:
-                value[new_param_name] = spec_dto.default_value
+        value = process_model.config.get_value(EnvAgent.PARAMS_CONFIG_NAME)
+        if spec_dto.type != dynamic_param_spec.specs[param_name].get_str_type() and param_name in value:
+            value[new_param_name] = spec_dto.default_value
         del value[param_name]
-        process_model.config.set_value('params', value)
 
         dynamic_param_spec.rename_and_update_spec(param_name, new_param_name, spec_dto)
 
-        process_model.config.update_spec('params', dynamic_param_spec)
+        process_model.config.update_spec(EnvAgent.PARAMS_CONFIG_NAME, dynamic_param_spec)
+
+        process_model.config.set_value(EnvAgent.PARAMS_CONFIG_NAME, value)
 
         process_model.config = process_model.config.save()
 
@@ -1053,7 +1089,7 @@ class ProtocolService():
 
         dynamic_param_spec.remove_spec(param_name)
 
-        process_model.config.update_spec('params', dynamic_param_spec)
+        process_model.config.update_spec(EnvAgent.PARAMS_CONFIG_NAME, dynamic_param_spec)
 
         if param_name in process_model.config.data['values']:
             del process_model.config.data['values'][param_name]
@@ -1068,7 +1104,7 @@ class ProtocolService():
     def get_process_dynamic_param_spec(cls, process_model: ProcessModel) -> DynamicParam:
 
         dynamic_param_spec: DynamicParam = DynamicParam.load_from_dto(
-            ParamSpecDTO.from_json(process_model.config.data.get('specs').get('params')))
+            ParamSpecDTO.from_json(process_model.config.data.get('specs').get(EnvAgent.PARAMS_CONFIG_NAME)))
 
         if dynamic_param_spec is None:
             raise BadRequestException("The process does not support dynamic params")
@@ -1113,5 +1149,9 @@ class ProtocolService():
                         "optional": is_optional,
                         "value": value
                     }
+                default_value_attr = attributs_infos['default_value']
+                del attributs_infos['default_value']
+                attributs_infos['default_value'] = default_value_attr
+            attributs_infos['human_name'] = StringHelper.snake_case_to_sentence(t.get_str_type())
             res[t.get_str_type()] = attributs_infos
         return res

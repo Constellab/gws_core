@@ -296,6 +296,18 @@ def configure_process(id_: str,
         return ProtocolService.configure_process(
             protocol_id=id_, process_instance_name=process_instance_name, config_values=config_values).to_dto()
 
+
+@core_app.put("/protocol/{id_}/process/{process_instance_name}/code-params-visibility", tags=["Protocol"],
+              summary="Update process code params visibility")
+def update_code_params_visitility(id_: str,
+                                  process_instance_name: str,
+                                  _=Depends(AuthService.check_user_access_token)) -> ProcessDTO:
+    with update_lock:
+        return ProtocolService.update_code_params_visitility(
+            protocol_id=id_, process_instance_name=process_instance_name
+        )
+
+
 ########################## INTERFACE / OUTERFACE #####################
 
 

@@ -81,17 +81,20 @@ class AgentFactory:
         return task_generator.generate_code()
 
     @classmethod
-    def generate_agent_file_from_agent_id(cls, task_id: str) -> CommunityAgentFileDTO:
+    def generate_agent_file_from_agent_id(cls, task_id: str, with_value: bool = False) -> CommunityAgentFileDTO:
         task: TaskModel = TaskModel.get_by_id_and_check(task_id)
-        values = task.config.get_and_check_values()
+        values = task.config.get_values()
         code = task.config.get_value("code")
         params = None
         if values.get("params") is not None:
             specs = task.config.get_spec('params').to_simple_dto().to_json_dict()['additional_info']['specs']
             params_values = task.config.get_value("params")
+            if not with_value:
+                for key in params_values.keys():
+                    params_values[key] = None
             params = {
                 "specs": specs,
-                "values": params_values
+                "values":  params_values
             }
         env = ""
         if values.get("env") is not None:

@@ -55,6 +55,10 @@ class EnvAgent(Task):
     TARGET_PATHS_VAR_NAME = 'target_paths'
     TARGET_PATHS_FILENAME = '__target_paths__.json'
 
+    ENV_CONFIG_NAME = 'env'
+    CODE_CONFIG_NAME = 'code'
+    PARAMS_CONFIG_NAME = 'params'
+
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
         env = params.get_value('env')
