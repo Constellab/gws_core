@@ -99,7 +99,7 @@ class TestShareResource(BaseTestCase):
         share_link = ShareLinkService.generate_share_link(generate_dto)
 
         # get the share entity info
-        share_entity_info: ShareResourceInfoReponseDTO = ShareService.get_resource_entity_object_info(share_link.token)
+        share_entity_info: ShareResourceInfoReponseDTO = ShareService.get_resource_entity_object_info(share_link)
         self.assertEqual(share_entity_info.entity_type, ShareLinkType.RESOURCE)
         self.assertEqual(share_entity_info.entity_id, original_resource_model.id)
         self.assertIsNotNone(share_entity_info.zip_entity_route)
@@ -107,7 +107,7 @@ class TestShareResource(BaseTestCase):
         self.assertTrue(len(share_entity_info.entity_object), 1)
 
         # Zip the resource
-        response: ShareResourceZippedResponseDTO = ShareService.zip_shared_resource(share_link.token)
+        response: ShareResourceZippedResponseDTO = ShareService.zip_shared_resource(share_link)
         self.assertEqual(response.entity_type, ShareLinkType.RESOURCE)
         self.assertEqual(response.entity_id, original_resource_model.id)
         self.assertIsNotNone(response.download_entity_route)

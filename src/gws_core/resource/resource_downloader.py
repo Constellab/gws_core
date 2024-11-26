@@ -3,6 +3,7 @@
 from typing import List, Optional
 
 import requests
+
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.settings import Settings
@@ -38,17 +39,17 @@ class ResourceDownloader():
 
         if response.status_code != 200:
             raise Exception("Error while getting information of the resource: " + response.text)
-        shared_entity_info = ShareResourceInfoReponseDTO.from_json(response.c())
+        shared_entity_info = ShareResourceInfoReponseDTO.from_json(response.json())
 
         # check if the resource is compatible with the current lab
         if not isinstance(shared_entity_info.entity_object, list):
             raise Exception("The resource is not compatible with the current lab")
 
-        resources: List[dict] = shared_entity_info.entity_object
+        resources = shared_entity_info.entity_object
 
         # check if the resources are compatible with the current lab
         for resource in resources:
-            TypingManager.check_typing_name_compatibility(resource['resource_typing_name'])
+            TypingManager.check_typing_name_compatibility(resource.resource_typing_name)
 
         # Zipping the resource
         self.message_dispatcher.notify_info_message("The resource is compatible with the lab.")

@@ -125,7 +125,7 @@ class ShareLink(ModelWithUser):
 
     @classmethod
     def is_lab_share_resource_link(cls, link: str) -> bool:
-        return cls._is_lab_share_entity_link(link) and link.find('share/info/') != -1
+        return cls._is_lab_share_entity_link(link) and link.find('share/') != -1
 
     @classmethod
     def is_lab_share_scenario_link(cls, link: str) -> bool:
@@ -136,7 +136,7 @@ class ShareLink(ModelWithUser):
         settings = Settings.get_instance()
 
         # specific case for dev env, accept if the link is from this lab
-        if settings.is_local_dev_env():
+        if settings.is_local_env():
             if not link.startswith('https://glab') and not link.startswith(settings.get_lab_api_url()):
                 return False
         else:
