@@ -115,7 +115,7 @@ class LogLine():
                       message=self.message, scenario_id=self.scenario_id)
 
     def to_str(self) -> str:
-        return f"{self.level} - {self.date_time} - {self.message}"
+        return f"{self.date_time} - {self.level} - {self.message}"
 
 
 class LogCompleteInfo():
@@ -178,8 +178,34 @@ class LogCompleteInfo():
 
         return log_lines
 
+    def _get_all_lines(self) -> List[LogLine]:
+        log_lines: List[LogLine] = []
+        for line in self.content.splitlines():
+            if len(line) == 0:
+                continue
+            log_line = LogLine(line)
+
+            if not log_line.is_valid():
+                continue
+
+            log_lines.append(log_line)
+
+        return log_lines
+
+    def get_content_as_dto(self) -> List[LogDTO]:
+        lines = self._get_all_lines()
+
+        return [log.to_dto() for log in lines]
+
+    def get_content_as_json(self) -> list:
+        lines = self._get_all_lines()
+
+        lines_json = [log.to_dto().to_json_dict() for log in lines]
+
+        return lines_json
+
     def to_dto(self) -> LogCompleteInfoDTO:
-        return LogCompleteInfoDTO(log_info=self.log_info, content=self.content)
+        return LogCompleteInfoDTO(log_info=self.log_info, content=self.get_content_as_dto())
 
 
 class LogsBetweenDates():
