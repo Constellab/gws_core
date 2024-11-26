@@ -56,16 +56,15 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
 
         for key, val in self.specs.items():
 
-            if key not in value:
-                value[key] = None
-
             if not isinstance(val, ParamSpec):
                 raise BadRequestException(f"The value of key '{key}' must be a ParamSpec")
 
-            if not val.optional and not val.validate(value[key]):
+            if key in value and not val.optional and not val.validate(value[key]):
                 raise BadRequestException(f"The value of specs '{key}' is mandatory")
 
-            if val.optional and (value[key] is None or len(str(value[key])) == 0) and val.default_value is not None:
+            if val.optional and (key not in value or
+                                 value[key] is None or
+                                 len(str(value[key])) == 0) and val.default_value is not None:
                 value[key] = val.default_value
 
         return value

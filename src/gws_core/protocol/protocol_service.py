@@ -1061,7 +1061,8 @@ class ProtocolService():
         value = process_model.config.get_value(EnvAgent.PARAMS_CONFIG_NAME)
         if spec_dto.type != dynamic_param_spec.specs[param_name].get_str_type() and param_name in value:
             value[new_param_name] = spec_dto.default_value
-        del value[param_name]
+        if param_name in value:
+            del value[param_name]
 
         dynamic_param_spec.rename_and_update_spec(param_name, new_param_name, spec_dto)
 
