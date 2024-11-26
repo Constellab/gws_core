@@ -13,13 +13,14 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list import ResourceList
+from gws_core.share.share_link import ShareLink
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_service import ShareService
 from gws_core.share.shared_dto import (GenerateShareLinkDTO, ShareLinkType,
-                                       ShareResourceInfoReponseDTO,
-                                       ShareResourceZippedResponseDTO)
+                                       ShareResourceInfoReponseDTO)
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
+from gws_core.test.gtest import TestStartUvicornApp
 from gws_core.user.current_user_service import CurrentUserService
 
 
@@ -81,22 +82,36 @@ class GenerateResourceList(Task):
 # test_share_resource
 class TestShareResource(BaseTestCase):
 
+    start_uvicorn_app: TestStartUvicornApp
+
+    # method to start the uvicorn app only once for all the tests
+    # required because ResourceService.upload_resource_from_link needs API
+    # and close it after all the tests
+    @classmethod
+    def init_before_test(cls):
+        super().init_before_test()
+        cls.start_uvicorn_app = TestStartUvicornApp()
+        cls.start_uvicorn_app.__enter__()
+
+    @classmethod
+    def clear_after_test(cls):
+        super().clear_after_test()
+        cls.start_uvicorn_app.__exit__(None, None, None)
+
     def test_share_basic_resource(self):
 
         # create a simple resource
         table = get_table()
         table.name = 'MyTestName'
         table.set_all_column_tags([{'name': 'tag1'}, {'name': 'tag2'}])
-        table.tags.add_tag(Tag('resource_tag', 'resource_tag_value', origins=TagOrigins(TagOriginType.USER, 'test')))
+        table.tags.add_tag(Tag('resource_tag', 'resource_tag_value',
+                               origins=TagOrigins(TagOriginType.USER, 'test')))
 
         # save the resource model
         original_resource_model = ResourceModel.save_from_resource(table, origin=ResourceOrigin.UPLOADED)
 
-        # create a share link
-        tomorrow = datetime.now() + timedelta(days=1)
-        generate_dto = GenerateShareLinkDTO(entity_id=original_resource_model.id, entity_type=ShareLinkType.RESOURCE,
-                                            valid_until=tomorrow)
-        share_link = ShareLinkService.generate_share_link(generate_dto)
+        new_resource_model = self._generate_link_and_download_resource(original_resource_model.id)
+        share_link = ShareLink.select().where(ShareLink.entity_id == original_resource_model.id).first()
 
         # get the share entity info
         share_entity_info: ShareResourceInfoReponseDTO = ShareService.get_resource_entity_object_info(share_link)
@@ -106,29 +121,16 @@ class TestShareResource(BaseTestCase):
         # check that there is only one resource
         self.assertTrue(len(share_entity_info.entity_object), 1)
 
-        # Zip the resource
-        response: ShareResourceZippedResponseDTO = ShareService.zip_shared_resource(share_link)
-        self.assertEqual(response.entity_type, ShareLinkType.RESOURCE)
-        self.assertEqual(response.entity_id, original_resource_model.id)
-        self.assertIsNotNone(response.download_entity_route)
-        self.assertIsNotNone(response.zipped_entity_resource_id)
+        new_table: Table = new_resource_model.get_resource()
 
-        zipped_resource: ResourceModel = ResourceModel.get_by_id_and_check(response.zipped_entity_resource_id)
-        zip_path = zipped_resource.fs_node_model.path
-
-        resource_unzipper: ResourceLoader = ResourceLoader.from_compress_file(zip_path)
-        new_table: Table = resource_unzipper.load_resource()
-        # new_resource_model: ResourceModel = resource_unzipper.resource_models[0].refresh()
-
-        # new_table: Table = new_resource_model.get_resource()
         self.assertIsInstance(new_table, Table)
         self.assertTrue(table.equals(new_table))
         self.assertEqual(new_table.name, 'MyTestName')
         self.assertTrue(new_table.tags.has_tag(Tag('resource_tag', 'resource_tag_value')))
 
         # test that the origin of the resource exist
-        # shared_resource: SharedResource = ResourceService.get_shared_resource_origin_info(new_resource_model.id)
-        # self.assertEqual(shared_resource.entity.id, new_resource_model.id)
+        shared_resource = ResourceService.get_shared_resource_origin_info(new_resource_model.id)
+        self.assertEqual(shared_resource.entity.id, new_resource_model.id)
 
     def test_share_file_resource(self):
         # save the resource model
@@ -136,12 +138,8 @@ class TestShareResource(BaseTestCase):
 
         original_resource_model = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
 
-        zipped_resource = ShareService.run_zip_resource_exp(
-            original_resource_model.id, CurrentUserService.get_and_check_current_user())
-        zip_path = zipped_resource.fs_node_model.path
-
-        resource_unzipper: ResourceLoader = ResourceLoader.from_compress_file(zip_path)
-        resource: File = resource_unzipper.load_resource()
+        new_resource_model = self._generate_link_and_download_resource(original_resource_model.id)
+        resource: File = new_resource_model.get_resource()
 
         self.assertEqual(resource.name, 'test.txt')
         # check that the path is different form the original
@@ -159,15 +157,11 @@ class TestShareResource(BaseTestCase):
         original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
         original_resource_set: ResourceSet = original_resource_model.get_resource()
 
-        zipped_resource = ShareService.run_zip_resource_exp(
-            resource_model_id, CurrentUserService.get_and_check_current_user())
-        zip_path = zipped_resource.fs_node_model.path
+        new_resource_model = self._generate_link_and_download_resource(original_resource_model.id)
 
-        resource_unzipper: ResourceLoader = ResourceLoader.from_compress_file(zip_path)
-        resource_set: ResourceSet = resource_unzipper.load_resource()
-
-        self.assertEqual(3, len(resource_unzipper.get_all_generated_resources()))
+        resource_set: ResourceSet = new_resource_model.get_resource()
         self.assertIsInstance(resource_set, ResourceSet)
+        self.assertEqual(2, len(resource_set))
 
         # check the table
         table: Table = resource_set.get_resource('table')
@@ -196,15 +190,11 @@ class TestShareResource(BaseTestCase):
         original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
         original_resource_list: ResourceList = original_resource_model.get_resource()
 
-        zipped_resource = ShareService.run_zip_resource_exp(
-            resource_model_id, CurrentUserService.get_and_check_current_user())
-        zip_path = zipped_resource.fs_node_model.path
+        new_resource_model = self._generate_link_and_download_resource(original_resource_model.id)
+        resource_list: ResourceList = new_resource_model.get_resource()
 
-        resource_unzipper: ResourceLoader = ResourceLoader.from_compress_file(zip_path)
-        resource_list: ResourceList = resource_unzipper.load_resource()
-
-        self.assertEqual(3, len(resource_unzipper.get_all_generated_resources()))
         self.assertIsInstance(resource_list, ResourceList)
+        self.assertEqual(2, len(resource_list))
 
         # check the table
         table: Table = resource_list[0]
@@ -221,3 +211,12 @@ class TestShareResource(BaseTestCase):
         original_file = original_resource_list[1]
         # check that this is a new resource
         self.assertNotEqual(original_file.get_model_id(), file.get_model_id())
+
+    def _generate_link_and_download_resource(self, original_resource_id) -> ResourceModel:
+        # create a share link
+        generate_dto = GenerateShareLinkDTO(
+            entity_id=original_resource_id, entity_type=ShareLinkType.RESOURCE, valid_until=datetime.now() +
+            timedelta(days=1))
+        share_link = ShareLinkService.generate_share_link(generate_dto)
+
+        return ResourceService.upload_resource_from_link(share_link.get_download_link(), 'auto')

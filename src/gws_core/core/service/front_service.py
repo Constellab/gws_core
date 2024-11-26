@@ -119,6 +119,16 @@ class FrontService():
     def get_monitoring_other_url() -> str:
         return FrontService.get_monitoring_dashboard_url() + '/other'
 
+    ############################################### OPEN URLS ###############################################
+
+    @staticmethod
+    def get_app_open_url() -> str:
+        return Settings.get_front_url() + '/open'
+
+    @staticmethod
+    def get_resource_open_url(token: str) -> str:
+        return FrontService.get_app_open_url() + '/resource/' + token
+
     ############################################### OTHER URLS ###############################################
 
     @staticmethod

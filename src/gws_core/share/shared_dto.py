@@ -27,7 +27,8 @@ class ShareLinkDTO(ModelWithUserDTO):
     entity_id: str
     entity_type: ShareLinkType
     valid_until: datetime
-    link: str
+    download_link: str
+    preview_link: Optional[str] = None
     status: Literal["SUCCESS", "ERROR"]
     entity_name: Optional[str] = None
 

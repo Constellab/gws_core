@@ -11,10 +11,10 @@ from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_set import ResourceSet
+from gws_core.scenario.scenario_downloader_service import \
+    ScenarioDownloaderService
 from gws_core.scenario.scenario_enums import ScenarioCreationType
 from gws_core.scenario.scenario_proxy import ScenarioProxy
-from gws_core.scenario.task.scenario_downloader import ScenarioDownloader
-from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
 from gws_core.share.shared_resource import SharedResource
@@ -22,7 +22,6 @@ from gws_core.share.shared_scenario import SharedScenario
 from gws_core.task.plug import InputTask, OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
-from gws_core.task.task_runner import TaskRunner
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.test.gtest import GTest, TestStartUvicornApp
 
@@ -86,16 +85,7 @@ class TestShareScenario(BaseTestCase):
 
             share_link = ShareLinkService.generate_share_link(share_dto)
 
-            task_runner = TaskRunner(ScenarioDownloader, params={
-                'link': share_link.get_link(),
-                'resource_mode': 'All'
-            })
-
-            outputs = task_runner.run()
-
-            scenario_resource: ScenarioResource = outputs['scenario']
-
-            new_scenario = scenario_resource.get_scenario()
+            new_scenario = ScenarioDownloaderService.import_from_lab(share_link.get_download_link(), "All")
 
             self.assertEqual(new_scenario.title, initial_scenario_model.title)
             self.assertEqual(new_scenario.folder.id, folder.id)
@@ -170,15 +160,8 @@ class TestShareScenario(BaseTestCase):
             self.assertIsNotNone(SharedResource.get_and_check_entity_origin(new_source_output.id))
 
             ######################  Re-run the share without all resources ######################
-            task_runner = TaskRunner(ScenarioDownloader, params={
-                'link': share_link.get_link(),
-                'resource_mode': 'Outputs only'
-            })
+            new_scenario_2 = ScenarioDownloaderService.import_from_lab(share_link.get_download_link(), "Outputs only")
 
-            outputs = task_runner.run()
-
-            scenario_resource_2: ScenarioResource = outputs['scenario']
-            new_scenario_2 = scenario_resource_2.get_scenario()
             new_protocol_2 = new_scenario_2.protocol_model
             # Check that the task input model where created
             self.assertNotEqual(new_scenario_2.id, new_scenario.id)

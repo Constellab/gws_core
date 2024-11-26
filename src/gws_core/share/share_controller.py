@@ -7,6 +7,8 @@ from gws_core.core.model.model_dto import PageDTO
 from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.core_controller import core_app
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.resource.resource_controller import CallViewParams
+from gws_core.resource.view.view_dto import CallViewResultDTO
 from gws_core.share.share_token_auth import ShareTokenAuth
 from gws_core.share.shared_dto import (ShareEntityInfoDTO, ShareLinkType,
                                        ShareResourceInfoReponseDTO,
@@ -59,6 +61,16 @@ def zip_resource(share_link=Depends(ShareTokenAuth.get_and_check_token)) -> Shar
 def download_resource(share_link=Depends(ShareTokenAuth.get_and_check_token)) -> FileResponse:
     file_path = ShareService.download_zipped_resource(share_link)
     return FileHelper.create_file_response(file_path)
+
+
+@core_app.post("/share/resource/{token}/views/{view_name}", tags=["Resource"],
+               summary="Call the view name for a resource")
+def call_view_on_resource(view_name: str,
+                          call_view_params: CallViewParams,
+                          share_link=Depends(ShareTokenAuth.get_and_check_token)) -> CallViewResultDTO:
+
+    return ShareService.call_resource_view(
+        share_link, view_name, call_view_params).to_dto()
 
 
 ################################ SCENARIO ################################

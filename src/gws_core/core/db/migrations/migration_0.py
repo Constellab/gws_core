@@ -1119,3 +1119,5 @@ class Migration0100(BrickMigration):
 
             migrator.drop_index_if_exists(Scenario, 'I_F_EXP_TIDESC')
             migrator.migrate()
+
+            Config.get_db().execute_sql("UPDATE gws_config SET data = REPLACE(data, 'note_template_param', 'note_template_param')")

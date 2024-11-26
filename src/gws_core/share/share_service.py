@@ -7,7 +7,6 @@ from peewee import JOIN
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
-from gws_core.core.model.model import Model
 from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.logger import Logger
@@ -18,13 +17,15 @@ from gws_core.process.process_proxy import ProcessProxy
 from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_controller import CallViewParams
 from gws_core.resource.resource_dto import ResourceDTO
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.task.resource_zipper_task import ResourceZipperTask
+from gws_core.resource.view.view_result import CallViewResult
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_service import ScenarioService
-from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import (SharedEntityMode, ShareLinkType,
                                        ShareResourceInfoReponseDTO,
                                        ShareResourceZippedResponseDTO,
@@ -208,6 +209,18 @@ class ShareService():
             raise Exception('Zip file does not contain the shared entity')
 
         return zip_file.path
+
+    @classmethod
+    def call_resource_view(
+            cls, shared_entity_link: ShareLink, view_name: str, call_view_params: CallViewParams) -> CallViewResult:
+        """Method to call a view on a resource
+        """
+        if shared_entity_link.entity_type != ShareLinkType.RESOURCE:
+            raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
+
+        with AuthenticateUser(shared_entity_link.created_by):
+            return ResourceService.get_and_call_view_on_resource_model(
+                shared_entity_link.entity_id, view_name, call_view_params.values, call_view_params.save_view_config)
 
     #################################### SCENARIO ####################################
 
