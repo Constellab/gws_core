@@ -907,7 +907,7 @@ class ProtocolService():
                 params=params,
                 env=community_agent_version.environment)
         elif issubclass(agent_type, StreamlitAgent):
-            config_params = agent_type.build_config_params_dict(code=community_agent_version.code)
+            config_params = agent_type.build_config_params_dict(code=community_agent_version.code, params=params)
         else:
             raise BadRequestException("The agent type is not supported")
 

@@ -48,7 +48,9 @@ class TestEnvAgent(TestCase):
         tester = TaskRunner(
             task_type=task_type,
             inputs={"source": File(source)},
-            params={}
+            params={
+                'params': {}
+            }
         )
 
         outputs = tester.run()

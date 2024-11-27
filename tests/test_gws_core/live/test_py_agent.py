@@ -21,6 +21,9 @@ class TestAgent(BaseTestCase):
         data = DataFrame({'col1': [0, 1], 'col2': [0, 2]})
         tester = TaskRunner(
             inputs={'source': Table(data)},
+            params={
+                'params': {}
+            },
             task_type=PyAgent
         )
 
@@ -147,11 +150,10 @@ raise Exception('This is not working')
 
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
-        self.assertIsNotNone(test_process_model.config.data.get('specs').get(
-            'params').get('additional_info').get('specs').get('a'))
+        self.assertIsNotNone(test_process_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME).specs['a'])
         self.assertIsNotNone(test_process_model.config.get_value('params'))
-        self.assertEqual(test_process_model.config.get_spec('params')
-                         .specs['a'].to_dto().to_json_dict(), IntParam(default_value=2).to_dto().to_json_dict())
+        self.assertEqual(test_process_model.config.get_spec('params').specs['a'].to_dto()
+                         .to_json_dict(), IntParam(default_value=2).to_dto().to_json_dict())
         self.assertEqual(test_process_model.config.get_value('params')['a'], 2)
 
     def test_update_param(self):
@@ -175,12 +177,40 @@ raise Exception('This is not working')
 
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
-        self.assertIsNotNone(test_process_model.config.data.get('specs').get(
-            'params').get('additional_info').get('specs').get('a'))
+        self.assertIsNotNone(test_process_model.config.get_spec('params').specs['a'])
         self.assertIsNotNone(test_process_model.config.get_value('params'))
         self.assertEqual(test_process_model.config.get_spec('params')
                          .specs['a'].to_dto().to_json_dict(), IntParam(default_value=3).to_dto().to_json_dict())
         self.assertEqual(test_process_model.config.get_value('params')['a'], 3)
+
+    def test_rename_and_update_param(self):
+
+        proto: ProtocolModel = ProtocolService.create_empty_protocol()
+
+        process_model = ProtocolService.add_process_to_protocol_id(
+            proto.id,
+            PyAgent.get_typing_name()
+        ).process
+
+        proto = proto.refresh()
+
+        ProtocolService.add_dynamic_param_spec_of_process(
+            proto.id, process_model.instance_name, 'a', IntParam(default_value=2).to_dto()
+        )
+
+        ProtocolService.rename_and_update_dynamic_param_spec_of_process(
+            proto.id, process_model.instance_name, 'a', 'b', IntParam(default_value=3).to_dto()
+        )
+
+        test_process_model = proto.get_process(process_model.instance_name)
+        self.assertIsNotNone(test_process_model)
+        self.assertIsNotNone(test_process_model.config.get_spec('params').specs['b'])
+        self.assertTrue('a' not in test_process_model.config.get_spec('params').specs)
+        self.assertIsNotNone(test_process_model.config.get_value('params'))
+        self.assertEqual(test_process_model.config.get_spec('params')
+                         .specs['b'].to_dto().to_json_dict(), IntParam(default_value=3).to_dto().to_json_dict())
+        self.assertEqual(test_process_model.config.get_value('params')['b'], 3)
+        self.assertTrue('a' not in test_process_model.config.get_values())
 
     def test_remove_param(self):
 
@@ -203,6 +233,5 @@ raise Exception('This is not working')
 
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
-        self.assertIsNone(test_process_model.config.data.get('specs').get(
-            'params').get('additional_info').get('specs').get('a'))
-        self.assertIsNone(test_process_model.config.get_value('params').get('a'))
+        self.assertTrue('a' not in test_process_model.config.get_spec('params').specs)
+        self.assertTrue('a' not in test_process_model.config.get_value('params'))

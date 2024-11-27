@@ -1,10 +1,11 @@
 
 
-from typing import List
+from typing import Any, Dict, List
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.code.task_generator import TaskGenerator
 from gws_core.community.community_dto import CommunityAgentFileDTO
+from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import (BoolParam, FloatParam, IntParam,
                                               ParamSpec, StrParam)
 from gws_core.core.utils.numeric_helper import NumericHelper
@@ -54,27 +55,13 @@ class AgentFactory:
             task_generator.add_output_spec(key, spec.get_default_resource_type())
             count = count + 1
 
-        params: List[str] = task.config.get_value(PyAgent.CONFIG_PARAMS_NAME)
-        for param_line in params:
-            if not param_line or '=' not in param_line or '#' in param_line or param_line[0] == '#':
-                continue
+        params: Dict[str, Any] = task.config.get_value(PyAgent.CONFIG_PARAMS_NAME)
+        params_spec: DynamicParam = task.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+        for param_name in params:
+            param_value = params[param_name]
 
-            param_line = param_line.strip()
-            param_line = param_line.replace(' ', '')
-
-            param_name = param_line.split('=')[0]
-            param_value = param_line.split('=')[1]
-
-            param_type: ParamSpec = None
-            # detect if type if int, float, bool or str based on value
-            if param_value == 'True' or param_value == 'False':
-                param_type = BoolParam(bool(param_value))
-            elif NumericHelper.is_int(param_value):
-                param_type = IntParam(int(param_value))
-            elif NumericHelper.is_float(param_value):
-                param_type = FloatParam(float(param_value))
-            else:
-                param_type = StrParam(str(param_value))
+            param_type: ParamSpec = params_spec.specs[param_name]
+            param_type.default_value = param_value
 
             task_generator.add_config_spec(param_name, param_type)
 

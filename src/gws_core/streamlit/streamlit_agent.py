@@ -1,7 +1,10 @@
 
+from typing import Any, Dict
+
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
+from gws_core.impl.live.base.env_agent import EnvAgent
 from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
 from gws_core.io.dynamic_io import DynamicInputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -43,17 +46,28 @@ class StreamlitAgent(Task):
         'streamlit_app': OutputSpec(StreamlitResource, human_name="Streamlit app")
     })
     config_specs: ConfigSpecs = {
+        'params': EnvAgent.get_dynamic_param_config(),
         'code':
         PythonCodeParam(
             default_value=LiveCodeHelper.get_streamlit_template(),
             human_name="Streamlit app code",
             short_description="Code of the streamlit app to run"), }
 
+    CONFIG_PARAMS_NAME = 'params'
+    CONFIG_CODE_NAME = 'code'
+
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
+        dynamic_params: Dict[str, Any] = params.get_value('params')
+        str_params = f"params = {str(dynamic_params)}"
+        if len(params) > 0:
+            str_params = str_params + "\n"
+
+        # add the params to the code
+        code_with_params = f"{str_params}{code}"
 
         # build the streamlit resource with the code and the resources
-        streamlit_resource = StreamlitResource(code)
+        streamlit_resource = StreamlitResource(code_with_params)
         resource_list: ResourceList = inputs.get('source')
         i = 1
         for resource in resource_list.get_resources():
@@ -76,5 +90,5 @@ class StreamlitAgent(Task):
         return {'streamlit_app': streamlit_resource}
 
     @classmethod
-    def build_config_params_dict(cls, code: str) -> ConfigParamsDict:
-        return {'code': code}
+    def build_config_params_dict(cls, code: str, params: Dict[str, Any]) -> ConfigParamsDict:
+        return {'code': code, "params": params}
