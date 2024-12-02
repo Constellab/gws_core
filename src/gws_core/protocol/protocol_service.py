@@ -1058,7 +1058,7 @@ class ProtocolService():
             value = process_model.config.get_value(config_spec_name)
             if param_name in value:
                 value[param_name] = spec_dto.default_value
-                process_model.config.set_value(config_spec_name, value)
+                process_model.config.set_value(config_spec_name, value, skip_validate=True)
 
         dynamic_param_spec.update_spec(param_name, spec_dto)
 
