@@ -28,7 +28,6 @@ class AgentFactory:
 
     @classmethod
     def generate_task_code_from_agent(cls, task: TaskModel) -> str:
-        # TODO : Change params part
         task_generator: TaskGenerator = TaskGenerator(task.instance_name)
 
         code: str = task.config.get_value(PyAgent.CONFIG_CODE_NAME)

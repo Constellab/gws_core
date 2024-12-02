@@ -26,6 +26,7 @@ from gws_core.scenario_template.scenario_template_dto import \
 from ..community.community_dto import (CommunityAgentDTO,
                                        CommunityCreateAgentDTO,
                                        CommunityGetAgentsBody)
+from ..config.param.param_types import ParamSpecVisibilty
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
 from .protocol_service import ProtocolService
@@ -35,12 +36,6 @@ from .protocol_service import ProtocolService
 # before the first one is finished so this will break the protocol processes.
 # this is not the best solution but it's a quick fix
 update_lock = threading.Lock()
-
-
-@core_app.get("/protocol/get-param-spec-types", tags=["Protocol"],
-              summary="Get param spec types")
-def get_dynamic_param_allowed_param_spec_types(_=Depends(AuthService.check_user_access_token)) -> Dict:
-    return ProtocolService.get_dynamic_param_allowed_param_spec_types()
 
 
 @core_app.get("/protocol/{id_}", tags=["Protocol"], summary="Get a protocol")
@@ -297,14 +292,15 @@ def configure_process(id_: str,
             protocol_id=id_, process_instance_name=process_instance_name, config_values=config_values).to_dto()
 
 
-@core_app.put("/protocol/{id_}/process/{process_instance_name}/code-params-visibility", tags=["Protocol"],
+@core_app.put("/protocol/{id_}/process/{process_instance_name}/code-params-visibility/{visibility}", tags=["Protocol"],
               summary="Update process code params visibility")
 def update_code_params_visitility(id_: str,
                                   process_instance_name: str,
+                                  visibility: ParamSpecVisibilty,
                                   _=Depends(AuthService.check_user_access_token)) -> ProcessDTO:
     with update_lock:
         return ProtocolService.update_code_params_visitility(
-            protocol_id=id_, process_instance_name=process_instance_name
+            protocol_id=id_, process_instance_name=process_instance_name, new_visibility=visibility
         )
 
 
@@ -561,51 +557,66 @@ def download_template(id_: str,
 
 
 ########################## DYNAMIC PARAM #####################
-@core_app.post("/protocol/{id_}/process/{process_name}/dynamic-param-spec/{param_name}", tags=["Protocol"],
+@core_app.get("/protocol/{id_}/process/{process_name}/get-param-spec-types", tags=["Protocol"],
+              summary="Get param spec types")
+def get_dynamic_param_allowed_param_spec_types(
+        id_: str,
+        process_name: str,
+        _=Depends(AuthService.check_user_access_token)) -> Dict:
+    return ProtocolService.get_dynamic_param_allowed_param_spec_types(protocol_id=id_, process_name=process_name)
+
+
+@core_app.post("/protocol/{id_}/process/{process_name}/{config_spec_name}/dynamic-param-spec/{param_name}",
+               tags=["Protocol"],
                summary="Add a dynamic param of a process")
 def add_dynamic_param_spec_of_process(id_: str,
                                       process_name: str,
+                                      config_spec_name: str,
                                       param_name: str,
                                       spec_dto: ParamSpecDTO,
                                       _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
 
     with update_lock:
         return ProtocolService.add_dynamic_param_spec_of_process(
-            id_, process_name, param_name, spec_dto)
+            id_, process_name, config_spec_name, param_name, spec_dto)
 
 
-@core_app.put("/protocol/{id_}/process/{process_name}/dynamic-param-spec/{param_name}", tags=["Protocol"],
+@core_app.put("/protocol/{id_}/process/{process_name}/{config_spec_name}/dynamic-param-spec/{param_name}",
+              tags=["Protocol"],
               summary="Update a dynamic param of a process")
 def update_dynamic_param_spec_of_process(id_: str,
                                          process_name: str,
+                                         config_spec_name: str,
                                          param_name: str,
                                          spec_dto: ParamSpecDTO,
                                          _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
 
     with update_lock:
         return ProtocolService.update_dynamic_param_spec_of_process(
-            id_, process_name, param_name, spec_dto)
+            id_, process_name, config_spec_name, param_name, spec_dto)
 
 
 @core_app.put(
-    "/protocol/{id_}/process/{process_name}/dynamic-param-spec/{param_name}/rename-and-update/{new_param_name}",
+    "/protocol/{id_}/process/{process_name}/{config_spec_name}/dynamic-param-spec/{param_name}/rename-and-update/{new_param_name}",
     tags=["Protocol"],
     summary="Rename and update a dynamic param of a process")
 def rename_and_update_dynamic_param_spec_of_process(
-        id_: str, process_name: str, param_name: str, new_param_name: str, spec_dto: ParamSpecDTO,
-        _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
+    id_: str, process_name: str, config_spec_name: str, param_name: str, new_param_name: str,
+        spec_dto: ParamSpecDTO, _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
     with update_lock:
         return ProtocolService.rename_and_update_dynamic_param_spec_of_process(
-            id_, process_name, param_name, new_param_name, spec_dto)
+            id_, process_name, config_spec_name, param_name, new_param_name, spec_dto)
 
 
-@core_app.delete("/protocol/{id_}/process/{process_name}/dynamic-param-spec/{param_name}", tags=["Protocol"],
+@core_app.delete("/protocol/{id_}/process/{process_name}/{config_spec_name}/dynamic-param-spec/{param_name}",
+                 tags=["Protocol"],
                  summary="Remove a dynamic param of a process")
 def remove_dynamic_param_spec_of_process(id_: str,
                                          process_name: str,
+                                         config_spec_name: str,
                                          param_name: str,
                                          _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
 
     with update_lock:
         return ProtocolService.remove_dynamic_param_spec_of_process(
-            id_, process_name, param_name)
+            id_, process_name, config_spec_name, param_name)

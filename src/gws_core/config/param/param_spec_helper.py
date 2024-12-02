@@ -1,10 +1,11 @@
 
 
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List, Type, get_type_hints
 
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.utils.string_helper import StringHelper
 
 from ..config_exceptions import MissingConfigsException
 from ..config_params import ConfigParams
@@ -146,3 +147,57 @@ class ParamSpecHelper():
                 return False
 
         return True
+
+    @staticmethod
+    def get_dynamic_param_allowed_param_spec_types(lab_allowed: bool = False):
+        """_summary_
+
+        :param lab_allowed: _description_, defaults to False
+        :type lab_allowed: bool, optional
+        :return: _description_
+        :rtype: _type_
+        """
+        # TODO: Ameliorer la doc + aerer le code (voir faire des sous methodes)
+        list_type: List[type[ParamSpec]] = ParamSpecHelper.get_simple_param_spec_types().copy()
+        if lab_allowed:
+            list_type.extend(ParamSpecHelper.get_lab_specific_param_spec_types())
+        res = {}
+        for t in list_type:
+            annotations = get_type_hints(t)
+            attributs_infos: Dict[str, Any] = {}
+            for name, type_ in annotations.items():
+                if name.isupper():
+                    continue
+                is_optional = type(None) in getattr(type_, '__args__', [])
+                value = getattr(t, name, None)
+                if name == "additional_info":
+                    additional_info_attributs_infos = {}
+                    additional_info_attributs_infos_annotations = get_type_hints(type_.__args__[0])
+                    for additional_info_name, additional_info_type in additional_info_attributs_infos_annotations.items():
+                        additional_info_is_optional = type(None) in getattr(additional_info_type, '__args__', [])
+                        additional_info_value = getattr(value, additional_info_name, None)
+                        additional_info_attributs_infos[additional_info_name] = {
+                            "type": str(additional_info_type.__name__).lower()
+                            if not additional_info_is_optional else str(f"{additional_info_type.__args__[0].__name__}").lower(),
+                            "optional": additional_info_is_optional, "value": additional_info_value}
+                    attributs_infos[name] = additional_info_attributs_infos
+                else:
+                    type_name: str = ''
+                    if type_.__name__ == "Literal":
+                        type_name = 'list'
+                        value = list(type_.__args__)
+                    elif name == "default_value":
+                        type_name = t.get_str_type()
+                    else:
+                        type_name = type_.__name__ if not is_optional else f"{type_.__args__[0].__name__}"
+                    attributs_infos[name] = {
+                        "type": str(type_name).lower(),
+                        "optional": is_optional,
+                        "value": value
+                    }
+                default_value_attr = attributs_infos['default_value']
+                del attributs_infos['default_value']
+                attributs_infos['default_value'] = default_value_attr
+            attributs_infos['human_name'] = StringHelper.snake_case_to_sentence(t.get_str_type())
+            res[t.get_str_type()] = attributs_infos
+        return res

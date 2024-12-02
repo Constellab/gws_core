@@ -48,23 +48,16 @@ class PyAgent(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
-        dynamic_params: Dict[str, Any] = params.get_value('params')
-        str_params = f"params = {str(dynamic_params)}"
-        if len(params) > 0:
-            str_params = str_params + "\n"
-
-        # add the params to the code
-        code_with_params = f"{str_params}{code}"
 
         working_dir = self.create_tmp_dir()
 
         resource_list: ResourceList = inputs.get('source')
 
         # execute the live code
-        init_globals = {'self': self, 'sources': resource_list.get_resources(),
+        init_globals = {'self': self, 'sources': resource_list.get_resources(), 'params': params.get_value('params'),
                         "working_dir": working_dir, **globals()}
 
-        result = LiveCodeHelper.run_python_code(code_with_params, init_globals)
+        result = LiveCodeHelper.run_python_code(code, init_globals)
 
         targets = result.get("targets", None)
 
