@@ -3,6 +3,8 @@
 from abc import abstractmethod
 from typing import List, Literal, Optional, Type, final
 
+from typing_extensions import TypedDict
+
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.dispatched_message import DispatchedMessage
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
@@ -12,7 +14,6 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_register_decorator import typing_registrator
 from gws_core.model.typing_style import TypingStyle
-from typing_extensions import TypedDict
 
 from ..config.config_params import ConfigParams
 from ..config.config_types import ConfigSpecs
@@ -61,6 +62,10 @@ class Task(Process):
     # list of temporary directories created by the task to be deleted after the task is run
     __temp_dirs__: List[str]
 
+    # The scenario id that run the task, do not update
+    # This is only provided when the task is run by a scenario
+    __scenario_id__: str
+
     def __init__(self):
         """
         Constructor, please do not overwrite this method, use the init method instead
@@ -77,6 +82,7 @@ class Task(Process):
         self.message_dispatcher = None
         self.style = None
         self.__temp_dirs__ = []
+        self.__scenario_id__ = None
 
     def init(self) -> None:
         """
@@ -178,6 +184,10 @@ class Task(Process):
     @final
     def __set_message_dispatcher__(self, message_dispatcher: MessageDispatcher) -> None:
         self.message_dispatcher = message_dispatcher
+
+    @final
+    def __set_scenario_id__(self, scenario_id: str) -> None:
+        self.__scenario_id__ = scenario_id
 
     @final
     @classmethod

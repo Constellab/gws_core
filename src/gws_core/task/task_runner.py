@@ -34,6 +34,7 @@ class TaskRunner():
     _output_specs: OutputSpecs
     _inputs: Dict[str, Resource]
     _outputs: TaskOutputs
+    _scenario_id: str
 
     _task: Task
     _message_dispatcher: MessageDispatcher
@@ -46,7 +47,8 @@ class TaskRunner():
                  inputs: Dict[str, Resource] = None,
                  config_model_id: str = None,
                  input_specs: InputSpecs = None,
-                 output_specs: OutputSpecs = None):
+                 output_specs: OutputSpecs = None,
+                 scenario_id: str = None):
         self._task_type = task_type
 
         if inputs is None:
@@ -65,6 +67,8 @@ class TaskRunner():
         self._output_specs = output_specs or self._task_type.output_specs
 
         self._build_config(params)
+
+        self._scenario_id = scenario_id
 
     def check_before_run(self) -> CheckBeforeTaskResult:
         """This method check the config and inputs and then execute the check before run of the task
@@ -140,6 +144,7 @@ class TaskRunner():
         if self._task is None:
             self._task = self._task_type()
             self._task.__set_message_dispatcher__(self._message_dispatcher)
+            self._task.__set_scenario_id__(self._scenario_id)
 
             try:
                 self._task.init()

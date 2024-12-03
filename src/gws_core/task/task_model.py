@@ -146,7 +146,9 @@ class TaskModel(ProcessModel):
             inputs=inputs,
             config_model_id=self.config.id,
             input_specs=self.inputs.get_specs(),
-            output_specs=self.outputs.get_specs())
+            output_specs=self.outputs.get_specs(),
+            scenario_id=self.scenario.id
+        )
         task_runner.set_progress_bar(self.progress_bar)
 
         check_result: CheckBeforeTaskResult

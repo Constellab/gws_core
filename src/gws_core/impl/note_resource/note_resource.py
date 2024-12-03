@@ -544,16 +544,22 @@ class NoteResource(ResourceSet):
 
     ############################# Notes #############################
 
-    def export_as_lab_note(self, title: str = None) -> Note:
+    def export_as_lab_note(self, title: str = None, scenario_id: str = None) -> Note:
         """
         Export the note as a note. The note is automatically saved in the database.
         :param note_title: The title of the note
+        :type note_title: str
+        :param scenario_id: Id of the scenario to associate the note with
+        :type scenario_id: str
         :return: The note
         """
         if not title and not self.title:
             raise ValueError("The note resource title is empty")
         note_dto = NoteSaveDTO(title=title or self.title)
         note: Note = NoteService.create(note_dto)
+
+        if scenario_id:
+            NoteService.add_scenario(note.id, scenario_id)
 
         note_rich_text = self._export_as_lab_note_rich_text(note.id)
 
