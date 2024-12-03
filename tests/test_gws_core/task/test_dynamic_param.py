@@ -8,7 +8,7 @@ from gws_core.test.base_test_case import BaseTestCase
 
 class TestDynamicParam(BaseTestCase):
 
-    def test_add_param(self) -> ProtocolModel:
+    def test(self):
 
         proto: ProtocolModel = ProtocolService.create_empty_protocol()
 
@@ -21,8 +21,10 @@ class TestDynamicParam(BaseTestCase):
         proto = proto.refresh()
 
         ProtocolService.add_dynamic_param_spec_of_process(
-            proto.id, process_model.instance_name, 'a', IntParam(default_value=2).to_dto()
+            proto.id, process_model.instance_name, 'params', 'a', IntParam(default_value=2).to_dto()
         )
+
+        proto = proto.refresh()
 
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
@@ -32,17 +34,13 @@ class TestDynamicParam(BaseTestCase):
                          .to_json_dict(), IntParam(default_value=2).to_dto().to_json_dict())
         self.assertEqual(test_process_model.config.get_value('params')['a'], 2)
 
-        return proto.refresh()
-
-    def test_update_param(self):
-
-        proto: ProtocolModel = self.test_add_param()
-
         process_model: ProcessModel = proto.get_process('task')
 
         ProtocolService.update_dynamic_param_spec_of_process(
-            proto.id, process_model.instance_name, 'a', IntParam(default_value=3).to_dto()
+            proto.id, process_model.instance_name, 'params', 'a', IntParam(default_value=3).to_dto()
         )
+
+        proto = proto.refresh()
 
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
@@ -52,15 +50,13 @@ class TestDynamicParam(BaseTestCase):
                          .specs['a'].to_dto().to_json_dict(), IntParam(default_value=3).to_dto().to_json_dict())
         self.assertEqual(test_process_model.config.get_value('params')['a'], 3)
 
-    def test_rename_and_update_param(self):
-
-        proto: ProtocolModel = self.test_add_param()
-
         process_model: ProcessModel = proto.get_process('task')
 
         ProtocolService.rename_and_update_dynamic_param_spec_of_process(
-            proto.id, process_model.instance_name, 'a', 'b', IntParam(default_value=3).to_dto()
+            proto.id, process_model.instance_name, 'params', 'a', 'b', IntParam(default_value=4).to_dto()
         )
+
+        proto = proto.refresh()
 
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
@@ -68,19 +64,17 @@ class TestDynamicParam(BaseTestCase):
         self.assertTrue('a' not in test_process_model.config.get_spec('params').specs)
         self.assertIsNotNone(test_process_model.config.get_value('params'))
         self.assertEqual(test_process_model.config.get_spec('params')
-                         .specs['b'].to_dto().to_json_dict(), IntParam(default_value=3).to_dto().to_json_dict())
-        self.assertEqual(test_process_model.config.get_value('params')['b'], 3)
+                         .specs['b'].to_dto().to_json_dict(), IntParam(default_value=4).to_dto().to_json_dict())
+        self.assertEqual(test_process_model.config.get_value('params')['b'], 4)
         self.assertTrue('a' not in test_process_model.config.get_values())
-
-    def test_remove_param(self):
-
-        proto: ProtocolModel = self.test_add_param()
 
         process_model: ProcessModel = proto.get_process('task')
 
         ProtocolService.remove_dynamic_param_spec_of_process(
-            proto.id, process_model.instance_name, 'a'
+            proto.id, process_model.instance_name, 'params', 'b'
         )
+
+        proto = proto.refresh()
 
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
