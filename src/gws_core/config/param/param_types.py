@@ -27,3 +27,11 @@ class ParamSpecDTO(ParamSpecSimpleDTO):
     human_name: Optional[str] = None
     short_description: Optional[str] = None
     allowed_values: Optional[List[ParamValue]] = None
+
+
+DynamicParamAllowedSpecsDict = Dict[str, ParamSpecDTO | Dict[str, ParamSpecDTO]]
+
+
+class DynamicParamAllowedParamSpecsDTO(BaseModelDTO):
+    human_name: str
+    specs: DynamicParamAllowedSpecsDict
