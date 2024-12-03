@@ -35,7 +35,7 @@ class CredentialsParam(ParamSpec[str]):
                  credentials_type: CredentialsType = None,
                  optional: bool = False,
                  visibility: ParamSpecVisibilty = "public",
-                 human_name: Optional[str] = "Select credentials",
+                 human_name: Optional[str] = None,
                  short_description: Optional[str] = None,
                  ):
         """
@@ -54,6 +54,12 @@ class CredentialsParam(ParamSpec[str]):
         self.additional_info = {
             "credentials_type": credentials_type.value if credentials_type is not None else None,
         }
+
+        if human_name is None:
+            if credentials_type is not None:
+                human_name = f"Select {credentials_type.value} credentials"
+            else:
+                human_name = "Select credentials"
 
         super().__init__(
             optional=optional,
