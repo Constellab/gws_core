@@ -54,7 +54,8 @@ from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
-from gws_core.task.plug import InputTask, OutputTask
+from gws_core.task.plug.input_task import InputTask
+from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.user.activity.activity import Activity

@@ -4,7 +4,7 @@ from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.task.scenario_downloader import (ScenarioDownloader,
                                                         ScenarioDownloaderMode)
 from gws_core.scenario.task.scenario_resource import ScenarioResource
-from gws_core.task.plug import OutputTask
+from gws_core.task.plug.output_task import OutputTask
 
 
 class ScenarioDownloaderService():

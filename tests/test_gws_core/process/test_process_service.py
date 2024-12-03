@@ -6,7 +6,7 @@ from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.process.process_service import ProcessService
-from gws_core.task.plug import Wait
+from gws_core.task.plug.wait import Wait
 
 
 # test_process_service

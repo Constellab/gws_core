@@ -20,7 +20,7 @@ from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_run_service import ScenarioRunService
-from gws_core.task.plug import OutputTask
+from gws_core.task.plug.output_task import OutputTask
 from gws_core.test.gtest import GTest
 
 

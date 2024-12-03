@@ -10,7 +10,7 @@ from gws_core.protocol.protocol_decorator import protocol_decorator
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_spec import ProcessSpec
 from gws_core.scenario.scenario_proxy import ScenarioProxy
-from gws_core.task.plug import OutputTask
+from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase

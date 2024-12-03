@@ -14,7 +14,7 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_list import TagList
-from gws_core.task.plug import InputTask
+from gws_core.task.plug.input_task import InputTask
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction

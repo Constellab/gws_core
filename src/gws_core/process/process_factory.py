@@ -7,7 +7,8 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 from gws_core.resource.view.viewer import Viewer
-from gws_core.task.plug import InputTask, OutputTask
+from gws_core.task.plug.input_task import InputTask
+from gws_core.task.plug.output_task import OutputTask
 
 from ..config.config import Config
 from ..config.config_types import ConfigParamsDict

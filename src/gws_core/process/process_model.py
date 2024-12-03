@@ -18,7 +18,8 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
-from gws_core.task.plug import InputTask, OutputTask
+from gws_core.task.plug.input_task import InputTask
+from gws_core.task.plug.output_task import OutputTask
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField

@@ -23,7 +23,7 @@ from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.share.shared_resource import SharedResource
-from gws_core.task.plug import OutputTask
+from gws_core.task.plug.output_task import OutputTask
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,

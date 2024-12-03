@@ -30,7 +30,7 @@ from gws_core.share.shared_dto import (SharedEntityMode, ShareLinkType,
                                        ShareScenarioInfoReponseDTO)
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
-from gws_core.task.plug import InputTask
+from gws_core.task.plug.input_task import InputTask
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs

@@ -13,7 +13,7 @@ from gws_core.protocol.protocol_dto import (ConnectorDTO, IOFaceDTO,
 from gws_core.protocol.protocol_exception import \
     IOFaceConnectedToTheParentDeleteException
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
-from gws_core.task.plug import InputTask
+from gws_core.task.plug.input_task import InputTask
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException

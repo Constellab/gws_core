@@ -2,6 +2,8 @@
 
 from typing import List, Type
 
+from gws_core.task.plug.input_task import InputTask as InputTask
+from gws_core.task.plug.output_task import OutputTask as OutputTask
 from gws_core.task.transformer.transformer import Transformer
 
 from ...core.exception.exceptions.bad_request_exception import \
@@ -13,7 +15,6 @@ from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel
 from ...scenario.scenario_proxy import ScenarioProxy
 from ..converter.converter import Converter
-from ..plug import InputTask, OutputTask
 from ..task import Task
 from .transformer_type import TransformerDict
 

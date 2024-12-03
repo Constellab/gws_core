@@ -8,7 +8,8 @@ from gws_core.process.process_proxy import ProcessProxy
 from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.scenario.scenario_proxy import ScenarioProxy
-from gws_core.task.plug import OutputTask, Switch2
+from gws_core.task.plug.output_task import OutputTask
+from gws_core.task.plug.switch import Switch2
 from gws_core.test.base_test_case import BaseTestCase
 
 

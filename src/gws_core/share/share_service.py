@@ -33,7 +33,7 @@ from gws_core.share.shared_dto import (SharedEntityMode, ShareLinkType,
 from gws_core.share.shared_entity_info import SharedEntityInfo
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
-from gws_core.task.plug import OutputTask
+from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import AuthenticateUser

@@ -11,7 +11,7 @@ from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_run_service import ScenarioRunService
-from gws_core.task.plug import InputTask
+from gws_core.task.plug.input_task import InputTask
 from gws_core.test.gtest import GTest
 
 from ..protocol_examples import TestSimpleProtocol

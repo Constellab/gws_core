@@ -36,7 +36,8 @@ from gws_core.scenario_template.scenario_template_factory import \
 from gws_core.scenario_template.scenario_template_service import \
     ScenarioTemplateService
 from gws_core.streamlit.streamlit_agent import StreamlitAgent
-from gws_core.task.plug import InputTask, OutputTask
+from gws_core.task.plug.input_task import InputTask
+from gws_core.task.plug.output_task import OutputTask
 from gws_core.user.current_user_service import CurrentUserService
 
 from ..code.agent_factory import AgentFactory

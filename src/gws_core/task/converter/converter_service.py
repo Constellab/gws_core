@@ -6,7 +6,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_tasks import FsNodeExtractor
 from gws_core.resource.resource import Resource
 from gws_core.task.converter.exporter import ResourceExporter
-from gws_core.task.plug import OutputTask
+from gws_core.task.plug.output_task import OutputTask
 
 from ...config.config_types import ConfigParamsDict
 from ...core.exception.exceptions.bad_request_exception import \

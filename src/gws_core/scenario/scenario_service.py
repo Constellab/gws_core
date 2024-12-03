@@ -14,7 +14,7 @@ from gws_core.scenario.scenario_zipper import ZipScenario, ZipScenarioInfo
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_factory import \
     ScenarioTemplateFactory
-from gws_core.task.plug import OutputTask
+from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)

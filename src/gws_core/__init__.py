@@ -433,8 +433,10 @@ from .task.converter.exporter import exporter_decorator as exporter_decorator
 from .task.converter.importer import ResourceImporter as ResourceImporter
 from .task.converter.importer import importer_decorator as importer_decorator
 # Task
-from .task.plug import InputTask as InputTask
-from .task.plug import OutputTask as OutputTask
+from .task.plug.input_task import InputTask as InputTask
+from .task.plug.input_task_from_process_output import \
+    InputTaskFromProcessOutput as InputTaskFromProcessOutput
+from .task.plug.output_task import OutputTask as OutputTask
 from .task.task import CheckBeforeTaskResult as CheckBeforeTaskResult
 from .task.task import Task as Task
 from .task.task_decorator import task_decorator as task_decorator

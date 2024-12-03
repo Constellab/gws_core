@@ -1,11 +1,12 @@
 
 
-from typing import Dict, List, Optional, Set
+from typing import Optional, Set
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.protocol.protocol_dto import (ProcessConfigDTO,
                                             ProtocolGraphConfigDTO)
-from gws_core.task.plug import InputTask, OutputTask
+from gws_core.task.plug.input_task import InputTask
+from gws_core.task.plug.output_task import OutputTask
 
 
 class ResourceTaskOrigin(BaseModelDTO):

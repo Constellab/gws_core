@@ -5,7 +5,7 @@ from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.protocol.protocol_graph import ProtocolGraph
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario_proxy import ScenarioProxy
-from gws_core.task.plug import OutputTask
+from gws_core.task.plug.output_task import OutputTask
 from gws_core.test.gtest import GTest
 
 from ..protocol_examples import TestSubProtocol
