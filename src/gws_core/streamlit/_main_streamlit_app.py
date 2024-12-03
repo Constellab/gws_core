@@ -151,8 +151,8 @@ try:
         # make the path absolute relative to the config file
         config_file_dir = os.path.dirname(app_config_file)
         app_dir_abs_path = os.path.join(config_file_dir, config.app_dir_path)
-        print(
-            f"app_dir_path is not absolute, making it absolute relative to the config file directory: {config_file_dir}. Absolute path: {app_dir_abs_path}")
+        # print(
+        #     f"app_dir_path is not absolute, making it absolute relative to the config file directory: {config_file_dir}. Absolute path: {app_dir_abs_path}")
 
     if not os.path.exists(app_dir_abs_path) or not os.path.isdir(app_dir_abs_path):
         st.error(f"App dir not found: {app_dir_abs_path}")

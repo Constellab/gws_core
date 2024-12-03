@@ -115,6 +115,8 @@ class Settings():
         :return: the url of the dev dashboard when using 'gws streamlit run-dev' command
         :rtype: str
         """
+        if cls.is_local_env():
+            return f"http://localhost:{cls.get_dashboard_dev_port()}"
         return f"https://dashboard-dev.{cls.get_virtual_host()}"
 
     @classmethod
