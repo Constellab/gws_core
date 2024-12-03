@@ -30,7 +30,7 @@ from gws_core.share.shared_dto import (SharedEntityMode, ShareLinkType,
                                        ShareScenarioInfoReponseDTO)
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
-from gws_core.task.plug import Source
+from gws_core.task.plug import InputTask
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -191,7 +191,7 @@ class ScenarioDownloader(Task):
         self.log_info_message("Replacing the resources in the protocol by the downloaded resources")
 
         # first, we save the inputs of protocol
-        inputs = protocol_model.get_source_resource_ids()
+        inputs = protocol_model.get_input_resource_ids()
         for resource_id in inputs:
             if resource_id in resources:
                 resource = resources[resource_id]
@@ -218,7 +218,7 @@ class ScenarioDownloader(Task):
                     in_port.set_resource_model(resource_model)
 
                     # if the resource is an output, flag it
-                    if resource_model and isinstance(process_model, TaskModel) and process_model.is_sink_task():
+                    if resource_model and isinstance(process_model, TaskModel) and process_model.is_output_task():
                         resource_model.flagged = True
                         resource_model.save()
 
@@ -254,11 +254,11 @@ class ScenarioDownloader(Task):
                 else:
                     out_port.set_resource_model(None)
 
-            # for Source process, update the config with new resource id
-            if isinstance(process_model, TaskModel) and process_model.is_source_task():
-                new_resource = process_model.out_port(Source.output_name).get_resource_model()
+            # for Input process, update the config with new resource id
+            if isinstance(process_model, TaskModel) and process_model.is_input_task():
+                new_resource = process_model.out_port(InputTask.output_name).get_resource_model()
                 new_resource_id = new_resource.id if new_resource else None
-                process_model.set_config_value(Source.config_name, new_resource_id)
+                process_model.set_config_value(InputTask.config_name, new_resource_id)
 
         protocol_model.save_full()
 

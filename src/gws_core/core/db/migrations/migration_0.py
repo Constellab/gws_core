@@ -54,7 +54,7 @@ from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
-from gws_core.task.plug import Sink, Source
+from gws_core.task.plug import InputTask, OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.user.activity.activity import Activity
@@ -189,11 +189,11 @@ class Migration0310(BrickMigration):
         migrator.migrate()
 
         task_models: List[TaskModel] = list(TaskModel.select().where(
-            TaskModel.process_typing_name == Source.get_typing_name()))
+            TaskModel.process_typing_name == InputTask.get_typing_name()))
 
         # Update source config in task models
         for task_model in task_models:
-            resource_id = Source.get_resource_id_from_config(
+            resource_id = InputTask.get_resource_id_from_config(
                 task_model.config.get_values())
 
             if resource_id is not None:
@@ -286,8 +286,8 @@ class Migration0313(BrickMigration):
                 # set show_in_databox
                 task_input_model: TaskInputModel = TaskInputModel.get_by_resource_model(
                     resource_model.id).first()
-                # if the resource is used a input of a Sink task or the resource was uploaded
-                if (task_input_model is not None and task_input_model.task_model.process_typing_name == Sink.get_typing_name()) or \
+                # if the resource is an output or the resource was uploaded
+                if (task_input_model is not None and task_input_model.task_model.process_typing_name == OutputTask.get_typing_name()) or \
                         resource_model.origin == ResourceOrigin.UPLOADED:
                     resource_model.flagged = True
 
@@ -1069,12 +1069,65 @@ class Migration0100(BrickMigration):
             for old_typing_name, new_typing_name in agent_renames.items():
                 SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
 
+    @brick_migration('0.10.3', short_description='Migrate note and note template images')
+    class Migration0103(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            FileHelper.create_dir_if_not_exist('/data/note')
+            FileHelper.create_dir_if_not_exist('/data/note/note')
+            FileHelper.create_dir_if_not_exist('/data/note/note_template')
+
+            if FileHelper.exists_on_os('/data/report/report'):
+                FileHelper.copy_dir_content_to_dir('/data/report/report', '/data/note/note')
+                FileHelper.delete_dir('/data/report/report')
+
+            if FileHelper.exists_on_os('/data/report/document_template'):
+                FileHelper.copy_dir_content_to_dir('/data/report/document_template', '/data/note/note_template')
+                FileHelper.delete_dir('/data/report/document_template')
+
+            FileHelper.delete_dir('/data/report')
+
+            task_rename = {
+                'TASK.gws_core.CreateENote': 'TASK.gws_core.CreateNoteResource',
+                'TASK.gws_core.GenerateReportFromENote': 'TASK.gws_core.GenerateLabNote',
+                'TASK.gws_core.FileUncompressTask': 'TASK.gws_core.FileDecompressTask',
+                'TASK.gws_core.Source': InputTask.get_typing_name(),
+                'TASK.gws_core.Sink': OutputTask.get_typing_name(),
+            }
+
+            for old_typing_name, new_typing_name in task_rename.items():
+                SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+
             migrator: SqlMigrator = SqlMigrator(Note.get_db())
             migrator.add_column_if_not_exists(Note, Note.modifications)
+
+            migrator.migrate()
+            #
+            #  delete unique index on gw_fs_node path and update path to 1024
+            FSNodeModel.execute_sql("ALTER TABLE [TABLE_NAME] ADD path_2 varchar(1024) NULL")
+            FSNodeModel.execute_sql("UPDATE [TABLE_NAME] set path_2 = path")
+            FSNodeModel.execute_sql("ALTER TABLE [TABLE_NAME] DROP COLUMN path")
+            FSNodeModel.execute_sql("ALTER TABLE [TABLE_NAME] CHANGE path_2 path varchar(1024) NOT NULL")
+            Scenario.execute_sql(
+                "update [TABLE_NAME] set description = null where description = 'null' or description = ''")
+            ScenarioTemplate.execute_sql(
+                "update [TABLE_NAME] set description = null where description = 'null' or description = ''")
+            Note.execute_sql("update [TABLE_NAME] set content = null where content = 'null' or content = ''")
+            NoteTemplate.execute_sql("update [TABLE_NAME] set content = null where content = 'null' or content = ''")
+
+    @brick_migration('0.10.4', short_description='Delete scenario full text indexe')
+    class Migration0104(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            migrator: SqlMigrator = SqlMigrator(Note.get_db())
+
+            migrator.drop_index_if_exists(Scenario, 'I_F_EXP_TIDESC')
             migrator.migrate()
 
-    @brick_migration('0.10.3', short_description='Migrate angets params')
-    class Migration0103(BrickMigration):
+    @brick_migration('0.10.5', short_description='Migrate agents params')
+    class Migration0105(BrickMigration):
 
         @classmethod
         def get_var_type(cls, var) -> str:

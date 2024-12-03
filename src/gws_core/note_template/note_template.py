@@ -4,9 +4,9 @@ from typing import final
 
 from peewee import CharField
 
-from gws_core.core.model.db_field import BaseDTOField
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_field import RichTextField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.note_template.note_template_dto import NoteTemplateDTO
 
@@ -15,7 +15,7 @@ from gws_core.note_template.note_template_dto import NoteTemplateDTO
 class NoteTemplate(ModelWithUser):
     title = CharField()
 
-    content: RichTextDTO = BaseDTOField(RichTextDTO, null=True)
+    content: RichTextDTO = RichTextField(null=True)
 
     _table_name = 'gws_note_template'
 
@@ -23,7 +23,7 @@ class NoteTemplate(ModelWithUser):
         return RichText(self.content)
 
     def update_content_rich_text(self, rich_text: RichText) -> None:
-        self.content = rich_text.get_content()
+        self.content = rich_text.to_dto()
 
     def to_dto(self) -> NoteTemplateDTO:
         return NoteTemplateDTO(

@@ -3,8 +3,9 @@ import os
 import subprocess
 
 import typer
-from gws_core import BrickService
 from typing_extensions import Annotated
+
+from gws_core import BrickService, Settings
 
 app = typer.Typer()
 
@@ -24,6 +25,11 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the js
         typer.echo(f"Config file '{config_file_path}' does not exist.", err=True)
         raise typer.Abort()
 
+    settings = Settings.get_instance()
+
+    print(f"Running streamlit in dev mode, DO NOT USE IN PRODUCTION. You can access the dashboard at "
+          f"{settings.get_dashboard_dev_url()}")
+
     subprocess.run([
         "streamlit",
         "run",
@@ -32,5 +38,5 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the js
         "--server.runOnSave", str(server_run_on_save).lower(),
         "--",
         "--dev_mode", "true",
-        "--dev_config_file", config_file_path
+        "--dev_config_file", config_file_path,
     ], check=False)

@@ -1,7 +1,6 @@
 from typing import List, Optional, Type
 
-import streamlit as st
-from peewee import Expression
+from peewee import Expression, Ordering
 from streamlit_searchbox import st_searchbox
 
 from gws_core.resource.resource import Resource
@@ -15,21 +14,61 @@ class ResourceSearchInput():
 
     search_builder: ResourceSearchBuilder
 
+    _default_options: List[ResourceModel] = None
+
     def __init__(self):
         self.search_builder = ResourceSearchBuilder()
 
     def select(self, placeholder: str = 'Search for resource',
-               key: str = "searchbox") -> Optional[ResourceModel]:
+               key: str = "searchbox",
+               debounce: int = 300,
+               label: str = None) -> Optional[ResourceModel]:
+        """ Create a search box to select a resource
+
+        :param placeholder: Placeholder for empty searches shown within the component, defaults to 'Search for resource'
+        :type placeholder: str, optional
+        :param key: streamlit key, defaults to "searchbox"
+        :type key: str, optional
+        :param debounce: _description_, defaults to 300
+        :type debounce: int, optional
+        :param label: Label shown above the component, defaults to None
+        :type label: str, optional
+        :return: _description_
+        :rtype: Optional[ResourceModel]
+        """
+
+        if self._default_options is None:
+            self._default_options = self.search_builder.search_all()
 
         selected_resource: ResourceModel = st_searchbox(
             self._search_resources,
             key=key,
             placeholder=placeholder,
-            # TODO cache the search results
-            default_options=self.search_builder.search_all(),
+            default_options=self._default_options,
+            debounce=debounce,
+            label=label,
         )
 
         return selected_resource
+
+    def set_default_options(self, default_options: List[ResourceModel]) -> "ResourceSearchInput":
+        """Set the default options for the search box, set empty list to disable
+        By default, it call a search based on the current filters
+        """
+        self._default_options = default_options
+        return self
+
+    def add_order_by(self, order: Ordering) -> "ResourceSearchInput":
+        """
+        Add an ordering to the search query
+
+        :param order: Peewee ordering object like ResourceModel.name, ResourceModel.name.asc(), ResourceModel.name.desc()
+        :type order: Ordering
+        :return: _description_
+        :rtype: ResourceSearchInput
+        """
+        self.search_builder.add_ordering(order)
+        return self
 
     def add_resource_type_filter(self, resource_type: Type[Resource]) -> "ResourceSearchInput":
         """Filter the search query by a specific resource type

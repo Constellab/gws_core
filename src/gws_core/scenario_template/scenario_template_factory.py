@@ -6,6 +6,7 @@ from typing import Dict
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.logger import Logger
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.model.typing_style import TypingStyle
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
@@ -17,7 +18,7 @@ class ScenarioTemplateFactory:
 
     @classmethod
     def from_protocol_model(
-            cls, protocol_model: ProtocolModel, name: str, description: dict = None) -> ScenarioTemplate:
+            cls, protocol_model: ProtocolModel, name: str, description: RichTextDTO = None) -> ScenarioTemplate:
         scenario_template = ScenarioTemplate()
         # retrieve the protocol config, without the source task config
         scenario_template.set_template(protocol_model.to_protocol_config_dto(ignore_source_config=True))
@@ -108,7 +109,7 @@ class ScenarioTemplateFactory:
             if node.get('graph'):
                 cls.migrate_data_from_1_to_3(node["graph"])
 
-            if node.get('process_typing_name') == 'TASK.gws_core.Source':
+            if node.get('process_typing_name') == 'TASK.gws_core.InputTask':
                 node['config']['values']['resource_id'] = None
 
         return graph

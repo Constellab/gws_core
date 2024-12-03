@@ -11,6 +11,7 @@ from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.impl.text.text_view import SimpleTextView
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_runner import TaskRunner
 
@@ -34,7 +35,9 @@ class CreateFolderTest(Task):
 class TestFolder(BaseTestCase):
 
     def test_folder_attr(self):
-        folder: Folder = LocalFileStore.get_default_instance().create_empty_folder("folder")
+        tmp_dir = Settings.make_temp_dir()
+        folder: Folder = Folder(os.path.join(tmp_dir, 'folder'))
+        FileHelper.create_dir_if_not_exist(folder.path)
         self.assertEqual(folder.get_default_name(), "folder")
 
         sub_file = folder.create_empty_file_if_not_exist('test.txt')
@@ -61,8 +64,8 @@ class TestFolder(BaseTestCase):
         self.assertEqual(result._data.text, 'test')
 
         # Test creating a sub file and sub folder directly
-        sub_file_2 = folder.create_dir_if_not_exist('sub_folder/test.txt')
-        sub_folder_2 = folder.create_empty_file_if_not_exist('sub_folder2/test.txt')
+        folder.create_dir_if_not_exist('sub_folder/test.txt')
+        folder.create_empty_file_if_not_exist('sub_folder2/test.txt')
         self.assertTrue(folder.has_node('sub_folder/test.txt'))
         self.assertTrue(folder.has_node('sub_folder2/test.txt'))
 
@@ -111,6 +114,15 @@ class TestFolder(BaseTestCase):
         self.assertTrue(isinstance(sub_file, File))
         self.assertEqual(sub_file.read(), 'test')
 
+        # Delete the scenario and resource and check that the file still exists (because it is a symbolic link)
+        ScenarioService.reset_scenario(sub_file_model.scenario)
+
+        self.assertFalse(ResourceModel.get_by_id(sub_file_model.id))
+        # reload the folder
+        folder = folder_model.get_resource(new_instance=True)
+        self.assertTrue(folder.exists())
+        self.assertTrue(folder.has_node('test.txt'))
+
     def test_folder_exporter(self):
         temp = Settings.make_temp_dir()
         folder: Folder = Folder(temp)
@@ -128,6 +140,6 @@ class TestFolder(BaseTestCase):
         # Call exporter to tar.gz
         task_runner = TaskRunner(FolderExporter, inputs={'source': folder}, params={'compression': 'tar.gz'})
         result = task_runner.run()
-        target: File = result['target']
+        target = result['target']
         self.assertTrue(isinstance(target, File))
         self.assertEqual(target.extension, 'gz')

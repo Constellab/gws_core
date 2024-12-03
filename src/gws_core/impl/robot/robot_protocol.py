@@ -4,7 +4,7 @@ from gws_core.model.typing_style import TypingStyle
 
 from ...protocol.protocol import ProcessSpec, Protocol
 from ...protocol.protocol_decorator import protocol_decorator
-from ...task.plug import Sink, Source
+from ...task.plug import InputTask, OutputTask
 from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
                           RobotFly, RobotMove)
 
@@ -25,16 +25,16 @@ class RobotSimpleTravel(Protocol):
         eat_2: ProcessSpec = self.add_process(RobotEat, 'eat_2')
 
         # define the protocol output
-        sink_1: ProcessSpec = self.add_process(Sink, 'sink_1')
-        sink_2: ProcessSpec = self.add_process(Sink, 'sink_2')
+        output_1: ProcessSpec = self.add_process(OutputTask, 'output_1')
+        output_2: ProcessSpec = self.add_process(OutputTask, 'output_2')
 
         self.add_connectors([
             (facto >> 'robot', move_1 << 'robot'),
             (move_1 >> 'robot', eat_1 << 'robot'),
             (eat_1 >> 'robot', move_2 << 'robot'),
             (eat_1 >> 'robot', eat_2 << 'robot'),
-            (eat_2 >> 'robot', sink_1 << 'resource'),
-            (move_2 >> 'robot', sink_2 << 'resource'),
+            (eat_2 >> 'robot', output_1 << 'resource'),
+            (move_2 >> 'robot', output_2 << 'resource'),
         ])
 
 
@@ -109,12 +109,12 @@ class RobotWorldTravelProto(Protocol):
             'direction', 'west')
 
         # define the protocol output
-        sink_1: ProcessSpec = self.add_process(Sink, 'sink_1')
+        output_1: ProcessSpec = self.add_process(OutputTask, 'output_1')
 
         self.add_connectors([
             (facto >> 'robot', super_travel << 'super_travel_int'),
             (super_travel >> 'super_travel_out', fly_1 << 'robot'),
-            (fly_1 >> 'robot', sink_1 << 'resource')
+            (fly_1 >> 'robot', output_1 << 'resource')
         ])
 
 
@@ -125,10 +125,10 @@ class CreateSimpleRobot(Protocol):
         facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
 
         # define the protocol output
-        sink_1: ProcessSpec = self.add_process(Sink, 'sink_1')
+        output_1: ProcessSpec = self.add_process(OutputTask, 'output_1')
 
         self.add_connectors([
-            (facto >> 'robot', sink_1 << 'resource'),
+            (facto >> 'robot', output_1 << 'resource'),
         ])
 
 
@@ -137,13 +137,13 @@ class CreateSimpleRobot(Protocol):
 class MoveSimpleRobot(Protocol):
 
     def configure_protocol(self) -> None:
-        source: ProcessSpec = self.add_process(Source, 'source')
+        source: ProcessSpec = self.add_process(InputTask, 'source')
         move: ProcessSpec = self.add_process(RobotMove, 'move')
 
         # define the protocol output
-        sink_1: ProcessSpec = self.add_process(Sink, 'sink_1')
+        output_1: ProcessSpec = self.add_process(OutputTask, 'output_1')
 
         self.add_connectors([
             (source >> 'resource', move << 'robot'),
-            (move >> 'robot', sink_1 << 'resource'),
+            (move >> 'robot', output_1 << 'resource'),
         ])

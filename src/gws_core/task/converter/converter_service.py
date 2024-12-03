@@ -6,7 +6,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_tasks import FsNodeExtractor
 from gws_core.resource.resource import Resource
 from gws_core.task.converter.exporter import ResourceExporter
-from gws_core.task.plug import Sink
+from gws_core.task.plug import OutputTask
 
 from ...config.config_types import ConfigParamsDict
 from ...core.exception.exceptions.bad_request_exception import \
@@ -34,7 +34,7 @@ class ConverterService:
 
         importer_type: Type[ResourceImporter] = TypingManager.get_and_check_type_from_name(importer_typing_name)
 
-        # Create an scenario containing 1 source, 1 importer , 1 sink
+        # Create an scenario containing 1 source, 1 importer , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{resource_type.get_human_name()} importer")
         protocol: ProtocolProxy = scenario.get_protocol()
@@ -43,17 +43,17 @@ class ConverterService:
         importer: ProcessProxy = protocol.add_process(importer_type, 'importer', config)
 
         # Add source and connect it
-        protocol.add_source('source', resource_model_id, importer << ResourceImporter.input_name)
+        protocol.add_resource('source', resource_model_id, importer << ResourceImporter.input_name)
 
-        # Add sink and connect it
-        sink = protocol.add_sink('sink', importer >> ResourceImporter.output_name)
+        # Add output task and connect it
+        output_task = protocol.add_output('output', importer >> ResourceImporter.output_name)
 
         # run the scenario
         scenario.run(auto_delete_if_error=True)
 
-        # return the resource model of the sink process
-        sink.refresh()
-        return sink.get_input_resource_model(Sink.input_name)
+        # return the resource model of the output task process
+        output_task.refresh()
+        return output_task.get_input_resource_model(OutputTask.input_name)
 
     ################################################ EXPORTER ################################################
 
@@ -92,7 +92,7 @@ class ConverterService:
         # Check that the resource exists
         resource_model = ResourceModel.get_by_id_and_check(resource_model_id)
 
-        # Create an scenario containing 1 source, 1 extractor , 1 sink
+        # Create an scenario containing 1 source, 1 extractor , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{resource_model.name} exporter")
         protocol: ProtocolProxy = scenario.get_protocol()
@@ -102,17 +102,17 @@ class ConverterService:
         extractor: ProcessProxy = protocol.add_process(exporter_type, 'exporter', params)
 
         # Add source and connect it,
-        protocol.add_source('source', resource_model_id, extractor << 'source')
+        protocol.add_resource('source', resource_model_id, extractor << 'source')
 
-        # Add sink and connect it, don't flag the resource
-        sink = protocol.add_sink('sink', extractor >> 'target', False)
+        # Add output task and connect it, don't flag the resource
+        output_task = protocol.add_output('output', extractor >> 'target', False)
 
         # run the scenario
         scenario.run(auto_delete_if_error=True)
 
-        # return the resource model of the sink process
-        sink.refresh()
-        return sink.get_input_resource_model(Sink.input_name)
+        # return the resource model of the output task process
+        output_task.refresh()
+        return output_task.get_input_resource_model(OutputTask.input_name)
 
     ################################################ FILE EXTRACTOR ################################################
 
@@ -121,7 +121,7 @@ class ConverterService:
         # Check that the resource exists
         ResourceModel.get_by_id_and_check(folder_model_id)
 
-        # Create an scenario containing 1 source, 1 extractor , 1 sink
+        # Create an scenario containing 1 source, 1 extractor , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{FileHelper.get_name(sub_path)} extractor")
         protocol: ProtocolProxy = scenario.get_protocol()
@@ -131,14 +131,14 @@ class ConverterService:
             'fs_node_path': sub_path, 'fs_node_typing_name': fs_node_typing_name})
 
         # Add source and connect it
-        protocol.add_source('source', folder_model_id, extractor << 'source')
+        protocol.add_resource('source', folder_model_id, extractor << 'source')
 
-        # Add sink and connect it
-        sink = protocol.add_sink('sink', extractor >> 'target')
+        # Add output task and connect it
+        output_task = protocol.add_output('output', extractor >> 'target')
 
         #  run the scenario
         scenario.run(auto_delete_if_error=True)
 
-        # return the resource model of the sink process
-        sink.refresh()
-        return sink.get_input_resource_model(Sink.input_name)
+        # return the resource model of the output task process
+        output_task.refresh()
+        return output_task.get_input_resource_model(OutputTask.input_name)

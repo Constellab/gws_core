@@ -95,7 +95,8 @@ class NoteResource(ResourceSet):
                                        title: str = None, caption: str = None,
                                        parameter_name: str = None,
                                        create_new_resource: bool = False) -> None:
-        """Add a default view to the note resource content.
+        """Add a default view to the note resource content. This method is reponsible for generating the view of the input resource and the input resource
+        will be attached to the NoteResource.
 
         :param resource: resource to call the view on
         :type resource: Resource
@@ -117,7 +118,8 @@ class NoteResource(ResourceSet):
                                caption: str = None,
                                parameter_name: str = None,
                                create_new_resource: bool = False) -> None:
-        """Add a view to the note resource content.
+        """Add a view to the note resource content. This method is reponsible for generating the view of the input resource and the input resource
+        will be attached to the NoteResource.
         To get the information of the views, once you opened the view in the application, you can
         click on View settings > Show view configuration
 
@@ -146,7 +148,9 @@ class NoteResource(ResourceSet):
                  title: str = None, caption: str = None,
                  parameter_name: str = None) -> None:
         """
-        Add a view to the note resource content.
+        Add a view to the note resource content. In this case the resource is not attached to the NoteResource, the
+        view is considered as standalone. This can be useful when you want to add a view of a resource that does not exist in the
+        system (manually created resource).
 
         :param view: view to add
         :type view: View
@@ -554,7 +558,7 @@ class NoteResource(ResourceSet):
         note_rich_text = self._export_as_lab_note_rich_text(note.id)
 
         # save the content to the note
-        return NoteService.update_content(note.id, note_rich_text.get_content())
+        return NoteService.update_content(note.id, note_rich_text.to_dto())
 
     def _export_as_lab_note_rich_text(self, note_id: str) -> RichText:
         """

@@ -9,7 +9,6 @@ from time import time
 from typing import List, Type, Union
 
 from gws_core.core.utils.logger import Logger
-from gws_core.impl.file.folder import Folder
 
 from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions import BadRequestException
@@ -17,6 +16,7 @@ from ...core.utils.settings import Settings
 from .file import File
 from .file_helper import FileHelper
 from .file_store import FileStore
+from .folder import Folder
 from .fs_node import FSNode
 
 
@@ -30,7 +30,7 @@ class LocalFileStore(FileStore):
         if not self.path:
             self.data["path"] = os.path.join(self.get_base_dir(), self.id)
 
-    def add_node_from_path(self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = FSNode) -> FSNode:
+    def add_node_from_path(self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = None) -> FSNode:
         """
         Add a file from an external repository to a local store.
 
@@ -39,13 +39,16 @@ class LocalFileStore(FileStore):
         :return: The file object
         :rtype: gws.file.File.
         """
+        if self.node_path_exists(source_path):
+            raise BadRequestException(f"Node '{source_path}' already exists in the file store")
+
         if dest_name is None:
             dest_name = FileHelper.get_name_with_extension(source_path)
 
-        file = self._init_node(node_path=dest_name, node_type=node_type)
-        self._copy_node(source_path, file.path)
+        destination_path = self.generate_new_node_path(dest_name)
+        self._move_node(source_path, destination_path)
 
-        return file
+        return self.get_node_by_path(node_path=destination_path, node_type=node_type)
 
     def add_from_temp_file(
             self, source_file: Union[IOBase, SpooledTemporaryFile],
@@ -59,29 +62,16 @@ class LocalFileStore(FileStore):
         :rtype: gws.file.File.
         """
 
-        file: File = self._init_node(node_path=dest_file_name, node_type=file_type)
-        self._init_dir(file.dir)
+        dest_file_path = self.generate_new_node_path(dest_file_name)
 
-        with open(file.path, "wb") as buffer:
+        self._init_dir(FileHelper.get_dir(dest_file_path))
+
+        with open(dest_file_path, "wb") as buffer:
             shutil.copyfileobj(source_file, buffer)
 
-        return file
+        return self.get_node_by_path(node_path=dest_file_path, node_type=file_type)
 
-    def create_empty_file(self, file_name: str = None, file_type: Type[File] = File) -> File:
-        file: File = self._init_node(node_path=file_name, node_type=file_type)
-
-        self._init_dir(file.dir)
-
-        open(file.path, 'a', encoding='utf-8').close()
-        return file
-
-    def create_empty_folder(self, folder_name: str, folder_type: Type[Folder] = Folder) -> Folder:
-        folder: Folder = self._init_node(folder_name, folder_type)
-        self._init_dir(folder.path)
-
-        return folder
-
-    def _copy_node(self, source: str, destination: str) -> None:
+    def _move_node(self, source: str, destination: str) -> None:
         """Copy a node from a path to another path
 
         :param source: [description]
@@ -89,12 +79,9 @@ class LocalFileStore(FileStore):
         :param destination: [description]
         :type destination: str
         """
-        self._init_dir(str(Path(destination).parent))
+        self._init_dir(str(FileHelper.get_dir(destination)))
 
-        if (os.path.isdir(source)):
-            shutil.copytree(source, destination)
-        else:
-            shutil.copy2(source, destination)
+        FileHelper.move_file_or_dir(source, destination)
 
     def _init_dir(self, dir_: str) -> None:
         """Create the directory if it doesn't exist
@@ -105,18 +92,23 @@ class LocalFileStore(FileStore):
             if not os.path.exists(dir_):
                 raise BadRequestException(f"Cannot create directory '{dir_}'")
 
-    def _init_node(self, node_path: str = None, node_type: Type[FSNode] = FSNode) -> FSNode:
+    def get_node_by_path(self, node_path: str = None, node_type: Type[FSNode] = None) -> FSNode:
+
+        if node_type is None:
+            if FileHelper.is_file(node_path):
+                node_type = File
+            else:
+                node_type = Folder
 
         if not isclass(node_type) or not issubclass(node_type, FSNode):
             raise BadRequestException(f"The path type '{str(node_type)}' is not a FsNode class")
 
-        file: FSNode = node_type()
-        file.path = self.get_new_node_path(node_path)
+        file: FSNode = node_type(path=node_path)
         file.file_store_id = self.id
 
         return file
 
-    def get_new_node_path(self, dest_node_name: str = None) -> str:
+    def generate_new_node_path(self, dest_node_name: str = None) -> str:
         """Generate the node path from node name and avoid duplicate
 
         :param dest_file_name: [description], defaults to None
@@ -136,15 +128,8 @@ class LocalFileStore(FileStore):
         if not self.node_name_exists(dest_node_name):
             return os.path.join(self.path, dest_node_name)
 
-        extension: str = FileHelper.get_extension(dest_node_name)
-        file_name: str = FileHelper.get_name(dest_node_name)
-
         # If the file exists, find a unique name with a number
-        unique: int = 1
-        node_name = f"{file_name}_{unique}.{extension}" if extension else f"{file_name}_{unique}"
-        while self.node_name_exists(node_name):
-            unique += 1
-            node_name = f"{file_name}_{unique}.{extension}" if extension else f"{file_name}_{unique}"
+        node_name = FileHelper.generate_unique_fs_node_for_dir(dest_node_name, self.path)
 
         return os.path.join(self.path, node_name)
 

@@ -115,27 +115,6 @@ class Folder(FSNode):
         else:
             return Folder(sub_node_path)
 
-    def copy_to_path(self, destination: str) -> str:
-        """
-        Copy the folder to the destination and rename the base name
-
-        :param destination: complete path to the destination
-        :type destination: str
-        :return: the new path
-        :rtype: str
-        """
-        FileHelper.copy_dir(self.path, destination)
-        return destination
-
-    def get_base_name(self) -> str:
-        """
-        Get the name of the folder without the path
-
-        :return: the name of the folder
-        :rtype: str
-        """
-        return FileHelper.get_dir_name(self.path)
-
     @view(view_type=LocalFolderView, human_name="View folder content",
           short_description="View the sub files and folders", default_view=True)
     def view_as_json(self, params: ConfigParams) -> LocalFolderView:
@@ -157,5 +136,5 @@ class Folder(FSNode):
 
         sub_file = File(complete_path)
         view_ = sub_file.get_default_view(params.get('line_number', 1))
-        view_.set_title(sub_file.get_default_name())
+        view_.set_title(sub_file.get_base_name())
         return view_

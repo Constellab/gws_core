@@ -34,7 +34,8 @@ class TestNote(BaseTestCase):
         note = NoteService.update(note.id, NoteSaveDTO(title='New title'))
         self.assertEqual(note.title, 'New title')
 
-        content: RichTextDTO = RichText.create_rich_text_dto([RichText.create_paragraph('1', 'Hello world!')])
+        content: RichTextDTO = RichText.create_rich_text_dto(
+            [RichText.create_paragraph('1', 'Hello world!')])
         NoteService.update_content(note.id, content)
         note = note.refresh()
         self.assertEqual(len(note.content.blocks), 1)
@@ -169,13 +170,13 @@ class TestNote(BaseTestCase):
         rich_text = RichText()
         rich_text.add_paragraph('First paragraph')
         rich_text.add_paragraph('Second paragraph')
-        NoteTemplateService.update_content(note_template.id, rich_text.get_content())
+        NoteTemplateService.update_content(note_template.id, rich_text.to_dto())
 
         note = NoteService.create(NoteSaveDTO(title='Test note'))
         note_rich_text = RichText()
         note_rich_text.add_paragraph('Start note')
         note_rich_text.add_paragraph('End note')
-        NoteService.update_content(note.id, note_rich_text.get_content())
+        NoteService.update_content(note.id, note_rich_text.to_dto())
 
         # inser the note template in the note
         data = NoteInsertTemplateDTO(block_index=1, note_template_id=note_template.id)
@@ -191,4 +192,4 @@ class TestNote(BaseTestCase):
             {"id": "4", "type": "paragraph", "data": {"text": "End note"}}
         ]
 
-        self.assert_json(note_rich_text.get_content_as_json().get('blocks'), expected_blocks, ['id'])
+        self.assert_json(note_rich_text.to_dto_json_dict().get('blocks'), expected_blocks, ['id'])

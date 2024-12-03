@@ -4,6 +4,7 @@ from fastapi import UploadFile
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.scenario_template.scenario_template_factory import \
     ScenarioTemplateFactory
@@ -17,7 +18,7 @@ class ScenarioTemplateService():
 
     @classmethod
     def create_from_protocol(cls, protocol: ProtocolModel,
-                             name: str, description: dict = None) -> ScenarioTemplate:
+                             name: str, description: RichTextDTO = None) -> ScenarioTemplate:
 
         scenario_template = ScenarioTemplateFactory.from_protocol_model(protocol, name, description)
         return scenario_template.save()
@@ -30,7 +31,7 @@ class ScenarioTemplateService():
     @classmethod
     def update(cls, id: str,
                protocol: ProtocolModel = None,
-               name: str = None, description: dict = None) -> ScenarioTemplate:
+               name: str = None, description: RichTextDTO = None) -> ScenarioTemplate:
 
         scenario_template = cls.get_by_id_and_check(id)
 

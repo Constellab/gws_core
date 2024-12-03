@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional, Tuple, Type
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.process.process import Process
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -16,6 +17,11 @@ from .process_model import ProcessModel
 
 if TYPE_CHECKING:
     from ..protocol.protocol_proxy import ProtocolProxy
+
+
+class ProcessWithPort(BaseModelDTO):
+    process_instance_name: str
+    port_name: str
 
 
 class ProcessProxy:
@@ -134,14 +140,54 @@ class ProcessProxy:
 
     ############################################### PORTS #########################################
 
-    def __lshift__(self, name: str) -> Tuple[ProcessModel, str]:
-        return (self._process_model, name)
+    def get_input_port(self, port_name: str) -> ProcessWithPort:
+        """
+        Access input port information of a process to create connectors in protocol
+        """
+        if not self._process_model.inputs.port_exists(port_name):
+            raise Exception(
+                f"The process '{self.instance_name}' does not have an input port named '{port_name}'")
 
-    def __rshift__(self, name: str) -> Tuple[ProcessModel, str]:
-        return (self._process_model, name)
+        return ProcessWithPort(process_instance_name=self._process_model.instance_name, port_name=port_name)
 
-    def get_first_inport(self) -> InPort:
-        return list(self._process_model.inputs.ports.values())[0]
+    def __lshift__(self, port_name: str) -> ProcessWithPort:
+        """Visual way to access port information of a process:
 
-    def get_first_outport(self) -> OutPort:
-        return list(self._process_model.outputs.ports.values())[0]
+        process << 'port_name'
+        """
+
+        return self.get_input_port(port_name)
+
+    def get_output_port(self, port_name: str) -> ProcessWithPort:
+        """
+        Access output port information of a process to create connectors in protocol
+        """
+        if not self._process_model.outputs.port_exists(port_name):
+            raise Exception(
+                f"The process '{self.instance_name}' does not have an output port named '{port_name}'")
+
+        return ProcessWithPort(process_instance_name=self._process_model.instance_name, port_name=port_name)
+
+    def __rshift__(self, port_name: str) -> ProcessWithPort:
+        """Visual way to access port information of a process:
+        process >> 'port_name'
+        """
+        return self.get_output_port(port_name)
+
+    def get_first_inport(self) -> ProcessWithPort:
+        if len(self._process_model.inputs.ports) == 0:
+            raise Exception(
+                f"The process '{self.instance_name}' does not have any input port")
+
+        in_port = list(self._process_model.inputs.ports.values())[0]
+
+        return ProcessWithPort(process_instance_name=self._process_model.instance_name, port_name=in_port.name)
+
+    def get_first_outport(self) -> ProcessWithPort:
+        if len(self._process_model.outputs.ports) == 0:
+            raise Exception(
+                f"The process '{self.instance_name}' does not have any output port")
+
+        out_port = list(self._process_model.outputs.ports.values())[0]
+
+        return ProcessWithPort(process_instance_name=self._process_model.instance_name, port_name=out_port.name)

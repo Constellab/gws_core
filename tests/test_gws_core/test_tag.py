@@ -381,7 +381,7 @@ class TestTag(BaseTestCase):
         i_scenario_2: ScenarioProxy = ScenarioProxy()
         i_protocol_2: ProtocolProxy = i_scenario_2.get_protocol()
         move_robot = i_protocol_2.add_process(RobotMove, 'move')
-        i_protocol_2.add_source('source', exp_1_output.id, move_robot << 'robot')
+        i_protocol_2.add_resource('source', exp_1_output.id, move_robot << 'robot')
         i_scenario_2.run()
         exp_2_output = move_robot.refresh().get_output_resource_model('robot')
         exp_2 = i_scenario_2.get_model()

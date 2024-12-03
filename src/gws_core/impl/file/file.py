@@ -82,18 +82,15 @@ class File(FSNode):
     def mime(self):
         return FileHelper.get_mime(self.path)
 
-    def copy_to_path(self, destination: str) -> str:
-        """
-        Copy the file to the target path
-        """
-        FileHelper.copy_file(self.path, destination)
-        return destination
+    def get_name(self) -> str:
+        name = super().get_default_name()
 
-    def get_base_name(self) -> str:
-        """
-        Get file name with extension
-        """
-        return FileHelper.get_name_with_extension(self.path)
+        extension = FileHelper.get_extension(name)
+
+        # if there is no extension in the name, add it from the path
+        if not extension:
+            return name + FileHelper.get_extension(self.path)
+        return name
 
     def open(self, mode: str, encoding: str = None) -> Any:
         """
@@ -193,6 +190,7 @@ class File(FSNode):
 
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json")
     def view_as_json(self, params: ConfigParams) -> JSONView:
+        self.check_if_exists()
         # if the file is not readable,don't open the file and return the main view
         if not self.is_readable():
             return super().view_as_json(ConfigParams())
@@ -210,11 +208,13 @@ class File(FSNode):
     @view(view_type=SimpleTextView, human_name="View file content", short_description="View the file content as string",
           specs={"line_number": IntParam(default_value=1, min_value=1, human_name="From line")})
     def view_content_as_str(self, params: ConfigParams) -> SimpleTextView:
+        self.check_if_exists()
         return self.get_view_by_lines(params.get('line_number'))
 
     @view(view_type=View, human_name="Default view", short_description="View the file with automatic view",
           default_view=True, specs={"line_number": IntParam(default_value=1, min_value=1, human_name="From line")})
     def default_view(self, params: ConfigParams) -> View:
+        self.check_if_exists()
         return self.get_default_view(params.get('line_number'))
 
     def get_default_view(self, page: int = 1) -> View:
@@ -269,3 +269,7 @@ class File(FSNode):
             previous_page=max(start_line - self.TEXT_VIEW_NB_LINES, 1),
             page_param_name=self.PAGE_PARAM_NAME
         ))
+
+    def check_if_exists(self):
+        if not self.exists():
+            raise BadRequestException(f"File {self.name or self.get_base_name()} does not exist")

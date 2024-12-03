@@ -48,7 +48,7 @@ class ResourceLoader():
     def load_resource(self) -> Resource:
 
         if not self.is_resource_zip():
-            return self._load_fs_node_resource()
+            return self.load_fs_node_resource()
 
         self._check_compatibility()
 
@@ -150,7 +150,7 @@ class ResourceLoader():
 
         return self.info_json
 
-    def _load_fs_node_resource(self) -> FSNode:
+    def load_fs_node_resource(self) -> FSNode:
         """Load the File or Folder resource from folder if the folder
         is not a resource export but only files.
         If there is 1 file or folder in the folder, return it.

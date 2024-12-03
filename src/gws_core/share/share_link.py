@@ -1,6 +1,6 @@
 
 
-from typing import List, Optional, Tuple, Type
+from typing import Optional, Type
 
 from peewee import CharField
 
@@ -10,6 +10,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.model.db_field import DateTimeUTC
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.settings import Settings
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
@@ -100,7 +101,8 @@ class ShareLink(ModelWithUser):
             entity_id=self.entity_id,
             entity_type=self.entity_type,
             valid_until=self.valid_until,
-            link=self.get_link(),
+            download_link=self.get_download_link(),
+            preview_link=self.get_preview_link(),
             status='SUCCESS',
         )
 
@@ -117,15 +119,21 @@ class ShareLink(ModelWithUser):
 
         return link_dto
 
-    def get_link(self) -> str:
+    def get_download_link(self) -> str:
         if self.entity_type == ShareLinkType.RESOURCE:
             return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/info/{self.token}"
         elif self.entity_type == ShareLinkType.SCENARIO:
             return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/scenario/{self.token}"
 
+    def get_preview_link(self) -> str | None:
+        if self.entity_type == ShareLinkType.RESOURCE:
+            return FrontService.get_resource_open_url(self.token)
+        elif self.entity_type == ShareLinkType.SCENARIO:
+            return None
+
     @classmethod
     def is_lab_share_resource_link(cls, link: str) -> bool:
-        return cls._is_lab_share_entity_link(link) and link.find('share/info/') != -1
+        return cls._is_lab_share_entity_link(link) and link.find('share/') != -1
 
     @classmethod
     def is_lab_share_scenario_link(cls, link: str) -> bool:
@@ -136,7 +144,7 @@ class ShareLink(ModelWithUser):
         settings = Settings.get_instance()
 
         # specific case for dev env, accept if the link is from this lab
-        if settings.is_local_dev_env():
+        if settings.is_local_env():
             if not link.startswith('https://glab') and not link.startswith(settings.get_lab_api_url()):
                 return False
         else:

@@ -11,6 +11,7 @@ from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.core_controller import core_app
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.scenario_template.scenario_template_dto import \
     ScenarioTemplateDTO
@@ -44,7 +45,7 @@ def upload_folder(file: UploadFile = FastAPIFile(...),
 
 class UpdateScenarioTemplate(BaseModelDTO):
     name: Optional[str] = None
-    description: Optional[dict] = None
+    description: Optional[RichTextDTO] = None
 
 
 @core_app.put("/scenario-template/{id}", tags=["Scenario template"], summary="Update scenario template")

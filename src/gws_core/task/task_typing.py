@@ -80,10 +80,10 @@ class TaskTyping(Typing):
             return False
 
         # if the importer does not as supported extension, we consider all the extension as supported
-        if not type_._supported_extensions:
+        if not type_.__supported_extensions__:
             return True
 
-        return extension in type_._supported_extensions
+        return extension in type_.__supported_extensions__
 
     def to_full_dto(self) -> TaskTypingDTO:
         typing_dto = super().to_full_dto()
@@ -103,6 +103,6 @@ class TaskTyping(Typing):
             from ..task.converter.importer import ResourceImporter
             if Utils.issubclass(model_t, ResourceImporter):
                 importer_t: Type[ResourceImporter] = model_t
-                task_typing.additional_data = {"supported_extensions": importer_t._supported_extensions}
+                task_typing.additional_data = {"supported_extensions": importer_t.__supported_extensions__}
 
         return task_typing

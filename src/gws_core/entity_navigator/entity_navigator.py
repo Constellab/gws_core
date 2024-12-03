@@ -318,7 +318,7 @@ class EntityNavigatorScenario(EntityNavigator[Scenario]):
         return self.get_next_resources().get_next_scenarios()
 
     def get_previous_resources(self) -> 'EntityNavigatorResource':
-        task_models: List[TaskModel] = list(TaskModel.get_scenario_source_tasks(self._get_entities_ids()))
+        task_models: List[TaskModel] = list(TaskModel.get_scenario_input_tasks(self._get_entities_ids()))
 
         resource_ids: List[str] = [task.source_config_id for task in task_models if task.source_config_id is not None]
 
@@ -393,7 +393,7 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
 
     def _get_next_tasks(self) -> Set[TaskModel]:
         # retrieve all the tasks that uses the resource as input
-        # Don't retrieve the Source task that uses this resource as Config because the output of the Source task
+        # Don't retrieve the input task that uses this resource as Config because the output of the input task
         # is the resource itself
         task_input_models: Set[TaskInputModel] = set(TaskInputModel.get_by_resource_models(self._get_entities_ids()))
         return {task_input.task_model for task_input in task_input_models}
@@ -412,7 +412,7 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         if len(resource_exp_ids) > 0:
             expression = expression & (Scenario.id.not_in(resource_exp_ids))
 
-        # Search scenario where a Source is configured with the resource and where a task takes the resource as input
+        # Search scenario where an input task is configured with the resource and where a task takes the resource as input
             # with this, all case are managed
         return Scenario.select().where(expression) \
             .join(TaskInputModel, JOIN.LEFT_OUTER) \
@@ -434,7 +434,7 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         """ Return all the scenarios that generated the current resources"""
 
         scenario_ids: List[str] = [resource.scenario.id for resource in self._entities
-                                     if resource.scenario is not None]
+                                   if resource.scenario is not None]
 
         scenarios: Set[Scenario] = set(Scenario.get_by_ids(scenario_ids))
 

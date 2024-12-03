@@ -73,6 +73,7 @@ from .core.db.db_config import DbMode as DbMode
 from .core.db.db_manager import AbstractDbManager as AbstractDbManager
 from .core.db.db_migration import brick_migration as brick_migration
 from .core.db.pool_db import PoolDb as PoolDb
+from .core.db.sql_migrator import SqlMigrator as SqlMigrator
 from .core.db.version import Version as Version
 # Core > Transaction
 from .core.decorator.transaction import transaction as transaction
@@ -164,6 +165,12 @@ from .impl.openai.open_ai_types import OpenAiChatMessage as OpenAiChatMessage
 from .impl.plotly.plotly_r_field import PlotlyRField as PlotlyRField
 from .impl.plotly.plotly_resource import PlotlyResource as PlotlyResource
 from .impl.plotly.plotly_view import PlotlyView as PlotlyView
+# Impl > RichText
+from .impl.rich_text.rich_text import RichText as RichText
+from .impl.rich_text.rich_text_paragraph_text import \
+    RichTextParagraphText as RichTextParagraphText
+from .impl.rich_text.rich_text_types import *
+from .impl.rich_text.rich_text_view import RichTextView as RichTextView
 # Impl > s3
 from .impl.s3.s3_bucket import S3Bucket as S3Bucket
 # Impl > Shell
@@ -362,6 +369,7 @@ from .resource.r_field.serializable_r_field import \
 from .resource.resource import Resource as Resource
 from .resource.resource_decorator import \
     resource_decorator as resource_decorator
+from .resource.resource_dto import ResourceOrigin as ResourceOrigin
 from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_r_field import ResourceRField as ResourceRField
 from .resource.resource_search_builder import \
@@ -414,7 +422,9 @@ from .streamlit.streamlit_resource import \
 from .tag.entity_tag import EntityTag as EntityTag
 from .tag.tag import Tag as Tag
 from .tag.tag_helper import TagHelper as TagHelper
+from .tag.tag_key_model import TagKeyModel as TagKeyModel
 from .tag.tag_service import TagService as TagService
+from .tag.tag_value_model import TagValueModel as TagValueModel
 # Task > Converter
 from .task.converter.converter import Converter as Converter
 from .task.converter.converter import ConverterRunner as ConverterRunner
@@ -423,8 +433,8 @@ from .task.converter.exporter import exporter_decorator as exporter_decorator
 from .task.converter.importer import ResourceImporter as ResourceImporter
 from .task.converter.importer import importer_decorator as importer_decorator
 # Task
-from .task.plug import Sink as Sink
-from .task.plug import Source as Source
+from .task.plug import InputTask as InputTask
+from .task.plug import OutputTask as OutputTask
 from .task.task import CheckBeforeTaskResult as CheckBeforeTaskResult
 from .task.task import Task as Task
 from .task.task_decorator import task_decorator as task_decorator

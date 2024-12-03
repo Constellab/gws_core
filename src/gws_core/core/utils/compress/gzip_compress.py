@@ -60,3 +60,9 @@ class GzipCompress(Compress):
         if file_path.endswith('.tar.gz'):
             return False
         return file_path.endswith('.gz')
+
+    @classmethod
+    def get_supported_extensions(cls) -> set:
+        """Return the list of supported extensions
+        """
+        return {'gz'}

@@ -27,9 +27,10 @@ def importer_decorator(
         supported_extensions: List[str],
         source_type: Type[FSNode] = File,
         human_name: str = None,
-        short_description: bool = None,
+        short_description: str = None,
         hide: bool = False,
         style: TypingStyle = None,
+        output_sub_class: bool = False,
         deprecated_since: str = None,
         deprecated_message: str = None,
         deprecated: TypingDeprecated = None) -> Callable:
@@ -56,6 +57,8 @@ def importer_decorator(
     :type hide: bool, optional
     :param style: style of the task, view TypingStyle object for more info. If not provided, takes the style of target_type resource, defaults to None
     :type style: TypingStyle, optional
+    :param output_sub_class: If True, the output suports sub classes of target type, defaults to False
+    :type output_sub_class: bool, optional
     :param deprecated: object to tell that the object is deprecated. See TypingDeprecated for more info, defaults to None
     :type deprecated: TypingDeprecated, optional
     :return: [description]
@@ -75,7 +78,7 @@ def importer_decorator(
                     f"Error in the importer_decorator of class {task_class.__name__}. The source_type must be an FsNode or child class")
                 return task_class
 
-            task_class._supported_extensions = supported_extensions
+            task_class.__supported_extensions__ = supported_extensions
             human_name_computed = human_name or target_type.get_human_name() + ' importer'
             short_description_computed = short_description or f"Import file to {target_type.get_human_name()}"
 
@@ -91,6 +94,7 @@ def importer_decorator(
                 short_description=short_description_computed,
                 hide=hide,
                 style=style,
+                output_sub_class=output_sub_class,
                 deprecated_since=deprecated_since,
                 deprecated_message=deprecated_message,
                 deprecated=deprecated)
@@ -119,7 +123,7 @@ class ResourceImporter(Converter):
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {}
 
-    _supported_extensions: List[str] = []
+    __supported_extensions__: List[str] = []
 
     @final
     def convert(self, source: FSNode, params: ConfigParams, target_type: Type[Resource]) -> Resource:

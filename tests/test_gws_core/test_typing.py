@@ -2,8 +2,8 @@
 
 from typing import List
 
-from gws_core import (BaseTestCase, File, ProcessSpec, Protocol,
-                      ProtocolTyping, ResourceTyping, Sink, TaskTyping,
+from gws_core import (BaseTestCase, File, OutputTask, ProcessSpec, Protocol,
+                      ProtocolTyping, ResourceTyping, TaskTyping,
                       protocol_decorator, transformer_decorator)
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
@@ -24,10 +24,10 @@ class CreateSimpleRobot2(Protocol):
         facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
 
         # define the protocol output
-        sink_1: ProcessSpec = self.add_process(Sink, 'sink_1')
+        output_1: ProcessSpec = self.add_process(OutputTask, 'output_1')
 
         self.add_connectors([
-            (facto >> 'robot', sink_1 << 'resource'),
+            (facto >> 'robot', output_1 << 'resource'),
         ])
 
 

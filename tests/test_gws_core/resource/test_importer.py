@@ -1,10 +1,11 @@
 
 
-from gws_core import (File, Paginator, Resource, ResourceImporter, Table,
-                      TableImporter, importer_decorator)
+from gws_core import (File, Paginator, Resource, ResourceImporter, Text,
+                      importer_decorator)
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
                                                   SearchOperator, SearchParams)
+from gws_core.impl.text.text_tasks import TextImporter
 from gws_core.model.typing_service import TypingService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
@@ -45,13 +46,10 @@ class TestImporter(BaseTestCase):
         self.assertTrue(len(importers.results) > 0)
 
     def test_importer(self):
-        file = File(path=DataProvider.get_iris_file().path)
+        file = DataProvider.get_new_empty_file()
 
         resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
-
-        # import the table file into a Table
-        result: ResourceModel = ConverterService.call_importer(resource_model.id, TableImporter.get_typing_name(),  {})
+        result: ResourceModel = ConverterService.call_importer(resource_model.id, TextImporter.get_typing_name(),  {})
 
         self.assertEqual(result.origin, ResourceOrigin.GENERATED)
-        table: Table = result.get_resource()
-        self.assertIsInstance(table, Table)
+        self.assertIsInstance(result.get_resource(), Text)

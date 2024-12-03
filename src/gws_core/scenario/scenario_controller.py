@@ -8,6 +8,7 @@ from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.scenario.scenario_downloader_service import \
     ScenarioDownloaderService
 from gws_core.scenario.task.scenario_downloader import ScenarioDownloaderMode
@@ -37,7 +38,7 @@ def get_the_list_of_running_scenarios(
 
 @core_app.get("/scenario/{id_}", tags=["Scenario"], summary="Get an scenario")
 def get_an_scenario(id_: str,
-                      _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                    _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
     Retrieve an scenario
 
@@ -96,7 +97,7 @@ def get_by_input_resource(resource_id: str,
 
 @core_app.post("/scenario", tags=["Scenario"], summary="Create an scenario")
 def create_an_scenario(scenario: ScenarioSaveDTO,
-                         _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                       _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
     Create an scenario.
     """
@@ -109,8 +110,8 @@ def create_an_scenario(scenario: ScenarioSaveDTO,
 
 @core_app.put("/scenario/{id_}/validate/{folder_id}", tags=["Scenario"], summary="Validate an scenario")
 def validate_an_scenario(id_: str,
-                           folder_id: str = None,
-                           _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                         folder_id: str = None,
+                         _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
     Validate a protocol
 
@@ -134,8 +135,8 @@ class UpdateFolder(BaseModelDTO):
 
 @core_app.put("/scenario/{id_}/folder", tags=["Scenario"], summary="Update the folder of an scenario")
 def update_scenario_folder(id_: str,
-                             folder: UpdateFolder,
-                             _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                           folder: UpdateFolder,
+                           _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
     Update the folder of an scenario
 
@@ -148,8 +149,8 @@ def update_scenario_folder(id_: str,
 
 @core_app.put("/scenario/{id_}/description", tags=["Scenario"], summary="Update an scenario's description")
 def update_scenario_description(id_: str,
-                                  description: Dict,
-                                  _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                                description: RichTextDTO,
+                                _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
     Update an scenario's description
     """
@@ -159,13 +160,13 @@ def update_scenario_description(id_: str,
 
 @core_app.put("/scenario/{id_}/reset", tags=["Scenario"], summary="Reset an scenario")
 def reset_an_scenario(id_: str,
-                        _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                      _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     return EntityNavigatorService.reset_scenario(id_).to_dto()
 
 
 @core_app.get("/scenario/{id_}/reset/check-impact", tags=["Scenario"], summary="Check impact for scenario reset")
 def check_impact_for_scenario_reset(id_: str,
-                                      _=Depends(AuthService.check_user_access_token)) -> ImpactResultDTO:
+                                    _=Depends(AuthService.check_user_access_token)) -> ImpactResultDTO:
     return EntityNavigatorService.check_impact_for_scenario_reset(id_).to_dto()
 
 
@@ -180,7 +181,7 @@ def sync_with_space(id_: str,
 
 @core_app.post("/scenario/{id_}/start", tags=["Scenario"], summary="Start an scenario")
 def start_an_scenario(id_: str,
-                        _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                      _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
     Start an scenario
 
@@ -192,7 +193,7 @@ def start_an_scenario(id_: str,
 
 @core_app.post("/scenario/{id_}/stop", tags=["Scenario"], summary="Stop an scenario")
 def stop_an_scenario(id_: str,
-                       _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                     _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
     Stop an scenario
 
@@ -206,7 +207,7 @@ def stop_an_scenario(id_: str,
 
 @core_app.put("/scenario/{id_}/clone", tags=["Scenario"], summary="Clone an scenario")
 def clone_scenario(id_: str,
-                     _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                   _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     return ScenarioService.clone_scenario(id_).to_dto()
 
 ################################### DELETE ##############################
@@ -214,7 +215,7 @@ def clone_scenario(id_: str,
 
 @core_app.delete("/scenario/{id_}", tags=["Scenario"], summary="Delete an scenario")
 def delete_scenario(id_: str,
-                      _=Depends(AuthService.check_user_access_token)) -> None:
+                    _=Depends(AuthService.check_user_access_token)) -> None:
     return EntityNavigatorService.delete_scenario(id_)
 
 

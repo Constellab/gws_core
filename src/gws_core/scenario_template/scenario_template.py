@@ -4,6 +4,8 @@ from typing import Any, Dict
 from peewee import CharField, IntegerField
 
 from gws_core.core.model.db_field import JSONField
+from gws_core.impl.rich_text.rich_text_field import RichTextField
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactory
 from gws_core.protocol.protocol_model import ProtocolModel
@@ -24,7 +26,7 @@ class ScenarioTemplate(ModelWithUser):
 
     name = CharField(max_length=255)
 
-    description = JSONField(null=True)
+    description = RichTextField(null=True)
 
     # version number of the scenario template
     version = IntegerField(null=False, default=1)

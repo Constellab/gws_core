@@ -41,9 +41,17 @@ def create_task(name: str, human_name: str = '', short_description: str = '') ->
         task_code = f.read()
 
     task_code = replace_variables(task_code, NAME_VAR, name)
-    task_code = replace_variables(task_code, HUMAN_NAME_VAR, f', "{human_name}"' if human_name else name)
-    task_code = replace_variables(task_code, SHORT_DESCRIPTION_VAR,
-                                  f', "{short_description}"' if short_description else '')
+    human_name = human_name if human_name else name
+    if human_name:
+        task_code = replace_variables(task_code, HUMAN_NAME_VAR, f', human_name="{human_name}"')
+    else:
+        task_code = replace_variables(task_code, HUMAN_NAME_VAR, '')
+
+    if short_description:
+        task_code = replace_variables(task_code, SHORT_DESCRIPTION_VAR,
+                                      f', short_description="{short_description}"')
+    else:
+        task_code = replace_variables(task_code, SHORT_DESCRIPTION_VAR, '')
 
     with open(task_file, 'w', encoding='UTF-8') as f:
         f.write(task_code)

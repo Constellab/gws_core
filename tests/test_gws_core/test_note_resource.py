@@ -67,7 +67,7 @@ class TestNoteResource(BaseTestCase):
         file_data = self._create_note_template_file(doc_template.id, 'hello.txt')
         template_rich_text.add_file(file_data)
 
-        doc_template.content = template_rich_text.get_content()
+        doc_template.content = template_rich_text.to_dto()
         doc_template.save()
 
         # Test create note resource from template

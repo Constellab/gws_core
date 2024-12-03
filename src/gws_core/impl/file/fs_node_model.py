@@ -21,7 +21,7 @@ class FSNodeModel(Model):
     :param Model: [description]
     :type Model: [type]
     """
-    path = CharField(null=True, unique=True)
+    path = CharField(null=False, max_length=1024)
     file_store_id = CharField(null=True, index=True)
     size = BigIntegerField(null=True)
     is_symbolic_link = BooleanField(null=False, default=False)
@@ -44,6 +44,10 @@ class FSNodeModel(Model):
     @classmethod
     def find_by_path(cls, path: str) -> Optional['FSNodeModel']:
         return cls.select().where(cls.path == path).first()
+
+    @classmethod
+    def path_already_exist(cls, path: str) -> bool:
+        return cls.find_by_path(path) is not None
 
     @classmethod
     def path_start_with(cls, path: str) -> List['FSNodeModel']:

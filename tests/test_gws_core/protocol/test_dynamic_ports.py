@@ -79,7 +79,7 @@ class TestDynamicPorts(BaseTestCase):
         # connect source to the new port
         # add a source to the input
         resource_model: ResourceModel = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)
-        ProtocolService.add_source_to_process_input(
+        ProtocolService.add_input_resource_to_process_input(
             protocol.id, resource_model.id, process_model.instance_name, port_name).process
 
         protocol = protocol.refresh()

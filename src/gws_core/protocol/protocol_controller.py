@@ -13,6 +13,7 @@ from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
@@ -351,37 +352,37 @@ def delete_outerface(id_: str,
 
 ########################## SPECIFIC PROCESS #####################
 
-@core_app.post("/protocol/{id_}/add-source/{resource_id}/{process_name}/{input_port_name}", tags=["Protocol"],
-               summary="Add a configured source link to a process' input")
-def add_source_to_process_input(id_: str,
-                                resource_id: str,
-                                process_name: str,
-                                input_port_name: str,
-                                _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+@core_app.post("/protocol/{id_}/add-resource/{resource_id}/{process_name}/{input_port_name}", tags=["Protocol"],
+               summary="Add a resource link to a process' input")
+def add_input_resource_to_process_input(id_: str,
+                                        resource_id: str,
+                                        process_name: str,
+                                        input_port_name: str,
+                                        _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
-        return ProtocolService.add_source_to_process_input(
+        return ProtocolService.add_input_resource_to_process_input(
             protocol_id=id_, resource_id=resource_id, process_name=process_name,
             input_port_name=input_port_name).to_dto()
 
 
-@core_app.post("/protocol/{id_}/add-source/{resource_id}", tags=["Protocol"],
-               summary="Add a configured source link to a process' input")
-def add_source_to_protocol(id_: str,
-                           resource_id: str,
-                           _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+@core_app.post("/protocol/{id_}/add-resource/{resource_id}", tags=["Protocol"],
+               summary="Add a resource link to a process' input")
+def add_input_resource_to_protocol(id_: str,
+                                   resource_id: str,
+                                   _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
-        return ProtocolService.add_source_to_protocol_id(
+        return ProtocolService.add_input_resource_to_protocol_id(
             protocol_id=id_, resource_id=resource_id).to_dto()
 
 
-@core_app.post("/protocol/{id_}/add-sink/{process_name}/{output_port_name}", tags=["Protocol"],
-               summary="Add a sink link a process' output")
-def add_sink_to_process_ouput(id_: str,
-                              process_name: str,
-                              output_port_name: str,
-                              _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+@core_app.post("/protocol/{id_}/add-output/{process_name}/{output_port_name}", tags=["Protocol"],
+               summary="Add an output task link a process' output")
+def add_output_task_to_process_ouput(id_: str,
+                                     process_name: str,
+                                     output_port_name: str,
+                                     _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
-        return ProtocolService.add_sink_to_process_ouput(
+        return ProtocolService.add_output_task_to_process_ouput(
             protocol_id=id_, process_name=process_name, output_port_name=output_port_name).to_dto()
 
 
@@ -537,7 +538,7 @@ def update_process_style(id_: str,
 
 class CreateScenarioTemplate(BaseModelDTO):
     name: str = None
-    description: Optional[dict] = None
+    description: Optional[RichTextDTO] = None
 
 
 @core_app.post("/protocol/{id_}/template", tags=["Protocol"],

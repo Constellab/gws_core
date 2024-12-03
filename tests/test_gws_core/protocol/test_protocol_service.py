@@ -18,7 +18,7 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.view.viewer import Viewer
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.streamlit.streamlit_agent import StreamlitAgent
-from gws_core.task.plug import Sink, Source
+from gws_core.task.plug import InputTask, OutputTask
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.user.current_user_service import CurrentUserService
 
@@ -42,33 +42,33 @@ class TestProtocolService(BaseTestCase):
         # Test add source
         resource_model: ResourceModel = ResourceModel.save_from_resource(
             Robot.empty(), ResourceOrigin.UPLOADED)
-        source_model: ProcessModel = ProtocolService.add_source_to_process_input(
+        source_model: ProcessModel = ProtocolService.add_input_resource_to_process_input(
             protocol_model.id, resource_model.id, process_model.instance_name, 'robot').process
 
         protocol_model = protocol_model.refresh()
         source_model = protocol_model.get_process(
             source_model.instance_name)
-        self.assertEqual(source_model.get_process_type(), Source)
+        self.assertEqual(source_model.get_process_type(), InputTask)
         self.assertEqual(source_model.config.get_value(
-            Source.config_name), resource_model.id)
+            InputTask.config_name), resource_model.id)
         # check that the source_config_id is set for the task model
         self.assertEqual(source_model.source_config_id, resource_model.id)
         # Check that the source was automatically run
         self.assertTrue(source_model.is_finished)
 
-        # check that the robot_move received the resource because Source was run
+        # check that the robot_move received the resource because InputTask was run
         process_model = process_model.refresh()
         self.assertEqual(process_model.in_port('robot').get_resource_model_id(), resource_model.id)
 
         # Check that the connector was created
         self.assertEqual(len(protocol_model.connectors), 1)
 
-        # Test add sink
-        sink_model: ProcessModel = ProtocolService.add_sink_to_process_ouput(
+        # Test add output
+        output_task_model: ProcessModel = ProtocolService.add_output_task_to_process_ouput(
             protocol_model.id, process_model.instance_name, 'robot').process
         protocol_model = protocol_model.refresh()
-        sink_model = protocol_model.get_process(sink_model.instance_name)
-        self.assertEqual(sink_model.get_process_type(), Sink)
+        output_task_model = protocol_model.get_process(output_task_model.instance_name)
+        self.assertEqual(output_task_model.get_process_type(), OutputTask)
 
         # Check that the connector was created
         self.assertEqual(len(protocol_model.connectors), 2)
@@ -191,7 +191,7 @@ class TestProtocolService(BaseTestCase):
 
         scenario2 = ScenarioProxy()
         robot_mode = scenario2.get_protocol().add_task(RobotMove, 'robot')
-        scenario2.get_protocol().add_source(
+        scenario2.get_protocol().add_resource(
             'source', main_resource.id, robot_mode << 'robot')
 
         reset_impact = EntityNavigatorService.check_impact_for_process_reset(

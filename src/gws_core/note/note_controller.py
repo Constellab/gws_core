@@ -184,7 +184,8 @@ def get_history(
 @core_app.get(
     "/note/{note_id}/history/undo-content/{modification_id}", tags=["Note"],
     summary="Get a note past content by modification id")
-def get_undo_content(note_id: str, modification_id: str, _=Depends(AuthService.check_user_access_token)) -> RichTextDTO:
+def get_undo_content(
+        note_id: str, modification_id: str, _=Depends(AuthService.check_user_access_token)) -> RichTextDTO:
     return NoteService.get_undo_content(note_id, modification_id)
 
 

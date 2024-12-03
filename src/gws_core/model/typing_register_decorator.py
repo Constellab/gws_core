@@ -58,14 +58,16 @@ def register_typing_class(
         human_name = StringHelper.camel_case_to_sentence(unique_name)
 
     # TODO v0.9.0 remove deprecated_since and deprecated_message
+    from ..brick.brick_service import BrickService
     if deprecated_since or deprecated_message:
-        Logger.warning("deprecated_since and deprecated_message are deprecated. Use the TypingDeprecated object instead.")
+        BrickService.log_brick_warning(
+            object_class,
+            "deprecated_since and deprecated_message are deprecated. Use the TypingDeprecated object instead.")
         deprecated = TypingDeprecated(deprecated_since, deprecated_message)
 
     # check deprecated_since version
     if deprecated is not None and not deprecated.check_version():
         # import the BrickService here and not in register_typing_class because it would create a cyclic error
-        from ..brick.brick_service import BrickService
         BrickService.log_brick_error(
             object_class,
             f"The deprecated_since property '{deprecated.deprecated_since}' for typing object {human_name} is not a version. Must be formatted like 1.0.0")

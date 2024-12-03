@@ -23,7 +23,7 @@ from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.share.shared_resource import SharedResource
-from gws_core.task.plug import Sink
+from gws_core.task.plug import OutputTask
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
@@ -325,7 +325,7 @@ class ResourceService():
     def upload_resource_from_link(cls, link: str, uncompress_options: str) -> ResourceModel:
 
         file_name = link.split('/')[-1]
-        # Create an scenario containing 1 resource downloader , 1 sink
+        # Create an scenario containing 1 resource downloader , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(None, title=f"Download {file_name}")
         protocol: ProtocolProxy = scenario.get_protocol()
 
@@ -335,11 +335,11 @@ class ResourceService():
             ResourceDownloaderHttp.UNCOMPRESS_PARAM_NAME: uncompress_options
         })
 
-        # Add sink and connect it
-        sink = protocol.add_sink('sink', downloader >> ResourceDownloaderHttp.OUTPUT_NAME)
+        # Add output and connect it
+        output_task = protocol.add_output('output', downloader >> ResourceDownloaderHttp.OUTPUT_NAME)
 
         scenario.run()
 
-        # return the resource model of the sink process
-        sink.refresh()
-        return sink.get_input_resource_model(Sink.input_name)
+        # return the resource model of the output process
+        output_task.refresh()
+        return output_task.get_input_resource_model(OutputTask.input_name)

@@ -61,7 +61,7 @@ class LabNoteResource(Resource):
         self._note = NoteService.update_title(self.note_id, title)
 
     def save(self):
-        note = NoteService.update_content(self.note_id, self.get_content().get_content())
+        note = NoteService.update_content(self.note_id, self.get_content().to_dto())
         self._content = note.get_content_as_rich_text()
 
     @view(view_type=RichTextView, human_name="View note", short_description="View note content", default_view=True)

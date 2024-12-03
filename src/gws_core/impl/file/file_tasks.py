@@ -16,8 +16,6 @@ from ...config.config_params import ConfigParams
 from ...config.config_types import ConfigSpecs
 from ...config.param.param_spec import StrParam
 from ...impl.file.file import File
-from ...impl.file.file_store import FileStore
-from ...impl.file.local_file_store import LocalFileStore
 from ...io.io_specs import InputSpecs, OutputSpecs
 from ...resource.resource import Resource
 from ...task.task import Task
@@ -35,12 +33,10 @@ class WriteToJsonFile(Task):
         short_description='Name of the file')}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        file_store: FileStore = LocalFileStore.get_default_instance()
-
-        file: File = file_store.create_empty_file(
-            params.get_value('filename') + '.json')
+        file_path = os.path.join(self.create_tmp_dir(), params.get_value('filename') + '.json')
 
         resource: Resource = inputs['resource']
+        file = File(file_path)
         file.write(json.dumps(resource.view_as_json(
             ConfigParams()).to_dto(ConfigParams()).to_json_dict()))
 

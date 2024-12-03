@@ -26,7 +26,7 @@ class LogsStatusDTO(BaseModelDTO):
 
 class LogCompleteInfoDTO(BaseModelDTO):
     log_info: LogInfo
-    content: str
+    content: List[LogDTO]
 
 
 class LogsBetweenDatesDTO(BaseModelDTO):

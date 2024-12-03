@@ -12,6 +12,8 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
 from gws_core.folder.model_with_folder import ModelWithFolder
+from gws_core.impl.rich_text.rich_text_field import RichTextField
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
@@ -49,7 +51,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
                                                     max_length=20)
 
     title = CharField(max_length=50)
-    description = JSONField(null=True)
+    description: RichTextDTO = RichTextField(null=True)
     lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
 
     is_validated: bool = BooleanField(default=False)
@@ -244,11 +246,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
         super().delete_instance(*args, **kwargs)
         EntityTagList.delete_by_entity(EntityType.SCENARIO, self.id)
-
-    @classmethod
-    def after_table_creation(cls) -> None:
-        super().after_table_creation()
-        cls.create_full_text_index(['title', 'description'], 'I_F_EXP_TIDESC')
 
     ########################### STATUS MANAGEMENT ##################################
 

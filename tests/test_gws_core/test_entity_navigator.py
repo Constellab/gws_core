@@ -70,8 +70,8 @@ class TestEntityNavigator(BaseTestCase):
         i_protocol_2: ProtocolProxy = scenario_2.get_protocol()
         move_robot_2 = i_protocol_2.add_task(RobotMove, 'move_robot')
         move_robot_3 = i_protocol_2.add_task(RobotMove, 'move_robot_1')
-        i_protocol_2.add_source('source_1', robot_1.id, move_robot_2 << 'robot')
-        i_protocol_2.add_source('source_2', robot_2.id, move_robot_3 << 'robot')
+        i_protocol_2.add_resource('source_1', robot_1.id, move_robot_2 << 'robot')
+        i_protocol_2.add_resource('source_2', robot_2.id, move_robot_3 << 'robot')
         scenario_2.run()
 
         move_robot_2.refresh()
@@ -90,7 +90,7 @@ class TestEntityNavigator(BaseTestCase):
         scenario_3 = ScenarioProxy()
         i_protocol_3: ProtocolProxy = scenario_3.get_protocol()
         move_robot_4 = i_protocol_3.add_task(RobotMove, 'move_robot')
-        i_protocol_3.add_source('source_1', self.exp_2_resource_2.id, move_robot_4 << 'robot')
+        i_protocol_3.add_resource('source_1', self.exp_2_resource_2.id, move_robot_4 << 'robot')
         scenario_3.run()
 
         move_robot_4.refresh()

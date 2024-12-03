@@ -36,7 +36,6 @@ class TestJson(BaseTestCaseLight):
         with open(file_path, encoding='utf-8') as file_path:
             json_ = json.load(file_path)
 
-        # print(d.data)
         self.assertEqual(json_, json_dict.data)
 
     def test_exporter(self):
