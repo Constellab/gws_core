@@ -1,6 +1,6 @@
 
 
-from typing import Any, List, Literal, Optional, Type
+from typing import Any, Dict, List, Literal, Optional, Type
 
 from gws_core.core.model.model_dto import BaseModelDTO
 
@@ -15,13 +15,23 @@ ParamValueType = Type[ParamValue]
 ParamSpecVisibilty = Literal["public", "protected", "private"]
 
 
-class ParamSpecDTO(BaseModelDTO):
+class ParamSpecSimpleDTO(BaseModelDTO):
     type: str
     optional: bool
-    visibility: ParamSpecVisibilty
+    visibility: Optional[ParamSpecVisibilty] = "public"
     default_value: Optional[ParamValue] = None
-    unit: Optional[str] = None
+    additional_info: Optional[Dict] = {}
+
+
+class ParamSpecDTO(ParamSpecSimpleDTO):
     human_name: Optional[str] = None
     short_description: Optional[str] = None
     allowed_values: Optional[List[ParamValue]] = None
-    additional_info: dict = {}
+
+
+DynamicParamAllowedSpecsDict = Dict[str, ParamSpecDTO | Dict[str, ParamSpecDTO]]
+
+
+class DynamicParamAllowedParamSpecsDTO(BaseModelDTO):
+    human_name: str
+    specs: DynamicParamAllowedSpecsDict

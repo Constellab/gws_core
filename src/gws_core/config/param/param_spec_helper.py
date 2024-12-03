@@ -1,16 +1,22 @@
 
 
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List, Type, get_type_hints
 
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.utils.string_helper import StringHelper
 
 from ..config_exceptions import MissingConfigsException
 from ..config_params import ConfigParams
 from ..config_types import ConfigParamsDict, ConfigSpecs
 from .param_spec import ParamSpec
-from .param_spec_decorator import PARAM_SPEC_TYPES_LIST
+from .param_spec_decorator import (LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST,
+                                   NESTED_PARAM_SPEC_TYPES_LIST,
+                                   PARAM_SPEC_TYPES_LIST,
+                                   SIMPLE_PARAM_SPEC_TYPES_LIST)
+from .param_types import (DynamicParamAllowedParamSpecsDTO,
+                          DynamicParamAllowedSpecsDict)
 
 
 class ParamSpecHelper():
@@ -100,12 +106,12 @@ class ParamSpecHelper():
 
     @staticmethod
     def create_param_spec_from_dto(dto: ParamSpecDTO) -> ParamSpec:
-        param_spec_type = ParamSpecHelper._get_param_spec_type_from_str(dto.type)
+        param_spec_type = ParamSpecHelper.get_param_spec_type_from_str(dto.type)
 
         return param_spec_type.load_from_dto(dto)
 
     @staticmethod
-    def _get_param_spec_type_from_str(type_: str) -> Type[ParamSpec]:
+    def get_param_spec_type_from_str(type_: str) -> Type[ParamSpec]:
         param_spec_types = ParamSpecHelper._get_param_spec_types()
         for param_spec_type in param_spec_types:
             if param_spec_type.get_str_type() == type_:
@@ -116,6 +122,18 @@ class ParamSpecHelper():
     @staticmethod
     def _get_param_spec_types() -> List[Type[ParamSpec]]:
         return PARAM_SPEC_TYPES_LIST
+
+    @staticmethod
+    def get_simple_param_spec_types() -> List[Type[ParamSpec]]:
+        return SIMPLE_PARAM_SPEC_TYPES_LIST
+
+    @staticmethod
+    def get_lab_specific_param_spec_types() -> List[Type[ParamSpec]]:
+        return LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST
+
+    @staticmethod
+    def get_nested_param_spec_types() -> List[Type[ParamSpec]]:
+        return NESTED_PARAM_SPEC_TYPES_LIST
 
     @staticmethod
     def mandatory_values_are_set(param_specs: ConfigSpecs,
@@ -131,3 +149,82 @@ class ParamSpecHelper():
                 return False
 
         return True
+
+    @staticmethod
+    def get_param_spec_dto(type_: str, optional: bool, value: Any, name: str) -> ParamSpecDTO:
+        human_name = StringHelper.snake_case_to_sentence(name)
+        json = {
+            "type": type_,
+            "optional": optional,
+            "visibility": "public",
+            "human_name": human_name,
+        }
+        if value:
+            json["additional_info"] = {}
+            json["additional_info"]["allowed_values"] = value
+        return ParamSpecDTO.from_json(json)
+
+    @staticmethod
+    def get_dynamic_param_allowed_param_spec_types(lab_allowed: bool = False) -> Dict[str,
+                                                                                      DynamicParamAllowedParamSpecsDTO]:
+        """_summary_
+
+        :param lab_allowed: _description_, defaults to False
+        :type lab_allowed: bool, optional
+        :return: _description_
+        :rtype: _type_
+        """
+        res: Dict[str, DynamicParamAllowedParamSpecsDTO] = {}
+
+        list_spec_types: List[type[ParamSpec]] = ParamSpecHelper.get_simple_param_spec_types().copy()
+        if lab_allowed:
+            list_spec_types.extend(ParamSpecHelper.get_lab_specific_param_spec_types())
+
+        for spec_type in list_spec_types:
+            annotations = get_type_hints(spec_type)
+            specs: DynamicParamAllowedSpecsDict = {}
+
+            for name, type_ in annotations.items():
+                if name.isupper():
+                    continue
+
+                is_optional = type(None) in getattr(type_, '__args__', [])
+                value = getattr(spec_type, name, None)
+
+                if name == "additional_info":
+                    additional_info_res: Dict[str, ParamSpecDTO] = {}
+                    additional_infos_annotations = get_type_hints(type_.__args__[0])
+
+                    for additional_info_name, additional_info_type in additional_infos_annotations.items():
+                        additional_info_is_optional = type(None) in getattr(additional_info_type, '__args__', [])
+                        additional_info_value = getattr(value, additional_info_name, None)
+                        additional_info_type = str(
+                            additional_info_type.__name__).lower() if not additional_info_is_optional else str(
+                            f"{additional_info_type.__args__[0].__name__}").lower()
+                        additional_info_res[additional_info_name] = ParamSpecHelper.get_param_spec_dto(
+                            type_=additional_info_type, optional=additional_info_is_optional,
+                            value=additional_info_value, name=additional_info_name)
+
+                    specs[name] = additional_info_res
+                else:
+                    type_name: str = ''
+                    if type_.__name__ == "Literal":
+                        type_name = 'list'
+                        value = list(type_.__args__) if type_.__args__ else None
+                    elif name == "default_value":
+                        type_name = spec_type.get_str_type()
+                    else:
+                        type_name = type_.__name__ if not is_optional else f"{type_.__args__[0].__name__}"
+
+                    specs[name] = ParamSpecHelper.get_param_spec_dto(
+                        type_=type_name, optional=is_optional, value=value, name=name
+                    )
+
+            dto_json = {
+                "human_name": StringHelper.snake_case_to_sentence(spec_type.get_str_type()),
+                "specs": specs
+            }
+
+            res[spec_type.get_str_type()] = DynamicParamAllowedParamSpecsDTO.from_json(dto_json)
+
+        return res

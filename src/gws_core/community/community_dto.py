@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing_style import TypingStyle
@@ -22,9 +23,14 @@ class CommunityAgentDTO(BaseModelDTO):
     latest_style: Optional[TypingStyle] = None
 
 
+class CommunityAgentFileParams(BaseModelDTO):
+    specs: Dict[str, ParamSpecDTO]
+    values: Dict[str, Any]
+
+
 class CommunityAgentFileDTO(BaseModelDTO):
     json_version: int
-    params: str
+    params: CommunityAgentFileParams
     code: str
     environment: str
     input_specs: Dict
@@ -45,7 +51,7 @@ class CommunityAgentVersionDTO(BaseModelDTO):
     version: int
     type: str
     environment: Optional[str]
-    params: Optional[str]
+    params: Optional[Dict[str, Any]]
     code: str
     input_specs: Optional[CommunityAgentIOSpecDTO]
     output_specs: Optional[CommunityAgentIOSpecDTO]

@@ -1,8 +1,15 @@
 
 
+from typing import Any, Dict
+
 from pandas import DataFrame
 
 from gws_core import BaseTestCase, PyAgent, Table, TaskRunner, Text
+from gws_core.config.config import Config
+from gws_core.config.param.dynamic_param import DynamicParam
+from gws_core.config.param.param_spec import IntParam, ListParam, ParamSpec
+from gws_core.protocol.protocol_model import ProtocolModel
+from gws_core.protocol.protocol_service import ProtocolService
 
 
 # test_py_agent
@@ -14,6 +21,9 @@ class TestAgent(BaseTestCase):
         data = DataFrame({'col1': [0, 1], 'col2': [0, 2]})
         tester = TaskRunner(
             inputs={'source': Table(data)},
+            params={
+                'params': {}
+            },
             task_type=PyAgent
         )
 
@@ -33,14 +43,17 @@ from pandas import DataFrame
 from gws_core import Table
 
 
-df = Table(DataFrame({'col1': [1,a], 'col2': [0,b]}))
+df = Table(DataFrame({'col1': [1,params['a']], 'col2': [0,params['b']]}))
 df = df.get_data() + sources[0].get_data()
 
 # return Dataframe (it should be converted to table)
 targets = [df]
 
             """,
-                "params": ["a=1", "b=2"],
+                "params": {
+                    'a': 1,
+                    'b': 2
+                },
             },
             inputs={
                 'source': Table(data=DataFrame({'col1': [0, 1], 'col2': [0, 2]}))
@@ -66,7 +79,7 @@ import sys
 result = subprocess.run([sys.executable, '-c', 'print(\"gencovery\")'], capture_output=True, text=True)
 targets = [Text(data=result.stdout)]
                 """,
-                "params": []
+                "params": {}
             },
             task_type=PyAgent
         )
@@ -89,7 +102,7 @@ with open(result_file_path, 'r+t') as fp:
 shell_proxy.clean_working_dir()
 targets = [Text(data=data)]
                 """,
-                "params": []
+                "params": {}
             },
             task_type=PyAgent
         )
@@ -105,7 +118,7 @@ targets = [Text(data=data)]
                 "code": """
 raise Exception('This is not working')
 """,
-                "params": []
+                "params": {}
             },
             task_type=PyAgent
         )

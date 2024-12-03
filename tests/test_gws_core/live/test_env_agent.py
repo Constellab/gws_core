@@ -7,6 +7,7 @@ from unittest import TestCase
 from pandas import DataFrame, read_csv
 
 from gws_core import File, PyCondaAgent, Task, TaskRunner
+from gws_core.config.param.param_spec import IntParam, ListParam
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
@@ -47,6 +48,9 @@ class TestEnvAgent(TestCase):
         tester = TaskRunner(
             task_type=task_type,
             inputs={"source": File(source)},
+            params={
+                'params': {}
+            }
         )
 
         outputs = tester.run()

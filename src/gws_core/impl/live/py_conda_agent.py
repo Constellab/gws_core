@@ -31,7 +31,7 @@ class PyCondaAgent(EnvAgent):
     SNIPPET_FILE_EXTENSION: str = "py"
 
     config_specs: ConfigSpecs = {
-        'params': EnvAgent.get_list_param_config(),
+        'params': EnvAgent.get_dynamic_param_config(),
         'env': YamlCodeParam(
             default_value=LiveCodeHelper.get_conda_env_file_template(),
             human_name="Conda environment (YAML)", short_description="YAML configuration of the conda environment"

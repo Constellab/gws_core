@@ -1,11 +1,12 @@
 
 
-from gws_core.config.param.param_spec_decorator import param_spec_decorator
+from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
+                                                        param_spec_decorator)
 
 from ..param_spec import TextParam
 
 
-@param_spec_decorator()
+@param_spec_decorator(type=ParamaSpecType.LAB_SPECIFIC)
 class YamlCodeParam(TextParam):
     """Param for yaml code. It shows a simple yaml IDE
       in the interface to provide code for yaml.

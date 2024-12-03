@@ -4,9 +4,9 @@ import json
 import os
 import shutil
 from abc import abstractmethod
-from typing import List
+from typing import Any, Dict, List
 
-from gws_core.config.param.param_spec import ListParam, ParamSpec
+from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
@@ -55,6 +55,10 @@ class EnvAgent(Task):
     TARGET_PATHS_VAR_NAME = 'target_paths'
     TARGET_PATHS_FILENAME = '__target_paths__.json'
 
+    ENV_CONFIG_NAME = 'env'
+    CODE_CONFIG_NAME = 'code'
+    PARAMS_CONFIG_NAME = 'params'
+
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')
         env = params.get_value('env')
@@ -80,7 +84,7 @@ class EnvAgent(Task):
         target = self.get_target_resources()
         return {'target': target}
 
-    def generate_code_file(self, code: str, params: List[str], source_paths: List[str]) -> str:
+    def generate_code_file(self, code: str, params: Dict[str, Any], source_paths: List[str]) -> str:
         # create the executable code file
         if self.SNIPPET_FILE_EXTENSION is None:
             raise BadRequestException("No SNIPPET_FILE_EXTENSION defined")
@@ -168,7 +172,7 @@ class EnvAgent(Task):
     def _create_shell_proxy(self, env: str) -> ShellProxy:
         pass
 
-    def _format_code(self, code: str, params: List[str], source_paths: List[str]) -> str:
+    def _format_code(self, code: str, params: Dict[str, Any], source_paths: List[str]) -> str:
         """
         Format the code to add parameters and input/output paths
         """
@@ -176,8 +180,10 @@ class EnvAgent(Task):
         # format the param to string and include the last carry return
         # only if there are some param, this is useful to limit the line number difference
         # when error occured
-        str_params = '\n' + ('\n'.join(params) + '\n') if len(params) > 0 else ''
-
+        if self.SNIPPET_FILE_EXTENSION == 'py':
+            str_params = f"\nparams = {str(params)}\n" if len(params) > 0 else ""
+        else:
+            str_params = f"\nparams <- {EnvAgent.dict_to_r_format(params)}\n" if len(params) > 0 else ""
         init_code = self._get_init_code(self.SOURCE_PATHS_VAR_NAME, source_paths,
                                         self.TARGET_PATHS_VAR_NAME)
         write_target_code = self._get_write_target_paths_code(self.TARGET_PATHS_VAR_NAME,
@@ -220,12 +226,31 @@ with open('{target_paths_filename}', 'w') as f:
             shutil.rmtree(self.target_temp_folder, ignore_errors=True)
 
     @classmethod
-    def get_list_param_config(cls) -> ParamSpec:
-        return ListParam(
-            optional=True, default_value=[],
+    def get_dynamic_param_config(cls) -> DynamicParam:
+        return DynamicParam(
             human_name="Parameter definitions",
             short_description="Please give one parameter definition per line (https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779#parameters)")
 
     @classmethod
-    def build_config_params_dict(cls, code: str, params: List[str], env: str) -> ConfigParamsDict:
+    def build_config_params_dict(cls, code: str, params: Dict[str, Any], env: str) -> ConfigParamsDict:
         return {'code': code, "params": params, "env": env}
+
+    @classmethod
+    def dict_to_r_format(cls, d):
+        r_string = "list(\n"
+        for key, value in d.items():
+            if isinstance(value, str):
+                r_string += f"  {key} = \"{value}\",\n"
+            elif isinstance(value, bool):
+                r_string += f"  {key} = {str(value).upper()},\n"
+            elif isinstance(value, (int, float)):
+                r_string += f"  {key} = {value},\n"
+            elif isinstance(value, list):
+                list_values = ", ".join(f"\"{v}\"" if isinstance(v, str) else str(v) for v in value)
+                r_string += f"  {key} = c({list_values}),\n"
+            elif isinstance(value, dict):
+                r_string += f"  {key} = {cls.dict_to_r_format(value)},\n"
+            else:
+                r_string += f"  {key} = NA,\n"
+        r_string = r_string.rstrip(",\n") + "\n)"
+        return r_string

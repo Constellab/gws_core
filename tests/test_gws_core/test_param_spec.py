@@ -12,7 +12,7 @@ class TestParamSpec(TestCase):
 
     def test_param_to_json(self):
         param = IntParam(default_value=1, human_name="Test", short_description="Description",
-                         min_value=1, max_value=10, allowed_values=[1, 2], unit='km')
+                         min_value=1, max_value=10, allowed_values=[1, 2])
 
         spec_dto = param.to_dto()
 
@@ -23,7 +23,6 @@ class TestParamSpec(TestCase):
         self.assertEqual(spec_dto.additional_info["min_value"], 1)
         self.assertEqual(spec_dto.additional_info["max_value"], 10)
         self.assertEqual(spec_dto.allowed_values, [1, 2])
-        self.assertEqual(spec_dto.unit, "km")
 
     def test_param_set(self):
         param = ParamSet({"str": StrParam(), 'int': IntParam(default_value=12)}, max_number_of_occurrences=3)

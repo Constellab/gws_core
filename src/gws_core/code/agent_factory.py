@@ -1,10 +1,11 @@
 
 
-from typing import List
+from typing import Any, Dict, List
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.code.task_generator import TaskGenerator
 from gws_core.community.community_dto import CommunityAgentFileDTO
+from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import (BoolParam, FloatParam, IntParam,
                                               ParamSpec, StrParam)
 from gws_core.core.utils.numeric_helper import NumericHelper
@@ -14,7 +15,7 @@ from gws_core.task.task_model import TaskModel
 
 class AgentFactory:
 
-    current_json_version = 2
+    current_json_version = 3
 
     @classmethod
     def generate_task_code_from_agent_id(cls, task_id: str) -> str:
@@ -27,7 +28,6 @@ class AgentFactory:
 
     @classmethod
     def generate_task_code_from_agent(cls, task: TaskModel) -> str:
-
         task_generator: TaskGenerator = TaskGenerator(task.instance_name)
 
         code: str = task.config.get_value(PyAgent.CONFIG_CODE_NAME)
@@ -54,40 +54,34 @@ class AgentFactory:
             task_generator.add_output_spec(key, spec.get_default_resource_type())
             count = count + 1
 
-        params: List[str] = task.config.get_value(PyAgent.CONFIG_PARAMS_NAME)
-        for param_line in params:
-            if not param_line or '=' not in param_line or '#' in param_line or param_line[0] == '#':
-                continue
+        params: Dict[str, Any] = task.config.get_value(PyAgent.CONFIG_PARAMS_NAME)
+        params_spec: DynamicParam = task.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+        for param_name in params:
+            param_value = params[param_name]
 
-            param_line = param_line.strip()
-            param_line = param_line.replace(' ', '')
-
-            param_name = param_line.split('=')[0]
-            param_value = param_line.split('=')[1]
-
-            param_type: ParamSpec = None
-            # detect if type if int, float, bool or str based on value
-            if param_value == 'True' or param_value == 'False':
-                param_type = BoolParam(bool(param_value))
-            elif NumericHelper.is_int(param_value):
-                param_type = IntParam(int(param_value))
-            elif NumericHelper.is_float(param_value):
-                param_type = FloatParam(float(param_value))
-            else:
-                param_type = StrParam(str(param_value))
+            param_type: ParamSpec = params_spec.specs[param_name]
+            param_type.default_value = param_value
 
             task_generator.add_config_spec(param_name, param_type)
 
         return task_generator.generate_code()
 
     @classmethod
-    def generate_agent_file_from_agent_id(cls, task_id: str, protocol_id: str = None) -> CommunityAgentFileDTO:
+    def generate_agent_file_from_agent_id(cls, task_id: str, with_value: bool = False) -> CommunityAgentFileDTO:
         task: TaskModel = TaskModel.get_by_id_and_check(task_id)
-        values = task.config.get_and_check_values()
+        values = task.config.get_values()
         code = task.config.get_value("code")
-        params = ''
+        params = None
         if values.get("params") is not None:
-            params = '\n'.join(task.config.get_value("params"))
+            specs = task.config.get_spec('params').to_simple_dto().to_json_dict()['additional_info']['specs']
+            params_values = task.config.get_value("params")
+            if not with_value:
+                for key in params_values.keys():
+                    params_values[key] = None
+            params = {
+                "specs": specs,
+                "values":  params_values
+            }
         env = ""
         if values.get("env") is not None:
             env = task.config.get_value("env")

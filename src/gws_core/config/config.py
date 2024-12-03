@@ -54,6 +54,14 @@ class Config(ModelWithUser):
             spec_json[key] = spec.to_dto().to_json_dict()
         self.data["specs"] = spec_json
 
+    def update_spec(self, name, spec: ParamSpec) -> None:
+        specs = self.get_specs()
+        specs[name] = spec
+        self.set_specs(specs)
+
+    def has_spec(self, param_name: str) -> bool:
+        return param_name in self.get_specs()
+
     def get_spec(self, param_name: str) -> ParamSpec:
         self._check_param(param_name)
 
@@ -108,7 +116,7 @@ class Config(ModelWithUser):
 
         return ParamSpecHelper.get_and_check_values(specs, values)
 
-    def set_value(self, param_name: str, value: ParamValue):
+    def set_value(self, param_name: str, value: ParamValue, skip_validate: bool = False):
         """
         Sets the value of a parameter by its name
 
@@ -117,11 +125,11 @@ class Config(ModelWithUser):
         :param value: The value of the parameter (base type)
         :type: [str, int, float, bool, NoneType]
         """
-
-        try:
-            value = self.get_spec(param_name).validate(value)
-        except Exception as err:
-            raise InvalidParamValueException(param_name, value, str(err))
+        if skip_validate == False:
+            try:
+                value = self.get_spec(param_name).validate(value)
+            except Exception as err:
+                raise InvalidParamValueException(param_name, value, str(err))
 
         if not "values" in self.data:
             self.data["values"] = {}

@@ -30,7 +30,7 @@ class PyPipenvAgent(EnvAgent):
     SNIPPET_FILE_EXTENSION: str = "py"
 
     config_specs: ConfigSpecs = {
-        'params': EnvAgent.get_list_param_config(),
+        'params': EnvAgent.get_dynamic_param_config(),
         'env': PythonCodeParam(
             default_value=LiveCodeHelper.get_pip_env_file_template(),
             human_name="Pipenv configuration", short_description="Pipenv configuration"
