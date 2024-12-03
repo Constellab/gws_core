@@ -65,54 +65,63 @@ app_config_file: str = None
 user_id: str = None
 
 dev_mode: bool = args.dev_mode
-if not dev_mode:
-    # retreive the token from query params
-    url_token = st.query_params.get('gws_token')
-    if url_token != args.gws_token:
-        st.error('Invalid token')
-        st.stop()
 
-    app_config_dir = args.app_dir
-    if not app_config_dir:
-        st.error('App dir not provided')
-        st.stop()
-
-    if not os.path.exists(app_config_dir):
-        st.error(f"Config dir not found: {app_config_dir}")
-        st.stop()
-
-    # check the app path
-    app_id = st.query_params.get('gws_app_id')
-    if not app_id:
-        st.error('App id not provided')
-        st.stop()
-
-    # check if the app id folder exists
-    app_config_folder = os.path.join(app_config_dir, app_id)
-    if not os.path.exists(app_config_folder) or not os.path.isdir(app_config_folder):
-        st.error('App config folder not found or is not a folder')
-        st.stop()
-
-    app_config_file = os.path.join(app_config_folder, APP_CONFIG_FILENAME)
-    if not os.path.exists(app_config_file):
-        st.error('App config file not found')
-        st.stop()
-
-    # check the user id
-    user_id = st.query_params.get('gws_user_id')
-    if not user_id:
-        st.error('User id not provided')
-        st.stop()
+# if the session state is already set, use it, the user already authenticated
+if st.session_state.get('gws_user_id') and st.session_state.get('app_config_file'):
+    user_id = st.session_state['gws_user_id']
+    app_config_file = st.session_state['app_config_file']
 else:
-    app_config_file = args.dev_config_file
-    if not app_config_file:
-        st.error('Dev config file not provided')
-        st.stop()
+    if dev_mode:
+        app_config_file = args.dev_config_file
+        if not app_config_file:
+            st.error('Dev config file not provided')
+            st.stop()
 
-    if not os.path.exists(app_config_file):
-        st.error(f"Dev config file not found: {app_config_file}")
-        st.stop()
+        if not os.path.exists(app_config_file):
+            st.error(f"Dev config file not found: {app_config_file}")
+            st.stop()
+    else:
+        # retreive the token from query params
+        url_token = st.query_params.get('gws_token')
+        if url_token != args.gws_token:
+            st.error('Invalid token')
+            st.stop()
 
+        app_config_dir = args.app_dir
+        if not app_config_dir:
+            st.error('App dir not provided')
+            st.stop()
+
+        if not os.path.exists(app_config_dir):
+            st.error(f"Config dir not found: {app_config_dir}")
+            st.stop()
+
+        # check the app path
+        app_id = st.query_params.get('gws_app_id')
+        if not app_id:
+            st.error('App id not provided')
+            st.stop()
+
+        # check if the app id folder exists
+        app_config_folder = os.path.join(app_config_dir, app_id)
+        if not os.path.exists(app_config_folder) or not os.path.isdir(app_config_folder):
+            st.error('App config folder not found or is not a folder')
+            st.stop()
+
+        app_config_file = os.path.join(app_config_folder, APP_CONFIG_FILENAME)
+        if not os.path.exists(app_config_file):
+            st.error('App config file not found')
+            st.stop()
+
+        # check the user id
+        user_id = st.query_params.get('gws_user_id')
+        if not user_id:
+            st.error('User id not provided')
+            st.stop()
+
+# save the user id and app config file in the session state
+st.session_state['gws_user_id'] = user_id
+st.session_state['app_config_file'] = app_config_file
 
 # Add custom css to hide the streamlit menu
 st.markdown("""
@@ -177,7 +186,7 @@ try:
 
     # Load gws environment and log the user
     from gws_streamlit_helper.streamlit_env_loader import StreamlitEnvLoader
-    with StreamlitEnvLoader(user_id, dev_mode):
+    with StreamlitEnvLoader(user_id):
 
         # load resources
         sources = load_sources(config.source_ids)
@@ -185,6 +194,9 @@ try:
         # set the source paths and params in the module
         setattr(module, 'sources', sources)
         setattr(module, 'params', config.params)
+        # also set the sources and params in the session state
+        st.session_state['__sources__'] = sources
+        st.session_state['__params__'] = config.params
 
         spec.loader.exec_module(module)
 except Exception as e:

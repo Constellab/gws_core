@@ -12,11 +12,9 @@ class StreamlitEnvLoader:
     """
 
     user_id: str = None
-    dev_mode: bool = False
 
-    def __init__(self, user_id: str, dev_mode: bool = False) -> None:
+    def __init__(self, user_id: str = None) -> None:
         self.user_id = user_id
-        self.dev_mode = dev_mode
 
     def __enter__(self):
 
@@ -26,7 +24,7 @@ class StreamlitEnvLoader:
 
         user: Optional[User] = None
 
-        if self.dev_mode:
+        if self.user_id is None:
             user = User.get_sysuser()
         else:
             user = User.get_by_id(self.user_id)
