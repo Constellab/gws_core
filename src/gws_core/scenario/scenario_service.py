@@ -1,6 +1,6 @@
 
 
-from typing import Dict, List, Optional, Type
+from typing import List, Optional, Type
 
 from peewee import ModelSelect
 
@@ -173,9 +173,14 @@ class ScenarioService():
         if new_folder_id:
             new_folder = SpaceFolder.get_by_id_and_check(new_folder_id)
 
+            # if the scenario was synchronized with space, check that the folder is in the same root folder,
+            # if not raise an error, otherwise update the folder in space
             if scenario.last_sync_at is not None and new_folder != scenario.folder:
-                raise BadRequestException(
-                    "You can't change the folder of an scenario that has been synced. Please unlink the scenario from the folder first.")
+                if new_folder.get_root() != scenario.folder.get_root():
+                    raise BadRequestException(
+                        "This scenario is synchronized with space, you can't move it to another root folder. Please unsync it first by removing it from the folder.")
+
+                SpaceService.update_scenario_folder(scenario.folder.id, scenario.id, new_folder.id)
 
             if scenario.folder != new_folder:
                 folder_changed = True

@@ -144,17 +144,23 @@ class NoteService():
 
     @classmethod
     @transaction()
-    def _update_note_folder(cls, note: Note, folder_id: str) -> Note:
+    def _update_note_folder(cls, note: Note, new_folder_id: str) -> Note:
+
         # update folder
-        if folder_id:
-            folder = SpaceFolder.get_by_id_and_check(folder_id)
-            if note.last_sync_at is not None and folder != note.folder:
-                raise BadRequestException(
-                    "You can't change the folder of note that has been synced. You must unlink it from the folder first.")
-            note.folder = folder
+        if new_folder_id:
+            new_folder = SpaceFolder.get_by_id_and_check(new_folder_id)
+
+            # if the note was synchronized with space, check that the folder is in the same root folder,
+            # if not raise an error, otherwise update the folder in space
+            if note.last_sync_at is not None and new_folder != note.folder:
+                if note.folder.get_root().id != new_folder.get_root().id:
+                    raise BadRequestException(
+                        "The note is synchronized with the space, you can't move it to another root folder. Please unsync it first by removing it from the folder.")
+                SpaceService.update_note_folder(note.folder.id, note.id, new_folder.id)
+            note.folder = new_folder
 
         # if the folder was removed
-        if folder_id is None and note.folder is not None:
+        if new_folder_id is None and note.folder is not None:
 
             if note.last_sync_at is not None:
                 cls._unsynchronize_with_space(note, note.folder.id)
@@ -164,10 +170,9 @@ class NoteService():
         scenarios: List[Scenario] = cls.get_scenarios_by_note(note.id)
 
         for scenario in scenarios:
-            exp_folder_id = scenario.folder.id if scenario.folder else None
-            if exp_folder_id != folder_id:
+            if scenario.folder is None:
                 ScenarioService.update_scenario_folder(scenario.id,
-                                                       folder_id, check_note=False)
+                                                       new_folder_id, check_note=False)
 
         return note
 
@@ -451,8 +456,8 @@ class NoteService():
                 note.folder = scenario.folder
                 note.save()
         else:
-            # check if the note folder is the same as the scenario folder
-            if scenario.folder is not None and note.folder.id != scenario.folder.id:
+            # check if the note root folder is the same as the scenario root folder
+            if scenario.folder is not None and note.folder.get_root().id != scenario.folder.get_root().id:
                 raise BadRequestException(GWSException.NOTE_ADD_EXP_OTHER_FOLDER.value,
                                           GWSException.NOTE_ADD_EXP_OTHER_FOLDER.name)
 

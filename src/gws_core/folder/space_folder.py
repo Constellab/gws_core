@@ -35,6 +35,16 @@ class SpaceFolder(Model):
             children=children
         )
 
+    def get_root(self) -> 'SpaceFolder':
+        """
+        Get the root folder of the current folder.
+        """
+
+        if self.parent is None:
+            return self
+        else:
+            return self.parent.get_root()
+
     @classmethod
     def get_roots(cls) -> ModelSelect:
         """

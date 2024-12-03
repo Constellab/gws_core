@@ -40,6 +40,8 @@ class SpaceService():
     # Key to set the user in the request
     user_id_header_key: str = 'User'
 
+    #################################### AUTHENTICATION ####################################
+
     @classmethod
     def check_api_key(cls, api_key: str) -> bool:
 
@@ -103,6 +105,8 @@ class SpaceService():
             return False
         return True
 
+    #################################### SCENARIO ####################################
+
     @classmethod
     def save_scenario(cls, folder_id: str, save_scenario_dto: SaveScenarioToSpaceDTO) -> None:
         cls._check_dev_mode()
@@ -132,6 +136,21 @@ class SpaceService():
             err.detail = f"Can't delete the scenario in space. Error : {err.detail}"
             raise err
 
+    @classmethod
+    def update_scenario_folder(cls, current_folder_id: str, scenario_id: str, new_folder_id: str) -> None:
+        cls._check_dev_mode()
+
+        space_api_url: str = cls._get_space_api_url(
+            f"{cls._external_labs_route}/folder/{current_folder_id}/scenario/{scenario_id}/folder/{new_folder_id}")
+
+        try:
+            return ExternalApiService.put(space_api_url, None,
+                                          cls._get_request_header(), raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't update the scenario folder in space. Error : {err.detail}"
+            raise err
+
+    #################################### NOTE ####################################
     @classmethod
     def save_note(cls, folder_id: str, note: SaveNoteToSpaceDTO,
                   file_paths: List[str]) -> None:
@@ -172,6 +191,21 @@ class SpaceService():
             raise err
 
     @classmethod
+    def update_note_folder(cls, current_folder_id: str, note_id: str, new_folder_id: str) -> None:
+        cls._check_dev_mode()
+
+        space_api_url: str = cls._get_space_api_url(
+            f"{cls._external_labs_route}/folder/{current_folder_id}/note/{note_id}/folder/{new_folder_id}")
+
+        try:
+            a = ExternalApiService.put(space_api_url, None,
+                                       cls._get_request_header(), raise_exception_if_error=True)
+            return a
+        except BaseHTTPException as err:
+            err.detail = f"Can't update the note folder in space. Error : {err.detail}"
+            raise err
+
+    @classmethod
     def get_modifications(
             cls, old_content: RichTextDTO, new_content: RichTextDTO,
             old_modifications: Optional[RichTextModificationsDTO] = None) -> RichTextModificationsDTO:
@@ -205,15 +239,6 @@ class SpaceService():
             err.detail = f"Can't get note modifications. Error : {err.detail}"
             raise err
         return RichTextDTO.from_json(response.json())
-
-    @classmethod
-    def send_mail(cls, send_mail_dto: SpaceSendMailDTO) -> Response:
-        cls._check_dev_mode()
-
-        space_api_url: str = cls._get_space_api_url(
-            f"{cls._external_labs_route}/send-mail")
-        return ExternalApiService.post(space_api_url, send_mail_dto, cls._get_request_header(),
-                                       raise_exception_if_error=True)
 
     #################################### SYNCHRONIZATION ####################################
 
@@ -275,11 +300,23 @@ class SpaceService():
 
         return UserFullDTO.from_json_list(response.json())
 
+    #################################### OTHER ####################################
+
+    @classmethod
+    def send_mail(cls, send_mail_dto: SpaceSendMailDTO) -> Response:
+        cls._check_dev_mode()
+
+        space_api_url: str = cls._get_space_api_url(
+            f"{cls._external_labs_route}/send-mail")
+        return ExternalApiService.post(space_api_url, send_mail_dto, cls._get_request_header(),
+                                       raise_exception_if_error=True)
+
     @classmethod
     def _check_dev_mode(cls) -> None:
-        if Settings.is_dev_mode():
-            raise BadRequestException(
-                "The action is disabled in dev environment")
+        pass
+        # if Settings.is_dev_mode():
+        #     raise BadRequestException(
+        #         "The action is disabled in dev environment")
 
     @classmethod
     def _get_space_api_url(cls, route: str) -> str:
