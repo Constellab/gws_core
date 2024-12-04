@@ -153,10 +153,15 @@ class ProtocolGraphFactory():
 
         process_builder: ProtocolSubProcessBuilder = None
 
+        check_connector_compatiblity = True
         if mode == 'type':
             process_builder = SubProcessBuilderCreate(graph)
         elif mode == 'config':
+            # in the config mode, the process and resources types might not exist in the system
+            # so we need to create the process from the config and not from the type
+            # no need to check the connector compatibility because the process is created from the config
             process_builder = SubProcessBuilderFromConfig(graph)
+            check_connector_compatiblity = False
 
         protocol.init_processes_from_graph(process_builder)
 
@@ -169,7 +174,7 @@ class ProtocolGraphFactory():
         # Init the iofaces and connectors afterward because its needs the child to init correctly
         protocol.add_interfaces_from_dto(graph.interfaces)
         protocol.add_outerfaces_from_dto(graph.outerfaces)
-        protocol.init_connectors_from_graph(graph.links)
+        protocol.init_connectors_from_graph(graph.links, check_compatiblity=check_connector_compatiblity)
 
         # set layout
         if graph.layout is not None:

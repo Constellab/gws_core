@@ -15,6 +15,7 @@ from gws_core.scenario.scenario_downloader_service import \
     ScenarioDownloaderService
 from gws_core.scenario.scenario_enums import ScenarioCreationType
 from gws_core.scenario.scenario_proxy import ScenarioProxy
+from gws_core.scenario.task.scenario_downloader import ScenarioDownloader
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
 from gws_core.share.shared_resource import SharedResource
@@ -86,7 +87,8 @@ class TestShareScenario(BaseTestCase):
 
             share_link = ShareLinkService.generate_share_link(share_dto)
 
-            new_scenario = ScenarioDownloaderService.import_from_lab(share_link.get_download_link(), "All")
+            new_scenario = ScenarioDownloaderService.import_from_lab(
+                ScenarioDownloader.build_config(share_link.get_download_link(),  "All"))
 
             self.assertEqual(new_scenario.title, initial_scenario_model.title)
             self.assertEqual(new_scenario.folder.id, folder.id)
@@ -161,7 +163,8 @@ class TestShareScenario(BaseTestCase):
             self.assertIsNotNone(SharedResource.get_and_check_entity_origin(new_source_output.id))
 
             ######################  Re-run the share without all resources ######################
-            new_scenario_2 = ScenarioDownloaderService.import_from_lab(share_link.get_download_link(), "Outputs only")
+            new_scenario_2 = ScenarioDownloaderService.import_from_lab(
+                ScenarioDownloader.build_config(share_link.get_download_link(), "Outputs only"))
 
             new_protocol_2 = new_scenario_2.protocol_model
             # Check that the task input model where created

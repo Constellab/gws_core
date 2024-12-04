@@ -7,10 +7,11 @@ from peewee import JOIN
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
-from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
-from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.logger import Logger
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorScenario
+from gws_core.external_lab.external_lab_api_service import \
+    ExternalLabApiService
+from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.impl.file.file import File
 from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process_proxy import ProcessProxy
@@ -18,7 +19,7 @@ from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_controller import CallViewParams
-from gws_core.resource.resource_dto import ResourceDTO
+from gws_core.resource.resource_dto import ResourceModelDTO
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
@@ -98,7 +99,7 @@ class ShareService():
         """
         resource_model = ResourceModel.get_by_id_and_check(shared_entity_link.entity_id)
 
-        entity_object: List[ResourceDTO] = [resource_model.to_dto()]
+        entity_object: List[ResourceModelDTO] = [resource_model.to_dto()]
 
         # specific case for resource set that contains multiple resource
         # we need to add all the resource to the zip
@@ -107,7 +108,7 @@ class ShareService():
             resource_models = resource.get_resource_models()
             entity_object.extend([resource_model.to_dto() for resource_model in resource_models])
 
-        zip_url: str = ExternalLabService.get_current_lab_route(f"share/resource/{shared_entity_link.token}/zip")
+        zip_url: str = ExternalLabApiService.get_current_lab_route(f"share/resource/{shared_entity_link.token}/zip")
         return ShareResourceInfoReponseDTO(version=cls.VERSION, entity_type=shared_entity_link.entity_type,
                                            entity_id=shared_entity_link.entity_id, entity_object=entity_object,
                                            zip_entity_route=zip_url)
@@ -121,7 +122,7 @@ class ShareService():
         zipped_resource: ResourceModel = cls._zip_resource(shared_entity_link.entity_id, shared_entity_link.created_by)
 
         # generate the link to download the zipped resource
-        download_url: str = ExternalLabService.get_current_lab_route(
+        download_url: str = ExternalLabApiService.get_current_lab_route(
             f"share/resource/{shared_entity_link.token}/download")
         return ShareResourceZippedResponseDTO(
             version=cls.VERSION, entity_type=shared_entity_link.entity_type, entity_id=shared_entity_link.entity_id,
@@ -227,8 +228,13 @@ class ShareService():
     @classmethod
     def get_scenario_entity_object_info(cls, shared_entity_link: ShareLink) -> ShareScenarioInfoReponseDTO:
 
+        scenario = ScenarioService.get_by_id_and_check(shared_entity_link.entity_id)
+
+        if scenario.is_running:
+            raise Exception('The scenario is running and downloaded, please wait for the end of the scenario')
+
         # generate the link to download the zipped resource
-        download_url: str = ExternalLabService.get_current_lab_route(
+        download_url: str = ExternalLabApiService.get_current_lab_route(
             f"share/scenario/{shared_entity_link.token}/resource/[RESOURCE_ID]/zip")
         return ShareScenarioInfoReponseDTO(
             version=cls.VERSION,
@@ -237,7 +243,7 @@ class ShareService():
             entity_object=ScenarioService.export_scenario(shared_entity_link.entity_id),
             resource_route=download_url,
             token=shared_entity_link.token,
-            origin=ExternalLabService.get_current_lab_info(shared_entity_link.created_by)
+            origin=ExternalLabApiService.get_current_lab_info(shared_entity_link.created_by)
         )
 
     @classmethod
@@ -251,7 +257,7 @@ class ShareService():
         zipped_resource: ResourceModel = cls._zip_resource(resource_id, shared_entity_link.created_by)
 
         # generate the link to download the zipped resource
-        download_url: str = ExternalLabService.get_current_lab_route(
+        download_url: str = ExternalLabApiService.get_current_lab_route(
             f"share/scenario/{shared_entity_link.token}/resource/{resource_id}/download")
         return ShareResourceZippedResponseDTO(
             version=cls.VERSION, entity_type=shared_entity_link.entity_type, entity_id=shared_entity_link.entity_id,

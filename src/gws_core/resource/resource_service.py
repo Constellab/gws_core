@@ -1,10 +1,9 @@
 
 
-from typing import List, Optional, Type
-
-from peewee import ModelSelect
+from typing import Dict, List, Optional, Type
 
 from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
@@ -322,18 +321,16 @@ class ResourceService():
     ############################# UPLOAD RESOURCE ###########################
 
     @classmethod
-    def upload_resource_from_link(cls, link: str, uncompress_options: str) -> ResourceModel:
+    def import_resource_from_link(cls, values: ConfigParamsDict) -> ResourceModel:
 
+        link: str = values.get(ResourceDownloaderHttp.LINK_PARAM_NAME)
         file_name = link.split('/')[-1]
         # Create an scenario containing 1 resource downloader , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(None, title=f"Download {file_name}")
         protocol: ProtocolProxy = scenario.get_protocol()
 
         # Add the importer and the connector
-        downloader: ProcessProxy = protocol.add_process(ResourceDownloaderHttp, 'downloader', {
-            ResourceDownloaderHttp.LINK_PARAM_NAME: link,
-            ResourceDownloaderHttp.UNCOMPRESS_PARAM_NAME: uncompress_options
-        })
+        downloader: ProcessProxy = protocol.add_process(ResourceDownloaderHttp, 'downloader', values)
 
         # Add output and connect it
         output_task = protocol.add_output('output', downloader >> ResourceDownloaderHttp.OUTPUT_NAME)
@@ -343,3 +340,7 @@ class ResourceService():
         # return the resource model of the output process
         output_task.refresh()
         return output_task.get_input_resource_model(OutputTask.input_name)
+
+    @classmethod
+    def get_import_from_link_config_specs(cls) -> Dict[str, ParamSpecDTO]:
+        return ResourceDownloaderHttp.get_config_specs_dto()

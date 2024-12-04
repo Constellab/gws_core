@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.model.typing_dto import TypingDTO
-from gws_core.resource.resource_dto import ResourceDTO
+from gws_core.resource.resource_dto import ResourceModelDTO
 from gws_core.resource.view.view_dto import CallViewResultDTO
 from gws_core.task.converter.converter_service import ConverterService
 
@@ -21,7 +21,7 @@ from .fs_node_service import FsNodeService
 @core_app.post("/fs-node/upload-file", tags=["Fs node"], summary="Upload file")
 def upload_file(file: UploadFile = FastAPIFile(...),
                 typing_name: List[str] = None,
-                _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
+                _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
     """ Upload a file
 
     :param files: file to upload, defaults to FastAPIFile(...)
@@ -37,7 +37,7 @@ def upload_file(file: UploadFile = FastAPIFile(...),
 @core_app.post("/fs-node/upload-folder/{folder_typing_name}", tags=["Fs node"], summary="Upload a folder")
 def upload_folder(folder_typing_name: str,
                   files: List[UploadFile] = FastAPIFile(...),
-                  _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
+                  _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
     """ Upload a folder
 
     :param files: list of files of folder, defaults to FastAPIFile(...)
@@ -68,7 +68,7 @@ class ExtractFileDTO(BaseModelDTO):
 @core_app.put("/fs-node/{id}/folder/extract-node", tags=["Files"], summary="Extract a node from a folder")
 def extract_node_from_folder(id: str,
                              extract: ExtractFileDTO,
-                             _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
+                             _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
     """
     Extract a node from a folder to make it a new Resource
     """

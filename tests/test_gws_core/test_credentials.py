@@ -4,10 +4,11 @@ from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
                                                   SearchOperator, SearchParams)
 from gws_core.credentials.credentials import Credentials
-from gws_core.credentials.credentials_dto import SaveCredentialDTO
 from gws_core.credentials.credentials_param import CredentialsParam
 from gws_core.credentials.credentials_service import CredentialsService
-from gws_core.credentials.credentials_type import CredentialsType
+from gws_core.credentials.credentials_type import (CredentialsDataOther,
+                                                   CredentialsType,
+                                                   SaveCredentialsDTO)
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -15,11 +16,11 @@ from gws_core.test.base_test_case import BaseTestCase
 class TestCredentials(BaseTestCase):
 
     def test_crud(self):
-        save_dto: SaveCredentialDTO = SaveCredentialDTO(
+        save_dto: SaveCredentialsDTO = SaveCredentialsDTO(
             name="test",
             type=CredentialsType.OTHER,
             description="test",
-            data={"test": "test"}
+            data={"data": {"test": "test"}}
         )
 
         first_credentials = CredentialsService.create(save_dto)
@@ -33,16 +34,16 @@ class TestCredentials(BaseTestCase):
         first_credentials = CredentialsService.update(first_credentials.id, save_dto)
         self.assertEqual(first_credentials.name, save_dto.name)
 
-        save_dto2: SaveCredentialDTO = SaveCredentialDTO(
+        save_dto2: SaveCredentialsDTO = SaveCredentialsDTO(
             name="hello",
             type=CredentialsType.S3,
-            data={"test": "test"}
+            data={"endpoint_url": "test", "region": "test", "access_key_id": "test", "secret_access_key": "test"}
         )
         CredentialsService.create(save_dto2)
 
         # test search by name
         search_dict: SearchParams = SearchParams(
-            filtersCriteria=[SearchFilterCriteria(key="name", operator="CONTAINS", value="est")])
+            filtersCriteria=[SearchFilterCriteria(key="name", operator=SearchOperator.CONTAINS, value="est")])
         search_result = CredentialsService.search(search_dict)
         self.assertEqual(search_result.page_info.total_number_of_items, 1)
         self.assertEqual(search_result.results[0].name, "test2")
@@ -65,10 +66,13 @@ class TestCredentials(BaseTestCase):
         credentials = Credentials()
         credentials.name = "9999"
         credentials.type = CredentialsType.OTHER
-        credentials.data = {"test": "test"}
+        credentials.data = {"data": {"test": "test"}}
         credentials.save()
 
         param = CredentialsParam(credentials_type=CredentialsType.OTHER)
         config_params = ParamSpecHelper.build_config_params({"credentials": param}, {"credentials": credentials.name})
-        self.assert_json(config_params["credentials"]["test"], "test")
-        self.assertIsNotNone(config_params["credentials"]["__meta__"])
+
+        data: CredentialsDataOther = config_params["credentials"]
+        self.assertIsInstance(data, CredentialsDataOther)
+        self.assertEqual(data.data["test"], "test")
+        self.assertIsNotNone(data.meta)

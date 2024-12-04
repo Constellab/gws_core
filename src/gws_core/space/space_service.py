@@ -300,6 +300,25 @@ class SpaceService():
 
         return UserFullDTO.from_json_list(response.json())
 
+    @classmethod
+    def get_user_info(cls, user_id: str) -> UserFullDTO:
+        """
+        Call the space api to get the user info
+        """
+        cls._check_dev_mode()
+
+        space_api_url: str = cls._get_space_api_url(
+            f"{cls._external_labs_route}/user/{user_id}")
+
+        try:
+            response = ExternalApiService.get(space_api_url, cls._get_request_header(),
+                                              raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't retrieve user info. Error : {err.detail}"
+            raise err
+
+        return UserFullDTO.from_json(response.json())
+
     #################################### OTHER ####################################
 
     @classmethod

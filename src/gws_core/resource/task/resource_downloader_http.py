@@ -1,11 +1,14 @@
 
 
+from typing import Literal
+
 from requests.models import Response
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
-from gws_core.core.service.external_lab_service import ExternalLabService
+from gws_core.external_lab.external_lab_api_service import \
+    ExternalLabApiService
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource_downloader import ResourceDownloader
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -73,12 +76,12 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
             self.log_info_message(
                 "Marking the resource as received in the origin lab")
             # call the origin lab to mark the resource as received
-            current_lab_info = ExternalLabService.get_current_lab_info(
+            current_lab_info = ExternalLabApiService.get_current_lab_info(
                 CurrentUserService.get_and_check_current_user())
 
             # retrieve the token which is the last part of the link
             share_token = self.link.split('/')[-1]
-            response: Response = ExternalLabService.mark_shared_object_as_received(
+            response: Response = ExternalLabApiService.mark_shared_object_as_received(
                 self.resource_loader.get_origin_info().lab_api_url,
                 ShareLinkType.RESOURCE, share_token, current_lab_info)
 
@@ -93,3 +96,10 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         TODO to remove once all the labs are updated to v >= 0.6.1
         """
         return link.startswith('https://glab') and link.find('share/resource/download/') != -1
+
+    @classmethod
+    def build_config(cls, link: str, uncompress: Literal['auto', 'yes', 'no']) -> ConfigParams:
+        return ConfigParams({
+            cls.LINK_PARAM_NAME: link,
+            cls.UNCOMPRESS_PARAM_NAME: uncompress
+        })

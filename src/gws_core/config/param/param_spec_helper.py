@@ -163,6 +163,7 @@ class ParamSpecHelper():
             json["additional_info"]["allowed_values"] = value
         return ParamSpecDTO.from_json(json)
 
+    # TODO @vfoex fix documentation and add comments
     @staticmethod
     def get_dynamic_param_allowed_param_spec_types(lab_allowed: bool = False) -> DynamicParamAllowedSpecsDict:
         """_summary_

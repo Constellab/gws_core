@@ -11,6 +11,7 @@ from gws_core.core.model.db_field import DateTimeUTC
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.service.front_service import FrontService
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
@@ -130,6 +131,9 @@ class ShareLink(ModelWithUser):
             return FrontService.get_resource_open_url(self.token)
         elif self.entity_type == ShareLinkType.SCENARIO:
             return None
+
+    def is_valid(self) -> bool:
+        return self.valid_until > DateHelper.now_utc()
 
     @classmethod
     def is_lab_share_resource_link(cls, link: str) -> bool:

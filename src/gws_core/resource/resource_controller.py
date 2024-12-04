@@ -1,17 +1,19 @@
 
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 
+from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
-from gws_core.resource.resource_dto import ResourceDTO
+from gws_core.resource.resource_dto import ResourceModelDTO
 from gws_core.resource.view.view_dto import (CallViewResultDTO,
                                              ResourceViewMetadatalDTO)
 from gws_core.share.shared_dto import ShareEntityInfoDTO
@@ -67,7 +69,7 @@ def get_view_json_file(id_: str, view_name: str,
 
 @core_app.get("/resource/{id_}", tags=["Resource"], summary="Get a resource")
 def get_a_resource(id_: str,
-                   _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
+                   _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
     """
     Retrieve a ResourceModel from a ResourceModel id_
 
@@ -79,7 +81,7 @@ def get_a_resource(id_: str,
 
 @core_app.get("/resource/{id_}/children", tags=["Resource"], summary="Get a resource")
 def get_resource_children(id_: str,
-                          _=Depends(AuthService.check_user_access_token)) -> List[ResourceDTO]:
+                          _=Depends(AuthService.check_user_access_token)) -> List[ResourceModelDTO]:
     """
     Retrieve a ResourceModel children resource of a ResourceModel id_
     """
@@ -109,7 +111,7 @@ def check_impact_delete_resource(id_: str,
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[ResourceDTO]:
+                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[ResourceModelDTO]:
     """
     Advanced search on resources
     """
@@ -119,7 +121,7 @@ def advanced_search(search_dict: SearchParams,
 
 @core_app.put("/resource/{id_}/name/{name}", tags=["Resource"], summary="Update the resource name")
 def update_name(id_: str, name: str,
-                _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
+                _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
     """
     Advanced search on resources
     """
@@ -130,7 +132,7 @@ def update_name(id_: str, name: str,
 @core_app.put("/resource/{id_}/type/{resource_typing_name}", tags=["Files"], summary="Update resource type")
 def update_file_type(id_: str,
                      resource_typing_name: str,
-                     _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
+                     _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
     return ResourceService.update_resource_type(id_, resource_typing_name).to_dto()
 
 
@@ -138,7 +140,7 @@ def update_file_type(id_: str,
               summary="Update the flagged of a resource")
 def update_flagged(id_: str,
                    body: dict,
-                   _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
+                   _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
     return ResourceService.update_flagged(id_, body["flagged"]).to_dto()
 
 
@@ -150,7 +152,7 @@ class UpdateFolder(BaseModelDTO):
               summary="Update the folder of a resource")
 def update_folder(id_: str,
                   folder: UpdateFolder,
-                  _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
+                  _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
     return ResourceService.update_folder(id_, folder.folder_id).to_dto()
 
 ############################# TRANSFORMER ###########################
@@ -159,7 +161,7 @@ def update_folder(id_: str,
 @core_app.post("/resource/{resource_model_id}/transform", tags=["Resource"],
                summary="Transform the resource")
 def create_transformer_scenario(transformers: List[TransformerDict], resource_model_id: str,
-                                  _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
+                                _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
 
     return TransformerService.create_and_run_transformer_scenario(
         transformers, resource_model_id).to_dto()
@@ -173,7 +175,7 @@ def create_transformer_scenario(transformers: List[TransformerDict], resource_mo
 def import_resource(config: dict,
                     resource_model_id: str,
                     importer_typing_name: str,
-                    _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
+                    _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
 
     return ConverterService.call_importer(
         resource_model_id, importer_typing_name, config).to_dto()
@@ -196,7 +198,7 @@ def export_resource(
         id_: str,
         exporter_typing_name: str,
         params: dict,
-        _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
+        _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
     """
     Export a resource.
     """
@@ -233,13 +235,15 @@ def get_shared_resource_origin_info(id_: str,
 
 ################################ RESOURCE ################################
 
-class ImportDto(BaseModelDTO):
-    url: str
-    uncompress_option: str
 
-
-@core_app.post("/resource/upload-from-link", tags=["Share"],
+@core_app.post("/resource/import-from-link", tags=["Share"],
                summary="Download a resource from an external link", response_model=None)
-def upload_resource_from_link(import_dto: ImportDto,
-                              _=Depends(AuthService.check_user_access_token)) -> ResourceDTO:
-    return ResourceService.upload_resource_from_link(import_dto.url, import_dto.uncompress_option).to_dto()
+def import_resource_from_link(values: ConfigParamsDict,
+                              _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
+    return ResourceService.import_resource_from_link(values).to_dto()
+
+
+@core_app.get("/resource/import-from-link/config-specs", tags=["Share"],
+              summary="Get config specs for importing a resource from a link")
+def get_import_resource_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
+    return ResourceService.get_import_from_link_config_specs()

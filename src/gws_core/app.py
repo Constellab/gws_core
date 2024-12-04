@@ -4,9 +4,9 @@ from threading import Thread
 
 import uvicorn
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
+from gws_core.external_lab.external_lab_controller import external_lab_app
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
 
 from .core.classes.cors_config import CorsConfig
@@ -96,9 +96,8 @@ class App:
 
         # api routes
         cls.app.mount("/core-api/", core_app)
-        # TODO To remove once central uses space-api (we can do that once all lab are on v0.5.0)
-        cls.app.mount("/central-api/", space_app)
         cls.app.mount("/space-api/", space_app)
+        cls.app.mount("/external-lab-api/", external_lab_app)
         cls.app.mount("/s3-server/", s3_server_app)
 
         uvicorn.run(cls.app, host='0.0.0.0', port=int(port))

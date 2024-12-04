@@ -143,3 +143,23 @@ class UserService():
 
         model_select = User.search_by_firstname_or_lastname(name)
         return Paginator(model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
+    def get_or_import_user_info(cls, user_id: str) -> User:
+        """ Get the user info from the database.
+         If he doesn"t exist, get it from the space (this might import a user that is not active in the lab)
+
+        :param user_id: _description_
+        :type user_id: str
+        :raises BadRequestException: _description_
+        :return: _description_
+        :rtype: User
+        """
+        user = cls.get_user_by_id(user_id)
+        if user is not None:
+            return user
+
+        user = SpaceService.get_user_info(user_id)
+        if user is None:
+            raise BadRequestException("The user does not exist in Constellab")
+        return cls.create_or_update_user_dto(user)

@@ -13,6 +13,8 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list import ResourceList
+from gws_core.resource.task.resource_downloader_http import \
+    ResourceDownloaderHttp
 from gws_core.share.share_link import ShareLink
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_service import ShareService
@@ -219,4 +221,6 @@ class TestShareResource(BaseTestCase):
             timedelta(days=1))
         share_link = ShareLinkService.generate_share_link(generate_dto)
 
-        return ResourceService.upload_resource_from_link(share_link.get_download_link(), 'auto')
+        return ResourceService.import_resource_from_link(
+            ResourceDownloaderHttp.build_config(share_link.get_download_link(),
+                                                'auto'))

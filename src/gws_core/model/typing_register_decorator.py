@@ -101,6 +101,7 @@ def register_typing_class(
         object_class.__set_typing_name__(typing.typing_name)
         object_class.__set_human_name__(human_name)
         object_class.__set_short_description__(short_description)
+        object_class.__set_style__(style)
 
 
 # Method to register gws object like Resource, Task and Protocol

@@ -12,6 +12,9 @@ from gws_core.scenario.scenario_enums import ScenarioCreationType
 from gws_core.scenario.scenario_zipper import ZipScenario, ZipScenarioInfo
 
 
+# TODO doesn't work if a task uses a resource typing (input or output) not
+# available in the lab. Or if we download a resource that uses a typing not
+# available in the lab.
 class ScenarioLoader():
 
     exp_info: ZipScenarioInfo

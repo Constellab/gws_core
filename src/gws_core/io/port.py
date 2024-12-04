@@ -8,7 +8,7 @@ from gws_core.io.io_dto import PortDTO
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from .io_spec import InputSpec, IOSpec, OutputSpec
+from .io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
 
 # For generic Port type
 PortType = TypeVar('PortType', bound='Port')
@@ -25,18 +25,21 @@ class Port(Base):
     name: str
 
     _resource_id: Optional[str] = None
+    _spec: IOSpecDTO = None
+
     # use to cache the resource model
     _resource_model: ResourceModel = None
+    # use to cache the resource spec
     _resource_spec: IOSpec = None
 
     # Switch to true when the set_resource_model is set (even if it is set with a None value)
     _resource_provided: bool = False
 
-    def __init__(self, name: str, _resource_spec: IOSpec):
+    def __init__(self, name: str, spec: IOSpecDTO) -> None:
         self._resource_id = None
         self._resource_model = None
         self.name = name
-        self._resource_spec = _resource_spec
+        self._spec = spec
 
     @property
     def is_ready(self) -> bool:
@@ -101,6 +104,13 @@ class Port(Base):
         :return: The resource
         :rtype: ResourceModel
         """
+        if not self._resource_spec:
+            spec_type: Type[IOSpec] = self._get_io_spec_type()
+            try:
+                self._resource_spec = spec_type.from_dto(self._spec)
+            except Exception as e:
+                raise ValueError(
+                    f"{self._get_type_name()} port '{self.get_human_name()}' ({self.name}) has invalid resource spec. {e}")
 
         return self._resource_spec
 
@@ -140,28 +150,39 @@ class Port(Base):
         if self.is_optional and resource_type is None:
             return True
 
-        return self._resource_spec.is_compatible_with_resource_type(resource_type)
+        return self.resource_spec.is_compatible_with_resource_type(resource_type)
 
     def get_resource(self, new_instance: bool = False) -> Resource:
         if self.is_empty:
             return None
         return self.get_resource_model().get_resource(new_instance=new_instance)
 
+    def get_human_name(self) -> str:
+        return self._spec.human_name or self.name
+
     def to_dto(self) -> PortDTO:
         return PortDTO(
             resource_id=self._resource_id,
-            specs=self.resource_spec.to_dto()
+            specs=self._spec
         )
 
     @classmethod
     def load_from_dto(cls: Type[PortType], dto: PortDTO, name: str) -> PortType:
-        spec_type: Type[IOSpec] = cls._get_io_spec_type()
-        specs: IOSpec = spec_type.from_dto(dto.specs)
-        return cls(name, specs)
+        port: PortType = cls(name, dto.specs)
+
+        if dto.resource_id:
+            port.set_resource_model_id(dto.resource_id)
+
+        return port
 
     @classmethod
     @abstractmethod
     def _get_io_spec_type(cls) -> Type[IOSpec]:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def _get_type_name(cls) -> str:
         pass
 
 
@@ -175,6 +196,10 @@ class InPort(Port):
     def _get_io_spec_type(cls) -> Type[IOSpec]:
         return InputSpec
 
+    @classmethod
+    def _get_type_name(cls) -> str:
+        return 'Input'
+
 
 @final
 class OutPort(Port):
@@ -185,3 +210,7 @@ class OutPort(Port):
     @classmethod
     def _get_io_spec_type(cls) -> Type[IOSpec]:
         return OutputSpec
+
+    @classmethod
+    def _get_type_name(cls) -> str:
+        return 'Output'

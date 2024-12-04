@@ -23,7 +23,7 @@ class ResourceOrigin(Enum):
     S3_FOLDER_STORAGE = "S3_FOLDER_STORAGE"
 
 
-class ResourceDTO(ModelWithUserDTO):
+class ResourceModelDTO(ModelWithUserDTO):
     resource_typing_name: str
     resource_type: Optional[TypingRefDTO] = None
     fs_node: Optional[FsNodeModelDTO]

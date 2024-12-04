@@ -69,7 +69,7 @@ class ProcessModel(ModelWithUser):
 
     data: Dict[str, Any] = JSONField(null=True)
     is_archived = BooleanField(default=False, index=True)
-    style: TypingStyle = BaseDTOField(TypingStyle, null=True)
+    style: TypingStyle = BaseDTOField(TypingStyle, null=False)
 
     # name of the process set by the user
     name = CharField(null=True)
@@ -186,6 +186,7 @@ class ProcessModel(ModelWithUser):
         self.process_typing_name = process_type.get_typing_name()
         self.brick_version_on_create = self._get_type_brick_version()
         self.name = process_type.get_human_name()
+        self.style = process_type.get_style()
 
     def set_inputs_from_specs(self, inputs_specs: IOSpecs) -> None:
         """Set the inputs from specs
@@ -461,19 +462,6 @@ class ProcessModel(ModelWithUser):
 
         return self.progress_bar.current_value
 
-    def get_style(self) -> TypingStyle:
-        """Return the style of the process
-        """
-        process_typing: Typing = self.get_process_typing()
-
-        if self.style:
-            return self.style
-
-        if process_typing:
-            return process_typing.style
-
-        return TypingStyle.default_task()
-
     ########################### JSON #################################
 
     def to_minimum_dto(self) -> ProcessMinimumDTO:
@@ -491,7 +479,6 @@ class ProcessModel(ModelWithUser):
         process_typing: Typing = self.get_process_typing()
         process_type_dto: SimpleTypingDTO = None
         type_status: TypingStatus = TypingStatus.OK
-        style: TypingStyle = self.get_style()
 
         if process_typing:
             process_type_dto = process_typing.to_simple_dto()
@@ -524,7 +511,7 @@ class ProcessModel(ModelWithUser):
             type_status=type_status,
             process_type=process_type_dto,
             name=self.name,
-            style=style
+            style=self.style
         )
 
     def to_config_dto(self, ignore_input_task_config: bool = False) -> ProcessConfigDTO:
@@ -555,7 +542,7 @@ class ProcessModel(ModelWithUser):
             outputs=self.outputs.to_dto(),
             status=self.status.value,
             process_type=process_typing.to_simple_dto(),
-            style=self.style or process_typing.style,
+            style=self.style,
             progress_bar=self.progress_bar.to_config_dto(),
         )
 

@@ -84,7 +84,7 @@ class IO(Base, Generic[PortType]):
         """
 
         port_type: Type[PortType] = self._get_port_type()
-        port: PortType = port_type(name, resource_spec)
+        port: PortType = port_type(name, resource_spec.to_dto())
         self.add_port(name, port)
         return port
 
@@ -229,9 +229,6 @@ class IO(Base, Generic[PortType]):
         for key, port_dto in io_dto.ports.items():
 
             port: PortType = port_type.load_from_dto(port_dto, key)
-
-            if port_dto.resource_id:
-                port.set_resource_model_id(port_dto.resource_id)
 
             io.add_port(key, port)
 

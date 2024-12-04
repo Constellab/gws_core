@@ -5,11 +5,12 @@ from json import dump
 from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
-from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.external_lab.external_lab_api_service import \
+    ExternalLabApiService
+from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.model.typing_style import TypingStyle
@@ -71,7 +72,7 @@ class ResourceZipper():
             zip_version=1,
             resource=None,
             children_resources=[],
-            origin=ExternalLabService.get_current_lab_info(self.shared_by)
+            origin=ExternalLabApiService.get_current_lab_info(self.shared_by)
         )
 
     def add_resource(self, resource: Resource) -> None:

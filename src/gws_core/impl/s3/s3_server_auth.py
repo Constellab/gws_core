@@ -56,7 +56,7 @@ class S3ServerAuth:
 
         expected_signature: str
         try:
-            expected_signature = cls._build_signature(request, s3_header, s3_credentials['secret_access_key'])
+            expected_signature = cls._build_signature(request, s3_header, s3_credentials.secret_access_key)
         except Exception as err:
             Logger.error(f"Error while building signature: {err}")
             raise ForbiddenException("Signature is invalid")

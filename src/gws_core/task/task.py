@@ -1,10 +1,12 @@
 
 
 from abc import abstractmethod
-from typing import List, Literal, Optional, Type, final
+from typing import Dict, List, Literal, Optional, Type, final
 
 from typing_extensions import TypedDict
 
+from gws_core.config.config_specs_helper import ConfigSpecsHelper
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.dispatched_message import DispatchedMessage
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
@@ -53,7 +55,7 @@ class Task(Process):
     file_downloader: FileDownloader
 
     # set this during the run of the task to apply a dynamic style to the task
-    # This overrides the style set byt the task_decorator
+    # This overrides the style set by the task_decorator
     style: TypingStyle
 
     # Current status of the task, do not update
@@ -190,6 +192,10 @@ class Task(Process):
         self.__scenario_id__ = scenario_id
 
     @final
+    def get_scenario_id(self) -> str:
+        return self.__scenario_id__
+
+    @final
     @classmethod
     def get_input_specs(cls) -> InputSpecs:
         return cls.input_specs
@@ -204,6 +210,11 @@ class Task(Process):
     def get_brick_name(cls) -> str:
         typing_name = TypingNameObj.from_typing_name(cls.get_typing_name())
         return typing_name.brick_name
+
+    @final
+    @classmethod
+    def get_config_specs_dto(cls) -> Dict[str, ParamSpecDTO]:
+        return ConfigSpecsHelper.config_specs_to_dto(cls.config_specs)
 
     def create_tmp_dir(self) -> str:
         """

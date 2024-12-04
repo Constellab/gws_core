@@ -6,8 +6,8 @@ from typing import List, Literal, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
-from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
-from gws_core.resource.resource_dto import ResourceDTO
+from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.resource.resource_dto import ResourceModelDTO
 from gws_core.scenario.scenario_zipper import ZipScenarioInfo
 from gws_core.user.user_dto import UserDTO
 
@@ -58,7 +58,7 @@ class ShareEntityInfoReponseDTO(BaseModelDTO):
 
 
 class ShareResourceInfoReponseDTO(ShareEntityInfoReponseDTO):
-    entity_object: List[ResourceDTO]
+    entity_object: List[ResourceModelDTO]
     # full route to call to zip the entity
     zip_entity_route: str
 

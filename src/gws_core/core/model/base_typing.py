@@ -3,6 +3,7 @@
 from typing import final
 
 from gws_core.core.model.base import Base
+from gws_core.model.typing_style import TypingStyle
 
 
 class BaseTyping(Base):
@@ -12,6 +13,7 @@ class BaseTyping(Base):
     __typing_name__: str = None
     __human_name__: str = None
     __short_description__: str = None
+    __style__: TypingStyle = None
 
     @final
     @classmethod
@@ -42,6 +44,16 @@ class BaseTyping(Base):
         :rtype: str
         """
         return cls.__short_description__
+
+    @final
+    @classmethod
+    def get_style(cls) -> TypingStyle:
+        """Get the style of the resource
+
+        :return: style
+        :rtype: str
+        """
+        return cls.__style__
 
     ############################################### SYSTEM METHODS ####################################################
 
@@ -80,3 +92,15 @@ class BaseTyping(Base):
         :type short_description: str
         """
         cls.__short_description__ = short_description
+
+    @final
+    @classmethod
+    def __set_style__(cls, style: TypingStyle) -> None:
+        """Set the style of the resource
+        This method is called by the system when the resource is created,
+        you should not call this method yourself
+
+        :param style: style
+        :type style: str
+        """
+        cls.__style__ = style

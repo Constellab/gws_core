@@ -15,7 +15,7 @@ from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
 class ShareLinkService:
 
     @classmethod
-    def find_by_entity_id_and_type(
+    def find_by_type_and_entity(
             cls, entity_type: ShareLinkType, entity_id: str) -> Optional[ShareLink]:
         """Method that find a shared entity link by its entity id and type
         """
@@ -28,7 +28,7 @@ class ShareLinkService:
         """
         share_link = ShareLink.find_by_token_and_check(token)
 
-        if share_link.valid_until < DateHelper.now_utc():
+        if not share_link.is_valid():
             raise BadRequestException("The link is expired")
 
         return share_link
@@ -68,6 +68,22 @@ class ShareLinkService:
 
         shared_entity_link.valid_until = share_dto.valid_until
         return shared_entity_link.save()
+
+    @classmethod
+    def get_or_create_valid_share_link(cls, share_dto: GenerateShareLinkDTO) -> ShareLink:
+        """Method that get a valid share link for a given entity or create a new one if it does not exist or expired
+        """
+
+        existing_link = ShareLink.find_by_entity_type_and_id(
+            entity_type=share_dto.entity_type, entity_id=share_dto.entity_id)
+
+        if existing_link:
+            if existing_link.is_valid():
+                return existing_link
+            else:
+                return cls.update_share_link(share_dto)
+        else:
+            return cls.generate_share_link(share_dto)
 
     @classmethod
     def delete_share_link(cls, id: str) -> None:

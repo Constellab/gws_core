@@ -10,52 +10,53 @@ from gws_core.user.auth_service import AuthService
 from gws_core.user.user_credentials_dto import UserCredentialsDTO
 
 from ..core_controller import core_app
-from .credentials_dto import CredentialDTO, SaveCredentialDTO
 from .credentials_service import CredentialsService
+from .credentials_type import (CredentialsDataSpecsDTO, CredentialsDTO,
+                               SaveCredentialsDTO)
 
 
 @core_app.post("/credentials")
-def create_credentials(credentials: SaveCredentialDTO,
-                       _=Depends(AuthService.check_user_access_token)) -> CredentialDTO:
+def create_credentials(credentials: SaveCredentialsDTO,
+                       _=Depends(AuthService.check_user_access_token)) -> CredentialsDTO:
     return CredentialsService.create(credentials).to_dto()
 
 
-@core_app.put("/credentials/{id}")
-def update_credentials(id: str,
-                       credentials: SaveCredentialDTO,
-                       _=Depends(AuthService.check_user_access_token)) -> CredentialDTO:
-    return CredentialsService.update(id, credentials).to_dto()
+@core_app.put("/credentials/{id_}")
+def update_credentials(id_: str,
+                       credentials: SaveCredentialsDTO,
+                       _=Depends(AuthService.check_user_access_token)) -> CredentialsDTO:
+    return CredentialsService.update(id_, credentials).to_dto()
 
 
-@core_app.delete("/credentials/{id}")
-def delete_credentials(id: str,
+@core_app.delete("/credentials/{id_}")
+def delete_credentials(id_: str,
                        _=Depends(AuthService.check_user_access_token)) -> None:
-    CredentialsService.delete(id)
+    CredentialsService.delete(id_)
 
 
-@core_app.get("/credentials/{id}")
-def get_credentials(id: str,
-                    _=Depends(AuthService.check_user_access_token)) -> CredentialDTO:
-    return CredentialsService.get_by_id_and_check(id).to_dto()
+@core_app.get("/credentials/{id_}")
+def get_credentials(id_: str,
+                    _=Depends(AuthService.check_user_access_token)) -> CredentialsDTO:
+    return CredentialsService.get_by_id_and_check(id_).to_dto()
 
 
 @core_app.get("/credentials")
 def get_all(page: int = 0,
             number_of_items_per_page: int = 20,
-            _=Depends(AuthService.check_user_access_token)) -> PageDTO[CredentialDTO]:
+            _=Depends(AuthService.check_user_access_token)) -> PageDTO[CredentialsDTO]:
     return CredentialsService.get_all(page, number_of_items_per_page).to_dto()
 
 
-@core_app.post("/credentials/{id}/data")
-def read_credentials(id: str,
+@core_app.post("/credentials/{id_}/data")
+def read_credentials(id_: str,
                      user_credentials: UserCredentialsDTO,
                      _=Depends(AuthService.check_user_access_token)) -> dict:
-    return CredentialsService.get_credentials_data(id, user_credentials)
+    return CredentialsService.get_credentials_data(id_, user_credentials)
 
 
 @core_app.get("/credentials/name/{name}")
 def get_credentials_by_name(name: str,
-                            _=Depends(AuthService.check_user_access_token)) -> Optional[CredentialDTO]:
+                            _=Depends(AuthService.check_user_access_token)) -> Optional[CredentialsDTO]:
     credentials = CredentialsService.find_by_name(name)
     if credentials:
         return credentials.to_dto()
@@ -67,5 +68,10 @@ def get_credentials_by_name(name: str,
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[CredentialDTO]:
+                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[CredentialsDTO]:
     return CredentialsService.search(search_dict, page, number_of_items_per_page).to_dto()
+
+
+@core_app.get("/credentials/data/specs")
+def get_credentials_data_specs(_=Depends(AuthService.check_user_access_token)) -> CredentialsDataSpecsDTO:
+    return CredentialsService.get_credentials_data_specs()

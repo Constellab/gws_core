@@ -9,8 +9,9 @@ from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.decorator.transaction import transaction
-from gws_core.core.service.external_lab_service import ExternalLabService
 from gws_core.core.utils.utils import Utils
+from gws_core.external_lab.external_lab_api_service import \
+    ExternalLabApiService
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
 from gws_core.model.typing_style import TypingStyle
@@ -50,7 +51,7 @@ class ScenarioDownloader(Task):
     })
 
     config_specs: ConfigSpecs = {
-        'link': StrParam(human_name='Resource link', short_description='Link to download the resource'),
+        'link': StrParam(human_name='Scenario link', short_description='Link to download the scenario'),
         'resource_mode': StrParam(human_name='Resource mode', short_description='Mode for downloading resource of the scenario',
                                   allowed_values=Utils.get_literal_values(ScenarioDownloaderMode))
     }
@@ -281,11 +282,11 @@ class ScenarioDownloader(Task):
             self.log_info_message(
                 "Marking the resource as received in the origin lab")
             # call the origin lab to mark the scenario as received
-            current_lab_info = ExternalLabService.get_current_lab_info(
+            current_lab_info = ExternalLabApiService.get_current_lab_info(
                 CurrentUserService.get_and_check_current_user())
 
             # retrieve the token which is the last part of the link
-            response: requests.Response = ExternalLabService.mark_shared_object_as_received(
+            response: requests.Response = ExternalLabApiService.mark_shared_object_as_received(
                 self.share_entity.origin.lab_api_url,
                 ShareLinkType.SCENARIO, self.share_entity.token, current_lab_info)
 

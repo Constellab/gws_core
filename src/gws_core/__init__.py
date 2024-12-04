@@ -115,6 +115,8 @@ from .credentials.credentials_param import CredentialsParam as CredentialsParam
 from .credentials.credentials_type import \
     CredentialsDataBasic as CredentialsDataBasic
 from .credentials.credentials_type import \
+    CredentialsDataLab as CredentialsDataLab
+from .credentials.credentials_type import \
     CredentialsDataOther as CredentialsDataOther
 from .credentials.credentials_type import \
     CredentialsDataS3 as CredentialsDataS3

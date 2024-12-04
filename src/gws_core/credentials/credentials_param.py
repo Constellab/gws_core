@@ -24,7 +24,7 @@ class CredentialsParam(ParamSpec[str]):
     but not the credentials data (key, password).
     The credentials data is retrieved from the credentials service just before the execution of the task or view.
 
-    The accessible value in task in a dictionary, it depends on the credentials type.
+    The accessible value in task is a CredentialsDataBase, it depends on the credentials type.
     See the documentation of the credentials type for more info.
 
     """
@@ -73,7 +73,7 @@ class CredentialsParam(ParamSpec[str]):
     def get_str_type(cls) -> str:
         return "credentials_param"
 
-    def build(self, value: Any) -> dict:
+    def build(self, value: Any) -> CredentialsDataBase:
         if not value:
             return None
 
@@ -86,11 +86,7 @@ class CredentialsParam(ParamSpec[str]):
             raise Exception(
                 f"Credentials {value} is not of type {self.credentials_type}")
 
-        json_: CredentialsDataBase = {
-            "__meta__": credentials.to_dto().to_json_dict(),
-            **credentials.data
-        }
-        return json_
+        return credentials.get_data_object()
 
     def validate(self, value: Any) -> str:
 

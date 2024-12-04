@@ -2,10 +2,12 @@
 
 from typing import List, Optional
 
-from peewee import ModelSelect
-
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+from gws_core.core.exception.exceptions.unauthorized_exception import \
+    UnauthorizedException
 from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials_search_builder import \
     CredentialsSearchBuilder
@@ -16,30 +18,31 @@ from gws_core.space.space_service import (ExternalCheckCredentialResponse,
 from gws_core.user.user_credentials_dto import UserCredentialsDTO
 
 from .credentials import Credentials
-from .credentials_dto import SaveCredentialDTO
+from .credentials_type import (CredentialsDataLab, CredentialsDataSpecsDTO,
+                               CredentialsDataTypeSpecDTO, SaveCredentialsDTO)
 
 
 class CredentialsService():
 
     @classmethod
-    def create(cls, save_credentials: SaveCredentialDTO) -> Credentials:
+    def create(cls, save_credentials: SaveCredentialsDTO) -> Credentials:
         credentials = cls._check_and_build_from_dto(save_credentials)
         return credentials.save()
 
     @classmethod
-    def update(cls, id: str, save_credentials: SaveCredentialDTO) -> Credentials:
-        credentials = cls._check_and_build_from_dto(save_credentials, id)
+    def update(cls, id_: str, save_credentials: SaveCredentialsDTO) -> Credentials:
+        credentials = cls._check_and_build_from_dto(save_credentials, id_)
         return credentials.save()
 
     @classmethod
-    def _check_and_build_from_dto(cls, save_credentials: SaveCredentialDTO, id: str = None) -> Credentials:
+    def _check_and_build_from_dto(cls, save_credentials: SaveCredentialsDTO, id_: str = None) -> Credentials:
 
         credentials: Credentials = None
 
         # check that another credentials with the same name does not exist
-        if id:
-            credentials = Credentials.get_by_id_and_check(id)
-            other = Credentials.select().where(Credentials.id != id, Credentials.name == save_credentials.name).first()
+        if id_:
+            credentials = Credentials.get_by_id_and_check(id_)
+            other = Credentials.select().where(Credentials.id != id_, Credentials.name == save_credentials.name).first()
             if other:
                 raise Exception("Credentials with this name already exists")
         else:
@@ -52,6 +55,12 @@ class CredentialsService():
         credentials.description = save_credentials.description
         credentials.type = save_credentials.type
         credentials.data = save_credentials.data
+
+        # check that the data is valid
+        try:
+            credentials.get_data_object(skip_meta=True)
+        except Exception as e:
+            raise BadRequestException(f"Invalid credentials data: {str(e)}")
         return credentials
 
     @classmethod
@@ -88,7 +97,7 @@ class CredentialsService():
             response: ExternalCheckCredentialResponse = SpaceService.check_credentials(user_credentials, False)
 
             if not response.status == 'OK':
-                raise Exception('Invalid credentials')
+                raise UnauthorizedException('Invalid credentials')
 
         credentials: Credentials = Credentials.get_by_id_and_check(credentials_id)
         return credentials.data
@@ -105,8 +114,37 @@ class CredentialsService():
         s3_credentials: List[Credentials] = Credentials.search_by_type(CredentialsType.S3)
 
         for credentials in s3_credentials:
-            data: CredentialsDataS3 = credentials.data
-            if data.get('access_key_id') == access_key_id:
+            data: CredentialsDataS3 = credentials.get_data_object()
+            if data.access_key_id == access_key_id:
                 return data
 
         return None
+
+    @classmethod
+    def get_lab_credentials_data_by_api_key(cls, api_key: str) -> Optional[CredentialsDataLab]:
+        """Return the lab credentials that match the api key
+        """
+
+        lab_credentials: List[Credentials] = Credentials.search_by_type(CredentialsType.LAB)
+
+        for credentials in lab_credentials:
+            data: CredentialsDataLab = credentials.get_data_object()
+            if data.api_key == api_key:
+                return data
+
+        return None
+
+    @classmethod
+    def get_credentials_data_specs(cls) -> CredentialsDataSpecsDTO:
+        """Return the specs of all credentials data types
+        """
+        data_types = Credentials.get_data_types()
+        data_specs = []
+
+        for type_, data_type in data_types.items():
+            data_specs.append(CredentialsDataTypeSpecDTO(
+                type=type_,
+                specs=data_type.get_spec_dto()
+            ))
+
+        return CredentialsDataSpecsDTO(data_specs=data_specs)

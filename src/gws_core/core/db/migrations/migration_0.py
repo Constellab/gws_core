@@ -14,6 +14,7 @@ from gws_core.config.param.param_spec import ListParam
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.sql_migrator import SqlMigrator
+from gws_core.core.model.db_field import BaseDTOField
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file_helper import FileHelper
@@ -1149,7 +1150,6 @@ class Migration0100(BrickMigration):
         @classmethod
         def migrate_agent(cls, agent: ProcessModel) -> None:
             if agent.config.param_exists('params') and isinstance(agent.config.get_spec('params'), ListParam):
-                print(f'Migrating agent {agent.id}')
                 params = agent.config.get_value('params')
 
                 new_params = {}
@@ -1173,21 +1173,21 @@ class Migration0100(BrickMigration):
                 agent.config.update_spec('params', dynamic_param)
 
                 agent.config.set_value('params', new_params)
-                agent.config.save()
+                agent.config.save(skip_hook=True)
 
         @classmethod
         def migrate(cls, from_version: Version, to_version: Version) -> None:
             process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
-            agents = []
             for process_model in process_models:
                 if process_model.process_typing_name in [
                     'TASK.gws_core.PyAgent', 'TASK.gws_core.PyCondaAgent', 'TASK.gws_core.PyMambaAgent',
                     'TASK.gws_core.PyPipenvAgent', 'TASK.gws_core.RCondaAgent', 'TASK.gws_core.RMambaAgent',
                         'TASK.gws_core.StreamlitAgent']:
-                    agents.append(process_model)
-
-            for agent in agents:
-                cls.migrate_agent(agent)
+                    try:
+                        cls.migrate_agent(process_model)
+                    except Exception as exception:
+                        Logger.error(
+                            f'Error while migrating agent {process_model.id} : {exception}')
 
             configs: List[Config] = list(Config.select())
 
@@ -1212,4 +1212,35 @@ class Migration0100(BrickMigration):
 
                     config.data['specs'][key] = spec_json
 
-                config.save()
+                config.save(skip_hook=True)
+
+            # force style on all entities
+            process_models = list(TaskModel.select()) + list(ProtocolModel.select())
+            for process_model in process_models:
+                if not process_model.style:
+
+                    process_typing: Typing = process_model.get_process_typing()
+                    if process_typing:
+                        process_model.style = process_typing.style
+                    else:
+                        process_model.style = TypingStyle.default_task()
+                    process_model.save(skip_hook=True)
+
+            resources: List[ResourceModel] = list(ResourceModel.select())
+            for resource in resources:
+                if not resource.style:
+                    resource_type = resource.get_resource_type()
+                    if resource_type:
+                        resource.style = resource_type.get_style()
+                    else:
+                        resource.style = TypingStyle.default_resource()
+                    resource.save(skip_hook=True)
+
+            migrator = SqlMigrator(ResourceModel.get_db())
+            migrator.alter_column_type(
+                ResourceModel, ResourceModel.style.column_name, BaseDTOField(TypingStyle, null=False))
+            migrator.alter_column_type(
+                TaskModel, TaskModel.style.column_name, BaseDTOField(TypingStyle, null=False))
+            migrator.alter_column_type(
+                ProtocolModel, ProtocolModel.style.column_name, BaseDTOField(TypingStyle, null=False))
+            migrator.migrate()

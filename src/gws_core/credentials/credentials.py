@@ -1,15 +1,17 @@
 
 
-from typing import Any, Dict, Optional, final
+from typing import Any, Dict, Optional, Type, final
 
 from peewee import CharField, ModelSelect, TextField
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model_with_user import ModelWithUser
-from gws_core.credentials.credentials_dto import CredentialDTO
+from gws_core.credentials.credentials_type import CredentialsDTO
 
-from .credentials_type import CredentialsType
+from .credentials_type import (CredentialsDataBase, CredentialsDataBasic,
+                               CredentialsDataLab, CredentialsDataOther,
+                               CredentialsDataS3, CredentialsType)
 
 
 @final
@@ -29,8 +31,8 @@ class Credentials(ModelWithUser):
         if not self.is_saved() and not self.data:
             self.data = {}
 
-    def to_dto(self) -> CredentialDTO:
-        return CredentialDTO(
+    def to_dto(self) -> CredentialsDTO:
+        return CredentialsDTO(
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
@@ -40,6 +42,10 @@ class Credentials(ModelWithUser):
             type=self.type,
             description=self.description,
         )
+
+    def get_data_object(self, skip_meta: bool = False) -> CredentialsDataBase:
+        data_type = self.get_data_types().get(self.type)
+        return data_type(**self.data, meta=self.to_dto() if not skip_meta else None)
 
     @classmethod
     def find_by_name(cls, name: str) -> Optional['Credentials']:
@@ -58,6 +64,15 @@ class Credentials(ModelWithUser):
         if not name:
             return cls.select().where(Credentials.type == type_)
         return cls.select().where(Credentials.name.contains(name), Credentials.type == type_)
+
+    @classmethod
+    def get_data_types(cls) -> Dict[CredentialsType, Type[CredentialsDataBase]]:
+        return {
+            CredentialsType.BASIC: CredentialsDataBasic,
+            CredentialsType.S3: CredentialsDataS3,
+            CredentialsType.LAB: CredentialsDataLab,
+            CredentialsType.OTHER: CredentialsDataOther,
+        }
 
     class Meta:
         table_name = "gws_credentials"

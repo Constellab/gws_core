@@ -12,10 +12,9 @@ from uvicorn import Config, Server
 
 from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials import Credentials
-from gws_core.credentials.credentials_dto import SaveCredentialDTO
 from gws_core.credentials.credentials_service import CredentialsService
-from gws_core.credentials.credentials_type import (CredentialsDataS3,
-                                                   CredentialsType)
+from gws_core.credentials.credentials_type import (CredentialsType,
+                                                   SaveCredentialsDTO)
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
@@ -132,7 +131,7 @@ class TestS3Server(BaseTestCase):
         credentials = CredentialsService.find_by_name(name)
         if credentials:
             return credentials
-        s3_data: CredentialsDataS3 = {
+        s3_data = {
             'endpoint_url': 'test',
             'bucket': '',
             'region': 'us-east-1',
@@ -140,8 +139,8 @@ class TestS3Server(BaseTestCase):
             'secret_access_key': 'secret_key'
         }
 
-        credentials_dto = SaveCredentialDTO(name='Test s3 server', type=CredentialsType.S3,
-                                            description='Test s3 server', data=s3_data)
+        credentials_dto = SaveCredentialsDTO(name='Test s3 server', type=CredentialsType.S3,
+                                             description='Test s3 server', data=s3_data)
 
         return CredentialsService.create(credentials_dto)
 

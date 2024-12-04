@@ -133,6 +133,10 @@ class Settings():
         return "core-api"
 
     @classmethod
+    def external_lab_api_route_path(cls) -> str:
+        return "external-lab-api"
+
+    @classmethod
     def get_lab_environment(cls) -> LabEnvironment:
         """Return the environment where the lab run
         ON_CLOUD : the lab is running on the cloud

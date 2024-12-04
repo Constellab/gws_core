@@ -91,7 +91,13 @@ class ExternalApiService:
 
     @classmethod
     def raise_error_from_response(cls, response: Response) -> None:
-        json_ = response.json()
+
+        json_: dict = None
+        try:
+            json_ = response.json()
+        except Exception:
+            # otherwise raise the default exception
+            raise BaseHTTPException(http_status_code=response.status_code, detail=response.text)
 
         # if this is a constellab know error
         if 'status' in json_ and 'code' in json_ and 'detail' in json_ and \

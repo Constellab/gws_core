@@ -40,5 +40,5 @@ def get_share_links(page: Optional[int] = 1,
 @core_app.get("/share-link/{entity_type}/{entity_id}", tags=["Share"], summary="Get share entity", response_model=None)
 def get_share_entity(entity_type: str, entity_id: str,
                      _=Depends(AuthService.check_user_access_token)) -> Optional[ShareLinkDTO]:
-    share_link = ShareLinkService.find_by_entity_id_and_type(entity_type, entity_id)
+    share_link = ShareLinkService.find_by_type_and_entity(entity_type, entity_id)
     return share_link.to_dto() if share_link else None

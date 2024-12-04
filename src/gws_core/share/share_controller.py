@@ -4,8 +4,8 @@ from fastapi import Depends
 from fastapi.responses import FileResponse
 
 from gws_core.core.model.model_dto import PageDTO
-from gws_core.core.service.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.core_controller import core_app
+from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.resource.resource_controller import CallViewParams
 from gws_core.resource.view.view_dto import CallViewResultDTO
@@ -75,15 +75,14 @@ def call_view_on_resource(view_name: str,
 
 ################################ SCENARIO ################################
 
-# Open zip the resource of a shared scenario
+# Route to get scenario info
 @core_app.get("/share/scenario/{token}", tags=["Share"],
               summary="Get info of the shared scenario")
 def get_share_scenario_info(share_link=Depends(ShareTokenAuth.get_and_check_token)) -> ShareScenarioInfoReponseDTO:
     return ShareService.get_scenario_entity_object_info(share_link)
 
-# Open zip the resource of a shared scenario
 
-
+# Open route to zip the resource of a shared scenario
 @core_app.post("/share/scenario/{token}/resource/{resource_id}/zip", tags=["Share"],
                summary="Zip the resource of a shared scenario")
 def zip_scenario_resource(resource_id: str,

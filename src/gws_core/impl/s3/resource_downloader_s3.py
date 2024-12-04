@@ -42,14 +42,14 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         credentials: CredentialsDataS3 = params.get_value('credentials')
 
-        bucket_name = credentials['bucket'] or params.get_value('s3_bucket')
+        bucket_name = credentials.bucket or params.get_value('s3_bucket')
         if not bucket_name:
             raise ValueError("Bucket name is not provided")
 
-        s3_bucket = S3Bucket(endpoint=credentials['endpoint_url'],
-                             region=credentials['region'],
-                             access_key_id=credentials['access_key_id'],
-                             secret_access_key=credentials['secret_access_key'],
+        s3_bucket = S3Bucket(endpoint=credentials.endpoint_url,
+                             region=credentials.region,
+                             access_key_id=credentials.access_key_id,
+                             secret_access_key=credentials.secret_access_key,
                              bucket_name=bucket_name,
                              message_dispatcher=self.message_dispatcher)
 

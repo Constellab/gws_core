@@ -16,7 +16,7 @@ from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dto import TypingRefDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
-from gws_core.resource.resource_dto import (ResourceDTO, ResourceOrigin,
+from gws_core.resource.resource_dto import (ResourceModelDTO, ResourceOrigin,
                                             ResourceSimpleDTO)
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
@@ -91,7 +91,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     # true if the resource content was deleted
     # when cleaning intermediate resources or importing an experience without the intermediate resources
     content_is_deleted = BooleanField(default=False)
-    style: TypingStyle = BaseDTOField(TypingStyle, null=True)
+    style: TypingStyle = BaseDTOField(TypingStyle, null=False)
 
     _table_name = 'gws_resource'
     _resource: Resource = None
@@ -359,6 +359,8 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         if style_override:
             style_override.fill_empty_values()
             resource_model.style = style_override
+        else:
+            resource_model.style = resource.get_style()
 
         # synchronize the model fields with the resource fields
         resource_model.receive_fields_from_resource(resource)
@@ -530,13 +532,12 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     ########################################## JSON ######################################
 
-    def to_dto(self) -> ResourceDTO:
+    def to_dto(self) -> ResourceModelDTO:
 
         resource_type_ref: TypingRefDTO = None
         is_downloadable: Optional[bool] = False
         type_status: TypingStatus = TypingStatus.OK
         has_children: bool = False
-        style: TypingStyle = self.style
 
         resource_typing: Optional[Typing] = TypingManager.get_typing_from_name(
             self.resource_typing_name)
@@ -550,16 +551,10 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             # check if the resource has children resources
             if resource_type is not None and Utils.issubclass(resource_type, ResourceListBase):
                 has_children = True
-
-            if style is None:
-                style = resource_typing.style
         else:
             type_status = TypingStatus.UNAVAILABLE
 
-        if style is None:
-            style = TypingStyle.default_resource()
-
-        return ResourceDTO(
+        return ResourceModelDTO(
             id=self.id,
             created_at=self.created_at,
             created_by=self.created_by.to_dto(),
@@ -576,7 +571,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             flagged=self.flagged,
             scenario=self.scenario.to_simple_dto() if self.scenario else None,
             folder=self.folder.to_dto() if self.folder else None,
-            style=style,
+            style=self.style,
         )
 
     def to_simple_dto(self) -> ResourceSimpleDTO:

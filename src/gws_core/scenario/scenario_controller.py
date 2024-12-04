@@ -3,6 +3,8 @@ from typing import Dict, List, Optional
 
 from fastapi import Depends
 
+from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
@@ -11,7 +13,6 @@ from gws_core.entity_navigator.entity_navigator_service import \
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.scenario.scenario_downloader_service import \
     ScenarioDownloaderService
-from gws_core.scenario.task.scenario_downloader import ScenarioDownloaderMode
 
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
@@ -243,13 +244,14 @@ def delete_intermediate_resources(id_: str,
     ################################### CREATE SCENARIO FROM LINK ##############################
 
 
-class ImportExpDto(BaseModelDTO):
-    url: str
-    mode: ScenarioDownloaderMode
-
-
 @core_app.post("/scenario/import-from-lab", tags=["Share"],
                summary="Import an scenario from another lab")
-def import_from_lab(import_dto: ImportExpDto,
+def import_from_lab(values: ConfigParamsDict,
                     _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
-    return ScenarioDownloaderService.import_from_lab(import_dto.url, import_dto.mode).to_dto()
+    return ScenarioDownloaderService.import_from_lab(values).to_dto()
+
+
+@core_app.get("/scenario/import-from-lab/config-specs", tags=["Share"],
+              summary="Get config specs for importing an scenario from another lab")
+def get_import_scenario_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
+    return ScenarioDownloaderService.get_import_scenario_config_specs()

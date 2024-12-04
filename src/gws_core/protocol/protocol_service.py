@@ -1122,6 +1122,7 @@ class ProtocolService():
 
         return dynamic_param_spec
 
+    # TODO @vfoex fix return type
     @classmethod
     def get_dynamic_param_allowed_param_spec_types(
             cls, protocol_id: str, process_name: str) -> DynamicParamAllowedSpecsDict:
