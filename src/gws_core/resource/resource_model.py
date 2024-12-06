@@ -313,20 +313,28 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
                       port_name: str = None, flagged: bool = None) -> ResourceModel:
         """Create a new ResourceModel from a resource
 
-        Don't set the resource here so it is regenerate on next get (avoid using same instance)
+        Don't set the resource here so it is regenerate on next get ( avoid using same instance)
 
         :return: [description]
         :rtype: [type]
         """
 
+        resource_model: ResourceModel = ResourceModel()
+        resource_model.origin = resource.__origin__ or origin
+
         # If the origin is not uploaded, then the scenario and the task must be provided
-        if origin not in [ResourceOrigin.UPLOADED, ResourceOrigin.S3_FOLDER_STORAGE, ResourceOrigin.IMPORTED_FROM_LAB]:
+        if resource_model.origin not in [
+                ResourceOrigin.UPLOADED, ResourceOrigin.S3_FOLDER_STORAGE, ResourceOrigin.IMPORTED_FROM_LAB]:
             if scenario is None or task_model is None:
                 raise Exception(f"To create a {origin} resource, you must provide the scenario and the task")
 
-        resource_model: ResourceModel = ResourceModel()
+        # if the resource is imported and its id is define, use it
+        # with this resources imported from another can keep their id
+        if resource_model.origin == ResourceOrigin.IMPORTED_FROM_LAB and resource.get_model_id() is not None:
+            resource_model.id = resource.get_model_id()
+
         resource_model.set_resource_typing_name(resource.get_typing_name())
-        resource_model.origin = resource.__origin__ or origin
+
         if scenario:
             resource_model.scenario = scenario
             resource_model.folder = scenario.folder
@@ -498,6 +506,10 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     def get_and_check_resource_type(self) -> Type[Resource]:
         return TypingManager.get_and_check_type_from_name(self.resource_typing_name)
+
+    def set_parent_and_save(self, parent_resource_id: str) -> 'ResourceModel':
+        self.parent_resource_id = parent_resource_id
+        return self.save()
 
     ########################################## KV STORE ######################################
 

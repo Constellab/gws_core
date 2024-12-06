@@ -3,6 +3,7 @@
 from typing import Dict, List, Optional, Type
 
 from gws_core.io.io_dto import IODTO
+from gws_core.io.ioface import IOface
 from gws_core.model.typing_style import TypingStyle
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
@@ -115,7 +116,7 @@ class ProcessFactory():
             task_type=task_type, config_params=config_params, instance_name=instance_name)
 
     @classmethod
-    def create_task_model_from_config_dto(cls, task_config_dto: ProcessConfigDTO) -> TaskModel:
+    def create_task_model_from_config_dto(cls, task_config_dto: ProcessConfigDTO, copy_id: bool) -> TaskModel:
         """Create a task model from a ProcessConfigDTO. The task is fully created from the dto and
         the process type is not used. It can create a task where the type does not exist in the system.
 
@@ -125,7 +126,7 @@ class ProcessFactory():
         :rtype: TaskModel
         """
         task_model: TaskModel = TaskModel()
-        return cls._init_process_model_from_config_dto(task_model, task_config_dto)
+        return cls._init_process_model_from_config_dto(task_model, task_config_dto, copy_id)
 
     ############################################### PROTOCOL FROM TYPE #################################################
 
@@ -224,7 +225,8 @@ class ProcessFactory():
         return protocol_model
 
     @classmethod
-    def create_empty_protocol_model_from_config_dto(cls, protocol_config_dto: ProcessConfigDTO) -> ProtocolModel:
+    def create_empty_protocol_model_from_config_dto(cls, protocol_config_dto: ProcessConfigDTO,
+                                                    copy_id: bool) -> ProtocolModel:
         """Create a protocol model from a ProcessConfigDTO. The protocol is fully created from the dto and
         the process type is not used. It can create a protocol where the type does not exist in the system.
 
@@ -235,7 +237,16 @@ class ProcessFactory():
         :rtype: TaskModel
         """
         protocol_model: ProtocolModel = ProtocolModel()
-        return cls._init_process_model_from_config_dto(protocol_model, protocol_config_dto)
+        protocol_model = cls._init_process_model_from_config_dto(protocol_model, protocol_config_dto, copy_id)
+
+        # force the interface and outerface from DTO
+        interfaces = IOface.load_from_dto_dict(protocol_config_dto.graph.interfaces)
+        protocol_model.set_interfaces(interfaces)
+
+        outerfaces = IOface.load_from_dto_dict(protocol_config_dto.graph.outerfaces)
+        protocol_model.set_outerfaces(outerfaces)
+
+        return protocol_model
 
     ############################################### PROTOCOL EMPTY #################################################
 
@@ -285,7 +296,10 @@ class ProcessFactory():
 
     @classmethod
     def _init_process_model_from_config_dto(cls, process_model: ProcessModel,
-                                            process_config_dto: ProcessConfigDTO) -> ProcessModel:
+                                            process_config_dto: ProcessConfigDTO,
+                                            copy_id: bool) -> ProcessModel:
+        if copy_id:
+            process_model.id = process_config_dto.id
         process_model.process_typing_name = process_config_dto.process_typing_name
         process_model.set_inputs_from_dto(process_config_dto.inputs)
         process_model.set_outputs_from_dto(process_config_dto.outputs)

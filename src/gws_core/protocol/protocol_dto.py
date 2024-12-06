@@ -42,6 +42,8 @@ class ProtocolGraphConfigDTO(BaseModelDTO):
 
 # set this type here to avoid circular import files
 class ProcessConfigDTO(BaseModelDTO):
+    # provided from lab v 0.10.5
+    id: Optional[str] = None
     process_typing_name: str
     instance_name: str
     config: ConfigSimpleDTO

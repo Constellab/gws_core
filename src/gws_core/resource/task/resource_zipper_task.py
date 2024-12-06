@@ -12,6 +12,7 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_zipper import ResourceZipper
 from gws_core.resource.technical_info import TechnicalInfo
+from gws_core.share.shared_dto import ShareEntityCreateMode
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -95,7 +96,7 @@ class ResourceUnZipper(Task):
         source: File = inputs['source']
 
         self.log_info_message("Uncompressing the file")
-        self.resource_loader = ResourceLoader.from_compress_file(source.path)
+        self.resource_loader = ResourceLoader.from_compress_file(source.path, ShareEntityCreateMode.NEW_ID)
 
         self.log_info_message("Loading the resource")
         resource = self.resource_loader.load_resource()

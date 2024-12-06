@@ -81,3 +81,8 @@ class ShareResourceZippedResponseDTO(BaseModelDTO):
     zipped_entity_resource_id: str
     # full route to call to download the entity
     download_entity_route: str
+
+
+class ShareEntityCreateMode(Enum):
+    KEEP_ID = "KEEP_ID"
+    NEW_ID = "NEW_ID"

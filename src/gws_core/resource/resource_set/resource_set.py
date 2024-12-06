@@ -59,10 +59,18 @@ class ResourceSet(ResourceListBase):
         """
         return set(self.get_resources().values())
 
-    def __set_r_field__(self) -> None:
+    def __set_r_field__(self, ids_map: Dict[str, str]) -> None:
         """ set _resource_ids with key = resource_name and value = resource_id"""
-        self._resource_ids = {
-            name: resource.get_model_id() for name, resource in self._resources.items()}
+        resource_ids = {}
+        for name, resource in self._resources.items():
+            model_id = ids_map.get(resource.uid)
+            if not model_id:
+                raise Exception(
+                    f"Resource with name {name} has no model id")
+
+            resource_ids[name] = model_id
+
+        self._resource_ids = resource_ids
 
     def add_resource(self, resource: Resource,
                      unique_name: str = None,

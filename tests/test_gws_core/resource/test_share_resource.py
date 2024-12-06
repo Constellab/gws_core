@@ -10,9 +10,10 @@ from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec,
                       Settings, Table, Task, TaskInputs, TaskOutputs,
                       task_decorator)
 from gws_core.resource.resource_dto import ResourceOrigin
-from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list import ResourceList
+from gws_core.resource.resource_transfert_service import \
+    ResourceTransfertService
 from gws_core.resource.task.resource_downloader_http import \
     ResourceDownloaderHttp
 from gws_core.share.share_link import ShareLink
@@ -23,7 +24,6 @@ from gws_core.share.shared_dto import (GenerateShareLinkDTO, ShareLinkType,
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.test.gtest import TestStartUvicornApp
-from gws_core.user.current_user_service import CurrentUserService
 
 
 def get_table() -> Table:
@@ -221,6 +221,6 @@ class TestShareResource(BaseTestCase):
             timedelta(days=1))
         share_link = ShareLinkService.generate_share_link(generate_dto)
 
-        return ResourceService.import_resource_from_link(
+        return ResourceTransfertService.import_resource_from_link(
             ResourceDownloaderHttp.build_config(share_link.get_download_link(),
-                                                'auto'))
+                                                'auto', 'Force new resource'))

@@ -6,9 +6,10 @@ from gws_core.external_lab.external_lab_api_service import \
 from gws_core.external_lab.external_lab_dto import (
     ExternalLabImportRequestDTO, ExternalLabImportResourceResponseDTO,
     ExternalLabImportScenarioResponseDTO)
-from gws_core.resource.resource_service import ResourceService
-from gws_core.scenario.scenario_downloader_service import \
-    ScenarioDownloaderService
+from gws_core.resource.resource_transfert_service import \
+    ResourceTransfertService
+from gws_core.scenario.scenario_transfert_service import \
+    ScenarioTransfertService
 from gws_core.user.current_user_service import CurrentUserService
 
 
@@ -19,7 +20,7 @@ class ExternalLabService:
             cls, import_resource: ExternalLabImportRequestDTO) -> ExternalLabImportResourceResponseDTO:
         """Import resources from the lab
         """
-        resource_model = ResourceService.import_resource_from_link(import_resource.params)
+        resource_model = ResourceTransfertService.import_resource_from_link(import_resource.params)
 
         return ExternalLabImportResourceResponseDTO(
             resource_model=resource_model.to_dto(),
@@ -32,7 +33,7 @@ class ExternalLabService:
             cls, import_scenario: ExternalLabImportRequestDTO) -> ExternalLabImportScenarioResponseDTO:
         """Import resources from the lab
         """
-        scenario = ScenarioDownloaderService.import_from_lab(import_scenario.params)
+        scenario = ScenarioTransfertService.import_from_lab(import_scenario.params)
 
         return ExternalLabImportScenarioResponseDTO(
             scenario=scenario.to_dto(),

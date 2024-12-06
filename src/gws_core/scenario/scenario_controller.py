@@ -11,8 +11,8 @@ from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
-from gws_core.scenario.scenario_downloader_service import \
-    ScenarioDownloaderService
+from gws_core.scenario.scenario_transfert_service import \
+    ScenarioTransfertService
 
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
@@ -248,10 +248,24 @@ def delete_intermediate_resources(id_: str,
                summary="Import an scenario from another lab")
 def import_from_lab(values: ConfigParamsDict,
                     _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
-    return ScenarioDownloaderService.import_from_lab(values).to_dto()
+    return ScenarioTransfertService.import_from_lab(values).to_dto()
 
 
 @core_app.get("/scenario/import-from-lab/config-specs", tags=["Share"],
               summary="Get config specs for importing an scenario from another lab")
 def get_import_scenario_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
-    return ScenarioDownloaderService.get_import_scenario_config_specs()
+    return ScenarioTransfertService.get_import_scenario_config_specs()
+
+
+@core_app.post("/scenario/{id}/export-to-lab", tags=["Share"],
+               summary="Export an scenario to another lab")
+def export_to_lab(id: str,
+                  values: ConfigParamsDict,
+                  _=Depends(AuthService.check_user_access_token)) -> None:
+    return ScenarioTransfertService.export_scenario_to_lab(id, values)
+
+
+@core_app.get("/scenario/export-to-lab/config-specs", tags=["Share"],
+              summary="Get config specs for exporting an scenario to another lab")
+def get_export_to_lab_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
+    return ScenarioTransfertService.get_export_scenario_to_lab_config_specs()

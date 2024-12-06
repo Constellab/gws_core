@@ -5,9 +5,9 @@ from peewee import CharField, IntegerField
 
 from gws_core.core.model.db_field import JSONField
 from gws_core.impl.rich_text.rich_text_field import RichTextField
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
-from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactory
+from gws_core.protocol.protocol_graph_factory import \
+    ProtocolGraphFactoryFromType
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.scenario_template.scenario_template_dto import (
     ScenarioTemplateDTO, ScenarioTemplateExportDTO)
@@ -73,7 +73,8 @@ class ScenarioTemplate(ModelWithUser):
         return protocol_model.to_protocol_config_dto()
 
     def generate_protocol_model(self) -> ProtocolModel:
-        protocol_model = ProtocolGraphFactory.create_protocol_model_from_type(self.get_template())
+        factory = ProtocolGraphFactoryFromType(self.get_template())
+        protocol_model: ProtocolModel = factory.create_protocol_model()
 
         protocol_model.name = self.name
 

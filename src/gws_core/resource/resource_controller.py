@@ -14,6 +14,8 @@ from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
 from gws_core.resource.resource_dto import ResourceModelDTO
+from gws_core.resource.resource_transfert_service import \
+    ResourceTransfertService
 from gws_core.resource.view.view_dto import (CallViewResultDTO,
                                              ResourceViewMetadatalDTO)
 from gws_core.share.shared_dto import ShareEntityInfoDTO
@@ -237,13 +239,26 @@ def get_shared_resource_origin_info(id_: str,
 
 
 @core_app.post("/resource/import-from-link", tags=["Share"],
-               summary="Download a resource from an external link", response_model=None)
+               summary="Download a resource from an external link")
 def import_resource_from_link(values: ConfigParamsDict,
                               _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
-    return ResourceService.import_resource_from_link(values).to_dto()
+    return ResourceTransfertService.import_resource_from_link(values).to_dto()
 
 
 @core_app.get("/resource/import-from-link/config-specs", tags=["Share"],
               summary="Get config specs for importing a resource from a link")
 def get_import_resource_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
-    return ResourceService.get_import_from_link_config_specs()
+    return ResourceTransfertService.get_import_from_link_config_specs()
+
+
+@core_app.post("/resource/{resource_id}/export-to-lab", tags=["Share"],
+               summary="Export a resource to a lab")
+def export_resource_to_lab(resource_id: str, values: ConfigParamsDict,
+                           _=Depends(AuthService.check_user_access_token)) -> None:
+    ResourceTransfertService.export_resource_to_lab(resource_id, values)
+
+
+@core_app.get("/resource/export-to-lab/config-specs", tags=["Share"],
+              summary="Get config specs for exporting a resource to a lab")
+def get_export_resource_to_lab_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
+    return ResourceTransfertService.get_export_resource_to_lab_config_specs()

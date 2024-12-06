@@ -1,6 +1,7 @@
 
 
-from typing import Dict, Literal, Type
+from abc import abstractmethod
+from typing import Dict, Type
 
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -79,10 +80,12 @@ class SubProcessBuilderFromConfig(ProtocolSubProcessBuilder):
     """
 
     protocol_config: ProtocolGraphConfigDTO
+    copy_id: bool
 
-    def __init__(self, protocol_config: ProtocolGraphConfigDTO) -> None:
+    def __init__(self, protocol_config: ProtocolGraphConfigDTO, copy_id: bool) -> None:
         super().__init__()
         self.protocol_config = protocol_config
+        self.copy_id = copy_id
 
     def instantiate_processes(self) -> Dict[str, ProcessModel]:
         processes: Dict[str, ProcessModel] = {}
@@ -95,55 +98,29 @@ class SubProcessBuilderFromConfig(ProtocolSubProcessBuilder):
         """
 
         if process_dto.graph is None:
-            return ProcessFactory.create_task_model_from_config_dto(process_dto)
+            return ProcessFactory.create_task_model_from_config_dto(process_dto, copy_id=self.copy_id)
         else:
             # create an empty protocol, it will be filled with graph later
-            return ProcessFactory.create_empty_protocol_model_from_config_dto(process_dto)
+            return ProcessFactory.create_empty_protocol_model_from_config_dto(process_dto, copy_id=self.copy_id)
 
 
 class ProtocolGraphFactory():
 
-    ############################################### PROTOCOL FROM GRAPH #################################################
+    check_connector_compatiblity: bool
 
-    @classmethod
-    def create_protocol_model_from_type(cls, graph: ProtocolGraphConfigDTO) -> ProtocolModel:
-        """
-        Create a new instance from a existing graph.
-        It uses the type of the processes to create them and instantiate specs.
+    def __init__(self, check_connector_compatiblity: bool) -> None:
+        self.check_connector_compatiblity = check_connector_compatiblity
 
-        :return: The protocol
-        :rtype": Protocol
-        """
-        try:
-            protocol: ProtocolModel = ProcessFactory.create_protocol_empty()
+    @abstractmethod
+    def create_sub_process_builder(self, protocol_config: ProtocolGraphConfigDTO) -> ProtocolSubProcessBuilder:
+        pass
 
-            return cls._create_protocol_model_from_graph_recur(protocol, graph, mode='type')
-        except Exception as err:
-            # log stacktrace
-            Logger.log_exception_stack_trace(err)
-            raise BadRequestException(
-                f"The template is not compatible with the current version. {err}")
+    @abstractmethod
+    def create_protocol_model(self) -> ProtocolModel:
+        pass
 
-    @classmethod
-    def create_protocol_model_from_config(cls, protocol_config_dto: ProcessConfigDTO) -> ProtocolModel:
-        """
-        Create a new instance from a existing graph.
-        It uses only the config to create the processes and instantiate specs.
-
-        :return: The protocol
-        :rtype": Protocol
-        """
-
-        protocol: ProtocolModel = ProcessFactory.create_empty_protocol_model_from_config_dto(protocol_config_dto)
-
-        return cls._create_protocol_model_from_graph_recur(protocol,
-                                                           protocol_config_dto.graph,
-                                                           mode='config')
-
-    @classmethod
-    def _create_protocol_model_from_graph_recur(cls, protocol: ProtocolModel,
-                                                graph: ProtocolGraphConfigDTO,
-                                                mode: Literal['type', 'config']) -> ProtocolModel:
+    def _create_protocol_model_from_graph_recur(self, protocol: ProtocolModel,
+                                                graph: ProtocolGraphConfigDTO) -> ProtocolModel:
         """
         Create a new instance from a existing graph
 
@@ -151,30 +128,18 @@ class ProtocolGraphFactory():
         :rtype": Protocol
         """
 
-        process_builder: ProtocolSubProcessBuilder = None
-
-        check_connector_compatiblity = True
-        if mode == 'type':
-            process_builder = SubProcessBuilderCreate(graph)
-        elif mode == 'config':
-            # in the config mode, the process and resources types might not exist in the system
-            # so we need to create the process from the config and not from the type
-            # no need to check the connector compatibility because the process is created from the config
-            process_builder = SubProcessBuilderFromConfig(graph)
-            check_connector_compatiblity = False
+        process_builder: ProtocolSubProcessBuilder = self.create_sub_process_builder(graph)
 
         protocol.init_processes_from_graph(process_builder)
 
         # call the method recursively for each sub protocol
         for key, process in protocol.processes.items():
             if isinstance(process, ProtocolModel):
-                cls._create_protocol_model_from_graph_recur(
-                    protocol=process, graph=graph.nodes[key].graph, mode=mode)
+                self._create_protocol_model_from_graph_recur(
+                    protocol=process, graph=graph.nodes[key].graph)
 
-        # Init the iofaces and connectors afterward because its needs the child to init correctly
-        protocol.add_interfaces_from_dto(graph.interfaces)
-        protocol.add_outerfaces_from_dto(graph.outerfaces)
-        protocol.init_connectors_from_graph(graph.links, check_compatiblity=check_connector_compatiblity)
+        # Init connectors afterward because its needs the child to init correctly
+        protocol.init_connectors_from_graph(graph.links, check_compatiblity=self.check_connector_compatiblity)
 
         # set layout
         if graph.layout is not None:
@@ -182,13 +147,59 @@ class ProtocolGraphFactory():
 
         return protocol
 
-    @classmethod
-    def copy_protocol(cls, protocol_model: ProtocolModel) -> ProtocolModel:
-        """Copy a protocol, copy sub nodes,copy interface, outerface and connecter
 
-        :param protocol_model: [description]
-        :type protocol_model: ProtocolModel
-        :return: [description]
-        :rtype: ProtocolModel
-        """
-        return cls.create_protocol_model_from_type(protocol_model.to_protocol_config_dto())
+class ProtocolGraphFactoryFromType(ProtocolGraphFactory):
+    """
+    Factory to create a protocol from a type.
+    Create a new instance from a existing graph.
+    It uses the type of the processes to create them and instantiate specs.
+    """
+    graph: ProtocolGraphConfigDTO
+
+    def __init__(self, graph: ProtocolGraphConfigDTO):
+        super().__init__(check_connector_compatiblity=True)
+        self.graph = graph
+
+    def create_sub_process_builder(self, protocol_config: ProtocolGraphConfigDTO) -> ProtocolSubProcessBuilder:
+        return SubProcessBuilderCreate(protocol_config)
+
+    def create_protocol_model(self) -> ProtocolModel:
+        try:
+            protocol: ProtocolModel = ProcessFactory.create_protocol_empty()
+
+            return self._create_protocol_model_from_graph_recur(protocol, self.graph)
+        except Exception as err:
+            # log stacktrace
+            Logger.log_exception_stack_trace(err)
+            raise BadRequestException(
+                f"The template is not compatible with the current version. {err}")
+
+
+class ProtocolGraphFactoryFromConfig(ProtocolGraphFactory):
+    """
+    Factory to create a protocol from a config.
+    Create a new instance from a existing graph.
+    It uses only the config to create the processes and instantiate specs.
+
+    """
+
+    protocol_config_dto: ProcessConfigDTO
+    copy_ids: bool
+
+    def __init__(self, protocol_config_dto: ProcessConfigDTO, copy_ids: bool):
+        # in the config mode, the process and resources types might not exist in the system
+        # so we need to create the process from the config and not from the type
+        # no need to check the connector compatibility because the process is created from the config
+        super().__init__(check_connector_compatiblity=False)
+        self.protocol_config_dto = protocol_config_dto
+        self.copy_ids = copy_ids
+
+    def create_sub_process_builder(self, protocol_config: ProtocolGraphConfigDTO) -> ProtocolSubProcessBuilder:
+        return SubProcessBuilderFromConfig(protocol_config, self.copy_ids)
+
+    def create_protocol_model(self) -> ProtocolModel:
+        protocol: ProtocolModel = ProcessFactory.create_empty_protocol_model_from_config_dto(self.protocol_config_dto,
+                                                                                             copy_id=self.copy_ids)
+
+        return self._create_protocol_model_from_graph_recur(protocol,
+                                                            self.protocol_config_dto.graph)

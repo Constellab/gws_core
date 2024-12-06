@@ -27,11 +27,11 @@ class ProgressBar(Model):
     process_typing_name = CharField(null=False)
 
     current_value = FloatField(default=0.0)
-    started_at = DateTimeUTC(null=True)
-    ended_at = DateTimeUTC(null=True)
+    started_at = DateTimeUTC(null=True, with_milliseconds=True)
+    ended_at = DateTimeUTC(null=True, with_milliseconds=True)
 
     elapsed_time = FloatField(null=True)
-    second_start = DateTimeUTC(null=True)
+    second_start = DateTimeUTC(null=True, with_milliseconds=True)
 
     data: Dict[str, Any] = JSONField(null=True)
 

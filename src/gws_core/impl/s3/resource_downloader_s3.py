@@ -8,6 +8,7 @@ from gws_core.impl.s3.s3_bucket import S3Bucket
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.task.resource_downloader_base import \
     ResourceDownloaderBase
+from gws_core.share.shared_dto import ShareEntityCreateMode
 
 from ...config.config_params import ConfigParams
 from ...config.config_types import ConfigSpecs
@@ -56,5 +57,6 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
         # download the file
         resource_file = s3_bucket.get_object(params.get_value('object_key'))
 
-        resource = self.create_resource_from_file(resource_file, params['uncompress'])
+        resource = self.create_resource_from_file(resource_file, params['uncompress'],
+                                                  ShareEntityCreateMode.NEW_ID)
         return {'resource': resource}

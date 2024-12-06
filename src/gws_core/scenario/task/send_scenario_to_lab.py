@@ -12,10 +12,11 @@ from gws_core.credentials.credentials_type import (CredentialsDataLab,
 from gws_core.external_lab.external_lab_api_service import \
     ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabImportRequestDTO
+from gws_core.io.io_spec import InputSpec
+from gws_core.io.io_specs import InputSpecs
 from gws_core.model.typing_style import TypingStyle
-from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.task.scenario_downloader import ScenarioDownloader
-from gws_core.scenario.task.scenario_param import ScenarioParam
+from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
 from gws_core.task.task import Task
@@ -40,8 +41,11 @@ class SendScenarioToLab(Task):
 
     """
 
+    input_specs = InputSpecs({'scenario': InputSpec(ScenarioResource, human_name="Scenario to send",
+                             short_description="Scenario to send, it must not be running"),
+                              })
+
     config_specs: ConfigSpecs = {
-        'scenario': ScenarioParam(human_name="Scenario to send", short_description="Select the scenario to send, it must not be running"),
         'credentials': CredentialsParam(credentials_type=CredentialsType.LAB, human_name="Lab credentials",
                                         short_description="The credentials must exist in destination lab"),
         'link_duration': IntParam(human_name='Share link duration in days',
@@ -50,11 +54,15 @@ class SendScenarioToLab(Task):
                                   max_value=365, default_value=1),
     }
 
+    INPUT_NAME = 'scenario'
+
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         current_day = DateHelper.now_utc()
 
-        scenario: Scenario = params.get_value('scenario')
+        scenario_resource: ScenarioResource = inputs['scenario']
+
+        scenario = scenario_resource.get_scenario()
 
         if scenario.is_running:
             raise ValueError("The scenario is running, it cannot be sent to the lab")
@@ -72,7 +80,7 @@ class SendScenarioToLab(Task):
         self.log_info_message("Send the scenario to the lab")
         request_dto = ExternalLabImportRequestDTO(
             # convert to ScenarioDownloader config because ScenarioDownloader is used to download the scenario
-            params=ScenarioDownloader.build_config(share_link.get_download_link(), 'Outputs only'),
+            params=ScenarioDownloader.build_config(share_link.get_download_link(), 'Outputs only', 'Skip if exists'),
         )
         credentials: CredentialsDataLab = params.get_value('credentials')
 

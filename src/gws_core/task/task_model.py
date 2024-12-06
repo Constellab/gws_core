@@ -266,21 +266,34 @@ class TaskModel(ProcessModel):
                 resource_model = ResourceModel.get_by_id_and_check(
                     resource.get_model_id())
             else:
-                resource_model = self.save_output_resource(resource, port.name)
+                resource_model = self._save_output_resource(resource, port.name)
 
             # save the resource model into the output's port (even if it's None)
             port.set_resource_model(resource_model)
 
-    def save_output_resource(self, resource: Resource, port_name: str) -> ResourceModel:
+    def _save_output_resource(self, resource: Resource, port_name: str) -> ResourceModel:
         """Save the resource
         """
+        self._check_resource_before_save(resource, port_name)
 
         # Handle specific case of ResourceSet, it saves all the sub
         new_children_resources: List[ResourceModel] = []
         if isinstance(resource, ResourceListBase):
-            new_children_resources = self._save_resource_list(
+            new_children_resources = self._save_resource_list_children(
                 resource, port_name)
 
+        # create and save the resource model from the resource
+        resource_model = ResourceModel.save_from_resource(
+            resource, origin=ResourceOrigin.GENERATED, scenario=self.scenario, task_model=self, port_name=port_name)
+
+        # update the parent of new children resource
+        if isinstance(resource, ResourceListBase):
+            for child_resource in new_children_resources:
+                child_resource.set_parent_and_save(resource_model)
+
+        return resource_model
+
+    def _check_resource_before_save(self, resource: Resource, port_name: str) -> None:
         # check the resource r field before saving
         self._check_resource_r_fields(resource, port_name)
 
@@ -300,34 +313,15 @@ class TaskModel(ProcessModel):
         resource.tags.add_tags(self._get_input_resource_tags())
         resource.tags.add_tags(self._get_scenario_tags())
 
-        # create and save the resource model from the resource
-        resource_model = ResourceModel.save_from_resource(
-            resource, origin=ResourceOrigin.GENERATED, scenario=self.scenario, task_model=self, port_name=port_name)
-
-        # update the parent of new children resource
-        if isinstance(resource, ResourceListBase):
-            for child_resource in new_children_resources:
-                child_resource.parent_resource_id = resource_model.id
-                child_resource.save()
-
-        return resource_model
-
-    def _save_resource_list(self, resource_list: ResourceListBase, port_name: str) -> List[ResourceModel]:
+    def _save_resource_list_children(self, resource_list: ResourceListBase, port_name: str) -> List[ResourceModel]:
         """Specific management to save resources of a resource set, return the new created resources
         """
 
-        new_children_resources: List[ResourceModel] = []
         for resource in resource_list.get_resources_as_set():
 
-            # if this is a new resource
-            if not resource_list.__resource_is_constant__(resource.uid):
+            # for constant resource, only check if it was set as input
+            if resource_list.__resource_is_constant__(resource.uid):
 
-                # create and save the resource model from the resource
-                resource_model = self.save_output_resource(resource, port_name)
-
-                resource.__set_model_id__(resource_model.id)
-                new_children_resources.append(resource_model)
-            else:
                 # verify that the resource exists
                 if resource.get_model_id() is None:
                     raise Exception(
@@ -339,9 +333,10 @@ class TaskModel(ProcessModel):
                     raise BadRequestException(GWSException.INVALID_LINKED_RESOURCE.value,
                                               unique_code=GWSException.INVALID_LINKED_RESOURCE.name,
                                               detail_args={'port_name': port_name})
+            else:
+                self._check_resource_before_save(resource, port_name)
 
-        resource_list.__set_r_field__()
-        return new_children_resources
+        return resource_list.save_new_children_resources(ResourceOrigin.GENERATED, self.scenario, self, port_name)
 
     def _check_resource_r_fields(self, resource: Resource, port_name: str):
         """check all ResourceRField are resource that are input of the task

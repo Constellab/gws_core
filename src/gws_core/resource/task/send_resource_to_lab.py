@@ -55,6 +55,8 @@ class SendResourceToLab(Task):
                                   max_value=365, default_value=1),
     }
 
+    INPUT_NAME = 'resource'
+
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         resource: Resource = inputs.get('resource')
@@ -74,13 +76,15 @@ class SendResourceToLab(Task):
         self.log_info_message("Send the resource to the lab")
         request_dto = ExternalLabImportRequestDTO(
             # convert to ResourceDownloaderHttp config because ResourceDownloaderHttp is used to download the resource
-            params=ResourceDownloaderHttp.build_config(link=share_link.get_download_link(), uncompress='yes')
+            params=ResourceDownloaderHttp.build_config(
+                link=share_link.get_download_link(),
+                uncompress='yes', create_option='Skip if exists')
         )
         credentials: CredentialsDataLab = params.get_value('credentials')
 
         response = ExternalLabApiService.send_resource_to_lab(request_dto, credentials,
                                                               CurrentUserService.get_and_check_current_user().id)
 
-        self.log_success_message(f"Resource {resource.get_model_id()} sent to the lab")
+        self.log_success_message(f"Resource sent to the lab, available at {response.resource_url}")
 
         return {}

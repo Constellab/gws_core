@@ -14,7 +14,7 @@ from gws_core.config.param.param_spec import ListParam
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.sql_migrator import SqlMigrator
-from gws_core.core.model.db_field import BaseDTOField
+from gws_core.core.model.db_field import BaseDTOField, DateTimeUTC
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file_helper import FileHelper
@@ -1243,4 +1243,22 @@ class Migration0100(BrickMigration):
                 TaskModel, TaskModel.style.column_name, BaseDTOField(TypingStyle, null=False))
             migrator.alter_column_type(
                 ProtocolModel, ProtocolModel.style.column_name, BaseDTOField(TypingStyle, null=False))
+
+            # Update start and end date of process to datetime with milliseconds
+            migrator.alter_column_type(
+                TaskModel, TaskModel.started_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+            migrator.alter_column_type(
+                TaskModel, TaskModel.ended_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+            migrator.alter_column_type(
+                ProtocolModel, ProtocolModel.started_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+            migrator.alter_column_type(
+                ProtocolModel, ProtocolModel.ended_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+
+            # uppate start and end data of progress bar to datetime with milliseconds
+            migrator.alter_column_type(
+                ProgressBar, ProgressBar.started_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+            migrator.alter_column_type(
+                ProgressBar, ProgressBar.ended_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+            migrator.alter_column_type(
+                ProgressBar, ProgressBar.second_start.column_name, DateTimeUTC(null=True, with_milliseconds=True))
             migrator.migrate()

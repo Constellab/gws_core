@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Literal, Optional, Set, Type, Union
 
 from gws_core.config.config_dto import ConfigSimpleDTO
 from gws_core.config.param.dynamic_param import DynamicParam
-from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import (DynamicParamAllowedSpecsDict,
                                                ParamSpecDTO, ParamValue)
@@ -21,7 +20,8 @@ from gws_core.io.ioface import IOface
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
-from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactory
+from gws_core.protocol.protocol_graph_factory import \
+    ProtocolGraphFactoryFromType
 from gws_core.protocol.protocol_layout import (ProcessLayoutDTO,
                                                ProtocolLayout,
                                                ProtocolLayoutDTO)
@@ -130,8 +130,9 @@ class ProtocolService():
                 community_agent_version_id=process_model.community_agent_version_id,
                 name=process_model.name + " (copy)"
             )
-        else:
-            duplicate_process_model = ProtocolGraphFactory.create_protocol_model_from_type(process_model)
+        elif isinstance(process_model, ProtocolModel):
+            factory = ProtocolGraphFactoryFromType(process_model.to_protocol_config_dto())
+            duplicate_process_model = factory.create_protocol_model()
 
         if duplicate_process_model is None:
             raise BadRequestException("The process does not exist in the protocol")
@@ -504,8 +505,8 @@ class ProtocolService():
     @classmethod
     @transaction()
     def copy_protocol(cls, protocol_model: ProtocolModel) -> ProtocolModel:
-        new_protocol_model: ProtocolModel = ProtocolGraphFactory.copy_protocol(
-            protocol_model)
+        factory = ProtocolGraphFactoryFromType(protocol_model.to_protocol_config_dto())
+        new_protocol_model: ProtocolModel = factory.create_protocol_model()
         new_protocol_model.save_full()
         new_protocol_model.reset()
         return new_protocol_model
@@ -858,8 +859,9 @@ class ProtocolService():
 
     @classmethod
     def create_protocol_model_from_graph(cls, graph: ProtocolGraphConfigDTO) -> ProtocolModel:
-        protocol: ProtocolModel = ProtocolGraphFactory.create_protocol_model_from_type(
-            graph=graph)
+        factory = ProtocolGraphFactoryFromType(graph)
+
+        protocol: ProtocolModel = factory.create_protocol_model()
 
         protocol.save_full()
         return protocol

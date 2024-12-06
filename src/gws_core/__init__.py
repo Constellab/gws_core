@@ -379,6 +379,8 @@ from .resource.resource_search_builder import \
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set.resource_list import ResourceList as ResourceList
 from .resource.resource_set.resource_set import ResourceSet as ResourceSet
+from .resource.resource_transfert_service import \
+    ResourceTransfertService as ResourceTransfertService
 from .resource.resource_typing import ResourceTyping as ResourceTyping
 from .resource.task.resource_downloader_base import \
     ResourceDownloaderBase as ResourceDownloaderBase
@@ -410,6 +412,8 @@ from .scenario.scenario_run_service import \
 from .scenario.scenario_search_builder import \
     ScenarioSearchBuilder as ScenarioSearchBuilder
 from .scenario.scenario_service import ScenarioService as ScenarioService
+from .scenario.scenario_transfert_service import \
+    ScenarioTransfertService as ScenarioTransfertService
 # Scenario template
 from .scenario_template.scenario_template import \
     ScenarioTemplate as ScenarioTemplate

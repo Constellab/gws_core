@@ -10,11 +10,12 @@ from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_set import ResourceSet
-from gws_core.scenario.scenario_downloader_service import \
-    ScenarioDownloaderService
 from gws_core.scenario.scenario_enums import ScenarioCreationType
 from gws_core.scenario.scenario_proxy import ScenarioProxy
+from gws_core.scenario.scenario_transfert_service import \
+    ScenarioTransfertService
 from gws_core.scenario.task.scenario_downloader import ScenarioDownloader
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
@@ -87,8 +88,8 @@ class TestShareScenario(BaseTestCase):
 
             share_link = ShareLinkService.generate_share_link(share_dto)
 
-            new_scenario = ScenarioDownloaderService.import_from_lab(
-                ScenarioDownloader.build_config(share_link.get_download_link(),  "All"))
+            new_scenario = ScenarioTransfertService.import_from_lab(
+                ScenarioDownloader.build_config(share_link.get_download_link(),  "All", 'Force new scenario'))
 
             self.assertEqual(new_scenario.title, initial_scenario_model.title)
             self.assertEqual(new_scenario.folder.id, folder.id)
@@ -138,7 +139,7 @@ class TestShareScenario(BaseTestCase):
             new_resource_1 = new_move_process.out_port("robot").get_resource_model()
             initial_resource_1 = initial_protocol_model.get_process('move').out_port("robot").get_resource_model()
             self.assertIsNotNone(new_resource_1)
-            self.assertEqual(new_resource_1.origin, ResourceOrigin.GENERATED)
+            self.assertEqual(new_resource_1.origin, ResourceOrigin.IMPORTED_FROM_LAB)
             self.assertEqual(new_resource_1.task_model.id, new_protocol_model.get_process('move').id)
             self.assertEqual(new_resource_1.scenario.id, new_scenario.id)
             self.assertEqual(new_resource_1.folder.id, new_scenario.folder.id)
@@ -163,13 +164,19 @@ class TestShareScenario(BaseTestCase):
             self.assertIsNotNone(SharedResource.get_and_check_entity_origin(new_source_output.id))
 
             ######################  Re-run the share without all resources ######################
-            new_scenario_2 = ScenarioDownloaderService.import_from_lab(
-                ScenarioDownloader.build_config(share_link.get_download_link(), "Outputs only"))
+            new_scenario_2 = ScenarioTransfertService.import_from_lab(
+                ScenarioDownloader.build_config(share_link.get_download_link(), "Outputs only", 'Force new scenario'))
 
             new_protocol_2 = new_scenario_2.protocol_model
+
+            # 3 resources should have been created (resource set and 2 robots)
+            self.assertEqual(ResourceModel.select().where(ResourceModel.scenario == new_scenario_2.id).count(), 3)
+
             # Check that the task input model where created
             self.assertNotEqual(new_scenario_2.id, new_scenario.id)
-            self.assertEqual(TaskInputModel.get_by_scenario(new_scenario_2.id).count(), 1)
+            # the input of the generator must have been created because the resource
+            # robot 1 was downloaded because it in in Resource set output
+            self.assertEqual(TaskInputModel.get_by_scenario(new_scenario_2.id).count(), 2)
 
             # the source task should not be configured as only the output resources are imported
             new_source_2: TaskModel = new_protocol_2.get_process('source')

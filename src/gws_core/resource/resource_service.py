@@ -1,28 +1,21 @@
 
 
-from typing import Dict, List, Optional, Type
+from typing import List, Optional, Type
 
 from gws_core.config.config_types import ConfigParamsDict
-from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.folder.space_folder import SpaceFolder
-from gws_core.process.process_proxy import ProcessProxy
-from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
-from gws_core.resource.task.resource_downloader_http import \
-    ResourceDownloaderHttp
 from gws_core.resource.view.view_dto import ResourceViewMetadatalDTO, ViewDTO
 from gws_core.resource.view.view_result import CallViewResult
 from gws_core.resource.view.view_runner import ViewRunner
 from gws_core.resource.view.view_types import exluded_views_in_note
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.resource.view_config.view_config_service import ViewConfigService
-from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.share.shared_resource import SharedResource
-from gws_core.task.plug.output_task import OutputTask
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import (SearchBuilder, SearchFilterCriteria,
@@ -317,30 +310,3 @@ class ResourceService():
     @classmethod
     def get_shared_resource_origin_info(cls, resource_model_id: str) -> SharedResource:
         return SharedResource.get_and_check_entity_origin(resource_model_id)
-
-    ############################# UPLOAD RESOURCE ###########################
-
-    @classmethod
-    def import_resource_from_link(cls, values: ConfigParamsDict) -> ResourceModel:
-
-        link: str = values.get(ResourceDownloaderHttp.LINK_PARAM_NAME)
-        file_name = link.split('/')[-1]
-        # Create an scenario containing 1 resource downloader , 1 output task
-        scenario: ScenarioProxy = ScenarioProxy(None, title=f"Download {file_name}")
-        protocol: ProtocolProxy = scenario.get_protocol()
-
-        # Add the importer and the connector
-        downloader: ProcessProxy = protocol.add_process(ResourceDownloaderHttp, 'downloader', values)
-
-        # Add output and connect it
-        output_task = protocol.add_output('output', downloader >> ResourceDownloaderHttp.OUTPUT_NAME)
-
-        scenario.run()
-
-        # return the resource model of the output process
-        output_task.refresh()
-        return output_task.get_input_resource_model(OutputTask.input_name)
-
-    @classmethod
-    def get_import_from_link_config_specs(cls) -> Dict[str, ParamSpecDTO]:
-        return ResourceDownloaderHttp.get_config_specs_dto()

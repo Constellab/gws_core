@@ -13,7 +13,7 @@ from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_loader import ResourceLoader
-from gws_core.share.shared_dto import SharedEntityMode
+from gws_core.share.shared_dto import SharedEntityMode, ShareEntityCreateMode
 from gws_core.share.shared_resource import SharedResource
 from gws_core.task.task import Task
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -43,7 +43,8 @@ class ResourceDownloaderBase(Task):
         pass
 
     def create_resource_from_file(
-            self, resource_file: str, uncompress_option: Literal['auto', 'yes', 'no']) -> Resource:
+            self, resource_file: str, uncompress_option: Literal['auto', 'yes', 'no'],
+            resource_loader_mode: ShareEntityCreateMode) -> Resource:
         """Methode to create the resource from a file (once downloaded) and return it as a task output
         """
 
@@ -61,7 +62,7 @@ class ResourceDownloaderBase(Task):
         # Convert the zip file to a resource
         try:
             self.log_info_message("Uncompressing the file")
-            self.resource_loader = ResourceLoader.from_compress_file(resource_file)
+            self.resource_loader = ResourceLoader.from_compress_file(resource_file, resource_loader_mode)
         except Exception as err:
             if uncompress_option == 'yes':
                 raise Exception("Error while unzipping the file. Error: {err}.")

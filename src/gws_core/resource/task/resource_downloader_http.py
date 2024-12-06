@@ -7,6 +7,8 @@ from requests.models import Response
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
+from gws_core.core.service.front_service import FrontService
+from gws_core.core.utils.utils import Utils
 from gws_core.external_lab.external_lab_api_service import \
     ExternalLabApiService
 from gws_core.model.typing_style import TypingStyle
@@ -15,10 +17,12 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.task.resource_downloader_base import \
     ResourceDownloaderBase
 from gws_core.share.share_link import ShareLink
-from gws_core.share.shared_dto import ShareLinkType
+from gws_core.share.shared_dto import ShareEntityCreateMode, ShareLinkType
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
+
+ResourceDownloaderCreateOption = Literal['Skip if exists', 'Force new resource']
 
 
 @task_decorator(unique_name="ResourceDownloaderHttp", human_name="Download resource from external source",
@@ -38,11 +42,13 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
     """
     config_specs: ConfigSpecs = {
         'link': StrParam(human_name='Resource link', short_description='Link to download the resource'),
-        'uncompress': ResourceDownloaderBase.uncompressConfig
+        'uncompress': ResourceDownloaderBase.uncompressConfig,
+        'create_option': StrParam(human_name='Create option',
+                                  allowed_values=Utils.get_literal_values(ResourceDownloaderCreateOption),
+                                  default_value='Skip if exists')
     }
 
     LINK_PARAM_NAME = 'link'
-    UNCOMPRESS_PARAM_NAME = 'uncompress'
 
     link: str
 
@@ -52,12 +58,32 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
 
         resource_downloader = ResourceDownloader(self.message_dispatcher)
 
+        create_option = params['create_option']
+
+        uncompressed_option = params['uncompress']
+
+        resource_loader_mode: ShareEntityCreateMode = None
+        # We keep the id only if option activated and uncompressed option is activated as well
+        if create_option == 'Skip if exists' and uncompressed_option != 'no':
+            resource_loader_mode = ShareEntityCreateMode.KEEP_ID
+        else:
+            resource_loader_mode = ShareEntityCreateMode.NEW_ID
+
+        # if we keep the resource id, we check if the resource already exists in the current lab
+        if resource_loader_mode == ShareEntityCreateMode.KEEP_ID:
+            resource_model = resource_downloader.get_resource_if_exist_in_current_lab(self.link)
+            if resource_model:
+                raise Exception(
+                    "The resource already exists in the current lab." +
+                    f' <a href="{FrontService.get_resource_url(resource_model.id)}">Click here to view the existing resource</a>.')
+
         zip_resource_link = resource_downloader.check_compatiblity(self.link)
 
         # download the resource file
         resource_file = resource_downloader.zip_and_download_resource_as_file(zip_resource_link)
 
-        resource = self.create_resource_from_file(resource_file, params['uncompress'])
+        resource = self.create_resource_from_file(resource_file, uncompressed_option,
+                                                  resource_loader_mode)
 
         if ShareLink.is_lab_share_resource_link(self.link):
             # set a special origin for the resource
@@ -98,8 +124,10 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         return link.startswith('https://glab') and link.find('share/resource/download/') != -1
 
     @classmethod
-    def build_config(cls, link: str, uncompress: Literal['auto', 'yes', 'no']) -> ConfigParams:
+    def build_config(cls, link: str, uncompress: Literal['auto', 'yes', 'no'],
+                     create_option: ResourceDownloaderCreateOption) -> ConfigParams:
         return ConfigParams({
             cls.LINK_PARAM_NAME: link,
-            cls.UNCOMPRESS_PARAM_NAME: uncompress
+            'uncompress': uncompress,
+            'create_option': create_option
         })

@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Dict, List, Set
+from typing import TYPE_CHECKING, Dict, List, Set, final
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.view.resources_list_view import ResourcesListView
 from gws_core.model.typing_style import TypingStyle
+from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.technical_info import TechnicalInfo
 from gws_core.resource.view.view_decorator import view
 
@@ -14,6 +15,9 @@ from ..resource import Resource
 from ..resource_decorator import resource_decorator
 
 if TYPE_CHECKING:
+    from gws_core.scenario.scenario import Scenario
+    from gws_core.task.task_model import TaskModel
+
     from ..resource_model import ResourceModel
 
 
@@ -90,13 +94,44 @@ class ResourceListBase(Resource):
         return ResourceModel.get_by_id_and_check(resource_model_id).get_resource()
 
     @abstractmethod
-    def __set_r_field__(self) -> None:
+    def __set_r_field__(self, ids_map: Dict[str, str]) -> None:
         """This method is called before the save of this resource but after the save of the
         child resources. Set the r_field of this resource with the ids of the child
 
+        :param ids_map: dict where key is the resource uid and value is the resource model id
+        :type ids_map: Dict[str, str]
         :raises NotImplementedError: _description_
         """
         raise NotImplementedError()
+
+    @final
+    def save_new_children_resources(
+            self, resource_origin: ResourceOrigin,
+            scenario: Scenario = None,
+            task_model: TaskModel = None,
+            port_name: str = None) -> List[ResourceModel]:
+        from ..resource_model import ResourceModel
+        new_children_resources: List[ResourceModel] = []
+
+        ids_map = {}
+        for resource in self.get_resources_as_set():
+
+            # if this is a new resource
+
+            if self.__resource_is_constant__(resource.uid):
+                # if the resource is constant, get the model id of the resource
+                # from the resource and add it to the map
+                ids_map[resource.uid] = resource.get_model_id()
+            else:
+
+                # create and save the resource model from the resource
+                resource_model = ResourceModel.save_from_resource(resource, origin=resource_origin,
+                                                                  scenario=scenario, task_model=task_model,
+                                                                  port_name=port_name)
+                ids_map[resource.uid] = resource_model.id
+                new_children_resources.append(resource_model)
+        self.__set_r_field__(ids_map)
+        return new_children_resources
 
     def _load_resources(self) -> Set[Resource]:
         resource_models: List[ResourceModel] = self.get_resource_models()

@@ -40,6 +40,15 @@ class DateTimeUTC(DateTimeField):
     when getting the DB
     """
 
+    with_milliseconds = False
+
+    def __init__(self, *args, with_milliseconds=False, **kwargs, ):
+        super().__init__(*args, **kwargs)
+        self.with_milliseconds = with_milliseconds
+
+    def get_modifiers(self):
+        return [3] if self.with_milliseconds else None
+
     def db_value(self, value):
         datetime_: datetime = super().db_value(value)
 

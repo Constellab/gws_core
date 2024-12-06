@@ -7,6 +7,7 @@ from gws_core.config.param.param_spec import StrParam
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.impl.file.folder import Folder
 from gws_core.resource.resource_loader import ResourceLoader
+from gws_core.share.shared_dto import ShareEntityCreateMode
 from gws_core.task.converter.importer import (ResourceImporter,
                                               importer_decorator)
 
@@ -44,7 +45,7 @@ class FileDecompressTask(ResourceImporter):
 
         # Convert the zip file to a resource
         self.log_info_message("Decompressing the file")
-        self.resource_loader = ResourceLoader.from_compress_file(source.path)
+        self.resource_loader = ResourceLoader.from_compress_file(source.path, ShareEntityCreateMode.NEW_ID)
 
         if mode == 'Always to folder':
             return self.resource_loader.load_fs_node_resource()

@@ -924,6 +924,9 @@ class ProtocolModel(ProcessModel):
         """
         return self._generate_unique_io_name(self.interfaces, "interface")
 
+    def set_interfaces(self, interfaces: Dict[str, IOface]) -> None:
+        self._interfaces = interfaces
+
     ############################### OUTERFACE #################################
 
     @property
@@ -1050,6 +1053,9 @@ class ProtocolModel(ProcessModel):
         """Generate a unique outerface name
         """
         return self._generate_unique_io_name(self.outerfaces, "outerface")
+
+    def set_outerfaces(self, outerfaces: Dict[str, IOface]) -> None:
+        self._outerfaces = outerfaces
 
     ############################### JSON #################################
 
@@ -1189,7 +1195,7 @@ class ProtocolModel(ProcessModel):
                 raise BadRequestException(
                     detail="The scenario is running or in queue, you can't update it")
 
-    def get_input_resource_ids(self) -> Set[str]:
+    def get_input_resource_model_ids(self) -> Set[str]:
         """
         :return: return all the resource ids configured as input of this protocol
         :rtype: Set[str]
@@ -1200,9 +1206,6 @@ class ProtocolModel(ProcessModel):
                 resource_id = InputTask.get_resource_id_from_config(process.config.get_values())
                 if resource_id:
                     resource_ids.add(resource_id)
-
-            if isinstance(process, ProtocolModel):
-                resource_ids.update(process.get_input_resource_ids())
         return resource_ids
 
     def replace_io_process_with_ioface(self):

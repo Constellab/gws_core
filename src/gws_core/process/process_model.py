@@ -64,8 +64,8 @@ class ProcessModel(ModelWithUser):
                                       default=ProcessStatus.DRAFT)
     error_info: ProcessErrorInfo = JSONField(null=True)
 
-    started_at = DateTimeUTC(null=True)
-    ended_at = DateTimeUTC(null=True)
+    started_at = DateTimeUTC(null=True, with_milliseconds=True)
+    ended_at = DateTimeUTC(null=True, with_milliseconds=True)
 
     data: Dict[str, Any] = JSONField(null=True)
     is_archived = BooleanField(default=False, index=True)
@@ -532,6 +532,7 @@ class ProcessModel(ModelWithUser):
         ignore_config_values = ignore_input_task_config and self.is_input_task()
 
         return ProcessConfigDTO(
+            id=self.id,
             process_typing_name=self.process_typing_name,
             instance_name=self.instance_name,
             config=self.config.to_simple_dto(ignore_config_values),
