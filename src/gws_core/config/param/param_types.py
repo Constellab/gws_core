@@ -30,8 +30,3 @@ class ParamSpecDTO(ParamSpecSimpleDTO):
 
 
 DynamicParamAllowedSpecsDict = Dict[str, ParamSpecDTO | Dict[str, ParamSpecDTO]]
-
-
-class DynamicParamAllowedParamSpecsDTO(BaseModelDTO):
-    human_name: str
-    specs: DynamicParamAllowedSpecsDict

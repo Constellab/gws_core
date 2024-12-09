@@ -15,8 +15,7 @@ from .param_spec_decorator import (LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST,
                                    NESTED_PARAM_SPEC_TYPES_LIST,
                                    PARAM_SPEC_TYPES_LIST,
                                    SIMPLE_PARAM_SPEC_TYPES_LIST)
-from .param_types import (DynamicParamAllowedParamSpecsDTO,
-                          DynamicParamAllowedSpecsDict)
+from .param_types import DynamicParamAllowedSpecsDict
 
 
 class ParamSpecHelper():
@@ -165,8 +164,7 @@ class ParamSpecHelper():
         return ParamSpecDTO.from_json(json)
 
     @staticmethod
-    def get_dynamic_param_allowed_param_spec_types(lab_allowed: bool = False) -> Dict[str,
-                                                                                      DynamicParamAllowedParamSpecsDTO]:
+    def get_dynamic_param_allowed_param_spec_types(lab_allowed: bool = False) -> Dict[str, DynamicParamAllowedSpecsDict]:
         """_summary_
 
         :param lab_allowed: _description_, defaults to False
@@ -174,7 +172,7 @@ class ParamSpecHelper():
         :return: _description_
         :rtype: _type_
         """
-        res: Dict[str, DynamicParamAllowedParamSpecsDTO] = {}
+        res: Dict[str, DynamicParamAllowedSpecsDict] = {}
 
         list_spec_types: List[type[ParamSpec]] = ParamSpecHelper.get_simple_param_spec_types().copy()
         if lab_allowed:
@@ -220,11 +218,6 @@ class ParamSpecHelper():
                         type_=type_name, optional=is_optional, value=value, name=name
                     )
 
-            dto_json = {
-                "human_name": StringHelper.snake_case_to_sentence(spec_type.get_str_type()),
-                "specs": specs
-            }
-
-            res[spec_type.get_str_type()] = DynamicParamAllowedParamSpecsDTO.from_json(dto_json)
+            res[spec_type.get_str_type()] = specs
 
         return res
