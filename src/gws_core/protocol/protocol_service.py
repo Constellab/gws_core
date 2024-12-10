@@ -145,13 +145,15 @@ class ProtocolService():
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
 
-        return cls.add_empty_protocol_to_protocol(protocol_model=protocol_model)
+        return cls.add_empty_protocol_to_protocol(protocol_model=protocol_model, name="Sub-scenario")
 
     @classmethod
     @transaction()
     def add_empty_protocol_to_protocol(
-            cls, protocol_model: ProtocolModel, instance_name: str = None) -> ProtocolUpdate:
-        child_protocol_model: ProtocolModel = ProcessFactory.create_protocol_empty()
+            cls, protocol_model: ProtocolModel, instance_name: str = None,
+            name: str = None) -> ProtocolUpdate:
+        child_protocol_model: ProtocolModel = ProcessFactory.create_protocol_empty(
+            name=name, instance_name=instance_name)
 
         return cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=child_protocol_model,
                                                  instance_name=instance_name)

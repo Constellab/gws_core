@@ -13,7 +13,8 @@ from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
-from gws_core.resource.resource_dto import ResourceModelDTO
+from gws_core.resource.resource_dto import (ResourceModelDTO,
+                                            ShareResourceWithSpaceRequestDTO)
 from gws_core.resource.resource_transfert_service import \
     ResourceTransfertService
 from gws_core.resource.view.view_dto import (CallViewResultDTO,
@@ -262,3 +263,10 @@ def export_resource_to_lab(resource_id: str, values: ConfigParamsDict,
               summary="Get config specs for exporting a resource to a lab")
 def get_export_resource_to_lab_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
     return ResourceTransfertService.get_export_resource_to_lab_config_specs()
+
+
+@core_app.post("/resource/{resource_id}/share-with-space", tags=["Share"],
+               summary="Share a resource with the space")
+def share_resource_with_space(resource_id: str, request_dto: ShareResourceWithSpaceRequestDTO,
+                              _=Depends(AuthService.check_user_access_token)) -> None:
+    return ResourceTransfertService.share_resource_with_space(resource_id, request_dto)

@@ -123,6 +123,14 @@ class Resource(BaseTyping):
         """
         return self.name or self.get_default_name()
 
+    def get_default_style(self) -> TypingStyle:
+        """Get the default style of the resource
+
+        :return: [description]
+        :rtype: [type]
+        """
+        return self.get_style()
+
     def add_technical_info(self, technical_info: TechnicalInfo) -> None:
         """Add technical information on the resource. Technical info are useful to set additional information on the resource.
 

@@ -1,15 +1,26 @@
 
 
+from datetime import timedelta
 from typing import Dict
 
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
+from gws_core.core.decorator.transaction import transaction
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.process.process_proxy import ProcessProxy
 from gws_core.protocol.protocol_proxy import ProtocolProxy
+from gws_core.resource.resource_dto import ShareResourceWithSpaceRequestDTO
+from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.task.resource_downloader_http import \
     ResourceDownloaderHttp
 from gws_core.resource.task.send_resource_to_lab import SendResourceToLab
 from gws_core.scenario.scenario_proxy import ScenarioProxy
+from gws_core.share.share_link_service import ShareLinkService
+from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
+from gws_core.space.space_dto import ShareResourceWithSpaceDTO
+from gws_core.space.space_service import SpaceService
 from gws_core.task.plug.output_task import OutputTask
 
 from .resource_model import ResourceModel
@@ -60,3 +71,29 @@ class ResourceTransfertService():
     @classmethod
     def get_export_resource_to_lab_config_specs(cls) -> Dict[str, ParamSpecDTO]:
         return SendResourceToLab.get_config_specs_dto()
+
+    @classmethod
+    @transaction()
+    def share_resource_with_space(cls, resource_id: str, request_dto: ShareResourceWithSpaceRequestDTO) -> None:
+
+        resource_model = ResourceService.get_by_id_and_check(resource_id)
+
+        # create or get the share link without expiration date
+        share_dto = GenerateShareLinkDTO(
+            entity_id=resource_id,
+            entity_type=ShareLinkType.RESOURCE,
+            valid_until=request_dto.valid_until
+        )
+        share_link = ShareLinkService.get_or_create_valid_share_link(share_dto)
+
+        # share the resource with the space
+        resource_dto: ShareResourceWithSpaceDTO = ShareResourceWithSpaceDTO(
+            resource_id=resource_model.id,
+            name=resource_model.name,
+            style=resource_model.style,
+            typing_name=resource_model.resource_typing_name,
+            share_link=share_link.get_preview_link(),
+            valid_until=share_link.valid_until
+        )
+
+        SpaceService.share_resource(request_dto.folder_id, resource_dto)

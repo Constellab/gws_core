@@ -1,5 +1,6 @@
 
 
+from datetime import datetime
 from typing import Optional, Type
 
 from peewee import CharField
@@ -26,7 +27,7 @@ class ShareLink(ModelWithUser):
 
     entity_type: ShareLinkType = EnumField(choices=ShareLinkType)
 
-    valid_until = DateTimeUTC()
+    valid_until: datetime = DateTimeUTC(null=True)
 
     token: str = CharField(null=True, max_length=100, unique=True)
 
@@ -133,7 +134,12 @@ class ShareLink(ModelWithUser):
             return None
 
     def is_valid(self) -> bool:
-        return self.valid_until > DateHelper.now_utc()
+        return self.valid_until is None or self.valid_until > DateHelper.now_utc()
+
+    def is_valid_at(self, valid_until_date: datetime) -> bool:
+        if not valid_until_date:
+            return self.valid_until is None
+        return self.valid_until is None or self.valid_until > valid_until_date
 
     @classmethod
     def is_lab_share_resource_link(cls, link: str) -> bool:

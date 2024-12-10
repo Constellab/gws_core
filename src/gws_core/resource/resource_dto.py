@@ -1,5 +1,6 @@
 
 
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 
@@ -41,3 +42,8 @@ class ResourceModelDTO(ModelWithUserDTO):
 class ResourceSimpleDTO(BaseModelDTO):
     id: str
     name: str
+
+
+class ShareResourceWithSpaceRequestDTO(BaseModelDTO):
+    folder_id: str
+    valid_until: Optional[datetime] = None

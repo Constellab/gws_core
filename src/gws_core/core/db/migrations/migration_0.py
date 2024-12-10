@@ -11,7 +11,6 @@ from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import ListParam
-from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.model.db_field import BaseDTOField, DateTimeUTC
@@ -38,7 +37,6 @@ from gws_core.note_template.note_template import NoteTemplate
 from gws_core.process.process_model import ProcessModel
 from gws_core.progress_bar.progress_bar import ProgressBar
 from gws_core.protocol.protocol_model import ProtocolModel
-from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -51,6 +49,7 @@ from gws_core.scenario.scenario import Scenario
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_factory import \
     ScenarioTemplateFactory
+from gws_core.share.share_link import ShareLink
 from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag_key_model import TagKeyModel
@@ -1226,15 +1225,23 @@ class Migration0100(BrickMigration):
                         process_model.style = TypingStyle.default_task()
                     process_model.save(skip_hook=True)
 
-            resources: List[ResourceModel] = list(ResourceModel.select())
-            for resource in resources:
-                if not resource.style:
-                    resource_type = resource.get_resource_type()
-                    if resource_type:
-                        resource.style = resource_type.get_style()
-                    else:
-                        resource.style = TypingStyle.default_resource()
-                    resource.save(skip_hook=True)
+            resource_models: List[ResourceModel] = list(ResourceModel.select())
+            for resource_model in resource_models:
+                if not resource_model.style:
+
+                    try:
+                        resource = resource_model.get_resource()
+                        resource_model.style = resource.get_default_style()
+                    except Exception:
+                        pass
+
+                    if not resource_model.style:
+                        resource_type = resource_model.get_resource_type()
+                        if resource_type:
+                            resource_model.style = resource_type.get_style()
+                        else:
+                            resource_model.style = TypingStyle.default_resource()
+                    resource_model.save(skip_hook=True)
 
             migrator = SqlMigrator(ResourceModel.get_db())
             migrator.alter_column_type(
@@ -1261,4 +1268,8 @@ class Migration0100(BrickMigration):
                 ProgressBar, ProgressBar.ended_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
             migrator.alter_column_type(
                 ProgressBar, ProgressBar.second_start.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+
+            migrator.alter_column_type(
+                ShareLink, ShareLink.valid_until.column_name, DateTimeUTC(null=True))
+
             migrator.migrate()

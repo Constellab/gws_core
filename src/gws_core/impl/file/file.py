@@ -1,7 +1,7 @@
 
 import json
 import os
-from typing import Any, AnyStr, List
+from typing import Any, AnyStr, List, Optional
 
 from gws_core.config.param.param_spec import IntParam
 from gws_core.impl.view.audio_view import AudioView
@@ -273,3 +273,41 @@ class File(FSNode):
     def check_if_exists(self):
         if not self.exists():
             raise BadRequestException(f"File {self.name or self.get_base_name()} does not exist")
+
+    def get_default_style(self) -> TypingStyle:
+        icon = self.get_icon_from_extension()
+
+        if icon:
+            return TypingStyle.material_icon(icon, background_color=None)
+        return super().get_default_style()
+
+    def get_icon_from_extension(self) -> Optional[str]:
+        extension = self.extension
+
+        if not extension:
+            return None
+
+        extension = extension.lower()
+
+        if extension in ['csv', 'xls', 'xlsx']:
+            return 'csv_file_icon'
+        if extension in ['jpeg', 'jpg', 'png', 'gif', 'svg']:
+            return 'image'
+        if extension in ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a', 'aiff', 'alac']:
+            return 'audiotrack'
+        if extension == 'txt':
+            return 'txt_file_icon'
+        if extension == 'pdf':
+            return 'pdf_file_icon'
+        if extension in ['doc', 'docx']:
+            return 'docx_file_icon'
+        if extension == 'json':
+            return 'json_file_icon'
+        if extension in ['ppt', 'pptx']:
+            return 'pptx_file_icon'
+        if extension == 'zip':
+            return 'zip_file_icon'
+        if extension == 'py':
+            return 'py_file_icon'
+
+        return None

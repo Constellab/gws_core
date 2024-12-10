@@ -368,7 +368,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             style_override.fill_empty_values()
             resource_model.style = style_override
         else:
-            resource_model.style = resource.get_style()
+            resource_model.style = resource.get_default_style()
 
         # synchronize the model fields with the resource fields
         resource_model.receive_fields_from_resource(resource)
@@ -583,7 +583,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             flagged=self.flagged,
             scenario=self.scenario.to_simple_dto() if self.scenario else None,
             folder=self.folder.to_dto() if self.folder else None,
-            style=self.style,
+            style=self.style
         )
 
     def to_simple_dto(self) -> ResourceSimpleDTO:

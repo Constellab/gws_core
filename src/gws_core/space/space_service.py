@@ -13,7 +13,9 @@ from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
                                                      RichTextModificationsDTO)
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
 from gws_core.space.space_dto import (LabStartDTO, SaveNoteToSpaceDTO,
-                                      SaveScenarioToSpaceDTO, SpaceSendMailDTO)
+                                      SaveScenarioToSpaceDTO,
+                                      ShareResourceWithSpaceDTO,
+                                      SpaceSendMailDTO)
 from gws_core.user.user_dto import UserFullDTO, UserSpace
 
 from ..core.exception.exceptions import BadRequestException
@@ -239,6 +241,22 @@ class SpaceService():
             err.detail = f"Can't get note modifications. Error : {err.detail}"
             raise err
         return RichTextDTO.from_json(response.json())
+
+    #################################### RESOURCE ####################################
+
+    @classmethod
+    def share_resource(cls, folder_id: str, resource_dto: ShareResourceWithSpaceDTO) -> None:
+        cls._check_dev_mode()
+
+        space_api_url: str = cls._get_space_api_url(
+            f"{cls._external_labs_route}/folder/{folder_id}/resource")
+
+        try:
+            return ExternalApiService.put(space_api_url, resource_dto, cls._get_request_header(),
+                                          raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't share the resource in space. Error : {err.detail}"
+            raise err
 
     #################################### SYNCHRONIZATION ####################################
 

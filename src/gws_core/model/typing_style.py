@@ -165,7 +165,7 @@ class TypingStyle(BaseModelDTO):
 
     @staticmethod
     def default_protocol() -> 'TypingStyle':
-        return TypingStyle(icon_technical_name="protocol",
+        return TypingStyle(icon_technical_name="scenario",
                            icon_type=TypingIconType.MATERIAL_ICON,
                            background_color=TYPING_DEFAULT_BACKGROUND_COLOR,
                            icon_color=TYPING_DEFAULT_ICON_COLOR)

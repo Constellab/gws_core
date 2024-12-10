@@ -78,7 +78,7 @@ class ShareLinkService:
             entity_type=share_dto.entity_type, entity_id=share_dto.entity_id)
 
         if existing_link:
-            if existing_link.is_valid():
+            if existing_link.is_valid_at(share_dto.valid_until):
                 return existing_link
             else:
                 return cls.update_share_link(share_dto)
@@ -86,11 +86,11 @@ class ShareLinkService:
             return cls.generate_share_link(share_dto)
 
     @classmethod
-    def delete_share_link(cls, id: str) -> None:
+    def delete_share_link(cls, id_: str) -> None:
         """Method that delete a share link for a given entity
         """
 
-        ShareLink.delete_by_id(id)
+        ShareLink.delete_by_id(id_)
 
     @classmethod
     def get_shared_links(cls, page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ShareLink]:

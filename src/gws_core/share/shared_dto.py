@@ -26,7 +26,7 @@ class SharedEntityMode(Enum):
 class ShareLinkDTO(ModelWithUserDTO):
     entity_id: str
     entity_type: ShareLinkType
-    valid_until: datetime
+    valid_until: Optional[datetime] = None
     download_link: str
     preview_link: Optional[str] = None
     status: Literal["SUCCESS", "ERROR"]
@@ -36,7 +36,7 @@ class ShareLinkDTO(ModelWithUserDTO):
 class GenerateShareLinkDTO(BaseModelDTO):
     entity_id: str
     entity_type: ShareLinkType
-    valid_until: datetime
+    valid_until: Optional[datetime] = None
 
 
 class ShareEntityInfoDTO(ModelDTO):
