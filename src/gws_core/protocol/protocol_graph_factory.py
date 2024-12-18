@@ -62,9 +62,8 @@ class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
                 outputs_dto=process_dto.outputs if process_dto.outputs.type == 'dynamic' else None, name=process_dto.
                 name)
         elif issubclass(process_type, Protocol):
-            # create an empty protocol, it will be filled with graph later
-            return ProcessFactory.create_protocol_empty(instance_name, process_dto.name,
-                                                        process_type)
+            # create protocol from dto, not from type
+            return ProcessFactory.create_empty_protocol_model_from_config_dto(process_dto, copy_id=False)
         else:
             name = process_type.__name__ if process_type.__name__ is not None else str(
                 process_type)
@@ -100,7 +99,7 @@ class SubProcessBuilderFromConfig(ProtocolSubProcessBuilder):
         if process_dto.graph is None:
             return ProcessFactory.create_task_model_from_config_dto(process_dto, copy_id=self.copy_id)
         else:
-            # create an empty protocol, it will be filled with graph later
+            # create protocol from dto
             return ProcessFactory.create_empty_protocol_model_from_config_dto(process_dto, copy_id=self.copy_id)
 
 

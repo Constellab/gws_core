@@ -192,7 +192,8 @@ class TestScenarioTemplate(BaseTestCase):
         self.assert_json(new_template.name, template.name)
         self.assert_json(new_template.version, template.version)
         self.assert_json(new_template.description, template.description)
-        self.assert_json(new_template.to_export_dto().data.to_json_dict(), template.to_export_dto().data.to_json_dict())
+        self.assert_json(new_template.to_export_dto().data.to_json_dict(), template.to_export_dto().data.to_json_dict(),
+                         ['id'])
 
     def test_add_scenario_component_to_protocol(self):
         i_scenario = ScenarioProxy()
