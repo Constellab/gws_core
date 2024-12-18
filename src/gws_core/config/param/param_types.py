@@ -39,5 +39,3 @@ class ParamSpecInfoSpecs(BaseModelDTO):
 
 
 DynamicParamAllowedSpecsDict = Dict[str, ParamSpecInfoSpecs]
-# TODO @vfoex remove following types
-DynamicParamAllowedSpecsDict = Dict[str, ParamSpecDTO | Dict[str, ParamSpecDTO]]
