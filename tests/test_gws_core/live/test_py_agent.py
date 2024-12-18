@@ -132,3 +132,80 @@ raise Exception('This is not working')
             self.assertEqual(str(err), 'This is not working')
 
         self.assertTrue(error)
+
+    def test_add_param(self):
+
+        proto: ProtocolModel = ProtocolService.create_empty_protocol()
+
+        process_model = ProtocolService.add_process_to_protocol_id(
+            proto.id,
+            PyAgent.get_typing_name()
+        ).process
+
+        proto = proto.refresh()
+
+        ProtocolService.add_dynamic_param_spec_of_process(
+            proto.id, process_model.instance_name, 'a', IntParam(default_value=2).to_dto()
+        )
+
+        test_process_model = proto.get_process(process_model.instance_name)
+        self.assertIsNotNone(test_process_model)
+        self.assertIsNotNone(test_process_model.config.data.get('specs').get(
+            'params').get('additional_info').get('specs').get('a'))
+        self.assertIsNotNone(test_process_model.config.get_value('params'))
+        self.assertEqual(test_process_model.config.get_spec('params')
+                         .specs['a'].to_dto().to_json_dict(), IntParam(default_value=2).to_dto().to_json_dict())
+        self.assertEqual(test_process_model.config.get_value('params')['a'], 2)
+
+    def test_update_param(self):
+
+        proto: ProtocolModel = ProtocolService.create_empty_protocol()
+
+        process_model = ProtocolService.add_process_to_protocol_id(
+            proto.id,
+            PyAgent.get_typing_name()
+        ).process
+
+        proto = proto.refresh()
+
+        ProtocolService.add_dynamic_param_spec_of_process(
+            proto.id, process_model.instance_name, 'a', IntParam(default_value=2).to_dto()
+        )
+
+        ProtocolService.update_dynamic_param_spec_of_process(
+            proto.id, process_model.instance_name, 'a', IntParam(default_value=3).to_dto()
+        )
+
+        test_process_model = proto.get_process(process_model.instance_name)
+        self.assertIsNotNone(test_process_model)
+        self.assertIsNotNone(test_process_model.config.data.get('specs').get(
+            'params').get('additional_info').get('specs').get('a'))
+        self.assertIsNotNone(test_process_model.config.get_value('params'))
+        self.assertEqual(test_process_model.config.get_spec('params')
+                         .specs['a'].to_dto().to_json_dict(), IntParam(default_value=3).to_dto().to_json_dict())
+        self.assertEqual(test_process_model.config.get_value('params')['a'], 3)
+
+    def test_remove_param(self):
+
+        proto: ProtocolModel = ProtocolService.create_empty_protocol()
+
+        process_model = ProtocolService.add_process_to_protocol_id(
+            proto.id,
+            PyAgent.get_typing_name()
+        ).process
+
+        proto = proto.refresh()
+
+        ProtocolService.add_dynamic_param_spec_of_process(
+            proto.id, process_model.instance_name, 'a', IntParam(default_value=2).to_dto()
+        )
+
+        ProtocolService.remove_dynamic_param_spec_of_process(
+            proto.id, process_model.instance_name, 'a'
+        )
+
+        test_process_model = proto.get_process(process_model.instance_name)
+        self.assertIsNotNone(test_process_model)
+        self.assertIsNone(test_process_model.config.data.get('specs').get(
+            'params').get('additional_info').get('specs').get('a'))
+        self.assertIsNone(test_process_model.config.get_value('params').get('a'))

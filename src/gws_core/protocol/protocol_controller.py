@@ -39,6 +39,12 @@ from .protocol_service import ProtocolService
 update_lock = threading.Lock()
 
 
+@core_app.get("/protocol/get-simple-param-spec-types", tags=["Protocol"],
+              summary="Get simple param spec types")
+def get_simple_param_spec_types(_=Depends(AuthService.check_user_access_token)) -> Dict:
+    return ProtocolService.get_simple_param_spec_types()
+
+
 @core_app.get("/protocol/{id_}", tags=["Protocol"], summary="Get a protocol")
 def get_a_protocol(id_: str,
                    _=Depends(AuthService.check_user_access_token)) -> ProtocolDTO:
