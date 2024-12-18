@@ -18,17 +18,22 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
 
     specs: Dict[str, ParamSpec] = None
 
+    edition_mode: bool = False
+
     def __init__(self,
                  optional: bool = False,
                  visibility: ParamSpecVisibilty = "public",
                  human_name: str = None,
                  short_description: str = None,
-                 specs: Dict[str, ParamSpec] = None) -> None:
+                 specs: Dict[str, ParamSpec] = None,
+                 edition_mode: bool = True) -> None:
 
         if specs is None:
             self.specs = {}
         else:
             self.specs = specs
+
+        self.edition_mode = edition_mode
 
         super().__init__(optional=optional,
                          visibility=visibility,
@@ -78,7 +83,8 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
         json_.default_value = self.get_default_value()
 
         json_.additional_info = {
-            'specs': {key: spec.to_dto() for key, spec in self.specs.items()}
+            'specs': {key: spec.to_dto() for key, spec in self.specs.items()},
+            'edition_mode': self.edition_mode
         }
 
         return json_
