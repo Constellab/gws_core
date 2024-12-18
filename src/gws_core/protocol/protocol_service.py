@@ -1,13 +1,13 @@
 
 
-from typing import (Any, Dict, List, Literal, Optional, Set, Type, Union,
-                    get_type_hints)
+from typing import Any, Dict, List, Literal, Optional, Set, Type, Union
 
 from gws_core.config.config_dto import ConfigSimpleDTO
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
-from gws_core.config.param.param_types import ParamSpecDTO, ParamValue
+from gws_core.config.param.param_types import (DynamicParamAllowedSpecsDict,
+                                               ParamSpecDTO, ParamValue)
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.entity_navigator.entity_navigator_type import EntityType
@@ -1122,7 +1122,8 @@ class ProtocolService():
         return dynamic_param_spec
 
     @classmethod
-    def get_dynamic_param_allowed_param_spec_types(cls, protocol_id: str, process_name: str) -> Dict:
+    def get_dynamic_param_allowed_param_spec_types(
+            cls, protocol_id: str, process_name: str) -> DynamicParamAllowedSpecsDict:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 

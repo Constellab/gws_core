@@ -117,3 +117,11 @@ class ParamSet(ParamSpec[list]):
             param_set.param_set[key] = ParamSpecHelper.create_param_spec_from_json(param)
 
         return param_set
+
+    @classmethod
+    def get_default_value_param_spec(cls) -> "ParamSet":
+        return ParamSet()
+
+    @classmethod
+    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+        return None

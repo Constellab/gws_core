@@ -172,3 +172,11 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
             return ListParam()
 
         raise BadRequestException(f"Invalid type for dynamic param: {type_}")
+
+    @classmethod
+    def get_default_value_param_spec(cls) -> "DynamicParam":
+        return DynamicParam()
+
+    @classmethod
+    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+        return None
