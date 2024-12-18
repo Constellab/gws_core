@@ -29,4 +29,13 @@ class ParamSpecDTO(ParamSpecSimpleDTO):
     allowed_values: Optional[List[ParamValue]] = None
 
 
-DynamicParamAllowedSpecsDict = Dict[str, ParamSpecDTO | Dict[str, ParamSpecDTO]]
+class ParamSpecInfoSpecs(BaseModelDTO):
+    optional: ParamSpecDTO
+    visibility: ParamSpecDTO
+    human_name: ParamSpecDTO
+    short_description: ParamSpecDTO
+    default_value: Optional[ParamSpecDTO] = None
+    additional_info: Optional[Dict[str, ParamSpecDTO]] = None
+
+
+DynamicParamAllowedSpecsDict = Dict[str, ParamSpecInfoSpecs]

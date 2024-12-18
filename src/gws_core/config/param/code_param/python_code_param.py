@@ -1,7 +1,10 @@
 
 
+from typing import Dict
+
 from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
                                                         param_spec_decorator)
+from gws_core.config.param.param_types import ParamSpecDTO
 
 from ..param_spec import TextParam
 
@@ -20,3 +23,11 @@ class PythonCodeParam(TextParam):
     @classmethod
     def get_str_type(cls) -> str:
         return "python_code_param"
+
+    @classmethod
+    def get_default_value_param_spec(cls) -> "PythonCodeParam":
+        return PythonCodeParam()
+
+    @classmethod
+    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+        return None

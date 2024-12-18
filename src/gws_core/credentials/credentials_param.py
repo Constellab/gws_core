@@ -1,10 +1,10 @@
 
-from typing import Any, Optional, TypedDict
+from typing import Any, Dict, Optional, TypedDict
 
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
                                                         param_spec_decorator)
-from gws_core.config.param.param_types import ParamSpecVisibilty
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecVisibilty
 from gws_core.core.classes.validator import StrValidator
 
 from .credentials import Credentials
@@ -96,3 +96,11 @@ class CredentialsParam(ParamSpec[str]):
 
         validator = StrValidator()
         return validator.validate(value)
+
+    @classmethod
+    def get_default_value_param_spec(cls) -> "CredentialsParam":
+        return CredentialsParam()
+
+    @classmethod
+    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+        return None
