@@ -64,6 +64,9 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
             if not isinstance(val, ParamSpec):
                 raise BadRequestException(f"The value of key '{key}' must be a ParamSpec")
 
+            if key not in value and not val.optional:
+                raise BadRequestException(f"The value of specs '{key}' is mandatory")
+
             if key in value and not val.optional:
                 if not val.validate(value[key]):
                     raise BadRequestException(f"The value of specs '{key}' is mandatory")
@@ -106,6 +109,8 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
             sub_spec_dto = ParamSpecDTO.from_json(spec)
             dynamic_param.specs[key] = ParamSpecHelper.get_param_spec_type_from_str(
                 sub_spec_dto.type).load_from_dto(sub_spec_dto)
+
+        dynamic_param.edition_mode = spec_dto.additional_info["edition_mode"]
 
         return dynamic_param
 

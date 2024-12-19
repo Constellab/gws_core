@@ -8,7 +8,7 @@ from gws_core.core.classes.observer.message_observer import (
     BasicMessageObserver, LoggerMessageObserver, MessageObserver)
 
 from ..config.config_params import ConfigParams
-from ..config.config_types import ConfigParamsDict
+from ..config.config_types import ConfigParamsDict, ConfigSpecs
 from ..io.io_exception import InvalidOutputsException
 from ..io.io_specs import InputSpecs, OutputSpecs
 from ..progress_bar.progress_bar import ProgressBar
@@ -48,6 +48,7 @@ class TaskRunner():
                  config_model_id: str = None,
                  input_specs: InputSpecs = None,
                  output_specs: OutputSpecs = None,
+                 config_specs: ConfigSpecs = None,
                  scenario_id: str = None):
         self._task_type = task_type
 
@@ -65,6 +66,8 @@ class TaskRunner():
 
         self._input_specs = input_specs or self._task_type.input_specs
         self._output_specs = output_specs or self._task_type.output_specs
+
+        self._config_specs = config_specs or self._task_type.config_specs
 
         self._build_config(params)
 
@@ -173,7 +176,7 @@ class TaskRunner():
             config = {}
 
         if self._config_params is None:
-            self._config_params = ParamSpecHelper.build_config_params(self._task_type.config_specs,
+            self._config_params = ParamSpecHelper.build_config_params(self._config_specs,
                                                                       config)
             self._config_params.set_config_model_id(self._config_model_id)
         return self._config_params
