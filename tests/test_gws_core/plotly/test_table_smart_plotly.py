@@ -59,6 +59,7 @@ target = px.scatter(source, x="A", y="B")```"""
             },
             params={
                 'code': code.get_data(),
+                'params': {}
             }
         )
         outputs = tester.run()

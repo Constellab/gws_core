@@ -67,6 +67,7 @@ class TestEnvAgent(TestCase):
     def test_agent_with_exception(self):
         tester = TaskRunner(
             params={
+                "params": {},
                 "code": """
 raise Exception('This is not working')
 """,

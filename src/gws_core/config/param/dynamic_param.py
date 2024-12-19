@@ -18,17 +18,22 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
 
     specs: Dict[str, ParamSpec] = None
 
+    edition_mode: bool = False
+
     def __init__(self,
                  optional: bool = False,
                  visibility: ParamSpecVisibilty = "public",
                  human_name: str = None,
                  short_description: str = None,
-                 specs: Dict[str, ParamSpec] = None) -> None:
+                 specs: Dict[str, ParamSpec] = None,
+                 edition_mode: bool = True) -> None:
 
         if specs is None:
             self.specs = {}
         else:
             self.specs = specs
+
+        self.edition_mode = edition_mode
 
         super().__init__(optional=optional,
                          visibility=visibility,
@@ -59,6 +64,9 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
             if not isinstance(val, ParamSpec):
                 raise BadRequestException(f"The value of key '{key}' must be a ParamSpec")
 
+            if key not in value and not val.optional:
+                raise BadRequestException(f"The value of specs '{key}' is mandatory")
+
             if key in value and not val.optional:
                 if not val.validate(value[key]):
                     raise BadRequestException(f"The value of specs '{key}' is mandatory")
@@ -78,7 +86,8 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
         json_.default_value = self.get_default_value()
 
         json_.additional_info = {
-            'specs': {key: spec.to_dto() for key, spec in self.specs.items()}
+            'specs': {key: spec.to_dto() for key, spec in self.specs.items()},
+            'edition_mode': self.edition_mode
         }
 
         return json_
@@ -100,6 +109,8 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
             sub_spec_dto = ParamSpecDTO.from_json(spec)
             dynamic_param.specs[key] = ParamSpecHelper.get_param_spec_type_from_str(
                 sub_spec_dto.type).load_from_dto(sub_spec_dto)
+
+        dynamic_param.edition_mode = spec_dto.additional_info["edition_mode"]
 
         return dynamic_param
 

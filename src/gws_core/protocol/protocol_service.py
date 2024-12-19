@@ -553,6 +553,11 @@ class ProtocolService():
             code_spec.visibility = new_visibility
             process_model.config.update_spec(EnvAgent.CODE_CONFIG_NAME, code_spec)
 
+        if EnvAgent.PARAMS_CONFIG_NAME in process_model.config.get_specs():
+            param_spec = process_model.config.get_spec(EnvAgent.PARAMS_CONFIG_NAME)
+            param_spec.edition_mode = True if new_visibility == "public" else False
+            process_model.config.update_spec(EnvAgent.PARAMS_CONFIG_NAME, param_spec)
+
         process_model.config.save()
         return process_model.to_dto()
 
@@ -936,9 +941,12 @@ class ProtocolService():
         dynamic_param_spec: DynamicParam = cls.get_process_dynamic_param_spec(
             process_model=process_model, config_spec_name=EnvAgent.PARAMS_CONFIG_NAME)
 
+        dynamic_param_spec.edition_mode = False
+
         for param_name, param_value in community_agent_version.params['specs'].items():
             # for each values in specs, add the good spec type to the dynamic param
             dynamic_param_spec.add_spec(param_name, ParamSpecDTO.from_json(param_value))
+
 
         # update the config spec 'params'
         process_model.config.update_spec(EnvAgent.PARAMS_CONFIG_NAME, dynamic_param_spec)
