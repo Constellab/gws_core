@@ -1127,7 +1127,7 @@ class Migration0100(BrickMigration):
             migrator.drop_index_if_exists(Scenario, 'I_F_EXP_TIDESC')
             migrator.migrate()
 
-    @brick_migration('0.10.5', short_description='Migrate agents params')
+    @brick_migration('0.11.0', short_description='Migrate agents params. Set style by default. Update process start and end date to datetime with milliseconds')
     class Migration0105(BrickMigration):
 
         @classmethod
