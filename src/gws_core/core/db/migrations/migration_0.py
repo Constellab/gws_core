@@ -1152,15 +1152,16 @@ class Migration0100(BrickMigration):
                 params = agent.config.get_value('params')
 
                 new_params = {}
-                for param in params:
-                    key, val = param.split('=')
+                if params:
+                    for param in params:
+                        if not param:
+                            continue
+                        key, val = param.split('=')
 
-                    val_str = f'\'{val}\'' if isinstance(val, str) else str(val)
+                        if ',' in val and '[' not in val and '{' not in val:
+                            val = f'[{val}]'
 
-                    if ',' in val_str and '[' not in val_str and '{' not in val_str:
-                        val_str = f'[{val_str}]'
-
-                    new_params[key] = ast.literal_eval(val_str)
+                        new_params[key] = ast.literal_eval(val)
 
                 dynamic_param: DynamicParam = EnvAgent.get_dynamic_param_config()
 
