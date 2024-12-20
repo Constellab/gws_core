@@ -190,7 +190,10 @@ class {self.class_name}(Task):"""
 
         params: list = []
         for key, value in self.config_specs.items():
-            params.append(f"'{key}': {value.__class__.__name__}(default_value={value.get_default_value()})")
+            default_value = value.get_default_value()
+            str_default_value = f"'{default_value}'" if isinstance(
+                default_value, str) else f"{default_value}"
+            params.append(f"'{key}': {value.__class__.__name__}(default_value={str_default_value})")
 
         return self._build_list_to_json(params)
 

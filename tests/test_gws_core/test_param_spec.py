@@ -22,7 +22,7 @@ class TestParamSpec(TestCase):
         self.assertEqual(spec_dto.short_description, "Description")
         self.assertEqual(spec_dto.additional_info["min_value"], 1)
         self.assertEqual(spec_dto.additional_info["max_value"], 10)
-        self.assertEqual(spec_dto.allowed_values, [1, 2])
+        self.assertEqual(spec_dto.additional_info["allowed_values"], [1, 2])
 
     def test_param_set(self):
         param = ParamSet({"str": StrParam(), 'int': IntParam(default_value=12)}, max_number_of_occurrences=3)

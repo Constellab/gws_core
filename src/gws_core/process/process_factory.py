@@ -12,7 +12,7 @@ from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 
 from ..config.config import Config
-from ..config.config_types import ConfigParamsDict
+from ..config.config_types import ConfigParamsDict, ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
@@ -43,7 +43,8 @@ class ProcessFactory():
             outputs_dto: Optional[IODTO] = None,
             name: Optional[str] = None,
             community_agent_version_id: Optional[str] = None,
-            style: Optional[TypingStyle] = None) -> TaskModel:
+            style: Optional[TypingStyle] = None,
+            config_specs: Optional[ConfigSpecs] = None) -> TaskModel:
         """
         Create a task model from a task type. The specs are created from the task type.
 
@@ -96,7 +97,7 @@ class ProcessFactory():
         task_model.community_agent_version_id = community_agent_version_id
 
         config: Config = Config()
-        config.set_specs(task_type.config_specs)
+        config.set_specs(config_specs if config_specs is not None else task_type.config_specs)
         if config_params:
             config.set_values(config_params)
 
