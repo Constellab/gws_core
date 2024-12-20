@@ -67,6 +67,7 @@ plt.savefig(output_path)```"""
             },
             params={
                 'code': code.get_data(),
+                'params': {}
             }
         )
         outputs = tester.run()

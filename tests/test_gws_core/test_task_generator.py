@@ -1,6 +1,9 @@
 
 
 from gws_core.code.agent_factory import AgentFactory
+from gws_core.config.param.code_param.python_code_param import PythonCodeParam
+from gws_core.config.param.dynamic_param import DynamicParam
+from gws_core.config.param.param_spec import BoolParam, IntParam, StrParam
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.live.py_agent import PyAgent
 from gws_core.process.process_factory import ProcessFactory
@@ -25,10 +28,18 @@ table: Table = sources[0].transpose()
 targets = [table]
 """
 
-        task_model = ProcessFactory.create_task_model_from_type(PyAgent, config_params={
-            PyAgent.CONFIG_CODE_NAME: code,
-            PyAgent.CONFIG_PARAMS_NAME: ["a = 1", "b = '2'", "c = 3", "d = True"],
-        }, instance_name='test_task_generator')
+        task_model = ProcessFactory.create_task_model_from_type(
+            PyAgent,
+            config_params={PyAgent.CONFIG_CODE_NAME: code, PyAgent.
+                           CONFIG_PARAMS_NAME: {'a': 1, 'b': '2', 'c': 3, 'd': True}, },
+            instance_name='test_task_generator',
+            config_specs={PyAgent.CONFIG_CODE_NAME: PythonCodeParam(),
+                          PyAgent.CONFIG_PARAMS_NAME:
+                          DynamicParam(
+                              specs={'a': IntParam(default_value=1),
+                                     'b': StrParam(default_value='2'),
+                                     'c': IntParam(default_value=3),
+                                     'd': BoolParam(default_value=True)})})
 
         result = AgentFactory.generate_task_code_from_agent(task_model)
 

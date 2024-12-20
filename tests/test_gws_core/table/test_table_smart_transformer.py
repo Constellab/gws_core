@@ -63,6 +63,7 @@ class TestTableSmartTransformer(TestCase):
             },
             params={
                 'code': code.get_data(),
+                'params': {}
             }
         )
 
