@@ -504,3 +504,7 @@ class RichText(SerializableObjectJson):
             version=RichText.CURRENT_VERION,
             editorVersion=RichText.CURRENT_EDITOR_VERSION,
         )
+
+    @classmethod
+    def from_json(cls, data: dict) -> 'RichText':
+        return RichText(RichTextDTO.from_json(data))

@@ -65,7 +65,7 @@ class ModelDTO(BaseModelDTO):
     last_modified_at: datetime
 
 
-class PageDTO(BaseModel, Generic[BaseModelDTOType]):
+class PageDTO(BaseModelDTO, Generic[BaseModelDTOType]):
     page: int
     prev_page: int
     next_page: int

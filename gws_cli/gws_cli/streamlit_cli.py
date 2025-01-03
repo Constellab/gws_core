@@ -5,7 +5,7 @@ import subprocess
 import typer
 from typing_extensions import Annotated
 
-from gws_core import BrickService, Settings
+from gws_core import BrickService, FrontService, Settings
 
 app = typer.Typer()
 
@@ -30,9 +30,15 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the js
     print(f"Running streamlit in dev mode, DO NOT USE IN PRODUCTION. You can access the dashboard at "
           f"{settings.get_dashboard_dev_url()}")
 
+    theme = FrontService.get_dark_theme()
+
     subprocess.run([
         "streamlit",
         "run",
+        '--theme.backgroundColor', theme.background_color,
+        '--theme.secondaryBackgroundColor', theme.secondary_background_color,
+        '--theme.textColor', theme.text_color,
+        '--theme.primaryColor', theme.primary_color,
         main_app_path,
         "--server.port", "8501",
         "--server.runOnSave", str(server_run_on_save).lower(),

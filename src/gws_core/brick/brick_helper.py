@@ -10,6 +10,9 @@ from .brick_dto import BrickInfo, BrickVersion
 
 
 class BrickHelper():
+
+    GWS_CORE = 'gws_core'
+
     @classmethod
     def get_all_bricks(cls) -> Dict[str, BrickInfo]:
         """ Returns the info of all the bricks used by the Application """
