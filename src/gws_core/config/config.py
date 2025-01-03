@@ -162,14 +162,24 @@ class Config(ModelWithUser):
         self.data["values"] = {}
 
     def to_dto(self) -> ConfigDTO:
+
+        specs = ConfigSpecsHelper.config_specs_to_dto(self.get_specs(), skip_private=True)
+
+        # get the values of the config (skip private values)
+        values = {}
+        for key, spec in specs.items():
+            if spec.visibility == "private":
+                continue
+            values[key] = self.get_value(key)
+
         return ConfigDTO(
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
             created_by=self.created_by.to_dto(),
             last_modified_by=self.last_modified_by.to_dto(),
-            specs=ConfigSpecsHelper.config_specs_to_dto(self.get_specs()),
-            values=self.get_values()
+            specs=specs,
+            values=values
         )
 
     def to_simple_dto(self, ignore_values: bool = False) -> ConfigSimpleDTO:

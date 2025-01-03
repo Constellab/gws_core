@@ -576,11 +576,11 @@ def add_dynamic_param_spec_of_process(id_: str,
                                       config_spec_name: str,
                                       param_name: str,
                                       spec_dto: ParamSpecDTO,
-                                      _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
+                                      _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
 
     with update_lock:
         return ProtocolService.add_dynamic_param_spec_of_process(
-            id_, process_name, config_spec_name, param_name, spec_dto)
+            id_, process_name, config_spec_name, param_name, spec_dto).to_dto()
 
 
 @core_app.put("/protocol/{id_}/process/{process_name}/{config_spec_name}/dynamic-param-spec/{param_name}",
@@ -591,11 +591,11 @@ def update_dynamic_param_spec_of_process(id_: str,
                                          config_spec_name: str,
                                          param_name: str,
                                          spec_dto: ParamSpecDTO,
-                                         _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
+                                         _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
 
     with update_lock:
         return ProtocolService.update_dynamic_param_spec_of_process(
-            id_, process_name, config_spec_name, param_name, spec_dto)
+            id_, process_name, config_spec_name, param_name, spec_dto).to_dto()
 
 
 @core_app.put(
@@ -604,10 +604,10 @@ def update_dynamic_param_spec_of_process(id_: str,
     summary="Rename and update a dynamic param of a process")
 def rename_and_update_dynamic_param_spec_of_process(
     id_: str, process_name: str, config_spec_name: str, param_name: str, new_param_name: str,
-        spec_dto: ParamSpecDTO, _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
+        spec_dto: ParamSpecDTO, _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.rename_and_update_dynamic_param_spec_of_process(
-            id_, process_name, config_spec_name, param_name, new_param_name, spec_dto)
+            id_, process_name, config_spec_name, param_name, new_param_name, spec_dto).to_dto()
 
 
 @core_app.delete("/protocol/{id_}/process/{process_name}/{config_spec_name}/dynamic-param-spec/{param_name}",
@@ -617,8 +617,8 @@ def remove_dynamic_param_spec_of_process(id_: str,
                                          process_name: str,
                                          config_spec_name: str,
                                          param_name: str,
-                                         _=Depends(AuthService.check_user_access_token)) -> ConfigSimpleDTO:
+                                         _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
 
     with update_lock:
         return ProtocolService.remove_dynamic_param_spec_of_process(
-            id_, process_name, config_spec_name, param_name)
+            id_, process_name, config_spec_name, param_name).to_dto()

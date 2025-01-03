@@ -938,7 +938,7 @@ class ProtocolService():
         )
 
         # Get the dynamic param of the newly created agent process model
-        dynamic_param_spec: DynamicParam = cls.get_process_dynamic_param_spec(
+        dynamic_param_spec: DynamicParam = cls._get_process_dynamic_param_spec(
             process_model=process_model, config_spec_name=EnvAgent.PARAMS_CONFIG_NAME)
 
         dynamic_param_spec.edition_mode = False
@@ -946,7 +946,6 @@ class ProtocolService():
         for param_name, param_value in community_agent_version.params['specs'].items():
             # for each values in specs, add the good spec type to the dynamic param
             dynamic_param_spec.add_spec(param_name, ParamSpecDTO.from_json(param_value))
-
 
         # update the config spec 'params'
         process_model.config.update_spec(EnvAgent.PARAMS_CONFIG_NAME, dynamic_param_spec)
@@ -1021,7 +1020,7 @@ class ProtocolService():
 
     ########################## DYNAMIC PARAM #####################
     @classmethod
-    def get_and_check_dynamic_param(cls, process_model: ProcessModel, config_spec_name: str) -> DynamicParam:
+    def _get_and_check_dynamic_param(cls, process_model: ProcessModel, config_spec_name: str) -> DynamicParam:
         process_model.check_is_updatable()
         dynamic_param_spec: DynamicParam = process_model.config.get_spec(config_spec_name)
 
@@ -1031,9 +1030,9 @@ class ProtocolService():
         return dynamic_param_spec
 
     @classmethod
-    def update_dynamic_param_config_spec(
+    def _update_dynamic_param_config_spec(
             cls, process_model: ProcessModel, config_spec_name: str, dynamic_param_spec: DynamicParam,
-            values: Dict[str, Any] = None) -> ConfigSimpleDTO:
+            values: Dict[str, Any] = None) -> ProtocolUpdate:
         process_model.config.update_spec(config_spec_name, dynamic_param_spec)
 
         if values:
@@ -1043,32 +1042,32 @@ class ProtocolService():
 
         process_model.save()
 
-        return process_model.config.to_simple_dto()
+        return ProtocolUpdate(protocol=process_model.parent_protocol, process=process_model, protocol_updated=False)
 
     @classmethod
     def add_dynamic_param_spec_of_process(
-            cls, protocol_id: str, process_name: str, config_spec_name: str, param_name: str, spec_dto: ParamSpecDTO) -> ConfigSimpleDTO:
+            cls, protocol_id: str, process_name: str, config_spec_name: str, param_name: str, spec_dto: ParamSpecDTO) -> ProtocolUpdate:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
         process_model = protocol_model.get_process(process_name)
 
-        dynamic_param_spec: DynamicParam = cls.get_and_check_dynamic_param(
+        dynamic_param_spec: DynamicParam = cls._get_and_check_dynamic_param(
             process_model=process_model, config_spec_name=config_spec_name)
 
         dynamic_param_spec.add_spec(param_name, spec_dto)
 
-        return cls.update_dynamic_param_config_spec(process_model, config_spec_name, dynamic_param_spec)
+        return cls._update_dynamic_param_config_spec(process_model, config_spec_name, dynamic_param_spec)
 
     @classmethod
     def update_dynamic_param_spec_of_process(
-            cls, protocol_id: str, process_name: str, config_spec_name: str, param_name: str, spec_dto: ParamSpecDTO) -> ConfigSimpleDTO:
+            cls, protocol_id: str, process_name: str, config_spec_name: str, param_name: str, spec_dto: ParamSpecDTO) -> ProtocolUpdate:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
         process_model = protocol_model.get_process(process_name)
 
-        dynamic_param_spec: DynamicParam = cls.get_and_check_dynamic_param(
+        dynamic_param_spec: DynamicParam = cls._get_and_check_dynamic_param(
             process_model=process_model, config_spec_name=config_spec_name)
 
         if spec_dto.type != dynamic_param_spec.specs[param_name].get_str_type():
@@ -1079,18 +1078,18 @@ class ProtocolService():
 
         dynamic_param_spec.update_spec(param_name, spec_dto)
 
-        return cls.update_dynamic_param_config_spec(process_model, config_spec_name, dynamic_param_spec)
+        return cls._update_dynamic_param_config_spec(process_model, config_spec_name, dynamic_param_spec)
 
     @classmethod
     def rename_and_update_dynamic_param_spec_of_process(
             cls, protocol_id: str, process_name: str, config_spec_name: str, param_name: str, new_param_name: str,
-            spec_dto: ParamSpecDTO) -> ConfigSimpleDTO:
+            spec_dto: ParamSpecDTO) -> ProtocolUpdate:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
         process_model = protocol_model.get_process(process_name)
 
-        dynamic_param_spec: DynamicParam = cls.get_and_check_dynamic_param(
+        dynamic_param_spec: DynamicParam = cls._get_and_check_dynamic_param(
             process_model=process_model, config_spec_name=config_spec_name)
 
         values = process_model.config.get_value(config_spec_name)
@@ -1101,17 +1100,17 @@ class ProtocolService():
 
         dynamic_param_spec.rename_and_update_spec(param_name, new_param_name, spec_dto)
 
-        return cls.update_dynamic_param_config_spec(process_model, config_spec_name, dynamic_param_spec, values)
+        return cls._update_dynamic_param_config_spec(process_model, config_spec_name, dynamic_param_spec, values)
 
     @classmethod
     def remove_dynamic_param_spec_of_process(
-            cls, protocol_id: str, process_name: str, config_spec_name: str, param_name: str) -> ConfigSimpleDTO:
+            cls, protocol_id: str, process_name: str, config_spec_name: str, param_name: str) -> ProtocolUpdate:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
         process_model = protocol_model.get_process(process_name)
 
-        dynamic_param_spec: DynamicParam = cls.get_and_check_dynamic_param(
+        dynamic_param_spec: DynamicParam = cls._get_and_check_dynamic_param(
             process_model=process_model, config_spec_name=config_spec_name)
 
         values = process_model.config.get_value(config_spec_name)
@@ -1121,10 +1120,10 @@ class ProtocolService():
         if param_name in values:
             del values[param_name]
 
-        return cls.update_dynamic_param_config_spec(process_model, config_spec_name, dynamic_param_spec, values)
+        return cls._update_dynamic_param_config_spec(process_model, config_spec_name, dynamic_param_spec, values)
 
     @classmethod
-    def get_process_dynamic_param_spec(cls, process_model: ProcessModel, config_spec_name: str) -> DynamicParam:
+    def _get_process_dynamic_param_spec(cls, process_model: ProcessModel, config_spec_name: str) -> DynamicParam:
 
         dynamic_param_spec: DynamicParam = DynamicParam.load_from_dto(
             ParamSpecDTO.from_json(process_model.config.data.get('specs').get(config_spec_name)))
