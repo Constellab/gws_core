@@ -171,16 +171,16 @@ class TestView(BaseTestCase):
         self.assertEqual(len(specs), 1)
         self.assertTrue('lazy' in specs)
         self.assertIsInstance(specs['lazy'], StrParam)
-        self.assertEqual(specs['lazy'].allowed_values, ['super'])
+        self.assertEqual(specs['lazy'].additional_info['allowed_values'], ['super'])
 
         # call with a resource type, like configuration before have the actual resource
-        specs: ConfigSpecs = view_meta.get_view_specs_from_type(type(resource))
+        specs = view_meta.get_view_specs_from_type(type(resource))
 
         self.assertEqual(len(specs), 1)
         self.assertTrue('lazy' in specs)
         self.assertIsInstance(specs['lazy'], StrParam)
         # there should be no allowed value
-        self.assertIsNone(specs['lazy'].allowed_values)
+        self.assertIsNone(specs['lazy'].additional_info['allowed_values'])
 
     def test_view_config(self):
 
