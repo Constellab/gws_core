@@ -111,6 +111,7 @@ from .core.utils.settings import Settings as Settings
 from .core.utils.string_helper import StringHelper as StringHelper
 from .core.utils.utils import Utils as Utils
 # Credentials
+from .credentials.credentials import Credentials as Credentials
 from .credentials.credentials_param import CredentialsParam as CredentialsParam
 from .credentials.credentials_type import \
     CredentialsDataBasic as CredentialsDataBasic

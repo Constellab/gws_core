@@ -78,14 +78,7 @@ class CredentialsParam(ParamSpec[str]):
             return None
 
         # retrieve the credentials and return it
-        credentials: Credentials = Credentials.find_by_name(value)
-        if credentials is None:
-            raise Exception(f"Credentials {value} not found")
-
-        if self.credentials_type is not None and credentials.type != self.credentials_type:
-            raise Exception(
-                f"Credentials {value} is not of type {self.credentials_type}")
-
+        credentials: Credentials = Credentials.find_by_name_and_check(value, self.credentials_type)
         return credentials.get_data_object()
 
     def validate(self, value: Any) -> str:

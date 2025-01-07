@@ -54,6 +54,17 @@ class Credentials(ModelWithUser):
         return cls.select().where(Credentials.name == name).first()
 
     @classmethod
+    def find_by_name_and_check(cls, name: str, type_: CredentialsType = None) -> 'Credentials':
+        credentials = cls.find_by_name(name)
+        if not credentials:
+            raise Exception(f"Credentials '{name}' not found, does it exist or was it renamed or deleted?")
+
+        if type_ is not None and credentials.type != type_:
+            raise Exception(
+                f"Credentials {name} does ont have the correct type. Expected type : '{type_}', found type : '{credentials.type}'. Was the credentials '{name}' updated?")
+        return credentials
+
+    @classmethod
     def search_by_type(cls, type_: CredentialsType) -> ModelSelect:
         return cls.select().where(Credentials.type == type_)
 
