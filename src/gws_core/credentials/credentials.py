@@ -2,12 +2,11 @@
 
 from typing import Any, Dict, Optional, Type, final
 
-from peewee import CharField, ModelSelect, TextField
-
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.credentials.credentials_type import CredentialsDTO
+from peewee import CharField, ModelSelect, TextField
 
 from .credentials_type import (CredentialsDataBase, CredentialsDataBasic,
                                CredentialsDataLab, CredentialsDataOther,
@@ -43,9 +42,12 @@ class Credentials(ModelWithUser):
             description=self.description,
         )
 
-    def get_data_object(self, skip_meta: bool = False) -> CredentialsDataBase:
-        data_type = self.get_data_types().get(self.type)
-        return data_type(**self.data, meta=self.to_dto() if not skip_meta else None)
+    def get_credentials_data_type(self) -> Type[CredentialsDataBase]:
+        return self.get_data_types().get(self.type)
+
+    def get_data_object(self) -> CredentialsDataBase:
+        data_type = self.get_credentials_data_type()
+        return data_type.build_from_json(self.data, self.to_dto())
 
     @classmethod
     def find_by_name(cls, name: str) -> Optional['Credentials']:

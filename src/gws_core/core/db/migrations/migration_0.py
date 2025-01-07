@@ -15,6 +15,9 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.model.db_field import BaseDTOField, DateTimeUTC
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.credentials.credentials import Credentials
+from gws_core.credentials.credentials_type import (CredentialsDataOther,
+                                                   CredentialsType)
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
@@ -1274,3 +1277,20 @@ class Migration0100(BrickMigration):
                 ShareLink, ShareLink.valid_until.column_name, DateTimeUTC(null=True))
 
             migrator.migrate()
+
+    @brick_migration('0.11.2', short_description='Convert other credentials data format')
+    class Migration0112(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            credentials: List[Credentials] = list(Credentials.select().where(
+                Credentials.type == CredentialsType.OTHER))
+
+            for credential in credentials:
+                if 'data' not in credential.data:
+                    data_list = []
+                    for key, val in credential.data.items():
+                        data_list.append({'key': key, 'value': val})
+
+                    credential.data = {'data': data_list}
+                    credential.save(skip_hook=True)

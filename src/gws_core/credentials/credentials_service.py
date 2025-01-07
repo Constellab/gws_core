@@ -1,6 +1,6 @@
 
 
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
@@ -54,11 +54,14 @@ class CredentialsService():
         credentials.name = save_credentials.name
         credentials.description = save_credentials.description
         credentials.type = save_credentials.type
-        credentials.data = save_credentials.data
 
         # check that the data is valid
         try:
-            credentials.get_data_object(skip_meta=True)
+            credentials_type = credentials.get_credentials_data_type()
+
+            # build the data object to check the data
+            data_obj = credentials_type.build_from_json(save_credentials.data)
+            credentials.data = data_obj.convert_to_dict()
         except Exception as e:
             raise BadRequestException(f"Invalid credentials data: {str(e)}")
         return credentials
@@ -100,7 +103,8 @@ class CredentialsService():
                 raise UnauthorizedException('Invalid credentials')
 
         credentials: Credentials = Credentials.get_by_id_and_check(credentials_id)
-        return credentials.data
+
+        return credentials.get_data_object().convert_to_dict()
 
     @classmethod
     def find_by_name(cls, name: str) -> Credentials:

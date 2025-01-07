@@ -68,7 +68,7 @@
         {
             "id": "testFileName",
             "type": "promptString",
-            "description": "Name of the test files to run (separated with space)",
+            "description": "Name of the test file to run",
         },
         {
             "id": "resetKey",

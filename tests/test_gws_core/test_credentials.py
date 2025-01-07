@@ -20,7 +20,7 @@ class TestCredentials(BaseTestCase):
             name="test",
             type=CredentialsType.OTHER,
             description="test",
-            data={"data": {"test": "test"}}
+            data={"data": [{"key": "test", "value": "test"}]}
         )
 
         first_credentials = CredentialsService.create(save_dto)
@@ -66,7 +66,7 @@ class TestCredentials(BaseTestCase):
         credentials = Credentials()
         credentials.name = "9999"
         credentials.type = CredentialsType.OTHER
-        credentials.data = {"data": {"test": "test"}}
+        credentials.data = {"data": [{"key": "test", "value": "test"}]}
         credentials.save()
 
         param = CredentialsParam(credentials_type=CredentialsType.OTHER)
