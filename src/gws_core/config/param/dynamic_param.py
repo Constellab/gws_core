@@ -110,7 +110,7 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
             dynamic_param.specs[key] = ParamSpecHelper.get_param_spec_type_from_str(
                 sub_spec_dto.type).load_from_dto(sub_spec_dto)
 
-        dynamic_param.edition_mode = spec_dto.additional_info["edition_mode"]
+        dynamic_param.edition_mode = spec_dto.additional_info.get("edition_mode", True)
 
         return dynamic_param
 
