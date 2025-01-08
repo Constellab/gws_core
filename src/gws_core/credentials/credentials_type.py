@@ -129,7 +129,7 @@ class CredentialsDataLab(CredentialsDataBase):
         return {
             "lab_domain": StrParam(human_name="Lab domain",
                                    short_description="The domain is the part of the URL that comes after the https://lab and before the first /"),
-            "api_key": StrParam(human_name="Api key"),
+            "api_key": StrParam(human_name="Api key", min_length=20),
         }
 
 
