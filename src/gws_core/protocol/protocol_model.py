@@ -5,6 +5,7 @@ from typing import Dict, List, Literal, Optional, Set
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.protocol.protocol_dto import (ConnectorDTO, IOFaceDTO,
                                             ProcessConfigDTO, ProtocolDTO,
                                             ProtocolFullDTO,
@@ -14,6 +15,9 @@ from gws_core.protocol.protocol_exception import \
     IOFaceConnectedToTheParentDeleteException
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 from gws_core.task.plug.input_task import InputTask
+from gws_core.task.task import Task
+from gws_core.task.task_model import TaskModel
+from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -207,6 +211,7 @@ class ProtocolModel(ProcessModel):
 
         self._run_before_task()
         self.mark_as_started()
+
         self._run_process(process)
 
         # auto run the next process if it is auto run

@@ -3,7 +3,6 @@
 import os
 import subprocess
 import traceback
-from multiprocessing import Process
 from typing import List, Optional
 
 from gws_core.core.service.front_service import FrontService
@@ -116,13 +115,13 @@ class ScenarioRunService():
             error_text = GWSException.SCENARIO_ERROR_BEFORE_RUN.value + str(err)
             Logger.error(error_text)
             scenario.mark_as_error(ProcessErrorInfo(detail=error_text,
-                                                      unique_code=GWSException.SCENARIO_ERROR_BEFORE_RUN.name,
-                                                      context=None, instance_id=None))
+                                                    unique_code=GWSException.SCENARIO_ERROR_BEFORE_RUN.name,
+                                                    context=None, instance_id=None))
         cls._run_scenario_process(scenario, protocol_model, process_name)
 
     @classmethod
     def _run_scenario_process(cls, scenario: Scenario, protocol_model: ProtocolModel,
-                                process_instance_name: str) -> Scenario:
+                              process_instance_name: str) -> Scenario:
         try:
 
             process_model = protocol_model.get_process(process_instance_name)
@@ -147,7 +146,6 @@ class ScenarioRunService():
             protocol_model.run_process(process_instance_name)
             protocol_model = protocol_model.refresh()
             protocol_model.refresh_status()
-
             return scenario
 
         except Exception as err:
@@ -180,15 +178,15 @@ class ScenarioRunService():
             exception: ScenarioRunException = ScenarioRunException.from_exception(
                 scenario=scenario, exception=err)
             scenario.mark_as_error(ProcessErrorInfo(detail=exception.get_detail_with_args(),
-                                                      unique_code=exception.unique_code,
-                                                      context=None, instance_id=exception.instance_id))
+                                                    unique_code=exception.unique_code,
+                                                    context=None, instance_id=exception.instance_id))
             raise exception
 
     @classmethod
     def create_cli_for_scenario_process(cls, scenario: Scenario,
-                                          protocol_model: ProtocolModel,
-                                          process_instance_name: str,
-                                          user: User) -> SysProc:
+                                        protocol_model: ProtocolModel,
+                                        process_instance_name: str,
+                                        user: User) -> SysProc:
         """
         Run an scenario in a non-blocking way through the cli.
 
@@ -209,8 +207,8 @@ class ScenarioRunService():
             exception: ScenarioRunException = ScenarioRunException.from_exception(
                 scenario=scenario, exception=err)
             scenario.mark_as_error(ProcessErrorInfo(detail=exception.get_detail_with_args(),
-                                                      unique_code=exception.unique_code,
-                                                      context=None, instance_id=exception.instance_id))
+                                                    unique_code=exception.unique_code,
+                                                    context=None, instance_id=exception.instance_id))
             raise exception
 
     @classmethod

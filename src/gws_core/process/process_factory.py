@@ -96,6 +96,8 @@ class ProcessFactory():
         # Set the community_agent_version_id if provided
         task_model.community_agent_version_id = community_agent_version_id
 
+        task_model.community_agent_version_modified = False
+
         config: Config = Config()
         config.set_specs(config_specs if config_specs is not None else task_type.config_specs)
         if config_params:
