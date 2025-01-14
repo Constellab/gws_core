@@ -10,7 +10,7 @@ from ...task.task_decorator import task_decorator
 @task_decorator(
     "RMambaAgent", human_name="R mamba env agent",
     short_description="Agent to run R snippets in mamba a shell environment.",
-    style=TypingStyle.material_icon("code"))
+    style=TypingStyle.material_icon("agent"))
 class RMambaAgent(RCondaAgent):
     """
     Mamba-based R agents allow to execute R snippets on the fly in isolated mamba environments.

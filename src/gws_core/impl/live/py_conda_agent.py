@@ -14,7 +14,7 @@ from ...task.task_decorator import task_decorator
 @task_decorator(
     "PyCondaAgent", human_name="Conda env agent",
     short_description="Agent to run Python snippets in a conda shell environment.",
-    style=TypingStyle.material_icon("code"))
+    style=TypingStyle.material_icon("agent"))
 class PyCondaAgent(EnvAgent):
     """
     Conda-based Python agents allow to execute Python snippets on the fly in isolated conda environments.

@@ -13,7 +13,7 @@ from ...task.task_decorator import task_decorator
 @task_decorator(
     "PyPipenvAgent", human_name="Pip env agent",
     short_description="Agent to run Python snippets in a pipenv shell environment.",
-    style=TypingStyle.material_icon("code"))
+    style=TypingStyle.material_icon("agent"))
 class PyPipenvAgent(EnvAgent):
     """
     Pipenv-based Python agents allow to execute Python snippets on the fly in isolated Pipenv environments.

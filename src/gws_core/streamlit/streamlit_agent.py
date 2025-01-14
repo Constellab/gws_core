@@ -23,7 +23,7 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 @task_decorator("StreamlitAgent", human_name="Streamlit agent",
                 short_description="Agent to generate a streamlit app dashboard",
                 style=StreamlitResource.copy_style(
-                    icon_technical_name='code', icon_type=TypingIconType.MATERIAL_ICON))
+                    icon_technical_name='agent', icon_type=TypingIconType.MATERIAL_ICON))
 class StreamlitAgent(Task):
     """
     Agent to generate a streamlit app dashboard.
