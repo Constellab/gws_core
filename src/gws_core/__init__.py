@@ -423,6 +423,10 @@ from .scenario_template.scenario_template_factory import \
 # Space
 from .space.mail_service import MailService as MailService
 # Streamlit
+from .streamlit.streamlit_dashboard import Dashboard as Dashboard
+from .streamlit.streamlit_dashboard import DashboardType as DashboardType
+from .streamlit.streamlit_dashboard import \
+    dashboard_decorator as dashboard_decorator
 from .streamlit.streamlit_resource import \
     StreamlitResource as StreamlitResource
 # Tag

@@ -29,7 +29,7 @@ class StreamlitApp():
 
     params: dict = None
 
-    _streamlit_folder: str = None
+    _streamlit_folder_path: str = None
 
     APP_CONFIG_FILENAME = 'streamlit_config.json'
     MAIN_FILE = 'main.py'
@@ -45,8 +45,8 @@ class StreamlitApp():
     def set_streamlit_code(self, streamlit_code: str) -> None:
         self.streamlit_code = streamlit_code
 
-    def set_streamlit_folder(self, streamlit_folder: str) -> None:
-        self._streamlit_folder = streamlit_folder
+    def set_streamlit_folder(self, streamlit_folder_path: str) -> None:
+        self._streamlit_folder_path = streamlit_folder_path
 
     def set_streamlit_code_path(self, streamlit_app_code_path: str) -> None:
         if not FileHelper.exists_on_os(streamlit_app_code_path):
@@ -80,12 +80,12 @@ class StreamlitApp():
 
         FileHelper.create_dir_if_not_exist(self.app_config_dir)
 
-        if self._streamlit_folder is None and self.streamlit_code is None:
+        if self._streamlit_folder_path is None and self.streamlit_code is None:
             raise Exception("streamlit_code or streamlit_folder must be set before starting the app")
 
         app_dir: str = None
-        if self._streamlit_folder is not None:
-            app_dir = self._streamlit_folder
+        if self._streamlit_folder_path is not None:
+            app_dir = self._streamlit_folder_path
         else:
             # write the main app code into the config dir
             main_app_path = os.path.join(self.app_config_dir, self.MAIN_FILE)

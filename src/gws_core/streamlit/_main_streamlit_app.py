@@ -133,6 +133,9 @@ st.markdown("""
         header {
             display: none !important;
         }
+        h1 {
+            padding: 0;
+        }
 
     </style>
 """, unsafe_allow_html=True)
@@ -201,4 +204,5 @@ try:
         spec.loader.exec_module(module)
 except Exception as e:
     st.error(f"Error loading python script: {e}")
+    st.exception(e)
     st.stop()
