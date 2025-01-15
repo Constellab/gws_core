@@ -12,10 +12,15 @@ class StreamlitAppDTO(BaseModelDTO):
     source_paths: List[str]
 
 
-class StreamlitStatusDTO(BaseModelDTO):
+class StreamlitProcessStatusDTO(BaseModelDTO):
+    id: str
     status: Literal["RUNNING", "STOPPED"]
     running_apps: List[StreamlitAppDTO]
     nb_of_connections: int
+
+
+class StreamlitStatusDTO(BaseModelDTO):
+    processes: List[StreamlitProcessStatusDTO]
 
 
 class StreamlitConfigDTO(BaseModelDTO):

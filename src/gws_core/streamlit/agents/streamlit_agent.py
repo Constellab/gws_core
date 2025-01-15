@@ -12,8 +12,6 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingIconType
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
-from gws_core.resource.resource_set.resource_list_base import ResourceListBase
-from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
@@ -49,43 +47,16 @@ class StreamlitAgent(Task):
         'params': EnvAgent.get_dynamic_param_config(),
         'code':
         PythonCodeParam(
-            default_value=LiveCodeHelper.get_streamlit_template(),
+            default_value=LiveCodeHelper.get_streamlit_code_template(),
             human_name="Streamlit app code",
-            short_description="Code of the streamlit app to run"), }
-
-    CONFIG_PARAMS_NAME = 'params'
-    CONFIG_CODE_NAME = 'code'
+            short_description="Code of the streamlit app to run")}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        code: str = params.get_value('code')
-        dynamic_params: Dict[str, Any] = params.get_value('params')
-        str_params = f"params = {str(dynamic_params)}"
-        if len(params) > 0:
-            str_params = str_params + "\n"
-
-        # add the params to the code
-        code_with_params = f"{str_params}{code}"
-
         # build the streamlit resource with the code and the resources
-        streamlit_resource = StreamlitResource(code_with_params)
+        streamlit_resource = StreamlitResource(params.get_value('code'), app_type='NORMAL')
+        streamlit_resource.set_params(params.get_value('params'))
         resource_list: ResourceList = inputs.get('source')
-        i = 1
-        for resource in resource_list.get_resources():
-            if resource:
-                # prevent nesting resource sets
-                if isinstance(resource, ResourceListBase):
-                    if (isinstance(resource, ResourceSet)):
-                        self.log_warning_message(
-                            f'Flatten sub resource for resource {resource.name} ({str(i + 1)}) because it is a resource set. The order of the resources will not be kept.')
-                    else:
-                        self.log_warning_message(
-                            f'Flatten sub resource for resource {resource.name} ({str(i + 1)}) because it is a resource list.')
-                    for sub_resource in resource.get_resources_as_set():
-                        streamlit_resource.add_resource(sub_resource, create_new_resource=False)
-                else:
-                    streamlit_resource.add_resource(resource, create_new_resource=False)
-
-            i += 1
+        streamlit_resource.add_multiple_resources(resource_list.to_list(), self.message_dispatcher)
 
         return {'streamlit_app': streamlit_resource}
 

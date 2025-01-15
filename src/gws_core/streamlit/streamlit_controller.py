@@ -20,9 +20,20 @@ def get_streamlit_app_status(_=Depends(AuthService.check_user_access_token)) -> 
 
 @core_app.post("/streamlit/stop", tags=["Streamlit"],
                summary="Stop main streamlit app")
-def stop_main_streamlit_app(_=Depends(AuthService.check_user_access_token)) -> None:
+def stop_all_processes(_=Depends(AuthService.check_user_access_token)) -> None:
     """
     Stop the main streamlit app
     """
 
-    return StreamlitAppManager.stop_main_app()
+    return StreamlitAppManager.stop_all_processes()
+
+
+@core_app.post("/streamlit/stop/{id}", tags=["Streamlit"],
+               summary="Stop main streamlit app")
+def stop_process(id: str,
+                 _=Depends(AuthService.check_user_access_token)) -> None:
+    """
+    Stop the main streamlit app
+    """
+
+    return StreamlitAppManager.stop_process(id)

@@ -36,7 +36,7 @@ class PyPipenvAgent(EnvAgent):
             human_name="Pipenv configuration", short_description="Pipenv configuration"
         ),
         'code': PythonCodeParam(
-            default_value=LiveCodeHelper.get_python_with_env_template(),
+            default_value=LiveCodeHelper.get_python_env_code_template(),
             human_name="Code snippet", short_description="The code snippet to execute using shell command"),
     }
 

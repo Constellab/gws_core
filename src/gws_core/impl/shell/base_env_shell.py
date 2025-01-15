@@ -11,6 +11,7 @@ from typing import Any, Dict, Union, final
 from typing_extensions import Literal
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
+from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
@@ -93,6 +94,19 @@ class BaseEnvShell(ShellProxy):
         self.install_env()
 
         return super().run(formatted_cmd, complete_env, shell_mode)
+
+    def run_in_new_thread(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = True) -> SysProc:
+        formatted_cmd = self.format_command(cmd)
+
+        # compute env
+        if env is None:
+            env = {}
+        complete_env = {**self.build_os_env(), **env}
+
+        # install env if not installed
+        self.install_env()
+
+        return super().run_in_new_thread(formatted_cmd, complete_env, shell_mode)
 
     @final
     def check_output(self, cmd: Union[list, str], env: dict = None,

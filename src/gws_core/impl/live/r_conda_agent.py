@@ -39,7 +39,7 @@ class RCondaAgent(EnvAgent):
             human_name="Conda environment (YAML)", short_description="YAML configuration of the R conda environment"
         ),
         'code': RCodeParam(
-            default_value=LiveCodeHelper.get_r_template(),
+            default_value=LiveCodeHelper.get_r_code_template(),
             human_name="R code snippet", short_description="The R code snippet to execute using shell command"),
     }
 

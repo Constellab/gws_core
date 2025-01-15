@@ -1,227 +1,96 @@
 
 
-import os
-import time
-from threading import Thread
 from typing import Dict, List
 
-import psutil
-
-from gws_core.core.model.sys_proc import SysProc
-from gws_core.core.service.external_api_service import ExternalApiService
-from gws_core.core.service.front_service import FrontService, FrontTheme
-from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
-from gws_core.core.utils.string_helper import StringHelper
 from gws_core.streamlit.streamlit_app import StreamlitApp
 from gws_core.streamlit.streamlit_dto import StreamlitStatusDTO
-from gws_core.user.current_user_service import CurrentUserService
+from gws_core.streamlit.streamlit_process import StreamlitProcess
 
 
 class StreamlitAppManager():
-    """Class to manage the different streamlit apps
+    """Class to manage the different streamlit processes and apps
 
-    Each apps runs on the same streamlit server managed by the _main_streamlit_app
+    All the normal apps (without env) run in the same streamlit process (8501)
+    the env apps run in different processes with different ports. One process per env.
     """
-
-    # interval in second to check if the app is still used
-    CHECK_RUNNING_INTERVAL = 5
-
-    # number of successive check when there is not connection to the main app
-    # before killing it
-    SUCCESSIVE_CHECK_BEFORE_KILL = 10
-
-    MAIN_APP_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                      "_main_streamlit_app.py")
 
     app_dir: str = None
 
-    main_app_token: str = None
-    main_app_process: SysProc = None
-
-    current_running_apps: Dict[str, StreamlitApp] = {}
-
-    # number of successive check when there is not connection to the main app
-    current_no_connection_check: int = 0
-
-    check_is_running = False
+    # key is the env hash
+    running_processes: Dict[str, StreamlitProcess] = {}
 
     @classmethod
-    def get_current_running_apps(cls) -> List[StreamlitApp]:
-        return list(cls.current_running_apps.values())
+    def create_or_get_app(cls, app: StreamlitApp) -> str:
+        for streamlit_process in cls.running_processes.values():
+            if streamlit_process.has_app(app.app_id):
+                streamlit_process.get_app(app.app_id)
+
+        cls._create_app(app)
+        return cls.get_app_full_url(app.app_id)
 
     @classmethod
-    def main_app_is_running(cls) -> bool:
-        return cls.main_app_process is not None and cls.main_app_process.is_alive()
+    def _create_app(cls, app: StreamlitApp) -> None:
 
-    @classmethod
-    def create_or_get_app(cls, app_id: str) -> StreamlitApp:
-        if app_id in cls.current_running_apps:
-            return cls.current_running_apps[app_id]
+        # get the env hash for this app
+        env_hash: str = app.get_env_code_hash()
 
-        return cls._create_app(app_id)
-
-    @classmethod
-    def _create_app(cls, app_id: str) -> StreamlitApp:
-        cls.start_streamlit_main_app()
-
-        app = StreamlitApp(cls.get_main_app_port(), app_id,
-                           cls.main_app_token, cls.get_app_dir())
-        cls.current_running_apps[app_id] = app
-
-        return app
-
-    @classmethod
-    def delete_app(cls, app: StreamlitApp) -> None:
-        if not app.app_id in cls.current_running_apps:
-            raise Exception("App not found")
-
-        del cls.current_running_apps[app.app_id]
-        app.clean()
-
-    @classmethod
-    def start_streamlit_main_app(cls) -> None:
-        if cls.main_app_is_running():
-            Logger.debug("Streamlit main app is already running")
+        # if the process for this env already exist, create the app in this process
+        # no need to create a new process with a new port
+        if env_hash in cls.running_processes:
+            streamlit_process = cls.running_processes[env_hash]
+            streamlit_process.create_app(app)
             return
 
-        cls.main_app_token = StringHelper.generate_random_chars(50)
-        Logger.debug("Starting streamlit app")
-
-        theme = cls.get_current_user_theme()
-
-        cmd = ['streamlit', 'run', cls.MAIN_APP_FILE_PATH,
-               '--theme.backgroundColor', theme.background_color,
-               '--theme.secondaryBackgroundColor', theme.secondary_background_color,
-               '--theme.textColor', theme.text_color,
-               '--theme.primaryColor', theme.primary_color,
-               '--server.port', str(cls.get_main_app_port()),
-               # prevent streamlit to open the browser
-               '--server.headless', "true",
-               #    '--theme.font', 'Roboto Serif',
-               # custom options
-               '--',
-               # configure a token to secure the app
-               '--gws_token', cls.main_app_token,
-               '--app_dir', cls.get_app_dir(),
-               ]
-
-        cls.main_app_process = SysProc.popen(cmd)
-        cls.current_no_connection_check = 0
-        cls.current_running_apps = {}
-
-        try:
-            cls.wait_main_app_heath_check()
-        except Exception as e:
-            Logger.error("Error while starting streamlit app, killing the process")
-            cls.stop_main_app()
-            raise e
-
-        # start the check running in new thread
-        cls.start_check_running()
-
-    @classmethod
-    def stop_main_app(cls) -> None:
-        if cls.main_app_process is not None:
-            cls.main_app_process.kill()
-            cls.main_app_process = None
-            cls.main_app_token = None
-
-        cls.current_running_apps = {}
-        cls.current_no_connection_check = 0
-
-    @classmethod
-    def start_check_running(cls) -> None:
-        """
-        Method to start the check running loop to check if the app is still used
-        """
-        if cls.check_is_running:
-            return
-
-        cls.check_is_running = True
-        Thread(target=cls._check_running_loop).start()
-
-    @classmethod
-    def _check_running_loop(cls) -> None:
-        while cls.main_app_is_running():
-            time.sleep(cls.CHECK_RUNNING_INTERVAL)
-            Logger.debug("Checking running streamlit app")
-
-            try:
-                if not cls._check_running():
-                    break
-            except Exception as e:
-                Logger.error(f"Error while checking running streamlit app: {e}")
-
-        Logger.debug("Killing the streamlit app")
-        apps = list(cls.current_running_apps.values())
-        for app in apps:
-            cls.delete_app(app)
-        cls.stop_main_app()
-
-        cls.check_is_running = False
-
-    @classmethod
-    def _check_running(cls) -> bool:
-        # count the number of network connections of the app
-        connection_count = cls.count_connections()
-
-        Logger.debug(f"Streamlit main app has {connection_count} connections")
-        if connection_count <= 0:
-            # if connection_count <= 0 or connection_count < app.default_number_of_connection:
-            cls.current_no_connection_check += 1
-
-            if cls.current_no_connection_check >= cls.SUCCESSIVE_CHECK_BEFORE_KILL:
-                Logger.debug("No connections, killing the app")
-                return False
-
+        # create a new streamlit process
+        # find available port
+        port: int = None
+        # all normal apps run on the same port
+        if app.is_normal_app():
+            port = cls.get_main_app_port()
         else:
-            cls.current_no_connection_check = 0
+            # env apps run on different ports
+            port = cls._get_env_app_available_port()
 
-        return True
+        # create a new process
+        streamlit_process = StreamlitProcess(port, app.app_type, app.env_code, env_hash)
+        cls.running_processes[env_hash] = streamlit_process
 
-    @classmethod
-    def wait_main_app_heath_check(cls) -> None:
-        # wait until ping http://localhost:8080/healthz  returns 200
-        i = 0
-        while True:
-            time.sleep(1)
-
-            health_check = cls.call_health_check()
-            if health_check:
-                break
-            Logger.debug("Waiting for streamlit app to start")
-            i += 1
-            if i > 30:
-                raise Exception("Streamlit app did not start in time")
+        streamlit_process.start_streamlit_process()
+        streamlit_process.create_app(app)
 
     @classmethod
-    def call_health_check(cls) -> bool:
-        try:
-            ExternalApiService.get(f"http://localhost:{cls.get_main_app_port()}/healthz")
-        except Exception:
-            return False
+    def _get_env_app_available_port(cls) -> int:
+        for port in cls.get_env_app_ports():
+            if not cls._port_is_used(port):
+                return port
 
-        return True
+        raise Exception(
+            "No available port for the env app, please stop existing app in Settings > Monitoring > Others > Streamlit apps")
 
     @classmethod
-    def count_connections(cls) -> int:
-        if not cls.main_app_process:
-            return 0
+    def _port_is_used(cls, port: int) -> bool:
+        return port in [app.port for app in cls.running_processes.values()]
 
-        # get the list of the connections
-        connections = psutil.net_connections(kind='inet')
+    @classmethod
+    def stop_all_processes(cls) -> None:
+        for streamlit_process in cls.running_processes.values():
+            streamlit_process.stop_process()
 
-        return len([x for x in connections if x.pid == cls.main_app_process.pid and x.status == 'ESTABLISHED'])
+        cls.running_processes = {}
+
+    @classmethod
+    def stop_process(cls, env_hash: str) -> None:
+        if env_hash in cls.running_processes:
+            cls.running_processes[env_hash].stop_process()
+            del cls.running_processes[env_hash]
 
     ############################# OTHERS ####################################
 
     @classmethod
     def get_status_dto(cls) -> StreamlitStatusDTO:
         return StreamlitStatusDTO(
-            status="RUNNING" if cls.main_app_is_running() else "STOPPED",
-            running_apps=[app.to_dto() for app in cls.get_current_running_apps()],
-            nb_of_connections=cls.count_connections(),
+            processes=[process.get_status_dto() for process in cls.running_processes.values()],
         )
 
     @classmethod
@@ -229,13 +98,16 @@ class StreamlitAppManager():
         return Settings.get_streamlit_main_app_port()
 
     @classmethod
-    def get_current_user_theme(cls) -> FrontTheme:
-        user = CurrentUserService.get_current_user()
+    def get_env_app_ports(cls) -> List[int]:
+        return Settings.get_streamlit_env_app_ports()
 
-        if user and user.has_dark_theme():
-            return FrontService.get_dark_theme()
+    @classmethod
+    def get_app_full_url(cls, app_id: str) -> str:
+        for streamlit_process in cls.running_processes.values():
+            if streamlit_process.has_app(app_id):
+                return streamlit_process.get_app_full_url(app_id)
 
-        return FrontService.get_light_theme()
+        raise Exception(f"App {app_id} not found")
 
     @classmethod
     def get_app_dir(cls) -> str:

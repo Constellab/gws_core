@@ -39,7 +39,7 @@ class PyAgent(Task):
         'params': EnvAgent.get_dynamic_param_config(),
         'code':
         PythonCodeParam(
-            default_value=LiveCodeHelper.get_python_template(),
+            default_value=LiveCodeHelper.get_python_code_template(),
             human_name="Python code snippet",
             short_description="Python code snippet to run"), }
 

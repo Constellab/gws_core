@@ -22,7 +22,7 @@ class TestDashboard(Dashboard):
     def get_folder_path(self):
         return os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            "_test_streamlit_dashboard2"
+            "_test_streamlit_dashboard"
         )
 
 

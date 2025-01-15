@@ -1,16 +1,8 @@
-
-
 from typing import List
 
 from psutil import Popen, Process
 
 from ..exception.exceptions import BadRequestException
-
-# ####################################################################
-#
-# SysProc
-#
-# ####################################################################
 
 
 class SysProc:
@@ -23,11 +15,11 @@ class SysProc:
 
     _process: Process = None
 
-    @staticmethod
-    def from_pid(pid) -> 'SysProc':
-        proc = SysProc()
-        proc._process = Process(pid)
-        return proc
+    def __init__(self, process: Process = None):
+        self._process = process
+
+    def get_process(self) -> Process:
+        return self._process
 
     def is_alive(self) -> bool:
         return self._process.is_running()
@@ -51,22 +43,6 @@ class SysProc:
         """
         return self._process.children(recursive=True)
 
-    @property
-    def pid(self) -> int:
-        if self._process is None:
-            return 0
-        return self._process.pid
-
-    @classmethod
-    def popen(cls, cmd, *args, **kwargs) -> 'SysProc':
-        try:
-            proc = SysProc()
-            proc._process = Popen(cmd, *args, **kwargs)
-            return proc
-        except Exception as err:
-            raise BadRequestException(
-                f"An error occured when calling command {cmd}. Error: {err}") from err
-
     def stats(self) -> dict:
         """
         Get process statistics
@@ -78,3 +54,21 @@ class SysProc:
         Wait for a process PID to terminate
         """
         self._process.wait(timeout=timeout)
+
+    @property
+    def pid(self) -> int:
+        if self._process is None:
+            return 0
+        return self._process.pid
+
+    @classmethod
+    def popen(cls, cmd, *args, **kwargs) -> 'SysProc':
+        try:
+            return SysProc(Popen(cmd, *args, **kwargs))
+        except Exception as err:
+            raise BadRequestException(
+                f"An error occured when calling command {cmd}. Error: {err}") from err
+
+    @staticmethod
+    def from_pid(pid) -> 'SysProc':
+        return SysProc(Process(pid))

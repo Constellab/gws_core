@@ -20,13 +20,13 @@ file_path = os.path.join(folder.path, 'test.json')
 images = os.path.join(folder.path, 'images')
 
 # FileHelper.create_dir_if_not_exist(images)
-# default_resource = ResourceModel.get_by_id_and_check('f3aa406d-bac6-468c-aa96-19b0cc0b5ad9')
+default_resource = ResourceModel.get_by_id_and_check('f3aa406d-bac6-468c-aa96-19b0cc0b5ad9')
 
-# selected_resource: ResourceModel | None = ResourceSearchInput().add_flagged_filter(
-#     True).add_is_archived_filter(False) \
-#     .add_order_by(ResourceModel.name) \
-#     .select(placeholder="Search for folder")
-# # .select(placeholder="Search for folder")
+selected_resource: ResourceModel | None = ResourceSearchInput().add_flagged_filter(
+    True).add_is_archived_filter(False) \
+    .add_order_by(ResourceModel.name) \
+    .select(placeholder="Search for folder")
+# .select(placeholder="Search for folder")
 
 # st.write('Hello ')
 # # print('Selected
