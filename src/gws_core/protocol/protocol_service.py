@@ -559,9 +559,7 @@ class ProtocolService():
             process_model.config.update_spec(EnvAgent.PARAMS_CONFIG_NAME, param_spec)
 
         process_model.config.save()
-        if getattr(
-                process_model, 'community_agent_version_id', None) is not None and getattr(
-                process_model, 'community_agent_version_modified', None) is False:
+        if process_model.get_community_agent_version_id is not None and process_model.get_community_agent_version_modified() is False:
             process_model.community_agent_version_modified = True
             process_model.save()
         return process_model.to_dto()

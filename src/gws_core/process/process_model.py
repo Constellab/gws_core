@@ -18,9 +18,10 @@ from gws_core.model.typing import Typing
 from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
+from gws_core.process_run_stat.process_run_stat_model import \
+    ProcessRunStatModel
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
-from gws_core.stat.stat_model import RunStatModel
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.user.current_user_service import CurrentUserService
@@ -551,6 +552,14 @@ class ProcessModel(ModelWithUser):
             progress_bar=self.progress_bar.to_config_dto(),
         )
 
+    @abstractmethod
+    def get_community_agent_version_modified(self) -> bool:
+        pass
+
+    @abstractmethod
+    def get_community_agent_version_id(self) -> str:
+        pass
+
     ########################### STATUS MANAGEMENT ##################################
 
     @property
@@ -660,13 +669,12 @@ class ProcessModel(ModelWithUser):
         """
 
         try:
-            if self.is_auto_run() or self.process_typing_name == 'PROTOCOL.gws_core.Protocol' or getattr(
-                    self, 'community_agent_version_modified', None) is True:
+            if self.is_auto_run() or self.process_typing_name == 'PROTOCOL.gws_core.Protocol' or self.get_community_agent_version_modified() is True:
                 return
 
-            stat: RunStatModel = RunStatModel()
+            stat: ProcessRunStatModel = ProcessRunStatModel()
             stat.process_typing_name = self.process_typing_name
-            stat.community_agent_version_id = getattr(self, 'community_agent_version_id', None)
+            stat.community_agent_version_id = self.get_community_agent_version_id()
             stat.status = self.status.value
             stat.error_info = self.get_error_info().to_json_dict() if self.get_error_info() else None
             stat.started_at = self.started_at

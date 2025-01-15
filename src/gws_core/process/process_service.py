@@ -18,9 +18,9 @@ from gws_core.lab.monitor.monitor_dto import MonitorBetweenDateGraphicsDTO
 from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.process.process_model import ProcessModel
 from gws_core.process.process_types import ProcessStatus
+from gws_core.process_run_stat.process_run_stat_model import \
+    ProcessRunStatModel
 from gws_core.protocol.protocol_model import ProtocolModel
-from gws_core.stat.stat_dto import RunStatDTO
-from gws_core.stat.stat_model import RunStatModel
 from gws_core.task.task_model import TaskModel
 
 ProcessType = Literal['TASK', 'PROTOCOL']
@@ -93,10 +93,10 @@ class ProcessService:
         """
 
         try:
-            Logger.info("Check to send run stats to Community")
-            stats = RunStatModel.select().where(
-                RunStatModel.sync_with_community == False).order_by(
-                RunStatModel.created_at.asc())
+            Logger.debug("Check to send run stats to Community")
+            stats = ProcessRunStatModel.select().where(
+                ProcessRunStatModel.sync_with_community == False).order_by(
+                ProcessRunStatModel.created_at.asc())
             if len(stats) > 0:
                 run_stats: List[Dict] = []
                 for stat in stats:
@@ -106,7 +106,7 @@ class ProcessService:
                     stat.sync_with_community = True
                     stat.save()
         except Exception as err:
-            Logger.error("Error while looking to send run stats to Community")
+            Logger.error("Error sending run statistics to the Community")
 
     @classmethod
     def _thread_send_process_run_stats_to_community(cls):
@@ -114,6 +114,8 @@ class ProcessService:
         Thread method to send new process run stats to community
         """
 
+        # Send run stats on init to Community then cron to send new process run stats to Community each hours
+        ProcessService.send_process_run_stats_to_community()
         # Set and run the scheduled cron method
         schedule.every(1).hours.do(cls.send_process_run_stats_to_community)
         while True:

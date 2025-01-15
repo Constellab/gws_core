@@ -54,7 +54,6 @@ from gws_core.scenario_template.scenario_template_factory import \
     ScenarioTemplateFactory
 from gws_core.share.share_link import ShareLink
 from gws_core.share.shared_scenario import SharedScenario
-from gws_core.stat.stat_model import RunStatModel
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
@@ -1296,12 +1295,11 @@ class Migration0100(BrickMigration):
                     credential.data = {'data': data_list}
                     credential.save(skip_hook=True)
 
-    @brick_migration('0.11.3', short_description='Add Stat table')
+    @brick_migration('0.11.3', short_description='Add Stat table + community agent version modified to task model')
     class Migration0113(BrickMigration):
 
         @classmethod
         def migrate(cls, from_version: Version, to_version: Version) -> None:
-            RunStatModel.create_table()
 
             migrator: SqlMigrator = SqlMigrator(TaskModel.get_db())
 

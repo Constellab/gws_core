@@ -1271,3 +1271,9 @@ class ProtocolModel(ProcessModel):
             count += 1
 
         return f"{name}_{count}"
+
+    def get_community_agent_version_id(self) -> str:
+        return None
+
+    def get_community_agent_version_modified(self) -> bool:
+        return None

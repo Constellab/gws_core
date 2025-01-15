@@ -79,8 +79,6 @@ class SystemService:
         # Force this init because it is overriden when importing streamlit
         px.defaults.color_discrete_sequence = px.colors.qualitative.Plotly
 
-        # Send run stats on init to Community then init cron thread to send new process run stats to Community each hours
-        ProcessService.send_process_run_stats_to_community()
         ProcessService.init_cron_thread_run_stats()
 
     @classmethod

@@ -458,3 +458,9 @@ class TaskModel(ProcessModel):
         res.community_agent_version_id = self.community_agent_version_id
         res.community_agent_version_modified = self.community_agent_version_modified
         return res
+
+    def get_community_agent_version_id(self) -> str:
+        return self.community_agent_version_id
+
+    def get_community_agent_version_modified(self) -> bool:
+        return self.community_agent_version_modified
