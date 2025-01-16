@@ -10,16 +10,20 @@ from peewee import BooleanField, CharField, ForeignKeyField
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.settings import Settings
 from gws_core.io.io_dto import IODTO
 from gws_core.io.io_specs import IOSpecs
 from gws_core.model.typing import Typing
 from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
+from gws_core.process_run_stat.process_run_stat_model import \
+    ProcessRunStatModel
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
+from gws_core.user.current_user_service import CurrentUserService
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField
@@ -547,6 +551,14 @@ class ProcessModel(ModelWithUser):
             progress_bar=self.progress_bar.to_config_dto(),
         )
 
+    @abstractmethod
+    def get_community_agent_version_modified(self) -> bool:
+        pass
+
+    @abstractmethod
+    def get_community_agent_version_id(self) -> str:
+        pass
+
     ########################### STATUS MANAGEMENT ##################################
 
     @property
@@ -600,16 +612,23 @@ class ProcessModel(ModelWithUser):
         self.status = ProcessStatus.SUCCESS
         self.ended_at = DateHelper.now_utc()
         self.save()
+        self.save_process_run_stat()
 
     def mark_as_error(self, error_info: ProcessErrorInfo):
         if self.is_error:
             return
+
+        pre_status = self.status
+
         self.progress_bar.stop_error(error_info.detail,
                                      self.get_execution_time())
         self.status = ProcessStatus.ERROR
         self.set_error_info(error_info)
         self.ended_at = DateHelper.now_utc()
         self.save()
+
+        if pre_status == ProcessStatus.RUNNING and error_info.unique_code != 'TASK_CHECK_BEFORE_STOP':
+            self.save_process_run_stat()
 
     def mark_as_error_and_parent(self, process_error: ProcessRunException, context: str = None):
         self.mark_as_error(ProcessErrorInfo(
@@ -640,3 +659,32 @@ class ProcessModel(ModelWithUser):
 
     def is_root_process(self) -> bool:
         return self.parent_protocol_id is None
+
+    ############################################## STAT ####################################################
+
+    def save_process_run_stat(self) -> None:
+        """
+        Save the process run stat. If it's a autorun process, it doesnt save.
+        """
+
+        try:
+            if self.is_auto_run() or self.process_typing_name == 'PROTOCOL.gws_core.Protocol' or self.get_community_agent_version_modified() is True:
+                return
+
+            ProcessRunStatModel.create_stat(
+                process_typing_name=self.process_typing_name,
+                status=self.status.value,
+                started_at=self.started_at,
+                ended_at=self.ended_at,
+                elapsed_time=self.progress_bar.get_elapsed_time(),
+                brick_version_on_run=self.brick_version_on_run,
+                brick_version_on_create=self.brick_version_on_create,
+                config_value=self.config.get_values(),
+                lab_env='DEV' if Settings.get_instance().is_dev_mode() else 'PROD',
+                executed_by=CurrentUserService().get_and_check_current_user().id,
+                error_info=self.get_error_info().to_json_dict() if self.get_error_info() else None,
+                community_agent_version_id=self.get_community_agent_version_id()
+            )
+        except Exception:
+            Logger.error(
+                f"Error: cannot save the run stat of the process '{self.instance_name}'")

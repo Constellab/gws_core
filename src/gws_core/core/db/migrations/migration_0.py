@@ -1294,3 +1294,15 @@ class Migration0100(BrickMigration):
 
                     credential.data = {'data': data_list}
                     credential.save(skip_hook=True)
+
+    @brick_migration('0.11.3', short_description='Add Stat table + community agent version modified to task model')
+    class Migration0113(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+            migrator: SqlMigrator = SqlMigrator(TaskModel.get_db())
+
+            migrator.add_column_if_not_exists(TaskModel, TaskModel.community_agent_version_modified)
+
+            migrator.migrate()

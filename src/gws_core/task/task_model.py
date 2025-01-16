@@ -2,7 +2,7 @@
 from traceback import format_exc
 from typing import Any, Dict, List, Type
 
-from peewee import CharField, ForeignKeyField, ModelSelect
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from gws_core.config.config import Config
 from gws_core.core.utils.date_helper import DateHelper
@@ -55,6 +55,8 @@ class TaskModel(ProcessModel):
         ResourceModel, null=True, index=True, lazy_load=False)
 
     community_agent_version_id: str = CharField(null=True, max_length=36, default="")
+
+    community_agent_version_modified: bool = BooleanField(default=False)
 
     _table_name = 'gws_task'
 
@@ -454,4 +456,11 @@ class TaskModel(ProcessModel):
     def to_dto(self):
         res = super().to_dto()
         res.community_agent_version_id = self.community_agent_version_id
+        res.community_agent_version_modified = self.community_agent_version_modified
         return res
+
+    def get_community_agent_version_id(self) -> str:
+        return self.community_agent_version_id
+
+    def get_community_agent_version_modified(self) -> bool:
+        return self.community_agent_version_modified

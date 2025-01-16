@@ -21,7 +21,7 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
     edition_mode: bool = False
 
     def __init__(self,
-                 optional: bool = False,
+                 optional: bool = True,
                  visibility: ParamSpecVisibilty = "public",
                  human_name: str = None,
                  short_description: str = None,

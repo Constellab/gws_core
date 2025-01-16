@@ -1,17 +1,25 @@
 
 
-from datetime import datetime, timedelta
-from typing import Literal, Type
+import threading
+import time
+from datetime import datetime, timedelta, timezone
+from typing import Dict, List, Literal, Type
 
+import schedule
+
+from gws_core.community.community_service import CommunityService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.logger import Logger
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_service import LogService
 from gws_core.lab.monitor.monitor_dto import MonitorBetweenDateGraphicsDTO
 from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.process.process_model import ProcessModel
 from gws_core.process.process_types import ProcessStatus
+from gws_core.process_run_stat.process_run_stat_model import \
+    ProcessRunStatModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.task.task_model import TaskModel
 
@@ -69,3 +77,47 @@ class ProcessService:
             return ProtocolModel
         else:
             raise BadRequestException(f"Process type {process_type} does not exist")
+
+    @classmethod
+    def init_cron_thread_run_stats(cls) -> None:
+        """
+        Init CRON Thread to send process runs stats to community
+        """
+        x = threading.Thread(target=cls._thread_send_process_run_stats_to_community)
+        x.start()
+
+    @classmethod
+    def send_process_run_stats_to_community(cls):
+        """
+        CRON scheduled method to send run stats to community
+        """
+
+        try:
+            Logger.debug("Check to send run stats to Community")
+            stats = ProcessRunStatModel.select().where(
+                ProcessRunStatModel.sync_with_community == False).order_by(
+                ProcessRunStatModel.created_at.asc())
+            if len(stats) > 0:
+                run_stats: List[Dict] = []
+                for stat in stats:
+                    run_stats.append(stat.to_dto().to_json_dict())
+                CommunityService.send_process_run_stats(run_stats)
+                for stat in stats:
+                    stat.sync_with_community = True
+                    stat.save()
+        except Exception as err:
+            Logger.error("Error sending run statistics to the Community")
+
+    @classmethod
+    def _thread_send_process_run_stats_to_community(cls):
+        """
+        Thread method to send new process run stats to community
+        """
+
+        # Send run stats on init to Community then cron to send new process run stats to Community each hours
+        ProcessService.send_process_run_stats_to_community()
+        # Set and run the scheduled cron method
+        schedule.every(1).hours.do(cls.send_process_run_stats_to_community)
+        while True:
+            schedule.run_pending()
+            time.sleep(1)

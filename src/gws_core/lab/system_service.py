@@ -39,6 +39,7 @@ from ..core.model.base_model_service import BaseModelService
 from ..core.utils.settings import Settings
 from ..impl.file.file_helper import FileHelper
 from ..model.model_service import ModelService
+from ..process.process_service import ProcessService
 from ..scenario.queue_service import QueueService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
@@ -77,6 +78,8 @@ class SystemService:
         # Init plotly color, use the default plotly color
         # Force this init because it is overriden when importing streamlit
         px.defaults.color_discrete_sequence = px.colors.qualitative.Plotly
+
+        ProcessService.init_cron_thread_run_stats()
 
     @classmethod
     def register_start_activity(cls):

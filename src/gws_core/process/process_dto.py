@@ -33,4 +33,5 @@ class ProcessDTO(ModelWithUserDTO):
     process_type: Optional[SimpleTypingDTO] = None
     name: Optional[str] = None
     community_agent_version_id: Optional[str] = None
+    community_agent_version_modified: Optional[bool] = None
     style: TypingStyle = None
