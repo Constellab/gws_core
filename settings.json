@@ -142,6 +142,10 @@
                     {
                         "name": "typer",
                         "version": "0.12.3"
+                    },
+                    {
+                        "name": "schedule",
+                        "version" : "1.2.2"
                     }
                 ]
             }

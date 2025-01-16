@@ -1295,7 +1295,7 @@ class Migration0100(BrickMigration):
                     credential.data = {'data': data_list}
                     credential.save(skip_hook=True)
 
-    @brick_migration('0.11.3', short_description='Add Stat table + community agent version modified to task model')
+    @brick_migration('0.11.3-beta.1', short_description='Add Stat table + community agent version modified to task model')
     class Migration0113(BrickMigration):
 
         @classmethod
