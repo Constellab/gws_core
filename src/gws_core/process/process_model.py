@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Dict, Optional, Type, final
 
 from peewee import BooleanField, CharField, ForeignKeyField
@@ -672,24 +671,20 @@ class ProcessModel(ModelWithUser):
             if self.is_auto_run() or self.process_typing_name == 'PROTOCOL.gws_core.Protocol' or self.get_community_agent_version_modified() is True:
                 return
 
-            stat: ProcessRunStatModel = ProcessRunStatModel()
-            stat.process_typing_name = self.process_typing_name
-            stat.community_agent_version_id = self.get_community_agent_version_id()
-            stat.status = self.status.value
-            stat.error_info = self.get_error_info().to_json_dict() if self.get_error_info() else None
-            stat.started_at = self.started_at
-            stat.ended_at = self.ended_at
-            stat.elapsed_time = self.progress_bar.get_elapsed_time()
-            stat.brick_version_on_run = self.brick_version_on_run
-            stat.brick_version_on_create = self.brick_version_on_create
-            stat.config_value = self.config.get_values()
-            stat.lab_id = Settings.get_instance().get_lab_id()
-            if Settings.get_instance().is_dev_mode():
-                stat.lab_env = 'DEV'
-            else:
-                stat.lab_env = 'PROD'
-            stat.executed_by = CurrentUserService().get_and_check_current_user().id
-            stat.save()
+            ProcessRunStatModel.create_stat(
+                process_typing_name=self.process_typing_name,
+                status=self.status.value,
+                started_at=self.started_at,
+                ended_at=self.ended_at,
+                elapsed_time=self.progress_bar.get_elapsed_time(),
+                brick_version_on_run=self.brick_version_on_run,
+                brick_version_on_create=self.brick_version_on_create,
+                config_value=self.config.get_values(),
+                lab_env='DEV' if Settings.get_instance().is_dev_mode() else 'PROD',
+                executed_by=CurrentUserService().get_and_check_current_user().id,
+                error_info=self.get_error_info().to_json_dict() if self.get_error_info() else None,
+                community_agent_version_id=self.get_community_agent_version_id()
+            )
         except Exception:
             Logger.error(
                 f"Error: cannot save the run stat of the process '{self.instance_name}'")

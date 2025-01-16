@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 from peewee import BooleanField, CharField, FloatField
 
@@ -26,6 +26,38 @@ class ProcessRunStatModel(Model):
     lab_env: ProcessRunStatLabEnv = CharField()
     executed_by: str = CharField()
     sync_with_community: bool = BooleanField()
+
+    @classmethod
+    def create_stat(cls,
+                    process_typing_name: str,
+                    status: ProcessRunStatStatus,
+                    started_at: datetime,
+                    ended_at: datetime,
+                    elapsed_time: float,
+                    brick_version_on_run: str,
+                    brick_version_on_create: str,
+                    config_value: Dict,
+                    lab_env: ProcessRunStatLabEnv,
+                    executed_by: str,
+                    error_info: Optional[Dict] = None,
+                    community_agent_version_id: Optional[str] = None
+                    ) -> None:
+
+        stat: ProcessRunStatModel = ProcessRunStatModel()
+        stat.process_typing_name = process_typing_name
+        stat.community_agent_version_id = community_agent_version_id
+        stat.status = status
+        stat.error_info = error_info
+        stat.started_at = started_at
+        stat.ended_at = ended_at
+        stat.elapsed_time = elapsed_time
+        stat.brick_version_on_run = brick_version_on_run
+        stat.brick_version_on_create = brick_version_on_create
+        stat.config_value = config_value
+        stat.lab_env = lab_env
+        stat.executed_by = executed_by
+
+        stat.save()
 
     def to_dto(self) -> ProcessRunStatDTO:
         return ProcessRunStatDTO(
