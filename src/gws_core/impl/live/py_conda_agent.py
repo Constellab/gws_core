@@ -37,7 +37,7 @@ class PyCondaAgent(EnvAgent):
             human_name="Conda environment (YAML)", short_description="YAML configuration of the conda environment"
         ),
         'code': PythonCodeParam(
-            default_value=LiveCodeHelper.get_python_with_env_template(),
+            default_value=LiveCodeHelper.get_python_env_code_template(),
             human_name="Python code snippet", short_description="The Python code snippet to execute using shell command"),
     }
 

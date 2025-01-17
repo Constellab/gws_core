@@ -4,6 +4,7 @@ import os
 from typing import Any, List, Type
 
 from gws_core.config.config_params import ConfigParams
+from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
@@ -12,19 +13,22 @@ from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.dict_r_field import DictRField
 from gws_core.resource.r_field.primitive_r_field import StrRField
+from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_list import ResourceList
+from gws_core.resource.resource_set.resource_list_base import ResourceListBase
+from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view.view_decorator import view
-from gws_core.streamlit.streamlit_app import StreamlitApp
+from gws_core.streamlit.streamlit_app import StreamlitApp, StreamlitAppType
 from gws_core.streamlit.streamlit_app_managers import StreamlitAppManager
 from gws_core.streamlit.streamlit_dashboard import Dashboard
 from gws_core.streamlit.streamlit_view import StreamlitView
 from gws_core.task.task_model import TaskModel
 
 
-@resource_decorator("StreamlitResource", human_name="Streamlit App",
-                    short_description="Streamlit App",
+@resource_decorator("StreamlitResource", human_name="Dashboard",
+                    short_description="Streamlit dashboard app",
                     style=TypingStyle.material_icon("dashboard", background_color='#ff4b4b'))
 class StreamlitResource(ResourceList):
     """
@@ -38,11 +42,22 @@ class StreamlitResource(ResourceList):
     # Used when code is passed as a string
     _streamlit_app_code: str = StrRField()
 
+    _app_type: StreamlitAppType = StrRField(default_value='NORMAL')
+
+    _env_code: str = StrRField()
+
     _params: dict = DictRField()
 
-    def __init__(self, streamlit_app_code: str = None):
+    _dashboard: Dashboard = None
+
+    def __init__(self, streamlit_app_code: str = None, app_type: StreamlitAppType = 'NORMAL',
+                 env_code: str = None):
         super().__init__()
+        if app_type != 'NORMAL' and not env_code:
+            raise Exception("The env_code must be set when the app is executed in a virtual environment")
         self._streamlit_app_code = streamlit_app_code
+        self._app_type = app_type
+        self._env_code = env_code
 
     def get_streamlit_app_code(self) -> str:
         """
@@ -95,7 +110,12 @@ class StreamlitResource(ResourceList):
         if not isinstance(dashboard, Dashboard):
             raise Exception("Dashboard must be a Dashboard instance")
 
-        folder_path = dashboard.get_folder_path()
+        if dashboard.get_app_type() != 'NORMAL' and not dashboard.get_env_file_path():
+            raise Exception(
+                "The get_env_file_path method must be implemented when the dashboard is executed in a virtual environment")
+
+        self._app_type = dashboard.get_app_type()
+        folder_path = dashboard.get_app_folder_path()
         self._check_folder(folder_path)
 
         self._streamlit_dashboard_typing_name = dashboard.get_typing_name()
@@ -139,13 +159,22 @@ class StreamlitResource(ResourceList):
             raise Exception(
                 f"Main python script file not found: {main_app_path}. Please make sure you have a main.py file in the app folder.")
 
+    def _get_dashboard(self) -> Dashboard | None:
+        if not self._streamlit_dashboard_typing_name:
+            return None
+
+        if not self._dashboard:
+            self._dashboard = TypingManager.get_and_check_type_from_name(self._streamlit_dashboard_typing_name)()
+
+        return self._dashboard
+
     def _get_dashboard_folder(self) -> str:
-        dashboard_type: Type[Dashboard] = TypingManager.get_and_check_type_from_name(
-            self._streamlit_dashboard_typing_name)
-        dashboard: Dashboard = dashboard_type()
-        folder = dashboard.get_folder_path()
+        dashboard: Dashboard = self._get_dashboard()
+        folder = dashboard.get_app_folder_path()
         self._check_folder(folder)
         return folder
+
+    #################################### PARAMS ####################################
 
     def set_params(self, params: dict) -> None:
         """
@@ -178,26 +207,130 @@ class StreamlitResource(ResourceList):
             self._params = {}
         self._params[key] = value
 
+    #################################### ENV CODE ####################################
+
+    def set_env_code(self, env_code: str) -> None:
+        """
+        Set the code that will be executed in the streamlit environment.
+        This code is executed before the streamlit app is loaded and can be used to load environment variables.
+
+        :param env_code: code that will be executed
+        :type env_code: str
+        """
+        self._env_code = env_code
+
+    def get_app_type(self) -> StreamlitAppType:
+        """
+        Get the type of the streamlit app.
+
+        :return: type of the streamlit app
+        :rtype: StreamlitAppType
+        """
+        # the dashboard info overrides the app type
+        dashboard = self._get_dashboard()
+        if dashboard:
+            return dashboard.get_app_type()
+        return self._app_type
+
+    def is_virtual_env(self) -> bool:
+        """
+        Return True if the streamlit app is executed in a virtual environment.
+
+        :return: True if the streamlit app is executed in a virtual environment
+        :rtype: bool
+        """
+        return self.get_app_type() != 'NORMAL'
+    #################################### RESOURCES ####################################
+
+    def add_resource(self, resource, create_new_resource=True) -> None:
+        """Add a resource to the StreamlitResource.
+
+        :param resource: _description_
+        :type resource: _type_
+        :param create_new_resource: _description_, defaults to True
+        :type create_new_resource: bool, optional
+        :raises Exception: _description_
+        :return: message if a warning is raised
+        :rtype: str
+        """
+        if self.is_virtual_env() and not isinstance(resource, FSNode):
+            raise Exception(
+                "Only FSNode resources can be added to a StreamlitResource when the app is executed in a virtual environment")
+
+        return super().add_resource(resource, create_new_resource)
+
+    def add_multiple_resources(
+            self, resources: List[Resource],
+            message_dispatcher: MessageDispatcher = None) -> None:
+        """
+
+        :param resources: _description_
+        :type resources: List[Resource]
+        """
+        i = 1
+        if message_dispatcher is None:
+            message_dispatcher = MessageDispatcher()
+        for resource in resources:
+            if resource:
+                # prevent nesting resource sets
+                if isinstance(resource, ResourceListBase):
+                    if (isinstance(resource, ResourceSet)):
+                        message_dispatcher.notify_warning_message(
+                            f'Flatten sub resource for resource {resource.name} ({str(i + 1)}) because it is a resource set. The order of the resources will not be kept.')
+                    else:
+                        message_dispatcher.notify_warning_message(
+                            f'Flatten sub resource for resource {resource.name} ({str(i + 1)}) because it is a resource list.')
+                    for sub_resource in resource.get_resources_as_set():
+                        self.add_resource(sub_resource, create_new_resource=False)
+                else:
+                    self.add_resource(resource, create_new_resource=False)
+
+            i += 1
+
+    #################################### VIEWS ####################################
+
     @view(view_type=StreamlitView, human_name="Dashboard", short_description="Dahsboard generated with streamlit", default_view=True)
     def default_view(self, _: ConfigParams) -> StreamlitView:
 
-        streamlit_app = StreamlitAppManager.create_or_get_app(self.uid)
+        streamlit_app = StreamlitApp(self.uid, self.get_app_type())
 
-        if self._streamlit_dashboard_typing_name is not None and len(self._streamlit_dashboard_typing_name) > 0:
+        dashboard = self._get_dashboard()
+
+        # Add the dashboard code
+        if dashboard:
             folder_path = self._get_dashboard_folder()
             streamlit_app.set_streamlit_folder(folder_path)
         elif self._streamlit_sub_resource_folder_name is not None and len(self._streamlit_sub_resource_folder_name) > 0:
             folder: Folder = self.get_resource_by_name(self._streamlit_sub_resource_folder_name)
             streamlit_app.set_streamlit_folder(folder.path)
-        else:
+        elif self.get_streamlit_app_code() is not None and len(self.get_streamlit_app_code()) > 0:
             streamlit_app.set_streamlit_code(self.get_streamlit_app_code())
+        else:
+            raise Exception("The streamlit code must be set")
+
+        # Add the env code
+        if self.is_virtual_env():
+            if dashboard:
+                streamlit_app.set_env_file_path(dashboard.get_env_file_path())
+            elif self._env_code:
+                streamlit_app.set_env_code(self._env_code)
+            else:
+                raise Exception(
+                    "The virtual environment code or file path must be set when the app is executed in a virtual environment")
 
         # add the resources as input of the streamlit app
-        resources: List[FSNode] = self.get_resources()
-        streamlit_app.set_input_resources([resource.get_model_id() for resource in resources])
+        resources: List[str] = []
+        if self.is_virtual_env():
+            resources = [resource.path for resource in self.get_resources() if isinstance(resource, FSNode)]
+        else:
+            resources = [resource.get_model_id() for resource in self.get_resources()]
+        streamlit_app.set_input_resources(resources)
 
+        # add the params
         streamlit_app.set_params(self._params)
-        url = streamlit_app.generate_app()
+
+        # create the app
+        url = StreamlitAppManager.create_or_get_app(streamlit_app)
 
         # create the view
         view_ = StreamlitView(url)

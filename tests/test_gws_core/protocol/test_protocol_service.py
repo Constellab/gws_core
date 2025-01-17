@@ -17,7 +17,7 @@ from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.view.viewer import Viewer
 from gws_core.scenario.scenario_proxy import ScenarioProxy
-from gws_core.streamlit.streamlit_agent import StreamlitAgent
+from gws_core.streamlit.agents.streamlit_agent import StreamlitAgent
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.test.base_test_case import BaseTestCase

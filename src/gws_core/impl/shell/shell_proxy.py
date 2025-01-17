@@ -2,10 +2,12 @@
 
 import select
 import subprocess
+from threading import Thread
 from typing import Any, List, Union
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import MessageObserver
+from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.progress_bar.progress_bar import ProgressBar
@@ -61,10 +63,7 @@ class ShellProxy():
         :param shell_mode: if True, the command is run in a shell, defaults to False
         :type shell_mode: bool, optional
         """
-
-        if env is not None and not isinstance(env, dict):
-            raise BadRequestException(
-                "Method 'build_os_env' must return a dictionnary")
+        self._check_before_run(cmd, env, shell_mode)
 
         FileHelper.create_dir_if_not_exist(self.working_dir)
 
@@ -146,6 +145,30 @@ class ShellProxy():
             self._message_dispatcher.notify_error_message(str(err))
             raise Exception(f"The shell process has failed. Error {err}.")
 
+    def run_in_new_thread(self, cmd: Union[list, str], env: dict = None,
+                          shell_mode: bool = False) -> SysProc:
+        """
+        Run a command in a shell without blocking the thread.
+        The logs of the command will be dispatched to the message dispatcher during the execution.
+
+        :param cmd: command to run
+        :type cmd: Union[list, str]
+        :param env: environment variables to pass to the shell, defaults to None
+        :type env: dict, optional
+        :param shell_mode: if True, the command is run in a shell, defaults to False
+        :type shell_mode: bool, optional
+        :return: Thread running the command
+        :rtype: threading.Thread
+        """
+        self._check_before_run(cmd, env, shell_mode)
+
+        FileHelper.create_dir_if_not_exist(self.working_dir)
+
+        self._message_dispatcher.notify_info_message(
+            f"[ShellProxy] Running command: {cmd}")
+
+        return SysProc.popen(cmd, cwd=self.working_dir, env=env, shell=shell_mode)
+
     def check_output(self, cmd: Union[list, str], env: dict = None,
                      shell_mode: bool = False, text: bool = True) -> Any:
         """
@@ -163,6 +186,7 @@ class ShellProxy():
         :return: output of the command
         :rtype: Any
         """
+        self._check_before_run(cmd, env, shell_mode)
 
         try:
             output = subprocess.check_output(
@@ -176,6 +200,23 @@ class ShellProxy():
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             raise Exception(f"The shell process has failed. Error {err}.")
+
+    def _check_before_run(self, cmd: Union[list, str], env: dict = None,
+                          shell_mode: bool = False) -> None:
+        """Check if the command can be run before running it.
+        """
+        if env is not None and not isinstance(env, dict):
+            raise ValueError(
+                "'env' must return a dictionnary")
+
+        if shell_mode:
+            if isinstance(cmd, list):
+                raise ValueError(
+                    "The command must be a string and not a list if the shell mode is activated")
+        else:
+            if not isinstance(cmd, list):
+                raise ValueError(
+                    "The command must be a list and not a string if the shell mode is not activated")
 
     def _self_dispatch_stdouts(self, messages: List[bytes]) -> None:
         if len(messages) > 0:

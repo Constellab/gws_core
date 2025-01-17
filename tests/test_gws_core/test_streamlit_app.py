@@ -50,17 +50,19 @@ if sources:
                 # generate the streamlit app
                 streamlit_resource.default_view(ConfigParams())
 
+                streamlit_app = StreamlitAppManager.current_running_apps[streamlit_resource.uid]
+
                 # check if the app is running
-                self.assertTrue(StreamlitAppManager.call_health_check())
+                self.assertTrue(streamlit_app.call_health_check())
 
                 status = StreamlitAppManager.get_status_dto()
                 self.assertEqual(status.status, 'RUNNING')
                 self.assertEqual(len(status.running_apps), 1)
                 self.assertEqual(status.running_apps[0].resource_id, streamlit_resource.uid)
 
-                StreamlitAppManager.stop_main_app()
+                StreamlitAppManager.stop_all_processes()
 
                 # check if the app is running
-                self.assertFalse(StreamlitAppManager.call_health_check())
+                self.assertFalse(streamlit_app.call_health_check())
         finally:
-            StreamlitAppManager.stop_main_app()
+            StreamlitAppManager.stop_all_processes()

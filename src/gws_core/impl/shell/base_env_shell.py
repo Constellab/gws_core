@@ -11,6 +11,7 @@ from typing import Any, Dict, Union, final
 from typing_extensions import Literal
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
+from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
@@ -54,12 +55,11 @@ class BaseEnvShell(ShellProxy):
         super().__init__(working_dir, message_dispatcher)
 
         # check env file path
-        if isinstance(env_file_path, (str, Path)):
-            if not FileHelper.exists_on_os(env_file_path):
-                raise Exception(
-                    f"The environment file '{env_file_path}' does not exist")
-        else:
+        if not isinstance(env_file_path, (str, Path)):
             raise Exception("Invalid env file path")
+        if not FileHelper.exists_on_os(env_file_path):
+            raise Exception(
+                f"The environment file '{env_file_path}' does not exist")
         self.env_file_path = str(env_file_path)
         self.env_hash = self._generate_env_hash()
 
@@ -93,6 +93,19 @@ class BaseEnvShell(ShellProxy):
         self.install_env()
 
         return super().run(formatted_cmd, complete_env, shell_mode)
+
+    def run_in_new_thread(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = True) -> SysProc:
+        formatted_cmd = self.format_command(cmd)
+
+        # compute env
+        if env is None:
+            env = {}
+        complete_env = {**self.build_os_env(), **env}
+
+        # install env if not installed
+        self.install_env()
+
+        return super().run_in_new_thread(formatted_cmd, complete_env, shell_mode)
 
     @final
     def check_output(self, cmd: Union[list, str], env: dict = None,
@@ -233,12 +246,9 @@ class BaseEnvShell(ShellProxy):
         return {}
 
     @abstractmethod
-    def format_command(self, user_cmd: Union[list, str]) -> str:
+    def format_command(self, user_cmd: Union[list, str]) -> Union[list, str]:
         """
-        Format the user command
-
-        :param stdout: The final command
-        :param type: `list`
+        Format the user command. If the command is a list, must return a list.
         """
 
     @abstractmethod

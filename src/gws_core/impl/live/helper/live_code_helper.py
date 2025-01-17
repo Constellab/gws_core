@@ -47,20 +47,24 @@ class LiveCodeHelper:
         return result
 
     @classmethod
-    def get_python_template(cls) -> str:
+    def get_python_code_template(cls) -> str:
         return cls._read_template("py_live_snippet_template.py", 'code')
 
     @classmethod
-    def get_python_with_env_template(cls) -> str:
+    def get_python_env_code_template(cls) -> str:
         return cls._read_template("py_env_snippet_template.py", 'code')
 
     @classmethod
-    def get_r_template(cls) -> str:
+    def get_r_code_template(cls) -> str:
         return cls._read_template("r_env_snippet_template.R", 'code')
 
     @classmethod
-    def get_streamlit_template(cls) -> str:
+    def get_streamlit_code_template(cls) -> str:
         return cls._read_template("streamlit_agent_template.py", 'code')
+
+    @classmethod
+    def get_streamlit_env_code_template(cls) -> str:
+        return cls._read_template("streamlit_env_agent_template.py", 'code')
 
     @classmethod
     def get_pip_env_file_template(cls) -> str:
@@ -73,6 +77,14 @@ class LiveCodeHelper:
     @classmethod
     def get_r_conda_env_file_template(cls) -> str:
         return cls._read_template("env_r_conda.yml", 'env')
+
+    @classmethod
+    def get_streamlit_conda_env_file_template(cls) -> str:
+        return cls._read_template("env_streamlit_conda.yml", 'env')
+
+    @classmethod
+    def get_streamlit_pip_env_file_template(cls) -> str:
+        return cls._read_template("env_streamlit_pipenv.txt", 'env')
 
     @classmethod
     def _read_template(cls, file_name: str, template_type: Literal['code', 'env']) -> str:

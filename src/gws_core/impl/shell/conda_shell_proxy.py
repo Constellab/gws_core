@@ -1,7 +1,7 @@
 
 
 import os
-from typing import Union
+from typing import List, Union
 
 from typing_extensions import Literal
 
@@ -26,8 +26,8 @@ class CondaShellProxy(BaseEnvShell):
         """
 
         cmd = [
-            self._build_conda_command(self.conda_command,
-                                      f'env create -f {self.env_file_path} --force --prefix {self.VENV_DIR_NAME}')
+            self._build_str_conda_command(self.conda_command,
+                                          f'env create -f {self.env_file_path} --force --prefix {self.VENV_DIR_NAME}')
         ]
 
         self._message_dispatcher.notify_info_message(
@@ -48,7 +48,7 @@ class CondaShellProxy(BaseEnvShell):
         """
 
         cmd = [
-            self._build_conda_command(
+            self._build_str_conda_command(
                 self.conda_command,
                 f'remove -y --prefix {self.VENV_DIR_NAME} --all && cd .. && rm -rf {self.get_env_dir_path()}')]
 
@@ -59,14 +59,23 @@ class CondaShellProxy(BaseEnvShell):
 
         return True
 
-    def format_command(self, user_cmd: Union[list, str]) -> str:
-        if isinstance(user_cmd, list):
-            user_cmd = [str(c) for c in user_cmd]
-            user_cmd = " ".join(user_cmd)
+    def format_command(self, user_cmd: Union[list, str]) -> Union[list, str]:
+        is_list = isinstance(user_cmd, list)
+
+        str_cmd: str = None
+        if is_list:
+            str_cmd = " ".join([str(c) for c in user_cmd])
+        else:
+            str_cmd = str(user_cmd)
+
+        str_cmd = f'activate {self.get_venv_dir_path()} && {str_cmd}'
+
         # the run command must use conda, not mamba
         # use conda activate and not run, otherwise the logs are retrieve only after the command is finished (not in real time)
-        return self._build_conda_command(CondaShellProxy.conda_command,
-                                         f'activate {self.get_venv_dir_path()} && {user_cmd}')
+        if is_list:
+            return self._build_list_conda_command(CondaShellProxy.conda_command, str_cmd)
+        else:
+            return self._build_str_conda_command(CondaShellProxy.conda_command, str_cmd)
 
     def build_os_env(self) -> dict:
         """
@@ -86,8 +95,14 @@ class CondaShellProxy(BaseEnvShell):
     def get_venv_dir_path(self) -> str:
         return os.path.join(self.get_env_dir_path(), self.VENV_DIR_NAME)
 
-    def _build_conda_command(self, conda_cmd: str, cmd: str) -> str:
-        return f'bash -c "source /opt/conda/etc/profile.d/{CondaShellProxy.conda_command}.sh && {conda_cmd} {cmd}"'
+    def _build_str_conda_command(self, conda_cmd: str, cmd: str) -> str:
+        return f'bash -c "{self._build_sub_conda_command(conda_cmd, cmd)}"'
+
+    def _build_list_conda_command(self, conda_cmd: str, cmd: str) -> List[str]:
+        return ['bash', '-c', self._build_sub_conda_command(conda_cmd, cmd)]
+
+    def _build_sub_conda_command(self, conda_cmd: str, cmd: str) -> str:
+        return f'source /opt/conda/etc/profile.d/{CondaShellProxy.conda_command}.sh && {conda_cmd} {cmd}'
 
     @classmethod
     def folder_is_env(cls, folder_path: str) -> bool:

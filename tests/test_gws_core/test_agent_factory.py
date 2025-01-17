@@ -3,7 +3,7 @@ from gws_core.community.community_dto import (CommunityAgentFileDTO,
                                               CommunityAgentVersionDTO)
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
-from gws_core.streamlit.streamlit_agent import StreamlitAgent
+from gws_core.streamlit.agents.streamlit_agent import StreamlitAgent
 from gws_core.test.base_test_case import BaseTestCase
 
 

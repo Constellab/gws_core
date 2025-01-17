@@ -324,10 +324,24 @@ class Settings():
         return int(os.environ.get("STREAMLIT_APP_SERVER_PORT", 8501))
 
     @classmethod
+    def get_streamlit_app_additional_ports(cls) -> List[int]:
+        """Returns available port for streamlit addtional app (running in virtual env)
+        """
+        # convert the env variable to a list of int
+        return [int(port) for port in os.environ.get("STREAMLIT_APP_ADDITIONAL_PORTS", "8502,8503").split(",")]
+
+    @classmethod
+    def get_streamlit_app_additional_hosts(cls) -> List[str]:
+        """Returns available port for streamlit addtional app (running in virtual env)
+        """
+        # convert the env variable to a list of int
+        return [host for host in os.environ.get("STREAMLIT_APP_ADDITIONAL_HOSTS", "dashboard1,dashboard2").split(",")]
+
+    @classmethod
     def get_streamlit_host_url(cls) -> str:
         """Returns the front version of the lab
         """
-        return os.environ.get("STREAMLIT_APP_SERVER_HOST", 'http://localhost:8501')
+        return os.environ.get("STREAMLIT_APP_SERVER_HOST")
 
     def get_gws_core_db_name(self) -> str:
         return 'gws_core'

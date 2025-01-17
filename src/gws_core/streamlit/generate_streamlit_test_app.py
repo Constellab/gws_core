@@ -5,6 +5,7 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.impl.file.folder import Folder
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.streamlit.streamlit_app import StreamlitAppType
 from gws_core.streamlit.streamlit_dashboard import (Dashboard, DashboardType,
                                                     dashboard_decorator)
 from gws_core.streamlit.streamlit_resource import StreamlitResource
@@ -19,10 +20,19 @@ class TestDashboard(Dashboard):
 
     # retrieve the path of the app folder, relative to this file
     # the dashboard code folder starts with a underscore to avoid being loaded when the brick is loaded
-    def get_folder_path(self):
+    def get_app_folder_path(self):
         return os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            "_test_streamlit_dashboard2"
+            "_test_streamlit_dashboard"
+        )
+
+    def get_app_type(self) -> StreamlitAppType:
+        return "MAMBA_ENV"
+
+    def get_env_file_path(self):
+        return os.path.join(
+            self.get_app_folder_path(),
+            'streamlit_env.yml',
         )
 
 

@@ -57,7 +57,7 @@ class PipShellProxy(BaseEnvShell):
 
         return True
 
-    def format_command(self, user_cmd: Union[list, str]) -> str:
+    def format_command(self, user_cmd: Union[list, str]) -> Union[list, str]:
         """
         This method builds the command to execute.
 
@@ -67,8 +67,7 @@ class PipShellProxy(BaseEnvShell):
 
         if isinstance(user_cmd, list):
             cmd = [str(c) for c in user_cmd]
-            cmd = ["pipenv", "run", *cmd]
-            return " ".join(cmd)
+            return ["pipenv", "run", *cmd]
         else:
             return f"pipenv run {user_cmd}"
 
