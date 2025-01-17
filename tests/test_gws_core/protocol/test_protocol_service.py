@@ -6,7 +6,7 @@ from gws_core import ResourceModel
 from gws_core.community.community_dto import CommunityAgentVersionDTO
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
-from gws_core.impl.live.py_agent import PyAgent
+from gws_core.impl.agent.py_agent import PyAgent
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.connector import Connector

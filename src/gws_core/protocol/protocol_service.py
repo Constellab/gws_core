@@ -10,8 +10,8 @@ from gws_core.config.param.param_types import (DynamicParamAllowedSpecsDict,
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.entity_navigator.entity_navigator_type import EntityType
-from gws_core.impl.live.base.env_agent import EnvAgent
-from gws_core.impl.live.py_agent import PyAgent
+from gws_core.impl.agent.env_agent import EnvAgent
+from gws_core.impl.agent.py_agent import PyAgent
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io import IO
@@ -40,7 +40,6 @@ from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.user.current_user_service import CurrentUserService
 
-from ..code.agent_factory import AgentFactory
 from ..community.community_dto import (CommunityAgentDTO,
                                        CommunityAgentFileDTO,
                                        CommunityAgentVersionCreateResDTO,
@@ -51,6 +50,7 @@ from ..config.config_types import ConfigParamsDict
 from ..config.param.param_types import ParamSpecVisibilty
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
+from ..impl.agent.helper.agent_factory import AgentFactory
 from ..io.connector import Connector
 from ..io.port import Port
 from ..model.typing import Typing

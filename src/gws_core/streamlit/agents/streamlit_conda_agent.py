@@ -3,8 +3,8 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
-from gws_core.impl.live.base.env_agent import EnvAgent
-from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
+from gws_core.impl.agent.env_agent import EnvAgent
+from gws_core.impl.agent.helper.agent_code_helper import AgentCodeHelper
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
 from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
@@ -25,12 +25,12 @@ class StreamlitCondaAgent(StreamlitEnvAgent):
     config_specs: ConfigSpecs = {
         'params': EnvAgent.get_dynamic_param_config(),
         'env': YamlCodeParam(
-            default_value=LiveCodeHelper.get_streamlit_conda_env_file_template(),
+            default_value=AgentCodeHelper.get_streamlit_conda_env_file_template(),
             human_name="Conda environment (YAML)", short_description="YAML configuration of the conda environment (contains the 'streamlit' package)"
         ),
         'code':
         PythonCodeParam(
-            default_value=LiveCodeHelper.get_streamlit_env_code_template(),
+            default_value=AgentCodeHelper.get_streamlit_env_code_template(),
             human_name="Streamlit app code",
             short_description="Code of the streamlit app to run")
     }

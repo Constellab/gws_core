@@ -14,16 +14,16 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource_set.resource_list import ResourceList
 
-from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigParamsDict, ConfigSpecs
-from ....core.exception.exceptions.bad_request_exception import \
+from ...config.config_params import ConfigParams
+from ...config.config_types import ConfigParamsDict, ConfigSpecs
+from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ....io.io_specs import InputSpecs, OutputSpecs
-from ....task.task import Task
-from ....task.task_decorator import task_decorator
-from ....task.task_io import TaskInputs, TaskOutputs
-from ...file.file import File
-from ...shell.shell_proxy import ShellProxy
+from ...io.io_specs import InputSpecs, OutputSpecs
+from ...task.task import Task
+from ...task.task_decorator import task_decorator
+from ...task.task_io import TaskInputs, TaskOutputs
+from ..file.file import File
+from ..shell.shell_proxy import ShellProxy
 
 
 @task_decorator("EnvAgent", human_name="Env agent",
@@ -60,6 +60,8 @@ class EnvAgent(Task):
     ENV_CONFIG_NAME = 'env'
     CODE_CONFIG_NAME = 'code'
     PARAMS_CONFIG_NAME = 'params'
+
+    __is_agent__: bool = True
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         code: str = params.get_value('code')

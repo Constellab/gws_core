@@ -1,11 +1,11 @@
 
 
-from gws_core.code.agent_factory import AgentFactory
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import BoolParam, IntParam, StrParam
 from gws_core.core.utils.string_helper import StringHelper
-from gws_core.impl.live.py_agent import PyAgent
+from gws_core.impl.agent.helper.agent_factory import AgentFactory
+from gws_core.impl.agent.py_agent import PyAgent
 from gws_core.process.process_factory import ProcessFactory
 from gws_core.test.base_test_case import BaseTestCase
 

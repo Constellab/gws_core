@@ -1,12 +1,17 @@
 
 
+import os
+
 from pandas import DataFrame
 
 from gws_core.config.config_params import ConfigParams
+from gws_core.core.utils.settings import Settings
+from gws_core.impl.file.file import File
 from gws_core.impl.table.table import Table
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.streamlit.streamlit_app_managers import StreamlitAppManager
+from gws_core.streamlit.streamlit_process import StreamlitProcess
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.test.gtest import GTest
@@ -43,26 +48,33 @@ if sources:
         streamlit_resource = StreamlitResource(streamlit_code)
         streamlit_resource.add_resource(resource_model.get_resource())
         # make the check faster to avoid test block
-        StreamlitAppManager.CHECK_RUNNING_INTERVAL = 3
+        StreamlitProcess.CHECK_RUNNING_INTERVAL = 3
 
         try:
-            with AuthenticateUser(GTest.get_test_user()):
-                # generate the streamlit app
-                streamlit_resource.default_view(ConfigParams())
+            # generate the streamlit app
+            streamlit_resource.default_view(ConfigParams())
 
-                streamlit_app = StreamlitAppManager.current_running_apps[streamlit_resource.uid]
+            streamlit_process: StreamlitProcess = None
+            for proc in StreamlitAppManager.running_processes.values():
+                if proc.has_app(streamlit_resource.uid):
+                    streamlit_process = proc
 
-                # check if the app is running
-                self.assertTrue(streamlit_app.call_health_check())
+            if streamlit_process is None:
+                self.fail("No streamlit process found")
 
-                status = StreamlitAppManager.get_status_dto()
-                self.assertEqual(status.status, 'RUNNING')
-                self.assertEqual(len(status.running_apps), 1)
-                self.assertEqual(status.running_apps[0].resource_id, streamlit_resource.uid)
+            # check if the app is running
+            self.assertTrue(streamlit_process.call_health_check())
 
-                StreamlitAppManager.stop_all_processes()
+            status = streamlit_process.get_status_dto()
+            self.assertEqual(status.status, 'RUNNING')
+            self.assertEqual(len(status.running_apps), 1)
+            self.assertEqual(status.running_apps[0].resource_id, streamlit_resource.uid)
+            self.assertEqual(streamlit_process.port, StreamlitAppManager.get_main_app_port())
 
-                # check if the app is running
-                self.assertFalse(streamlit_app.call_health_check())
+            StreamlitAppManager.stop_all_processes()
+
+            # check if the app is running
+            self.assertFalse(streamlit_process.call_health_check())
+            self.assertFalse(streamlit_process.process_is_running())
         finally:
             StreamlitAppManager.stop_all_processes()

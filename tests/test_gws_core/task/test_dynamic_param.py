@@ -1,5 +1,5 @@
 from gws_core.config.param.param_spec import IntParam
-from gws_core.impl.live.py_agent import PyAgent
+from gws_core.impl.agent.py_agent import PyAgent
 from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService

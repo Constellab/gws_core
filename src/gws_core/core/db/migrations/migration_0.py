@@ -17,11 +17,11 @@ from gws_core.credentials.credentials import Credentials
 from gws_core.credentials.credentials_type import (CredentialsDataOther,
                                                    CredentialsType)
 from gws_core.folder.space_folder import SpaceFolder
+from gws_core.impl.agent.env_agent import EnvAgent
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
-from gws_core.impl.live.base.env_agent import EnvAgent
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,

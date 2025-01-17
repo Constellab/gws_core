@@ -1,21 +1,32 @@
 
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.code.task_generator import TaskGenerator
 from gws_core.community.community_dto import CommunityAgentFileDTO
 from gws_core.config.param.dynamic_param import DynamicParam
-from gws_core.config.param.param_spec import (BoolParam, FloatParam, IntParam,
-                                              ParamSpec, StrParam)
-from gws_core.core.utils.numeric_helper import NumericHelper
-from gws_core.impl.live.py_agent import PyAgent
+from gws_core.config.param.param_spec import ParamSpec
+from gws_core.impl.agent.py_agent import PyAgent
 from gws_core.task.task_model import TaskModel
 
 
 class AgentFactory:
 
     current_json_version = 3
+
+    AGENT_DICT = {
+        'TASK.gws_core.PyAgent': 'PYTHON',
+        'TASK.gws_core.PyCondaAgent': 'CONDA_PYTHON',
+        'TASK.gws_core.PyMambaAgent': 'MAMBA_PYTHON',
+        'TASK.gws_core.PyPipenvAgent': 'PIP_PYTHON',
+        'TASK.gws_core.RCondaAgent': 'CONDA_R',
+        'TASK.gws_core.RMambaAgent': 'MAMBA_R',
+        'TASK.gws_core.StreamlitAgent': 'STREAMLIT',
+        'TASK.gws_core.StreamlitCondaAgent': 'STREAMLIT',
+        'TASK.gws_core.StreamlitMambaAgent': 'STREAMLIT',
+        'TASK.gws_core.StreamlitPipenvAgent': 'STREAMLIT',
+    }
 
     @classmethod
     def generate_task_code_from_agent_id(cls, task_id: str) -> str:
@@ -107,19 +118,10 @@ class AgentFactory:
             "output_specs": outputs,
             "config_specs": {},
             "bricks": bricks,
-            "task_type": cls.get_agent_type(task.process_typing_name),
+            "task_type": cls.AGENT_DICT[task.process_typing_name],
             "style": task.to_dto().style
         })
 
     @classmethod
-    def get_agent_type(cls, typing_name: str) -> str:
-        choice = {
-            'TASK.gws_core.PyAgent': 'PYTHON',
-            'TASK.gws_core.PyCondaAgent': 'CONDA_PYTHON',
-            'TASK.gws_core.PyMambaAgent': 'MAMBA_PYTHON',
-            'TASK.gws_core.PyPipenvAgent': 'PIP_PYTHON',
-            'TASK.gws_core.RCondaAgent': 'CONDA_R',
-            'TASK.gws_core.RMambaAgent': 'MAMBA_R',
-            'TASK.gws_core.StreamlitAgent': 'STREAMLIT',
-        }
-        return choice[typing_name]
+    def is_agent(cls, typing_name: str) -> bool:
+        return typing_name in cls.AGENT_DICT

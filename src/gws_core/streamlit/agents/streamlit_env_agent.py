@@ -2,6 +2,7 @@
 from abc import abstractmethod
 from typing import Any, Dict
 
+from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
@@ -14,6 +15,7 @@ from gws_core.streamlit.streamlit_app import StreamlitAppType
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
+from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
 @task_decorator("StreamlitEnvAgent", human_name="Streamlit env agent",
@@ -42,6 +44,12 @@ class StreamlitEnvAgent(Task):
     output_specs: OutputSpecs = OutputSpecs({
         'streamlit_app': OutputSpec(StreamlitResource, human_name="Streamlit app")
     })
+
+    __is_agent__: bool = True
+
+    @abstractmethod
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        pass
 
     def run_agent(self, resources: ResourceList, params: Dict[str, Any],
                   app_type: StreamlitAppType, code: str, env_code: str = None,

@@ -2,11 +2,10 @@
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
-
-from gws_core.code.agent_factory import AgentFactory
 from gws_core.community.community_dto import CommunityAgentFileDTO
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.core_controller import core_app
+from gws_core.impl.agent.helper.agent_factory import AgentFactory
 from gws_core.user.auth_service import AuthService
 
 

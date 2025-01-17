@@ -4,17 +4,16 @@ import os
 from typing import Type
 from unittest import TestCase
 
-from pandas import DataFrame, read_csv
-
 from gws_core import File, PyCondaAgent, Task, TaskRunner
 from gws_core.config.param.param_spec import IntParam, ListParam
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.utils.settings import Settings
+from gws_core.impl.agent.py_mamba_agent import PyMambaAgent
+from gws_core.impl.agent.py_pipenv_agent import PyPipenvAgent
+from gws_core.impl.agent.r_conda_agent import RCondaAgent
+from gws_core.impl.agent.r_mamba_agent import RMambaAgent
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.live.py_mamba_agent import PyMambaAgent
-from gws_core.impl.live.py_pipenv_agent import PyPipenvAgent
-from gws_core.impl.live.r_conda_agent import RCondaAgent
-from gws_core.impl.live.r_mamba_agent import RMambaAgent
+from pandas import DataFrame, read_csv
 
 
 # test_env_agent

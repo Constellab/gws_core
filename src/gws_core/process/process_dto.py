@@ -35,3 +35,4 @@ class ProcessDTO(ModelWithUserDTO):
     community_agent_version_id: Optional[str] = None
     community_agent_version_modified: Optional[bool] = None
     style: TypingStyle = None
+    is_agent: bool = False

@@ -6,8 +6,6 @@
 
 # Brick
 from .brick.brick_service import BrickService as BrickService
-# Code > AgentFactory
-from .code.agent_factory import AgentFactory as AgentFactory
 # Community
 from .community.community_service import CommunityService as CommunityService
 # Config
@@ -130,6 +128,15 @@ from .entity_navigator.entity_navigator_service import \
 from .entity_navigator.entity_navigator_type import EntityType as EntityType
 # Folder
 from .folder.space_folder import SpaceFolder as SpaceFolder
+# Code > AgentFactory
+from .impl.agent.helper.agent_factory import AgentFactory as AgentFactory
+# Impl > Agent
+from .impl.agent.py_agent import PyAgent as PyAgent
+from .impl.agent.py_conda_agent import PyCondaAgent as PyCondaAgent
+from .impl.agent.py_mamba_agent import PyMambaAgent as PyMambaAgent
+from .impl.agent.py_pipenv_agent import PyPipenvAgent as PyPipenvAgent
+from .impl.agent.r_conda_agent import RCondaAgent as RCondaAgent
+from .impl.agent.r_mamba_agent import RMambaAgent as RMambaAgent
 # Impl > File
 from .impl.file.file import File as File
 from .impl.file.file_helper import FileHelper as FileHelper
@@ -147,13 +154,6 @@ from .impl.json.json_tasks import JSONExporter as JSONExporter
 from .impl.json.json_tasks import JSONImporter as JSONImporter
 # Impl > JSONView
 from .impl.json.json_view import JSONView as JSONView
-# Impl > Agent
-from .impl.live.py_agent import PyAgent as PyAgent
-from .impl.live.py_conda_agent import PyCondaAgent as PyCondaAgent
-from .impl.live.py_mamba_agent import PyMambaAgent as PyMambaAgent
-from .impl.live.py_pipenv_agent import PyPipenvAgent as PyPipenvAgent
-from .impl.live.r_conda_agent import RCondaAgent as RCondaAgent
-from .impl.live.r_mamba_agent import RMambaAgent as RMambaAgent
 # Impl > Network
 from .impl.network.network_view import NetworkView as NetworkView
 # Extension

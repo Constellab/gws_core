@@ -1,8 +1,8 @@
 from typing import Any, Dict, List
 
-from gws_core.code.agent_factory import AgentFactory
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
+from gws_core.impl.agent.helper.agent_factory import AgentFactory
 
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings

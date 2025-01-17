@@ -5,8 +5,6 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Optional, Type, final
 
-from peewee import BooleanField, CharField, ForeignKeyField
-
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
@@ -24,6 +22,7 @@ from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.user.current_user_service import CurrentUserService
+from peewee import BooleanField, CharField, ForeignKeyField
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField
@@ -483,10 +482,12 @@ class ProcessModel(ModelWithUser):
         process_typing: Typing = self.get_process_typing()
         process_type_dto: SimpleTypingDTO = None
         type_status: TypingStatus = TypingStatus.OK
-
+        is_agent: bool = False
         if process_typing:
             process_type_dto = process_typing.to_simple_dto()
             type_status = process_typing.get_type_status()
+            process_type: Type[Process] = process_typing.get_type()
+            is_agent = process_type.__is_agent__
         else:
             type_status = TypingStatus.UNAVAILABLE
 
@@ -515,7 +516,8 @@ class ProcessModel(ModelWithUser):
             type_status=type_status,
             process_type=process_type_dto,
             name=self.name,
-            style=self.style
+            style=self.style,
+            is_agent=is_agent
         )
 
     def to_config_dto(self, ignore_input_task_config: bool = False) -> ProcessConfigDTO:

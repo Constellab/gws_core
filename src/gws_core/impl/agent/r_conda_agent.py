@@ -4,8 +4,8 @@ from typing import List
 
 from gws_core.config.param.code_param.r_code_param import RCodeParam
 from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
-from gws_core.impl.live.base.env_agent import EnvAgent
-from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
+from gws_core.impl.agent.env_agent import EnvAgent
+from gws_core.impl.agent.helper.agent_code_helper import AgentCodeHelper
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
 from gws_core.model.typing_style import TypingStyle
 
@@ -35,11 +35,11 @@ class RCondaAgent(EnvAgent):
     config_specs: ConfigSpecs = {
         'params': EnvAgent.get_dynamic_param_config(),
         'env': YamlCodeParam(
-            default_value=LiveCodeHelper.get_r_conda_env_file_template(),
+            default_value=AgentCodeHelper.get_r_conda_env_file_template(),
             human_name="Conda environment (YAML)", short_description="YAML configuration of the R conda environment"
         ),
         'code': RCodeParam(
-            default_value=LiveCodeHelper.get_r_code_template(),
+            default_value=AgentCodeHelper.get_r_code_template(),
             human_name="R code snippet", short_description="The R code snippet to execute using shell command"),
     }
 

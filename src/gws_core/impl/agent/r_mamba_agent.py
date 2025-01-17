@@ -1,6 +1,6 @@
 
 
-from gws_core.impl.live.r_conda_agent import RCondaAgent
+from gws_core.impl.agent.r_conda_agent import RCondaAgent
 from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
 from gws_core.model.typing_style import TypingStyle
 

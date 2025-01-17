@@ -2,9 +2,9 @@
 
 from unittest import TestCase
 
+from gws_core.impl.agent.py_agent import PyAgent
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.impl.json.json_smart_transformer import JsonSmartTransformer
-from gws_core.impl.live.py_agent import PyAgent
 from gws_core.impl.openai.open_ai_types import OpenAiChatDict
 from gws_core.impl.text.text import Text
 from gws_core.task.task_runner import TaskRunner

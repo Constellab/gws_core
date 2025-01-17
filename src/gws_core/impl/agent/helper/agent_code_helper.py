@@ -8,7 +8,7 @@ from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
 
-class LiveCodeHelper:
+class AgentCodeHelper:
 
     @classmethod
     def run_python_code(cls, code: str, params: Dict[str, Any]) -> Dict[str, Any]:

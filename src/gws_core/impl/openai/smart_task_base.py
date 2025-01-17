@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Type
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_types import ConfigSpecs
-from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
+from gws_core.impl.agent.helper.agent_code_helper import AgentCodeHelper
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
@@ -236,6 +236,6 @@ class SmartTaskBase(Task):
 
         # execute the live code
         self.log_info_message('Executing the code snippet...')
-        outputs = LiveCodeHelper.run_python_code(code, code_inputs)
+        outputs = AgentCodeHelper.run_python_code(code, code_inputs)
 
         return self.build_task_outputs(outputs, code, params, inputs)

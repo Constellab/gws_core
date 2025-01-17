@@ -18,6 +18,9 @@ class Process(BaseTyping):
     # Set only on specific tasks when you know what you are doing
     __enable_in_sub_protocol__: bool = True
 
+    # For specific tasks, defines the process as an agent
+    __is_agent__: bool = False
+
     @classmethod
     @abstractmethod
     def get_input_specs(cls) -> InputSpecs:

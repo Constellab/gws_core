@@ -1,8 +1,8 @@
 
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
-from gws_core.impl.live.base.env_agent import EnvAgent
-from gws_core.impl.live.helper.live_code_helper import LiveCodeHelper
+from gws_core.impl.agent.env_agent import EnvAgent
+from gws_core.impl.agent.helper.agent_code_helper import AgentCodeHelper
 from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
 from gws_core.model.typing_style import TypingStyle
 
@@ -32,11 +32,11 @@ class PyPipenvAgent(EnvAgent):
     config_specs: ConfigSpecs = {
         'params': EnvAgent.get_dynamic_param_config(),
         'env': PythonCodeParam(
-            default_value=LiveCodeHelper.get_pip_env_file_template(),
+            default_value=AgentCodeHelper.get_pip_env_file_template(),
             human_name="Pipenv configuration", short_description="Pipenv configuration"
         ),
         'code': PythonCodeParam(
-            default_value=LiveCodeHelper.get_python_env_code_template(),
+            default_value=AgentCodeHelper.get_python_env_code_template(),
             human_name="Code snippet", short_description="The code snippet to execute using shell command"),
     }
 
