@@ -3,7 +3,7 @@
     "author": "Gencovery",
     "author_email": "admin@gencovery.com",
     "description": "Kernel brick of Constellab data lab",
-    "version": "0.11.3-beta.1",
+    "version": "0.12.0",
     "app_dir": "./",
     "app_host": "0.0.0.0",
     "app_port": 3000,
@@ -11,7 +11,7 @@
         "gws_core:testdata_dir": "${CURRENT_DIR}/tests/testdata"
     },
     "technical_info": {
-        "FRONT_VERSION": "2.1.1",
+        "FRONT_VERSION": "2.2.0",
         "GLAB_VERSION": "2.5.0"
     },
     "environment": {
@@ -145,7 +145,7 @@
                     },
                     {
                         "name": "schedule",
-                        "version" : "1.2.2"
+                        "version": "1.2.2"
                     }
                 ]
             }

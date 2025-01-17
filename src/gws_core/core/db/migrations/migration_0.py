@@ -5,8 +5,6 @@ import os
 from copy import deepcopy
 from typing import Any, Dict, List
 
-from peewee import BigIntegerField, CharField
-
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
 from gws_core.config.param.dynamic_param import DynamicParam
@@ -65,6 +63,7 @@ from gws_core.user.activity.activity import Activity
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.user import User
+from peewee import BigIntegerField, CharField
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -1295,8 +1294,8 @@ class Migration0100(BrickMigration):
                     credential.data = {'data': data_list}
                     credential.save(skip_hook=True)
 
-    @brick_migration('0.11.3-beta.1', short_description='Add Stat table + community agent version modified to task model')
-    class Migration0113(BrickMigration):
+    @brick_migration('0.12.0', short_description='Add community agent version modified to task model')
+    class Migration0120(BrickMigration):
 
         @classmethod
         def migrate(cls, from_version: Version, to_version: Version) -> None:
