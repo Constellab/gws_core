@@ -4,7 +4,6 @@ from typing import Callable, Optional, Type
 
 from gws_core.core.model.base import Base
 from gws_core.core.model.base_typing import BaseTyping
-from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.model.typing_deprecated import TypingDeprecated
