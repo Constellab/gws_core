@@ -1,6 +1,6 @@
 
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.impl.live.base.env_agent import EnvAgent
@@ -19,7 +19,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 
 @task_decorator("PyAgent", human_name="Python agent",
                 short_description="Agent to run Python snippets directly in the global environment. The input data and parameters are passed in memory to the snippet.",
-                style=TypingStyle.material_icon("code"))
+                style=TypingStyle.material_icon("agent"))
 class PyAgent(Task):
     """
     Python agents allow to execute any Python code snippets on the fly.

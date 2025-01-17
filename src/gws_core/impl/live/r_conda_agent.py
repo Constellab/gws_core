@@ -16,7 +16,7 @@ from ...task.task_decorator import task_decorator
 @task_decorator(
     "RCondaAgent", human_name="R conda env agent",
     short_description="Agent to run R snippets in conda a shell environment.",
-    style=TypingStyle.material_icon("code"))
+    style=TypingStyle.material_icon("agent"))
 class RCondaAgent(EnvAgent):
     """
     Conda-based R agents allow to execute R snippets on the fly in isolated conda environments.

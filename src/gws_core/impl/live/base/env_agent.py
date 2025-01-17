@@ -11,6 +11,7 @@ from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource_set.resource_list import ResourceList
 
 from ....config.config_params import ConfigParams
@@ -27,6 +28,7 @@ from ...shell.shell_proxy import ShellProxy
 
 @task_decorator("EnvAgent", human_name="Env agent",
                 short_description="Agent to run code snippets in a shell environment. The inputs files are passed to the snippet through the arguments.",
+                style=TypingStyle.material_icon("agent"),
                 hide=True)
 class EnvAgent(Task):
     """
