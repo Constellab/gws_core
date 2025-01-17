@@ -79,7 +79,7 @@ class EnvAgent(Task):
         # validate user inputs, params, code
         cmd = self._format_command(code_file_path)
         result: int = None
-        result = self.shell_proxy.run(cmd, shell_mode=True)
+        result = self.shell_proxy.run(cmd, shell_mode=False)
 
         if result != 0:
             raise BadRequestException(

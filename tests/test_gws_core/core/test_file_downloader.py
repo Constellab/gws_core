@@ -26,8 +26,7 @@ class TestFileDownloader(TestCase):
         file_downloader = FileDownloader(
             destination_folder, message_dispatcher)
 
-        url = "https://www.biorxiv.org/content/10.1101/2020.02.16.951624v1.full.pdf"
-        # url = "https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata/ubiome/qiime2/sepp-refs-gg-13-8.qza"
+        url = "https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata/gws_core/iris.csv"
         filename = "my_file.pdf"
 
         # download the file and check the destination path
@@ -54,7 +53,7 @@ class TestFileDownloader(TestCase):
         if FileHelper.exists_on_os(file_destination):
             FileHelper.delete_file(file_destination)
 
-        url = "https://www.biorxiv.org/content/10.1101/2020.02.16.951624v1.full.pdf"
+        url = "https://storage.gra.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/opendata/gws_core/iris.csv"
         task_file_downloader.download_file_if_missing(
             url, "my_file.pdf", timeout=60)
 

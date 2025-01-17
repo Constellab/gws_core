@@ -1,6 +1,5 @@
 from gws_core.config.param.param_spec import IntParam
 from gws_core.impl.agent.py_agent import PyAgent
-from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.test.base_test_case import BaseTestCase
@@ -34,7 +33,7 @@ class TestDynamicParam(BaseTestCase):
                          .to_json_dict(), IntParam(default_value=2).to_dto().to_json_dict())
         self.assertEqual(test_process_model.config.get_value('params')['a'], 2)
 
-        process_model: ProcessModel = proto.get_process('task')
+        process_model = proto.get_process('task')
 
         ProtocolService.update_dynamic_param_spec_of_process(
             proto.id, process_model.instance_name, 'params', 'a', IntParam(default_value=3).to_dto()
@@ -50,7 +49,7 @@ class TestDynamicParam(BaseTestCase):
                          .specs['a'].to_dto().to_json_dict(), IntParam(default_value=3).to_dto().to_json_dict())
         self.assertEqual(test_process_model.config.get_value('params')['a'], 3)
 
-        process_model: ProcessModel = proto.get_process('task')
+        process_model = proto.get_process('task')
 
         ProtocolService.rename_and_update_dynamic_param_spec_of_process(
             proto.id, process_model.instance_name, 'params', 'a', 'b', IntParam(default_value=4).to_dto()
@@ -68,7 +67,7 @@ class TestDynamicParam(BaseTestCase):
         self.assertEqual(test_process_model.config.get_value('params')['b'], 4)
         self.assertTrue('a' not in test_process_model.config.get_values())
 
-        process_model: ProcessModel = proto.get_process('task')
+        process_model = proto.get_process('task')
 
         ProtocolService.remove_dynamic_param_spec_of_process(
             proto.id, process_model.instance_name, 'params', 'b'
