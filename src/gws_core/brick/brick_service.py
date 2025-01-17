@@ -7,16 +7,17 @@ from time import time
 from typing import Any, Dict, List, Optional
 
 from gws_core.brick.brick_dto import BrickInfo, BrickMessageStatus
+from gws_core.brick.brick_model import BrickModel
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.settings import Settings
+from gws_core.model.typing import Typing
 
 from ..core.utils.logger import Logger
 from ..core.utils.utils import Utils
 from ..lab.system_status import SystemStatus
 from .brick_helper import BrickHelper
-from .brick_model import BrickModel
 
 
 class WaitingMessage(BaseModelDTO):
@@ -250,3 +251,27 @@ class BrickService():
             raise Exception(f"The folder '{brick_path}' found for brick '{brick_name}' is not a brick")
 
         return brick_path
+
+    @classmethod
+    def rename_brick(cls, old_brick_name: str, new_brick_name: str):
+        """Rename brick objects and delete brick from settings
+        /!\ This method is not safe and should be used with caution"""
+
+        BrickModel.delete().where(BrickModel.name == old_brick_name).execute()
+
+        Typing.delete().where(Typing.brick == old_brick_name).execute()
+
+        Typing.get_db().execute_sql(
+            f"UPDATE gws_resource SET resource_typing_name = REPLACE(resource_typing_name, '.{old_brick_name}.', '.{new_brick_name}.')")
+        Typing.get_db().execute_sql(
+            f"UPDATE gws_task SET data = REPLACE(data, '.{old_brick_name}.', '.{new_brick_name}.')")
+        Typing.get_db().execute_sql(
+            f"UPDATE gws_scenario_template SET data = REPLACE(data, '.{old_brick_name}.', '.{new_brick_name}.')")
+
+        Typing.get_db().execute_sql(
+            f"UPDATE gws_task SET process_typing_name = REPLACE(process_typing_name, '.{old_brick_name}.', '.{new_brick_name}.')")
+        Typing.get_db().execute_sql(
+            f"UPDATE gws_protocol SET process_typing_name = REPLACE(process_typing_name, '.{old_brick_name}.', '.{new_brick_name}.')")
+
+        Typing.get_db().execute_sql(
+            f"UPDATE gws_scenario_template SET data = REPLACE(data, '.{old_brick_name}.', '.{new_brick_name}.')")
