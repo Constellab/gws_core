@@ -26,8 +26,6 @@ class TestDynamicParam(BaseTestCase):
         proto = proto.refresh()
 
         test_process_model = proto.get_process(process_model.instance_name)
-        test_process_model.set_config_values(
-            {'params': {'a': None}, 'code': test_process_model.config.get_value('code')})
         self.assertIsNotNone(test_process_model)
         self.assertIsNotNone(test_process_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME).specs['a'])
         self.assertIsNotNone(test_process_model.config.get_value('params'))
@@ -44,8 +42,6 @@ class TestDynamicParam(BaseTestCase):
         proto = proto.refresh()
 
         test_process_model = proto.get_process(process_model.instance_name)
-        test_process_model.set_config_values(
-            {'params': {'a': None}, 'code': test_process_model.config.get_value('code')})
         self.assertIsNotNone(test_process_model)
         self.assertIsNotNone(test_process_model.config.get_spec('params').specs['a'])
         self.assertIsNotNone(test_process_model.config.get_value('params'))
@@ -62,8 +58,6 @@ class TestDynamicParam(BaseTestCase):
         proto = proto.refresh()
 
         test_process_model = proto.get_process(process_model.instance_name)
-        test_process_model.set_config_values(
-            {'params': {'b': None}, 'code': test_process_model.config.get_value('code')})
         self.assertIsNotNone(test_process_model)
         self.assertIsNotNone(test_process_model.config.get_spec('params').specs['b'])
         self.assertTrue('a' not in test_process_model.config.get_spec('params').specs)
@@ -83,5 +77,5 @@ class TestDynamicParam(BaseTestCase):
 
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
-        self.assertTrue('a' not in test_process_model.config.get_spec('params').specs)
-        self.assertTrue('a' not in test_process_model.config.get_value('params'))
+        self.assertTrue('b' not in test_process_model.config.get_spec('params').specs)
+        self.assertTrue('b' not in test_process_model.config.get_value('params'))
