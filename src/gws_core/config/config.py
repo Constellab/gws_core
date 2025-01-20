@@ -97,11 +97,7 @@ class Config(ModelWithUser):
         :return: The value of the parameter (base type)
         :rtype: `str`, `int`, `float`, `bool`
         """
-
-        if self.get_spec(param_name).get_str_type() == 'dynamic':
-            return ParamSpecHelper.get_and_check_values(self.get_spec(param_name).specs, self.data.get("values", {}))
-
-        default = self.get_spec(param_name).default_value
+        default = self.get_spec(param_name).get_default_value()
         return self.data.get("values", {}).get(param_name, default)
 
     def get_and_check_values(self) -> ConfigParamsDict:

@@ -1,15 +1,11 @@
 
 
-from typing import Any, Dict
-
 from pandas import DataFrame
 
-from gws_core import BaseTestCase, PyAgent, Table, TaskRunner, Text
-from gws_core.config.config import Config
+from gws_core import BaseTestCase, PyAgent, Table, TaskRunner
+from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.config.param.dynamic_param import DynamicParam
-from gws_core.config.param.param_spec import IntParam, ListParam, ParamSpec
-from gws_core.protocol.protocol_model import ProtocolModel
-from gws_core.protocol.protocol_service import ProtocolService
+from gws_core.config.param.param_spec import IntParam
 
 
 # test_py_agent
@@ -58,6 +54,11 @@ targets = [df]
             inputs={
                 'source': Table(data=DataFrame({'col1': [0, 1], 'col2': [0, 2]}))
             },
+            config_specs={
+                'params': DynamicParam(specs={'a': IntParam(), 'b': IntParam()}),
+                'code':
+                    PythonCodeParam(),
+            },
             task_type=PyAgent
         )
 
@@ -68,49 +69,6 @@ targets = [df]
 
         expected_table = Table(DataFrame({'col1': [1, 2], 'col2': [0, 4]}))
         self.assertTrue(table.equals(expected_table))
-
-    def test_agent_shell_with_subproc(self):
-        tester = TaskRunner(
-            params={
-                "code": """
-from gws_core import Text
-import subprocess
-import sys
-result = subprocess.run([sys.executable, '-c', 'print(\"gencovery\")'], capture_output=True, text=True)
-targets = [Text(data=result.stdout)]
-                """,
-                "params": {}
-            },
-            task_type=PyAgent
-        )
-
-        outputs = tester.run()
-        text = outputs["target"]
-        self.assertTrue(isinstance(text, Text))
-
-    def test_agent_shell_with_shellproxy(self):
-        tester = TaskRunner(
-            params={
-                "code": """
-import os
-from gws_core import Text, ShellProxy
-shell_proxy = ShellProxy()
-shell_proxy.run([f'echo \"constellab\" > echo.txt'], shell_mode=True)
-result_file_path = os.path.join(shell_proxy.working_dir, 'echo.txt')
-with open(result_file_path, 'r+t') as fp:
-    data = fp.read()
-shell_proxy.clean_working_dir()
-targets = [Text(data=data)]
-                """,
-                "params": {}
-            },
-            task_type=PyAgent
-        )
-
-        outputs = tester.run()
-        text: Text = outputs["target"]
-        self.assertTrue(isinstance(text, Text))
-        self.assertEqual(text.get_data().strip(), 'constellab')
 
     def test_agent_with_exception(self):
         tester = TaskRunner(

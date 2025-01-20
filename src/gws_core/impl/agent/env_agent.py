@@ -231,9 +231,7 @@ with open('{target_paths_filename}', 'w') as f:
 
     @classmethod
     def get_dynamic_param_config(cls) -> DynamicParam:
-        return DynamicParam(
-            human_name="Parameter definitions",
-            short_description="Please give one parameter definition per line (https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779#parameters)")
+        return DynamicParam(human_name="Waoooow", short_description="HEHEL ES MECS")
 
     @classmethod
     def build_config_params_dict(cls, code: str, params: Dict[str, Any], env: str) -> ConfigParamsDict:

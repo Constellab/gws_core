@@ -42,20 +42,15 @@ class ParamSpecHelper():
         missing_params: List[str] = []
 
         for key, spec in param_specs.items():
-
-            if spec.get_str_type() == 'dynamic':
-                dynamic_param_values = param_values[key] if key in param_values else {}
-                full_values[key] = ParamSpecHelper.get_and_check_values(spec.specs, dynamic_param_values)
-            else:
-                # if the config was not set
-                if not key in param_values:
-                    if spec.optional:
-                        full_values[key] = spec.get_default_value()
-                    else:
-                        # if there is not default value the value is missing
-                        missing_params.append(spec.human_name or key)
+            # if the config was not set
+            if not key in param_values:
+                if spec.optional:
+                    full_values[key] = spec.get_default_value()
                 else:
-                    full_values[key] = spec.validate(param_values[key])
+                    # if there is not default value the value is missing
+                    missing_params.append(spec.human_name or key)
+            else:
+                full_values[key] = spec.validate(param_values[key])
 
         # If there is at least one missing param, raise an exception
         if len(missing_params) > 0:

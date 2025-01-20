@@ -86,7 +86,7 @@ class ParamSpec(Generic[ParamSpecType]):
             optional=self.optional,
             visibility=self.visibility,
             additional_info=self.additional_info or {},
-            default_value=self.default_value,
+            default_value=self.get_default_value(),
             human_name=self.human_name,
             short_description=self.short_description
         )
@@ -97,7 +97,7 @@ class ParamSpec(Generic[ParamSpecType]):
             optional=self.optional,
             visibility=self.visibility,
             additional_info=self.additional_info or {},
-            default_value=self.default_value
+            default_value=self.get_default_value(),
         )
 
     def validate(self, value: Any) -> ParamSpecType:
@@ -174,9 +174,10 @@ class ParamSpec(Generic[ParamSpecType]):
             optional=BoolParam(False, False, human_name='Optional').to_dto(),
             human_name=StrParam(
                 optional=True, human_name='Human name').to_dto(),
-            visibility=StrParam(
-                default_value='public', human_name='Visibility',
-                allowed_values=['public', 'protected', 'private']).to_dto(),
+            # comment visibility because not supported yet in dynamic param sub specs
+            # visibility=StrParam(
+            #     default_value='public', human_name='Visibility',
+            #     allowed_values=['public', 'protected', 'private']).to_dto(),
             short_description=StrParam(optional=True, human_name='Short description').to_dto(),
             default_value=default_value_param.to_dto()
         )

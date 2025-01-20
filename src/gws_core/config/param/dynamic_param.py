@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param.param_spec import (BoolParam, DictParam, FloatParam,
                                               IntParam, ListParam, ParamSpec,
                                               StrParam, TextParam)
@@ -9,41 +10,38 @@ from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 
-from .param_types import ParamSpecDTO, ParamSpecVisibilty
+from .param_types import ParamSpecDTO
 
 
 @param_spec_decorator(type=ParamaSpecType.NESTED)
 class DynamicParam(ParamSpec[Dict[str, Any]]):
     """Dynamic param"""
 
-    specs: Dict[str, ParamSpec] = None
+    specs: ConfigSpecs = None
 
-    edition_mode: bool = False
+    edition_mode: bool = True
 
-    def __init__(self,
-                 optional: bool = True,
-                 visibility: ParamSpecVisibilty = "public",
-                 human_name: str = None,
-                 short_description: str = None,
-                 specs: Dict[str, ParamSpec] = None,
-                 edition_mode: bool = True) -> None:
+    def __init__(self, specs: ConfigSpecs = None,
+                 human_name: str = 'Dynamic params',
+                 short_description: str = None) -> None:
 
         if specs is None:
             self.specs = {}
         else:
             self.specs = specs
 
-        self.edition_mode = edition_mode
+        if human_name is None:
+            human_name = 'Dynamic params'
 
-        super().__init__(optional=optional,
-                         visibility=visibility,
+        ParamSpecHelper.check_config_specs(self.specs)
+
+        super().__init__(optional=True,
+                         visibility='public',
                          human_name=human_name,
                          short_description=short_description,
-                         default_value={} if optional else None)
+                         default_value=None)
 
     def get_default_value(self):
-        if self.optional:
-            return {}
         default_value = {}
         for key, spec in self.specs.items():
             default_value[key] = spec.default_value
@@ -53,32 +51,7 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
         if value is None:
             return value
 
-        if self.specs is None:
-            raise BadRequestException("The specs attribute is required.")
-
-        if value is None:
-            raise BadRequestException("The values attribute is required.")
-
-        for key, val in self.specs.items():
-
-            if not isinstance(val, ParamSpec):
-                raise BadRequestException(f"The value of key '{key}' must be a ParamSpec")
-
-            if key not in value and not val.optional:
-                raise BadRequestException(f"The value of specs '{key}' is mandatory")
-
-            if key in value and not val.optional:
-                if not val.validate(value[key]):
-                    raise BadRequestException(f"The value of specs '{key}' is mandatory")
-                else:
-                    value[key] = val.validate(value[key])
-
-            if val.optional and (key not in value or
-                                 value[key] is None or
-                                 len(str(value[key])) == 0) and val.default_value is not None:
-                value[key] = val.default_value
-
-        return value
+        return ParamSpecHelper.get_and_check_values(self.specs, value)
 
     def to_dto(self) -> ParamSpecDTO:
         json_ = super().to_dto()
