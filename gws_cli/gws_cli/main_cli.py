@@ -16,11 +16,18 @@ def main():
     return app
 
 
+def enable_logger() -> None:
+    from gws_core import Logger, Settings
+    log_dir = Settings.build_log_dir(is_test=False)
+    Logger(log_dir=log_dir)
+
+
 def start():
     # load gws_core module before running the app
     from gws_cli.utils.gws_core_loader import load_gws_core
 
     load_gws_core()
+    enable_logger()
     app = main()
     app()
 

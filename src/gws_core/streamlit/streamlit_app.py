@@ -7,7 +7,6 @@ from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import \
     LoggerMessageObserver
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
@@ -43,6 +42,9 @@ class StreamlitApp():
 
     app_folder_path: str = None
     env_file_path: str = None
+
+    _dev_mode: bool = False
+    _dev_config_file: str = None
 
     APP_CONFIG_FILENAME = 'streamlit_config.json'
     MAIN_FILE = 'main.py'
@@ -85,10 +87,17 @@ class StreamlitApp():
     def set_params(self, params: dict) -> None:
         self.params = params
 
+    def set_dev_mode(self, dev_config_file: str) -> None:
+        self._dev_mode = True
+        self._dev_config_file = dev_config_file
+
     def generate_app(self, working_dir: str) -> None:
         """
         Method to create the streamlit app code file and return the url to access the app.
         """
+        # no need to generate the app if in dev mode
+        if self._dev_mode:
+            return
         self._app_config_dir = os.path.join(working_dir, self.app_id)
 
         FileHelper.create_dir_if_not_exist(self._app_config_dir)
@@ -119,6 +128,8 @@ class StreamlitApp():
             file_path.write(config.to_json_str())
 
     def get_app_full_url(self, host_url: str, token: str) -> str:
+        if self._dev_mode:
+            return host_url
         return f"{host_url}?gws_token={token}&gws_app_id={self.app_id}&gws_user_id={CurrentUserService.get_and_check_current_user().id}"
 
     def destroy(self) -> None:
@@ -169,6 +180,12 @@ class StreamlitApp():
                 return PipShellProxy.from_env_str(env_str=self.env_code, message_dispatcher=message_dispatcher)
 
         raise Exception(f"Unknown app type: {self.app_type}")
+
+    def is_dev_mode(self) -> bool:
+        return self._dev_mode
+
+    def get_dev_config_file(self) -> str:
+        return self._dev_config_file
 
     def to_dto(self, host_url: str, token: str) -> StreamlitAppDTO:
         return StreamlitAppDTO(

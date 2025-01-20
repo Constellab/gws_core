@@ -44,9 +44,12 @@ class StreamlitProcess:
 
     _check_is_running: bool = False
 
-    MAIN_APP_FILE_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)))
-    NORMAL_APP_MAIN_FILE = "_main_streamlit_app.py"
-    ENV_APP_MAIN_FILE = "_main_streamlit_app_env.py"
+    _dev_mode: bool = False
+    _dev_config_file: str = None
+
+    MAIN_APP_FILE_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_streamlit_main_app')
+    NORMAL_APP_MAIN_FILE = "main_streamlit_app.py"
+    ENV_APP_MAIN_FILE = "main_streamlit_app_env.py"
 
     # interval in second to check if the app is still used
     CHECK_RUNNING_INTERVAL = 30
@@ -68,7 +71,11 @@ class StreamlitProcess:
         app.generate_app(self.get_working_dir())
         self.current_running_apps[app.app_id] = app
 
-    def start_streamlit_process(self, shell_proxy: ShellProxy) -> None:
+    def set_dev_mode(self, dev_config_file: str) -> None:
+        self._dev_mode = True
+        self._dev_config_file = dev_config_file
+
+    def start_streamlit_process(self, app: StreamlitApp) -> None:
         Logger.debug(f"Starting streamlit process for port {self.port}")
 
         theme = self.get_current_user_theme()
@@ -82,16 +89,29 @@ class StreamlitProcess:
                # prevent streamlit to open the browser
                '--server.headless=true',
                #    '--theme.font=Roboto Serif',
-               # custom options
-               '--',
-               # configure a token to secure the app
-               f'--gws_token={self.token}',
-               f'--app_dir={self.get_working_dir()}',
                ]
+
+        if app.is_dev_mode():
+            cmd += [
+                # custom options
+                '--',
+                # configure a token to secure the app
+                f'--dev_mode={app.is_dev_mode()}',
+                f'--dev_config_file={app.get_dev_config_file()}',
+            ]
+        else:
+            cmd += [
+                # custom options
+                '--',
+                # configure a token to secure the app
+                f'--gws_token={self.token}',
+                f'--app_dir={self.get_working_dir()}',
+            ]
 
         # check if the env is installed
         # if should be installed by the task that generated the app
         # otherwise the env would installed when the user open the app, leading to a long loading time
+        shell_proxy = app.get_shell_proxy()
         if isinstance(shell_proxy, BaseEnvShell) and not shell_proxy.env_is_installed():
             raise Exception(
                 "The virtual environment is not installed, it was deleted. Please re-execute the task that generated the app to re-install the virtual environment.")

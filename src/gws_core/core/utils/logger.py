@@ -68,7 +68,7 @@ class Logger:
 
     _waiting_messages: list = []
 
-    def __init__(self, log_dir: str = None,
+    def __init__(self, log_dir: str,
                  level: LoggerLevel = "INFO", scenario_id: str = None) -> None:
         """Create the Gencovery logger, it logs into the console and into a file
 

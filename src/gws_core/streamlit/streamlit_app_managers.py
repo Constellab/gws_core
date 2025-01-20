@@ -66,7 +66,7 @@ class StreamlitAppManager():
         cls.running_processes[env_hash] = streamlit_process
 
         try:
-            streamlit_process.start_streamlit_process(app.get_shell_proxy())
+            streamlit_process.start_streamlit_process(app)
             streamlit_process.create_app(app)
         except Exception as e:
             cls.stop_process(env_hash)
