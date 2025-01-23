@@ -79,7 +79,7 @@ class SystemService:
         # Force this init because it is overriden when importing streamlit
         px.defaults.color_discrete_sequence = px.colors.qualitative.Plotly
 
-        if not Settings.is_test:
+        if not Settings.get_instance().is_test:
             ProcessService.init_cron_thread_run_stats()
 
     @classmethod
