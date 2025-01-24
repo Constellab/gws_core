@@ -3,11 +3,10 @@ import json
 import os
 
 import typer
-from typing_extensions import Annotated, Literal
-
 from gws_core import (CondaShellProxy, LoggerMessageObserver, MambaShellProxy,
                       PipShellProxy, ShellProxy, StreamlitApp,
                       StreamlitAppManager, Utils)
+from typing_extensions import Annotated, Literal
 
 app = typer.Typer()
 
@@ -18,11 +17,11 @@ def _get_shell_proxy(env_type: EnvType, env_file_path: str) -> ShellProxy:
     if env_type == "NONE":
         return ShellProxy()
     elif env_type == "PIP":
-        return PipShellProxy(None, env_file_path)
+        return PipShellProxy(env_file_path)
     elif env_type == "CONDA":
-        return CondaShellProxy(None, env_file_path)
+        return CondaShellProxy(env_file_path)
     elif env_type == "MAMBA":
-        return MambaShellProxy(None, env_file_path)
+        return MambaShellProxy(env_file_path)
     else:
         raise ValueError(f"Invalid env type '{env_type}'")
 

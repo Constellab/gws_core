@@ -8,8 +8,6 @@ from json import dump, load
 from pathlib import Path
 from typing import Any, Dict, Union, final
 
-from typing_extensions import Literal
-
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
@@ -17,6 +15,7 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.virtual_env.venv_dto import VEnvCreationInfo
+from typing_extensions import Literal
 
 from .shell_proxy import ShellProxy, ShellProxyDTO
 
@@ -33,7 +32,7 @@ class BaseEnvShell(ShellProxy):
     # overrided by subclasses. Use to define the default env file name
     CONFIG_FILE_NAME: str = None
 
-    def __init__(self, env_name: str, env_file_path: Union[Path, str],
+    def __init__(self, env_file_path: Union[Path, str], env_name: str = None,
                  working_dir: str = None, message_dispatcher: MessageDispatcher = None):
         """_summary_
 

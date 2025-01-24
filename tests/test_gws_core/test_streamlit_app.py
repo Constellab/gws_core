@@ -1,12 +1,8 @@
 
 
-import os
-
 from pandas import DataFrame
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.core.utils.settings import Settings
-from gws_core.impl.file.file import File
 from gws_core.impl.table.table import Table
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
@@ -14,8 +10,6 @@ from gws_core.streamlit.streamlit_app_managers import StreamlitAppManager
 from gws_core.streamlit.streamlit_process import StreamlitProcess
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.test.base_test_case import BaseTestCase
-from gws_core.test.gtest import GTest
-from gws_core.user.current_user_service import AuthenticateUser
 
 
 # test_streamlit_app

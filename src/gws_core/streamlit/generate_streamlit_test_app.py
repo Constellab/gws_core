@@ -32,7 +32,7 @@ class TestDashboard(Dashboard):
             self.get_app_folder_path(),
             'streamlit_env.yml',
         )
-        return MambaShellProxy(None, env_path)
+        return MambaShellProxy(env_path)
 
 
 @task_decorator("GenerateStreamlitTestApp", human_name="GenerateStreamlitTestApp", hide=False)
