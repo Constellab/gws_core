@@ -80,7 +80,7 @@ class BaseEnvShell(ShellProxy):
         except Exception as err:
             raise Exception(f"Error while reading the env file. Error {err}") from err
 
-    def run(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = True) -> int:
+    def run(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = False) -> int:
         formatted_cmd = self.format_command(cmd)
 
         # compute env
@@ -93,7 +93,7 @@ class BaseEnvShell(ShellProxy):
 
         return super().run(formatted_cmd, complete_env, shell_mode)
 
-    def run_in_new_thread(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = True) -> SysProc:
+    def run_in_new_thread(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = False) -> SysProc:
         formatted_cmd = self.format_command(cmd)
 
         # compute env
