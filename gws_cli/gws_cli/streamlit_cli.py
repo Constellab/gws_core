@@ -56,5 +56,7 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the js
     streamit_app.set_dev_mode(config_file_path)
 
     url = StreamlitAppManager.create_or_get_app(streamit_app)
+    print("----------------------------------------------------------------------------------------------------------------------------------------------------------")
     print(
         f"Running streamlit in dev mode type '{app_type}', DO NOT USE IN PRODUCTION. You can access the dashboard at {url}")
+    print("----------------------------------------------------------------------------------------------------------------------------------------------------------")
