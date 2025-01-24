@@ -2,6 +2,6 @@
     "app_dir_path": "",
     "source_ids": [],
     "params": {},
-    "env_type": "NORMAL",
+    "env_type": "CONDA",
     "env_file_path": "streamlit_env.yml"
 }

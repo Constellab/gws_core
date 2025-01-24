@@ -1,23 +1,15 @@
 
 
 import os
-from typing import List, Literal
+from typing import List
 
-from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
-from gws_core.core.classes.observer.message_observer import \
-    LoggerMessageObserver
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
-from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
-from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
-from gws_core.impl.shell.pip_shell_proxy import PipShellProxy
 from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.streamlit.streamlit_dto import (StreamlitAppDTO,
                                               StreamlitConfigDTO)
 from gws_core.user.current_user_service import CurrentUserService
-
-StreamlitAppType = Literal['NORMAL', 'PIP_ENV', 'CONDA_ENV', 'MAMBA_ENV']
 
 
 class StreamlitApp():
@@ -28,10 +20,7 @@ class StreamlitApp():
     """
 
     app_id: str = None
-    app_type: StreamlitAppType = None
-
     streamlit_code: str = None
-    env_code: str = None
 
     # for normal app, the resources are the source ids
     # for env app, the resources are the file paths
@@ -41,7 +30,8 @@ class StreamlitApp():
     params: dict = None
 
     app_folder_path: str = None
-    env_file_path: str = None
+
+    _shell_proxy: ShellProxy = None
 
     _dev_mode: bool = False
     _dev_config_file: str = None
@@ -49,22 +39,20 @@ class StreamlitApp():
     APP_CONFIG_FILENAME = 'streamlit_config.json'
     MAIN_FILE = 'main.py'
 
-    def __init__(self, app_id: str, app_type: StreamlitAppType):
+    MAIN_APP_FILE_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_streamlit_main_app')
+    NORMAL_APP_MAIN_FILE = "main_streamlit_app.py"
+    ENV_APP_MAIN_FILE = "main_streamlit_app_env.py"
+
+    def __init__(self, app_id: str, shell_proxy: ShellProxy):
         self.app_id = app_id
-        self.app_type = app_type
         self.resources = []
+        self._shell_proxy = shell_proxy
 
     def set_streamlit_code(self, streamlit_code: str) -> None:
         self.streamlit_code = streamlit_code
 
-    def set_env_code(self, env_code: str) -> None:
-        self.env_code = env_code
-
     def set_streamlit_folder(self, streamlit_folder_path: str) -> None:
         self.app_folder_path = streamlit_folder_path
-
-    def set_env_file_path(self, env_file_path: str) -> None:
-        self.env_file_path = env_file_path
 
     def set_streamlit_code_path(self, streamlit_app_code_path: str) -> None:
         if not FileHelper.exists_on_os(streamlit_app_code_path):
@@ -137,55 +125,27 @@ class StreamlitApp():
             FileHelper.delete_dir(self._app_config_dir)
 
     def is_normal_app(self) -> bool:
-        return self.app_type == 'NORMAL'
+        return not isinstance(self._shell_proxy, BaseEnvShell)
 
     def get_env_code_hash(self) -> str:
-        if self.is_normal_app():
-            return self.app_type
-
-        env_code: str = None
-        if self.env_file_path:
-            if not FileHelper.exists_on_os(self.env_file_path):
-                raise Exception(f"The environment file '{self.env_file_path}' of the Streamlit app does not exist")
-
-            with open(self.env_file_path, 'r', encoding="utf-8") as file_path:
-                env_code = file_path.read()
-        else:
-            env_code = self.env_code
-
-        return BaseEnvShell.hash_env_str(env_code)
+        if isinstance(self._shell_proxy, BaseEnvShell):
+            return self._shell_proxy.env_hash
+        return "NORMAL"
 
     def get_shell_proxy(self) -> ShellProxy:
-        message_dispatcher = MessageDispatcher()
-        message_dispatcher.attach(LoggerMessageObserver())
-        if self.app_type == 'NORMAL':
-            return ShellProxy(message_dispatcher=message_dispatcher)
-
-        if self.env_file_path:
-            if self.app_type == 'CONDA_ENV':
-                return CondaShellProxy(env_name="streamlit_env", env_file_path=self.env_file_path,
-                                       message_dispatcher=message_dispatcher)
-            elif self.app_type == 'MAMBA_ENV':
-                return MambaShellProxy(env_name="streamlit_env", env_file_path=self.env_file_path,
-                                       message_dispatcher=message_dispatcher)
-            elif self.app_type == 'PIP_ENV':
-                return PipShellProxy(env_name="streamlit_env", env_file_path=self.env_file_path,
-                                     message_dispatcher=message_dispatcher)
-        else:
-            if self.app_type == 'CONDA_ENV':
-                return CondaShellProxy.from_env_str(env_str=self.env_code, message_dispatcher=message_dispatcher)
-            elif self.app_type == 'MAMBA_ENV':
-                return MambaShellProxy.from_env_str(env_str=self.env_code, message_dispatcher=message_dispatcher)
-            elif self.app_type == 'PIP_ENV':
-                return PipShellProxy.from_env_str(env_str=self.env_code, message_dispatcher=message_dispatcher)
-
-        raise Exception(f"Unknown app type: {self.app_type}")
+        return self._shell_proxy
 
     def is_dev_mode(self) -> bool:
         return self._dev_mode
 
     def get_dev_config_file(self) -> str:
         return self._dev_config_file
+
+    def get_main_app_file_path(self) -> str:
+        if self.is_normal_app():
+            return os.path.join(self.MAIN_APP_FILE_FOLDER, self.NORMAL_APP_MAIN_FILE)
+        else:
+            return os.path.join(self.MAIN_APP_FILE_FOLDER, self.ENV_APP_MAIN_FILE)
 
     def to_dto(self, host_url: str, token: str) -> StreamlitAppDTO:
         return StreamlitAppDTO(

@@ -5,13 +5,19 @@ from typing import Any, List, Type
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
+from gws_core.core.classes.observer.message_observer import \
+    LoggerMessageObserver
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
+from gws_core.impl.shell.base_env_shell import BaseEnvShell
+from gws_core.impl.shell.shell_proxy import ShellProxy, ShellProxyDTO
+from gws_core.impl.shell.shell_proxy_factory import ShellProxyFactory
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.dict_r_field import DictRField
+from gws_core.resource.r_field.model_r_field import ModelRfield
 from gws_core.resource.r_field.primitive_r_field import StrRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
@@ -20,7 +26,7 @@ from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view.view_decorator import view
-from gws_core.streamlit.streamlit_app import StreamlitApp, StreamlitAppType
+from gws_core.streamlit.streamlit_app import StreamlitApp
 from gws_core.streamlit.streamlit_app_managers import StreamlitAppManager
 from gws_core.streamlit.streamlit_dashboard import Dashboard
 from gws_core.streamlit.streamlit_view import StreamlitView
@@ -42,22 +48,17 @@ class StreamlitResource(ResourceList):
     # Used when code is passed as a string
     _streamlit_app_code: str = StrRField()
 
-    _app_type: StreamlitAppType = StrRField(default_value='NORMAL')
-
-    _env_code: str = StrRField()
+    _shell_proxy: ShellProxyDTO = ModelRfield(ShellProxyDTO)
 
     _params: dict = DictRField()
 
     _dashboard: Dashboard = None
 
-    def __init__(self, streamlit_app_code: str = None, app_type: StreamlitAppType = 'NORMAL',
-                 env_code: str = None):
+    def __init__(self, streamlit_app_code: str = None):
         super().__init__()
-        if app_type != 'NORMAL' and not env_code:
-            raise Exception("The env_code must be set when the app is executed in a virtual environment")
+
         self._streamlit_app_code = streamlit_app_code
-        self._app_type = app_type
-        self._env_code = env_code
+        self._shell_proxy = ShellProxy().to_dto()
 
     def get_streamlit_app_code(self) -> str:
         """
@@ -78,10 +79,10 @@ class StreamlitResource(ResourceList):
         """
         self._streamlit_app_code = streamlit_code
 
-    def set_streamlit_code_path(self, streamlit_app_code_path: str) -> None:
+    def copy_streamlit_code_path(self, streamlit_app_code_path: str) -> None:
         """
         Set the streamlit code from a file path.
-        The file will be read and the content will be set as the streamlit code.
+        The file will be read and the content will be copied as the streamlit code.
         Don't use this if you have multiple files for the streamlit app. In this case, use the set_streamlit_folder method.
         The code is stored as a string, the dashboard need to be re-generated to update the code.
 
@@ -110,11 +111,9 @@ class StreamlitResource(ResourceList):
         if not isinstance(dashboard, Dashboard):
             raise Exception("Dashboard must be a Dashboard instance")
 
-        if dashboard.get_app_type() != 'NORMAL' and not dashboard.get_env_file_path():
-            raise Exception(
-                "The get_env_file_path method must be implemented when the dashboard is executed in a virtual environment")
+        if not isinstance(dashboard.get_shell_proxy(), ShellProxy):
+            raise Exception("The dashboard 'get_shell_proxy' method must return a 'ShellProxy' instance")
 
-        self._app_type = dashboard.get_app_type()
         folder_path = dashboard.get_app_folder_path()
         self._check_folder(folder_path)
 
@@ -209,7 +208,7 @@ class StreamlitResource(ResourceList):
 
     #################################### ENV CODE ####################################
 
-    def set_env_code(self, env_code: str) -> None:
+    def set_env_shell_proxy(self, shell_proxy: BaseEnvShell) -> None:
         """
         Set the code that will be executed in the streamlit environment.
         This code is executed before the streamlit app is loaded and can be used to load environment variables.
@@ -217,20 +216,14 @@ class StreamlitResource(ResourceList):
         :param env_code: code that will be executed
         :type env_code: str
         """
-        self._env_code = env_code
+        if not isinstance(shell_proxy, BaseEnvShell):
+            raise Exception("The shell proxy must be a BaseEnvShell instance")
 
-    def get_app_type(self) -> StreamlitAppType:
-        """
-        Get the type of the streamlit app.
+        typing_name = shell_proxy.get_typing_name()
+        if not typing_name:
+            raise Exception("The shell proxy must have a typing name, is it decorated with @typing_registrator ?")
 
-        :return: type of the streamlit app
-        :rtype: StreamlitAppType
-        """
-        # the dashboard info overrides the app type
-        dashboard = self._get_dashboard()
-        if dashboard:
-            return dashboard.get_app_type()
-        return self._app_type
+        self._shell_proxy = shell_proxy.to_dto()
 
     def is_virtual_env(self) -> bool:
         """
@@ -239,7 +232,7 @@ class StreamlitResource(ResourceList):
         :return: True if the streamlit app is executed in a virtual environment
         :rtype: bool
         """
-        return self.get_app_type() != 'NORMAL'
+        return isinstance(self._get_shell_proxy(), BaseEnvShell)
     #################################### RESOURCES ####################################
 
     def add_resource(self, resource, create_new_resource=True) -> None:
@@ -289,10 +282,23 @@ class StreamlitResource(ResourceList):
 
     #################################### VIEWS ####################################
 
+    def _get_shell_proxy(self) -> ShellProxy:
+        dashboard = self._get_dashboard()
+
+        if dashboard:
+            return dashboard.get_shell_proxy()
+
+        if self._shell_proxy:
+            return ShellProxyFactory.build_shell_proxy(self._shell_proxy)
+
+        return ShellProxy()
+
     @view(view_type=StreamlitView, human_name="Dashboard", short_description="Dahsboard generated with streamlit", default_view=True)
     def default_view(self, _: ConfigParams) -> StreamlitView:
 
-        streamlit_app = StreamlitApp(self.uid, self.get_app_type())
+        shell_proxy = self._get_shell_proxy()
+        shell_proxy.attach_observer(LoggerMessageObserver())
+        streamlit_app = StreamlitApp(self.uid, shell_proxy)
 
         dashboard = self._get_dashboard()
 
@@ -307,16 +313,6 @@ class StreamlitResource(ResourceList):
             streamlit_app.set_streamlit_code(self.get_streamlit_app_code())
         else:
             raise Exception("The streamlit code must be set")
-
-        # Add the env code
-        if self.is_virtual_env():
-            if dashboard:
-                streamlit_app.set_env_file_path(dashboard.get_env_file_path())
-            elif self._env_code:
-                streamlit_app.set_env_code(self._env_code)
-            else:
-                raise Exception(
-                    "The virtual environment code or file path must be set when the app is executed in a virtual environment")
 
         # add the resources as input of the streamlit app
         resources: List[str] = []
@@ -351,7 +347,7 @@ class StreamlitResource(ResourceList):
         :rtype: StreamlitResource
         """
         streamlit_resource = StreamlitResource()
-        streamlit_resource.set_streamlit_code_path(streamlit_app_code_path)
+        streamlit_resource.copy_streamlit_code_path(streamlit_app_code_path)
         return streamlit_resource
 
     @classmethod

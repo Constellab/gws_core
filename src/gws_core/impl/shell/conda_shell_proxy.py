@@ -7,10 +7,12 @@ from typing_extensions import Literal
 
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.virtual_env.venv_dto import VEnvCreationInfo
+from gws_core.model.typing_register_decorator import typing_registrator
 
 from .base_env_shell import BaseEnvShell
 
 
+@typing_registrator(unique_name="CondaShellProxy", object_type="MODEL", hide=True)
 class CondaShellProxy(BaseEnvShell):
 
     CONFIG_FILE_NAME = "environment.yml"

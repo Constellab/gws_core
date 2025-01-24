@@ -50,6 +50,8 @@ from .core.classes.observer.message_dispatcher import \
     MessageDispatcher as MessageDispatcher
 from .core.classes.observer.message_level import MessageLevel as MessageLevel
 from .core.classes.observer.message_observer import \
+    LoggerMessageObserver as LoggerMessageObserver
+from .core.classes.observer.message_observer import \
     MessageObserver as MessageObserver
 from .core.classes.observer.message_observer import \
     ProgressBarMessageObserver as ProgressBarMessageObserver
@@ -182,6 +184,8 @@ from .impl.shell.conda_shell_proxy import CondaShellProxy as CondaShellProxy
 from .impl.shell.mamba_shell_proxy import MambaShellProxy as MambaShellProxy
 from .impl.shell.pip_shell_proxy import PipShellProxy as PipShellProxy
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy
+from .impl.shell.shell_proxy_factory import \
+    ShellProxyFactory as ShellProxyFactory
 # Impl > Table
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
 from .impl.table.helper.dataframe_aggregator_helper import \
@@ -357,6 +361,7 @@ from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
 from .resource.kv_store import KVStore as KVStore
 from .resource.r_field.dict_r_field import DictRField as DictRField
 from .resource.r_field.list_r_field import ListRField as ListRField
+from .resource.r_field.model_r_field import ModelRfield as ModelRfield
 from .resource.r_field.primitive_r_field import BoolRField as BoolRField
 from .resource.r_field.primitive_r_field import FloatRField as FloatRField
 from .resource.r_field.primitive_r_field import IntRField as IntRField
@@ -424,7 +429,6 @@ from .scenario_template.scenario_template_factory import \
 from .space.mail_service import MailService as MailService
 # Streamlit
 from .streamlit.streamlit_app import StreamlitApp as StreamlitApp
-from .streamlit.streamlit_app import StreamlitAppType as StreamlitAppType
 from .streamlit.streamlit_app_managers import \
     StreamlitAppManager as StreamlitAppManager
 from .streamlit.streamlit_dashboard import Dashboard as Dashboard

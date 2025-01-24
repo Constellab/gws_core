@@ -10,7 +10,6 @@ from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
 from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
 from gws_core.model.typing_style import TypingIconType
 from gws_core.streamlit.agents.streamlit_env_agent import StreamlitEnvAgent
-from gws_core.streamlit.streamlit_app import StreamlitAppType
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -35,9 +34,6 @@ class StreamlitCondaAgent(StreamlitEnvAgent):
             short_description="Code of the streamlit app to run")
     }
 
-    def get_app_type(self) -> StreamlitAppType:
-        return 'CONDA_ENV'
-
     def get_shell_proxy(self, env: str) -> BaseEnvShell:
         return CondaShellProxy.from_env_str(env, message_dispatcher=self.message_dispatcher)
 
@@ -46,7 +42,6 @@ class StreamlitCondaAgent(StreamlitEnvAgent):
         shell_proxy = self.get_shell_proxy(params.get_value('env'))
         streamlit_resource = self.run_agent(inputs.get('source'),
                                             params.get_value('params'),
-                                            self.get_app_type(),
                                             params.get_value('code'),
                                             params.get_value('env'),
                                             env_shell_proxy=shell_proxy)
@@ -59,9 +54,6 @@ class StreamlitCondaAgent(StreamlitEnvAgent):
                 style=StreamlitResource.copy_style(
                     icon_technical_name='agent', icon_type=TypingIconType.MATERIAL_ICON))
 class StreamlitMambaAgent(StreamlitCondaAgent):
-
-    def get_app_type(self) -> StreamlitAppType:
-        return 'MAMBA_ENV'
 
     def get_shell_proxy(self, env: str) -> BaseEnvShell:
         return MambaShellProxy.from_env_str(env, message_dispatcher=self.message_dispatcher)

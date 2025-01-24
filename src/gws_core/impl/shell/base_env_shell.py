@@ -18,7 +18,7 @@ from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.virtual_env.venv_dto import VEnvCreationInfo
 
-from .shell_proxy import ShellProxy
+from .shell_proxy import ShellProxy, ShellProxyDTO
 
 
 class BaseEnvShell(ShellProxy):
@@ -319,6 +319,15 @@ class BaseEnvShell(ShellProxy):
 
         return FileHelper.create_dir_if_not_exist(self.get_env_dir_path())
 
+    @final
+    def read_env_file(self) -> str:
+        """
+        Read the env file and return its content.
+        """
+
+        with open(self.env_file_path, 'r', encoding='utf-8') as file:
+            return file.read()
+
     @classmethod
     def folder_is_env(cls, folder_path: str) -> bool:
         """return true if the folder is a valid env folder"""
@@ -336,7 +345,7 @@ class BaseEnvShell(ShellProxy):
             return VEnvCreationInfo.from_json(load(json_file))
 
     @classmethod
-    def from_env_str(cls, env_str: str, message_dispatcher: MessageDispatcher) -> "BaseEnvShell":
+    def from_env_str(cls, env_str: str, message_dispatcher: MessageDispatcher = None) -> "BaseEnvShell":
         """
         Create the virtual environment from a string containing the environment definition.
 
@@ -369,3 +378,9 @@ class BaseEnvShell(ShellProxy):
         """
         Returns the type of the env
         """
+
+    def to_dto(self) -> ShellProxyDTO:
+        return ShellProxyDTO(
+            typing_name=self.get_typing_name(),
+            env_code=self.read_env_file(),
+        )

@@ -37,7 +37,6 @@ class StreamlitPipenvAgent(StreamlitEnvAgent):
         shell_proxy = PipShellProxy.from_env_str(params.get_value('env'), message_dispatcher=self.message_dispatcher)
         streamlit_resource = self.run_agent(inputs.get('source'),
                                             params.get_value('params'),
-                                            'PIP_ENV',
                                             params.get_value('code'),
                                             params.get_value('env'),
                                             env_shell_proxy=shell_proxy)

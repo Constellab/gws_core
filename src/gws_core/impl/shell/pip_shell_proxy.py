@@ -5,10 +5,12 @@ from typing import Union
 from typing_extensions import Literal
 
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.model.typing_register_decorator import typing_registrator
 
 from .base_env_shell import BaseEnvShell
 
 
+@typing_registrator(unique_name="PipShellProxy", object_type="MODEL", hide=True)
 class PipShellProxy(BaseEnvShell):
 
     CONFIG_FILE_NAME = "Pipfile"

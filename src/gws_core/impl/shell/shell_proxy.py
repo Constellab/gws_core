@@ -2,22 +2,27 @@
 
 import select
 import subprocess
-from threading import Thread
-from typing import Any, List, Union
+from typing import Any, List, Optional, Union
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import MessageObserver
+from gws_core.core.model.base_typing import BaseTyping
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.model.typing_register_decorator import typing_registrator
 from gws_core.progress_bar.progress_bar import ProgressBar
 
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
-from ...core.utils.settings import Settings
+
+class ShellProxyDTO(BaseModelDTO):
+    typing_name: str
+    env_code: Optional[str] = None
 
 
-class ShellProxy():
+@typing_registrator(unique_name="ShellProxy", object_type="MODEL", hide=True)
+class ShellProxy(BaseTyping):
     """
     Shell task proxy.
 
@@ -277,3 +282,8 @@ class ShellProxy():
         # add support for with statement
         self.clean_working_dir()
         return True
+
+    def to_dto(self) -> ShellProxyDTO:
+        return ShellProxyDTO(
+            typing_name=self.get_typing_name(),
+        )

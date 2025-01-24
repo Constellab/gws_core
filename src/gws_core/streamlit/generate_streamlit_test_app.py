@@ -3,9 +3,10 @@ import os
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.file.folder import Folder
+from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
+from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
-from gws_core.streamlit.streamlit_app import StreamlitAppType
 from gws_core.streamlit.streamlit_dashboard import (Dashboard, DashboardType,
                                                     dashboard_decorator)
 from gws_core.streamlit.streamlit_resource import StreamlitResource
@@ -26,14 +27,12 @@ class TestDashboard(Dashboard):
             "_test_streamlit_dashboard"
         )
 
-    def get_app_type(self) -> StreamlitAppType:
-        return "MAMBA_ENV"
-
-    def get_env_file_path(self):
-        return os.path.join(
+    def get_shell_proxy(self) -> ShellProxy:
+        env_path = os.path.join(
             self.get_app_folder_path(),
             'streamlit_env.yml',
         )
+        return MambaShellProxy(None, env_path)
 
 
 @task_decorator("GenerateStreamlitTestApp", human_name="GenerateStreamlitTestApp", hide=False)

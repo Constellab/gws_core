@@ -55,7 +55,7 @@ class StreamlitAgent(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # build the streamlit resource with the code and the resources
-        streamlit_resource = StreamlitResource(params.get_value('code'), app_type='NORMAL')
+        streamlit_resource = StreamlitResource(params.get_value('code'))
         streamlit_resource.set_params(params.get_value('params'))
         resource_list: ResourceList = inputs.get('source')
         streamlit_resource.add_multiple_resources(resource_list.to_list(), self.message_dispatcher)

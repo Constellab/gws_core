@@ -62,7 +62,7 @@ class StreamlitAppManager():
             host_url = f"http://localhost:{port}"
 
         # create a new process
-        streamlit_process = StreamlitProcess(port, host_url, app.app_type, env_hash)
+        streamlit_process = StreamlitProcess(port, host_url, env_hash)
         cls.running_processes[env_hash] = streamlit_process
 
         try:

@@ -7,9 +7,9 @@ from typing import Callable, Type
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.model.base_typing import BaseTyping
 from gws_core.core.utils.utils import Utils
+from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.model.typing_register_decorator import register_gws_typing_class
 from gws_core.model.typing_style import TypingStyle
-from gws_core.streamlit.streamlit_app import StreamlitAppType
 
 
 class DashboardType(Enum):
@@ -29,11 +29,14 @@ class Dashboard(BaseTyping):
         :rtype: str
         """
 
-    def get_app_type(self) -> StreamlitAppType:
-        return "NORMAL"
+    def get_shell_proxy(self) -> ShellProxy:
+        """Override this method to return a env shell proxy if your dashboard
+        needs to run in a virtual environment.
 
-    def get_env_file_path(self) -> str:
-        return None
+        :return: _description_
+        :rtype: ShellProxy
+        """
+        return ShellProxy()
 
 
 def dashboard_decorator(unique_name: str,

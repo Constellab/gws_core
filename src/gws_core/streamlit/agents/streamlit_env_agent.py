@@ -11,7 +11,6 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingIconType
 from gws_core.resource.resource_set.resource_list import ResourceList
-from gws_core.streamlit.streamlit_app import StreamlitAppType
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
@@ -52,14 +51,15 @@ class StreamlitEnvAgent(Task):
         pass
 
     def run_agent(self, resources: ResourceList, params: Dict[str, Any],
-                  app_type: StreamlitAppType, code: str, env_code: str = None,
+                  code: str, env_code: str = None,
                   env_shell_proxy: BaseEnvShell = None) -> StreamlitResource:
 
         if env_code is not None and 'streamlit' not in env_code:
             raise Exception("The env code must contain the 'streamlit' package")
 
         # build the streamlit resource with the code and the resources
-        streamlit_resource = StreamlitResource(code, app_type=app_type, env_code=env_code)
+        streamlit_resource = StreamlitResource(code)
+        streamlit_resource.set_env_shell_proxy(env_shell_proxy)
         streamlit_resource.set_params(params)
         streamlit_resource.add_multiple_resources(resources.to_list(), self.message_dispatcher)
 
