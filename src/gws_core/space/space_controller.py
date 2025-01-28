@@ -7,7 +7,8 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.folder.space_folder_dto import ExternalSpaceFolder
+from gws_core.folder.space_folder_dto import (ExternalSpaceFolder,
+                                              ExternalSpaceFolders)
 from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.lab.system_dto import SettingsDTO
@@ -142,7 +143,6 @@ def get_users(_=Depends(AuthSpace.check_space_api_key_and_user)) -> List[UserFul
 def create_folder(folder: ExternalSpaceFolder, _=Depends(AuthSpace.check_space_api_key)) -> None:
     """
     Register a space folder to the lab
-
     """
 
     SpaceFolderService.synchronize_space_folder(folder)
@@ -152,13 +152,30 @@ def create_folder(folder: ExternalSpaceFolder, _=Depends(AuthSpace.check_space_a
 def delete_folder(id_: str, _=Depends(AuthSpace.check_space_api_key)) -> None:
     """
     Remove a folder from the lab
-
     """
 
     SpaceFolderService.delete_folder(id_)
 
 
+@space_app.post("/folder/sync", tags=["Folder"])
+def sync_all_folders(folders: ExternalSpaceFolders, _=Depends(AuthSpace.check_space_api_key)) -> None:
+    """
+    Sync all the folders from the space to the lab
+    """
+
+    SpaceFolderService.synchronize_all_folders(folders)
+
+
+@space_app.put("/folder/{id_}/move/{parent_id}", tags=["Folder"])
+def move_folder(id_: str, parent_id: str, _=Depends(AuthSpace.check_space_api_key)) -> None:
+    """
+    Move a folder to another folder
+    """
+
+    SpaceFolderService.move_folder(id_, parent_id)
+
 ############################################### SCENARIO #####################################################
+
 
 @space_app.get("/lab/global-activity", tags=["Scenario"])
 def lab_activity(_=Depends(AuthSpace.check_space_api_key)) -> LabActivityReponseDTO:

@@ -21,7 +21,7 @@ from gws_core.user.user_dto import UserFullDTO, UserSpace
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings
-from ..folder.space_folder_dto import ExternalSpaceFolder
+from ..folder.space_folder_dto import ExternalSpaceFolder, ExternalSpaceFolders
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from ..user.user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
@@ -261,7 +261,7 @@ class SpaceService():
     #################################### SYNCHRONIZATION ####################################
 
     @classmethod
-    def get_all_lab_folders(cls) -> List[ExternalSpaceFolder]:
+    def get_all_lab_folders(cls) -> ExternalSpaceFolders:
         """
         Call the space api to get the list of folder for this lab
         """
@@ -278,7 +278,8 @@ class SpaceService():
             raise err
 
         # get response and parse it to a list of spaceFolder
-        return ExternalSpaceFolder.from_json_list(response.json())
+        root_folders = ExternalSpaceFolder.from_json_list(response.json())
+        return ExternalSpaceFolders(folders=root_folders)
 
     @classmethod
     def get_lab_root_folder(cls, id_: str) -> ExternalSpaceFolder:

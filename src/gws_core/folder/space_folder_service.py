@@ -1,6 +1,6 @@
 
 
-from typing import List, Type
+from typing import List, Set, Type
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -13,7 +13,7 @@ from gws_core.scenario.scenario import Scenario
 from gws_core.space.space_service import SpaceService
 
 from .space_folder import SpaceFolder
-from .space_folder_dto import ExternalSpaceFolder
+from .space_folder_dto import ExternalSpaceFolder, ExternalSpaceFolders
 
 
 class SpaceFolderService():
@@ -34,9 +34,9 @@ class SpaceFolderService():
 
         try:
             external_folders = SpaceService.get_all_lab_folders()
-            cls.synchronize_folders(external_folders)
+            cls.synchronize_all_folders(external_folders)
 
-            Logger.info(f"{len(external_folders)} folders synchronized from space")
+            Logger.info(f"{len(external_folders.folders)} root folders synchronized from space")
         except Exception as err:
             Logger.error(f"Error while synchronizing folders from space: {err}")
             raise err
@@ -50,19 +50,32 @@ class SpaceFolderService():
         cls.synchronize_space_folder(space_root_folder)
 
     @classmethod
-    def synchronize_folders(cls, external_folders: List[ExternalSpaceFolder]) -> None:
+    def synchronize_all_folders(cls, external_folders: ExternalSpaceFolders) -> None:
         """Method that synchronize a list of folders from space into the lab
         """
 
-        for space_folder in external_folders:
-            cls.synchronize_space_folder(space_folder)
+        for space_folder in external_folders.folders:
+            # sync the root folder and its children but do not delete the children
+            # as they might have moved, the deletetion is handled after
+            cls._synchronize_space_folder(space_folder, None)
 
-        # check the root folders to delete
-        root_folders: List[SpaceFolder] = list(SpaceFolder.get_roots())
-        external_folder_ids = [space_folder.id for space_folder in external_folders]
-        for root_folder in root_folders:
-            if root_folder.id not in external_folder_ids:
-                cls.delete_folder(root_folder.id)
+        # check the folders to delete
+        current_root_folders: List[SpaceFolder] = list(SpaceFolder.get_roots())
+        for root_folder in current_root_folders:
+            cls._delete_folder_on_sync(root_folder, external_folders)
+
+    @classmethod
+    def _delete_folder_on_sync(cls, folder: SpaceFolder, external_folders: ExternalSpaceFolders) -> None:
+        """
+        Method that loop through all folder children in DB and
+        delete them if they are not in the external folders.
+        It is used after synced to delete the folders that were removed from the space
+        """
+        if not external_folders.folder_exist(folder.id):
+            cls.delete_folder(folder.id)
+
+        for child in folder.children:
+            cls._delete_folder_on_sync(child, external_folders)
 
     @classmethod
     def synchronize_space_folder(cls, external_folder: ExternalSpaceFolder) -> None:
@@ -70,6 +83,12 @@ class SpaceFolderService():
         """
 
         cls._synchronize_space_folder(external_folder, None)
+
+        # delete the children folder that were removed from the space folder
+        root_folder = SpaceFolder.get_by_id_and_check(external_folder.id)
+        if external_folder.children:
+            folders = ExternalSpaceFolders(folders=[external_folder])
+            cls._delete_folder_on_sync(root_folder, folders)
 
     @classmethod
     def _synchronize_space_folder(cls, external_folder: ExternalSpaceFolder, parent: ExternalSpaceFolder) -> None:
@@ -86,12 +105,6 @@ class SpaceFolderService():
         lab_folder.title = external_folder.title
         lab_folder.parent = parent
         lab_folder.save()
-
-        # delete children that are not in the space folder
-        if lab_folder.children:
-            for child in lab_folder.children:
-                if child.id not in [otherChild.id for otherChild in external_folder.children]:
-                    cls.delete_folder(child.id)
 
         if external_folder.children is not None:
             for child in external_folder.children:
@@ -123,4 +136,19 @@ class SpaceFolderService():
             entity.clear_folder(folders)
 
         folder.delete_instance()
-        return None
+
+    @classmethod
+    def move_folder(cls, folder_id: str, new_parent_id: str) -> None:
+
+        if folder_id == new_parent_id:
+            raise BadRequestException("Cannot move a folder into itself")
+
+        folder = SpaceFolder.get_by_id_and_check(folder_id)
+        new_parent = SpaceFolder.get_by_id_and_check(new_parent_id)
+
+        # check if the new parent is not a child of the folder
+        if new_parent.has_ancestor(folder_id):
+            raise BadRequestException("Cannot move a folder into a child folder")
+
+        folder.parent = new_parent
+        folder.save()

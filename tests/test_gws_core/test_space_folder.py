@@ -5,7 +5,8 @@ from typing import List
 from gws_core import BaseTestCase
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.folder.space_folder import SpaceFolder
-from gws_core.folder.space_folder_dto import ExternalSpaceFolder
+from gws_core.folder.space_folder_dto import (ExternalSpaceFolder,
+                                              ExternalSpaceFolders)
 from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_service import ScenarioService
@@ -125,7 +126,7 @@ class TestFolder(BaseTestCase):
             }),
         ]
 
-        SpaceFolderService.synchronize_folders(space_folders)
+        SpaceFolderService.synchronize_all_folders(ExternalSpaceFolders(folders=space_folders))
 
         self.assertEqual(SpaceFolder.select().count(), 4)
         root_1 = SpaceFolder.get_by_id_and_check("caf61803-70e5-4ac3-9adb-53a35f65a2f1")
@@ -161,7 +162,7 @@ class TestFolder(BaseTestCase):
             }),
         ]
 
-        SpaceFolderService.synchronize_folders(new_folders)
+        SpaceFolderService.synchronize_all_folders(ExternalSpaceFolders(folders=new_folders))
 
         self.assertEqual(SpaceFolder.select().count(), 4)
         new_root_1 = SpaceFolder.get_by_id_and_check("caf61803-70e5-4ac3-9adb-53a35f65a2f1")
@@ -177,3 +178,52 @@ class TestFolder(BaseTestCase):
         self.assertIsNone(SpaceFolder.get_by_id("caf61803-70e5-4ac3-9adb-53a35f65a2f5"))
         # check root 3 was created
         self.assertIsNotNone(SpaceFolder.get_by_id("caf61803-70e5-4ac3-9adb-53a35f65a2f7"))
+
+        # Test move folder
+        new_folders_2: List[ExternalSpaceFolder] = [
+            ExternalSpaceFolder.from_json({
+                "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
+                "title": "Root new",
+                "children": [
+                    {
+                        "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f2",
+                        "title": "Work package 1 new",  # title updated
+                    },
+
+                ]
+            }),
+            # root 2 removed
+            # new root 3
+            ExternalSpaceFolder.from_json({
+                "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f7",
+                "title": "Root folder 3",
+                "children": [
+                    # // moved from root 1
+                    {
+                        "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f6",
+                        "title": "New child",
+                    }]
+            }),
+        ]
+
+        # Attach a scenario to the moved folder to check that it is not deleted but only moved
+        scenario: Scenario = ScenarioService.create_scenario(folder_id='caf61803-70e5-4ac3-9adb-53a35f65a2f6')
+        scenario.last_sync_at = DateHelper.now_utc()
+        scenario.last_sync_by = scenario.created_by
+        scenario.save()
+
+        SpaceFolderService.synchronize_all_folders(ExternalSpaceFolders(folders=new_folders_2))
+        self.assertEqual(SpaceFolder.select().count(), 4)
+        root_1 = SpaceFolder.get_by_id_and_check("caf61803-70e5-4ac3-9adb-53a35f65a2f1")
+        self.assertEqual(len(root_1.children), 1)
+        self.assertEqual(root_1.children[0].id, 'caf61803-70e5-4ac3-9adb-53a35f65a2f2')
+
+        root_3 = SpaceFolder.get_by_id_and_check("caf61803-70e5-4ac3-9adb-53a35f65a2f7")
+        self.assertEqual(len(root_3.children), 1)
+        self.assertEqual(root_3.children[0].id, 'caf61803-70e5-4ac3-9adb-53a35f65a2f6')
+
+        scenario = scenario.refresh()
+        self.assertEqual(scenario.folder.id, 'caf61803-70e5-4ac3-9adb-53a35f65a2f6')
+        # clean scenario to allow folder deletion
+        scenario.folder = None
+        scenario.save()

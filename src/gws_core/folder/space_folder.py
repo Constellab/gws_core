@@ -10,7 +10,7 @@ from gws_core.folder.space_folder_dto import SpaceFolderDTO, SpaceFolderTreeDTO
 
 class SpaceFolder(Model):
     title: str = CharField(null=False, max_length=100)
-    parent = ForeignKeyField('self', null=True, backref='children', on_delete='CASCADE')
+    parent: 'SpaceFolder' = ForeignKeyField('self', null=True, backref='children', on_delete='CASCADE')
 
     children: List['SpaceFolder']
 
@@ -63,6 +63,19 @@ class SpaceFolder(Model):
             children += child.get_with_children_as_list()
 
         return children
+
+    def has_ancestor(self, id_: str) -> bool:
+        """
+        Check if the folder has an ancestor with the given id.
+        """
+
+        if self.parent is None:
+            return False
+
+        if self.parent.id == id_:
+            return True
+
+        return self.parent.has_ancestor(id_)
 
     def _before_insert(self) -> None:
         pass
