@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING, List, Optional, final
 
-from peewee import BigIntegerField, BooleanField, CharField
+from peewee import BigIntegerField, BooleanField, CharField, Expression
 
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
@@ -52,6 +52,10 @@ class FSNodeModel(Model):
     @classmethod
     def path_start_with(cls, path: str) -> List['FSNodeModel']:
         return list(cls.select().where(cls.path.startswith(path)))
+
+    @classmethod
+    def get_extension_expression(cls, extension: str) -> Expression:
+        return cls.path.endswith(extension)
 
     def get_resource_model(self) -> 'ResourceModel':
         from gws_core.resource.resource_model import ResourceModel

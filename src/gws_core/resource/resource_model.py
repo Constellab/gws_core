@@ -184,14 +184,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         if not Utils.issubclass(type_, Resource):
             raise Exception(f"{type_} is not a subclass of Resource")
 
-        # retrieve all the sub type of the type
-        resource_types: Set[Type[Resource]] = {
-            type_}.union(Utils.get_all_subclasses(type_))
-        # get the typing names
-        resource_typing_names = [
-            resource_type.get_typing_name() for resource_type in resource_types]
-        # select the resource model with the typing name
-        return ResourceModel.select().where(ResourceModel.resource_typing_name.in_(resource_typing_names))
+        return ResourceModel.select().where(cls.get_by_types_and_sub_expression([type_.get_typing_name()]))
 
     @transaction()
     def save_full(self) -> 'ResourceModel':

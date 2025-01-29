@@ -5,6 +5,9 @@ from json import dump, load
 
 import streamlit as st
 
+from gws_core import FSNode
+from gws_core.streamlit import ResourceSearchInput
+
 # from gws_core import FileHelper, RichText
 # from gws_core.resource.resource_model import ResourceModel
 # from gws_core.streamlit import rich_text_editor
@@ -14,6 +17,8 @@ import streamlit as st
 sources: list
 
 st.title("Hello World")
+search = ResourceSearchInput().add_fs_node_extension_filter('.csv').select()
+
 
 # folder = sources[0]
 # file_path = os.path.join(folder.path, 'test.json')

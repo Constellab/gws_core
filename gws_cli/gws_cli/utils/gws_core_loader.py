@@ -46,7 +46,7 @@ def load_gws_core():
             if not os.path.exists(core_lib_path):
                 raise Exception("Cannot find gws_core brick")
         sys.path.insert(0, core_lib_path)
-        LocalLogger.info(f"{gws_core_package} has been imported path '{core_lib_path}'")
+        LocalLogger.info(f"{gws_core_package} has been imported from path '{core_lib_path}'")
 
 
 # if __name__ == "__main__":

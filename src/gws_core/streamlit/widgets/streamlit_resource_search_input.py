@@ -137,10 +137,34 @@ class ResourceSearchInput():
         self.search_builder.add_resource_type_filter(resource_type)
         return self
 
+    def add_resource_types_filter(self, resource_types: List[Type[Resource]]) -> "ResourceSearchInput":
+        """Filter the search query by a specific resource type
+        """
+        self.search_builder.add_resource_types_filter(resource_types)
+        return self
+
     def add_resource_typing_name_filter(self, resource_typing_name: str) -> "ResourceSearchInput":
         """Filter the search query by a specific resource typing name
         """
         self.search_builder.add_resource_typing_name_filter(resource_typing_name)
+        return self
+
+    def add_resource_type_and_sub_types_filter(self, resource_type: Type[Resource]) -> "ResourceSearchInput":
+        """Filter the search query by a specific resource type and its subtypes
+        """
+        self.search_builder.add_resource_type_and_sub_types_filter(resource_type)
+        return self
+
+    def add_resource_types_and_sub_types_filter(self, resource_types: List[Type[Resource]]) -> "ResourceSearchInput":
+        """Filter the search query by resource types and its subtypes
+        """
+        self.search_builder.add_resource_types_and_sub_types_filter(resource_types)
+        return self
+
+    def add_resource_typing_names_and_sub_types_filter(self, resource_typing_names: List[str]) -> "ResourceSearchInput":
+        """Filter the search query by resource typing names and its subtypes
+        """
+        self.search_builder.add_expression(ResourceModel.resource_typing_name.in_(resource_typing_names))
         return self
 
     def add_tag_filter(self, tag: Tag) -> "ResourceSearchInput":
@@ -177,6 +201,12 @@ class ResourceSearchInput():
         """Filter the search query by a specific archived status
         """
         self.search_builder.add_is_archived_filter(is_archived)
+        return self
+
+    def add_fs_node_extension_filter(self, extension: str) -> "ResourceSearchInput":
+        """Filter the search query by a specific extension, it will only resturn FsNode resources
+        """
+        self.search_builder.add_fs_node_extension_filter(extension)
         return self
 
     def add_expression(self, expression: Expression) -> "ResourceSearchInput":

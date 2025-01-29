@@ -1,10 +1,11 @@
 
 
-from typing import Type
+from typing import List, Type
 
 from peewee import Expression
 
 from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.tag.entity_with_tag_search_builder import \
@@ -54,10 +55,37 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder):
         self.add_resource_typing_name_filter(resource_type.get_typing_name())
         return self
 
+    def add_resource_types_filter(self, resource_types: List[Type[Resource]]) -> "ResourceSearchBuilder":
+        """Filter the search query by a specific resource type
+        """
+        typing_names = [resource_type.get_typing_name() for resource_type in resource_types]
+        self.add_expression(ResourceModel.resource_typing_name.in_(typing_names))
+        return self
+
     def add_resource_typing_name_filter(self, resource_typing_name: str) -> "ResourceSearchBuilder":
         """Filter the search query by a specific resource typing name
         """
         self.add_expression(ResourceModel.resource_typing_name == resource_typing_name)
+        return self
+
+    def add_resource_type_and_sub_types_filter(self, resource_type: Type[Resource]) -> "ResourceSearchBuilder":
+        """Filter the search query by a specific resource type and its subtypes
+        """
+        self.add_expression(ResourceModel.get_by_types_and_sub_expression([resource_type.get_typing_name()]))
+        return self
+
+    def add_resource_types_and_sub_types_filter(self, resource_types: List[Type[Resource]]) -> "ResourceSearchBuilder":
+        """Filter the search query by resource types and its subtypes
+        """
+        typing_names = [resource_type.get_typing_name() for resource_type in resource_types]
+        self.add_expression(ResourceModel.get_by_types_and_sub_expression(typing_names))
+        return self
+
+    def add_resource_typing_names_and_sub_types_filter(
+            self, resource_typing_names: List[str]) -> "ResourceSearchBuilder":
+        """Filter the search query by resource types and its subtypes
+        """
+        self.add_expression(ResourceModel.get_by_types_and_sub_expression(resource_typing_names))
         return self
 
     def add_origin_filter(self, origin: ResourceOrigin) -> "ResourceSearchBuilder":
@@ -88,4 +116,12 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder):
         """Filter the search query by a specific archived status
         """
         self.add_expression(ResourceModel.is_archived == is_archived)
+        return self
+
+    def add_fs_node_extension_filter(self, extension: str) -> "ResourceSearchBuilder":
+        """Filter the search query by a specific extension, it will only resturn FsNode resources
+        """
+        self.add_join(FSNodeModel, on=(FSNodeModel.id == ResourceModel.fs_node_model))
+
+        self.add_expression(FSNodeModel.get_extension_expression(extension))
         return self
