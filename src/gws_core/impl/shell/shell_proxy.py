@@ -2,7 +2,7 @@
 
 import select
 import subprocess
-from typing import Any, List, Optional, Union
+from typing import IO, Any, Callable, List, Optional, Union
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import MessageObserver
@@ -19,6 +19,15 @@ from gws_core.progress_bar.progress_bar import ProgressBar
 class ShellProxyDTO(BaseModelDTO):
     typing_name: str
     env_code: Optional[str] = None
+
+
+class ShellIO():
+    io: IO
+    dispatch: Callable
+
+    def __init__(self, io: IO, dispatch: Callable) -> None:
+        self.io = io
+        self.dispatch = dispatch
 
 
 @typing_registrator(unique_name="ShellProxy", object_type="MODEL", hide=True)
@@ -56,7 +65,9 @@ class ShellProxy(BaseTyping):
             self._message_dispatcher = MessageDispatcher()
 
     def run(self, cmd: Union[list, str], env: dict = None,
-            shell_mode: bool = False) -> int:
+            shell_mode: bool = False,
+            dispatch_stdout: bool = False,
+            dispatch_stderr: bool = True) -> int:
         """
         Run a command in a shell.
         The logs of the command will be dispatched to the message dispatcher during the execution.
@@ -67,6 +78,14 @@ class ShellProxy(BaseTyping):
         :type env: dict, optional
         :param shell_mode: if True, the command is run in a shell, defaults to False
         :type shell_mode: bool, optional
+        :param dispatch_stdout: if True, the stdout of the command is dispatched to the message dispatcher.
+                            ⚠️ Warning ⚠️ Do not set to True if the command generates a lot of logs,
+                            because logs are stored in database, defaults to False
+        :type dispatch_stdout: bool, optional
+        :param dispatch_stderr: if True, the stderr of the command is dispatched to the message dispatcher.
+                            ⚠️ Warning ⚠️ Do not set to True if the command generates a lot of logs,
+                            because logs are stored in database, defaults to True
+        :type dispatch_stderr: bool, optional
         """
         self._check_before_run(cmd, env, shell_mode)
 
@@ -80,57 +99,35 @@ class ShellProxy(BaseTyping):
                 cwd=self.working_dir,
                 env=env,
                 shell=shell_mode,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE if dispatch_stdout else subprocess.DEVNULL,
+                stderr=subprocess.PIPE if dispatch_stderr else subprocess.DEVNULL
             )
 
             self._message_dispatcher.notify_info_message(
                 f"[ShellProxy] Running command in process : {proc.pid}")
 
-            # use to read the stdout and stderr of the process
-            # https://stackoverflow.com/questions/12270645/can-you-make-a-python-subprocess-output-stdout-and-stderr-as-usual-but-also-cap/12272262#12272262
-            while True:
-                # get the file descriptors of the stdout and stderr
-                reads = [proc.stdout.fileno(), proc.stderr.fileno()]
+            # get the file descriptors of the stdout and stderr
+            shell_io: List[ShellIO] = []
+            if dispatch_stdout:
+                shell_io.append(ShellIO(io=proc.stdout, dispatch=self._self_dispatch_stdout))
 
-                # return the list of file descriptors that are ready to be read
-                ret = select.select(reads, [], [])
+            if dispatch_stderr:
+                shell_io.append(ShellIO(io=proc.stderr, dispatch=self._self_dispatch_stderr))
 
-                has_read: bool = False
+            if len(shell_io) > 0:
+                self._manage_run_output(proc, shell_io)
 
-                for file_no in ret[0]:
-                    # read the stdout
-                    if file_no == proc.stdout.fileno():
-                        read = proc.stdout.readline()
-                        if read:
-                            self._self_dispatch_stdout(read)
-                            has_read = True
-
-                    # read the stderr
-                    if file_no == proc.stderr.fileno():
-                        read = proc.stderr.readline()
-                        if read:
-                            self._self_dispatch_stderr(read)
-                            has_read = True
-
-                poll = proc.poll()
-
-                # stop if the process has finished and there is no more data to read
-                # we need to check if there is no more data to read because the process can be finished but there is still data in the buffer (if long log at the end)
-                if poll is not None and not has_read:
-                    break
-
-            # wait for the process to finish, use comminicate to avoir deadlock if messages are still in the buffer
-            # The communicate should always return empty output.
-            outs, errs = proc.communicate()
-            if outs:
-                self._message_dispatcher.notify_error_message(
-                    "[ShellProxy] The communicate method has returned an stdout output. This is not expected.")
-                self._self_dispatch_stdout(outs)
-            if errs:
-                self._message_dispatcher.notify_error_message(
-                    "[ShellProxy] The communicate method has returned an stderr output. This is not expected.")
-                self._self_dispatch_stderr(errs)
+                # wait for the process to finish, use comminicate to avoir deadlock if messages are still in the buffer
+                # The communicate should always return empty output.
+                outs, errs = proc.communicate()
+                if outs:
+                    self._message_dispatcher.notify_error_message(
+                        "[ShellProxy] The communicate method has returned an stdout output. This is not expected.")
+                    self._self_dispatch_stdout(outs)
+                if errs:
+                    self._message_dispatcher.notify_error_message(
+                        "[ShellProxy] The communicate method has returned an stderr output. This is not expected.")
+                    self._self_dispatch_stderr(errs)
 
             # retrieve the return code of the process and dispatch the message to the observers
             # we can use wait instead of poll because we have already called communicate
@@ -150,11 +147,39 @@ class ShellProxy(BaseTyping):
             self._message_dispatcher.notify_error_message(str(err))
             raise Exception(f"The shell process has failed. Error {err}.")
 
+    def _manage_run_output(self, proc: subprocess.Popen, loggers: List[ShellIO]) -> None:
+        # use to read the stdout and stderr of the process
+        # https://stackoverflow.com/questions/12270645/can-you-make-a-python-subprocess-output-stdout-and-stderr-as-usual-but-also-cap/12272262#12272262
+        reads = [logger.io.fileno() for logger in loggers]
+
+        while True:
+            # return the list of file descriptors that are ready to be read
+            ret = select.select(reads, [], [])
+
+            has_read: bool = False
+
+            for file_no in ret[0]:
+
+                # log stdout or stderr
+                for logger in loggers:
+                    if file_no == logger.io.fileno():
+                        read = logger.io.readline()
+                        if read:
+                            logger.dispatch(read)
+                            has_read = True
+
+            poll = proc.poll()
+
+            # stop if the process has finished and there is no more data to read
+            # we need to check if there is no more data to read because the process can be finished but there is still data in the buffer (if long log at the end)
+            if poll is not None and not has_read:
+                break
+
     def run_in_new_thread(self, cmd: Union[list, str], env: dict = None,
                           shell_mode: bool = False) -> SysProc:
         """
         Run a command in a shell without blocking the thread.
-        The logs of the command will be dispatched to the message dispatcher during the execution.
+        There logs of the command are ignored.
 
         :param cmd: command to run
         :type cmd: Union[list, str]
@@ -178,6 +203,7 @@ class ShellProxy(BaseTyping):
                      shell_mode: bool = False, text: bool = True) -> Any:
         """
         Run a command in a shell and return the output.
+        There logs of the command are ignored.
 
         :param cmd: command to run
         :type cmd: Union[list, str]

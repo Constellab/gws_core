@@ -36,7 +36,7 @@ class TestShellProxy(TestCase):
         message_observer = BasicMessageObserver()
         shell_proxy.attach_observer(message_observer)
 
-        result = shell_proxy.run('echo "AA" && ui', shell_mode=True)
+        result = shell_proxy.run('echo "AA" && ui', shell_mode=True, dispatch_stdout=True)
         self.assertNotEqual(result, 0)
 
         # Check that the message observer received echo AA info message
@@ -60,7 +60,7 @@ class TestShellProxy(TestCase):
         message_observer = BasicMessageObserver()
         shell_proxy.attach_observer(message_observer)
 
-        result = shell_proxy.run('echo "AA\nBB"', shell_mode=True)
+        result = shell_proxy.run('echo "AA\nBB"', shell_mode=True, dispatch_stdout=True)
         self.assertEqual(result, 0)
 
         # Check that the message observer received echo AA info message
@@ -68,5 +68,26 @@ class TestShellProxy(TestCase):
             x for x in message_observer.messages if x.message == "AA" and x.status == 'INFO']), 1)
         self.assertEqual(len([
             x for x in message_observer.messages if x.message == "BB" and x.status == 'INFO']), 1)
+
+        shell_proxy.clean_working_dir()
+
+    def test_notified_error(self):
+
+        # disable the time buffer for message so they are sent immediately
+        dispatcher = MessageDispatcher(interval_time_dispatched_buffer=0)
+        shell_proxy = ShellProxy(message_dispatcher=dispatcher)
+
+        message_observer = BasicMessageObserver()
+        shell_proxy.attach_observer(message_observer)
+
+        result = shell_proxy.run('echo "AA" && ui', shell_mode=True,
+                                 dispatch_stdout=False, dispatch_stderr=True)
+        self.assertNotEqual(result, 0)
+
+        # Check that the message observer received echo AA info message
+        self.assertEqual(len([
+            x for x in message_observer.messages if x.message == "AA" and x.status == 'INFO']), 0)
+        self.assertEqual(len([
+            x for x in message_observer.messages if "ui: not found" in x.message and x.status == 'ERROR']), 1)
 
         shell_proxy.clean_working_dir()
