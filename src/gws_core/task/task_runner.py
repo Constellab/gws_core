@@ -34,6 +34,7 @@ class TaskRunner():
     _output_specs: OutputSpecs
     _inputs: Dict[str, Resource]
     _outputs: TaskOutputs
+    _task_id: str
     _scenario_id: str
 
     _task: Task
@@ -49,6 +50,7 @@ class TaskRunner():
                  input_specs: InputSpecs = None,
                  output_specs: OutputSpecs = None,
                  config_specs: ConfigSpecs = None,
+                 task_id: str = None,
                  scenario_id: str = None):
         self._task_type = task_type
 
@@ -71,6 +73,7 @@ class TaskRunner():
 
         self._build_config(params)
 
+        self._task_id = task_id
         self._scenario_id = scenario_id
 
     def check_before_run(self) -> CheckBeforeTaskResult:
@@ -147,6 +150,7 @@ class TaskRunner():
         if self._task is None:
             self._task = self._task_type()
             self._task.__set_message_dispatcher__(self._message_dispatcher)
+            self._task.__set_task_id__(self._task_id)
             self._task.__set_scenario_id__(self._scenario_id)
 
             try:

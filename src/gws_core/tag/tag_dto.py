@@ -34,16 +34,17 @@ class EntityTagValueFormat(Enum):
     DATETIME = "DATETIME"
 
 
-class TagDTO(BaseModelDTO):
-    key: str
-    value: Any
-    is_user_origin: Optional[bool] = None
-    is_propagable: Optional[bool] = None
-
-
 class TagOriginDTO(BaseModelDTO):
     origin_type: TagOriginType
     origin_id: str
+    external_lab_origin_id: Optional[str] = None
+
+
+class TagDTO(BaseModelDTO):
+    key: str
+    value: Any
+    is_propagable: Optional[bool] = None
+    origins: Optional[List[TagOriginDTO]] = None
 
 
 class TagOriginDetailDTO(TagOriginDTO):

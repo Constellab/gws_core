@@ -97,7 +97,6 @@ class TagService():
         result: List[TagKeyModel] = []
         for i, key in enumerate(tag_keys):
 
-            key = Tag.check_parse_tag_key(key)
             tag_model_filtererd: List[TagKeyModel] = [
                 x for x in tag_models if x.key == key]
 
@@ -122,7 +121,6 @@ class TagService():
 
         return search_builder.add_tag_filter(tag).search_all()
 
-
     @classmethod
     @transaction()
     def add_tag_to_entity(cls, entity_type: EntityType, entity_id: str,
@@ -132,8 +130,8 @@ class TagService():
         entity_tags = EntityTagList.find_by_entity(entity_type, entity_id)
 
         if not tag.origin_is_defined():
-            tag.origins.add_origin(
-                TagOriginType.USER, CurrentUserService.get_and_check_current_user().id)
+            tag.origins.add_origin(TagOrigin(
+                TagOriginType.USER, CurrentUserService.get_and_check_current_user().id))
 
         return entity_tags.add_tag(tag)
 
@@ -146,8 +144,8 @@ class TagService():
 
         for tag in tags:
             if not tag.origin_is_defined():
-                tag.origins.add_origin(
-                    TagOriginType.USER, CurrentUserService.get_and_check_current_user().id)
+                tag.origins.add_origin(TagOrigin(
+                    TagOriginType.USER, CurrentUserService.get_and_check_current_user().id))
 
         return entity_tags.add_tags(tags)
 

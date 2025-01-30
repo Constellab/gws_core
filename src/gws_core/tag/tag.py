@@ -1,11 +1,13 @@
 
 
+import re
 from datetime import datetime
-from typing import List, Union
+from typing import List, Optional, Union
 
 from fastapi.encoders import jsonable_encoder
 
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.string_helper import StringHelper
 from gws_core.tag.tag_dto import TagDTO, TagOriginDTO, TagOriginType
 
 KEY_VALUE_SEPARATOR: str = ':'
@@ -19,10 +21,14 @@ TagValueType = Union[str, int, float, datetime]
 class TagOrigin():
     origin_type: TagOriginType
     origin_id: str
+    # provided if the origin is an external lab
+    external_lab_origin_id: Optional[str] = None
 
-    def __init__(self, origin_type: TagOriginType, origin_id: str) -> None:
+    def __init__(self, origin_type: TagOriginType, origin_id: str,
+                 external_lab_origin_id: str = None) -> None:
         self.origin_type = origin_type
         self.origin_id = origin_id
+        self.external_lab_origin_id = external_lab_origin_id
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, TagOrigin):
@@ -31,15 +37,17 @@ class TagOrigin():
 
     def to_dto(self) -> TagOriginDTO:
         return TagOriginDTO(
-            origin_type=self.origin_type.value,
-            origin_id=self.origin_id
+            origin_type=self.origin_type,
+            origin_id=self.origin_id,
+            external_lab_origin_id=self.external_lab_origin_id
         )
 
     @staticmethod
     def from_dto(dto: TagOriginDTO) -> 'TagOrigin':
         return TagOrigin(
             origin_type=dto.origin_type,
-            origin_id=dto.origin_id)
+            origin_id=dto.origin_id,
+            external_lab_origin_id=dto.external_lab_origin_id)
 
 
 class TagOrigins():
@@ -61,27 +69,24 @@ class TagOrigins():
         if origin_type and origin_id:
             self.set_origins(origin_type, origin_id)
 
-    def add_origin(self, origin_type: TagOriginType, origin_id: str) -> bool:
+    def add_origin(self, tag_origin: TagOrigin) -> bool:
         """Add an origin to the tag. Return true if the current origins have been modified
         """
-        if self.has_origin(origin_type, origin_id):
+        if self.has_origin(tag_origin.origin_type, tag_origin.origin_id):
             return False
+        if self.is_empty():
+            self._origins.append(tag_origin)
+            return True
 
         # if the current origin is user, we override it
         # an automatic origin will always override a user origin
-        origin_dict: TagOrigin = TagOrigin(origin_type, origin_id)
-
-        if self.is_empty():
-            self._origins.append(TagOrigin(origin_type, origin_id))
-            return True
-
         if self.is_user_origin():
-            self._origins = [origin_dict]
+            self._origins = [tag_origin]
         else:
             # if the current origin is automatic, we can't add a user origin
-            if origin_type == TagOriginType.USER:
+            if tag_origin.origin_type == TagOriginType.USER:
                 return False
-            self._origins.append(origin_dict)
+            self._origins.append(tag_origin)
 
         return True
 
@@ -91,7 +96,7 @@ class TagOrigins():
 
         origin_modified = False
         for origin in origins:
-            modified = self.add_origin(origin.origin_type, origin.origin_id)
+            modified = self.add_origin(origin)
             origin_modified = origin_modified or modified
 
         return origin_modified
@@ -118,6 +123,13 @@ class TagOrigins():
     def set_origins(self, origin_type: TagOriginType, origin_id: str) -> None:
         self._origins = [TagOrigin(origin_type, origin_id)]
 
+    def set_external_lab_origin(self, external_lab_origin_id: str) -> None:
+        """Set the external lab origin for all origin if not already defined
+        """
+        for origin in self._origins:
+            if origin.external_lab_origin_id is None:
+                origin.external_lab_origin_id = external_lab_origin_id
+
     def to_json(self) -> List[dict]:
         return jsonable_encoder([origin for origin in self.to_dto()])
 
@@ -143,8 +155,8 @@ class TagOrigins():
 
         if dto:
             for origin in dto:
-                origin_obj = TagOrigin.from_dto(origin)
-                tag_origins.add_origin(origin_obj.origin_type, origin_obj.origin_id)
+                tag_origin = TagOrigin.from_dto(origin)
+                tag_origins.add_origin(tag_origin)
         return tag_origins
 
 
@@ -160,16 +172,18 @@ class Tag():
 
     def __init__(self, key: str, value: TagValueType, is_propagable: bool = False,
                  origins: TagOrigins = None) -> None:
-        self.key = self._check_parse_key(key)
-        self.value = self._check_parse_value(value)
+        self._check_key(key)
+        self._check_value(value)
+        self.key = key
+        self.value = value
         self.is_propagable = bool(is_propagable)
         self.origins = origins or TagOrigins()
 
     def set_key(self, key: str) -> None:
-        self.key = self._check_parse_key(key)
+        self.key = self._check_key(key)
 
     def set_value(self, value: TagValueType) -> None:
-        self.value = self._check_parse_value(value)
+        self.value = self._check_value(value)
 
     def get_str_value(self) -> str:
         if isinstance(self.value, datetime):
@@ -177,15 +191,19 @@ class Tag():
         else:
             return str(self.value)
 
-    def _check_parse_key(self, key: str) -> str:
+    def _check_key(self, key: str) -> str:
         if not key:
             raise ValueError('The tag key must be defined')
 
-        return Tag.check_parse_tag_key(key)
+        Tag.validate_tag(key)
 
-    def _check_parse_value(self, value: TagValueType) -> TagValueType:
-        # if value:
-        #     value = Tag.check_parse_tag_str(value)
+        return key
+
+    def _check_value(self, value: TagValueType) -> TagValueType:
+        # check that the value doesn't contains '/'
+        if isinstance(value, str):
+            Tag.validate_tag(value)
+
         return value
 
     def origin_is_defined(self) -> bool:
@@ -194,11 +212,17 @@ class Tag():
         return not self.origins.is_empty()
 
     def propagate(self, origin_type: TagOriginType, origin_id: str) -> 'Tag':
-        """ Return a new instance of tag with the new origin
+        """ Return a new instance of tag with the new origin.
+        Only the origin_type and origin_id are propagated
         """
         tag = Tag(self.key, self.value, self.is_propagable)
-        tag.origins.add_origin(origin_type, origin_id)
+        tag.origins.add_origin(TagOrigin(origin_type, origin_id))
         return tag
+
+    def set_external_lab_origin(self, external_lab_origin_id: str) -> None:
+        """Set the external lab origin for all origin if not already defined
+        """
+        self.origins.set_external_lab_origin(external_lab_origin_id)
 
     def __str__(self) -> str:
         return self.key + KEY_VALUE_SEPARATOR + self.get_str_value()
@@ -212,48 +236,32 @@ class Tag():
         return TagDTO(
             key=self.key,
             value=self.get_str_value(),
-            is_user_origin=self.origins.is_user_origin(),
-            is_propagable=self.is_propagable
+            is_propagable=self.is_propagable,
+            origins=self.origins.to_dto()
         )
-
-    # TODO to remove once old tags are not supported
-    @staticmethod
-    def from_string(tag_str: str) -> 'Tag':
-        if not tag_str:
-            return None
-
-        tag_info: List[str] = tag_str.split(KEY_VALUE_SEPARATOR)
-
-        # Tag without a value
-        if len(tag_info) == 1:
-            return Tag(tag_info[0], '')
-        else:
-            return Tag(tag_info[0], tag_info[1])
 
     @staticmethod
     def from_dto(dto: TagDTO) -> 'Tag':
-        return Tag(key=dto.key, value=dto.value, is_propagable=dto.is_propagable)
+        origins: TagOrigins = None
+        if dto.origins:
+            origins = TagOrigins.from_dto(dto.origins)
+        return Tag(key=dto.key, value=dto.value, is_propagable=dto.is_propagable,
+                   origins=origins)
 
     @staticmethod
-    def check_parse_tag_key(tag_key: str) -> str:
-        # check that the key doesn't contains '/'
-        if '/' in tag_key:
-            raise ValueError('The tag key must not contains "/"')
-        return tag_key
+    def validate_tag(tag_str: str) -> None:
+        pattern = re.compile(r'^[a-z0-9\-_]+$')
+        if not pattern.match(tag_str):
+            raise ValueError('The tag only support alphanumeric characters in lower case, with "-", "_" allowed')
 
     @staticmethod
-    def check_parse_tag_str(tag_str: TagValueType) -> TagValueType:
-        """Method that check the length of the tag str (key or value) and that the tag str is valid
+    def parse_tag(tag_str: str) -> str:
+        """Parse a tag from a string
         """
-        # check that the value doesn't contains '/'
-        if isinstance(tag_str, str) and '/' in tag_str:
-            raise ValueError('The tag value must not contains "/"')
-        return tag_str
-        # if len(tag_str) > MAX_TAG_LENGTH:
-        #     tag_str = tag_str[0: MAX_TAG_LENGTH]
+        if tag_str is None:
+            return None
 
-        # # check if string is only alphanumeric, with '-', '_', '/', '.' or ' ' allowed with regex
-        # if not match(r"^[\w\-_/. ]+$", tag_str):
-        #     raise ValueError('The tag only support alphanumeric characters, with "-", "_", "/", "." and space allowed')
-
-        # return tag_str.lower()
+        pattern = re.compile(r'[^a-z0-9\-_]')
+        tag_str = str(tag_str).lower()
+        tag_str = StringHelper.replace_accent_with_letter(tag_str)
+        return pattern.sub('_', tag_str)

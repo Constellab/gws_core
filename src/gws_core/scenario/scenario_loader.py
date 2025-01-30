@@ -1,6 +1,6 @@
 
 
-from typing import Optional
+from typing import List, Optional
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.folder.space_folder import SpaceFolder
@@ -12,6 +12,8 @@ from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioCreationType
 from gws_core.scenario.scenario_zipper import ZipScenario, ZipScenarioInfo
 from gws_core.share.shared_dto import ShareEntityCreateMode
+from gws_core.tag.tag import Tag
+from gws_core.tag.tag_helper import TagHelper
 
 
 # TODO doesn't work if a task uses a resource typing (input or output) not
@@ -91,3 +93,6 @@ class ScenarioLoader():
             raise Exception("Protocol model not loaded, call load_scenario first")
 
         return self._protocol_model
+
+    def get_tags(self) -> List[Tag]:
+        return TagHelper.tags_dto_to_list(self.exp_info.scenario.tags)

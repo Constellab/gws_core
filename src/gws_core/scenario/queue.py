@@ -59,6 +59,8 @@ class Queue(Model):
 
     @classmethod
     def deinit(cls):
+        if not cls.table_exists():
+            return
         queue = cls.get_current_queue()
 
         if queue is not None:

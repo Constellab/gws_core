@@ -19,7 +19,7 @@ from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag import TagOrigins
+from gws_core.tag.tag import TagOrigin, TagOrigins
 from gws_core.tag.tag_dto import EntityTagValueFormat, TagOriginType
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_service import TagService
@@ -49,25 +49,25 @@ class TestTag(BaseTestCase):
     def test_origin(self):
         tag = Tag('tag', 'value')
         self.assertFalse(tag.origin_is_defined())
-        self.assertTrue(tag.origins.add_origin(TagOriginType.USER, 'user_id'))
+        self.assertTrue(tag.origins.add_origin(TagOrigin(TagOriginType.USER, 'user_id')))
         self.assertTrue(tag.origin_is_defined())
         self.assertEqual(tag.origins.count_origins(), 1)
         self.assertTrue(tag.origins.has_origin(TagOriginType.USER, 'user_id'))
         self.assertTrue(tag.origins.is_user_origin())
 
         # add an automatic origin, this should overide the user origin
-        self.assertTrue(tag.origins.add_origin(TagOriginType.SCENARIO_PROPAGATED, 'exp_id'))
+        self.assertTrue(tag.origins.add_origin(TagOrigin(TagOriginType.SCENARIO_PROPAGATED, 'exp_id')))
         self.assertEqual(tag.origins.count_origins(), 1)
         self.assertTrue(tag.origins.has_origin(TagOriginType.SCENARIO_PROPAGATED, 'exp_id'))
 
         # add a second origin
-        self.assertTrue(tag.origins.add_origin(TagOriginType.TASK_PROPAGATED, 'task_id'))
+        self.assertTrue(tag.origins.add_origin(TagOrigin(TagOriginType.TASK_PROPAGATED, 'task_id')))
         self.assertEqual(tag.origins.count_origins(), 2)
         self.assertTrue(tag.origins.has_origin(TagOriginType.SCENARIO_PROPAGATED, 'exp_id'))
         self.assertTrue(tag.origins.has_origin(TagOriginType.TASK_PROPAGATED, 'task_id'))
 
         # add a user origin (should not be added because there is already an automatic origin)
-        self.assertFalse(tag.origins.add_origin(TagOriginType.USER, 'user_id'))
+        self.assertFalse(tag.origins.add_origin(TagOrigin(TagOriginType.USER, 'user_id')))
         self.assertEqual(tag.origins.count_origins(), 2)
         self.assertTrue(tag.origins.has_origin(TagOriginType.SCENARIO_PROPAGATED, 'exp_id'))
         self.assertTrue(tag.origins.has_origin(TagOriginType.TASK_PROPAGATED, 'task_id'))

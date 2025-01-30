@@ -2,6 +2,8 @@
 
 from typing import List
 
+from peewee import BooleanField, CharField, Expression, ModelSelect
+
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.model.db_field import JSONField
@@ -12,7 +14,6 @@ from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO,
                                   EntityTagValueFormat, TagOriginDTO,
                                   TagOriginType)
 from gws_core.tag.tag_helper import TagHelper
-from peewee import BooleanField, CharField, Expression, ModelSelect
 
 
 class EntityTag(Model):
@@ -102,17 +103,19 @@ class EntityTag(Model):
     ###################################### EDITION ######################################
 
     @classmethod
-    def create_entity_tag(cls, tag: Tag, value_format: EntityTagValueFormat, entity_id: str,
+    def create_entity_tag(cls, key: str, value: TagValueType,
+                          is_propagable: bool, origins: TagOrigins,
+                          value_format: EntityTagValueFormat, entity_id: str,
                           entity_type: EntityType) -> 'EntityTag':
-        if not tag.origin_is_defined():
+        if not origins or origins.is_empty():
             raise ValueError('The tag origin must be defined to save it')
 
         entity_tag: EntityTag = EntityTag(
-            tag_key=tag.key, value_format=value_format,
+            tag_key=key, value_format=value_format,
             entity_id=entity_id, entity_type=entity_type,
-            is_propagable=tag.is_propagable)
-        entity_tag.set_value(tag.value)
-        entity_tag.set_origins(tag.origins)
+            is_propagable=is_propagable)
+        entity_tag.set_value(value)
+        entity_tag.set_origins(origins)
         return entity_tag.save()
 
     @classmethod

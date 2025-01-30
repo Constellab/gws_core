@@ -64,9 +64,10 @@ class Task(Process):
     # list of temporary directories created by the task to be deleted after the task is run
     __temp_dirs__: List[str]
 
-    # The scenario id that run the task, do not update
+    # The scenario id and task id that run the task, do not update
     # This is only provided when the task is run by a scenario
     __scenario_id__: str
+    __task_id__: str
 
     def __init__(self):
         """
@@ -194,6 +195,14 @@ class Task(Process):
     @final
     def get_scenario_id(self) -> str:
         return self.__scenario_id__
+
+    @final
+    def __set_task_id__(self, task_id: str) -> None:
+        self.__task_id__ = task_id
+
+    @final
+    def get_task_id(self) -> str:
+        return self.__task_id__
 
     @final
     @classmethod

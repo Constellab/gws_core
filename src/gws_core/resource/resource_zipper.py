@@ -30,8 +30,8 @@ class ZipResource(BaseModelDTO):
     resource_typing_name: str
     brick_version: str
     data: dict
-    parent_resource_id: Optional[str]
-    kvstore_dir_name: Optional[str]
+    parent_resource_id: Optional[str] = None
+    kvstore_dir_name: Optional[str] = None
     tags: List[TagDTO]
     style: Optional[TypingStyle] = None
 

@@ -6,6 +6,7 @@ from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
                       OutputSpecs, Task, TaskInputs, TaskOutputs,
                       task_decorator)
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.protocol.protocol_model import ProtocolModel
@@ -21,6 +22,9 @@ from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
+from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag import Tag, TagOrigins
+from gws_core.tag.tag_dto import TagOriginType
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
@@ -61,6 +65,9 @@ class TestShareScenario(BaseTestCase):
             # Create and run an scenario
             folder = GTest.create_default_folder()
             scenario = ScenarioProxy(title='Test scenario', folder=folder)
+
+            scenario.add_tag(Tag('scenario_tag', 'scenario_value', is_propagable=True,
+                                 origins=TagOrigins(TagOriginType.USER, 'test')))
             protocol = scenario.get_protocol()
 
             move = protocol.add_process(RobotMove, 'move', config_params={'moving_step': 100})
@@ -95,6 +102,17 @@ class TestShareScenario(BaseTestCase):
             self.assertEqual(new_scenario.folder.id, folder.id)
             self.assertEqual(new_scenario.status, initial_scenario_model.status)
             self.assertEqual(new_scenario.creation_type, ScenarioCreationType.IMPORTED)
+
+            # Check the tags
+            tags = EntityTagList.find_by_entity(EntityType.SCENARIO, new_scenario.id)
+            self.assertEqual(len(tags.get_tags()), 1)
+            tag = tags.get_tags()[0]
+            self.assertEqual(tag.tag_key, 'scenario_tag')
+            self.assertEqual(tag.tag_value, 'scenario_value')
+            self.assertTrue(tag.is_propagable)
+            origins = tag.get_origins()
+            self.assertEqual(origins.count_origins(), 1)
+            self.assertTrue(origins.has_origin(TagOriginType.USER, 'test'))
 
             new_protocol_model = new_scenario.protocol_model
 

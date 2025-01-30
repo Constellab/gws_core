@@ -308,9 +308,11 @@ class TaskModel(ProcessModel):
             # this is to remove the tags of the input resource
             resource.tags.remove_loaded_tags()
 
-            # For all tag created by the task, mark the origin as created by the task.
+            # For all tag created by the task, if there is no origin mark the origin as created by the task.
+            # Otherwise keep the origin as it is
             for tag in resource.tags.get_tags():
-                tag.origins.set_origins(TagOriginType.TASK, self.id)
+                if not tag.origin_is_defined():
+                    tag.origins.set_origins(TagOriginType.TASK, self.id)
 
         # propagate the tag from input resources and scenario
         resource.tags.add_tags(self._get_input_resource_tags())

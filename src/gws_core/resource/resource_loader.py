@@ -96,6 +96,10 @@ class ResourceLoader():
         tags_dict = zip_resource.tags or []
         tags = TagHelper.tags_dto_to_list(tags_dict)
 
+        # Set the external lab origin for all tags
+        for tag in tags:
+            tag.set_external_lab_origin(self.get_origin_info().lab_id)
+
         resource_model_id: str = None
         if self.mode == ShareEntityCreateMode.KEEP_ID:
             resource_model_id = zip_resource.id

@@ -49,7 +49,8 @@ class ShellProxy(BaseTyping):
                             If not provided, an new temp directory is created. defaults to None
         :type working_dir: str, optional
         :param message_dispatcher: if provided, the output of the command will be redirected to the dispatcher.
-                                  Can be useful to log command outputs in task's logs. defaults to None
+                                    In a task it can be used provided like this : ShellProxy(message_dispatcher=self.message_dispatcher)
+                                    Can be useful to log command outputs in task's logs. defaults to None
         :type message_dispatcher: MessageDispatcher, optional
         """
         super().__init__()

@@ -9,6 +9,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec,
                       OutputSpecs, ResourceModel, ResourceSet, ScenarioProxy,
                       Settings, Table, Task, TaskInputs, TaskOutputs,
                       task_decorator)
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list import ResourceList
@@ -21,6 +22,7 @@ from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_service import ShareService
 from gws_core.share.shared_dto import (GenerateShareLinkDTO, ShareLinkType,
                                        ShareResourceInfoReponseDTO)
+from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.test.gtest import TestStartUvicornApp
@@ -101,7 +103,6 @@ class TestShareResource(BaseTestCase):
         cls.start_uvicorn_app.__exit__(None, None, None)
 
     def test_share_basic_resource(self):
-
         # create a simple resource
         table = get_table()
         table.name = 'MyTestName'
@@ -125,10 +126,18 @@ class TestShareResource(BaseTestCase):
 
         new_table: Table = new_resource_model.get_resource()
 
+        # Check the tags
+        tags = EntityTagList.find_by_entity(EntityType.RESOURCE, new_resource_model.id)
+        self.assertEqual(len(tags.get_tags()), 1)
+        tag = tags.get_tags()[0]
+
         self.assertIsInstance(new_table, Table)
         self.assertTrue(table.equals(new_table))
         self.assertEqual(new_table.name, 'MyTestName')
         self.assertTrue(new_table.tags.has_tag(Tag('resource_tag', 'resource_tag_value')))
+        tag = new_table.tags.get_tag('resource_tag', 'resource_tag_value')
+        self.assertTrue(tag.origins.has_origin(TagOriginType.USER, 'test'))
+        self.assertIsNotNone(tag.origins.get_origins()[0].external_lab_origin_id)
 
         # test that the origin of the resource exist
         shared_resource = ResourceService.get_shared_resource_origin_info(new_resource_model.id)

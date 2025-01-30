@@ -78,7 +78,13 @@ class EntityTagList():
          # add tag to the list of tags
         tag_model = TagValueModel.create_tag_value_if_not_exists(tag.key, tag.value)
 
-        new_tag = EntityTag.create_entity_tag(tag, tag_model.tag_key.value_format, self._entity_id, self._entity_type)
+        new_tag = EntityTag.create_entity_tag(key=tag_model.tag_key.key,
+                                              value=tag_model.tag_value,
+                                              is_propagable=tag.is_propagable,
+                                              origins=tag.origins,
+                                              value_format=tag_model.tag_key.value_format,
+                                              entity_id=self._entity_id,
+                                              entity_type=self._entity_type)
         self._tags.append(new_tag)
         return new_tag
 

@@ -5,6 +5,8 @@ import os
 from copy import deepcopy
 from typing import Any, Dict, List
 
+from peewee import BigIntegerField, CharField
+
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
 from gws_core.config.param.dynamic_param import DynamicParam
@@ -53,6 +55,7 @@ from gws_core.scenario_template.scenario_template_factory import \
 from gws_core.share.share_link import ShareLink
 from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.entity_tag import EntityTag
+from gws_core.tag.tag import Tag
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
 from gws_core.task.plug.input_task import InputTask
@@ -63,7 +66,6 @@ from gws_core.user.activity.activity import Activity
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.user import User
-from peewee import BigIntegerField, CharField
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -1305,3 +1307,36 @@ class Migration0100(BrickMigration):
             migrator.add_column_if_not_exists(TaskModel, TaskModel.community_agent_version_modified)
 
             migrator.migrate()
+
+    @brick_migration('0.12.2', short_description='Replace forbidden characters in tags')
+    class Migration0122(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+            tag_keys: List[TagKeyModel] = list(TagKeyModel.select())
+
+            for tag_key in tag_keys:
+                new_key = Tag.parse_tag(tag_key.key)
+
+                try:
+
+                    if new_key != tag_key.key:
+                        tag_key.key = new_key
+                        tag_key.save(skip_hook=True)
+                except Exception as exception:
+                    Logger.error(
+                        f'Error while setting tag key for {tag_key.key} : {exception}')
+
+            tag_values: List[TagValueModel] = list(TagValueModel.select())
+
+            for tag_value in tag_values:
+                new_value = Tag.parse_tag(tag_value.tag_value)
+
+                try:
+                    if new_value != tag_value.tag_value:
+                        tag_value.tag_value = new_value
+                        tag_value.save(skip_hook=True)
+                except Exception as exception:
+                    Logger.error(
+                        f'Error while setting tag value for {tag_value.tag_value} : {exception}')

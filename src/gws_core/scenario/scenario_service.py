@@ -6,6 +6,7 @@ from peewee import ModelSelect
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.note.note import NoteScenario
@@ -14,6 +15,7 @@ from gws_core.scenario.scenario_zipper import ZipScenario, ZipScenarioInfo
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_factory import \
     ScenarioTemplateFactory
+from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
@@ -552,13 +554,17 @@ class ScenarioService():
     def export_scenario(cls, scenario_id: str) -> ZipScenarioInfo:
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
+        scenario_tags = EntityTagList.find_by_entity(EntityType.SCENARIO, scenario_id)
+        tags_dtos = [tag.to_simple_tag().to_dto() for tag in scenario_tags.get_tags()]
+
         experimeny_zip = ZipScenario(
             id=scenario.id,
             title=scenario.title,
             description=scenario.description,
             status=scenario.status,
             folder=scenario.folder.to_dto() if scenario.folder is not None else None,
-            error_info=scenario.error_info
+            error_info=scenario.error_info,
+            tags=tags_dtos
         )
 
         return ZipScenarioInfo(

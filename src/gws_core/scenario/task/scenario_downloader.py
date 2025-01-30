@@ -11,6 +11,7 @@ from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.utils import Utils
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.external_lab.external_lab_api_service import \
     ExternalLabApiService
 from gws_core.io.io_spec import OutputSpec
@@ -36,6 +37,7 @@ from gws_core.share.shared_dto import (SharedEntityMode, ShareEntityCreateMode,
                                        ShareScenarioInfoReponseDTO)
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
+from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task import Task
@@ -242,6 +244,15 @@ class ScenarioDownloader(Task):
         scenario.save()
         protocol_model.save_full()
 
+        self.log_info_message("Saving the scenario tags")
+        tags = scenario_load.get_tags()
+        # set the lab origin for the tags
+        for tag in tags:
+            tag.set_external_lab_origin(self.share_entity.origin.lab_id)
+        # Add tags
+        entity_tags: EntityTagList = EntityTagList(EntityType.SCENARIO, scenario.id)
+        entity_tags.add_tags(tags)
+
         self.log_info_message("Saving the resources")
 
         # then we save other resources
@@ -283,7 +294,7 @@ class ScenarioDownloader(Task):
         protocol_model.save_full()
 
         # Create the shared entity info
-        self.log_info_message("Storing the expeirment origin info")
+        self.log_info_message("Storing the scenario origin info")
         SharedScenario.create_from_lab_info(scenario.id, SharedEntityMode.RECEIVED,
                                             self.share_entity.origin,
                                             CurrentUserService.get_and_check_current_user())

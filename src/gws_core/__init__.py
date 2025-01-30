@@ -125,6 +125,14 @@ from .credentials.credentials_type import CredentialsType as CredentialsType
 # EntityNavigator
 from .entity_navigator.entity_navigator import \
     EntityNavigator as EntityNavigator
+from .entity_navigator.entity_navigator import \
+    EntityNavigatorNote as EntityNavigatorNote
+from .entity_navigator.entity_navigator import \
+    EntityNavigatorResource as EntityNavigatorResource
+from .entity_navigator.entity_navigator import \
+    EntityNavigatorScenario as EntityNavigatorScenario
+from .entity_navigator.entity_navigator import \
+    EntityNavigatorView as EntityNavigatorView
 from .entity_navigator.entity_navigator_service import \
     EntityNavigatorService as EntityNavigatorService
 from .entity_navigator.entity_navigator_type import EntityType as EntityType
