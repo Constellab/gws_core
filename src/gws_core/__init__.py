@@ -409,6 +409,7 @@ from .resource.view.view_resource import ViewResource as ViewResource
 from .resource.view.view_types import ViewSpecs as ViewSpecs
 from .resource.view.view_types import ViewType as ViewType
 from .resource.view.viewer import Viewer as Viewer
+from .resource.view_config.view_config import ViewConfig as ViewConfig
 # Scenario
 from .scenario.queue import Job as Job
 from .scenario.queue import Queue as Queue
