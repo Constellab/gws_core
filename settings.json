@@ -11,8 +11,8 @@
         "gws_core:testdata_dir": "${CURRENT_DIR}/tests/testdata"
     },
     "technical_info": {
-        "FRONT_VERSION": "2.2.0",
-        "GLAB_VERSION": "2.5.0"
+        "FRONT_VERSION": "2.2.1",
+        "GLAB_VERSION": "2.6.0"
     },
     "environment": {
         "pip": [
