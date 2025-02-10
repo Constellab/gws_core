@@ -10,9 +10,8 @@ from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model import Model
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.tag import Tag, TagOrigins, TagValueType
-from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO,
-                                  EntityTagValueFormat, TagOriginDTO,
-                                  TagOriginType)
+from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, TagOriginDTO,
+                                  TagOriginType, TagValueFormat)
 from gws_core.tag.tag_helper import TagHelper
 
 
@@ -23,8 +22,8 @@ class EntityTag(Model):
 
     tag_value = CharField(null=False)
 
-    value_format: EntityTagValueFormat = EnumField(
-        choices=EntityTagValueFormat, null=False, default=EntityTagValueFormat.STRING)
+    value_format: TagValueFormat = EnumField(
+        choices=TagValueFormat, null=False, default=TagValueFormat.STRING)
 
     # to override in child classes
     entity_id: str = CharField(null=False, max_length=36)
@@ -105,7 +104,7 @@ class EntityTag(Model):
     @classmethod
     def create_entity_tag(cls, key: str, value: TagValueType,
                           is_propagable: bool, origins: TagOrigins,
-                          value_format: EntityTagValueFormat, entity_id: str,
+                          value_format: TagValueFormat, entity_id: str,
                           entity_type: EntityType) -> 'EntityTag':
         if not origins or origins.is_empty():
             raise ValueError('The tag origin must be defined to save it')

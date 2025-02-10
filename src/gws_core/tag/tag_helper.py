@@ -6,9 +6,9 @@ from typing import Dict, List
 from numpy import array, meshgrid
 
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.tag.tag_dto import EntityTagValueFormat, TagDTO
+from gws_core.tag.tag_dto import TagDTO, TagValueFormat
 
-from .tag import TAGS_SEPARATOR, Tag, TagValueType
+from .tag import Tag, TagValueType
 
 
 class TagHelper():
@@ -88,7 +88,7 @@ class TagHelper():
     ################################ Tag value check ################################
 
     @classmethod
-    def check_and_convert_value(cls, value: TagValueType, value_format: EntityTagValueFormat) -> TagValueType:
+    def check_and_convert_value(cls, value: TagValueType, value_format: TagValueFormat) -> TagValueType:
         if value is None:
             raise Exception("The tag value cannot be None")
         try:
@@ -100,32 +100,22 @@ class TagHelper():
             raise Exception(f"Invalid value {value}, expected type {value_format.value}")
 
     @classmethod
-    def _check_value(cls, value: TagValueType, value_format: EntityTagValueFormat) -> bool:
+    def _check_value(cls, value: TagValueType, value_format: TagValueFormat) -> bool:
         if value is None:
             return False
-        if value_format == EntityTagValueFormat.INTEGER:
+        if value_format == TagValueFormat.INTEGER:
             return isinstance(value, int)
-        elif value_format == EntityTagValueFormat.FLOAT:
+        elif value_format == TagValueFormat.FLOAT:
             return isinstance(value, float)
-        elif value_format == EntityTagValueFormat.DATETIME:
+        elif value_format == TagValueFormat.DATETIME:
             return isinstance(value, datetime)
         else:
             return isinstance(value, str)
 
     @classmethod
-    def convert_str_value_to_type(cls, value: str, value_format: EntityTagValueFormat) -> TagValueType:
-        if value_format == EntityTagValueFormat.INTEGER:
-            return int(value)
-        elif value_format == EntityTagValueFormat.FLOAT:
-            return float(value)
-        elif value_format == EntityTagValueFormat.DATETIME:
-            return DateHelper.from_iso_str(value)
-        else:
-            return value
+    def convert_str_value_to_type(cls, value: str, value_format: TagValueFormat) -> TagValueType:
+        return Tag.convert_str_value_to_type(value, value_format)
 
     @classmethod
     def convert_value_to_str(cls, value: TagValueType) -> str:
-        if isinstance(value, datetime):
-            return DateHelper.to_iso_str(value)
-        else:
-            return str(value)
+        return Tag.convert_value_to_str(value)

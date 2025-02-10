@@ -20,7 +20,7 @@ from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOrigin, TagOrigins
-from gws_core.tag.tag_dto import EntityTagValueFormat, TagOriginType
+from gws_core.tag.tag_dto import TagOriginType, TagValueFormat
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_service import TagService
 from gws_core.tag.tag_value_model import TagValueModel
@@ -45,6 +45,47 @@ class TagRobot(Task):
 
 # test_tag
 class TestTag(BaseTestCase):
+
+    def test_tag(self):
+
+        # test string tag
+        tag = Tag('tag', 'value')
+        self.assertEqual(tag.key, 'tag')
+        self.assertEqual(tag.value, 'value')
+        self.assertEqual(tag.get_value_format(), TagValueFormat.STRING)
+        new_tag = Tag.from_dto(tag.to_dto())
+        self.assertEqual(new_tag.key, tag.key)
+        self.assertEqual(new_tag.value, tag.value)
+        self.assertEqual(new_tag.get_value_format(), TagValueFormat.STRING)
+
+        # create a tag with a invalid string
+        with self.assertRaises(ValueError):
+            Tag('tag#', 'value')
+        tag = Tag('tag#é', 'value#é', auto_parse=True)
+        self.assertEqual(tag.key, 'tag_e')
+        self.assertEqual(tag.value, 'value_e')
+
+        # test int tag
+        tag = Tag('tag', 1)
+        self.assertEqual(tag.get_value_format(), TagValueFormat.INTEGER)
+        new_tag = Tag.from_dto(tag.to_dto())
+        self.assertEqual(new_tag.value, tag.value)
+        self.assertEqual(new_tag.get_value_format(), TagValueFormat.INTEGER)
+
+        # test float tag
+        tag = Tag('tag', 1.1)
+        self.assertEqual(tag.get_value_format(), TagValueFormat.FLOAT)
+        new_tag = Tag.from_dto(tag.to_dto())
+        self.assertEqual(new_tag.value, tag.value)
+        self.assertEqual(new_tag.get_value_format(), TagValueFormat.FLOAT)
+
+        # test datetime tag
+        now = DateHelper.now_utc()
+        tag = Tag('tag', now)
+        self.assertEqual(tag.get_value_format(), TagValueFormat.DATETIME)
+        new_tag = Tag.from_dto(tag.to_dto())
+        self.assertEqual(new_tag.value, tag.value)
+        self.assertEqual(new_tag.get_value_format(), TagValueFormat.DATETIME)
 
     def test_origin(self):
         tag = Tag('tag', 'value')
@@ -100,20 +141,20 @@ class TestTag(BaseTestCase):
         tag = TagService.add_tag_to_entity(EntityType.SCENARIO, scenario.id, Tag('test_int', 1))
         self.assertEqual(tag.get_tag_value(), 1)
         self.assertEqual(TagValueModel.get_tag_value_model('test_int', 1).get_tag_value(), 1)
-        self.assertEqual(TagKeyModel.find_by_key('test_int').value_format, EntityTagValueFormat.INTEGER)
+        self.assertEqual(TagKeyModel.find_by_key('test_int').value_format, TagValueFormat.INTEGER)
 
         # add float tag
         tag = TagService.add_tag_to_entity(EntityType.SCENARIO, scenario.id, Tag('test_float', 1.1))
         self.assertEqual(tag.get_tag_value(), 1.1)
         self.assertEqual(TagValueModel.get_tag_value_model('test_float', 1.1).get_tag_value(), 1.1)
-        self.assertEqual(TagKeyModel.find_by_key('test_float').value_format, EntityTagValueFormat.FLOAT)
+        self.assertEqual(TagKeyModel.find_by_key('test_float').value_format, TagValueFormat.FLOAT)
 
         # add datetime tag
         now = DateHelper.now_utc()
         tag = TagService.add_tag_to_entity(EntityType.SCENARIO, scenario.id, Tag('test_datetime', now))
         self.assertEqual(tag.get_tag_value(), now)
         self.assertEqual(TagValueModel.get_tag_value_model('test_datetime', now).get_tag_value(), now)
-        self.assertEqual(TagKeyModel.find_by_key('test_datetime').value_format, EntityTagValueFormat.DATETIME)
+        self.assertEqual(TagKeyModel.find_by_key('test_datetime').value_format, TagValueFormat.DATETIME)
 
     def test_tag_crud(self) -> None:
         """ Test update and delete tag"""
@@ -211,7 +252,7 @@ class TestTag(BaseTestCase):
         search_dict.set_filters_criteria([
             SearchFilterCriteria(
                 key="tags", operator=SearchOperator.EQ, value=TagHelper.tags_to_json(
-                    [Tag('datetime_tag', DateHelper.to_iso_str(now))]))])
+                    [Tag('datetime_tag', now)]))])
         paginator = ScenarioService.search(search_dict)
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, scenario.id)

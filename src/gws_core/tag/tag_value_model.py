@@ -8,7 +8,7 @@ from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.model.model import Model
 from gws_core.tag.tag import TagValueType
-from gws_core.tag.tag_dto import EntityTagValueFormat, TagValueModelDTO
+from gws_core.tag.tag_dto import TagValueFormat, TagValueModelDTO
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
 
@@ -61,13 +61,13 @@ class TagValueModel(Model):
         # cretae the key if it does not exist
         tag_key_model = TagKeyModel.find_by_key(key=tag_key)
         if not tag_key_model:
-            value_format: EntityTagValueFormat = EntityTagValueFormat.STRING
+            value_format: TagValueFormat = TagValueFormat.STRING
             if isinstance(tag_value, int):
-                value_format = EntityTagValueFormat.INTEGER
+                value_format = TagValueFormat.INTEGER
             elif isinstance(tag_value, float):
-                value_format = EntityTagValueFormat.FLOAT
+                value_format = TagValueFormat.FLOAT
             elif isinstance(tag_value, datetime):
-                value_format = EntityTagValueFormat.DATETIME
+                value_format = TagValueFormat.DATETIME
 
             tag_key_model = TagKeyModel.create_tag_key_if_not_exists(tag_key, value_format)
 

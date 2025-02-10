@@ -8,10 +8,8 @@ from fastapi.encoders import jsonable_encoder
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
-from gws_core.tag.tag_dto import TagDTO, TagOriginDTO, TagOriginType
-
-KEY_VALUE_SEPARATOR: str = ':'
-TAGS_SEPARATOR = ','
+from gws_core.tag.tag_dto import (TagDTO, TagOriginDTO, TagOriginType,
+                                  TagValueFormat)
 
 MAX_TAG_LENGTH = 1000
 
@@ -170,39 +168,52 @@ class Tag():
     # Do not modified, this is to know if the tag is loaded from the database in a resource
     __is_field_loaded__: bool = False
 
+    SUPPORTED_TAG_REGEX = r"[a-z0-9\-_\./]"
+
     def __init__(self, key: str, value: TagValueType, is_propagable: bool = False,
-                 origins: TagOrigins = None) -> None:
-        self._check_key(key)
-        self._check_value(value)
+                 origins: TagOrigins = None, auto_parse: bool = False) -> None:
+        """Create a new tag
+
+        :param key: key of the tag
+        :type key: str
+        :param value: value of the tag
+        :type value: TagValueType
+        :param is_propagable: if True the tagwill be propagated in next resouces and views, defaults to False
+        :type is_propagable: bool, optional
+        :param origins: origin of the tag, defaults to None
+        :type origins: TagOrigins, optional
+        :param auto_parse: if True the key and value will be parsed to validate tag format.
+                            if False and tag is invalid, an exception will be raised, defaults to False
+        :type auto_parse: bool, optional
+        """
+        self._check_key(key, auto_parse)
+        self._check_value(value, auto_parse)
         self.key = key
         self.value = value
         self.is_propagable = bool(is_propagable)
         self.origins = origins or TagOrigins()
 
-    def set_key(self, key: str) -> None:
-        self.key = self._check_key(key)
-
-    def set_value(self, value: TagValueType) -> None:
-        self.value = self._check_value(value)
-
     def get_str_value(self) -> str:
-        if isinstance(self.value, datetime):
-            return DateHelper.to_iso_str(self.value)
-        else:
-            return str(self.value)
+        return Tag.convert_value_to_str(self.value)
 
-    def _check_key(self, key: str) -> str:
+    def _check_key(self, key: str, auto_parse: bool) -> str:
         if not key:
             raise ValueError('The tag key must be defined')
 
-        Tag.validate_tag(key)
+        if auto_parse:
+            key = Tag.parse_tag(key)
+        else:
+            Tag.validate_tag(key)
 
         return key
 
-    def _check_value(self, value: TagValueType) -> TagValueType:
-        # check that the value doesn't contains '/'
+    def _check_value(self, value: TagValueType, auto_parse: bool) -> TagValueType:
         if isinstance(value, str):
-            Tag.validate_tag(value)
+
+            if auto_parse:
+                value = Tag.parse_tag(value)
+            else:
+                Tag.validate_tag(value)
 
         return value
 
@@ -224,8 +235,18 @@ class Tag():
         """
         self.origins.set_external_lab_origin(external_lab_origin_id)
 
+    def get_value_format(self) -> TagValueFormat:
+        if isinstance(self.value, int):
+            return TagValueFormat.INTEGER
+        elif isinstance(self.value, float):
+            return TagValueFormat.FLOAT
+        elif isinstance(self.value, datetime):
+            return TagValueFormat.DATETIME
+        else:
+            return TagValueFormat.STRING
+
     def __str__(self) -> str:
-        return self.key + KEY_VALUE_SEPARATOR + self.get_str_value()
+        return self.key + ':' + self.get_str_value()
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, Tag):
@@ -237,7 +258,8 @@ class Tag():
             key=self.key,
             value=self.get_str_value(),
             is_propagable=self.is_propagable,
-            origins=self.origins.to_dto()
+            origins=self.origins.to_dto(),
+            value_format=self.get_value_format()
         )
 
     @staticmethod
@@ -245,14 +267,17 @@ class Tag():
         origins: TagOrigins = None
         if dto.origins:
             origins = TagOrigins.from_dto(dto.origins)
-        return Tag(key=dto.key, value=dto.value, is_propagable=dto.is_propagable,
+
+        value = Tag.convert_str_value_to_type(dto.value, dto.value_format)
+        return Tag(key=dto.key, value=value, is_propagable=dto.is_propagable,
                    origins=origins)
 
     @staticmethod
     def validate_tag(tag_str: str) -> None:
-        pattern = re.compile(r'^[a-z0-9\-_]+$')
+        pattern = re.compile(r'^' + Tag.SUPPORTED_TAG_REGEX + '+$')
         if not pattern.match(tag_str):
-            raise ValueError('The tag only support alphanumeric characters in lower case, with "-", "_" allowed')
+            raise ValueError(
+                'The tag only support alphanumeric characters in lower case, with "-", "_", "." and "/" allowed')
 
     @staticmethod
     def parse_tag(tag_str: str) -> str:
@@ -261,7 +286,25 @@ class Tag():
         if tag_str is None:
             return None
 
-        pattern = re.compile(r'[^a-z0-9\-_]')
+        pattern = re.compile(Tag.SUPPORTED_TAG_REGEX)
         tag_str = str(tag_str).lower()
         tag_str = StringHelper.replace_accent_with_letter(tag_str)
         return pattern.sub('_', tag_str)
+
+    @staticmethod
+    def convert_str_value_to_type(value: str, value_format: TagValueFormat) -> TagValueType:
+        if value_format == TagValueFormat.INTEGER:
+            return int(value)
+        elif value_format == TagValueFormat.FLOAT:
+            return float(value)
+        elif value_format == TagValueFormat.DATETIME:
+            return DateHelper.from_iso_str(value)
+        else:
+            return value
+
+    @staticmethod
+    def convert_value_to_str(value: TagValueType) -> str:
+        if isinstance(value, datetime):
+            return DateHelper.to_iso_str(value)
+        else:
+            return str(value)

@@ -27,7 +27,7 @@ class TagOriginType(Enum):
     VIEW_PROPAGATED = 'VIEW_PROPAGATED'
 
 
-class EntityTagValueFormat(Enum):
+class TagValueFormat(Enum):
     STRING = "STRING"
     INTEGER = "INTEGER"
     FLOAT = "FLOAT"
@@ -42,9 +42,10 @@ class TagOriginDTO(BaseModelDTO):
 
 class TagDTO(BaseModelDTO):
     key: str
-    value: Any
+    value: str
     is_propagable: Optional[bool] = None
     origins: Optional[List[TagOriginDTO]] = None
+    value_format: Optional[TagValueFormat] = TagValueFormat.STRING
 
 
 class TagOriginDetailDTO(TagOriginDTO):
@@ -82,14 +83,14 @@ class TagPropagationImpactDTO(BaseModelDTO):
 
 class TagKeyModelDTO(ModelDTO):
     key: str
-    value_format: EntityTagValueFormat
+    value_format: TagValueFormat
     is_propagable: bool
 
 
 class TagValueModelDTO(ModelDTO):
     key: str
     value: Any
-    value_format: EntityTagValueFormat
+    value_format: TagValueFormat
 
 
 class SaveTagModelResonseDTO(BaseModelDTO):

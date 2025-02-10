@@ -1,12 +1,13 @@
 
 
 from os import path
-from typing import Any, ByteString, Dict, List, Optional
+from typing import ByteString, Dict, List, Optional
 
 from fastapi.responses import FileResponse
 from mypy_boto3_s3.type_defs import (ListObjectsV2OutputTypeDef, ObjectTypeDef,
                                      TagTypeDef)
 
+from gws_core.core.classes.search_builder import SearchOperator
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
@@ -100,9 +101,8 @@ class S3ServerService:
                        tags: Dict[str, str] = None) -> None:
         with S3ServerContext(bucket_name, key):
 
-            folder: SpaceFolder = None
             if cls._is_folder_doc_bucket(bucket_name):
-                folder = cls._get_and_check_folder_bucket(bucket_name, tags.get(cls.FOLDER_TAG_NAME))
+                cls._get_and_check_folder_bucket(bucket_name, tags.get(cls.FOLDER_TAG_NAME))
             else:
                 # for now we allow only folder documents to be uploaded
                 raise S3ServerException(
@@ -137,15 +137,17 @@ class S3ServerService:
 
             # Add the tags, make sure they are not propagable
             origins = cls.get_tag_origin()
-            resource_tags.add_tag(Tag(cls.STORAGE_TAG_NAME, 's3', is_propagable=False, origins=origins))
-            resource_tags.add_tag(Tag(cls.BUCKET_TAG_NAME, bucket_name, is_propagable=False, origins=origins))
-            resource_tags.add_tag(Tag(cls.KEY_TAG_NAME, key, is_propagable=False, origins=origins))
+            resource_tags.add_tag(Tag(cls.STORAGE_TAG_NAME, 's3', is_propagable=False,
+                                  origins=origins, auto_parse=True))
+            resource_tags.add_tag(Tag(cls.BUCKET_TAG_NAME, bucket_name,
+                                  is_propagable=False, origins=origins, auto_parse=True))
+            resource_tags.add_tag(Tag(cls.KEY_TAG_NAME, key, is_propagable=False, origins=origins, auto_parse=True))
 
             # add the additional tags
             if tags:
                 cleaned_tags = cls.get_additional_tags(tags)
                 for key, value in cleaned_tags.items():
-                    resource_tags.add_tag(Tag(key, value, is_propagable=False, origins=origins))
+                    resource_tags.add_tag(Tag(key, value, is_propagable=False, origins=origins, auto_parse=True))
 
     @classmethod
     def _update_object(cls, bucket_name: str,
@@ -332,8 +334,8 @@ class S3ServerService:
         """
         search_builder = ResourceSearchBuilder()
 
-        search_builder.add_tag_filter(Tag(cls.STORAGE_TAG_NAME, 's3'))
-        search_builder.add_tag_filter(Tag(cls.BUCKET_TAG_NAME, bucket_name))
+        search_builder.add_tag_filter(Tag(cls.STORAGE_TAG_NAME, 's3', auto_parse=True))
+        search_builder.add_tag_filter(Tag(cls.BUCKET_TAG_NAME, bucket_name, auto_parse=True))
 
         search_builder.add_expression(ResourceModel.fs_node_model.is_null(False))
 
@@ -343,12 +345,12 @@ class S3ServerService:
             search_builder.add_expression(ResourceModel.origin == ResourceOrigin.UPLOADED)
 
         if key:
-            search_builder.add_tag_filter(Tag(cls.KEY_TAG_NAME, key))
+            search_builder.add_tag_filter(Tag(cls.KEY_TAG_NAME, key, auto_parse=True))
 
         if prefix:
             if not prefix.endswith('/'):
                 prefix += '/'
-            search_builder.add_tag_filter(Tag(cls.KEY_TAG_NAME, prefix), 'START_WITH')
+            search_builder.add_tag_filter(Tag(cls.KEY_TAG_NAME, prefix, auto_parse=True), SearchOperator.START_WITH)
 
         return search_builder
 
@@ -409,12 +411,12 @@ class S3ServerService:
         # delete all additional tags
         additional_current_tags = cls.get_additional_tags(entity_tags.get_tags_as_dict())
         for key, value in additional_current_tags.items():
-            entity_tags.delete_tag(Tag(key, value))
+            entity_tags.delete_tag(Tag(key, value, auto_parse=True))
 
         # add the new tags
         additional_new_tags = cls.get_additional_tags(tags)
         for key, value in additional_new_tags.items():
-            entity_tags.add_tag(Tag(key, value, origins=cls.get_tag_origin()))
+            entity_tags.add_tag(Tag(key, value, origins=cls.get_tag_origin(), auto_parse=True))
 
         resource = cls._update_resource_from_tags(resource, tags)
         resource.save()

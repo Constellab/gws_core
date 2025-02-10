@@ -6,7 +6,7 @@ from peewee import BooleanField, CharField, IntegerField, ModelSelect
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.tag.tag import TagValueType
-from gws_core.tag.tag_dto import EntityTagValueFormat, TagKeyModelDTO
+from gws_core.tag.tag_dto import TagKeyModelDTO, TagValueFormat
 from gws_core.tag.tag_helper import TagHelper
 
 from ..core.model.model import Model
@@ -16,8 +16,8 @@ class TagKeyModel(Model):
     key = CharField(null=False, unique=True)
     order = IntegerField(default=0)
 
-    value_format: EntityTagValueFormat = EnumField(
-        choices=EntityTagValueFormat, null=False, default=EntityTagValueFormat.STRING)
+    value_format: TagValueFormat = EnumField(
+        choices=TagValueFormat, null=False, default=TagValueFormat.STRING)
 
     is_propagable = BooleanField(default=False)
 
@@ -39,7 +39,7 @@ class TagKeyModel(Model):
     ############################################## CLASS METHODS ##############################################
 
     @classmethod
-    def create_tag_key_if_not_exists(cls, tag_key: str, value_format: EntityTagValueFormat) -> 'TagKeyModel':
+    def create_tag_key_if_not_exists(cls, tag_key: str, value_format: TagValueFormat) -> 'TagKeyModel':
         """Create a tag key model
         """
         tag_key_model = cls.find_by_key(tag_key)

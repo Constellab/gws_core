@@ -8,7 +8,7 @@ from gws_core.core.model.model import Model
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag
-from gws_core.tag.tag_dto import EntityTagValueFormat
+from gws_core.tag.tag_dto import TagValueFormat
 from gws_core.tag.tag_key_model import TagKeyModel
 
 from ..core.classes.search_builder import (SearchBuilder, SearchBuilderType,
@@ -24,7 +24,7 @@ class EntityWithTagSearchBuilder(SearchBuilder):
     :type SearchBuilder: _type_
     """
 
-    entity_type: EntityType
+    entity_type: EntityType = None
 
     def __init__(self, model_type: Type[Model],
                  entity_type: EntityType,
@@ -50,36 +50,39 @@ class EntityWithTagSearchBuilder(SearchBuilder):
         # return none because expression is already added with the join
         return None
 
-    def add_tag_filter(self: SearchBuilderType, tag: Tag, value_operator: SearchOperator = SearchOperator.EQ,
+    def add_tag_filter(self, tag: Tag, value_operator: SearchOperator = SearchOperator.EQ,
                        error_if_key_not_exists: bool = False) -> SearchBuilderType:
 
+        # value_format: TagValueFormat = tag.get_value_format()
         if error_if_key_not_exists:
             tag_model: TagKeyModel = TagKeyModel.find_by_key(tag.key)
 
             if tag_model is None:
                 raise Exception(f"Tag with key {tag.key} does not exist")
 
+            # value_format = tag_model.value_format
+
         entity_alias: Type[EntityTag] = EntityTag.alias()
-        # tag_value_field = self.get_tag_value_column_filter(entity_alias, tag_model.value_format)
         # TODO add support for CAST for Greater than integer for example
+        # tag_value_field = self._get_tag_value_column_filter(entity_alias, value_format)
 
         self.add_join(entity_alias, on=((entity_alias.entity_id == self._model_type.id) &
                                         (entity_alias.entity_type == self.entity_type.value) &
                                         (entity_alias.tag_key == tag.key) &
                                         # (tag_value_field == tag_value)
                                         # (tag_value_field.contains(tag.value)) &
-                                        (self._get_expression(value_operator, entity_alias.tag_value, tag.value))
+                                        (self._get_expression(value_operator, entity_alias.tag_value, tag.get_str_value()))
                                         ))
 
         return self
 
-    def _get_tag_value_column_filter(self, entity_type: Type[EntityTag], value_format: EntityTagValueFormat) -> Field:
-        return entity_type.tag_value
-        # if value_format == EntityTagValueFormat.STRING:
-        #     return entity_type.tag_value
-        # elif value_format == EntityTagValueFormat.INTEGER:
-        #     return entity_type.tag_value.cast('INTEGER')
-        # elif value_format == EntityTagValueFormat.FLOAT:
-        #     return entity_type.tag_value.cast('FLOAT')
-        # elif value_format == EntityTagValueFormat.DATETIME:
-        #     return entity_type.tag_value.cast('DATETIME')
+    def _get_tag_value_column_filter(self, entity_type: Type[EntityTag], value_format: TagValueFormat) -> Field:
+        # return entity_type.tag_value
+        if value_format == TagValueFormat.STRING:
+            return entity_type.tag_value
+        elif value_format == TagValueFormat.INTEGER:
+            return entity_type.tag_value.cast('INTEGER')
+        elif value_format == TagValueFormat.FLOAT:
+            return entity_type.tag_value.cast('FLOAT')
+        elif value_format == TagValueFormat.DATETIME:
+            return entity_type.tag_value.cast('DATETIME')
