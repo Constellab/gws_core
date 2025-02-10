@@ -47,7 +47,7 @@ class TestEnvShellProxy(TestCase):
         message_dispatcher.attach(basic_observer)
 
         shell_proxy: BaseEnvShell = shell_proxy_type(
-            env_name, env_file_path, message_dispatcher=message_dispatcher)
+            env_file_path, env_name=env_name, message_dispatcher=message_dispatcher)
 
         if shell_proxy.env_is_installed():
             shell_proxy.uninstall_env()
@@ -90,7 +90,7 @@ class TestEnvShellProxy(TestCase):
             self.assertFalse(shell_proxy.install_env())
 
             # Run a command
-            result = shell_proxy.run(f"python {python_file}")
+            result = shell_proxy.run(f"python {python_file}", shell_mode=True, dispatch_stdout=True)
             self.assertEqual(result, 0)
             self.assertTrue(basic_observer.has_message_containing('eyJhb'))
 

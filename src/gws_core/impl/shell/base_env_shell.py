@@ -8,6 +8,8 @@ from json import dump, load
 from pathlib import Path
 from typing import Any, Dict, Union, final
 
+from typing_extensions import Literal
+
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
@@ -15,7 +17,6 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.virtual_env.venv_dto import VEnvCreationInfo
-from typing_extensions import Literal
 
 from .shell_proxy import ShellProxy, ShellProxyDTO
 
@@ -80,7 +81,29 @@ class BaseEnvShell(ShellProxy):
         except Exception as err:
             raise Exception(f"Error while reading the env file. Error {err}") from err
 
-    def run(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = False) -> int:
+    def run(self, cmd: Union[list, str], env: dict = None,
+            shell_mode: bool = False,
+            dispatch_stdout: bool = False,
+            dispatch_stderr: bool = True) -> int:
+        """
+        Run a command in a shell.
+        The logs of the command will be dispatched to the message dispatcher during the execution.
+
+        :param cmd: command to run
+        :type cmd: Union[list, str]
+        :param env: environment variables to pass to the shell, defaults to None
+        :type env: dict, optional
+        :param shell_mode: if True, the command is run in a shell, defaults to False
+        :type shell_mode: bool, optional
+        :param dispatch_stdout: if True, the stdout of the command is dispatched to the message dispatcher.
+                            ⚠️ Warning ⚠️ Do not set to True if the command generates a lot of logs,
+                            because logs are stored in database, defaults to False
+        :type dispatch_stdout: bool, optional
+        :param dispatch_stderr: if True, the stderr of the command is dispatched to the message dispatcher.
+                            ⚠️ Warning ⚠️ Do not set to True if the command generates a lot of logs,
+                            because logs are stored in database, defaults to True
+        :type dispatch_stderr: bool, optional
+        """
         formatted_cmd = self.format_command(cmd)
 
         # compute env
@@ -91,9 +114,23 @@ class BaseEnvShell(ShellProxy):
         # install env if not installed
         self.install_env()
 
-        return super().run(formatted_cmd, complete_env, shell_mode)
+        return super().run(formatted_cmd, complete_env, shell_mode, dispatch_stdout, dispatch_stderr)
 
-    def run_in_new_thread(self, cmd: Union[list, str], env: dict = None, shell_mode: bool = False) -> SysProc:
+    def run_in_new_thread(self, cmd: Union[list, str], env: dict = None,
+                          shell_mode: bool = False) -> SysProc:
+        """
+        Run a command in a shell without blocking the thread.
+        There logs of the command are ignored.
+
+        :param cmd: command to run
+        :type cmd: Union[list, str]
+        :param env: environment variables to pass to the shell, defaults to None
+        :type env: dict, optional
+        :param shell_mode: if True, the command is run in a shell, defaults to False
+        :type shell_mode: bool, optional
+        :return: Thread running the command
+        :rtype: threading.Thread
+        """
         formatted_cmd = self.format_command(cmd)
 
         # compute env
@@ -109,6 +146,22 @@ class BaseEnvShell(ShellProxy):
     @final
     def check_output(self, cmd: Union[list, str], env: dict = None,
                      shell_mode: bool = False, text: bool = True) -> Any:
+        """
+        Run a command in a shell and return the output.
+        There logs of the command are ignored.
+
+        :param cmd: command to run
+        :type cmd: Union[list, str]
+        :param env: environment variables to pass to the shell, defaults to None
+        :type env: dict, optional
+        :param shell_mode: if True, the command is run in a shell, defaults to False
+        :type shell_mode: bool, optional
+        :param text: if True, the output is returned as a string, defaults to True
+        :type text: bool, optional
+        :raises Exception: _description_
+        :return: output of the command
+        :rtype: Any
+        """
         formatted_cmd = self.format_command(cmd)
 
         # compute env
