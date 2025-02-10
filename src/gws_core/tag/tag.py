@@ -168,7 +168,7 @@ class Tag():
     # Do not modified, this is to know if the tag is loaded from the database in a resource
     __is_field_loaded__: bool = False
 
-    SUPPORTED_TAG_REGEX = r"[a-z0-9\-_\./]"
+    SUPPORTED_TAG_REGEX = r"a-z0-9\-_\./"
 
     def __init__(self, key: str, value: TagValueType, is_propagable: bool = False,
                  origins: TagOrigins = None, auto_parse: bool = False) -> None:
@@ -186,10 +186,8 @@ class Tag():
                             if False and tag is invalid, an exception will be raised, defaults to False
         :type auto_parse: bool, optional
         """
-        self._check_key(key, auto_parse)
-        self._check_value(value, auto_parse)
-        self.key = key
-        self.value = value
+        self.key = self._check_key(key, auto_parse)
+        self.value = self._check_value(value, auto_parse)
         self.is_propagable = bool(is_propagable)
         self.origins = origins or TagOrigins()
 
@@ -274,7 +272,7 @@ class Tag():
 
     @staticmethod
     def validate_tag(tag_str: str) -> None:
-        pattern = re.compile(r'^' + Tag.SUPPORTED_TAG_REGEX + '+$')
+        pattern = re.compile(r'^[' + Tag.SUPPORTED_TAG_REGEX + ']+$')
         if not pattern.match(tag_str):
             raise ValueError(
                 'The tag only support alphanumeric characters in lower case, with "-", "_", "." and "/" allowed')
@@ -286,9 +284,9 @@ class Tag():
         if tag_str is None:
             return None
 
-        pattern = re.compile(Tag.SUPPORTED_TAG_REGEX)
         tag_str = str(tag_str).lower()
         tag_str = StringHelper.replace_accent_with_letter(tag_str)
+        pattern = re.compile(r'[^' + Tag.SUPPORTED_TAG_REGEX + ']')
         return pattern.sub('_', tag_str)
 
     @staticmethod
