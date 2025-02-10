@@ -10,6 +10,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.plotly.plotly_r_field import PlotlyRField
+from gws_core.impl.plotly.plotly_resource import PlotlyResource
 
 from .monitor import Monitor
 from .monitor_dto import MonitorBetweenDateGraphicsDTO, MonitorDTO
@@ -91,6 +92,7 @@ class MonitorService():
                                x: str,
                                y: list,
                                y_labs: dict = None) -> dict:
+
         # Create the plotly figure from the dataframe
 
         figure = px.line(dataframe, x=x, y=y, markers=True)
@@ -103,6 +105,7 @@ class MonitorService():
                 hovertemplate=t.hovertemplate.replace(t.name, y_labs[t.name])
             )
         )
+
         figure.update_layout(
             {
                 'title': '',
@@ -111,6 +114,9 @@ class MonitorService():
                 'legend_title': '',
             }
         )
+
+        # set the background color
+        figure.update_layout(PlotlyResource.get_current_user_layout_colors(use_secondary_background=True))
 
         # Convert the figure to a dict
         return PlotlyRField.figure_to_dict(figure)

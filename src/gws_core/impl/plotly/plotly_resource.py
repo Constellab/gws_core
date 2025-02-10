@@ -8,6 +8,7 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.view.view_decorator import view
+from gws_core.user.current_user_service import CurrentUserService
 
 from .plotly_r_field import PlotlyRField
 from .plotly_view import PlotlyView
@@ -50,3 +51,34 @@ class PlotlyResource(Resource):
         return Utils.json_are_equals(
             PlotlyRField.figure_to_dict(self.figure),
             PlotlyRField.figure_to_dict(other.figure))
+
+    @classmethod
+    def get_current_user_layout_colors(cls, use_secondary_background: bool = False) -> dict:
+        """Method to get the layout colors of plotly figure according to the current user theme
+        Ex : figure.update_layout(PlotlyResource.get_current_user_layout_colors())
+
+        :param use_secondary_background: If true, the secondary background color (used in card) will be used, defaults to False
+        :type use_secondary_background: bool, optional
+        :return: _description_
+        :rtype: dict
+        """
+        theme = CurrentUserService.get_current_user_theme()
+
+        background_color = theme.secondary_background_color if use_secondary_background else theme.background_color
+        return {
+            'plot_bgcolor': background_color,
+            'paper_bgcolor': background_color,
+            'font': {
+                'color': theme.text_color
+            },
+            'xaxis': {
+                'gridcolor': theme.outline_color,
+                'zerolinecolor': theme.outline_color,
+                'linecolor': theme.outline_color
+            },
+            'yaxis': {
+                'gridcolor': theme.outline_color,
+                'zerolinecolor': theme.outline_color,
+                'linecolor': theme.outline_color
+            }
+        }

@@ -4,6 +4,8 @@ from typing import Union
 
 from starlette_context import context
 
+from gws_core.core.service.front_service import FrontService, FrontTheme
+
 from ..core.exception.exceptions import (BadRequestException,
                                          UnauthorizedException)
 from ..core.utils.http_helper import HTTPHelper
@@ -96,6 +98,14 @@ class CurrentUserService:
 
         if not user.is_admin:
             raise UnauthorizedException(detail="Unauthorized: admin required")
+
+    @classmethod
+    def get_current_user_theme(cls) -> FrontTheme:
+        user = CurrentUserService.get_current_user()
+        if user is None:
+            return FrontService.get_light_theme()
+
+        return FrontService.get_dark_theme() if user.has_dark_theme() else FrontService.get_light_theme()
 
 
 class AuthenticateUser:

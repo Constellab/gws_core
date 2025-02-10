@@ -11,8 +11,14 @@ class FrontTheme(BaseModelDTO):
     :type BaseModelDTO: _type_
     """
 
+    # background color of the application
     background_color: str
+
+    # background color of cards
     secondary_background_color: str
+
+    # color for border, outline, hover, etc.
+    outline_color: str
 
     # text color used for the text on the background_color and secondary_background_color
     text_color: str
@@ -148,7 +154,8 @@ class FrontService():
         return FrontTheme(
             background_color='#FFFFFF',
             secondary_background_color='#EAEAEA',
-            text_color='#222222',
+            outline_color='#d2d2d2',
+            text_color='#181c1c',
             primary_color='#49A8A9',
             primary_contrast_color='#222222',
             accent_color='#6C4EF6',
@@ -162,7 +169,8 @@ class FrontService():
         return FrontTheme(
             background_color='#222222',
             secondary_background_color='#2B2D2E',
-            text_color='#FFFFFF',
+            outline_color='#494949',
+            text_color='#dfe3e3',
             primary_color='#49A8A9',
             primary_contrast_color='#222222',
             accent_color='#6C4EF6',
