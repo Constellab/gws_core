@@ -473,11 +473,13 @@ class FileHelper():
         :return: human readable size
         :rtype: str
         """
+        prefix = '-' if size < 0 else ''
+        size = abs(size)
         for unit in ['B', 'KB', 'MB', 'GB', 'TB', 'PB']:
             if size < 1024.0:
-                return f'{size:.1f} {unit}'
+                return f'{prefix}{size:.1f} {unit}'
             size /= 1024.0
-        return f'{size:.1f} EB'
+        return f'{prefix}{size:.1f} EB'
 
     @staticmethod
     def generate_unique_fs_node_for_dir(fs_node_name: str, dir_path: str) -> str:

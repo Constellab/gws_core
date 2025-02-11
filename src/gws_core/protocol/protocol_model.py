@@ -1183,14 +1183,6 @@ class ProtocolModel(ProcessModel):
         self.status = ProcessStatus.PARTIALLY_RUN
         self.save()
 
-    def mark_as_draft(self):
-        if self.is_draft:
-            return
-        self.ended_at = None
-        self.status = ProcessStatus.DRAFT
-        self.set_error_info(None)
-        self.save()
-
     def check_is_updatable(self, error_if_finished: bool = True) -> None:
         super().check_is_updatable(error_if_finished)
         if self.scenario:

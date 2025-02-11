@@ -11,7 +11,7 @@ from gws_core.test.base_test_case import BaseTestCase
 class TestMonitor(BaseTestCase):
 
     def test_get_current_monitor(self):
-        monitoring = MonitorService.get_current_monitor()
+        monitoring = Monitor.get_current()
 
         self.assertNotEqual(monitoring.disk_total, 0.0)
         self.assertNotEqual(monitoring.disk_usage_used, 0.0)

@@ -92,7 +92,7 @@ class Monitor(Model):
             interval=None, percpu=True)
 
         # Disk
-        disk = psutil.disk_usage("/")
+        disk = cls.get_current_disk_usage()
         monitor.disk_total = disk.total
         monitor.disk_usage_used = disk.used
         monitor.disk_usage_free = disk.free
@@ -129,6 +129,10 @@ class Monitor(Model):
                 monitor.gpu_memory_percent = gpu_info.memory_percent
 
         return monitor
+
+    @classmethod
+    def get_current_disk_usage(cls):
+        return psutil.disk_usage("/")
 
     @classmethod
     def get_gpu_info(cls) -> GpuInfo:

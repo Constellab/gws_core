@@ -5,6 +5,8 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Optional, Type, final
 
+from peewee import BooleanField, CharField, ForeignKeyField
+
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
@@ -22,7 +24,6 @@ from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.user.current_user_service import CurrentUserService
-from peewee import BooleanField, CharField, ForeignKeyField
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField
@@ -140,12 +141,7 @@ class ProcessModel(ModelWithUser):
         """
         Reset the process
         """
-        self.progress_bar.reset()
-
-        self.status = ProcessStatus.DRAFT
-        self.set_error_info(None)
-        self.started_at = None
-        self.ended_at = None
+        self.mark_as_draft()
         self._reset_io()
         process_model = self.save()
         return process_model
@@ -631,6 +627,16 @@ class ProcessModel(ModelWithUser):
 
         if pre_status == ProcessStatus.RUNNING and error_info.unique_code != 'TASK_CHECK_BEFORE_STOP':
             self.save_process_run_stat()
+
+    def mark_as_draft(self):
+        if self.is_draft:
+            return
+        self.started_at = None
+        self.ended_at = None
+        self.status = ProcessStatus.DRAFT
+        self.set_error_info(None)
+        self.save()
+        self.progress_bar.reset()
 
     def mark_as_error_and_parent(self, process_error: ProcessRunException, context: str = None):
         self.mark_as_error(ProcessErrorInfo(

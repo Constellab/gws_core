@@ -13,15 +13,23 @@ from gws_core.impl.plotly.plotly_r_field import PlotlyRField
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
 
 from .monitor import Monitor
-from .monitor_dto import MonitorBetweenDateGraphicsDTO, MonitorDTO
+from .monitor_dto import (CurrentMonitorDTO, MonitorBetweenDateGraphicsDTO,
+                          MonitorFreeDiskDTO)
 
 
 class MonitorService():
 
-    TICK_INTERVAL_SECONDS = 30   # 30 seconds
+    TICK_INTERVAL_SECONDS = 30  # 30 seconds
     TICK_INTERVAL_CLEANUP = 60 * 60 * 24  # 24 hours
     MONITORING_MAX_LINES = 86400  # 86400 = 1 log every 30 seconds for 1 month
     _is_initialized: bool = False
+
+    # Define the percentage of free disk space to keep
+    # We will keep 10% of free space on the disk to avoid disk full with
+    # a min of 5GB and a max of 20GB
+    PERCENTAGE_FREE_DISK_SPACE = 10  # 10%
+    MIN_FREE_DISK_SPACE = 5 * 1024 * 1024 * 1024  # 5GB
+    MAX_FREE_DISK_SPACE = 20 * 1024 * 1024 * 1024  # 20GB
 
     @classmethod
     def init(cls):
@@ -64,16 +72,15 @@ class MonitorService():
 
     @classmethod
     def save_current_monitor(cls) -> Monitor:
-        monitor = cls.get_current_monitor()
+        monitor = Monitor.get_current()
         return monitor.save()
 
     @classmethod
-    def get_current_monitor_data(cls) -> MonitorDTO:
-        return cls.get_current_monitor().to_dto()
-
-    @classmethod
-    def get_current_monitor(cls) -> Monitor:
-        return Monitor.get_current()
+    def get_current_monitor(cls) -> CurrentMonitorDTO:
+        return CurrentMonitorDTO(
+            monitor=Monitor.get_current().to_dto(),
+            free_disk=cls.get_free_disk_info(),
+        )
 
     @classmethod
     def get_monitor_graphics_between_dates_str(cls,
@@ -83,7 +90,8 @@ class MonitorService():
         return cls.get_monitor_data_graphics_between_dates(
             DateHelper.from_iso_str(from_date_str),
             DateHelper.from_iso_str(to_date_str),
-            utc_num
+            utc_num,
+            0
         )
 
     @classmethod
@@ -125,11 +133,15 @@ class MonitorService():
     def get_monitor_data_graphics_between_dates(cls,
                                                 from_date: datetime,
                                                 to_date: datetime,
-                                                utc_number: float = 0) -> MonitorBetweenDateGraphicsDTO:
+                                                utc_number: float = 0,
+                                                seconds_margin: int = None) -> MonitorBetweenDateGraphicsDTO:
 
-        # convert date to string and add tick interval to be sure to have at least one tick
-        from_date = from_date - timedelta(seconds=cls.TICK_INTERVAL_SECONDS)
-        to_date = to_date + timedelta(seconds=cls.TICK_INTERVAL_SECONDS)
+        # add tick interval to be sure to have at least one tick
+        if seconds_margin is None:
+            seconds_margin = cls.TICK_INTERVAL_SECONDS
+
+        from_date = from_date - timedelta(seconds=seconds_margin)
+        to_date = to_date + timedelta(seconds=seconds_margin)
 
         monitors = list(Monitor.select().where(
             Monitor.created_at >= from_date,
@@ -213,3 +225,16 @@ class MonitorService():
             return
         # Delete all record older
         Monitor.delete().where(Monitor.created_at <= monitor.created_at).execute()
+
+    @classmethod
+    def get_free_disk_info(cls) -> MonitorFreeDiskDTO:
+        """Get information about the free disk space.
+        """
+        disk_usage = Monitor.get_current_disk_usage()
+        required_free_space = disk_usage.total * cls.PERCENTAGE_FREE_DISK_SPACE / 100
+        required_free_space_normalized = max(min(required_free_space, cls.MAX_FREE_DISK_SPACE), cls.MIN_FREE_DISK_SPACE)
+
+        return MonitorFreeDiskDTO(
+            required_disk_free_space=required_free_space_normalized,
+            disk_usage_free=disk_usage.free
+        )

@@ -24,9 +24,9 @@ class ProcessStatus(Enum):
 
 class ProcessErrorInfo(BaseModelDTO):
     detail: str
-    unique_code: Optional[str]
-    context: Optional[str]
-    instance_id: Optional[str]
+    unique_code: Optional[str] = None
+    context: Optional[str] = None
+    instance_id: Optional[str] = None
 
 
 class ProcessMinimumDTO(BaseModelDTO):

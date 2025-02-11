@@ -1,11 +1,7 @@
-
-
-from typing import List
-
 from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.lab.system_dto import (LabInfoDTO, LabSystemConfig, PipPackage,
+from gws_core.lab.system_dto import (LabInfoDTO, LabStatusDTO, LabSystemConfig,
                                      SettingsDTO)
 
 from ..core.service.settings_service import SettingsService
@@ -16,11 +12,12 @@ from .system_service import SystemService
 
 @core_app.get("/system/info", tags=["System"], summary="Get system info")
 def system_info(_=Depends(AuthService.check_user_access_token)) -> LabInfoDTO:
-    """
-    Reset dev environment
-    """
-
     return SystemService.get_lab_info()
+
+
+@core_app.get("/system/status", tags=["System"], summary="Get system status")
+def system_status(_=Depends(AuthService.check_user_access_token)) -> LabStatusDTO:
+    return SystemService.get_system_status()
 
 
 @core_app.post("/system/dev-reset", tags=["System"], summary="Reset dev environment")

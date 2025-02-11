@@ -325,6 +325,10 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.set_error_info(error_info)
         self.save()
 
+        # mark the protocol as error if it is not already
+        if not self.protocol_model.is_error:
+            self.protocol_model.mark_as_error(error_info)
+
     def mark_as_partially_run(self) -> None:
         self.status = ScenarioStatus.PARTIALLY_RUN
         self.set_error_info(None)

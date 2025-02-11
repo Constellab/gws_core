@@ -18,7 +18,7 @@ from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor_service import MonitorService
-from gws_core.lab.system_dto import LabInfoDTO, LabSystemConfig
+from gws_core.lab.system_dto import LabInfoDTO, LabStatusDTO, LabSystemConfig
 from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.resource.kv_store import KVStore
@@ -247,6 +247,12 @@ class SystemService:
             front_version=settings.get_front_version(),
             space=settings.get_space(),
             id=settings.get_lab_id(),
+        )
+
+    @classmethod
+    def get_system_status(cls) -> LabStatusDTO:
+        return LabStatusDTO(
+            free_disk=MonitorService.get_free_disk_info()
         )
 
     @classmethod

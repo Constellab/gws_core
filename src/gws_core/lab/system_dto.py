@@ -5,6 +5,7 @@ from typing import List, Literal, Optional
 from typing_extensions import TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.lab.monitor.monitor_dto import MonitorFreeDiskDTO
 from gws_core.user.user_dto import SpaceDict
 
 LabEnvironment = Literal["ON_CLOUD", "DESKTOP", "LOCAL"]
@@ -15,6 +16,10 @@ class LabInfoDTO(BaseModelDTO):
     lab_name: str
     front_version: str
     space: Optional[SpaceDict]
+
+
+class LabStatusDTO(BaseModelDTO):
+    free_disk: MonitorFreeDiskDTO
 
 
 class SettingsDTO(BaseModelDTO):

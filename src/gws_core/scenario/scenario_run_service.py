@@ -6,6 +6,8 @@ import traceback
 from typing import List, Optional
 
 from gws_core.core.service.front_service import FrontService
+from gws_core.impl.file.file_helper import FileHelper
+from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_model import ProcessModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
@@ -32,6 +34,9 @@ from .scenario_exception import ScenarioRunException
 class ScenarioRunService():
     """Service used to run scenario
     """
+
+    # additional disk space required to run the scenario
+    REQUIRED_DISK_SPACE_RUN_SCENARIO = 1 * 1024 * 1024 * 1024  # 1 GB
 
     @classmethod
     def run_scenario_in_cli(cls, scenario_id: str) -> None:
@@ -157,8 +162,6 @@ class ScenarioRunService():
 
     @classmethod
     def _check_scenario_before_start(cls, scenario: Scenario) -> None:
-        user = CurrentUserService.get_and_check_current_user()
-
         # check scenario status
         scenario.check_is_runnable()
 
@@ -226,6 +229,8 @@ class ScenarioRunService():
             raise BadRequestException(
                 f"A CLI process was already created to run the process {process_model.id}")
 
+        cls._check_disk_space_before_run(scenario)
+
         settings = Settings.get_instance()
         gws_core_path = settings.get_brick("gws_core").path
 
@@ -272,6 +277,20 @@ class ScenarioRunService():
             f"""The scenario logs are not shown in the console, because it is run in another linux process ({scenario.pid}).
             To view them check the logs marked as {Logger.SUB_PROCESS_TEXT} in the today's log file : {Logger.get_file_path()}""")
         return sproc
+
+    @classmethod
+    def _check_disk_space_before_run(cls, scenario: Scenario) -> None:
+        # check if there is enough disk space
+        free_disk = MonitorService.get_free_disk_info()
+
+        if not free_disk.has_enough_space_for_file(cls.REQUIRED_DISK_SPACE_RUN_SCENARIO):
+            required_space_pretty = FileHelper.get_file_size_pretty_text(
+                cls.REQUIRED_DISK_SPACE_RUN_SCENARIO + free_disk.required_disk_free_space)
+
+            error = f"Not enough disk space to run the scenario. It requires at least {required_space_pretty} of free space"
+
+            scenario.mark_as_error(ProcessErrorInfo(detail=error))
+            raise BadRequestException(error)
 
     @classmethod
     def stop_scenario(cls, id: str) -> Scenario:

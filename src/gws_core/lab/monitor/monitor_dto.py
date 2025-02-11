@@ -39,6 +39,24 @@ class MonitorDTO(ModelDTO):
     data: dict
 
 
+class MonitorFreeDiskDTO(BaseModelDTO):
+    required_disk_free_space: float
+    disk_usage_free: float
+
+    def has_enough_space_for_file(self, file_size: float) -> bool:
+        remaining_space_after_file = self.get_remaining_space_after_file(file_size)
+
+        return remaining_space_after_file > self.required_disk_free_space
+
+    def get_remaining_space_after_file(self, file_size: float) -> float:
+        return self.disk_usage_free - file_size
+
+
+class CurrentMonitorDTO(BaseModelDTO):
+    monitor: MonitorDTO
+    free_disk: MonitorFreeDiskDTO
+
+
 class MonitorBetweenDateGraphicsDTO(BaseModelDTO):
 
     from_date: datetime

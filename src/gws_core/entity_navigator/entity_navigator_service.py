@@ -136,6 +136,8 @@ class EntityNavigatorService:
         for task in error_tasks:
             ProtocolService.reset_process_of_protocol(task.parent_protocol, task.instance_name)
 
+        protocol_model.refresh_status()
+
     ############################################# RESOURCE #############################################
 
     @classmethod

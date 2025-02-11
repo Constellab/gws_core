@@ -9,6 +9,7 @@ from time import time
 from typing import List, Type, Union
 
 from gws_core.core.utils.logger import Logger
+from gws_core.lab.monitor.monitor_service import MonitorService
 
 from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions import BadRequestException
@@ -39,8 +40,12 @@ class LocalFileStore(FileStore):
         :return: The file object
         :rtype: gws.file.File.
         """
+
         if self.node_path_exists(source_path):
             raise BadRequestException(f"Node '{source_path}' already exists in the file store")
+
+        file_size = FileHelper.get_size(source_path)
+        self.check_disk_has_enough_space(file_size)
 
         if dest_name is None:
             dest_name = FileHelper.get_name_with_extension(source_path)
@@ -62,6 +67,8 @@ class LocalFileStore(FileStore):
         :rtype: gws.file.File.
         """
 
+        self.check_disk_has_enough_space(source_file.tell())
+
         dest_file_path = self.generate_new_node_path(dest_file_name)
 
         self._init_dir(FileHelper.get_dir(dest_file_path))
@@ -70,6 +77,24 @@ class LocalFileStore(FileStore):
             shutil.copyfileobj(source_file, buffer)
 
         return self.get_node_by_path(node_path=dest_file_path, node_type=file_type)
+
+    @classmethod
+    def check_disk_has_enough_space(cls, file_size: float) -> None:
+        """ Check if the disk has enough space to store a file of the given size.
+        The system will try to keep a percentage of free space on the disk.
+        Raise a BadRequestException if there is not enough space.
+
+        :param file_size: The size of the file to store in bytes
+        :type file_size: int
+        """
+        free_disk_info = MonitorService.get_free_disk_info()
+
+        if not free_disk_info.has_enough_space_for_file(file_size):
+            raise Exception(
+                "Not enough space on disk to store the file. " +
+                f"Required free space: {FileHelper.get_file_size_pretty_text(free_disk_info.required_disk_free_space)}, " +
+                f"file size: {FileHelper.get_file_size_pretty_text(file_size)}, " +
+                f"remaining space after file: {FileHelper.get_file_size_pretty_text(free_disk_info.get_remaining_space_after_file(file_size))}")
 
     def _move_node(self, source: str, destination: str) -> None:
         """Copy a node from a path to another path

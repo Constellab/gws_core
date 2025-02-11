@@ -1,7 +1,7 @@
 from fastapi import Depends
 
-from gws_core.lab.monitor.monitor_dto import (MonitorBetweenDateGraphicsDTO,
-                                              MonitorDTO)
+from gws_core.lab.monitor.monitor_dto import (CurrentMonitorDTO,
+                                              MonitorBetweenDateGraphicsDTO)
 
 from ...core_controller import core_app
 from ...user.auth_service import AuthService
@@ -10,11 +10,11 @@ from .monitor_service import MonitorService
 
 
 @core_app.get("/monitor/current", tags=["Lab"], summary="Get current monitor data")
-def get_the_last_lab_monitor_data(_=Depends(AuthService.check_user_access_token)) -> MonitorDTO:
+def get_the_last_lab_monitor_data(_=Depends(AuthService.check_user_access_token)) -> CurrentMonitorDTO:
     """
     Get current monitor data
     """
-    return MonitorService.get_current_monitor_data()
+    return MonitorService.get_current_monitor()
 
 
 @core_app.post("/monitor/graphics", tags=["Lab"], summary="Get the lab monitor graphics")
