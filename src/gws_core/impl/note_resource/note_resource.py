@@ -54,7 +54,8 @@ class NoteResource(ResourceSet):
 
         self._rich_text = RichText()
 
-    def set_parameter(self, parameter_name: str, value: Any) -> None:
+    def set_parameter(self, parameter_name: str, value: Any,
+                      replace_block: bool = False) -> None:
         """
         Set the value of a parameter.
 
@@ -62,8 +63,10 @@ class NoteResource(ResourceSet):
         :type parameter_name: str
         :param value: value of the parameter. This is convert to str
         :type value: Any
+        :param replace_block: if True, the block containing the parameter is replaced by a new block with the value
+        :type replace_block: bool
         """
-        self._rich_text.set_parameter(parameter_name, str(value))
+        self._rich_text.set_parameter(parameter_name, str(value), replace_block)
 
     def add_paragraph(self, paragraph: str) -> None:
         """

@@ -1,6 +1,7 @@
 
 
 from gws_core.config.config_types import ConfigParamsDict
+from gws_core.impl.note_resource.note_resource import NoteResource
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextObjectType
 from gws_core.impl.rich_text.rich_text_view import RichTextView
@@ -35,6 +36,13 @@ class NoteTemplateResource(Resource):
         if self._note_template is None:
             self._note_template = NoteTemplate.get_by_id_and_check(self.note_template_id)
         return self._note_template
+
+    def generate_note_resource(self) -> NoteResource:
+        note_resource = NoteResource()
+        note_resource.append_advanced_rich_text(self.get_content(),
+                                                RichTextObjectType.NOTE_TEMPLATE,
+                                                self.note_template_id)
+        return note_resource
 
     @view(view_type=RichTextView, human_name="View note template",
           default_view=True)

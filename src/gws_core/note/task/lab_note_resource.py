@@ -38,9 +38,10 @@ class LabNoteResource(Resource):
             self._note = Note.get_by_id_and_check(self.note_id)
         return self._note
 
-    def replace_variable(self, variable_name: str, value: str) -> None:
+    def replace_variable(self, parameter_name: str, value: str,
+                         replace_block: bool = False) -> None:
         rich_text: RichText = self.get_content()
-        rich_text.set_parameter(variable_name, value)
+        rich_text.set_parameter(parameter_name, value, replace_block)
         self._content = rich_text
 
     def add_paragraph(self, paragraph: str) -> None:

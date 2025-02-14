@@ -202,7 +202,8 @@ class RichText(SerializableObjectJson):
             else:
                 block_index += 1
 
-    def set_parameter(self, parameter_name: str, value: str) -> None:
+    def set_parameter(self, parameter_name: str, value: str,
+                      replace_block: bool = False) -> None:
         """Replace the parameter in the rich text content text
         """
         paragraphs = self.get_blocks_by_type(RichTextBlockType.PARAGRAPH)
@@ -214,7 +215,7 @@ class RichText(SerializableObjectJson):
                 continue
 
             paragraph_text = RichTextParagraphText(data['text'])
-            new_text = paragraph_text.replace_parameter_with_text(parameter_name, value)
+            new_text = paragraph_text.replace_parameter_with_text(parameter_name, value, replace_block)
 
             if new_text is not None:
                 data['text'] = new_text

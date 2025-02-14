@@ -43,9 +43,17 @@ class TestRichText(BaseTestCaseLight):
                     "text": 'Place for <te-variable-inline data-jsondata=\'{"name": "test2", "description": "", "type": "string", "value": null}\'></te-variable-inline> variable'
                 }
             ),
-            # Variable for figure inline with text alone in a block
             RichTextBlock(
                 id="3",
+                type=RichTextBlockType.PARAGRAPH,
+                data={
+                    # Paragraph with a variable named test2
+                    "text": 'Place for <te-variable-inline data-jsondata=\'{"name": "test3", "description": "", "type": "string", "value": null}\'></te-variable-inline> variable'
+                }
+            ),
+            # Variable for figure inline with text alone in a block
+            RichTextBlock(
+                id="4",
                 type=RichTextBlockType.PARAGRAPH,
                 data={
                     "text": '<te-variable-inline data-jsondata=\'{"name": "figure_1", "description": "", "type": "string", "value": null}\'> figure_1</te-variable-inline>'
@@ -53,7 +61,7 @@ class TestRichText(BaseTestCaseLight):
             ),
             #  Variable for figure inline with text
             RichTextBlock(
-                id="4",
+                id="5",
                 type=RichTextBlockType.PARAGRAPH,
                 data={
                     "text": 'Variable : <te-variable-inline data-jsondata=\'{"name": "figure_2", "description": "", "type": "string", "value": null}\'> figure_2</te-variable-inline> super'
@@ -87,6 +95,12 @@ class TestRichText(BaseTestCaseLight):
             rich_text.to_dto().blocks[2].data["text"],
             'Place for <te-variable-inline data-jsondata=\'{"name": "test2", "description": "", "type": "string", "value": "test2_value"}\'></te-variable-inline> variable')
 
+        rich_text.set_parameter('test3', 'test_3_value', replace_block=True)
+        self.assertEqual(
+            rich_text.to_dto().blocks[3].data["text"],
+            'Place for test_3_value variable'
+        )
+
         # test views
         view: RichTextResourceViewData = {
             "id": "1",
@@ -104,15 +118,15 @@ class TestRichText(BaseTestCaseLight):
         rich_text.add_resource_view(view, 'figure_1')
         # no block should be added
         self.assertEqual(len(rich_text.to_dto().blocks), block_count)
-        self.assertEqual(rich_text.to_dto().blocks[3].type, RichTextBlockType.RESOURCE_VIEW)
+        self.assertEqual(rich_text.to_dto().blocks[4].type, RichTextBlockType.RESOURCE_VIEW)
 
         # add the resource view in the rich text at a specific variable
         # this should split the block in 3 blocks
         rich_text.add_resource_view(view, 'figure_2')
-        self.assertEqual(rich_text.to_dto().blocks[4].data["text"], 'Variable : ')
-        self.assertEqual(rich_text.to_dto().blocks[5].type, RichTextBlockType.RESOURCE_VIEW)
-        self.assertEqual(rich_text.to_dto().blocks[6].data["text"], ' super')
-        self.assertEqual(rich_text.to_dto().blocks[7].data["text"], 'End')
+        self.assertEqual(rich_text.to_dto().blocks[5].data["text"], 'Variable : ')
+        self.assertEqual(rich_text.to_dto().blocks[6].type, RichTextBlockType.RESOURCE_VIEW)
+        self.assertEqual(rich_text.to_dto().blocks[7].data["text"], ' super')
+        self.assertEqual(rich_text.to_dto().blocks[8].data["text"], 'End')
 
         # test replace block
         rich_text.replace_block_at_index(0, RichTextBlock(

@@ -162,6 +162,8 @@ class RichTextVariableData(TypedDict):
     description: str
     value: Any
     type: Literal['string']
+    # if true, the only the variable value is displayed
+    hideBlock: bool
 
 
 class RichTextTimestampData(TypedDict):

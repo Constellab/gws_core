@@ -26,13 +26,16 @@ class RichTextParagraphText():
     def __init__(self, text: str):
         self.text = text
 
-    def replace_parameter_with_text(self, variable_name: str, value: str) -> str:
+    def replace_parameter_with_text(self, parameter_name: str, value: str,
+                                    replace_block: bool = False) -> str:
         """Replace the variable in the rich text content text
 
         :param variable_name: the name of the variable to replace
         :type variable_name: str
         :param value: the value to replace the variable
         :type value: str
+        :param replace_block: if True, the variable block will be remove and only the value will be displayed
+        :type replace_block: bool
         :return: the updated text if the variable was found and replaced
         :rtype: str
         """
@@ -47,11 +50,16 @@ class RichTextParagraphText():
                 json_data = tag[self.VARIABLE_JSON_ATTRIBUTE]
                 variable_data: RichTextVariableData = json.loads(json_data)
 
-                if variable_data.get('name') == variable_name:
+                if variable_data.get('name') == parameter_name:
                     variable_data['value'] = value
 
-                    # update the json data attribute
-                    tag[self.VARIABLE_JSON_ATTRIBUTE] = json.dumps(variable_data)
+                    # if replace is set to True, we remove the block and only display the value
+                    # using beautifulsoup
+                    if replace_block:
+                        tag.replace_with(value)
+                    else:
+                        # update the json data attribute
+                        tag[self.VARIABLE_JSON_ATTRIBUTE] = json.dumps(variable_data)
                     variable_applied = True
 
         if variable_applied:
