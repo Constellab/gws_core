@@ -69,7 +69,7 @@ class ScenarioLoader():
 
             if folder is None:
                 self._message_dispatcher.notify_info_message(
-                    f"Folder '{zip_scenario.folder.title}' not found, skipping linking scenario to folder.")
+                    f"Folder '{zip_scenario.folder.name}' not found, skipping linking scenario to folder.")
             else:
                 scenario.folder = folder
 

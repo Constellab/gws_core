@@ -182,7 +182,7 @@ class ScenarioService():
                     raise BadRequestException(
                         "This scenario is synchronized with space, you can't move it to another root folder. Please unsync it first by removing it from the folder.")
 
-                SpaceService.update_scenario_folder(scenario.folder.id, scenario.id, new_folder.id)
+                SpaceService.get_instance().update_scenario_folder(scenario.folder.id, scenario.id, new_folder.id)
 
             if scenario.folder != new_folder:
                 folder_changed = True
@@ -292,7 +292,7 @@ class ScenarioService():
             lab_config=lab_config.to_dto()
         )
         # Save the scenario in space
-        SpaceService.save_scenario(
+        SpaceService.get_instance().save_scenario(
             scenario.folder.id, save_scenario_dto)
         return scenario
 
@@ -309,7 +309,7 @@ class ScenarioService():
                     "You can't unsynchronize an scenario that has associated notes synced in space. Please unsync the notes first.")
 
         # Delete the scenario in space
-        SpaceService.delete_scenario(folder_id, scenario.id)
+        SpaceService.get_instance().delete_scenario(folder_id, scenario.id)
 
         # clear sync info
         scenario.last_sync_at = None
@@ -479,7 +479,7 @@ class ScenarioService():
 
         # if the scenario was sync with space, delete it in space too
         if scenario.last_sync_at is not None and scenario.folder is not None:
-            SpaceService.delete_scenario(
+            SpaceService.get_instance().delete_scenario(
                 scenario.folder.id, scenario.id)
 
         ActivityService.add(activity_type=ActivityType.DELETE,

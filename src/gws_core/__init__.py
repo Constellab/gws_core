@@ -138,6 +138,8 @@ from .entity_navigator.entity_navigator_service import \
 from .entity_navigator.entity_navigator_type import EntityType as EntityType
 # Folder
 from .folder.space_folder import SpaceFolder as SpaceFolder
+from .folder.space_folder_dto import \
+    ExternalSpaceCreateFolder as ExternalSpaceCreateFolder
 # Code > AgentFactory
 from .impl.agent.helper.agent_factory import AgentFactory as AgentFactory
 # Impl > Agent
@@ -436,6 +438,8 @@ from .scenario_template.scenario_template_factory import \
     ScenarioTemplateFactory as ScenarioTemplateFactory
 # Space
 from .space.mail_service import MailService as MailService
+from .space.space_service import SpaceService as SpaceService
+from .space.space_service_token import SpaceServiceToken as SpaceServiceToken
 # Streamlit
 from .streamlit.streamlit_app import StreamlitApp as StreamlitApp
 from .streamlit.streamlit_app_managers import \
@@ -452,6 +456,7 @@ from .tag.entity_tag import EntityTag as EntityTag
 from .tag.tag import Tag as Tag
 from .tag.tag_helper import TagHelper as TagHelper
 from .tag.tag_key_model import TagKeyModel as TagKeyModel
+from .tag.tag_list import TagList as TagList
 from .tag.tag_service import TagService as TagService
 from .tag.tag_value_model import TagValueModel as TagValueModel
 # Task > Converter

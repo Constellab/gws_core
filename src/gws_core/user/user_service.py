@@ -112,7 +112,7 @@ class UserService():
     def synchronize_all_space_users(cls) -> None:
         Logger.info("Synchronizing users from space")
         try:
-            users = SpaceService.get_all_lab_users()
+            users = SpaceService.get_instance().get_all_lab_users()
             for user in users:
                 cls.create_or_update_user_dto(user)
 
@@ -159,7 +159,7 @@ class UserService():
         if user is not None:
             return user
 
-        user = SpaceService.get_user_info(user_id)
+        user = SpaceService.get_instance().get_user_info(user_id)
         if user is None:
             raise BadRequestException("The user does not exist in Constellab")
         return cls.create_or_update_user_dto(user)

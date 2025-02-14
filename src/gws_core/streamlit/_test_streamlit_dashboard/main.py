@@ -5,8 +5,9 @@ from json import dump, load
 
 import streamlit as st
 
-from gws_core import FSNode
+from gws_core import ExternalSpaceCreateFolder, FSNode, SpaceService
 from gws_core.streamlit import ResourceSearchInput
+from gws_core.tag.tag import Tag
 
 # from gws_core import FileHelper, RichText
 # from gws_core.resource.resource_model import ResourceModel
@@ -17,7 +18,29 @@ from gws_core.streamlit import ResourceSearchInput
 sources: list
 
 st.title("Hello World")
-search = ResourceSearchInput().add_fs_node_extension_filter('.csv').select()
+# search = ResourceSearchInput().add_fs_node_extension_filter('.csv').select()
+
+title = st.text_input(label='Title')
+
+tag_key = st.text_input(label='Tag Key')
+
+tag_value = st.text_input(label='Tag Value')
+
+if st.button('Create Folder'):
+    folder = ExternalSpaceCreateFolder(name=title, tags=[Tag(key=tag_key, value=tag_value)])
+    SpaceService.get_instance().create_root_folder(folder)
+
+
+id = st.text_input(label='Folder ID')
+
+if st.button('Add or update tag'):
+    SpaceService.get_instance().add_or_replace_tags_on_object(id, [Tag(key=tag_key, value=tag_value)])
+
+if st.button('Add tag'):
+    SpaceService.get_instance().add_tags_to_object(id, [Tag(key=tag_key, value=tag_value)])
+
+if st.button('Delete tag'):
+    SpaceService.get_instance().delete_tags_on_object(id, [Tag(key=tag_key, value=tag_value)])
 
 
 # folder = sources[0]

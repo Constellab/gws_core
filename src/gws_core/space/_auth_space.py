@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 from fastapi import Depends
+
 from gws_core.user.auth_service import AuthService
 
 from ..core.exception.exceptions import UnauthorizedException
@@ -47,7 +48,7 @@ class AuthSpace:
         """Method to check the space api key retrieved from the header
         """
 
-        is_authorized = SpaceService.check_api_key(api_key)
+        is_authorized = SpaceService.get_instance().check_api_key(api_key)
         if not is_authorized:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_INVALID_API_KEY.value,

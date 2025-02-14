@@ -156,7 +156,7 @@ class NoteService():
                 if note.folder.get_root().id != new_folder.get_root().id:
                     raise BadRequestException(
                         "The note is synchronized with the space, you can't move it to another root folder. Please unsync it first by removing it from the folder.")
-                SpaceService.update_note_folder(note.folder.id, note.id, new_folder.id)
+                SpaceService.get_instance().update_note_folder(note.folder.id, note.id, new_folder.id)
             note.folder = new_folder
 
         # if the folder was removed
@@ -182,7 +182,7 @@ class NoteService():
         note: Note = cls._get_and_check_before_update(note_id)
 
         if not Settings.get_instance().is_test and not Settings.get_instance().is_local_env():
-            note.modifications = SpaceService.get_modifications(note.content, note_content, note.modifications)
+            note.modifications = SpaceService.get_instance().get_modifications(note.content, note_content, note.modifications)
         note.content = note_content
 
         # refresh NoteResource table
@@ -257,7 +257,7 @@ class NoteService():
 
         # if the note was sync with space, delete it in space too
         if note.last_sync_at is not None and note.folder is not None:
-            SpaceService.delete_note(note.folder.id, note.id)
+            SpaceService.get_instance().delete_note(note.folder.id, note.id)
 
         ActivityService.add(ActivityType.DELETE,
                             object_type=ActivityObjectType.NOTE,
@@ -419,14 +419,14 @@ class NoteService():
             rich_text.replace_block_data_by_id(file_view_block.id, new_data)
 
         # Save the scenario in space
-        SpaceService.save_note(note.folder.id, save_note_dto, file_paths)
+        SpaceService.get_instance().save_note(note.folder.id, save_note_dto, file_paths)
 
         return note
 
     @classmethod
     def _unsynchronize_with_space(cls, note: Note, folder_id: str) -> Note:
         # delete the note in space
-        SpaceService.delete_note(folder_id=folder_id, note_id=note.id)
+        SpaceService.get_instance().delete_note(folder_id=folder_id, note_id=note.id)
 
         note.last_sync_at = None
         note.last_sync_by = None
@@ -704,7 +704,7 @@ class NoteService():
     def get_undo_content(cls, note_id: str, modification_id: str) -> RichTextDTO:
         note: Note = Note.get_by_id_and_check(note_id)
 
-        return SpaceService.get_undo_content(note.content, note.modifications, modification_id)
+        return SpaceService.get_instance().get_undo_content(note.content, note.modifications, modification_id)
 
     @classmethod
     @transaction()

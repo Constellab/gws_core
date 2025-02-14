@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Callable, List
 
 import streamlit as st
 from pandas import DataFrame
@@ -13,13 +13,14 @@ def dataframe_paginated(dataframe: DataFrame,
                         paginate_rows: bool = True,
                         row_page_size_options: List[int] = None,
                         paginate_columns: bool = False,
-                        column_page_size_options: List[int] = None):
+                        column_page_size_options: List[int] = None,
+                        transformer: Callable[[Any], DataFrame] = None):
     """
     Paginate a dataframe in streamlit.
     Can only be used in a streamlit app.
     Import it like this: `from gws_streamlit_helper import dataframe_paginated`
 
-    :param dataframe: dataframe to paginate
+    :param dataframe: dataframe to paginate. It only supports pandas dataframe.
     :type dataframe: DataFrame
     :param paginate_rows: whether to paginate rows, defaults to True
     :type paginate_rows: bool, optional
@@ -29,9 +30,16 @@ def dataframe_paginated(dataframe: DataFrame,
     :type paginate_columns: bool, optional
     :param column_page_size_options: list of page size available, defaults to row_page_size_options
     :type column_page_size_options: List[int], optional
+    :param transformer: function to apply to the dataframe before displaying it (after pagination).
+    Ex apply a style : `transformer = lambda df : df.style.format(thousands=" ", precision=1)`, defaults to None
+    :type transformer: Callable[[DataFrame]], optional
     :return: _description_
     :rtype: Any
     """
+
+    if not isinstance(dataframe, DataFrame):
+        raise ValueError(
+            "dataframe must be a pandas DataFrame. If you want to apply a function like a style, please use the transformer parameter")
     if row_page_size_options is None:
         row_page_size_options = [50, 100, 250]
 
@@ -74,4 +82,7 @@ def dataframe_paginated(dataframe: DataFrame,
         to_column_id = int(current_page * page_size)
 
     pages = _select_by_coords(dataframe, from_row_id, to_row_id, from_column_id, to_column_id)
+
+    if transformer is not None:
+        pages = transformer(pages)
     return pagination.dataframe(pages, use_container_width=True)

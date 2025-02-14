@@ -892,7 +892,7 @@ class Migration080(BrickMigration):
         migrator.drop_column_if_exists(ViewConfig, 'tags')
 
         migrator.add_column_if_not_exists(ResourceModel, ResourceModel.content_is_deleted)
-        migrator.alter_column_type(SpaceFolder, SpaceFolder.title.column_name, CharField(null=False, max_length=100))
+        migrator.alter_column_type(SpaceFolder, SpaceFolder.name.column_name, CharField(null=False, max_length=100))
 
         migrator.migrate()
 
@@ -1340,3 +1340,14 @@ class Migration0100(BrickMigration):
                 except Exception as exception:
                     Logger.error(
                         f'Error while setting tag value for {tag_value.tag_value} : {exception}')
+
+    @brick_migration('0.13.0', short_description='Rename folder title to name')
+    class Migration0130(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+            migrator = SqlMigrator(ResourceModel.get_db())
+
+            migrator.rename_column_if_exists(SpaceFolder, 'title', 'name')
+            migrator.migrate()

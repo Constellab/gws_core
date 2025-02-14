@@ -9,7 +9,7 @@ from gws_core.folder.space_folder_dto import SpaceFolderDTO, SpaceFolderTreeDTO
 
 
 class SpaceFolder(Model):
-    title: str = CharField(null=False, max_length=100)
+    name: str = CharField(null=False, max_length=100)
     parent: 'SpaceFolder' = ForeignKeyField('self', null=True, backref='children', on_delete='CASCADE')
 
     children: List['SpaceFolder']
@@ -21,14 +21,14 @@ class SpaceFolder(Model):
             id=self.id,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
-            title=self.title,
+            name=self.name,
         )
 
     def to_tree_dto(self) -> SpaceFolderTreeDTO:
         children = [child.to_tree_dto() for child in self.children]
 
         # sort children by title
-        children.sort(key=lambda x: x.title)
+        children.sort(key=lambda x: x.name)
 
         return SpaceFolderTreeDTO(
             **self.to_dto().to_json_dict(),
@@ -51,7 +51,7 @@ class SpaceFolder(Model):
         Get all root folders.
         """
 
-        return cls.select().where(cls.parent.is_null()).order_by(cls.title)
+        return cls.select().where(cls.parent.is_null()).order_by(cls.name)
 
     def get_with_children_as_list(self) -> List['SpaceFolder']:
         """

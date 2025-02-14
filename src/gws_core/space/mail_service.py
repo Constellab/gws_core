@@ -73,7 +73,7 @@ class MailService:
             subject=subject
         )
 
-        SpaceService.send_mail(mail_dto)
+        SpaceService.get_instance().send_mail(mail_dto)
 
         return True
 

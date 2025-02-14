@@ -298,7 +298,7 @@ class StreamlitResource(ResourceList):
 
         shell_proxy = self._get_shell_proxy()
         shell_proxy.attach_observer(LoggerMessageObserver())
-        streamlit_app = StreamlitApp(self.uid, shell_proxy)
+        streamlit_app = StreamlitApp(self.get_model_id(), shell_proxy)
 
         dashboard = self._get_dashboard()
 

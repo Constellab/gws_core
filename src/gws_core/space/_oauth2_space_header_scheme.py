@@ -8,6 +8,7 @@ from typing import Optional
 from fastapi.requests import Request
 from fastapi.security import OAuth2
 from fastapi.security.utils import get_authorization_scheme_param
+
 from gws_core.space.space_service import SpaceService
 
 from ..core.exception.exceptions import BadRequestException

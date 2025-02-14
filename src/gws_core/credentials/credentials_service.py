@@ -97,7 +97,7 @@ class CredentialsService():
 
         # skip the check with space in local dev env
         if not Settings.get_instance().is_local_dev_env():
-            response: ExternalCheckCredentialResponse = SpaceService.check_credentials(user_credentials, False)
+            response: ExternalCheckCredentialResponse = SpaceService.get_instance().check_credentials(user_credentials, False)
 
             if not response.status == 'OK':
                 raise UnauthorizedException('Invalid credentials')

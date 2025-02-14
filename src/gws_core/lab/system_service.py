@@ -226,7 +226,7 @@ class SystemService:
         try:
             Logger.info('Registering lab start on space')
 
-            result = SpaceService.register_lab_start(
+            result = SpaceService.get_instance().register_lab_start(
                 LabConfigModel.get_current_config().to_dto())
 
             if result:

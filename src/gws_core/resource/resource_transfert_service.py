@@ -96,4 +96,4 @@ class ResourceTransfertService():
             valid_until=share_link.valid_until
         )
 
-        SpaceService.share_resource(request_dto.folder_id, resource_dto)
+        SpaceService.get_instance().share_resource(request_dto.folder_id, resource_dto)

@@ -33,7 +33,7 @@ class SpaceFolderService():
         Logger.info("Synchronizing folders from space")
 
         try:
-            external_folders = SpaceService.get_all_lab_folders()
+            external_folders = SpaceService.get_instance().get_all_lab_folders()
             cls.synchronize_all_folders(external_folders)
 
             Logger.info(f"{len(external_folders.folders)} root folders synchronized from space")
@@ -46,7 +46,7 @@ class SpaceFolderService():
         """
         Synchronize a folder from space
         """
-        space_root_folder = SpaceService.get_lab_root_folder(folder_id)
+        space_root_folder = SpaceService.get_instance().get_lab_root_folder(folder_id)
         cls.synchronize_space_folder(space_root_folder)
 
     @classmethod
@@ -102,7 +102,7 @@ class SpaceFolderService():
             lab_folder.id = external_folder.id
 
         # update other fields
-        lab_folder.title = external_folder.title
+        lab_folder.name = external_folder.name
         lab_folder.parent = parent
         lab_folder.save()
 

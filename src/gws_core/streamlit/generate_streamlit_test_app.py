@@ -27,12 +27,12 @@ class TestDashboard(Dashboard):
             "_test_streamlit_dashboard"
         )
 
-    def get_shell_proxy(self) -> ShellProxy:
-        env_path = os.path.join(
-            self.get_app_folder_path(),
-            'streamlit_env.yml',
-        )
-        return MambaShellProxy(env_path)
+    # def get_shell_proxy(self) -> ShellProxy:
+    #     env_path = os.path.join(
+    #         self.get_app_folder_path(),
+    #         'streamlit_env.yml',
+    #     )
+    #     return MambaShellProxy(env_path)
 
 
 @task_decorator("GenerateStreamlitTestApp", human_name="GenerateStreamlitTestApp", hide=False)

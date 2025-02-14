@@ -17,6 +17,7 @@ class TestTableConcat(TestCase):
 
     def test_flatten_dataframe_by_column(self):
         df = DataFrame({'F1': [1, 2], 'F2': [7, 1]})
+        a = df.style.format(thousands=" ", precision=1)
         self.assertEqual(DataframeHelper.flatten_dataframe_by_column(df), [1, 2, 7, 1])
 
     def test_dataframe_to_float(self):

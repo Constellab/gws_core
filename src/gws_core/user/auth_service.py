@@ -42,7 +42,7 @@ class AuthService():
             return cls.log_user(user)
 
         # Check the user credentials
-        check_response: ExternalCheckCredentialResponse = SpaceService.check_credentials(credentials)
+        check_response: ExternalCheckCredentialResponse = SpaceService.get_instance().check_credentials(credentials)
 
         # if the user is logged
         if check_response.status == 'OK':
@@ -58,7 +58,7 @@ class AuthService():
     def login_with_2fa(cls, credentials: UserCredentials2Fa) -> Response:
 
         # Check if the code is valid
-        user_space: UserSpace = SpaceService.check_2_fa(credentials)
+        user_space: UserSpace = SpaceService.get_instance().check_2_fa(credentials)
 
         # refresh and retrieve lab user
         user: User = cls.get_and_refresh_user_from_space(user_space)

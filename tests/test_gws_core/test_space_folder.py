@@ -51,20 +51,20 @@ class TestFolder(BaseTestCase):
         folder: SpaceFolder = SpaceFolder.get_by_id_and_check("caf61803-70e5-4ac3-9adb-53a35f65a2f1")
 
         json_ = folder.to_tree_dto()
-        self.assertEqual(json_.title, 'Root folder')
+        self.assertEqual(json_.name, 'Root folder')
         self.assertEqual(len(json_.children), 2)
-        self.assertEqual(json_.children[0].title, 'Work package 1')
-        self.assertEqual(json_.children[1].title, 'Work package 2')
+        self.assertEqual(json_.children[0].name, 'Work package 1')
+        self.assertEqual(json_.children[1].name, 'Work package 2')
         self.assertEqual(len(json_.children[0].children), 1)
-        self.assertEqual(json_.children[0].children[0].title, 'Task 1')
+        self.assertEqual(json_.children[0].children[0].name, 'Task 1')
         self.assertEqual(len(json_.children[0].children[0].children), 0)
         self.assertEqual(len(json_.children[1].children), 0)
 
         # test get available folders as tree
         folder_trees = SpaceFolderService.get_folder_trees()
         # check that the root folder was returned but not the children
-        self.assertTrue(any(folder_tree.title == 'Root folder' for folder_tree in folder_trees))
-        self.assertFalse(any(folder_tree.title == 'Work package 1' for folder_tree in folder_trees))
+        self.assertTrue(any(folder_tree.name == 'Root folder' for folder_tree in folder_trees))
+        self.assertFalse(any(folder_tree.name == 'Work package 1' for folder_tree in folder_trees))
 
         # Test another synchronization to delete the Work package 2 folder and verify that the other folder were not changed
         space_folder.children = space_folder.children[:1]
@@ -73,9 +73,9 @@ class TestFolder(BaseTestCase):
 
         # test get
         folder = SpaceFolder.get_by_id_and_check("caf61803-70e5-4ac3-9adb-53a35f65a2f1")
-        self.assertEqual(folder.title, 'Root folder')
+        self.assertEqual(folder.name, 'Root folder')
         self.assertEqual(len(folder.children), 1)
-        self.assertEqual(folder.children[0].title, 'Work package 1')
+        self.assertEqual(folder.children[0].name, 'Work package 1')
 
         # Test deletion, create a sync scenario
         scenario: Scenario = ScenarioService.create_scenario(folder_id='caf61803-70e5-4ac3-9adb-53a35f65a2f3')
@@ -130,12 +130,12 @@ class TestFolder(BaseTestCase):
 
         self.assertEqual(SpaceFolder.select().count(), 4)
         root_1 = SpaceFolder.get_by_id_and_check("caf61803-70e5-4ac3-9adb-53a35f65a2f1")
-        self.assertEqual(root_1.title, 'Root folder')
+        self.assertEqual(root_1.name, 'Root folder')
         self.assertEqual(len(root_1.children), 2)
         self.assertEqual(root_1.children[0].id, 'caf61803-70e5-4ac3-9adb-53a35f65a2f2')
-        self.assertEqual(root_1.children[0].title, 'Work package 1')
+        self.assertEqual(root_1.children[0].name, 'Work package 1')
         self.assertEqual(root_1.children[1].id, 'caf61803-70e5-4ac3-9adb-53a35f65a2f4')
-        self.assertEqual(root_1.children[1].title, 'Work package 2')
+        self.assertEqual(root_1.children[1].name, 'Work package 2')
 
         new_folders: List[ExternalSpaceFolder] = [
             ExternalSpaceFolder.from_json({
@@ -166,12 +166,12 @@ class TestFolder(BaseTestCase):
 
         self.assertEqual(SpaceFolder.select().count(), 4)
         new_root_1 = SpaceFolder.get_by_id_and_check("caf61803-70e5-4ac3-9adb-53a35f65a2f1")
-        self.assertEqual(new_root_1.title, 'Root new')
+        self.assertEqual(new_root_1.name, 'Root new')
         self.assertEqual(len(new_root_1.children), 2)
         self.assertEqual(new_root_1.children[0].id, 'caf61803-70e5-4ac3-9adb-53a35f65a2f2')
-        self.assertEqual(new_root_1.children[0].title, 'Work package 1 new')
+        self.assertEqual(new_root_1.children[0].name, 'Work package 1 new')
         self.assertEqual(new_root_1.children[1].id, 'caf61803-70e5-4ac3-9adb-53a35f65a2f6')
-        self.assertEqual(new_root_1.children[1].title, 'New child')
+        self.assertEqual(new_root_1.children[1].name, 'New child')
 
         # check Work package 2 and root 1 were deleted
         self.assertIsNone(SpaceFolder.get_by_id("caf61803-70e5-4ac3-9adb-53a35f65a2f4"))
