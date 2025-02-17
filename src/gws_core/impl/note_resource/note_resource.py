@@ -7,6 +7,7 @@ from PIL import Image
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text import RichText
@@ -36,6 +37,7 @@ from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_resource import ViewResource
 from gws_core.resource.view.view_result import CallViewResult
 from gws_core.resource.view.view_runner import ViewRunner
+from gws_core.tag.tag_service import TagService
 
 
 @resource_decorator("NoteResource", human_name="Note resource",
@@ -564,6 +566,9 @@ class NoteResource(ResourceSet):
         if scenario_id:
             NoteService.add_scenario(note.id, scenario_id)
 
+        if self.tags and self.tags.count() > 0:
+            TagService.add_tags_to_entity(EntityType.NOTE, note.id, self.tags.get_tags())
+
         note_rich_text = self._export_as_lab_note_rich_text(note.id)
 
         # save the content to the note
@@ -743,8 +748,8 @@ class NoteResource(ResourceSet):
         :return: the note resource
         :rtype: NoteResource
         """
-        note = NoteResource()
+        note_resource = NoteResource()
         rich_text = RichText(note.content)
-        note.append_advanced_rich_text(rich_text, RichTextObjectType.NOTE, note.id)
-        note.title = title or note.title
-        return note
+        note_resource.append_advanced_rich_text(rich_text, RichTextObjectType.NOTE, note.id)
+        note_resource.title = title or note.title
+        return note_resource

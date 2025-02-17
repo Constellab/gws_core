@@ -64,3 +64,8 @@ class TagList():
         """Remove tags that are loaded from the database
         """
         self._tags = [tag for tag in self._tags if not tag.__is_field_loaded__]
+
+    def count(self) -> int:
+        """Return the number of tags
+        """
+        return len(self._tags)

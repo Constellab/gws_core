@@ -38,11 +38,7 @@ class NoteTemplateResource(Resource):
         return self._note_template
 
     def generate_note_resource(self) -> NoteResource:
-        note_resource = NoteResource()
-        note_resource.append_advanced_rich_text(self.get_content(),
-                                                RichTextObjectType.NOTE_TEMPLATE,
-                                                self.note_template_id)
-        return note_resource
+        return NoteResource.from_note_template(self.get_note_template())
 
     @view(view_type=RichTextView, human_name="View note template",
           default_view=True)
