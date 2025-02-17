@@ -439,7 +439,6 @@ from .scenario_template.scenario_template_factory import \
 # Space
 from .space.mail_service import MailService as MailService
 from .space.space_service import SpaceService as SpaceService
-from .space.space_service_token import SpaceServiceToken as SpaceServiceToken
 # Streamlit
 from .streamlit.streamlit_app import StreamlitApp as StreamlitApp
 from .streamlit.streamlit_app_managers import \
