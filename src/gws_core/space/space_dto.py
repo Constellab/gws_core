@@ -3,8 +3,6 @@
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
-from typing_extensions import TypedDict
-
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
 from gws_core.model.typing_style import TypingStyle
@@ -13,6 +11,7 @@ from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
 from gws_core.resource.view.view_dto import CallViewResultDTO
 from gws_core.scenario.scenario_dto import ScenarioDTO
 from gws_core.user.activity.activity_dto import ActivityDTO
+from typing_extensions import TypedDict
 
 
 class LabStartDTO(BaseModelDTO):
@@ -34,6 +33,13 @@ class SaveNoteToSpaceDTO(BaseModelDTO):
 
 class SpaceSendMailDTO(BaseModelDTO):
     receiver_ids: List[str]
+    mail_template: Literal['scenario-finished', 'generic']
+    data: Optional[Any]
+    subject: Optional[str]  # if provided, it override the template subject
+
+
+class SpaceSendMailToMailsDTO(BaseModelDTO):
+    receiver_mails: List[str]
     mail_template: Literal['scenario-finished', 'generic']
     data: Optional[Any]
     subject: Optional[str]  # if provided, it override the template subject

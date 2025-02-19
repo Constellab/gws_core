@@ -2,8 +2,6 @@
 
 from typing import Any, Dict, List, Literal, Optional
 
-from requests.models import Response
-
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
@@ -15,8 +13,10 @@ from gws_core.lab.lab_config_dto import LabConfigModelDTO
 from gws_core.space.space_dto import (LabStartDTO, SaveNoteToSpaceDTO,
                                       SaveScenarioToSpaceDTO,
                                       ShareResourceWithSpaceDTO,
-                                      SpaceSendMailDTO)
+                                      SpaceSendMailDTO,
+                                      SpaceSendMailToMailsDTO)
 from gws_core.user.user_dto import UserFullDTO, UserSpace
+from requests.models import Response
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.external_api_service import ExternalApiService
@@ -347,6 +347,15 @@ class SpaceService():
         space_api_url: str = cls._get_space_api_url(
             f"{cls._external_labs_route}/send-mail")
         return ExternalApiService.post(space_api_url, send_mail_dto, cls._get_request_header(),
+                                       raise_exception_if_error=True)
+
+    @classmethod
+    def send_mail_to_mails(cls, send_mail_to_mails_dto: SpaceSendMailToMailsDTO) -> Response:
+        cls._check_dev_mode()
+
+        space_api_url: str = cls._get_space_api_url(
+            f"{cls._external_labs_route}/send-mail-to-mails")
+        return ExternalApiService.post(space_api_url, send_mail_to_mails_dto, cls._get_request_header(),
                                        raise_exception_if_error=True)
 
     @classmethod
