@@ -33,7 +33,7 @@ class StreamlitEnvLoader:
             st.error('User not found')
             st.stop()
 
-        # Authenticate sys user because in S3 server we don't have a user
+        # Authenticate user
         CurrentUserService.set_current_user(user)
         # Code to set up and acquire resources
         return self  # You can return an object that you want to use in the with block

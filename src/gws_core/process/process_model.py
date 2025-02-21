@@ -483,7 +483,8 @@ class ProcessModel(ModelWithUser):
             process_type_dto = process_typing.to_simple_dto()
             type_status = process_typing.get_type_status()
             process_type: Type[Process] = process_typing.get_type()
-            is_agent = process_type.__is_agent__
+            if process_type is not None:
+                is_agent = process_type.__is_agent__
         else:
             type_status = TypingStatus.UNAVAILABLE
 
