@@ -34,7 +34,7 @@ class ConverterService:
 
         importer_type: Type[ResourceImporter] = TypingManager.get_and_check_type_from_name(importer_typing_name)
 
-        # Create an scenario containing 1 source, 1 importer , 1 output task
+        # Create a scenario containing 1 source, 1 importer , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{resource_type.get_human_name()} importer")
         protocol: ProtocolProxy = scenario.get_protocol()
@@ -92,7 +92,7 @@ class ConverterService:
         # Check that the resource exists
         resource_model = ResourceModel.get_by_id_and_check(resource_model_id)
 
-        # Create an scenario containing 1 source, 1 extractor , 1 output task
+        # Create a scenario containing 1 source, 1 extractor , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{resource_model.name} exporter")
         protocol: ProtocolProxy = scenario.get_protocol()
@@ -121,7 +121,7 @@ class ConverterService:
         # Check that the resource exists
         ResourceModel.get_by_id_and_check(folder_model_id)
 
-        # Create an scenario containing 1 source, 1 extractor , 1 output task
+        # Create a scenario containing 1 source, 1 extractor , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{FileHelper.get_name(sub_path)} extractor")
         protocol: ProtocolProxy = scenario.get_protocol()

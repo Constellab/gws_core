@@ -47,6 +47,13 @@ class CurrentUserService:
         return None
 
     @classmethod
+    def user_is_authenticated(cls) -> bool:
+        """
+        Check if the user is authenticated
+        """
+        return cls.get_current_user() is not None
+
+    @classmethod
     def set_current_user(cls, user: User) -> None:
         """
         Set the user in the current session

@@ -224,6 +224,6 @@ class TestFolder(BaseTestCase):
 
         scenario = scenario.refresh()
         self.assertEqual(scenario.folder.id, 'caf61803-70e5-4ac3-9adb-53a35f65a2f6')
-        # clean scenario to allow folder deletion
+        # clea scenario to allow folder deletion
         scenario.folder = None
         scenario.save()

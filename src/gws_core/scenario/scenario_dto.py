@@ -14,7 +14,7 @@ from gws_core.scenario.scenario_enums import (ScenarioCreationType,
 from gws_core.user.user_dto import UserDTO
 
 
-# DTO to create/update an scenario
+# DTO to create/update a scenario
 class ScenarioSaveDTO(BaseModelDTO):
     folder_id: Optional[str] = None
     title: str = None

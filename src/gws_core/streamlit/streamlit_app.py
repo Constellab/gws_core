@@ -118,7 +118,11 @@ class StreamlitApp():
     def get_app_full_url(self, host_url: str, token: str) -> str:
         if self._dev_mode:
             return host_url
-        return f"{host_url}?gws_token={token}&gws_app_id={self.app_id}&gws_user_id={CurrentUserService.get_and_check_current_user().id}"
+        url = f"{host_url}?gws_token={token}&gws_app_id={self.app_id}"
+        user = CurrentUserService.get_current_user()
+        if user is not None:
+            url += f"&gws_user_id={user.id}"
+        return url
 
     def destroy(self) -> None:
         if self._app_config_dir is not None:

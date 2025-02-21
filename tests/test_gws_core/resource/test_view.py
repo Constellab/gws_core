@@ -228,7 +228,7 @@ class TestView(BaseTestCase):
         resource: Resource = ResourceViewTestSub()
         resource_model: ResourceModel = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.UPLOADED)
 
-        # create an scenario with the view task
+        # create a scenario with the view task
         i_scenario = ScenarioProxy()
         i_protocol = i_scenario.get_protocol()
 

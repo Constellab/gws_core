@@ -109,7 +109,7 @@ class VEnvService():
         Delete a virtual environment.
         """
         if check_running_scenario and ScenarioService.count_of_running_scenarios() > 0:
-            raise BadRequestException('Cannot delete a venv while an scenario is running.')
+            raise BadRequestException('Cannot delete a venv while a scenario is running.')
         venv_folder = os.path.join(Settings.get_global_env_dir(), venv_name)
         FileHelper.delete_dir(venv_folder)
 
@@ -119,5 +119,5 @@ class VEnvService():
         Delete all virtual environments.
         """
         if ScenarioService.count_of_running_scenarios() > 0:
-            raise BadRequestException('Cannot delete a venv while an scenario is running.')
+            raise BadRequestException('Cannot delete a venv while a scenario is running.')
         FileHelper.delete_dir_content(Settings.get_global_env_dir())

@@ -18,7 +18,7 @@ class ScenarioTransfertService():
 
     @classmethod
     def import_from_lab(cls, values: ConfigParamsDict) -> Scenario:
-        # Create an scenario containing 1 scenario downloader , 1 output task
+        # Create a scenario containing 1 scenario downloader , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(title="Import scenario")
         protocol = scenario.get_protocol()
 
@@ -43,7 +43,7 @@ class ScenarioTransfertService():
     @classmethod
     def export_scenario_to_lab(cls, scenario_id: str, values: ConfigParamsDict) -> None:
 
-        # Create an scenario containing 1 scenario downloader , 1 output task
+        # Create a scenario containing 1 scenario downloader , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(title="Send scenario")
         protocol = scenario.get_protocol()
 

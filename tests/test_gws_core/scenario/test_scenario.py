@@ -289,7 +289,7 @@ class TestScenario(BaseTestCase):
         # generate a resource
         robot_model = output.refresh().get_input_resource_model(OutputTask.input_name)
 
-        # create an scenario that uses this resource
+        # create a scenario that uses this resource
         scenario_2 = ScenarioProxy()
         protocol_2 = scenario_2.get_protocol()
         i_move = protocol_2.add_process(RobotMove, 'move', {})

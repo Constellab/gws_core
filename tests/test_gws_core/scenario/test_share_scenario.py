@@ -62,7 +62,7 @@ class TestShareScenario(BaseTestCase):
 
             input_robot_model = GTest.save_robot_resource()
 
-            # Create and run an scenario
+            # Create and run a scenario
             folder = GTest.create_default_folder()
             scenario = ScenarioProxy(title='Test scenario', folder=folder)
 

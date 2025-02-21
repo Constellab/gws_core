@@ -49,7 +49,7 @@ class LogLine():
 
     def _init_new(self, line_str: str) -> None:
         """
-        Read the line as json and extract the level, date, content and if it is from an scenario
+        Read the line as json and extract the level, date, content and if it is from a scenario
         """
         try:
             line_json: LogFileLine = LogFileLine.from_json_str(line_str)
@@ -62,7 +62,7 @@ class LogLine():
             pass
 
     def _init_old(self, line_str: str) -> None:
-        """Read the line and extract the level, date, content and if it is from an scenario
+        """Read the line and extract the level, date, content and if it is from a scenario
         Line example : INFO - 2023-07-12 14:10:09,676 - Logger configured with log level: INFO
         The log system was changed on v0.5.7
 
@@ -78,7 +78,7 @@ class LogLine():
             self.init_old_date(logs_parts[1])
 
             # if the log also contains the text ' - [SCENARIO] - '
-            # it is from an scenario
+            # it is from a scenario
             if len(logs_parts) >= 4 and logs_parts[2] == Logger.SUB_PROCESS_TEXT:
                 # use a join because the log can contains ' - '
                 self.message = separator.join(logs_parts[3:])
@@ -134,7 +134,7 @@ class LogCompleteInfo():
     def get_log_lines_by_time(self, start_time: datetime, end_time: datetime,
                               from_scenario_id: str = None,
                               nb_of_lines: int = None) -> List[LogLine]:
-        """Filter the log lines by time and if it is from an scenario
+        """Filter the log lines by time and if it is from a scenario
 
         :param start_time: start time of the filter
         :type start_time: datetime

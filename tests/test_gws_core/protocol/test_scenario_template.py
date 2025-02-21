@@ -96,7 +96,7 @@ class TestScenarioTemplate(BaseTestCase):
         self.assertEqual(paginator.page_info.total_number_of_items, 1)
         self.assertEqual(paginator.results[0].id, template_db.id)
 
-        # Test create an scenario from a template
+        # Test create a scenario from a template
         scenario = ScenarioService.create_scenario(scenario_template=template_db)
 
         # check that protocol and task are created
@@ -159,7 +159,7 @@ class TestScenarioTemplate(BaseTestCase):
         template = ProtocolService.create_scenario_template_from_id(
             protocol_id=protocol.get_model().id, name='test_dynamic')
 
-        # Test create an scenario from a template
+        # Test create a scenario from a template
         scenario_dto = ScenarioSaveDTO(scenario_template_id=template.id, title='')
         scenario = ScenarioService.create_scenario_from_dto(scenario_dto)
 

@@ -62,8 +62,8 @@ class ImportedResource():
         self.children = children
 
 
-@task_decorator(unique_name="ScenarioDownloader", human_name="Download an scenario",
-                short_description="Download an scenario from another lab using a link",
+@task_decorator(unique_name="ScenarioDownloader", human_name="Download a scenario",
+                short_description="Download a scenario from another lab using a link",
                 style=TypingStyle.material_icon("scenario"))
 class ScenarioDownloader(Task):
 

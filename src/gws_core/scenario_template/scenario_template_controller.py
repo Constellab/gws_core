@@ -20,7 +20,7 @@ from gws_core.user.auth_service import AuthService
 from .scenario_template_service import ScenarioTemplateService
 
 
-@core_app.get("/scenario-template/{id}", tags=["Scenario template"], summary="Get an scenario template")
+@core_app.get("/scenario-template/{id}", tags=["Scenario template"], summary="Get a scenario template")
 def get_by_id(id: str,
               _=Depends(AuthService.check_user_access_token)) -> ScenarioTemplateDTO:
 
@@ -67,7 +67,7 @@ def update_name(id: str,
     return ScenarioTemplateService.update_name(id=id, name=update_scenario_template.name).to_dto()
 
 
-@core_app.delete("/scenario-template/{id}", tags=["Scenario template"], summary="Delete an scenario template")
+@core_app.delete("/scenario-template/{id}", tags=["Scenario template"], summary="Delete a scenario template")
 def delete_by_id(id: str,
                  _=Depends(AuthService.check_user_access_token)) -> None:
 

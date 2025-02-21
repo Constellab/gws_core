@@ -168,7 +168,7 @@ class ScenarioRunService():
     @classmethod
     def create_cli_for_scenario(cls, scenario: Scenario, user: User) -> SysProc:
         """
-        Run an scenario in a non-blocking way through the cli.
+        Run a scenario in a non-blocking way through the cli.
 
         :param user: The user who is running the scenario. If not provided, the system will try the get the currently authenticated user
         :type user: `gws.user.User`
@@ -191,7 +191,7 @@ class ScenarioRunService():
                                         process_instance_name: str,
                                         user: User) -> SysProc:
         """
-        Run an scenario in a non-blocking way through the cli.
+        Run a scenario in a non-blocking way through the cli.
 
         :param user: The user who is running the scenario. If not provided, the system will try the get the currently authenticated user
         :type user: `gws.user.User`

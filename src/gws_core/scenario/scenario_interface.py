@@ -33,7 +33,7 @@ class ScenarioProxy:
     def __init__(
             self, protocol_type: Type[Protocol] = None, folder: SpaceFolder = None, title: str = '',
             creation_type: ScenarioCreationType = ScenarioCreationType.AUTO):
-        """This create an scenario in the database with the provided Task or Protocol
+        """This create a scenario in the database with the provided Task or Protocol
 
         :param process_type: Can be the type of a Protocol or a Task.
                             If this is a task, it will be wrapped in a protocol

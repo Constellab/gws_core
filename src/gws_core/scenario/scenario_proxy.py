@@ -37,7 +37,7 @@ class ScenarioProxy:
             title: str = '',
             creation_type: ScenarioCreationType = ScenarioCreationType.AUTO,
             scenario_id: str = None) -> None:
-        """This create an scenario in the database with the provided Task or Protocol
+        """This create a scenario in the database with the provided Task or Protocol
 
         :param process_type: Can be the type of a Protocol or a Task.
                             If this is a task, it will be wrapped in a protocol

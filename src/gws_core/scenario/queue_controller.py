@@ -27,7 +27,7 @@ def remove_scenario_from_queue(
         id: str,
         _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
-    Remove an scenario from the queue
+    Remove a scenario from the queue
     """
 
     return QueueService.remove_scenario_from_queue(id).to_dto()

@@ -14,7 +14,7 @@ from gws_core.scenario.scenario import Scenario
 @resource_decorator("ScenarioResource", human_name="Scenario resource", short_description="Scenario resource",
                     style=TypingStyle.material_icon("scenario", background_color="#735f32"))
 class ScenarioResource(Resource):
-    """Resource to reference an scenario.
+    """Resource to reference a scenario.
 
     :param Resource: _description_
     :type Resource: _type_

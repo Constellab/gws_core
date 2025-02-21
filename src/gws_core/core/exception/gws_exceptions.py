@@ -45,7 +45,7 @@ class GWSException(Enum):
     EMPTY_FILE = "The file '{{filename}}' is empty"
     INVALID_FILE_ON_UPLOAD = "The file is invalid. Error : '{{error}}'"
     INVALID_FOLDER_ON_UPLOAD = "The folder is invalid. Error : '{{error}}'"
-    NOTE_NO_LINKED_SCENARIO = "The note is not linked with an scenario. Please link it to an scenario to access views."
+    NOTE_NO_LINKED_SCENARIO = "The note is not linked with a scenario. Please link it to a scenario to access views."
     DELETE_FOLDER_WITH_SCENARIOS = "The folder can't be deleted because it contains synced scenarios"
     DELETE_FOLDER_WITH_NOTES = "The folder can't be deleted because it contains synced notes"
     EXP_CONTINUE_LAB_INCOMPATIBLE = "The scenario cannot be continued because the lab version has changed since last execution. Please reset the scenario first."

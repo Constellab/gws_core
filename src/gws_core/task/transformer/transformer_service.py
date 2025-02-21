@@ -33,7 +33,7 @@ class TransformerService():
             resource_model_id)
         resource_type: Type[Resource] = resource_model.get_and_check_resource_type()
 
-        # Create an scenario containing 1 source, X transformers task , 1 output task
+        # Create a scenario containing 1 source, X transformers task , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(
             None, title=f"{resource_type.get_human_name()} transformation")
         protocol: ProtocolProxy = scenario.get_protocol()

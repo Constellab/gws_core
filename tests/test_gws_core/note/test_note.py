@@ -52,7 +52,7 @@ class TestNote(BaseTestCase):
         self.assertEqual(len(notes), 1)
         self.assertEqual(notes[0].id, note.id)
 
-        # Check that note_2 ha an scenario
+        # Check that note_2 ha a scenario
         notes = NoteService.get_by_scenario(scenario_2.id)
         self.assertEqual(len(notes), 1)
         self.assertEqual(notes[0].id, note_2.id)
@@ -126,7 +126,7 @@ class TestNote(BaseTestCase):
 
     # test to have a view config to a note
     def test_add_view_config_to_note(self):
-        # generate a resource from an scenario
+        # generate a resource from a scenario
         scenario = ScenarioProxy()
         scenario.get_protocol().add_process(RobotCreate, 'create')
         scenario.run()

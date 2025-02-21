@@ -94,7 +94,7 @@ class TestProtocolBuildError(Protocol):
 class TestProtocolError(BaseTestCase):
 
     def test_error_on_task(self):
-        """Test an scenario with a task that throws an exception """
+        """Test a scenario with a task that throws an exception """
 
         protocol = ProtocolService.create_protocol_model_from_type(
             TestErrorProtocol)

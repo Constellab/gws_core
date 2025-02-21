@@ -41,7 +41,7 @@ class SubFile(File):
 class TestResourceModel(BaseTestCase):
 
     def test_search(self):
-        # Create an scenario and a task
+        # Create a scenario and a task
         scenario: ScenarioProxy = ScenarioProxy()
         scenario.get_protocol().add_process(ForSearchCreate, 'facto')
         task: TaskProxy = scenario.get_protocol().get_process('facto')

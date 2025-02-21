@@ -74,7 +74,7 @@ class Logger:
 
         :param level: level of the logs to show, defaults to "info"
         :type level: error | info | debug, optional
-        :param _scenario_id: set when  gws is runned inside a subprocess to run an scenario, defaults to False
+        :param _scenario_id: set when  gws is runned inside a subprocess to run a scenario, defaults to False
         :type _scenario_id: bool, optional
         """
         if Logger._logger is not None:

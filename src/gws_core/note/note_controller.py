@@ -15,12 +15,12 @@ from .note_dto import NoteDTO, NoteInsertTemplateDTO, NoteSaveDTO
 from .note_service import NoteService
 
 
-@core_app.post("/note", tags=["Note"], summary="Create a note for an scenario")
+@core_app.post("/note", tags=["Note"], summary="Create a note for a scenario")
 def create(note_dto: NoteSaveDTO, _=Depends(AuthService.check_user_access_token)) -> NoteDTO:
     return NoteService.create(note_dto).to_dto()
 
 
-@core_app.post("/note/scenario/{scenario_id}", tags=["Note"], summary="Create a note for an scenario")
+@core_app.post("/note/scenario/{scenario_id}", tags=["Note"], summary="Create a note for a scenario")
 def create_for_scenario(scenario_id: str,
                         note_dto: NoteSaveDTO,
                         _=Depends(AuthService.check_user_access_token)) -> NoteDTO:
@@ -75,14 +75,14 @@ def delete(note_id: str, _=Depends(AuthService.check_user_access_token)) -> None
 
 @core_app.put(
     "/note/{note_id}/add-scenario/{scenario_id}", tags=["Note"],
-    summary="Add an scenario to the note")
+    summary="Add a scenario to the note")
 def add_scenario(note_id: str, scenario_id: str, _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     return NoteService.add_scenario(note_id, scenario_id).to_dto()
 
 
 @core_app.delete(
     "/note/{note_id}/remove-scenario/{scenario_id}", tags=["Note"],
-    summary="Remove an scenario")
+    summary="Remove a scenario")
 def remove_scenario(
         note_id: str, scenario_id: str, _=Depends(AuthService.check_user_access_token)) -> None:
     NoteService.remove_scenario(note_id, scenario_id)
@@ -114,7 +114,7 @@ def get_content(id_: str, _=Depends(AuthService.check_user_access_token)) -> Ric
 
 
 @core_app.get("/note/scenario/{scenario_id}", tags=["Note"],
-              summary="Find notes of an scenario")
+              summary="Find notes of a scenario")
 def get_by_scenario(scenario_id: str, _=Depends(AuthService.check_user_access_token)) -> List[NoteDTO]:
     notes = NoteService.get_by_scenario(scenario_id)
     return [note.to_dto() for note in notes]

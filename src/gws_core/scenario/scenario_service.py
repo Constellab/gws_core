@@ -306,7 +306,7 @@ class ScenarioService():
 
             if len(synced_associated_notes) > 0:
                 raise BadRequestException(
-                    "You can't unsynchronize an scenario that has associated notes synced in space. Please unsync the notes first.")
+                    "You can't unsynchronize a scenario that has associated notes synced in space. Please unsync the notes first.")
 
         # Delete the scenario in space
         SpaceService.get_instance().delete_scenario(folder_id, scenario.id)
@@ -327,7 +327,7 @@ class ScenarioService():
             raise BadRequestException("The scenario is already archived")
 
         if scenario.is_running:
-            raise BadRequestException("You can't archive an scenario that is running")
+            raise BadRequestException("You can't archive a scenario that is running")
 
         ActivityService.add(
             ActivityType.ARCHIVE,
@@ -491,7 +491,7 @@ class ScenarioService():
     @classmethod
     @transaction()
     def delete_intermediate_resources(cls, scenario_id: str) -> None:
-        """Delete the intermediate resources of an scenario
+        """Delete the intermediate resources of a scenario
         An intermediate resource is a resource that is not used as input or output and not flagged
 
         :param scenario_id: id of the scenario
@@ -524,7 +524,7 @@ class ScenarioService():
 
     @classmethod
     def get_intermediate_results(cls, scenario_id: str) -> List[ResourceModel]:
-        """Retrieve the list of intermediate resources of an scenario
+        """Retrieve the list of intermediate resources of a scenario
         A resource is considered as intermediate if it is not used as output and not flagged
 
         :param scenario_id: id of the scenario

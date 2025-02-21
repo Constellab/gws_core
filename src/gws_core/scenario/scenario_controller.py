@@ -37,13 +37,13 @@ def get_the_list_of_running_scenarios(
     return ScenarioService.get_running_scenarios()
 
 
-@core_app.get("/scenario/{id_}", tags=["Scenario"], summary="Get an scenario")
+@core_app.get("/scenario/{id_}", tags=["Scenario"], summary="Get a scenario")
 def get_an_scenario(id_: str,
                     _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
-    Retrieve an scenario
+    Retrieve a scenario
 
-    - **id_**: the id_ of an scenario
+    - **id_**: the id_ of a scenario
     """
 
     return ScenarioService.get_by_id_and_check(id_).to_dto()
@@ -96,11 +96,11 @@ def get_by_input_resource(resource_id: str,
 
 ###################################### CREATE ################################
 
-@core_app.post("/scenario", tags=["Scenario"], summary="Create an scenario")
+@core_app.post("/scenario", tags=["Scenario"], summary="Create a scenario")
 def create_an_scenario(scenario: ScenarioSaveDTO,
                        _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
-    Create an scenario.
+    Create a scenario.
     """
 
     return ScenarioService.create_scenario_from_dto(
@@ -109,7 +109,7 @@ def create_an_scenario(scenario: ScenarioSaveDTO,
 ###################################### UPDATE  ################################
 
 
-@core_app.put("/scenario/{id_}/validate/{folder_id}", tags=["Scenario"], summary="Validate an scenario")
+@core_app.put("/scenario/{id_}/validate/{folder_id}", tags=["Scenario"], summary="Validate a scenario")
 def validate_an_scenario(id_: str,
                          folder_id: str = None,
                          _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
@@ -123,7 +123,7 @@ def validate_an_scenario(id_: str,
 
 
 @core_app.put("/scenario/{id_}/title", tags=["Scenario"],
-              summary="Update the title of an scenario")
+              summary="Update the title of a scenario")
 def update_title(id_: str,
                  body: dict,
                  _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
@@ -134,12 +134,12 @@ class UpdateFolder(BaseModelDTO):
     folder_id: Optional[str]
 
 
-@core_app.put("/scenario/{id_}/folder", tags=["Scenario"], summary="Update the folder of an scenario")
+@core_app.put("/scenario/{id_}/folder", tags=["Scenario"], summary="Update the folder of a scenario")
 def update_scenario_folder(id_: str,
                            folder: UpdateFolder,
                            _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
-    Update the folder of an scenario
+    Update the folder of a scenario
 
     - **id_**: the id_ of the scenario
     - **folder_id**: the id_ of the folder
@@ -148,18 +148,18 @@ def update_scenario_folder(id_: str,
     return ScenarioService.update_scenario_folder(id_, folder.folder_id).to_dto()
 
 
-@core_app.put("/scenario/{id_}/description", tags=["Scenario"], summary="Update an scenario's description")
+@core_app.put("/scenario/{id_}/description", tags=["Scenario"], summary="Update a scenario's description")
 def update_scenario_description(id_: str,
                                 description: RichTextDTO,
                                 _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
-    Update an scenario's description
+    Update a scenario's description
     """
 
     return ScenarioService.update_scenario_description(id_, description).to_dto()
 
 
-@core_app.put("/scenario/{id_}/reset", tags=["Scenario"], summary="Reset an scenario")
+@core_app.put("/scenario/{id_}/reset", tags=["Scenario"], summary="Reset a scenario")
 def reset_an_scenario(id_: str,
                       _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     return EntityNavigatorService.reset_scenario(id_).to_dto()
@@ -180,11 +180,11 @@ def sync_with_space(id_: str,
 ###################################### RUN ################################
 
 
-@core_app.post("/scenario/{id_}/start", tags=["Scenario"], summary="Start an scenario")
+@core_app.post("/scenario/{id_}/start", tags=["Scenario"], summary="Start a scenario")
 def start_an_scenario(id_: str,
                       _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
-    Start an scenario
+    Start a scenario
 
     - **flow**: the flow object
     """
@@ -192,11 +192,11 @@ def start_an_scenario(id_: str,
     return QueueService.add_scenario_to_queue(scenario_id=id_).to_dto()
 
 
-@core_app.post("/scenario/{id_}/stop", tags=["Scenario"], summary="Stop an scenario")
+@core_app.post("/scenario/{id_}/stop", tags=["Scenario"], summary="Stop a scenario")
 def stop_an_scenario(id_: str,
                      _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     """
-    Stop an scenario
+    Stop a scenario
 
     - **id_**: the scenario id_
     """
@@ -206,7 +206,7 @@ def stop_an_scenario(id_: str,
 ################################### COPY ##############################
 
 
-@core_app.put("/scenario/{id_}/clone", tags=["Scenario"], summary="Clone an scenario")
+@core_app.put("/scenario/{id_}/clone", tags=["Scenario"], summary="Clone a scenario")
 def clone_scenario(id_: str,
                    _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     return ScenarioService.clone_scenario(id_).to_dto()
@@ -214,20 +214,20 @@ def clone_scenario(id_: str,
 ################################### DELETE ##############################
 
 
-@core_app.delete("/scenario/{id_}", tags=["Scenario"], summary="Delete an scenario")
+@core_app.delete("/scenario/{id_}", tags=["Scenario"], summary="Delete a scenario")
 def delete_scenario(id_: str,
                     _=Depends(AuthService.check_user_access_token)) -> None:
     return EntityNavigatorService.delete_scenario(id_)
 
 
 ################################### ARCHIVE ##############################
-@core_app.put("/scenario/{id_}/archive", tags=["Scenario"], summary="Archive an scenario")
+@core_app.put("/scenario/{id_}/archive", tags=["Scenario"], summary="Archive a scenario")
 def archive(id_: str,
             _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     return ScenarioService.archive_scenario_by_id(id_).to_dto()
 
 
-@core_app.put("/scenario/{id_}/unarchive", tags=["Scenario"], summary="Unarchive an scenario")
+@core_app.put("/scenario/{id_}/unarchive", tags=["Scenario"], summary="Unarchive a scenario")
 def unarchive(id_: str,
               _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     return ScenarioService.unarchive_scenario_by_id(id_).to_dto()
@@ -236,7 +236,7 @@ def unarchive(id_: str,
 ################################### INTERMEDIATE RESOURCES ##############################
 
 @core_app.delete("/scenario/{id_}/intermediate-resources", tags=["Scenario"],
-                 summary="Delete all intermediate resources of an scenario")
+                 summary="Delete all intermediate resources of a scenario")
 def delete_intermediate_resources(id_: str,
                                   _=Depends(AuthService.check_user_access_token)) -> None:
     return ScenarioService.delete_intermediate_resources(id_)
@@ -245,20 +245,20 @@ def delete_intermediate_resources(id_: str,
 
 
 @core_app.post("/scenario/import-from-lab", tags=["Share"],
-               summary="Import an scenario from another lab")
+               summary="Import a scenario from another lab")
 def import_from_lab(values: ConfigParamsDict,
                     _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
     return ScenarioTransfertService.import_from_lab(values).to_dto()
 
 
 @core_app.get("/scenario/import-from-lab/config-specs", tags=["Share"],
-              summary="Get config specs for importing an scenario from another lab")
+              summary="Get config specs for importing a scenario from another lab")
 def get_import_scenario_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
     return ScenarioTransfertService.get_import_scenario_config_specs()
 
 
 @core_app.post("/scenario/{id}/export-to-lab", tags=["Share"],
-               summary="Export an scenario to another lab")
+               summary="Export a scenario to another lab")
 def export_to_lab(id: str,
                   values: ConfigParamsDict,
                   _=Depends(AuthService.check_user_access_token)) -> None:
@@ -266,6 +266,6 @@ def export_to_lab(id: str,
 
 
 @core_app.get("/scenario/export-to-lab/config-specs", tags=["Share"],
-              summary="Get config specs for exporting an scenario to another lab")
+              summary="Get config specs for exporting a scenario to another lab")
 def get_export_to_lab_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
     return ScenarioTransfertService.get_export_scenario_to_lab_config_specs()

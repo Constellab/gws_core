@@ -202,7 +202,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.check_is_updatable()
 
         if not self.is_saved():
-            raise BadRequestException("Can't reset an scenario not saved before")
+            raise BadRequestException("Can't reset a scenario not saved before")
 
         if self.is_running:
             raise BadRequestException("Can't reset a running scenario")

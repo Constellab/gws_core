@@ -1,7 +1,7 @@
 
 
 import os
-from typing import Any, List, Type
+from typing import Any, List
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
