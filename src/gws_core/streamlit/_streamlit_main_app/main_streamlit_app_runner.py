@@ -98,10 +98,6 @@ class StreamlitMainAppRunner:
 
         # check the user id
         user_id = st.query_params.get('gws_user_id')
-        if not user_id:
-            st.error('User id not provided')
-            st.stop()
-
         # save the user id and app config file in the session state
         st.session_state['gws_user_id'] = user_id
 
