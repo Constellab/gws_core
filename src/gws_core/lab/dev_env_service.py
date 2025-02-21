@@ -53,7 +53,7 @@ class DevEnvService:
         # Check if the user's token is valid in prod environment and retrieve user's information
         try:
             response: ApiResponse = ExternalApiService.post(
-                url=f"{prod_api_url}/core-api/dev-login-unique-code/check/{unique_code}", body=None)
+                url=f"{prod_api_url}/{Settings.core_api_route_path()}/dev-login-unique-code/check/{unique_code}", body=None)
         except Exception as err:
             Logger.error(
                 f"Error during authentication to the prod api : {err}")

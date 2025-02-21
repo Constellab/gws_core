@@ -11,6 +11,7 @@ from gws_core.config.param.param_spec import StrParam
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
+from gws_core.core.utils.settings import Settings
 
 
 class CredentialsType(Enum):
@@ -123,6 +124,7 @@ class CredentialsDataLab(CredentialsDataBase):
     """
     lab_domain: str
     api_key: str
+    sub_domain_api_override: Optional[str] = None
 
     @classmethod
     def get_specs(cls) -> ConfigSpecs:
@@ -130,7 +132,15 @@ class CredentialsDataLab(CredentialsDataBase):
             "lab_domain": StrParam(human_name="Lab domain",
                                    short_description="The domain is the part of the URL that comes after the https://lab and before the first /"),
             "api_key": StrParam(human_name="Api key", min_length=20),
+            "sub_domain_api_override": StrParam(human_name="Sub domain API override", short_description="Leave empty for default. Set 'glab-dev' for dev api",
+                                                optional=True),
         }
+
+    def get_lab_api_url(self) -> str:
+        """Get the lab api url
+        """
+        sub_domain = self.sub_domain_api_override if self.sub_domain_api_override else Settings.prod_api_sub_domain()
+        return f"https://{sub_domain}.{self.lab_domain}"
 
 
 # Format of the data for other credentials

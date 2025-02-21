@@ -96,8 +96,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         super().run_after_task()
 
         # check if the link is a share link from a lab
-        if self.is_old_share_resource_link(
-                self.link) or ShareLink.is_lab_share_resource_link(
+        if ShareLink.is_lab_share_resource_link(
                 self.link) and self.resource_loader:
             self.log_info_message(
                 "Marking the resource as received in the origin lab")
@@ -114,14 +113,6 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
             if response.status_code != 200:
                 self.log_error_message(
                     "Error while marking the resource as received: " + response.text)
-
-    @classmethod
-    def is_old_share_resource_link(cls, link: str) -> bool:
-        """Check if the link is a share resource link, it must start with https://glab,
-        contains share/resource/download and end with a token
-        TODO to remove once all the labs are updated to v >= 0.6.1
-        """
-        return link.startswith('https://glab') and link.find('share/resource/download/') != -1
 
     @classmethod
     def build_config(cls, link: str, uncompress: Literal['auto', 'yes', 'no'],

@@ -1,5 +1,9 @@
 
 
+from typing import Optional
+
+from requests.models import Response
+
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials_type import CredentialsDataLab
@@ -9,7 +13,6 @@ from gws_core.external_lab.external_lab_dto import (
     ExternalLabImportScenarioResponseDTO, ExternalLabWithUserInfo)
 from gws_core.share.shared_dto import ShareLinkType
 from gws_core.user.user import User
-from requests.models import Response
 
 
 class ExternalLabApiService():
@@ -32,7 +35,7 @@ class ExternalLabApiService():
 
         # for test purpose
         # url = f"http://localhost:3000/{Settings.external_lab_api_route_path()}/import-resource"
-        url = f"{cls._get_external_lab_api_url(credentials.lab_domain)}/{Settings.external_lab_api_route_path()}/import-resource"
+        url = f"{credentials.get_lab_api_url()}/{Settings.external_lab_api_route_path()}/import-resource"
 
         response = ExternalApiService.post(url, body=request_dto.to_json_dict(), headers=headers,
                                            raise_exception_if_error=True)
@@ -48,7 +51,7 @@ class ExternalLabApiService():
 
         # for test purpose
         # url = f"http://localhost:3000/{Settings.external_lab_api_route_path()}/import-scenario"
-        url = f"{cls._get_external_lab_api_url(credentials.lab_domain)}/{Settings.external_lab_api_route_path()}/import-scenario"
+        url = f"{credentials.get_lab_api_url()}/{Settings.external_lab_api_route_path()}/import-scenario"
 
         response = ExternalApiService.post(url, body=request_dto.to_json_dict(), headers=headers,
                                            raise_exception_if_error=True)
@@ -75,11 +78,6 @@ class ExternalLabApiService():
     def _get_external_lab_auth(cls, api_key: str, user_id: str) -> dict:
         """Get the external lab auth"""
         return ExternalLabAuth.get_auth_headers(api_key, user_id)
-
-    @classmethod
-    def _get_external_lab_api_url(cls, lab_domain: str) -> str:
-        """Get the external lab API URL"""
-        return f"https://glab/{lab_domain}"
 
     @classmethod
     def get_current_lab_route(cls, route: str) -> str:

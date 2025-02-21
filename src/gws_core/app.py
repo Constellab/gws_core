@@ -6,6 +6,7 @@ import uvicorn
 from fastapi import FastAPI
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
+from gws_core.core.utils.settings import Settings
 from gws_core.external_lab.external_lab_controller import external_lab_app
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
 
@@ -95,9 +96,9 @@ class App:
         )
 
         # api routes
-        cls.app.mount("/core-api/", core_app)
-        cls.app.mount("/space-api/", space_app)
-        cls.app.mount("/external-lab-api/", external_lab_app)
-        cls.app.mount("/s3-server/", s3_server_app)
+        cls.app.mount(f"/{Settings.core_api_route_path()}/", core_app)
+        cls.app.mount(f"/{Settings.space_api_route_path()}/", space_app)
+        cls.app.mount(f"/{Settings.external_lab_api_route_path()}/", external_lab_app)
+        cls.app.mount(f"/{Settings.s3_server_api_route_path()}/", s3_server_app)
 
         uvicorn.run(cls.app, host='0.0.0.0', port=int(port))

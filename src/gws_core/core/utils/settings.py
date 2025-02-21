@@ -133,8 +133,24 @@ class Settings():
         return "core-api"
 
     @classmethod
+    def space_api_route_path(cls) -> str:
+        return "space-api"
+
+    @classmethod
     def external_lab_api_route_path(cls) -> str:
         return "external-lab-api"
+
+    @classmethod
+    def s3_server_api_route_path(cls) -> str:
+        return "s3-server"
+
+    @classmethod
+    def prod_api_sub_domain(cls) -> str:
+        return "glab"
+
+    @classmethod
+    def dev_api_sub_domain(cls) -> str:
+        return "glab-dev"
 
     @classmethod
     def get_lab_environment(cls) -> LabEnvironment:

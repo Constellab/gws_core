@@ -153,15 +153,18 @@ class ShareLink(ModelWithUser):
     def _is_lab_share_entity_link(cls, link: str) -> bool:
         settings = Settings.get_instance()
 
-        # specific case for dev env, accept if the link is from this lab
-        if settings.is_local_env():
-            if not link.startswith('https://glab') and not link.startswith(settings.get_lab_api_url()):
-                return False
-        else:
-            if not link.startswith('https://glab'):
-                return False
+        # is the url does not contains core-api, it is not a share link form a lab
+        if not link.find(settings.core_api_route_path()):
+            return False
 
-        return link.find(settings.core_api_route_path()) != -1
+        # specific case for dev env, accept if the link is from this lab
+        if settings.is_local_env() and link.startswith(
+                settings.get_lab_api_url()):
+            return True
+
+        # check if the link is from correct sub domain
+        return link.startswith(f'https://{Settings.prod_api_sub_domain()}') or link.startswith(
+            f'https://{Settings.dev_api_sub_domain()}')
 
     # generate unique key with entity_id and entity_type
 

@@ -52,6 +52,8 @@ class SendScenarioToLab(Task):
                                   short_description="The share link is not created if a share link already exists for the resource",
                                   min_value=1,
                                   max_value=365, default_value=1),
+        'resource_mode': ScenarioDownloader.config_specs['resource_mode'],
+        'create_option': ScenarioDownloader.config_specs['create_option'],
     }
 
     INPUT_NAME = 'scenario'
@@ -80,7 +82,10 @@ class SendScenarioToLab(Task):
         self.log_info_message("Send the scenario to the lab")
         request_dto = ExternalLabImportRequestDTO(
             # convert to ScenarioDownloader config because ScenarioDownloader is used to download the scenario
-            params=ScenarioDownloader.build_config(share_link.get_download_link(), 'Outputs only', 'Skip if exists'),
+            params=ScenarioDownloader.build_config(
+                share_link.get_download_link(),
+                params['resource_mode'],
+                params['create_option']),
         )
         credentials: CredentialsDataLab = params.get_value('credentials')
 
