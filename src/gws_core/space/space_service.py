@@ -2,6 +2,8 @@
 
 from typing import Dict, List, Literal, Optional
 
+from requests.models import Response
+
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
@@ -15,11 +17,9 @@ from gws_core.space.space_dto import (LabStartDTO, SaveNoteToSpaceDTO,
                                       ShareResourceWithSpaceDTO,
                                       SpaceSendMailDTO,
                                       SpaceSendMailToMailsDTO)
-                                      SpaceSendMailDTO)
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.user.user_dto import UserFullDTO, UserSpace
-from requests.models import Response
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.external_api_service import ExternalApiService
@@ -45,11 +45,11 @@ class SpaceService():
     AUTH_HEADER_KEY: str = 'Authorization'
     AUTH_API_KEY_HEADER_PREFIX: str = 'api-key'
     # Key to set the user in the request
-    USER_ID_HEADER_KEY: str= 'User'
+    USER_ID_HEADER_KEY: str = 'User'
 
-    ACCESS_TOKEN_HEADER= 'access-token'
+    ACCESS_TOKEN_HEADER = 'access-token'
 
-    _access_token: Optional[str]= None
+    _access_token: Optional[str] = None
 
     def __init__(self, access_token: Optional[str] = None):
         """ Constructor of the SpaceService
@@ -58,9 +58,9 @@ class SpaceService():
         Otherwise the current user is used for authentication, defaults to None
         :type access_token: Optional[str], optional
         """
-        self._access_token= access_token
+        self._access_token = access_token
 
-    @ staticmethod
+    @staticmethod
     def get_instance() -> 'SpaceService':
         """
         Return a new instance of the SpaceService that use the
@@ -71,7 +71,7 @@ class SpaceService():
         """
         return SpaceService()
 
-    @ staticmethod
+    @staticmethod
     def create_with_access_token() -> 'SpaceService':
         """
         Return a new instance of the SpaceService that use the

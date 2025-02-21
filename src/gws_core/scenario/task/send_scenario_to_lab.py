@@ -3,7 +3,7 @@
 from datetime import timedelta
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.config.param.param_spec import IntParam
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.credentials.credentials_param import CredentialsParam
@@ -95,3 +95,12 @@ class SendScenarioToLab(Task):
         self.log_success_message(f"Scenario sent to the lab, available at {response.scenario_url}")
 
         return {}
+
+    @classmethod
+    def build_config(cls, credentials: CredentialsDataLab, link_duration: int, resource_mode: str, create_option: str) -> ConfigParamsDict:
+        return {
+            'credentials': credentials,
+            'link_duration': link_duration,
+            'resource_mode': resource_mode,
+            'create_option': create_option
+        }

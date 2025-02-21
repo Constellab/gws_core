@@ -85,7 +85,7 @@ class DevEnvService:
         code_obj = UniqueCodeService.check_code(unique_code)
 
         # return the user associated with the code
-        return User.get_by_id_and_check(code_obj["user_id"])
+        return User.get_by_id_and_check(code_obj.user_id)
 
     @classmethod
     def dev_env_is_running(cls) -> bool:

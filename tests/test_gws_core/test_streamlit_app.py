@@ -38,9 +38,13 @@ def long_running_function(file):
 if sources:
     st.write(sources[0].get_data())
 """
-
         streamlit_resource = StreamlitResource(streamlit_code)
         streamlit_resource.add_resource(resource_model.get_resource())
+        resource_model = ResourceModel.save_from_resource(
+            StreamlitResource(streamlit_code),
+            origin=ResourceOrigin.UPLOADED)
+
+        streamlit_resource = resource_model.get_resource()
         # make the check faster to avoid test block
         StreamlitProcess.CHECK_RUNNING_INTERVAL = 3
 
@@ -50,7 +54,7 @@ if sources:
 
             streamlit_process: StreamlitProcess = None
             for proc in StreamlitAppManager.running_processes.values():
-                if proc.has_app(streamlit_resource.uid):
+                if proc.has_app(streamlit_resource.get_model_id()):
                     streamlit_process = proc
 
             if streamlit_process is None:
@@ -62,7 +66,7 @@ if sources:
             status = streamlit_process.get_status_dto()
             self.assertEqual(status.status, 'RUNNING')
             self.assertEqual(len(status.running_apps), 1)
-            self.assertEqual(status.running_apps[0].resource_id, streamlit_resource.uid)
+            self.assertEqual(status.running_apps[0].resource_id, streamlit_resource.get_model_id())
             self.assertEqual(streamlit_process.port, StreamlitAppManager.get_main_app_port())
 
             StreamlitAppManager.stop_all_processes()

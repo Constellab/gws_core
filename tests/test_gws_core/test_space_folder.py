@@ -22,21 +22,21 @@ class TestFolder(BaseTestCase):
 
         space_folder: ExternalSpaceFolder = ExternalSpaceFolder.from_json({
             "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
-            "title": "Root folder",
+            "name": "Root folder",
             "children": [
                 {
                     "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f2",
-                    "title": "Work package 1",
+                    "name": "Work package 1",
                     "children": [
                         {
                             "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f3",
-                            "title": "Task 1",
+                            "name": "Task 1",
                         }
                     ]
                 },
                 {
                     "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f4",
-                    "title": "Work package 2",
+                    "name": "Work package 2",
                     "children": []
                 }
             ]
@@ -108,21 +108,21 @@ class TestFolder(BaseTestCase):
         space_folders: List[ExternalSpaceFolder] = [
             ExternalSpaceFolder.from_json({
                 "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
-                "title": "Root folder",
+                "name": "Root folder",
                 "children": [
                     {
                         "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f2",
-                        "title": "Work package 1",
+                        "name": "Work package 1",
                     },
                     {
                         "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f4",
-                        "title": "Work package 2",
+                        "name": "Work package 2",
                     }
                 ]
             }),
             ExternalSpaceFolder.from_json({
                 "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f5",
-                "title": "Root folder 2",
+                "name": "Root folder 2",
             }),
         ]
 
@@ -140,17 +140,17 @@ class TestFolder(BaseTestCase):
         new_folders: List[ExternalSpaceFolder] = [
             ExternalSpaceFolder.from_json({
                 "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
-                "title": "Root new",  # title updated
+                "name": "Root new",  # name updated
                 "children": [
                     {
                         "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f2",
-                        "title": "Work package 1 new",  # title updated
+                        "name": "Work package 1 new",  # name updated
                     },
                     # child removed
                     # new child
                     {
                         "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f6",
-                        "title": "New child",
+                        "name": "New child",
                     }
                 ]
             }),
@@ -158,7 +158,7 @@ class TestFolder(BaseTestCase):
             # new root 3
             ExternalSpaceFolder.from_json({
                 "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f7",
-                "title": "Root folder 3",
+                "name": "Root folder 3",
             }),
         ]
 
@@ -183,11 +183,11 @@ class TestFolder(BaseTestCase):
         new_folders_2: List[ExternalSpaceFolder] = [
             ExternalSpaceFolder.from_json({
                 "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
-                "title": "Root new",
+                "name": "Root new",
                 "children": [
                     {
                         "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f2",
-                        "title": "Work package 1 new",  # title updated
+                        "name": "Work package 1 new",  # name updated
                     },
 
                 ]
@@ -196,12 +196,12 @@ class TestFolder(BaseTestCase):
             # new root 3
             ExternalSpaceFolder.from_json({
                 "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f7",
-                "title": "Root folder 3",
+                "name": "Root folder 3",
                 "children": [
                     # // moved from root 1
                     {
                         "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f6",
-                        "title": "New child",
+                        "name": "New child",
                     }]
             }),
         ]

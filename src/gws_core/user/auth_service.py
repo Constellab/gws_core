@@ -15,7 +15,6 @@ from ..space.space_service import ExternalCheckCredentialResponse, SpaceService
 from .activity.activity_service import ActivityService
 from .current_user_service import CurrentUserService
 from .jwt_service import JWTService
-from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .unique_code_service import (CodeObject, InvalidUniqueCodeException,
                                   UniqueCodeService)
 from .user import User
@@ -146,7 +145,7 @@ class AuthService():
     def check_user_access_token(cls, request: Request) -> User:
         token = cls.get_and_check_token_from_request(request)
 
-        return cls._authenticate_from_token(token)
+        return cls.authenticate_from_token(token)
 
     @classmethod
     def check_unique_code(cls, unique_code: str) -> User:
@@ -176,7 +175,7 @@ class AuthService():
         if not token:
             return None
 
-        return cls._authenticate_from_token(token)
+        return cls.authenticate_from_token(token)
 
     @classmethod
     def get_token_from_request(cls, request: Request) -> str | None:
@@ -193,7 +192,7 @@ class AuthService():
         return token
 
     @classmethod
-    def _authenticate_from_token(cls, token: str) -> User:
+    def authenticate_from_token(cls, token: str) -> User:
         try:
             user_id: str = JWTService.check_user_access_token(token)
             db_user: User = cls.authenticate(user_id)

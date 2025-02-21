@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from typing import Any, Dict
 
 from fastapi import status
-from typing_extensions import TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.string_helper import StringHelper

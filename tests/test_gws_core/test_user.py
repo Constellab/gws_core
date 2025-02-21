@@ -56,7 +56,7 @@ class TestUser(BaseTestCase):
 
         token = AuthService.generate_user_access_token(user_dto.id)
 
-        user_data: User = AuthService.check_user_access_token(token)
+        user_data: User = AuthService.authenticate_from_token(token)
         self.assertEqual(user_data.id, user_dto.id)
 
     def test_deactivate_user(self):
