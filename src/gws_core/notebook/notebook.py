@@ -22,7 +22,7 @@ class Notebook(Console):
             raise BadRequestException("User not found. Authentication failed!")
 
         try:
-            AuthService.authenticate(id=user.id)
+            AuthService.authenticate(id_=user.id)
         except:
             raise BadRequestException("Authentication failed!")
 

@@ -8,6 +8,7 @@ from gws_core.user.unique_code_service import (CodeObject,
                                                UniqueCodeService)
 
 
+# test_unique_code_service
 class TestUniqueCodeService(TestCase):
 
     def test_unique_code(self):
@@ -15,8 +16,8 @@ class TestUniqueCodeService(TestCase):
 
         result: CodeObject = UniqueCodeService.check_code(code)
 
-        self.assertEqual(result['user_id'], '0')
-        self.assertEqual(result['obj'], {'obj': 'top'})
+        self.assertEqual(result.user_id, '0')
+        self.assertEqual(result.obj, {'obj': 'top'})
 
         with self.assertRaises(InvalidUniqueCodeException):
             UniqueCodeService.check_code(code)

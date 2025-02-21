@@ -37,13 +37,6 @@ def get_shared_to_list(entity_type: ShareLinkType,
 
 ################################ RESOURCE ################################
 # Open route to get info about a shared entity
-# TODO TO REMOVE ONCE MOST LAST ARE ON V 0.10.4
-@core_app.get("/share/info/{token}", tags=["Share"],
-              summary="Get info about a shared entity")
-def get_share_entity_info(share_link=Depends(ShareTokenAuth.get_and_check_token)) -> ShareResourceInfoReponseDTO:
-    return ShareService.get_resource_entity_object_info(share_link)
-
-
 # Same as above
 @core_app.get("/share/resource/{token}", tags=["Share"], summary="Download a resource")
 def get_share_resource_info(share_link=Depends(ShareTokenAuth.get_and_check_token)) -> ShareResourceInfoReponseDTO:

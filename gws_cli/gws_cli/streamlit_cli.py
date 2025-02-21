@@ -3,10 +3,11 @@ import json
 import os
 
 import typer
+from typing_extensions import Annotated, Literal
+
 from gws_core import (CondaShellProxy, LoggerMessageObserver, MambaShellProxy,
                       PipShellProxy, ShellProxy, StreamlitApp,
                       StreamlitAppManager, Utils)
-from typing_extensions import Annotated, Literal
 
 app = typer.Typer()
 
@@ -75,7 +76,7 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the js
     streamit_app = StreamlitApp("main", shell_proxy)
     streamit_app.set_dev_mode(config_file_path)
 
-    url = StreamlitAppManager.create_or_get_app(streamit_app)
+    url = StreamlitAppManager.create_or_get_app(streamit_app).get_url()
     print("----------------------------------------------------------------------------------------------------------------------------------------------------------")
     print(
         f"Running streamlit in dev mode type '{env_type}', DO NOT USE IN PRODUCTION. You can access the dashboard at {url}")

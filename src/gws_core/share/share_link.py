@@ -123,7 +123,7 @@ class ShareLink(ModelWithUser):
 
     def get_download_link(self) -> str:
         if self.entity_type == ShareLinkType.RESOURCE:
-            return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/info/{self.token}"
+            return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/resource/{self.token}"
         elif self.entity_type == ShareLinkType.SCENARIO:
             return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/scenario/{self.token}"
 

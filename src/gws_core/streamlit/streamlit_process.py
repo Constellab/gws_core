@@ -14,7 +14,7 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
-from gws_core.streamlit.streamlit_app import StreamlitApp
+from gws_core.streamlit.streamlit_app import StreamlitApp, StreamlitAppUrl
 from gws_core.streamlit.streamlit_dto import StreamlitProcessStatusDTO
 from gws_core.user.current_user_service import CurrentUserService
 
@@ -170,7 +170,7 @@ class StreamlitProcess:
     def get_app(self, app_id: str) -> StreamlitApp | None:
         return self.current_running_apps.get(app_id)
 
-    def get_app_full_url(self, app_id: str) -> str:
+    def get_app_full_url(self, app_id: str) -> StreamlitAppUrl:
         app = self.get_app(app_id)
         if not app:
             raise Exception(f"App {app_id} not found")

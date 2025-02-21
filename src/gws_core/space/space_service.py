@@ -41,9 +41,9 @@ class ExternalCheckCredentialResponse(BaseModelDTO):
 class SpaceService():
 
     # external lab route on space
-    _EXTERNAL_LABS_ROUTe: str= 'external-labs'
-    AUTH_HEADER_KEY: str= 'Authorization'
-    AUTH_API_KEY_HEADER_PREFIX: str= 'api-key'
+    _EXTERNAL_LABS_ROUTE: str = 'external-labs'
+    AUTH_HEADER_KEY: str = 'Authorization'
+    AUTH_API_KEY_HEADER_PREFIX: str = 'api-key'
     # Key to set the user in the request
     USER_ID_HEADER_KEY: str= 'User'
 
@@ -108,7 +108,7 @@ class SpaceService():
         """
         route = 'check-credentials' if for_login else 'check-credentials-simple'
         space_api_url: str = self._get_space_api_url(
-            f'{self._EXTERNAL_LABS_ROUTe}/{route}')
+            f'{self._EXTERNAL_LABS_ROUTE}/{route}')
         response = ExternalApiService.post(
             space_api_url, credentials, headers=self._get_request_header(),
             raise_exception_if_error=True)
@@ -133,7 +133,7 @@ class SpaceService():
         """
         self._check_dev_mode()
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/start")
+            f"{self._EXTERNAL_LABS_ROUTE}/start")
 
         body = LabStartDTO(lab_config=lab_config)
 
@@ -153,7 +153,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/folder/{folder_id}/scenario")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/scenario")
 
         try:
             return ExternalApiService.put(space_api_url, save_scenario_dto, self._get_request_header(),
@@ -166,7 +166,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/folder/{folder_id}/scenario/{scenario_id}")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/scenario/{scenario_id}")
 
         try:
             return ExternalApiService.delete(space_api_url, self._get_request_header(),
@@ -180,7 +180,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/folder/{current_folder_id}/scenario/{scenario_id}/folder/{new_folder_id}")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{current_folder_id}/scenario/{scenario_id}/folder/{new_folder_id}")
 
         try:
             return ExternalApiService.put(space_api_url, None,
@@ -196,7 +196,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/folder/{folder_id}/note/v2")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/note/v2")
 
         # convert the file paths to file object supported by the form data request
         files = []
@@ -220,7 +220,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/folder/{folder_id}/note/{note_id}")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/note/{note_id}")
         try:
             return ExternalApiService.delete(space_api_url, self._get_request_header(),
                                              raise_exception_if_error=True)
@@ -232,7 +232,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/folder/{current_folder_id}/note/{note_id}/folder/{new_folder_id}")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{current_folder_id}/note/{note_id}/folder/{new_folder_id}")
 
         try:
             a = ExternalApiService.put(space_api_url, None,
@@ -247,7 +247,7 @@ class SpaceService():
             old_modifications: Optional[RichTextModificationsDTO] = None) -> RichTextModificationsDTO:
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/rich-text/compare")
+            f"{self._EXTERNAL_LABS_ROUTE}/rich-text/compare")
         try:
             response = ExternalApiService.post(space_api_url, {
                 'oldContent': old_content.to_json_dict(),
@@ -263,7 +263,7 @@ class SpaceService():
     def get_undo_content(self, content: RichTextDTO, modifications: RichTextModificationsDTO,
                          modification_id: str) -> RichTextDTO:
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/rich-text/previous-version")
+            f"{self._EXTERNAL_LABS_ROUTE}/rich-text/previous-version")
         try:
             response = ExternalApiService.post(space_api_url, {
                 'content': content.to_json_dict(),
@@ -281,7 +281,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/folder/{folder_id}/resource")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/resource")
 
         try:
             return ExternalApiService.put(space_api_url, resource_dto, self._get_request_header(),
@@ -299,7 +299,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/folder/all-trees")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/all-trees")
 
         try:
             response = ExternalApiService.get(space_api_url, self._get_request_header(),
@@ -318,7 +318,7 @@ class SpaceService():
         """
         self._check_dev_mode()
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTe}/folder/{id_}/root-tree")
+        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/{id_}/root-tree")
 
         try:
             response = ExternalApiService.get(space_api_url, self._get_request_header(),
@@ -337,7 +337,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/folder")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder")
 
         try:
             response = ExternalApiService.post(space_api_url, folder.to_dto(), self._get_request_header(),
@@ -355,7 +355,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/folder/{parent_id}")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{parent_id}")
 
         try:
             response = ExternalApiService.post(space_api_url, folder.to_dto(), self._get_request_header(),
@@ -375,7 +375,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/hierarchyObject/{entity_id}/tags/multiple")
+            f"{self._EXTERNAL_LABS_ROUTE}/hierarchyObject/{entity_id}/tags/multiple")
 
         try:
             tags_dto = [tag.to_dto() for tag in tags]
@@ -396,7 +396,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/hierarchyObject/{entity_id}/tags/createOrReplace")
+            f"{self._EXTERNAL_LABS_ROUTE}/hierarchyObject/{entity_id}/tags/createOrReplace")
 
         try:
             tags_dto = [tag.to_dto() for tag in tags]
@@ -417,7 +417,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/hierarchyObject/{entity_id}/tags/delete")
+            f"{self._EXTERNAL_LABS_ROUTE}/hierarchyObject/{entity_id}/tags/delete")
 
         try:
             tags_dto = [tag.to_dto() for tag in tags]
@@ -438,7 +438,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/user")
+            f"{self._EXTERNAL_LABS_ROUTE}/user")
 
         try:
             response = ExternalApiService.get(space_api_url, self._get_request_header(),
@@ -456,7 +456,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/user/{user_id}")
+            f"{self._EXTERNAL_LABS_ROUTE}/user/{user_id}")
 
         try:
             response = ExternalApiService.get(space_api_url, self._get_request_header(),
@@ -473,7 +473,7 @@ class SpaceService():
         self._check_dev_mode()
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTe}/send-mail")
+            f"{self._EXTERNAL_LABS_ROUTE}/send-mail")
         return ExternalApiService.post(space_api_url, send_mail_dto, self._get_request_header(),
                                        raise_exception_if_error=True)
 

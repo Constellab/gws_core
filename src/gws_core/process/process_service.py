@@ -2,7 +2,7 @@
 
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Dict, List, Literal, Type
 
 import schedule
@@ -106,7 +106,7 @@ class ProcessService:
                     stat.sync_with_community = True
                     stat.save()
         except Exception as err:
-            Logger.error("Error sending run statistics to the Community")
+            Logger.error("Error sending run statistics to the Community. Error: " + str(err))
 
     @classmethod
     def _thread_send_process_run_stats_to_community(cls):

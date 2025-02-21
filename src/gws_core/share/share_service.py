@@ -219,9 +219,8 @@ class ShareService():
         if shared_entity_link.entity_type != ShareLinkType.RESOURCE:
             raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
 
-        with AuthenticateUser(shared_entity_link.created_by):
-            return ResourceService.get_and_call_view_on_resource_model(
-                shared_entity_link.entity_id, view_name, call_view_params.values, call_view_params.save_view_config)
+        return ResourceService.get_and_call_view_on_resource_model(
+            shared_entity_link.entity_id, view_name, call_view_params.values, call_view_params.save_view_config)
 
     #################################### SCENARIO ####################################
 

@@ -20,21 +20,16 @@ class StreamlitEnvLoader:
 
         self._load_env()
 
-        from gws_core import CurrentUserService, User
+        from gws_core import CurrentUserService, User, UserService
 
         user: Optional[User] = None
 
-        if self.user_id is None:
-            user = User.get_sysuser()
-        else:
-            user = User.get_by_id(self.user_id)
+        if self.user_id:
+            user = UserService.get_or_import_user_info(self.user_id)
 
-        if not user:
-            st.error('User not found')
-            st.stop()
-
-        # Authenticate user
-        CurrentUserService.set_current_user(user)
+        if user:
+            # Authenticate user
+            CurrentUserService.set_current_user(user)
         # Code to set up and acquire resources
         return self  # You can return an object that you want to use in the with block
 

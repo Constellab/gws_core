@@ -1,5 +1,6 @@
 
 
+from fastapi import Request
 from fastapi.param_functions import Depends
 from starlette.responses import JSONResponse, Response
 
@@ -84,8 +85,8 @@ class AuthService():
         return response
 
     @classmethod
-    def generate_user_access_token(cls, id: str) -> str:
-        user: User = UserService.get_by_id_or_none(id)
+    def generate_user_access_token(cls, id_: str) -> str:
+        user: User = UserService.get_by_id_or_none(id_)
         if not user:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.value,
@@ -142,17 +143,10 @@ class AuthService():
         return user
 
     @classmethod
-    def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> User:
+    def check_user_access_token(cls, request: Request) -> User:
+        token = cls.get_and_check_token_from_request(request)
 
-        try:
-            user_id: str = JWTService.check_user_access_token(token)
-
-            db_user: User = cls.authenticate(user_id)
-
-            return db_user
-
-        except Exception:
-            raise InvalidTokenException()
+        return cls._authenticate_from_token(token)
 
     @classmethod
     def check_unique_code(cls, unique_code: str) -> User:
@@ -161,19 +155,62 @@ class AuthService():
         try:
             code_obj: CodeObject = UniqueCodeService.check_code(unique_code)
 
-            return cls.authenticate(code_obj["user_id"])
+            return cls.authenticate(code_obj.user_id)
         except Exception:
             raise InvalidUniqueCodeException()
 
     @classmethod
-    def authenticate(cls, id: str) -> User:
+    def authenticate_user_if_token_provided(cls, request: Request) -> User | None:
+        """Method for public route to authenticate user if token provided
+        If not, the user is not authenticated and the method return None but no exception is raised
+
+        :param id_: _description_
+        :type id_: str
+        :raises UnauthorizedException: _description_
+        :return: _description_
+        :rtype: User | None
+        """
+
+        token = cls.get_token_from_request(request)
+
+        if not token:
+            return None
+
+        return cls._authenticate_from_token(token)
+
+    @classmethod
+    def get_token_from_request(cls, request: Request) -> str | None:
+        header_authorization: str = request.headers.get("Authorization")
+        cookie_authorization: str = request.cookies.get("Authorization")
+
+        return header_authorization or cookie_authorization
+
+    @classmethod
+    def get_and_check_token_from_request(cls, request: Request) -> str:
+        token: str = cls.get_token_from_request(request)
+        if not token:
+            raise InvalidTokenException()
+        return token
+
+    @classmethod
+    def _authenticate_from_token(cls, token: str) -> User:
+        try:
+            user_id: str = JWTService.check_user_access_token(token)
+            db_user: User = cls.authenticate(user_id)
+            return db_user
+
+        except Exception:
+            raise InvalidTokenException()
+
+    @classmethod
+    def authenticate(cls, id_: str) -> User:
         """
         Authenticate a user. Return the DB user if ok, throw an exception if not ok
 
         :param id: The id of the user to authenticate
         :type id: `str`
         """
-        user: User = User.get_by_id_and_check(id)
+        user: User = User.get_by_id_and_check(id_)
 
         if not user.is_active:
             raise UnauthorizedException(

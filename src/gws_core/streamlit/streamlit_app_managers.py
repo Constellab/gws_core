@@ -3,7 +3,7 @@
 from typing import Dict, List
 
 from gws_core.core.utils.settings import Settings
-from gws_core.streamlit.streamlit_app import StreamlitApp
+from gws_core.streamlit.streamlit_app import StreamlitApp, StreamlitAppUrl
 from gws_core.streamlit.streamlit_dto import StreamlitStatusDTO
 from gws_core.streamlit.streamlit_process import StreamlitProcess
 
@@ -21,7 +21,7 @@ class StreamlitAppManager():
     running_processes: Dict[str, StreamlitProcess] = {}
 
     @classmethod
-    def create_or_get_app(cls, app: StreamlitApp) -> str:
+    def create_or_get_app(cls, app: StreamlitApp) -> StreamlitAppUrl:
         cls._refresh_processes()
         for streamlit_process in cls.running_processes.values():
             if streamlit_process.has_app(app.app_id):
@@ -132,7 +132,7 @@ class StreamlitAppManager():
         return [f"https://{host}.{virtual_host}" for host in hosts]
 
     @classmethod
-    def get_app_full_url(cls, app_id: str) -> str:
+    def get_app_full_url(cls, app_id: str) -> StreamlitAppUrl:
         for streamlit_process in cls.running_processes.values():
             if streamlit_process.has_app(app_id):
                 return streamlit_process.get_app_full_url(app_id)

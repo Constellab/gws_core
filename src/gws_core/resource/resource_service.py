@@ -242,7 +242,7 @@ class ResourceService():
         style = view.get_style() or view_runner.get_metadata_style()
         # Save the view config
         view_config: ViewConfig = None
-        if save_view_config:
+        if save_view_config and CurrentUserService.get_current_user():
             view_config = ViewConfigService.save_view_config(
                 resource_model=resource_model,
                 view=view,

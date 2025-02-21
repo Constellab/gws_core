@@ -1,8 +1,9 @@
 
 
 import os
-from typing import List
+from typing import Dict, List, Optional
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
@@ -10,6 +11,20 @@ from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.streamlit.streamlit_dto import (StreamlitAppDTO,
                                               StreamlitConfigDTO)
 from gws_core.user.current_user_service import CurrentUserService
+
+
+class StreamlitAppUrl(BaseModelDTO):
+    host_url: str
+
+    params: Optional[Dict[str, str]] = None
+
+    def get_url(self) -> str:
+        url = self.host_url
+
+        if self.params is not None and len(self.params) > 0:
+            params = "&".join([f"{key}={value}" for key, value in self.params.items()])
+            url += f"?{params}"
+        return url
 
 
 class StreamlitApp():
@@ -115,14 +130,20 @@ class StreamlitApp():
         with open(config_path, 'w', encoding="utf-8") as file_path:
             file_path.write(config.to_json_str())
 
-    def get_app_full_url(self, host_url: str, token: str) -> str:
+    def get_app_full_url(self, host_url: str, token: str) -> StreamlitAppUrl:
         if self._dev_mode:
-            return host_url
-        url = f"{host_url}?gws_token={token}&gws_app_id={self.app_id}"
+            return StreamlitAppUrl(host_url=host_url)
+
+        params = {
+            'gws_token': token,
+            'gws_app_id': self.app_id
+        }
+
         user = CurrentUserService.get_current_user()
         if user is not None:
-            url += f"&gws_user_id={user.id}"
-        return url
+            params['gws_user_id'] = user.id
+
+        return StreamlitAppUrl(host_url=host_url, params=params)
 
     def destroy(self) -> None:
         if self._app_config_dir is not None:
@@ -156,5 +177,5 @@ class StreamlitApp():
             resource_id=self.app_id,
             source_paths=self.resources,
             streamlit_app_config_path=self._app_config_dir,
-            url=self.get_app_full_url(host_url, token)
+            url=self.get_app_full_url(host_url, token).get_url(),
         )

@@ -159,7 +159,7 @@ class UserService():
         if user is not None:
             return user
 
-        user = SpaceService.get_instance().get_user_info(user_id)
-        if user is None:
+        user_dto = SpaceService.get_instance().get_user_info(user_id)
+        if user_dto is None:
             raise BadRequestException("The user does not exist in Constellab")
-        return cls.create_or_update_user_dto(user)
+        return cls.create_or_update_user_dto(user_dto)

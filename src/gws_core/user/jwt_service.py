@@ -44,11 +44,11 @@ class JWTService:
         """
         payload: JWTData = decode(token, cls._get_secret(),
                                   algorithms=[ALGORITHM])
-        id: str = payload.get("sub")
-        if id is None:
+        id_: str = payload.get("sub")
+        if id_ is None:
             raise InvalidTokenException()
 
-        return id
+        return id_
 
     @classmethod
     def get_token_duration_in_seconds(cls) -> int:
