@@ -2,8 +2,6 @@
 
 from typing import Callable, List
 
-from peewee import ModelSelect
-
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator_type import EntityType

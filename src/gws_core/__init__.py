@@ -440,6 +440,12 @@ from .scenario_template.scenario_template_factory import \
     ScenarioTemplateFactory as ScenarioTemplateFactory
 # Space
 from .space.mail_service import MailService as MailService
+from .space.space_dto import SaveNoteToSpaceDTO as SaveNoteToSpaceDTO
+from .space.space_dto import SaveScenarioToSpaceDTO as SaveScenarioToSpaceDTO
+from .space.space_dto import \
+    ShareResourceWithSpaceDTO as ShareResourceWithSpaceDTO
+from .space.space_dto import SpaceSendMailToMailsDTO as SpaceSendMailToMailsDTO
+from .space.space_dto import SpaceSendMailToUsersDTO as SpaceSendMailToUsersDTO
 from .space.space_service import SpaceService as SpaceService
 # Streamlit
 from .streamlit.streamlit_app import StreamlitApp as StreamlitApp

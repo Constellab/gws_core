@@ -3,7 +3,7 @@
 from typing import Any, Dict, List
 
 from gws_core.space.space_dto import (SendScenarioFinishMailData,
-                                      SpaceSendMailDTO)
+                                      SpaceSendMailToUsersDTO)
 from gws_core.space.space_service import SpaceService
 from gws_core.user.current_user_service import CurrentUserService
 
@@ -66,7 +66,7 @@ class MailService:
         :return: _description_
         :rtype: bool
         """
-        mail_dto = SpaceSendMailDTO(
+        mail_dto = SpaceSendMailToUsersDTO(
             receiver_ids=receivers_ids,
             mail_template=mail_template,
             data=data,

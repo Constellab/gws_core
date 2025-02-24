@@ -15,7 +15,9 @@ from gws_core.external_lab.external_lab_dto import ExternalLabImportRequestDTO
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
 from gws_core.model.typing_style import TypingStyle
-from gws_core.scenario.task.scenario_downloader import ScenarioDownloader
+from gws_core.scenario.task.scenario_downloader import (
+    ScenarioDownloader, ScenarioDownloaderCreateOption,
+    ScenarioDownloaderResourceMode)
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
@@ -97,7 +99,9 @@ class SendScenarioToLab(Task):
         return {}
 
     @classmethod
-    def build_config(cls, credentials: CredentialsDataLab, link_duration: int, resource_mode: str, create_option: str) -> ConfigParamsDict:
+    def build_config(
+            cls, credentials: CredentialsDataLab | str, link_duration: int, resource_mode: ScenarioDownloaderResourceMode,
+            create_option: ScenarioDownloaderCreateOption) -> ConfigParamsDict:
         return {
             'credentials': credentials,
             'link_duration': link_duration,
