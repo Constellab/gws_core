@@ -4,7 +4,7 @@ from typing import List
 
 from fastapi.param_functions import Depends
 
-from gws_core.folder.space_folder_dto import SpaceFolderTreeDTO
+from gws_core.folder.space_folder_dto import SpaceFolderDTO, SpaceFolderTreeDTO
 
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
@@ -28,3 +28,12 @@ def get_folder_trees(_=Depends(AuthService.check_user_access_token)) -> List[Spa
 
     folders = SpaceFolderService.get_folder_trees()
     return [folder.to_tree_dto() for folder in folders]
+
+
+@core_app.get("/space-folder/{id_}", tags=["Folder"])
+def get_folder(id_: str, _=Depends(AuthService.check_user_access_token)) -> SpaceFolderDTO:
+    """
+    Get the folder with the given id.
+    """
+
+    return SpaceFolderService.get_by_id_and_check(id_).to_dto()

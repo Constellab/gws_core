@@ -24,16 +24,16 @@ class ScenarioResource(Resource):
 
     scenario_id: str = StrRField()
 
-    scenario: Scenario = None
+    _scenario: Scenario = None
 
     def __init__(self, scenario_id: str = None):
         super().__init__()
         self.scenario_id = scenario_id
 
     def get_scenario(self) -> Scenario:
-        if self.scenario is None:
-            self.scenario = Scenario.get_by_id_and_check(self.scenario_id)
-        return self.scenario
+        if self._scenario is None:
+            self._scenario = Scenario.get_by_id_and_check(self.scenario_id)
+        return self._scenario
 
     @view(view_type=JSONView, human_name="View scenario info", default_view=True)
     def view_scenario(self, config: ConfigParamsDict = None) -> JSONView:

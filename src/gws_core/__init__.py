@@ -136,10 +136,14 @@ from .entity_navigator.entity_navigator import \
 from .entity_navigator.entity_navigator_service import \
     EntityNavigatorService as EntityNavigatorService
 from .entity_navigator.entity_navigator_type import EntityType as EntityType
-# Folder
+# Space Folder
 from .folder.space_folder import SpaceFolder as SpaceFolder
 from .folder.space_folder_dto import \
     ExternalSpaceCreateFolder as ExternalSpaceCreateFolder
+from .folder.task.space_folder_param import \
+    SpaceFolderParam as SpaceFolderParam
+from .folder.task.space_folder_resource import \
+    SpaceFolderResource as SpaceFolderResource
 # Code > AgentFactory
 from .impl.agent.helper.agent_factory import AgentFactory as AgentFactory
 # Impl > Agent

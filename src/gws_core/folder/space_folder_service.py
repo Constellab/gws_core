@@ -152,3 +152,7 @@ class SpaceFolderService():
 
         folder.parent = new_parent
         folder.save()
+
+    @classmethod
+    def get_by_id_and_check(cls, folder_id: str) -> SpaceFolder:
+        return SpaceFolder.get_by_id_and_check(folder_id)
