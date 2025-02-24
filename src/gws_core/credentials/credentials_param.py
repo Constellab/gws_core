@@ -85,9 +85,9 @@ class CredentialsParam(ParamSpec[str]):
 
         if isinstance(value, Credentials):
             return value.name
-        # if this is the credentials object, retrieve the name
-        if isinstance(value, dict) and 'name' in value:
-            value = value['name']
+
+        if isinstance(value, CredentialsDataBase) and value.meta:
+            return value.meta.name
 
         validator = StrValidator()
         return validator.validate(value)
