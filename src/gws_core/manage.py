@@ -6,6 +6,8 @@ from copy import Error
 from typing import List
 from unittest.suite import TestSuite
 
+import plotly.express as px
+
 from gws_core.core.utils.logger import Logger
 from gws_core.lab.system_service import SystemService
 from gws_core.model.typing_manager import TypingManager
@@ -49,6 +51,10 @@ class AppManager:
 
         # Init the typings
         TypingManager.init_typings()
+
+        # Init plotly color, use the default plotly color
+        # Force this init because it is overriden when importing streamlit
+        px.defaults.color_discrete_sequence = px.colors.qualitative.Plotly
 
         return settings_loader.settings
 
@@ -108,12 +114,12 @@ class AppManager:
 
     @classmethod
     def run_scenario(cls,
-                       main_setting_file_path: str,
-                       scenario_id: str,
-                       user_id: str,
-                       log_level: str,
-                       show_sql: bool,
-                       is_test: bool) -> None:
+                     main_setting_file_path: str,
+                     scenario_id: str,
+                     user_id: str,
+                     log_level: str,
+                     show_sql: bool,
+                     is_test: bool) -> None:
         cls.init_gws_env(main_setting_file_path=main_setting_file_path,
                          log_level=log_level,
                          scenario_id=scenario_id,

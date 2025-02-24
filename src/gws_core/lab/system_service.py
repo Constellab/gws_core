@@ -5,8 +5,6 @@ import sys
 from threading import Thread
 from typing import List
 
-import plotly.express as px
-
 from gws_core.core.db.db_migration import DbMigrationService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -74,10 +72,6 @@ class SystemService:
 
         # Register lab start activity
         cls.register_start_activity()
-
-        # Init plotly color, use the default plotly color
-        # Force this init because it is overriden when importing streamlit
-        px.defaults.color_discrete_sequence = px.colors.qualitative.Plotly
 
         if not Settings.get_instance().is_test:
             ProcessService.init_cron_thread_run_stats()
