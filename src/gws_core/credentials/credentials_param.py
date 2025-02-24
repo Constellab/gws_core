@@ -89,6 +89,11 @@ class CredentialsParam(ParamSpec[str]):
         if isinstance(value, CredentialsDataBase) and value.meta:
             return value.meta.name
 
+        # if this is the credentials object, retrieve the name
+        # used when the credentials of a task are saved
+        if isinstance(value, dict) and 'name' in value:
+            value = value['name']
+
         validator = StrValidator()
         return validator.validate(value)
 
