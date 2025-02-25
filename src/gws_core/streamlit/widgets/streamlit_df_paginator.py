@@ -14,7 +14,8 @@ def dataframe_paginated(dataframe: DataFrame,
                         row_page_size_options: List[int] = None,
                         paginate_columns: bool = False,
                         column_page_size_options: List[int] = None,
-                        transformer: Callable[[Any], DataFrame] = None):
+                        transformer: Callable[[Any], DataFrame] = None,
+                        key: str = 'dataframe_paginated') -> Any:
     """
     Paginate a dataframe in streamlit.
     Can only be used in a streamlit app.
@@ -46,7 +47,7 @@ def dataframe_paginated(dataframe: DataFrame,
     if column_page_size_options is None:
         column_page_size_options = row_page_size_options
 
-    pagination = st.container()
+    pagination = st.container(key=f"{key}_container")
     bottom_menu = st.columns((4, 1, 1))
 
     # handle row pagination
@@ -54,11 +55,11 @@ def dataframe_paginated(dataframe: DataFrame,
     to_row_id: int = len(dataframe)
     if paginate_rows:
         with bottom_menu[2]:
-            page_size = st.selectbox("Page Size", options=row_page_size_options)
+            page_size = st.selectbox("Page Size", options=row_page_size_options, key=f"{key}_page_size")
         with bottom_menu[1]:
             total_number_of_items = len(dataframe)
             total_pages = int(total_number_of_items/page_size) + int(bool(total_number_of_items % page_size))
-            current_page = st.number_input("Page", min_value=1, max_value=total_pages, step=1)
+            current_page = st.number_input("Page", min_value=1, max_value=total_pages, step=1, key=f"{key}_page")
         with bottom_menu[0]:
             st.markdown(f"Page **{current_page}** of **{total_pages}** ")
 
@@ -70,11 +71,12 @@ def dataframe_paginated(dataframe: DataFrame,
     to_column_id = len(dataframe.columns)
     if paginate_columns:
         with bottom_menu[2]:
-            page_size = st.selectbox("Column page Size", options=row_page_size_options)
+            page_size = st.selectbox("Column page Size", options=row_page_size_options, key=f"{key}_column_page_size")
         with bottom_menu[1]:
             total_number_of_items = len(dataframe.columns)
             total_pages = int(total_number_of_items/page_size) + int(bool(total_number_of_items % page_size))
-            current_page = st.number_input("Column page", min_value=1, max_value=total_pages, step=1)
+            current_page = st.number_input("Column page", min_value=1,
+                                           max_value=total_pages, step=1, key=f"{key}_column_page")
         with bottom_menu[0]:
             st.markdown(f"Column page **{current_page}** of **{total_pages}** ")
 
@@ -85,4 +87,4 @@ def dataframe_paginated(dataframe: DataFrame,
 
     if transformer is not None:
         pages = transformer(pages)
-    return pagination.dataframe(pages, use_container_width=True)
+    return pagination.dataframe(pages, use_container_width=True, key=f"{key}_dataframe")

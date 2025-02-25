@@ -3,8 +3,6 @@ import os
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.file.folder import Folder
-from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
-from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.streamlit.streamlit_dashboard import (Dashboard, DashboardType,
@@ -35,7 +33,7 @@ class TestDashboard(Dashboard):
     #     return MambaShellProxy(env_path)
 
 
-@task_decorator("GenerateStreamlitTestApp", human_name="GenerateStreamlitTestApp", hide=False)
+@task_decorator("GenerateStreamlitTestApp", human_name="GenerateStreamlitTestApp", hide=True)
 class GenerateStreamlitTestApp(Task):
     """
     Task description (supports markdown)
