@@ -162,13 +162,15 @@ class ProgressBar(Model):
 
         return message
 
-    def _add_message(self, message: str, type_: MessageLevel = MessageLevel.INFO):
+    def _add_message(self, message: str, type_: MessageLevel = MessageLevel.INFO,
+                     progress: Optional[float] = None) -> None:
         dtime = jsonable_encoder(DateHelper.now_utc())
 
         progress_bar_message = ProgressBarMessageDTO(
             type=type_,
             text=message,
-            datetime=dtime
+            datetime=dtime,
+            progress=progress
         )
         self.data["messages"].append(progress_bar_message.to_json_dict())
 
@@ -210,11 +212,13 @@ class ProgressBar(Model):
         Increment the progress-bar value and log a progress message
         """
 
+        if self.current_value == value:
+            return
+
         # check if we update the progres
         value = self._update_progress_value(value)
         if message:
-            perc = value
-            self._add_message(f"{perc:1.1f}%: {message}", MessageLevel.PROGRESS)
+            self._add_message(message, MessageLevel.PROGRESS, value)
 
     def get_messages(self) -> List[ProgressBarMessageDTO]:
         return ProgressBarMessageDTO.from_json_list(self.data["messages"])

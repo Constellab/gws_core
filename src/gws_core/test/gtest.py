@@ -7,6 +7,11 @@ import requests
 
 from gws_core.app import App
 from gws_core.core.utils.settings import Settings
+from gws_core.credentials.credentials import Credentials
+from gws_core.credentials.credentials_service import CredentialsService
+from gws_core.credentials.credentials_type import (CredentialsDataLab,
+                                                   CredentialsType,
+                                                   SaveCredentialsDTO)
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -50,6 +55,15 @@ class GTest(Console):
         robot = Robot.empty()
         return ResourceModel.save_from_resource(robot, origin=ResourceOrigin.UPLOADED)
 
+    @classmethod
+    def create_lab_credentials(cls) -> Credentials:
+        """
+        Create lab credentials that reference itself
+        """
+        lab_credentials = CredentialsDataLab(lab_domain="http://localhost", api_key="test")
+        return CredentialsService.create(SaveCredentialsDTO(name="test", type=CredentialsType.LAB,
+                                                            data=lab_credentials.to_json_dict()))
+
 
 class TestStartUvicornApp():
     """ Context to support with statement start the uvicorn api server in tests.
@@ -57,6 +71,12 @@ class TestStartUvicornApp():
     """
 
     process: Process = None
+
+    def enter(self):
+        self.__enter__()
+
+    def exit(self, exc_type, exc_value, traceback):
+        self.__exit__(exc_type, exc_value, traceback)
 
     def __enter__(self):
         # Registrer the lab start. Use a new thread to prevent blocking the start

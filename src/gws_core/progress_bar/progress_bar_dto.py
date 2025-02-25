@@ -17,9 +17,16 @@ class ProgressBarMessageDTO(BaseModelDTO):
     type: MessageLevel
     text: str
     datetime: str
+    progress: Optional[float] = None
 
     def __str__(self) -> str:
         return f"{self.type} - {self.datetime} - {self.text}"
+
+    def is_after(self, other: 'ProgressBarMessageDTO') -> bool:
+        return self.get_datetime() > other.get_datetime()
+
+    def get_datetime(self):
+        return datetime.fromisoformat(self.datetime)
 
 
 class ProgressBarConfigDTO(BaseModelDTO):

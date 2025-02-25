@@ -1,14 +1,10 @@
 
 
-from datetime import timedelta
 from typing import Dict
 
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.decorator.transaction import transaction
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
-from gws_core.core.utils.date_helper import DateHelper
 from gws_core.process.process_proxy import ProcessProxy
 from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource_dto import ShareResourceWithSpaceRequestDTO
@@ -16,6 +12,7 @@ from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.task.resource_downloader_http import \
     ResourceDownloaderHttp
 from gws_core.resource.task.send_resource_to_lab import SendResourceToLab
+from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
@@ -29,24 +26,52 @@ from .resource_model import ResourceModel
 class ResourceTransfertService():
 
     @classmethod
-    def import_resource_from_link(cls, values: ConfigParamsDict) -> ResourceModel:
+    def import_resource_from_link_sync(cls, values: ConfigParamsDict) -> ResourceModel:
+        """ Run the import resource synchronously and return the imported resource
+        """
+
+        scenario = cls._build_import_resource_from_link_scenario(values)
+
+        scenario.run()
+
+        # return the resource model of the output process
+        output_task = scenario.get_protocol().get_process('output').refresh()
+        return output_task.get_input_resource_model(OutputTask.input_name)
+
+    @classmethod
+    def import_resource_from_link_async(cls, values: ConfigParamsDict) -> Scenario:
+        """ Run the import resource asynchronously, return the running import scenario
+        """
+
+        scenario = cls._build_import_resource_from_link_scenario(values)
+        scenario.run_async()
+        return scenario.get_model().refresh()
+
+    @classmethod
+    def _build_import_resource_from_link_scenario(cls, values: ConfigParamsDict) -> ScenarioProxy:
 
         link: str = values.get(ResourceDownloaderHttp.LINK_PARAM_NAME)
         file_name = link.split('/')[-1]
         # Create an resource containing 1 resource downloader , 1 output task
-        resource: ScenarioProxy = ScenarioProxy(title=f"Download {file_name}")
-        protocol: ProtocolProxy = resource.get_protocol()
+        scenario: ScenarioProxy = ScenarioProxy(title=f"Download {file_name}")
+        protocol: ProtocolProxy = scenario.get_protocol()
 
         # Add the importer and the connector
         downloader: ProcessProxy = protocol.add_process(ResourceDownloaderHttp, 'downloader', values)
 
         # Add output and connect it
-        output_task = protocol.add_output('output', downloader >> ResourceDownloaderHttp.OUTPUT_NAME)
+        protocol.add_output('output', downloader >> ResourceDownloaderHttp.OUTPUT_NAME)
 
-        resource.run()
+        return scenario
 
-        # return the resource model of the output process
-        output_task.refresh()
+    @classmethod
+    def get_imported_resource_from_scenario(cls, scenario_id: str) -> ResourceModel:
+        """Get the imported resource from the scenario
+        """
+        scenario_proxy = ScenarioProxy.from_existing_scenario(scenario_id)
+        if not scenario_proxy.is_success():
+            raise Exception("The scenario is not finished or not successful, can't retrieve the resource")
+        output_task = scenario_proxy.get_protocol().get_process('output')
         return output_task.get_input_resource_model(OutputTask.input_name)
 
     @classmethod
@@ -54,11 +79,11 @@ class ResourceTransfertService():
         return ResourceDownloaderHttp.get_config_specs_dto()
 
     @classmethod
-    def export_resource_to_lab(cls, resource_id: str, values: ConfigParamsDict) -> None:
+    def export_resource_to_lab(cls, resource_id: str, values: ConfigParamsDict) -> Scenario:
 
         # Create an resource containing 1 resource downloader , 1 output task
-        resource: ScenarioProxy = ScenarioProxy(title="Send resource")
-        protocol = resource.get_protocol()
+        scenario: ScenarioProxy = ScenarioProxy(title="Send resource")
+        protocol = scenario.get_protocol()
 
         # Add the importer and the connector
         send_process = protocol.add_process(SendResourceToLab, 'sender', values)
@@ -66,7 +91,9 @@ class ResourceTransfertService():
         # add input resource
         protocol.add_resource('resource', resource_id, send_process.get_input_port(SendResourceToLab.INPUT_NAME))
 
-        resource.run()
+        scenario.run()
+
+        return scenario.get_model().refresh()
 
     @classmethod
     def get_export_resource_to_lab_config_specs(cls) -> Dict[str, ParamSpecDTO]:

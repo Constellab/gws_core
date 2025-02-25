@@ -243,7 +243,7 @@ def get_shared_resource_origin_info(id_: str,
                summary="Download a resource from an external link")
 def import_resource_from_link(values: ConfigParamsDict,
                               _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
-    return ResourceTransfertService.import_resource_from_link(values).to_dto()
+    return ResourceTransfertService.import_resource_from_link_sync(values).to_dto()
 
 
 @core_app.get("/resource/import-from-link/config-specs", tags=["Share"],

@@ -21,7 +21,7 @@ class ScenarioTemplateFactory:
             cls, protocol_model: ProtocolModel, name: str, description: RichTextDTO = None) -> ScenarioTemplate:
         scenario_template = ScenarioTemplate()
         # retrieve the protocol config, without the source task config
-        scenario_template.set_template(protocol_model.to_protocol_config_dto(ignore_source_config=True))
+        scenario_template.set_template(protocol_model.to_protocol_config_dto(ignore_input_task_config=True))
         scenario_template.name = name
         scenario_template.description = description
         scenario_template.version = ScenarioTemplate.CURRENT_VERSION

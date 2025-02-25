@@ -248,7 +248,7 @@ def delete_intermediate_resources(id_: str,
                summary="Import a scenario from another lab")
 def import_from_lab(values: ConfigParamsDict,
                     _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
-    return ScenarioTransfertService.import_from_lab(values).to_dto()
+    return ScenarioTransfertService.import_from_lab_sync(values).to_dto()
 
 
 @core_app.get("/scenario/import-from-lab/config-specs", tags=["Share"],

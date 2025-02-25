@@ -59,3 +59,14 @@ class ScenarioCountByTitleResultDTO(BaseModelDTO):
 class ScenarioSimpleDTO(BaseModelDTO):
     id: str
     title: str
+
+
+class ScenarioProgressDTO(BaseModelDTO):
+    progress: int = None
+    last_message: Optional[ProgressBarMessageDTO] = None
+
+    def get_last_message_content(self) -> str | None:
+        return self.last_message.text if self.last_message else None
+
+    def has_last_message(self) -> bool:
+        return self.last_message is not None

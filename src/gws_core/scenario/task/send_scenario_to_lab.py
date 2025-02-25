@@ -15,6 +15,8 @@ from gws_core.external_lab.external_lab_dto import ExternalLabImportRequestDTO
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
 from gws_core.model.typing_style import TypingStyle
+from gws_core.scenario.scenario_enums import ScenarioStatus
+from gws_core.scenario.scenario_waiter import ExternalLabScenarioWaiter
 from gws_core.scenario.task.scenario_downloader import (
     ScenarioDownloader, ScenarioDownloaderCreateOption,
     ScenarioDownloaderResourceMode)
@@ -94,7 +96,20 @@ class SendScenarioToLab(Task):
         response = ExternalLabApiService.send_scenario_to_lab(request_dto, credentials,
                                                               CurrentUserService.get_and_check_current_user().id)
 
-        self.log_success_message(f"Scenario sent to the lab, available at {response.scenario_url}")
+        self.log_success_message(
+            f"Import of scenario started, follow progress in destination lab : {response.scenario_url}")
+
+        scenario_waiter = ExternalLabScenarioWaiter(response.scenario.id, credentials,
+                                                    CurrentUserService.get_and_check_current_user().id)
+
+        # refresh every 30 seconds, max 2 hours
+        scenario_info = scenario_waiter.wait_until_finished(refresh_interval=30, refresh_interval_max_count=240,
+                                                            message_dispatcher=self.message_dispatcher)
+
+        if scenario_info.scenario.status != ScenarioStatus.SUCCESS:
+            error = scenario_info.progress.last_message.text if scenario_info.progress and scenario_info.progress.has_last_message() else "Unknown error"
+            raise Exception(
+                f"Export scenario to lab failed, status: {scenario_info.scenario.status}. Error details: {error}")
 
         return {}
 

@@ -3,7 +3,7 @@ from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.resource.resource_dto import ResourceModelDTO
-from gws_core.scenario.scenario_dto import ScenarioDTO
+from gws_core.scenario.scenario_dto import ScenarioDTO, ScenarioProgressDTO
 
 
 class ExternalLabWithUserInfo(BaseModelDTO):
@@ -34,3 +34,4 @@ class ExternalLabImportScenarioResponseDTO(BaseModelDTO):
     scenario: ScenarioDTO
     scenario_url: str
     lab_info: ExternalLabWithUserInfo
+    scenario_progress: Optional[ScenarioProgressDTO] = None

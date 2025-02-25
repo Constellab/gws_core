@@ -5,7 +5,7 @@ from typing import Dict, List, Literal, Optional, Set
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.settings import Settings
+from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import (ConnectorDTO, IOFaceDTO,
                                             ProcessConfigDTO, ProtocolDTO,
                                             ProtocolFullDTO,
@@ -14,10 +14,8 @@ from gws_core.protocol.protocol_dto import (ConnectorDTO, IOFaceDTO,
 from gws_core.protocol.protocol_exception import \
     IOFaceConnectedToTheParentDeleteException
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
+from gws_core.scenario.scenario_dto import ScenarioProgressDTO
 from gws_core.task.plug.input_task import InputTask
-from gws_core.task.task import Task
-from gws_core.task.task_model import TaskModel
-from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -297,7 +295,50 @@ class ProtocolModel(ProcessModel):
         # save the protocol graph
         self.save_graph()
 
+    def get_current_progress(self) -> ScenarioProgressDTO:
+        """Calculate the current progress of the protocol.
+        It excludes the auto run processes and count finished processes as 100%
+        and running processes as their progress
+
+        :return: _description_
+        :rtype: float
+        """
+        if self.is_finished:
+            return ScenarioProgressDTO(progress=100, last_message=self.progress_bar.get_last_message())
+        if self.is_draft:
+            return ScenarioProgressDTO(progress=100)
+
+        # retrieve all the processes that are not auto run
+        processes = [process for process in self.processes.values() if not process.is_auto_run()]
+
+        if len(processes) == 0:
+            return ScenarioProgressDTO(progress=100)
+
+        finished_processes = [process for process in processes if process.is_finished]
+
+        progress = len(finished_processes) / len(processes) * 100
+
+        # we add the process of running processes (normalized)
+        running_processes = [process for process in processes if process.is_running]
+
+        last_message: ProgressBarMessageDTO = None
+
+        for process in running_processes:
+            progress += process.progress_bar.current_value / len(processes)
+
+            # retrieve the last message of the running process
+            last_process_message = process.progress_bar.get_last_message()
+
+            if last_process_message:
+                if last_message is None:
+                    last_message = last_process_message
+                elif last_process_message.is_after(last_message):
+                    last_message = last_process_message
+
+        return ScenarioProgressDTO(progress=round(progress), last_message=last_message)
+
     ############################### PROCESS #################################
+
     @property
     def processes(self) -> Dict[str, ProcessModel]:
         """
@@ -1064,14 +1105,14 @@ class ProtocolModel(ProcessModel):
 
     ############################### JSON #################################
 
-    def to_config_dto(self, ignore_source_config: bool = False) -> ProcessConfigDTO:
+    def to_config_dto(self, ignore_input_task_config: bool = False) -> ProcessConfigDTO:
         dto = super().to_config_dto()
-        dto.graph = self.to_protocol_config_dto(ignore_source_config=ignore_source_config)
+        dto.graph = self.to_protocol_config_dto(ignore_input_task_config=ignore_input_task_config)
         return dto
 
-    def to_protocol_config_dto(self, ignore_source_config: bool = False) -> ProtocolGraphConfigDTO:
+    def to_protocol_config_dto(self, ignore_input_task_config: bool = False) -> ProtocolGraphConfigDTO:
         return ProtocolGraphConfigDTO(
-            nodes={key: process.to_config_dto(ignore_source_config) for key, process in self.processes.items()},
+            nodes={key: process.to_config_dto(ignore_input_task_config) for key, process in self.processes.items()},
             links=[connector.to_dto() for connector in self.connectors],
             interfaces={key: interface.to_dto() for key, interface in self.interfaces.items()},
             outerfaces={key: outerface.to_dto() for key, outerface in self.outerfaces.items()},

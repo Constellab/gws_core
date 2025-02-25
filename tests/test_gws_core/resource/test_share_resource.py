@@ -17,6 +17,8 @@ from gws_core.resource.resource_transfert_service import \
     ResourceTransfertService
 from gws_core.resource.task.resource_downloader_http import \
     ResourceDownloaderHttp
+from gws_core.resource.task.send_resource_to_lab import SendResourceToLab
+from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.share.share_link import ShareLink
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_service import ShareService
@@ -25,7 +27,7 @@ from gws_core.share.shared_dto import (GenerateShareLinkDTO, ShareLinkType,
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
-from gws_core.test.gtest import TestStartUvicornApp
+from gws_core.test.gtest import GTest, TestStartUvicornApp
 
 
 def get_table() -> Table:
@@ -95,12 +97,12 @@ class TestShareResource(BaseTestCase):
     def init_before_test(cls):
         super().init_before_test()
         cls.start_uvicorn_app = TestStartUvicornApp()
-        cls.start_uvicorn_app.__enter__()
+        cls.start_uvicorn_app.enter()
 
     @classmethod
     def clear_after_test(cls):
         super().clear_after_test()
-        cls.start_uvicorn_app.__exit__(None, None, None)
+        cls.start_uvicorn_app.exit(None, None, None)
 
     def test_share_basic_resource(self):
         # create a simple resource
@@ -230,6 +232,22 @@ class TestShareResource(BaseTestCase):
             timedelta(days=1))
         share_link = ShareLinkService.generate_share_link(generate_dto)
 
-        return ResourceTransfertService.import_resource_from_link(
+        return ResourceTransfertService.import_resource_from_link_sync(
             ResourceDownloaderHttp.build_config(share_link.get_download_link(),
                                                 'auto', 'Force new resource'))
+
+    def test_send_resource_to_lab(self):
+        # create a simple resource
+        table = get_table()
+
+        # save the resource model
+        original_resource_model = ResourceModel.save_from_resource(table, origin=ResourceOrigin.UPLOADED)
+
+        lab_credentials = GTest.create_lab_credentials()
+
+        # Call the external lab API to import the resource
+        scenario = ResourceTransfertService.export_resource_to_lab(
+            original_resource_model.id, SendResourceToLab.build_config(
+                lab_credentials.name, 1, 'Force new resource'))
+
+        self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)

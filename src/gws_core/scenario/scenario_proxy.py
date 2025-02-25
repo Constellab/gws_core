@@ -5,7 +5,9 @@ from multiprocessing import Process
 from time import sleep
 from typing import List, Type
 
+from gws_core.core.service.front_service import FrontService
 from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.scenario.scenario_waiter import ScenarioWaiterBasic
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_service import TagService
 
@@ -116,6 +118,30 @@ class ScenarioProxy:
         if process.exitcode != 0:
             raise Exception("Error in during the execution of the scenario")
 
+    def run_async(self) -> ScenarioWaiterBasic:
+        """Run the scenario in a separate process but don't wait for it to finish
+
+        :return: the process that is running the scenario
+        :rtype: Process
+        """
+        process = Process(
+            target=ScenarioRunService.run_scenario, args=(self._scenario,))
+        process.start()
+
+        count = 0
+        while count < 15:
+            self.refresh()
+            if not self._scenario.is_draft:
+                break
+
+            count += 1
+            sleep(2)
+
+        if self._scenario.is_draft:
+            raise Exception("The scenario is still in draft mode, it was not started")
+
+        return ScenarioWaiterBasic(self._scenario.id)
+
     def add_to_queue(self) -> None:
         from gws_core.scenario.queue_service import QueueService
 
@@ -155,3 +181,6 @@ class ScenarioProxy:
         self._protocol.refresh()
 
         return self
+
+    def get_url(self) -> str:
+        return FrontService.get_scenario_url(self._scenario.id)

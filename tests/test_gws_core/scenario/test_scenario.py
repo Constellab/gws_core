@@ -1,6 +1,5 @@
 
 
-import time
 from typing import List
 
 from gws_core import (BaseTestCase, ProcessModel, ProtocolModel, ResourceModel,
@@ -8,7 +7,6 @@ from gws_core import (BaseTestCase, ProcessModel, ProtocolModel, ResourceModel,
                       ScenarioStatus, TaskModel)
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.impl.robot.robot_protocol import (RobotSimpleTravel,
                                                 RobotWorldTravelProto)
 from gws_core.impl.robot.robot_resource import Robot
@@ -20,6 +18,7 @@ from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_run_service import ScenarioRunService
+from gws_core.scenario.scenario_waiter import ScenarioWaiterBasic
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.test.gtest import GTest
 
@@ -139,17 +138,13 @@ class TestScenario(BaseTestCase):
                          ScenarioStatus.WAITING_FOR_CLI_PROCESS)
         self.assertTrue(scenario.pid > 0)
 
-        waiting_count = 0
-        scenario: Scenario = Scenario.get_by_id_and_check(
+        scenario = Scenario.get_by_id_and_check(
             scenario.id)
-        print(scenario.protocol_model)
-        while scenario.status != ScenarioStatus.SUCCESS:
-            print("Waiting 3 secs the scenario to finish ...")
-            time.sleep(3)
-            if waiting_count == 10:
-                raise Exception("The scenario is not finished")
-            scenario = scenario.refresh()  # reload from DB
-            waiting_count += 1
+
+        scenario_waiter = ScenarioWaiterBasic(scenario.id)
+
+        result = scenario_waiter.wait_until_finished(refresh_interval=3, refresh_interval_max_count=10)
+        self.assertEqual(result.status, ScenarioStatus.SUCCESS)
 
         self.assertEqual(Scenario.count_running_or_queued_scenarios(), 0)
         scenario = Scenario.get_by_id_and_check(scenario.id)
@@ -160,13 +155,8 @@ class TestScenario(BaseTestCase):
         self.assertEqual(len(scenario.resources),
                          RobotWorldTravelProto.resource_count)
 
-        print("Archive scenario ...")
         self._archive_scenario(scenario, True)
-
-        print("Unarchive scenario ...")
         self._archive_scenario(scenario, False)
-
-        print("Archive scenario again...")
         self._archive_scenario(scenario, True)
 
     def _archive_scenario(self, scenario: Scenario, archive: bool) -> None:

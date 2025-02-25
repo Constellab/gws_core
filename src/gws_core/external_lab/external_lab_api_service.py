@@ -1,7 +1,5 @@
 
 
-from typing import Optional
-
 from requests.models import Response
 
 from gws_core.core.service.external_api_service import ExternalApiService
@@ -28,17 +26,26 @@ class ExternalLabApiService():
 
     @classmethod
     def send_resource_to_lab(cls, request_dto: ExternalLabImportRequestDTO,
-                             credentials: CredentialsDataLab, user_id: str) -> ExternalLabImportResourceResponseDTO:
+                             credentials: CredentialsDataLab, user_id: str) -> ExternalLabImportScenarioResponseDTO:
         """Send a resource to the lab"""
 
         headers = ExternalLabApiService._get_external_lab_auth(credentials.api_key, user_id)
 
-        # for test purpose
-        # url = f"http://localhost:3000/{Settings.external_lab_api_route_path()}/import-resource"
-        url = f"{credentials.get_lab_api_url()}/{Settings.external_lab_api_route_path()}/import-resource"
+        url = cls.get_full_route(credentials, "resource/import")
 
         response = ExternalApiService.post(url, body=request_dto.to_json_dict(), headers=headers,
                                            raise_exception_if_error=True)
+
+        return ExternalLabImportScenarioResponseDTO.from_json(response.json())
+
+    @classmethod
+    def get_imported_resource_from_scenario(cls, scenario_id: str, credentials: CredentialsDataLab, user_id: str) -> ExternalLabImportResourceResponseDTO:
+        """Get the imported resource from the import scenario"""
+        headers = ExternalLabApiService._get_external_lab_auth(credentials.api_key, user_id)
+
+        url = cls.get_full_route(credentials, f"resource/from-scenario/{scenario_id}")
+
+        response = ExternalApiService.get(url, headers=headers, raise_exception_if_error=True)
 
         return ExternalLabImportResourceResponseDTO.from_json(response.json())
 
@@ -49,14 +56,32 @@ class ExternalLabApiService():
 
         headers = ExternalLabApiService._get_external_lab_auth(credentials.api_key, user_id)
 
-        # for test purpose
-        # url = f"http://localhost:3000/{Settings.external_lab_api_route_path()}/import-scenario"
-        url = f"{credentials.get_lab_api_url()}/{Settings.external_lab_api_route_path()}/import-scenario"
+        url = cls.get_full_route(credentials, "scenario/import")
 
         response = ExternalApiService.post(url, body=request_dto.to_json_dict(), headers=headers,
                                            raise_exception_if_error=True)
 
         return ExternalLabImportScenarioResponseDTO.from_json(response.json())
+
+    @classmethod
+    def get_scenario(cls, id_: str, credentials: CredentialsDataLab, user_id: str) -> ExternalLabImportScenarioResponseDTO:
+        """Get the scenario that is currently being imported"""
+        headers = ExternalLabApiService._get_external_lab_auth(credentials.api_key, user_id)
+
+        url = cls.get_full_route(credentials, f"scenario/{id_}")
+
+        response = ExternalApiService.get(url, headers=headers, raise_exception_if_error=True)
+
+        return ExternalLabImportScenarioResponseDTO.from_json(response.json())
+
+    @classmethod
+    def get_full_route(cls, credentials: CredentialsDataLab, route: str) -> str:
+        """Get the full route"""
+        if Settings.is_test:
+            return f"http://localhost:3000/{Settings.external_lab_api_route_path()}/{route}"
+        # for test purpose
+        return f"http://localhost:3000/{Settings.external_lab_api_route_path()}/{route}"
+        return f"{credentials.get_lab_api_url()}/{Settings.external_lab_api_route_path()}/{route}"
 
     @classmethod
     def get_current_lab_info(cls, user: User) -> ExternalLabWithUserInfo:

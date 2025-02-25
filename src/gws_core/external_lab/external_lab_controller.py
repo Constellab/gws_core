@@ -39,16 +39,34 @@ def health_check() -> bool:
     return True
 
 
-@external_lab_app.post("/import-resource", summary="Import resource from the lab")
+@external_lab_app.post("/resource/import", summary="Import resource from the lab")
 def import_resource(import_dto: ExternalLabImportRequestDTO,
-                    _=Depends(ExternalLabAuth.check_auth)) -> ExternalLabImportResourceResponseDTO:
+                    _=Depends(ExternalLabAuth.check_auth)) -> ExternalLabImportScenarioResponseDTO:
     """
     Import resources from the lab
     """
     return ExternalLabService.import_resource(import_dto)
 
 
-@external_lab_app.post("/import-scenario", summary="Import scenario from the lab")
+@external_lab_app.get("/resource/from-scenario/{scenario_id}",
+                      summary="Get the imported resource from the import scenario")
+def get_imported_resource(scenario_id: str,
+                          _=Depends(ExternalLabAuth.check_auth)) -> ExternalLabImportResourceResponseDTO:
+    """
+    Get the imported resource from the import scenario
+    """
+    return ExternalLabService.get_imported_resource_from_scenario(scenario_id)
+
+
+@external_lab_app.get("/scenario/{id_}", summary="Get a scenario information")
+def get_scenario(id_: str, _=Depends(ExternalLabAuth.check_auth)) -> ExternalLabImportScenarioResponseDTO:
+    """
+    Get a scenario information
+    """
+    return ExternalLabService.get_scenario(id_)
+
+
+@external_lab_app.post("/scenario/import", summary="Import scenario from the lab")
 def import_scenario(import_dto: ExternalLabImportRequestDTO,
                     _=Depends(ExternalLabAuth.check_auth)) -> ExternalLabImportScenarioResponseDTO:
     """

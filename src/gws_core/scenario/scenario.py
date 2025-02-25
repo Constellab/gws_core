@@ -17,7 +17,8 @@ from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
-from gws_core.scenario.scenario_dto import ScenarioDTO, ScenarioSimpleDTO
+from gws_core.scenario.scenario_dto import (ScenarioDTO, ScenarioProgressDTO,
+                                            ScenarioSimpleDTO)
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.user.current_user_service import CurrentUserService
 
@@ -134,6 +135,9 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         return list(TaskModel.select().where(
             (TaskModel.scenario == self) &
             (TaskModel.status.in_([ProcessStatus.RUNNING, ProcessStatus.WAITING_FOR_CLI_PROCESS]))))
+
+    def get_current_progress(self) -> ScenarioProgressDTO:
+        return self.protocol_model.get_current_progress()
 
     def get_entity_name(self) -> str:
         return self.title
