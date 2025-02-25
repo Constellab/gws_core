@@ -36,7 +36,7 @@ class AppManager:
         log_dir = Settings.build_log_dir(is_test=is_test)
 
         logger_level = Logger.check_log_level(log_level)
-        Logger(log_dir=log_dir, level=logger_level, scenario_id=scenario_id)
+        Logger.build_main_logger(log_dir=log_dir, level=logger_level, scenario_id=scenario_id)
 
         if show_sql:
             Logger.print_sql_queries()

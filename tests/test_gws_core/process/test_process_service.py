@@ -21,7 +21,7 @@ class TestProcessService(BaseTestCase):
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
         Logger.clear_logger()
         # initialize the logger associated to the scenario
-        Logger(Settings.build_log_dir(True), level='INFO', scenario_id=scenario.get_model().id)
+        Logger.build_main_logger(Settings.build_log_dir(True), level='INFO', scenario_id=scenario.get_model().id)
 
         protocol: ProtocolProxy = scenario.get_protocol()
 
@@ -31,7 +31,7 @@ class TestProcessService(BaseTestCase):
 
         scenario.run()
 
-        logs = ProcessService.get_logs_of_process('TASK', wait.refresh()._process_model.id)
+        logs = ProcessService.get_logs_of_process('TASK', wait.refresh().get_model_id())
         self.assertTrue(len(logs.logs) > 0)
         # search log with content : Waiting 1 seconds
         self.assertTrue(len([log for log in logs.logs if 'Waiting 1 sec' in log.message]) > 0)

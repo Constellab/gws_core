@@ -19,7 +19,7 @@ def main():
 def enable_logger() -> None:
     from gws_core import Logger, Settings
     log_dir = Settings.build_log_dir(is_test=False)
-    Logger(log_dir=log_dir)
+    Logger.build_main_logger(log_dir=log_dir)
 
 
 def start():

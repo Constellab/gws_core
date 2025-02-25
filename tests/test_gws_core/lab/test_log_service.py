@@ -22,7 +22,7 @@ class TestLogService(TestCase):
         log_dir = Settings.get_instance().get_log_dir()
         FileHelper.delete_dir_content(log_dir)
         Logger.clear_logger()
-        Logger(Settings.build_log_dir(True), level='INFO')
+        Logger.build_main_logger(Settings.build_log_dir(True), level='INFO')
 
         log_content_1 = """{"level": "INFO", "timestamp": "2022-12-01T08:24:46.905469+00:00", "message": "Day 1"}
 INFO - 2022-12-01 09:26:46.906581 - first - log day 1

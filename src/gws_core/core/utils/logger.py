@@ -66,7 +66,9 @@ class Logger:
 
     level: LoggerLevel = "INFO"
 
+    # class level
     _waiting_messages: list = []
+    _logger_instance: 'Logger' = None
 
     def __init__(self, log_dir: str,
                  level: LoggerLevel = "INFO", scenario_id: str = None) -> None:
@@ -77,25 +79,22 @@ class Logger:
         :param _scenario_id: set when  gws is runned inside a subprocess to run a scenario, defaults to False
         :type _scenario_id: bool, optional
         """
-        if Logger._logger is not None:
-            return
-            # raise BadRequestException("The logger already exists")
 
-        Logger._scenario_id = scenario_id
+        self._scenario_id = scenario_id
 
         if level is None:
             level = "INFO"
-        Logger.level = level
+        self.level = level
 
         if level not in ["ERROR", "INFO", "DEBUG"]:
             raise BadRequestException(
                 f"The logging level '{level}' is incorrect, please use one of the following [ERROR, INFO, DEBUG]")
 
         # Create the logger
-        Logger._logger = logging.getLogger(LOGGER_NAME)
+        self._logger = logging.getLogger(LOGGER_NAME)
 
         # Set the logger level
-        Logger._logger.setLevel(level)
+        self._logger.setLevel(level)
 
         # Format of the logs, format date like : 2024-06-24T14:18:07.442618+00:00
         formatter = logging.Formatter("%(levelname)s - %(asctime)s - %(message)s")
@@ -103,29 +102,35 @@ class Logger:
         # Configure the console logger
         console_logger = logging.StreamHandler()
         console_logger.setFormatter(formatter)
-        Logger._logger.addHandler(console_logger)
+        self._logger.addHandler(console_logger)
 
         # Configure the logs into the log files
         if not path.exists(log_dir):
             makedirs(log_dir)
-        Logger._file_path = path.join(log_dir, LOGGER_FILE_NAME)
+        self._file_path = path.join(log_dir, LOGGER_FILE_NAME)
         # file_handler = logging.FileHandler(Logger._file_path)
 
         # define a TimeRotating file to create a new file each day à 00:00
         # this write the log in a file with a json format
         file_handler = TimedRotatingFileHandler(
-            Logger._file_path, when="midnight")
-        file_handler.setFormatter(JSONFormatter(Logger._scenario_id))
+            self._file_path, when="midnight")
+        file_handler.setFormatter(JSONFormatter(scenario_id))
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         # file_handler.setFormatter(formatter)
-        Logger._logger.addHandler(file_handler)
+        self._logger.addHandler(file_handler)
+
+    @classmethod
+    def build_main_logger(cls, log_dir: str,
+                          level: LoggerLevel = "INFO", scenario_id: str = None) -> None:
+        logger = Logger(log_dir, level, scenario_id)
+        cls._logger_instance = logger
 
         if scenario_id:
-            Logger.info(f"Logger configured for scenario process with log level: {level}")
+            cls._log_message('INFO', f"Logger configured for scenario process with log level: {level}")
         else:
-            Logger.info(f"Logger configured with log level: {level}")
+            cls._log_message('INFO', f"Logger configured with log level: {level}")
 
-        self._log_waiting_message()
+        cls._log_waiting_message()
 
     @classmethod
     def check_log_level(cls, log_level: str) -> LoggerLevel:
@@ -173,20 +178,21 @@ class Logger:
         :param message: message to log
         :type message: str
         """
-        if cls._logger:
+        if cls._logger_instance:
+            logger = cls._logger_instance
 
             if level_name == "EXCEPTION":
-                cls._logger.exception(obj, exc_info=True)
+                logger.log_exception(obj)
                 return
 
             if level_name == "ERROR":
-                cls._logger.error(obj)
+                logger.log_error(obj)
             elif level_name == "WARNING":
-                cls._logger.warning(obj)
+                logger.log_warning(obj)
             elif level_name == "INFO" or level_name == "PROGRESS":
-                cls._logger.info(obj)
+                logger.log_info(obj)
             elif level_name == "DEBUG":
-                cls._logger.debug(obj)
+                logger.log_debug(obj)
 
         else:
             # add the message in the waiting list to be logged later
@@ -201,7 +207,6 @@ class Logger:
         cls._waiting_messages = []
 
     # Get the current date in Human readable format
-
     @classmethod
     def get_date(cls) -> str:
         current_date: datetime = DateHelper.now_utc()
@@ -252,7 +257,19 @@ class Logger:
     def clear_logger(cls) -> None:
         """Clear the logger
         """
-        Logger._file_path = None
-        Logger._scenario_id = None
-        Logger._logger.handlers.clear()
-        Logger._logger = None
+        Logger._logger_instance = None
+
+    def log_exception(self, message: str) -> None:
+        self._logger.exception(message, exc_info=True)
+
+    def log_error(self, message: str) -> None:
+        self._logger.error(message)
+
+    def log_warning(self, message: str) -> None:
+        self._logger.warning(message)
+
+    def log_info(self, message: str) -> None:
+        self._logger.info(message)
+
+    def log_debug(self, message: str) -> None:
+        self._logger.debug(message)
