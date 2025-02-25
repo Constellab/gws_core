@@ -2,8 +2,6 @@
 
 from typing import Any, List
 
-from PIL import Image
-
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
@@ -16,7 +14,7 @@ from gws_core.impl.rich_text.rich_text_types import (
     RichTextBlock, RichTextBlockType, RichTextFigureData, RichTextFileData,
     RichTextNoteResourceViewData, RichTextObjectType,
     RichTextParagraphHeaderLevel, RichTextResourceViewData,
-    RichTextViewFileData)
+    RichTextTimestampData, RichTextViewFileData)
 from gws_core.impl.rich_text.rich_text_view import RichTextView
 from gws_core.model.typing_style import TypingStyle
 from gws_core.note.note import Note
@@ -38,6 +36,7 @@ from gws_core.resource.view.view_resource import ViewResource
 from gws_core.resource.view.view_result import CallViewResult
 from gws_core.resource.view.view_runner import ViewRunner
 from gws_core.tag.tag_service import TagService
+from PIL import Image
 
 
 @resource_decorator("NoteResource", human_name="Note resource",
@@ -93,6 +92,18 @@ class NoteResource(ResourceSet):
         :type level: RichTextParagraphHeaderLevel
         """
         self._rich_text.add_header(header, level)
+
+    def add_timestamp(self, timestamp_data: RichTextTimestampData,
+                      parameter_name: str = None) -> None:
+        """
+        Add a time stamp to the note resource content.
+
+        :param timestamp_data: time stamp data
+        :type timestamp_data: RichTextTimestampData
+        :param parameter_name: if provided, the time stamp replace the provided variable.
+        :type parameter_name: str, optional
+        """
+        self._rich_text.add_timestamp(timestamp_data=timestamp_data, parameter_name=parameter_name)
 
     ########################################################### VIEW ###########################################################
 

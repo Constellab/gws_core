@@ -364,7 +364,7 @@ class RichText(SerializableObjectJson):
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
-    ##################################### FILE #########################################
+    ##################################### TIME STAMP #########################################
 
     def add_timestamp(self, timestamp_data: RichTextTimestampData,
                       parameter_name: str = None) -> RichTextBlock:
