@@ -121,16 +121,14 @@ class Logger:
 
     @classmethod
     def build_main_logger(cls, log_dir: str,
-                          level: LoggerLevel = "INFO", scenario_id: str = None) -> None:
+                          level: LoggerLevel = "INFO", scenario_id: str = None) -> 'Logger':
+        cls.clear_logger()
         logger = Logger(log_dir, level, scenario_id)
         cls._logger_instance = logger
 
-        if scenario_id:
-            cls._log_message('INFO', f"Logger configured for scenario process with log level: {level}")
-        else:
-            cls._log_message('INFO', f"Logger configured with log level: {level}")
-
         cls._log_waiting_message()
+
+        return logger
 
     @classmethod
     def check_log_level(cls, log_level: str) -> LoggerLevel:
@@ -257,7 +255,12 @@ class Logger:
     def clear_logger(cls) -> None:
         """Clear the logger
         """
-        Logger._logger_instance = None
+        if cls._logger_instance:
+            cls._logger_instance.clear()
+            cls._logger_instance = None
+
+    def clear(self) -> None:
+        self._logger.handlers.clear()
 
     def log_exception(self, message: str) -> None:
         self._logger.exception(message, exc_info=True)

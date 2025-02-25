@@ -36,7 +36,11 @@ class AppManager:
         log_dir = Settings.build_log_dir(is_test=is_test)
 
         logger_level = Logger.check_log_level(log_level)
-        Logger.build_main_logger(log_dir=log_dir, level=logger_level, scenario_id=scenario_id)
+        logger = Logger.build_main_logger(log_dir=log_dir, level=logger_level, scenario_id=scenario_id)
+        if scenario_id:
+            Logger.info(f"Logger configured for scenario process with log level: {logger.level}")
+        else:
+            Logger.info(f"Logger configured with log level: {logger.level}")
 
         if show_sql:
             Logger.print_sql_queries()
