@@ -106,7 +106,7 @@ class ScenarioWaiterBasic(ScenarioWaiter):
         return Scenario.get_by_id_and_check(self.scenario_id)
 
 
-class ExternalLabScenarioWaiter(ScenarioWaiter):
+class ScenarioWaiterExternalLab(ScenarioWaiter):
 
     scenario_id: str
     lab_credentials: CredentialsDataLab

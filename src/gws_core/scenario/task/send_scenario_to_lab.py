@@ -16,7 +16,7 @@ from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
 from gws_core.model.typing_style import TypingStyle
 from gws_core.scenario.scenario_enums import ScenarioStatus
-from gws_core.scenario.scenario_waiter import ExternalLabScenarioWaiter
+from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
 from gws_core.scenario.task.scenario_downloader import (
     ScenarioDownloader, ScenarioDownloaderCreateOption,
     ScenarioDownloaderResourceMode)
@@ -99,7 +99,7 @@ class SendScenarioToLab(Task):
         self.log_success_message(
             f"Import of scenario started, follow progress in destination lab : {response.scenario_url}")
 
-        scenario_waiter = ExternalLabScenarioWaiter(response.scenario.id, credentials,
+        scenario_waiter = ScenarioWaiterExternalLab(response.scenario.id, credentials,
                                                     CurrentUserService.get_and_check_current_user().id)
 
         # refresh every 30 seconds, max 2 hours

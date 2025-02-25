@@ -19,7 +19,7 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.task.resource_downloader_http import (
     ResourceDownloaderCreateOption, ResourceDownloaderHttp)
 from gws_core.scenario.scenario_enums import ScenarioStatus
-from gws_core.scenario.scenario_waiter import ExternalLabScenarioWaiter
+from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
 from gws_core.task.task import Task
@@ -92,7 +92,7 @@ class SendResourceToLab(Task):
         self.log_success_message(
             f"Import of resource started, follow progress in destination lab : {response.scenario_url}")
 
-        scenario_waiter = ExternalLabScenarioWaiter(response.scenario.id, credentials,
+        scenario_waiter = ScenarioWaiterExternalLab(response.scenario.id, credentials,
                                                     CurrentUserService.get_and_check_current_user().id)
 
         # refresh every 30 seconds, max 2 hours

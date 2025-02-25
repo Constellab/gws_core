@@ -435,6 +435,11 @@ from .scenario.scenario_search_builder import \
 from .scenario.scenario_service import ScenarioService as ScenarioService
 from .scenario.scenario_transfert_service import \
     ScenarioTransfertService as ScenarioTransfertService
+from .scenario.scenario_waiter import ScenarioWaiter as ScenarioWaiter
+from .scenario.scenario_waiter import \
+    ScenarioWaiterBasic as ScenarioWaiterBasic
+from .scenario.scenario_waiter import \
+    ScenarioWaiterExternalLab as ScenarioWaiterExternalLab
 from .scenario.task.send_scenario_to_lab import \
     SendScenarioToLab as SendScenarioToLab
 # Scenario template
