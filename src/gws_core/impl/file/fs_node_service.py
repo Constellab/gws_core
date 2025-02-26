@@ -14,6 +14,8 @@ from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
+from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
+from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_result import CallViewResult
@@ -101,6 +103,7 @@ class FsNodeService():
 
 ############################# FOLDER ###########################
 
+
     @classmethod
     @transaction()
     def upload_folder(cls, folder_typing_name: str, files: List[UploadFile] = FastAPIFile(...)) -> ResourceModel:
@@ -169,7 +172,35 @@ class FsNodeService():
 
         return FileHelper.create_file_response(sub_path_full, filename=FileHelper.get_name(sub_file_path))
 
+    @classmethod
+    def rename_folder_sub_node(cls, resource_id: str, sub_file_path: str, new_name: str) -> None:
+        folder = cls._get_and_check_folder_before_modification(resource_id)
 
+        folder.rename_sub_node(sub_file_path, new_name)
+
+    @classmethod
+    def delete_folder_sub_node(cls, resource_id: str, sub_file_path: str) -> None:
+        folder = cls._get_and_check_folder_before_modification(resource_id)
+
+        folder.delete_sub_node(sub_file_path)
+
+    @classmethod
+    def _get_and_check_folder_before_modification(cls, resource_id: str) -> Folder:
+        resource_model: ResourceModel = ResourceService.get_by_id_and_check(
+            resource_id)
+        resource = resource_model.get_resource()
+
+        if not isinstance(resource, Folder):
+            raise BadRequestException(
+                "The resource is not a folder")
+
+        resource_navigation = EntityNavigatorResource(resource_model)
+
+        if resource_navigation.has_next_entities([EntityType.SCENARIO]):
+            raise BadRequestException(
+                "The folder is used in a scenario, it can't be modified")
+
+        return resource
 ############################# FILE TYPE ###########################
 
     @classmethod

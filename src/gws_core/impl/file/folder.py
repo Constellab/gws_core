@@ -115,6 +115,43 @@ class Folder(FSNode):
         else:
             return Folder(sub_node_path)
 
+    def rename_sub_node(self, sub_node_path: str, new_name: str) -> None:
+        """
+        Rename the sub node (file or folder) at the given path
+
+        :param sub_node_path: relative path of the sub node
+        :type sub_node_path: str
+        :param new_name: new name of the sub node
+        :type new_name: str
+        :raises BadRequestException: If the sub node does not exist
+        """
+        sub_node_path = self.get_sub_path(sub_node_path)
+
+        if not FileHelper.exists_on_os(sub_node_path):
+            raise BadRequestException("The sub node does not exist")
+
+        new_sub_node_path = self.get_sub_path(new_name)
+
+        if FileHelper.exists_on_os(new_sub_node_path):
+            raise BadRequestException("The new name already exists in the folder")
+
+        FileHelper.move_file_or_dir(sub_node_path, new_sub_node_path)
+
+    def delete_sub_node(self, sub_node_path: str,
+                        ignore_errors: bool = True) -> None:
+        """
+        Delete the sub node (file or folder) at the given path
+
+        :param sub_node_path: relative path of the sub node
+        :type sub_node_path: str
+        :param ignore_errors: if True, errors will be ignored, defaults to True
+        :type ignore_errors: bool, optional
+        :raises BadRequestException: If the sub node does not exist
+        """
+        sub_node_path = self.get_sub_path(sub_node_path)
+
+        FileHelper.delete_node(sub_node_path, ignore_errors)
+
     @view(view_type=LocalFolderView, human_name="View folder content",
           short_description="View the sub files and folders", default_view=True)
     def view_as_json(self, params: ConfigParams) -> LocalFolderView:

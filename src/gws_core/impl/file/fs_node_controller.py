@@ -48,13 +48,13 @@ def upload_folder(folder_typing_name: str,
         folder_typing_name=folder_typing_name, files=files).to_dto()
 
 
-@core_app.get("/fs-node/{id}/download", tags=["Files"], summary="Download a file")
-def download_a_file(id: str,
+@core_app.get("/fs-node/{id_}/download", tags=["Files"], summary="Download a file")
+def download_a_file(id_: str,
                     _=Depends(AuthService.check_user_access_token)) -> FileResponse:
     """
     Download a file. The access is made with a unique  code generated with get_download_file_url
     """
-    return FsNodeService.download_file(fs_node_id=id)
+    return FsNodeService.download_file(fs_node_id=id_)
 
 
 ############################# FOLDER ROUTES ###########################
@@ -65,15 +65,15 @@ class ExtractFileDTO(BaseModelDTO):
     fs_node_typing_name: str
 
 
-@core_app.put("/fs-node/{id}/folder/extract-node", tags=["Files"], summary="Extract a node from a folder")
-def extract_node_from_folder(id: str,
+@core_app.put("/fs-node/{id_}/folder/extract-node", tags=["Files"], summary="Extract a node from a folder")
+def extract_node_from_folder(id_: str,
                              extract: ExtractFileDTO,
                              _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
     """
     Extract a node from a folder to make it a new Resource
     """
     return ConverterService.call_file_extractor(
-        folder_model_id=id, sub_path=extract.path,
+        folder_model_id=id_, sub_path=extract.path,
         fs_node_typing_name=extract.fs_node_typing_name).to_dto()
 
 
@@ -81,26 +81,52 @@ class SubFilePath(BaseModelDTO):
     sub_file_path: str
 
 
-@core_app.post("/fs-node/{id}/folder/sub-file-view", tags=["Files"],
+@core_app.post("/fs-node/{id_}/folder/sub-file-view", tags=["Files"],
                summary="Call the default view of a folder sub file")
-def call_folder_sub_file_view(id: str,
+def call_folder_sub_file_view(id_: str,
                               data: SubFilePath,
                               _=Depends(AuthService.check_user_access_token)) -> CallViewResultDTO:
     """
     Call the default view of a sub file in a folder
     """
-    return FsNodeService.call_folder_sub_file_view(resource_id=id, sub_file_path=data.sub_file_path).to_dto()
+    return FsNodeService.call_folder_sub_file_view(resource_id=id_, sub_file_path=data.sub_file_path).to_dto()
 
 
-@core_app.post("/fs-node/{id}/folder/download-sub-node", tags=["Files"],
+@core_app.post("/fs-node/{id_}/folder/download-sub-node", tags=["Files"],
                summary="Download a sub file of a folder")
-def download_folder_sub_file(id: str,
+def download_folder_sub_file(id_: str,
                              data: SubFilePath,
                              _=Depends(AuthService.check_user_access_token)) -> FileResponse:
     """
     Call the default view of a sub file in a folder
     """
-    return FsNodeService.download_folder_sub_node(resource_id=id, sub_file_path=data.sub_file_path)
+    return FsNodeService.download_folder_sub_node(resource_id=id_, sub_file_path=data.sub_file_path)
+
+
+class RenameSubNodePath(BaseModelDTO):
+    sub_node_path: str
+    new_name: str
+
+
+@core_app.put("/fs-node/{id_}/folder/rename-sub-node", tags=["Files"], summary="Rename a sub file of a folder")
+def rename_folder_sub_file(id_: str,
+                           data: RenameSubNodePath,
+                           _=Depends(AuthService.check_user_access_token)) -> None:
+    """
+    Rename a sub file of a folder
+    """
+    return FsNodeService.rename_folder_sub_node(
+        resource_id=id_, sub_file_path=data.sub_node_path, new_name=data.new_name)
+
+
+@core_app.put("/fs-node/{id_}/folder/delete-sub-node", tags=["Files"], summary="Delete a sub file of a folder")
+def delete_folder_sub_file(id_: str,
+                           data: SubFilePath,
+                           _=Depends(AuthService.check_user_access_token)) -> None:
+    """
+    Delete a sub file of a folder
+    """
+    return FsNodeService.delete_folder_sub_node(resource_id=id_, sub_file_path=data.sub_file_path)
 
 ############################# FILE TYPE ###########################
 
