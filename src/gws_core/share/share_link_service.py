@@ -1,6 +1,6 @@
 
 
-from typing import Optional
+from typing import List, Optional
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -102,3 +102,23 @@ class ShareLinkService:
         paginator: Paginator[ShareLink] = Paginator(
             query, page=page, nb_of_items_per_page=number_of_items_per_page)
         return paginator
+
+    @classmethod
+    def clean_links(cls, clean_expired_links: bool = True, clean_invalid_links: bool = True) -> None:
+        """ Method that clean the shared links
+
+        :param clean_expired_links: If true delete the expired links, defaults to True
+        :type clean_expired_links: bool, optional
+        :param clean_invalid_links: If true delete links where model does not exist anymore, defaults to True
+        :type clean_invalid_links: bool, optional
+        """
+        if not clean_expired_links and not clean_invalid_links:
+            return
+
+        links: List[ShareLink] = ShareLink.select()
+
+        for link in links:
+            if clean_expired_links and not link.is_valid():
+                link.delete_instance()
+            elif clean_invalid_links and link.get_model(link.entity_id, link.entity_type) is None:
+                link.delete_instance()
