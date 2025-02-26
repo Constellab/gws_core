@@ -24,12 +24,16 @@ class StreamlitEnvLoader:
 
         user: Optional[User] = None
 
-        if self.user_id:
+        if st.session_state.get('gws_user'):
+            user = st.session_state['gws_user']
+        elif self.user_id:
             user = UserService.get_or_import_user_info(self.user_id)
+            st.session_state['gws_user'] = user
 
         if user:
             # Authenticate user
             CurrentUserService.set_current_user(user)
+
         # Code to set up and acquire resources
         return self  # You can return an object that you want to use in the with block
 
