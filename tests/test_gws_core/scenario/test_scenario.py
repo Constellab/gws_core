@@ -144,7 +144,7 @@ class TestScenario(BaseTestCase):
         scenario_waiter = ScenarioWaiterBasic(scenario.id)
 
         result = scenario_waiter.wait_until_finished(refresh_interval=3, refresh_interval_max_count=10)
-        self.assertEqual(result.status, ScenarioStatus.SUCCESS)
+        self.assertEqual(result.scenario.status, ScenarioStatus.SUCCESS)
 
         self.assertEqual(Scenario.count_running_or_queued_scenarios(), 0)
         scenario = Scenario.get_by_id_and_check(scenario.id)

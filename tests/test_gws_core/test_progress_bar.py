@@ -30,7 +30,8 @@ class TestProgressBar(BaseTestCase):
         # Test progress message
         progress_bar.update_progress(25, 'New progress')
         progress_message = progress_bar.get_messages()[1]
-        self.assertEqual(progress_message.text, '25.0%: New progress')
+        self.assertEqual(progress_message.text, 'New progress')
+        self.assertEqual(progress_message.progress, 25.0)
         self.assertTrue(progress_bar.is_running)
 
         progress_bar.stop_success('Finish', 1)
