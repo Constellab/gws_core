@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Literal, Type
 
 import schedule
-
 from gws_core.community.community_service import CommunityService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
