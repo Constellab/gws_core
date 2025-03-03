@@ -77,14 +77,14 @@ class SendResourceToLab(Task):
         share_link = ShareLinkService.get_or_create_valid_share_link(generate_share_link)
 
         # Call the external lab API to import the resource
-        self.log_info_message("Send the resource to the lab")
+        credentials: CredentialsDataLab = params.get_value('credentials')
+        self.log_info_message(f"Send the resource to the lab {credentials.get_lab_api_url()}")
         request_dto = ExternalLabImportRequestDTO(
             # convert to ResourceDownloaderHttp config because ResourceDownloaderHttp is used to download the resource
             params=ResourceDownloaderHttp.build_config(
                 link=share_link.get_download_link(),
                 uncompress='yes', create_option=params['create_option'])
         )
-        credentials: CredentialsDataLab = params.get_value('credentials')
 
         response = ExternalLabApiService.send_resource_to_lab(request_dto, credentials,
                                                               CurrentUserService.get_and_check_current_user().id)

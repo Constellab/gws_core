@@ -83,7 +83,8 @@ class SendScenarioToLab(Task):
         share_link = ShareLinkService.get_or_create_valid_share_link(generate_share_link)
 
         # Call the external lab API to import the current scenario
-        self.log_info_message("Send the scenario to the lab")
+        credentials: CredentialsDataLab = params.get_value('credentials')
+        self.log_info_message(f"Send the scenario to the lab {credentials.get_lab_api_url()}")
         request_dto = ExternalLabImportRequestDTO(
             # convert to ScenarioDownloader config because ScenarioDownloader is used to download the scenario
             params=ScenarioDownloader.build_config(
@@ -91,7 +92,6 @@ class SendScenarioToLab(Task):
                 params['resource_mode'],
                 params['create_option']),
         )
-        credentials: CredentialsDataLab = params.get_value('credentials')
 
         response = ExternalLabApiService.send_scenario_to_lab(request_dto, credentials,
                                                               CurrentUserService.get_and_check_current_user().id)

@@ -77,7 +77,7 @@ class ExternalLabApiService():
     @classmethod
     def get_full_route(cls, credentials: CredentialsDataLab, route: str) -> str:
         """Get the full route"""
-        if Settings.is_test:
+        if Settings.get_instance().is_test:
             return f"http://localhost:3000/{Settings.external_lab_api_route_path()}/{route}"
         # for test purpose
         # return f"http://localhost:3000/{Settings.external_lab_api_route_path()}/{route}"
