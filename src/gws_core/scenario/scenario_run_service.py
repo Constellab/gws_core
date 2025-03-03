@@ -24,7 +24,7 @@ from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..user.activity.activity_service import ActivityService
-from ..user.current_user_service import CurrentUserService
+from ..user.current_user_service import AuthenticateUser, CurrentUserService
 from ..user.user import User
 from .scenario import Scenario
 from .scenario_enums import ScenarioStatus
@@ -203,6 +203,7 @@ class ScenarioRunService():
             raise BadRequestException(
                 "The process cannot be run because it is not ready. Where the previous process run and are the inputs provided ?")
 
+        # Autnenticate the user if necessary because it can be triggered by the queue so the user is not authenticated
         try:
             return cls._create_cli(scenario, user, process_model)
         except Exception as err:
@@ -217,9 +218,6 @@ class ScenarioRunService():
     @classmethod
     def _create_cli(cls, scenario: Scenario, user: User,
                     process_model: Optional[ProcessModel] = None) -> SysProc:
-
-        # set the user in the context to make the update works
-        CurrentUserService.set_current_user(user)
 
         if scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS:
             raise BadRequestException(

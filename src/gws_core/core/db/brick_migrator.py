@@ -5,8 +5,7 @@ from typing import List, Type
 from gws_core.core.db.migration_dto import MigrationDTO
 from gws_core.core.db.version import Version
 from gws_core.core.utils.logger import Logger
-from gws_core.user import current_user_service
-from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.current_user_service import AuthenticateUser
 from gws_core.user.user import User
 
 from ...core.exception.exceptions import BadRequestException
@@ -107,33 +106,21 @@ class BrickMigrator():
         Logger.info(
             f"Start migrating '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'. Description: {migration_object.short_description}")
 
-        no_authenticated_user: bool = False
         # Authenticate the system user if there is no current user (when calling migration on start)
-        if migration_object.authenticate_sys_user:
-            current_user = CurrentUserService.get_current_user()
-            no_authenticated_user = current_user is None
-            if no_authenticated_user:
-                CurrentUserService.set_current_user(User.get_sysuser())
+        with AuthenticateUser(User.get_sysuser()):
+            try:
+                migration_object.brick_migration.migrate(self.current_brick_version, migration_object.version)
 
-        try:
-            migration_object.brick_migration.migrate(self.current_brick_version, migration_object.version)
+            except Exception as err:
+                Logger.error(
+                    f"Error during migration of brick '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'")
 
-        except Exception as err:
-            Logger.error(
-                f"Error during migration of brick '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'")
+                raise err
 
-            # clear authentication if there were no current user
-            if no_authenticated_user:
-                CurrentUserService.set_current_user(None)
-            raise err
+            Logger.info(
+                f"Success migrating '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'")
 
-        Logger.info(
-            f"Success migrating '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'")
-
-        # clear authentication if there were no current user
-        if no_authenticated_user:
-            CurrentUserService.set_current_user(None)
-        self.current_brick_version = migration_object.version
+            self.current_brick_version = migration_object.version
 
     def call_migration_manually(self, version: Version) -> None:
         """Call migration manually for the version at any time

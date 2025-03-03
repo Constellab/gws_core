@@ -39,7 +39,7 @@ from ..impl.file.file_helper import FileHelper
 from ..model.model_service import ModelService
 from ..process.process_service import ProcessService
 from ..scenario.queue_service import QueueService
-from ..user.current_user_service import CurrentUserService
+from ..user.current_user_service import AuthenticateUser, CurrentUserService
 from ..user.user import User
 from ..user.user_service import UserService
 from .system_status import SystemStatus
@@ -101,30 +101,28 @@ class SystemService:
         # check for all running status scenario, if the process is still running
         # if not we consider that the scenario is not running
 
-        try:
-            CurrentUserService.set_current_user(User.get_sysuser())
-            scenarios: List[Scenario] = list(Scenario.get_running_scenarios())
+        with AuthenticateUser(User.get_sysuser()):
+            try:
+                scenarios: List[Scenario] = list(Scenario.get_running_scenarios())
 
-            for scenario in scenarios:
-                if scenario.get_process_status() != ScenarioStatus.RUNNING:
-                    Logger.info(f"Marking scenario {scenario.id} as stopped because the process is not running")
-                    running_process = scenario.protocol_model.get_running_task()
+                for scenario in scenarios:
+                    if scenario.get_process_status() != ScenarioStatus.RUNNING:
+                        Logger.info(f"Marking scenario {scenario.id} as stopped because the process is not running")
+                        running_process = scenario.protocol_model.get_running_task()
 
-                    error_text = "The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped."
-                    if running_process is not None:
-                        running_process.mark_as_error_and_parent(ProcessRunException.from_exception(
-                            process_model=running_process, exception=Exception(error_text),
-                            error_prefix="Lab init"))
-                    else:
-                        scenario.mark_as_error(ProcessErrorInfo(
-                            detail="The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped.",
-                            unique_code="LAB_STOPPED_WHILE_RUNNING", context=None, instance_id=None))
-        except Exception as err:
-            Logger.error(
-                f'[SystemService] Error while checking running scenarios: {err}')
-            Logger.log_exception_stack_trace(err)
-        finally:
-            CurrentUserService.set_current_user(None)
+                        error_text = "The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped."
+                        if running_process is not None:
+                            running_process.mark_as_error_and_parent(ProcessRunException.from_exception(
+                                process_model=running_process, exception=Exception(error_text),
+                                error_prefix="Lab init"))
+                        else:
+                            scenario.mark_as_error(ProcessErrorInfo(
+                                detail="The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped.",
+                                unique_code="LAB_STOPPED_WHILE_RUNNING", context=None, instance_id=None))
+            except Exception as err:
+                Logger.error(
+                    f'[SystemService] Error while checking running scenarios: {err}')
+                Logger.log_exception_stack_trace(err)
 
     @classmethod
     def deinit_queue_and_monitor(cls) -> None:

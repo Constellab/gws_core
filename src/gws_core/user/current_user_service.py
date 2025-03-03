@@ -18,7 +18,7 @@ class CurrentUserService:
     Use to set and get the user in a session
     """
 
-    _console_data = {"user": None}
+    _no_context_user: User = None
 
     @classmethod
     def get_and_check_current_user(cls) -> User:
@@ -38,11 +38,10 @@ class CurrentUserService:
         """
         Get the user in the current session, return none if the user is not authenticated
         """
-        if HTTPHelper.is_http_context() and "user" in context.data:
-            return context.data["user"]
-
-        if "user" in cls._console_data:
-            return cls._console_data["user"]
+        if HTTPHelper.is_http_context():
+            return context.data.get("user")
+        elif cls._no_context_user is not None:
+            return cls._no_context_user
 
         return None
 
@@ -59,32 +58,24 @@ class CurrentUserService:
         Set the user in the current session
         """
 
+        # clear the user if None
         if user is None:
-            try:
+            if HTTPHelper.is_http_context():
                 # is http context
                 context.data["user"] = None
-            except:
-                # is console context
-                cls._console_data["user"] = None
+            else:
+                cls._no_context_user = None
+
+            return
+
+        if not isinstance(user, User):
+            raise BadRequestException("Invalid current user")
+
+        if HTTPHelper.is_http_context():
+            # is http contexts
+            context.data["user"] = user
         else:
-            if isinstance(user, dict):
-                try:
-                    user = User.get(User.id == user.id)
-                except Exception as err:
-                    raise BadRequestException("Invalid current user") from err
-
-            if not isinstance(user, User):
-                raise BadRequestException("Invalid current user")
-
-            if not user.is_active:
-                raise UnauthorizedException("User not activate")
-
-            try:
-                # is http contexts
-                context.data["user"] = user
-            except Exception as _:
-                # is console context
-                cls._console_data["user"] = user
+            cls._no_context_user = user
 
     @classmethod
     def check_is_sysuser(cls):

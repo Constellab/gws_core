@@ -13,7 +13,7 @@ from gws_core.lab.system_service import SystemService
 from gws_core.model.typing_manager import TypingManager
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.settings_loader import SettingsLoader
-from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.current_user_service import AuthenticateUser
 from gws_core.user.user import User
 
 from .app import App
@@ -132,9 +132,8 @@ class AppManager:
 
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
-        CurrentUserService.set_current_user(user)
-
-        ScenarioRunService.run_scenario_in_cli(scenario_id)
+        with AuthenticateUser(user):
+            ScenarioRunService.run_scenario_in_cli(scenario_id)
 
     @classmethod
     def run_process(cls,
@@ -154,9 +153,8 @@ class AppManager:
 
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
-        CurrentUserService.set_current_user(user)
-
-        ScenarioRunService.run_scenario_process_in_cli(scenario_id, protocol_model_id, process_instance_name)
+        with AuthenticateUser(user):
+            ScenarioRunService.run_scenario_process_in_cli(scenario_id, protocol_model_id, process_instance_name)
 
     @classmethod
     def run_notebook(cls, main_settings_path: str, log_level: str) -> None:

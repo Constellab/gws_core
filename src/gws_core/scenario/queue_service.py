@@ -12,7 +12,7 @@ from ..core.exception.exceptions import NotFoundException
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.utils.logger import Logger
-from ..user.current_user_service import CurrentUserService
+from ..user.current_user_service import AuthenticateUser, CurrentUserService
 from .queue import Job, Queue
 from .scenario import Scenario, ScenarioStatus
 from .scenario_run_service import ScenarioRunService
@@ -80,6 +80,8 @@ class QueueService():
         :raises BadRequestException: [description]
         """
         Logger.debug("Checking scenario queue ...")
+        user = CurrentUserService.get_current_user().id if CurrentUserService.get_current_user() else "None"
+        Logger.info("Checking scenario queue ..." + user)
         if Scenario.count_running_scenarios() > 0:
             # -> busy: we will test later!
             Logger.debug("The lab is busy! Retry later")
@@ -96,8 +98,9 @@ class QueueService():
             f"Scenario {scenario.id}, is_running = {scenario.is_running}")
 
         try:
-            sproc = ScenarioRunService.create_cli_for_scenario(
-                scenario=scenario, user=job.user)
+            with AuthenticateUser(job.user):
+                sproc = ScenarioRunService.create_cli_for_scenario(
+                    scenario=scenario, user=job.user)
 
             if sproc:
                 # wait for the scenario to finish in a separate thread
