@@ -9,7 +9,7 @@ class StreamlitAuthenticateUser:
     Can be useful in part of code that are runned standalone and not in the main app. In this case, the user is not authenticated.
     Use this class to authenticate the user in the with statement like this:
     ```
-    with AuthenticateUser(user):
+    with AuthenticateUser():
         # code to run
     ```
     """
