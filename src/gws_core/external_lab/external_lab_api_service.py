@@ -80,7 +80,7 @@ class ExternalLabApiService():
         if Settings.is_test:
             return f"http://localhost:3000/{Settings.external_lab_api_route_path()}/{route}"
         # for test purpose
-        return f"http://localhost:3000/{Settings.external_lab_api_route_path()}/{route}"
+        # return f"http://localhost:3000/{Settings.external_lab_api_route_path()}/{route}"
         return f"{credentials.get_lab_api_url()}/{Settings.external_lab_api_route_path()}/{route}"
 
     @classmethod
