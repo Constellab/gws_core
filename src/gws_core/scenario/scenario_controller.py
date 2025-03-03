@@ -257,12 +257,12 @@ def get_import_scenario_config_specs(_=Depends(AuthService.check_user_access_tok
     return ScenarioTransfertService.get_import_scenario_config_specs()
 
 
-@core_app.post("/scenario/{id}/export-to-lab", tags=["Share"],
+@core_app.post("/scenario/{id_}/export-to-lab", tags=["Share"],
                summary="Export a scenario to another lab")
-def export_to_lab(id: str,
+def export_to_lab(id_: str,
                   values: ConfigParamsDict,
-                  _=Depends(AuthService.check_user_access_token)) -> None:
-    return ScenarioTransfertService.export_scenario_to_lab(id, values)
+                  _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+    return ScenarioTransfertService.export_scenario_to_lab(id_, values).to_dto()
 
 
 @core_app.get("/scenario/export-to-lab/config-specs", tags=["Share"],
