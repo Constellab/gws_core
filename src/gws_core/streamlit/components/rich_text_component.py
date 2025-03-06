@@ -25,7 +25,7 @@ def rich_text_editor(placeholder: str = None,
 
     streamlit_component_loader = StreamlitComponentLoader(
         "text-editor",
-        version="dc_text_editor_1.0.0",
+        version="dc_text_editor_1.1.0",
         is_released=True)
 
     default_value_json = initial_value.to_dto_json_dict() if initial_value is not None else None

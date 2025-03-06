@@ -32,7 +32,7 @@ class ParamSpecDTO(ParamSpecSimpleDTO):
 class ParamSpecInfoSpecs(BaseModelDTO):
     optional: ParamSpecDTO
     # visibility: ParamSpecDTO
-    human_name: ParamSpecDTO
+    name: ParamSpecDTO
     short_description: ParamSpecDTO
     default_value: Optional[ParamSpecDTO] = None
     additional_info: Optional[Dict[str, ParamSpecDTO]] = None

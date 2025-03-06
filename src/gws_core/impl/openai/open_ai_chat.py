@@ -32,7 +32,7 @@ class OpenAiChat():
         return response
 
     def _add_message(self, role: Literal['system', 'user', 'assistant'], content: str):
-        self._messages.append({'role': role, 'content': content})
+        self._messages.append(AiChatMessage(role=role, content=content))
 
     def add_assistant_message(self, content: str) -> None:
         self._add_message('assistant', content)
@@ -42,8 +42,8 @@ class OpenAiChat():
 
     def get_last_assistant_message(self, extract_code: bool) -> Optional[str]:
         for message in reversed(self._messages):
-            if message['role'] == 'assistant':
-                response = message['content']
+            if message.role == 'assistant':
+                response = message.content
                 if extract_code:
                     return self.extract_code_from_gpt_response(response)
                 else:
@@ -53,35 +53,43 @@ class OpenAiChat():
 
     def export_gpt_messages(self) -> List[OpenAiChatMessage]:
         # return messages in the format expected by GPT
-        return [{'role': message['role'], 'content': message['content']} for message in self._messages]
+        return [{'role': message.role, 'content': message.content} for message in self._messages]
 
     def get_last_message(self) -> Optional[AiChatMessage]:
+        if len(self._messages) == 0:
+            return None
         return self._messages[-1]
+
+    def get_messages(self) -> List[AiChatMessage]:
+        return self._messages
 
     def last_message_is_user(self) -> bool:
         last_message = self.get_last_message()
         if not last_message:
             return False
 
-        return last_message['role'] == 'user'
+        return last_message.is_user()
 
     def set_context(self, context: str):
         if self.has_context():
-            self._messages[0]['content'] = context
+            self._messages[0].content = context
         else:
-            self._messages.insert(0, {'role': 'system', 'content': context})
+            self._messages.insert(0, AiChatMessage(role='system', content=context))
 
     def has_context(self) -> bool:
-        return len(self._messages) > 0 and self._messages[0]['role'] == 'system'
+        return len(self._messages) > 0 and self._messages[0].role == 'system'
+
+    def has_messages(self) -> bool:
+        return len(self._messages) > 0
 
     def to_json(self) -> OpenAiChatDict:
         return {
-            'messages': self._messages
+            'messages': [message.to_json_dict() for message in self._messages]
         }
 
     @classmethod
     def from_json(cls, json: OpenAiChatDict, context: str = None) -> 'OpenAiChat':
-        return cls(messages=json['messages'], context=context)
+        return cls(messages=AiChatMessage.from_json_list(json['messages']), context=context)
 
     @classmethod
     def extract_code_from_gpt_response(cls, gpt_response: str) -> str:

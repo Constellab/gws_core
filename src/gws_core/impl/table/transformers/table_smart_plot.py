@@ -3,54 +3,45 @@
 from typing import Any, Dict, List
 
 from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_types import ConfigSpecs
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
+from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.openai.smart_task_base import SmartTaskBase
+from gws_core.impl.openai.ai_prompt_code import (AIPromptCode,
+                                                 AIPromptCodeContext)
+from gws_core.impl.openai.open_ai_chat import OpenAiChat
+from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
 from gws_core.impl.table.table import Table
 from gws_core.impl.text.text import Text
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingStyle
+from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
-from gws_core.task.task_io import TaskInputs
+from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("SmartPlot", human_name="Smart plot generator",
-                short_description="Generate a plot using an AI (OpenAI).",
-                style=TypingStyle.material_icon("auto_awesome"))
-class SmartPlot(SmartTaskBase):
+class AITableGeneratePlotImage(AIPromptCode):
     """
-This task is still in beta version.
-
-This task uses openAI API to generate python code that generate a chart using matplotlib library. This code is then automaticaaly executed.
-
-/!\ This task does not support table tags.
-
-The data of the table is not transferered to OpenAI, only the provided text.
+    Class to call AI to generate a plot image from a table.
+    The data of the table is not transferered to OpenAI, only the provided text.
     """
 
-    input_specs: InputSpecs = InputSpecs({
-        'source': InputSpec(Table),
-    })
-    output_specs: OutputSpecs = OutputSpecs({
-        'target': OutputSpec(File, human_name='Plot', short_description='Generated plot file by the AI.'),
-        'generated_code': SmartTaskBase.generated_code_output
-    })
+    table: Table
 
-    temp_dir: str
-    ouput_path: str
+    def __init__(self, table: Table, chat: OpenAiChat, message_dispatcher=None):
+        super().__init__(chat, message_dispatcher)
+        self.table = table
 
-    def build_main_context(self, params: ConfigParams, task_inputs: TaskInputs,
-                           code_inputs: Dict[str, Any]) -> str:
-        table: Table = task_inputs["source"]
+    def build_main_context(self, context: AIPromptCodeContext) -> str:
 
-        return f"""{self.VAR_PY_INTRO}
+        return f"""{context.python_code_intro}
 The code purpose is to modify generate a plot file from a DataFrame using matplotlib.
-{self.VAR_INPUTS}
-The dataframe has {table.nb_rows} rows and {table.nb_columns} columns.
+{context.inputs_description}
+The dataframe has {self.table.nb_rows} rows and {self.table.nb_columns} columns.
 The variable named 'output_path' contains the absolute path of the output png file destination. Don't use the show method.
-{self.VAR_CODE_RULES}"""
+{context.code_rules}"""
 
     def get_code_expected_output_types(self) -> Dict[str, Any]:
         return {}
@@ -58,24 +49,27 @@ The variable named 'output_path' contains the absolute path of the output png fi
     def get_available_package_names(self) -> List[str]:
         return [GwsCorePackages.PANDAS, GwsCorePackages.NUMPY, GwsCorePackages.MATPLOTLIB]
 
-    def build_code_inputs(self, params: ConfigParams, task_inputs: TaskInputs) -> dict:
-        # prepare the input
-        table: Table = task_inputs["source"]
-
+    def build_code_inputs(self) -> dict:
         # execute the live code
-        temp_dir = self.create_tmp_dir()
-        self.ouput_path = temp_dir + "/output.png"
+        temp_dir = Settings.make_temp_dir()
+        output_path = temp_dir + "/output.png"
 
         # all variable accessible in the generated code
-        return {"source": table.get_data(), 'output_path': self.ouput_path}
+        return {"source": self.table.get_data(), 'output_path': output_path}
 
-    def build_task_outputs(self, code_outputs: dict, generated_code: str,
-                           params: ConfigParams, task_inputs: TaskInputs) -> dict:
-        if not FileHelper.exists_on_os(self.ouput_path) or not FileHelper.is_file(self.ouput_path):
+    def build_output(self, code_outputs: dict) -> File:
+        output_path = code_outputs.get("output_path", None)
+
+        if output_path is None:
+            raise Exception("The code did not generate any file")
+
+        if not FileHelper.exists_on_os(output_path) or not FileHelper.is_file(output_path):
             raise Exception("The output must be a file")
 
-        # make the output code compatible with the agent
-        agent_code = f"""
+        return File(output_path)
+
+    def _generate_agent_code(self, generated_code):
+        return f"""
 from gws_core import File
 import os
 source = sources[0].get_data()
@@ -84,7 +78,46 @@ output_path = os.path.join(working_dir, 'output.png')
 {generated_code}
 targets = [File(output_path)]"""
 
-        generated_text = Text(agent_code)
+
+@task_decorator("SmartPlot", human_name="Smart plot generator",
+                short_description="Generate a plot using an AI (OpenAI).",
+                style=TypingStyle.material_icon("auto_awesome"))
+class SmartPlot(Task):
+    """
+    This task uses openAI API to generate python code that generate a chart using matplotlib library. This code is then automaticaaly executed.
+
+    /!\ This task does not support table tags.
+
+    The data of the table is not transferered to OpenAI, only the provided text.
+    """
+
+    input_specs: InputSpecs = InputSpecs({
+        'source': InputSpec(Table),
+    })
+    output_specs: OutputSpecs = OutputSpecs({
+        'target': OutputSpec(File, human_name='Plot', short_description='Generated plot file by the AI.'),
+        'generated_code': AITableGeneratePlotImage.generate_agent_code_task_output_config()
+    })
+
+    config_specs: ConfigSpecs = {
+        'prompt': OpenAiChatParam()
+    }
+
+    temp_dir: str
+    ouput_path: str
+
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+
+        chat: OpenAiChat = params.get_value('prompt')
+
+        smart_plotly = AITableGeneratePlotImage(inputs["source"], chat, self.message_dispatcher)
+        file: File = smart_plotly.run()
+
+        # save the new config with the new prompt
+        params.set_value('prompt', smart_plotly.chat)
+        params.save_params()
+
+        generated_text = Text(smart_plotly.generate_agent_code())
         generated_text.name = "Plot code"
 
-        return {'target': File(self.ouput_path), 'generated_code': generated_text}
+        return {'target': file, 'generated_code': generated_text}

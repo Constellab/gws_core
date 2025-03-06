@@ -59,3 +59,13 @@ class ConfigSpecsHelper():
                 return False
 
         return True
+
+    @classmethod
+    def has_visible_config_specs(cls, specs: ConfigSpecs) -> bool:
+        """Check if the config has visible specs
+        """
+        for spec in specs.values():
+            if spec.visibility != "private":
+                return True
+
+        return False

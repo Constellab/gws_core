@@ -110,6 +110,7 @@ from .core.utils.requests import Requests as Requests
 from .core.utils.settings import Settings as Settings
 from .core.utils.string_helper import StringHelper as StringHelper
 from .core.utils.utils import Utils as Utils
+from .core.utils.xml_helper import XMLHelper as XMLHelper
 # Credentials
 from .credentials.credentials import Credentials as Credentials
 from .credentials.credentials_param import CredentialsParam as CredentialsParam
@@ -176,14 +177,16 @@ from .impl.network.network_view import NetworkView as NetworkView
 # Impl > Note resource
 from .impl.note_resource.note_resource import NoteResource as NoteResource
 # Impl > open ai
+from .impl.openai.ai_prompt_code import AIPromptCode as AIPromptCode
 from .impl.openai.open_ai_chat import OpenAiChat as OpenAiChat
 from .impl.openai.open_ai_chat_param import OpenAiChatParam as OpenAiChatParam
 from .impl.openai.open_ai_helper import OpenAiHelper as OpenAiHelper
-from .impl.openai.open_ai_types import OpenAiChatMessage as OpenAiChatMessage
 # Impl > Plotly
 from .impl.plotly.plotly_r_field import PlotlyRField as PlotlyRField
 from .impl.plotly.plotly_resource import PlotlyResource as PlotlyResource
 from .impl.plotly.plotly_view import PlotlyView as PlotlyView
+from .impl.plotly.table_smart_plotly import \
+    AITableGeneratePlotly as AITableGeneratePlotly
 # Impl > RichText
 from .impl.rich_text.rich_text import RichText as RichText
 from .impl.rich_text.rich_text_paragraph_text import \
@@ -500,6 +503,7 @@ from .task.task_runner import TaskRunner as TaskRunner
 from .task.task_service import TaskService as TaskService
 from .task.task_typing import TaskTyping as TaskTyping
 # Task > Transformer
+from .task.transformer.transformer import Transformer as Transformer
 from .task.transformer.transformer import \
     transformer_decorator as transformer_decorator
 # Core > Test

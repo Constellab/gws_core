@@ -11,7 +11,7 @@ from .config_specs_helper import ConfigSpecsHelper
 from .config_types import ConfigParamsDict, ConfigSpecs
 from .param.param_spec import ParamSpec
 from .param.param_spec_helper import ParamSpecHelper
-from .param.param_types import ParamValue
+from .param.param_types import ParamSpecDTO, ParamValue
 
 
 @final
@@ -66,6 +66,9 @@ class Config(ModelWithUser):
         self._check_param(param_name)
 
         return self.get_specs()[param_name]
+
+    def has_visible_specs(self) -> bool:
+        return ConfigSpecsHelper.has_visible_config_specs(self.get_specs())
 
     ########################################## PARAM  #####################################
 
@@ -124,13 +127,13 @@ class Config(ModelWithUser):
         :param value: The value of the parameter (base type)
         :type: [str, int, float, bool, NoneType]
         """
-        if skip_validate == False:
+        if not skip_validate:
             try:
                 value = self.get_spec(param_name).validate(value)
             except Exception as err:
                 raise InvalidParamValueException(param_name, value, str(err))
 
-        if not "values" in self.data:
+        if "values" not in self.data:
             self.data["values"] = {}
 
         self.data["values"][param_name] = value
@@ -162,7 +165,7 @@ class Config(ModelWithUser):
 
     def to_dto(self) -> ConfigDTO:
 
-        specs = ConfigSpecsHelper.config_specs_to_dto(self.get_specs(), skip_private=True)
+        specs = self.to_specs_dto()
 
         # get the values of the config (skip private values)
         values = {}
@@ -187,7 +190,7 @@ class Config(ModelWithUser):
         """
 
         return ConfigSimpleDTO(
-            specs=ConfigSpecsHelper.config_specs_to_dto(self.get_specs(), skip_private=False),
+            specs=self.to_specs_dto(skip_private=False),
             values=self.get_values() if not ignore_values else {}
         )
 
@@ -210,6 +213,9 @@ class Config(ModelWithUser):
         new_config: Config = Config()
         new_config.data = self.data
         return new_config
+
+    def to_specs_dto(self, skip_private: bool = True) -> Dict[str, ParamSpecDTO]:
+        return ConfigSpecsHelper.config_specs_to_dto(self.get_specs(), skip_private=skip_private)
 
     class Meta:
         table_name = 'gws_config'

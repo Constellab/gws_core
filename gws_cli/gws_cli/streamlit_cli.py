@@ -78,6 +78,7 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the js
 
     url = StreamlitAppManager.create_or_get_app(streamit_app).get_url()
     print("----------------------------------------------------------------------------------------------------------------------------------------------------------")
+    env_txt = "" if env_type == "NONE" else f" with env type '{env_type}'"
     print(
-        f"Running streamlit in dev mode type '{env_type}', DO NOT USE IN PRODUCTION. You can access the dashboard at {url}")
+        f"Running streamlit in dev mode{env_txt}, DO NOT USE IN PRODUCTION. You can access the dashboard at {url}")
     print("----------------------------------------------------------------------------------------------------------------------------------------------------------")

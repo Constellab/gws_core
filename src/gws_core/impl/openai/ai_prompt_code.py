@@ -1,24 +1,32 @@
 
 
 from abc import abstractmethod
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List, Optional, Type
 
-from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.agent.helper.agent_code_helper import AgentCodeHelper
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
-from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
 from gws_core.impl.text.text import Text
 from gws_core.io.io_spec import OutputSpec
-from gws_core.task.task import Task
-from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-class SmartTaskBase(Task):
-    """Base class to apply transformation to resources based on a prompt and AI (openAI).
+class AIPromptCodeContext(BaseModelDTO):
+    """ Class that contains the prompt parts to build a prompt for the AI with AIPromptCode.
+    """
+    python_code_intro: str
+    r_code_intro: str
+    inputs_description: Optional[str]
+    outputs_description: Optional[str]
+    code_rules: Optional[str]
+
+
+class AIPromptCode():
+    """Base class to apply transformation to object (like resource) based on a prompt and AI (openAI).
     This will ask the AI to generate a code and then execute it.
-
+    This class helps describe the input, output and prompt to the AI, and then execute the generated code.
+    THe data is not transfered to OpenAI, only the provided text.
 
     This class need a context to tell the AI what is the goal of the task, what are the inputs and outputs...
     To build the context, you must overide the following methods (see build_context method to view the context structure):
@@ -33,34 +41,26 @@ class SmartTaskBase(Task):
 
     - build_task_outputs: method to build the task outputs resources based on the generated code outputs.
     """
+    PROMPT_PY_INTRO = "You are a developer assistant that generate code in python."
+    PROMPT_R_INTRO = "You are a developer assistant that generate code in R."
 
-    generated_code_output = OutputSpec(
-        Text, human_name='Generated code',
-        short_description='Modified generated code that can be used in a python agent directly.')
+    chat: OpenAiChat = None
+    message_dispatcher: MessageDispatcher = None
 
-    config_specs: ConfigSpecs = {
-        'prompt': OpenAiChatParam()
-    }
+    def __init__(self, chat: OpenAiChat, message_dispatcher: Optional[MessageDispatcher] = None):
+        self.chat = chat
 
-    VAR_PY_INTRO = "You are a developer assistant that generate code in python."
-    VAR_R_INTRO = "You are a developer assistant that generate code in R."
-    VAR_INPUTS = "$INPUTS$"
-    VAR_OUTPUTS = "$OUTPUTS$"
-    VAR_CODE_RULES = "$CODE_RULES$"
+        if message_dispatcher is None:
+            self.message_dispatcher = MessageDispatcher()
+        else:
+            self.message_dispatcher = message_dispatcher
 
     @abstractmethod
-    def build_main_context(self, params: ConfigParams, task_inputs: TaskInputs,
-                           code_inputs: Dict[str, Any]) -> str:
+    def build_main_context(self, context: AIPromptCodeContext) -> str:
         """Method to build the context of the openAI chat. This should define the main goal of the task.
-        You can use variable in the context that will be replaced by the task.
-        Available variables are :
-        - VAR_PY_INTRO : Intro for python code generation
-        - VAR_R_INTRO : Intro for R code generation
-        - VAR_INPUTS : Description of the inputs based on build_code_inputs() result
-        - VAR_OUTPUTS : Description of the outputs based on get_code_expected_output_types result
-        - VAR_CODE_RULES : Description of the code rules (packages, imports ...)
+        You can use context variable to build main context.
 
-        Thoses variable are attribute (self.VAR_PY_INTRO). The recommended order is :
+        The recommended order is :
         - INTRO
         - Text to explain the goal of the task (Ex: "The code purpose is to generate a plotly express figure from a DataFrame.")
         - INPUTS
@@ -68,29 +68,21 @@ class SmartTaskBase(Task):
         - CODE_RULES
 
         You can insert text after a variable to add more information, like :
-        - VAR_INPUTS + 'The dataframe has ' + str(table.nb_rows) + ' rows and ' + str(table.nb_columns) + ' columns.'
-        - VAR_OUTPUTS + 'Only build the figure object, do not display the figure using 'show' method.'
+        - inputs_description + 'The dataframe has ' + str(table.nb_rows) + ' rows and ' + str(table.nb_columns) + ' columns.'
+        - outputs_description + 'Only build the figure object, do not display the figure using 'show' method.'
 
-        :param params: task params
-        :type params: ConfigParams
-        :param inputs: task inputs
-        :type inputs: TaskInputs
-        :param code_inputs: transformed inputs generated by build_code_inputs method
-        :type code_inputs: dict
+        :param context: the variables to build the context
+        :type context: AIPromptCodeVariables
         :return: the context
         :rtype: str
         """
 
     @abstractmethod
-    def build_code_inputs(self, params: ConfigParams, task_inputs: TaskInputs) -> dict:
+    def build_code_inputs(self) -> dict:
         """Method to build the variables that will be accessible in the generated code.
         It is recommended to use known object types for the inputs, like dict, list, Dataframe, int ...
         so the AI can understand the structure of the input.
 
-        :param params: task params
-        :type params: ConfigParams
-        :param inputs: task inputs
-        :type inputs: TaskInputs
         :return: the input dict that will be accessible in the generated code
         :rtype: dict
         """
@@ -119,20 +111,23 @@ class SmartTaskBase(Task):
         return []
 
     @abstractmethod
-    def build_task_outputs(self, code_outputs: Dict[str, Any], generated_code: str,
-                           params: ConfigParams, task_inputs: TaskInputs) -> dict:
-        """Method to build the task outputs resources based on the generated code outputs.
+    def build_output(self, code_outputs: Dict[str, Any]) -> Any:
+        """Method to build the output based on the generated code outputs.
 
         :param code_outputs: the outputs of the generated code
         :type code_outputs: dict
-        :param generated_code: the generated code
-        :type generated_code: str
-        :param params: task params
-        :type params: ConfigParams
-        :param inputs: task inputs
-        :type inputs: TaskInputs
         :return: the task outputs
         :rtype: dict
+        """
+
+    @abstractmethod
+    def _generate_agent_code(self, generated_code: str) -> str:
+        """Generate the agent code that will be used to run the code in the agent.
+
+        :param generated_code: the code generated by the AI
+        :type generated_code: str
+        :return: the agent code
+        :rtype: str
         """
 
     def build_inputs_context(self, code_inputs: Dict[str, Any]) -> str:
@@ -171,71 +166,86 @@ class SmartTaskBase(Task):
         """
         return OpenAiHelper.get_code_context(pip_package_names)
 
-    def build_context(self, params: ConfigParams, task_inputs: TaskInputs,
-                      code_inputs: Dict[str, Any]) -> str:
+    def build_context(self, code_inputs: Dict[str, Any]) -> str:
         """Method that is automatically called by the task to build the context.
         This method can be overided to change the way of describing the context.
 
-        :param params: task params
-        :type params: ConfigParams
-        :param inputs: task inputs
-        :type inputs: TaskInputs
         :return: the context
         :rtype: str
         """
-        # retrieve the main context
-        main_context = self.build_main_context(params, task_inputs, code_inputs)
 
+        inputs_description = self.build_inputs_context(code_inputs) or ''
+
+        outputs_description = self.build_outputs_context() or ''
+
+        code_rules = self.build_code_rules_context(self.get_available_package_names()) or ''
+
+        variables = AIPromptCodeContext(
+            python_code_intro=self.PROMPT_PY_INTRO,
+            r_code_intro=self.PROMPT_R_INTRO,
+            inputs_description=inputs_description,
+            outputs_description=outputs_description,
+            code_rules=code_rules
+        )
+
+        # retrieve the main context
+        main_context = self.build_main_context(variables)
         if not main_context or len(main_context) == 0:
             raise Exception("The main context must be defined")
 
-        if self.VAR_INPUTS in main_context:
-            inputs = self.build_inputs_context(code_inputs) or ''
-            main_context = main_context.replace(self.VAR_INPUTS, inputs + ' ')
-
-        if self.VAR_OUTPUTS in main_context:
-            outputs = self.build_outputs_context() or ''
-            main_context = main_context.replace(self.VAR_OUTPUTS, outputs + ' ')
-
-        if self.VAR_CODE_RULES in main_context:
-            code_rules = self.build_code_rules_context(self.get_available_package_names()) or ''
-            main_context = main_context.replace(self.VAR_CODE_RULES, code_rules + ' ')
-
         return main_context
 
-    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-
-        chat: OpenAiChat = params.get_value('prompt')
-
+    def run(self) -> Any:
         # all variable accessible in the generated code
-        code_inputs = self.build_code_inputs(params, inputs)
+        code_inputs = self.build_code_inputs()
 
-        if chat.last_message_is_user():
+        if self.chat.last_message_is_user():
             # retrieve the main context
-            context = self.build_context(params, inputs, code_inputs)
+            context = self.build_context(code_inputs)
 
             # Store the context in the chat object
-            chat.set_context(context)
+            self.chat.set_context(context)
 
             # only call open ai if the last message is from the user
             # create the completion
-            self.log_info_message('Generating code snippet...')
-            chat.call_gpt()
+            self.message_dispatcher.notify_info_message('Generating code snippet...')
+            self.chat.call_gpt()
 
-            # save the new config with the new prompt
-            params.set_value('prompt', chat)
-            params.save_params()
         else:
-            self.log_info_message('The last message is not from the user, no need to call openAI')
+            self.message_dispatcher.notify_info_message('The last message is not from the user, no need to call openAI')
 
-        code = chat.get_last_assistant_message(extract_code=True)
+        code = self.chat.get_last_assistant_message(extract_code=True)
         if code is None:
             raise Exception("No code generated by OpenAI")
 
-        self.log_info_message('Code generated by OpenAI: ' + code)
+        self.message_dispatcher.notify_info_message('Code generated by OpenAI: ' + code)
 
         # execute the live code
-        self.log_info_message('Executing the code snippet...')
+        self.message_dispatcher.notify_info_message('Executing the code snippet...')
         outputs = AgentCodeHelper.run_python_code(code, code_inputs)
 
-        return self.build_task_outputs(outputs, code, params, inputs)
+        return self.build_output(outputs)
+
+    def generate_agent_code(self) -> str:
+        """Generate the agent code that will be used to run the code in the agent.
+
+        :return: the agent code
+        :rtype: str
+        """
+
+        last_assistant_message = self.chat.get_last_assistant_message(extract_code=True)
+        if last_assistant_message is None:
+            raise Exception("No code generated by OpenAI")
+
+        return self._generate_agent_code(last_assistant_message)
+
+    @staticmethod
+    def generate_agent_code_task_output_config() -> OutputSpec:
+        """Get the task output config for the generate_agent_code task.
+
+        :return: the task output config
+        :rtype: Dict[str, Any]
+        """
+        return OutputSpec(
+            Text, human_name='Generated code',
+            short_description='Modified generated code that can be used in a python agent directly.')

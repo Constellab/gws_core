@@ -225,6 +225,11 @@ class Task(Process):
     def get_config_specs_dto(cls) -> Dict[str, ParamSpecDTO]:
         return ConfigSpecsHelper.config_specs_to_dto(cls.config_specs)
 
+    @final
+    @classmethod
+    def has_visible_config_specs(cls) -> bool:
+        return ConfigSpecsHelper.has_visible_config_specs(cls.config_specs)
+
     def create_tmp_dir(self) -> str:
         """
         Create a temporary directory.

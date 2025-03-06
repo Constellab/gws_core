@@ -2,6 +2,8 @@
 
 from typing import Any, List
 
+from PIL import Image
+
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
@@ -36,7 +38,6 @@ from gws_core.resource.view.view_resource import ViewResource
 from gws_core.resource.view.view_result import CallViewResult
 from gws_core.resource.view.view_runner import ViewRunner
 from gws_core.tag.tag_service import TagService
-from PIL import Image
 
 
 @resource_decorator("NoteResource", human_name="Note resource",
@@ -727,6 +728,9 @@ class NoteResource(ResourceSet):
                             object_type=RichTextObjectType.NOTE_RESOURCE,
                             object_id=self.get_model_id())
 
+    ############################# Others  #############################
+    def get_rich_text(self) -> RichText:
+        return self._rich_text
     ############################# Constructors #############################
 
     @staticmethod

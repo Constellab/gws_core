@@ -172,8 +172,8 @@ class ParamSpec(Generic[ParamSpecType]):
 
         infos: ParamSpecInfoSpecs = ParamSpecInfoSpecs(
             optional=BoolParam(False, False, human_name='Optional').to_dto(),
-            human_name=StrParam(
-                optional=True, human_name='Human name').to_dto(),
+            name=StrParam(
+                optional=False, human_name='Name').to_dto(),
             # comment visibility because not supported yet in dynamic param sub specs
             # visibility=StrParam(
             #     default_value='public', human_name='Visibility',

@@ -59,6 +59,10 @@ class StreamlitMainAppRunner:
                 h1 {
                     padding: 0;
                 }
+                /* Hide the container that only contain style. Without this they have a small height */
+                .stElementContainer:has(.stMarkdown style) {
+                    display: none;
+                }
 
             </style>
         """, unsafe_allow_html=True)
@@ -186,11 +190,14 @@ class StreamlitMainAppRunner:
                     f"Main python script file not found: {app_main_path}. Please make sure you have a main.py file in the app folder.")
                 st.stop()
 
-            self.spec = importlib.util.spec_from_file_location("module_name", app_main_path)
+            # load the module ('main' is the file name)
+            self.spec = importlib.util.spec_from_file_location("main", app_main_path)
             if self.spec is None:
                 st.error(f"Python script file not found: {app_main_path}")
                 st.stop()
 
+            # due to dynamic import, streamlit lose track of the module so it doesn't refresh it correctly when the file changes
+            # only the main.py file is refresh because it is load dynamically but its dependencies are not
             return importlib.util.module_from_spec(self.spec)
 
         except Exception as e:
