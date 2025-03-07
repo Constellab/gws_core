@@ -81,7 +81,6 @@ class QueueService():
         """
         Logger.debug("Checking scenario queue ...")
         user = CurrentUserService.get_current_user().id if CurrentUserService.get_current_user() else "None"
-        Logger.info("Checking scenario queue ..." + user)
         if Scenario.count_running_scenarios() > 0:
             # -> busy: we will test later!
             Logger.debug("The lab is busy! Retry later")
