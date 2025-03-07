@@ -2,6 +2,7 @@
 import os
 
 from gws_core.config.config_params import ConfigParams
+from gws_core.impl.table.table import Table
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.note.task.lab_note_resource import LabNoteResource
@@ -35,7 +36,8 @@ class GenerateAutoMLApp(Task):
     """
 
     input_specs = InputSpecs({
-        'getting_started_note': InputSpec(LabNoteResource, human_name='Getting started note')
+        'getting_started_note': InputSpec(LabNoteResource, human_name='Getting started note'),
+        'table': InputSpec(Table, human_name='Table', short_description='Optional table to init dashboard with', is_optional=True)
     })
     output_specs = OutputSpecs({
         'streamlit_app': OutputSpec(StreamlitResource)
@@ -49,6 +51,10 @@ class GenerateAutoMLApp(Task):
         streamlit_app = StreamlitResource()
 
         streamlit_app.set_dashboard(GenerateAutoMLAppDashboard())
-        streamlit_app.add_resource(inputs['getting_started_note'])
+        streamlit_app.add_resource(inputs['getting_started_note'], create_new_resource=False)
+
+        table = inputs.get('table')
+        if table is not None:
+            streamlit_app.add_resource(table, create_new_resource=False)
 
         return {"streamlit_app": streamlit_app}

@@ -5,8 +5,8 @@ from .components.streamlit_task_runner import \
 # Widgets
 from .widgets.streamlit_auth_user import \
     StreamlitAuthenticateUser as StreamlitAuthenticateUser
-from .widgets.streamlit_container import \
-    StreamlitContainer as StreamlitContainer
+from .widgets.streamlit_containers import \
+    StreamlitContainers as StreamlitContainers
 from .widgets.streamlit_df_paginator import \
     dataframe_paginated as dataframe_paginated
 from .widgets.streamlit_helper import StreamlitHelper as StreamlitHelper

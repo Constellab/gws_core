@@ -71,7 +71,8 @@ def dataframe_paginated(dataframe: DataFrame,
     to_column_id = len(dataframe.columns)
     if paginate_columns:
         with bottom_menu[2]:
-            page_size = st.selectbox("Column page Size", options=row_page_size_options, key=f"{key}_column_page_size")
+            page_size = st.selectbox("Column page Size", options=column_page_size_options,
+                                     key=f"{key}_column_page_size")
         with bottom_menu[1]:
             total_number_of_items = len(dataframe.columns)
             total_pages = int(total_number_of_items/page_size) + int(bool(total_number_of_items % page_size))

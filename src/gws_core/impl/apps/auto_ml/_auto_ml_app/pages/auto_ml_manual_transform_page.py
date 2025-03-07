@@ -9,7 +9,7 @@ from gws_core import (TableColumnAggregator, TableColumnsDeleter,
                       TableColumnSelector, TableReplace, TableRowAggregator,
                       TableRowsDeleter, TableRowSelector, TableScaler,
                       TableTransposer, Transformer)
-from gws_core.streamlit import (StreamlitContainer, StreamlitHelper,
+from gws_core.streamlit import (StreamlitContainers, StreamlitHelper,
                                 StreamlitTaskRunner)
 
 
@@ -88,6 +88,6 @@ def render_manual_transform_page():
         }}
 """
 
-        with StreamlitContainer.full_dataframe_container('right-container', style):
+        with StreamlitContainers.full_width_dataframe_container('right-container', style):
             st.dataframe(AutoMlState.get_current_table().table.get_data(),
                          use_container_width=True, key='current-table-dataframe')

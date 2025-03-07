@@ -1,13 +1,15 @@
 
 
+import importlib.util
+
 import streamlit as st
 from auto_ml_state import AutoMlState
-from pages import (auto_ml_ai_plot_page, auto_ml_ai_transform_page,
-                   auto_ml_getting_started_page, auto_ml_import_page,
-                   auto_ml_manual_transform_page, auto_ml_tables_page)
 
-from gws_core.impl.apps.auto_ml._auto_ml_app.pages import \
-    auto_ml_ai_multi_tables_page
+from gws_core import Table
+from gws_core.impl.apps.auto_ml._auto_ml_app.pages import (
+    auto_ml_ai_multi_tables_page, auto_ml_ai_plot_page,
+    auto_ml_ai_transform_page, auto_ml_getting_started_page,
+    auto_ml_import_page, auto_ml_manual_transform_page, auto_ml_tables_page)
 
 sources: list
 
@@ -28,10 +30,12 @@ sources: list
 # Remove column 'one' and 'two' from the table.
 ########################## TEST ##########################
 
+table = AutoMlState.get_current_table()
+if table is None:
+    if len(sources) > 1 and isinstance(sources[1], Table):
+        source_table: Table = sources[1]
+        AutoMlState.init(source_table, source_table.name)
 
-# count = st.session_state.get('count', 0)
-# st.write('Count:', count)
-# st.session_state['count'] = count + 1
 
 def _render_getting_started_page():
     # importlib.reload(auto_ml_getting_started_page)
@@ -39,7 +43,7 @@ def _render_getting_started_page():
 
 
 def _render_import_page():
-    # importlib.reload(auto_ml_import_page)
+    importlib.reload(auto_ml_import_page)
     auto_ml_import_page.render_import_page()
 
 

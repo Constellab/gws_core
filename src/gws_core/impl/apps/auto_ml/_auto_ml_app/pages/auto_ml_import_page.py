@@ -8,6 +8,7 @@ from auto_ml_state import AutoMlState
 from gws_core import (File, FileHelper, Settings, Table, TableImporter,
                       TaskOutputs)
 from gws_core.streamlit import StreamlitTaskRunner
+from gws_core.test.data_provider import DataProvider
 
 
 def _import_file_to_table(key: str) -> None:
@@ -45,6 +46,9 @@ def render_import_page():
     st.file_uploader("Upload a CSV or excel file",
                      type=Table.ALLOWED_FILE_FORMATS,
                      key=key, on_change=lambda: _import_file_to_table(key))
+
+    if st.button('Load iris dataset'):
+        AutoMlState.add_table(DataProvider.get_iris_table(), 'iris', set_current=True)
 
     if AutoMlState.has_current_table():
         select_current_table_with_preview(dataframe_height=300)

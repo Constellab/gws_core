@@ -5,16 +5,16 @@ from auto_ml_state import AutoMlState
 
 from gws_core import PlotlyResource
 from gws_core.impl.plotly.table_smart_plotly import AITableGeneratePlotly
-from gws_core.streamlit import StreamlitContainer, StreamlitOpenAiChat
+from gws_core.streamlit import StreamlitContainers, StreamlitOpenAiChat
 
 
 @st.fragment
 def render_ai_plot_page():
 
-    with StreamlitContainer.container_centered('chat-container'):
+    with StreamlitContainers.container_centered('chat-container'):
 
         streamlit_ai_chat = StreamlitOpenAiChat.load_from_session('plot_chat')
-        col1, col2 = StreamlitContainer.columns_with_fit_content('chat-header', [1, 'fit-content'])
+        col1, col2 = StreamlitContainers.columns_with_fit_content('chat-header', [1, 'fit-content'])
         with col1:
             st.subheader("AI plots")
         with col2:

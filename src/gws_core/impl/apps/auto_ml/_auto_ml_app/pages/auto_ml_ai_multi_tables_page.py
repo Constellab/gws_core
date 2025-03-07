@@ -7,16 +7,16 @@ from auto_ml_state import AutoMlState, TableInfo
 from gws_core.impl.table.table import Table
 from gws_core.impl.table.transformers.table_smart_multi_transformer import \
     AIMultiTableTransformer
-from gws_core.streamlit import StreamlitContainer, StreamlitOpenAiChat
+from gws_core.streamlit import StreamlitContainers, StreamlitOpenAiChat
 
 _MULTI_TABLE_KEY = 'multi-table'
 
 
 def render_ai_multi_tables_page():
-    with StreamlitContainer.container_centered('multi-table-container'):
+    with StreamlitContainers.container_centered('multi-table-container'):
 
         streamlit_ai_chat = StreamlitOpenAiChat.load_from_session('plot_chat')
-        col1, col2 = StreamlitContainer.columns_with_fit_content('multi-table-header', [1, 'fit-content'])
+        col1, col2 = StreamlitContainers.columns_with_fit_content('multi-table-header', [1, 'fit-content'])
         with col1:
             st.subheader("AI multi table")
         with col2:

@@ -5,7 +5,7 @@ import streamlit as st
 from .streamlit_helper import StreamlitHelper
 
 
-class StreamlitContainer():
+class StreamlitContainers():
 
     @classmethod
     def container_centered(cls, key: str, max_width: str = '48em', additional_style: str = None):
@@ -33,6 +33,7 @@ class StreamlitContainer():
 
     @classmethod
     def row_container(cls, key: str, flow: Literal['row', 'row wrap'] = 'row wrap',
+                      vertical_align_items: Literal['start', 'center', 'end'] = 'start',
                       additional_style: str = None):
         """Define a row container, element inside a in a row (like buttons, text...)
 
@@ -40,12 +41,15 @@ class StreamlitContainer():
         :type key: str
         :param flow: flex-flow style, defaults to 'row wrap'
         :type flow: Literal[&#39;row&#39;, &#39;row wrap&#39;], optional
+        :param align_items: vertical align-items style, defaults to 'start'
+        :type align_items: Literal[&#39;start&#39;, &#39;center&#39;, &#39;end&#39;], optional
         :return: _description_
         :rtype: _type_
         """
         style = f"""
             [CLASS_NAME] {{
                 flex-flow: {flow};
+                align-items: {vertical_align_items};
             }}
 
             [CLASS_NAME] * {{
@@ -58,7 +62,8 @@ class StreamlitContainer():
         return cls.container_with_style(key, style)
 
     @classmethod
-    def columns_with_fit_content(cls, key: str, cols: List[int | Literal['fit-content']]):
+    def columns_with_fit_content(cls, key: str, cols: List[int | Literal['fit-content']],
+                                 additional_style: str = None):
         """Define columns that also support fit content width.
 
         :param key: key
@@ -87,6 +92,9 @@ class StreamlitContainer():
             else:
                 int_cols.append(col)
 
+        if additional_style:
+            style += additional_style
+
         container = cls.container_with_style(key, style)
         return container.columns(int_cols)
 
@@ -103,7 +111,7 @@ class StreamlitContainer():
         # 16px of main row wrap (of a column)
         style = """
         [CLASS_NAME] {
-            height: calc(100vh - 32px);
+            min-height: calc(100vh - 32px);
         }
         """
 
@@ -113,7 +121,7 @@ class StreamlitContainer():
         return cls.container_with_style(key, style)
 
     @classmethod
-    def full_dataframe_container(cls, key: str, additional_style: str = None):
+    def full_width_dataframe_container(cls, key: str, additional_style: str = None):
         """Define a container for a dataframe that uses use_container_width=True.
         This prevent the dataframe to be too large and to create a horizontal scroll.
         The horizontal scroll of the dataframe is due to the resize absolute cursor.

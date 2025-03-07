@@ -3,13 +3,13 @@
 import streamlit as st
 from auto_ml_state import AutoMlState, TableInfo
 
-from gws_core.streamlit import StreamlitContainer
+from gws_core.streamlit import StreamlitContainers
 
 
 def select_current_table_with_preview(dataframe_height: int = 300) -> TableInfo:
     result = select_current_table()
 
-    with StreamlitContainer.full_dataframe_container('current-table'):
+    with StreamlitContainers.full_width_dataframe_container('current-table'):
         st.dataframe(result.get_dataframe(), use_container_width=True,
                      height=dataframe_height, key="select_table_dataframe")
 

@@ -6,15 +6,15 @@ from auto_ml_state import AutoMlState
 from gws_core import Table
 from gws_core.impl.table.transformers.table_smart_transformer import \
     AITableTransformer
-from gws_core.streamlit import StreamlitContainer, StreamlitOpenAiChat
+from gws_core.streamlit import StreamlitContainers, StreamlitOpenAiChat
 
 
 def render_ai_transform_page():
 
-    with StreamlitContainer.container_centered('chat-container'):
+    with StreamlitContainers.container_centered('chat-container'):
         streamlit_ai_chat = StreamlitOpenAiChat.load_from_session('transform_chat')
 
-        col1, col2 = StreamlitContainer.columns_with_fit_content('transform-header', [1, 'fit-content'])
+        col1, col2 = StreamlitContainers.columns_with_fit_content('transform-header', [1, 'fit-content'])
         with col1:
             st.subheader("AI transformer")
         with col2:
