@@ -28,18 +28,18 @@ def _render_resource_search_input():
         st.write('No resource selected')
 
     st.code('''
-    import streamlit as st
-    from gws_core.streamlit import ResourceSearchInput
-    resource_search = ResourceSearchInput()
-    resource_search.add_flagged_filter(True)
-    selected_resource = resource_search.select(
-        placeholder='Search for resource', label='Resource Search Input', key='resource-search')
+import streamlit as st
+from gws_core.streamlit import ResourceSearchInput
 
-    if selected_resource:
-        st.write(f'Selected resource: {selected_resource.name}')
-    else:
-        st.write('No resource selected')
+resource_search = ResourceSearchInput()
+resource_search.add_flagged_filter(True)
+selected_resource = resource_search.select(
+    placeholder='Search for resource', label='Resource Search Input', key='resource-search')
 
-    ''')
+if selected_resource:
+    st.write(f'Selected resource: {selected_resource.name}')
+else:
+    st.write('No resource selected')
+''')
 
     st.divider()

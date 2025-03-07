@@ -24,10 +24,11 @@ def _render_full_width_dataframe_container(df: DataFrame):
         st.dataframe(df, use_container_width=True)
 
     st.code('''
-    from gws_core.streamlit import StreamlitContainer
-    with StreamlitContainer.full_dataframe_container('container-full-dataframe'):
-        st.dataframe(dataframe, use_container_width=True)
-    ''')
+from gws_core.streamlit import StreamlitContainer
+
+with StreamlitContainer.full_dataframe_container('container-full-dataframe'):
+    st.dataframe(dataframe, use_container_width=True)
+''')
 
     st.divider()
 
@@ -42,11 +43,11 @@ def _render_dataframe_paginated(df: DataFrame):
                         key='row_paginated')
 
     st.code('''
-    dataframe_paginated(df, paginate_rows=True, row_page_size_options=[25, 50, 100],
-        # apply a style to the dataframe
-        transformer=lambda df: df.style.format(thousands=" ", precision=1),
-        key='row_paginated')
-    ''')
+dataframe_paginated(df, paginate_rows=True, row_page_size_options=[25, 50, 100],
+    # apply a style to the dataframe
+    transformer=lambda df: df.style.format(thousands=" ", precision=1),
+    key='row_paginated')
+''')
 
     st.write("Column pagination")
     df_t = df.T
@@ -54,8 +55,8 @@ def _render_dataframe_paginated(df: DataFrame):
                         key='column_paginated')
 
     st.code('''
-    dataframe_paginated(df_t, paginate_rows=False, paginate_columns=True, column_page_size_options=[25, 50, 100],
-        key='column_paginated')
-    ''')
+dataframe_paginated(df_t, paginate_rows=False, paginate_columns=True, column_page_size_options=[25, 50, 100],
+    key='column_paginated')
+''')
 
     st.divider()
