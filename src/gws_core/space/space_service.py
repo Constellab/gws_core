@@ -69,6 +69,10 @@ class SpaceService():
         :return: a new instance of the SpaceService
         :rtype: SpaceService
         """
+        # For streamlit context, we force the access token
+        if CurrentUserService.is_streamlit_context():
+            return SpaceService.create_with_access_token()
+
         return SpaceService()
 
     @staticmethod

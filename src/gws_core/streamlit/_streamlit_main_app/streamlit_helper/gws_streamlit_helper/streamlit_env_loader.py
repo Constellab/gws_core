@@ -34,6 +34,9 @@ class StreamlitEnvLoader:
             # Authenticate user
             CurrentUserService.set_current_user(user)
 
+        # Set the running context as streamlit
+        CurrentUserService.set_streamlit_context()
+
         # Code to set up and acquire resources
         return self  # You can return an object that you want to use in the with block
 

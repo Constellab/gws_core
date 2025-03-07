@@ -1,5 +1,6 @@
 
 
+from enum import Enum
 from typing import Union
 
 from starlette_context import context
@@ -12,6 +13,12 @@ from ..core.utils.http_helper import HTTPHelper
 from .user import User
 
 
+class CurrentUserContext(Enum):
+    NORMAL = 'NORMAL'
+    # set to streamlit context when the code is executed in streamlit
+    STREAMLIT = 'STREAMLIT'
+
+
 class CurrentUserService:
     """Class to manage the current connected user
 
@@ -19,6 +26,8 @@ class CurrentUserService:
     """
 
     _no_context_user: User = None
+
+    _run_context: CurrentUserContext = CurrentUserContext.NORMAL
 
     @classmethod
     def get_and_check_current_user(cls) -> User:
@@ -57,6 +66,7 @@ class CurrentUserService:
         """
         Set the user in the current session
         """
+        print("Context " + str(cls._run_context))
 
         # clear the user if None
         if user is None:
@@ -104,6 +114,14 @@ class CurrentUserService:
             return FrontService.get_light_theme()
 
         return FrontService.get_dark_theme() if user.has_dark_theme() else FrontService.get_light_theme()
+
+    @classmethod
+    def set_streamlit_context(cls):
+        cls._run_context = CurrentUserContext.STREAMLIT
+
+    @classmethod
+    def is_streamlit_context(cls) -> bool:
+        return cls._run_context == CurrentUserContext.STREAMLIT
 
 
 class AuthenticateUser:

@@ -26,6 +26,9 @@ class StreamlitAuthenticateUser:
             if CurrentUserService.get_current_user().id != user.id:
                 raise Exception("The user in the context is different from the current user")
             self.was_already_authenticated = True
+
+        # Set streamlit context
+        CurrentUserService.set_streamlit_context()
         # Code to set up and acquire resources
         return self  # You can return an object that you want to use in the with block
 
