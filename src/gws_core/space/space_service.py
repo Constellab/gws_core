@@ -75,6 +75,7 @@ class SpaceService():
 
         return SpaceService()
 
+    # TODO TO REMOVE
     @staticmethod
     def create_with_access_token() -> 'SpaceService':
         """
