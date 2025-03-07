@@ -66,8 +66,6 @@ class CurrentUserService:
         """
         Set the user in the current session
         """
-        print("Context " + str(cls._run_context))
-
         # clear the user if None
         if user is None:
             if HTTPHelper.is_http_context():
