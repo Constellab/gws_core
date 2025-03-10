@@ -160,6 +160,20 @@ class CommunityService:
             raise err
 
     @classmethod
+    def send_app_stat(cls, body: Dict) -> None:
+        if cls.community_api_url is None:
+            return None
+        url = f"{cls.community_api_url}/app/for-lab/stat"
+        try:
+            ExternalApiService.post(
+                url, body,
+                cls._get_request_header(),
+                raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't send app stat to Community. Error : {err.detail}"
+            raise err
+
+    @classmethod
     def _get_request_header(cls) -> Dict[str, str]:
         """
         Return the header for a request to space, with Api key and User if exists

@@ -1,9 +1,7 @@
+import threading
+from typing import Dict, List, Optional, Type
 
-
-from typing import List, Optional, Type
-
-from peewee import JOIN
-
+from gws_core.community.community_service import CommunityService
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
@@ -34,11 +32,13 @@ from gws_core.share.shared_dto import (SharedEntityMode, ShareLinkType,
 from gws_core.share.shared_entity_info import SharedEntityInfo
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
+from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import AuthenticateUser
 from gws_core.user.user import User
+from peewee import JOIN
 
 from .share_link import ShareLink
 
@@ -219,10 +219,32 @@ class ShareService():
         if shared_entity_link.entity_type != ShareLinkType.RESOURCE:
             raise Exception(f'Entity type {shared_entity_link.entity_type} is not supported')
 
+        # Check if shared entity is a StreamlitResource
+        if shared_entity_link.entity_type is ShareLinkType.RESOURCE:
+            if issubclass(type(shared_entity_link.get_model_and_check(
+                    shared_entity_link.entity_id, shared_entity_link.entity_type).get_resource()), StreamlitResource):
+                ShareService._init_send_resource_app_stat_to_community_thread(
+                    app_url=shared_entity_link.get_preview_link())
+
         return ResourceService.get_and_call_view_on_resource_model(
             shared_entity_link.entity_id, view_name, call_view_params.values, call_view_params.save_view_config)
 
-    #################################### SCENARIO ####################################
+    @classmethod
+    def _init_send_resource_app_stat_to_community_thread(cls, app_url: str):
+        x = threading.Thread(target=cls._send_resource_app_stat_to_community, args=(app_url,))
+        x.start()
+
+    @classmethod
+    def _send_resource_app_stat_to_community(cls, app_url: str):
+        try:
+            body: Dict = {
+                'app_url': app_url
+            }
+            CommunityService.send_app_stat(body)
+        except Exception as err:
+            Logger.error(f"Error sending app statistics to the Community. Error: {str(err)}")
+
+        #################################### SCENARIO ####################################
 
     @classmethod
     def get_scenario_entity_object_info(cls, shared_entity_link: ShareLink) -> ShareScenarioInfoReponseDTO:
