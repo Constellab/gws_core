@@ -223,7 +223,7 @@ class ShareService():
         if shared_entity_link.entity_type is ShareLinkType.RESOURCE:
             if issubclass(type(shared_entity_link.get_model_and_check(
                     shared_entity_link.entity_id, shared_entity_link.entity_type).get_resource()), StreamlitResource):
-                ShareService._init_send_resource_app_stat_to_community_thread(
+                cls._init_send_resource_app_stat_to_community_thread(
                     app_url=shared_entity_link.get_preview_link())
 
         return ResourceService.get_and_call_view_on_resource_model(
@@ -237,10 +237,7 @@ class ShareService():
     @classmethod
     def _send_resource_app_stat_to_community(cls, app_url: str):
         try:
-            body: Dict = {
-                'app_url': app_url
-            }
-            CommunityService.send_app_stat(body)
+            CommunityService.send_app_stat(app_url)
         except Exception as err:
             Logger.error(f"Error sending app statistics to the Community. Error: {str(err)}")
 

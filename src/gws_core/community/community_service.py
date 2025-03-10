@@ -160,13 +160,13 @@ class CommunityService:
             raise err
 
     @classmethod
-    def send_app_stat(cls, body: Dict) -> None:
+    def send_app_stat(cls, app_url: str) -> None:
         if cls.community_api_url is None:
             return None
         url = f"{cls.community_api_url}/app/for-lab/stat"
         try:
             ExternalApiService.post(
-                url, body,
+                url, {'app_url': app_url},
                 cls._get_request_header(),
                 raise_exception_if_error=True)
         except BaseHTTPException as err:
