@@ -49,6 +49,7 @@ def render_import_page():
 
     if st.button('Load iris dataset'):
         AutoMlState.add_table(DataProvider.get_iris_table(), 'iris', set_current=True)
+        st.rerun()
 
     if AutoMlState.has_current_table():
         select_current_table_with_preview(dataframe_height=300)

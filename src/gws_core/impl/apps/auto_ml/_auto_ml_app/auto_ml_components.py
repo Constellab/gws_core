@@ -22,8 +22,8 @@ def _on_table_selected(key: str):
 
 
 def select_current_table() -> TableInfo:
-    tables = st.session_state.get("tables", [])
-    current_table = st.session_state.get("current_table")
+    tables = AutoMlState.get_tables()
+    current_table = AutoMlState.get_current_table()
     current_index = tables.index(current_table)
 
     # To correctly work on multiple pages, we need to use the same ke yfor each page and a key
