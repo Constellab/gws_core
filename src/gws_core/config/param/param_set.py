@@ -8,10 +8,10 @@ from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
 
 from ...core.classes.validator import DictValidator, ListValidator
 from .param_spec import ParamSpec, ParamSpecType
-from .param_types import ParamSpecDTO, ParamSpecVisibilty
+from .param_types import ParamSpecDTO, ParamSpecTypeStr, ParamSpecVisibilty
 
 
-@param_spec_decorator(type=ParamaSpecType.NESTED)
+@param_spec_decorator(type_=ParamaSpecType.NESTED)
 class ParamSet(ParamSpec[list]):
     """ ParamSet. Use to define a group of parameters that can be added multiple times. This will
     provid a list of dictionary as values : List[Dict[str, Any]]
@@ -102,8 +102,8 @@ class ParamSet(ParamSpec[list]):
         return json_
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return "param_set"
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.PARAM_SET
 
     @classmethod
     def load_from_dto(cls, spec_dto: ParamSpecDTO) -> "ParamSet":

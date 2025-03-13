@@ -19,8 +19,8 @@ class ResourceViewMetadatalDTO(BaseModelDTO):
     config_specs: Dict[str, ParamSpecDTO]
     style: TypingStyle
 
-    def to_markdown(self) -> str:
-        markdown = f"#### {self.human_name}"
+    def to_markdown(self, resource_class_name: str) -> str:
+        markdown = f"#### {self.human_name} ({resource_class_name})"
 
         if self.default_view:
             markdown += " (default view)"

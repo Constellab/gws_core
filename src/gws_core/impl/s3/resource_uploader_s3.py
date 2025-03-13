@@ -26,6 +26,16 @@ from ...task.task_io import TaskInputs, TaskOutputs
                 short_description="Simple task to send the input resource to a S3 bucket",
                 style=TypingStyle.material_icon("cloud_upload"))
 class ResourceUploaderS3(Task):
+    """
+    Task to upload a resource to an S3 bucket.
+
+    The resource will be converted to a zip resource before being uploaded.
+    The zip resource format is made to be downloaded by a data lab.
+    In this case the resource will be imported in the correct format in the data lab.
+
+    See ResourceDownloaderS3 to download a resource from an S3 bucket.
+
+    """
     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
     config_specs: ConfigSpecs = {
         'credentials': CredentialsParam(credentials_type=CredentialsType.S3),

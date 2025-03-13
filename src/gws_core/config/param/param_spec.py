@@ -12,7 +12,7 @@ from ...core.classes.validator import (BoolValidator, DictValidator,
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from .param_types import (ParamSpecDTO, ParamSpecInfoSpecs, ParamSpecSimpleDTO,
-                          ParamSpecVisibilty)
+                          ParamSpecTypeStr, ParamSpecVisibilty)
 
 ParamSpecType = TypeVar("ParamSpecType")
 
@@ -136,7 +136,7 @@ class ParamSpec(Generic[ParamSpecType]):
 
     @classmethod
     @abstractmethod
-    def get_str_type(cls) -> str:
+    def get_str_type(cls) -> ParamSpecTypeStr:
         pass
 
     @classmethod
@@ -255,8 +255,8 @@ class StrParam(ParamSpec[str]):
         return str_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return 'str'
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.STRING
 
     @classmethod
     def get_default_value_param_spec(cls) -> "StrParam":
@@ -279,7 +279,7 @@ class StrParam(ParamSpec[str]):
 
             if self.additional_info is not None and self.additional_info['allowed_values'] is None:
                 raise BadRequestException(
-                    f"Allowed values are not allowed in the 'str' param")
+                    "Allowed values are not allowed in the 'str' param")
             self.additional_info['allowed_values'] = allowed_values
         else:
             self.additional_info['allowed_values'] = None
@@ -329,8 +329,8 @@ class TextParam(ParamSpec[str]):
         return str_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return 'text'
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.TEXT
 
     @classmethod
     def get_default_value_param_spec(cls) -> "TextParam":
@@ -384,8 +384,8 @@ class BoolParam(ParamSpec[bool]):
         return bool_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return 'bool'
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.BOOL
 
     @classmethod
     def get_default_value_param_spec(cls) -> "BoolParam":
@@ -438,8 +438,8 @@ class DictParam(ParamSpec[dict]):
         return dict_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return 'dict'
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.DICT
 
     @classmethod
     def get_default_value_param_spec(cls) -> "DictParam":
@@ -492,8 +492,8 @@ class ListParam(ParamSpec[list]):
         return list_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return 'list'
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.LIST
 
     @classmethod
     def get_default_value_param_spec(cls) -> "ListParam":
@@ -567,7 +567,7 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
 
     @classmethod
     @abstractmethod
-    def get_str_type(cls) -> str:
+    def get_str_type(cls) -> ParamSpecTypeStr:
         pass
 
     def _check_allowed_values(self, allowed_values: Optional[List[ParamSpecType]]) -> None:
@@ -601,8 +601,8 @@ class IntParam(NumericParam[int]):
         return int_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return "int"
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.INT
 
     @classmethod
     def get_default_value_param_spec(cls) -> "IntParam":
@@ -633,8 +633,8 @@ class FloatParam(NumericParam[float]):
         return float_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return "float"
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.FLOAT
 
     @classmethod
     def get_default_value_param_spec(cls) -> "FloatParam":

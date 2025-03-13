@@ -20,15 +20,16 @@ from ...task.task_io import TaskInputs, TaskOutputs
                 style=TypingStyle.material_icon("cloud_download"))
 class ResourceDownloaderS3(ResourceDownloaderBase):
     """
-    Task to download a resource from an external source using an HTTP link.
+    Task to download a resource from an S3 bucket.
 
-    If the link is from a Gencovery lab, the resource downloaded and imported in the correct type.
-    Then it will be marked as received in the origin lab.
+    If the downloaded file is a zipped Resource, the resource will be unzipped and imported in the original format.
 
-    If the link refers to a zip file, the zip file will be unzipped and the resource will be imported (File or Folder).
+    If the link refers to a normal zip file, the zip file will be unzipped and the resource will be imported (File or Folder).
+    See the uncompress parameter.
 
     If the link refers to a file, the file will be imported as a resource.
 
+    See ResourceUploaderS3 to upload a resource to an S3 bucket.
     """
 
     config_specs: ConfigSpecs = {

@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 from gws_core.config.param.param_spec import DictParam
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
 from gws_core.impl.rich_text.rich_text import RichText
 
 
@@ -18,8 +18,8 @@ class RichTextParam(DictParam):
         return RichText.deserialize(value)
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return "rich_text_param"
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.RICH_TEXT
 
     @classmethod
     def get_default_value_param_spec(cls) -> "RichTextParam":

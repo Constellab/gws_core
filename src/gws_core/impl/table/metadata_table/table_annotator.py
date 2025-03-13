@@ -17,11 +17,9 @@ from .helper.table_annotator_helper import TableAnnotatorHelper
                 short_description="Annotate table rows according to a metadata table")
 class TableRowAnnotator(Task):
     """
-    TableRowAnnotator
-
-    Annotate the rows of a `sample_table` using information from a `metadata_table`.
-    * all the row values of the reference column of the `sample_table` are matched against the `ids` of the `metadata_table`.
-    * if an `id` matches against a reference value of the `sample_table`, the corresponding row of the `sample_table` is taggeg with the metadata given by the `id`.
+    Annotate the rows of a `Sample table` using information from a `Metadata table`.
+    All the row values of the reference column of the `Sample table` are matched against the `ids` of the `Metadata table`.
+    If an `id` matches against a reference value of the `Sample table`, the corresponding row of the `Sample table` is tagged with the metadata given by the `id`.
     """
 
     input_specs: InputSpecs = InputSpecs({
@@ -80,11 +78,9 @@ class TableRowAnnotator(Task):
                 short_description="Annotate table columns according to a metadata table")
 class TableColumnAnnotator(Task):
     """
-    TableColumnAnnotator
-
-    Annotate the columns of a `sample_table` using information from a `metadata_table`.
-    * all the column values of the reference row of the `sample_table` are matched against the `ids` of the `metadata_table`.
-    * if an `id` matches against a reference value of the `sample_table`, the corresponding column of the `sample_table` is taggeg with the metadata given by the `id`.
+    Annotate the columns of a `Sample table` using information from a `metadata_table`.
+    * all the column values of the reference row of the `Sample table` are matched against the `ids` of the `Metadata table`.
+    * if an `id` matches against a reference value of the `Sample table`, the corresponding column of the `Sample table` is taggeg with the metadata given by the `id`.
     """
 
     input_specs: InputSpecs = InputSpecs({

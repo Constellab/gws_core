@@ -4,7 +4,7 @@ from typing import Dict
 
 from gws_core.config.param.param_spec import TextParam
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
 
 
 @param_spec_decorator()
@@ -19,8 +19,8 @@ class JsonCodeParam(TextParam):
     """
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return "json_code_param"
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.JSON_CODE
 
     @classmethod
     def get_default_value_param_spec(cls) -> "JsonCodeParam":

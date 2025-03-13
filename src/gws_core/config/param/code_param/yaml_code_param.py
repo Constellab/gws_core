@@ -4,12 +4,12 @@ from typing import Dict
 
 from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
                                                         param_spec_decorator)
-from gws_core.config.param.param_types import ParamSpecDTO
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
 
 from ..param_spec import TextParam
 
 
-@param_spec_decorator(type=ParamaSpecType.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamaSpecType.LAB_SPECIFIC)
 class YamlCodeParam(TextParam):
     """Param for yaml code. It shows a simple yaml IDE
       in the interface to provide code for yaml.
@@ -21,8 +21,8 @@ class YamlCodeParam(TextParam):
     """
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return "yaml_code_param"
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.YAML_CODE
 
     @classmethod
     def get_default_value_param_spec(cls) -> "YamlCodeParam":

@@ -105,34 +105,39 @@ class TechnicalDocService():
         return ClassicClassDocDTO(name=name, doc=inspect.getdoc(obj), methods=methods, variables=variables)
 
     @classmethod
-    def generate_tasks_technical_doc_as_md(cls, brick_name: str) -> str:
+    def generate_tasks_technical_doc_as_md(cls, brick_name: str, separator: str = None) -> str:
         """Method to return the technical doc information about a brick to upload it on the hub
         """
         tasks = cls.export_typing_technical_doc(brick_name, TaskTyping)
 
-        return cls._generate_objects_technical_doc_as_md(tasks, 'Tasks')
+        return cls._generate_objects_technical_doc_as_md(tasks, 'Tasks', separator)
 
     @classmethod
-    def generate_protocols_technical_doc_as_md(cls, brick_name: str) -> str:
+    def generate_protocols_technical_doc_as_md(cls, brick_name: str, separator: str = None) -> str:
         protocols = cls.export_typing_technical_doc(brick_name, ProtocolTyping)
 
-        return cls._generate_objects_technical_doc_as_md(protocols, 'Protocols')
+        return cls._generate_objects_technical_doc_as_md(protocols, 'Protocols', separator)
 
     @classmethod
-    def generate_resources_technical_doc_as_md(cls, brick_name: str) -> str:
+    def generate_resources_technical_doc_as_md(cls, brick_name: str, separator: str = None) -> str:
         resources = cls.export_typing_technical_doc(brick_name, ResourceTyping)
 
-        return cls._generate_objects_technical_doc_as_md(resources, 'Resources')
+        return cls._generate_objects_technical_doc_as_md(resources, 'Resources', separator)
 
     @classmethod
-    def _generate_objects_technical_doc_as_md(cls, objects: List[TypingFullDTO], title: str) -> str:
+    def _generate_objects_technical_doc_as_md(cls, objects: List[TypingFullDTO], title: str,
+                                              separator: str = None) -> str:
         markdown = f'# {title}\n\n'
 
         for obj in objects:
             if obj.status == TypingStatus.UNAVAILABLE:
                 continue
+            if obj.hide:
+                continue
             markdown += obj.to_markdown()
 
             markdown += '\n\n'
+            if separator:
+                markdown += separator + '\n'
 
         return markdown

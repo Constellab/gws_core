@@ -4,12 +4,13 @@ from typing import Any, Dict, Optional
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
                                                         param_spec_decorator)
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecVisibilty
+from gws_core.config.param.param_types import (ParamSpecDTO, ParamSpecTypeStr,
+                                               ParamSpecVisibilty)
 from gws_core.core.classes.validator import StrValidator
 from gws_core.scenario.scenario import Scenario
 
 
-@param_spec_decorator(type=ParamaSpecType.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamaSpecType.LAB_SPECIFIC)
 class ScenarioParam(ParamSpec[str]):
     """ Scenario param spec. When used, the end user will be able to select a scenario from
     the list of available scenarios. The config stores only the scenario id, not the full scenario object.
@@ -44,8 +45,8 @@ class ScenarioParam(ParamSpec[str]):
         )
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return "scenario_param"
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.SCENARIO
 
     def build(self, value: Any) -> Scenario:
         if not value:

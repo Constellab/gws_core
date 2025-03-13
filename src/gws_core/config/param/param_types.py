@@ -1,5 +1,6 @@
 
 
+from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Type
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -15,8 +16,35 @@ ParamValueType = Type[ParamValue]
 ParamSpecVisibilty = Literal["public", "protected", "private"]
 
 
+class ParamSpecTypeStr(Enum):
+    STRING = "str"
+    TEXT = "text"
+    BOOL = "bool"
+    INT = "int"
+    FLOAT = "float"
+    DICT = "dict"
+    LIST = "list"
+    DYNAMIC_PARAM = "dynamic"
+    PARAM_SET = "param_set"
+    TAGS = "tags_param"
+    BASH_CODE = "bash_code_param"
+    JSON_CODE = "json_code_param"
+    JULIA_CODE = "julia_code_param"
+    PERL_CODE = "perl_code_param"
+    PYTHON_CODE = "python_code_param"
+    R_CODE = "r_code_param"
+    YAML_CODE = "yaml_code_param"
+    CREDENTIALS = "credentials_param"
+    SPACE_FOLDER = "space_folder_param"
+    OPEN_AI_CHAT = "open_ai_chat_param"
+    RICH_TEXT = "rich_text_param"
+    NOTE = "note_param"
+    NOTE_TEMPLATE = "note_template_param"
+    SCENARIO = "scenario_param"
+
+
 class ParamSpecSimpleDTO(BaseModelDTO):
-    type: str
+    type: ParamSpecTypeStr
     optional: bool
     visibility: Optional[ParamSpecVisibilty] = "public"
     default_value: Optional[ParamValue] = None
@@ -36,7 +64,11 @@ class ParamSpecDTO(ParamSpecSimpleDTO):
         markdown += ")"
 
         markdown += f": {self.short_description}"
-        if self.default_value:
+
+        # write the default value (only for basic types)
+        basic_types = [ParamSpecTypeStr.STRING, ParamSpecTypeStr.TEXT, ParamSpecTypeStr.BOOL, ParamSpecTypeStr.INT,
+                       ParamSpecTypeStr.FLOAT]
+        if self.type in [basic_types] and self.default_value:
             markdown += f", default to '{self.default_value}'"
         if self.allowed_values:
             markdown += f" (allowed values: {self.allowed_values})"

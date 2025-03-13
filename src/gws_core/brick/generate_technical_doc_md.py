@@ -41,6 +41,9 @@ class GenerateTechnicalDocMarkdown(Task):
         'object_type': StrParam(human_name='Object type',
                                 short_description='The object type to generate the technical documentation',
                                 allowed_values=['Resource', 'Task', 'Protocol']),
+        'separator': StrParam(human_name='Separator',
+                              short_description='The separator to use between two object in the markdown file',
+                              default_value='[---]\\n')
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -48,13 +51,14 @@ class GenerateTechnicalDocMarkdown(Task):
         result: str = None
         brick_name: str = params['brick_name']
         object_type: str = params['object_type']
+        separator: str = params['separator']
 
         if object_type == 'Task':
-            result = TechnicalDocService.generate_tasks_technical_doc_as_md(brick_name)
+            result = TechnicalDocService.generate_tasks_technical_doc_as_md(brick_name, separator)
         elif object_type == 'Protocol':
-            result = TechnicalDocService.generate_protocols_technical_doc_as_md(brick_name)
+            result = TechnicalDocService.generate_protocols_technical_doc_as_md(brick_name, separator)
         elif object_type == 'Resource':
-            result = TechnicalDocService.generate_resources_technical_doc_as_md(brick_name)
+            result = TechnicalDocService.generate_resources_technical_doc_as_md(brick_name, separator)
 
         file_name = f'{brick_name}_{object_type}_technical_doc.md'
 

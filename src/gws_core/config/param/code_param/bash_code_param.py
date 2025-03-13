@@ -1,5 +1,6 @@
 
 
+from gws_core.config.param.param_types import ParamSpecTypeStr
 from gws_core.core.classes.validator import StrValidator, Validator
 
 from ..param_spec import TextParam
@@ -16,5 +17,5 @@ class BashCodeParam(TextParam):
     """
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return "bash_code_param"
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.BASH_CODE

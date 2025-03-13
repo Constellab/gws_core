@@ -13,8 +13,8 @@ from ....task.task_io import TaskInputs, TaskOutputs
 from ..table import Table
 
 
-@task_decorator("describe", human_name='Describe', short_description="Generate short descriptive statistics")
-class Describe(Task):
+@task_decorator("describe", human_name='TableDescribe', short_description="Generate short descriptive statistics")
+class TableDescribe(Task):
     """
     Descriptive statistics include those that summarize the central tendency, dispersion and shape of a dataset’s distribution, excluding `NaN` values.
 

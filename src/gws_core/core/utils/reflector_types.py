@@ -85,8 +85,8 @@ class MethodDoc(BaseModelDTO):
             return match.group(1).strip()
         return self.doc
 
-    def to_markdown(self) -> str:
-        markdown = f"#### {self.name}"
+    def to_markdown(self, class_name: str) -> str:
+        markdown = f"#### {self.name} ({class_name})"
 
         if self.method_type:
             markdown += f" ({self.method_type})"

@@ -13,13 +13,12 @@ from ....task.task_io import TaskInputs, TaskOutputs
 from ..table import Table
 
 
-@task_decorator("Melt", human_name="Melt",
-                short_description="pandas.melt, Unpivot a DataFrame from wide to long format, optionally leaving identifiers set.")
-class Melt(Task):
+@task_decorator("Melt", human_name="Table melt",
+                short_description="Unpivot a DataFrame from wide to long format, optionally leaving identifiers set (pandas.melt).")
+class TableMelt(Task):
     """
-    Melt from pandas \n
-    input : Table \n
-    output : Table \n
+    Call the pandas melt function
+
     Unpivot a DataFrame from wide to long format, optionally leaving identifiers set.
 
     This function is useful to massage a DataFrame into a format where one or

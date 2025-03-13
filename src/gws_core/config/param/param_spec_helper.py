@@ -15,7 +15,7 @@ from .param_spec_decorator import (LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST,
                                    NESTED_PARAM_SPEC_TYPES_LIST,
                                    PARAM_SPEC_TYPES_LIST,
                                    SIMPLE_PARAM_SPEC_TYPES_LIST)
-from .param_types import DynamicParamAllowedSpecsDict
+from .param_types import DynamicParamAllowedSpecsDict, ParamSpecTypeStr
 
 
 class ParamSpecHelper():
@@ -110,7 +110,7 @@ class ParamSpecHelper():
         return param_spec_type.load_from_dto(dto)
 
     @staticmethod
-    def get_param_spec_type_from_str(type_: str) -> Type[ParamSpec]:
+    def get_param_spec_type_from_str(type_: ParamSpecTypeStr) -> Type[ParamSpec]:
         param_spec_types = ParamSpecHelper._get_param_spec_types()
         for param_spec_type in param_spec_types:
             if param_spec_type.get_str_type() == type_:

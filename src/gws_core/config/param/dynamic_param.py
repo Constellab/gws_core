@@ -10,10 +10,10 @@ from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 
-from .param_types import ParamSpecDTO
+from .param_types import ParamSpecDTO, ParamSpecTypeStr
 
 
-@param_spec_decorator(type=ParamaSpecType.NESTED)
+@param_spec_decorator(type_=ParamaSpecType.NESTED)
 class DynamicParam(ParamSpec[Dict[str, Any]]):
     """Dynamic param"""
 
@@ -66,8 +66,8 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
         return json_
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return "dynamic"
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.DYNAMIC_PARAM
 
     @classmethod
     def load_from_dto(cls, spec_dto: ParamSpecDTO) -> "DynamicParam":

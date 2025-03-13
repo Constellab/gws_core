@@ -2,12 +2,14 @@ from typing import List
 
 from gws_core import (ConfigParams, InputSpec, OutputSpecs, Task, TaskInputs,
                       TaskOutputs, task_decorator)
-from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.param_spec import IntParam, StrParam
 from gws_core.core.utils.utils import Utils
 from gws_core.credentials.credentials_param import CredentialsParam
 from gws_core.credentials.credentials_type import (CredentialsDataOther,
                                                    CredentialsType)
-from gws_core.impl.dify.dify_service import DifyIndexingTechnique, DifyService
+from gws_core.impl.dify.dify_service import (DifyIndexingTechnique,
+                                             DifySendDocumentOptions,
+                                             DifyService)
 from gws_core.impl.file.file import File
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
@@ -42,6 +44,12 @@ class DifySendFileToKnownledgeBase(Task):
                                        short_description="Indexing technique to use",
                                        allowed_values=Utils.get_literal_values(DifyIndexingTechnique),
                                        default_value='high_quality'),
+        'chunk_separator': StrParam(human_name="Chunk separator",
+                                    short_description="Separator to use to split the text into chunks",
+                                    default_value='\\n\\n'),
+        'chunk_max_tokens': IntParam(human_name="Chunk max tokens",
+                                     short_description="Max tokens per chunk",
+                                     default_value=500, min_value=1),
         'lang': StrParam(human_name="Language",
                          short_description="Language of the document",
                          default_value='en')
@@ -66,12 +74,17 @@ class DifySendFileToKnownledgeBase(Task):
             else:
                 self.log_error_message(f"Resource {fs_node.name} is not a file or a folder")
 
+        options = DifySendDocumentOptions(
+            indexing_technique=params.get_value('indexing_technique'),
+            chunk_separator=params.get_value('chunk_separator'),
+            chunk_max_tokens=params.get_value('chunk_max_tokens'),
+            lang=params.get_value('lang')
+        )
         progress = 0
         for file_path in file_paths:
             dify_service.send_document(file_path,
                                        params.get_value('dataset_id'),
-                                       params.get_value('indexing_technique'),
-                                       params.get_value('lang'))
+                                       options)
 
             progress += 1
             self.update_progress_value(progress / len(file_paths) * 100,

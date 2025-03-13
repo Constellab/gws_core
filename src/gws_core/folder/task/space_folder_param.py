@@ -4,12 +4,13 @@ from typing import Any, Dict, Optional
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
                                                         param_spec_decorator)
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecVisibilty
+from gws_core.config.param.param_types import (ParamSpecDTO, ParamSpecTypeStr,
+                                               ParamSpecVisibilty)
 from gws_core.core.classes.validator import StrValidator
 from gws_core.folder.space_folder import SpaceFolder
 
 
-@param_spec_decorator(type=ParamaSpecType.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamaSpecType.LAB_SPECIFIC)
 class SpaceFolderParam(ParamSpec[str]):
     """ Space folder param spec. When used, the end user will be able to select a space folder from
     the list of available space folders. The config stores only the space folder id, not the full space folder object.
@@ -44,8 +45,8 @@ class SpaceFolderParam(ParamSpec[str]):
         )
 
     @classmethod
-    def get_str_type(cls) -> str:
-        return "space_folder_param"
+    def get_str_type(cls) -> ParamSpecTypeStr:
+        return ParamSpecTypeStr.SPACE_FOLDER
 
     def build(self, value: Any) -> SpaceFolder:
         if not value:
