@@ -23,7 +23,9 @@ from .note_resource import NoteResource
 )
 class CreateNoteResource(Task):
     """
-    Create a note that can be exported to a note.
+    Create a note resource. It can be initialized from a note template of directly from the configuration.
+
+    The note resource can then by used in other tasks or converted to a lab note.
     """
 
     input_specs: InputSpecs = InputSpecs()

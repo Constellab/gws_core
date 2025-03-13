@@ -20,6 +20,12 @@ class IOSpecsDTO(BaseModelDTO):
     type: IOSpecsType
     additional_info: dict
 
+    def to_markdown(self) -> str:
+        markdown = ""
+        for spec in self.specs.values():
+            markdown += spec.to_markdown() + "\n"
+        return markdown
+
 
 class OutputsCheckResult(BaseModelDTO):
     """OutputCheckResult type

@@ -4,10 +4,12 @@ from typing import Any, Dict, List, Type
 
 from gws_core.brick.technical_doc_dto import TechnicalDocDTO
 from gws_core.core.utils.reflector_helper import ReflectorHelper
-from gws_core.core.utils.reflector_types import (ClassicClassDocDTO,
+from gws_core.core.utils.reflector_types import (ClassicClassDocDTO, MethodDoc,
                                                  MethodDocFunction)
-from gws_core.model.typing_dto import TypingFullDTO
+from gws_core.io.io_specs import IOSpecsDTO
+from gws_core.model.typing_dto import TypingFullDTO, TypingStatus
 from gws_core.protocol.protocol_typing import ProtocolTyping
+from gws_core.task.task_dto import TaskTypingDTO
 
 from ..model.typing import Typing
 from ..resource.resource import Resource
@@ -101,3 +103,36 @@ class TechnicalDocService():
             name = obj.__name__
 
         return ClassicClassDocDTO(name=name, doc=inspect.getdoc(obj), methods=methods, variables=variables)
+
+    @classmethod
+    def generate_tasks_technical_doc_as_md(cls, brick_name: str) -> str:
+        """Method to return the technical doc information about a brick to upload it on the hub
+        """
+        tasks = cls.export_typing_technical_doc(brick_name, TaskTyping)
+
+        return cls._generate_objects_technical_doc_as_md(tasks, 'Tasks')
+
+    @classmethod
+    def generate_protocols_technical_doc_as_md(cls, brick_name: str) -> str:
+        protocols = cls.export_typing_technical_doc(brick_name, ProtocolTyping)
+
+        return cls._generate_objects_technical_doc_as_md(protocols, 'Protocols')
+
+    @classmethod
+    def generate_resources_technical_doc_as_md(cls, brick_name: str) -> str:
+        resources = cls.export_typing_technical_doc(brick_name, ResourceTyping)
+
+        return cls._generate_objects_technical_doc_as_md(resources, 'Resources')
+
+    @classmethod
+    def _generate_objects_technical_doc_as_md(cls, objects: List[TypingFullDTO], title: str) -> str:
+        markdown = f'# {title}\n\n'
+
+        for obj in objects:
+            if obj.status == TypingStatus.UNAVAILABLE:
+                continue
+            markdown += obj.to_markdown()
+
+            markdown += '\n\n'
+
+        return markdown

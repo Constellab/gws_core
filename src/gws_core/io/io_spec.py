@@ -24,6 +24,26 @@ class IOSpecDTO(BaseModelDTO):
     sub_class: Optional[bool] = None
     is_constant: Optional[bool] = None
 
+    def to_markdown(self) -> str:
+
+        text = f'- `{self.human_name}` ('
+
+        if len(self.resource_types) > 1:
+            type_human_names = [f"`{resource_type.human_name}`" for resource_type in self.resource_types]
+            text += f"[{', '.join(type_human_names)}]"
+        else:
+            text += f"`{self.resource_types[0].human_name}`"
+
+        if self.is_optional:
+            text += ', optional'
+
+        text += ')'
+
+        if self.short_description:
+            text += f' : {self.short_description}.'
+
+        return text
+
 
 class IOSpec:
     resource_types: List[ResourceType]

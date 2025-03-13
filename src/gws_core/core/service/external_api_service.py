@@ -1,7 +1,8 @@
 
 
 import json
-from typing import Any, Dict
+from io import BufferedReader
+from typing import Any, Dict, List, Tuple
 
 import requests
 from fastapi.encoders import jsonable_encoder
@@ -9,9 +10,52 @@ from requests.models import Response
 
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
+from gws_core.impl.file.file_helper import FileHelper
 
 # 1 minute timeout
 DEFAULT_TIMEOUT = 60
+
+
+class FormData():
+
+    file_paths: List[Tuple[str, str]]
+    json_data: List[Tuple[str, Any]]
+
+    _opened_files: List[BufferedReader]
+
+    def __init__(self):
+        self.file_paths = []
+        self.json_data = []
+        self._opened_files = []
+
+    def add_file_from_path(self, key: str,  file_path: str) -> None:
+        self.file_paths.append((key, file_path))
+
+    def add_json_data(self, key: str, data: Any) -> None:
+        self.json_data.append((key, data))
+
+    def __enter__(self) -> List:
+        data: List = []
+        for key, file_path in self.file_paths:
+            file_name = FileHelper.get_name_with_extension(file_path)
+            content_type = FileHelper.get_mime(file_path)
+            opened_file = open(file_path, 'rb')
+            data.append((key, (file_name, opened_file, content_type)))
+            self._opened_files.append(opened_file)
+
+        for key, obj in self.json_data:
+            obj_str = json.dumps(jsonable_encoder(obj))
+            data.append((key, (None, obj_str, 'text/plain')))
+
+        return data
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for file in self._opened_files:
+            file.close()
+        # raise the exception if exists
+        if exc_val:
+            raise exc_val
+        return False
 
 
 class ExternalApiService:
@@ -31,6 +75,22 @@ class ExternalApiService:
         return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
+    def post_form_data(cls, url: str, form_data: FormData,
+                       data: Any = None, headers: Dict[str, str] = None,
+                       raise_exception_if_error: bool = False,
+                       timeout: int = DEFAULT_TIMEOUT) -> Response:
+        """
+        Make an HTTP post request
+        """
+        if headers is None:
+            headers = {}
+        session = requests.Session()
+        with form_data as files:
+            response = session.post(url, data=data, headers=headers, files=files, timeout=timeout)
+
+        return cls._handle_response(response, raise_exception_if_error)
+
+    @classmethod
     def put(cls, url: str, body: Any, headers: Dict[str, str] = None, files: Any = None,
             raise_exception_if_error: bool = False, timeout: int = DEFAULT_TIMEOUT) -> Response:
         """
@@ -42,19 +102,17 @@ class ExternalApiService:
         return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
-    def put_form_data(cls, url: str, data: Any, headers: Dict[str, str] = None, files: Any = None,
+    def put_form_data(cls, url: str, form_data: FormData, data: Any = None, headers: Dict[str, str] = None,
                       raise_exception_if_error: bool = False, timeout: int = DEFAULT_TIMEOUT) -> Response:
         """
         Make an HTTP put request
         """
         if headers is None:
             headers = {}
-        session = requests.Session()
-        # Wrap the data in body key to retrive it
-        # use the jsonable_encoder to convert the data to json
-        # use the json.dumps to convert the data to string
-        body = {"body": json.dumps(jsonable_encoder(data))}
-        response = session.put(url, data=body, headers=headers, files=files, timeout=timeout)
+
+        with form_data as files:
+            session = requests.Session()
+            response = session.put(url, data=data, headers=headers, files=files, timeout=timeout)
 
         return cls._handle_response(response, raise_exception_if_error)
 

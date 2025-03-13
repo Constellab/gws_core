@@ -18,10 +18,10 @@ from .plotly_task import PlotlyTask
                 style=TypingStyle.material_icon("ssid_chart"))
 class PlotlyLine(PlotlyTask):
     """
-    Plotly linear plot
-    plotly.express.line()
+    Generate a line plot from a table using plotly.
 
-    please check : [https://plotly.com/python-api-reference/generated/plotly.express.line.html] for more info
+    Please check plotly documentation to understand configuration :
+    [https://plotly.com/python-api-reference/generated/plotly.express.line.html]
     """
     input_specs = PlotlyTask.input_specs
 

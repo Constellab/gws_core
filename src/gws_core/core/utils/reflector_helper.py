@@ -156,7 +156,7 @@ class ReflectorHelper():
         return res
 
     @classmethod
-    def get_all_public_args(cls, type_: Type) -> Optional[Dict]:
+    def get_all_public_args(cls, type_: Type) -> Optional[Dict[str, str]]:
         '''
             Get all the public args of a class and its ancestors
         '''
@@ -170,7 +170,7 @@ class ReflectorHelper():
         return res if len(res) > 0 else None
 
     @classmethod
-    def get_public_args(cls, class_) -> Dict:
+    def get_public_args(cls, class_) -> Dict[str, str]:
         '''
             Get the public args of a class
         '''

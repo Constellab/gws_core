@@ -26,11 +26,16 @@ class ShowcaseApp(Dashboard):
 
 
 @task_decorator("GenerateShowcaseApp", human_name="Generate streamlit showcase app",
-                short_description="App that showacases Constellab components for streamlit",
+                short_description="App that showcases Constellab components for streamlit",
                 style=StreamlitResource.copy_style())
 class GenerateShowcaseApp(Task):
     """
-    Task description (supports markdown)
+    Task that generates the streamlit showcase app.
+
+    This app showcases the streamlit component developped by Gencovery to simplify
+    the creation of streamlit apps.
+
+    Some components are generic streamlit components (like containers), other wrap Constellab UI components.
     """
 
     output_specs = OutputSpecs({

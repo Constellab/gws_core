@@ -18,6 +18,8 @@ class CreateJsonDict(Task):
     """Simple task to create a json dict resource from the interface.
 
     It can be useful to pass configuration to other tasks.
+
+    Is uses a json code editor as configuration to create the json dict resource.
     """
 
     input_specs: InputSpecs = InputSpecs()

@@ -12,6 +12,24 @@ class ResourceTypingMethodDTO(BaseModelDTO):
     funcs: Optional[List[MethodDoc]]
     views: Optional[List[ResourceViewMetadatalDTO]]
 
+    def to_markdown(self) -> str:
+        markdown = ""
+
+        markdown += '\n\n### Methods\n'
+        if self.funcs:
+            for func in self.funcs:
+                markdown += func.to_markdown() + "\n"
+        else:
+            markdown += 'No method.'
+
+        markdown += '\n\n### Views\n'
+        if self.views:
+            for view in self.views:
+                markdown += view.to_markdown() + "\n"
+        else:
+            markdown += 'No view.'
+        return markdown
+
 
 class ResourceTypingVariableDTO(BaseModelDTO):
     name: str
@@ -20,5 +38,19 @@ class ResourceTypingVariableDTO(BaseModelDTO):
 
 
 class ResourceTypingDTO(TypingFullDTO):
-    variables: Optional[Dict]
+    variables: Optional[Dict[str, str]]
     methods: Optional[ResourceTypingMethodDTO]
+
+    def to_markdown(self) -> str:
+        markdown = super().to_markdown()
+
+        if self.variables:
+            markdown += '\n\n**Attributes:**\n'
+            for key, value in self.variables.items():
+                markdown += f"- {key} : `{value}`\n"
+        else:
+            markdown += '\n\nNo attribute.'
+
+        markdown += self.methods.to_markdown()
+
+        return markdown

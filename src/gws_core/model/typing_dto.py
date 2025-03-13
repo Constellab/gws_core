@@ -45,6 +45,30 @@ class TypingFullDTO(TypingDTO):
     parent: Optional[TypingRefDTO] = None
     doc: Optional[str] = None
 
+    def to_markdown(self) -> str:
+        markdown = f'## {self.human_name}\n\n'
+
+        markdown += f'Typing name: {self.typing_name}.'
+
+        if self.short_description:
+            markdown += f' Short description: {self.short_description}.'
+
+        if self.deprecated_since and self.deprecated_message:
+            markdown += f' Deprecated since: {self.deprecated_since}. Reason: {self.deprecated_message}.'
+
+        if self.hide:
+            markdown += ' This task is hidden from playground.'
+
+        if self.parent:
+            markdown += f' Parent class: {self.parent.typing_name}.'
+
+        if self.doc:
+            # TODO to improve
+            doc = self.doc.replace('#', '')
+            markdown += f'{doc}'
+
+        return markdown
+
 
 class SimpleTypingDTO(BaseModelDTO):
     human_name: str = None

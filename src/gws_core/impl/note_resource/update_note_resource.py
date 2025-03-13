@@ -23,7 +23,7 @@ from .note_resource import NoteResource
 )
 class UpdatNoteResource(Task):
     """
-    Append content to an existing note resource.
+    Append the content provided in the configuration to the input note resource.
     """
 
     input_specs: InputSpecs = InputSpecs({

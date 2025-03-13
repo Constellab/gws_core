@@ -21,7 +21,7 @@ from .note_resource import NoteResource
 )
 class MergeNoteResources(Task):
     """
-    Append content to an existing note resource.
+    Merge multiple note resource into a new note resource.
     """
 
     input_specs: InputSpecs = DynamicInputs({

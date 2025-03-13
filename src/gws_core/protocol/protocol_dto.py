@@ -111,3 +111,20 @@ class ProtocolTypingFullDTO(TypingFullDTO):
     input_specs: Optional[IOSpecsDTO] = None
     output_specs: Optional[IOSpecsDTO] = None
     config_specs: Optional[dict] = None
+
+    def to_markdown(self) -> str:
+        markdown = super().to_markdown()
+
+        if self.input_specs and len(self.input_specs.specs) > 0:
+            markdown += '\n\n**Inputs:**\n'
+            markdown += self.input_specs.to_markdown()
+        else:
+            markdown += '\n\nNo input.'
+
+        if self.output_specs and len(self.output_specs.specs) > 0:
+            markdown += '\n\n**Outputs:**\n'
+            markdown += self.output_specs.to_markdown()
+        else:
+            markdown += '\n\nNo output.'
+
+        return markdown

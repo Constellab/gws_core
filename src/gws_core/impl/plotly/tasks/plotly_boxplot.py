@@ -18,10 +18,10 @@ from .plotly_task import PlotlyTask
                 style=TypingStyle.material_icon("multiline_chart"))
 class PlotlyBoxplot(PlotlyTask):
     """
-    Plotly Box plot
-    plotly.express.box()
+    Generate a box plot from a table using plotly.
 
-    please check : [https://plotly.com/python-api-reference/generated/plotly.express.box.html] for more info
+    Please check plotly documentation to understand configuration :
+    [https://plotly.com/python-api-reference/generated/plotly.express.box.html]
 
     """
     input_specs = PlotlyTask.input_specs

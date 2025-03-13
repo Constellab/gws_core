@@ -84,6 +84,19 @@ class Folder(FSNode):
         """
         return list(map(self.get_sub_path,  self.list_dir()))
 
+    def list_all_file_paths(self) -> List[str]:
+        """
+        List the files inside this folder recursively
+
+        :return: List of all file paths in the folder
+        :rtype: List[str]
+        """
+        file_paths = []
+        for root, _, files in os.walk(self.path):
+            for file in files:
+                file_paths.append(os.path.join(root, file))
+        return file_paths
+
     def get_sub_path(self, sub_node_path: str) -> str:
         """
         Get the absolute path of the sub node

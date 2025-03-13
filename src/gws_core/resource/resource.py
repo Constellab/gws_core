@@ -135,6 +135,7 @@ class Resource(BaseTyping):
         """Add technical information on the resource. Technical info are useful to set additional information on the resource.
 
         :param technical_info: technical information to add (key, value)
+        this is a long description of the technical information, defaults to None
         :type technical_info: TechnicalInfo
         """
         self.technical_info.add(technical_info)

@@ -23,35 +23,15 @@ from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator(unique_name="WriteToJsonFile", human_name="Write to file",
-                short_description="Simple task to write a resource json data to a file in local store",
-                style=File.copy_style())
-class WriteToJsonFile(Task):
-    input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
-    output_specs: OutputSpecs = OutputSpecs({'file': OutputSpec(File)})
-    config_specs: ConfigSpecs = {'filename': StrParam(
-        short_description='Name of the file')}
-
-    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        file_path = os.path.join(self.create_tmp_dir(), params.get_value('filename') + '.json')
-
-        resource: Resource = inputs['resource']
-        file = File(file_path)
-        file.write(json.dumps(resource.view_as_json(
-            ConfigParams()).to_dto(ConfigParams()).to_json_dict()))
-
-        return {"file": file}
-
-
 @task_decorator(unique_name="FsNodeExtractor", human_name="Fs node extractor",
                 short_description="Extract a sub file or folder from a folder to generated a new resource")
 class FsNodeExtractor(Task):
-    """Task to extract a file from a folder to create a resource
+    """Task to extract a file from a folder to create a resource.
 
-    :param Task: _description_
-    :type Task: _type_
-    :return: _description_
-    :rtype: _type_
+    This is useful when you want to use a specific file or folder from a folder in another scenario.
+
+    A new resource is created but he file is not copied, a symbolic link is created to the original file.
+    If the original folder is deleted, the extracted resource will be deleted as well.
     """
 
     input_specs = InputSpecs({"source": InputSpec(Folder)})

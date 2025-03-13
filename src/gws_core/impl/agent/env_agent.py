@@ -34,8 +34,8 @@ class EnvAgent(Task):
     """
     This task executes code snippets on the fly in shell environments.
 
-    # source_paths variable contains the list of input files and folders.
-    # Each file or folder in the target_path folder are exported as output resources.
+    Check agent documentation for more information :
+    https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779
 
     > **Warning**: It is recommended to use code snippets comming from trusted sources.
     """

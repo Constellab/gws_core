@@ -19,6 +19,26 @@ class ResourceViewMetadatalDTO(BaseModelDTO):
     config_specs: Dict[str, ParamSpecDTO]
     style: TypingStyle
 
+    def to_markdown(self) -> str:
+        markdown = f"#### {self.human_name}"
+
+        if self.default_view:
+            markdown += " (default view)"
+        markdown += "\n"
+
+        if self.short_description:
+            markdown += f"**Description:** {self.short_description}\n\n"
+
+        markdown += f"**View type:** {self.view_type}\n\n"
+
+        markdown += "**Config Specs:**\n"
+        if self.config_specs:
+            for spec in self.config_specs.values():
+                markdown += spec.to_markdown() + "\n"
+        else:
+            markdown += "No config specs.\n"
+        return markdown
+
 
 class ViewDTO(BaseModelDTO):
     type: ViewType

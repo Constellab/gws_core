@@ -18,10 +18,10 @@ from .plotly_task import PlotlyTask
                 style=TypingStyle.material_icon("scatter_plot"))
 class PlotlyScatterplot(PlotlyTask):
     """
-    Plotly scatter plot
-    plotly.express.scatter()
+    Generate a scatter plot from a table using plotly.
 
-    please check : [https://plotly.com/python-api-reference/generated/plotly.express.scatter.html] for more info
+    Please check plotly documentation to understand configuration :
+    [https://plotly.com/python-api-reference/generated/plotly.express.scatter.html]
     """
 
     input_specs = PlotlyTask.input_specs

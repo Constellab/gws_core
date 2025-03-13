@@ -17,7 +17,11 @@ from .note_resource import NoteResource
                 short_description="Task to generate a lab note from an note resource")
 class GenerateLabNote(Task):
     """
-    Generate a note from the note content.
+    Generate a note from a note resource. After generation, a lab note will be created and available
+    in notes pages.
+
+    This taks is useful as the end of a scenario to convert generate a report of the scenario.
+    In this case a NoteResource can be passed though the scenario and at the end, a lab note can be generated.
     """
 
     input_specs: InputSpecs = InputSpecs({

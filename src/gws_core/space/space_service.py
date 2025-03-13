@@ -1,14 +1,15 @@
 
 
+import json
 from typing import Dict, List, Literal, Optional
 
+from fastapi.encoders import jsonable_encoder
 from requests.models import Response
 
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
                                                      RichTextModificationsDTO)
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
@@ -22,7 +23,7 @@ from gws_core.tag.tag_helper import TagHelper
 from gws_core.user.user_dto import UserFullDTO, UserSpace
 
 from ..core.exception.exceptions import BadRequestException
-from ..core.service.external_api_service import ExternalApiService
+from ..core.service.external_api_service import ExternalApiService, FormData
 from ..core.utils.settings import Settings
 from ..folder.space_folder_dto import (ExternalSpaceCreateFolder,
                                        ExternalSpaceFolder,
@@ -199,18 +200,17 @@ class SpaceService():
             f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/note/v2")
 
         # convert the file paths to file object supported by the form data request
-        files = []
+        form_data = FormData()
         for file_path in file_paths:
-            file = open(file_path, 'rb')
-            filename = FileHelper.get_name_with_extension(file_path)
-            content_type = FileHelper.get_mime(file_path)
-            files.append(('files', (filename, file, content_type)))
+            form_data.add_file_from_path('files', file_path)
 
         try:
+            body = {"body": json.dumps(jsonable_encoder(note))}
             ExternalApiService.put_form_data(
-                space_api_url, data=note,
+                space_api_url,
+                form_data=form_data,
+                data=body,
                 headers=self._get_request_header(),
-                files=files,
                 raise_exception_if_error=True)
         except BaseHTTPException as err:
             err.detail = f"Can't save the note in space. Error : {err.detail}"

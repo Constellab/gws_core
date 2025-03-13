@@ -27,11 +27,12 @@ from ...task.task_io import TaskInputs, TaskOutputs
 class CreateFolderFromFiles(Task):
     """
     Create a folder from a list of files or folders.
-    Provide a list of files or folders as input and the task will create a folder containing the files or folders.
+    Provide a list of files or folders as input and the task will create
+    a folder containing the files or folders.
 
     The input file and folder are copied to the new folder.
 
-    ## Configuration:
+    **Configuration**:
     List of filenames to use for the files or folders in the input list.
     If not provided, the original filenames will be used.
     The filenames must be provided in the same order as the input list.

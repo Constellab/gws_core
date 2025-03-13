@@ -83,9 +83,12 @@ targets = [JSONDict(target)]
                 style=TypingStyle.material_icon("auto_awesome"))
 class JsonSmartTransformer(Task):
     """
-    This task uses openAI API to generate python code that transforms a json. This code is then automatically executed.
+    This task uses openAI API to generate python code that transforms a json.
+    This code is then automatically executed to apply transformation on the input json.
 
     The structure of the json is transfered to OpenAI, not the json itself.
+
+    This is useful when you want to transform a json in a way that is not trivial.
     """
 
     input_specs: InputSpecs = InputSpecs({

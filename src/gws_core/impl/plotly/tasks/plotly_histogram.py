@@ -17,6 +17,13 @@ from .plotly_task import PlotlyTask
                 short_description="Histogram plot from plotly(px)",
                 style=TypingStyle.material_icon("bar_chart"))
 class PlotlyHistogram(PlotlyTask):
+    """
+    Generate a histogram plot from a table using plotly.
+
+    Please check plotly documentation to understand configuration :
+      [https://plotly.com/python-api-reference/generated/plotly.express.histogram.html]
+
+    """
 
     input_specs = PlotlyTask.input_specs
 

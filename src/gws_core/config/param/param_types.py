@@ -28,6 +28,20 @@ class ParamSpecDTO(ParamSpecSimpleDTO):
     short_description: Optional[str] = None
     allowed_values: Optional[List[ParamValue]] = None
 
+    def to_markdown(self) -> str:
+        markdown = f"- {self.human_name} (`{self.type}`"
+        if self.optional:
+            markdown += ", optional"
+
+        markdown += ")"
+
+        markdown += f": {self.short_description}"
+        if self.default_value:
+            markdown += f", default to '{self.default_value}'"
+        if self.allowed_values:
+            markdown += f" (allowed values: {self.allowed_values})"
+        return markdown
+
 
 class ParamSpecInfoSpecs(BaseModelDTO):
     optional: ParamSpecDTO

@@ -27,16 +27,23 @@ class GenerateAutoMLAppDashboard(Dashboard):
         )
 
 
-@task_decorator("GenerateAutoMLApp", human_name="Generate auto machine learning app",
-                short_description="Task to generate an auto machine learning app",
+@task_decorator("GenerateAutoMLApp", human_name="Generate copilot machine learning app",
+                short_description="Task to generate the copilot machine learning app",
                 style=StreamlitResource.copy_style())
 class GenerateAutoMLApp(Task):
     """
-    Task description (supports markdown)
+    Task that generates the copilot machine learning app.
+
+    Execute this task to have access to the copilot machine learning app.
+
+    You can provide a note to be displayed in the getting started section of the app.
+
+    You can provide a table to initialize the dashboard with data.
     """
 
     input_specs = InputSpecs({
-        'getting_started_note': InputSpec(LabNoteResource, human_name='Getting started note'),
+        'getting_started_note': InputSpec(LabNoteResource, human_name='Getting started note',
+                                          short_description='Note that is being displayed in the getting started section'),
         'table': InputSpec(Table, human_name='Table', short_description='Optional table to init dashboard with', is_optional=True)
     })
     output_specs = OutputSpecs({

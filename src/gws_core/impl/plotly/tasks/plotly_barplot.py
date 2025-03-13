@@ -18,10 +18,10 @@ from .plotly_task import PlotlyTask
                 style=TypingStyle.material_icon("bar_chart"))
 class PlotlyBarplot(PlotlyTask):
     """
-    Plotly Bar plot
-    plotly.express.bar()
+    Generate a bar plot or a stack bar plot from a table using plotly.
 
-    please check : [https://plotly.com/python-api-reference/generated/plotly.express.bar.html]
+    Please check plotly documentation to understand configuration :
+    [https://plotly.com/python-api-reference/generated/plotly.express.bar.html]
 
     """
     input_specs = PlotlyTask.input_specs

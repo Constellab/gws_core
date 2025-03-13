@@ -88,6 +88,8 @@ This task uses openAI API to generate python code that generate an interactive c
 /!\ This task does not support table tags.
 
 The data of the table is not transferered to OpenAI, only the provided text.
+
+This task is useful to generate interactive plots from a table data.
     """
 
     input_specs: InputSpecs = InputSpecs({
