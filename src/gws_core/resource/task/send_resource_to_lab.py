@@ -35,13 +35,15 @@ class SendResourceToLab(Task):
     """
     Task to send a resource to another lab using a share link.
 
-    This task creates a share link for the resource.
+    This task creates a share link for the resource. A import scenario is created in the destination lab.
 
     Then it call the external lab API to import the resource in the external lab using the share link.
 
     A credentials of type lab are required in both labs to be able to send and receive resources. It
     needs to be the same api_key in both labs.
 
+    Check the following documentation to see how to configure the lab credentials:
+    https://constellab.community/bricks/gws_academy/latest/doc/data-lab/resource/51b1f255-e08f-41f6-b503-10e37ea277b0#send-resources-to-another-lab-(e.g.-a-datahub)
     """
 
     input_specs = InputSpecs({

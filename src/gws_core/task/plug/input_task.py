@@ -21,9 +21,8 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
                 style=TypingStyle.material_icon("login"))
 class InputTask(Task):
     """
-    Input task.
-
-    A source task is used to load and transfer a resource. No more action is done.
+    Standard task to load a resource into a scenario.
+    This is the task used when you add a resource to a scenario.
     """
 
     output_name: str = 'resource'

@@ -1,15 +1,13 @@
 import inspect
 import sys
-from typing import Any, Dict, List, Type
+from typing import Any, List, Type
 
 from gws_core.brick.technical_doc_dto import TechnicalDocDTO
 from gws_core.core.utils.reflector_helper import ReflectorHelper
-from gws_core.core.utils.reflector_types import (ClassicClassDocDTO, MethodDoc,
+from gws_core.core.utils.reflector_types import (ClassicClassDocDTO,
                                                  MethodDocFunction)
-from gws_core.io.io_specs import IOSpecsDTO
 from gws_core.model.typing_dto import TypingFullDTO, TypingStatus
 from gws_core.protocol.protocol_typing import ProtocolTyping
-from gws_core.task.task_dto import TaskTypingDTO
 
 from ..model.typing import Typing
 from ..resource.resource import Resource
@@ -102,7 +100,8 @@ class TechnicalDocService():
         else:
             name = obj.__name__
 
-        return ClassicClassDocDTO(name=name, doc=inspect.getdoc(obj), methods=methods, variables=variables)
+        doc = ReflectorHelper.get_cleaned_doc(obj)
+        return ClassicClassDocDTO(name=name, doc=doc, methods=methods, variables=variables)
 
     @classmethod
     def generate_tasks_technical_doc_as_md(cls, brick_name: str, separator: str = None) -> str:

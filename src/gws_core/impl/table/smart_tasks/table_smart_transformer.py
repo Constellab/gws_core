@@ -108,13 +108,20 @@ table_target = Table(target)
 
 
 @task_decorator("SmartTableTransformer", human_name="Smart table transformer",
-                short_description="Table transformer that uses AI  (OpenAI).",
+                short_description="Table transformer that uses AI (OpenAI).",
                 style=TypingStyle.material_icon("auto_awesome"))
 class TableSmartTransformer(Task):
     """
-    This task uses openAI API to generate python code that transforms a dataframe. This code is then automatically executed.
+    This task uses AI to tranform a table.
+    This task is useful to filter a table, transform it, generate simple statistics, etc.
 
     The data of the table is not transferered to OpenAI, only the provided text.
+    Please provide a clear description of what you want to achieve by providing column names, row names, etc.
+    You can provide multiple message to the AI to get the best result, the context will be kept between the messages.
+
+    This task uses openAI API to generate python code which is then automatically executed.
+
+    ⚠️ This task does not support table tags. ⚠️
     """
 
     input_specs: InputSpecs = InputSpecs({

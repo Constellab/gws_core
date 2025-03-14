@@ -14,11 +14,13 @@ from gws_core.impl.file.file import File
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.io.dynamic_io import DynamicInputs
+from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource_set.resource_list import ResourceList
 
 
 @task_decorator("DifySendFileToKnownledgeBase", human_name="Send files to Dify Knowledge Base",
-                short_description="Send as many files or folders as you want to Dify Knowledge Base")
+                short_description="Send as many files or folders as you want to Dify Knowledge Base",
+                style=TypingStyle.community_image("dify", "#ffffff"))
 class DifySendFileToKnownledgeBase(Task):
     """
     Send as many files or folders as you want to Dify Knowledge Base.

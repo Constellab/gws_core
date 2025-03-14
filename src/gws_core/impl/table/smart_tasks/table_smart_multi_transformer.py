@@ -100,11 +100,17 @@ targets = [Table(t) for t in target]"""
                 style=TypingStyle.material_icon("auto_awesome"))
 class MultiTableSmartTransformer(Task):
     """
-    This task uses openAI API to generate python code that transforms multiple dataframe. This code is then automatically executed.
+    This tasks uses AI to transform multiple tables. It supports multiple tables as input and output.
 
-    /!\ This task does not support table tags.
+    This task can be useful to merge multiple tables, filter them, compare them, etc.
 
     The data of the table is not transferered to OpenAI, only the provided text.
+    Please provide a clear description of what you want to achieve by providing column names, row names, etc.
+    You can provide multiple message to the AI to get the best result, the context will be kept between the messages.
+
+    This task uses openAI API to generate python code which is then automatically executed.
+
+    ⚠️ This task does not support table tags. ⚠️
     """
 
     input_specs: InputSpecs = DynamicInputs({

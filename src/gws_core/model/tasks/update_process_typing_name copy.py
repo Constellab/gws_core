@@ -17,7 +17,6 @@ class UpdateProcessTypingName(Task):
     """
     ⚠️⚠️⚠️ Use this task only if you know what you are doing, it can break the system.⚠️⚠️⚠️
 
-
     Update the typing name of processes (task or protocol) in the database.
     This is useful when the typing name of a process has changed after an update for example.
     """

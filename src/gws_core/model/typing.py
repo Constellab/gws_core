@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Type
 from peewee import BooleanField, CharField, ModelSelect
 
 from gws_core.core.model.db_field import BaseDTOField, JSONField
+from gws_core.core.utils.reflector_helper import ReflectorHelper
 from gws_core.model.typing_dto import (SimpleTypingDTO, TypingDTO,
                                        TypingFullDTO, TypingObjectType,
                                        TypingRefDTO, TypingStatus)
@@ -169,7 +170,8 @@ class Typing(Model):
 
         if model_t is None:
             return ""
-        return inspect.getdoc(model_t)
+
+        return ReflectorHelper.get_cleaned_doc(model_t)
 
     ############################################# CLASS METHODS #########################################
 

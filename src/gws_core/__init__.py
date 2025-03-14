@@ -184,8 +184,6 @@ from .impl.openai.open_ai_helper import OpenAiHelper as OpenAiHelper
 from .impl.plotly.plotly_r_field import PlotlyRField as PlotlyRField
 from .impl.plotly.plotly_resource import PlotlyResource as PlotlyResource
 from .impl.plotly.plotly_view import PlotlyView as PlotlyView
-from .impl.plotly.table_smart_plotly import \
-    AITableGeneratePlotly as AITableGeneratePlotly
 # Impl > RichText
 from .impl.rich_text.rich_text import RichText as RichText
 from .impl.rich_text.rich_text_paragraph_text import \
@@ -228,6 +226,8 @@ from .impl.table.metadata_table.table_annotator import \
     TableColumnAnnotator as TableColumnAnnotator
 from .impl.table.metadata_table.table_annotator import \
     TableRowAnnotator as TableRowAnnotator
+from .impl.table.smart_tasks.table_smart_plotly import \
+    AITableGeneratePlotly as AITableGeneratePlotly
 from .impl.table.table import Table as Table
 from .impl.table.table_types import TableHeaderInfo as TableHeaderInfo
 from .impl.table.tasks.table_exporter import TableExporter as TableExporter

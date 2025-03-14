@@ -148,7 +148,9 @@ class ReflectorHelper():
                 arguments: List = cls.get_method_named_args_json(method.func)
                 return_type = Utils.stringify_type(
                     signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None
-                res.append(MethodDoc(name=method.name, doc=inspect.getdoc(method.func),
+
+                doc = cls.get_cleaned_doc(method.func)
+                res.append(MethodDoc(name=method.name, doc=doc,
                                      args=arguments, return_type=return_type, method_type=method_type))
             except Exception:
                 Logger.error(f"Error while getting method doc of {method.name} in {type_}")
@@ -192,3 +194,18 @@ class ReflectorHelper():
         except:
             Logger.error(f"Error while getting public args of {class_}")
             return {}
+
+    @classmethod
+    def get_cleaned_doc(cls, object: object) -> str | None:
+        """Method to retrieve the doc of a class or a method and clean it
+        The clean replace header 1 with header 2
+
+        This is to prevent header 1 in community.
+        """
+        doc = inspect.getdoc(object)
+        if doc is None:
+            return None
+
+        doc = doc.replace('\n# ', '\n## ')
+
+        return doc

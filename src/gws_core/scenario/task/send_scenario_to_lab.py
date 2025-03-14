@@ -43,6 +43,8 @@ class SendScenarioToLab(Task):
     A credentials of type lab are required in both labs to be able to send and receive scenarios. It
     needs to be the same api_key in both labs.
 
+    The following documentation explain how to configure the lab credentials:
+    https://constellab.community/bricks/gws_academy/latest/doc/data-lab/scenario/f4453296-ccc5-4b54-8e46-2d1c2f830a0c#send-a-scenario-to-another-lab-(e.g.-a-datahub)
     """
 
     input_specs = InputSpecs({'scenario': InputSpec(ScenarioResource, human_name="Scenario to send",

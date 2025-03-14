@@ -19,7 +19,7 @@ from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
-from .plotly_resource import PlotlyResource
+from ...plotly.plotly_resource import PlotlyResource
 
 
 class AITableGeneratePlotly(AIPromptCode):
@@ -81,15 +81,15 @@ targets = [PlotlyResource(target)]"""
                 style=TypingStyle.material_icon("insights"))
 class SmartPlotly(Task):
     """
-This task is still in beta version.
+    This tasks uses AI to generate an interactive plot using Plotly from a table.
 
-This task uses openAI API to generate python code that generate an interactive chart using plotly library. This code is then automatically executed.
+    The data of the table is not transferered to OpenAI, only the provided text.
+    Please provide a clear description of what you want to achieve by providing column names, row names, etc.
+    You can provide multiple message to the AI to get the best result, the context will be kept between the messages.
 
-/!\ This task does not support table tags.
+    This task uses openAI API to generate python code which is then automatically executed.
 
-The data of the table is not transferered to OpenAI, only the provided text.
-
-This task is useful to generate interactive plots from a table data.
+    ⚠️ This task does not support table tags. ⚠️
     """
 
     input_specs: InputSpecs = InputSpecs({

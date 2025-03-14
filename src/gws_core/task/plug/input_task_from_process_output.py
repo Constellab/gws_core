@@ -24,7 +24,10 @@ class InputTaskFromProcessOutput(Task):
     Input task to select a resource directly from a task output.
     It can be used set an input of a scenario connected to an output of a task from another scenario.
     The scenario containing this task can be created and configure before the first scenario is executed.
-    It must be run after the first scenario is executed
+    It must be run after the first scenario is executed.
+
+    This is useful when you dynamically generated multiple scenario and you want to connect output
+    of one scenario to the input of another scenario.
     """
 
     output_name: str = 'resource'

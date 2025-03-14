@@ -84,11 +84,15 @@ targets = [File(output_path)]"""
                 style=TypingStyle.material_icon("auto_awesome"))
 class SmartPlot(Task):
     """
-    This task uses openAI API to generate python code that generate a chart using matplotlib library. This code is then automaticaaly executed.
-
-    /!\ This task does not support table tags.
+    This task uses AI to generate a plot image from a table. It uses the matplotlib library.
 
     The data of the table is not transferered to OpenAI, only the provided text.
+    Please provide a clear description of what you want to achieve by providing column names, row names, etc.
+    You can provide multiple message to the AI to get the best result, the context will be kept between the messages.
+
+    This task uses openAI API to generate python code which is then automatically executed.
+
+    ⚠️ This task does not support table tags. ⚠️
     """
 
     input_specs: InputSpecs = InputSpecs({

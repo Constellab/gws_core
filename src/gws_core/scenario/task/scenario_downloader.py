@@ -66,6 +66,11 @@ class ImportedResource():
                 short_description="Download a scenario from another lab using a link",
                 style=TypingStyle.material_icon("scenario"))
 class ScenarioDownloader(Task):
+    """
+    Task to download a scenario from another lab using a share link.
+
+    This can be used between a dev and a prod environment of a lab.
+    """
 
     output_specs = OutputSpecs({
         'scenario': OutputSpec(ScenarioResource, human_name='Scenario')

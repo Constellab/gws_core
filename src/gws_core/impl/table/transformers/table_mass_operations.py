@@ -28,7 +28,7 @@ class TableColumnMassOperations(Task):
 
     **The input table must not contained special caracters in the column names**
 
-    # Examples
+    ## Examples
     Let's say you have this ```Table``` with the column A, B, C, D
     | A | B  | C  | D  |
     |---|----|----|----|
@@ -48,13 +48,13 @@ class TableColumnMassOperations(Task):
     * Floor division : ``` A // C```
     * Advanced exemple : ```(A + B) / (C * D)```
 
-    # Comparaison
+    ## Comparaison
 
     This task support comparaison, it will return the string ```True``` or ```False```.
 
     Comparaison operators : ```==```, ```!=```, ```>```, ```<```, ```>=``` and ```<=```
 
-    ## Math functions
+    ### Math functions
 
     This task supports basic math functions : ```sin```, ```cos```, ```exp```, ```log```, ```expm1```, ```log1p```, ```sqrt```, ```sinh```, ```cosh```, ```tanh```, ```arcsin```, ```arccos```, ```arctan```, ```arccosh```, ```arcsinh```, ```arctanh```, ```abs```, ```arctan2``` and ```log10```.
 
@@ -64,7 +64,7 @@ class TableColumnMassOperations(Task):
 
 
 
-    # Error on unknown column
+    ## Error on unknown column
     If ```Error on unknown column``` is unchecked, the operation will not fail on unknow columns (the result for operations with unknown column will be 'NaN') but only basic operations and comparaison are supported (no functions).
 
     If ```Error on unknown column``` is checked, the operation will fail on unknow columns (raise an exception) but it supports all operations.

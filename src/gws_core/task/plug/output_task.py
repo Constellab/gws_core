@@ -15,9 +15,11 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
                 style=TypingStyle.material_icon("logout"))
 class OutputTask(Task):
     """
-    Output task.
+    Standard task to define a resource as an output of a scenario.
 
-    An output task is used to recieve a resource. The resource is flagged to show resources list.
+    Ths resource is then flagged so it can be shown in the resources list.
+
+    output resources can be used when sending a scenario to another lab.
     """
 
     input_name: str = 'resource'

@@ -13,7 +13,9 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
                 short_description="Select a scenario and return a ScenarioResource")
 class SelectScenario(Task):
     """
-    Task description (supports markdown)
+    Task to select a scenario and return a ScenarioResource.
+
+    This is useful when you want to manipulate a scenario from a task (like send a scenario to a lab).
     """
 
     output_specs = OutputSpecs({

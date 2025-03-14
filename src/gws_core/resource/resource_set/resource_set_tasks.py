@@ -24,6 +24,14 @@ from .resource_set import ResourceSet
                 hide=False,
                 style=TypingStyle.material_icon("format_list_bulleted", background_color="#FEC7B4"))
 class ResourceStacker(Task):
+    """
+    Stack a set of resource in a resource set.
+    This is useful when a task uses a resource set as input.
+
+    The provided input resource are directly added to the output resource set (resource are not copied).
+
+    If an input resource is a ResourceList or a ResourceSet, the resource are flatten and added to the output resource set.
+    """
 
     config_specs: ConfigSpecs = {'keys': ParamSet(
         {'key': StrParam(human_name="Resource key", short_description="The key of the resource to stack", optional=True)},
@@ -67,6 +75,14 @@ class ResourceStacker(Task):
                 hide=False,
                 style=TypingStyle.material_icon("format_list_bulleted", background_color="#FEC7B4"))
 class ResourcePicker(Task):
+    """
+    Pick a resource from a resource set.
+
+    This is useful when you need to extract a resource from a resource set to use it in another
+
+    The picked resource references the original resource in the resource set and is not a copy.
+
+    """
     input_specs: InputSpecs = InputSpecs({
         "resource_set": InputSpec(ResourceSet),
     })

@@ -17,7 +17,6 @@ class UpdateResourceTypingName(Task):
     """
     ⚠️⚠️⚠️ Use this task only if you know what you are doing, it can break the system.⚠️⚠️⚠️
 
-
     Update the typing name of resources in the database.
     This is useful when the typing name of a resource has changed after an update for example.
     """

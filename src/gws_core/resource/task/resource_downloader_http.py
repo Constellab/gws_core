@@ -34,11 +34,11 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
 
     If the link is from a Gencovery lab, the resource downloaded and imported in the correct type.
     Then it will be marked as received in the origin lab.
+    In this case an automatic scenario might be created in the source lab to zip the resource before sharing it.
 
     If the link refers to a zip file, the zip file will be unzipped and the resource will be imported (File or Folder).
 
     If the link refers to a file, the file will be imported as a resource.
-
     """
     config_specs: ConfigSpecs = {
         'link': StrParam(human_name='Resource link', short_description='Link to download the resource'),

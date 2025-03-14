@@ -63,8 +63,8 @@ class TypingFullDTO(TypingDTO):
             markdown += f' Parent class: {self.parent.typing_name}.'
 
         if self.doc:
-            # TODO to improve
-            doc = self.doc.replace('#', '')
+            # replace titles
+            doc = self.doc.replace('\n# ', '\n### ').replace('\n## ', '\n### ')
             markdown += f'{doc}'
 
         return markdown

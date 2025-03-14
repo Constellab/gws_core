@@ -1660,7 +1660,8 @@ class Table(Resource):
         View one or several columns as 2D-line plots
         TODO to improve
         """
-        from gws_core.impl.plotly.table_smart_plotly import SmartPlotly
+        from gws_core.impl.table.smart_tasks.table_smart_plotly import \
+            SmartPlotly
         from gws_core.task.task_runner import TaskRunner
 
         task_runner = TaskRunner(SmartPlotly,
