@@ -27,7 +27,7 @@ class GenerateAutoMLAppDashboard(Dashboard):
         )
 
 
-@task_decorator("GenerateAutoMLApp", human_name="Generate copilot machine learning app",
+@task_decorator("GenerateAutoMLApp", human_name="Generate ML Copilot App",
                 short_description="Task to generate the copilot machine learning app",
                 style=StreamlitResource.copy_style())
 class GenerateAutoMLApp(Task):
@@ -58,6 +58,7 @@ class GenerateAutoMLApp(Task):
         streamlit_app = StreamlitResource()
 
         streamlit_app.set_dashboard(GenerateAutoMLAppDashboard())
+        streamlit_app.name = 'Machine Learning Copilot'
         streamlit_app.add_resource(inputs['getting_started_note'], create_new_resource=False)
 
         table = inputs.get('table')

@@ -4,9 +4,9 @@ from typing import List
 import streamlit as st
 from auto_ml_state import AutoMlState, TableInfo
 
-from gws_core.impl.table.table import Table
-from gws_core.impl.table.transformers.table_smart_multi_transformer import \
+from gws_core.impl.table.smart_tasks.table_smart_multi_transformer import \
     AIMultiTableTransformer
+from gws_core.impl.table.table import Table
 from gws_core.streamlit import StreamlitContainers, StreamlitOpenAiChat
 
 _MULTI_TABLE_KEY = 'multi-table'
