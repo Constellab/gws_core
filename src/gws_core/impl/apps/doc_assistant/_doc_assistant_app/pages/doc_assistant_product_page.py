@@ -1,55 +1,41 @@
 import streamlit as st
 
 from gws_core import FileHelper, OpenAiChat, OpenAiHelper
-from gws_core.streamlit import StreamlitHelper
-
-_DEFAULT_PROMPT = """You are a assistant that helps me write a documentation for a SaaS product.
-This documentation is meant to be digest by an AI agent to create a chatbot.
-
-- The documentation must be written in English using simple English to be understandable by anyone.
-- Create a new Header 2 for each section of the documentation.
-- For step by step guide, use ordered list.
-- Write the button name is bold.
-- For button prefix the button name for specific button :
-  - '⋮' for menu button.
-  - '✏️' for edit button.
-  - '+' for create button.
-  - '⚙️' for settings button.
-- Keep the technical vocabulary."""
+from gws_core.streamlit import StreamlitContainers, StreamlitHelper
 
 
-def render_product_assistant_page():
+def render_product_assistant_page(default_prompt: str):
 
-    st.subheader('Product documentation assistant')
+    with StreamlitContainers.container_centered('product'):
 
-    st.info('This assistant helps you to generate the product documentation of Constellab.')
+        st.subheader('Product documentation assistant')
 
-    with st.expander('Show prompt'):
-        prompt = st.text_area('Prompt', value=_DEFAULT_PROMPT, height=300)
+        st.info('This assistant helps you to generate the product documentation of Constellab.')
 
-    if not prompt:
-        st.error('Please provide a prompt to generate the documentation.')
-        st.stop()
+        with st.expander('Show prompt'):
+            prompt = st.text_area('Prompt', value=default_prompt, height=300)
 
-    st.divider()
-    left_column, right_column = st.columns(2)
+        if not prompt:
+            st.error('Please provide a prompt to generate the documentation.')
+            st.stop()
 
-    result_doc: str = None
+        st.divider()
 
-    with left_column:
+        result_doc: str = None
 
+        # Generate from audio file
         st.subheader('Generate from audio file')
-
         file = st.file_uploader("Upload an audio file",
                                 type=['mp3', 'wav', 'flac'],
                                 key='audio_file')
 
         no_file = file is None
-        if st.button('Transcribe and generate product documentation', disabled=no_file):
+        if st.button('Generate product documentation from audio', disabled=no_file):
             result_doc = _generate_product_doc(file, prompt)
 
-    with right_column:
+        st.divider()
 
+        # Generate from text
         st.subheader('Generate from text')
 
         text = st.text_area('Paste the text to generate the documentation', height=300)
@@ -57,8 +43,8 @@ def render_product_assistant_page():
         if st.button('Generate product documentation from text'):
             result_doc = _generate_product_doc(text, prompt)
 
-    if result_doc:
-        _show_result(result_doc)
+        if result_doc:
+            _show_result(result_doc)
 
 
 def _generate_product_doc(file, prompt: str) -> str:
