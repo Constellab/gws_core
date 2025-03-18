@@ -43,7 +43,8 @@ class StreamlitMainAppRunner:
         st.set_page_config(
             page_title="Dashboard",
             layout="wide",
-            initial_sidebar_state="expanded",
+            menu_items={},  # hide the menu
+            initial_sidebar_state=st.session_state.get('__sidebar_state__', 'expanded'),
         )
 
         # Add custom css to hide the streamlit menu

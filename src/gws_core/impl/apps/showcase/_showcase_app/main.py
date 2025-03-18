@@ -1,4 +1,6 @@
 
+import importlib
+
 import streamlit as st
 
 from gws_core.impl.apps.showcase._showcase_app.pages import (ai_chat_page,
@@ -7,37 +9,40 @@ from gws_core.impl.apps.showcase._showcase_app.pages import (ai_chat_page,
                                                              processes_page,
                                                              resources_page,
                                                              utils_page)
+from gws_core.streamlit import StreamlitHelper
 
 sources: list
 
+StreamlitHelper.hide_sidebar_toggle()
+
 
 def _render_containers_page():
-    # importlib.reload(pages.containers_page)
+    # importlib.reload(containers_page)
     containers_page.render_containers_page()
 
 
 def _render_resources_page():
-    # importlib.reload(pages.resources_page)
+    # importlib.reload(resources_page)
     resources_page.render_resources_page()
 
 
 def _render_process_page():
-    # importlib.reload(pages.processes_page)
+    # importlib.reload(processes_page)
     processes_page.render_processes_page()
 
 
 def _render_dataframes_page():
-    # importlib.reload(pages.dataframes_page)
+    # importlib.reload(dataframes_page)
     dataframes_page.render_dataframes_page()
 
 
 def _render_ai_chat_page():
-    # importlib.reload(pages.ai_chat_page)
+    # importlib.reload(ai_chat_page)
     ai_chat_page.render_chat()
 
 
 def _render_utils_page():
-    # importlib.reload(pages.utils_page)
+    # importlib.reload(utils_page)
     utils_page.render_utils_page()
 
 

@@ -6,7 +6,7 @@ from gws_core.streamlit import ResourceSearchInput
 
 def render_resources_page():
 
-    st.title('Resource Page')
+    st.title('Resources')
     st.info('This page contains a showcase for streamlit component to interact with resources.')
 
     _render_resource_search_input()

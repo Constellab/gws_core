@@ -5,6 +5,29 @@ import streamlit as st
 from .streamlit_helper import StreamlitHelper
 
 
+class StreamlitGridCell():
+
+    col_span: int
+    row_span: int
+    style: str
+
+    def __init__(self, col_span: int, row_span: int, style: str = None):
+        """Define a cell of a grid (for StreamlitContainers.container_grid method)
+
+        :param col_span: number of columns spanned by the cell.
+                        It will be passed to css like : grid-column: span {col_span}
+        :type col_span: int
+        :param row_span: number of rows spanned by the cell
+                        It will be passed to css like : grid-row: span {row_span}
+        :type row_span: int
+        :param style: css style of the cell, defaults to None
+        :type style: str, optional
+        """
+        self.col_span = col_span
+        self.row_span = row_span
+        self.style = style
+
+
 class StreamlitContainers():
 
     @classmethod
@@ -169,3 +192,114 @@ class StreamlitContainers():
         )
 
         return st.container(key=key)
+
+    @classmethod
+    def grid_container(cls, nb_columns: int, cells: List[StreamlitGridCell],
+                       key: str, row_height: str = 'auto',
+                       gap: str = None):
+        """
+        Define a grid container with cells. All columns have the same width.
+
+        :param nb_columns: number of columns
+        :type nb_columns: int
+        :param cells: list of StreamlitGridCell that define the cells width and height
+        :type cells: List[StreamlitGridCell]
+        :param key: key
+        :type key: str
+        :param row_height: height of the row as css value (auto, 1fr, 100px...), defaults to 'auto'
+        :type row_height: str, optional
+        :param gap: gap between cells as css value (1em, 10px...), defaults to None
+        :type gap: str, optional
+        :return: _description_
+        :rtype: _type_
+        """
+
+        style = f"""
+[CLASS_NAME] {{
+  display: grid;
+  grid-template-columns: repeat({nb_columns}, 1fr);
+  grid-auto-rows: {row_height};
+}}
+"""
+        if gap:
+            style += f"""
+[CLASS_NAME] {{
+    grid-gap: {gap};
+}}
+
+/* Set cell to fill height */
+[CLASS_NAME] [data-testid="stVerticalBlockBorderWrapper"] > div {{
+    height: 100%;
+}}
+"""
+        i = 1
+        for cell in cells:
+            child_class = StreamlitHelper.get_element_css_class(f'{key}_{i}')
+
+            style += f"""
+[CLASS_NAME] [data-testid="stVerticalBlockBorderWrapper"]:has(.{child_class}) {{
+    grid-column: span {cell.col_span};
+    grid-row: span {cell.row_span};
+    border: solid black
+}}
+"""
+            i += 1
+
+        children = []
+        with cls.container_with_style(key, style):
+            i = 1
+            for cell in cells:
+                child_key = f'{key}_{i}'
+                children.append(cls.container_with_style(child_key, cell.style))
+                i += 1
+
+        return tuple(children)
+
+    @classmethod
+    def exception_container(cls, key: str,
+                            error_text: str = "An error occurred",
+                            exception: BaseException = None):
+        """ Define a container that display an error message and an exception if provided.
+        The exception detail can be displayed in a popover.
+
+        :param key: key
+        :type key: str
+        :param error_text: Error text to show the user, defaults to "An error occurred"
+        :type error_text: str, optional
+        :param exception: if provided, the user can view the detail, defaults to None
+        :type exception: BaseException, optional
+        """
+        with cls.row_container(key, flow='row', vertical_align_items='center'):
+            st.error(error_text)
+            if exception:
+                with st.popover('View details'):
+                    st.exception(exception)
+
+    @classmethod
+    def fragment(cls, key: str):
+        """ Decorator that works like st.fragment but catch exception and display
+        them in an exception container.
+
+        Use like this:
+        ```
+        @StreamlitContainers.fragment('my-key')
+        def my_function():
+            # code that can raise an exception
+        ```
+
+        :param key: key
+        :type key: str
+        """
+
+        def decorator(func):
+            @st.fragment
+            def wrapper(*args, **kwargs):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    cls.exception_container(key,
+                                            error_text=f"An error occurred: {str(e)}",
+                                            exception=e)
+            return wrapper
+
+        return decorator

@@ -43,6 +43,8 @@ def start_app(streammlit_app: StreamlitMainAppRunner) -> None:
 
     with StreamlitEnvLoader(streammlit_app.load_user()):
 
+        from gws_core.streamlit import StreamlitContainers
+
         config = streammlit_app.config
 
         # load resources
@@ -51,7 +53,12 @@ def start_app(streammlit_app: StreamlitMainAppRunner) -> None:
         streammlit_app.set_variable('sources', sources)
         streammlit_app.set_variable('params', config['params'])
 
-        streammlit_app.start_app()
+        try:
+            streammlit_app.start_app()
+        except Exception as e:
+            StreamlitContainers.exception_container(key='main-exception-handler',
+                                                    error_text=f"Error generating plot: {str(e)}",
+                                                    exception=e)
 
 
 streammlit_app = StreamlitMainAppRunner()

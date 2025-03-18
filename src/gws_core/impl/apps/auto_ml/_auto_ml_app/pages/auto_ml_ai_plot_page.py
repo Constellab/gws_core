@@ -9,7 +9,7 @@ from gws_core.impl.table.smart_tasks.table_smart_plotly import \
 from gws_core.streamlit import StreamlitContainers, StreamlitOpenAiChat
 
 
-@st.fragment
+@StreamlitContainers.fragment('ai_plot_page')
 def render_ai_plot_page():
 
     with StreamlitContainers.container_centered('chat-container'):
@@ -32,13 +32,13 @@ def render_ai_plot_page():
             with st.spinner('Processing...'):
                 current_table = AutoMlState.get_current_table()
                 plotly_generator = AITableGeneratePlotly(current_table.table, streamlit_ai_chat.chat)
+
                 plot: PlotlyResource = plotly_generator.run()
 
                 last_message = streamlit_ai_chat.get_last_message()
                 last_message.add_plot(plot.get_figure())
 
                 streamlit_ai_chat.save()
-
                 st.rerun(scope='fragment')
 
         st.divider()

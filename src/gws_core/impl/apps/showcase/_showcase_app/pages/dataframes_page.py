@@ -8,7 +8,7 @@ from gws_core.test.data_provider import DataProvider
 
 def render_dataframes_page():
 
-    st.title('Dataframe Page')
+    st.title('Dataframes')
     st.info('This page contains a showcase for custom streamlit component for dataframe.')
 
     dataframe = DataProvider.get_iris_table().get_data()

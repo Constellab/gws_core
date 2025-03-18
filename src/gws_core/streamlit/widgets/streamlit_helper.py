@@ -2,12 +2,15 @@
 import os
 from typing import Any
 
+import streamlit as st
+
 from gws_core.core.utils.settings import Settings
 
 
 class StreamlitHelper():
 
     CSS_PREFIX = 'st-key-'
+    SIDEBAR_STATE_KEY = '__sidebar_state__'
 
     @classmethod
     def get_element_css_class(cls, key: str) -> str:
@@ -38,3 +41,42 @@ class StreamlitHelper():
         with open(temp_file_path, 'wb') as f:
             f.write(uploaded_file.getbuffer())
         return temp_file_path
+
+    @classmethod
+    def hide_sidebar_toggle(cls) -> None:
+        # Hide the toggle default sidebar button
+        st.markdown(
+            """
+<style>
+/* Hide the toggle default sidebar button in sidebar and outside */
+[data-testid="stSidebarHeader"], [data-testid="stSidebarCollapsedControl"]{
+    display: none;
+}
+
+/* Add top padding in sidebar */
+[data-testid="stSidebarNav"] {
+    padding-top:1em;
+}
+</style>
+""",
+            unsafe_allow_html=True
+        )
+
+    @classmethod
+    def hide_sidebar(cls) -> None:
+        if st.session_state.get(cls.SIDEBAR_STATE_KEY) != 'collapsed':
+            st.session_state[cls.SIDEBAR_STATE_KEY] = 'collapsed'
+            st.rerun()
+
+    @classmethod
+    def show_sidebar(cls) -> None:
+        if st.session_state.get(cls.SIDEBAR_STATE_KEY) != 'expanded':
+            st.session_state[cls.SIDEBAR_STATE_KEY] = 'expanded'
+            st.rerun()
+
+    @classmethod
+    def toggle_sidebar(cls) -> None:
+        if st.session_state.get(cls.SIDEBAR_STATE_KEY) == 'collapsed':
+            cls.show_sidebar()
+        else:
+            cls.hide_sidebar()

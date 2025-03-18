@@ -8,7 +8,7 @@ from gws_core.streamlit import StreamlitTaskRunner
 
 
 def render_processes_page():
-    st.title("Process page")
+    st.title("Processes")
     st.info("This page contains a showcase for streamlit component to interact with tasks and protocols.")
 
     _render_task_runner()
