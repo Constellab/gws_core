@@ -5,6 +5,7 @@ from typing import Any
 import streamlit as st
 
 from gws_core.core.utils.settings import Settings
+from gws_core.user.user import User
 
 
 class StreamlitHelper():
@@ -44,7 +45,8 @@ class StreamlitHelper():
 
     @classmethod
     def hide_sidebar_toggle(cls) -> None:
-        # Hide the toggle default sidebar button
+        """ Hide the sidebar toggle button, the sidebar will be always expanded
+        """
         st.markdown(
             """
 <style>
@@ -56,6 +58,17 @@ class StreamlitHelper():
 /* Add top padding in sidebar */
 [data-testid="stSidebarNav"] {
     padding-top:1em;
+}
+
+/* Always show the sidebar (even in small screen) */
+.stSidebar {
+    transform: none !important;
+    max-width: initial !important;
+}
+
+/* Prevent main section to be full width on small screen */
+.stMain{
+    position: relative;
 }
 </style>
 """,
@@ -80,3 +93,12 @@ class StreamlitHelper():
             cls.show_sidebar()
         else:
             cls.hide_sidebar()
+
+    @classmethod
+    def get_current_user(cls) -> User | None:
+        """ Return the current connected user. If no user is connected, return None
+
+        :return: the current connected user
+        :rtype: User | None
+        """
+        return st.session_state.get('__gws_user__')

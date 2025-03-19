@@ -1,2 +1,2 @@
 # Use to include txt, yml and R files in the package
-recursive-include src *.txt *.yml *.R
+recursive-include src *.txt *.yml *.R *.py

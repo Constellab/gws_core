@@ -103,6 +103,7 @@ from .core.utils.compress.tar_compress import TarCompress as TarCompress
 from .core.utils.compress.tar_compress import TarGzCompress as TarGzCompress
 from .core.utils.compress.zip_compress import ZipCompress as ZipCompress
 from .core.utils.gws_core_packages import GwsCorePackages as GwsCorePackages
+from .core.utils.logger import LogContext as LogContext
 from .core.utils.logger import Logger as Logger
 from .core.utils.numeric_helper import NumericHelper as NumericHelper
 from .core.utils.package_helper import PackageHelper as PackageHelper

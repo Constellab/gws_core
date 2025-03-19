@@ -2,6 +2,7 @@
 
 import logging
 from datetime import datetime
+from enum import Enum
 from logging import Logger as PythonLogger
 from logging.handlers import TimedRotatingFileHandler
 from os import makedirs, path
@@ -22,28 +23,38 @@ MessageType = Literal['ERROR', 'WARNING', 'INFO', 'DEBUG', 'PROGRESS', 'EXCEPTIO
 LoggerLevel = Literal['INFO', 'DEBUG', 'ERROR']
 
 
+class LogContext(Enum):
+    MAIN = "MAIN"
+    SCENARIO = "SCENARIO"
+    STREAMLIT = "STREAMLIT"
+
+
 class LogFileLine(BaseModelDTO):
     level: MessageType
     timestamp: str
     message: str
-    scenario_id: Optional[str] = None
     stack_trace: Optional[str] = None
+    context: LogContext = LogContext.MAIN
+    context_id: Optional[str] = None
 
 
 class JSONFormatter(logging.Formatter):
 
-    scenario_id: str = None
+    context: LogContext
+    context_id: str = None
 
-    def __init__(self, scenario_id: str = None):
+    def __init__(self, context: LogContext = LogContext.MAIN, context_id: str = None) -> None:
         super().__init__()
-        self.scenario_id = scenario_id
+        self.context = context
+        self.context_id = context_id
 
     def format(self, record) -> str:
         log_data = LogFileLine(
             level=record.levelname,
             timestamp=Logger.get_date(),
             message=record.getMessage(),
-            scenario_id=self.scenario_id,
+            context=self.context,
+            context_id=self.context_id,
             stack_trace=record.exc_text if record.exc_text else None
         )
         return log_data.to_json_str()
@@ -56,13 +67,13 @@ class Logger:
     It logs into the console and in the log file
     """
 
-    SUB_PROCESS_TEXT = "[SCENARIO]"
-    SEPARATOR = " - "
     FILE_NAME_DATE_FORMAT = "%Y-%m-%d"
 
     _logger: Optional[PythonLogger] = None
     _file_path: str = None
-    _scenario_id: str = None
+
+    _context: LogContext
+    _context_id: str = None
 
     level: LoggerLevel = "INFO"
 
@@ -71,16 +82,24 @@ class Logger:
     _logger_instance: 'Logger' = None
 
     def __init__(self, log_dir: str,
-                 level: LoggerLevel = "INFO", scenario_id: str = None) -> None:
+                 level: LoggerLevel = "INFO",
+                 context: LogContext = LogContext.MAIN,
+                 context_id: str = None
+                 ) -> None:
         """Create the Gencovery logger, it logs into the console and into a file
 
+        :param log_dir: directory where the logs are stored
+        :type log_dir: str
         :param level: level of the logs to show, defaults to "info"
         :type level: error | info | debug, optional
-        :param _scenario_id: set when  gws is runned inside a subprocess to run a scenario, defaults to False
-        :type _scenario_id: bool, optional
+        :param context: context of the logger, defaults to LogContext.MAIN
+        :type context: LogContext, optional
+        :param context_id: id of the context, defaults to None
+        :type context_id: str, optional
         """
 
-        self._scenario_id = scenario_id
+        self._context = context
+        self._context_id = context_id
 
         if level is None:
             level = "INFO"
@@ -114,16 +133,18 @@ class Logger:
         # this write the log in a file with a json format
         file_handler = TimedRotatingFileHandler(
             self._file_path, when="midnight")
-        file_handler.setFormatter(JSONFormatter(scenario_id))
+        file_handler.setFormatter(JSONFormatter(context=context, context_id=context_id))
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         # file_handler.setFormatter(formatter)
         self._logger.addHandler(file_handler)
 
     @classmethod
     def build_main_logger(cls, log_dir: str,
-                          level: LoggerLevel = "INFO", scenario_id: str = None) -> 'Logger':
+                          level: LoggerLevel = "INFO",
+                          context: LogContext = LogContext.MAIN,
+                          context_id: str = None) -> 'Logger':
         cls.clear_logger()
-        logger = Logger(log_dir, level, scenario_id)
+        logger = Logger(log_dir, level, context, context_id)
         cls._logger_instance = logger
 
         cls._log_waiting_message()

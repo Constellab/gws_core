@@ -41,7 +41,7 @@ def start_app(streammlit_app: StreamlitMainAppRunner) -> None:
 
     # Load gws environment and log the user
 
-    with StreamlitEnvLoader(streammlit_app.load_user()):
+    with StreamlitEnvLoader(streammlit_app.get_app_id(), streammlit_app.load_user()):
 
         from gws_core.streamlit import StreamlitContainers
 
@@ -56,8 +56,10 @@ def start_app(streammlit_app: StreamlitMainAppRunner) -> None:
         try:
             streammlit_app.start_app()
         except Exception as e:
+            from gws_core import Logger
+            Logger.log_exception_stack_trace(e)
             StreamlitContainers.exception_container(key='main-exception-handler',
-                                                    error_text=f"Error generating plot: {str(e)}",
+                                                    error_text=f"Unexpected error: {str(e)}",
                                                     exception=e)
 
 

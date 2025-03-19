@@ -95,8 +95,8 @@ class StreamlitMainAppRunner:
         self.spec.loader.exec_module(self.module)
 
     def load_user(self) -> str:
-        if st.session_state.get('gws_user_id'):
-            return st.session_state['gws_user_id']
+        if st.session_state.get('__gws_user_id__'):
+            return st.session_state['__gws_user_id__']
 
         if self.dev_mode:
             return None
@@ -104,14 +104,14 @@ class StreamlitMainAppRunner:
         # check the user id
         user_id = st.query_params.get('gws_user_id')
         # save the user id and app config file in the session state
-        st.session_state['gws_user_id'] = user_id
+        st.session_state['__gws_user_id__'] = user_id
 
         return user_id
 
     def _load_app_config_file(self) -> str:
 
-        if st.session_state.get('app_config_file'):
-            return st.session_state['app_config_file']
+        if st.session_state.get('__app_config_file__'):
+            return st.session_state['__app_config_file__']
 
         if self.dev_mode:
             app_config_file = self.dev_config_file
@@ -139,7 +139,7 @@ class StreamlitMainAppRunner:
                 st.stop()
 
             # check the app path
-            app_id = st.query_params.get('gws_app_id')
+            app_id = self.get_app_id()
             if not app_id:
                 st.error('App id not provided')
                 st.stop()
@@ -155,7 +155,7 @@ class StreamlitMainAppRunner:
                 st.error('App config file not found')
                 st.stop()
 
-        st.session_state['app_config_file'] = app_config_file
+        st.session_state['__app_config_file__'] = app_config_file
 
         return app_config_file
 
@@ -205,3 +205,6 @@ class StreamlitMainAppRunner:
             st.error(f"Error loading python script: {e}")
             st.exception(e)
             st.stop()
+
+    def get_app_id(self) -> str:
+        return st.query_params.get('gws_app_id')

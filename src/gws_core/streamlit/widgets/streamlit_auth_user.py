@@ -17,7 +17,7 @@ class StreamlitAuthenticateUser:
     was_already_authenticated: bool = False
 
     def __enter__(self):
-        user = st.session_state.get('gws_user')
+        user = st.session_state.get('__gws_user__')
         if user is None:
             raise Exception("There is no user in the context")
         if CurrentUserService.get_current_user() is None:

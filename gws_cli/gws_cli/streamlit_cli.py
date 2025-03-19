@@ -5,6 +5,8 @@ import os
 import typer
 from typing_extensions import Annotated, Literal
 
+from gws_cli.generate_streamlit_app.generate_streamlit_app import \
+    generate_streamlit_app
 from gws_core import (CondaShellProxy, LoggerMessageObserver, MambaShellProxy,
                       PipShellProxy, ShellProxy, StreamlitApp,
                       StreamlitAppManager, Utils)
@@ -82,3 +84,11 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the js
     print(
         f"Running streamlit in dev mode{env_txt}, DO NOT USE IN PRODUCTION. You can access the dashboard at {url}")
     print("----------------------------------------------------------------------------------------------------------------------------------------------------------")
+
+
+@app.command("generate")
+def generate(
+        name: Annotated[str, typer.Argument(help="Name of the streamlit app (Pascal case).")]):
+    print(f"Generating streamlit app: '{name}'")
+    app_folder = generate_streamlit_app(name,)
+    print(f"Streamlit app '{name}' created successfully in '{app_folder}'.")

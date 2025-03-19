@@ -1,12 +1,28 @@
 
 
 from datetime import date, datetime, timedelta
-from typing import List
+from json import loads
+from typing import List, Optional
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.core.utils.logger import LogFileLine, Logger, MessageType
+from gws_core.core.utils.logger import (LogContext, LogFileLine, Logger,
+                                        MessageType)
 from gws_core.lab.log.log_dto import (LogCompleteInfoDTO, LogDTO, LogInfo,
                                       LogsBetweenDatesDTO)
+
+
+class OldLogFileLine(BaseModelDTO):
+    """ Type that represent a  the old format of a log line
+
+    :param BaseModelDTO: _description_
+    :type BaseModelDTO: _type_
+    """
+    level: MessageType
+    timestamp: str
+    message: str
+    stack_trace: Optional[str] = None
+    scenario_id: Optional[str] = None
 
 
 class LogLine():
@@ -25,11 +41,13 @@ class LogLine():
 
     level: MessageType
     date_time: datetime
-    is_from_scenario: bool
-    scenario_id: str
     message: str
+    context: LogContext
+    context_id: str
 
     OLD_DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+    OLD_SCENARIO_TEXT = "[SCENARIO]"
+    OLD_SEPARATOR = " - "
 
     def __init__(self, line_str: str) -> None:
         if line_str is None or len(line_str) == 0:
@@ -39,8 +57,6 @@ class LogLine():
         self.level = None
         self.date_time = None
         self.message = None
-        self.is_from_scenario = False
-        self.scenario_id = None
 
         if line_str[0] == '{':
             self._init_new(line_str)
@@ -52,12 +68,23 @@ class LogLine():
         Read the line as json and extract the level, date, content and if it is from a scenario
         """
         try:
-            line_json: LogFileLine = LogFileLine.from_json_str(line_str)
-            self.level = line_json.level
-            self.init_new_date(line_json.timestamp)
-            self.message = line_json.message
-            self.is_from_scenario = line_json.scenario_id is not None
-            self.scenario_id = line_json.scenario_id
+            dict_ = loads(line_str)
+
+            if 'context' in dict_:
+                line_json = LogFileLine.from_json(dict_)
+                self.level = line_json.level
+                self.init_new_date(line_json.timestamp)
+                self.message = line_json.message
+                self.context = line_json.context
+                self.context_id = line_json.context_id
+            else:
+                old_line_json = OldLogFileLine.from_json(dict_)
+                self.level = old_line_json.level
+                self.init_new_date(old_line_json.timestamp)
+                self.message = old_line_json.message
+                self.context = LogContext.SCENARIO if old_line_json.scenario_id else LogContext.MAIN
+                self.context_id = old_line_json.scenario_id
+
         except ValueError:
             pass
 
@@ -69,7 +96,7 @@ class LogLine():
         :param line_str: _description_
         :type line_str: str
         """
-        separator = Logger.SEPARATOR
+        separator = self.OLD_SEPARATOR
         logs_parts = line_str.split(separator)
 
         if len(logs_parts) >= 3:
@@ -77,16 +104,7 @@ class LogLine():
 
             self.init_old_date(logs_parts[1])
 
-            # if the log also contains the text ' - [SCENARIO] - '
-            # it is from a scenario
-            if len(logs_parts) >= 4 and logs_parts[2] == Logger.SUB_PROCESS_TEXT:
-                # use a join because the log can contains ' - '
-                self.message = separator.join(logs_parts[3:])
-                self.is_from_scenario = True
-            else:
-                # use a join because the log can contains ' - '
-                self.message = separator.join(logs_parts[2:])
-                self.is_from_scenario = False
+            self.message = separator.join(logs_parts[2:])
 
     def init_old_date(self, date_str: str) -> None:
         try:
@@ -110,9 +128,13 @@ class LogLine():
     def get_datetime_without_microseconds(self) -> datetime:
         return self.date_time.replace(microsecond=self.date_time.microsecond // 1000 * 1000)
 
+    def is_scenario_context(self) -> bool:
+        return self.context == LogContext.SCENARIO
+
     def to_dto(self) -> LogDTO:
         return LogDTO(level=self.level, date_time=self.date_time,
-                      message=self.message, scenario_id=self.scenario_id)
+                      message=self.message, context=self.context,
+                      context_id=self.context_id)
 
     def to_str(self) -> str:
         return f"{self.date_time} - {self.level} - {self.message}"
@@ -164,11 +186,9 @@ class LogCompleteInfo():
             # if the scenario id is provided, filter the log lines
             # skip lines that are not from the scenario
             # also skip lines that are from another scenario
-            # if the scenario id is not provided, don't skip this is old format
-            if from_scenario_id is not None and (
-                    not log_line.is_from_scenario
-                    or (log_line.scenario_id is not None and log_line.scenario_id != from_scenario_id)):
-                continue
+            if from_scenario_id is not None:
+                if not log_line.is_scenario_context() or log_line.context_id != from_scenario_id:
+                    continue
 
             if start_time <= log_line.date_time <= end_time:
                 log_lines.append(log_line)

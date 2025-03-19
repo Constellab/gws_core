@@ -10,7 +10,7 @@ skeleton_name = 'brick_skeleton'
 user_bricks_folder = '/lab/user/bricks'
 
 
-def create_brick(name: str):
+def generate_brick(name: str):
     name = name.lower().replace(" ", "_").replace("-", "_")
 
     skeleton_dir = os.path.join(__cdir__, skeleton_name)

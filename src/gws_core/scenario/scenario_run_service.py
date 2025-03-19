@@ -273,7 +273,7 @@ class ScenarioRunService():
             f"Scenario process run_through_cli {str(cmd)}")
         Logger.info(
             f"""The scenario logs are not shown in the console, because it is run in another linux process ({scenario.pid}).
-            To view them check the logs marked as {Logger.SUB_PROCESS_TEXT} in the today's log file : {Logger.get_file_path()}""")
+            To view them check the logs in the today's log file : {Logger.get_file_path()}""")
         return sproc
 
     @classmethod

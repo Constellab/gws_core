@@ -11,9 +11,11 @@ class StreamlitEnvLoader:
     Inside the with statement the gws environment is loaded and the current user is set.
     """
 
+    app_id: str = None
     user_id: str = None
 
-    def __init__(self, user_id: str = None) -> None:
+    def __init__(self, app_id: str, user_id: str = None, ) -> None:
+        self.app_id = app_id
         self.user_id = user_id
 
     def __enter__(self):
@@ -24,11 +26,11 @@ class StreamlitEnvLoader:
 
         user: Optional[User] = None
 
-        if st.session_state.get('gws_user'):
-            user = st.session_state['gws_user']
+        if st.session_state.get('__gws_user__'):
+            user = st.session_state['__gws_user__']
         elif self.user_id:
             user = UserService.get_or_import_user_info(self.user_id)
-            st.session_state['gws_user'] = user
+            st.session_state['__gws_user__'] = user
 
         if user:
             # Authenticate user
@@ -55,7 +57,7 @@ class StreamlitEnvLoader:
                         raise Exception("Cannot find gws_core brick")
                 sys.path.insert(0, core_lib_path)
 
-                from gws_core import Settings, manage
+                from gws_core import LogContext, Settings, manage
                 manage.AppManager.init_gws_env(
                     main_setting_file_path=Settings.get_instance().get_main_settings_file_path(),
-                    log_level='INFO')
+                    log_level='INFO', log_context=LogContext.STREAMLIT, log_context_id=self.app_id)

@@ -1,7 +1,8 @@
 
 import typer
-from gws_cli.generate_task.create_task import create_task
 from typing_extensions import Annotated
+
+from gws_cli.generate_task.generate_task import generate_task
 
 app = typer.Typer()
 
@@ -13,5 +14,5 @@ def generate(
         short_description:
         Annotated[str, typer.Option("--short-description", help="Short description of the task.")] = None):
     print(f"Creating task: '{name}'")
-    task_file = create_task(name, human_name=human_name, short_description=short_description)
+    task_file = generate_task(name, human_name=human_name, short_description=short_description)
     print(f"Task '{name}' created successfully in '{task_file}'.")

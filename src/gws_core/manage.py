@@ -19,7 +19,7 @@ from gws_core.user.user import User
 from .app import App
 from .core.db.db_manager_service import DbManagerService
 from .core.exception.exceptions import BadRequestException
-from .core.utils.logger import Logger
+from .core.utils.logger import LogContext, Logger
 from .core.utils.settings import Settings
 from .notebook.notebook import Notebook
 
@@ -29,18 +29,21 @@ class AppManager:
     @classmethod
     def init_gws_env(cls, main_setting_file_path: str,
                      log_level: str,
-                     scenario_id: str = None,
+                     log_context: LogContext = LogContext.MAIN,
+                     log_context_id: str = None,
                      show_sql: bool = False,
                      is_test: bool = False) -> Settings:
 
         log_dir = Settings.build_log_dir(is_test=is_test)
 
         logger_level = Logger.check_log_level(log_level)
-        logger = Logger.build_main_logger(log_dir=log_dir, level=logger_level, scenario_id=scenario_id)
-        if scenario_id:
-            Logger.info(f"Logger configured for scenario process with log level: {logger.level}")
-        else:
+        logger = Logger.build_main_logger(log_dir=log_dir, level=logger_level, context=log_context,
+                                          context_id=log_context_id)
+        if log_context == LogContext.MAIN:
             Logger.info(f"Logger configured with log level: {logger.level}")
+        else:
+            Logger.info(
+                f"Logger configured for context {log_context} with object {log_context_id} with log level: {logger.level}")
 
         if show_sql:
             Logger.print_sql_queries()
@@ -66,7 +69,7 @@ class AppManager:
     def start_app(cls, main_setting_file_path: str,
                   port: str, log_level: str, show_sql: bool) -> None:
         cls.init_gws_env(main_setting_file_path=main_setting_file_path,
-                         log_level=log_level, show_sql=show_sql)
+                         log_level=log_level, show_sql=show_sql, log_context=LogContext.MAIN)
 
         Logger.info(
             f"Starting server in {('prod' if Settings.is_prod_mode() else 'dev')} mode with {Settings.get_lab_environment()} lab env.")
@@ -91,7 +94,8 @@ class AppManager:
         cls.init_gws_env(main_setting_file_path=settings_file,
                          log_level=log_level,
                          show_sql=show_sql,
-                         is_test=True)
+                         is_test=True,
+                         log_context=LogContext.MAIN)
 
         if len(tests) == 1 and tests[0] in ["*", "all"]:
             tests = ["test*"]
@@ -126,9 +130,10 @@ class AppManager:
                      is_test: bool) -> None:
         cls.init_gws_env(main_setting_file_path=main_setting_file_path,
                          log_level=log_level,
-                         scenario_id=scenario_id,
                          show_sql=show_sql,
-                         is_test=is_test)
+                         is_test=is_test,
+                         log_context=LogContext.SCENARIO,
+                         log_context_id=scenario_id)
 
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
@@ -147,9 +152,10 @@ class AppManager:
                     is_test: bool) -> None:
         cls.init_gws_env(main_setting_file_path=main_setting_file_path,
                          log_level=log_level,
-                         scenario_id=scenario_id,
                          show_sql=show_sql,
-                         is_test=is_test)
+                         is_test=is_test,
+                         log_context=LogContext.SCENARIO,
+                         log_context_id=scenario_id)
 
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)

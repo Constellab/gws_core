@@ -1,7 +1,7 @@
 
 
 from gws_core import BaseTestCase, ProcessProxy, ProtocolProxy, ScenarioProxy
-from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.logger import LogContext, Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.robot.robot_tasks import RobotCreate
@@ -21,7 +21,9 @@ class TestProcessService(BaseTestCase):
         FileHelper.delete_dir_content(Settings.get_instance().get_log_dir())
         Logger.clear_logger()
         # initialize the logger associated to the scenario
-        Logger.build_main_logger(Settings.build_log_dir(True), level='INFO', scenario_id=scenario.get_model().id)
+        Logger.build_main_logger(Settings.build_log_dir(True), level='INFO',
+                                 context=LogContext.SCENARIO,
+                                 context_id=scenario.get_model().id)
 
         protocol: ProtocolProxy = scenario.get_protocol()
 
