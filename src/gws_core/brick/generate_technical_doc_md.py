@@ -16,7 +16,7 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 @task_decorator(
     unique_name="GenerateTechnicalDocMarkdown",
-    short_description="Generate technical documentationof a brick as markdown",
+    short_description="Generate technical documentation of a brick as markdown",
 )
 class GenerateTechnicalDocMarkdown(Task):
     """
