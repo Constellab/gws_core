@@ -47,6 +47,8 @@ class Resource(BaseTyping):
     # provide tags to this attribute to save them on resource generation
     tags: TagList = TagListField()
 
+    flagged: bool
+
     # Set by the resource parent on creation
     # //!\\ Do not modify theses values
     __model_id__: str = None
@@ -71,6 +73,7 @@ class Resource(BaseTyping):
         # init the default name
         self.name = None
         self.style = None
+        self.flagged = False
         # Init default values of BaseRField
         properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(type(self), BaseRField)
         for key, r_field in properties.items():

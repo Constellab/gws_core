@@ -339,7 +339,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             resource_model.flagged = flagged
         else:
             # by default only the uploaded resource are showed in list
-            resource_model.flagged = resource_model.is_manually_generated()
+            resource_model.flagged = resource.flagged or resource_model.is_manually_generated()
 
         if isinstance(resource, FSNode):
             resource_model.init_fs_node_model(resource)

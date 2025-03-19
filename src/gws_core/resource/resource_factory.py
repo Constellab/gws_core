@@ -3,6 +3,9 @@
 import copy
 from typing import Any, Dict, List, Type
 
+from pandas import DataFrame
+from plotly.graph_objs import Figure
+
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
 from gws_core.impl.table.table import Table
@@ -13,8 +16,6 @@ from gws_core.resource.r_field.r_field import BaseRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.tag.tag import Tag
-from pandas import DataFrame
-from plotly.graph_objs import Figure
 
 
 class ResourceFactory():
@@ -29,6 +30,7 @@ class ResourceFactory():
                         kv_store: KVStore, data: Dict[str, Any],
                         resource_model_id: str = None, name: str = None,
                         tags: List[Tag] = None,
+                        flagged: bool = False,
                         style: TypingStyle = None) -> Resource:
         resource: Resource = resource_type()
 
@@ -44,6 +46,8 @@ class ResourceFactory():
 
         if style:
             resource.style = style
+
+        resource.flagged = flagged
 
         cls._send_fields_to_resource(resource, kv_store=kv_store, data=data)
 
