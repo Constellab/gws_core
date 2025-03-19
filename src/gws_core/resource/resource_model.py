@@ -21,6 +21,7 @@ from gws_core.resource.resource_dto import (ResourceModelDTO, ResourceOrigin,
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
 from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag import TagOrigin
 from gws_core.tag.tag_list import TagList
 
 from ..core.classes.enum_field import EnumField
@@ -439,8 +440,10 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             flagged=flagged).save_full()
 
         if resource.tags and isinstance(resource.tags, TagList):
-            # Add tags
-            entity_tags: EntityTagList = EntityTagList(EntityType.RESOURCE, resource_model.id)
+            # Add tags, use current user origin as default origin
+            user_origin = TagOrigin.current_user_origin()
+            entity_tags: EntityTagList = EntityTagList(EntityType.RESOURCE, resource_model.id,
+                                                       default_origin=user_origin)
 
             entity_tags.add_tags(resource.tags.get_tags())
         return resource_model

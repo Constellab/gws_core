@@ -2,6 +2,7 @@
 import streamlit as st
 
 from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.user import User
 
 
 class StreamlitAuthenticateUser:
@@ -16,7 +17,7 @@ class StreamlitAuthenticateUser:
 
     was_already_authenticated: bool = False
 
-    def __enter__(self):
+    def __enter__(self) -> User:
         user = st.session_state.get('__gws_user__')
         if user is None:
             raise Exception("There is no user in the context")
@@ -29,8 +30,7 @@ class StreamlitAuthenticateUser:
 
         # Set streamlit context
         CurrentUserService.set_streamlit_context()
-        # Code to set up and acquire resources
-        return self  # You can return an object that you want to use in the with block
+        return user
 
     def __exit__(self, exc_type, exc_value, traceback):
         if not self.was_already_authenticated:

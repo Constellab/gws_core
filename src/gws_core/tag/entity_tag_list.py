@@ -4,7 +4,7 @@ from typing import List, Optional
 from gws_core.core.decorator.transaction import transaction
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
-from gws_core.tag.tag import Tag
+from gws_core.tag.tag import Tag, TagOrigin
 from gws_core.tag.tag_dto import EntityTagDTO, TagOriginType
 from gws_core.tag.tag_value_model import TagValueModel
 
@@ -18,13 +18,18 @@ class EntityTagList():
 
     _tags: List[EntityTag]
 
-    def __init__(self, entity_type: EntityType, entity_id: str, tags: List[EntityTag] = None) -> None:
+    _default_origin: TagOrigin = None
+
+    def __init__(self, entity_type: EntityType, entity_id: str,
+                 tags: List[EntityTag] = None,
+                 default_origin: TagOrigin = None) -> None:
         self._entity_type = entity_type
         self._entity_id = entity_id
 
         if tags is None:
             tags = []
         self._tags = tags
+        self._default_origin = default_origin
 
     def has_tag(self, tag: Tag) -> bool:
         """return true if the tag key and value already exist in the model
@@ -74,6 +79,9 @@ class EntityTagList():
                 return existing_tag.merge_tag(tag)
             else:
                 return existing_tag
+
+        if not tag.origin_is_defined():
+            tag.origins.add_origin(self._default_origin)
 
          # add tag to the list of tags
         tag_model = TagValueModel.create_tag_value_if_not_exists(tag.key, tag.value)

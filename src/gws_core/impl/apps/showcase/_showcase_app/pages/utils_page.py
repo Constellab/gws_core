@@ -26,8 +26,8 @@ def render():
 
 def _on_click():
     st.write('User is not authenticated')
-    with StreamlitAuthenticateUser():
-        st.write('User is authenticated')
+    with StreamlitAuthenticateUser() as user:
+        st.write('User is authenticated ' + user.first_name)
 ''')
     st.divider()
 

@@ -10,6 +10,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.tag.tag_dto import (TagDTO, TagOriginDTO, TagOriginType,
                                   TagValueFormat)
+from gws_core.user.current_user_service import CurrentUserService
 
 MAX_TAG_LENGTH = 1000
 
@@ -46,6 +47,11 @@ class TagOrigin():
             origin_type=dto.origin_type,
             origin_id=dto.origin_id,
             external_lab_origin_id=dto.external_lab_origin_id)
+
+    @staticmethod
+    def current_user_origin() -> 'TagOrigin':
+        user_id = CurrentUserService.get_and_check_current_user().id
+        return TagOrigin(origin_type=TagOriginType.USER, origin_id=user_id)
 
 
 class TagOrigins():
@@ -155,6 +161,12 @@ class TagOrigins():
             for origin in dto:
                 tag_origin = TagOrigin.from_dto(origin)
                 tag_origins.add_origin(tag_origin)
+        return tag_origins
+
+    @classmethod
+    def current_user_origins(cls) -> 'TagOrigins':
+        tag_origins = TagOrigins()
+        tag_origins.add_origin(TagOrigin.current_user_origin())
         return tag_origins
 
 
