@@ -86,7 +86,7 @@ class SendScenarioToLab(Task):
 
         # Call the external lab API to import the current scenario
         credentials: CredentialsDataLab = params.get_value('credentials')
-        self.log_info_message(f"Send the scenario to the lab {credentials.get_lab_api_url()}")
+        self.log_info_message(f"Send the scenario to the lab {ExternalLabApiService.get_full_route(credentials, '')}")
         request_dto = ExternalLabImportRequestDTO(
             # convert to ScenarioDownloader config because ScenarioDownloader is used to download the scenario
             params=ScenarioDownloader.build_config(

@@ -5,9 +5,9 @@ from unittest import TestCase
 from pandas import DataFrame
 
 from gws_core.impl.openai.open_ai_types import OpenAiChatDict
-from gws_core.impl.table.table import Table
-from gws_core.impl.table.transformers.table_smart_multi_transformer import \
+from gws_core.impl.table.smart_tasks.table_smart_multi_transformer import \
     MultiTableSmartTransformer
+from gws_core.impl.table.table import Table
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource_set.resource_list import ResourceList

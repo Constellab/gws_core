@@ -98,6 +98,8 @@ class LogLine():
         """
         separator = self.OLD_SEPARATOR
         logs_parts = line_str.split(separator)
+        self.context = LogContext.MAIN
+        self.context_id = None
 
         if len(logs_parts) >= 3:
             self.level = logs_parts[0]

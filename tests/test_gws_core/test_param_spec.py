@@ -4,6 +4,7 @@ from unittest import TestCase
 
 from gws_core import IntParam, ParamSet, StrParam
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.config.param.param_types import ParamSpecTypeStr
 from gws_core.core.utils.utils import Utils
 
 
@@ -16,7 +17,7 @@ class TestParamSpec(TestCase):
 
         spec_dto = param.to_dto()
 
-        self.assertEqual(spec_dto.type, "int")
+        self.assertEqual(spec_dto.type, ParamSpecTypeStr.INT)
         self.assertEqual(spec_dto.default_value, 1)
         self.assertEqual(spec_dto.human_name, "Test")
         self.assertEqual(spec_dto.short_description, "Description")

@@ -80,7 +80,7 @@ class SendResourceToLab(Task):
 
         # Call the external lab API to import the resource
         credentials: CredentialsDataLab = params.get_value('credentials')
-        self.log_info_message(f"Send the resource to the lab {credentials.get_lab_api_url()}")
+        self.log_info_message(f"Send the resource to the lab {ExternalLabApiService.get_full_route(credentials, '')}")
         request_dto = ExternalLabImportRequestDTO(
             # convert to ResourceDownloaderHttp config because ResourceDownloaderHttp is used to download the resource
             params=ResourceDownloaderHttp.build_config(

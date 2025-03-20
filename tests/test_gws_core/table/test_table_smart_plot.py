@@ -2,14 +2,15 @@
 
 from unittest import TestCase
 
+from pandas import DataFrame
+
 from gws_core.impl.agent.py_agent import PyAgent
 from gws_core.impl.file.file import File
 from gws_core.impl.openai.open_ai_types import OpenAiChatDict
+from gws_core.impl.table.smart_tasks.table_smart_plot import SmartPlot
 from gws_core.impl.table.table import Table
-from gws_core.impl.table.transformers.table_smart_plot import SmartPlot
 from gws_core.impl.text.text import Text
 from gws_core.task.task_runner import TaskRunner
-from pandas import DataFrame
 
 
 # test_table_smart_plot
