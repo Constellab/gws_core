@@ -518,4 +518,5 @@ class RichText(SerializableObjectJson):
     @classmethod
     def from_json_file(cls, file_path: str) -> 'RichText':
         with open(file_path, 'r', encoding='utf-8') as file:
-            return cls.from_json(file.read())
+            rich_text_dto = RichTextDTO.from_json_str(file.read())
+            return RichText(rich_text_dto)
