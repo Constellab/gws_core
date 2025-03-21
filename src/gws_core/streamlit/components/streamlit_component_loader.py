@@ -57,9 +57,6 @@ class StreamlitComponentLoader():
         destination_folder_full_path = os.path.join(destination_folder, self.version)
         existing_version = self._get_existing_version(destination_folder_full_path)
 
-        if not existing_version:
-            Logger.error(f"Error reading the existing version of the component {self.component_name}")
-
         if existing_version == self.version:
             # The component is already downloaded
             return components.declare_component(
@@ -68,7 +65,7 @@ class StreamlitComponentLoader():
             )
 
         # Delete the existing component
-        FileHelper.delete_dir(destination_folder)
+        FileHelper.delete_dir(destination_folder_full_path)
 
         message_dispatcher = MessageDispatcher()
         message_dispatcher.attach(LoggerMessageObserver())

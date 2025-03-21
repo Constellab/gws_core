@@ -8,6 +8,7 @@ from gws_core.impl.apps.showcase._showcase_app.pages import (ai_chat_page,
                                                              dataframes_page,
                                                              processes_page,
                                                              resources_page,
+                                                             rich_text_page,
                                                              utils_page)
 from gws_core.streamlit import StreamlitHelper
 
@@ -36,6 +37,11 @@ def _render_dataframes_page():
     dataframes_page.render_dataframes_page()
 
 
+def _render_rich_text_page():
+    # importlib.reload(rich_text_page)
+    rich_text_page.render_rich_text_page()
+
+
 def _render_ai_chat_page():
     # importlib.reload(ai_chat_page)
     ai_chat_page.render_chat()
@@ -50,8 +56,10 @@ _containers_page = st.Page(_render_containers_page, title='Containers', url_path
 _resources_page = st.Page(_render_resources_page, title='Resources', url_path='resources', icon='📁')
 _processes_page = st.Page(_render_process_page, title='Processes', url_path='processes', icon='🔄')
 _dataframes_page = st.Page(_render_dataframes_page, title='Dataframes', url_path='dataframes', icon='📊')
+_rich_text_page = st.Page(_render_rich_text_page, title='Rich Text', url_path='rich_text', icon='📝')
 _ai_chat_page = st.Page(_render_ai_chat_page, title='AI Chat', url_path='ai_chat', icon='✨')
 _utils_page = st.Page(_render_utils_page, title='Utils', url_path='utils', icon='🛠️')
-pg = st.navigation([_containers_page, _resources_page, _processes_page, _dataframes_page, _ai_chat_page, _utils_page])
+pg = st.navigation([_containers_page, _resources_page, _processes_page,
+                   _dataframes_page, _rich_text_page, _ai_chat_page, _utils_page])
 
 pg.run()
