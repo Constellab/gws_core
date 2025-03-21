@@ -386,6 +386,11 @@ class RichText(SerializableObjectJson):
     def to_dto_json_dict(self) -> dict:
         return self.to_dto().to_json_dict()
 
+    def to_json_file(self, file_path: str) -> None:
+        str_dict = self.to_dto().to_json_str()
+        with open(file_path, 'w', encoding='utf-8') as file:
+            file.write(str_dict)
+
     def is_empty(self) -> bool:
         if not self.blocks or len(self.blocks) == 0:
             return True
@@ -509,3 +514,8 @@ class RichText(SerializableObjectJson):
     @classmethod
     def from_json(cls, data: dict) -> 'RichText':
         return RichText(RichTextDTO.from_json(data))
+
+    @classmethod
+    def from_json_file(cls, file_path: str) -> 'RichText':
+        with open(file_path, 'r', encoding='utf-8') as file:
+            return cls.from_json(file.read())
