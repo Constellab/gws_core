@@ -18,9 +18,16 @@ from gws_core.impl.file.file_helper import FileHelper
 
 
 class StreamlitComponentLoader():
+    """ Class to load a streamlit component.
+    In dev mode, the component is loaded from the dev front app.
+    In release mode, the component is downloaded from the github release.
+
+    :return: _description_
+    :rtype: _type_
+    """
 
     # url for dev front app
-    DEV_FRONT_URL = "http://localhost:4200"
+    DEV_FRONT_URL = "http://localhost:4201"
 
     VERSION_FILE_NAME = "version.json"
     VERSION_KEY = "version"
@@ -72,7 +79,7 @@ class StreamlitComponentLoader():
 
         # Download the file
         folder_path: str
-        with st.spinner('Downloading the component...'):
+        with st.spinner('Installing the component...'):
             Logger.info(f"Downloading the component {self.component_name} version {self.version}")
             file_downloader = FileDownloader(destination_folder, message_dispatcher=message_dispatcher)
             folder_path = file_downloader.download_file_if_missing(self._get_release_url(), self.version,

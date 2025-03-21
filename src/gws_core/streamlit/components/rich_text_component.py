@@ -8,7 +8,9 @@ from gws_core.streamlit.components.streamlit_component_loader import \
 def rich_text_editor(placeholder: str = None,
                      initial_value: RichText = None,
                      disabled: bool = False,
-                     key: str = 'rich-text-editor') -> RichText:
+                     key: str = 'rich-text-editor',
+                     min_height: str = '500px',
+                     max_height: str = None) -> RichText:
     """ Add a rich text editor to the streamlit app
 
     :param placeholder: placeholder, defaults to None
@@ -19,20 +21,24 @@ def rich_text_editor(placeholder: str = None,
     :type disabled: bool, optional
     :param key: streamlit key, defaults to None
     :type key: str, optional
+    :param min_height: minimum height of the editor (css format), defaults to '500px'
+    :type min_height: str, optional
+    :param max_height: maximum height of the editor (css format), defaults to None
+    :type max_height: str, optional
     :return: _description_
     :rtype: RichText
     """
 
     streamlit_component_loader = StreamlitComponentLoader(
         "text-editor",
-        version="dc_text_editor_1.2.0",
+        version="dc_text_editor_1.3.0",
         is_released=True)
 
     default_value_json = initial_value.to_dto_json_dict() if initial_value is not None else None
 
     component_value = streamlit_component_loader.get_function()(
         placeholder=placeholder, initial_value=default_value_json, key=key, default=default_value_json,
-        disabled=disabled)
+        disabled=disabled, min_height=min_height, max_height=max_height)
 
     if component_value is None:
         return RichText()

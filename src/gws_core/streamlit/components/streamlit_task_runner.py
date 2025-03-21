@@ -29,7 +29,7 @@ class StreamlitTaskRunner():
 
     _streamlit_component_loader = StreamlitComponentLoader(
         "process-config",
-        version="dc_process_config_1.1.0",
+        version="dc_process_config_1.2.0",
         is_released=True)
 
     def __init__(self, task_type: Type[Task], key: str = 'process-config'):
