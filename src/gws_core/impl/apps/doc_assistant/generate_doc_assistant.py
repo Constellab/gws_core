@@ -61,4 +61,4 @@ class GenerateDocAssistant(Task):
 
         streamlit_app.set_param('product_doc_default_prompt', params['product_doc_default_prompt'])
 
-        return TaskOutputs(streamlit_app=streamlit_app)
+        return {"streamlit_app": streamlit_app}
