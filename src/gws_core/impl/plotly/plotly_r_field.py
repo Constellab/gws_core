@@ -16,10 +16,14 @@ class PlotlyRField(BaseRField):
         super().__init__()
 
     def deserialize(self, r_field_value: Any) -> go.Figure:
-        return go.Figure(r_field_value)
+        return PlotlyRField.figure_from_dict(r_field_value)
 
     def serialize(self, r_field_value: go.Figure) -> Any:
         return PlotlyRField.figure_to_dict(r_field_value)
+
+    @staticmethod
+    def figure_from_dict(figure_dict: dict) -> go.Figure:
+        return go.Figure(figure_dict)
 
     @staticmethod
     def figure_to_dict(figure: go.Figure) -> dict:

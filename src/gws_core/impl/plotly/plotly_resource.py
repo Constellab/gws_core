@@ -1,5 +1,7 @@
 
 
+import json
+
 import plotly.graph_objs as go
 
 from gws_core.config.config_params import ConfigParams
@@ -35,6 +37,14 @@ class PlotlyResource(Resource):
 
     def get_figure(self) -> go.Figure:
         return self.figure
+
+    def export_to_path(self, path: str):
+        dict_ = self.export_to_dict()
+        with open(path, 'w', encoding='utf-8') as file:
+            json.dump(dict_, file)
+
+    def export_to_dict(self) -> dict:
+        return PlotlyRField.figure_to_dict(self.figure)
 
     @view(view_type=PlotlyView, human_name="View plot", short_description="View interactive plotly figure",
           default_view=True)
@@ -82,3 +92,19 @@ class PlotlyResource(Resource):
                 'linecolor': theme.outline_color
             }
         }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'PlotlyResource':
+        return PlotlyResource(PlotlyRField.figure_from_dict(data))
+
+    @classmethod
+    def from_json_file(cls, path: str) -> 'PlotlyResource':
+        dict_: dict = None
+
+        try:
+            with open(path, 'r', encoding='utf-8') as file:
+                dict_ = json.load(file)
+        except Exception as e:
+            raise Exception(f"Error while reading the json file {path}. {str(e)}")
+
+        return PlotlyResource.from_dict(dict_)
