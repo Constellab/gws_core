@@ -25,8 +25,6 @@ class Config(ModelWithUser):
 
     _table_name = 'gws_config'
 
-    _specs: ConfigSpecs = None
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -39,15 +37,10 @@ class Config(ModelWithUser):
     ########################################## SPEC #####################################
 
     def get_specs(self) -> ConfigSpecs:
-        if self._specs is None:
-            self._specs = ConfigSpecsHelper.config_specs_from_json(self.data["specs"])
-
-        return self._specs
+        return ConfigSpecsHelper.config_specs_from_json(self.data["specs"])
 
     def set_specs(self, specs: ConfigSpecs) -> None:
         ConfigSpecsHelper.check_config_specs(specs)
-
-        self._specs = specs
 
         spec_json = {}
         for key, spec in specs.items():

@@ -19,11 +19,13 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
 
     specs: ConfigSpecs = None
 
-    edition_mode: bool = True
+    edition_mode: bool = None
 
     def __init__(self, specs: ConfigSpecs = None,
                  human_name: str = 'Dynamic params',
                  short_description: str = None) -> None:
+
+        self.edition_mode = True
 
         if specs is None:
             self.specs = {}

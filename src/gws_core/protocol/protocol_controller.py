@@ -5,7 +5,6 @@ from typing import Any, Dict, Optional
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
-
 from gws_core.config.config_dto import ConfigSimpleDTO
 from gws_core.config.param.param_types import (DynamicParamAllowedSpecsDict,
                                                ParamSpecDTO)
@@ -130,6 +129,13 @@ def get_community_available_agents(page: int,
 def get_community_agent(agent_version_id: str,
                         _=Depends(AuthService.check_user_access_token)) -> CommunityAgentDTO:
     return ProtocolService.get_community_agent(agent_version_id)
+
+
+@core_app.get("/protocol/get-current-agent-and-check-rights/{agent_version_id}", tags=["Protocol"],
+              summary="Get community agent by agent version id and check rights")
+def get_community_agent_and_check_rights(agent_version_id: str,
+                                         _=Depends(AuthService.check_user_access_token)) -> Optional[CommunityAgentDTO]:
+    return ProtocolService.get_community_agent_and_check_rights(agent_version_id)
 
 
 @core_app.post("/protocol/{id}/create-community-agent", tags=["Protocol"],

@@ -1,9 +1,9 @@
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, Optional
 
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
+from gws_core.core.utils.logger import Logger
 from gws_core.impl.agent.helper.agent_factory import AgentFactory
-from gws_core.model.typing_dto import TypingRefDTO
 from gws_core.model.typing_name import TypingNameObj
 
 from ..core.service.external_api_service import ExternalApiService
@@ -93,6 +93,21 @@ class CommunityService:
         except BaseHTTPException as err:
             err.detail = f"Can't retrieve community agents for the lab. Error : {err.detail}"
             raise err
+        return CommunityAgentDTO.from_json(response.json())
+
+    @classmethod
+    def get_community_agent_and_check_rights(cls, agent_version_id: str) -> Optional[CommunityAgentDTO]:
+        """
+        Get a community agent by comunity agent version id and check if the user has the right to edit it, if not return None
+        """
+        if cls.community_api_url is None:
+            return None
+        url = f"{cls.community_api_url}/agent/for-lab/check-rights/version/{agent_version_id}/{AgentFactory().current_json_version}"
+        try:
+            response = ExternalApiService.get(url, cls._get_request_header(), raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            Logger.info(f"Can't retrieve community agent for the lab. Error : {err.detail}")
+            return None
         return CommunityAgentDTO.from_json(response.json())
 
     @classmethod

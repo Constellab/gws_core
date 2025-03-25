@@ -1005,6 +1005,10 @@ class ProtocolService():
         return CommunityService.get_community_agent(agent_version_id)
 
     @classmethod
+    def get_community_agent_and_check_rights(cls, agent_version_id: str) -> Optional[CommunityAgentDTO]:
+        return CommunityService.get_community_agent_and_check_rights(agent_version_id)
+
+    @classmethod
     def create_community_agent(
             cls, process_id: str, form_data: CommunityCreateAgentDTO) -> CommunityAgentVersionCreateResDTO:
         version_file: CommunityAgentFileDTO = AgentFactory.generate_agent_file_from_agent_id(process_id)

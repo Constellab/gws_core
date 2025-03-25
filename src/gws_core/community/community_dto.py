@@ -21,6 +21,9 @@ class CommunityAgentDTO(BaseModelDTO):
     latest_publish_version: int
     description: Optional[object] = None
     latest_style: Optional[TypingStyle] = None
+    agent_co_authors: Optional[List[object]] = None
+    likes: Optional[int] = None
+    comments: Optional[int] = None
 
 
 class CommunityAgentFileParams(BaseModelDTO):
