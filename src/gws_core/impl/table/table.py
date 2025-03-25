@@ -57,7 +57,7 @@ class Table(Resource):
     Tags are visible in the interface and can be used to manipulate (filter, merge...) the data.
 
     ## Header names
-    Table has more strict rules about row and column names than DataFrame :
+    Table has stricter rules about row and column names than DataFrame :
      - Row names are converted to string and must be unique (if not, _1, _2, _3, ... are added to the name)
      - Column names are converted to string and must be unique (if not, _1, _2, _3, ... are added to the name)
     """

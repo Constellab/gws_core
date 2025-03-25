@@ -7,6 +7,7 @@ from gws_core.config.param.param_spec import IntParam
 from gws_core.impl.view.audio_view import AudioView
 from gws_core.impl.view.html_view import HTMLView
 from gws_core.impl.view.image_view import ImageView
+from gws_core.impl.view.markdown_view import MarkdownView
 from gws_core.model.typing_style import TypingStyle
 
 from ...config.config_params import ConfigParams
@@ -235,6 +236,8 @@ class File(FSNode):
             return AudioView.from_local_file(self.path)
         if self.extension == 'html':
             return HTMLView(self.read())
+        if self.extension == 'md':
+            return MarkdownView(self.read())
 
         # if the file is not readable, don't open the file and return the main view
         if not self.is_readable():
