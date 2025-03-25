@@ -1,9 +1,8 @@
 
 import streamlit as st
-from pandas import DataFrame
-
 from gws_core.streamlit import StreamlitContainers, dataframe_paginated
 from gws_core.test.data_provider import DataProvider
+from pandas import DataFrame
 
 
 def render_dataframes_page():
@@ -24,9 +23,9 @@ def _render_full_width_dataframe_container(df: DataFrame):
         st.dataframe(df, use_container_width=True)
 
     st.code('''
-from gws_core.streamlit import StreamlitContainer
+from gws_core.streamlit import StreamlitContainers
 
-with StreamlitContainer.full_dataframe_container('container-full-dataframe'):
+with StreamlitContainers.full_width_dataframe_container('container-full-dataframe'):
     st.dataframe(dataframe, use_container_width=True)
 ''')
 
