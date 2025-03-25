@@ -83,13 +83,23 @@ class DifySendFileToKnownledgeBase(Task):
             lang=params.get_value('lang')
         )
         progress = 0
+
+        error_files: List[str] = []
         for file_path in file_paths:
-            dify_service.send_document(file_path,
-                                       params.get_value('dataset_id'),
-                                       options)
+
+            try:
+                dify_service.send_document(file_path,
+                                           params.get_value('dataset_id'),
+                                           options)
+            except Exception as e:
+                self.log_error_message(f"Error while sending file '{file_path}' to Dify Knowledge Base: {str(e)}")
+                error_files.append(file_path)
 
             progress += 1
             self.update_progress_value(progress / len(file_paths) * 100,
                                        f"File {file_path} sent")
+
+        if error_files:
+            raise Exception(f"Error while sending files to Dify Knowledge Base: {error_files}")
 
         return {}

@@ -1,3 +1,4 @@
+import os
 from typing import Literal, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
