@@ -4,7 +4,8 @@ from typing import Type
 
 from typing_extensions import TypedDict
 
-from ..config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParamsDict
+
 from ..config.param.param_types import ParamValue
 from ..process.process import Process
 

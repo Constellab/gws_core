@@ -4,6 +4,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec,
                       OutputSpecs, Resource, ResourceModel, RField,
                       ScenarioProxy, Task, TaskInputs, TaskModel, TaskOutputs,
                       TaskProxy, resource_decorator, task_decorator)
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
                                                   SearchOperator, SearchParams)
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -26,7 +27,7 @@ class ForSearch(Resource):
 @task_decorator("ForSearchCreate")
 class ForSearchCreate(Task):
     output_specs = OutputSpecs({'search': OutputSpec(ForSearch)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'search': ForSearch.create('empty')}

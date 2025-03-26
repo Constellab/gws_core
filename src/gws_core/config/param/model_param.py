@@ -8,7 +8,7 @@ from gws_core.core.classes.validator import StrValidator
 from gws_core.core.model.model import Model
 
 
-class ModelParam(ParamSpec[str]):
+class ModelParam(ParamSpec):
     """ Abstract param spec to select an model from the DB and return it in the task
     """
 

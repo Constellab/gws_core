@@ -1,7 +1,7 @@
 import time
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import FloatParam
 from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -28,8 +28,8 @@ class Wait(Task):
     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
         resource_types=Resource, sub_class=True, is_constant=True)})
-    config_specs: ConfigSpecs = {"waiting_time": FloatParam(
-        default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
+    config_specs = ConfigSpecs({"waiting_time": FloatParam(
+        default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         waiting_time = params.get_value("waiting_time")
@@ -60,8 +60,8 @@ class ShellWait(Task):
     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
         resource_types=Resource, sub_class=True, is_constant=True)})
-    config_specs: ConfigSpecs = {"waiting_time": FloatParam(
-        default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
+    config_specs = ConfigSpecs({"waiting_time": FloatParam(
+        default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # Create the shell proxy. No need to provide the working directory.

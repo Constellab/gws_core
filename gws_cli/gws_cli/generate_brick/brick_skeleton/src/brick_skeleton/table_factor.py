@@ -4,6 +4,7 @@ from pandas import DataFrame
 
 from gws_core import (ConfigParams, InputSpec, IntParam, OutputSpec, Table,
                       Task, TaskInputs, TaskOutputs, task_decorator)
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
 
@@ -21,8 +22,8 @@ class TableFactor(Task):
     output_specs = OutputSpecs({'output_table': OutputSpec(Table, human_name="Result",
                                                            short_description="The output table")})
 
-    config_specs = {"factor": IntParam(human_name='Factor',
-                                       short_description="Factor to apply to the table")}
+    config_specs = ConfigSpecs({"factor": IntParam(human_name='Factor',
+                                                   short_description="Factor to apply to the table")})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """ Run the task """

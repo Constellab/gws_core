@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Type
 from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from gws_core.config.config import Config
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.process.process import Process
@@ -16,7 +17,6 @@ from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_list import TagList
 from gws_core.task.plug.input_task import InputTask
 
-from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException

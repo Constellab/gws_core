@@ -1,6 +1,6 @@
 
 
-from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.json.json_view import JSONView
 from gws_core.model.typing_style import TypingStyle

@@ -1,4 +1,5 @@
 from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.folder.task.space_folder_param import SpaceFolderParam
 from gws_core.folder.task.space_folder_resource import SpaceFolderResource
@@ -17,9 +18,9 @@ class SelectSpaceFolder(Task):
         'space_folder': OutputSpec(SpaceFolderResource, human_name="Selected space folder")
     })
 
-    config_specs = {
+    config_specs = ConfigSpecs({
         'space_folder': SpaceFolderParam(human_name="Select a space folder"),
-    }
+    })
 
     OUTPUT_NAME = 'space_folder'
     CONFIG_NAME = 'space_folder'

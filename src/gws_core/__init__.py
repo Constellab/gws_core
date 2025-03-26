@@ -13,8 +13,8 @@ from .community.community_service import CommunityService as CommunityService
 # Config
 from .config.config import Config as Config
 from .config.config_params import ConfigParams as ConfigParams
-from .config.config_types import ConfigParamsDict as ConfigParamsDict
-from .config.config_types import ConfigSpecs as ConfigSpecs
+from .config.config_params import ConfigParamsDict as ConfigParamsDict
+from .config.config_specs import ConfigSpecs as ConfigSpecs
 # Code params
 from .config.param.code_param.bash_code_param import \
     BashCodeParam as BashCodeParam
@@ -418,7 +418,6 @@ from .resource.view.multi_views import MultiViews as MultiViews
 from .resource.view.view import View as View
 from .resource.view.view_decorator import view as view
 from .resource.view.view_resource import ViewResource as ViewResource
-from .resource.view.view_types import ViewSpecs as ViewSpecs
 from .resource.view.view_types import ViewType as ViewType
 from .resource.view.viewer import Viewer as Viewer
 from .resource.view_config.view_config import ViewConfig as ViewConfig

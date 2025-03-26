@@ -5,6 +5,7 @@ import os
 from gws_core import (BaseTestCase, ConfigParams, FileHelper, Folder,
                       OutputSpec, OutputSpecs, ScenarioProxy, Settings, Task,
                       TaskInputs, TaskOutputs, task_decorator)
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.impl.file.file import File
 from gws_core.impl.file.folder_task import FolderExporter
 from gws_core.impl.file.local_file_store import LocalFileStore
@@ -21,7 +22,7 @@ class CreateFolderTest(Task):
     """ Simple process that create a file anywhere on the server
     """
     output_specs = OutputSpecs({'folder': OutputSpec(Folder)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         folder = Folder()

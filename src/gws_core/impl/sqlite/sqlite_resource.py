@@ -3,7 +3,10 @@
 import sqlite3
 from typing import List
 
+from pandas import read_sql_query
+
 from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.file.file import File
 from gws_core.impl.table.table import Table
@@ -11,7 +14,6 @@ from gws_core.impl.table.view.table_view import TableView
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_decorator import view
-from pandas import read_sql_query
 
 
 @resource_decorator("SqliteResource")
@@ -81,12 +83,12 @@ class SqliteResource(File):
         return self._get_table_names_view()
 
     @view(view_type=TableView, human_name="View table", short_description="Show the content of a table", default_view=False,
-          specs={'table_name': StrParam(human_name="Table name", short_description="Name of the table to show")})
+          specs=ConfigSpecs({'table_name': StrParam(human_name="Table name", short_description="Name of the table to show")}))
     def select_table_view(self, params: ConfigParams) -> TableView:
         return self._get_select_table_view(params["table_name"])
 
     @view(view_type=TableView, human_name="Execute query", short_description="Show the result of a select query",
-          default_view=False, specs={'query': StrParam(human_name="Query", short_description="Query to execute")})
+          default_view=False, specs=ConfigSpecs({'query': StrParam(human_name="Query", short_description="Query to execute")}))
     def execute_select_view(self, params: ConfigParams) -> TableView:
         query = params["query"]
         table_view = TableView(self.execute_select(query))

@@ -5,13 +5,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
 from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import FloatParam, ListParam
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.impl.table.view.base_table_view import BaseTableView
 from gws_core.impl.table.view.table_selection import Serie2d
 from gws_core.impl.view.vulcano_plot_view import VulcanoPlotView
-from gws_core.resource.view.view_types import ViewSpecs, ViewType
+from gws_core.resource.view.view_types import ViewType
 
 if TYPE_CHECKING:
     from ..table import Table
@@ -20,14 +21,13 @@ if TYPE_CHECKING:
 class TableVulcanoPlotView(BaseTableView):
 
     _table: Table
-    _specs: ViewSpecs = {
-        **BaseTableView._specs,
+
+    _specs = ConfigSpecs({
         "series": ListParam(default_value=[]),
         "x_threshold": FloatParam(default_value=0.05),
         "y_threshold": FloatParam(default_value=0.05),
-        **BaseTableView._2d_axis_labels_specs,
+    }).merge_specs(BaseTableView._2d_axis_labels_specs)
 
-    }
     _type: ViewType = ViewType.VULCANO_PLOT
 
     def data_to_dict(self, params: ConfigParams) -> dict:

@@ -8,7 +8,7 @@ from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.impl.file.file_helper import FileHelper
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_specs import ConfigSpecs
 from ....config.param.param_set import ParamSet
 from ....config.param.param_spec import BoolParam, IntParam, StrParam
 from ....core.exception.exceptions.bad_request_exception import \
@@ -21,7 +21,7 @@ from ..table import Table
 
 @importer_decorator(unique_name="TableImporter", target_type=Table, supported_extensions=Table.ALLOWED_FILE_FORMATS)
 class TableImporter(ResourceImporter):
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'file_format': StrParam(allowed_values=['auto', *Table.ALLOWED_FILE_FORMATS], default_value='auto', human_name="File format", short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, human_name="Delimiter", short_description="Delimiter character. Only for parsing CSV files"),
         'header': IntParam(default_value=0, min_value=-1, human_name="Header", short_description="Row to use as the column names. By default the first row is used (i.e. header=0). Set header=-1 to not read column names."),
@@ -31,11 +31,11 @@ class TableImporter(ResourceImporter):
         'nrows': IntParam(default_value=None, optional=True, min_value=0, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Number of rows", short_description="Number of rows to import. Useful to read piece of data."),
         'comment': StrParam(default_value="#", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Comment character", short_description="Character used to comment lines. Set empty to disable comment lines."),
         'encoding': StrParam(default_value="auto", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="File encoding", short_description="Encoding of the file, 'auto' for automatic detection."),
-        "metadata_columns": ParamSet({
+        "metadata_columns": ParamSet(ConfigSpecs({
             'column': StrParam(default_value=None, optional=True, visibility=StrParam.PROTECTED_VISIBILITY, human_name="Column", short_description="Metadata column to use to tag rows"),
             'keep_in_table': BoolParam(default_value=True, optional=True, visibility=BoolParam.PROTECTED_VISIBILITY, human_name="Keep in table", short_description="Set True to keep the column in the final table; False otherwise"),
-        }, optional=True, visibility=ParamSet.PROTECTED_VISIBILITY, human_name="Metadata columns", short_description="Columns data to use to tag the rows of the table"),
-    }
+        }), optional=True, visibility=ParamSet.PROTECTED_VISIBILITY, human_name="Metadata columns", short_description="Columns data to use to tag the rows of the table"),
+    })
 
     def import_from_path(self, source: File, params: ConfigParams, target_type: Type[Table]) -> Table:
         if source.is_empty():

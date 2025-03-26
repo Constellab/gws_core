@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
+from gws_core.config.config_specs import ConfigSpecs
+
 from ....config.config_params import ConfigParams
 from ....config.param.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
-from ....resource.view.view_types import ViewSpecs, ViewType
+from ....resource.view.view_types import ViewType
 from ...view.venn_diagram_view import VennDiagramView
 from .base_table_view import BaseTableView
 from .table_selection import Serie1d
@@ -50,10 +52,9 @@ class TableVennDiagramView(BaseTableView):
     _type: ViewType = ViewType.VENN_DIAGRAM
     _table: Table
 
-    _specs: ViewSpecs = {
-        **BaseTableView._specs,
+    _specs = ConfigSpecs({
         "series": ListParam(default_value=[]),
-    }
+    })
 
     def data_to_dict(self, params: ConfigParams) -> dict:
 

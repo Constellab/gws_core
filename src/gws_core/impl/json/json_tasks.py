@@ -13,7 +13,7 @@ from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 
 from ...config.config_params import ConfigParams
-from ...config.config_types import ConfigSpecs
+from ...config.config_specs import ConfigSpecs
 from ...config.param.param_spec import BoolParam, StrParam
 from ...task.converter.exporter import ResourceExporter, exporter_decorator
 from ...task.converter.importer import ResourceImporter, importer_decorator
@@ -22,7 +22,7 @@ from .json_dict import JSONDict
 
 @importer_decorator(unique_name="JSONImporter", target_type=JSONDict, supported_extensions=['json'])
 class JSONImporter(ResourceImporter):
-    config_specs: ConfigSpecs = {'file_format': StrParam(default_value="json", short_description="File format")}
+    config_specs = ConfigSpecs({'file_format': StrParam(default_value="json", short_description="File format")})
 
     def import_from_path(self, source: File, params: ConfigParams, target_type: Type[JSONDict]) -> JSONDict:
         if source.is_empty():
@@ -38,7 +38,7 @@ class JSONImporter(ResourceImporter):
 
 @exporter_decorator("JSONExporter", source_type=JSONDict)
 class JSONExporter(ResourceExporter):
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'file_name': StrParam(optional=True, short_description="Destination file name in the store"),
         'file_format':
         StrParam(
@@ -47,7 +47,7 @@ class JSONExporter(ResourceExporter):
         'prettify':
         BoolParam(
             default_value=False, visibility=BoolParam.PROTECTED_VISIBILITY,
-            short_description="True to indent and prettify the JSON file, False otherwise")}
+            short_description="True to indent and prettify the JSON file, False otherwise")})
 
     def export_to_path(self, source: JSONDict, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_name = params.get_value('file_name', type(self).get_human_name())

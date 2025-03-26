@@ -3,6 +3,7 @@
 import pandas as pd
 import plotly.express as px
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.model.typing_style import TypingStyle
 
@@ -28,7 +29,7 @@ class PlotlyBarplot(PlotlyTask):
 
     output_specs = PlotlyTask.output_specs
 
-    config_specs = {
+    config_specs = ConfigSpecs({
         **PlotlyTask.config_specs_d2,
         # specific params
         'base': StrParam(
@@ -43,7 +44,7 @@ class PlotlyBarplot(PlotlyTask):
         **PlotlyTask.color_continuous,
         **PlotlyTask.pattern_shape,
         **PlotlyTask.custom_data,
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         dataframe = pd.DataFrame(inputs['input_table'].get_data())

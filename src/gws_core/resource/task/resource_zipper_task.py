@@ -1,7 +1,7 @@
 
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.file.file import File
@@ -45,11 +45,11 @@ class ResourceZipperTask(Task):
         "target": OutputSpec(File, human_name="Zip file")
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         # this config is only set when calling this automatically
         "shared_by_id": StrParam(optional=True, human_name="Id of the user that shared the resource",
                                  visibility=StrParam.PRIVATE_VISIBILITY),
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
@@ -103,8 +103,7 @@ class ResourceUnZipper(Task):
         "target": OutputSpec(Resource, human_name="Resource")
     })
 
-    config_specs: ConfigSpecs = {
-    }
+    config_specs = ConfigSpecs({})
 
     resource_loader: ResourceLoader = None
 

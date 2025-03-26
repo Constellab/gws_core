@@ -6,7 +6,7 @@ import streamlit as st
 
 from gws_core.community.community_service import CommunityService
 from gws_core.config.config import Config
-from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.resource import Resource
 from gws_core.streamlit.components.streamlit_component_loader import \

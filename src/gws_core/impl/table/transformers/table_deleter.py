@@ -3,7 +3,7 @@
 from typing import List
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_specs import ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ..helper.dataframe_filter_helper import DataframeFilterHelper
 from ..table import Table
@@ -27,9 +27,9 @@ class TableRowsDeleter(Transformer):
     It also supports regexp.
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "filters": DataframeFilterHelper.get_filter_param_set('row', 'Row filters')
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         return source.filter_out_by_row_names(params.get('filters'))
@@ -49,9 +49,9 @@ class TableColumnsDeleter(Transformer):
     If you want to select column by name instead of deleting them, use the **TableColumnSelector**.
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "filters": DataframeFilterHelper.get_filter_param_set('column', 'Column filters')
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         return source.filter_out_by_column_names(params.get('filters'))
@@ -86,9 +86,9 @@ class TableRowTagsDeleter(Transformer):
     If you want to select rows by tags instead of deleting them, use the **TableRowTagsSelector**.
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'tags': DataframeFilterHelper.get_tags_param_set('row')
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get('tags'))
@@ -118,9 +118,9 @@ class TableColumnTagsDeleter(Transformer):
     If you want to select columns by tags instead of deleting them, use the **TableColumnTagsSelector**.
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'tags': DataframeFilterHelper.get_tags_param_set('column')
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get('tags'))

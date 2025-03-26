@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.impl.table.table import Table

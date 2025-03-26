@@ -2,6 +2,7 @@ from typing import List
 
 from gws_core import (ConfigParams, InputSpec, OutputSpecs, Task, TaskInputs,
                       TaskOutputs, task_decorator)
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam, StrParam
 from gws_core.core.utils.utils import Utils
 from gws_core.credentials.credentials_param import CredentialsParam
@@ -34,7 +35,7 @@ class DifySendFileToKnownledgeBase(Task):
     )
     output_specs = OutputSpecs()
 
-    config_specs = {
+    config_specs = ConfigSpecs({
         'api_key': CredentialsParam(credentials_type=CredentialsType.OTHER,
                                     human_name="Dify API Key",
                                     short_description="A credentials that contains 'route' and 'api_key'",
@@ -55,7 +56,7 @@ class DifySendFileToKnownledgeBase(Task):
         'lang': StrParam(human_name="Language",
                          short_description="Language of the document",
                          default_value='en')
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """ Run the task """

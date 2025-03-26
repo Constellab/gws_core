@@ -1,7 +1,7 @@
 
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_specs import ConfigSpecs
 from ....config.param.param_spec import BoolParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
@@ -16,7 +16,7 @@ class TableColumnAggregator(Transformer):
 
     Available aggregation functions: ```mean```, ```std```, ```var```, ```min```, ```max```, ```median``` and ```sum```.
     """
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "function": StrParam(
             human_name="Aggregation function",
             allowed_values=DataframeAggregatorHelper.AGGREGATION_FUNCTIONS,
@@ -27,7 +27,7 @@ class TableColumnAggregator(Transformer):
             human_name="Skip NaN",
             short_description="If True, skip NaN values when aggregating. If False the result is NaN if one value is NaN.",
         ),
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data = DataframeAggregatorHelper.aggregate(
@@ -49,7 +49,7 @@ class TableRowAggregator(Transformer):
 
     Available aggregation functions: ```mean```, ```std```, ```var```, ```min```, ```max```, ```median``` and ```sum```.
     """
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "function": StrParam(
             human_name="Aggregation function",
             allowed_values=DataframeAggregatorHelper.AGGREGATION_FUNCTIONS,
@@ -60,7 +60,7 @@ class TableRowAggregator(Transformer):
             human_name="Skip NaN",
             short_description="If True, skip NaN values when aggregating. If False the result is NaN if one value is NaN.",
         ),
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data = DataframeAggregatorHelper.aggregate(

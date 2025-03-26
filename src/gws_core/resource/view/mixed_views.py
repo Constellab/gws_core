@@ -5,7 +5,6 @@ from typing import List
 from gws_core.resource.view.multi_views import MultiViews
 
 from ...config.config_params import ConfigParams, ConfigParamsDict
-from ...config.param.param_spec_helper import ParamSpecHelper
 from .view import View
 
 
@@ -56,8 +55,7 @@ class MixedViews(View):
         if not isinstance(view, self._allowed_view_types):
             raise Exception(f'[MixedViews] can only mix {self._allowed_view_types}')
 
-        # TODO error if LazyViewParam is used
-        config_params: ConfigParams = ParamSpecHelper.get_and_check_values(view._specs, params)
+        config_params: ConfigParams = view._specs.get_and_check_values(params)
 
         self._sub_views.append(
             {

@@ -3,6 +3,7 @@
 from pandas import DataFrame
 
 from gws_core import BaseTestCase, PyAgent, Table, TaskRunner
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import IntParam
@@ -54,11 +55,11 @@ targets = [df]
             inputs={
                 'source': Table(data=DataFrame({'col1': [0, 1], 'col2': [0, 2]}))
             },
-            config_specs={
-                'params': DynamicParam(specs={'a': IntParam(), 'b': IntParam()}),
+            config_specs=ConfigSpecs({
+                'params': DynamicParam(specs=ConfigSpecs({'a': IntParam(), 'b': IntParam()})),
                 'code':
                     PythonCodeParam(),
-            },
+            }),
             task_type=PyAgent
         )
 

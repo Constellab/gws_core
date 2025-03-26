@@ -2,13 +2,15 @@
 
 from typing import Any
 
+from gws_core.config.config_specs import ConfigSpecs
+
 from ...config.config_params import ConfigParams
 from ...config.param.param_spec import IntParam
 from ...core.classes.paginator import PageInfo
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...resource.view.view import View
-from ...resource.view.view_types import ViewSpecs, ViewType
+from ...resource.view.view_types import ViewType
 
 MAX_NUMBER_OF_CHARS_PER_PAGE = 50000
 
@@ -57,12 +59,9 @@ class TextView(View):
     """
 
     _type: ViewType = ViewType.TEXT
-    _specs: ViewSpecs = {
-        **View._specs,
-        "page": IntParam(default_value=1, min_value=1, human_name="Page number"),
-        "page_size": IntParam(
-            default_value=10000, max_value=MAX_NUMBER_OF_CHARS_PER_PAGE, min_value=1000, human_name="Number of caracters to display per page")
-    }
+    _specs = ConfigSpecs({"page": IntParam(default_value=1, min_value=1, human_name="Page number"), "page_size": IntParam(
+        default_value=10000, max_value=MAX_NUMBER_OF_CHARS_PER_PAGE, min_value=1000, human_name="Number of caracters to display per page")})
+
     _data: str
 
     PAGE_PARAM_NAME = "page"

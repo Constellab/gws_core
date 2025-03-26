@@ -70,7 +70,7 @@ class AgentFactory:
         for param_name in params:
             param_value = params[param_name]
 
-            param_type: ParamSpec = params_spec.specs[param_name]
+            param_type: ParamSpec = params_spec.specs.get_spec(param_name)
             param_type.default_value = param_value
 
             task_generator.add_config_spec(param_name, param_type)

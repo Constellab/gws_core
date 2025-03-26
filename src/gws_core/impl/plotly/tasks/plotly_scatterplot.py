@@ -3,6 +3,7 @@
 import pandas as pd
 import plotly.express as px
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import FloatParam, IntParam, StrParam
 from gws_core.model.typing_style import TypingStyle
 
@@ -28,7 +29,7 @@ class PlotlyScatterplot(PlotlyTask):
 
     output_specs = PlotlyTask.output_specs
 
-    config_specs = {
+    config_specs = ConfigSpecs({
         **PlotlyTask.config_specs_d2,
         'size': StrParam(
             default_value=None,
@@ -71,7 +72,7 @@ class PlotlyScatterplot(PlotlyTask):
         **PlotlyTask.color_continuous,
         **PlotlyTask.trendline,
         **PlotlyTask.custom_data,
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         dataframe = pd.DataFrame(inputs['input_table'].get_data())

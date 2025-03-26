@@ -7,7 +7,7 @@ from typing import Dict, List, Type, final
 from peewee import Tuple
 from typing_extensions import TypedDict
 
-from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingStyle

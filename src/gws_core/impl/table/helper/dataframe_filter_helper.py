@@ -5,6 +5,7 @@ from typing import List, Literal, Union
 from pandas import DataFrame, Index, api
 from typing_extensions import NotRequired, TypedDict
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.config.param.tags_param_spec import TagsParam
@@ -94,7 +95,7 @@ class DataframeFilterHelper:
         """
 
         human_name = "Row name" if axis_name == "row" else "Column name"
-        return ParamSet({
+        return ParamSet(ConfigSpecs({
             "name": StrParam(
                 human_name=human_name,
                 short_description="Searched text or pattern (i.e. regular expression)",
@@ -104,7 +105,7 @@ class DataframeFilterHelper:
                 human_name="Use regular expression",
                 short_description="True to use regular expression, False otherwise",
             )
-        },
+        }),
             human_name=param_set_human_name,
             short_description=param_set_short_description,
             optional=optional)
@@ -115,12 +116,12 @@ class DataframeFilterHelper:
         """
 
         human_name = "Row tags" if axis_name == "row" else "Column tags"
-        return ParamSet({
+        return ParamSet(ConfigSpecs({
             "tags": TagsParam(
                 human_name=human_name,
                 short_description="If multiple tags provided, the data must have all of them (AND condition)",
             )
-        },
+        }),
             human_name=human_name,
             short_description="The different tag inputs are combined with an OR condition")
 

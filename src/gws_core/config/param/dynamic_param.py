@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import (BoolParam, DictParam, FloatParam,
                                               IntParam, ListParam, ParamSpec,
                                               StrParam, TextParam)
@@ -14,7 +14,7 @@ from .param_types import ParamSpecDTO, ParamSpecTypeStr
 
 
 @param_spec_decorator(type_=ParamaSpecType.NESTED)
-class DynamicParam(ParamSpec[Dict[str, Any]]):
+class DynamicParam(ParamSpec):
     """Dynamic param"""
 
     specs: ConfigSpecs = None
@@ -24,36 +24,38 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
     def __init__(self, specs: ConfigSpecs = None,
                  human_name: str = 'Dynamic params',
                  short_description: str = None) -> None:
-
-        self.edition_mode = True
-
-        if specs is None:
-            self.specs = {}
-        else:
-            self.specs = specs
-
-        if human_name is None:
-            human_name = 'Dynamic params'
-
-        ParamSpecHelper.check_config_specs(self.specs)
-
         super().__init__(optional=True,
                          visibility='public',
                          human_name=human_name,
                          short_description=short_description,
                          default_value=None)
 
+        self.edition_mode = True
+
+        if specs is None:
+            self.specs = ConfigSpecs()
+        else:
+            if isinstance(specs, dict):
+                specs = ConfigSpecs(specs)
+
+            if not isinstance(specs, ConfigSpecs):
+                raise BadRequestException("The specs attribute must be an instance of ConfigSpecs.")
+
+            self.specs = specs
+
+        if human_name is None:
+            human_name = 'Dynamic params'
+
+        self.specs.check_config_specs()
+
     def get_default_value(self):
-        default_value = {}
-        for key, spec in self.specs.items():
-            default_value[key] = spec.default_value
-        return default_value
+        return self.specs.get_default_values()
 
     def validate(self, value: Dict[str, Any]) -> Dict[str, Any]:
         if value is None:
             return value
 
-        return ParamSpecHelper.get_and_check_values(self.specs, value)
+        return self.specs.get_and_check_values(value)
 
     def to_dto(self) -> ParamSpecDTO:
         json_ = super().to_dto()
@@ -61,7 +63,7 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
         json_.default_value = self.get_default_value()
 
         json_.additional_info = {
-            'specs': {key: spec.to_dto() for key, spec in self.specs.items()},
+            'specs': self.specs.to_dto(skip_private=False),
             'edition_mode': self.edition_mode
         }
 
@@ -75,60 +77,44 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
     def load_from_dto(cls, spec_dto: ParamSpecDTO) -> "DynamicParam":
         dynamic_param: DynamicParam = super().load_from_dto(spec_dto)
 
-        dynamic_param.specs = {}
+        specs = ConfigSpecs()
 
         if spec_dto.additional_info is None or "specs" not in spec_dto.additional_info:
             raise BadRequestException("The specs attribute is required.")
 
         for key, spec in spec_dto.additional_info["specs"].items():
             sub_spec_dto = ParamSpecDTO.from_json(spec)
-            dynamic_param.specs[key] = ParamSpecHelper.get_param_spec_type_from_str(
+            param_spec: ParamSpec = ParamSpecHelper.get_param_spec_type_from_str(
                 sub_spec_dto.type).load_from_dto(sub_spec_dto)
+            specs.add_spec(key, param_spec)
 
         dynamic_param.edition_mode = spec_dto.additional_info.get("edition_mode", True)
+        dynamic_param.specs = specs
 
         return dynamic_param
 
     def add_spec(self, param_name: str, spec_dto: ParamSpecDTO) -> None:
-        if param_name in self.specs:
-            raise BadRequestException(f"Spec with name {param_name} already exists")
+        spec: ParamSpec = self.get_spec_from_dto(spec_dto)
 
-        spec: ParamSpec[Any] = self.get_spec_from_dto(spec_dto)
-
-        self.specs[param_name] = spec
+        self.specs.add_spec(param_name, spec)
 
     def update_spec(self, param_name: str, spec_dto: ParamSpecDTO) -> None:
-        if param_name not in self.specs:
-            raise BadRequestException(f"Spec with name {param_name} not found")
+        spec: ParamSpec = self.get_spec_from_dto(spec_dto)
 
-        spec: ParamSpec[Any] = self.get_spec_from_dto(spec_dto)
-
-        self.specs[param_name] = spec
+        self.specs.update_spec(param_name, spec)
 
     def rename_and_update_spec(self, param_name: str, new_param_name: str, spec_dto: ParamSpecDTO) -> None:
-        if param_name not in self.specs:
-            raise BadRequestException(f"Spec with name {param_name} not found")
+        spec: ParamSpec = self.get_spec_from_dto(spec_dto)
 
-        if new_param_name in self.specs:
-            raise BadRequestException(f"Spec with name {new_param_name} already exists")
-
-        spec: ParamSpec[Any] = self.get_spec_from_dto(spec_dto)
-
-        self.specs[new_param_name] = spec
-
-        del self.specs[param_name]
+        self.specs.remove_spec(param_name)
+        self.specs.add_spec(new_param_name, spec)
 
     def remove_spec(self, param_name: str) -> None:
-        if param_name not in self.specs:
-            raise BadRequestException(f"Spec with name {param_name} not found")
-
-        del self.specs[param_name]
-
-        if self.additional_info is not None and 'specs' in self.additional_info:
-            del self.additional_info['specs'][param_name]
+        self.specs.remove_spec(param_name)
 
     def get_spec_from_dto(self, spec_dto: ParamSpecDTO) -> ParamSpec:
         spec = ParamSpecHelper.get_param_spec_type_from_str(spec_dto.type).load_from_dto(spec_dto)
+        # TODO A VERIFIER
         if 'allowed_values' in spec.additional_info and spec.additional_info['allowed_values'] is not None and len(
                 spec.additional_info['allowed_values']) == 0:
             spec.additional_info['allowed_values'] = None
@@ -166,3 +152,8 @@ class DynamicParam(ParamSpec[Dict[str, Any]]):
     @classmethod
     def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
         return None
+
+
+a: DynamicParam = DynamicParam()
+
+# a is consider a ParamSpec

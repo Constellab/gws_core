@@ -2,13 +2,13 @@
 
 from typing import Callable, Type
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource import Resource
 
 from ..brick.brick_service import BrickService
-from ..config.param.param_spec_helper import ParamSpecHelper
 from ..core.utils.utils import Utils
 from ..io.io_spec_helper import IOSpecsHelper
 from ..model.typing_register_decorator import register_gws_typing_class
@@ -99,7 +99,16 @@ def decorate_task(
 
         task_class.input_specs = IOSpecsHelper.check_input_specs(task_class.input_specs, task_class)
         task_class.output_specs = IOSpecsHelper.check_output_specs(task_class.output_specs, task_class)
-        ParamSpecHelper.check_config_specs(task_class.config_specs)
+
+        # check the config specs
+        if isinstance(task_class.config_specs, dict):
+            # TODO for now this is just a warning
+            BrickService.log_brick_warning(
+                task_class,
+                f"The config specs of task {task_class.__name__} must be an ConfigSpecs object and not a dict. The dict support will be removed in the future")
+
+            task_class.config_specs = ConfigSpecs(task_class.config_specs)
+        task_class.config_specs.check_config_specs()
 
     except Exception as err:
         BrickService.log_brick_error(

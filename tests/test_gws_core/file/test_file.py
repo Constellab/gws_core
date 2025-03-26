@@ -5,6 +5,7 @@ import os
 from gws_core import (BaseTestCase, ConfigParams, File, FsNodeService,
                       OutputSpec, OutputSpecs, Task, TaskInputs, TaskOutputs,
                       task_decorator)
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_store import FileStore
@@ -19,7 +20,7 @@ class CreateFileTest(Task):
     """ Simple process that create a file anywhere on the server
     """
     output_specs = OutputSpecs({'file': OutputSpec(File)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         file = File()

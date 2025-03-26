@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Type, final
 
 from peewee import BooleanField, CharField, ForeignKeyField
 
-from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings

@@ -1,6 +1,6 @@
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
 from gws_core.impl.agent.env_agent import EnvAgent
@@ -19,7 +19,7 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
                     icon_technical_name='agent', icon_type=TypingIconType.MATERIAL_ICON))
 class StreamlitPipenvAgent(StreamlitEnvAgent):
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'params': EnvAgent.get_dynamic_param_config(),
         'env': YamlCodeParam(
             default_value=AgentCodeHelper.get_streamlit_pip_env_file_template(),
@@ -30,7 +30,7 @@ class StreamlitPipenvAgent(StreamlitEnvAgent):
             default_value=AgentCodeHelper.get_streamlit_env_code_template(),
             human_name="Streamlit app code",
             short_description="Code of the streamlit app to run")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

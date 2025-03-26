@@ -1,6 +1,6 @@
 
 from abc import abstractmethod
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Dict, List, Optional
 
 from typing_extensions import TypedDict
 
@@ -14,16 +14,14 @@ from ...core.exception.exceptions.bad_request_exception import \
 from .param_types import (ParamSpecDTO, ParamSpecInfoSpecs, ParamSpecSimpleDTO,
                           ParamSpecTypeStr, ParamSpecVisibilty)
 
-ParamSpecType = TypeVar("ParamSpecType")
 
-
-class ParamSpec(Generic[ParamSpecType]):
+class ParamSpec():
     """Main abstract class for the spec of config params"""
 
     # Default value, if None, and optional is false, the config is mandatory
     # If a value is provided there is no need to set the optional
     # Setting optional to True, allows default None value
-    default_value: Optional[ParamSpecType]
+    default_value: Optional[Any]
     optional: bool
 
     # Visibility of the param, see doc on type ParamSpecVisibilty for more info
@@ -44,7 +42,7 @@ class ParamSpec(Generic[ParamSpecType]):
 
     def __init__(
         self,
-        default_value: Optional[ParamSpecType] = None,
+        default_value: Optional[Any] = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
@@ -77,7 +75,7 @@ class ParamSpec(Generic[ParamSpecType]):
 
         self.default_value = self.validate(default_value)
 
-    def get_default_value(self) -> ParamSpecType:
+    def get_default_value(self) -> Any:
         return self.default_value
 
     def to_dto(self) -> ParamSpecDTO:
@@ -100,7 +98,7 @@ class ParamSpec(Generic[ParamSpecType]):
             default_value=self.get_default_value(),
         )
 
-    def validate(self, value: Any) -> ParamSpecType:
+    def validate(self, value: Any) -> Any:
         """
         Validate the value of the param and return the modified value if needed.
         This method is called when the param is set in the config before saving it in the database.
@@ -198,7 +196,7 @@ class StrParamAdditionalInfo(TypedDict):
 
 
 @param_spec_decorator()
-class StrParam(ParamSpec[str]):
+class StrParam(ParamSpec):
     """String param"""
 
     additional_info: Optional[StrParamAdditionalInfo]
@@ -286,7 +284,7 @@ class StrParam(ParamSpec[str]):
 
 
 @param_spec_decorator()
-class TextParam(ParamSpec[str]):
+class TextParam(ParamSpec):
     """Text param used for long string (like multi line text)
     If you want a short string param, use the StrParam.
     """
@@ -342,12 +340,12 @@ class TextParam(ParamSpec[str]):
 
 
 @param_spec_decorator()
-class BoolParam(ParamSpec[bool]):
+class BoolParam(ParamSpec):
     """Boolean param"""
 
     def __init__(
         self,
-        default_value: Optional[ParamSpecType] = False,
+        default_value: Optional[Any] = False,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
@@ -397,12 +395,12 @@ class BoolParam(ParamSpec[bool]):
 
 
 @param_spec_decorator()
-class DictParam(ParamSpec[dict]):
+class DictParam(ParamSpec):
     """Any json dict param"""
 
     def __init__(
         self,
-        default_value: Optional[ParamSpecType] = None,
+        default_value: Optional[Any] = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
@@ -451,12 +449,12 @@ class DictParam(ParamSpec[dict]):
 
 
 @param_spec_decorator()
-class ListParam(ParamSpec[list]):
+class ListParam(ParamSpec):
     """Any list param"""
 
     def __init__(
         self,
-        default_value: Optional[ParamSpecType] = None,
+        default_value: Optional[Any] = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
@@ -514,24 +512,24 @@ class NumericParamAdditionalInfo(TypedDict):
     max_value: Optional[float]
 
     # List of allowed values
-    allowed_values: Optional[List[ParamSpecType]]
+    allowed_values: Optional[List[Any]]
 
 
-class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
+class NumericParam(ParamSpec):
     """Abstract numerci param class (int or float)"""
 
     additional_info: Optional[NumericParamAdditionalInfo]
 
     def __init__(
         self,
-        default_value: Optional[ParamSpecType] = None,
+        default_value: Optional[Any] = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
         short_description: Optional[str] = None,
-        allowed_values: Optional[List[ParamSpecType]] = None,
-        min_value: Optional[ParamSpecType] = None,
-        max_value: Optional[ParamSpecType] = None
+        allowed_values: Optional[List[Any]] = None,
+        min_value: Optional[Any] = None,
+        max_value: Optional[Any] = None
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -570,7 +568,7 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
     def get_str_type(cls) -> ParamSpecTypeStr:
         pass
 
-    def _check_allowed_values(self, allowed_values: Optional[List[ParamSpecType]]) -> None:
+    def _check_allowed_values(self, allowed_values: Optional[List[Any]]) -> None:
         if allowed_values is not None:
 
             if not isinstance(allowed_values, (list, tuple)):
@@ -586,7 +584,7 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
 
 
 @param_spec_decorator()
-class IntParam(NumericParam[int]):
+class IntParam(NumericParam):
     """int param"""
 
     def validate(self, value: Any) -> int:
@@ -618,7 +616,7 @@ class IntParam(NumericParam[int]):
 
 
 @param_spec_decorator()
-class FloatParam(NumericParam[float]):
+class FloatParam(NumericParam):
     """float param"""
 
     def validate(self, value: Any) -> float:

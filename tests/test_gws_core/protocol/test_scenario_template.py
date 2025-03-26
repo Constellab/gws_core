@@ -1,7 +1,7 @@
 
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import OutputSpec
@@ -31,7 +31,7 @@ class TestScenarioTemplateDynamic(Task):
 
     input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = DynamicOutputs()
-    config_specs: ConfigSpecs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}
@@ -41,7 +41,7 @@ class TestScenarioTemplateDynamic(Task):
 class TestGenerator(Task):
 
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(Resource)})
-    config_specs: ConfigSpecs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}

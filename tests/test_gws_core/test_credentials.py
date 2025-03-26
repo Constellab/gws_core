@@ -1,6 +1,6 @@
 
 
-from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
                                                   SearchOperator, SearchParams)
 from gws_core.credentials.credentials import Credentials
@@ -69,8 +69,9 @@ class TestCredentials(BaseTestCase):
         credentials.data = {"data": [{"key": "test", "value": "test"}]}
         credentials.save()
 
-        param = CredentialsParam(credentials_type=CredentialsType.OTHER)
-        config_params = ParamSpecHelper.build_config_params({"credentials": param}, {"credentials": credentials.name})
+        config_params = ConfigSpecs(
+            {"credentials": CredentialsParam(credentials_type=CredentialsType.OTHER)}).build_config_params(
+            {"credentials": credentials.name})
 
         data: CredentialsDataOther = config_params["credentials"]
         self.assertIsInstance(data, CredentialsDataOther)

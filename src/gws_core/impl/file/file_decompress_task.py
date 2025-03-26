@@ -2,7 +2,7 @@
 
 from typing import Literal, Type
 
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.impl.file.folder import Folder
@@ -25,7 +25,7 @@ from .file import File
                     style=Folder.copy_style())
 class FileDecompressTask(ResourceImporter):
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'mode':
         StrParam(
             allowed_values=['Auto', 'Always to folder'],
@@ -37,7 +37,7 @@ class FileDecompressTask(ResourceImporter):
             default_value=False,
             human_name="Delete compressed input file",
             short_description="Delete the compressed input file after decompression (this task will not be re-executable as the input is deleted).")
-    }
+    })
 
     resource_loader: ResourceLoader = None
 

@@ -4,7 +4,7 @@ import os
 
 from gws_core.brick.technical_doc_service import TechnicalDocService
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.file.file import File
 from gws_core.io.io_spec import OutputSpec
@@ -35,7 +35,7 @@ class GenerateTechnicalDocMarkdown(Task):
         )
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'brick_name': StrParam(human_name='Brick name',
                                short_description='The name of the brick to generate the technical documentation'),
         'object_type': StrParam(human_name='Object type',
@@ -44,7 +44,7 @@ class GenerateTechnicalDocMarkdown(Task):
         'separator': StrParam(human_name='Separator',
                               short_description='The separator to use between two object in the markdown file',
                               default_value='[---]\\n')
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

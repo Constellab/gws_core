@@ -1,7 +1,7 @@
 
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
@@ -32,10 +32,10 @@ class GenerateLabNote(Task):
         'note': OutputSpec(LabNoteResource, human_name='Note', short_description='New note')
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'title': StrParam(human_name='Note title', short_description='This overides the note resource title',
                           optional=True)
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         note_resource: NoteResource = inputs['note']

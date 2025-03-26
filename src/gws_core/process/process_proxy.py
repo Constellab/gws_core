@@ -1,16 +1,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Any, Optional, Type
 
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.process.process import Process
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource_dto import ResourceOrigin
 
-from ..config.config_types import ConfigParamsDict
 from ..config.param.param_types import ParamValue
-from ..io.port import InPort, OutPort
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .process_model import ProcessModel

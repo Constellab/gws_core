@@ -2,6 +2,8 @@
 
 from typing import Any, Dict
 
+from gws_core.config.config_params import ConfigParamsDict
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.impl.agent.env_agent import EnvAgent
 from gws_core.impl.agent.helper.agent_code_helper import AgentCodeHelper
@@ -10,7 +12,6 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource_set.resource_list import ResourceList
 
 from ...config.config_params import ConfigParams
-from ...config.config_types import ConfigParamsDict, ConfigSpecs
 from ...io.io_specs import InputSpecs, OutputSpecs
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
@@ -35,13 +36,13 @@ class PyAgent(Task):
 
     input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = DynamicOutputs()
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'params': EnvAgent.get_dynamic_param_config(),
         'code':
         PythonCodeParam(
             default_value=AgentCodeHelper.get_python_code_template(),
             human_name="Python code snippet",
-            short_description="Python code snippet to run"), }
+            short_description="Python code snippet to run"), })
 
     CONFIG_PARAMS_NAME = 'params'
     CONFIG_CODE_NAME = 'code'

@@ -5,7 +5,7 @@ from typing import List
 from gws_core import (BaseTestCase, ConfigParams, IntParam, JSONView, Resource,
                       ResourceService, StrParam, TextView, resource_decorator,
                       view)
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.note.note_dto import NoteSaveDTO
 from gws_core.note.note_service import NoteService
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -36,8 +36,8 @@ class ResourceViewTest(Resource):
 class ResourceViewTestSub(ResourceViewTest):
 
     @view(view_type=TextView, human_name='Sub View for test', short_description='Description for sub test',
-          specs={'test_str_param': StrParam(default_value='Hello'),
-                 'test_any_param': StrParam('Nice')},
+          specs=ConfigSpecs({'test_str_param': StrParam(default_value='Hello'),
+                             'test_any_param': StrParam('Nice')}),
           default_view=True)
     def sub_view_test(self, params: ConfigParams) -> TextView:
         text_view = TextView(params.get_value('test_str_param') + params.get_value('test_any_param'))
@@ -49,7 +49,9 @@ class ResourceViewTestSub(ResourceViewTest):
 class ResourceViewTestOverideParent(Resource):
 
     @view(view_type=TextView, human_name='View overide',
-          specs={"page": IntParam(default_value=1, min_value=0, human_name="Page number", visibility='private')})
+          specs=ConfigSpecs(
+              {"page": IntParam(
+                  default_value=1, min_value=0, human_name="Page number", visibility='private')}))
     def a_view_test(self, params: ConfigParams) -> TextView:
         return TextView('Test sub')
 
@@ -58,7 +60,9 @@ class ResourceViewTestOverideParent(Resource):
 class ResourceViewTestOveride(ResourceViewTestOverideParent):
 
     @view(view_type=TextView, human_name='View overide',
-          specs={"page": IntParam(default_value=1, min_value=0, human_name="Page number", visibility='public')})
+          specs=ConfigSpecs(
+              {"page": IntParam(
+                  default_value=1, min_value=0, human_name="Page number", visibility='public')}))
     def a_view_test(self, params: ConfigParams) -> TextView:
         return TextView('Test sub')
 
@@ -127,7 +131,7 @@ class TestView(BaseTestCase):
 
         view_test: ResourceViewMetaData = [x for x in views if x.method_name == 'a_view_test'][0]
         # the child class should have overwritten the page parameter to make is visible
-        self.assertEqual(view_test.method_specs['page'].visibility, 'public')
+        self.assertEqual(view_test.method_specs.get_spec('page').visibility, 'public')
 
         # the view as json should be hidden and not returned by the list view
         self.assertEqual(len([x for x in views if x.method_name == 'view_as_json']), 0)
@@ -143,7 +147,7 @@ class TestView(BaseTestCase):
         specs: ConfigSpecs = view_meta.get_view_specs_from_type(skip_private=True)
 
         # if the page was overrided and the private is working, the page should not be in the json
-        self.assertFalse('page' in specs)
+        self.assertFalse(specs.has_spec('page'))
 
     def test_view_config(self):
 

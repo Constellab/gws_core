@@ -4,7 +4,7 @@ import os
 from typing import Type
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.utils.compress.tar_compress import TarGzCompress
 from gws_core.core.utils.compress.zip_compress import ZipCompress
@@ -21,12 +21,12 @@ from gws_core.task.converter.exporter import (ResourceExporter,
                     short_description="Export a folder to a zip or tar.gz file")
 class FolderExporter(ResourceExporter):
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'compression': StrParam(optional=True,
                                 human_name="Compression type",
                                 default_value="zip",
                                 allowed_values=["zip",  "tar.gz"])
-    }
+    })
 
     def export_to_path(self, source: Resource, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]) -> File:
 

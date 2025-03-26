@@ -1,7 +1,7 @@
 
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_param import RichTextParam
@@ -34,11 +34,11 @@ class UpdatNoteResource(Task):
         'note': OutputSpec(NoteResource, human_name='Note resource')
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'section-title': StrParam(optional=True, human_name='Section title',
                                   short_description='Title of the new section'),
         'note': RichTextParam(human_name='Note resource', short_description='Content to append to the input note resource')
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         note_resource: NoteResource = inputs['note']

@@ -1,13 +1,10 @@
 
 
 from abc import abstractmethod
-from typing import Dict, List, Literal, Optional, Type, final
+from typing import List, Literal, Optional, Type, final
 
 from typing_extensions import TypedDict
 
-from gws_core.config.config_specs_helper import ConfigSpecsHelper
-from gws_core.config.param.param_types import ParamSpecDTO
-from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.dispatched_message import DispatchedMessage
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_level import MessageLevel
@@ -18,7 +15,7 @@ from gws_core.model.typing_register_decorator import typing_registrator
 from gws_core.model.typing_style import TypingStyle
 
 from ..config.config_params import ConfigParams
-from ..config.config_types import ConfigSpecs
+from ..config.config_specs import ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_specs import InputSpecs, OutputSpecs
@@ -46,13 +43,10 @@ class Task(Process):
 
     input_specs: InputSpecs = InputSpecs({})
     output_specs: OutputSpecs = OutputSpecs({})
-    config_specs: ConfigSpecs = {}
+    config_specs: ConfigSpecs = ConfigSpecs({})
 
     # Message dispatcher used to log messages of the task
     message_dispatcher: MessageDispatcher
-
-    # Object useful to download external files required by the task
-    file_downloader: FileDownloader
 
     # set this during the run of the task to apply a dynamic style to the task
     # This overrides the style set by the task_decorator
@@ -219,16 +213,6 @@ class Task(Process):
     def get_brick_name(cls) -> str:
         typing_name = TypingNameObj.from_typing_name(cls.get_typing_name())
         return typing_name.brick_name
-
-    @final
-    @classmethod
-    def get_config_specs_dto(cls) -> Dict[str, ParamSpecDTO]:
-        return ConfigSpecsHelper.config_specs_to_dto(cls.config_specs)
-
-    @final
-    @classmethod
-    def has_visible_config_specs(cls) -> bool:
-        return ConfigSpecsHelper.has_visible_config_specs(cls.config_specs)
 
     def create_tmp_dir(self) -> str:
         """

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from gws_core.config.config_specs import ConfigSpecs
+
 from ....config.config_params import ConfigParams
 from ....config.param.param_spec import IntParam, StrParam
-from ....resource.view.view_types import ViewSpecs, ViewType
+from ....resource.view.view_types import ViewType
 from ...view.tabular_view import TabularView
 from .base_table_view import BaseTableView
 
@@ -42,8 +44,7 @@ class TableView(BaseTableView):
 
     _type: ViewType = ViewType.TABLE
     _table: Table
-    _specs: ViewSpecs = {
-        **BaseTableView._specs,
+    _specs = ConfigSpecs({
         "from_row": IntParam(default_value=1, human_name="From row"),
         "number_of_rows_per_page":
         IntParam(
@@ -60,7 +61,7 @@ class TableView(BaseTableView):
         StrParam(
             default_value="empty", allowed_values=["empty", "NaN", "-"],
             optional=True, visibility=StrParam.PROTECTED_VISIBILITY, human_name="Replace NaN by",
-            short_description="Text to use to replace NaN values. Defaults to empty string"), }
+            short_description="Text to use to replace NaN values. Defaults to empty string"), })
 
     def data_to_dict(self, params: ConfigParams) -> dict:
 

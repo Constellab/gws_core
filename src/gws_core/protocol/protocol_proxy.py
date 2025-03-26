@@ -3,6 +3,7 @@
 from inspect import isclass
 from typing import List, Tuple, Type
 
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.logger import Logger
@@ -11,7 +12,6 @@ from gws_core.protocol.protocol_update import ProtocolUpdate
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 
-from ..config.config_types import ConfigParamsDict
 from ..config.param.param_types import ParamValue
 from ..process.process import Process
 from ..process.process_model import ProcessModel

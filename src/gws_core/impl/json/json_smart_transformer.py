@@ -3,7 +3,7 @@
 from typing import Dict, List, Type
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
 from gws_core.core.utils.json_helper import JSONHelper
 from gws_core.impl.json.json_dict import JSONDict
@@ -98,9 +98,9 @@ class JsonSmartTransformer(Task):
         'target': OutputSpec(JSONDict),
         'generated_code': AIJsonTransformer.generate_agent_code_task_output_config()
     })
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'prompt': OpenAiChatParam()
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

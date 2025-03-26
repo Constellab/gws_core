@@ -6,6 +6,7 @@ from gws_core import (BadRequestException, BaseTestCase, ConfigParams,
                       ResourceModel, Scenario, ScenarioService, Task,
                       TaskInputs, TaskModel, TaskOutputs, protocol_decorator,
                       resource_decorator, task_decorator)
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_exception import ImcompatiblePortsException
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.scenario.scenario_run_service import ScenarioRunService
@@ -34,7 +35,7 @@ class Car(Resource):
 @task_decorator("Create")
 class Create(Task):
     output_specs = OutputSpecs({'create_person_out': OutputSpec(Person)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'create_person_out': Person()}
@@ -44,7 +45,7 @@ class Create(Task):
 class Move(Task):
     input_specs = InputSpecs({'move_person_in': InputSpec(Person)})
     output_specs = OutputSpecs({'move_person_out': OutputSpec(Person)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'move_person_out': inputs['move_person_in']}
@@ -54,7 +55,7 @@ class Move(Task):
 class Drive(Task):
     input_specs = InputSpecs({'move_drive_in': InputSpec(Car)})
     output_specs = OutputSpecs({'move_drive_out': OutputSpec(Car)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'move_drive_out': inputs['move_drive_in']}
@@ -66,7 +67,7 @@ class Jump(Task):
                               'jump_person_in_2': InputSpec(Person)})
     output_specs = OutputSpecs({'jump_person_out': OutputSpec(Person),
                                 'jump_person_out_any': OutputSpec(resource_types=Person, sub_class=True)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'jump_person_out': inputs['jump_person_in_1'], 'jump_person_out_any': inputs['jump_person_in_2']}
@@ -78,7 +79,7 @@ class Multi(Task):
                               'resource_2': InputSpec([Car, Person])})
     output_specs = OutputSpecs({'resource_1': OutputSpec((Car, Person)),
                                 'resource_2': OutputSpec([Car, Person])})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'resource_1': inputs['resource_1'], 'resource_2': inputs['resource_2']}
@@ -88,7 +89,7 @@ class Multi(Task):
 class Fly(Task):
     input_specs = InputSpecs({'superman': InputSpec(SuperMan)})
     output_specs = OutputSpecs({})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}
@@ -100,7 +101,7 @@ class OptionalTask(Task):
                               'second': InputSpec(Person, is_optional=True),
                               'third': InputSpec(Person)})
     output_specs = OutputSpecs({})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}
@@ -111,7 +112,7 @@ class OptionalTask(Task):
 @task_decorator("OptionalTaskOut")
 class OptionalTaskOut(Task):
     output_specs = OutputSpecs({'out': OutputSpec(Car)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}
@@ -123,7 +124,7 @@ class Log(Task):
     input_specs = InputSpecs({'person': InputSpec(Person)})
     output_specs = OutputSpecs({'samePerson': OutputSpec(Person, is_constant=True),
                                 'otherPerson': OutputSpec(Person)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'samePerson': inputs.get('person'), 'otherPerson': inputs.get('person')}

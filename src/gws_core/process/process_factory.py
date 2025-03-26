@@ -2,6 +2,8 @@
 
 from typing import Dict, List, Optional, Type
 
+from gws_core.config.config_params import ConfigParamsDict
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_dto import IODTO
 from gws_core.io.ioface import IOface
 from gws_core.model.typing_style import TypingStyle
@@ -12,7 +14,6 @@ from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 
 from ..config.config import Config
-from ..config.config_types import ConfigParamsDict, ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager

@@ -1,8 +1,8 @@
 
 from typing import Any, Dict
 
-from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
+from gws_core.config.config_params import ConfigParams, ConfigParamsDict
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.impl.agent.env_agent import EnvAgent
 from gws_core.impl.agent.helper.agent_code_helper import AgentCodeHelper
@@ -45,13 +45,13 @@ class StreamlitAgent(Task):
     output_specs: OutputSpecs = OutputSpecs({
         'streamlit_app': OutputSpec(StreamlitResource, human_name="Streamlit app")
     })
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'params': EnvAgent.get_dynamic_param_config(),
         'code':
         PythonCodeParam(
             default_value=AgentCodeHelper.get_streamlit_code_template(),
             human_name="Streamlit app code",
-            short_description="Code of the streamlit app to run")}
+            short_description="Code of the streamlit app to run")})
 
     __is_agent__: bool = True
 

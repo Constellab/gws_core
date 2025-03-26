@@ -2,8 +2,7 @@
 from abc import abstractmethod
 from typing import Any, Dict
 
-from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
 from gws_core.io.dynamic_io import DynamicInputs

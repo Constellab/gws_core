@@ -1,5 +1,5 @@
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.db.sql_migrator import SqlMigrator
@@ -21,13 +21,13 @@ class UpdateProcessTypingName(Task):
     This is useful when the typing name of a process has changed after an update for example.
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         # this config is only set when calling this automatically
-        "processes": ParamSet({
+        "processes": ParamSet(ConfigSpecs({
             'old_name': StrParam(human_name="Old process typing name", short_description="Ex: TASK.gws_core.MyOldTaskUniqueName"),
             'new_name': StrParam(human_name="New process typing name", short_description="Ex: TASK.gws_core.MyNewTaskUniqueName"),
-        }, human_name="Processes to update"),
-    }
+        }), human_name="Processes to update"),
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

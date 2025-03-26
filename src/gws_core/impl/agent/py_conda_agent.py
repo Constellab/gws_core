@@ -7,7 +7,7 @@ from gws_core.impl.agent.helper.agent_code_helper import AgentCodeHelper
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
 from gws_core.model.typing_style import TypingStyle
 
-from ...config.config_types import ConfigSpecs
+from ...config.config_specs import ConfigSpecs
 from ...task.task_decorator import task_decorator
 
 
@@ -30,7 +30,7 @@ class PyCondaAgent(EnvAgent):
 
     SNIPPET_FILE_EXTENSION: str = "py"
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'params': EnvAgent.get_dynamic_param_config(),
         'env': YamlCodeParam(
             default_value=AgentCodeHelper.get_conda_env_file_template(),
@@ -39,7 +39,7 @@ class PyCondaAgent(EnvAgent):
         'code': PythonCodeParam(
             default_value=AgentCodeHelper.get_python_env_code_template(),
             human_name="Python code snippet", short_description="The Python code snippet to execute using shell command"),
-    }
+    })
 
     def _format_command(self, code_file_path: str) -> list:
         return ["python", code_file_path]

@@ -8,7 +8,7 @@ from gws_core.impl.table.helper.dataframe_data_filter_helper import \
     DataframeDataFilterHelper
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_specs import ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 
@@ -42,8 +42,8 @@ class TableColumnDataNumericFilter(Transformer):
     If you need to apply filters on text values, you can use the ```Table column data numeric filter``` task.
     """
 
-    config_specs: ConfigSpecs = {
-        "numeric_filter": ParamSet(
+    config_specs = ConfigSpecs({
+        "numeric_filter": ParamSet(ConfigSpecs(
             {
                 "row_name_regex": StrParam(
                     human_name="Row name (pattern)",
@@ -52,12 +52,12 @@ class TableColumnDataNumericFilter(Transformer):
                 ),
                 "comparator": comparator_param,
                 "value": value_param,
-            },
+            }),
             visibility="public",
             human_name="Numeric data filters",
             max_number_of_occurrences=9
         ),
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
@@ -89,8 +89,8 @@ class TableRowDataNumericFilter(Transformer):
     If you need to apply filters on text values, you can use the ```Table row data text filter``` task.
     """
 
-    config_specs: ConfigSpecs = {
-        "numeric_filter": ParamSet(
+    config_specs = ConfigSpecs({
+        "numeric_filter": ParamSet(ConfigSpecs(
             {
                 "column_name_regex": StrParam(
                     human_name="Column name (pattern)",
@@ -99,12 +99,12 @@ class TableRowDataNumericFilter(Transformer):
                 ),
                 "comparator": comparator_param,
                 "value": value_param,
-            },
+            }),
             visibility="public",
             human_name="Numeric data filters",
             max_number_of_occurrences=9
         ),
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()

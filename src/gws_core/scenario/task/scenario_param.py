@@ -11,7 +11,7 @@ from gws_core.scenario.scenario import Scenario
 
 
 @param_spec_decorator(type_=ParamaSpecType.LAB_SPECIFIC)
-class ScenarioParam(ParamSpec[str]):
+class ScenarioParam(ParamSpec):
     """ Scenario param spec. When used, the end user will be able to select a scenario from
     the list of available scenarios. The config stores only the scenario id, not the full scenario object.
 

@@ -3,7 +3,7 @@
 from typing import List
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_specs import ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ..helper.dataframe_filter_helper import DataframeFilterHelper
 from ..table import Table
@@ -27,9 +27,9 @@ class TableRowSelector(Transformer):
     It also supports regexp.
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "filters": DataframeFilterHelper.get_filter_param_set('row', 'Row filters')
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         return source.select_by_row_names(params.get('filters'))
@@ -47,9 +47,9 @@ class TableColumnSelector(Transformer):
     It also supports regexp.
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "filters": DataframeFilterHelper.get_filter_param_set('column', 'Column filters')
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         return source.select_by_column_names(params.get('filters'))
@@ -84,9 +84,9 @@ class TableRowTagsSelector(Transformer):
     If you want to delete rows by tags instead of selcting them, use the **TableRowTagsDeleter**.
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'tags': DataframeFilterHelper.get_tags_param_set('row')
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get('tags'))
@@ -116,9 +116,9 @@ class TableColumnTagsSelector(Transformer):
     If you want to delete columns by tags instead of selcting them, use the **TableColumnTagsDeleter**.
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'tags': DataframeFilterHelper.get_tags_param_set('column')
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
 

@@ -4,7 +4,7 @@ from typing import Any, List, Optional
 from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from gws_core.config.config import Config
-from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.model.db_field import BaseDTOField

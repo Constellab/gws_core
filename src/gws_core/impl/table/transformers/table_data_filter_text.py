@@ -9,7 +9,7 @@ from gws_core.impl.table.helper.dataframe_data_filter_helper import \
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_specs import ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 
@@ -42,8 +42,8 @@ class TableColumnDataTextFilter(Transformer):
 
 If you need to apply filters on text values, you can use the ```Table column data text filter``` task.
     """
-    config_specs: ConfigSpecs = {
-        "text_filter": ParamSet(
+    config_specs = ConfigSpecs({
+        "text_filter": ParamSet(ConfigSpecs(
             {
                 "row_name_regex": StrParam(
                     human_name="Row name (pattern)",
@@ -52,12 +52,12 @@ If you need to apply filters on text values, you can use the ```Table column dat
                 ),
                 "comparator": comparator_param,
                 "value": value_param,
-            },
+            }),
             visibility="public",
             human_name="Text data filters",
             max_number_of_occurrences=9
         ),
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
@@ -88,8 +88,8 @@ class TableRowDataTextFilter(Transformer):
 
     If you need to apply filters on text values, you can use the ```Table row data numeric filter``` task.
     """
-    config_specs: ConfigSpecs = {
-        "text_filter": ParamSet(
+    config_specs = ConfigSpecs({
+        "text_filter": ParamSet(ConfigSpecs(
             {
                 "column_name_regex": StrParam(
                     human_name="Column name (pattern)",
@@ -98,7 +98,7 @@ class TableRowDataTextFilter(Transformer):
                 ),
                 "comparator": comparator_param,
                 "value": value_param,
-            },
+            }),
             visibility="public",
             human_name="Text data filters",
             max_number_of_occurrences=9
@@ -106,7 +106,7 @@ class TableRowDataTextFilter(Transformer):
         "stringify_table": BoolParam(default_value=False,
                                      human_name="Convert values to text",
                                      short_description="If true convert all the value (including numeric) to text. Otherwise none text value are ignored.")
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()

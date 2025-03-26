@@ -1,6 +1,6 @@
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
@@ -26,9 +26,9 @@ class OutputTask(Task):
     flag_config_name: str = 'flag_resource'
 
     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'flag_resource': BoolParam(default_value=True, human_name="Check to flag the resource provided in the output")
-    }
+    })
 
     __auto_run__: bool = True
 

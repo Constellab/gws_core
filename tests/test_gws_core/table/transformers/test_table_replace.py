@@ -6,7 +6,7 @@ from numpy import NaN
 from pandas import DataFrame
 
 from gws_core import Table, TableReplace
-from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.task.task_runner import TaskRunner
 
 

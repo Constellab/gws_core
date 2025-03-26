@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 from pandas import DataFrame
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
 from gws_core.impl.openai.ai_prompt_code import (AIPromptCode,
@@ -131,7 +131,7 @@ class TableSmartTransformer(Task):
         'target': OutputSpec(Table),
         'generated_code': AITableTransformer.generate_agent_code_task_output_config()
     })
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         # get the openAI config specs
         'prompt': OpenAiChatParam(),
         # add custom config specs
@@ -139,7 +139,7 @@ class TableSmartTransformer(Task):
                                        short_description="If true, the columns tags are kept in the output table for columns that have the same names."),
         "keep_rows_tags": BoolParam(default_value=False, human_name="Keep rows tags",
                                     short_description="If true, the rows tags are kept in the output table for rows that have the same names."),
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

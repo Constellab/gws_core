@@ -4,6 +4,7 @@ from typing import Literal, Type, final
 
 from peewee import CharField, ModelSelect
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
 
@@ -66,6 +67,6 @@ class ProtocolTyping(Typing):
             # json_["graph"] = protocol.dumps_data(minimize=False)
             protocol_typing.input_specs = protocol.get_input_specs_self().to_dto()
             protocol_typing.output_specs = protocol.get_output_specs_self().to_dto()
-            protocol_typing.config_specs = {}
+            protocol_typing.config_specs = ConfigSpecs({})
 
         return protocol_typing

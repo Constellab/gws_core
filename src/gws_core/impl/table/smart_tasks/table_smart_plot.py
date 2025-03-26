@@ -3,7 +3,7 @@
 from typing import Any, Dict, List
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
@@ -103,9 +103,9 @@ class SmartPlot(Task):
         'generated_code': AITableGeneratePlotImage.generate_agent_code_task_output_config()
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'prompt': OpenAiChatParam()
-    }
+    })
 
     temp_dir: str
     ouput_path: str

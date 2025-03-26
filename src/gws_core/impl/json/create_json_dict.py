@@ -2,7 +2,7 @@
 from json import loads
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.code_param.json_code_param import JsonCodeParam
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.io.io_spec import OutputSpec
@@ -27,9 +27,9 @@ class CreateJsonDict(Task):
         'json_dict': OutputSpec(JSONDict, human_name="Json dict",
                                 short_description="Generated json dict resource"),
     })
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'json': JsonCodeParam(human_name="Json code")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         json_code = params.get_value('json')

@@ -2,8 +2,8 @@
 
 from typing import Optional
 
-from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
+from gws_core.config.config_params import ConfigParams, ConfigParamsDict
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -31,10 +31,10 @@ class InputTask(Task):
     input_specs: InputSpecs = InputSpecs({})
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
         Resource, sub_class=True, is_constant=True, human_name="Resource", short_description="Loaded resource")})
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'resource_id': StrParam(human_name="Resource"),
     }
-
+    )
     __auto_run__: bool = True
 
     __enable_in_sub_protocol__: bool = False

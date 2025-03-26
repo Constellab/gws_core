@@ -1,4 +1,5 @@
 from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
 from gws_core.scenario.scenario import Scenario
@@ -22,9 +23,9 @@ class SelectScenario(Task):
         'scenario': OutputSpec(ScenarioResource, human_name="Selected scenario")
     })
 
-    config_specs = {
+    config_specs = ConfigSpecs({
         'scenario': ScenarioParam(human_name="Select a scenario"),
-    }
+    })
 
     OUTPUT_NAME = 'scenario'
     CONFIG_NAME = 'scenario'

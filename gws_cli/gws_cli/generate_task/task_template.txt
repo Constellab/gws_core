@@ -1,6 +1,6 @@
 from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
                       OutputSpecs, Task, TaskInputs, TaskOutputs,
-                      task_decorator)
+                      task_decorator, ConfigSpecs)
 
 
 @task_decorator("{{name}}"{{humanName}}{{shortDescription}})
@@ -12,7 +12,7 @@ class {{name}}(Task):
     input_specs = InputSpecs()
     output_specs = OutputSpecs()
 
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """ Run the task """

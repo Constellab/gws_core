@@ -1,8 +1,8 @@
 
 
-from typing import Any, Dict, List, Literal, Optional, Set, Type, Union
+from typing import Any, Dict, List, Literal, Optional, Set, Type, Union, cast
 
-from gws_core.config.config_dto import ConfigSimpleDTO
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import (DynamicParamAllowedSpecsDict,
@@ -46,7 +46,6 @@ from ..community.community_dto import (CommunityAgentDTO,
                                        CommunityAgentVersionDTO,
                                        CommunityCreateAgentDTO)
 from ..community.community_service import CommunityService
-from ..config.config_types import ConfigParamsDict
 from ..config.param.param_types import ParamSpecVisibilty
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -543,17 +542,18 @@ class ProtocolService():
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
         process_model: ProcessModel = protocol_model.get_process(process_instance_name)
 
-        if EnvAgent.ENV_CONFIG_NAME in process_model.config.get_specs():
+        config_specs = process_model.config.get_specs()
+        if process_model.config.has_spec(EnvAgent.ENV_CONFIG_NAME):
             env_spec = process_model.config.get_spec(EnvAgent.ENV_CONFIG_NAME)
             env_spec.visibility = new_visibility
             process_model.config.update_spec(EnvAgent.ENV_CONFIG_NAME, env_spec)
 
-        if EnvAgent.CODE_CONFIG_NAME in process_model.config.get_specs():
+        if process_model.config.has_spec(EnvAgent.CODE_CONFIG_NAME):
             code_spec = process_model.config.get_spec(EnvAgent.CODE_CONFIG_NAME)
             code_spec.visibility = new_visibility
             process_model.config.update_spec(EnvAgent.CODE_CONFIG_NAME, code_spec)
 
-        if EnvAgent.PARAMS_CONFIG_NAME in process_model.config.get_specs():
+        if process_model.config.has_spec(EnvAgent.PARAMS_CONFIG_NAME):
             param_spec = process_model.config.get_spec(EnvAgent.PARAMS_CONFIG_NAME)
             param_spec.edition_mode = True if new_visibility == "public" else False
             process_model.config.update_spec(EnvAgent.PARAMS_CONFIG_NAME, param_spec)
@@ -568,7 +568,7 @@ class ProtocolService():
     @transaction()
     def configure_process_model(cls, process_model: ProcessModel, config_values: ConfigParamsDict) -> ProtocolUpdate:
 
-        for key in process_model.config.get_specs():
+        for key in process_model.config.get_specs().specs:
             spec = process_model.config.get_spec(key)
             if spec.visibility == 'private':
                 # if spec visibility is private, add it's value to config_value wich basically only has value of public specs
@@ -1029,7 +1029,7 @@ class ProtocolService():
     @classmethod
     def _get_and_check_dynamic_param(cls, process_model: ProcessModel, config_spec_name: str) -> DynamicParam:
         process_model.check_is_updatable()
-        dynamic_param_spec: DynamicParam = process_model.config.get_spec(config_spec_name)
+        dynamic_param_spec = process_model.config.get_spec(config_spec_name)
 
         if not isinstance(dynamic_param_spec, DynamicParam):
             raise BadRequestException("The process does not support adding dynamic param specs")
@@ -1059,7 +1059,7 @@ class ProtocolService():
 
         process_model = protocol_model.get_process(process_name)
 
-        dynamic_param_spec: DynamicParam = cls._get_and_check_dynamic_param(
+        dynamic_param_spec = cls._get_and_check_dynamic_param(
             process_model=process_model, config_spec_name=config_spec_name)
 
         dynamic_param_spec.add_spec(param_name, spec_dto)
@@ -1077,7 +1077,7 @@ class ProtocolService():
         dynamic_param_spec: DynamicParam = cls._get_and_check_dynamic_param(
             process_model=process_model, config_spec_name=config_spec_name)
 
-        if spec_dto.type != dynamic_param_spec.specs[param_name].get_str_type():
+        if spec_dto.type != dynamic_param_spec.specs.get_spec(param_name).get_str_type():
             value = process_model.config.get_value(config_spec_name)
             if param_name in value:
                 value[param_name] = spec_dto.default_value
@@ -1100,7 +1100,7 @@ class ProtocolService():
             process_model=process_model, config_spec_name=config_spec_name)
 
         values = process_model.config.get_value(config_spec_name)
-        if spec_dto.type != dynamic_param_spec.specs[param_name].get_str_type() and param_name in values:
+        if spec_dto.type != dynamic_param_spec.specs.get_spec(param_name).get_str_type() and param_name in values:
             values[new_param_name] = spec_dto.default_value
         if param_name in values:
             del values[param_name]

@@ -2,17 +2,18 @@
 
 from typing import Any, Dict, List, Optional
 
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
                                                         param_spec_decorator)
+from gws_core.core.utils.logger import Logger
 
 from ...core.classes.validator import DictValidator, ListValidator
-from .param_spec import ParamSpec, ParamSpecType
+from .param_spec import ParamSpec
 from .param_types import ParamSpecDTO, ParamSpecTypeStr, ParamSpecVisibilty
 
 
 @param_spec_decorator(type_=ParamaSpecType.NESTED)
-class ParamSet(ParamSpec[list]):
+class ParamSet(ParamSpec):
     """ ParamSet. Use to define a group of parameters that can be added multiple times. This will
     provid a list of dictionary as values : List[Dict[str, Any]]
 
@@ -46,7 +47,12 @@ class ParamSet(ParamSpec[list]):
         self.max_number_of_occurrences = max_number_of_occurrences
 
         if param_set is None:
-            param_set = {}
+            param_set = ConfigSpecs()
+
+        if isinstance(param_set, dict):
+            Logger.warning("ParamSet: param_set should be a ConfigSpecs object, not a dict. ")
+            param_set = ConfigSpecs(param_set)
+
         self.param_set = param_set
         super().__init__(
             default_value=[] if optional else None,
@@ -56,18 +62,15 @@ class ParamSet(ParamSpec[list]):
             short_description=short_description,
         )
 
-    def get_default_value(self) -> ParamSpecType:
+    def get_default_value(self) -> List:
         if self.optional:
             return []
 
-        # if this is not option, return an array of 1 element with the
+        # if this is not optional, return an array of 1 element with the
         # default value of each param_spec
-        default_value = {}
-        for key, spec in self.param_set.items():
-            default_value[key] = spec.get_default_value()
-        return [default_value]
+        return [self.param_set.get_default_values()]
 
-    def validate(self, value: List[Dict[str, Any]]) -> ParamSpecType:
+    def validate(self, value: List[Dict[str, Any]]) -> Any:
         if value is None:
             return []
         list_validator = ListValidator(max_number_of_occurrences=self.max_number_of_occurrences)
@@ -75,20 +78,16 @@ class ParamSet(ParamSpec[list]):
 
         # global validation of the list
         list_: List[Dict[str, Any]] = list_validator.validate(value)
-        index = 0
+
+        result_list = []
         for dict_ in list_:
             # Valid on dict of param set
-            list_[index] = dict_validator.validate(dict_)
+            dict_ = dict_validator.validate(dict_)
 
-            # validate each value of the param set by retreiving the corresponding param_spec
-            for key, spec in self.param_set.items():
-                value: Any = dict_.get(key)
+            validated_item = self.param_set.get_and_check_values(dict_)
+            result_list.append(validated_item)
 
-                dict_[key] = spec.validate(value)
-
-            index = index + 1
-
-        return list_
+        return result_list
 
     def to_dto(self) -> ParamSpecDTO:
         json_: ParamSpecDTO = super().to_dto()
@@ -96,7 +95,7 @@ class ParamSet(ParamSpec[list]):
         # convert the additional info to json
         json_.additional_info = {
             "max_number_of_occurrences": self.max_number_of_occurrences,
-            "param_set": {key: spec.to_dto() for key, spec in self.param_set.items()}
+            "param_set": self.param_set.to_dto()
         }
 
         return json_
@@ -113,8 +112,12 @@ class ParamSet(ParamSpec[list]):
         # load info from additional info
         param_set.max_number_of_occurrences = spec_dto.additional_info.get("max_number_of_occurrences")
 
+        specs = ConfigSpecs()
+
         for key, param in spec_dto.additional_info.get("param_set").items():
-            param_set.param_set[key] = ParamSpecHelper.create_param_spec_from_json(param)
+            specs.add_spec(key, ParamSpecHelper.create_param_spec_from_json(param))
+
+        param_set.param_set = specs
 
         return param_set
 

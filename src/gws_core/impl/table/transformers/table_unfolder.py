@@ -1,7 +1,7 @@
 
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import ListParam, StrParam
 from gws_core.impl.table.helper.dataframe_filter_helper import \
     DataframeFilterHelper
@@ -66,7 +66,7 @@ class TableRowTagUnfolder(Transformer):
 
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "tag_keys": ListParam(
             human_name="Row tag keys",
             short_description="Row tag keys to use for data unfolding",
@@ -76,7 +76,7 @@ class TableRowTagUnfolder(Transformer):
         "tag_key_column_name": StrParam(default_value='column_name', visibility="protected", human_name='Tag key column name',
                                         short_description='Name for the column tag key that receives the column name as value'),
 
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         table: Table = source
@@ -110,7 +110,7 @@ class TableColumnTagUnfolder(Transformer):
     ## Examples
     See Table Row Tag Unfolder for examples.
     """
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "tag_keys": ListParam(
             human_name="Column tag keys",
             short_description="Column tags keys to use for data unfolding",
@@ -121,7 +121,7 @@ class TableColumnTagUnfolder(Transformer):
         "tag_key_row_name": StrParam(default_value='row_name', visibility="protected", human_name='Tag key rown name',
                                      short_description='Name for the row tag key that receives the row name as value'),
 
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         table: Table = source

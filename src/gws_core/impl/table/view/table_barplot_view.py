@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from gws_core.config.config_specs import ConfigSpecs
+
 from ....config.config_params import ConfigParams
 from ....config.param.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
-from ....resource.view.view_types import ViewSpecs, ViewType
+from ....resource.view.view_types import ViewType
 from ...view.barplot_view import BarPlotView
 from .base_table_view import BaseTableView
 from .table_selection import Serie1dList
@@ -53,11 +55,10 @@ class TableBarPlotView(BaseTableView):
     """
 
     _table: Table
-    _specs: ViewSpecs = {
-        **BaseTableView._specs,
+    _specs = ConfigSpecs({
         "series": ListParam(default_value=[]),
-        **BaseTableView._2d_axis_labels_specs
-    }
+    }).merge_specs(BaseTableView._2d_axis_labels_specs)
+
     _type: ViewType = ViewType.BAR_PLOT
 
     def _get_view(self, params: ConfigParams) -> BarPlotView:

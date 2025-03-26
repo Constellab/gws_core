@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.utils import Utils
 
 from ....config.config_params import ConfigParams
 from ....config.param.param_spec import IntParam, ListParam, StrParam
-from ....resource.view.view_types import ViewSpecs, ViewType
+from ....resource.view.view_types import ViewType
 from ...view.histogram_view import HistogramMode, HistogramView
 from .base_table_view import BaseTableView
 from .table_selection import Serie1d
@@ -55,14 +56,14 @@ class TableHistogramView(BaseTableView):
     """
 
     _table: Table
-    _specs: ViewSpecs = {
-        **BaseTableView._specs,
+
+    _specs = ConfigSpecs({
         "series": ListParam(default_value=[]),
         "nbins": IntParam(default_value=10, min_value=0, optional=True, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
         "mode": StrParam(default_value="FREQUENCY", optional=True, human_name="Mode",
                          allowed_values=Utils.get_literal_values(HistogramMode)),
-        **BaseTableView._2d_axis_labels_specs
-    }
+    }).merge_specs(BaseTableView._2d_axis_labels_specs)
+
     _type: ViewType = ViewType.HISTOGRAM
 
     def data_to_dict(self, params: ConfigParams) -> dict:

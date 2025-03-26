@@ -13,7 +13,7 @@ from gws_core.model.typing_style import TypingStyle
 
 from ...brick.brick_service import BrickService
 from ...config.config_params import ConfigParams
-from ...config.config_types import ConfigSpecs
+from ...config.config_specs import ConfigSpecs
 from ...core.utils.utils import Utils
 from ...impl.file.fs_node import FSNode
 from ...resource.resource import Resource
@@ -121,7 +121,7 @@ class ResourceImporter(Converter):
     output_specs = OutputSpecs({"target": OutputSpec(Resource)})
 
     # Override the config_spec to define custom spec for the importer
-    config_specs: ConfigSpecs = {}
+    config_specs = ConfigSpecs({})
 
     __supported_extensions__: List[str] = []
 

@@ -14,7 +14,7 @@ from gws_core.space.mail_service import MailService
 from gws_core.user.current_user_service import CurrentUserService
 
 from ...config.config_params import ConfigParams
-from ...config.config_types import ConfigSpecs
+from ...config.config_specs import ConfigSpecs
 from ...io.io_specs import InputSpecs
 from ...resource.resource import Resource
 from ...task.task import Task
@@ -37,12 +37,12 @@ class ResourceUploaderS3(Task):
 
     """
     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'credentials': CredentialsParam(credentials_type=CredentialsType.S3),
         's3_object_prefix': StrParam(human_name="Prefix for the S3 object", default_value=""),
         's3_bucket': StrParam(human_name="S3 bucket name"),
         'send_me_an_email': BoolParam(human_name="Send me an email when the task is finished", default_value=False)
-    }
+    })
 
     zip_file_path: str = None
 

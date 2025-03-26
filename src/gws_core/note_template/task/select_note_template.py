@@ -1,6 +1,6 @@
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.note_template.note_template import NoteTemplate
@@ -29,9 +29,9 @@ class SelectNoteTemplate(Task):
                                     short_description='Select a note template')
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'note_template': NoteTemplateParam(),
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         note_template: NoteTemplate = params['note_template']

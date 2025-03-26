@@ -1,29 +1,23 @@
 
 
-from __future__ import annotations
+from typing import Any, Dict
 
-from typing import TYPE_CHECKING, Any
+from gws_core.config.param.param_types import ParamValue
 
-from .config_types import ConfigParamsDict
-
-if TYPE_CHECKING:
-    from .config import Config
+ConfigParamsDict = Dict[str, ParamValue]
 
 
 class ConfigParams(ConfigParamsDict):
     """Config values send to the task
     """
 
-    __config__: Config = None
     __config_model_id__: str = None
 
     def set_config_model_id(self, config_model_id: str) -> None:
         self.__config_model_id__ = config_model_id
 
-    def set_config(self, config: Config) -> None:
-        self.__config__ = config
-
     # specification of the config
+
     def get_value(self, param_name: str, default_value: Any = None) -> Any:
         """
         Returns the value of a parameter by its name.
@@ -65,9 +59,6 @@ class ConfigParams(ConfigParamsDict):
 
         self[param_name] = value
 
-        if self.__config__:
-            self.__config__.set_value(param_name, value)
-
     def save_params(self) -> None:
         """Special method to update the config during the task run.
         The update is directly saved in the database
@@ -92,17 +83,3 @@ class ConfigParams(ConfigParamsDict):
         for key, value in self.items():
             config.set_value(key, value)
         config.save()
-
-    @classmethod
-    def from_config(cls, config: Config) -> ConfigParams:
-        """Create a config params from a config
-        """
-        params = ConfigParams(config.get_values())
-        params.set_config(config)
-        # params.set_config_model_id(config.get_id())
-        return params
-
-    # def __getitem__(self, __k: str) -> Any:
-    #     if __k not in self:
-    #         raise KeyError(f"The config does not have the parameter '{__k}'")
-    #     return super().__getitem__(__k)

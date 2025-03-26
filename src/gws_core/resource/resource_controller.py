@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 
-from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO

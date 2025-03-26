@@ -5,7 +5,7 @@ from typing import Any
 from numpy import NaN
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.table.helper.table_concat_helper import TableConcatHelper
 from gws_core.impl.table.table import Table
@@ -93,13 +93,13 @@ class TableRowConcat(Task):
         'table': OutputSpec(Table, human_name='Concatenated table'),
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'column_tags_options': StrParam(human_name='Column tags options',
                                         short_description='What to do with the column tags. See doc for more info',
                                         allowed_values=TableConcatHelper.OPPOSITE_TAG_OPTIONS,
                                         default_value='ignore'),
         'fill_nan': fill_nan_param
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
@@ -174,13 +174,13 @@ class TableColumnConcat(Task):
         'table': OutputSpec(Table, human_name='Concatenated table'),
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'row_tags_options': StrParam(human_name='Row tags options',
                                      short_description='What to do with the row tags. See doc for more info',
                                      allowed_values=TableConcatHelper.OPPOSITE_TAG_OPTIONS,
                                      default_value='ignore'),
         'fill_nan': fill_nan_param
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

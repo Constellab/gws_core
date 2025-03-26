@@ -6,11 +6,10 @@ from gws_core.config.config_dto import ConfigDTO, ConfigSimpleDTO
 from gws_core.core.model.db_field import JSONField
 
 from ..core.model.model_with_user import ModelWithUser
-from .config_exceptions import InvalidParamValueException, UnkownParamException
-from .config_specs_helper import ConfigSpecsHelper
-from .config_types import ConfigParamsDict, ConfigSpecs
+from .config_exceptions import InvalidParamValueException
+from .config_params import ConfigParamsDict
+from .config_specs import ConfigSpecs
 from .param.param_spec import ParamSpec
-from .param.param_spec_helper import ParamSpecHelper
 from .param.param_types import ParamSpecDTO, ParamValue
 
 
@@ -37,31 +36,22 @@ class Config(ModelWithUser):
     ########################################## SPEC #####################################
 
     def get_specs(self) -> ConfigSpecs:
-        return ConfigSpecsHelper.config_specs_from_json(self.data["specs"])
+        return ConfigSpecs.from_json(self.data["specs"])
 
     def set_specs(self, specs: ConfigSpecs) -> None:
-        ConfigSpecsHelper.check_config_specs(specs)
-
-        spec_json = {}
-        for key, spec in specs.items():
-            spec_json[key] = spec.to_dto().to_json_dict()
-        self.data["specs"] = spec_json
+        specs.check_config_specs()
+        self.data["specs"] = specs.to_json_dict(skip_private=False)
 
     def update_spec(self, name, spec: ParamSpec) -> None:
         specs = self.get_specs()
-        specs[name] = spec
+        specs.update_spec(name, spec)
         self.set_specs(specs)
 
     def has_spec(self, param_name: str) -> bool:
-        return param_name in self.get_specs()
+        return self.get_specs().has_spec(param_name)
 
     def get_spec(self, param_name: str) -> ParamSpec:
-        self._check_param(param_name)
-
-        return self.get_specs()[param_name]
-
-    def has_visible_specs(self) -> bool:
-        return ConfigSpecsHelper.has_visible_config_specs(self.get_specs())
+        return self.get_specs().get_spec(param_name)
 
     ########################################## PARAM  #####################################
 
@@ -74,10 +64,6 @@ class Config(ModelWithUser):
         """
 
         return name in self.data.get("specs", {})
-
-    def _check_param(self, param_name: str) -> None:
-        if not param_name in self.get_specs():
-            raise UnkownParamException(param_name)
 
     ########################################## VALUE #####################################
 
@@ -109,7 +95,7 @@ class Config(ModelWithUser):
         values: ConfigParamsDict = self.get_values()
         specs: ConfigSpecs = self.get_specs()
 
-        return ParamSpecHelper.get_and_check_values(specs, values)
+        return specs.get_and_check_values(values)
 
     def set_value(self, param_name: str, value: ParamValue, skip_validate: bool = False):
         """
@@ -151,7 +137,7 @@ class Config(ModelWithUser):
         return name in self.data["values"] and self.data["values"][name] is not None
 
     def mandatory_values_are_set(self) -> bool:
-        return ParamSpecHelper.mandatory_values_are_set(self.get_specs(), self.get_values())
+        return self.get_specs().mandatory_values_are_set(self.get_values())
 
     def _clear_values(self):
         self.data["values"] = {}
@@ -194,7 +180,7 @@ class Config(ModelWithUser):
         """
 
         config = Config()
-        config.set_specs(ConfigSpecsHelper.config_specs_from_dto(config_dto.specs))
+        config.set_specs(ConfigSpecs.from_dto(config_dto.specs))
         config.set_values(config_dto.values)
 
         return config
@@ -208,7 +194,7 @@ class Config(ModelWithUser):
         return new_config
 
     def to_specs_dto(self, skip_private: bool = True) -> Dict[str, ParamSpecDTO]:
-        return ConfigSpecsHelper.config_specs_to_dto(self.get_specs(), skip_private=skip_private)
+        return self.get_specs().to_dto(skip_private=skip_private)
 
     class Meta:
         table_name = 'gws_config'

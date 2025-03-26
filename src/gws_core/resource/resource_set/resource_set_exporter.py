@@ -4,14 +4,10 @@ import os
 from typing import Dict, List, Type
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_specs_helper import ConfigSpecsHelper
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.settings import Settings
-from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.file import File
 from gws_core.impl.file.fs_node import FSNode
-from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.converter.exporter import (ResourceExporter,
@@ -59,7 +55,7 @@ class ResourceSetExporter(ResourceExporter):
             exporter: ResourceExporter = exporters[resource_typing_name]
 
             # skip the exporter if 1 config is not optional
-            if not ConfigSpecsHelper.all_config_are_optional(exporter.config_specs):
+            if not exporter.config_specs.all_config_are_optional():
                 Logger.info(
                     f"Skipping exporter {exporter.get_typing_name()} because it has required config")
 

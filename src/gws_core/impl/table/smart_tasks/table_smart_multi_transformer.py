@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Type
 from pandas import DataFrame
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
 from gws_core.impl.openai.ai_prompt_code import (AIPromptCode,
                                                  AIPromptCodeContext)
@@ -121,9 +121,9 @@ class MultiTableSmartTransformer(Task):
         'target': OutputSpec(Table),
     }, additionnal_port_spec=OutputSpec(Table))
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'prompt': OpenAiChatParam()
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

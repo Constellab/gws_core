@@ -1,6 +1,6 @@
 
 
-from ....resource.view.view_types import ViewSpecs, ViewType
+from ....resource.view.view_types import ViewType
 from ...view.lineplot_2d_view import LinePlot2DView
 from .table_scatterplot_2d_view import TableScatterPlot2DView
 
@@ -42,7 +42,6 @@ class TableLinePlot2DView(TableScatterPlot2DView):
     See also ScatterPlot2DView, LinePlot2DView, TableScatterPlot2DView
     """
 
-    _specs: ViewSpecs = {**TableScatterPlot2DView._specs}
     _view_helper = LinePlot2DView
 
     _type: ViewType = ViewType.LINE_PLOT_2D

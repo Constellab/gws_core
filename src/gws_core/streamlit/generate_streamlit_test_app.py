@@ -2,6 +2,7 @@
 import os
 
 from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.impl.file.folder import Folder
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
@@ -44,7 +45,7 @@ class GenerateStreamlitTestApp(Task):
         'streamlit_app': OutputSpec(StreamlitResource)
     })
 
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """ Run the task """

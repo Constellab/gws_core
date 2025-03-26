@@ -1,5 +1,6 @@
 
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import BoolParam, IntParam, StrParam
@@ -33,13 +34,14 @@ targets = [table]
             config_params={PyAgent.CONFIG_CODE_NAME: code, PyAgent.
                            CONFIG_PARAMS_NAME: {'a': 1, 'b': '2', 'c': 3, 'd': True}, },
             instance_name='test_task_generator',
-            config_specs={PyAgent.CONFIG_CODE_NAME: PythonCodeParam(),
-                          PyAgent.CONFIG_PARAMS_NAME:
-                          DynamicParam(
-                              specs={'a': IntParam(default_value=1),
-                                     'b': StrParam(default_value='2'),
-                                     'c': IntParam(default_value=3),
-                                     'd': BoolParam(default_value=True)})})
+            config_specs=ConfigSpecs({PyAgent.CONFIG_CODE_NAME: PythonCodeParam(),
+                                      PyAgent.CONFIG_PARAMS_NAME:
+                                      DynamicParam(
+                specs=ConfigSpecs({'a': IntParam(default_value=1),
+                                   'b': StrParam(default_value='2'),
+                                   'c': IntParam(default_value=3),
+                                   'd': BoolParam(default_value=True)}))})
+        )
 
         result = AgentFactory.generate_task_code_from_agent(task_model)
 
@@ -56,7 +58,7 @@ class TestTaskGenerator(Task):
 
         input_specs: InputSpecs = InputSpecs({'resource_1': InputSpec(Resource)})
         output_specs: OutputSpecs = OutputSpecs({'resource_1': OutputSpec(Resource)})
-        config_specs: ConfigSpecs = {'a': IntParam(default_value=1), 'b': StrParam(default_value='2'), 'c': IntParam(default_value=3), 'd': BoolParam(default_value=True)}
+        config_specs: ConfigSpecs = ConfigSpecs({'a': IntParam(default_value=1), 'b': StrParam(default_value='2'), 'c': IntParam(default_value=3), 'd': BoolParam(default_value=True)})
 
         def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

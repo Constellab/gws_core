@@ -4,7 +4,7 @@ from typing import Any, List
 
 from PIL import Image
 
-from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType

@@ -34,7 +34,7 @@ class Text(Resource):
         return self._data
 
     @view(view_type=TextView, human_name='Text', short_description='View as text',
-          specs={}, default_view=True)
+          default_view=True)
     def view_as_text(self, params: ConfigParams) -> TextView:
         """
         View as table

@@ -2,6 +2,7 @@
 
 import time
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import FloatParam, StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
@@ -19,7 +20,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 class RobotCreate(Task):
     input_specs = InputSpecs({})  # no required input
     output_specs = OutputSpecs({'robot': OutputSpec(Robot)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         robot: Robot = Robot.empty()
@@ -35,8 +36,8 @@ class RobotMove(Task):
                                                  short_description="The robot to feed")})  # just for testing
     output_specs = OutputSpecs({'robot': OutputSpec(
         Robot), 'food': OutputSpec(RobotFood, is_optional=True)})
-    config_specs = {'moving_step': FloatParam(default_value=0.1, short_description="The moving step of the robot"), 'direction': StrParam(
-        default_value="north", allowed_values=["north", "south", "east", "west"], short_description="The moving direction")}
+    config_specs = ConfigSpecs({'moving_step': FloatParam(default_value=0.1, short_description="The moving step of the robot"), 'direction': StrParam(
+        default_value="north", allowed_values=["north", "south", "east", "west"], short_description="The moving direction")})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         robot: Robot = inputs['robot']
@@ -51,9 +52,9 @@ class RobotEat(Task):
     input_specs = InputSpecs({'robot': InputSpec(
         Robot), 'food': InputSpec(RobotFood, is_optional=True)})
     output_specs = OutputSpecs({'robot': OutputSpec(Robot)})
-    config_specs = {
+    config_specs = ConfigSpecs({
         'food_weight': FloatParam(default_value=3.14)
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         robot: Robot = inputs['robot']
@@ -73,10 +74,10 @@ class RobotEat(Task):
 class RobotWait(Task):
     input_specs = InputSpecs({'robot': InputSpec(Robot)})
     output_specs = OutputSpecs({'robot': OutputSpec(Robot)})
-    config_specs = {
+    config_specs = ConfigSpecs({
         # wait for .5 secs by default
         'waiting_time': FloatParam(default_value=0.5)
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         time.sleep(params.get_value('waiting_time'))
@@ -87,8 +88,8 @@ class RobotWait(Task):
                 short_description="This task emulates the fly of the robot. It inherites the Move task.",
                 hide=True)
 class RobotFly(RobotMove):
-    config_specs = {'moving_step': FloatParam(default_value=1000.0), 'direction': StrParam(
-        default_value="west", allowed_values=["north", "south", "east", "west"], short_description="The flying direction")}
+    config_specs = ConfigSpecs({'moving_step': FloatParam(default_value=1000.0), 'direction': StrParam(
+        default_value="west", allowed_values=["north", "south", "east", "west"], short_description="The flying direction")})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return super().run(params, inputs)
@@ -98,7 +99,7 @@ class RobotFly(RobotMove):
 class RobotAdd(Task):
     input_specs = InputSpecs({'robot': InputSpec(Robot), 'addon': InputSpec(RobotAddOn)})
     output_specs = OutputSpecs({'mega_robot': OutputSpec(MegaRobot)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
@@ -112,7 +113,7 @@ class RobotAdd(Task):
                 hide=True)
 class RobotAddOnCreate(Task):
     output_specs = OutputSpecs({'addon': OutputSpec(RobotAddOn)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'addon': RobotAddOn()}
@@ -126,7 +127,7 @@ class RobotSugarCreate(Task):
     used in TestRobotWithSugarProtocol
     """
     output_specs = OutputSpecs({'sugar': OutputSpec(RobotFood)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         food: RobotFood = RobotFood()

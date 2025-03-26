@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 import plotly.graph_objs as go
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
 from gws_core.impl.openai.ai_prompt_code import (AIPromptCode,
                                                  AIPromptCodeContext)
@@ -100,9 +100,9 @@ class SmartPlotly(Task):
         'generated_code': AITableGeneratePlotly.generate_agent_code_task_output_config()
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'prompt': OpenAiChatParam()
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

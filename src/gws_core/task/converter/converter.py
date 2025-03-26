@@ -3,6 +3,8 @@
 from abc import abstractmethod
 from typing import Tuple, Type, final
 
+from gws_core.config.config_params import ConfigParamsDict
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
@@ -11,7 +13,6 @@ from gws_core.model.typing_style import TypingStyle
 
 from ...brick.brick_service import BrickService
 from ...config.config_params import ConfigParams
-from ...config.config_types import ConfigParamsDict, ConfigSpecs
 from ...core.utils.utils import Utils
 from ...resource.resource import Resource
 from ...task.task import CheckBeforeTaskResult, Task
@@ -95,7 +96,7 @@ class Converter(Task):
     output_specs = OutputSpecs({"target": OutputSpec(Resource)})
 
     # Override the config_spec to define custom spec for the importer
-    config_specs: ConfigSpecs = {}
+    config_specs = ConfigSpecs({})
 
     @final
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

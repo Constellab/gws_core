@@ -3,7 +3,7 @@
 from typing import List
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import StrParam
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
@@ -33,10 +33,10 @@ class ResourceStacker(Task):
     If an input resource is a ResourceList or a ResourceSet, the resource are flatten and added to the output resource set.
     """
 
-    config_specs: ConfigSpecs = {'keys': ParamSet(
-        {'key': StrParam(human_name="Resource key", short_description="The key of the resource to stack", optional=True)},
+    config_specs = ConfigSpecs({'keys': ParamSet(ConfigSpecs(
+        {'key': StrParam(human_name="Resource key", short_description="The key of the resource to stack", optional=True)}),
         optional=True, human_name="Resource keys", short_description="The keys of the resources to stack"
-    )}
+    )})
     input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = OutputSpecs({'resource_set': OutputSpec(ResourceSet)})
 
@@ -89,10 +89,10 @@ class ResourcePicker(Task):
     output_specs: OutputSpecs = DynamicOutputs(
         additionnal_port_spec=OutputSpec(Resource, sub_class=True, is_constant=True))
 
-    config_specs: ConfigSpecs = {'keys': ParamSet(
-        {'key': StrParam(human_name="Resource key", short_description="The key of the resource to pick")},
+    config_specs = ConfigSpecs({'keys': ParamSet(ConfigSpecs(
+        {'key': StrParam(human_name="Resource key", short_description="The key of the resource to pick")}),
         optional=False, human_name="Resource keys", short_description="The keys of the resources to pick"
-    )}
+    )})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

@@ -1,6 +1,7 @@
 import os
 
 from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import TextParam
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
@@ -44,12 +45,12 @@ class GenerateDocAssistant(Task):
         'streamlit_app': OutputSpec(StreamlitResource)
     })
 
-    config_specs = {
+    config_specs = ConfigSpecs({
         'product_doc_default_prompt': TextParam(
             human_name='Product documentation default prompt',
             short_description='The default prompt to use to generate the product documentation',
         ),
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """ Run the task """

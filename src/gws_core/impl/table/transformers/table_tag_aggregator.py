@@ -1,7 +1,7 @@
 
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_specs import ConfigSpecs
 from ....config.param.param_spec import ListParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ..helper.table_tag_aggregator_helper import TableTagAggregatorHelper
@@ -24,7 +24,7 @@ class TableRowTagAggregator(Transformer):
     ⚠️ **Multiple tag keys are only supported for ```sort``` function** ⚠️
 
     """
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "tag_keys": ListParam(
             human_name="Tag keys",
             short_description="Tags keys to use for data grouping",
@@ -34,7 +34,7 @@ class TableRowTagAggregator(Transformer):
             human_name="Grouping function",
             short_description="The grouping function. Multiple tags are only supported for 'sort' function.",
         ),
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableTagAggregatorHelper.aggregate_by_row_tags(source,
@@ -56,7 +56,7 @@ class TableColumnTagAggregator(Transformer):
 
     ⚠️ **Multiple tag keys are only supported for ```sort``` function** ⚠️
     """
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "tag_keys": ListParam(
             human_name="Tag keys",
             short_description="Tags keys to use for data grouping",
@@ -66,7 +66,7 @@ class TableColumnTagAggregator(Transformer):
             human_name="Grouping function",
             short_description="The grouping function. Multiple tags are only supported for 'sort' function.",
         ),
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableTagAggregatorHelper.aggregate_by_column_tags(source,

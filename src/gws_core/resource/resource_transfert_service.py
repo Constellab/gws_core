@@ -2,7 +2,7 @@
 
 from typing import Dict
 
-from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.decorator.transaction import transaction
 from gws_core.process.process_proxy import ProcessProxy
@@ -76,7 +76,7 @@ class ResourceTransfertService():
 
     @classmethod
     def get_import_from_link_config_specs(cls) -> Dict[str, ParamSpecDTO]:
-        return ResourceDownloaderHttp.get_config_specs_dto()
+        return ResourceDownloaderHttp.config_specs.to_dto()
 
     @classmethod
     def export_resource_to_lab(cls, resource_id: str, values: ConfigParamsDict) -> Scenario:
@@ -97,7 +97,7 @@ class ResourceTransfertService():
 
     @classmethod
     def get_export_resource_to_lab_config_specs(cls) -> Dict[str, ParamSpecDTO]:
-        return SendResourceToLab.get_config_specs_dto()
+        return SendResourceToLab.config_specs.to_dto()
 
     @classmethod
     @transaction()

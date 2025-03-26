@@ -5,6 +5,8 @@ import traceback
 from abc import abstractmethod
 from typing import Callable, Type, final
 
+from typing_extensions import TypedDict
+
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
@@ -12,11 +14,10 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
-from typing_extensions import TypedDict
 
 from ...brick.brick_service import BrickService
 from ...config.config_params import ConfigParams
-from ...config.config_types import ConfigSpecs
+from ...config.config_specs import ConfigSpecs
 from ...core.utils.settings import Settings
 from ...core.utils.utils import Utils
 from ...impl.file.file import File
@@ -131,7 +132,7 @@ class ResourceExporter(Converter):
     output_specs = OutputSpecs({"target": OutputSpec(File)})
 
     # Override the config_spec to define custom spec for the exporter
-    config_specs: ConfigSpecs = {}
+    config_specs = ConfigSpecs({})
 
     @final
     def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> File:

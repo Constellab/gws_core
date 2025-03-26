@@ -3,6 +3,7 @@ from typing import Dict, List
 
 from pandas import DataFrame
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.model.typing_style import TypingStyle
 
 from ...config.config_params import ConfigParams
@@ -45,7 +46,7 @@ class Robot(Resource):
             self.position[0] += moving_step
 
     @view(view_type=JSONView, human_name="View position",
-          specs={"position": StrParam(default_value="latitude", allowed_values=['latitude', 'longitude'])})
+          specs=ConfigSpecs({"position": StrParam(default_value="latitude", allowed_values=['latitude', 'longitude'])}))
     def view_only_position(self, params: ConfigParams) -> JSONView:
         position: str = params.get_value('position')
         position_value = self.position[1] if position == 'latitude' else self.position[0]

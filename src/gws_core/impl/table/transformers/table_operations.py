@@ -1,6 +1,6 @@
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam, ListParam
 from gws_core.impl.table.helper.table_operation_helper import \
     TableOperationHelper
@@ -79,14 +79,14 @@ class TableColumnOperations(Transformer):
 
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "operations": ListParam(human_name="Operations", short_description="Operations on columns, see documentation for more info"),
         'keep_original_columns':
         BoolParam(
             default_value=False, human_name='Keep original columns',
             short_description="If true, the original columns of the Table will be added at the end of the Table. If false, only the calculcation columns are kept.",
         )
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableOperationHelper.column_operations(source, params["operations"], params["keep_original_columns"])

@@ -3,6 +3,7 @@ import json
 import os
 from typing import Any, AnyStr, List, Optional
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam
 from gws_core.impl.view.audio_view import AudioView
 from gws_core.impl.view.html_view import HTMLView
@@ -207,13 +208,13 @@ class File(FSNode):
         return self.view_content_as_str(params)
 
     @view(view_type=SimpleTextView, human_name="View file content", short_description="View the file content as string",
-          specs={"line_number": IntParam(default_value=1, min_value=1, human_name="From line")})
+          specs=ConfigSpecs({"line_number": IntParam(default_value=1, min_value=1, human_name="From line")}))
     def view_content_as_str(self, params: ConfigParams) -> SimpleTextView:
         self.check_if_exists()
         return self.get_view_by_lines(params.get('line_number'))
 
     @view(view_type=View, human_name="Default view", short_description="View the file with automatic view",
-          default_view=True, specs={"line_number": IntParam(default_value=1, min_value=1, human_name="From line")})
+          default_view=True, specs=ConfigSpecs({"line_number": IntParam(default_value=1, min_value=1, human_name="From line")}))
     def default_view(self, params: ConfigParams) -> View:
         self.check_if_exists()
         return self.get_default_view(params.get('line_number'))

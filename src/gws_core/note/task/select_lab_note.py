@@ -1,6 +1,6 @@
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.note.note import Note
@@ -27,9 +27,9 @@ class SelectNote(Task):
         'note': OutputSpec(LabNoteResource, human_name='Note', short_description='Select a note')
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'note': NoteParam(),
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         note: Note = params['note']

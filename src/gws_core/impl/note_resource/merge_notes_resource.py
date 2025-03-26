@@ -1,7 +1,7 @@
 
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.io.dynamic_io import DynamicInputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -32,12 +32,12 @@ class MergeNoteResources(Task):
         'note': OutputSpec(NoteResource, human_name='Note resource')
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'title':
         StrParam(
             human_name='Title',
             short_description='Title of the new note resource, if empty the first note resource title is used',
-            default_value=''), }
+            default_value='')})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # prepare the input

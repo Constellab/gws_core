@@ -11,7 +11,7 @@ from gws_core.resource.task.resource_downloader_base import \
 from gws_core.share.shared_dto import ShareEntityCreateMode
 
 from ...config.config_params import ConfigParams
-from ...config.config_types import ConfigSpecs
+from ...config.config_specs import ConfigSpecs
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 
@@ -32,14 +32,14 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
     See ResourceUploaderS3 to upload a resource to an S3 bucket.
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'credentials': CredentialsParam(credentials_type=CredentialsType.S3),
         'object_key': StrParam(human_name="Key of the S3 object in bucket"),
         's3_bucket': StrParam(human_name="S3 bucket name",
                               short_description="If provided, override the bucket name in credentials",
                               optional=True),
         'uncompress': ResourceDownloaderBase.uncompressConfig
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         credentials: CredentialsDataS3 = params.get_value('credentials')

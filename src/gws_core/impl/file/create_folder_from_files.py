@@ -3,7 +3,7 @@
 import os
 from typing import List
 
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.utils.settings import Settings
@@ -44,10 +44,10 @@ class CreateFolderFromFiles(Task):
         additionnal_port_spec=InputSpec(FSNode, human_name="File or folder"))
     output_specs = OutputSpecs({'folder': OutputSpec(Folder, human_name='Folder')})
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'folder_name': StrParam(human_name="Output folder name", short_description="Name of the folder to create", optional=True),
-        'filenames': ParamSet({'filename': StrParam(
-            human_name="Filename", short_description="Overide the file or folder name at this index", optional=True)}, optional=True)}
+        'filenames': ParamSet(ConfigSpecs({'filename': StrParam(
+            human_name="Filename", short_description="Overide the file or folder name at this index", optional=True)}), optional=True)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

@@ -4,8 +4,7 @@ from abc import abstractmethod
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from gws_core.config.config_specs_helper import ConfigSpecsHelper
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import StrParam
 from gws_core.config.param.param_types import ParamSpecDTO
@@ -68,7 +67,7 @@ class CredentialsDataBase(BaseModelDTO):
     def get_spec_dto(cls) -> Dict[str, ParamSpecDTO]:
         """Get the specs of the credentials data in DTO format
         """
-        return ConfigSpecsHelper.config_specs_to_dto(cls.get_specs())
+        return cls.get_specs().to_dto()
 
     @classmethod
     def build_from_json(cls, json_: dict, meta: CredentialsDTO = None) -> 'CredentialsDataBase':
@@ -153,10 +152,10 @@ class CredentialsDataOther(CredentialsDataBase):
     @classmethod
     def get_specs(cls) -> ConfigSpecs:
         return {
-            "data": ParamSet({
+            "data": ParamSet(ConfigSpecs({
                 "key": StrParam(human_name="Key"),
                 "value": StrParam(human_name="Value"),
-            },
+            }),
                 human_name="Custom data",
                 short_description="List of key value pairs")
         }

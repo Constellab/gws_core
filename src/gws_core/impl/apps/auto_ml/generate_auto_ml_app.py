@@ -50,8 +50,6 @@ class GenerateAutoMLApp(Task):
         'streamlit_app': OutputSpec(StreamlitResource)
     })
 
-    config_specs = {}
-
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """ Run the task """
 

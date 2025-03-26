@@ -1,8 +1,6 @@
 
 
-from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigParamsDict
-from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.dict_r_field import DictRField
 from gws_core.resource.resource import Resource
@@ -74,8 +72,7 @@ class ViewResource(Resource):
             raise Exception("The view object must be an instance of View")
 
         # create a new config for the view to_dict method based on view specs
-        config_params: ConfigParams = ParamSpecHelper.build_config_params(view_.get_specs(),
-                                                                          dict(view_config_values or {}))
+        config_params: ConfigParams = view_.get_specs().build_config_params(dict(view_config_values or {}))
         # disable the pagination of the view because it contains only the data of 1 page
         view_.disable_pagination()
         return ViewResource.from_view_dto(view_.to_dto(config_params))

@@ -6,6 +6,8 @@ import shutil
 from abc import abstractmethod
 from typing import Any, Dict, List
 
+from gws_core.config.config_params import ConfigParamsDict
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
@@ -15,7 +17,6 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource_set.resource_list import ResourceList
 
 from ...config.config_params import ConfigParams
-from ...config.config_types import ConfigParamsDict, ConfigSpecs
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...io.io_specs import InputSpecs, OutputSpecs
@@ -46,7 +47,7 @@ class EnvAgent(Task):
         additionnal_port_spec=OutputSpec(FSNode, human_name="File or folder", sub_class=True))
 
     # override this in subclasses
-    config_specs: ConfigSpecs = {}
+    config_specs = ConfigSpecs({})
     SNIPPET_FILE_EXTENSION: str = None
 
     shell_proxy: ShellProxy = None

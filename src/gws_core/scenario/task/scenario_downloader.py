@@ -4,8 +4,8 @@ from typing import Dict, List, Literal, Optional, Set, Tuple
 
 import requests
 
-from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
+from gws_core.config.config_params import ConfigParams, ConfigParamsDict
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.decorator.transaction import transaction
@@ -76,7 +76,7 @@ class ScenarioDownloader(Task):
         'scenario': OutputSpec(ScenarioResource, human_name='Scenario')
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'link': StrParam(human_name='Scenario link', short_description='Link to download the scenario'),
         'resource_mode': StrParam(human_name='Resource mode', short_description='Mode for downloading resource of the scenario',
                                   allowed_values=Utils.get_literal_values(ScenarioDownloaderResourceMode)),
@@ -84,7 +84,7 @@ class ScenarioDownloader(Task):
                                   short_description='This applies for the scenario and the resources',
                                   allowed_values=Utils.get_literal_values(ScenarioDownloaderCreateOption),
                                   default_value='Skip if exists')
-    }
+    })
 
     share_entity: ShareScenarioInfoReponseDTO
     resource_loaders: List[ResourceLoader]

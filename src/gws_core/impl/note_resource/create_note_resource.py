@@ -1,7 +1,7 @@
 
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_param import RichTextParam
@@ -34,12 +34,12 @@ class CreateNoteResource(Task):
         'note': OutputSpec(NoteResource, human_name='Note resource', short_description='New note resource')
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'template': NoteTemplateParam(optional=True),
         'title': StrParam(human_name='Title', short_description='Title of the note resource', default_value='New note resource'),
         'note': RichTextParam(human_name='Note resource', short_description='Note resource content, this overrides the template',
                               optional=True)
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         template: NoteTemplate = params['template']

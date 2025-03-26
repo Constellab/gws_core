@@ -1,7 +1,7 @@
 
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
@@ -36,10 +36,10 @@ class InputTaskFromProcessOutput(Task):
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
         Resource, sub_class=True, is_constant=True, human_name="Resource", short_description="Loaded resource")})
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'process_model_id': StrParam(human_name="Process model id", short_description="The id of the process model that contains the output"),
         'process_output_port_name': StrParam(human_name="Output port name", short_description="The name of the output port of the process model"),
-    }
+    })
 
     __enable_in_sub_protocol__: bool = False
 

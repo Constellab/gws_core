@@ -6,7 +6,7 @@ from gws_core.impl.table.helper.dataframe_scaler_helper import \
 from gws_core.impl.table.helper.table_scaler_helper import TableScalerHelper
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_specs import ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ..table import Table
 
@@ -24,12 +24,12 @@ class TableScaler(Transformer):
     - ```log2, log10``` replace each element by the corresponding log value
     - ```log``` replace each element by the corresponding natural logarithm value
     """
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "scaling_function": StrParam(
             human_name="Scaling function",
             allowed_values=DataframeScalerHelper.SCALE_FUNCTIONS,
         )
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableScalerHelper.scale(
@@ -58,9 +58,9 @@ class TableRowScaler(Transformer):
     - ```percent``` is like ```unit``` but the final value is multiplied by 100
     - ```standard``` normalizes each element by the standard deviation of its rows
     """
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "scaling_function": axis_scale_param
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableScalerHelper.scale_by_rows(
@@ -84,9 +84,9 @@ class TableColumnScaler(Transformer):
     - ```standard``` normalizes each element by the standard deviation of its columns
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "scaling_function": axis_scale_param
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableScalerHelper.scale_by_columns(

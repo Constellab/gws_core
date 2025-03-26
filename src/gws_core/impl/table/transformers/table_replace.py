@@ -5,7 +5,7 @@ from numpy import NaN
 from pandas import DataFrame
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.core.utils.numeric_helper import NumericHelper
@@ -38,14 +38,15 @@ class TableReplace(Transformer):
 
     """
 
-    config_specs: ConfigSpecs = {
-        "replace_values": ParamSet(
+    config_specs = ConfigSpecs({
+        "replace_values": ParamSet(ConfigSpecs(
             {"search_value": StrParam(human_name="Value to search for", short_description="Use 'NaN' or 'None' for NaN/None or leave empty for empty string", default_value=""),
              "replace_value": StrParam(human_name="Replace value", short_description="Use 'NaN' for NaN, 'None' for None or leave empty for empty string", default_value=""), "is_regex": BoolParam(
                 default_value=False, human_name="Is regex", short_description="If true, the search value is interpreted as a regex"),
-             }, human_name="Replace values"
+             }),
+            human_name="Replace values"
         ),
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         dataframe: DataFrame = source.get_data()

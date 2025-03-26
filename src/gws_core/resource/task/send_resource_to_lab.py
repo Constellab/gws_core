@@ -2,8 +2,8 @@
 
 from datetime import timedelta
 
-from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
+from gws_core.config.config_params import ConfigParams, ConfigParamsDict
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.credentials.credentials_param import CredentialsParam
@@ -50,16 +50,16 @@ class SendResourceToLab(Task):
         'resource': InputSpec(Resource, human_name="Resource to send"),
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'credentials': CredentialsParam(credentials_type=CredentialsType.LAB, human_name="Lab credentials",
                                         short_description="The credentials must exist in destination lab"),
         'link_duration': IntParam(human_name='Share link duration in days',
                                   short_description="The share link is not created if a share link already exists for the resource",
                                   min_value=1,
                                   max_value=365, default_value=1),
-        'create_option': ResourceDownloaderHttp.config_specs['create_option'],
+        'create_option': ResourceDownloaderHttp.config_specs.get_spec('create_option'),
 
-    }
+    })
 
     INPUT_NAME = 'resource'
 

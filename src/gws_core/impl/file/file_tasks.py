@@ -1,6 +1,5 @@
 
 
-import json
 import os
 from typing import Type
 
@@ -13,11 +12,10 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_manager import TypingManager
 
 from ...config.config_params import ConfigParams
-from ...config.config_types import ConfigSpecs
+from ...config.config_specs import ConfigSpecs
 from ...config.param.param_spec import StrParam
 from ...impl.file.file import File
 from ...io.io_specs import InputSpecs, OutputSpecs
-from ...resource.resource import Resource
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
@@ -38,12 +36,12 @@ class FsNodeExtractor(Task):
     output_specs = OutputSpecs({"target": OutputSpec(FSNode, sub_class=True)})
 
     # Override the config_spec to define custom spec for the importer
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "fs_node_path": StrParam(human_name="Sub path for the FSNode to extract",
                                  short_description="Path to the sub file or folder to extract"),
         "fs_node_typing_name": StrParam(human_name="FSNode typing name",
                                         short_description="Override typing name of the FSNode to create. Leave empty to infer from the path",
-                                        optional=True)}
+                                        optional=True)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         path: str = params.get('fs_node_path')

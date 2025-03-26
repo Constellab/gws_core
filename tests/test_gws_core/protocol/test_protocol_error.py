@@ -6,6 +6,7 @@ from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
                       ProtocolModel, ProtocolService, Resource,
                       ScenarioService, Task, TaskInputs, TaskOutputs,
                       protocol_decorator, resource_decorator, task_decorator)
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
 from gws_core.impl.robot.robot_resource import Robot
@@ -67,7 +68,7 @@ class NotRobot(Resource):
 @task_decorator("NotRobotCreate")
 class NotRobotCreate(Task):
     output_specs = OutputSpecs({'not_robot': OutputSpec(NotRobot)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'not_robot': NotRobot()}

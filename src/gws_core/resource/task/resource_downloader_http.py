@@ -5,7 +5,7 @@ from typing import Literal
 from requests.models import Response
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.utils import Utils
@@ -40,13 +40,13 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
 
     If the link refers to a file, the file will be imported as a resource.
     """
-    config_specs: ConfigSpecs = {
+    config_specs: ConfigSpecs = ConfigSpecs({
         'link': StrParam(human_name='Resource link', short_description='Link to download the resource'),
         'uncompress': ResourceDownloaderBase.uncompressConfig,
         'create_option': StrParam(human_name='Create option',
                                   allowed_values=Utils.get_literal_values(ResourceDownloaderCreateOption),
                                   default_value='Skip if exists')
-    }
+    })
 
     LINK_PARAM_NAME = 'link'
 

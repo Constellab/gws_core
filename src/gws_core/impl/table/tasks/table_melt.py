@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam, ListParam, StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
@@ -30,7 +31,7 @@ class TableMelt(Task):
     input_specs = InputSpecs({'input_table': InputSpec(Table, human_name="input_table")})
     output_specs = OutputSpecs({'output_table': OutputSpec(Table, human_name="output_table")})
 
-    config_specs = {
+    config_specs = ConfigSpecs({
         "id_vars": ListParam(
             default_value=None,
             optional=True,
@@ -67,7 +68,7 @@ class TableMelt(Task):
             optional=True,
             short_description="If True, original index is ignored. If False, the original index is retained. Index labels will be repeated as necessary."
         )
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         dataframe = pd.DataFrame(inputs['input_table'].get_data())

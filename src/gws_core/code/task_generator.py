@@ -4,6 +4,7 @@ import inspect
 from typing import Dict, List, Set, Type
 
 from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.core.utils.utils import Utils
@@ -23,14 +24,13 @@ class TaskGenerator:
 
     inputs_specs: Dict[str, Type[Resource]] = None
     outputs_specs: Dict[str, Type[Resource]] = None
-    config_specs: Dict[str, ParamSpec] = None
+    config_specs: ConfigSpecs = None
 
     run_method_content: str = None
     custom_imports: List[str] = None
     gws_core_additional_imports: Set[str] = None
 
     _TASK_OUTPUTS_TYPE = 'TaskOutputs'
-    _CONFIG_SPECS_TYPE = 'ConfigSpecs'
 
     _INPUT_SPECS_NAME = 'input_specs'
     _OUTPUT_SPECS_NAME = 'output_specs'
@@ -41,7 +41,7 @@ class TaskGenerator:
         self.inputs_specs = {}
         self.outputs_specs = {}
 
-        self.config_specs = {}
+        self.config_specs = ConfigSpecs({})
         self.run_method_content = ""
         self.custom_imports = []
         self.gws_core_additional_imports = set()
@@ -108,7 +108,7 @@ class TaskGenerator:
         if not isinstance(param_spec, ParamSpec):
             raise Exception(
                 f"The param spec {param_spec.__name__} is not a instance of ParamSpec")
-        self.config_specs[key] = param_spec
+        self.config_specs.add_spec(key, param_spec)
 
         # add required imports,
         self.gws_core_additional_imports.add(param_spec.__class__.__name__)
@@ -144,7 +144,7 @@ class TaskGenerator:
 {self._build_custom_imports()}"""
 
     def _build_gws_core_import(self) -> str:
-        required_imports = [Task.__name__, InputSpecs.__name__, OutputSpecs.__name__, self._CONFIG_SPECS_TYPE,
+        required_imports = [Task.__name__, InputSpecs.__name__, OutputSpecs.__name__, ConfigSpecs.__name__,
                             ConfigParams.__name__, TaskInputs.__name__, self._TASK_OUTPUTS_TYPE, task_decorator.__name__]
 
         required_imports.extend(self.gws_core_additional_imports)
@@ -181,7 +181,7 @@ class {self.class_name}(Task):"""
     ###################################### CONFIG SPECS ######################################
 
     def _build_config_specs(self) -> str:
-        return f"""\t{self._CONFIG_SPECS_NAME}: {self._CONFIG_SPECS_TYPE} = {self._build_config_specs_dict()}"""
+        return f"""\t{self._CONFIG_SPECS_NAME} : {ConfigSpecs.__name__} = {ConfigSpecs.__name__}({self._build_config_specs_dict()})"""
 
     def _build_config_specs_dict(self) -> str:
 
@@ -189,7 +189,7 @@ class {self.class_name}(Task):"""
             return "{}"
 
         params: list = []
-        for key, value in self.config_specs.items():
+        for key, value in self.config_specs.specs.items():
             default_value = value.get_default_value()
             str_default_value = f"'{default_value}'" if isinstance(
                 default_value, str) else f"{default_value}"

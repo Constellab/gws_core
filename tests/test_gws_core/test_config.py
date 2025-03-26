@@ -1,10 +1,9 @@
 
 
-from gws_core import (BaseTestCase, Config, FloatParam, ProcessFactory,
-                      TaskModel)
+from gws_core import BaseTestCase, Config, FloatParam, ProcessFactory
 from gws_core.config.config_exceptions import MissingConfigsException
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.impl.robot.robot_tasks import RobotMove
 
 
@@ -12,15 +11,14 @@ from gws_core.impl.robot.robot_tasks import RobotMove
 class TestConfig(BaseTestCase):
 
     def test_config(self):
-        specs = {
+        specs = ConfigSpecs({
             'moving_step':  FloatParam(default_value=0.1)
-        }
+        })
 
         config = Config()
         config.set_specs(specs)
 
-        config_params = ParamSpecHelper.build_config_params(
-            config.get_specs(), config.get_values())
+        config_params = config.get_specs().build_config_params(config.get_values())
         self.assertIsInstance(config_params, ConfigParams)
         self.assertEqual(config_params["moving_step"], 0.1)
 
@@ -31,8 +29,8 @@ class TestConfig(BaseTestCase):
         config.save()
         config2: Config = Config.get_by_id(config.id)
         self.assertEqual(config2.data, config.data)
-        self.assertIsNotNone(config2.get_specs().get('moving_step'))
-        self.assertIsInstance(config2.get_specs().get('moving_step'), FloatParam)
+        self.assertIsNotNone(config2.get_specs().get_spec('moving_step'))
+        self.assertIsInstance(config2.get_specs().get_spec('moving_step'), FloatParam)
         self.assertEqual(config2.get_values().get('moving_step'), 4.5)
 
     def test_task_config(self):
@@ -47,10 +45,10 @@ class TestConfig(BaseTestCase):
         self.assertEqual(config.get_value("moving_step"), 0.3)
 
     def test_optional(self):
-        specs = {
+        specs = ConfigSpecs({
             'moving_step': FloatParam(),
             'optional': FloatParam(default_value=0.1),
-        }
+        })
 
         # Check an optional config
         config = Config()
@@ -74,7 +72,7 @@ class TestConfig(BaseTestCase):
 
         # Test that the config private are not returned in json
         config = Config()
-        config.set_specs({'float_1': float_1, 'float_2': float_2})
+        config.set_specs(ConfigSpecs({'float_1': float_1, 'float_2': float_2}))
         config.save()
 
         json_specs = config.to_dto().specs

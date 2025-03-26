@@ -2,6 +2,7 @@
 
 from typing import Any, List, Optional, final
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.string_helper import StringHelper
@@ -10,7 +11,7 @@ from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
 from gws_core.resource.view.view_dto import ViewDTO
 
 from ...config.config_params import ConfigParams
-from .view_types import ViewSpecs, ViewType
+from .view_types import ViewType
 
 
 class View:
@@ -26,7 +27,7 @@ class View:
     _favorite: bool = False
 
     # Spec of the view. All the view spec must be optional or have a default value
-    _specs: ViewSpecs = {}
+    _specs: ConfigSpecs = ConfigSpecs({})
 
     def __init__(self):
         # Check view type
@@ -45,10 +46,9 @@ class View:
         if self._specs is None:
             return
 
-        for key, spec in self._specs.items():
-            if not spec.optional:
-                raise Exception(
-                    f"The spec '{key}' of the view '{self.__class__.__name__}' is not optional. All the view specs must be optional or have a default value")
+        if not self._specs.all_config_are_optional():
+            raise Exception(
+                f"Some specs of the view '{self.__class__.__name__}' are not optional. All the view specs must be optional or have a default value")
 
     def set_title(self, title: str):
         """ Set title """
@@ -165,5 +165,5 @@ class View:
         return list(range(0, length))
 
     @classmethod
-    def get_specs(cls) -> ViewSpecs:
+    def get_specs(cls) -> ConfigSpecs:
         return cls._specs

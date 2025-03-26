@@ -1,6 +1,6 @@
 
 
-from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.folder.task.select_space_folder import SelectSpaceFolder
 from gws_core.folder.task.space_folder_param import SpaceFolderParam
@@ -16,8 +16,9 @@ class TestSpaceFolderParam(BaseTestCase):
         space_folder = SpaceFolder(name='Test')
         space_folder.save()
 
-        param = SpaceFolderParam()
-        config_params = ParamSpecHelper.build_config_params({"space_folder": param}, {"space_folder": space_folder.id})
+        config_params = ConfigSpecs(
+            {"space_folder": SpaceFolderParam()}).build_config_params(
+            {"space_folder": space_folder.id})
 
         data: SpaceFolder = config_params["space_folder"]
         self.assertIsInstance(data, SpaceFolder)

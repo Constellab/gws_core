@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import List, Literal
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.impl.file.file import File
@@ -30,7 +30,7 @@ class ResourceDownloaderBase(Task):
     input_specs: InputSpecs = InputSpecs({})
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
         Resource, human_name='Imported resource', sub_class=True)})
-    config_specs: ConfigSpecs = {}
+    config_specs = ConfigSpecs({})
 
     uncompressConfig = StrParam(human_name="Uncompress file", allowed_values=['auto', 'yes', 'no'],
                                 default_value='auto',

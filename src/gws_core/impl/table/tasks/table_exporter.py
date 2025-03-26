@@ -7,7 +7,7 @@ from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_specs import ConfigSpecs
 from ....config.param.param_spec import BoolParam, StrParam
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -17,14 +17,14 @@ from ..table import Table
 
 @exporter_decorator(unique_name="TableExporter", source_type=Table)
 class TableExporter(ResourceExporter):
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'file_name': StrParam(optional=True, human_name="File name", short_description="File name (without extension)"),
         'file_format': StrParam(optional=True, default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, human_name="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, human_name="Delimiter character", short_description="Only for CSV files"),
         # 'write_metadata': BoolParam(default_value=True, short_description="Set True to write metadata"),
         'write_header': BoolParam(default_value=True, visibility=BoolParam.PROTECTED_VISIBILITY, human_name="Write header", short_description="Set True to write column names (header), False otherwise"),
         'write_index': BoolParam(default_value=False, visibility=BoolParam.PROTECTED_VISIBILITY, human_name="Write index", short_description="Set True to write row names (index), False otherwise"),
-    }
+    })
 
     def export_to_path(self, source: Table, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_name = params.get_value('file_name', source.name) or 'table'

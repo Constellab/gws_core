@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 
 from ....config.config_params import ConfigParams
 from ....config.param.param_spec import ListParam
-from ....resource.view.view_types import ViewSpecs, ViewType
+from ....resource.view.view_types import ViewType
 from ...view.boxplot_view import BoxPlotView
 from .base_table_view import BaseTableView
 from .table_selection import Serie1d
@@ -62,11 +63,9 @@ class TableBoxPlotView(BaseTableView):
 
     _type: ViewType = ViewType.BOX_PLOT
     _table: Table
-    _specs: ViewSpecs = {
-        **BaseTableView._specs,
+    _specs = ConfigSpecs({
         "series": ListParam(default_value=[]),
-        **BaseTableView._2d_axis_labels_specs
-    }
+    }).merge_specs(BaseTableView._2d_axis_labels_specs)
 
     def data_to_dict(self, params: ConfigParams) -> dict:
 

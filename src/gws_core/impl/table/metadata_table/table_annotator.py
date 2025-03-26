@@ -3,7 +3,7 @@
 from gws_core.io.io_spec import InputSpec, OutputSpec
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_specs import ConfigSpecs
 from ....config.param.param_spec import BoolParam, StrParam
 from ....io.io_specs import InputSpecs, OutputSpecs
 from ....task.task import Task
@@ -26,7 +26,7 @@ class TableRowAnnotator(Task):
         "sample_table": InputSpec(Table, human_name="Sample table", short_description="Table to annotate"),
         "metadata_table": InputSpec(Table, human_name="Metadata table", short_description="Table containing the metadata")})
     output_specs: OutputSpecs = OutputSpecs({"sample_table": OutputSpec(Table)})
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "reference_column":
         StrParam(
             default_value="", human_name="Reference column in sample table",
@@ -41,7 +41,7 @@ class TableRowAnnotator(Task):
         "use_metadata_row_names_as_ref":  BoolParam(
             default_value=False, human_name="Use metadata table row names as reference", visibility="protected",
             short_description="If checked, the row names of the metadata table are used as reference for annotation and the metadata reference column param is ignored.")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
@@ -88,7 +88,7 @@ class TableColumnAnnotator(Task):
         "metadata_table": InputSpec(Table, human_name="Metadata table", short_description="Table containing the metadata")
     })
     output_specs: OutputSpecs = OutputSpecs({"sample_table": OutputSpec(Table)})
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "reference_row":
         StrParam(
             default_value="", human_name="Reference row in sample table",
@@ -103,7 +103,7 @@ class TableColumnAnnotator(Task):
         "use_metadata_row_names_as_ref":  BoolParam(
             default_value=False, human_name="Use metadata table row names as reference", visibility="protected",
             short_description="If checked, the row names of the metadata table are used as reference for annotation and the metadata reference column param is ignored.")
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

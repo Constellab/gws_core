@@ -7,7 +7,6 @@ from typing_extensions import TypedDict
 from gws_core.resource.view.view_types import ViewType
 
 from ...config.config_params import ConfigParams, ConfigParamsDict
-from ...config.param.param_spec_helper import ParamSpecHelper
 from .view import View
 
 
@@ -77,8 +76,7 @@ class MultiViews(View):
         if isinstance(view, MultiViews):
             raise Exception('[MultiViews] cannot create nested MultiViews')
 
-        # TODO error if LazyViewParam is used
-        config_params: ConfigParamsDict = ParamSpecHelper.get_and_check_values(view._specs, params)
+        config_params: ConfigParamsDict = view._specs.get_and_check_values(params)
 
         self._check_number(colspan, 'Colums span')
         self._check_number(rowspan, 'Rows span')

@@ -5,7 +5,7 @@ from typing import Type
 from gws_core.impl.file.file_helper import FileHelper
 
 from ...config.config_params import ConfigParams
-from ...config.config_types import ConfigSpecs
+from ...config.config_specs import ConfigSpecs
 from ...config.param.param_spec import StrParam
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -24,7 +24,7 @@ from .text import Text
 @importer_decorator(unique_name="TextImporter", target_type=Text, supported_extensions=['txt'])
 class TextImporter(ResourceImporter):
 
-    config_specs: ConfigSpecs = {'encoding': StrParam(default_value='utf-8', short_description="Text encoding")}
+    config_specs = ConfigSpecs({'encoding': StrParam(default_value='utf-8', short_description="Text encoding")})
 
     def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Text]) -> Text:
         try:
@@ -46,11 +46,11 @@ class TextImporter(ResourceImporter):
 @exporter_decorator(unique_name="TextExporter", source_type=Text)
 class TextExporter(ResourceExporter):
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'file_name': StrParam(optional=True, short_description="Destination file name in the store"),
         'file_format': StrParam(optional=True, default_value=Text.DEFAULT_FILE_FORMAT, visibility=StrParam.PROTECTED_VISIBILITY, short_description="File format"),
         'encoding': StrParam(default_value='utf-8', visibility=StrParam.PROTECTED_VISIBILITY, short_description="Text encoding"),
-    }
+    })
 
     def export_to_path(self, resource: Text, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_name = params.get_value('file_name', type(self).get_human_name())

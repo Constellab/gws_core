@@ -1,6 +1,6 @@
 
 
-from gws_core.config.config_types import ConfigParamsDict
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.service.front_service import FrontService
 from gws_core.impl.json.json_view import JSONView
 from gws_core.model.typing_style import TypingStyle

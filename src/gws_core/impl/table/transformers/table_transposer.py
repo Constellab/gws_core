@@ -3,7 +3,7 @@
 from gws_core.model.typing_style import TypingStyle
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_specs import ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 
@@ -18,7 +18,7 @@ class TableTransposer(Transformer):
     It also transpose the tags.
     """
 
-    config_specs: ConfigSpecs = {}
+    config_specs = ConfigSpecs({})
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         result = source.transpose()

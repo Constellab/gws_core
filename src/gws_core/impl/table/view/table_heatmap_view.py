@@ -6,9 +6,11 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import TypedDict
 
+from gws_core.config.config_specs import ConfigSpecs
+
 from ....config.config_params import ConfigParams
 from ....config.param.param_spec import DictParam
-from ....resource.view.view_types import ViewSpecs, ViewType
+from ....resource.view.view_types import ViewType
 from ...view.heatmap_view import HeatmapView
 from .base_table_view import BaseTableView
 from .table_selection import CellRange, Serie1d, TableSelection
@@ -49,11 +51,10 @@ class TableHeatmapView(BaseTableView):
     ```
     """
 
-    _specs: ViewSpecs = {
-        **BaseTableView._specs,
+    _specs = ConfigSpecs({
         "serie": DictParam(default_value={}),
-        **BaseTableView._2d_axis_labels_specs
-    }
+    }).merge_specs(BaseTableView._2d_axis_labels_specs)
+
     _type: ViewType = ViewType.HEATMAP
 
     def data_to_dict(self, params: ConfigParams) -> dict:

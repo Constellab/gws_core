@@ -4,6 +4,7 @@ import time
 from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
                       OutputSpecs, ProcessSpec, Protocol, Task, TaskInputs,
                       TaskOutputs, protocol_decorator, task_decorator)
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.impl.robot.robot_resource import RobotFood
 from gws_core.impl.robot.robot_tasks import (RobotCreate, RobotEat, RobotMove,
                                              RobotSugarCreate, RobotWait)
@@ -86,7 +87,7 @@ class RobotWaitFood(Task):
     """
     input_specs = InputSpecs({'food': InputSpec(RobotFood)})
     output_specs = OutputSpecs({'food': OutputSpec(RobotFood)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Wait food", flush=True)
@@ -100,7 +101,7 @@ class RobotEmptyFood(Task):
     """Wait 3
     """
     output_specs = OutputSpecs({'food': OutputSpec(RobotFood)})
-    config_specs = {}
+    config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}

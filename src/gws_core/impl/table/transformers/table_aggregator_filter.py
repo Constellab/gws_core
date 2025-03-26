@@ -7,7 +7,7 @@ from gws_core.impl.table.helper.dataframe_data_filter_helper import \
     DataframeDataFilterHelper
 
 from ....config.config_params import ConfigParams
-from ....config.config_types import ConfigSpecs
+from ....config.config_specs import ConfigSpecs
 from ....config.param.param_set import ParamSet
 from ....config.param.param_spec import FloatParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
@@ -53,19 +53,19 @@ class TableColumnAggregatorFilter(Transformer):
     Supported comparators: ```>```, ```<```, ```>=```, ```<=```, ```==```, ```!=```.
 
     """
-    config_specs: ConfigSpecs = {
-        "aggregation_filter": ParamSet(
+    config_specs = ConfigSpecs({
+        "aggregation_filter": ParamSet(ConfigSpecs(
             {
                 "function": get_function_param("columns"),
                 "comparator": comparator_param,
                 "value": value_param,
-            },
+            }),
             optional=True,
             human_name="Numeric aggregation criterion",
             short_description="Filter axis validating a numeric criterion after aggregation",
             max_number_of_occurrences=3
         )
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
@@ -99,19 +99,19 @@ class TableRowAggregatorFilter(Transformer):
     Supported comparators: ```>```, ```<```, ```>=```, ```<=```, ```==```, ```!=```.
 
     """
-    config_specs: ConfigSpecs = {
-        "aggregation_filter": ParamSet(
+    config_specs = ConfigSpecs({
+        "aggregation_filter": ParamSet(ConfigSpecs(
             {
                 "function": get_function_param("rows"),
                 "comparator": comparator_param,
                 "value": value_param,
-            },
+            }),
             optional=True,
             human_name="Numeric aggregation criterion",
             short_description="Filter axis validating a numeric criterion after aggregation",
             max_number_of_occurrences=3
         )
-    }
+    })
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()

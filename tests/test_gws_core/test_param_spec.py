@@ -3,6 +3,7 @@
 from unittest import TestCase
 
 from gws_core import IntParam, ParamSet, StrParam
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import ParamSpecTypeStr
 from gws_core.core.utils.utils import Utils
@@ -26,13 +27,16 @@ class TestParamSpec(TestCase):
         self.assertEqual(spec_dto.additional_info["allowed_values"], [1, 2])
 
     def test_param_set(self):
-        param = ParamSet({"str": StrParam(), 'int': IntParam(default_value=12)}, max_number_of_occurrences=3)
+        param = ParamSet(
+            ConfigSpecs({"str": StrParam(),
+                         'int': IntParam(default_value=12)}),
+            max_number_of_occurrences=3)
 
         param_2: ParamSet = ParamSpecHelper.create_param_spec_from_json(param.to_dto())
         self.assertIsInstance(param_2, ParamSet)
         self.assertEqual(param_2.max_number_of_occurrences, 3)
-        self.assertIsInstance(param_2.param_set['str'], StrParam)
-        self.assertIsInstance(param_2.param_set['int'], IntParam)
+        self.assertIsInstance(param_2.param_set.get_spec('str'), StrParam)
+        self.assertIsInstance(param_2.param_set.get_spec('int'), IntParam)
 
         # check the default value
         Utils.assert_json_equals(param_2.get_default_value(), [{'str': None, 'int': 12}])

@@ -2,13 +2,13 @@
 
 from typing import Dict, Type
 
-from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.config.config_params import ConfigParamsDict
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import (
     BasicMessageObserver, LoggerMessageObserver, MessageObserver)
 
 from ..config.config_params import ConfigParams
-from ..config.config_types import ConfigParamsDict, ConfigSpecs
 from ..io.io_exception import InvalidOutputsException
 from ..io.io_specs import InputSpecs, OutputSpecs
 from ..progress_bar.progress_bar import ProgressBar
@@ -180,8 +180,7 @@ class TaskRunner():
             config = {}
 
         if self._config_params is None:
-            self._config_params = ParamSpecHelper.build_config_params(self._config_specs,
-                                                                      config)
+            self._config_params = self._config_specs.build_config_params(config)
             self._config_params.set_config_model_id(self._config_model_id)
         return self._config_params
 

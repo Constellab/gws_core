@@ -3,7 +3,7 @@
 from typing import List
 
 from gws_core import ConfigParams, transformer_decorator
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -17,7 +17,7 @@ from gws_core.test.base_test_case import BaseTestCase
 @transformer_decorator('RobotTransform', resource_type=Robot)
 class RobotTransform(Transformer):
 
-    config_specs: ConfigSpecs = {'age': IntParam()}
+    config_specs = ConfigSpecs({'age': IntParam()})
 
     def transform(self, source: Robot, params: ConfigParams) -> Robot:
         source.age = params['age']

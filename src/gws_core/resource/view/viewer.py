@@ -2,7 +2,7 @@
 from typing import Type
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import DictParam, StrParam
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_spec import InputSpec
@@ -30,10 +30,10 @@ class Viewer(Task):
         "resource": InputSpec(Resource)
     })
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         "resource_typing_name": StrParam(),
         "view_config": DictParam()
-    }
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         from gws_core.resource.resource_service import ResourceService

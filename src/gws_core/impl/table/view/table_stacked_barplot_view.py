@@ -1,9 +1,10 @@
 
 
 from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam
 from gws_core.impl.view.barplot_view import BarPlotView
-from gws_core.resource.view.view_types import ViewSpecs, ViewType
+from gws_core.resource.view.view_types import ViewType
 
 from ...view.stacked_barplot_view import StackedBarPlotView
 from .table_barplot_view import TableBarPlotView
@@ -43,10 +44,9 @@ class TableStackedBarPlotView(TableBarPlotView):
     ```
     """
 
-    _specs: ViewSpecs = {
-        **TableBarPlotView._specs,
-        "normalize": BoolParam(default_value=False, optional=True, human_name="Normalize", short_description="True to normalize values"),
-    }
+    _specs = ConfigSpecs({"normalize": BoolParam(default_value=False, optional=True, human_name="Normalize",
+                         short_description="True to normalize values"), }).merge_specs(TableBarPlotView._specs)
+
     _type: ViewType = ViewType.STACKED_BAR_PLOT
 
     def _get_view(self, params: ConfigParams) -> BarPlotView:

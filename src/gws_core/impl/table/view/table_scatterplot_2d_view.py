@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Type
 
+from gws_core.config.config_specs import ConfigSpecs
+
 from ....config.config_params import ConfigParams
 from ....config.param.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
-from ....resource.view.view_types import ViewSpecs, ViewType
+from ....resource.view.view_types import ViewType
 from ...view.scatterplot_2d_view import ScatterPlot2DView
 from .base_table_view import BaseTableView
 from .table_selection import Serie2d
@@ -54,11 +56,11 @@ class TableScatterPlot2DView(BaseTableView):
     """
 
     _table: Table
-    _specs: ViewSpecs = {
-        **BaseTableView._specs,
+
+    _specs = ConfigSpecs({
         "series": ListParam(default_value=[]),
-        **BaseTableView._2d_axis_labels_specs
-    }
+    }).merge_specs(BaseTableView._2d_axis_labels_specs)
+
     _view_helper: Type = ScatterPlot2DView
     _type: ViewType = ViewType.SCATTER_PLOT_2D
 

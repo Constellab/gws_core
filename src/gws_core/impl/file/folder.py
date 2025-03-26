@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from typing import List
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam, StrParam
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -171,10 +172,10 @@ class Folder(FSNode):
         return LocalFolderView(self.path)
 
     @view(view_type=View, human_name="View folder content",
-          short_description="View the sub files and folders", specs={
+          short_description="View the sub files and folders", specs=ConfigSpecs({
               'sub_file_path': StrParam(),
               "line_number": IntParam(default_value=1, min_value=1, human_name="From line")
-          })
+          }))
     def view_sub_file(self, params: ConfigParams) -> View:
         complete_path = os.path.join(self.path, params['sub_file_path'])
 

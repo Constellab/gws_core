@@ -8,7 +8,6 @@ from gws_core.core.utils.utils import Utils
 from gws_core.resource.resource import Resource
 from gws_core.task.task_dto import TaskTypingDTO
 
-from ..config.config_specs_helper import ConfigSpecsHelper
 from ..model.typing import Typing
 from ..model.typing_dto import TypingObjectType
 from ..task.task import Task
@@ -98,7 +97,7 @@ class TaskTyping(Typing):
         if model_t:
             task_typing.input_specs = model_t.input_specs.to_dto()
             task_typing.output_specs = model_t.output_specs.to_dto()
-            task_typing.config_specs = ConfigSpecsHelper.config_specs_to_dto(model_t.config_specs)
+            task_typing.config_specs = model_t.config_specs.to_dto()
 
             from ..task.converter.importer import ResourceImporter
             if Utils.issubclass(model_t, ResourceImporter):

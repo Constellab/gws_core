@@ -7,6 +7,7 @@ from pandas import DataFrame, Series
 from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
                               is_string_dtype)
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
@@ -1571,7 +1572,7 @@ class Table(Resource):
 
     ################################################# TABLE VIEW #################################################
 
-    @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
+    @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table')
     def view_as_table(self, params: ConfigParams) -> TableView:
         """
         View as table
@@ -1582,7 +1583,7 @@ class Table(Resource):
     ################################################# PLOT VIEW #################################################
     # Plot view are hidden because they are manually called by the ResourceTableService
 
-    @view(view_type=TableLinePlot2DView, human_name='Line plot', short_description='View columns as line plots', specs={}, hide=True)
+    @view(view_type=TableLinePlot2DView, human_name='Line plot', short_description='View columns as line plots', hide=True)
     def view_as_line_plot_2d(self, params: ConfigParams) -> TableLinePlot2DView:
         """
         View columns as 2D-line plots
@@ -1591,7 +1592,7 @@ class Table(Resource):
         return TableLinePlot2DView(self)
 
     @view(view_type=TableScatterPlot2DView, human_name='Scatter plot',
-          short_description='View columns as scatter plots', specs={}, hide=True)
+          short_description='View columns as scatter plots', hide=True)
     def view_as_scatter_plot_2d(self, params: ConfigParams) -> TableScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
@@ -1600,11 +1601,11 @@ class Table(Resource):
         return TableScatterPlot2DView(self)
 
     @view(view_type=TableVulcanoPlotView, human_name='Vulcano plot',
-          short_description='View columns vulcano plot', specs={}, hide=True)
+          short_description='View columns vulcano plot', hide=True)
     def view_as_vulcano_plot(self, params: ConfigParams) -> TableVulcanoPlotView:
         return TableVulcanoPlotView(self)
 
-    @view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as bar plots', specs={}, hide=True)
+    @view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as bar plots', hide=True)
     def view_as_bar_plot(self, params: ConfigParams) -> TableBarPlotView:
         """
         View one or several columns as bar plots
@@ -1613,7 +1614,7 @@ class Table(Resource):
         return TableBarPlotView(self)
 
     @view(view_type=TableStackedBarPlotView, human_name='Stacked bar plot',
-          short_description='View columns as stacked bar plots', specs={}, hide=True)
+          short_description='View columns as stacked bar plots', hide=True)
     def view_as_stacked_bar_plot(self, params: ConfigParams) -> TableStackedBarPlotView:
         """
         View one or several columns as 2D-stacked bar plots
@@ -1621,7 +1622,7 @@ class Table(Resource):
 
         return TableStackedBarPlotView(self)
 
-    @view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as line plots', specs={}, hide=True)
+    @view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as line plots', hide=True)
     def view_as_histogram(self, params: ConfigParams) -> TableHistogramView:
         """
         View columns as 2D-line plots
@@ -1629,7 +1630,7 @@ class Table(Resource):
 
         return TableHistogramView(self)
 
-    @view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={}, hide=True)
+    @view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', hide=True)
     def view_as_box_plot(self, params: ConfigParams) -> TableBoxPlotView:
         """
         View one or several columns as box plots
@@ -1637,7 +1638,7 @@ class Table(Resource):
 
         return TableBoxPlotView(self)
 
-    @view(view_type=TableHeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={}, hide=True)
+    @view(view_type=TableHeatmapView, human_name='Heatmap', short_description='View table as heatmap', hide=True)
     def view_as_heatmap(self, params: ConfigParams) -> TableHeatmapView:
         """
         View the table as heatmap
@@ -1645,7 +1646,7 @@ class Table(Resource):
 
         return TableHeatmapView(self)
 
-    @view(view_type=TableVennDiagramView, human_name='VennDiagram', short_description='View table as Venn diagram', specs={}, hide=True)
+    @view(view_type=TableVennDiagramView, human_name='VennDiagram', short_description='View table as Venn diagram', hide=True)
     def view_as_venn_diagram(self, params: ConfigParams) -> TableVennDiagramView:
         """
         View the table as Venn diagram
@@ -1653,7 +1654,7 @@ class Table(Resource):
 
         return TableVennDiagramView(self)
 
-    @view(view_type=PlotlyView, specs={'prompt': OpenAiChatParam()},
+    @view(view_type=PlotlyView, specs=ConfigSpecs({'prompt': OpenAiChatParam()}),
           human_name="Smart interactive plot", short_description="Generate an interactive plot using an AI (OpenAI).")
     def smart_view(self, params: ConfigParams) -> PlotlyView:
         """
@@ -1672,7 +1673,7 @@ class Table(Resource):
         plotly_resource: PlotlyResource = output['target']
         return plotly_resource.default_view(ConfigParams())
 
-    # @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
+    # @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots')
     # def view_as_line_plot_3d(self, params: ConfigParams) -> LinePlot3DView:
     #     """
     #     View columns as 3D-line plots
@@ -1680,7 +1681,7 @@ class Table(Resource):
 
     #     return LinePlot3DView(self)
 
-    # @view(view_type=TableScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
+    # @view(view_type=TableScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots')
     # def view_as_scatter_plot_3d(self, params: ConfigParams) -> TableScatterPlot3DView:
     #     """
     #     View columns as 3D-scatter plots

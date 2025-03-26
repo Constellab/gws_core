@@ -1,7 +1,7 @@
 
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.table.helper.table_operation_helper import (
@@ -81,7 +81,7 @@ class TableColumnMassOperations(Task):
             short_description='Table that contains the operation\'s name and operations\'s calculations')})
     output_specs: OutputSpecs = OutputSpecs({'target': OutputSpec(Table)})
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         'name_column':
         StrParam(
             optional=True, human_name='Name column',
@@ -101,7 +101,7 @@ class TableColumnMassOperations(Task):
             human_name='Action on unknown column',
             short_description="Option to apply when an unknown column is found in the operation table.",
             allowed_values=StringHelper.get_enum_values(TableOperationUnknownColumnOption),
-            visibility='protected')}
+            visibility='protected')})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 

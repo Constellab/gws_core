@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, List, Type
+from typing import TYPE_CHECKING, Callable, List, Type
 
 if TYPE_CHECKING:
     from gws_core.config.param.param_spec import ParamSpec
@@ -23,7 +23,7 @@ class ParamaSpecType(Enum):
     LAB_SPECIFIC = "lab_specific"
 
 
-def param_spec_decorator(type_: ParamaSpecType = ParamaSpecType.SIMPLE):
+def param_spec_decorator(type_: ParamaSpecType = ParamaSpecType.SIMPLE) -> Callable:
     """Decorator of ParamSpec class to add it to the list of param spec types
     """
     def decorator(param_class: Type[ParamSpec]):

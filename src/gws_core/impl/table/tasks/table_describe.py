@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
@@ -33,7 +34,7 @@ class TableDescribe(Task):
     input_specs = InputSpecs({'input_table': InputSpec(Table, human_name="input_table")})
     output_specs = OutputSpecs({'output_table': OutputSpec(Table, human_name="output_table")})
 
-    config_specs = {
+    config_specs = ConfigSpecs({
         "percentiles": StrParam(
             default_value="quartiles",
             optional=True,
@@ -48,11 +49,8 @@ class TableDescribe(Task):
             short_description="""
             Include non numeric data
             """
-        ),
-
-
-
-    }
+        )
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         dataframe = pd.DataFrame(inputs['input_table'].get_data())

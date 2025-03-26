@@ -1,5 +1,5 @@
 from gws_core.config.config_params import ConfigParams
-from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.db.sql_migrator import SqlMigrator
@@ -21,13 +21,13 @@ class UpdateResourceTypingName(Task):
     This is useful when the typing name of a resource has changed after an update for example.
     """
 
-    config_specs: ConfigSpecs = {
+    config_specs = ConfigSpecs({
         # this config is only set when calling this automatically
-        "resources": ParamSet({
+        "resources": ParamSet(ConfigSpecs({
             'old_name': StrParam(human_name="Old resource typing name", short_description="Ex: RESOURCE.gws_core.MyOldTaskUniqueName"),
             'new_name': StrParam(human_name="New resource typing name", short_description="Ex: RESOURCE.gws_core.MyNewTaskUniqueName"),
-        }, human_name="Resources to update"),
-    }
+        }), human_name="Resources to update"),
+    })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
