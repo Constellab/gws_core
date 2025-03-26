@@ -191,7 +191,7 @@ class ResourceService():
         resource = resource_model.get_resource()
         view_meta = ViewHelper.get_and_check_view_meta(type(resource), view_name)
 
-        return view_meta.to_dto(resource)
+        return view_meta.to_dto()
 
     @classmethod
     def get_view_specs_from_type(cls, resource_typing_name: str, view_name: str) -> ResourceViewMetadatalDTO:

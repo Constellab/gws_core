@@ -79,7 +79,7 @@ class ViewRunner():
         metadata = self._get_and_check_view_meta()
 
         self.config_params = ParamSpecHelper.build_config_params(
-            metadata.get_view_specs_from_resource(self.resource, skip_private=False), config_values)
+            metadata.get_view_specs_from_type(skip_private=False), config_values)
 
     def get_config(self) -> Config:
         config = Config()

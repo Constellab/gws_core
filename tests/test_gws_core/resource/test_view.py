@@ -10,8 +10,6 @@ from gws_core.note.note_dto import NoteSaveDTO
 from gws_core.note.note_service import NoteService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.view.any_view import AnyView
-from gws_core.resource.view.lazy_view_param import LazyViewParam
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.resource.view.view_meta_data import ResourceViewMetaData
 from gws_core.resource.view.view_runner import ViewRunner
@@ -70,22 +68,9 @@ class ResourceViewTestOveride(ResourceViewTestOverideParent):
         """
         pass
 
-
-@resource_decorator("ResourceLazySpecs")
-class ResourceLazySpecs(Resource):
-
-    allowed_value = ['super']
-
-    @view(view_type=AnyView, human_name='View overide',
-          specs={"lazy": LazyViewParam('get_param', StrParam())})
-    def lazy_view(self, params: ConfigParams) -> AnyView:
-        return AnyView('Test sub')
-
-    def get_param(self) -> StrParam:
-        return StrParam(allowed_values=self.allowed_value)
-
-
 # test_view
+
+
 class TestView(BaseTestCase):
 
     def test_view_def(self):
@@ -155,32 +140,10 @@ class TestView(BaseTestCase):
 
         resource = resource_model.get_resource()
         view_meta = ViewHelper.get_and_check_view_meta(type(resource), 'a_view_test')
-        specs: ConfigSpecs = view_meta.get_view_specs_from_resource(resource, skip_private=True)
+        specs: ConfigSpecs = view_meta.get_view_specs_from_type(skip_private=True)
 
         # if the page was overrided and the private is working, the page should not be in the json
         self.assertFalse('page' in specs)
-
-    def test_get_view_specs(self):
-        resource: Resource = ResourceLazySpecs()
-        resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.UPLOADED)
-
-        # call with a resource
-        view_meta = ViewHelper.get_and_check_view_meta(type(resource), 'lazy_view')
-        specs: ConfigSpecs = view_meta.get_view_specs_from_resource(resource_model.get_resource())
-
-        self.assertEqual(len(specs), 1)
-        self.assertTrue('lazy' in specs)
-        self.assertIsInstance(specs['lazy'], StrParam)
-        self.assertEqual(specs['lazy'].additional_info['allowed_values'], ['super'])
-
-        # call with a resource type, like configuration before have the actual resource
-        specs = view_meta.get_view_specs_from_type(type(resource))
-
-        self.assertEqual(len(specs), 1)
-        self.assertTrue('lazy' in specs)
-        self.assertIsInstance(specs['lazy'], StrParam)
-        # there should be no allowed value
-        self.assertIsNone(specs['lazy'].additional_info['allowed_values'])
 
     def test_view_config(self):
 

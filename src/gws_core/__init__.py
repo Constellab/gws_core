@@ -412,7 +412,6 @@ from .resource.task.resource_downloader_base import \
 from .resource.task.resource_downloader_http import \
     ResourceDownloaderHttp as ResourceDownloaderHttp
 from .resource.technical_info import TechnicalInfo as TechnicalInfo
-from .resource.view.lazy_view_param import LazyViewParam as LazyViewParam
 from .resource.view.multi_views import MultiViews as MultiViews
 from .resource.view.view import View as View
 from .resource.view.view_decorator import view as view

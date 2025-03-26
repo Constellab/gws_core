@@ -3,12 +3,11 @@
 from enum import Enum
 from typing import Dict, Union
 
-from gws_core.model.typing_style import TypingIconColor, TypingStyle
+from gws_core.model.typing_style import TypingStyle
 
 from ...config.param.param_spec import ParamSpec
-from .lazy_view_param import LazyViewParam
 
-ViewSpecs = Dict[str, Union[ParamSpec, LazyViewParam]]
+ViewSpecs = Dict[str, Union[ParamSpec]]
 
 
 class ViewType(Enum):

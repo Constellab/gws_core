@@ -9,7 +9,6 @@ from gws_core.model.typing_style import TypingStyle
 from ...config.param.param_spec import ParamSpec
 from ...core.classes.func_meta_data import FuncArgsMetaData
 from ...core.utils.reflector_helper import ReflectorHelper
-from .lazy_view_param import LazyViewParam
 from .view import View
 from .view_meta_data import ResourceViewMetaData
 from .view_types import ViewSpecs
@@ -105,7 +104,7 @@ def view(view_type: Type[View],
                 raise Exception("The view specs must be a dictionary")
 
             for key, item in specs.items():
-                if not isinstance(item, ParamSpec) and not isinstance(item, LazyViewParam):
+                if not isinstance(item, ParamSpec):
                     raise Exception(
                         f"The config spec '{key}' is invalid, it must be a ParamSpec or a LazyViewParam but got {type(item)}")
 
