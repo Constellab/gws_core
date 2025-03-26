@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, Type
 
 import streamlit as st
 
-from gws_core.community.community_service import CommunityService
+from gws_core.community.community_front_service import CommunityFrontService
 from gws_core.config.config import Config
 from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.utils.utils import Utils
@@ -30,7 +30,7 @@ class StreamlitTaskRunner():
     _streamlit_component_loader = StreamlitComponentLoader(
         "process-config",
         version="dc_process_config_1.2.0",
-        is_released=True)
+        is_released=False)
 
     def __init__(self, task_type: Type[Task], key: str = 'process-config'):
 
@@ -51,7 +51,7 @@ class StreamlitTaskRunner():
         """Generate the form from the values
         """
 
-        if self.task_type.has_visible_config_specs():
+        if self.task_type.config_specs.has_visible_config_specs():
             self._open_dialog(default_config_values, inputs, on_run_success)
         else:
             # if the task doesn't have config, call it directly
@@ -98,7 +98,7 @@ class StreamlitTaskRunner():
             specs=self._get_task_specs_json(config),
             values=default_config_values,
             processDescription=self.task_type.get_short_description(),
-            docUrl=CommunityService.get_typing_doc_url(self.task_type.get_typing_name())
+            docUrl=CommunityFrontService.get_typing_doc_url(self.task_type.get_typing_name())
         )
 
         if component_value is None:

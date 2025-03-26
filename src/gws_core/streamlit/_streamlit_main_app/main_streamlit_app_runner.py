@@ -4,7 +4,7 @@ import os
 import sys
 from json import load
 from types import ModuleType
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import streamlit as st
 from typing_extensions import TypedDict
@@ -17,6 +17,11 @@ class StreamlitConfigDTO(TypedDict):
     app_dir_path: str
     source_ids: List[str]
     params: Optional[dict]
+    requires_authentication: bool
+    # List of token of user that can access the app
+    # Only provided if the app requires authentication
+    # Key is access token, value is user id
+    user_access_tokens: Dict[str, str]
 
 
 class StreamlitMainAppRunner:
@@ -44,7 +49,7 @@ class StreamlitMainAppRunner:
             page_title="Dashboard",
             layout="wide",
             menu_items={},  # hide the menu
-            initial_sidebar_state=st.session_state.get('__sidebar_state__', 'expanded'),
+            initial_sidebar_state=st.session_state.get('__gws_sidebar_state__', 'expanded'),
         )
 
         # Add custom css to hide the streamlit menu
@@ -70,9 +75,9 @@ class StreamlitMainAppRunner:
 
         self._load_args()
         app_config_file: str = self._load_app_config_file()
-        self.load_user()
 
         self.module = self._load_app(app_config_file)
+        self.load_user()
 
     def _load_args(self) -> None:
         parser = argparse.ArgumentParser()
@@ -95,14 +100,27 @@ class StreamlitMainAppRunner:
         self.spec.loader.exec_module(self.module)
 
     def load_user(self) -> str:
-        if st.session_state.get('__gws_user_id__'):
-            return st.session_state['__gws_user_id__']
-
+        # skip user load if authentication is not required
+        if not self.authentication_is_required():
+            return None
         if self.dev_mode:
             return None
 
-        # check the user id
-        user_id = st.query_params.get('gws_user_id')
+        if st.session_state.get('__gws_user_id__'):
+            return st.session_state['__gws_user_id__']
+
+        user_access_token = st.query_params.get('gws_user_access_token')
+        if not user_access_token:
+            st.error('User access token not provided')
+            st.stop()
+
+        # retrieve the list of users that can access the app
+        user_access_tokens = self.config.get('user_access_tokens', {})
+        user_id = user_access_tokens.get(user_access_token)
+        if not user_id:
+            st.error('Invalid user access token')
+            st.stop()
+
         # save the user id and app config file in the session state
         st.session_state['__gws_user_id__'] = user_id
 
@@ -208,3 +226,6 @@ class StreamlitMainAppRunner:
 
     def get_app_id(self) -> str:
         return st.query_params.get('gws_app_id')
+
+    def authentication_is_required(self) -> bool:
+        return self.config.get('requires_authentication')
