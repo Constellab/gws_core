@@ -1,10 +1,9 @@
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Optional
 
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.agent.helper.agent_factory import AgentFactory
-from gws_core.model.typing_name import TypingNameObj
 
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings
@@ -203,21 +202,3 @@ class CommunityService:
             headers[cls.user_id_header_key] = user.id
 
         return headers
-
-    ############################################# LINKS #############################################
-
-    @classmethod
-    def get_typing_doc_url(cls, typing_name: str,
-                           brick_major_version: int | Literal['latest'] = 'latest') -> str:
-        typing_name_obj = TypingNameObj.from_typing_name(typing_name)
-        brick_version_str = 'latest' if brick_major_version == 'latest' else 'v' + str(brick_major_version)
-
-        object_type: str = None
-        if typing_name_obj.object_type == 'TASK':
-            object_type = 'task'
-        elif typing_name_obj.object_type == 'RESOURCE':
-            object_type = 'resource'
-        else:
-            raise Exception(f"Object with type '{typing_name_obj.object_type}' are not documented in community")
-
-        return f"{cls.community_api_url}/bricks/{typing_name_obj.brick_name}/{brick_version_str}/doc/technical-folder/{object_type}/{typing_name_obj.unique_name}"

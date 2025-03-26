@@ -171,6 +171,10 @@ class Settings():
         return os.getenv("COMMUNITY_API_URL")
 
     @classmethod
+    def get_community_front_url(cls) -> str:
+        return os.getenv("COMMUNITY_FRONT_URL")
+
+    @classmethod
     def is_local_env(cls) -> bool:
         return cls.get_lab_environment() == 'LOCAL'
 

@@ -7,6 +7,8 @@
 # Brick
 from .brick.brick_service import BrickService as BrickService
 # Community
+from .community.community_front_service import \
+    CommunityFrontService as CommunityFrontService
 from .community.community_service import CommunityService as CommunityService
 # Config
 from .config.config import Config as Config
