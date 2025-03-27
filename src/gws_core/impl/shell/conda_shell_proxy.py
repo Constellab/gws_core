@@ -29,7 +29,7 @@ class CondaShellProxy(BaseEnvShell):
 
         cmd = [
             self._build_str_conda_command(self.conda_command,
-                                          f'env create -f {self.env_file_path} --force --prefix {self.VENV_DIR_NAME}')
+                                          f'env create -f {self.env_file_path} --yes --prefix {self.VENV_DIR_NAME}')
         ]
 
         self._message_dispatcher.notify_info_message(
