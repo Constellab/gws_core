@@ -1,6 +1,6 @@
 
 
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 
@@ -27,3 +27,8 @@ class StreamlitConfigDTO(BaseModelDTO):
     app_dir_path: str
     source_ids: List[str]
     params: Optional[dict]
+    requires_authentication: bool
+    # List of token of user that can access the app
+    # Only provided if the app requires authentication
+    # Key is access token, value is user id
+    user_access_tokens: Dict[str, str]

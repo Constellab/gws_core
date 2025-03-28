@@ -1,7 +1,7 @@
 
 from fastapi import Depends
 
-from gws_core.streamlit.streamlit_app_managers import StreamlitAppManager
+from gws_core.streamlit.streamlit_apps_manager import StreamlitAppsManager
 from gws_core.streamlit.streamlit_dto import StreamlitStatusDTO
 
 from ..core_controller import core_app
@@ -15,7 +15,7 @@ def get_streamlit_app_status(_=Depends(AuthService.check_user_access_token)) -> 
     Get streamlit apps status
     """
 
-    return StreamlitAppManager.get_status_dto()
+    return StreamlitAppsManager.get_status_dto()
 
 
 @core_app.post("/streamlit/stop", tags=["Streamlit"],
@@ -25,7 +25,7 @@ def stop_all_processes(_=Depends(AuthService.check_user_access_token)) -> None:
     Stop the main streamlit app
     """
 
-    return StreamlitAppManager.stop_all_processes()
+    return StreamlitAppsManager.stop_all_processes()
 
 
 @core_app.post("/streamlit/stop/{id}", tags=["Streamlit"],
@@ -36,4 +36,4 @@ def stop_process(id: str,
     Stop the main streamlit app
     """
 
-    return StreamlitAppManager.stop_process(id)
+    return StreamlitAppsManager.stop_process(id)

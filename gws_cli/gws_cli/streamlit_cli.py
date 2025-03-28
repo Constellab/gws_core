@@ -9,7 +9,7 @@ from gws_cli.generate_streamlit_app.generate_streamlit_app import \
     generate_streamlit_app
 from gws_core import (CondaShellProxy, LoggerMessageObserver, MambaShellProxy,
                       PipShellProxy, ShellProxy, StreamlitApp,
-                      StreamlitAppManager, Utils)
+                      StreamlitAppsManager, Utils)
 
 app = typer.Typer()
 
@@ -78,7 +78,7 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the js
     streamit_app = StreamlitApp("main", shell_proxy)
     streamit_app.set_dev_mode(config_file_path)
 
-    url = StreamlitAppManager.create_or_get_app(streamit_app).get_url()
+    url = StreamlitAppsManager.create_or_get_app(streamit_app).get_url()
     print("----------------------------------------------------------------------------------------------------------------------------------------------------------")
     env_txt = "" if env_type == "NONE" else f" with env type '{env_type}'"
     print(

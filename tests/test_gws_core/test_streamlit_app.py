@@ -6,7 +6,7 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.impl.table.table import Table
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.streamlit.streamlit_app_managers import StreamlitAppManager
+from gws_core.streamlit.streamlit_apps_manager import StreamlitAppsManager
 from gws_core.streamlit.streamlit_process import StreamlitProcess
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.test.base_test_case import BaseTestCase
@@ -53,7 +53,7 @@ if sources:
             streamlit_resource.default_view(ConfigParams())
 
             streamlit_process: StreamlitProcess = None
-            for proc in StreamlitAppManager.running_processes.values():
+            for proc in StreamlitAppsManager.running_processes.values():
                 if proc.has_app(streamlit_resource.get_model_id()):
                     streamlit_process = proc
 
@@ -67,12 +67,12 @@ if sources:
             self.assertEqual(status.status, 'RUNNING')
             self.assertEqual(len(status.running_apps), 1)
             self.assertEqual(status.running_apps[0].resource_id, streamlit_resource.get_model_id())
-            self.assertEqual(streamlit_process.port, StreamlitAppManager.get_main_app_port())
+            self.assertEqual(streamlit_process.port, StreamlitAppsManager.get_main_app_port())
 
-            StreamlitAppManager.stop_all_processes()
+            StreamlitAppsManager.stop_all_processes()
 
             # check if the app is running
             self.assertFalse(streamlit_process.call_health_check())
             self.assertFalse(streamlit_process.process_is_running())
         finally:
-            StreamlitAppManager.stop_all_processes()
+            StreamlitAppsManager.stop_all_processes()

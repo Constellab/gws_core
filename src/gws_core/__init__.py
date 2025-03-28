@@ -463,8 +463,8 @@ from .space.space_dto import SpaceSendMailToUsersDTO as SpaceSendMailToUsersDTO
 from .space.space_service import SpaceService as SpaceService
 # Streamlit
 from .streamlit.streamlit_app import StreamlitApp as StreamlitApp
-from .streamlit.streamlit_app_managers import \
-    StreamlitAppManager as StreamlitAppManager
+from .streamlit.streamlit_apps_manager import \
+    StreamlitAppsManager as StreamlitAppsManager
 from .streamlit.streamlit_dashboard import Dashboard as Dashboard
 from .streamlit.streamlit_dashboard import DashboardType as DashboardType
 from .streamlit.streamlit_dashboard import \

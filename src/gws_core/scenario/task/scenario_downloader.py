@@ -33,7 +33,7 @@ from gws_core.scenario.scenario_zipper import ZipScenarioInfo
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.share_link import ShareLink
 from gws_core.share.shared_dto import (SharedEntityMode, ShareEntityCreateMode,
-                                       ShareLinkType,
+                                       ShareLinkEntityType,
                                        ShareScenarioInfoReponseDTO)
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
@@ -400,7 +400,7 @@ class ScenarioDownloader(Task):
             # retrieve the token which is the last part of the link
             response: requests.Response = ExternalLabApiService.mark_shared_object_as_received(
                 self.share_entity.origin.lab_api_url,
-                ShareLinkType.SCENARIO, self.share_entity.token, current_lab_info)
+                ShareLinkEntityType.SCENARIO, self.share_entity.token, current_lab_info)
 
             if response.status_code != 200:
                 self.log_error_message(

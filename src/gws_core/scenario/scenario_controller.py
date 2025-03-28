@@ -1,4 +1,5 @@
 
+
 from typing import Dict, List, Optional
 
 from fastapi import Depends
@@ -29,7 +30,7 @@ from .scenario_service import ScenarioService
 @core_app.get("/scenario/running", tags=["Scenario"],
               summary="Get the list of running scenarios")
 def get_the_list_of_running_scenarios(
-        _=Depends(AuthService.check_user_access_token)) -> List[RunningScenarioInfoDTO]:
+        _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> List[RunningScenarioInfoDTO]:
     """
     Retrieve a list of running scenarios.
     """

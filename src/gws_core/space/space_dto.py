@@ -73,5 +73,5 @@ class ShareResourceWithSpaceDTO(BaseModelDTO):
     name: str
     typing_name: str
     style: TypingStyle
-    share_link: str
+    token: str
     valid_until: Optional[datetime] = None

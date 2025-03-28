@@ -1,6 +1,6 @@
 
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from gws_core.core.utils.settings import Settings
 from gws_core.streamlit.streamlit_app import StreamlitApp, StreamlitAppUrl
@@ -8,7 +8,7 @@ from gws_core.streamlit.streamlit_dto import StreamlitStatusDTO
 from gws_core.streamlit.streamlit_process import StreamlitProcess
 
 
-class StreamlitAppManager():
+class StreamlitAppsManager():
     """Class to manage the different streamlit processes and apps
 
     All the normal apps (without env) run in the same streamlit process (8501)
@@ -144,3 +144,24 @@ class StreamlitAppManager():
         if cls.app_dir is None:
             cls.app_dir = Settings.make_temp_dir()
         return cls.app_dir
+
+    @classmethod
+    def user_has_access_to_app(cls, app_id: str, user_access_token: str) -> Optional[str]:
+        """Return the user id from the user access token if the user has access to the app
+        """
+        for streamlit_process in cls.running_processes.values():
+            if streamlit_process.has_app(app_id):
+                return streamlit_process.user_has_access_to_app(app_id, user_access_token)
+
+        return None
+
+    @classmethod
+    def find_app_by_resource_model_id(cls, resource_model_id: str) -> StreamlitApp:
+        """Find the streamlit app that was generated from the given resource model id
+        """
+        for streamlit_process in cls.running_processes.values():
+            app = streamlit_process.find_app_by_resource_model_id(resource_model_id)
+            if app:
+                return app
+
+        return None

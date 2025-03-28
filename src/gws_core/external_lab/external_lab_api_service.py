@@ -9,7 +9,7 @@ from gws_core.external_lab.external_lab_auth import ExternalLabAuth
 from gws_core.external_lab.external_lab_dto import (
     ExternalLabImportRequestDTO, ExternalLabImportResourceResponseDTO,
     ExternalLabImportScenarioResponseDTO, ExternalLabWithUserInfo)
-from gws_core.share.shared_dto import ShareLinkType
+from gws_core.share.shared_dto import ShareLinkEntityType
 from gws_core.user.user import User
 
 
@@ -17,7 +17,7 @@ class ExternalLabApiService():
     """Class that contains method to communicate with external lab API"""
 
     @classmethod
-    def mark_shared_object_as_received(cls, lab_api_url: str, entity_type: ShareLinkType,
+    def mark_shared_object_as_received(cls, lab_api_url: str, entity_type: ShareLinkEntityType,
                                        token: str, current_lab_info: ExternalLabWithUserInfo) -> Response:
         """Method that mark a shared object as received"""
         return ExternalApiService.post(

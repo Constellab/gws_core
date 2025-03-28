@@ -19,7 +19,7 @@ from gws_core.resource.resource_transfert_service import \
     ResourceTransfertService
 from gws_core.resource.view.view_dto import (CallViewResultDTO,
                                              ResourceViewMetadatalDTO)
-from gws_core.share.shared_dto import ShareEntityInfoDTO
+from gws_core.share.shared_dto import ShareEntityInfoDTO, ShareLinkDTO
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_dto import TaskTypingDTO
 from gws_core.task.transformer.transformer_service import TransformerService
@@ -268,5 +268,5 @@ def get_export_resource_to_lab_config_specs(_=Depends(AuthService.check_user_acc
 @core_app.post("/resource/{resource_id}/share-with-space", tags=["Share"],
                summary="Share a resource with the space")
 def share_resource_with_space(resource_id: str, request_dto: ShareResourceWithSpaceRequestDTO,
-                              _=Depends(AuthService.check_user_access_token)) -> None:
-    return ResourceTransfertService.share_resource_with_space(resource_id, request_dto)
+                              _=Depends(AuthService.check_user_access_token)) -> ShareLinkDTO:
+    return ResourceTransfertService.share_resource_with_space(resource_id, request_dto).to_dto()

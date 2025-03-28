@@ -3,7 +3,7 @@
 import os
 import time
 from threading import Thread
-from typing import Dict
+from typing import Dict, Optional
 
 import psutil
 
@@ -184,6 +184,24 @@ class StreamlitProcess:
             running_apps=[app.to_dto(self.host_url, self._token) for app in self.current_running_apps.values()],
             nb_of_connections=self.count_connections(),
         )
+
+    def user_has_access_to_app(self, app_id: str, user_access_token: str) -> Optional[str]:
+        """Return the user id from the user access token if the user has access to the app
+        """
+        app = self.get_app(app_id)
+        if not app:
+            return None
+
+        return app.get_user_from_token(user_access_token)
+
+    def find_app_by_resource_model_id(self, resource_model_id: str) -> StreamlitApp:
+        """Find the streamlit app that was generated from the given resource model id
+        """
+        for app in self.current_running_apps.values():
+            if app.was_generated_from_resource_model_id(resource_model_id):
+                return app
+
+        return None
 
     ############################################ CHECK RUNNING ############################################
 

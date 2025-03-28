@@ -16,7 +16,8 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
-from gws_core.share.shared_dto import ShareLinkDTO, ShareLinkType
+from gws_core.share.shared_dto import (ShareLinkDTO, ShareLinkEntityType,
+                                       ShareLinkType)
 
 
 class ShareLink(ModelWithUser):
@@ -25,11 +26,13 @@ class ShareLink(ModelWithUser):
 
     entity_id: str = CharField(null=True, max_length=36)
 
-    entity_type: ShareLinkType = EnumField(choices=ShareLinkType)
+    entity_type: ShareLinkEntityType = EnumField(choices=ShareLinkEntityType)
 
     valid_until: datetime = DateTimeUTC(null=True)
 
     token: str = CharField(null=True, max_length=100, unique=True)
+
+    link_type: ShareLinkType = EnumField(choices=ShareLinkType, default=ShareLinkType.PUBLIC)
 
     @classmethod
     def find_by_token_and_check(cls, token: str) -> 'ShareLink':
@@ -44,13 +47,14 @@ class ShareLink(ModelWithUser):
         return shared_entity_link
 
     @classmethod
-    def find_by_entity_type_and_id_and_check(
-            cls, entity_type: ShareLinkType, entity_id: str) -> 'ShareLink':
+    def find_by_entity_type_and_id_and_check(cls, entity_type: ShareLinkEntityType,
+                                             entity_id: str,
+                                             link_type: ShareLinkType) -> 'ShareLink':
         """Method that find a shared entity link by its entity id and type and check if it is valid
         """
 
         shared_entity_link: ShareLink = cls.find_by_entity_type_and_id(
-            entity_type=entity_type, entity_id=entity_id)
+            entity_type=entity_type, entity_id=entity_id, link_type=link_type)
 
         if not shared_entity_link:
             raise BadRequestException("Share link not found")
@@ -58,13 +62,16 @@ class ShareLink(ModelWithUser):
         return shared_entity_link
 
     @classmethod
-    def find_by_entity_type_and_id(cls, entity_type: ShareLinkType, entity_id: str) -> Optional['ShareLink']:
+    def find_by_entity_type_and_id(cls, entity_type: ShareLinkEntityType,
+                                   entity_id: str,
+                                   link_type: ShareLinkType) -> Optional['ShareLink']:
         """Method that find a shared entity link by its entity id and type
         """
-        return cls.get_or_none((cls.entity_type == entity_type) & (cls.entity_id == entity_id))
+        return cls.get_or_none((cls.entity_type == entity_type) & (cls.entity_id == entity_id) &
+                               (cls.link_type == link_type))
 
     @classmethod
-    def get_model(cls, entity_id: str, entity_type: ShareLinkType) -> Model:
+    def get_model(cls, entity_id: str, entity_type: ShareLinkEntityType) -> Model:
         """Method that return the model for a given entity type
         """
 
@@ -73,7 +80,7 @@ class ShareLink(ModelWithUser):
         return model_type.get_by_id(entity_id)
 
     @classmethod
-    def get_model_and_check(cls, entity_id: str, entity_type: ShareLinkType) -> Model:
+    def get_model_and_check(cls, entity_id: str, entity_type: ShareLinkEntityType) -> Model:
         """Method that return the model for a given entity type and check if it exists
         """
 
@@ -82,13 +89,13 @@ class ShareLink(ModelWithUser):
         return model_type.get_by_id_and_check(entity_id)
 
     @classmethod
-    def _get_model_type(cls, entity_type: ShareLinkType) -> Type[Model]:
+    def _get_model_type(cls, entity_type: ShareLinkEntityType) -> Type[Model]:
         """Method that return the model type for a given entity type
         """
 
-        if entity_type == ShareLinkType.RESOURCE:
+        if entity_type == ShareLinkEntityType.RESOURCE:
             return ResourceModel
-        elif entity_type == ShareLinkType.SCENARIO:
+        elif entity_type == ShareLinkEntityType.SCENARIO:
             return Scenario
         else:
             raise BadRequestException(f"Entity type {entity_type} is not supported")
@@ -104,8 +111,9 @@ class ShareLink(ModelWithUser):
             entity_type=self.entity_type,
             valid_until=self.valid_until,
             download_link=self.get_download_link(),
-            preview_link=self.get_preview_link(),
+            preview_link=self.get_public_link(),
             status='SUCCESS',
+            link_type=self.link_type,
         )
 
         # add the info of the associated entity if it exists
@@ -122,16 +130,22 @@ class ShareLink(ModelWithUser):
         return link_dto
 
     def get_download_link(self) -> str:
-        if self.entity_type == ShareLinkType.RESOURCE:
+        if self.entity_type == ShareLinkEntityType.RESOURCE:
             return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/resource/{self.token}"
-        elif self.entity_type == ShareLinkType.SCENARIO:
+        elif self.entity_type == ShareLinkEntityType.SCENARIO:
             return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/scenario/{self.token}"
 
-    def get_preview_link(self) -> str | None:
-        if self.entity_type == ShareLinkType.RESOURCE:
+    def get_public_link(self) -> str | None:
+        if self.entity_type == ShareLinkEntityType.RESOURCE:
             return FrontService.get_resource_open_url(self.token)
-        elif self.entity_type == ShareLinkType.SCENARIO:
+        elif self.entity_type == ShareLinkEntityType.SCENARIO:
             return None
+
+    def get_space_link(self, user_access_token: str) -> str | None:
+        if self.entity_type == ShareLinkEntityType.RESOURCE:
+            return FrontService.get_resource_open_space_url(self.token, user_access_token)
+        else:
+            raise BadRequestException("Space link is not supported for this entity type")
 
     def is_valid(self) -> bool:
         return self.valid_until is None or self.valid_until > DateHelper.now_utc()
@@ -171,5 +185,5 @@ class ShareLink(ModelWithUser):
     class Meta:
         table_name = 'gws_share_link'
         indexes = (
-            (("entity_id", "entity_type"), True),
+            (("entity_id", "entity_type", "link_type"), True),
         )

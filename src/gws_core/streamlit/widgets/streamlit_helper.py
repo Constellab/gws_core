@@ -5,13 +5,12 @@ from typing import Any
 import streamlit as st
 
 from gws_core.core.utils.settings import Settings
-from gws_core.user.user import User
 
 
 class StreamlitHelper():
 
     CSS_PREFIX = 'st-key-'
-    SIDEBAR_STATE_KEY = '__sidebar_state__'
+    SIDEBAR_STATE_KEY = '__gws_sidebar_state__'
 
     @classmethod
     def get_element_css_class(cls, key: str) -> str:
@@ -93,12 +92,3 @@ class StreamlitHelper():
             cls.show_sidebar()
         else:
             cls.hide_sidebar()
-
-    @classmethod
-    def get_current_user(cls) -> User | None:
-        """ Return the current connected user. If no user is connected, return None
-
-        :return: the current connected user
-        :rtype: User | None
-        """
-        return st.session_state.get('__gws_user__')

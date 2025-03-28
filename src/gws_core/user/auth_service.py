@@ -5,6 +5,7 @@ from fastapi.param_functions import Depends
 from starlette.responses import JSONResponse, Response
 
 from gws_core.lab.system_service import SystemService
+from gws_core.streamlit.streamlit_apps_manager import StreamlitAppsManager
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 
@@ -148,6 +149,33 @@ class AuthService():
         return cls.authenticate_from_token(token)
 
     @classmethod
+    def check_user_access_token_or_streamlit_app(cls, request: Request) -> User:
+        """Method to allow authentication from :
+        - normal token
+        - user access token for streamlit app
+
+        If user access token is provided, only this method is used
+        even if there is a normal token
+        """
+
+        app_id = request.headers.get("gws_app_id")
+        user_access_token = request.headers.get("gws_user_access_token")
+
+        if app_id and user_access_token:
+            user_id = StreamlitAppsManager.user_has_access_to_app(app_id, user_access_token)
+
+            if not user_id:
+                raise UnauthorizedException(
+                    detail=GWSException.INVALID_APP_TOKEN.value,
+                    unique_code=GWSException.INVALID_APP_TOKEN.name,
+                )
+
+            return cls.authenticate(user_id)
+
+        # if no user access token, check the normal token
+        return cls.check_user_access_token(request)
+
+    @classmethod
     def check_unique_code(cls, unique_code: str) -> User:
         """Use link the the token to check access for a unique code generated. return the object associated with the code
         """
@@ -157,25 +185,6 @@ class AuthService():
             return cls.authenticate(code_obj.user_id)
         except Exception:
             raise InvalidUniqueCodeException()
-
-    @classmethod
-    def authenticate_user_if_token_provided(cls, request: Request) -> User | None:
-        """Method for public route to authenticate user if token provided
-        If not, the user is not authenticated and the method return None but no exception is raised
-
-        :param id_: _description_
-        :type id_: str
-        :raises UnauthorizedException: _description_
-        :return: _description_
-        :rtype: User | None
-        """
-
-        token = cls.get_token_from_request(request)
-
-        if not token:
-            return None
-
-        return cls.authenticate_from_token(token)
 
     @classmethod
     def get_token_from_request(cls, request: Request) -> str | None:

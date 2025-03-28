@@ -21,7 +21,7 @@ from gws_core.resource.task.resource_downloader_http import (
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
 from gws_core.share.share_link_service import ShareLinkService
-from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
+from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkEntityType
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -71,12 +71,12 @@ class SendResourceToLab(Task):
 
         generate_share_link = GenerateShareLinkDTO(
             entity_id=resource.get_model_id(),
-            entity_type=ShareLinkType.RESOURCE,
+            entity_type=ShareLinkEntityType.RESOURCE,
             valid_until=current_day + timedelta(days=params.get_value('link_duration'))
         )
 
         self.log_info_message(f"Generate share link for resource {resource.get_model_id()} if not exists")
-        share_link = ShareLinkService.get_or_create_valid_share_link(generate_share_link)
+        share_link = ShareLinkService.get_or_create_valid_public_share_link(generate_share_link)
 
         # Call the external lab API to import the resource
         credentials: CredentialsDataLab = params.get_value('credentials')

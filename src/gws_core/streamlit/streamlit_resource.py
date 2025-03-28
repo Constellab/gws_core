@@ -1,7 +1,7 @@
 
 
 import os
-from typing import Any, List
+from typing import Any, List, cast
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
@@ -18,7 +18,7 @@ from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.dict_r_field import DictRField
 from gws_core.resource.r_field.model_r_field import ModelRfield
-from gws_core.resource.r_field.primitive_r_field import StrRField
+from gws_core.resource.r_field.primitive_r_field import BoolRField, StrRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_model import ResourceModel
@@ -27,10 +27,11 @@ from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view.view_decorator import view
 from gws_core.streamlit.streamlit_app import StreamlitApp
-from gws_core.streamlit.streamlit_app_managers import StreamlitAppManager
+from gws_core.streamlit.streamlit_apps_manager import StreamlitAppsManager
 from gws_core.streamlit.streamlit_dashboard import Dashboard
 from gws_core.streamlit.streamlit_view import StreamlitView
 from gws_core.task.task_model import TaskModel
+from gws_core.user.current_user_service import CurrentUserService
 
 
 @resource_decorator("StreamlitResource", human_name="Dashboard",
@@ -47,6 +48,8 @@ class StreamlitResource(ResourceList):
     _streamlit_sub_resource_folder_name: str = StrRField()
     # Used when code is passed as a string
     _streamlit_app_code: str = StrRField()
+    # Used to define if the app needs the user to be authenticated
+    _streamlit_app_requires_authentification: bool = BoolRField(default_value=True)
 
     _shell_proxy: ShellProxyDTO = ModelRfield(ShellProxyDTO)
 
@@ -143,6 +146,16 @@ class StreamlitResource(ResourceList):
 
         # store the name of the sub resource
         self._streamlit_sub_resource_folder_name = 'Dashboard code'
+
+    def set_requires_authentication(self, requires_authentication: bool) -> None:
+        """
+        Set if the app requires the user to be authenticated.
+        By default it requires authentication.
+
+        :param requires_authentication: True if the app requires authentication
+        :type requires_authentication: bool
+        """
+        self._streamlit_app_requires_authentification = requires_authentication
 
     def _check_folder(self, folder_path: str) -> None:
         if not FileHelper.exists_on_os(folder_path) or not FileHelper.is_dir(folder_path):
@@ -293,12 +306,15 @@ class StreamlitResource(ResourceList):
 
         return ShellProxy()
 
-    @view(view_type=StreamlitView, human_name="Dashboard", short_description="Dahsboard generated with streamlit", default_view=True)
+    @view(view_type=StreamlitView, human_name="Dashboard",
+          short_description="Dahsboard generated with streamlit",
+          default_view=True)
     def default_view(self, _: ConfigParams) -> StreamlitView:
 
         shell_proxy = self._get_shell_proxy()
         shell_proxy.attach_observer(LoggerMessageObserver())
-        streamlit_app = StreamlitApp(self.get_model_id(), shell_proxy)
+        streamlit_app = StreamlitApp(self.get_model_id(), shell_proxy,
+                                     self._streamlit_app_requires_authentification)
 
         dashboard = self._get_dashboard()
 
@@ -307,7 +323,7 @@ class StreamlitResource(ResourceList):
             folder_path = self._get_dashboard_folder()
             streamlit_app.set_streamlit_folder(folder_path)
         elif self._streamlit_sub_resource_folder_name is not None and len(self._streamlit_sub_resource_folder_name) > 0:
-            folder: Folder = self.get_resource_by_name(self._streamlit_sub_resource_folder_name)
+            folder: Folder = cast(Folder, self.get_resource_by_name(self._streamlit_sub_resource_folder_name))
             streamlit_app.set_streamlit_folder(folder.path)
         elif self.get_streamlit_app_code() is not None and len(self.get_streamlit_app_code()) > 0:
             streamlit_app.set_streamlit_code(self.get_streamlit_app_code())
@@ -326,7 +342,7 @@ class StreamlitResource(ResourceList):
         streamlit_app.set_params(self._params)
 
         # create the app
-        url = StreamlitAppManager.create_or_get_app(streamlit_app)
+        url = StreamlitAppsManager.create_or_get_app(streamlit_app)
 
         # create the view
         view_ = StreamlitView(url)

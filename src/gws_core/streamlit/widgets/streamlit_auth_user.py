@@ -1,6 +1,6 @@
 
-import streamlit as st
 
+from gws_core.streamlit.widgets.streamlit_state import StreamlitState
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
@@ -18,7 +18,7 @@ class StreamlitAuthenticateUser:
     was_already_authenticated: bool = False
 
     def __enter__(self) -> User:
-        user = st.session_state.get('__gws_user__')
+        user = StreamlitState.get_current_user()
         if user is None:
             raise Exception("There is no user in the context")
         if CurrentUserService.get_current_user() is None:

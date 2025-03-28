@@ -3,8 +3,12 @@
 import os
 from typing import Dict, List, Optional
 
+from gws_core.core.exception.exceptions.unauthorized_exception import \
+    UnauthorizedException
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
 from gws_core.impl.shell.shell_proxy import ShellProxy
@@ -26,6 +30,11 @@ class StreamlitAppUrl(BaseModelDTO):
             url += f"?{params}"
         return url
 
+    def add_param(self, key: str, value: str) -> None:
+        if self.params is None:
+            self.params = {}
+        self.params[key] = value
+
 
 class StreamlitApp():
     """Class to manage a streamlit app that runs inside the main streamlit app
@@ -35,17 +44,26 @@ class StreamlitApp():
     """
 
     app_id: str = None
-    streamlit_code: str = None
 
     # for normal app, the resources are the source ids
     # for env app, the resources are the file paths
     resources: List[str] = None
-    _app_config_dir: str = None
 
     params: dict = None
 
+    # Either the streamlit code is stored in attribute or in a file (most of the time)
+    streamlit_code: str = None
     app_folder_path: str = None
 
+    # If True, the user must be authenticated to access the app
+    requires_authentication: bool = True
+
+    # List of token of user that can access the app
+    # This is provided if the app requires authentication
+    # Key is access token, value is user id
+    user_access_tokens: Dict[str, str] = None
+
+    _app_config_dir: str = None
     _shell_proxy: ShellProxy = None
 
     _dev_mode: bool = False
@@ -58,10 +76,12 @@ class StreamlitApp():
     NORMAL_APP_MAIN_FILE = "main_streamlit_app.py"
     ENV_APP_MAIN_FILE = "main_streamlit_app_env.py"
 
-    def __init__(self, app_id: str, shell_proxy: ShellProxy):
+    def __init__(self, app_id: str, shell_proxy: ShellProxy, requires_authentication: bool = True):
         self.app_id = app_id
         self.resources = []
         self._shell_proxy = shell_proxy
+        self.user_access_tokens = {}
+        self.requires_authentication = requires_authentication
 
     def set_streamlit_code(self, streamlit_code: str) -> None:
         self.streamlit_code = streamlit_code
@@ -89,6 +109,14 @@ class StreamlitApp():
 
     def set_params(self, params: dict) -> None:
         self.params = params
+
+    def set_requires_authentication(self, requires_authentication: bool) -> None:
+        """ Set if the app requires authentication. By default it requires authentication.
+
+        :param requires_authentication: True if the app requires authentication
+        :type requires_authentication: bool
+        """
+        self.requires_authentication = requires_authentication
 
     def set_dev_mode(self, dev_config_file: str) -> None:
         self._dev_mode = True
@@ -121,14 +149,62 @@ class StreamlitApp():
             app_dir = self._app_config_dir
 
         # write the streamlit config file
-        config_path = os.path.join(self._app_config_dir, self.APP_CONFIG_FILENAME)
         config = StreamlitConfigDTO(
             app_dir_path=app_dir,  # store the app path
             source_ids=self.resources,
-            params=self.params
+            params=self.params,
+            requires_authentication=self.requires_authentication,
+            user_access_tokens={}
         )
+
+        self._write_config_file(config)
+
+    def _write_config_file(self, config: StreamlitConfigDTO) -> None:
+        config_path = self._get_config_file_path()
         with open(config_path, 'w', encoding="utf-8") as file_path:
             file_path.write(config.to_json_str())
+
+    def _read_config_file(self) -> StreamlitConfigDTO:
+        config_path = self._get_config_file_path()
+        with open(config_path, 'r', encoding="utf-8") as file_path:
+            return StreamlitConfigDTO.from_json_str(file_path.read())
+
+    def _get_config_file_path(self) -> str:
+        return os.path.join(self._app_config_dir, self.APP_CONFIG_FILENAME)
+
+    def add_user(self, user_id: str) -> str:
+        """Add the user to the list of users that can access the app and return the user access token
+        """
+        if not self.requires_authentication:
+            raise Exception("The app does not require authentication")
+
+        # check if the user is already in the list
+        for token, user_id in self.user_access_tokens.items():
+            if user_id == user_id:
+                return token
+
+        user_access_token = StringHelper.generate_uuid() + '_' + str(DateHelper.now_utc_as_milliseconds())
+        self.user_access_tokens[user_access_token] = user_id
+
+        # store the user access token in the config file
+        config = self._read_config_file()
+        config.user_access_tokens = self.user_access_tokens
+        self._write_config_file(config)
+        return user_access_token
+
+    def get_user_from_token(self, user_access_token: str) -> Optional[str]:
+        """Get the user id from the user access token
+        If the user does not exist, return None
+        """
+        if not self.requires_authentication:
+            raise Exception("The app does not require authentication")
+
+        return self.user_access_tokens.get(user_access_token, None)
+
+    def was_generated_from_resource_model_id(self, resource_model_id: str) -> bool:
+        """Return true if the app was generated from the given resource model id
+        """
+        return self.app_id == resource_model_id
 
     def get_app_full_url(self, host_url: str, token: str) -> StreamlitAppUrl:
         if self._dev_mode:
@@ -139,9 +215,13 @@ class StreamlitApp():
             'gws_app_id': self.app_id
         }
 
-        user = CurrentUserService.get_current_user()
-        if user is not None:
-            params['gws_user_id'] = user.id
+        if self.requires_authentication:
+            current_user = CurrentUserService.get_current_user()
+            if not current_user:
+                raise UnauthorizedException(
+                    "The app requires authentication. Please log in to access the app.")
+            user_access_token = self.add_user(current_user.id)
+            params['gws_user_access_token'] = user_access_token
 
         return StreamlitAppUrl(host_url=host_url, params=params)
 

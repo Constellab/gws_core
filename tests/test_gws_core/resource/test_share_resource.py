@@ -22,7 +22,8 @@ from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.share.share_link import ShareLink
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_service import ShareService
-from gws_core.share.shared_dto import (GenerateShareLinkDTO, ShareLinkType,
+from gws_core.share.shared_dto import (GenerateShareLinkDTO,
+                                       ShareLinkEntityType, ShareLinkType,
                                        ShareResourceInfoReponseDTO)
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
@@ -120,7 +121,7 @@ class TestShareResource(BaseTestCase):
 
         # get the share entity info
         share_entity_info: ShareResourceInfoReponseDTO = ShareService.get_resource_entity_object_info(share_link)
-        self.assertEqual(share_entity_info.entity_type, ShareLinkType.RESOURCE)
+        self.assertEqual(share_entity_info.entity_type, ShareLinkEntityType.RESOURCE)
         self.assertEqual(share_entity_info.entity_id, original_resource_model.id)
         self.assertIsNotNone(share_entity_info.zip_entity_route)
         # check that there is only one resource
@@ -228,9 +229,9 @@ class TestShareResource(BaseTestCase):
     def _generate_link_and_download_resource(self, original_resource_id) -> ResourceModel:
         # create a share link
         generate_dto = GenerateShareLinkDTO(
-            entity_id=original_resource_id, entity_type=ShareLinkType.RESOURCE, valid_until=datetime.now() +
+            entity_id=original_resource_id, entity_type=ShareLinkEntityType.RESOURCE, valid_until=datetime.now() +
             timedelta(days=1))
-        share_link = ShareLinkService.generate_share_link(generate_dto)
+        share_link = ShareLinkService.generate_share_link(generate_dto, ShareLinkType.PUBLIC)
 
         return ResourceTransfertService.import_resource_from_link_sync(
             ResourceDownloaderHttp.build_config(share_link.get_download_link(),

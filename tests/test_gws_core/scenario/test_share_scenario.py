@@ -22,7 +22,8 @@ from gws_core.scenario.scenario_transfert_service import \
 from gws_core.scenario.task.scenario_downloader import ScenarioDownloader
 from gws_core.scenario.task.send_scenario_to_lab import SendScenarioToLab
 from gws_core.share.share_link_service import ShareLinkService
-from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
+from gws_core.share.shared_dto import (GenerateShareLinkDTO,
+                                       ShareLinkEntityType, ShareLinkType)
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -104,11 +105,11 @@ class TestShareScenario(BaseTestCase):
         # generate share link
         share_dto = GenerateShareLinkDTO(
             entity_id=scenario.get_model().id,
-            entity_type=ShareLinkType.SCENARIO,
+            entity_type=ShareLinkEntityType.SCENARIO,
             valid_until=DateHelper.now_utc() + timedelta(days=1)
         )
 
-        share_link = ShareLinkService.generate_share_link(share_dto)
+        share_link = ShareLinkService.generate_share_link(generate_dto, ShareLinkType.PUBLIC)
 
         new_scenario = ScenarioTransfertService.import_from_lab_sync(
             ScenarioDownloader.build_config(share_link.get_download_link(),  "All", 'Force new scenario'))

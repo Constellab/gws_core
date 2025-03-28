@@ -135,6 +135,13 @@ class FrontService():
     def get_resource_open_url(token: str) -> str:
         return FrontService.get_app_open_url() + '/resource/' + token
 
+    @staticmethod
+    def get_resource_open_space_url(token: str, user_access_token: str) -> str:
+        """ Open route to access the resource but the user needs to be authenticated
+        via the user_access_token
+        """
+        return FrontService.get_resource_open_url(token) + '?gws_user_access_token=' + user_access_token + '&hide_header=true'
+
     ############################################### OTHER URLS ###############################################
 
     @staticmethod

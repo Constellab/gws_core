@@ -12,9 +12,16 @@ from gws_core.scenario.scenario_zipper import ZipScenarioInfo
 from gws_core.user.user_dto import UserDTO
 
 
-class ShareLinkType(Enum):
+class ShareLinkEntityType(Enum):
     RESOURCE = "RESOURCE"
     SCENARIO = "SCENARIO"
+
+
+class ShareLinkType(Enum):
+    # if the link is public, it can be accessed by anyone
+    PUBLIC = "PUBLIC"
+    # the link was shared with space and can only be accessed by the space members
+    SPACE = "SPACE"
 
 
 # Define if the resource is shared as a sender or a receiver
@@ -25,17 +32,22 @@ class SharedEntityMode(Enum):
 
 class ShareLinkDTO(ModelWithUserDTO):
     entity_id: str
-    entity_type: ShareLinkType
+    entity_type: ShareLinkEntityType
     valid_until: Optional[datetime] = None
     download_link: str
     preview_link: Optional[str] = None
     status: Literal["SUCCESS", "ERROR"]
     entity_name: Optional[str] = None
+    link_type: ShareLinkType
 
 
 class GenerateShareLinkDTO(BaseModelDTO):
     entity_id: str
-    entity_type: ShareLinkType
+    entity_type: ShareLinkEntityType
+    valid_until: Optional[datetime] = None
+
+
+class UpdateShareLinkDTO(BaseModelDTO):
     valid_until: Optional[datetime] = None
 
 
@@ -53,7 +65,7 @@ class ShareEntityInfoDTO(ModelDTO):
 
 class ShareEntityInfoReponseDTO(BaseModelDTO):
     version: int
-    entity_type: ShareLinkType
+    entity_type: ShareLinkEntityType
     entity_id: str
 
 
@@ -75,7 +87,7 @@ class ShareScenarioInfoReponseDTO(ShareEntityInfoReponseDTO):
 
 class ShareResourceZippedResponseDTO(BaseModelDTO):
     version: int
-    entity_type: ShareLinkType
+    entity_type: ShareLinkEntityType
     entity_id: str
     # id of the resource that contains the zip file of the shared entity
     zipped_entity_resource_id: str
@@ -86,3 +98,8 @@ class ShareResourceZippedResponseDTO(BaseModelDTO):
 class ShareEntityCreateMode(Enum):
     KEEP_ID = "KEEP_ID"
     NEW_ID = "NEW_ID"
+
+
+class GenerateUserAccessTokenForSpaceResponse(BaseModelDTO):
+    valid_until: datetime
+    access_url: str

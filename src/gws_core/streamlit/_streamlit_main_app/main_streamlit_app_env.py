@@ -1,20 +1,35 @@
 import streamlit as st
 from main_streamlit_app_runner import StreamlitMainAppRunner
+from streamlite_app_info_state import StreamlitAppInfo, StreamlitAppInfoState
 
-streammlit_app = StreamlitMainAppRunner()
+streamlit_app = StreamlitMainAppRunner()
 
-streammlit_app.init()
+streamlit_app.init()
 
-config = streammlit_app.config
+if not StreamlitAppInfoState.is_initialized():
 
-# load resources
-source_paths = config['source_ids']
+    config = streamlit_app.config
 
-streammlit_app.set_variable('source_paths', source_paths)
-streammlit_app.set_variable('params', config['params'])
+    # load resources
+    source_paths = config['source_ids']
+
+    StreamlitAppInfoState.set_app_info({
+        'app_id': streamlit_app.get_app_id(),
+        'user_access_token': streamlit_app.get_user_access_token(),
+        'requires_authentication': streamlit_app.authentication_is_required(),
+        'user_id': streamlit_app.load_user(),
+        'sources': None,
+        'source_paths': config['source_ids'],
+        'params': config['params'],
+    })
+
+app_info: StreamlitAppInfo = StreamlitAppInfoState.get_app_info()
+
+streamlit_app.set_variable('source_paths', app_info['source_paths'])
+streamlit_app.set_variable('params', app_info['params'])
 
 try:
-    streammlit_app.start_app()
+    streamlit_app.start_app()
 except Exception as e:
     st.error(f"Unexpected error: {str(e)}")
     with st.popover('View details'):

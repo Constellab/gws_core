@@ -14,8 +14,10 @@ from gws_core.resource.task.resource_downloader_http import \
 from gws_core.resource.task.send_resource_to_lab import SendResourceToLab
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_proxy import ScenarioProxy
+from gws_core.share.share_link import ShareLink
 from gws_core.share.share_link_service import ShareLinkService
-from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkType
+from gws_core.share.shared_dto import (GenerateShareLinkDTO,
+                                       ShareLinkEntityType, ShareLinkType)
 from gws_core.space.space_dto import ShareResourceWithSpaceDTO
 from gws_core.space.space_service import SpaceService
 from gws_core.task.plug.output_task import OutputTask
@@ -101,17 +103,17 @@ class ResourceTransfertService():
 
     @classmethod
     @transaction()
-    def share_resource_with_space(cls, resource_id: str, request_dto: ShareResourceWithSpaceRequestDTO) -> None:
+    def share_resource_with_space(cls, resource_id: str, request_dto: ShareResourceWithSpaceRequestDTO) -> ShareLink:
 
         resource_model = ResourceService.get_by_id_and_check(resource_id)
 
         # create or get the share link without expiration date
         share_dto = GenerateShareLinkDTO(
             entity_id=resource_id,
-            entity_type=ShareLinkType.RESOURCE,
+            entity_type=ShareLinkEntityType.RESOURCE,
             valid_until=request_dto.valid_until
         )
-        share_link = ShareLinkService.get_or_create_valid_share_link(share_dto)
+        share_link = ShareLinkService.get_or_create_valid_share_link(share_dto, ShareLinkType.SPACE)
 
         # share the resource with the space
         resource_dto: ShareResourceWithSpaceDTO = ShareResourceWithSpaceDTO(
@@ -119,8 +121,10 @@ class ResourceTransfertService():
             name=resource_model.name,
             style=resource_model.style,
             typing_name=resource_model.resource_typing_name,
-            share_link=share_link.get_preview_link(),
+            token=share_link.token,
             valid_until=share_link.valid_until
         )
 
         SpaceService.get_instance().share_resource(request_dto.folder_id, resource_dto)
+
+        return share_link

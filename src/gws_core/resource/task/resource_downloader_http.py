@@ -17,7 +17,8 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.task.resource_downloader_base import \
     ResourceDownloaderBase
 from gws_core.share.share_link import ShareLink
-from gws_core.share.shared_dto import ShareEntityCreateMode, ShareLinkType
+from gws_core.share.shared_dto import (ShareEntityCreateMode,
+                                       ShareLinkEntityType)
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
@@ -108,7 +109,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
             share_token = self.link.split('/')[-1]
             response: Response = ExternalLabApiService.mark_shared_object_as_received(
                 self.resource_loader.get_origin_info().lab_api_url,
-                ShareLinkType.RESOURCE, share_token, current_lab_info)
+                ShareLinkEntityType.RESOURCE, share_token, current_lab_info)
 
             if response.status_code != 200:
                 self.log_error_message(

@@ -2,7 +2,7 @@
 
 import os
 from json import load
-from typing import Callable
+from typing import Any, Callable, Optional
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -12,9 +12,11 @@ from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import \
     LoggerMessageObserver
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.streamlit.widgets.streamlit_state import StreamlitUserAuthInfo
 
 
 class StreamlitComponentLoader():
@@ -42,6 +44,35 @@ class StreamlitComponentLoader():
         self.component_name = component_name
         self.version = version
         self.is_released = is_released
+
+    def call_component(self, data: Any, authentication_info: StreamlitUserAuthInfo = None) -> Any:
+        """Call the component with the data.
+        The component will receive the data formatted like this:
+        {
+            "lab_info": {
+                "authentication_info":StreamlitUserAuthInfo,
+                "lab_api_url": str
+            },
+            "data": data
+        }
+
+        :param data: data to pass to the component
+        :type data: Any
+        :param authenticationInfo: authentication info to pass to the component if the component can request the API, defaults to None
+        :type authenticationInfo: StreamlitUserAuthInfo, optional
+        :return: _description_
+        :rtype: Any
+        """
+        lab_info = None
+        if authentication_info:
+            lab_info = {
+                "authentication_info": authentication_info.to_json_dict(),
+                "lab_api_url": Settings.get_instance().get_lab_api_url()
+            }
+        return self.get_function()(
+            lab_info=lab_info,
+            data=data
+        )
 
     def get_function(self) -> Callable:
         if self.is_released:

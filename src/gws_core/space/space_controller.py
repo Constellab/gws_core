@@ -13,6 +13,8 @@ from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.lab.system_dto import SettingsDTO
 from gws_core.scenario.scenario_service import ScenarioService
+from gws_core.share.share_link_service import ShareLinkService
+from gws_core.share.shared_dto import GenerateUserAccessTokenForSpaceResponse
 from gws_core.space.space_dto import LabActivityReponseDTO
 from gws_core.user.activity.activity_service import ActivityService
 
@@ -68,13 +70,6 @@ class TokenData(BaseModelDTO):
 
 class UserIdData(BaseModelDTO):
     id: str
-
-
-# ##################################################################
-#
-# User
-#
-# ##################################################################
 
 
 @space_app.post("/user/generate-temp-access", tags=["User management"])
@@ -192,3 +187,17 @@ def lab_activity(_=Depends(AuthSpace.check_space_api_key)) -> LabActivityReponse
         last_activity=last_activity.to_dto() if last_activity is not None else None,
         dev_env_running=DevEnvService.dev_env_is_running()
     )
+
+############################################### SHARE #####################################################
+
+
+@space_app.post("/share/{token}/generate-user-access-token", tags=["Share"])
+def generate_user_access_token(token: str,
+                               user: UserFullDTO,
+                               _=Depends(AuthSpace.check_space_api_key)) -> GenerateUserAccessTokenForSpaceResponse:
+    """
+    Route to generate a user access token for a space share link.
+    This token usure that the user is connected and has access to the share link.
+    """
+
+    return ShareLinkService.generate_user_access_token_for_space_link(token, user)

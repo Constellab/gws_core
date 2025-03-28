@@ -10,6 +10,7 @@ class GWSException(Enum):
     WRONG_CREDENTIALS_USER_NOT_FOUND = "Not authorized. Cannot generate user access token. User not found"
     WRONG_CREDENTIALS_USER_NOT_ACTIVATED = "Not authorized. Cannot generate user access token. User not active"
     INVALID_TOKEN = "Not authorized. Invalid token"
+    INVALID_APP_TOKEN = "Not authorized. Invalid app token"
     FUNCTIONALITY_UNAVAILBLE_IN_PROD = "This functionnality is not available in the production environment"
     MISSING_PROD_API_URL = "Missing production API URL"
     ERROR_DURING_DEV_LOGIN = "Error during login in development environment"

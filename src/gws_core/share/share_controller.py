@@ -10,7 +10,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.resource.resource_controller import CallViewParams
 from gws_core.resource.view.view_dto import CallViewResultDTO
 from gws_core.share.share_token_auth import ShareTokenAuth
-from gws_core.share.shared_dto import (ShareEntityInfoDTO, ShareLinkType,
+from gws_core.share.shared_dto import (ShareEntityInfoDTO, ShareLinkEntityType,
                                        ShareResourceInfoReponseDTO,
                                        ShareResourceZippedResponseDTO,
                                        ShareScenarioInfoReponseDTO)
@@ -22,14 +22,14 @@ from .share_service import ShareService
 # Open to mark the resource as downloaded by another lab
 @core_app.post("/share/{entity_type}/mark-as-shared/{token}", tags=["Share"],
                summary="Mark the resource as downloaded by another lab")
-def mark_entity_as_shared(entity_type: ShareLinkType, receiver_lab: ExternalLabWithUserInfo,
+def mark_entity_as_shared(entity_type: ShareLinkEntityType, receiver_lab: ExternalLabWithUserInfo,
                           share_link=Depends(ShareTokenAuth.get_and_check_token)) -> None:
     ShareService.mark_entity_as_shared(entity_type, share_link, receiver_lab)
 
 
 @core_app.get("/share/{entity_type}/{entity_id}/shared-to", tags=["Share"],
               summary="Get info about which lab this object was shared to", response_model=None)
-def get_shared_to_list(entity_type: ShareLinkType,
+def get_shared_to_list(entity_type: ShareLinkEntityType,
                        entity_id: str,
                        _=Depends(AuthService.check_user_access_token)) -> PageDTO[ShareEntityInfoDTO]:
     return ShareService.get_shared_to_list(entity_type, entity_id).to_dto()

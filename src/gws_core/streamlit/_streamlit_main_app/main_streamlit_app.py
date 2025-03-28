@@ -4,6 +4,7 @@ from typing import List
 
 import streamlit as st
 from main_streamlit_app_runner import StreamlitMainAppRunner
+from streamlite_app_info_state import StreamlitAppInfo, StreamlitAppInfoState
 
 
 def import_streamlit_helper():
@@ -36,25 +37,41 @@ def load_sources(source_ids: List[str]) -> List['Resource']:
     return sources_
 
 
-def start_app(streammlit_app: StreamlitMainAppRunner) -> None:
+def start_app(streamlit_app: StreamlitMainAppRunner) -> None:
     from gws_streamlit_helper.streamlit_env_loader import StreamlitEnvLoader
 
     # Load gws environment and log the user
 
-    with StreamlitEnvLoader(streammlit_app.get_app_id(), streammlit_app.load_user()):
+    with StreamlitEnvLoader(streamlit_app.get_app_id(),
+                            streamlit_app.authentication_is_required(),
+                            streamlit_app.load_user()):
 
         from gws_core.streamlit import StreamlitContainers
 
-        config = streammlit_app.config
+        if not StreamlitAppInfoState.is_initialized():
 
-        # load resources
-        sources = load_sources(config['source_ids'])
+            config = streamlit_app.config
 
-        streammlit_app.set_variable('sources', sources)
-        streammlit_app.set_variable('params', config['params'])
+            # load resources
+            sources = load_sources(config['source_ids'])
+
+            StreamlitAppInfoState.set_app_info({
+                'app_id': streamlit_app.get_app_id(),
+                'user_access_token': streamlit_app.get_user_access_token(),
+                'requires_authentication': streamlit_app.authentication_is_required(),
+                'user_id': streamlit_app.load_user(),
+                'sources': sources,
+                'source_paths': None,
+                'params': config['params'],
+            })
+
+        app_info: StreamlitAppInfo = StreamlitAppInfoState.get_app_info()
+
+        streamlit_app.set_variable('sources', app_info['sources'])
+        streamlit_app.set_variable('params', app_info['params'])
 
         try:
-            streammlit_app.start_app()
+            streamlit_app.start_app()
         except Exception as e:
             from gws_core import Logger
             Logger.log_exception_stack_trace(e)
@@ -63,9 +80,9 @@ def start_app(streammlit_app: StreamlitMainAppRunner) -> None:
                                                     exception=e)
 
 
-streammlit_app = StreamlitMainAppRunner()
+streamlit_main_app = StreamlitMainAppRunner()
 
-streammlit_app.init()
+streamlit_main_app.init()
 
 try:
     import_streamlit_helper()
@@ -73,4 +90,4 @@ except Exception as e:
     st.error(f"Error importing streamlit helper: {e}")
     st.stop()
 
-start_app(streammlit_app)
+start_app(streamlit_main_app)
