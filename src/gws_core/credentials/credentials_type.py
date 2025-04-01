@@ -93,13 +93,13 @@ class CredentialsDataS3(CredentialsDataBase):
 
     @classmethod
     def get_specs(cls) -> ConfigSpecs:
-        return {
+        return ConfigSpecs({
             "endpoint_url": StrParam(human_name="Endpoint URL"),
             "region": StrParam(human_name="Region"),
             "access_key_id": StrParam(human_name="Access Key ID"),
             "secret_access_key": StrParam(human_name="Secret Access Key"),
             "bucket": StrParam(human_name="Bucket", optional=True),
-        }
+        })
 
 
 class CredentialsDataBasic(CredentialsDataBase):
@@ -111,11 +111,11 @@ class CredentialsDataBasic(CredentialsDataBase):
 
     @classmethod
     def get_specs(cls) -> ConfigSpecs:
-        return {
+        return ConfigSpecs({
             "username": StrParam(human_name="Username"),
             "password": StrParam(human_name="Password"),
             "url": StrParam(human_name="URL", optional=True),
-        }
+        })
 
 
 class CredentialsDataLab(CredentialsDataBase):
@@ -127,13 +127,13 @@ class CredentialsDataLab(CredentialsDataBase):
 
     @classmethod
     def get_specs(cls) -> ConfigSpecs:
-        return {
+        return ConfigSpecs({
             "lab_domain": StrParam(human_name="Lab domain",
                                    short_description="The domain is the part of the URL that comes after the https://lab and before the first /"),
             "api_key": StrParam(human_name="Api key", min_length=20),
             "sub_domain_api_override": StrParam(human_name="Sub domain API override", short_description="Leave empty for default. Set 'glab-dev' for dev api",
                                                 optional=True),
-        }
+        })
 
     def get_lab_api_url(self) -> str:
         """Get the lab api url
@@ -151,14 +151,14 @@ class CredentialsDataOther(CredentialsDataBase):
 
     @classmethod
     def get_specs(cls) -> ConfigSpecs:
-        return {
+        return ConfigSpecs({
             "data": ParamSet(ConfigSpecs({
                 "key": StrParam(human_name="Key"),
                 "value": StrParam(human_name="Value"),
             }),
                 human_name="Custom data",
                 short_description="List of key value pairs")
-        }
+        })
 
     @classmethod
     def build_from_json(cls, json_: dict, meta: CredentialsDTO = None) -> 'CredentialsDataBase':
