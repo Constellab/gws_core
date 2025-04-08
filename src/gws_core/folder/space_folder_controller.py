@@ -21,7 +21,7 @@ def synchronize_folder(_=Depends(AuthService.check_user_access_token)) -> None:
 
 
 @core_app.get("/space-folder/trees", tags=["Folder"])
-def get_folder_trees(_=Depends(AuthService.check_user_access_token)) -> List[SpaceFolderTreeDTO]:
+def get_folder_trees(_=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> List[SpaceFolderTreeDTO]:
     """
     Get the list of available folders with children.
     """

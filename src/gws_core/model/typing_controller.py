@@ -1,8 +1,9 @@
 
 
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, cast
 
 from fastapi.param_functions import Depends
+
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.model.typing_dto import TypingDTO, TypingObjectType
@@ -17,20 +18,20 @@ from ..core_controller import core_app
 
 @core_app.get("/typing/resource/{typing_name}", tags=["Typing"], summary="Get a resource typing")
 def get_resource_typing(typing_name: str,
-                        _=Depends(AuthService.check_user_access_token)) -> ResourceTypingDTO:
-    return TypingService.get_and_check_typing(typing_name).to_full_dto()
+                        _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> ResourceTypingDTO:
+    return cast(ResourceTypingDTO, TypingService.get_and_check_typing(typing_name).to_full_dto())
 
 
 @core_app.get("/typing/task/{typing_name}", tags=["Typing"], summary="Get a task typing")
 def get_task_typing(typing_name: str,
-                    _=Depends(AuthService.check_user_access_token)) -> TaskTypingDTO:
-    return TypingService.get_and_check_typing(typing_name).to_full_dto()
+                    _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> TaskTypingDTO:
+    return cast(TaskTypingDTO, TypingService.get_and_check_typing(typing_name).to_full_dto())
 
 
 @core_app.get("/typing/protocol/{typing_name}", tags=["Typing"], summary="Get a protocol typing")
 def get_protocol_typing(typing_name: str,
-                        _=Depends(AuthService.check_user_access_token)) -> ProtocolTypingFullDTO:
-    return TypingService.get_and_check_typing(typing_name).to_full_dto()
+                        _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> ProtocolTypingFullDTO:
+    return cast(ProtocolTypingFullDTO, TypingService.get_and_check_typing(typing_name).to_full_dto())
 
 
 @core_app.get("/typing/object-type/{object_type}", tags=["Resource"],
@@ -47,7 +48,7 @@ def get_by_object_type(object_type: TypingObjectType,
 def advanced_search(search_params: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[TypingDTO]:
+                    _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[TypingDTO]:
     """
     Advanced search for typing
     """

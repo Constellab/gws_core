@@ -72,7 +72,7 @@ def get_view_json_file(id_: str, view_name: str,
 
 @core_app.get("/resource/{id_}", tags=["Resource"], summary="Get a resource")
 def get_a_resource(id_: str,
-                   _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
+                   _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> ResourceModelDTO:
     """
     Retrieve a ResourceModel from a ResourceModel id_
 
@@ -84,7 +84,7 @@ def get_a_resource(id_: str,
 
 @core_app.get("/resource/{id_}/children", tags=["Resource"], summary="Get a resource")
 def get_resource_children(id_: str,
-                          _=Depends(AuthService.check_user_access_token)) -> List[ResourceModelDTO]:
+                          _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> List[ResourceModelDTO]:
     """
     Retrieve a ResourceModel children resource of a ResourceModel id_
     """
@@ -112,10 +112,9 @@ def check_impact_delete_resource(id_: str,
 
 @core_app.get("/resource/search-name/{name}", tags=["Resource"],
               summary="Search resource by name")
-def search_resource_by_name(name: str,
-                            page: Optional[int] = 1,
-                            number_of_items_per_page: Optional[int] = 20,
-                            _=Depends(AuthService.check_user_access_token)) -> PageDTO[ResourceModelDTO]:
+def search_resource_by_name(
+        name: str, page: Optional[int] = 1, number_of_items_per_page: Optional[int] = 20,
+        _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[ResourceModelDTO]:
     """
     Search resource by name
     """
@@ -127,7 +126,7 @@ def search_resource_by_name(name: str,
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[ResourceModelDTO]:
+                    _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[ResourceModelDTO]:
     """
     Advanced search on resources
     """

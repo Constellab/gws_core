@@ -18,7 +18,7 @@ from .brick_service import BrickService
 
 
 @core_app.get("/brick", tags=["Bricks"], summary="Get all brick with status")
-def get_bricks_status(_=Depends(AuthService.check_user_access_token)) -> List[BrickDTO]:
+def get_bricks_status(_=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> List[BrickDTO]:
     bricks = BrickService.get_all_brick_models()
     return [brick.to_dto() for brick in bricks]
 

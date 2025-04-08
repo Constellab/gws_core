@@ -146,7 +146,9 @@ class StreamlitPlugin:
         dict_ = {
             "apiBaseUrl": Settings.get_lab_api_url(),
             "baseHref": cls.get_plugin_relative_path(),
-            "spaceApiUrl": Settings.get_space_api_url()
+            "spaceApiUrl": Settings.get_space_api_url(),
+            "communityFrontUrl": Settings.get_community_front_url(),
+            "communityApiUrl": Settings.get_community_api_url(),
         }
 
         # Define the path for the JSON file

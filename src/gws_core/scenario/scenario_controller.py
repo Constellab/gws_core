@@ -30,7 +30,7 @@ from .scenario_service import ScenarioService
 @core_app.get("/scenario/running", tags=["Scenario"],
               summary="Get the list of running scenarios")
 def get_the_list_of_running_scenarios(
-        _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> List[RunningScenarioInfoDTO]:
+        _=Depends(AuthService.check_user_access_token)) -> List[RunningScenarioInfoDTO]:
     """
     Retrieve a list of running scenarios.
     """
@@ -54,7 +54,7 @@ def get_an_scenario(id_: str,
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[ScenarioDTO]:
+                    _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[ScenarioDTO]:
     """
     Advanced search on scenario
     """
@@ -71,7 +71,7 @@ def count_by_title(title: str,
 def search_by_title(title: str,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[ScenarioDTO]:
+                    _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[ScenarioDTO]:
     """
     Advanced search on scenario
     """

@@ -133,7 +133,7 @@ def get_by_id_and_check(id: str,
 def search_user_by_name(name: str,
                         page: int = 0,
                         number_of_items_per_page: int = 20,
-                        _=Depends(AuthService.check_user_access_token)) -> PageDTO[UserDTO]:
+                        _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[UserDTO]:
     """
     Search users by name
     """

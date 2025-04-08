@@ -19,7 +19,7 @@ from .tag_service import TagService
 @core_app.get("/tag/search/key", tags=["Tag"], summary='Search tags by key')
 def search_all_keys(page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[TagKeyModelDTO]:
+                    _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[TagKeyModelDTO]:
     """
     Search tags by key.
     """
@@ -31,7 +31,7 @@ def search_all_keys(page: Optional[int] = 1,
 def search_keys(key: Optional[str],
                 page: Optional[int] = 1,
                 number_of_items_per_page: Optional[int] = 20,
-                _=Depends(AuthService.check_user_access_token)) -> PageDTO[TagKeyModelDTO]:
+                _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[TagKeyModelDTO]:
     """
     Search tags by key.
     """
@@ -43,7 +43,7 @@ def search_keys(key: Optional[str],
 def search_all_values(key: str,
                       page: Optional[int] = 1,
                       number_of_items_per_page: Optional[int] = 20,
-                      _=Depends(AuthService.check_user_access_token)) -> PageDTO[TagValueModelDTO]:
+                      _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[TagValueModelDTO]:
     """
     Search tags by key.
     """
@@ -56,7 +56,7 @@ def search_values(key: str,
                   value: Optional[str],
                   page: Optional[int] = 1,
                   number_of_items_per_page: Optional[int] = 20,
-                  _=Depends(AuthService.check_user_access_token)) -> PageDTO[TagValueModelDTO]:
+                  _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[TagValueModelDTO]:
     """
     Search tags by key.
     """
@@ -118,7 +118,7 @@ def get_tag_origins(entity_tag_id: str,
 @core_app.get("/tag/entity/{entity_type}/{entity_id}", tags=["Tag"], summary='Get tags of an entity')
 def get_tags_of_entity(entity_type: EntityType,
                        entity_id: str,
-                       _=Depends(AuthService.check_user_access_token)) -> List[EntityTagDTO]:
+                       _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> List[EntityTagDTO]:
     return TagService.find_by_entity_id(entity_type, entity_id).to_dto()
 
 
