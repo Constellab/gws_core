@@ -15,7 +15,7 @@ def _import_file_to_table(key: str) -> None:
         temp_file_path = StreamlitHelper.store_uploaded_file_in_tmp_dir(uploaded_file)
 
         # convert the file to table
-        task_config = StreamlitTaskRunner(TableImporter, key="table_importer")
+        task_config = StreamlitTaskRunner(TableImporter)
 
         file = File(temp_file_path)
         task_config.generate_form_dialog(

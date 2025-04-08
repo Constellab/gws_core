@@ -7,6 +7,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec,
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
                                                   SearchOperator, SearchParams)
+from gws_core.impl.robot.robot_resource import Robot
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.test.data_provider import DataProvider
@@ -41,6 +42,23 @@ class SubFile(File):
 # test_resource_model
 class TestResourceModel(BaseTestCase):
 
+    def test_search_by_name(self):
+        resource = Robot.empty()
+        resource.name = "test"
+        resource_model = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.UPLOADED)
+
+        resource_2 = Robot.empty()
+        resource_2.name = "anotherresource"
+        resource_model_2 = ResourceModel.save_from_resource(resource_2, origin=ResourceOrigin.UPLOADED)
+
+        result = ResourceService.search_by_name("test")
+        self.assertEqual(result.page_info.total_number_of_items, 1)
+        self.assertEqual(result.results[0].id, resource_model.id)
+
+        result = ResourceService.search_by_name("herresour")
+        self.assertEqual(result.page_info.total_number_of_items, 1)
+        self.assertEqual(result.results[0].id, resource_model_2.id)
+
     def test_search(self):
         # Create a scenario and a task
         scenario: ScenarioProxy = ScenarioProxy()
@@ -59,32 +77,32 @@ class TestResourceModel(BaseTestCase):
             SearchFilterCriteria(
                 key="resource_typing_name", operator=SearchOperator.EQ,
                 value=ForSearch.get_typing_name())])
-        self.search(search_dict, 2)
+        self._search(search_dict, 2)
 
         # Search on name ResourceOrigin
         search_dict.set_filters_criteria([
             SearchFilterCriteria(key="origin", operator=SearchOperator.EQ, value=ResourceOrigin.GENERATED.value)])
-        self.search(search_dict, 1)
+        self._search(search_dict, 1)
 
         # Search on Scenario
         search_dict.set_filters_criteria([
             SearchFilterCriteria(key="scenario", operator=SearchOperator.EQ, value=scenario._scenario.id)])
-        self.search(search_dict, 1)
+        self._search(search_dict, 1)
 
         # Search on Task
         search_dict.set_filters_criteria([
             SearchFilterCriteria(key="task_model", operator=SearchOperator.EQ, value=task._process_model.id)])
-        self.search(search_dict, 1)
+        self._search(search_dict, 1)
 
         # Search on Data with full text
         search_dict.set_filters_criteria([self._get_data_filter("information")])
-        self.search(search_dict, 1)
+        self._search(search_dict, 1)
         search_dict.set_filters_criteria([self._get_data_filter("great")])
-        self.search(search_dict, 2)
+        self._search(search_dict, 2)
         search_dict.set_filters_criteria([self._get_data_filter("gre*")])
-        self.search(search_dict, 2)
+        self._search(search_dict, 2)
 
-    def search(self, search_dict: SearchParams, expected_nb_of_result: int) -> None:
+    def _search(self, search_dict: SearchParams, expected_nb_of_result: int) -> None:
         paginator = ResourceService.search(search_dict).to_dto()
         self.assertEqual(
             paginator.total_number_of_items, expected_nb_of_result)

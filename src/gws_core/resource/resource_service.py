@@ -280,6 +280,15 @@ class ResourceService():
     ############################# SEARCH ###########################
 
     @classmethod
+    def search_by_name(cls, name: str, page: int = 0,
+                       number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+        search_builder: SearchBuilder = ResourceSearchBuilder()
+
+        search_builder.add_expression(ResourceModel.name.contains(name))
+
+        return search_builder.search_page(page, number_of_items_per_page)
+
+    @classmethod
     def search(cls, search: SearchParams,
                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
 

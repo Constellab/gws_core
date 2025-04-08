@@ -1,7 +1,7 @@
 
 import streamlit as st
 
-from gws_core.streamlit import ResourceSearchInput
+from gws_core.streamlit import StreamlitResourceSelect
 
 
 def render_resources_page():
@@ -9,37 +9,35 @@ def render_resources_page():
     st.title('Resources')
     st.info('This page contains a showcase for streamlit component to interact with resources.')
 
-    _render_resource_search_input()
+    _render_resource_select()
 
 
-def _render_resource_search_input():
-    st.subheader('Resource Search Input')
-    st.info('This is a resource search input. It contains multiple search options for resources.')
+def _render_resource_select():
+    st.subheader('Resource Select')
+    st.info('This is a resource search input. It allows the user to search and select a resource.')
 
-    resource_search = ResourceSearchInput()
-    # show only flagged resources
-    resource_search.add_flagged_filter(True)
-    selected_resource = resource_search.select(
-        placeholder='Search for resource', label='Resource Search Input', key='resource-search')
+    resource_select = StreamlitResourceSelect()
+    selected_resource = resource_select.select_resource(
+        placeholder='Search for resource', key="resource-selector", defaut_resource=None)
 
     if selected_resource:
         st.write(f'Selected resource: {selected_resource.name}')
     else:
         st.write('No resource selected')
 
-    st.code('''
-import streamlit as st
-from gws_core.streamlit import ResourceSearchInput
+    st.code("""
+st.subheader('Resource Select')
 
-resource_search = ResourceSearchInput()
-resource_search.add_flagged_filter(True)
-selected_resource = resource_search.select(
-    placeholder='Search for resource', label='Resource Search Input', key='resource-search')
+resource_select = StreamlitResourceSelect()
+selected_resource = resource_select.select_resource(
+    placeholder='Search for resource', key="resource-selector", defaut_resource=None)
 
 if selected_resource:
     st.write(f'Selected resource: {selected_resource.name}')
 else:
     st.write('No resource selected')
-''')
+
+
+    """)
 
     st.divider()

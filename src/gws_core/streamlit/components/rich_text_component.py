@@ -29,16 +29,18 @@ def rich_text_editor(placeholder: str = None,
     :rtype: RichText
     """
 
-    streamlit_component_loader = StreamlitComponentLoader(
-        "text-editor",
-        version="dc_text_editor_1.3.0",
-        is_released=True)
+    streamlit_component_loader = StreamlitComponentLoader("text-editor")
 
     default_value_json = initial_value.to_dto_json_dict() if initial_value is not None else None
 
-    component_value = streamlit_component_loader.get_function()(
-        placeholder=placeholder, initial_value=default_value_json, key=key, default=default_value_json,
-        disabled=disabled, min_height=min_height, max_height=max_height)
+    data = {
+        "placeholder": placeholder,
+        "initial_value": default_value_json,
+        "disabled": disabled,
+        "min_height": min_height,
+        "max_height": max_height
+    }
+    component_value = streamlit_component_loader.call_component(data, key=key)
 
     if component_value is None:
         return RichText()

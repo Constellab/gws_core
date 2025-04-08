@@ -110,6 +110,19 @@ def check_impact_delete_resource(id_: str,
     return EntityNavigatorService.check_impact_delete_resource(id_).to_dto()
 
 
+@core_app.get("/resource/search-name/{name}", tags=["Resource"],
+              summary="Search resource by name")
+def search_resource_by_name(name: str,
+                            page: Optional[int] = 1,
+                            number_of_items_per_page: Optional[int] = 20,
+                            _=Depends(AuthService.check_user_access_token)) -> PageDTO[ResourceModelDTO]:
+    """
+    Search resource by name
+    """
+
+    return ResourceService.search_by_name(name, page, number_of_items_per_page).to_dto()
+
+
 @core_app.post("/resource/advanced-search", tags=["Resource"], summary="Advanced search for resource")
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,

@@ -21,7 +21,7 @@ def _call_transformer(transformer: Type[Transformer], suffix: str) -> None:
         AutoMlState.add_table(result[Transformer.output_name], name, set_current=True,
                               original_name=current_table.original_name)
 
-    task_config = StreamlitTaskRunner(transformer, key='process-config')
+    task_config = StreamlitTaskRunner(transformer)
     task_config.generate_form_dialog(
         inputs={Transformer.input_name: current_table.table},
         on_run_success=on_success)

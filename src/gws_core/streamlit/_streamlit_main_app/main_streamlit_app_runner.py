@@ -62,6 +62,9 @@ class StreamlitMainAppRunner:
         # Add custom css to hide the streamlit menu
         st.markdown("""
             <style>
+                html{
+                    font-size: 14px;
+                }
                 .block-container {
                     padding: 8px;
                 }

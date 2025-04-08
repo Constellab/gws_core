@@ -2,7 +2,7 @@
 
 import os
 from json import load
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -12,70 +12,70 @@ from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import \
     LoggerMessageObserver
-from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.streamlit.widgets.streamlit_helper import StreamlitHelper
 from gws_core.streamlit.widgets.streamlit_state import StreamlitUserAuthInfo
 
 
 class StreamlitComponentLoader():
     """ Class to load a streamlit component.
-    In dev mode, the component is loaded from the dev front app.
-    In release mode, the component is downloaded from the github release.
+    In dev mode
+        - the component is loaded from the dev front app running in (DEV_FRONT_URL).
+    In release mode
+        - the IFRAME_MESSAGE is downloaded from the github release.
+        - then the comopnent is generated as streamlit component.
+        - the IFRAME_MESSAGE role is to send message to streamlit app to generate the component in main app.
 
     :return: _description_
     :rtype: _type_
     """
-
-    # url for dev front app
-    DEV_FRONT_URL = "http://localhost:4201"
 
     VERSION_FILE_NAME = "version.json"
     VERSION_KEY = "version"
 
     RELEASE_BASE_URL = 'https://github.com/Constellab/dashboard-components/releases/download/'
 
+    IFRAME_MESSAGE = "iframe-message"
+    IFRAME_MESSAGE_VERSION = "dc_iframe_message_1.0.0"
+
+    IS_RELEASED = True
+    # url for dev front app
+    DEV_FRONT_URL = "http://localhost:4201"
+
+    # name of the component to load
     component_name: str
-    version: str
-    is_released: bool
 
-    def __init__(self, component_name: str, version: str, is_released: bool):
+    def __init__(self, component_name: str):
         self.component_name = component_name
-        self.version = version
-        self.is_released = is_released
 
-    def call_component(self, data: Any, authentication_info: StreamlitUserAuthInfo = None) -> Any:
+    def call_component(self, data: Any, key: str, authentication_info: StreamlitUserAuthInfo = None) -> Any:
         """Call the component with the data.
-        The component will receive the data formatted like this:
-        {
-            "lab_info": {
-                "authentication_info":StreamlitUserAuthInfo,
-                "lab_api_url": str
-            },
-            "data": data
-        }
 
         :param data: data to pass to the component
         :type data: Any
+        :param key: streamlit key
+        :type key: str
         :param authenticationInfo: authentication info to pass to the component if the component can request the API, defaults to None
         :type authenticationInfo: StreamlitUserAuthInfo, optional
         :return: _description_
         :rtype: Any
         """
-        lab_info = None
-        if authentication_info:
-            lab_info = {
-                "authentication_info": authentication_info.to_json_dict(),
-                "lab_api_url": Settings.get_instance().get_lab_api_url()
-            }
         return self.get_function()(
-            lab_info=lab_info,
-            data=data
+            authentication_info=authentication_info.to_json_dict() if authentication_info else None,
+            container_class=StreamlitHelper.get_element_css_class(key),
+            # We pass the component name to the component to be able to
+            # dynamically load the component
+            component=self.component_name,
+            component_data=data,
+            # we pass the key so streamlit knows the component
+            # key and set a class to the component container
+            key=key,
         )
 
     def get_function(self) -> Callable:
-        if self.is_released:
+        if self.IS_RELEASED:
             return self._get_released_function()
         else:
             return self._get_dev_function()
@@ -87,15 +87,23 @@ class StreamlitComponentLoader():
         )
 
     def _get_released_function(self) -> Callable:
+        """ Load the component in release mode.
+        The iframe message component is loaded from the github release.
+        The
+
+
+        :return: _description_
+        :rtype: Callable
+        """
 
         settings = Settings.get_instance()
         destination_folder = settings.get_brick_data_dir(BrickHelper.GWS_CORE)
 
         # read the existing version
-        destination_folder_full_path = os.path.join(destination_folder, self.version)
+        destination_folder_full_path = os.path.join(destination_folder, self.IFRAME_MESSAGE_VERSION)
         existing_version = self._get_existing_version(destination_folder_full_path)
 
-        if existing_version == self.version:
+        if existing_version == self.IFRAME_MESSAGE_VERSION:
             # The component is already downloaded
             return components.declare_component(
                 self.component_name,
@@ -111,9 +119,9 @@ class StreamlitComponentLoader():
         # Download the file
         folder_path: str
         with st.spinner('Installing the component...'):
-            Logger.info(f"Downloading the component {self.component_name} version {self.version}")
+            Logger.info(f"Downloading the component {self.component_name} version {self.IFRAME_MESSAGE_VERSION}")
             file_downloader = FileDownloader(destination_folder, message_dispatcher=message_dispatcher)
-            folder_path = file_downloader.download_file_if_missing(self._get_release_url(), self.version,
+            folder_path = file_downloader.download_file_if_missing(self._get_release_url(), self.IFRAME_MESSAGE_VERSION,
                                                                    decompress_file=True)
 
         return components.declare_component(
@@ -134,4 +142,4 @@ class StreamlitComponentLoader():
         return None
 
     def _get_release_url(self) -> str:
-        return f"{self.RELEASE_BASE_URL}{self.version}/{self.component_name}.zip"
+        return f"{self.RELEASE_BASE_URL}{self.IFRAME_MESSAGE_VERSION}/{self.IFRAME_MESSAGE}.zip"

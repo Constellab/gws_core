@@ -16,6 +16,7 @@ from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
 from gws_core.streamlit.streamlit_app import StreamlitApp, StreamlitAppUrl
 from gws_core.streamlit.streamlit_dto import StreamlitProcessStatusDTO
+from gws_core.streamlit.streamlit_plugin import StreamlitPlugin
 from gws_core.user.current_user_service import CurrentUserService
 
 
@@ -71,6 +72,9 @@ class StreamlitProcess:
 
         theme = self.get_current_user_theme()
 
+        # Install gws plugin if not already installed
+        StreamlitPlugin.install_plugin()
+
         cmd = ['streamlit', 'run', app.get_main_app_file_path(),
                f'--theme.backgroundColor={theme.background_color}',
                f'--theme.secondaryBackgroundColor={theme.secondary_background_color}',
@@ -79,6 +83,7 @@ class StreamlitProcess:
                f'--server.port={str(self.port)}',
                # prevent streamlit to open the browser
                '--server.headless=true',
+               '--browser.gatherUsageStats=false',
                #    '--theme.font=Roboto Serif',
                ]
 
