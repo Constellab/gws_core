@@ -1,5 +1,4 @@
 import streamlit as st
-
 from gws_core import PlotlyResource
 from gws_core.impl.table.smart_tasks.table_smart_plotly import \
     AITableGeneratePlotly
@@ -58,9 +57,9 @@ def _render_code():
     st.code('''
 from gws_core import PlotlyResource
 from gws_core.impl.plotly.table_smart_plotly import AITableGeneratePlotly
-from gws_core.streamlit import StreamlitContainer, StreamlitOpenAiChat
+from gws_core.streamlit import StreamlitContainers, StreamlitOpenAiChat
 
-with StreamlitContainer.container_centered('chat-container'):
+with StreamlitContainers.container_centered('chat-container'):
     st.dataframe(table.get_data())
 
     streamlit_ai_chat = StreamlitOpenAiChat.load_from_session('plot_chat')

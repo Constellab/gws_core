@@ -3,13 +3,12 @@ import json
 import os
 
 import typer
-from typing_extensions import Annotated, Literal
-
 from gws_cli.generate_streamlit_app.generate_streamlit_app import \
     generate_streamlit_app
 from gws_core import (CondaShellProxy, LoggerMessageObserver, MambaShellProxy,
                       PipShellProxy, ShellProxy, StreamlitApp,
                       StreamlitAppsManager, Utils)
+from typing_extensions import Annotated, Literal
 
 app = typer.Typer()
 
@@ -88,7 +87,7 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the js
 
 @app.command("generate")
 def generate(
-        name: Annotated[str, typer.Argument(help="Name of the streamlit app (Pascal case).")]):
+        name: Annotated[str, typer.Argument(help="Name of the streamlit app (PascalCase).")]):
     print(f"Generating streamlit app: '{name}'")
     app_folder = generate_streamlit_app(name,)
     print(f"Streamlit app '{name}' created successfully in '{app_folder}'.")

@@ -1,6 +1,5 @@
 
 import streamlit as st
-
 from gws_core.streamlit import StreamlitContainers, StreamlitGridCell
 
 
@@ -32,11 +31,11 @@ def _render_center_container():
 
         st.code(f'''
 import streamlit as st
-from gws_core.streamlit import StreamlitContainer
+from gws_core.streamlit import StreamlitContainers
 
 style = """{style}"""
 
-with StreamlitContainer.container_centered('container-center', max_width='48em',
+with StreamlitContainers.container_centered('container-center', max_width='48em',
             additional_style=style):
     st.write('This is a centered container')
 ''')
@@ -62,7 +61,7 @@ def _render_row_container():
 
     st.code(f'''
 import streamlit as st
-from gws_core.streamlit import StreamlitContainer
+from gws_core.streamlit import StreamlitContainers
 
 style = """{style}"""
 with StreamlitContainers.row_container('container-row', flow='row wrap',
@@ -95,10 +94,10 @@ def _render_column_with_fit_content():
 
     st.code(f'''
 import streamlit as st
-from gws_core.streamlit import StreamlitContainer
+from gws_core.streamlit import StreamlitContainers
 
 style = """{style}"""
-title_col, button_col = StreamlitContainer.columns_with_fit_content('container-column', cols=[1, 'fit-content'])
+title_col, button_col = StreamlitContainers.columns_with_fit_content('container-column', cols=[1, 'fit-content'])
 with title_col:
     st.write('This column takes max space')
 with button_col:
@@ -123,10 +122,10 @@ def _render_full_min_height_container():
 
     st.code(f'''
 import streamlit as st
-from gws_core.streamlit import StreamlitContainer
+from gws_core.streamlit import StreamlitContainers
 
 style = """{style}"""
-with StreamlitContainer.container_full_min_height('container-full-min-height', additional_style=style):
+with StreamlitContainers.container_full_min_height('container-full-min-height', additional_style=style):
     st.info('This allow the container to take at minimum the full height of the page.')
 ''')
 
@@ -145,10 +144,10 @@ def _render_container_with_style():
 
     st.code(f'''
 import streamlit as st
-from gws_core.streamlit import StreamlitContainer
+from gws_core.streamlit import StreamlitContainers
 
 style = """{style}"""
-with StreamlitContainer.container_with_style('container-with-style', style):
+with StreamlitContainers.container_with_style('container-with-style', style):
     st.write('This is a container with style')
 ''')
 
@@ -216,7 +215,7 @@ def _render_grid():
 
     st.code('''
 import streamlit as st
-from gws_core.streamlit import StreamlitContainer
+from gws_core.streamlit import StreamlitContainers
 
 grid_cells = [
     StreamlitGridCell(col_span=3, row_span=1, style="""
@@ -297,12 +296,12 @@ def _render_exception_container():
 
     st.code('''
 import streamlit as st
-from gws_core.streamlit import StreamlitContainer
+from gws_core.streamlit import StreamlitContainers
 
 try:
     raise Exception('An exception occurred')
 except Exception as e:
-    StreamlitContainer.exception_container(key='exception-container',
+    StreamlitContainers.exception_container(key='exception-container',
                                            error_text='Custom message',
                                            exception=e)
 ''')

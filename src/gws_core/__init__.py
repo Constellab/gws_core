@@ -148,15 +148,22 @@ from .folder.task.space_folder_param import \
     SpaceFolderParam as SpaceFolderParam
 from .folder.task.space_folder_resource import \
     SpaceFolderResource as SpaceFolderResource
-# Code > AgentFactory
-from .impl.agent.helper.agent_factory import AgentFactory as AgentFactory
 # Impl > Agent
+from .impl.agent.helper.agent_factory import AgentFactory as AgentFactory
 from .impl.agent.py_agent import PyAgent as PyAgent
 from .impl.agent.py_conda_agent import PyCondaAgent as PyCondaAgent
 from .impl.agent.py_mamba_agent import PyMambaAgent as PyMambaAgent
 from .impl.agent.py_pipenv_agent import PyPipenvAgent as PyPipenvAgent
 from .impl.agent.r_conda_agent import RCondaAgent as RCondaAgent
 from .impl.agent.r_mamba_agent import RMambaAgent as RMambaAgent
+# Impl > Dify
+from .impl.dify.dify_service import \
+    DifySendDocumentOptions as DifySendDocumentOptions
+from .impl.dify.dify_service import \
+    DifySendEndMessageStreamResponse as DifySendEndMessageStreamResponse
+from .impl.dify.dify_service import \
+    DifySendMessageStreamResponse as DifySendMessageStreamResponse
+from .impl.dify.dify_service import DifyService as DifyService
 # Impl > File
 from .impl.file.file import File as File
 from .impl.file.file_helper import FileHelper as FileHelper
