@@ -1352,7 +1352,7 @@ class Migration0100(BrickMigration):
             migrator.rename_column_if_exists(SpaceFolder, 'title', 'name')
             migrator.migrate()
 
-    @brick_migration('0.14.0', short_description='Add link type to ShareLink')
+    @brick_migration('0.14.0-beta.1', short_description='Add link type to ShareLink')
     class Migration0140(BrickMigration):
 
         @classmethod
@@ -1362,9 +1362,11 @@ class Migration0100(BrickMigration):
             migrator.add_column_if_not_exists(ShareLink, ShareLink.link_type)
             migrator.migrate()
 
-            # delete unique key sharelink_entity_id_entity_type
-            ShareLink.execute_sql("ALTER TABLE [TABLE_NAME] DROP INDEX sharelink_entity_id_entity_type")
+            if ShareLink.index_exists('sharelink_entity_id_entity_type'):
+                # delete unique key sharelink_entity_id_entity_type
+                ShareLink.execute_sql("ALTER TABLE [TABLE_NAME] DROP INDEX sharelink_entity_id_entity_type")
 
-            # Create unique key sharelink_entity_id_entity_type_link_type
-            ShareLink.execute_sql(
-                "CREATE UNIQUE INDEX sharelink_entity_id_entity_type_link_type ON gws_share_link (entity_id, entity_type, link_type)")
+            if not ShareLink.index_exists('sharelink_entity_id_entity_type_link_type'):
+                # Create unique key sharelink_entity_id_entity_type_link_type
+                ShareLink.execute_sql(
+                    "CREATE UNIQUE INDEX sharelink_entity_id_entity_type_link_type ON gws_share_link (entity_id, entity_type, link_type)")
