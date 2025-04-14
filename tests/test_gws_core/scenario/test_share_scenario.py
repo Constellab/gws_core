@@ -109,7 +109,7 @@ class TestShareScenario(BaseTestCase):
             valid_until=DateHelper.now_utc() + timedelta(days=1)
         )
 
-        share_link = ShareLinkService.generate_share_link(generate_dto, ShareLinkType.PUBLIC)
+        share_link = ShareLinkService.generate_share_link(share_dto, ShareLinkType.PUBLIC)
 
         new_scenario = ScenarioTransfertService.import_from_lab_sync(
             ScenarioDownloader.build_config(share_link.get_download_link(),  "All", 'Force new scenario'))
