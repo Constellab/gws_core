@@ -24,7 +24,7 @@ from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..user.activity.activity_service import ActivityService
-from ..user.current_user_service import AuthenticateUser, CurrentUserService
+from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from .scenario import Scenario
 from .scenario_enums import ScenarioStatus
@@ -44,19 +44,15 @@ class ScenarioRunService():
         """
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
-        try:
-            if scenario.status != ScenarioStatus.WAITING_FOR_CLI_PROCESS:
-                raise Exception(
-                    f"Cannot run the scenario {scenario.id} as its status was changed before process could run it")
-
-        except Exception as err:
-            error_text = GWSException.SCENARIO_ERROR_BEFORE_RUN.value + str(err)
-            Logger.error(error_text)
+        if scenario.status != ScenarioStatus.WAITING_FOR_CLI_PROCESS:
+            Logger.error(f"Cannot run the scenario {scenario.id} as its status was changed before process could run it")
             scenario.mark_as_error(ProcessErrorInfo(
-                detail=error_text,
+                detail=f"Cannot run the scenario {scenario.id} as its status was changed before process could run it",
                 unique_code=GWSException.SCENARIO_ERROR_BEFORE_RUN.name,
                 context=None,
                 instance_id=None))
+            return
+
         cls.run_scenario(scenario)
 
     @classmethod

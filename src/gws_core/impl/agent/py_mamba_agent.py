@@ -22,6 +22,9 @@ class PyMambaAgent(PyCondaAgent):
     Here is the general documentation for agent: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779
 
     Here is the documentation of the agent: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/env-agent/c6acb3c3-2a7c-44cd-8fb2-ea1beccdbdcc
+
+    Use the parameter 'Log output to task' to enable print messages (like print, logging, etc.) to be logged in the task log.
+    This is useful to debug your code and see the output of your code.
     """
 
     def _create_shell_proxy(self, env: str) -> MambaShellProxy:

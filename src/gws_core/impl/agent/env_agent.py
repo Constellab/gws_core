@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.dynamic_param import DynamicParam
+from gws_core.config.param.param_spec import BoolParam
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
@@ -61,12 +62,14 @@ class EnvAgent(Task):
     ENV_CONFIG_NAME = 'env'
     CODE_CONFIG_NAME = 'code'
     PARAMS_CONFIG_NAME = 'params'
+    LOG_STDOUT_CONFIG_NAME = 'log_stdout'
 
     __is_agent__: bool = True
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        code: str = params.get_value('code')
-        env = params.get_value('env')
+        code: str = params.get_value(self.CODE_CONFIG_NAME)
+        env = params.get_value(self.ENV_CONFIG_NAME)
+        log_stdout = params.get_value(self.LOG_STDOUT_CONFIG_NAME)
 
         # build the source path
         source_paths = self.get_source_path(inputs.get("source"))
@@ -74,13 +77,13 @@ class EnvAgent(Task):
         self.shell_proxy = self._create_shell_proxy(env)
 
         # create the executable code file
-        code_file_path = self.generate_code_file(code, params.get_value('params'),
+        code_file_path = self.generate_code_file(code, params.get_value(self.PARAMS_CONFIG_NAME),
                                                  source_paths)
 
         # validate user inputs, params, code
         cmd = self._format_command(code_file_path)
         result: int = None
-        result = self.shell_proxy.run(cmd, shell_mode=False)
+        result = self.shell_proxy.run(cmd, shell_mode=False, dispatch_stdout=log_stdout)
 
         if result != 0:
             raise BadRequestException(
@@ -237,6 +240,13 @@ with open('{target_paths_filename}', 'w') as f:
     @classmethod
     def build_config_params_dict(cls, code: str, params: Dict[str, Any], env: str) -> ConfigParamsDict:
         return {'code': code, "params": params, "env": env}
+
+    @classmethod
+    def get_log_stdout_param(cls) -> BoolParam:
+        return BoolParam(
+            default_value=False, visibility='protected',
+            human_name="Log output to task", short_description="Log the output of the code snippet to the task log"
+        )
 
     @classmethod
     def dict_to_r_format(cls, d):

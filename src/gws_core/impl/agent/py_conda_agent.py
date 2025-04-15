@@ -26,6 +26,9 @@ class PyCondaAgent(EnvAgent):
     Here is the general documentation for agent: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/getting-started/69820653-52e0-41ba-a5f3-4d9d54561779
 
     Here is the documentation of the agent: https://constellab.community/bricks/gws_core/latest/doc/developer-guide/agent/env-agent/c6acb3c3-2a7c-44cd-8fb2-ea1beccdbdcc
+
+    Use the parameter 'Log output to task' to enable print messages (like print, logging, etc.) to be logged in the task log.
+    This is useful to debug your code and see the output of your code.
     """
 
     SNIPPET_FILE_EXTENSION: str = "py"
@@ -38,7 +41,9 @@ class PyCondaAgent(EnvAgent):
         ),
         'code': PythonCodeParam(
             default_value=AgentCodeHelper.get_python_env_code_template(),
-            human_name="Python code snippet", short_description="The Python code snippet to execute using shell command"),
+            human_name="Python code snippet", short_description="The Python code snippet to execute using shell command"
+        ),
+        'log_stdout': EnvAgent.get_log_stdout_param()
     })
 
     def _format_command(self, code_file_path: str) -> list:

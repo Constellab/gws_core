@@ -6,7 +6,7 @@ import subprocess
 from abc import abstractmethod
 from json import dump, load
 from pathlib import Path
-from typing import Any, Dict, Union, final
+from typing import Any, Dict, Type, TypeVar, Union, final
 
 from typing_extensions import Literal
 
@@ -19,6 +19,8 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.virtual_env.venv_dto import VEnvCreationInfo
 
 from .shell_proxy import ShellProxy, ShellProxyDTO
+
+BaseEnvShellType = TypeVar('BaseEnvShellType', bound='BaseEnvShell')
 
 
 class BaseEnvShell(ShellProxy):
@@ -397,7 +399,9 @@ class BaseEnvShell(ShellProxy):
             return VEnvCreationInfo.from_json(load(json_file))
 
     @classmethod
-    def from_env_str(cls, env_str: str, message_dispatcher: MessageDispatcher = None) -> "BaseEnvShell":
+    def from_env_str(
+            cls: Type[BaseEnvShellType],
+            env_str: str, message_dispatcher: MessageDispatcher = None) -> BaseEnvShellType:
         """
         Create the virtual environment from a string containing the environment definition.
 
