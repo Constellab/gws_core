@@ -42,7 +42,7 @@ class TagOriginDTO(BaseModelDTO):
 
 class TagDTO(BaseModelDTO):
     key: str
-    value: str
+    value: Optional[str] = None
     is_propagable: Optional[bool] = None
     origins: Optional[List[TagOriginDTO]] = None
     value_format: Optional[TagValueFormat] = TagValueFormat.STRING

@@ -6,7 +6,6 @@ from typing import Any, Callable
 
 import streamlit as st
 import streamlit.components.v1 as components
-
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher

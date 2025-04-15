@@ -2,14 +2,13 @@
 
 from typing import Type
 
-from peewee import Expression, Field
-
 from gws_core.core.model.model import Model
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_dto import TagValueFormat
 from gws_core.tag.tag_key_model import TagKeyModel
+from peewee import Expression, Field
 
 from ..core.classes.search_builder import (SearchBuilder, SearchBuilderType,
                                            SearchFilterCriteria,
@@ -45,6 +44,8 @@ class EntityWithTagSearchBuilder(SearchBuilder):
         tags = TagHelper.tags_dict_to_list(filter_.value)
 
         for tag in tags:
+            if tag.value is None:  # Value is None if we want to check if the tag exists
+                filter_.operator = SearchOperator.NOT_NULL
             self.add_tag_filter(tag, filter_.operator)
 
         # return none because expression is already added with the join

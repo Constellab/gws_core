@@ -2,10 +2,9 @@
 
 from typing import Type
 
-from pandas import DataFrame, read_excel, read_table
-
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.impl.file.file_helper import FileHelper
+from pandas import DataFrame, read_excel, read_table
 
 from ....config.config_params import ConfigParams
 from ....config.config_specs import ConfigSpecs

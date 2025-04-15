@@ -1,12 +1,13 @@
 
 
-from typing import List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.folder.space_folder import SpaceFolder
+from gws_core.impl.table.table import Table
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.view.view_dto import ResourceViewMetadatalDTO, ViewDTO
@@ -313,7 +314,44 @@ class ResourceService():
             search_builder.add_expression(ResourceModel.flagged == True)
         search.remove_filter_criteria('include_not_flagged')
 
-        return search_builder.add_search_params(search).search_page(page, number_of_items_per_page)
+        # Handle 'column_tags'
+        column_tags: SearchFilterCriteria = search.get_filter_criteria(
+            'column_tags')
+        column_tags_filter_function: Callable[[ResourceModel], bool] = None
+        if column_tags is not None and column_tags.value:
+            column_tags_filter_function: Callable[[ResourceModel],
+                                                  bool] = lambda table_resource_model: cls.check_column_tags(
+                table_resource_model, column_tags.value)
+            search.remove_filter_criteria('column_tags')
+
+        pagination = search_builder.add_search_params(search).search_page(
+            page, number_of_items_per_page)
+        if column_tags_filter_function is not None:
+            pagination.filter(column_tags_filter_function, number_of_items_per_page)
+        return pagination
+
+    @classmethod
+    def check_column_tags(cls, table_resource_model: ResourceModel, filter_column_tags: List[Any]) -> bool:
+        if (table_resource_model.resource_typing_name != 'RESOURCE.gws_core.Table'):
+            return False
+
+        table: Table = table_resource_model.get_resource()
+
+        for filter_column_tag in filter_column_tags:
+            key = filter_column_tag['key']
+            value: str = filter_column_tag['value']
+            if value is not None:
+                value = value.strip().lower()
+
+            not_found = True
+            for column_tag in table.get_column_tags():
+                if key in column_tag and value in column_tag[key]:
+                    not_found = False
+                    break
+            if not_found:
+                return False
+
+        return True
 
     ############################# SHARED RESOURCE ###########################
 

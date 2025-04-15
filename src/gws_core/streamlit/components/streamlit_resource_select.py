@@ -1,9 +1,8 @@
 
 
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import streamlit as st
-
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.streamlit.components.streamlit_component_loader import \
     StreamlitComponentLoader
@@ -13,6 +12,21 @@ from gws_core.streamlit.widgets.streamlit_state import StreamlitState
 class StreamlitResourceSelect():
 
     _streamlit_component_loader = StreamlitComponentLoader("select-resource")
+    filters: Dict[str, Any] = {}
+    column_tags_filter_keys: List[str] = []
+
+    def __init__(self):
+        self.filters = {}
+        self.column_tags_filter_keys = []
+
+    def add_tag_filter(self, key: str, value: Any = None) -> None:
+        if 'tags' not in self.filters:
+            self.filters['tags'] = []
+        tag = {'key': key, 'value': value} if value is not None else {'key': key}
+        self.filters['tags'].append(tag)
+
+    def add_column_tag_filter_key(self, key: str) -> None:
+        self.column_tags_filter_keys.append(key)
 
     def select_resource(self, placeholder: str = 'Search for resource',
                         key='resource-select',
@@ -30,6 +44,8 @@ class StreamlitResourceSelect():
         data = {
             "default_resource": defaut_resource.to_dto() if defaut_resource is not None else None,
             "placeholder": placeholder,
+            "default_filters": self.filters,
+            "column_tags_filter_keys": self.column_tags_filter_keys,
         }
 
         component_value = self._streamlit_component_loader.call_component(
