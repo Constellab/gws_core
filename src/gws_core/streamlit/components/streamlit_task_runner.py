@@ -104,7 +104,8 @@ class StreamlitTaskRunner():
         }
 
         component_value = self._streamlit_component_loader.call_component(
-            data, key=key, authentication_info=StreamlitState.get_user_auth_info())
+            data, key=key,
+            authentication_info=StreamlitState.get_and_check_app_authentication_for_component('StreamlitTaskRunner'))
 
         if component_value is None:
             return None

@@ -31,7 +31,6 @@ from gws_core.streamlit.streamlit_apps_manager import StreamlitAppsManager
 from gws_core.streamlit.streamlit_dashboard import Dashboard
 from gws_core.streamlit.streamlit_view import StreamlitView
 from gws_core.task.task_model import TaskModel
-from gws_core.user.current_user_service import CurrentUserService
 
 
 @resource_decorator("StreamlitResource", human_name="Dashboard",

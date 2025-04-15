@@ -11,7 +11,7 @@ class {{dashboardClass}}(Dashboard):
     # retrieve the path of the app folder, relative to this file
     # the dashboard code folder starts with a underscore to avoid being loaded when the brick is loaded
     def get_app_folder_path(self):
-        return self.get_app_folder_from_relative(__file__, "{{folderAppName}}")
+        return self.get_app_folder_from_relative_path(__file__, "{{folderAppName}}")
 
 
 @task_decorator("{{generateClass}}", human_name="Generate {{name}} app",

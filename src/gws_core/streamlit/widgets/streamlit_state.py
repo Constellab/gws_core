@@ -72,7 +72,7 @@ class StreamlitState():
         """
         user_access_token = cls.get_app_info().get('user_access_token')
         if not user_access_token:
-            st.error('User access token not provided')
+            st.error('User access token not provided.')
             st.stop()
         return user_access_token
 
@@ -94,3 +94,19 @@ class StreamlitState():
         :rtype: StreamlitAppInfo
         """
         return st.session_state.get('__gws_app_info__')
+
+    @classmethod
+    def get_and_check_app_authentication_for_component(cls, component_name: str) -> StreamlitUserAuthInfo:
+        """ Called by components that requires authentication. This function checks if the app requires authentication
+        and if the user is authenticated. If not, it raises an exception.
+        :param component_name: the name of the component
+        :type component_name: str
+        :return: the user auth info
+        :rtype: StreamlitUserAuthInfo
+        """
+        if not cls.app_requires_authentication():
+            raise Exception(
+                f"The component {component_name} requires authentication but the app does not require authentication. "
+                + "Please set the app to require authentication. " +
+                "Use `streamlit_resource.set_requires_authentication(True)` (or remove as this is default) when creating the `StreamlitResource` in the generation task.")
+        return cls.get_user_auth_info()

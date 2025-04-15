@@ -1,5 +1,3 @@
-import os
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import TextParam
@@ -19,8 +17,8 @@ class GenerateDocAssistantDashboard(Dashboard):
     # retrieve the path of the app folder, relative to this file
     # the dashboard code folder starts with a underscore to avoid being loaded when the brick is loaded
     def get_app_folder_path(self):
-        return os.path.join(
-            os.path.abspath(os.path.dirname(__file__)),
+        return self.get_app_folder_from_relative_path(
+            __file__,
             "_doc_assistant_app"
         )
 
@@ -59,6 +57,7 @@ class GenerateDocAssistant(Task):
 
         streamlit_app.set_dashboard(GenerateDocAssistantDashboard())
         streamlit_app.name = "Documentation AI assistant"
+        streamlit_app.set_requires_authentication(False)
 
         streamlit_app.set_param('product_doc_default_prompt', params['product_doc_default_prompt'])
 

@@ -9,23 +9,23 @@ from gws_core.streamlit import StreamlitTaskRunner
 
 def render_processes_page():
     st.title("Processes")
-    st.info("This page contains a showcase for streamlit component to interact with tasks and protocols.")
+    st.info("This page contains a showcase for streamlit component to interact with tasks and protocols. The preview is not enable yet")
 
     _render_task_runner()
 
 
 def _render_task_runner():
-    key = "import_file_uploader"
-    st.file_uploader("Upload a CSV or excel file",
-                     type=Table.ALLOWED_FILE_FORMATS,
-                     key=key, on_change=lambda: _import_file_to_table(key))
+    # key = "import_file_uploader"
+    # st.file_uploader("Upload a CSV or excel file",
+    #                  type=Table.ALLOWED_FILE_FORMATS,
+    #                  key=key, on_change=lambda: _import_file_to_table(key))
 
-    imported_table: Table = st.session_state.get("imported_table")
-    if imported_table is None:
-        st.write("No table imported yet.")
-    else:
-        st.write("Imported table:")
-        st.dataframe(imported_table.get_data())
+    # imported_table: Table = st.session_state.get("imported_table")
+    # if imported_table is None:
+    #     st.write("No table imported yet.")
+    # else:
+    #     st.write("Imported table:")
+    #     st.dataframe(imported_table.get_data())
 
     _render_code()
 

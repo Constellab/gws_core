@@ -1,5 +1,6 @@
 
 
+import os
 from abc import abstractmethod
 from enum import Enum
 from typing import Callable, Type
@@ -37,6 +38,21 @@ class Dashboard(BaseTyping):
         :rtype: ShellProxy
         """
         return ShellProxy()
+
+    def get_app_folder_from_relative_path(self, current_file: str, app_folder_name: str) -> str:
+        """Method to get the app folder from a relative path.
+
+        :param current_file: path of the current file (__file__)
+        :type current_file: str
+        :param folder_name: name of the app folder
+        :type folder_name: str
+        :return: _description_
+        :rtype: str
+        """
+        return os.path.join(
+            os.path.abspath(os.path.dirname(current_file)),
+            app_folder_name
+        )
 
 
 def dashboard_decorator(unique_name: str,
