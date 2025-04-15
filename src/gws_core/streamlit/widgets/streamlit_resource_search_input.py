@@ -1,13 +1,13 @@
 from typing import List, Optional, Type
 
-from peewee import Expression, Ordering
-from streamlit_searchbox import st_searchbox
-
+from gws_core.core.classes.search_builder import SearchOperator
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_search_builder import ResourceSearchBuilder
 from gws_core.tag.tag import Tag
+from peewee import Expression, Ordering
+from streamlit_searchbox import st_searchbox
 
 
 class ResourceSearchInput():
@@ -167,10 +167,10 @@ class ResourceSearchInput():
         self.search_builder.add_expression(ResourceModel.resource_typing_name.in_(resource_typing_names))
         return self
 
-    def add_tag_filter(self, tag: Tag) -> "ResourceSearchInput":
+    def add_tag_filter(self, tag: Tag, value_operator: SearchOperator = SearchOperator.EQ) -> "ResourceSearchInput":
         """Filter the search query by a specific tag
         """
-        self.search_builder.add_tag_filter(tag)
+        self.search_builder.add_tag_filter(tag, value_operator=value_operator)
         return self
 
     def add_origin_filter(self, origin: ResourceOrigin) -> "ResourceSearchInput":
