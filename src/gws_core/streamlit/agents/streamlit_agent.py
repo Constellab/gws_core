@@ -3,7 +3,6 @@ from typing import Any, Dict
 
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.impl.agent.env_agent import EnvAgent
 from gws_core.impl.agent.helper.agent_code_helper import AgentCodeHelper
 from gws_core.io.dynamic_io import DynamicInputs
@@ -47,11 +46,9 @@ class StreamlitAgent(Task):
     })
     config_specs = ConfigSpecs({
         'params': EnvAgent.get_dynamic_param_config(),
-        'code':
-        PythonCodeParam(
-            default_value=AgentCodeHelper.get_streamlit_code_template(),
-            human_name="Streamlit app code",
-            short_description="Code of the streamlit app to run")})
+        'code': AgentCodeHelper.get_streamlit_code_param(),
+        'requires_authentication': AgentCodeHelper.get_streamlit_requires_auth_param()
+    })
 
     __is_agent__: bool = True
 
@@ -61,6 +58,7 @@ class StreamlitAgent(Task):
         streamlit_resource.set_params(params.get_value('params'))
         resource_list: ResourceList = inputs.get('source')
         streamlit_resource.add_multiple_resources(resource_list.to_list(), self.message_dispatcher)
+        streamlit_resource.set_requires_authentication(params.get_value('requires_authentication'))
 
         return {'streamlit_app': streamlit_resource}
 

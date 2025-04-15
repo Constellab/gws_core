@@ -1,15 +1,17 @@
 import os
 
 import streamlit as st
+from showcase_core import ShowcaseCore
 
-from gws_core import (File, FileHelper, Settings, Table, TableImporter,
-                      TaskOutputs)
+from gws_core import File, FileHelper, Settings, TableImporter, TaskOutputs
 from gws_core.streamlit import StreamlitTaskRunner
 
 
 def render_processes_page():
     st.title("Processes")
     st.info("This page contains a showcase for streamlit component to interact with tasks and protocols. The preview is not enable yet")
+
+    ShowcaseCore.show_requires_authentication_warning()
 
     _render_task_runner()
 

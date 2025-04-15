@@ -50,7 +50,9 @@ class StreamlitEnvAgent(Task):
         pass
 
     def run_agent(self, resources: ResourceList, params: Dict[str, Any],
-                  code: str, env_code: str = None,
+                  code: str,
+                  requires_authentication: bool,
+                  env_code: str = None,
                   env_shell_proxy: BaseEnvShell = None) -> StreamlitResource:
 
         if env_code is not None and 'streamlit' not in env_code:
@@ -61,6 +63,7 @@ class StreamlitEnvAgent(Task):
         streamlit_resource.set_env_shell_proxy(env_shell_proxy)
         streamlit_resource.set_params(params)
         streamlit_resource.add_multiple_resources(resources.to_list(), self.message_dispatcher)
+        streamlit_resource.set_requires_authentication(requires_authentication)
 
         # install the env so it is not installed when viewing the app
         if env_shell_proxy is not None:

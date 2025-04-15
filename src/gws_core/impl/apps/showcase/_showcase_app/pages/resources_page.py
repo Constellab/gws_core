@@ -1,5 +1,6 @@
 
 import streamlit as st
+from showcase_core import ShowcaseCore
 
 
 def render_resources_page():
@@ -13,6 +14,8 @@ def render_resources_page():
 def _render_resource_select():
     st.subheader('Resource Select')
     st.info('This is a resource search input. It allows the user to search and select a resource. The preview is not enable yet.')
+
+    ShowcaseCore.show_requires_authentication_warning()
 
     # resource_select = StreamlitResourceSelect()
     # selected_resource = resource_select.select_resource(

@@ -4,6 +4,8 @@ import os
 from runpy import run_path
 from typing import Any, Dict, List, Literal
 
+from gws_core.config.param.code_param.python_code_param import PythonCodeParam
+from gws_core.config.param.param_spec import BoolParam
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -97,3 +99,23 @@ class AgentCodeHelper:
         with open(template_file_path, encoding="utf-8") as file_path:
             content = file_path.read()
         return content
+
+    @classmethod
+    def get_streamlit_code_param(cls) -> PythonCodeParam:
+        """Get the code parameter for the streamlit agent.
+        """
+        return PythonCodeParam(
+            default_value=cls.get_streamlit_code_template(),
+            human_name="Streamlit app code",
+            short_description="Code of the streamlit app to run"
+        )
+
+    @classmethod
+    def get_streamlit_requires_auth_param(cls) -> BoolParam:
+        """Get the requires authentication parameter for the streamlit agent.
+        """
+        return BoolParam(default_value=True,
+                         visibility='protected',
+                         human_name="Requires authentication",
+                         short_description="If the app requires authentication"
+                         )

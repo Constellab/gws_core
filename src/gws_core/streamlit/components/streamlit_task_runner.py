@@ -18,11 +18,11 @@ from gws_core.task.task_runner import TaskRunner
 
 
 class StreamlitTaskRunner():
-    """Class to configure a task in streamlit and run it
+    """Class to generate a form to configure a task in streamlit.
+    The task is then automatically run when the form is submitted.
+    The task is run in a separate thread, so the streamlit app is not blocked.
 
-    :raises ValueError: _description_
-    :return: _description_
-    :rtype: _type_
+    To use this component, you need to use a Streamlit app that requires authentication.
     """
 
     task_type: Type[Task]

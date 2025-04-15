@@ -3,6 +3,7 @@
 from typing import Any, Dict, List, Optional
 
 import streamlit as st
+
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.streamlit.components.streamlit_component_loader import \
     StreamlitComponentLoader
@@ -10,6 +11,12 @@ from gws_core.streamlit.widgets.streamlit_state import StreamlitState
 
 
 class StreamlitResourceSelect():
+    """ Streamlit component to select a resource
+    This component is a wrapper around the GWS resource search component.
+    It allows the user to search and select a resource.
+
+    To use this component, you need to use a Streamlit app that requires authentication.
+    """
 
     _streamlit_component_loader = StreamlitComponentLoader("select-resource")
     filters: Dict[str, Any] = {}
