@@ -1,8 +1,9 @@
 
 import streamlit as st
+from pandas import DataFrame
+
 from gws_core.streamlit import StreamlitContainers, dataframe_paginated
 from gws_core.test.data_provider import DataProvider
-from pandas import DataFrame
 
 
 def render_dataframes_page():
@@ -42,6 +43,9 @@ def _render_dataframe_paginated(df: DataFrame):
                         key='row_paginated')
 
     st.code('''
+
+from gws_core.streamlit import dataframe_paginated
+
 dataframe_paginated(df, paginate_rows=True, row_page_size_options=[25, 50, 100],
     # apply a style to the dataframe
     transformer=lambda df: df.style.format(thousands=" ", precision=1),

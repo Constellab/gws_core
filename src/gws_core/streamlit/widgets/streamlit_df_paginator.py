@@ -1,7 +1,8 @@
-from typing import Any, Callable, List
+from typing import Any, Callable, Iterable, List, Literal
 
 import streamlit as st
 from pandas import DataFrame
+from streamlit.elements.arrow import ColumnConfigMappingInput, SelectionMode
 
 
 def _select_by_coords(input_df: DataFrame, from_row_id: int, to_row_id: int,
@@ -15,6 +16,15 @@ def dataframe_paginated(dataframe: DataFrame,
                         paginate_columns: bool = False,
                         column_page_size_options: List[int] = None,
                         transformer: Callable[[Any], DataFrame] = None,
+                        width: int | None = None,
+                        height: int | None = None,
+                        use_container_width: bool = False,
+                        hide_index: bool = False,
+                        column_order: Iterable[str] | None = None,
+                        column_config: ColumnConfigMappingInput | None = None,
+                        on_select: Literal["ignore", "rerun"] = "ignore",
+                        selection_mode: SelectionMode | Iterable[SelectionMode] = "multi-row",
+
                         key: str = 'dataframe_paginated') -> Any:
     """
     Paginate a dataframe in streamlit.
@@ -34,6 +44,24 @@ def dataframe_paginated(dataframe: DataFrame,
     :param transformer: function to apply to the dataframe before displaying it (after pagination).
     Ex apply a style : `transformer = lambda df : df.style.format(thousands=" ", precision=1)`, defaults to None
     :type transformer: Callable[[DataFrame]], optional
+    :param width: view st.dataframe width parameter, defaults to None
+    :type width: int | None, optional
+    :param height: view st.dataframe height parameter, defaults to None
+    :type height: int | None, optional
+    :param use_container_width: view st.dataframe use_container_width parameter, defaults to False
+    :type use_container_width: bool, optional
+    :param hide_index: view st.dataframe hide_index parameter, defaults to False
+    :type hide_index: bool, optional
+    :param column_order: view st.dataframe column_order parameter, defaults to None
+    :type column_order: Iterable[str] | None, optional
+    :param column_config: view st.dataframe column_config parameter, defaults to None
+    :type column_config: ColumnConfigMappingInput | None, optional
+    :param on_select: view st.dataframe on_select parameter, defaults to "ignore"
+    :type on_select: Literal["ignore", "rerun"], optional
+    :param selection_mode: view st.dataframe selection_mode parameter, defaults to "multi-row"
+    :type selection_mode: SelectionMode | Iterable[SelectionMode], optional
+    :param key: key for the dataframe, defaults to 'dataframe_paginated'
+    :type key: str, optional
     :return: _description_
     :rtype: Any
     """
@@ -88,4 +116,13 @@ def dataframe_paginated(dataframe: DataFrame,
 
     if transformer is not None:
         pages = transformer(pages)
-    return pagination.dataframe(pages, use_container_width=True, key=f"{key}_dataframe")
+    return pagination.dataframe(pages,
+                                use_container_width=use_container_width,
+                                hide_index=hide_index,
+                                column_order=column_order,
+                                column_config=column_config,
+                                on_select=on_select,
+                                selection_mode=selection_mode,
+                                width=width,
+                                height=height,
+                                key=f"{key}_dataframe")
