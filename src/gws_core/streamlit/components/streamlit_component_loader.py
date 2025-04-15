@@ -37,7 +37,7 @@ class StreamlitComponentLoader():
     RELEASE_BASE_URL = 'https://github.com/Constellab/dashboard-components/releases/download/'
 
     IFRAME_MESSAGE = "iframe-message"
-    IFRAME_MESSAGE_VERSION = "dc_iframe_message_1.0.0"
+    IFRAME_MESSAGE_VERSION = "dc_iframe_message_1.1.0"
 
     IS_RELEASED = True
     # url for dev front app
