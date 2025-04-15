@@ -41,12 +41,11 @@ class EntityWithTagSearchBuilder(SearchBuilder):
     def _handle_tag_filter(self, filter_: SearchFilterCriteria) -> Expression:
         """Handle the tag filter
         """
-        tags = TagHelper.tags_dict_to_list(filter_.value)
+        tags = [Tag(tag_dict['key'], tag_dict['value']) if 'value' in tag_dict else Tag(tag_dict['key'], None)
+                for tag_dict in filter_.value]
 
         for tag in tags:
-            if tag.value is None:  # Value is None if we want to check if the tag exists
-                filter_.operator = SearchOperator.NOT_NULL
-            self.add_tag_filter(tag, filter_.operator)
+            self.add_tag_filter(tag, filter_.operator if tag.value is not None else SearchOperator.NOT_NULL)
 
         # return none because expression is already added with the join
         return None
