@@ -13,6 +13,7 @@ class LogDTO(BaseModelDTO):
     message: Optional[str]
     context: LogContext
     context_id: Optional[str] = None
+    stack_trace: Optional[str] = None
 
 
 class LogInfo(BaseModelDTO):

@@ -44,6 +44,7 @@ class LogLine():
     message: str
     context: LogContext
     context_id: str
+    stack_trace: Optional[str] = None
 
     OLD_DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
     OLD_SCENARIO_TEXT = "[SCENARIO]"
@@ -77,6 +78,7 @@ class LogLine():
                 self.message = line_json.message
                 self.context = line_json.context
                 self.context_id = line_json.context_id
+                self.stack_trace = line_json.stack_trace
             else:
                 old_line_json = OldLogFileLine.from_json(dict_)
                 self.level = old_line_json.level
@@ -84,6 +86,7 @@ class LogLine():
                 self.message = old_line_json.message
                 self.context = LogContext.SCENARIO if old_line_json.scenario_id else LogContext.MAIN
                 self.context_id = old_line_json.scenario_id
+                self.stack_trace = old_line_json.stack_trace
 
         except ValueError:
             pass
@@ -136,7 +139,7 @@ class LogLine():
     def to_dto(self) -> LogDTO:
         return LogDTO(level=self.level, date_time=self.date_time,
                       message=self.message, context=self.context,
-                      context_id=self.context_id)
+                      context_id=self.context_id, stack_trace=self.stack_trace)
 
     def to_str(self) -> str:
         return f"{self.date_time} - {self.level} - {self.message}"
