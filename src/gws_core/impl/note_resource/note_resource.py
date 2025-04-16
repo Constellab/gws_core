@@ -559,6 +559,28 @@ class NoteResource(ResourceSet):
             else:
                 self.append_block(block)
 
+    def append_note_template(self, note_template: NoteTemplate) -> None:
+        """Append a note template content to the note resource content.
+
+        :param note_template: note template to append
+        :type note_template: NoteTemplate
+        """
+        rich_text = RichText(note_template.content)
+        self.append_advanced_rich_text(rich_text,
+                                       RichTextObjectType.NOTE_TEMPLATE,
+                                       note_template.id)
+
+    def append_note(self, note: Note) -> None:
+        """Append a note content to the note resource content.
+
+        :param note: note to append
+        :type note: Note
+        """
+        rich_text = RichText(note.content)
+        self.append_advanced_rich_text(rich_text,
+                                       RichTextObjectType.NOTE,
+                                       note.id)
+
     ############################# Notes #############################
 
     def export_as_lab_note(self, title: str = None, scenario_id: str = None, folder_id: str = None) -> Note:
@@ -746,8 +768,7 @@ class NoteResource(ResourceSet):
         :rtype: NoteResource
         """
         note = NoteResource()
-        rich_text = RichText(note_template.content)
-        note.append_advanced_rich_text(rich_text, RichTextObjectType.NOTE_TEMPLATE, note_template.id)
+        note.append_note_template(note_template)
         note.title = title or note_template.title
         return note
 
@@ -764,7 +785,6 @@ class NoteResource(ResourceSet):
         :rtype: NoteResource
         """
         note_resource = NoteResource()
-        rich_text = RichText(note.content)
-        note_resource.append_advanced_rich_text(rich_text, RichTextObjectType.NOTE, note.id)
+        note_resource.append_note(note)
         note_resource.title = title or note.title
         return note_resource
