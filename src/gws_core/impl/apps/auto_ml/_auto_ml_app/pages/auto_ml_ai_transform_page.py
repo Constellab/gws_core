@@ -44,7 +44,7 @@ def render_ai_transform_page():
 
                 streamlit_ai_chat.save()
 
-                st.rerun(scope='fragment')
+                st.rerun()
 
         st.divider()
         select_current_table_with_preview()
@@ -55,4 +55,4 @@ def render_ai_transform_page():
             streamlit_ai_chat.add_user_message(prompt)
 
             # re-run the app
-            st.rerun(scope='fragment')
+            st.rerun()

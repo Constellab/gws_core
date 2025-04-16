@@ -46,7 +46,7 @@ def render_ai_multi_tables_page():
 
                 streamlit_ai_chat.save()
 
-                st.rerun(scope='fragment')
+                st.rerun()
 
         st.divider()
 
@@ -72,7 +72,7 @@ def render_ai_multi_tables_page():
                 streamlit_ai_chat.add_user_message(prompt)
 
                 # re-run the app
-                st.rerun(scope='fragment')
+                st.rerun()
 
         else:
             st.info("Select at least 2 tables to chat with AI.")
