@@ -84,6 +84,12 @@ class StreamlitProcess:
                # prevent streamlit to open the browser
                '--server.headless=true',
                '--browser.gatherUsageStats=false',
+               # Disable XSRF protection to make file uploader work
+               # when used in iframe.
+               # This is not ideal but it is the only way to make it work
+               # It is ok as the ap are secured with a dynamically generated token
+               # TODO : check https://github.com/streamlit/streamlit/issues/5793
+               '--server.enableXsrfProtection=false'
                #    '--theme.font=Roboto Serif',
                ]
 
