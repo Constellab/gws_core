@@ -30,8 +30,13 @@ class User(Model):
     _table_name = 'gws_user'
 
     @classmethod
-    def get_sysuser(cls) -> 'User':
-        return User.get(User.group == UserGroup.SYSUSER)
+    def get_and_check_sysuser(cls) -> 'User':
+        sys_user = User.get_or_none(User.group == UserGroup.SYSUSER)
+
+        if sys_user is None:
+            raise Exception("System user not found, please restart your lab. If the error continues, contact the support.")
+
+        return sys_user
 
     @classmethod
     def get_by_email(cls, email: str) -> Optional['User']:

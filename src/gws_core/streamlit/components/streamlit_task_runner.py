@@ -21,8 +21,6 @@ class StreamlitTaskRunner():
     """Class to generate a form to configure a task in streamlit.
     The task is then automatically run when the form is submitted.
     The task is run in a separate thread, so the streamlit app is not blocked.
-
-    To use this component, you need to use a Streamlit app that requires authentication.
     """
 
     task_type: Type[Task]
@@ -105,7 +103,7 @@ class StreamlitTaskRunner():
 
         component_value = self._streamlit_component_loader.call_component(
             data, key=key,
-            authentication_info=StreamlitState.get_and_check_app_authentication_for_component('StreamlitTaskRunner'))
+            authentication_info=StreamlitState.get_user_auth_info())
 
         if component_value is None:
             return None

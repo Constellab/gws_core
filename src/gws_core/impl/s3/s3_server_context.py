@@ -22,7 +22,7 @@ class S3ServerContext:
 
     def __enter__(self):
         # Authenticate sys user because in S3 server we don't have a user
-        CurrentUserService.set_current_user(User.get_sysuser())
+        CurrentUserService.set_current_user(User.get_and_check_sysuser())
         # Code to set up and acquire resources
         return self  # You can return an object that you want to use in the with block
 

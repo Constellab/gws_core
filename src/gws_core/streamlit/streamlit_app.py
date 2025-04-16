@@ -15,6 +15,7 @@ from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.streamlit.streamlit_dto import (StreamlitAppDTO,
                                               StreamlitConfigDTO)
 from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.user import User
 
 
 class StreamlitAppUrl(BaseModelDTO):
@@ -112,6 +113,8 @@ class StreamlitApp():
 
     def set_requires_authentication(self, requires_authentication: bool) -> None:
         """ Set if the app requires authentication. By default it requires authentication.
+        If the app does not require authentication, the user access tokens are not used.
+        In this case the system user is used to access the app.
 
         :param requires_authentication: True if the app requires authentication
         :type requires_authentication: bool
@@ -175,8 +178,6 @@ class StreamlitApp():
     def add_user(self, user_id: str) -> str:
         """Add the user to the list of users that can access the app and return the user access token
         """
-        if not self.requires_authentication:
-            raise Exception("The app does not require authentication")
 
         # check if the user is already in the list
         for token, user_id in self.user_access_tokens.items():
@@ -196,9 +197,6 @@ class StreamlitApp():
         """Get the user id from the user access token
         If the user does not exist, return None
         """
-        if not self.requires_authentication:
-            raise Exception("The app does not require authentication")
-
         return self.user_access_tokens.get(user_access_token, None)
 
     def was_generated_from_resource_model_id(self, resource_model_id: str) -> bool:
@@ -215,13 +213,17 @@ class StreamlitApp():
             'gws_app_id': self.app_id
         }
 
+        user: User = None
         if self.requires_authentication:
-            current_user = CurrentUserService.get_current_user()
-            if not current_user:
-                raise UnauthorizedException(
-                    "The app requires authentication. Please log in to access the app.")
-            user_access_token = self.add_user(current_user.id)
-            params['gws_user_access_token'] = user_access_token
+            user = CurrentUserService.get_current_user()
+        else:
+            user = User.get_and_check_sysuser()
+
+        if not user:
+            raise UnauthorizedException(
+                f"The user could not be be authenticated with requires_authentication : {self.requires_authentication}")
+        user_access_token = self.add_user(user.id)
+        params['gws_user_access_token'] = user_access_token
 
         return StreamlitAppUrl(host_url=host_url, params=params)
 

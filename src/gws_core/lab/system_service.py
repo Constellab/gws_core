@@ -78,7 +78,7 @@ class SystemService:
 
     @classmethod
     def register_start_activity(cls):
-        sys_user = User.get_sysuser()
+        sys_user = User.get_and_check_sysuser()
         ActivityService.add_with_catch(activity_type=ActivityType.LAB_START, object_type=ActivityObjectType.USER,
                                        object_id=sys_user.id, user=sys_user)
 
@@ -101,7 +101,7 @@ class SystemService:
         # check for all running status scenario, if the process is still running
         # if not we consider that the scenario is not running
 
-        with AuthenticateUser(User.get_sysuser()):
+        with AuthenticateUser(User.get_and_check_sysuser()):
             try:
                 scenarios: List[Scenario] = list(Scenario.get_running_scenarios())
 

@@ -1,6 +1,5 @@
 import os
 import sys
-from typing import Optional
 
 import streamlit as st
 
@@ -12,38 +11,49 @@ class StreamlitEnvLoader:
     """
 
     app_id: str = None
-    requires_authentification: bool = None
+    dev_mode: bool = False
     user_id: str = None
 
-    def __init__(self, app_id: str, requires_authentification: bool,
+    def __init__(self, app_id: str,
+                 dev_mode: bool,
                  user_id: str = None) -> None:
         self.app_id = app_id
-        self.requires_authentification = requires_authentification
+        self.dev_mode = dev_mode
         self.user_id = user_id
 
     def __enter__(self):
 
         self._load_env()
 
-        if self.requires_authentification:
-            self._authenticate_user()
+        # Authenticate user
+        self._authenticate_user()
 
         # Code to set up and acquire resources
         return self  # You can return an object that you want to use in the with block
 
     def _authenticate_user(self):
+        """Authenticate the user.
+        If the user was already initialized in streamlit, it will be used.
+        Otherwise the connected user will be used and is required
+        """
         from gws_core import CurrentUserService, User, UserService
         from gws_core.streamlit import StreamlitState
-        user: Optional[User] = None
 
-        if StreamlitState.get_current_user():
-            user = StreamlitState.get_current_user()
-        elif self.user_id:
-            user = UserService.get_or_import_user_info(self.user_id)
-            StreamlitState.set_current_user(user)
+        user: User = StreamlitState.get_current_user()
 
+        # if the user was not already authenticated
         if not user:
-            raise Exception("Cannot authenticate user")
+            # get the connected user
+            user = None
+            if self.dev_mode:
+                user = User.get_and_check_sysuser()
+            else:
+                user = UserService.get_or_import_user_info(self.user_id)
+            if not user:
+                raise Exception("Cannot authenticate user")
+
+            # Set the current user in the streamlit state
+            StreamlitState.set_current_user(user)
 
         # Authenticate user
         CurrentUserService.set_current_user(user)

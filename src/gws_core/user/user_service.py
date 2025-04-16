@@ -102,7 +102,7 @@ class UserService():
 
     @classmethod
     def get_sysuser(cls):
-        return User.get_sysuser()
+        return User.get_and_check_sysuser()
 
     @classmethod
     def user_exists(cls, id_: str) -> bool:

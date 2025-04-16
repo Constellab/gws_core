@@ -43,7 +43,7 @@ def start_app(streamlit_app: StreamlitMainAppRunner) -> None:
     # Load gws environment and log the user
 
     with StreamlitEnvLoader(streamlit_app.get_app_id(),
-                            streamlit_app.authentication_is_required(),
+                            streamlit_app.dev_mode,
                             streamlit_app.load_user()):
 
         from gws_core.streamlit import StreamlitContainers

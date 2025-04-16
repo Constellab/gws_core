@@ -107,7 +107,7 @@ class BrickMigrator():
             f"Start migrating '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'. Description: {migration_object.short_description}")
 
         # Authenticate the system user if there is no current user (when calling migration on start)
-        with AuthenticateUser(User.get_sysuser()):
+        with AuthenticateUser(User.get_and_check_sysuser()):
             try:
                 migration_object.brick_migration.migrate(self.current_brick_version, migration_object.version)
 

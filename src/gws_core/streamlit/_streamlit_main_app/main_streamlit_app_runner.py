@@ -109,8 +109,6 @@ class StreamlitMainAppRunner:
 
     def load_user(self) -> str:
         # skip user load if authentication is not required
-        if not self.authentication_is_required():
-            return None
         if self.dev_mode:
             return None
 

@@ -14,8 +14,6 @@ class StreamlitResourceSelect():
     """ Streamlit component to select a resource
     This component is a wrapper around the GWS resource search component.
     It allows the user to search and select a resource.
-
-    To use this component, you need to use a Streamlit app that requires authentication.
     """
 
     _streamlit_component_loader = StreamlitComponentLoader("select-resource")
@@ -56,8 +54,7 @@ class StreamlitResourceSelect():
         }
 
         component_value = self._streamlit_component_loader.call_component(
-            data, key=key, authentication_info=StreamlitState.get_and_check_app_authentication_for_component(
-                'StreamlitResourceSelect'))
+            data, key=key, authentication_info=StreamlitState.get_user_auth_info())
 
         if component_value is None:
             st.session_state['__gws_resource_model__'] = None

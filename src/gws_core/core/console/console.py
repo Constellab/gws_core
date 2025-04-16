@@ -34,7 +34,7 @@ class Console:
         SystemService.init()
 
         if user is None:
-            user = User.get_sysuser()
+            user = User.get_and_check_sysuser()
 
         # refresh user information from DB
         AuthService.authenticate(id_=user.id)
