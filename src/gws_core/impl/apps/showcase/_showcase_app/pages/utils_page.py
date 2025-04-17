@@ -1,6 +1,6 @@
 import streamlit as st
 
-from gws_core.streamlit import StreamlitHelper
+from gws_core.streamlit import StreamlitHelper, StreamlitRouter
 
 
 def render_utils_page():
@@ -10,6 +10,7 @@ def render_utils_page():
     _render_authenticate_user()
     _render_hide_sidebar_toggle()
     _render_toggle_sidebar()
+    _render_router()
 
 
 def _render_authenticate_user():
@@ -66,5 +67,34 @@ if st.button('Show sidebar'):
 
 if st.button('Hide sidebar'):
     StreamlitHelper.hide_sidebar()
+''')
+    st.divider()
+
+
+def _render_router():
+    st.subheader('Router')
+    st.info('This utility allows to create streamlit pages and navigate between them.')
+
+    router = StreamlitRouter.load_from_session()
+
+    if st.button('Navigate to Containers'):
+        router.navigate('containers')
+
+    st.code('''
+# Define the pages
+from gws_core.streamlit import StreamlitRouter
+
+router = StreamlitRouter.load_from_session()
+
+router.add_page(_render_containers_page_function, title='Containers', url_path='containers', icon='📦')
+router.add_page(_render_resources_page_function, title='Resources', url_path='resources', icon='📁')
+
+# Navigate to a page
+from gws_core.streamlit import StreamlitRouter
+
+router = StreamlitRouter.load_from_session()
+
+if st.button('Navigate to Containers'):
+    router.navigate('containers')
 ''')
     st.divider()

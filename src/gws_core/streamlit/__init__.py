@@ -18,4 +18,5 @@ from .widgets.streamlit_open_ai_chat import \
     StreamlitOpenAiChat as StreamlitOpenAiChat
 from .widgets.streamlit_resource_search_input import \
     ResourceSearchInput as ResourceSearchInput
+from .widgets.streamlit_router import StreamlitRouter as StreamlitRouter
 from .widgets.streamlit_state import StreamlitState as StreamlitState
