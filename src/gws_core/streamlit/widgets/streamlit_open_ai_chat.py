@@ -48,6 +48,10 @@ class StreamlitOpenAiChat():
         self.chat.add_user_message(message)
         self.save()
 
+    def add_assistant_message(self, message: str) -> None:
+        self.chat.add_assistant_message(message)
+        self.save()
+
     def last_message_is_user(self) -> bool:
         return self.chat.last_message_is_user()
 
@@ -56,6 +60,12 @@ class StreamlitOpenAiChat():
 
     def save(self) -> None:
         st.session_state[self.key] = self.chat
+
+    def call_gpt(self) -> str:
+        """Call GPT with the current chat history"""
+        response = self.chat.call_gpt()
+        self.save()
+        return response
 
     def reset(self) -> None:
         self.chat = OpenAiChat()

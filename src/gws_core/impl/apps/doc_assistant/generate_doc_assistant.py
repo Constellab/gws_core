@@ -48,6 +48,10 @@ class GenerateDocAssistant(Task):
             human_name='Product documentation default prompt',
             short_description='The default prompt to use to generate the product documentation',
         ),
+        'technical_doc_default_prompt': TextParam(
+            human_name='Technical documentation default prompt',
+            short_description='The default prompt to use to generate the technical documentation',
+        ),
     })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -60,5 +64,6 @@ class GenerateDocAssistant(Task):
         streamlit_app.set_requires_authentication(False)
 
         streamlit_app.set_param('product_doc_default_prompt', params['product_doc_default_prompt'])
+        streamlit_app.set_param('technical_doc_default_prompt', params['technical_doc_default_prompt'])
 
         return {"streamlit_app": streamlit_app}
