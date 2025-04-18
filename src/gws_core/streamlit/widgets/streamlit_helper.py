@@ -1,5 +1,5 @@
-
 import os
+import re
 from typing import Any
 
 import streamlit as st
@@ -14,7 +14,20 @@ class StreamlitHelper():
 
     @classmethod
     def get_element_css_class(cls, key: str) -> str:
-        return cls.CSS_PREFIX + key
+        """Generate a valid CSS class name from the given key.
+
+        Ensures the class name:
+        - Contains only alphanumeric characters, hyphens, and underscores
+
+        :param key: The key to convert to a CSS class name
+        :type key: str
+        :return: A valid CSS class name
+        :rtype: str
+        """
+        # Replace invalid characters with underscores
+        sanitized_key = re.sub(r'[^a-zA-Z0-9_-]', '-', str(key))
+
+        return cls.CSS_PREFIX + sanitized_key
 
     @classmethod
     def get_page_height(cls, additional_padding: int = 0) -> str:
