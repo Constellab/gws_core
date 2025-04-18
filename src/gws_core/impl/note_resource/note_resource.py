@@ -70,6 +70,14 @@ class NoteResource(ResourceSet):
         """
         self._rich_text.set_parameter(parameter_name, str(value), replace_block)
 
+    def delete_parameter(self, parameter_name: str) -> None:
+        """ Delete a parameter.
+
+        :param parameter_name: parameter name
+        :type parameter_name: str
+        """
+        self._rich_text.delete_parameter(parameter_name)
+
     def add_paragraph(self, paragraph: str) -> None:
         """
         Add a paragraph to the note resource content.

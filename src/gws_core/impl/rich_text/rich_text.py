@@ -220,6 +220,11 @@ class RichText(SerializableObjectJson):
             if new_text is not None:
                 data['text'] = new_text
 
+    def delete_parameter(self, parameter_name: str) -> None:
+        """Delete the parameter in the rich text content text
+        """
+        self.set_parameter(parameter_name, '', True)
+
     def replace_resource_views_with_parameters(self) -> None:
         """
         Method to remove the resource view from the rich text content
