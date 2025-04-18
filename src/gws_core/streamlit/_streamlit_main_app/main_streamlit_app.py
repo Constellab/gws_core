@@ -65,6 +65,12 @@ def start_app(streamlit_app: StreamlitMainAppRunner) -> None:
                 'params': config['params'],
             })
 
+            # Force a rerun on first load to fix flickering
+            # With tabs, if a user make the first action on a second tab, it swtich to the first tab
+            # With spinner, if a spinner if showed on first action, there is the app duplicated in disabled
+            # This force re-run to fix first action
+            st.rerun()
+
         app_info: StreamlitAppInfo = StreamlitAppInfoState.get_app_info()
 
         streamlit_app.set_variable('sources', app_info['sources'])
