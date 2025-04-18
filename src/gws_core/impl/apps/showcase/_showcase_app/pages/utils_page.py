@@ -87,7 +87,9 @@ from gws_core.streamlit import StreamlitRouter
 router = StreamlitRouter.load_from_session()
 
 router.add_page(_render_containers_page_function, title='Containers', url_path='containers', icon='📦')
-router.add_page(_render_resources_page_function, title='Resources', url_path='resources', icon='📁')
+
+# Page available but not shown in the sidebar, can only be access with router.navigate()
+router.add_page(_render_resources_page_function, title='Resources', url_path='resources', icon='📁', hide_from_sidebar=True)
 
 # Navigate to a page
 from gws_core.streamlit import StreamlitRouter
