@@ -32,6 +32,16 @@ class Folder(FSNode):
     provided when creating the resource.
     """
 
+    def __init__(self, path: str = ""):
+        """ Create a new Folder
+
+        :param path: absolute path to the folder, defaults to ""
+        :type path: str, optional
+        """
+        super().__init__(path)
+        if self.exists() and not FileHelper.is_dir(self.path):
+            raise BadRequestException(f"The path {self.path} is not a folder")
+
     def has_node(self, sub_node_path: str) -> bool:
         """
         Check if the sub node exists

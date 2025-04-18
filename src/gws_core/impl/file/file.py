@@ -44,6 +44,17 @@ class File(FSNode):
     TEXT_VIEW_NB_LINES = 100
     PAGE_PARAM_NAME = 'line_number'
 
+    def __init__(self, path: str = ""):
+        """ Create a new File
+
+        :param path: absolute path to the file, defaults to ""
+        :type path: str, optional
+        """
+        super().__init__(path)
+
+        if self.exists() and not FileHelper.is_file(self.path):
+            raise ValueError(f"The path {self.path} is not a file")
+
     @property
     def dir(self):
         return FileHelper.get_dir(self.path)
