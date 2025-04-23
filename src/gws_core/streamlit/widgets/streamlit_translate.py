@@ -62,7 +62,7 @@ class StreamlitTranslateService():
         self._set_translation_dict()
         self.lang = lang_
         st.session_state.selected_lang = lang_
-        st.rerun()
+        st.rerun(scope='app')
 
     def get_lang(self) -> StreamlitTranslateLang:
         """
