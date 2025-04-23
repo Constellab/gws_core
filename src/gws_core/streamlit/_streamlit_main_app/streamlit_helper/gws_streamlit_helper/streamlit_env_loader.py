@@ -1,5 +1,6 @@
 import os
 import sys
+from time import sleep
 
 import streamlit as st
 
@@ -43,12 +44,21 @@ class StreamlitEnvLoader:
 
         # if the user was not already authenticated
         if not user:
+
             # get the connected user
             user = None
-            if self.dev_mode:
-                user = User.get_and_check_sysuser()
-            else:
-                user = UserService.get_or_import_user_info(self.user_id)
+            try:
+                if self.dev_mode:
+                    user = User.get_and_check_sysuser()
+                else:
+                    user = UserService.get_or_import_user_info(self.user_id)
+            except Exception as e:
+                if self._is_env_loading_error(e):
+                    # wait for the environment to be loaded
+                    user = self._wait_for_env_loading()
+                else:
+                    raise e
+
             if not user:
                 raise Exception("Cannot authenticate user")
 
@@ -67,6 +77,7 @@ class StreamlitEnvLoader:
         CurrentUserService.set_current_user(None)
 
     def _load_env(self):
+
         if 'gws_core' not in sys.modules:
             with st.spinner('Initializing dashboard...'):
                 core_lib_path = "/lab/user/bricks/gws_core/src"
@@ -80,3 +91,35 @@ class StreamlitEnvLoader:
                 manage.AppManager.init_gws_env(
                     main_setting_file_path=Settings.get_instance().get_main_settings_file_path(),
                     log_level='INFO', log_context=LogContext.STREAMLIT, log_context_id=self.app_id)
+
+    def _wait_for_env_loading(self):
+        """When call when the environment is not loaded yet.
+        To wait for the environment to be loaded, we will try to get the user
+        """
+        from gws_core import User, UserService
+
+        current_time = 0
+        time_limit = 60
+        time_step = 5
+        with st.spinner('Initializing dashboard...'):
+            while current_time < time_limit:
+                sleep(time_step)
+                try:
+                    if self.dev_mode:
+                        return User.get_and_check_sysuser()
+                    else:
+                        return UserService.get_or_import_user_info(self.user_id)
+                except Exception as e:
+                    if self._is_env_loading_error(e):
+                        current_time += time_step
+                    else:
+                        raise e
+
+    def _is_env_loading_error(self, e: Exception) -> bool:
+        """Return true if the error is due to the environment that is being loaded.
+        Happens when 2 dashboard are loaded at the same time
+        """
+        if not isinstance(e, AttributeError):
+            return False
+
+        return str(e) == 'Cannot use uninitialized Proxy.'

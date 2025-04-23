@@ -116,4 +116,7 @@ class OpenAiChat():
             .replace("``` python", "```") \
             .replace("```R", "") \
             .replace("``` R", "")
+
+        if "```" not in generated_prompt:
+            raise ValueError("No code block found in the AI response")
         return generated_prompt.split("```")[1].strip()
