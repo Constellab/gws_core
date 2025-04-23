@@ -157,6 +157,13 @@ from .impl.agent.py_pipenv_agent import PyPipenvAgent as PyPipenvAgent
 from .impl.agent.r_conda_agent import RCondaAgent as RCondaAgent
 from .impl.agent.r_mamba_agent import RMambaAgent as RMambaAgent
 # Impl > Dify
+from .impl.dify.dify_service import DifyChunkDocument as DifyChunkDocument
+from .impl.dify.dify_service import DifyChunkRecord as DifyChunkRecord
+from .impl.dify.dify_service import DifyChunksResponse as DifyChunksResponse
+from .impl.dify.dify_service import DifyDocumentChunk as DifyDocumentChunk
+from .impl.dify.dify_service import \
+    DifyDocumentChunksResponse as DifyDocumentChunksResponse
+from .impl.dify.dify_service import DifySegment as DifySegment
 from .impl.dify.dify_service import \
     DifySendDocumentOptions as DifySendDocumentOptions
 from .impl.dify.dify_service import \
@@ -164,6 +171,9 @@ from .impl.dify.dify_service import \
 from .impl.dify.dify_service import \
     DifySendMessageStreamResponse as DifySendMessageStreamResponse
 from .impl.dify.dify_service import DifyService as DifyService
+from .impl.dify.dify_service import DifyUploadFile as DifyUploadFile
+from .impl.dify.dify_service import \
+    DifyUploadFileResponse as DifyUploadFileResponse
 # Impl > File
 from .impl.file.file import File as File
 from .impl.file.file_helper import FileHelper as FileHelper
