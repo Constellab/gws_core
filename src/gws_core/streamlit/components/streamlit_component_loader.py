@@ -6,6 +6,8 @@ from typing import Any, Callable
 
 import streamlit as st
 import streamlit.components.v1 as components
+from fastapi.encoders import jsonable_encoder
+
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
@@ -67,7 +69,7 @@ class StreamlitComponentLoader():
             # We pass the component name to the component to be able to
             # dynamically load the component
             component=self.component_name,
-            component_data=data,
+            component_data=jsonable_encoder(data),
             # we pass the key so streamlit knows the component
             # key and set a class to the component container
             key=key,

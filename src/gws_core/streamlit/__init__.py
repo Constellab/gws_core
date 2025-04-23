@@ -1,5 +1,9 @@
 from .components.rich_text_component import \
     rich_text_editor as rich_text_editor
+from .components.streamlit_menu_button import \
+    StreamlitMenuButton as StreamlitMenuButton
+from .components.streamlit_menu_button import \
+    StreamlitMenuButtonItem as StreamlitMenuButtonItem
 from .components.streamlit_resource_select import \
     StreamlitResourceSelect as StreamlitResourceSelect
 from .components.streamlit_task_runner import \

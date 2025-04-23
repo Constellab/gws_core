@@ -6,6 +6,7 @@ import streamlit as st
 from gws_core.impl.apps.showcase._showcase_app.pages import (ai_chat_page,
                                                              containers_page,
                                                              dataframes_page,
+                                                             menu_button_page,
                                                              processes_page,
                                                              resources_page,
                                                              rich_text_page,
@@ -49,6 +50,11 @@ def _render_ai_chat_page():
     ai_chat_page.render_chat()
 
 
+def _render_menu_button_page():
+    # importlib.reload(menu_button_page)
+    menu_button_page.render_menu_button_page()
+
+
 def _render_utils_page():
     # importlib.reload(utils_page)
     utils_page.render_utils_page()
@@ -60,5 +66,6 @@ router.add_page(_render_process_page, title='Processes', url_path='processes', i
 router.add_page(_render_dataframes_page, title='Dataframes', url_path='dataframes', icon='📊')
 router.add_page(_render_rich_text_page, title='Rich Text', url_path='rich_text', icon='📝')
 router.add_page(_render_ai_chat_page, title='AI Chat', url_path='ai_chat', icon='✨')
+router.add_page(_render_menu_button_page, title='Menu Button', url_path='menu_button', icon=':material/more_vert:')
 router.add_page(_render_utils_page, title='Utils', url_path='utils', icon='🛠️')
 router.run()
