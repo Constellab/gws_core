@@ -48,7 +48,7 @@ key = "a_test"
 
 current_lang = translate_service.get_lang()
 
-st.write(translate_service.translate(key))
+st.write("Translate : " + translate_service.translate(key))
 
 if st.button('Change lang'):
     if current_lang == StreamlitTranslateLang.EN:

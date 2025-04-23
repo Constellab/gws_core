@@ -29,7 +29,7 @@ class StreamlitTranslateService():
         Initialize the translation service.
 
         Args:
-            translation_files_folder_path (str): Path to the folder containing translation files.
+            translation_files_folder_path (str): Path to the folder containing translation files (en.json and fr.json by default).
             lang_ (StreamlitTranslateLang): Default language for translations (default is English).
         """
         if "selected_lang" in st.session_state:
@@ -37,7 +37,6 @@ class StreamlitTranslateService():
         else:
             st.session_state.selected_lang = lang_
             self.lang = lang_
-        self.lang = lang_
         self.translation_files_folder_path = translation_files_folder_path
         self._set_translation_dict()
 
@@ -59,9 +58,10 @@ class StreamlitTranslateService():
         Args:
             lang_ (StreamlitTranslateLang): The new language to switch to.
         """
+
+        self._set_translation_dict()
         self.lang = lang_
         st.session_state.selected_lang = lang_
-        self._set_translation_dict()
         st.rerun()
 
     def get_lang(self) -> StreamlitTranslateLang:
