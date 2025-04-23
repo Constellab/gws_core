@@ -69,7 +69,7 @@ class OpenAiChatParam(ParamSpec):
 
         if isinstance(value, OpenAiChat):
             return value
-        return OpenAiChat.from_json(value, context=self.context)
+        return OpenAiChat.from_json(value, system_prompt=self.context)
 
     @classmethod
     def get_str_type(cls) -> ParamSpecTypeStr:

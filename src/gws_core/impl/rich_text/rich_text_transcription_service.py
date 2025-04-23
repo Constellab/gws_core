@@ -237,7 +237,7 @@ The generated JSON must validate this schema.
         """
 
         prompt = cls.prompt.replace('{{SCHEMA}}', str(cls.json_schema))
-        chat = OpenAiChat(context=prompt)
+        chat = OpenAiChat(system_prompt=prompt)
         chat.add_user_message(transcription_text)
 
         response = OpenAiChat.call_gpt(chat)

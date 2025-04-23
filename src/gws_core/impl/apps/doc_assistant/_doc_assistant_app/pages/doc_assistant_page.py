@@ -11,7 +11,7 @@ def render_assistant_page(type_: str, default_prompt: str, title: str, info: str
         st.subheader(title)
 
         # Load chat history for this specific type of documentation
-        streamlit_ai_chat = StreamlitOpenAiChat.load_from_session(f'{type_}_doc_chat')
+        streamlit_ai_chat = StreamlitOpenAiChat.load_from_session(f'{type_}_doc_chat', default_prompt)
 
         # Display header with clear chat button
         col1, col2 = StreamlitContainers.columns_with_fit_content('chat-header', [1, 'fit-content'])
@@ -22,13 +22,6 @@ def render_assistant_page(type_: str, default_prompt: str, title: str, info: str
                 streamlit_ai_chat.reset()
 
         streamlit_ai_chat.show_chat()
-
-        with st.expander('Show prompt'):
-            prompt = st.text_area('Prompt', value=default_prompt, height=300)
-
-        if not prompt:
-            st.error('Please provide a prompt to generate the documentation.')
-            st.stop()
 
         st.divider()
 

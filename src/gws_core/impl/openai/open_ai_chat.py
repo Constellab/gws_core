@@ -1,6 +1,6 @@
 
 
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, cast
 
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
 from gws_core.impl.openai.open_ai_types import (AiChatMessage, OpenAiChatDict,
@@ -16,13 +16,13 @@ class OpenAiChat():
 
     _messages: List[AiChatMessage]
 
-    def __init__(self, context: str = None, messages: List[AiChatMessage] = None):
+    def __init__(self, system_prompt: str = None, messages: List[AiChatMessage] = None):
         self._messages = []
         if messages:
             self._messages.extend(messages)
 
-        if context:
-            self.set_context(context)
+        if system_prompt:
+            self.set_system_prompt(system_prompt)
 
     def call_gpt(self) -> str:
         response = OpenAiHelper.call_gpt(self.export_gpt_messages())
@@ -70,26 +70,37 @@ class OpenAiChat():
 
         return last_message.is_user()
 
-    def set_context(self, context: str):
-        if self.has_context():
-            self._messages[0].content = context
+    def set_system_prompt(self, system_prompt: str):
+        if self.has_system_prompt():
+            self._messages[0].content = system_prompt
         else:
-            self._messages.insert(0, AiChatMessage(role='system', content=context))
+            self._messages.insert(0, AiChatMessage(role='system', content=system_prompt))
 
-    def has_context(self) -> bool:
+    def has_system_prompt(self) -> bool:
         return len(self._messages) > 0 and self._messages[0].role == 'system'
+
+    def get_system_prompt(self) -> Optional[str]:
+        if self.has_system_prompt():
+            return self._messages[0].content
+        return None
 
     def has_messages(self) -> bool:
         return len(self._messages) > 0
 
     def to_json(self) -> OpenAiChatDict:
         return {
-            'messages': [message.to_json_dict() for message in self._messages]
+            'messages': [cast(OpenAiChatMessage, message.to_json_dict()) for message in self._messages]
         }
 
+    def reset(self):
+        system_prompt = self.get_system_prompt()
+        self._messages = []
+        if system_prompt:
+            self.set_system_prompt(system_prompt)
+
     @classmethod
-    def from_json(cls, json: OpenAiChatDict, context: str = None) -> 'OpenAiChat':
-        return cls(messages=AiChatMessage.from_json_list(json['messages']), context=context)
+    def from_json(cls, json: OpenAiChatDict, system_prompt: str = None) -> 'OpenAiChat':
+        return cls(messages=AiChatMessage.from_json_list(json['messages']), system_prompt=system_prompt)
 
     @classmethod
     def extract_code_from_gpt_response(cls, gpt_response: str) -> str:

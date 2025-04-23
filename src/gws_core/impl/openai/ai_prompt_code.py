@@ -204,7 +204,7 @@ class AIPromptCode():
             context = self.build_context(code_inputs)
 
             # Store the context in the chat object
-            self.chat.set_context(context)
+            self.chat.set_system_prompt(context)
 
             # only call open ai if the last message is from the user
             # create the completion

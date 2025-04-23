@@ -20,12 +20,12 @@ class StreamlitOpenAiChat():
         self.key = key
 
     @staticmethod
-    def load_from_session(key: str) -> 'StreamlitOpenAiChat':
+    def load_from_session(key: str, system_prompt: str = None) -> 'StreamlitOpenAiChat':
         chat: OpenAiChat
         if key in st.session_state:
             chat = st.session_state.get(key)
         else:
-            chat = OpenAiChat()
+            chat = OpenAiChat(system_prompt)
 
         return StreamlitOpenAiChat(chat, key)
 
@@ -37,7 +37,7 @@ class StreamlitOpenAiChat():
             if message.role == 'system':
                 self._show_system_message(message.content)
             else:
-                message_type = 'human' if message.role == 'user' else 'ai'
+                message_type: Literal['human', 'ai'] = 'human' if message.role == 'user' else 'ai'
 
                 self._show_message(message, message_type)
 
@@ -68,7 +68,7 @@ class StreamlitOpenAiChat():
         return response
 
     def reset(self) -> None:
-        self.chat = OpenAiChat()
+        self.chat.reset()
         self.save()
 
     def _show_system_message(self, text: str) -> None:

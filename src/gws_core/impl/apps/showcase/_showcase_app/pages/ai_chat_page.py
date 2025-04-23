@@ -1,4 +1,5 @@
 import streamlit as st
+
 from gws_core import PlotlyResource
 from gws_core.impl.table.smart_tasks.table_smart_plotly import \
     AITableGeneratePlotly
@@ -15,7 +16,7 @@ def render_chat():
     with StreamlitContainers.container_centered('chat-container'):
         st.dataframe(table.get_data())
 
-        streamlit_ai_chat = StreamlitOpenAiChat.load_from_session('plot_chat')
+        streamlit_ai_chat = StreamlitOpenAiChat.load_from_session('plot_chat', system_prompt="Be polite and helpful.")
         if st.button("New chat", key='new_chat'):
             streamlit_ai_chat.reset()
 
@@ -39,7 +40,7 @@ def render_chat():
 
         st.divider()
         prompt = st.chat_input(
-            "Enter your prompt/message here. Ex: Generate a scatter plot with column 'A' as x and column 'B' as y.")
+            "Enter your prompt/message here.")
 
         if prompt:
             # add the message and rerun the app, so the message is shown before call to GPT
@@ -62,7 +63,7 @@ from gws_core.streamlit import StreamlitContainers, StreamlitOpenAiChat
 with StreamlitContainers.container_centered('chat-container'):
     st.dataframe(table.get_data())
 
-    streamlit_ai_chat = StreamlitOpenAiChat.load_from_session('plot_chat')
+    streamlit_ai_chat = StreamlitOpenAiChat.load_from_session('plot_chat', system_prompt="Be polite and helpful.")
     if st.button("New chat", key='new_chat'):
         streamlit_ai_chat.reset()
 

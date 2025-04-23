@@ -2,7 +2,7 @@
     "app_dir_path": "",
     "source_ids": [],
     "params": {
-        "product_doc_default_prompt": "You are a assistant that helps me write a documentation for a SaaS product",
+        "product_doc_default_prompt": "You are a assistant that helps me write a documentation for a SaaS product. Translate to english.",
         "technical_doc_default_prompt": "You are a assistant that helps me write a documentation for a SaaS product"
     },
     "env_type": "NONE",
