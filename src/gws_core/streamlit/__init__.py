@@ -20,3 +20,7 @@ from .widgets.streamlit_resource_search_input import \
     ResourceSearchInput as ResourceSearchInput
 from .widgets.streamlit_router import StreamlitRouter as StreamlitRouter
 from .widgets.streamlit_state import StreamlitState as StreamlitState
+from .widgets.streamlit_translate import \
+    StreamlitTranslateLang as StreamlitTranslateLang
+from .widgets.streamlit_translate import \
+    StreamlitTranslateService as StreamlitTranslateService

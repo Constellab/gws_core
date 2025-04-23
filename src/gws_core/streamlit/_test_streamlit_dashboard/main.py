@@ -4,9 +4,9 @@ import os
 from json import dump, load
 
 import streamlit as st
-
 from gws_core import ExternalSpaceCreateFolder, FSNode, SpaceService
-from gws_core.streamlit import ResourceSearchInput
+from gws_core.streamlit import (ResourceSearchInput, StreamlitTranslateLang,
+                                StreamlitTranslateService)
 from gws_core.tag.tag import Tag
 
 # from gws_core import FileHelper, RichText
@@ -42,6 +42,21 @@ if st.button('Add tag'):
 if st.button('Delete tag'):
     SpaceService.get_instance().delete_tags_on_object(id, [Tag(key=tag_key, value=tag_value)])
 
+translation_folder_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'trad')
+translate_service = StreamlitTranslateService(translation_files_folder_path=translation_folder_path)
+key = "a_test"
+
+current_lang = translate_service.get_lang()
+
+st.write(translate_service.translate(key))
+
+if st.button('Change lang'):
+    if current_lang == StreamlitTranslateLang.EN:
+        current_lang = StreamlitTranslateLang.FR
+    else:
+        current_lang = StreamlitTranslateLang.EN
+
+    translate_service.change_lang(current_lang)
 
 # folder = sources[0]
 # file_path = os.path.join(folder.path, 'test.json')
