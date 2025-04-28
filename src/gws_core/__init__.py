@@ -169,6 +169,8 @@ from .impl.dify.dify_service import \
 from .impl.dify.dify_service import \
     DifySendEndMessageStreamResponse as DifySendEndMessageStreamResponse
 from .impl.dify.dify_service import \
+    DifySendMessageSource as DifySendMessageSource
+from .impl.dify.dify_service import \
     DifySendMessageStreamResponse as DifySendMessageStreamResponse
 from .impl.dify.dify_service import DifyService as DifyService
 from .impl.dify.dify_service import DifyUploadFile as DifyUploadFile

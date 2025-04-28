@@ -1,5 +1,7 @@
 
-from typing import Callable, List, Literal, Optional
+from typing import Callable, List, Literal, Optional, TypedDict
+
+import streamlit as st
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.streamlit.components.streamlit_component_loader import \
@@ -111,6 +113,14 @@ class StreamlitMenuButtonItem():
             has_handler=self.on_click is not None)
 
 
+class StreamlitMenuButtonValue(TypedDict):
+    button_key: str
+    # use to distinguish the different clicks
+    # it is used to avoid the click to be processed twice
+    # when the component is reloaded
+    timestamp: int
+
+
 class StreamlitMenuButton:
     """
     Streamlit component to create a menu button
@@ -170,21 +180,38 @@ class StreamlitMenuButton:
             "menu_items": [button.to_dto() for button in self._buttons],
         }
 
-        component_value = self._streamlit_component_loader.call_component(
+        component_value: StreamlitMenuButtonValue = self._streamlit_component_loader.call_component(
             data, key=self.key)
+
+        print(f"Component value '{component_value}', session value '{st.session_state.get(self.key)}'")
 
         if not component_value:
             return None
 
-        button_key = component_value.get('button_key')
+        # as the component value is stored in the session state, we compare the value
+        # with the previous click value to avoid double click
+        # if the timestamp has changed, it means a click was really triggered
+        # if the timestamp is the same, it means the component was just reloaded but no click was triggered
+        previous_click_key = '__' + self.key + '_previous_click__'
+        previous_click: StreamlitMenuButtonValue = st.session_state.get(previous_click_key)
 
-        button = self.find_button_item_by_key(button_key)
-        if button is None:
-            raise Exception(f"[StreamlitMenuButton] Button with key '{button_key}' not found")
+        # if the button was clicked
+        if previous_click is None or previous_click.get('timestamp') != component_value.get('timestamp'):
 
-        if button.on_click is None:
-            raise Exception(f"[StreamlitMenuButton] Button with key '{button_key}' has no on_click handler")
+            button_key = component_value.get('button_key')
 
-        button.on_click()
+            button = self.find_button_item_by_key(button_key)
+            if button is None:
+                raise Exception(f"[StreamlitMenuButton] Button with key '{button_key}' not found")
 
-        return button
+            if button.on_click is None:
+                raise Exception(f"[StreamlitMenuButton] Button with key '{button_key}' has no on_click handler")
+
+            button.on_click()
+
+            # store the value in the session state to avoid double click
+            st.session_state[previous_click_key] = component_value
+
+            return button
+
+        return None
