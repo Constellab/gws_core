@@ -183,8 +183,6 @@ class StreamlitMenuButton:
         component_value: StreamlitMenuButtonValue = self._streamlit_component_loader.call_component(
             data, key=self.key)
 
-        print(f"Component value '{component_value}', session value '{st.session_state.get(self.key)}'")
-
         if not component_value:
             return None
 
