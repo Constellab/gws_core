@@ -3,6 +3,7 @@
 from typing import Callable, List
 
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.folder.space_folder import SpaceFolder
@@ -733,3 +734,25 @@ class NoteService():
                                             object_id=note.id)
 
         return note
+
+    @classmethod
+    def sync_notes_from_space(cls) -> None:
+        Logger.info("Syncing notes from space")
+
+        try:
+            notes = SpaceService.get_instance().get_synced_notes()
+
+            for note in notes:
+                # check if the note is already in the lab
+                lab_note = Note.get_by_id(note.id)
+                if lab_note is not None and lab_note.folder.id != note.folder_id:
+                    folder = SpaceFolder.get_by_id(note.folder_id)
+
+                    if folder:
+                        lab_note.folder = folder
+                        lab_note.save()
+                        Logger.info(f"Note {note.id} moved to folder {folder.id}")
+
+        except Exception as err:
+            Logger.error(f"Error while syncing notes from space: {err}")
+            raise err

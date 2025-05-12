@@ -1,6 +1,6 @@
 
 
-from typing import List, Set, Type
+from typing import List, Type
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -122,12 +122,12 @@ class SpaceFolderService():
         folders = folder.get_with_children_as_list()
 
         # check if one of the sync scenario is attached to the folder
-        if Scenario.select().where((Scenario.folder.in_(folders)) & (Scenario.last_sync_at.is_null(False))).count() > 0:
+        if Scenario.select().where((Scenario.folder.in_(folders)) & (Scenario.validated_at.is_null(False))).count() > 0:
             raise BadRequestException(detail=GWSException.DELETE_FOLDER_WITH_SCENARIOS.value,
                                       unique_code=GWSException.DELETE_FOLDER_WITH_SCENARIOS.name)
 
         # check if one of the note is attached to the folder
-        if Note.select().where((Note.folder.in_(folders)) & (Note.last_sync_at.is_null(False))).count() > 0:
+        if Note.select().where((Note.folder.in_(folders)) & (Note.validated_at.is_null(False))).count() > 0:
             raise BadRequestException(detail=GWSException.DELETE_FOLDER_WITH_NOTES.value,
                                       unique_code=GWSException.DELETE_FOLDER_WITH_NOTES.name)
 

@@ -251,6 +251,19 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         super().delete_instance(*args, **kwargs)
         EntityTagList.delete_by_entity(EntityType.SCENARIO, self.id)
 
+    @classmethod
+    def get_synced_objects(cls) -> List['Scenario']:
+        """Get all scenarios that are synced with space
+
+        :return: [description]
+        :rtype: [type]
+        """
+        return list(cls.select().where(cls.last_sync_at.is_null(False)))
+
+    @classmethod
+    def clear_folder(cls, folders: List[SpaceFolder]) -> None:
+        cls.update(folder=None, last_sync_at=None, last_sync_by=None).where(cls.folder.in_(folders)).execute()
+
     ########################### STATUS MANAGEMENT ##################################
 
     @property

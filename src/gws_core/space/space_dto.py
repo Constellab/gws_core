@@ -75,3 +75,12 @@ class ShareResourceWithSpaceDTO(BaseModelDTO):
     style: TypingStyle
     token: str
     valid_until: Optional[datetime] = None
+
+
+class SpaceSyncObjectDTO(BaseModelDTO):
+    """Object representing a space sync object
+    """
+    id: str
+    folder_id: str
+    last_sync_at: datetime
+    last_sync_by_id: str

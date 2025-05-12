@@ -15,7 +15,8 @@ from gws_core.lab.system_dto import SettingsDTO
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateUserAccessTokenForSpaceResponse
-from gws_core.space.space_dto import LabActivityReponseDTO
+from gws_core.space.space_dto import LabActivityReponseDTO, SpaceSyncObjectDTO
+from gws_core.space.space_object_service import SpaceObjectService
 from gws_core.user.activity.activity_service import ActivityService
 
 from ..core.exception.exception_handler import ExceptionHandler
@@ -135,7 +136,7 @@ def get_users(_=Depends(AuthSpace.check_space_api_key_and_user)) -> List[UserFul
 
 ##################################################### FOLDER #####################################################
 @space_app.post("/folder", tags=["Folder"])
-def create_folder(folder: ExternalSpaceFolder, _=Depends(AuthSpace.check_space_api_key)) -> None:
+def sync_folder(folder: ExternalSpaceFolder, _=Depends(AuthSpace.check_space_api_key)) -> None:
     """
     Register a space folder to the lab
     """
@@ -187,6 +188,28 @@ def lab_activity(_=Depends(AuthSpace.check_space_api_key)) -> LabActivityReponse
         last_activity=last_activity.to_dto() if last_activity is not None else None,
         dev_env_running=DevEnvService.dev_env_is_running()
     )
+
+
+@space_app.put("/scenario/sync", tags=["Scenario"])
+def sync_scenarios(scenario: SpaceSyncObjectDTO,
+                   _=Depends(AuthSpace.check_space_api_key)) -> None:
+    """
+    Sync all the scenarios from the space to the lab
+    """
+
+    SpaceObjectService.sync_scenario_from_space(scenario)
+
+############################################### NOTE #####################################################
+
+
+@space_app.put("/note/sync", tags=["Note"])
+def sync_notes(note: SpaceSyncObjectDTO,
+               _=Depends(AuthSpace.check_space_api_key)) -> None:
+    """
+    Sync all the notes from the space to the lab
+    """
+
+    SpaceObjectService.sync_note_from_space(note)
 
 ############################################### SHARE #####################################################
 

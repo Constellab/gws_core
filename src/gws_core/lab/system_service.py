@@ -24,6 +24,7 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_run_service import ScenarioRunService
+from gws_core.space.space_object_service import SpaceObjectService
 from gws_core.space.space_service import SpaceService
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
@@ -319,12 +320,21 @@ class SystemService:
         Logger.info('Ending the garbage collector')
 
     @classmethod
-    def synchronize_with_space(cls, sync_users: bool = True, sync_folders: bool = True) -> None:
+    def synchronize_with_space(cls, sync_users: bool = True,
+                               sync_folders: bool = True,
+                               sync_notes: bool = True,
+                               sync_scenarios: bool = True) -> None:
         if sync_users:
             UserService.synchronize_all_space_users()
 
         if sync_folders:
             SpaceFolderService.synchronize_all_space_folders()
+
+        if sync_scenarios:
+            SpaceObjectService.sync_scenarios_from_space()
+
+        if sync_notes:
+            SpaceObjectService.sync_notes_from_space()
         Logger.info('Synchronization with space done')
 
     @classmethod

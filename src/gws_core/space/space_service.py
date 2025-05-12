@@ -17,7 +17,8 @@ from gws_core.space.space_dto import (LabStartDTO, SaveNoteToSpaceDTO,
                                       SaveScenarioToSpaceDTO,
                                       ShareResourceWithSpaceDTO,
                                       SpaceSendMailToMailsDTO,
-                                      SpaceSendMailToUsersDTO)
+                                      SpaceSendMailToUsersDTO,
+                                      SpaceSyncObjectDTO)
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.user.user_dto import UserFullDTO, UserSpace
@@ -191,6 +192,20 @@ class SpaceService():
             err.detail = f"Can't update the scenario folder in space. Error : {err.detail}"
             raise err
 
+    def get_synced_scenarios(self) -> List[SpaceSyncObjectDTO]:
+        """ Get the list of scenarios synced with space
+        """
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/scenario/sync")
+
+        try:
+            response = ExternalApiService.get(space_api_url, self._get_request_header(),
+                                              raise_exception_if_error=True)
+            return SpaceSyncObjectDTO.from_json_list(response.json())
+        except BaseHTTPException as err:
+            err.detail = f"Can't get scenario sync. Error : {err.detail}"
+            raise err
+
     #################################### NOTE ####################################
 
     def save_note(self, folder_id: str, note: SaveNoteToSpaceDTO,
@@ -270,6 +285,20 @@ class SpaceService():
             return RichTextDTO.from_json(response.json())
         except BaseHTTPException as err:
             err.detail = f"Can't get note modifications. Error : {err.detail}"
+            raise err
+
+    def get_synced_notes(self) -> List[SpaceSyncObjectDTO]:
+        """ Get the list of notes synced with space
+        """
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/note/sync")
+
+        try:
+            response = ExternalApiService.get(space_api_url, self._get_request_header(),
+                                              raise_exception_if_error=True)
+            return SpaceSyncObjectDTO.from_json_list(response.json())
+        except BaseHTTPException as err:
+            err.detail = f"Can't get note sync. Error : {err.detail}"
             raise err
 
     #################################### RESOURCE ####################################

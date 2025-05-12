@@ -126,6 +126,19 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
     def entity_is_validated(self) -> bool:
         return self.is_validated
 
+    @classmethod
+    def get_synced_objects(cls) -> List['Note']:
+        """Get all notes that are synced with space
+
+        :return: [description]
+        :rtype: [type]
+        """
+        return list(cls.select().where(cls.last_sync_at.is_null(False)))
+
+    @classmethod
+    def clear_folder(cls, folders: List[SpaceFolder]) -> None:
+        cls.update(folder=None, last_sync_at=None, last_sync_by=None).where(cls.folder.in_(folders)).execute()
+
     class Meta:
         table_name = 'gws_note'
 
