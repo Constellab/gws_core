@@ -74,17 +74,31 @@ class StreamlitMainAppRunner:
                 }
                 /* use same top and bottom padding for title to be able to align element with the title */
                 h1, h2 {
-                    padding: 1rem 0 !important;
-                }
-                h3, h5, h6 {
                     padding: 0.5rem 0 !important;
                 }
+                h3, h5, h6 {
+                    padding: 0.25rem 0 !important;
+                }
                 h4 {
-                    padding: 0.75rem 0 !important;
+                    padding: 0.40rem 0 !important;
+                }
+                p, ol, ul, dl{
+                    margin: 0.25rem 0 !important;
                 }
                 .stButton button {
                     border-width: 2px;
                     border-radius: 30px;
+                }
+
+                /*
+                    Remove weird negative margin-bottom  that is used
+                    to override the default column gap between element.
+                    This margin is used for text and title elements.
+                    It breaks the alignment so we remove it and reduce the padding
+                    of headers and paragraphs to achieve the same result.
+                */
+                [data-testid="stMarkdownContainer"] {
+                    margin-bottom: 0 !important;
                 }
                 /* Hide the container that only contain style. Without this they have a small height */
                 .stElementContainer:has(.stMarkdown style) {
