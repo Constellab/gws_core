@@ -110,7 +110,10 @@ class StreamlitContainers():
         :rtype: _type_
         """
 
-        style: str = ''
+        style: str = f"""
+        [CLASS_NAME] .stHorizontalBlock {{
+            align-items: {vertical_align_items};
+        }}"""
 
         int_cols = []
         for i, col in enumerate(cols):
@@ -122,10 +125,6 @@ class StreamlitContainers():
         }}
         [CLASS_NAME] .stColumn:nth-of-type({i + 1}) * {{
              width: fit-content !important;
-        }}
-
-        [CLASS_NAME] .stHorizontalBlock {{
-            align-items: {vertical_align_items};
         }}
         """
                 int_cols.append(1)
