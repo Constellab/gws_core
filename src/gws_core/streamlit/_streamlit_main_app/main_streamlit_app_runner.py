@@ -82,6 +82,10 @@ class StreamlitMainAppRunner:
                 h4 {
                     padding: 0.75rem 0 !important;
                 }
+                .stButton button {
+                    border-width: 2px;
+                    border-radius: 30px;
+                }
                 /* Hide the container that only contain style. Without this they have a small height */
                 .stElementContainer:has(.stMarkdown style) {
                     display: none;
