@@ -4,6 +4,8 @@ import streamlit as st
 
 from .streamlit_helper import StreamlitHelper
 
+FlexAlignItems = Literal['start', 'center', 'end', 'baseline', 'stretch']
+
 
 class StreamlitGridCell():
 
@@ -56,7 +58,8 @@ class StreamlitContainers():
 
     @classmethod
     def row_container(cls, key: str, flow: Literal['row', 'row wrap'] = 'row wrap',
-                      vertical_align_items: Literal['start', 'center', 'end'] = 'start',
+                      vertical_align_items: FlexAlignItems = 'start',
+                      gap: str = None,
                       additional_style: str = None):
         """Define a row container, element inside a in a row (like buttons, text...)
 
@@ -64,8 +67,12 @@ class StreamlitContainers():
         :type key: str
         :param flow: flex-flow style, defaults to 'row wrap'
         :type flow: Literal[&#39;row&#39;, &#39;row wrap&#39;], optional
-        :param align_items: vertical align-items style, defaults to 'start'
-        :type align_items: Literal[&#39;start&#39;, &#39;center&#39;, &#39;end&#39;], optional
+        :param vertical_align_items: vertical align-items style, defaults to 'start'
+        :type vertical_align_items: FlexAlignItems, optional
+        :param gap: gap between elements, defaults to None
+        :type gap: str, optional
+        :param additional_style: additional css style, defaults to None
+        :type additional_style: str, optional
         :return: _description_
         :rtype: _type_
         """
@@ -73,6 +80,7 @@ class StreamlitContainers():
             [CLASS_NAME] {{
                 flex-flow: {flow};
                 align-items: {vertical_align_items};
+                gap: {gap};
             }}
 
             [CLASS_NAME] * {{
@@ -86,13 +94,18 @@ class StreamlitContainers():
 
     @classmethod
     def columns_with_fit_content(cls, key: str, cols: List[int | Literal['fit-content']],
+                                 vertical_align_items: FlexAlignItems = 'start',
                                  additional_style: str = None):
         """Define columns that also support fit content width.
 
         :param key: key
         :type key: str
         :param cols: list of columns width. Use 'fit-content' to define a column with fit content width
-        :type cols: List[int | Literal[&#39;fit-content&#39;]]
+        :type cols: List[int | Literal['fit-content']]
+        :param vertical_align_items: vertical align-items style, defaults to 'start'
+        :type vertical_align_items: FlexAlignItems, optional
+        :param additional_style: additional css style, defaults to None
+        :type additional_style: str, optional
         :return: _description_
         :rtype: _type_
         """
@@ -109,6 +122,10 @@ class StreamlitContainers():
         }}
         [CLASS_NAME] .stColumn:nth-of-type({i + 1}) * {{
              width: fit-content !important;
+        }}
+
+        [CLASS_NAME] .stHorizontalBlock {{
+            align-items: {vertical_align_items};
         }}
         """
                 int_cols.append(1)

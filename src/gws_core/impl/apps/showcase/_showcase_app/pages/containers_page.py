@@ -1,5 +1,6 @@
 
 import streamlit as st
+
 from gws_core.streamlit import StreamlitContainers, StreamlitGridCell
 
 
@@ -53,6 +54,7 @@ def _render_row_container():
 """
     with StreamlitContainers.row_container('container-row', flow='row wrap',
                                            vertical_align_items='center',
+                                           gap='50px',
                                            additional_style=style):
         st.write('This is a row container')
         st.button('Button 1')
@@ -66,6 +68,7 @@ from gws_core.streamlit import StreamlitContainers
 style = """{style}"""
 with StreamlitContainers.row_container('container-row', flow='row wrap',
                                         vertical_align_items='center',
+                                        gap='50px',
                                         additional_style=style):
     st.write('This is a row container')
     st.button('Button 1')
@@ -85,7 +88,9 @@ def _render_column_with_fit_content():
 }
 """
     title_col, button_col = StreamlitContainers.columns_with_fit_content(
-        'container-column', cols=[1, 'fit-content'], additional_style=style)
+        'container-column', cols=[1, 'fit-content'],
+        vertical_align_items='center',
+        additional_style=style)
     with title_col:
         st.write('This column takes max space')
 
@@ -97,7 +102,9 @@ import streamlit as st
 from gws_core.streamlit import StreamlitContainers
 
 style = """{style}"""
-title_col, button_col = StreamlitContainers.columns_with_fit_content('container-column', cols=[1, 'fit-content'])
+title_col, button_col = StreamlitContainers.columns_with_fit_content('container-column', cols=[1, 'fit-content'],
+        vertical_align_items='center',
+        additional_style=style)
 with title_col:
     st.write('This column takes max space')
 with button_col:

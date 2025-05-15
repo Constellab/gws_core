@@ -38,7 +38,13 @@ class CurrentUserService:
         user: User = cls.get_current_user()
 
         if user is None:
-            raise UnauthorizedException("User not authenticated")
+            if cls._run_context == CurrentUserContext.STREAMLIT:
+                raise UnauthorizedException(
+                    "User not authenticated in streamlit context. " +
+                    "If this action was trigger in a `on_click`, `on_change` or similar, " +
+                    "please use the `StreamlitAuthenticateUser` class to authenticate the user")
+            else:
+                raise UnauthorizedException("User not authenticated")
 
         return user
 

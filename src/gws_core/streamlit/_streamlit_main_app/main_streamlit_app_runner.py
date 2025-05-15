@@ -72,8 +72,15 @@ class StreamlitMainAppRunner:
                 header {
                     display: none !important;
                 }
-                h1 {
-                    padding: 0;
+                /* use same top and bottom padding for title to be able to align element with the title */
+                h1, h2 {
+                    padding: 1rem 0 !important;
+                }
+                h3, h5, h6 {
+                    padding: 0.5rem 0 !important;
+                }
+                h4 {
+                    padding: 0.75rem 0 !important;
                 }
                 /* Hide the container that only contain style. Without this they have a small height */
                 .stElementContainer:has(.stMarkdown style) {

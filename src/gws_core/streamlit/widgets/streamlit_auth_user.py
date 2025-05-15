@@ -20,7 +20,7 @@ class StreamlitAuthenticateUser:
     def __enter__(self) -> User:
         user = StreamlitState.get_current_user()
         if user is None:
-            raise Exception("There is no user in the context")
+            raise Exception("There is no user in the streamlit context")
         if CurrentUserService.get_current_user() is None:
             CurrentUserService.set_current_user(user)
         else:

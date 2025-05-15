@@ -78,14 +78,55 @@ class StreamlitMenuButtonItem():
         self.children.append(child)
 
     def add_children(self, children: List['StreamlitMenuButtonItem']) -> None:
-        """ Add a child to the item
+        """ Add a list of children to the item
 
+        :param children: List of child items to add
+        :type children: List[StreamlitMenuButtonItem]
+        """
+        if self.children is None:
+            self.children = []
+        self.children.extend(children)
+
+    def insert_child(self, index: int, child: 'StreamlitMenuButtonItem') -> None:
+        """ Insert a child to the item
+
+        :param index: Index of the child to insert
+        :type index: int
         :param child: Child item to add
         :type child: StreamlitMenuButtonItem
         """
         if self.children is None:
             self.children = []
-        self.children.extend(children)
+        if index >= len(self.children):
+            raise Exception(f"[StreamlitMenuButton] Child index {index} out of range")
+
+        self.children.insert(index, child)
+
+    def update_child(self, index: int, child: 'StreamlitMenuButtonItem') -> None:
+        """ Update a child in the item
+
+        :param index: Index of the child to update
+        :type index: int
+        :param child: Child item to add
+        :type child: StreamlitMenuButtonItem
+        """
+        if self.children is None:
+            raise Exception("[StreamlitMenuButton] No children to update")
+        if index >= len(self.children):
+            raise Exception(f"[StreamlitMenuButton] Child index {index} out of range")
+        self.children[index] = child
+
+    def remove_child_at(self, index: int) -> None:
+        """ Remove a child from the item
+
+        :param index: Index of the child to remove
+        :type index: int
+        """
+        if self.children is None:
+            raise Exception("[StreamlitMenuButton] No children to remove")
+        if index >= len(self.children):
+            raise Exception(f"[StreamlitMenuButton] Child index {index} out of range")
+        self.children.pop(index)
 
     def find_by_key(self, key: str) -> Optional['StreamlitMenuButtonItem']:
         if self.key == key:
