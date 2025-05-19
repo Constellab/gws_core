@@ -57,13 +57,10 @@ class TestFileService(BaseTestCase):
             self.assertEqual(file_model.resource_typing_name, File.get_typing_name())
 
             # Download the file
-            file_response = FsNodeService.download_file(fs_node_id=file_model.id)
-
-            # Check that the file is the same
-            self.assertEqual(file_response.filename, 'test.txt')
+            file = FsNodeService.download_file(fs_node_id=file_model.id)
 
             # read path
-            with open(file_response.path, "r", encoding='utf-8') as f:
+            with open(file.path, "r", encoding='utf-8') as f:
                 self.assertEqual(f.read(), "test")
         finally:
             if upload_file:

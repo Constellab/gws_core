@@ -5,7 +5,7 @@ import os
 import shutil
 from pathlib import Path
 from re import sub
-from typing import Any, List, Union
+from typing import Any, List, Literal, Union
 
 from charset_normalizer import from_path
 from fastapi.responses import FileResponse
@@ -436,8 +436,8 @@ class FileHelper():
         shutil.move(str(source_path), str(destination_path))
 
     @classmethod
-    def create_file_response(cls, file_path: PathType, filename: str = None,
-                             media_type: str = None) -> FileResponse:
+    def create_file_response(cls, file_path: PathType, filename: str = None, media_type: str = None,
+                             content_disposition_type: Literal['inline', 'attachment'] = 'attachment') -> FileResponse:
         """
         Create a FastAPI FileResponse from a file path
 
@@ -460,7 +460,8 @@ class FileHelper():
         if not media_type:
             media_type = cls.get_mime(file_path)
 
-        return FileResponse(file_path, media_type=media_type, filename=filename)
+        return FileResponse(file_path, media_type=media_type, filename=filename,
+                            content_disposition_type=content_disposition_type)
 
     @classmethod
     def get_file_size_pretty_text(cls, size: float) -> str:

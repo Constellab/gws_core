@@ -34,6 +34,7 @@ class ViewType(Enum):
     RICH_TEXT = "rich-text-view"
     STREAMLIT = "streamlit-view"
     AUDIO = "audio-view"
+    IFRAME = "iframe-view"
 
     def get_typing_style(self) -> TypingStyle:
         """Return the default typing style for the view type
@@ -137,6 +138,8 @@ class ViewType(Enum):
             return "Image"
         elif self == ViewType.HTML:
             return "HTML"
+        elif self == ViewType.IFRAME:
+            return "Iframe"
         elif self == ViewType.MARKDOWN:
             return "Markdown"
         elif self == ViewType.PLOTLY:
@@ -154,4 +157,4 @@ class ViewType(Enum):
 # List of view type that cannot be used in a note
 exluded_views_in_note = [
     ViewType.VIEW, ViewType.FOLDER, ViewType.RESOURCES_LIST_VIEW, ViewType.EMPTY,
-    ViewType.RICH_TEXT, ViewType.STREAMLIT, ViewType.AUDIO]
+    ViewType.RICH_TEXT, ViewType.STREAMLIT]

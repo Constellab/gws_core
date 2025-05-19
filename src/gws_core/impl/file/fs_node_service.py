@@ -3,7 +3,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List, Type
+from typing import List, Literal, Type
 
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
@@ -38,9 +38,9 @@ from .local_file_store import LocalFileStore
 class FsNodeService():
 
     @classmethod
-    def download_file(cls, fs_node_id: str) -> FileResponse:
+    def download_file(cls, fs_node_id: str) -> File:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(fs_node_id)
-        resource: File = resource_model.get_resource()
+        resource = resource_model.get_resource()
 
         if not isinstance(resource, File):
             raise BadRequestException(
@@ -51,7 +51,7 @@ class FsNodeService():
             raise NotFoundException(
                 "The file does not exists on the server. It has been deleted")
 
-        return FileHelper.create_file_response(resource.path, filename=resource.get_default_name())
+        return resource
 
     ############################# UPLOAD / CREATION  ###########################
 

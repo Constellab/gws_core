@@ -7,6 +7,7 @@ from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam
 from gws_core.impl.view.audio_view import AudioView
 from gws_core.impl.view.html_view import HTMLView
+from gws_core.impl.view.iframe_view import IFrameView
 from gws_core.impl.view.image_view import ImageView
 from gws_core.impl.view.markdown_view import MarkdownView
 from gws_core.model.typing_style import TypingStyle
@@ -248,6 +249,8 @@ class File(FSNode):
             return AudioView.from_local_file(self.path)
         if self.extension == 'html':
             return HTMLView(self.read())
+        if self.extension == 'pdf':
+            return IFrameView.from_file_model_id(self.get_model_id(), self.name)
         if self.extension == 'md':
             return MarkdownView(self.read())
 

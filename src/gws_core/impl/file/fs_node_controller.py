@@ -8,6 +8,7 @@ from fastapi import UploadFile
 from fastapi.responses import FileResponse
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dto import TypingDTO
 from gws_core.resource.resource_dto import ResourceModelDTO
 from gws_core.resource.view.view_dto import CallViewResultDTO
@@ -54,7 +55,22 @@ def download_a_file(id_: str,
     """
     Download a file. The access is made with a unique  code generated with get_download_file_url
     """
-    return FsNodeService.download_file(fs_node_id=id_)
+    file = FsNodeService.download_file(fs_node_id=id_)
+
+    return FileHelper.create_file_response(file.path, filename=file.get_default_name())
+
+
+@core_app.get("/fs-node/{id_}/preview/{file_name}", tags=["Files"], summary="Preview a file")
+def preview_a_file(id_: str,
+                   _=Depends(AuthService.check_user_access_token)) -> FileResponse:
+    """
+    Preview a file. The access is made with a unique  code generated with get_download_file_url
+    """
+    file = FsNodeService.download_file(fs_node_id=id_)
+
+    return FileHelper.create_file_response(
+        file.path, filename=file.get_default_name(),
+        content_disposition_type='inline')
 
 
 ############################# FOLDER ROUTES ###########################

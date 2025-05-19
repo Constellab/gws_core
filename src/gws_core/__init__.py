@@ -323,6 +323,7 @@ from .impl.view.boxplot_view import BoxPlotView as BoxPlotView
 from .impl.view.heatmap_view import HeatmapView as HeatmapView
 from .impl.view.histogram_view import HistogramView as HistogramView
 from .impl.view.html_view import HTMLView as HTMLView
+from .impl.view.iframe_view import IFrameView as IFrameView
 from .impl.view.image_view import ImageView as ImageView
 from .impl.view.lineplot_2d_view import LinePlot2DView as LinePlot2DView
 from .impl.view.markdown_view import MarkdownView as MarkdownView
