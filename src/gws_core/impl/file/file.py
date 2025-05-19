@@ -92,6 +92,9 @@ class File(FSNode):
     def is_audio(self):
         return FileHelper.is_audio(self.path)
 
+    def is_video(self):
+        return FileHelper.is_video(self.path)
+
     @property
     def mime(self):
         return FileHelper.get_mime(self.path)
@@ -250,6 +253,8 @@ class File(FSNode):
         if self.extension == 'html':
             return HTMLView(self.read())
         if self.extension == 'pdf':
+            return IFrameView.from_file_model_id(self.get_model_id(), self.name)
+        if self.is_video():
             return IFrameView.from_file_model_id(self.get_model_id(), self.name)
         if self.extension == 'md':
             return MarkdownView(self.read())

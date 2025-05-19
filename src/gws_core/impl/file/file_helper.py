@@ -203,6 +203,10 @@ class FileHelper():
         return cls.get_extension(path) in ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a', 'aiff', 'alac']
 
     @classmethod
+    def is_video(cls, path: PathType) -> bool:
+        return cls.get_extension(path) in ['mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm']
+
+    @classmethod
     def is_file(cls, path: PathType) -> bool:
         return os.path.isfile(path)
 
