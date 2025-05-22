@@ -33,6 +33,10 @@ class StreamlitResourceSelect():
     def add_column_tag_filter_key(self, key: str) -> None:
         self.column_tags_filter_keys.append(key)
 
+    def include_not_flagged_resources(self) -> None:
+        """ Add a filter to include not flagged resources """
+        self.filters['includeNotFlagged'] = True
+
     def select_resource(self, placeholder: str = 'Search for resource',
                         key='resource-select',
                         defaut_resource: ResourceModel = None) -> Optional[ResourceModel]:

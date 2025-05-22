@@ -2,162 +2,19 @@ import json
 from typing import Any, Dict, Generator, List, Literal, Optional, Union
 
 import requests
-from gws_core.core.model.model_dto import BaseModelDTO
+
 from gws_core.core.service.external_api_service import (ExternalApiService,
                                                         FormData)
+from gws_core.core.utils.logger import Logger
 from gws_core.credentials.credentials_type import CredentialsDataOther
-
-DifyIndexingTechnique = Literal['economic', 'high_quality']
-
-
-class DifySendDocumentOptions(BaseModelDTO):
-    indexing_technique: DifyIndexingTechnique = 'economic'
-    remove_extra_spaces: bool = True
-    remove_urls_emails: bool = False
-    chunk_separator: str = '\n\n'
-    chunk_max_tokens: int = 500
-    lang: Optional[str] = None
-
-
-class DifySendMessageSource(BaseModelDTO):
-    dataset_id: str
-    dataset_name: str
-    document_id: str
-    document_name: str
-    data_source_type: Literal['upload_file']
-    retriever_from: Literal['api']
-    score: float  # 0-1
-
-
-class DifySendMessageStreamResponse(BaseModelDTO):
-    answer: str
-
-
-class DifySendEndMessageStreamResponse(BaseModelDTO):
-    conversation_id: Optional[str] = None
-    sources: Optional[List[DifySendMessageSource]] = None
-
-
-class DifyChunkDocument(BaseModelDTO):
-    """Model for document information within a chunk."""
-    id: str
-    data_source_type: str
-    name: str
-    doc_type: Optional[str] = None
-
-
-class DifySegment(BaseModelDTO):
-    """Model for segment information in a chunk."""
-    id: str
-    position: int
-    document_id: str
-    content: str
-    sign_content: str
-    answer: Optional[str] = None
-    word_count: int
-    tokens: int
-    keywords: List[str]
-    index_node_id: str
-    index_node_hash: str
-    hit_count: int
-    enabled: bool
-    disabled_at: Optional[int] = None
-    disabled_by: Optional[str] = None
-    status: str
-    created_by: str
-    created_at: int
-    indexing_at: int
-    completed_at: int
-    error: Optional[str] = None
-    stopped_at: Optional[int] = None
-    document: DifyChunkDocument
-
-
-class DifyChunkRecord(BaseModelDTO):
-    """Model for a chunk record in the retrieval results."""
-    segment: DifySegment
-    child_chunks: Optional[Any]
-    score: Optional[float] = None
-    tsne_position: Optional[Any] = None
-
-
-class DifyChunksResponse(BaseModelDTO):
-    """Model for the response from retrieving chunks from a dataset."""
-    query: Dict[str, str]
-    records: List[DifyChunkRecord]
-
-    def get_distinct_documents(self) -> List[DifyChunkDocument]:
-        """Get distinct documents from the chunk records."""
-        documents = {}
-        for record in self.records:
-            doc = record.segment.document
-            if doc.id not in documents:
-                documents[doc.id] = doc
-        return list(documents.values())
-
-
-class DifyDocumentChunk(BaseModelDTO):
-    """Model for a document chunk."""
-    id: str
-    position: int
-    document_id: str
-    content: str
-    answer: Optional[str] = None
-    word_count: int
-    tokens: int
-    keywords: List[str]
-    index_node_id: str
-    index_node_hash: str
-    hit_count: int
-    enabled: bool
-    disabled_at: Optional[int] = None
-    disabled_by: Optional[str] = None
-    status: str
-    created_by: str
-    created_at: int
-    indexing_at: int
-    completed_at: int
-    error: Optional[str] = None
-    stopped_at: Optional[int] = None
-
-
-class DifyDocumentChunksResponse(BaseModelDTO):
-    """Model for the response from retrieving chunks from a document."""
-    data: List[DifyDocumentChunk]
-    doc_form: str
-    has_more: bool
-    limit: int
-    total: int
-    page: int
-
-    def count_words(self) -> int:
-        """Count the total number of words in the chunks."""
-        return sum(chunk.word_count for chunk in self.data)
-
-    def get_all_chunk_texts(self) -> str:
-        """Get all chunk texts."""
-        return "\n".join(chunk.content for chunk in self.data)
-
-
-class DifyUploadFile(BaseModelDTO):
-    """Model for the response from retrieving upload file information."""
-    id: str
-    name: str
-    size: int
-    extension: str
-    url: str
-    download_url: str
-    mime_type: str
-    created_by: str
-    created_at: float
-
-
-class DifyUploadFileResponse(BaseModelDTO):
-    file: DifyUploadFile
-    base_dify_url: str
-
-    def get_download_url(self) -> str:
-        return self.base_dify_url + self.file.download_url
+from gws_core.impl.dify.dify_class import (
+    DifyChunksResponse, DifyCreateDatasetMetadataRequest,
+    DifyCreateDatasetMetadataResponse, DifyDocumentChunksResponse,
+    DifyGetDatasetMetadataResponse, DifyGetDatasetMetadataResponseMetadata,
+    DifySendDocumentOptions, DifySendDocumentResponse,
+    DifySendEndMessageStreamResponse, DifySendMessageSource,
+    DifySendMessageStreamResponse, DifyUpdateDocumentOptions,
+    DifyUpdateDocumentsMetadataRequest, DifyUploadFile, DifyUploadFileResponse)
 
 
 class DifyService:
@@ -171,45 +28,84 @@ class DifyService:
         self.api_key = api_key
 
     def send_document(self, doc_path: str, dataset_id: str,
-                      options: DifySendDocumentOptions) -> dict:
+                      options: DifySendDocumentOptions, filename: str = None) -> DifySendDocumentResponse:
 
         route = f'{self.route}/datasets/{dataset_id}/document/create-by-file'
 
         body = {
             "indexing_technique": options.indexing_technique,
             "doc_language": options.lang,
-            "process_rule": {
-                "rules": {
-                    "pre_processing_rules": [
-                        {"id": "remove_extra_spaces", "enabled": options.remove_extra_spaces},
-                        {"id": "remove_urls_emails", "enabled": options.remove_urls_emails}
-                    ],
-                    "segmentation": {
-                        "separator": options.chunk_separator,
-                        "max_tokens": options.chunk_max_tokens
-                    }
-                },
-                "mode": "custom"
-            }
-        }
-
-        headers = {
-            'Authorization': 'Bearer ' + self.api_key,
+            "process_rule": self._get_process_rule(options),
         }
 
         form_data = FormData()
-        form_data.add_file_from_path('file', doc_path)
+        form_data.add_file_from_path('file', doc_path, filename)
         form_data.add_json_data('data', body)
 
         response = ExternalApiService.post_form_data(
             route,
             form_data=form_data,
-            headers=headers,
+            headers=self._get_http_headers(),
             timeout=10,
             raise_exception_if_error=True
         )
 
-        return response.json()
+        return DifySendDocumentResponse.from_json(response.json())
+
+    def update_document(self, doc_path: str, dataset_id: str, document_id: str,
+                        options: DifySendDocumentOptions, filename: str = None) -> DifySendDocumentResponse:
+        """Update a document in a dataset.
+        Parameters
+        ----------
+        doc_path : str
+            Path to the document file
+        dataset_id : str
+            Knowledge Base ID
+        document_id : str
+            Document ID to update
+        options : DifyUpdateDocumentOptions
+            Options for updating the document
+        Returns
+        -------
+        DifySendDocumentResponse
+            Response containing the updated document information
+        Raises
+        ------
+        requests.exceptions.HTTPError
+            If the API request fails
+        """
+        route = f'{self.route}/datasets/{dataset_id}/documents/{document_id}/update-by-file'
+        body = {
+            "process_rule": self._get_process_rule(options),
+        }
+
+        form_data = FormData()
+        form_data.add_file_from_path('file', doc_path, filename)
+        form_data.add_json_data('data', body)
+        response = ExternalApiService.post_form_data(
+            route,
+            form_data=form_data,
+            headers=self._get_http_headers(),
+            timeout=10,
+            raise_exception_if_error=True
+        )
+        return DifySendDocumentResponse.from_json(response.json())
+
+    def _get_process_rule(self, options: DifyUpdateDocumentOptions) -> Dict[str, Any]:
+        """Get the process rule for document update."""
+        return {
+            "rules": {
+                "pre_processing_rules": [
+                    {"id": "remove_extra_spaces", "enabled": options.remove_extra_spaces},
+                    {"id": "remove_urls_emails", "enabled": options.remove_urls_emails}
+                ],
+                "segmentation": {
+                    "separator": options.chunk_separator,
+                    "max_tokens": options.chunk_max_tokens
+                }
+            },
+            "mode": "custom"
+        }
 
     def search_chunks(self, dataset_id: str, query: str,
                       search_method: Literal['keyword_search', 'semantic_search', 'full_text_search', 'hybrid_search'] = 'semantic_search',
@@ -289,15 +185,10 @@ class DifyService:
             "retrieval_model": retrieval_model,
         }
 
-        headers = {
-            'Authorization': 'Bearer ' + self.api_key,
-            'Content-Type': 'application/json'
-        }
-
         response = requests.post(
             route,
             json=body,
-            headers=headers,
+            headers=self._get_http_headers(content_type=True),
             timeout=10
         )
 
@@ -352,14 +243,10 @@ class DifyService:
         if keyword:
             params['keyword'] = keyword
 
-        headers = {
-            'Authorization': 'Bearer ' + self.api_key
-        }
-
         response = requests.get(
             route,
             params=params,
-            headers=headers,
+            headers=self._get_http_headers(),
             timeout=10
         )
 
@@ -398,14 +285,10 @@ class DifyService:
         # First get the file information
         route = f'{self.route}/datasets/{dataset_id}/documents/{document_id}/upload-file'
 
-        headers = {
-            'Authorization': 'Bearer ' + self.api_key
-        }
-
         # Get file information
         response = requests.get(
             route,
-            headers=headers,
+            headers=self._get_http_headers(),
             timeout=10
         )
 
@@ -418,8 +301,36 @@ class DifyService:
             base_dify_url=self.get_base_url()
         )
 
-    def send_message_stream(self, query: str, conversation_id: Optional[str] = None,
-                            user: Optional[str] = None,
+    def delete_document(self, dataset_id: str, document_id: str) -> None:
+        """Delete a document from a dataset.
+
+        Parameters
+        ----------
+        dataset_id : str
+            Knowledge Base ID
+        document_id : str
+            Document ID to delete
+
+        Raises
+        ------
+        requests.exceptions.HTTPError
+            If the API request fails
+        """
+        route = f'{self.route}/datasets/{dataset_id}/documents/{document_id}'
+
+        response = requests.delete(
+            route,
+            headers=self._get_http_headers(),
+            timeout=10
+        )
+
+        response.raise_for_status()
+
+    ################################# CHAT #################################
+
+    def send_message_stream(self, query: str,
+                            user: str,
+                            conversation_id: Optional[str] = None,
                             inputs: Optional[Dict[str, Any]] = None,
                             files: Optional[list] = None) -> Generator[Union[str, DifySendMessageStreamResponse, DifySendEndMessageStreamResponse], None, None]:
         """
@@ -436,22 +347,16 @@ class DifyService:
             Generator that yields response chunks (string or objects)
         """
         url = f"{self.route}/chat-messages"
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
 
         data = {
             "query": query,
             "response_mode": "streaming",
-            "inputs": inputs or {}
+            "inputs": inputs or {},
+            "user": user,
         }
 
         if conversation_id:
             data["conversation_id"] = conversation_id
-
-        if user:
-            data["user"] = user
 
         if files:
             data["files"] = files
@@ -462,7 +367,8 @@ class DifyService:
         )
 
         try:
-            with requests.post(url, headers=headers, json=data, stream=True) as response:
+            with requests.post(url, headers=self._get_http_headers(content_type=True),
+                               json=data, stream=True, timeout=30) as response:
                 response.raise_for_status()
                 buffer = ""
 
@@ -518,6 +424,135 @@ class DifyService:
 
         except requests.exceptions.RequestException as e:
             raise RuntimeError(f"Error calling Dify API: {str(e)}") from e
+
+    ################################### METADATA ###################################
+
+    def create_dataset_metadata(
+            self, dataset_id: str, metadata: DifyCreateDatasetMetadataRequest) -> DifyCreateDatasetMetadataResponse:
+        """Create metadata for a specific document in a dataset.
+        Parameters
+        ----------
+        dataset_id : str
+            Knowledge Base ID
+        body : DifyCreateMetadataRequest
+            Metadata to create
+        Raises
+        ------
+        requests.exceptions.HTTPError
+            If the API request fails
+        """
+        route = f'{self.route}/datasets/{dataset_id}/metadata'
+        response = requests.post(
+            route,
+            json=metadata.to_json_dict(),
+            headers=self._get_http_headers(),
+            timeout=30
+        )
+        response.raise_for_status()
+        return DifyCreateDatasetMetadataResponse.from_json(response.json())
+
+    def get_dataset_all_metadata(
+            self, dataset_id: str) -> DifyGetDatasetMetadataResponse:
+        """Get metadata for a specific dataset.
+        Parameters
+        ----------
+        dataset_id : str
+            Knowledge Base ID
+        Raises
+        ------
+        requests.exceptions.HTTPError
+            If the API request fails
+        """
+        route = f'{self.route}/datasets/{dataset_id}/metadata'
+        response = requests.get(
+            route,
+            headers=self._get_http_headers(),
+            timeout=30
+        )
+        response.raise_for_status()
+        return DifyGetDatasetMetadataResponse.from_json(response.json())
+
+    def get_dataset_metadata(
+            self, dataset_id: str, metadata_name: str) -> DifyGetDatasetMetadataResponseMetadata | None:
+        """Get metadata for a specific dataset.
+        Parameters
+        ----------
+        dataset_id : str
+            Knowledge Base ID
+        metadata_name : str
+            Metadata name to get
+        Raises
+        ------
+        requests.exceptions.HTTPError
+            If the API request fails
+        """
+
+        metadata = self.get_dataset_all_metadata(dataset_id)
+
+        for meta in metadata.doc_metadata:
+            if meta.name == metadata_name:
+                return meta
+
+        return None
+
+    def get_or_create_dataset_metadata(
+            self, dataset_id: str, metadata: DifyCreateDatasetMetadataRequest) -> DifyGetDatasetMetadataResponseMetadata:
+        """Get or create the access right metadata in Dify."""
+        dify_metadata = self.get_dataset_metadata(dataset_id, metadata.name)
+
+        if dify_metadata is not None:
+            return dify_metadata
+
+        Logger.info(f"The {metadata.name} metadata does not exist in dify. Creating it.")
+
+        self.create_dataset_metadata(dataset_id, metadata)
+
+        dify_metadata = self.get_dataset_metadata(dataset_id, metadata.name)
+        if dify_metadata is None:
+            raise ValueError(f"The {metadata.name} metadata could not be created in dify in dataset : {dataset_id}.")
+        return dify_metadata
+
+    def update_document_metadata(
+            self, dataset_id: str, body: List[DifyUpdateDocumentsMetadataRequest]) -> None:
+        """Update metadata for a specific document in a dataset.
+
+        Parameters
+        ----------
+        dataset_id : str
+            Knowledge Base ID
+        document_id : str
+            Document ID to update metadata for
+        metadata : Dict[str, Any]
+            Metadata to update
+
+        Raises
+        ------
+        requests.exceptions.HTTPError
+            If the API request fails
+        """
+        route = f'{self.route}/datasets/{dataset_id}/documents/metadata'
+
+        response = requests.post(
+            route,
+            json={"operation_data": DifyUpdateDocumentsMetadataRequest.to_json_list(body)},
+            headers=self._get_http_headers(content_type=True),
+            timeout=30
+        )
+
+        response.raise_for_status()
+
+    def _get_http_headers(self, content_type: bool = False) -> Dict[str, str]:
+        """Get the HTTP headers for the Dify API requests.
+
+        Returns:
+            Dict[str, str]: HTTP headers
+        """
+        headers = {
+            'Authorization': 'Bearer ' + self.api_key,
+        }
+        if content_type:
+            headers['Content-Type'] = 'application/json'
+        return headers
 
     def get_base_url(self) -> str:
         """Get the base URL of the Dify API before the first '/'.

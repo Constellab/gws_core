@@ -14,8 +14,9 @@ from gws_core.entity_navigator.entity_navigator_type import (EntityType,
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_field import RichTextField
-from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
-                                                     RichTextModificationsDTO)
+from gws_core.impl.rich_text.rich_text_modification import \
+    RichTextModificationsDTO
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.note.note_dto import NoteDTO, NoteFullDTO
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User

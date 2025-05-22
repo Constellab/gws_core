@@ -1,7 +1,16 @@
 from abc import abstractmethod
-from typing import Any, List
+from typing import Any, List, TypedDict
 
-from .rich_text_types import RichTextBlockType, RichTextDTO, RichTextListItem
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockType
+
+from .rich_text_types import RichTextDTO
+
+
+class RichTextListItem(TypedDict):
+    """Object representing a list item in a rich text"""
+    content: str
+    items: List["RichTextListItem"]
+    meta: dict
 
 
 class TeRichTextMigrator():

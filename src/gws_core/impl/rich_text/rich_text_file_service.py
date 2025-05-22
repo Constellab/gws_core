@@ -142,7 +142,9 @@ class RichTextFileService():
 
         # write the file
         file_path = cls.get_object_file_path(object_type, object_id, filename)
-        with open(file_path, mode, encoding='utf-8') as file:
+
+        encoding = 'utf-8' if mode == 'w' else None
+        with open(file_path, mode, encoding=encoding) as file:
             file.write(file_content)
 
         return RichTextUploadFileResultDTO(

@@ -11,9 +11,12 @@ from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
+from gws_core.impl.rich_text.block.rich_text_block_header import \
+    RichTextBlockHeaderLevel
+from gws_core.impl.rich_text.block.rich_text_block_list import \
+    RichTextBlockList
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_types import (
-    RichTextBlock, RichTextParagraphHeaderLevel)
+from gws_core.impl.rich_text.rich_text_types import RichTextBlock
 
 
 class TranscriptionOutput(BaseModelDTO):
@@ -276,9 +279,9 @@ The generated JSON must validate this schema.
         elif transcription.type == 'title':
             return rich_text.add_header(
                 transcription.data.get('text'),
-                RichTextParagraphHeaderLevel.from_int(transcription.data.get('level', 1)))
+                RichTextBlockHeaderLevel.from_int(transcription.data.get('level', 1)))
         elif transcription.type == 'list':
-            return rich_text.add_list(transcription.data)
+            return rich_text.add_list(RichTextBlockList.from_json(transcription.data))
         elif transcription.type == 'formula':
             return rich_text.add_formula(transcription.data.get('formula'))
         else:

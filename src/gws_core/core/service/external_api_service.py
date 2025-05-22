@@ -18,7 +18,7 @@ DEFAULT_TIMEOUT = 60
 
 class FormData():
 
-    file_paths: List[Tuple[str, str]]
+    file_paths: List[Tuple[str, str, str]]
     json_data: List[Tuple[str, Any]]
 
     _opened_files: List[BufferedReader]
@@ -28,16 +28,16 @@ class FormData():
         self.json_data = []
         self._opened_files = []
 
-    def add_file_from_path(self, key: str,  file_path: str) -> None:
-        self.file_paths.append((key, file_path))
+    def add_file_from_path(self, key: str,  file_path: str, filename: str = None) -> None:
+        self.file_paths.append((key, file_path, filename))
 
     def add_json_data(self, key: str, data: Any) -> None:
         self.json_data.append((key, data))
 
     def __enter__(self) -> List:
         data: List = []
-        for key, file_path in self.file_paths:
-            file_name = FileHelper.get_name_with_extension(file_path)
+        for key, file_path, filename in self.file_paths:
+            file_name = filename if filename else FileHelper.get_name_with_extension(file_path)
             content_type = FileHelper.get_mime(file_path)
             opened_file = open(file_path, 'rb')
             data.append((key, (file_name, opened_file, content_type)))

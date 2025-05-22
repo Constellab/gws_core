@@ -1,11 +1,13 @@
 
 
-from typing import List
+from typing import List, cast
 
 from gws_core import (BaseTestCase, ProcessModel, ProtocolModel, ResourceModel,
                       Scenario, ScenarioSaveDTO, ScenarioService,
                       ScenarioStatus, TaskModel)
 from gws_core.folder.space_folder import SpaceFolder
+from gws_core.impl.rich_text.block.rich_text_block_paragraph import \
+    RichTextBlockParagraph
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.robot.robot_protocol import (RobotSimpleTravel,
                                                 RobotWorldTravelProto)
@@ -47,7 +49,9 @@ class TestScenario(BaseTestCase):
 
         rich_text = RichText(scenario.description)
         paragraph = rich_text.get_block_at_index(0)
-        self.assert_json(paragraph.data, {"text": "test"})
+        block = cast(RichTextBlockParagraph, paragraph.get_data())
+        self.assertIsInstance(block, RichTextBlockParagraph)
+        self.assertEqual(block.text, "test")
 
     def test_run(self):
         # test setting the folder to the scenario

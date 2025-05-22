@@ -100,6 +100,12 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder):
         self.add_expression(ResourceModel.folder == folder_id)
         return self
 
+    def add_has_folder_filter(self) -> "ResourceSearchBuilder":
+        """Filter the search query to keep only resources with a folder
+        """
+        self.add_expression(ResourceModel.folder.is_null(False))
+        return self
+
     def add_flagged_filter(self, flagged: bool) -> "ResourceSearchBuilder":
         """Filter the search query by a specific flag
         """
@@ -124,4 +130,10 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder):
         self.add_join(FSNodeModel, on=(FSNodeModel.id == ResourceModel.fs_node_model))
 
         self.add_expression(FSNodeModel.get_extension_expression(extension))
+        return self
+
+    def add_is_fs_node_filter(self) -> "ResourceSearchBuilder":
+        """Filter the search query to keep only fs node resources (file or folder)
+        """
+        self.add_expression(ResourceModel.fs_node_model.is_null(False))
         return self

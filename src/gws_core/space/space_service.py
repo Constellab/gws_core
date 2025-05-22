@@ -1,7 +1,7 @@
 
 
 import json
-from typing import Dict, List, Literal, Optional
+from typing import List, Literal, Optional
 
 from fastapi.encoders import jsonable_encoder
 from requests.models import Response
@@ -10,15 +10,18 @@ from gws_core.brick.brick_service import BrickService
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
-                                                     RichTextModificationsDTO)
+from gws_core.impl.rich_text.rich_text_modification import \
+    RichTextModificationsDTO
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
 from gws_core.space.space_dto import (LabStartDTO, SaveNoteToSpaceDTO,
                                       SaveScenarioToSpaceDTO,
                                       ShareResourceWithSpaceDTO,
+                                      SpaceHierarchyObjectDTO,
                                       SpaceSendMailToMailsDTO,
                                       SpaceSendMailToUsersDTO,
                                       SpaceSyncObjectDTO)
+from gws_core.space.space_service_base import SpaceServiceBase
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.user.user_dto import UserFullDTO, UserSpace
@@ -30,7 +33,6 @@ from ..folder.space_folder_dto import (ExternalSpaceCreateFolder,
                                        ExternalSpaceFolder,
                                        ExternalSpaceFolders)
 from ..user.current_user_service import CurrentUserService
-from ..user.user import User
 from ..user.user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
 
 
@@ -40,58 +42,10 @@ class ExternalCheckCredentialResponse(BaseModelDTO):
     twoFAUrlCode: Optional[str] = None
 
 
-class SpaceService():
+class SpaceService(SpaceServiceBase):
 
     # external lab route on space
     _EXTERNAL_LABS_ROUTE: str = 'external-labs'
-    AUTH_HEADER_KEY: str = 'Authorization'
-    AUTH_API_KEY_HEADER_PREFIX: str = 'api-key'
-    # Key to set the user in the request
-    USER_ID_HEADER_KEY: str = 'User'
-
-    ACCESS_TOKEN_HEADER = 'access-token'
-
-    _access_token: Optional[str] = None
-
-    def __init__(self, access_token: Optional[str] = None):
-        """ Constructor of the SpaceService
-
-        :param access_token: if access token is provided, it is used to authenticate.
-        Otherwise the current user is used for authentication, defaults to None
-        :type access_token: Optional[str], optional
-        """
-        self._access_token = access_token
-
-    @staticmethod
-    def get_instance() -> 'SpaceService':
-        """
-        Return a new instance of the SpaceService that use the
-        current user for authentication
-
-        :return: a new instance of the SpaceService
-        :rtype: SpaceService
-        """
-        # For streamlit context, we force the access token
-        if CurrentUserService.is_streamlit_context():
-            return SpaceService.create_with_access_token()
-
-        return SpaceService()
-
-    # TODO TO REMOVE
-    @staticmethod
-    def create_with_access_token() -> 'SpaceService':
-        """
-        Return a new instance of the SpaceService that use the
-        access token for authentication
-
-        :return: a new instance of the SpaceService
-        :rtype: SpaceService
-        """
-
-        # for now we fake an access token.
-        # In the future, the access token will be passed as parameter
-        # It allow to add the header in the request to switch to a access token request
-        return SpaceService('1')
 
     #################################### AUTHENTICATION ####################################
 
@@ -455,6 +409,24 @@ class SpaceService():
             err.detail = f"Can't share root folder. Error : {err.detail}"
             raise err
 
+    def get_all_current_user_root_folders(self) -> List[SpaceHierarchyObjectDTO]:
+        """ Get all the root folders accessible by the current user
+
+        :return: list of root folders
+        :rtype: List[SpaceHierarchyObjectDTO]
+        """
+
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/user/current")
+
+        try:
+            response = ExternalApiService.get(space_api_url, self._get_request_header(),
+                                              raise_exception_if_error=True)
+            return SpaceHierarchyObjectDTO.from_json_list(response.json())
+        except BaseHTTPException as err:
+            err.detail = f"Can't retrieve folders for the lab. Error : {err.detail}"
+            raise err
+
     ############################################# ENTITY #############################################
 
     def add_tags_to_object(self, entity_id: str, tags: List[Tag]) -> List[Tag]:
@@ -602,31 +574,3 @@ class SpaceService():
             f"{self._EXTERNAL_LABS_ROUTE}/send-mail-to-mails")
         return ExternalApiService.post(space_api_url, send_mail_to_mails_dto, self._get_request_header(),
                                        raise_exception_if_error=True)
-
-    #################################### OTHER ####################################
-
-    def _get_space_api_url(self, route: str) -> str:
-        """
-        Build an URL to call the space API
-        """
-
-        space_api_url = Settings.get_space_api_url()
-        return space_api_url + '/' + route
-
-    def _get_request_header(self) -> Dict[str, str]:
-        """
-        Return the header for a request to space, with Api key and User if exists
-        """
-        # Header with the Api Key
-        headers = {self.AUTH_HEADER_KEY: self.AUTH_API_KEY_HEADER_PREFIX +
-                   ' ' + Settings.get_space_api_key()}
-
-        user: User = CurrentUserService.get_current_user()
-
-        if user:
-            headers[self.USER_ID_HEADER_KEY] = user.id
-
-        if self._access_token:
-            headers[self.ACCESS_TOKEN_HEADER] = self._access_token
-
-        return headers

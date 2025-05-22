@@ -1,5 +1,7 @@
 
 
+from typing import cast
+
 from PIL import Image
 
 from gws_core.core.utils.settings import Settings
@@ -9,12 +11,21 @@ from gws_core.impl.note_resource.generate_lab_note import GenerateLabNote
 from gws_core.impl.note_resource.merge_notes_resource import MergeNoteResources
 from gws_core.impl.note_resource.note_resource import NoteResource
 from gws_core.impl.note_resource.update_note_resource import UpdatNoteResource
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block_figure import \
+    RichTextBlockFigure
+from gws_core.impl.rich_text.block.rich_text_block_file import \
+    RichTextBlockFile
+from gws_core.impl.rich_text.block.rich_text_block_header import \
+    RichTextBlockHeader
+from gws_core.impl.rich_text.block.rich_text_block_paragraph import \
+    RichTextBlockParagraph
+from gws_core.impl.rich_text.block.rich_text_block_view import \
+    RichTextBlockNoteResourceView
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import (
     RichTextFileService, RichTextUploadFileResultDTO)
-from gws_core.impl.rich_text.rich_text_types import (RichTextBlockType,
-                                                     RichTextFigureData,
-                                                     RichTextObjectType)
+from gws_core.impl.rich_text.rich_text_types import RichTextObjectType
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
@@ -48,11 +59,12 @@ class TestNoteResource(BaseTestCase):
 
         outputs = task_runner.run()
 
-        note: NoteResource = outputs['note']
+        note = cast(NoteResource, outputs['note'])
         self.assertIsInstance(note, NoteResource)
         self.assertEqual(note.title, "My custom note")
-        self.assertEqual(note.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(note.get_block_at_index(0).data["text"], "This is a test paragraph")
+        block_data = cast(RichTextBlockParagraph, note.get_block_at_index(0).get_data())
+        self.assertIsInstance(block_data, RichTextBlockParagraph)
+        self.assertEqual(block_data.text, "This is a test paragraph")
 
     def test_create_note_from_template(self):
 
@@ -78,19 +90,22 @@ class TestNoteResource(BaseTestCase):
 
         outputs = task_runner.run()
 
-        note: NoteResource = outputs['note']
+        note = cast(NoteResource, outputs['note'])
         self.assertIsInstance(note, NoteResource)
         self.assertEqual(note.title, "My template")
-        self.assertEqual(note.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(note.get_block_at_index(0).data["text"], "This is a test paragraph")
+        block_data = cast(RichTextBlockParagraph, note.get_block_at_index(0).get_data())
+        self.assertIsInstance(block_data, RichTextBlockParagraph)
+        self.assertEqual(block_data.text, "This is a test paragraph")
 
         # check that the image exists
-        self.assertEqual(note.get_block_at_index(1).type, RichTextBlockType.FIGURE)
-        self.assertEqual(note.get_block_at_index(1).data['title'], 'test')
+        figure_block = cast(RichTextBlockFigure, note.get_block_at_index(1).get_data())
+        self.assertIsInstance(figure_block, RichTextBlockFigure)
+        self.assertEqual(figure_block.title, 'test')
 
         # check that the file exists
-        self.assertEqual(note.get_block_at_index(2).type, RichTextBlockType.FILE)
-        self.assertEqual(note.get_block_at_index(2).data['name'], 'hello.txt')
+        file_block = cast(RichTextBlockFile, note.get_block_at_index(2).get_data())
+        self.assertIsInstance(file_block, RichTextBlockFile)
+        self.assertEqual(file_block.name, 'hello.txt')
 
         # the note should have 2 resources (1 for the figure, 1 for the file)
         self.assertEqual(len(note.get_resources()), 2)
@@ -111,38 +126,42 @@ class TestNoteResource(BaseTestCase):
         })
 
         outputs = task_runner.run()
-        updated_note: NoteResource = outputs['note']
+        updated_note = cast(NoteResource, outputs['note'])
         self.assertIsInstance(updated_note, NoteResource)
         self.assertEqual(updated_note.title, "My custom note")
-        self.assertEqual(updated_note.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(updated_note.get_block_at_index(0).data["text"], "This is a test paragraph")
-        self.assertEqual(updated_note.get_block_at_index(1).type, RichTextBlockType.HEADER)
-        self.assertEqual(updated_note.get_block_at_index(1).data["text"], "New section")
-        self.assertEqual(updated_note.get_block_at_index(2).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(updated_note.get_block_at_index(2).data["text"], "This is a new paragraph")
+        first_block = cast(RichTextBlockParagraph, updated_note.get_block_at_index(0).get_data())
+        self.assertIsInstance(first_block, RichTextBlockParagraph)
+        self.assertEqual(first_block.text, "This is a test paragraph")
+        second_block = cast(RichTextBlockParagraph, updated_note.get_block_at_index(1).get_data())
+        self.assertIsInstance(second_block, RichTextBlockHeader)
+        self.assertEqual(second_block.text, "New section")
+        third_block = cast(RichTextBlockParagraph, updated_note.get_block_at_index(2).get_data())
+        self.assertIsInstance(third_block, RichTextBlockParagraph)
+        self.assertEqual(third_block.text, "This is a new paragraph")
 
     def test_generate_note_from_note(self):
-        note = NoteResource(title="My custom note")
-        note.add_paragraph("This is a test paragraph")
-        note.add_figure_file(self._create_note_image(), title='test', create_new_resource=False)
-        note.add_default_view_from_resource(self._create_resource(), title='view', create_new_resource=False)
+        note_resource = NoteResource(title="My custom note")
+        note_resource.add_paragraph("This is a test paragraph")
+        note_resource.add_figure_file(self._create_note_image(), title='test', create_new_resource=False)
+        note_resource.add_default_view_from_resource(self._create_resource(), title='view', create_new_resource=False)
 
         # add a view from a resource that is not saved
         robot = Robot.empty()
-        note.add_default_view_from_resource(robot, title='view', create_new_resource=True)
+        note_resource.add_default_view_from_resource(robot, title='view', create_new_resource=True)
 
         # Test generate note from note resource
         task_runner = TaskRunner(GenerateLabNote, inputs={
-            "note": note
+            "note": note_resource
         })
 
         outputs = task_runner.run()
 
-        note: LabNoteResource = outputs['note']
+        note = cast(LabNoteResource, outputs['note'])
         self.assertIsInstance(note, LabNoteResource)
-        self.assertEqual(note.get_content().get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(note.get_content().get_block_at_index(0).data["text"], "This is a test paragraph")
-        self.assertEqual(note.get_content().get_block_at_index(1).type, RichTextBlockType.FIGURE)
+
+        first_block = cast(RichTextBlockParagraph, note.get_content().get_block_at_index(0).get_data())
+        self.assertIsInstance(first_block, RichTextBlockParagraph)
+        self.assertEqual(first_block.text, "This is a test paragraph")
         # the first view was attached to a resource, it should generate a RESOURCE_VIEW
         self.assertEqual(note.get_content().get_block_at_index(2).type, RichTextBlockType.RESOURCE_VIEW)
         # the second view was not attached to a resource, it should generate a FILE_VIEW
@@ -174,17 +193,22 @@ class TestNoteResource(BaseTestCase):
 
         outputs = task_runner.run()
 
-        merged_note: NoteResource = outputs['note']
+        merged_note = cast(NoteResource, outputs['note'])
         self.assertIsInstance(merged_note, NoteResource)
         self.assertEqual(merged_note.title, "Merged note")
-        self.assertEqual(merged_note.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(merged_note.get_block_at_index(0).data["text"], "This is a first paragraph")
-        self.assertEqual(merged_note.get_block_at_index(1).type, RichTextBlockType.PARAGRAPH)
-        self.assertEqual(merged_note.get_block_at_index(1).data["text"], "This is a second paragraph")
-        self.assertEqual(merged_note.get_block_at_index(2).type, RichTextBlockType.FIGURE)
-        self.assertEqual(merged_note.get_block_at_index(2).data['title'], 'figure')
-        self.assertEqual(merged_note.get_block_at_index(3).type, RichTextBlockType.NOTE_RESOURCE_VIEW)
-        self.assertEqual(merged_note.get_block_at_index(3).data['title'], 'view')
+
+        first_block = cast(RichTextBlockParagraph, merged_note.get_block_at_index(0).get_data())
+        self.assertIsInstance(first_block, RichTextBlockParagraph)
+        self.assertEqual(first_block.text, "This is a first paragraph")
+        second_block = cast(RichTextBlockParagraph, merged_note.get_block_at_index(1).get_data())
+        self.assertIsInstance(second_block, RichTextBlockParagraph)
+        self.assertEqual(second_block.text, "This is a second paragraph")
+        third_block = cast(RichTextBlockFigure, merged_note.get_block_at_index(2).get_data())
+        self.assertIsInstance(third_block, RichTextBlockFigure)
+        self.assertEqual(third_block.title, 'figure')
+        fourth_block = cast(RichTextBlockNoteResourceView, merged_note.get_block_at_index(3).get_data())
+        self.assertIsInstance(fourth_block, RichTextBlockNoteResourceView)
+        self.assertEqual(fourth_block.title, 'view')
 
         # the merged note contains the figure and view resources
         self.assertEqual(len(merged_note.get_resources()), 2)
@@ -204,27 +228,32 @@ class TestNoteResource(BaseTestCase):
 
         return File(filename)
 
-    def _create_note_template_image(self, note_template_id: str, title: str = None) -> RichTextFigureData:
+    def _create_note_template_image(self, note_template_id: str, title: str = None) -> RichTextBlockFigure:
         # create an image with a red pixel and save it in note storage
         img = self._create_image()
 
         # add the image to the template
         result = RichTextFileService.save_image(RichTextObjectType.NOTE_TEMPLATE, note_template_id, img, 'png')
-        return {
-            "filename": result.filename,
-            "width": result.width,
-            "height": result.height,
-            "naturalHeight": result.height,
-            "naturalWidth": result.width,
-            "title": title,
-            "caption": None,
-        }
+        return RichTextBlockFigure(
+            filename=result.filename,
+            width=result.width,
+            height=result.height,
+            naturalHeight=result.height,
+            naturalWidth=result.width,
+            title=title,
+            caption=None,
+        )
 
     def _create_note_template_file(
-            self, note_template_id: str, filename: str = None) -> RichTextUploadFileResultDTO:
+            self, note_template_id: str, filename: str = None) -> RichTextBlockFile:
         # write the file
-        return RichTextFileService.write_file(
+        file = RichTextFileService.write_file(
             RichTextObjectType.NOTE_TEMPLATE, note_template_id, 'hello', filename, 'w')
+
+        return RichTextBlockFile(
+            name=file.name,
+            size=file.size,
+        )
 
     def _create_resource(self) -> Resource:
         resource_model = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)

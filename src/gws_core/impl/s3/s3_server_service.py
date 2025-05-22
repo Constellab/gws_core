@@ -42,6 +42,7 @@ class S3ServerService:
 
     # Mandatory and not updatable tags for the S3 server object
     STORAGE_TAG_NAME = 'storage'
+    STORAGE_TAG_VALUE = 's3'
     BUCKET_TAG_NAME = 'bucket'
     KEY_TAG_NAME = 'key'
 
@@ -137,7 +138,7 @@ class S3ServerService:
 
             # Add the tags, make sure they are not propagable
             origins = cls.get_tag_origin()
-            resource_tags.add_tag(Tag(cls.STORAGE_TAG_NAME, 's3', is_propagable=False,
+            resource_tags.add_tag(Tag(cls.STORAGE_TAG_NAME, cls.STORAGE_TAG_VALUE, is_propagable=False,
                                   origins=origins, auto_parse=True))
             resource_tags.add_tag(Tag(cls.BUCKET_TAG_NAME, bucket_name,
                                   is_propagable=False, origins=origins, auto_parse=True))
@@ -334,7 +335,7 @@ class S3ServerService:
         """
         search_builder = ResourceSearchBuilder()
 
-        search_builder.add_tag_filter(Tag(cls.STORAGE_TAG_NAME, 's3', auto_parse=True))
+        search_builder.add_tag_filter(Tag(cls.STORAGE_TAG_NAME, cls.STORAGE_TAG_VALUE, auto_parse=True))
         search_builder.add_tag_filter(Tag(cls.BUCKET_TAG_NAME, bucket_name, auto_parse=True))
 
         search_builder.add_expression(ResourceModel.fs_node_model.is_null(False))
@@ -452,6 +453,15 @@ class S3ServerService:
         """Get the origin of a tag
         """
         return TagOrigins(TagOriginType.S3, 's3')
+
+    @classmethod
+    def get_datahub_tag(cls) -> Tag:
+        """Get the datahub tag used to tags the objects that are stored in the datahub
+
+        :return: _description_
+        :rtype: Tag
+        """
+        return Tag(cls.BUCKET_TAG_NAME, cls.FOLDERS_BUCKET_NAME)
 
     ##################################################### OTHER METHODS #####################################################
 

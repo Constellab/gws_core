@@ -1,6 +1,7 @@
 
 
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 
 from typing_extensions import TypedDict
@@ -84,3 +85,33 @@ class SpaceSyncObjectDTO(BaseModelDTO):
     folder_id: str
     last_sync_at: datetime
     last_sync_by_id: str
+
+
+class SpaceDocumentDTO(BaseModelDTO):
+    """Object representing a space document
+    """
+    id: str
+    name: str
+    size: int
+    mimeType: str
+    type: Literal['UPLOADED_DOCUMENT', 'CONSTELLAB_DOCUMENT']
+
+
+class SpaceHierarchyObjectType(Enum):
+    """Enum representing the type of a space hierarchy object
+    """
+    FOLDER = 'FOLDER'
+    DOCUMENT = 'DOCUMENT'
+    CONSTELLAB_DOCUMENT = 'CONSTELLAB_DOCUMENT'
+    NOTE = 'NOTE'
+    SCENARIO = 'SCENARIO'
+    RESOURCE = 'RESOURCE'
+
+
+class SpaceHierarchyObjectDTO(BaseModelDTO):
+    """Object representing a space hierarchy object
+    """
+    id: str
+    name: str
+    objectType: SpaceHierarchyObjectType
+    parentId: Optional[str] = None

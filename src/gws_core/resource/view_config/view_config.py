@@ -14,7 +14,8 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (EntityType,
                                                              NavigableEntity)
-from gws_core.impl.rich_text.rich_text_types import RichTextResourceViewData
+from gws_core.impl.rich_text.block.rich_text_block_view import \
+    RichTextBlockResourceView
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view_config.view_config_dto import ViewConfigDTO
@@ -78,17 +79,17 @@ class ViewConfig(ModelWithUser, NavigableEntity):
         EntityTagList.delete_by_entity(EntityType.VIEW, self.id)
         return result
 
-    def to_rich_text_resource_view(self, title: str = None, caption: str = None) -> RichTextResourceViewData:
-        return {
-            "id": self.id + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
-            "view_config_id": self.id,
-            "resource_id": self.resource_model.id,
-            "scenario_id": self.scenario.id if self.scenario else None,
-            "view_method_name": self.view_name,
-            "view_config": self.get_config_values(),
-            "title": title or self.title,
-            "caption": caption or "",
-        }
+    def to_rich_text_resource_view(self, title: str = None, caption: str = None) -> RichTextBlockResourceView:
+        return RichTextBlockResourceView(
+            id=self.id + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
+            view_config_id=self.id,
+            resource_id=self.resource_model.id,
+            scenario_id=self.scenario.id if self.scenario else None,
+            view_method_name=self.view_name,
+            view_config=self.get_config_values(),
+            title=title or self.title,
+            caption=caption or "",
+        )
 
     @classmethod
     def get_same_view_config(cls, view_config: 'ViewConfig') -> Optional['ViewConfig']:

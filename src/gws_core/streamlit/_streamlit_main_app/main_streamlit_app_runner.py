@@ -85,7 +85,8 @@ class StreamlitMainAppRunner:
                 p, ol, ul, dl{
                     margin: 0.25rem 0 !important;
                 }
-                .stButton button {
+                .stButton button,
+                .stLinkButton a {
                     border-width: 2px;
                     border-radius: 30px;
                 }

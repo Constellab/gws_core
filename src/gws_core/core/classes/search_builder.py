@@ -172,6 +172,14 @@ class SearchBuilder:
     def search_page(self, page: int = 0, number_of_items_per_page: int = 20) -> Paginator:
         return Paginator(self.build_search(), page, number_of_items_per_page)
 
+    def search_first(self) -> Optional[Model]:
+        """Search the first element of the search
+
+        :return: [description]
+        :rtype: Optional[Model]
+        """
+        return self.build_search().first()
+
     def add_search_params(self: SearchBuilderType, search: SearchParams) -> SearchBuilderType:
         self._add_search_filter_query(search.filtersCriteria)
 

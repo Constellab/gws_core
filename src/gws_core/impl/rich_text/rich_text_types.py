@@ -1,42 +1,39 @@
-
-
-from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, TypedDict
+from typing import List
 
 from gws_core.core.model.model_dto import BaseModelDTO
-
-
-class RichTextBlockType(Enum):
-    """List the special block type that can be used in rich text """
-    FIGURE = 'figure'
-    RESOURCE_VIEW = 'resourceView'  # view of a resource
-    FILE_VIEW = 'fileView'  # independant view stored in a file (without resource)
-    NOTE_RESOURCE_VIEW = 'noteResourceView'  # view of a resource in an note
-    PARAGRAPH = 'paragraph'
-    HEADER = 'header'
-    QUOTE = 'quote'
-    HINT = 'hint'
-    CODE = 'code'
-    LIST = 'list'
-    VIDEO = 'video'
-    FORMULA = 'formula'
-    TABLE = 'table'
-    FILE = 'file'
-    TIMESTAMP = 'timestamp'
-
-
-class RichTextBlock(BaseModelDTO):
-    id: str
-    type: RichTextBlockType
-    data: Any
-    # tunes: Dict[str, Any]
-
-
-class RichTextDTO(BaseModelDTO):
-    version: int
-    editorVersion: str
-    blocks: List[RichTextBlock]
+from gws_core.core.utils.string_helper import StringHelper
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase, RichTextBlockType)
+from gws_core.impl.rich_text.block.rich_text_block_code import \
+    RichTextBlockCode
+from gws_core.impl.rich_text.block.rich_text_block_figure import \
+    RichTextBlockFigure
+from gws_core.impl.rich_text.block.rich_text_block_file import \
+    RichTextBlockFile
+from gws_core.impl.rich_text.block.rich_text_block_formula import \
+    RichTextBlockFormula
+from gws_core.impl.rich_text.block.rich_text_block_header import \
+    RichTextBlockHeader
+from gws_core.impl.rich_text.block.rich_text_block_hint import \
+    RichTextBlockHint
+from gws_core.impl.rich_text.block.rich_text_block_iframe import \
+    RichTextBlockIframe
+from gws_core.impl.rich_text.block.rich_text_block_list import \
+    RichTextBlockList
+from gws_core.impl.rich_text.block.rich_text_block_paragraph import \
+    RichTextBlockParagraph
+from gws_core.impl.rich_text.block.rich_text_block_quote import \
+    RichTextBlockQuote
+from gws_core.impl.rich_text.block.rich_text_block_table import \
+    RichTextBlockTable
+from gws_core.impl.rich_text.block.rich_text_block_timestamp import \
+    RichTextBlockTimestamp
+from gws_core.impl.rich_text.block.rich_text_block_video import \
+    RichTextBlockVideo
+from gws_core.impl.rich_text.block.rich_text_block_view import (
+    RichTextBlockNoteResourceView, RichTextBlockResourceView,
+    RichTextBlockViewFile)
 
 
 class RichTextObjectType(Enum):
@@ -50,193 +47,92 @@ class RichTextObjectType(Enum):
     NOTE_RESOURCE = 'note_resource'
 
 
-################################ BLOCK DATA ################################
+####################################### RICH TEXT #######################################
 
-class RichTextParagraphData(TypedDict):
-    """Object representing a paragraph block data in a rich text
-
-    :param TypedDict: [description]
-    :type TypedDict: [type]
-    """
-    text: str
-
-
-class RichTextParagraphHeaderLevel(Enum):
-    HEADER_1 = 2
-    HEADER_2 = 3
-    HEADER_3 = 4
-
-    @classmethod
-    def from_int(cls, level: int) -> 'RichTextParagraphHeaderLevel':
-        if not isinstance(level, int):
-            return cls.HEADER_1
-        if level == 1:
-            return cls.HEADER_1
-        elif level == 2:
-            return cls.HEADER_2
-        else:
-            return cls.HEADER_3
-
-
-class RichTextParagraphHeaderData(TypedDict):
-    """Object representing a paragraph block data in a rich text
-
-    :param TypedDict: [description]
-    :type TypedDict: [type]
-    """
-    text: str
-    level: int
-
-
-class RichTextParagraphListItemData(TypedDict):
-    """Object representing a list block data in a rich text
-
-    :param TypedDict: [description]
-    :type TypedDict: [type]
-    """
-
-    content: str
-    items: List["RichTextParagraphListItemData"]
-
-
-class RichTextParagraphListData(TypedDict):
-    """Object representing a list block data in a rich text
-
-    :param TypedDict: [description]
-    :type TypedDict: [type]
-    """
-
-    style: Literal['ordered', 'unordered']
-    items: List[RichTextParagraphListItemData]
-
-
-class RichTextFigureData(TypedDict):
-    """Object representing a figure in a rich text
-
-    :param TypedDict: [description]
-    :type TypedDict: [type]
-    """
-    filename: str
-    title: Optional[str]
-    caption: Optional[str]
-    width: int
-    height: int
-    naturalWidth: int
-    naturalHeight: int
-
-
-class RichTextResourceViewData(TypedDict):
-    """Object representing a resource view in a rich text"""
+class RichTextBlock(BaseModelDTO):
     id: str
-    view_config_id: str
-    resource_id: str
-    scenario_id: Optional[str]
-    view_method_name: str
-    view_config: Dict[str, Any]
-    title: Optional[str]
-    caption: Optional[str]
+    type: RichTextBlockType
+    data: dict
+    # tunes: Dict[str, Any]
+
+    def get_data(self) -> RichTextBlockDataBase:
+        if self.type == RichTextBlockType.PARAGRAPH:
+            return RichTextBlockParagraph.from_json(self.data)
+        elif self.type == RichTextBlockType.HEADER:
+            return RichTextBlockHeader.from_json(self.data)
+        elif self.type == RichTextBlockType.LIST:
+            return RichTextBlockList.from_json(self.data)
+        elif self.type == RichTextBlockType.FIGURE:
+            return RichTextBlockFigure.from_json(self.data)
+        elif self.type == RichTextBlockType.RESOURCE_VIEW:
+            return RichTextBlockResourceView.from_json(self.data)
+        elif self.type == RichTextBlockType.NOTE_RESOURCE_VIEW:
+            return RichTextBlockNoteResourceView.from_json(self.data)
+        elif self.type == RichTextBlockType.FILE_VIEW:
+            return RichTextBlockViewFile.from_json(self.data)
+        elif self.type == RichTextBlockType.TIMESTAMP:
+            return RichTextBlockTimestamp.from_json(self.data)
+        elif self.type == RichTextBlockType.FORMULA:
+            return RichTextBlockFormula.from_json(self.data)
+        elif self.type == RichTextBlockType.QUOTE:
+            return RichTextBlockQuote.from_json(self.data)
+        elif self.type == RichTextBlockType.HINT:
+            return RichTextBlockHint.from_json(self.data)
+        elif self.type == RichTextBlockType.CODE:
+            return RichTextBlockCode.from_json(self.data)
+        elif self.type == RichTextBlockType.VIDEO:
+            return RichTextBlockVideo.from_json(self.data)
+        elif self.type == RichTextBlockType.TABLE:
+            return RichTextBlockTable.from_json(self.data)
+        elif self.type == RichTextBlockType.FILE:
+            return RichTextBlockFile.from_json(self.data)
+        elif self.type == RichTextBlockType.IFRAME:
+            return RichTextBlockIframe.from_json(self.data)
+        raise ValueError(f"Unknown block type: {self.type}")
+
+    def to_markdown(self) -> str:
+        """Convert the block to markdown
+
+        :return: the markdown representation of the block
+        :rtype: str
+        """
+        try:
+            data = self.get_data()
+            if isinstance(data, RichTextBlockDataBase):
+                return data.to_markdown()
+        except Exception:
+            # If any error occurs during conversion, return empty string
+            pass
+        return ""
+
+    def set_data(self, data: RichTextBlockDataBase) -> None:
+        """Set the data of the block
+
+        :param data: the data to set
+        :type data: RichTextBlockDataBase
+        """
+        if self.type != data.get_type():
+            raise ValueError(f"Block type {self.type} does not match data type {data.get_type()}")
+        self.data = data.to_json_dict()
+
+    @staticmethod
+    def from_data(data: RichTextBlockDataBase, id_: str = None) -> 'RichTextBlock':
+        """Create a RichTextBlock from data
+
+        :param data: the data to set
+        :type data: RichTextBlockDataBase
+        :return: the RichTextBlock
+        :rtype: RichTextBlock
+        """
+        block = RichTextBlock(
+            id=id_ or StringHelper.generate_uuid(),
+            type=data.get_type(),
+            data=data.to_json_dict()
+        )
+        return block
 
 
-class RichTextNoteResourceViewData(TypedDict):
-    """Object representing a resource view in an note rich text"""
-    id: str
-    # key in the note of the sub resource to call view on
-    sub_resource_key: str
-    view_method_name: str
-    view_config: Dict[str, Any]
-    title: Optional[str]
-    caption: Optional[str]
-
-
-class RichTextViewFileData(TypedDict):
-    """Object representing a independant view in a rich text, the view is not associated with a resource"""
-    id: str
-    filename: str
-    title: Optional[str]
-    caption: Optional[str]
-
-
-class RichTextVariableData(TypedDict):
-    """Object representing a variable in a rich text"""
-    name: str
-    description: str
-    value: Any
-    type: Literal['string']
-
-
-class RichTextTimestampData(TypedDict):
-    """Object representing a variable in a rich text"""
-    timestamp: str
-    format: Literal['DATE', 'DATE_TIME', 'DATE_TIME_WITH_SECONDS', 'TIME_WITH_SECONDS', 'FROM_NOW']
-
-
-class RichTextFormulaData(TypedDict):
-    formula: str
-
-
-class RichTextFileData(TypedDict):
-    name: str
-    size: int  # in bytes
-
-
-class RichTextListItem(TypedDict):
-    """Object representing a list item in a rich text"""
-    content: str
-    items: List["RichTextListItem"]
-    meta: dict
-
-
-class RichTextListData(TypedDict):
-    """Object representing a list in a rich text"""
-    style: Literal['ordered', 'unordered', 'checklist']
-    items: List["RichTextListItem"]
-    meta: dict
-
-
-################################ BLOCK DATA ################################
-class RichTextModificationType(Enum):
-    """List the possible modification type in a rich text"""
-    CREATED = 'CREATED'
-    UPDATED = 'UPDATED'
-    DELETED = 'DELETED'
-    MOVED = 'MOVED'
-
-
-class RichTextModificationDifferenceDTO(BaseModelDTO):
-    index: int
-    count: int
-    added: bool
-    removed: bool
-    value: str
-
-
-class RichTextBlockModificationDTO(BaseModelDTO):
-    """Object representing a modification of a block in a rich text"""
-    id: str
-    time: datetime
-    blockId: str
-    blockType: RichTextBlockType
-    differences: Optional[List[RichTextModificationDifferenceDTO]] = None
-    blockValue: Optional[Dict[str, Any]] = None
-    type: RichTextModificationType
-    index: int
-    oldIndex: Optional[int] = None
-    userId: str
-
-
-class RichTextUserDTO(BaseModelDTO):
-    id: str
-    firstname: str
-    lastname: str
-    photo: Optional[str] = None
-
-
-class RichTextBlockModificationWithUserDTO(RichTextBlockModificationDTO):
-    blockType: str
-    type: str
-    user: RichTextUserDTO
-
-
-class RichTextModificationsDTO(BaseModelDTO):
-    version: int = 1
-    modifications: List[RichTextBlockModificationDTO] = []
+class RichTextDTO(BaseModelDTO):
+    version: int
+    editorVersion: str
+    blocks: List[RichTextBlock]

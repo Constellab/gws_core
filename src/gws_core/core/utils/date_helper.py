@@ -20,6 +20,10 @@ class DateHelper:
         return int(DateHelper.now_utc().timestamp() * 1000)
 
     @staticmethod
+    def from_utc_milliseconds(utc_milliseconds: int) -> datetime:
+        return datetime.fromtimestamp(utc_milliseconds / 1000, tz=timezone.utc)
+
+    @staticmethod
     def from_str(date_str: str, format: str) -> datetime:
         return datetime.strptime(date_str, format)
 

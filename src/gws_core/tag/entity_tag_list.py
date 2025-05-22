@@ -47,6 +47,16 @@ class EntityTagList():
 
         return None
 
+    def get_tags_by_key(self, tag_key: str) -> List[EntityTag]:
+        """return the tags with the given key
+        """
+        return [entity_tag for entity_tag in self._tags if entity_tag.tag_key == tag_key]
+
+    def has_tag_key(self, tag_key: str) -> bool:
+        """return true if the tag key already exist in the model
+        """
+        return len(self.get_tags_by_key(tag_key)) > 0
+
     def get_tags(self) -> List[EntityTag]:
         return self._tags
 
@@ -113,6 +123,20 @@ class EntityTagList():
         return new_tags
 
     @transaction()
+    def replace_tags(self, tags: List[Tag]) -> None:
+        """Remove the tag with the same key and add the new tags
+        """
+        for tag in tags:
+            self.replace_tag(tag)
+
+    @transaction()
+    def replace_tag(self, tag: Tag) -> None:
+        """Remove the tag with the same key and add the new tag
+        """
+        self.delete_tag_by_key(tag.key)
+        self.add_tag(tag)
+
+    @transaction()
     def delete_tags(self, tags: List[Tag]) -> None:
         """Delete a tag from the entity tags. Check if the tag is still used by other entities
         """
@@ -132,8 +156,16 @@ class EntityTagList():
             self._delete_tag(tag)
 
     @transaction()
+    def delete_tag_by_key(self, tag_key: str) -> None:
+        """Delete a tag from the entity tags by key
+        """
+        tags = self.get_tags_by_key(tag_key)
+        for tag in tags:
+            self._delete_tag(tag.to_simple_tag())
+
+    @transaction()
     def _delete_tag_origin(self, tag: Tag) -> None:
-        """Delete a tag ovgfrigin from the list, if there is no more origins, delete the tag
+        """Delete a tag origin from the list, if there is no more origins, delete the tag
         """
         existing_tag = self.get_tag(tag)
         if existing_tag is None:

@@ -157,25 +157,25 @@ from .impl.agent.py_pipenv_agent import PyPipenvAgent as PyPipenvAgent
 from .impl.agent.r_conda_agent import RCondaAgent as RCondaAgent
 from .impl.agent.r_mamba_agent import RMambaAgent as RMambaAgent
 # Impl > Dify
-from .impl.dify.dify_service import DifyChunkDocument as DifyChunkDocument
-from .impl.dify.dify_service import DifyChunkRecord as DifyChunkRecord
-from .impl.dify.dify_service import DifyChunksResponse as DifyChunksResponse
-from .impl.dify.dify_service import DifyDocumentChunk as DifyDocumentChunk
-from .impl.dify.dify_service import \
+from .impl.dify.dify_class import DifyChunkDocument as DifyChunkDocument
+from .impl.dify.dify_class import DifyChunkRecord as DifyChunkRecord
+from .impl.dify.dify_class import DifyChunksResponse as DifyChunksResponse
+from .impl.dify.dify_class import DifyDocumentChunk as DifyDocumentChunk
+from .impl.dify.dify_class import \
     DifyDocumentChunksResponse as DifyDocumentChunksResponse
-from .impl.dify.dify_service import DifySegment as DifySegment
-from .impl.dify.dify_service import \
+from .impl.dify.dify_class import DifySegment as DifySegment
+from .impl.dify.dify_class import \
     DifySendDocumentOptions as DifySendDocumentOptions
-from .impl.dify.dify_service import \
+from .impl.dify.dify_class import \
     DifySendEndMessageStreamResponse as DifySendEndMessageStreamResponse
-from .impl.dify.dify_service import \
+from .impl.dify.dify_class import \
     DifySendMessageSource as DifySendMessageSource
-from .impl.dify.dify_service import \
+from .impl.dify.dify_class import \
     DifySendMessageStreamResponse as DifySendMessageStreamResponse
-from .impl.dify.dify_service import DifyService as DifyService
-from .impl.dify.dify_service import DifyUploadFile as DifyUploadFile
-from .impl.dify.dify_service import \
+from .impl.dify.dify_class import DifyUploadFile as DifyUploadFile
+from .impl.dify.dify_class import \
     DifyUploadFileResponse as DifyUploadFileResponse
+from .impl.dify.dify_service import DifyService as DifyService
 # Impl > File
 from .impl.file.file import File as File
 from .impl.file.file_helper import FileHelper as FileHelper
@@ -206,11 +206,48 @@ from .impl.openai.open_ai_helper import OpenAiHelper as OpenAiHelper
 from .impl.plotly.plotly_r_field import PlotlyRField as PlotlyRField
 from .impl.plotly.plotly_resource import PlotlyResource as PlotlyResource
 from .impl.plotly.plotly_view import PlotlyView as PlotlyView
+from .impl.rich_text.block.rich_text_block import \
+    RichTextBlockDataBase as RichTextBlockDataBase
+from .impl.rich_text.block.rich_text_block import \
+    RichTextBlockType as RichTextBlockType
+from .impl.rich_text.block.rich_text_block_code import \
+    RichTextBlockCode as RichTextBlockCode
+from .impl.rich_text.block.rich_text_block_figure import \
+    RichTextBlockFigure as RichTextBlockFigure
+from .impl.rich_text.block.rich_text_block_file import \
+    RichTextBlockFile as RichTextBlockFile
+from .impl.rich_text.block.rich_text_block_formula import \
+    RichTextBlockFormula as RichTextBlockFormula
+from .impl.rich_text.block.rich_text_block_header import \
+    RichTextBlockHeader as RichTextBlockHeader
+from .impl.rich_text.block.rich_text_block_hint import \
+    RichTextBlockHint as RichTextBlockHint
+from .impl.rich_text.block.rich_text_block_iframe import \
+    RichTextBlockIframe as RichTextBlockIframe
+from .impl.rich_text.block.rich_text_block_list import \
+    RichTextBlockList as RichTextBlockList
+from .impl.rich_text.block.rich_text_block_paragraph import \
+    RichTextBlockParagraph as RichTextBlockParagraph
+from .impl.rich_text.block.rich_text_block_quote import \
+    RichTextBlockQuote as RichTextBlockQuote
+from .impl.rich_text.block.rich_text_block_table import \
+    RichTextBlockTable as RichTextBlockTable
+from .impl.rich_text.block.rich_text_block_timestamp import \
+    RichTextBlockTimestamp as RichTextBlockTimestamp
+from .impl.rich_text.block.rich_text_block_video import \
+    RichTextBlockVideo as RichTextBlockVideo
+from .impl.rich_text.block.rich_text_block_view import \
+    RichTextBlockNoteResourceView as RichTextBlockNoteResourceView
+from .impl.rich_text.block.rich_text_block_view import \
+    RichTextBlockResourceView as RichTextBlockResourceView
+from .impl.rich_text.block.rich_text_block_view import \
+    RichTextBlockViewFile as RichTextBlockViewFile
 # Impl > RichText
 from .impl.rich_text.rich_text import RichText as RichText
-from .impl.rich_text.rich_text_paragraph_text import \
-    RichTextParagraphText as RichTextParagraphText
-from .impl.rich_text.rich_text_types import *
+from .impl.rich_text.rich_text_types import RichTextBlock as RichTextBlock
+from .impl.rich_text.rich_text_types import RichTextDTO as RichTextDTO
+from .impl.rich_text.rich_text_types import \
+    RichTextObjectType as RichTextObjectType
 from .impl.rich_text.rich_text_view import RichTextView as RichTextView
 # Impl > s3
 from .impl.s3.s3_bucket import S3Bucket as S3Bucket

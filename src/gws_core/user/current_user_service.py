@@ -41,7 +41,7 @@ class CurrentUserService:
             if cls._run_context == CurrentUserContext.STREAMLIT:
                 raise UnauthorizedException(
                     "User not authenticated in streamlit context. " +
-                    "If this action was trigger in a `on_click`, `on_change` or similar, " +
+                    "If this action was trigger in a `on_click`, `on_change`, in a st.dialog or similar, " +
                     "please use the `StreamlitAuthenticateUser` class to authenticate the user")
             else:
                 raise UnauthorizedException("User not authenticated")

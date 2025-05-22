@@ -28,6 +28,13 @@ class BaseModelDTO(BaseModel):
         return dumps(self.to_json_dict())
 
     @classmethod
+    def to_json_list(cls: Type[BaseModelDTOType], model_dto_list: List[BaseModelDTOType]) -> List[dict]:
+        """
+        Convert a list of ModelDTO to a list of json dictionaries.
+        """
+        return [model_dto.to_json_dict() for model_dto in model_dto_list]
+
+    @classmethod
     def from_json(cls: Type[BaseModelDTOType], json_: dict) -> BaseModelDTOType:
         """
         Create a ModelDTO from a json.

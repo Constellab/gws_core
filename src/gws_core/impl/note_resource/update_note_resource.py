@@ -3,10 +3,10 @@
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
+from gws_core.impl.rich_text.block.rich_text_block_header import \
+    RichTextBlockHeaderLevel
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_param import RichTextParam
-from gws_core.impl.rich_text.rich_text_types import \
-    RichTextParagraphHeaderLevel
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.task.task import Task
@@ -46,7 +46,7 @@ class UpdatNoteResource(Task):
         note_param: RichText = params['note']
 
         if section_title is not None:
-            note_resource.add_header(section_title, RichTextParagraphHeaderLevel.HEADER_1)
+            note_resource.add_header(section_title, RichTextBlockHeaderLevel.HEADER_1)
 
         note_resource.append_basic_rich_text(note_param)
 

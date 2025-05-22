@@ -1,6 +1,6 @@
 
 
-from typing import Any, List
+from typing import Any, List, cast
 
 from PIL import Image
 
@@ -10,13 +10,22 @@ from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block_figure import \
+    RichTextBlockFigure
+from gws_core.impl.rich_text.block.rich_text_block_file import \
+    RichTextBlockFile
+from gws_core.impl.rich_text.block.rich_text_block_header import \
+    RichTextBlockHeaderLevel
+from gws_core.impl.rich_text.block.rich_text_block_timestamp import \
+    RichTextBlockTimestamp
+from gws_core.impl.rich_text.block.rich_text_block_view import (
+    RichTextBlockNoteResourceView, RichTextBlockResourceView,
+    RichTextBlockViewFile)
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
-from gws_core.impl.rich_text.rich_text_types import (
-    RichTextBlock, RichTextBlockType, RichTextFigureData, RichTextFileData,
-    RichTextNoteResourceViewData, RichTextObjectType,
-    RichTextParagraphHeaderLevel, RichTextResourceViewData,
-    RichTextTimestampData, RichTextViewFileData)
+from gws_core.impl.rich_text.rich_text_types import (RichTextBlock,
+                                                     RichTextObjectType)
 from gws_core.impl.rich_text.rich_text_view import RichTextView
 from gws_core.model.typing_style import TypingStyle
 from gws_core.note.note import Note
@@ -91,7 +100,7 @@ class NoteResource(ResourceSet):
         """Add a blank line to the note resource content."""
         self._rich_text.add_paragraph('')
 
-    def add_header(self, header: str, level: RichTextParagraphHeaderLevel) -> None:
+    def add_header(self, header: str, level: RichTextBlockHeaderLevel) -> None:
         """
         Add a header to the note resource content.
 
@@ -102,7 +111,7 @@ class NoteResource(ResourceSet):
         """
         self._rich_text.add_header(header, level)
 
-    def add_timestamp(self, timestamp_data: RichTextTimestampData,
+    def add_timestamp(self, timestamp_data: RichTextBlockTimestamp,
                       parameter_name: str = None) -> None:
         """
         Add a time stamp to the note resource content.
@@ -222,14 +231,14 @@ class NoteResource(ResourceSet):
                   view_config_values: ConfigParamsDict = None,
                   title: str = None, caption: str = None,
                   parameter_name: str = None) -> None:
-        rich_text_view: RichTextNoteResourceViewData = {
-            "id": StringHelper.generate_uuid() + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
-            "sub_resource_key": resource_key,
-            "view_method_name": view_method_name,
-            "view_config": view_config_values or {},
-            "title": title or "",
-            "caption": caption or "",
-        }
+        rich_text_view = RichTextBlockNoteResourceView(
+            id=StringHelper.generate_uuid() + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
+            sub_resource_key=resource_key,
+            view_method_name=view_method_name,
+            view_config=view_config_values or {},
+            title=title or "",
+            caption=caption or "",
+        )
         self._rich_text.add_note_resource_view(rich_text_view, parameter_name)
 
     def call_view_on_resource(self, resource_key: str, view_name: str, config: ConfigParamsDict) -> CallViewResultDTO:
@@ -302,15 +311,15 @@ class NoteResource(ResourceSet):
         image = Image.open(file.path)
 
         filename = f"{StringHelper.generate_uuid()}_{str(DateHelper.now_utc_as_milliseconds())}.{file.extension}"
-        figure_data: RichTextFigureData = {
-            "filename": filename,
-            "width": image.size[0],
-            "height": image.size[1],
-            "naturalWidth": image.size[0],
-            "naturalHeight": image.size[1],
-            "title": title,
-            "caption": caption,
-        }
+        figure_data = RichTextBlockFigure(
+            filename=filename,
+            width=image.size[0],
+            height=image.size[1],
+            naturalWidth=image.size[0],
+            naturalHeight=image.size[1],
+            title=title,
+            caption=caption,
+        )
 
         self._rich_text.add_figure(figure_data, parameter_name=parameter_name)
 
@@ -366,10 +375,10 @@ class NoteResource(ResourceSet):
         if self.resource_exists(filename):
             raise ValueError(f"The file {filename} already exists in the note resource")
 
-        self._rich_text.add_file({
-            "name": filename,
-            "size": file.get_size(),
-        }, parameter_name=parameter_name)
+        self._rich_text.add_file(RichTextBlockFile(
+            name=filename,
+            size=file.get_size(),
+        ), parameter_name=parameter_name)
 
         self.add_resource(file, filename, create_new_resource=create_new_resource)
 
@@ -478,23 +487,23 @@ class NoteResource(ResourceSet):
         for block in note.get_blocks():
             if block.type == RichTextBlockType.FIGURE:
                 # add the figure manually (including the resource)
-                figure_data: RichTextFigureData = block.data
-                self.add_figure_file(note.get_file(figure_data['filename']),
-                                     title=figure_data['title'], caption=figure_data['caption'],
+                figure_data = cast(RichTextBlockFigure, block.get_data())
+                self.add_figure_file(note.get_file(figure_data.filename),
+                                     title=figure_data.title, caption=figure_data.caption,
                                      create_new_resource=False)
             elif block.type == RichTextBlockType.FILE:
                 # add the file manually (including the resource)
-                file_data: RichTextFileData = block.data
-                self.add_file(note.get_file(file_data['name']), create_new_resource=False)
+                file_data = cast(RichTextBlockFile, block.get_data())
+                self.add_file(note.get_file(file_data.name), create_new_resource=False)
 
             elif block.type == RichTextBlockType.NOTE_RESOURCE_VIEW:
                 # add the view manually (including the resource)
-                view_data: RichTextNoteResourceViewData = block.data
-                self.add_view_from_resource(note.get_resource(view_data['sub_resource_key']),
-                                            view_method_name=view_data['view_method_name'],
-                                            config_values=view_data['view_config'],
-                                            title=view_data['title'],
-                                            caption=view_data['caption'],
+                view_data = cast(RichTextBlockNoteResourceView, block.get_data())
+                self.add_view_from_resource(note.get_resource(view_data.sub_resource_key),
+                                            view_method_name=view_data.view_method_name,
+                                            config_values=view_data.view_config,
+                                            title=view_data.title,
+                                            caption=view_data.caption,
                                             create_new_resource=False)
 
             else:
@@ -533,36 +542,36 @@ class NoteResource(ResourceSet):
         for block in rich_text.get_blocks():
             # specific case for the figure
             if block.type == RichTextBlockType.FIGURE:
-                figure_data: RichTextFigureData = block.data
+                figure_data = cast(RichTextBlockFigure, block.get_data())
 
                 # get the path of the figure, to add the figure to note
                 filename = RichTextFileService.get_object_file_path(object_type, object_id,
-                                                                    figure_data['filename'])
+                                                                    figure_data.filename)
                 # add the figure manually
-                self.add_figure_from_path(filename, figure_data['title'], figure_data['caption'])
+                self.add_figure_from_path(filename, figure_data.title, figure_data.caption)
             elif block.type == RichTextBlockType.FILE:
                 # add the file manually
-                file_data: RichTextFileData = block.data
-                filename = RichTextFileService.get_object_file_path(object_type, object_id, file_data['name'])
+                file_data = cast(RichTextBlockFile, block.get_data())
+                filename = RichTextFileService.get_object_file_path(object_type, object_id, file_data.name)
                 self.add_file_from_path(filename)
             elif block.type == RichTextBlockType.RESOURCE_VIEW:
                 # add the view manually
-                view_data: RichTextResourceViewData = block.data
-                resource_model = ResourceModel.get_by_id_and_check(view_data['resource_id'])
+                view_data = cast(RichTextBlockResourceView, block.get_data())
+                resource_model = ResourceModel.get_by_id_and_check(view_data.resource_id)
                 self.add_view_from_resource(resource_model.get_resource(),
-                                            view_method_name=view_data['view_method_name'],
-                                            config_values=view_data['view_config'],
-                                            title=view_data['title'],
-                                            caption=view_data['caption'],
+                                            view_method_name=view_data.view_method_name,
+                                            config_values=view_data.view_config,
+                                            title=view_data.title,
+                                            caption=view_data.caption,
                                             create_new_resource=False)
             elif block.type == RichTextBlockType.FILE_VIEW:
                 # convert the file view to a ViewResource
-                file_view_data: RichTextViewFileData = block.data
-                view_result = RichTextFileService.get_file_view(object_type, object_id, file_view_data['filename'])
+                file_view_data = cast(RichTextBlockViewFile, block.get_data())
+                view_result = RichTextFileService.get_file_view(object_type, object_id, file_view_data.filename)
 
                 view_resource = ViewResource.from_view_dto(view_result.view)
                 self._add_view_resource(view_resource, view_config_values=None,
-                                        title=file_view_data["title"], caption=file_view_data["caption"])
+                                        title=file_view_data.title, caption=file_view_data.caption)
 
             else:
                 self.append_block(block)
@@ -630,25 +639,28 @@ class NoteResource(ResourceSet):
             # specific case for the figure
             if block.type == RichTextBlockType.FIGURE:
                 # add the figure manually
-                figure_data = self._convert_figure_for_lab_note_rich_text(block.data, note_id)
+                block_data = cast(RichTextBlockFigure, block.get_data())
+                figure_data = self._convert_figure_for_lab_note_rich_text(block_data, note_id)
                 note_rich_text.add_figure(figure_data)
             elif block.type == RichTextBlockType.FILE:
                 # add the file manually
-                file_data = self._convert_file_for_lab_note_rich_text(block.data, note_id)
+                block_data = cast(RichTextBlockFile, block.get_data())
+                file_data = self._convert_file_for_lab_note_rich_text(block_data, note_id)
                 note_rich_text.add_file(file_data)
             elif block.type == RichTextBlockType.NOTE_RESOURCE_VIEW:
                 # add the view manually
-                self._add_note_view_to_note_rich_text(block.data, note_rich_text, note_id)
+                block_data = cast(RichTextBlockNoteResourceView, block.get_data())
+                self._add_note_view_to_note_rich_text(block_data, note_rich_text, note_id)
             else:
                 note_rich_text.append_block(block)
 
         return note_rich_text
 
     def _convert_figure_for_lab_note_rich_text(
-            self, note_figure: RichTextFigureData, note_id: str) -> RichTextFigureData:
+            self, note_figure: RichTextBlockFigure, note_id: str) -> RichTextBlockFigure:
         """Method to convert a note figure to a note figure. It saves the figure in the note storage.
         """
-        figure_file = self.get_file(note_figure['filename'])
+        figure_file = self.get_file(note_figure.filename)
         image: Image.Image = None
         try:
             image = Image.open(figure_file.path)
@@ -660,22 +672,22 @@ class NoteResource(ResourceSet):
                                                 image, figure_file.extension)
 
         # add the figure manually
-        return {
-            "filename": result.filename,
-            "width": result.width,
-            "height": result.height,
-            "naturalWidth": result.width,
-            "naturalHeight": result.height,
-            "title": note_figure['title'],
-            "caption": note_figure['caption'],
-        }
+        return RichTextBlockFigure(
+            filename=result.filename,
+            width=result.width,
+            height=result.height,
+            naturalWidth=result.width,
+            naturalHeight=result.height,
+            title=note_figure.title,
+            caption=note_figure.caption,
+        )
 
     def _convert_file_for_lab_note_rich_text(
-            self, note_file: RichTextFileData, note_id: str) -> RichTextFileData:
+            self, note_file: RichTextBlockFile, note_id: str) -> RichTextBlockFile:
         """Method to convert a note figure to a note figure. It saves the figure in the note storage.
         """
         # retrieve the file
-        file = self.get_file(note_file['name'])
+        file = self.get_file(note_file.name)
 
         # get the file destination for the note
         destination_file_path = RichTextFileService.get_uploaded_file_path(RichTextObjectType.NOTE,
@@ -690,11 +702,11 @@ class NoteResource(ResourceSet):
         # the object is the same as the note
         return note_file
 
-    def _add_note_view_to_note_rich_text(self, note_view: RichTextNoteResourceViewData,
+    def _add_note_view_to_note_rich_text(self, note_view: RichTextBlockNoteResourceView,
                                          note_rich_text: RichText, note_id: str) -> None:
 
         # retrieve the resource model from the resource
-        resource = self.get_resource(note_view['sub_resource_key'])
+        resource = self.get_resource(note_view.sub_resource_key)
 
         if resource.get_model_id() is not None:
             # add the view manually from the resource and config
@@ -705,28 +717,29 @@ class NoteResource(ResourceSet):
             view_data_2 = self._convert_file_view_for_lab_note_rich_text(note_view, note_id)
             note_rich_text.add_file_view(view_data_2)
 
-    def _convert_view_for_lab_note_rich_text(self, note_view: RichTextNoteResourceViewData) -> RichTextResourceViewData:
+    def _convert_view_for_lab_note_rich_text(
+            self, note_view: RichTextBlockNoteResourceView) -> RichTextBlockResourceView:
         """Method to convert a note view to a note view.
         """
         # retrieve the resource model from the resource
-        resource = self.get_resource(note_view['sub_resource_key'])
+        resource = self.get_resource(note_view.sub_resource_key)
 
         if not resource.get_model_id():
             raise ValueError(
-                f"The resource {note_view['sub_resource_key']} of the note resource was not saved on the database.")
+                f"The resource {note_view.sub_resource_key} of the note resource was not saved on the database.")
 
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
-            resource.get_model_id(), note_view['view_method_name'], note_view["view_config"], True)
+            resource.get_model_id(), note_view.view_method_name, note_view.view_config, True)
 
         return view_result.view_config.to_rich_text_resource_view()
 
     def _convert_file_view_for_lab_note_rich_text(
-            self, note_view: RichTextNoteResourceViewData, note_id: str) -> RichTextViewFileData:
+            self, note_view: RichTextBlockNoteResourceView, note_id: str) -> RichTextBlockViewFile:
 
         # retrieve the resource model from the resource
-        resource = self.get_resource(note_view['sub_resource_key'])
+        resource = self.get_resource(note_view.sub_resource_key)
 
-        view_runner: ViewRunner = ViewRunner(resource, note_view['view_method_name'], note_view["view_config"])
+        view_runner: ViewRunner = ViewRunner(resource, note_view.view_method_name, note_view.view_config)
 
         view_ = view_runner.generate_view()
         # call the view to dict
@@ -743,12 +756,21 @@ class NoteResource(ResourceSet):
         filename = RichTextFileService.save_file_view(RichTextObjectType.NOTE, note_id,
                                                       view_result.to_dto())
 
-        return {
-            "id": note_view['id'],
-            "filename": filename,
-            "title": note_view['title'],
-            "caption": note_view['caption'],
-        }
+        return RichTextBlockViewFile(
+            id=note_view.id,
+            filename=filename,
+            title=note_view.title,
+            caption=note_view.caption,
+        )
+
+    def to_markdown(self) -> str:
+        """
+        Convert the note resource to markdown.
+
+        :return: the note resource in markdown format
+        :rtype: str
+        """
+        return self._rich_text.to_markdown()
 
     ############################# Views #############################
 

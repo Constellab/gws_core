@@ -8,9 +8,9 @@ from gws_core.core.utils.utils import Utils
 from gws_core.credentials.credentials_param import CredentialsParam
 from gws_core.credentials.credentials_type import (CredentialsDataOther,
                                                    CredentialsType)
-from gws_core.impl.dify.dify_service import (DifyIndexingTechnique,
-                                             DifySendDocumentOptions,
-                                             DifyService)
+from gws_core.impl.dify.dify_class import (DifyIndexingTechnique,
+                                           DifySendDocumentOptions)
+from gws_core.impl.dify.dify_service import DifyService
 from gws_core.impl.file.file import File
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode

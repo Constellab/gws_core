@@ -1,6 +1,6 @@
-
-
 from typing import Type
+
+from peewee import Expression, Field
 
 from gws_core.core.model.model import Model
 from gws_core.entity_navigator.entity_navigator_type import EntityType
@@ -8,12 +8,10 @@ from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_dto import TagValueFormat
 from gws_core.tag.tag_key_model import TagKeyModel
-from peewee import Expression, Field
 
 from ..core.classes.search_builder import (SearchBuilder, SearchBuilderType,
                                            SearchFilterCriteria,
                                            SearchOperator)
-from ..tag.tag_helper import TagHelper
 
 
 class EntityWithTagSearchBuilder(SearchBuilder):
@@ -73,6 +71,16 @@ class EntityWithTagSearchBuilder(SearchBuilder):
                                         # (tag_value_field.contains(tag.value)) &
                                         (self._get_expression(value_operator, entity_alias.tag_value, tag.get_str_value()))
                                         ))
+
+        return self
+
+    def add_tag_key_filter(self, tag_key: str) -> SearchBuilderType:
+        """Add a tag key filter to the search builder
+        """
+        entity_alias: Type[EntityTag] = EntityTag.alias()
+        self.add_join(entity_alias, on=((entity_alias.entity_id == self._model_type.id) &
+                                        (entity_alias.entity_type == self.entity_type.value) &
+                                        (entity_alias.tag_key == tag_key)))
 
         return self
 

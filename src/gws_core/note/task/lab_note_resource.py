@@ -65,6 +65,9 @@ class LabNoteResource(Resource):
         note = NoteService.update_content(self.note_id, self.get_content().to_dto())
         self._content = note.get_content_as_rich_text()
 
+    def to_markdown(self) -> str:
+        return self.get_content().to_markdown()
+
     @view(view_type=RichTextView, human_name="View note", short_description="View note content", default_view=True)
     def view_note(self, config: ConfigParamsDict = None) -> RichTextView:
         return RichTextView(self.get_note().title,

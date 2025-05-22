@@ -4,8 +4,9 @@ from typing import List, Optional
 from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import PageDTO
-from gws_core.impl.rich_text.rich_text_types import (
-    RichTextBlockModificationWithUserDTO, RichTextDTO)
+from gws_core.impl.rich_text.rich_text_modification import \
+    RichTextBlockModificationWithUserDTO
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.scenario.scenario_dto import ScenarioDTO
 
 from ..core.classes.search_builder import SearchParams
