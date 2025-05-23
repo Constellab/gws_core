@@ -2,7 +2,7 @@ from gws_core import (ConfigParams, ConfigSpecs, Dashboard, DashboardType,
                       InputSpecs, OutputSpec, OutputSpecs, StreamlitResource,
                       Task, TaskInputs, TaskOutputs, dashboard_decorator,
                       task_decorator)
-from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.config.param.param_spec import BoolParam, IntParam, StrParam
 from gws_core.credentials.credentials_param import CredentialsParam
 from gws_core.credentials.credentials_type import CredentialsDataOther
 
@@ -47,6 +47,11 @@ class GenerateDatahubDifyApp(Task):
             short_description="Show the config page",
             default_value=True
         ),
+        'root_folder_limit': IntParam(
+            human_name="Root folder limit",
+            short_description="Maximum number of root folders accessible by the user supported by the app",
+            default_value=20
+        ),
     })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -62,6 +67,7 @@ class GenerateDatahubDifyApp(Task):
 
         streamlit_app.set_param('knowledge_base_id', params['knowledge_base_id'])
         streamlit_app.set_param('show_config_page', params['show_config_page'])
+        streamlit_app.set_param('root_folder_limit', params['root_folder_limit'])
 
         streamlit_app.set_dashboard(DatahubDifyAppDashboard())
         streamlit_app.name = "Datahub dify app"

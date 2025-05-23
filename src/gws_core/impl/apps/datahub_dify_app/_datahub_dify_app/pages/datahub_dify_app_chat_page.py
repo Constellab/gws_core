@@ -1,4 +1,3 @@
-
 import uuid
 from typing import List, Literal, Optional
 
@@ -26,72 +25,86 @@ class ChatMessage(BaseModelDTO):
 
 class DataHubDifyAppChatPageState:
 
-    ROOT_FOLDER_IDS_KEY = "root_folder_ids"
-    CHAT_MESSAGES_KEY = "chat_messages"
-    CONVERSATION_ID_KEY = "conversation_id"
+    root_folder_limit: int = None
+    state_key: str = None
+    root_folder_ids: List[str] = None
+    chat_messages: List[ChatMessage] = None
+    conversation_id: Optional[str] = None
+
+    def __init__(self, root_folder_limit: int, key: str):
+        """Initialize the state with default values"""
+        self.root_folder_limit = root_folder_limit
+        self.state_key = key
+        self.root_folder_ids = []
+        self.chat_messages = []
+        self.conversation_id = None
 
     @classmethod
-    def get_root_folder_ids(cls) -> List[str]:
-        """Get the root folders from the session state."""
-        if cls.ROOT_FOLDER_IDS_KEY in st.session_state:
-            return st.session_state[cls.ROOT_FOLDER_IDS_KEY]
+    def init(cls, root_folder_limit: int, key: str = 'datahub-dify-app-chat-page-state'):
+        """
+        Initialize the session state for the chat page.
+        """
+        if key in st.session_state:
+            return st.session_state[key]
 
-        try:
-            # Get all the user root folders from space
-            folders = SpaceService.get_instance().get_all_current_user_root_folders()
-            if not folders:
-                st.error("The user accessible folders could not be found.")
+        state = cls(root_folder_limit, key)
+        st.session_state[key] = state
+        return state
 
-            # For dev purspose to have folder without the space running
-            # folders: List[SpaceFolder] = list(SpaceFolder.get_roots())
-            st.session_state[cls.ROOT_FOLDER_IDS_KEY] = [folder.id for folder in folders]
-            return st.session_state[cls.ROOT_FOLDER_IDS_KEY]
-        except Exception as e:
-            Logger.error(f"Error while retrieving user accessible folders: {e}")
-            Logger.log_exception_stack_trace(e)
-            st.error("Could no retrieve the user accessible folders. Please retry later.")
-            st.stop()
+    def get_root_folder_limit(self) -> int:
+        """Get the root folder limit from the state."""
+        return self.root_folder_limit
 
-    @classmethod
-    def get_chat_messages(cls) -> List[ChatMessage]:
-        """Get the chat messages history from the session state."""
-        if cls.CHAT_MESSAGES_KEY not in st.session_state:
-            st.session_state[cls.CHAT_MESSAGES_KEY] = []
-        return st.session_state[cls.CHAT_MESSAGES_KEY]
+    def get_root_folder_ids(self) -> List[str]:
+        """Get the root folders from the state."""
+        if not self.root_folder_ids:
+            try:
+                # Get all the user root folders from space
+                folders = SpaceService.get_instance().get_all_current_user_root_folders()
+                if not folders:
+                    st.error("The user accessible folders could not be found.")
 
-    @classmethod
-    def add_chat_message(cls, role: Literal['user', 'assistant'], content: str,
+                # For dev purspose to have folder without the space running
+                # folders: List[SpaceFolder] = list(SpaceFolder.get_roots())
+                self.root_folder_ids = [folder.id for folder in folders]
+            except Exception as e:
+                Logger.error(f"Error while retrieving user accessible folders: {e}")
+                Logger.log_exception_stack_trace(e)
+                st.error("Could no retrieve the user accessible folders. Please retry later.")
+                st.stop()
+
+        return self.root_folder_ids
+
+    def get_chat_messages(self) -> List[ChatMessage]:
+        """Get the chat messages history from the state."""
+        return self.chat_messages
+
+    def add_chat_message(self, role: Literal['user', 'assistant'], content: str,
                          sources: Optional[List[DifySendMessageSource]] = None):
         """Add a new message to the chat history."""
         message = ChatMessage(
             role=role,
             content=content,
             id=str(uuid.uuid4()),
-            sources=sources
+            sources=sources or []
         )
-        if cls.CHAT_MESSAGES_KEY not in st.session_state:
-            st.session_state[cls.CHAT_MESSAGES_KEY] = []
-        st.session_state[cls.CHAT_MESSAGES_KEY].append(message)
+        self.chat_messages.append(message)
 
-    # Conversation ID state methods
-    @classmethod
-    def get_conversation_id(cls) -> Optional[str]:
+    def get_conversation_id(self) -> Optional[str]:
         """Get the current conversation ID."""
-        return st.session_state.get(cls.CONVERSATION_ID_KEY)
+        return self.conversation_id
 
-    @classmethod
-    def set_conversation_id(cls, conversation_id: str):
+    def set_conversation_id(self, conversation_id: str):
         """Set the conversation ID."""
-        st.session_state[cls.CONVERSATION_ID_KEY] = conversation_id
+        self.conversation_id = conversation_id
 
-    @classmethod
-    def clear_chat(cls):
+    def clear_chat(self):
         """Clear the chat history."""
-        st.session_state[cls.CHAT_MESSAGES_KEY] = []
-        st.session_state[cls.CONVERSATION_ID_KEY] = None
+        self.chat_messages = []
+        self.conversation_id = None
 
 
-def render_page():
+def render_page(chat_state: DataHubDifyAppChatPageState):
 
     with StreamlitContainers.container_centered('chat_page'):
         col1, col2 = StreamlitContainers.columns_with_fit_content(key='header-button', cols=[1, 'fit-content'],
@@ -102,25 +115,25 @@ def render_page():
 
         with col2:
             if st.button("Clear Chat History", icon=':material/replay:'):
-                DataHubDifyAppChatPageState.clear_chat()
+                chat_state.clear_chat()
                 st.rerun()
 
         # Display chat messages
-        for message in DataHubDifyAppChatPageState.get_chat_messages():
+        for message in chat_state.get_chat_messages():
             with st.chat_message(message.role):
                 st.write(message.content)
                 _render_sources(message)
 
         # Check if last message is from the user and needs a response
-        messages = DataHubDifyAppChatPageState.get_chat_messages()
+        messages = chat_state.get_chat_messages()
         last_message = messages[-1] if messages else None
         if last_message and last_message.role == "user":
-            render_stream_response(last_message.content)
+            render_stream_response(last_message.content, chat_state)
 
         # Chat input
         if prompt := st.chat_input("Ask something..."):
             # Add user message to chat history
-            DataHubDifyAppChatPageState.add_chat_message("user", prompt)
+            chat_state.add_chat_message("user", prompt)
             st.rerun()
 
 
@@ -160,14 +173,19 @@ def _render_sources(message: ChatMessage):
                             article_expert_state.select_document_and_navigate(dify_document)
 
 
-def render_stream_response(user_prompt: str):
+def render_stream_response(user_prompt: str, chat_state: DataHubDifyAppChatPageState):
     if st.session_state.get("chat_is_streaming", False):
         return
     st.session_state["chat_is_streaming"] = True
 
     datahub_dify_service = DatahubDifyAppState.get_datahub_chat_dify_service()
-    user_folders_ids = DataHubDifyAppChatPageState.get_root_folder_ids()
+    user_folders_ids = chat_state.get_root_folder_ids()
 
+    if len(user_folders_ids) > chat_state.get_root_folder_limit():
+        st.warning(
+            f"You have access to too many root folders ({len(user_folders_ids)}). Only the first {chat_state.get_root_folder_limit()} folders will be used.")
+
+    user_folders_ids = user_folders_ids[:chat_state.get_root_folder_limit()]
     # Display assistant response with streaming
     with st.chat_message("assistant"):
         response_placeholder = st.empty()
@@ -181,7 +199,7 @@ def render_stream_response(user_prompt: str):
             for chunk in datahub_dify_service.send_message_stream(
                 user_root_folder_ids=user_folders_ids,
                 query=user_prompt,
-                conversation_id=DataHubDifyAppChatPageState.get_conversation_id(),
+                conversation_id=chat_state.get_conversation_id(),
                 user=StreamlitState.get_current_user().id,
                 inputs={},
             ):
@@ -197,7 +215,7 @@ def render_stream_response(user_prompt: str):
 
             # Update conversation ID if returned
             if end_message_response and end_message_response.conversation_id:
-                DataHubDifyAppChatPageState.set_conversation_id(end_message_response.conversation_id)
+                chat_state.set_conversation_id(end_message_response.conversation_id)
 
             sources = []
             for source in end_message_response.sources:
@@ -206,7 +224,7 @@ def render_stream_response(user_prompt: str):
                     sources.append(source)
 
             # Add assistant response to chat history
-            DataHubDifyAppChatPageState.add_chat_message("assistant", full_response, sources)
+            chat_state.add_chat_message("assistant", full_response, sources)
 
             st.rerun()
 

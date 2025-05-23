@@ -27,6 +27,8 @@ DatahubDifyAppState.init(
     knowledge_base_id=params.get('knowledge_base_id')
 )
 
+chat_state = datahub_dify_app_chat_page.DataHubDifyAppChatPageState.init(params.get('root_folder_limit'))
+
 expert_config = DocExpertAIPageConfig.get_default_config(params.get('knowledge_base_id'))
 dify_service = DifyService.from_credentials(DatahubDifyAppState.get_knowledge_base_credentials())
 expert_state = DatahubDifyAppExpertState.init(expert_config, dify_service)
@@ -34,7 +36,7 @@ expert_state = DatahubDifyAppExpertState.init(expert_config, dify_service)
 
 def _render_chat_page():
     importlib.reload(datahub_dify_app_chat_page)
-    datahub_dify_app_chat_page.render_page()
+    datahub_dify_app_chat_page.render_page(chat_state)
 
 
 def _render_expert_ai_page():

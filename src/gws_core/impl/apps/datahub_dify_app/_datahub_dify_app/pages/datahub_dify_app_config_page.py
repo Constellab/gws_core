@@ -4,6 +4,7 @@ import streamlit as st
 from datahub_dify_app_state import DatahubDifyAppState
 
 from gws_core.impl.dify.datahub_dify_resource import DatahubDifyResource
+from gws_core.impl.dify.dify_class import DifyDatasetDocument
 from gws_core.impl.s3.s3_server_service import S3ServerService
 from gws_core.streamlit import (StreamlitAuthenticateUser, StreamlitContainers,
                                 StreamlitResourceSelect)
@@ -29,14 +30,13 @@ def render_page():
     st.title("⚙️ Configuration")
 
     with StreamlitContainers.row_container('all_button_actions', gap='1em'):
-        if st.button('Refresh resources', key='refresh_resources'):
-            PageState.clear_resources_to_sync()
-            st.rerun()
         if st.button("Sync all resources", key='sync_all_resources'):
             _sync_all_resources_dialog()
 
         if st.button("Unsync all resources", key='unsync_all_resources'):
             _unsync_all_resources_dialog()
+        if st.button('Delete expired documents', key='delete_expired_documents'):
+            _delete_expired_documents()
 
     _render_sync_one_resource_section()
 
@@ -130,7 +130,6 @@ def _sync_all_resources_dialog():
                 percent = int((i + 1) / len(resources) * 100)
                 my_bar.progress(percent, text=f"Syncing resource {i + 1}/{len(resources)}")
 
-        PageState.clear_resources_to_sync()
         st.rerun()
 
 
@@ -164,5 +163,46 @@ def _unsync_all_resources_dialog():
                 percent = int((i + 1) / len(synced_resources) * 100)
                 my_bar.progress(percent, text=f"Unsyncing resource {i + 1}/{len(synced_resources)}")
 
-        PageState.clear_resources_to_sync()
+        st.rerun()
+
+
+@st.dialog("Delete expired documents from Dify")
+def _delete_expired_documents():
+    datahub_dify_service = DatahubDifyAppState.get_datahub_knowledge_dify_service()
+
+    documents_to_delete: List[DifyDatasetDocument]
+    with st.spinner("Retrieving documents to delete..."):
+        documents_to_delete = datahub_dify_service.get_dify_documents_to_delete()
+
+    if not documents_to_delete:
+        st.write("No documents to delete.")
+        return
+
+    st.write(
+        f"Are you sure you want to delete {len(documents_to_delete)} documents from Dify? Thoses documents where deleted from DataHub and are not synced with Dify anymore.")
+
+    with st.expander("Documents to delete"):
+        st.json(DifyDatasetDocument.to_json_list(documents_to_delete))
+
+    delete_buttons: bool = False
+
+    with StreamlitContainers.row_container('delete_validation', gap='1em'):
+        if st.button("Yes"):
+            delete_buttons = True
+
+        if st.button("No"):
+            st.rerun()
+
+    if delete_buttons:
+        with StreamlitAuthenticateUser():
+            my_bar = st.progress(0, text="Deleting documents...")
+            for i, dify_document in enumerate(documents_to_delete):
+                try:
+                    datahub_dify_service.delete_dify_document(dify_document.id)
+                except Exception as e:
+                    st.error(
+                        f"Error deleting document '{dify_document.name}' {dify_document.id}: {e}")
+                percent = int((i + 1) / len(documents_to_delete) * 100)
+                my_bar.progress(percent, text=f"Deleting document {i + 1}/{len(documents_to_delete)}")
+
         st.rerun()

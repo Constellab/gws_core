@@ -17,7 +17,7 @@ class DifySendDocumentOptions(DifyUpdateDocumentOptions):
     lang: str = 'en'
 
 
-class DifySendDocumentResponseDocument(BaseModelDTO):
+class DifyDatasetDocument(BaseModelDTO):
     """Model for document information in the response."""
     id: str
     position: int
@@ -35,15 +35,11 @@ class DifySendDocumentResponseDocument(BaseModelDTO):
     disabled_at: Optional[int] = None
     disabled_by: Optional[str] = None
     archived: bool
-    display_status: str
-    word_count: int
-    hit_count: int
-    doc_form: str
 
 
 class DifySendDocumentResponse(BaseModelDTO):
     """Model for the response from sending a document."""
-    document: DifySendDocumentResponseDocument
+    document: DifyDatasetDocument
     batch: Optional[str] = None
 
 
@@ -64,6 +60,15 @@ class DifySendMessageStreamResponse(BaseModelDTO):
 class DifySendEndMessageStreamResponse(BaseModelDTO):
     conversation_id: Optional[str] = None
     sources: Optional[List[DifySendMessageSource]] = None
+
+
+class DifyGetDocumentsResponse(BaseModelDTO):
+    """Model for the response from retrieving documents."""
+    data: List[DifyDatasetDocument]
+    has_more: bool
+    limit: int
+    total: int
+    page: int
 
 
 class DifyChunkDocument(BaseModelDTO):

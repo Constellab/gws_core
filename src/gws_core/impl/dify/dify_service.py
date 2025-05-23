@@ -9,8 +9,9 @@ from gws_core.core.utils.logger import Logger
 from gws_core.credentials.credentials_type import CredentialsDataOther
 from gws_core.impl.dify.dify_class import (
     DifyChunksResponse, DifyCreateDatasetMetadataRequest,
-    DifyCreateDatasetMetadataResponse, DifyDocumentChunksResponse,
-    DifyGetDatasetMetadataResponse, DifyGetDatasetMetadataResponseMetadata,
+    DifyCreateDatasetMetadataResponse, DifyDatasetDocument,
+    DifyDocumentChunksResponse, DifyGetDatasetMetadataResponse,
+    DifyGetDatasetMetadataResponseMetadata, DifyGetDocumentsResponse,
     DifySendDocumentOptions, DifySendDocumentResponse,
     DifySendEndMessageStreamResponse, DifySendMessageSource,
     DifySendMessageStreamResponse, DifyUpdateDocumentOptions,
@@ -300,6 +301,76 @@ class DifyService:
             file=file_info,
             base_dify_url=self.get_base_url()
         )
+
+    def get_document_page(self, dataset_id: str, page: int, limit: int) -> DifyGetDocumentsResponse:
+        """Get a list of documents in a dataset.
+
+        Parameters
+        ----------
+        dataset_id : str
+            Knowledge Base ID
+        page : int
+            Page number for pagination
+        limit : int
+            Number of items to return per page (1-100)
+
+        Returns
+        -------
+        DifyGetDocumentsResponse
+            Response containing the list of documents and pagination info
+
+        Raises
+        ------
+        requests.exceptions.HTTPError
+            If the API request fails
+        """
+        route = f'{self.route}/datasets/{dataset_id}/documents'
+
+        params = {
+            'page': page,
+            'limit': limit
+        }
+
+        response = requests.get(
+            route,
+            params=params,
+            headers=self._get_http_headers(),
+            timeout=10
+        )
+
+        response.raise_for_status()
+        return DifyGetDocumentsResponse.from_json(response.json())
+
+    def get_all_documents(self, dataset_id: str) -> List[DifyDatasetDocument]:
+        """Get all documents in a dataset.
+
+        Parameters
+        ----------
+        dataset_id : str
+            Knowledge Base ID
+
+        Returns
+        -------
+        List[DifyDatasetDocument]
+            List of documents in the dataset
+
+        Raises
+        ------
+        requests.exceptions.HTTPError
+            If the API request fails
+        """
+        documents: List[DifyDatasetDocument] = []
+        page = 1
+        limit = 100
+        while True:
+            response = self.get_document_page(dataset_id, page, limit)
+            documents.extend(response.data)
+
+            if not response.has_more:
+                break
+
+            page += 1
+        return documents
 
     def delete_document(self, dataset_id: str, document_id: str) -> None:
         """Delete a document from a dataset.

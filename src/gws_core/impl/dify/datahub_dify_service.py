@@ -4,8 +4,9 @@ from typing import Any, Dict, Generator, List, Optional, Union
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.dify.datahub_dify_resource import DatahubDifyResource
 from gws_core.impl.dify.dify_class import (
-    DifyCreateDatasetMetadataRequest, DifyGetDatasetMetadataResponseMetadata,
-    DifyMetadata, DifySendDocumentOptions, DifySendDocumentResponse,
+    DifyCreateDatasetMetadataRequest, DifyDatasetDocument,
+    DifyGetDatasetMetadataResponseMetadata, DifyMetadata,
+    DifySendDocumentOptions, DifySendDocumentResponse,
     DifySendEndMessageStreamResponse, DifySendMessageStreamResponse,
     DifyUpdateDocumentsMetadataRequest)
 from gws_core.impl.dify.dify_service import DifyService
@@ -121,6 +122,10 @@ class DatahubDifyService:
         # Remove the tags from the resource
         dify_resource.unmark_resource_as_sent_to_dify()
 
+    def delete_dify_document(self, dify_document_id: str) -> None:
+        """Delete a document from Dify."""
+        self.dify_service.delete_document(self.dataset_id, dify_document_id)
+
     def get_all_resource_to_sync(self) -> List[DatahubDifyResource]:
         """Get all resources to sync with Dify."""
 
@@ -162,25 +167,19 @@ class DatahubDifyService:
 
         return research_search.search_all()
 
-    def get_resource_from_dify_id(self, dify_document_id: str) -> Optional[DatahubDifyResource]:
-        """Get a resource from Dify ID."""
-        # retrive all the files stored in the datahub
-        research_search = ResourceSearchBuilder()
-        research_search.add_tag_filter(S3ServerService.get_datahub_tag())
-        research_search.add_tag_filter(S3ServerService.get_datahub_tag())
-        research_search.add_is_fs_node_filter()
-        research_search.add_is_archived_filter(False)
-        research_search.add_has_folder_filter()
+    def get_dify_documents_to_delete(self) -> List[DifyDatasetDocument]:
+        """List all the dify documents that are not in the datahub anymore."""
 
-        resource_models = research_search.search_all()
+        dify_documents = self.dify_service.get_all_documents(self.dataset_id)
 
-        for resource_model in resource_models:
+        document_to_delete = []
+        for dify_document in dify_documents:
             # check if the resource is compatible with dify
-            dify_resource = DatahubDifyResource(resource_model)
-            if dify_resource.is_compatible_with_dify() and dify_resource.get_and_check_dify_document_id() == dify_document_id:
-                return dify_resource
+            dify_resource = DatahubDifyResource.from_dify_document_id(dify_document.id)
+            if dify_resource is None:
+                document_to_delete.append(dify_document)
 
-        return None
+        return document_to_delete
 
     #################################### CHAT ####################################
 

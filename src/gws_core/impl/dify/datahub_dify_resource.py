@@ -43,7 +43,7 @@ class DatahubDifyResource:
     # Value ISO date time of the last sync with Dify
     DIFY_SYNC_TAG_KEY = 'dify_sync'
 
-    SUPPORTED_FILE_EXTENSIONS = ['txt', 'pdf', 'docx', 'doc', 'pptx', 'ppt',
+    SUPPORTED_FILE_EXTENSIONS = ['txt', 'pdf', 'docx', 'doc',
                                  'md', 'msg', 'json']
 
     MAX_FILE_SIZE_MB = 15
