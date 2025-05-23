@@ -12,7 +12,6 @@ from gws_core.streamlit import (StreamlitAuthenticateUser, StreamlitContainers,
 class PageState:
 
     SELECTED_RESOURCE_KEY = "selected_resource"
-    RESOURCES_TO_SYNC_KEY = "resources_to_sync"
 
     @classmethod
     def get_selected_resource(cls) -> DatahubDifyResource | None:
@@ -23,23 +22,6 @@ class PageState:
     def set_selected_resource(cls, resource: DatahubDifyResource):
         """Set the selected resource in the session state."""
         st.session_state[cls.SELECTED_RESOURCE_KEY] = resource
-
-    @classmethod
-    def get_resources_to_sync(cls) -> List[DatahubDifyResource]:
-        """Get the resources to sync from the session state."""
-        if cls.RESOURCES_TO_SYNC_KEY in st.session_state:
-            return st.session_state[cls.RESOURCES_TO_SYNC_KEY]
-
-        service = DatahubDifyAppState.get_datahub_chat_dify_service()
-        resources_to_sync = service.get_all_resource_to_sync()
-
-        st.session_state[cls.RESOURCES_TO_SYNC_KEY] = resources_to_sync
-        return resources_to_sync
-
-    @classmethod
-    def clear_resources_to_sync(cls):
-        """Clear the resources to sync in the session state."""
-        del st.session_state[cls.RESOURCES_TO_SYNC_KEY]
 
 
 def render_page():
@@ -138,8 +120,13 @@ def _sync_all_resources_dialog():
 
         with StreamlitAuthenticateUser():
             my_bar = st.progress(0, text="Syncing resources...")
-            for i, resource_model in enumerate(resources):
-                datahub_dify_service.send_resource_to_dify(resource_model)
+            for i, dify_resource in enumerate(resources):
+
+                try:
+                    datahub_dify_service.send_resource_to_dify(dify_resource)
+                except Exception as e:
+                    st.error(
+                        f"Error syncing resource '{dify_resource.resource_model.name}' {dify_resource.resource_model.id}: {e}")
                 percent = int((i + 1) / len(resources) * 100)
                 my_bar.progress(percent, text=f"Syncing resource {i + 1}/{len(resources)}")
 
@@ -168,8 +155,12 @@ def _unsync_all_resources_dialog():
 
         with StreamlitAuthenticateUser():
             my_bar = st.progress(0, text="Unsyncing resources...")
-            for i, resource_model in enumerate(synced_resources):
-                datahub_dify_service.delete_resource_from_dify(resource_model)
+            for i, dify_resource in enumerate(synced_resources):
+                try:
+                    datahub_dify_service.delete_resource_from_dify(dify_resource)
+                except Exception as e:
+                    st.error(
+                        f"Error unsyncing resource '{dify_resource.resource_model.name}' {dify_resource.resource_model.id}: {e}")
                 percent = int((i + 1) / len(synced_resources) * 100)
                 my_bar.progress(percent, text=f"Unsyncing resource {i + 1}/{len(synced_resources)}")
 
