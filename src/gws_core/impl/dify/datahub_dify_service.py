@@ -41,26 +41,26 @@ class DatahubDifyService:
         root_folder_metadata = self.get_or_create_dify_root_folder_metadata()
         resource_metadata = self.get_or_create_dify_resource_metadata()
 
-        file_path = dify_resource.get_file_path()
+        file = dify_resource.get_file_path()
 
         # Send the resource to Dify
         options = DifySendDocumentOptions(
             indexing_technique='high_quality',
             chunk_max_tokens=2048,
-            chunk_separator=dify_resource.get_chunk_separator(file_path),
+            chunk_separator=dify_resource.get_chunk_separator(file.path),
             lang='en',
         )
 
         dify_document: DifySendDocumentResponse
         if dify_resource.is_synced_with_dify():
             # if the resource is already synced with dify, we need to update the document
-            dify_document = self.dify_service.update_document(file_path, self.dataset_id,
+            dify_document = self.dify_service.update_document(file.path, self.dataset_id,
                                                               dify_resource.get_and_check_dify_document_id(),
                                                               options,
-                                                              filename=dify_resource.resource_model.name)
+                                                              filename=file.get_name())
         else:
-            dify_document = self.dify_service.send_document(file_path, self.dataset_id, options,
-                                                            filename=dify_resource.resource_model.name)
+            dify_document = self.dify_service.send_document(file.path, self.dataset_id, options,
+                                                            filename=file.get_name())
 
         try:
 

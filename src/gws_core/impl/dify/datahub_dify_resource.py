@@ -2,7 +2,7 @@
 
 import json
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
@@ -11,6 +11,7 @@ from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_modification import RichTextAggregateDTO
 from gws_core.impl.s3.s3_server_service import S3ServerService
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_search_builder import ResourceSearchBuilder
@@ -65,7 +66,7 @@ class DatahubDifyResource:
         if resource.extension == 'json':
             try:
                 dict_ = json.loads(resource.read())
-                if not RichText.is_rich_text_json(dict_):
+                if not RichText.is_rich_text_json(dict_) and not RichTextAggregateDTO.json_is_rich_text_aggregate(dict_):
                     return False
             except json.JSONDecodeError as e:
                 raise Exception(f"Error decoding JSON: {e}") from e
@@ -122,7 +123,7 @@ class DatahubDifyResource:
         tags = resource_tags.get_tags_by_key(self.DIFY_KB_TAG_KEY)
         return tags[0].tag_value
 
-    def get_file_path(self) -> str:
+    def get_file_path(self) -> File:
         """Get the file path of the resource."""
         if not self.is_compatible_with_dify():
             raise ValueError("The resource is not compatible with Dify.")
@@ -130,15 +131,25 @@ class DatahubDifyResource:
         # For rech text, we convert it to a markdown file
         file = self._check_and_check_file()
         if file.extension == 'json':
-            rich_text = RichText.from_json_file(file.path)
+            rich_text: RichText = None
+            dict_ = json.loads(file.read())
+
+            if RichText.is_rich_text_json(dict_):
+                rich_text = RichText.from_json(dict_)
+            elif RichTextAggregateDTO.json_is_rich_text_aggregate(dict_):
+                aggregate_dto = RichTextAggregateDTO.from_json(dict_)
+                rich_text = RichText(aggregate_dto.richText)
+            else:
+                raise ValueError("The json resource is not a rich text.")
+
             self._tmp_dir = Settings.make_temp_dir()
             file_path = f"{self._tmp_dir}/{file.name}.md"
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(rich_text.to_markdown())
 
-            return file_path
+            return File(file_path)
 
-        return self.resource_model.fs_node_model.path
+        return cast(File, self.resource_model.get_resource())
 
     def get_chunk_separator(self, file_path: str) -> str:
         """Get the chunk separator for the resource."""

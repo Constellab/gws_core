@@ -120,6 +120,8 @@ def _sync_all_resources_dialog():
 
         with StreamlitAuthenticateUser():
             my_bar = st.progress(0, text="Syncing resources...")
+
+            has_error = False
             for i, dify_resource in enumerate(resources):
 
                 try:
@@ -127,10 +129,12 @@ def _sync_all_resources_dialog():
                 except Exception as e:
                     st.error(
                         f"Error syncing resource '{dify_resource.resource_model.name}' {dify_resource.resource_model.id}: {e}")
+                    has_error = True
                 percent = int((i + 1) / len(resources) * 100)
                 my_bar.progress(percent, text=f"Syncing resource {i + 1}/{len(resources)}")
 
-        st.rerun()
+        if not has_error:
+            st.success("Resources synced successfully.")
 
 
 @st.dialog("Unsync all resources")
@@ -154,16 +158,19 @@ def _unsync_all_resources_dialog():
 
         with StreamlitAuthenticateUser():
             my_bar = st.progress(0, text="Unsyncing resources...")
+            has_error = False
             for i, dify_resource in enumerate(synced_resources):
                 try:
                     datahub_dify_service.delete_resource_from_dify(dify_resource)
                 except Exception as e:
                     st.error(
                         f"Error unsyncing resource '{dify_resource.resource_model.name}' {dify_resource.resource_model.id}: {e}")
+                    has_error = True
                 percent = int((i + 1) / len(synced_resources) * 100)
                 my_bar.progress(percent, text=f"Unsyncing resource {i + 1}/{len(synced_resources)}")
 
-        st.rerun()
+        if not has_error:
+            st.success("Resources unsynced successfully.")
 
 
 @st.dialog("Delete expired documents from Dify")
@@ -196,13 +203,16 @@ def _delete_expired_documents():
     if delete_buttons:
         with StreamlitAuthenticateUser():
             my_bar = st.progress(0, text="Deleting documents...")
+            has_error = False
             for i, dify_document in enumerate(documents_to_delete):
                 try:
                     datahub_dify_service.delete_dify_document(dify_document.id)
                 except Exception as e:
                     st.error(
                         f"Error deleting document '{dify_document.name}' {dify_document.id}: {e}")
+                    has_error = True
                 percent = int((i + 1) / len(documents_to_delete) * 100)
                 my_bar.progress(percent, text=f"Deleting document {i + 1}/{len(documents_to_delete)}")
 
-        st.rerun()
+        if not has_error:
+            st.success("Documents deleted successfully.")

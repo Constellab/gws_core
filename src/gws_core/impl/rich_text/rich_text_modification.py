@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockType
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 
 
 class RichTextModificationType(Enum):
@@ -50,3 +51,34 @@ class RichTextBlockModificationWithUserDTO(RichTextBlockModificationDTO):
 class RichTextModificationsDTO(BaseModelDTO):
     version: int = 1
     modifications: List[RichTextBlockModificationDTO] = []
+
+# export interface TeNewFullRichTextDTO {
+#   version: number;
+#   richText: TeRichTextDTO;
+#   mo/difications?: TeRichTextBlockModificationsDTO;
+# }
+
+
+class RichTextAggregateDTO(BaseModelDTO):
+    """Class to represent a rich text with its modifications
+    Used in space note
+
+    :param BaseModelDTO: _description_
+    :type BaseModelDTO: _type_
+    :return: _description_
+    :rtype: _type_
+    """
+    version: int
+    richText: RichTextDTO
+    modifications: Optional[Any] = None
+
+    @classmethod
+    def json_is_rich_text_aggregate(cls, dict_: dict) -> bool:
+        if 'version' not in dict_ or 'richText' not in dict_:
+            return False
+
+        try:
+            RichTextAggregateDTO.from_json(dict_)
+        except Exception:
+            return False
+        return True
