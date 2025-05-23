@@ -234,7 +234,7 @@ class TestTag(BaseTestCase):
 
         # search with tag key only
         search_builder = EntityWithTagSearchBuilder(Scenario, EntityType.SCENARIO)
-        search_builder.add_tag_key_filter(Tag('first_key'))
+        search_builder.add_tag_key_filter('first_key')
         scenarios = search_builder.search_all()
         self.assertEqual(len(scenarios), 2)
 

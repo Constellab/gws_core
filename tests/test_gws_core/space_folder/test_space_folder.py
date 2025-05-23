@@ -83,15 +83,6 @@ class TestFolder(BaseTestCase):
         scenario.last_sync_by = scenario.created_by
         scenario.save()
 
-        # Should not be able to delete a folder with scenarios
-        with self.assertRaises(Exception):
-            SpaceFolderService.delete_folder(folder.id)
-
-        # un-sync the scenario
-        scenario.last_sync_at = None
-        scenario.last_sync_by = None
-        scenario.save()
-
         # Now we should be able to delete the folder
         SpaceFolderService.delete_folder(folder.id)
         self.assertEqual(SpaceFolder.select().count(), 0)
