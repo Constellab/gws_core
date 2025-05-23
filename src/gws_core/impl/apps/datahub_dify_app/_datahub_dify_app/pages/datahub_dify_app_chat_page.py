@@ -5,7 +5,7 @@ from typing import List, Literal, Optional
 import streamlit as st
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.folder.space_folder import SpaceFolder
+from gws_core.core.utils.logger import Logger
 from gws_core.impl.apps.datahub_dify_app._datahub_dify_app.datahub_dify_app_state import \
     DatahubDifyAppState
 from gws_core.impl.dify.dify_class import (DifySendEndMessageStreamResponse,
@@ -36,15 +36,21 @@ class DataHubDifyAppChatPageState:
         if cls.ROOT_FOLDER_IDS_KEY in st.session_state:
             return st.session_state[cls.ROOT_FOLDER_IDS_KEY]
 
-        # Get all the user root folders from space
-        folders = SpaceService.get_instance().get_all_current_user_root_folders()
-        if not folders:
-            st.error("The user accessible folders could not be found.")
+        try:
+            # Get all the user root folders from space
+            folders = SpaceService.get_instance().get_all_current_user_root_folders()
+            if not folders:
+                st.error("The user accessible folders could not be found.")
 
-        # For dev purspose to have folder without the space running
-        # folders: List[SpaceFolder] = list(SpaceFolder.get_roots())
-        st.session_state[cls.ROOT_FOLDER_IDS_KEY] = [folder.id for folder in folders]
-        return st.session_state[cls.ROOT_FOLDER_IDS_KEY]
+            # For dev purspose to have folder without the space running
+            # folders: List[SpaceFolder] = list(SpaceFolder.get_roots())
+            st.session_state[cls.ROOT_FOLDER_IDS_KEY] = [folder.id for folder in folders]
+            return st.session_state[cls.ROOT_FOLDER_IDS_KEY]
+        except Exception as e:
+            Logger.error(f"Error while retrieving user accessible folders: {e}")
+            Logger.log_exception_stack_trace(e)
+            st.error("Could no retrieve the user accessible folders. Please retry later.")
+            st.stop()
 
     @classmethod
     def get_chat_messages(cls) -> List[ChatMessage]:

@@ -49,6 +49,9 @@ def _render_config_page():
 
 router.add_page(_render_chat_page, title='Chat page', url_path='chat-page', icon='💬')
 router.add_page(_render_expert_ai_page, title='Expert AI page', url_path=expert_config.page_url, icon='🤖')
-router.add_page(_render_config_page, title='Config page', url_path='config-page', icon='⚙️')
+
+if params.get('show_config_page'):
+    # Add the config page only if the parameter is set to True
+    router.add_page(_render_config_page, title='Config page', url_path='config-page', icon='⚙️')
 
 router.run()
