@@ -60,17 +60,19 @@ class StreamlitResourceSelect():
         component_value = self._streamlit_component_loader.call_component(
             data, key=key, authentication_info=StreamlitState.get_user_auth_info())
 
+        key = f'__{key}_gws_resource_model__'
+
         if component_value is None:
-            st.session_state['__gws_resource_model__'] = None
+            st.session_state[key] = None
             return None
 
         if 'resourceId' in component_value:
             resource_id = component_value['resourceId']
             if resource_id is None:
-                st.session_state['__gws_resource_model__'] = None
+                st.session_state[key] = None
                 return None
             resource_model = ResourceModel.get_by_id_and_check(resource_id)
 
-            st.session_state['__gws_resource_model__'] = resource_model
+            st.session_state[key] = resource_model
 
-        return st.session_state.get('__gws_resource_model__')
+        return st.session_state.get(key)

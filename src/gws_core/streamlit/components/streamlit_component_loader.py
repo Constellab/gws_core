@@ -13,6 +13,7 @@ from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import \
     LoggerMessageObserver
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
@@ -39,9 +40,9 @@ class StreamlitComponentLoader():
     RELEASE_BASE_URL = 'https://github.com/Constellab/dashboard-components/releases/download/'
 
     IFRAME_MESSAGE = "iframe-message"
-    IFRAME_MESSAGE_VERSION = "dc_iframe_message_1.1.0"
+    IFRAME_MESSAGE_VERSION = "dc_iframe_message_1.2.0"
 
-    IS_RELEASED = True
+    IS_RELEASED = False
     # url for dev front app
     DEV_FRONT_URL = "http://localhost:4201"
 
@@ -73,10 +74,12 @@ class StreamlitComponentLoader():
             # we pass the key so streamlit knows the component
             # key and set a class to the component container
             key=key,
+            timestamp=DateHelper.now_utc_as_milliseconds()
         )
 
     def get_function(self) -> Callable:
-        if self.IS_RELEASED:
+        # use dev mode only in local environment and is not released
+        if not Settings.is_local_env() or self.IS_RELEASED:
             return self._get_released_function()
         else:
             return self._get_dev_function()

@@ -8,6 +8,10 @@ from .components.streamlit_resource_select import \
     StreamlitResourceSelect as StreamlitResourceSelect
 from .components.streamlit_task_runner import \
     StreamlitTaskRunner as StreamlitTaskRunner
+from .components.streamlit_tree_menu import \
+    StreamlitTreeMenu as StreamlitTreeMenu
+from .components.streamlit_tree_menu import \
+    StreamlitTreeMenuItem as StreamlitTreeMenuItem
 # Widgets
 from .widgets.streamlit_auth_user import \
     StreamlitAuthenticateUser as StreamlitAuthenticateUser

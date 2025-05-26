@@ -37,7 +37,7 @@ class StreamlitPlugin:
     PLUGIN_VERSION_FILE = 'version.json'
 
     PLUGIN_NAME = 'streamlit-components'
-    PLUGIN_VERSION = 'dc_streamlit_components_1.2.2'
+    PLUGIN_VERSION = 'dc_streamlit_components_1.3.0'
     PLUGIN_BASE_URL = 'https://github.com/Constellab/dashboard-components/releases/download/'
 
     @classmethod
