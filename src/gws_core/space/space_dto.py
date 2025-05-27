@@ -115,3 +115,9 @@ class SpaceHierarchyObjectDTO(BaseModelDTO):
     name: str
     objectType: SpaceHierarchyObjectType
     parentId: Optional[str] = None
+
+
+class SpaceRootFolderUserRole(Enum):
+    OWNER = 'OWNER'
+    USER = 'USER'
+    VIEWER = 'VIEWER'

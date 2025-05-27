@@ -18,6 +18,7 @@ from gws_core.space.space_dto import (LabStartDTO, SaveNoteToSpaceDTO,
                                       SaveScenarioToSpaceDTO,
                                       ShareResourceWithSpaceDTO,
                                       SpaceHierarchyObjectDTO,
+                                      SpaceRootFolderUserRole,
                                       SpaceSendMailToMailsDTO,
                                       SpaceSendMailToUsersDTO,
                                       SpaceSyncObjectDTO)
@@ -390,17 +391,18 @@ class SpaceService(SpaceServiceBase):
             err.detail = f"Can't update folder. Error : {err.detail}"
             raise err
 
-    def share_root_folder(self, root_folder_id: str, group_id: str) -> None:
+    def share_root_folder(self, root_folder_id: str, group_id: str,
+                          role: SpaceRootFolderUserRole = SpaceRootFolderUserRole.USER) -> None:
         """Share a root folder with a group
 
         :param root_folder_id: id of the root folder
         :type root_folder_id: str
-        :param group_id: id of the group
+        :param group_id: id of the group (can be a user id or a team id)
         :type group_id: str
         """
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTE}/folder/{root_folder_id}/share/{group_id}")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{root_folder_id}/share/{group_id}/role/{role.value}")
 
         try:
             ExternalApiService.put(space_api_url, None, self._get_request_header(),
