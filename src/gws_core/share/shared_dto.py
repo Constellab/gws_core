@@ -101,5 +101,7 @@ class ShareEntityCreateMode(Enum):
 
 
 class GenerateUserAccessTokenForSpaceResponse(BaseModelDTO):
-    valid_until: datetime
+    # Valid until date for the share link
+    share_link_valid_until: Optional[datetime] = None
     access_url: str
+    access_url_valid_until: datetime

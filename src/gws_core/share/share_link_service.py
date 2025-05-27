@@ -165,6 +165,8 @@ class ShareLinkService:
 
         access_url = share_link.get_space_link(share_link_access.user_access_token)
         return GenerateUserAccessTokenForSpaceResponse(
-            valid_until=share_link_access.valid_until,
-            access_url=access_url
+            # return the main share link valid until date
+            share_link_valid_until=share_link.valid_until,
+            access_url=access_url,
+            access_url_valid_until=share_link_access.valid_until
         )
