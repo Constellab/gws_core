@@ -57,7 +57,7 @@ def download_a_file(id_: str,
     """
     file = FsNodeService.download_file(fs_node_id=id_)
 
-    return FileHelper.create_file_response(file.path, filename=file.get_default_name())
+    return FileHelper.create_file_response(file.path, filename=file.get_name())
 
 
 @core_app.get("/fs-node/{id_}/preview/{file_name}", tags=["Files"], summary="Preview a file")
@@ -69,7 +69,7 @@ def preview_a_file(id_: str,
     file = FsNodeService.download_file(fs_node_id=id_)
 
     return FileHelper.create_file_response(
-        file.path, filename=file.get_default_name(),
+        file.path, filename=file.get_name(),
         content_disposition_type='inline')
 
 

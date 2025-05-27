@@ -73,7 +73,9 @@ class ResourceService():
             raise BadRequestException(
                 "This resource is a document of the folder in the space, it can't be renamed.")
 
-        resource_model.name = name
+        resource = resource_model.get_resource()
+        resource.set_name(name)
+        resource_model.name = resource.get_name()
         return resource_model.save()
 
     @classmethod

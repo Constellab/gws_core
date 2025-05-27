@@ -118,13 +118,27 @@ class Resource(BaseTyping):
         """
         return self.get_human_name()
 
-    def get_name_or_default(self) -> str:
+    def get_name(self) -> str:
         """Get the name of the resource or the default name if the name is None
 
         :return: [description]
         :rtype: [type]
         """
         return self.name or self.get_default_name()
+
+    def set_name(self, name: Optional[str]) -> None:
+        """Set the name of the resource.
+        You can override this method to force a format for the name of the resource.
+
+        :param name: name to format
+        :type name: str
+        """
+        if not name:
+            self.name = self.get_default_name()
+        else:
+            if not isinstance(name, str):
+                name = str(name)
+            self.name = name.strip()
 
     def get_default_style(self) -> TypingStyle:
         """Get the default style of the resource

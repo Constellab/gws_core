@@ -99,15 +99,20 @@ class File(FSNode):
     def mime(self):
         return FileHelper.get_mime(self.path)
 
-    def get_name(self) -> str:
-        name = super().get_default_name()
+    def set_name(self, name: Optional[str]) -> None:
+        """
+        Format the name of the file to ensure it has the correct extension
+
+        :param name: name of the file
+        :type name: str
+        :return: formatted name
+        :rtype: str
+        """
 
         extension = FileHelper.get_extension(name)
-
-        # if there is no extension in the name, add it from the path
-        if not extension:
-            return name + FileHelper.get_extension(self.path)
-        return name
+        if extension != self.extension:
+            name += f".{self.extension}"
+        super().set_name(name)
 
     def open(self, mode: str, encoding: str = None) -> Any:
         """

@@ -346,7 +346,7 @@ class StreamlitResource(ResourceList):
         # create the view
         view_ = StreamlitView(url)
         view_.set_favorite(True)
-        view_.set_title(self.get_name_or_default())
+        view_.set_title(self.get_name())
         return view_
 
     @staticmethod

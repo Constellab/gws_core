@@ -345,17 +345,16 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             resource_model.init_fs_node_model(resource)
 
         # Get the name of the resource, and set it in the resource model
-        name: str = None
         try:
-            name = resource.name or resource.get_default_name()
+            # set the name of the resource from its name
+            # this is to format the name correctly
+            resource.set_name(resource.name)
+            resource_model.name = resource.get_name() or resource.get_human_name()
         except Exception as err:
             Logger.error(
-                f'Error while getting the default name of the resource {type(resource)}. Err : {str(err)}')
+                f'Error while getting the name of the resource {type(resource)}. Err : {str(err)}')
             Logger.log_exception_stack_trace(err)
-
-        if name is None:
             name = resource.get_human_name()
-        resource_model.name = name
 
         style_override = resource.style
         if style_override:
