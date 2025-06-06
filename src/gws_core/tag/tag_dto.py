@@ -2,10 +2,11 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.entity_navigator.entity_navigator_type import EntityNavGroupDTO
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.user.user_dto import UserDTO
 
 
@@ -32,6 +33,7 @@ class TagValueFormat(Enum):
     INTEGER = "INTEGER"
     FLOAT = "FLOAT"
     DATETIME = "DATETIME"
+    BOOLEAN = "BOOLEAN"
 
 
 class TagOriginDTO(BaseModelDTO):
@@ -68,6 +70,12 @@ class EntityTagFullDTO(EntityTagDTO):
 class NewTagDTO(BaseModelDTO):
     key: str
     value: str
+    is_community_tag: Optional[bool] = None
+
+
+class ShareTagDTO(BaseModelDTO):
+    publish_mode: str
+    space_selected: Optional[str] = None
 
 
 class TagPropagationImpactDTO(BaseModelDTO):
@@ -85,14 +93,71 @@ class TagKeyModelDTO(ModelDTO):
     key: str
     value_format: TagValueFormat
     is_propagable: bool
+    label: Optional[str] = None
+    description: Optional[RichTextDTO] = None
+    deprecated: Optional[bool] = None
+    is_community_tag: Optional[bool] = None
+    additional_infos_specs: Optional[Dict] = None
 
 
 class TagValueModelDTO(ModelDTO):
     key: str
     value: Any
     value_format: TagValueFormat
+    is_community_tag_value: Optional[bool] = None
+    deprecated: Optional[bool] = None
+    short_description: Optional[str] = None
+    additional_infos: Optional[Dict] = None
 
 
 class SaveTagModelResonseDTO(BaseModelDTO):
     key_model: TagKeyModelDTO
     value_model: TagValueModelDTO
+
+
+class TagKeyNotSynchronizedFields(Enum):
+    """Enum to define the fields that are not synchronized with the tag service.
+    This is used to avoid sending these fields to the tag service when saving a tag.
+    """
+    LABEL = "label"
+    DESCRIPTION = "description"
+    DEPRECATED = "deprecated"
+    ADDITIONAL_INFOS_SPECS = "additional_infos_specs"
+
+
+class TagValueNotSynchronizedFields(Enum):
+    """Enum to define the fields that are not synchronized with the tag service.
+    This is used to avoid sending these fields to the tag service when saving a tag.
+    """
+    VALUE_CREATED = "value_created"
+    SHORT_DESCRIPTION = "short_description"
+    ADDITIONAL_INFOS = "additional_infos"
+    DEPRECATED = "deprecated"
+
+
+class TagValueNotSynchronizedFieldsDTO(BaseModelDTO):
+    old_value: Optional[TagValueModelDTO] = None
+    new_value: TagValueModelDTO = None
+    not_synchronized_fields: List[TagValueNotSynchronizedFields] = []
+
+
+class TagNotSynchronizedDTO(BaseModelDTO):
+    old_key: TagKeyModelDTO
+    new_key: Optional[TagKeyModelDTO] = None
+    not_synchronized_fields: Optional[List[TagKeyNotSynchronizedFields]] = []
+    not_synchronized_values: Optional[List[TagValueNotSynchronizedFieldsDTO]] = []
+
+
+class TagsNotSynchronizedDTO(BaseModelDTO):
+    """DTO to define the tags that are not synchronized with the tag service.
+    This is used to avoid sending these tags to the tag service when saving a tag.
+    """
+    tag_keys_not_synchronized: List[TagNotSynchronizedDTO] = []
+
+
+class TagValueEditDTO(BaseModelDTO):
+    id: Optional[str] = None
+    value: Any
+    short_description: Optional[str] = None
+    additional_infos: Optional[Dict] = None
+    tag_key: str

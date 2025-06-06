@@ -3,17 +3,120 @@
 from typing import List, Optional
 
 from fastapi.param_functions import Depends
-
+from gws_core.community.community_dto import CommunityGetTagKeysBody
+from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, NewTagDTO,
-                                  SaveTagModelResonseDTO, TagKeyModelDTO,
-                                  TagOriginDetailDTO, TagPropagationImpactDTO,
+                                  SaveTagModelResonseDTO, ShareTagDTO,
+                                  TagKeyModelDTO, TagOriginDetailDTO,
+                                  TagPropagationImpactDTO,
+                                  TagsNotSynchronizedDTO, TagValueEditDTO,
                                   TagValueModelDTO)
 
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
 from .tag_service import TagService
+
+
+#################################### COMMUNITY TAGS ######################################
+@core_app.post(
+    "/tag/share-tag-to-community/{tag_key}", tags=["Tag"],
+    summary="Share tag to community")
+def share_tag_to_community(
+        tag_key: str,
+        body: ShareTagDTO,
+        _=Depends(AuthService.check_user_access_token)) -> TagKeyModelDTO:
+    """
+    Share a tag to the community.
+    """
+    shared_tag_key = TagService.share_tag_to_community(
+        tag_key,
+        body.publish_mode,
+        body.space_selected
+    )
+    return shared_tag_key.to_dto() if shared_tag_key else None
+
+
+@core_app.post(
+    "/tag/get-community-available-tags", tags=["Tag"],
+    summary="Get community available tags")
+def get_community_available_tags(
+    page: int,
+    number_of_items_per_page: int,
+    body: CommunityGetTagKeysBody,
+    _=Depends(AuthService.check_user_access_token)
+) -> PageDTO[TagKeyModelDTO]:
+    """
+    Get community available tags
+    """
+    return TagService.get_community_available_tags(
+        body.spacesFilter,
+        body.labelFilter,
+        body.personalOnly,
+        page,
+        number_of_items_per_page
+    )
+
+
+@core_app.get(
+    "/tag/get-community-tag-values/{tag_key}", tags=["Tag"],
+    summary="Get community tag values")
+def get_community_tag_values(
+    tag_key: str,
+    page: int,
+    number_of_items_per_page: int,
+    _=Depends(AuthService.check_user_access_token)
+) -> PageDTO[TagValueModelDTO]:
+    """
+    Get community tag key values
+    """
+    return TagService.get_community_tag_values(
+        tag_key,
+        page,
+        number_of_items_per_page
+    )
+
+
+@core_app.get(
+    "/tag/community/get-not-synchronized-community-tags", tags=["Tag"],
+    summary="Get not synchronized community tags")
+def get_not_synchronized_community_tags(
+    _=Depends(AuthService.check_user_access_token)
+) -> TagsNotSynchronizedDTO:
+    """
+    Get not synchronized community tags
+    """
+    return TagService.get_not_synchronized_community_tags()
+
+
+@core_app.post(
+    "/tag/community/synchronize-community-tags", tags=["Tag"],
+    summary="Synchronize community tags")
+def synchronize_community_tags(
+    tags_not_sync: TagsNotSynchronizedDTO,
+    _=Depends(AuthService.check_user_access_token)
+) -> None:
+    """
+    Synchronize community tags
+    """
+    TagService.apply_sync(tags_not_sync)
+    return
+
+
+#################################### TAG ####################################
+
+
+@core_app.post("/tag/search", tags=["Tag"], summary="Advanced search for tags")
+def advanced_search(search_dict: SearchParams,
+                    page: Optional[int] = 1,
+                    number_of_items_per_page: Optional[int] = 20,
+                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[TagKeyModelDTO]:
+    """
+    Advanced search on tags
+    """
+
+    return TagService.search(search_dict, page, number_of_items_per_page).to_dto()
 
 
 @core_app.get("/tag/search/key", tags=["Tag"], summary='Search tags by key')
@@ -24,7 +127,7 @@ def search_all_keys(page: Optional[int] = 1,
     Search tags by key.
     """
 
-    return TagService.search_keys(None, page, number_of_items_per_page).to_dto()
+    return TagService.search_keys(None, page, number_of_items_per_page)
 
 
 @core_app.get("/tag/search/key/{key}", tags=["Tag"], summary='Search tags by key')
@@ -36,7 +139,7 @@ def search_keys(key: Optional[str],
     Search tags by key.
     """
 
-    return TagService.search_keys(key, page, number_of_items_per_page).to_dto()
+    return TagService.search_keys(key, page, number_of_items_per_page)
 
 
 @core_app.get("/tag/search/key/{key}/value", tags=["Tag"], summary='Search tags by value')
@@ -62,6 +165,29 @@ def search_values(key: str,
     """
 
     return TagService.search_values(key, value, page, number_of_items_per_page).to_dto()
+
+
+@core_app.post("/tag/{key}/create-value", tags=["Tag"], summary='Create tag value')
+def create_tag_value(key: str,
+                     tag_value_dto: TagValueEditDTO,
+                     _=Depends(AuthService.check_user_access_token)) -> TagValueModelDTO:
+    """
+    Create a new tag value for the given tag key.
+    """
+    tag_value_model = TagService.create_tag_value(key, tag_value_dto)
+    return tag_value_model.to_dto()
+
+
+@core_app.put("/tag/{key}/update-value", tags=["Tag"], summary='Update tag value')
+def update_tag_key(key: str,
+                   tag_value_edit_dto: TagValueEditDTO,
+                   _=Depends(AuthService.check_user_access_token)) -> SaveTagModelResonseDTO:
+
+    tag_value_model = TagService.update_tag_value(key, tag_value_edit_dto)
+    return SaveTagModelResonseDTO(
+        key_model=tag_value_model.tag_key.to_dto(),
+        value_model=tag_value_model.to_dto()
+    )
 
 
 @core_app.post("/tag/{key}/{value}", tags=["Tag"], summary='Register a new tag')
@@ -99,6 +225,16 @@ def delete_registered_tag(key: str,
                           value: str,
                           _=Depends(AuthService.check_user_access_token)) -> None:
     TagService.delete_registered_tag(key, value)
+
+
+@core_app.get("/tag/{key}", tags=["Tag"], summary='Get tag by key')
+def get_tag_key_by_key(key: str,
+                       _=Depends(AuthService.check_user_access_token)) -> TagKeyModelDTO:
+    """
+    Get tag by key
+    """
+    tag_key = TagService.get_by_key(key)
+    return tag_key.to_dto()
 
 ################################# ENTITY TAG #################################
 

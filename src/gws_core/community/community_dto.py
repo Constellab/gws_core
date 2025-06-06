@@ -2,11 +2,13 @@ from typing import Any, Dict, List, Optional
 
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing_style import TypingStyle
+from gws_core.tag.tag_dto import TagValueFormat
 
 
-class CommunityAgentSpaceDTO(BaseModelDTO):
+class CommunitySpaceDTO(BaseModelDTO):
     id: str
     name: str
 
@@ -14,7 +16,7 @@ class CommunityAgentSpaceDTO(BaseModelDTO):
 class CommunityAgentDTO(BaseModelDTO):
     id: str
     title: str
-    space: Optional[CommunityAgentSpaceDTO] = None
+    space: Optional[CommunitySpaceDTO] = None
     created_at: Optional[str] = None
     last_modified_at: Optional[str] = None
     created_by: Optional[object] = None
@@ -79,3 +81,36 @@ class CommunityAgentVersionCreateResDTO(BaseModelDTO):
     id: str
     agent_version: str
     title: str
+
+
+class CommunityTagKeyDTO(BaseModelDTO):
+    id: str
+    key: str
+    label: str
+    value_format: TagValueFormat
+    deprecated: bool
+    published_at: Optional[str] = None
+    unit: Optional[str] = None
+    description: Optional[RichTextDTO] = None
+    space: Optional[CommunitySpaceDTO] = None
+    tag_co_authors: Optional[List[object]] = None
+    created_at: Optional[str] = None
+    last_modified_at: Optional[str] = None
+    created_by: Optional[object] = None
+    last_modified_by: Optional[object] = None
+    additional_infos_specs: Optional[Dict[str, Any]] = None
+
+
+class CommunityGetTagKeysBody(BaseModelDTO):
+    spacesFilter: List[str] = []
+    labelFilter: str = ''
+    personalOnly: bool = False
+
+
+class CommunityTagValueDTO(BaseModelDTO):
+    id: str
+    value: str
+    deprecated: bool
+    tag_key: CommunityTagKeyDTO
+    short_description: Optional[str] = None
+    additional_infos: Optional[Dict[str, Any]] = None

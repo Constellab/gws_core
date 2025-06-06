@@ -15,6 +15,7 @@ class EntityType(Enum):
     NOTE = "NOTE"
     SCENARIO_TEMPLATE = 'SCENARIO_TEMPLATE'
     FOLDER = 'FOLDER'
+    TAG = 'TAG'
 
     @staticmethod
     def get_human_name(entity_type: 'EntityType', capitalize: bool = False, plurial: bool = False) -> str:
@@ -31,6 +32,8 @@ class EntityType(Enum):
             human_name = 'Scenario template'
         elif entity_type == EntityType.FOLDER:
             human_name = 'Folder'
+        elif entity_type == EntityType.TAG:
+            human_name = 'Tag'
         else:
             human_name = 'Unknown'
 
@@ -50,6 +53,7 @@ class EntityType(Enum):
         from gws_core.scenario.scenario import Scenario
         from gws_core.scenario_template.scenario_template import \
             ScenarioTemplate
+        from gws_core.tag.tag_key_model import TagKeyModel
         if entity_type == EntityType.SCENARIO:
             return Scenario
         elif entity_type == EntityType.RESOURCE:
@@ -62,12 +66,14 @@ class EntityType(Enum):
             return ScenarioTemplate
         elif entity_type == EntityType.FOLDER:
             return SpaceFolder
+        elif entity_type == EntityType.TAG:
+            return TagKeyModel
 
         raise Exception(f"Unknown entity type {entity_type}")
 
 
 all_entity_types = [EntityType.SCENARIO, EntityType.RESOURCE,
-                    EntityType.VIEW, EntityType.NOTE]
+                    EntityType.VIEW, EntityType.NOTE, EntityType.TAG]
 
 
 class NavigableEntity():

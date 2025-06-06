@@ -5,8 +5,6 @@ import os
 from copy import deepcopy
 from typing import Any, Dict, List
 
-from peewee import BigIntegerField, CharField
-
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
 from gws_core.config.param.dynamic_param import DynamicParam
@@ -66,6 +64,7 @@ from gws_core.user.activity.activity import Activity
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.user import User
+from peewee import BigIntegerField, CharField
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -1370,3 +1369,27 @@ class Migration0100(BrickMigration):
                 # Create unique key sharelink_entity_id_entity_type_link_type
                 ShareLink.execute_sql(
                     "CREATE UNIQUE INDEX sharelink_entity_id_entity_type_link_type ON gws_share_link (entity_id, entity_type, link_type)")
+
+    @brick_migration('0.14.1', short_description='Migrate tag to add Community tag')
+    class Migration0141(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+            migrator = SqlMigrator(TagKeyModel.get_db())
+            migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.is_community_tag)
+            migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.label)
+            migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.description)
+            migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.deprecated)
+            migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.additional_infos_specs)
+            migrator.add_column_if_not_exists(TagValueModel, TagValueModel.is_community_tag_value)
+            migrator.add_column_if_not_exists(TagValueModel, TagValueModel.short_description)
+            migrator.add_column_if_not_exists(TagValueModel, TagValueModel.additional_infos)
+            migrator.migrate()
+
+            # Migrate label based on the key
+            tag_keys: List[TagKeyModel] = list(TagKeyModel.select())
+            for tag_key in tag_keys:
+                if not tag_key.label and not tag_key.is_community_tag:
+                    tag_key.label = tag_key.key.replace('_', ' ').capitalize()
+                    tag_key.save(skip_hook=True)
