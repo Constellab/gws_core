@@ -24,6 +24,8 @@ class StreamlitPlugin:
     # This is used to remove previously injected code before adding new code
     START_COMMENT = '[GWS_AUTO_ADD_START]'
     END_COMMENT = '[GWS_AUTO_ADD_END]'
+    # This is used to identify the plugin version in the index.html file
+    VERSION_COMMENT = '[GWS_PLUGIN_VERSION]'
 
     # Path of the index.html folder in the streamlit package
     INDEX_HTML_FOLDER = 'static'
@@ -112,6 +114,52 @@ class StreamlitPlugin:
 
     @classmethod
     def get_installed_plugin_version(cls) -> str | None:
+        """To get the version we check the version in the index.html file and the version in the plugin folder.
+        If both versions are present and match, we return the plugin version.
+        If the versions do not match, we clear the plugin and return None. It is possible when
+        the streamlit package is updated, the index.html file is updated but the plugin is not.
+        If no version is found, we return None.
+
+        :return: _description_
+        :rtype: str | None
+        """
+        index_version = cls.get_version_from_index_html()
+
+        plugin_js_version = cls.get_installed_plugin_js_version()
+
+        if not index_version and not plugin_js_version:
+            return None
+
+        if index_version != plugin_js_version:
+            Logger.warning(f"Version mismatch: index.html version '{index_version}' "
+                           f"does not match installed plugin version '{plugin_js_version}'. "
+                           f"Using index.html version.")
+            cls.clear_plugin()
+            return None
+
+        return plugin_js_version
+
+    @classmethod
+    def get_version_from_index_html(cls) -> str | None:
+        """
+        Get the version of the plugin from the index.html file.
+        Extract the text between the version comment tags.
+        """
+        index_html_path = cls.get_streamlit_html_file_path()
+        if not os.path.exists(index_html_path):
+            return None
+
+        with open(index_html_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+            # Use regex to find the version comment
+            version_pattern = re.compile(
+                r'<!--\s*' + re.escape(cls.VERSION_COMMENT) + r'(\S+)\s*' + re.escape(cls.VERSION_COMMENT) + r'-->')
+            match = version_pattern.search(content)
+            if match:
+                return match.group(1)
+
+    @classmethod
+    def get_installed_plugin_js_version(cls) -> str | None:
         """
         Get the installed plugin version.
         """
@@ -136,7 +184,7 @@ class StreamlitPlugin:
                                                  decompress_file=True)
 
         # Check if the folder was downloaded successfully
-        installed_version = cls.get_installed_plugin_version()
+        installed_version = cls.get_installed_plugin_js_version()
         if installed_version != cls.PLUGIN_VERSION:
             raise Exception(f"Failed to download the plugin version '{cls.PLUGIN_VERSION}'. "
                             f"Installed version is '{installed_version}'.")
@@ -205,6 +253,8 @@ class StreamlitPlugin:
         source_styles = source_soup.find_all('style')
         source_link_styles = source_soup.find_all('link', {'rel': 'stylesheet'})
 
+        # Add version comment to the head of destination_soup
+        cls._add_version_comment(destination_soup)
         # Add styles to the head of destination_soup
         cls._add_styles_to_head(source_styles, destination_soup)
         cls._add_link_styles_to_head(source_link_styles, destination_soup)
@@ -224,25 +274,27 @@ class StreamlitPlugin:
         streamlit_index = BeautifulSoup(streamlit_index_content, 'html.parser')
 
         # Remove existing auto-added content from head
-        cls._remove_existing_content(streamlit_index.head)
+        cls._remove_existing_content(streamlit_index.head, cls.START_COMMENT, cls.END_COMMENT)
+        # Remove existing version comment from head
+        cls._remove_existing_content(streamlit_index.head, cls.VERSION_COMMENT, cls.VERSION_COMMENT)
 
         # Remove existing auto-added content from body
-        cls._remove_existing_content(streamlit_index.body)
+        cls._remove_existing_content(streamlit_index.body, cls.START_COMMENT, cls.END_COMMENT)
 
         # Write the modified HTML back to the destination file
         cls._write_streamlit_html_file(streamlit_index)
 
     @classmethod
-    def _remove_existing_content(cls, container: BeautifulSoup):
+    def _remove_existing_content(cls, container: BeautifulSoup, start_comment: str, end_comment: str):
         start_comments = container.find_all(
-            string=lambda text: isinstance(text, Comment) and cls.START_COMMENT in text)
+            string=lambda text: isinstance(text, Comment) and start_comment in text)
         for start_comment in start_comments:
             current = start_comment
             elements_to_remove = []
 
             # Collect all elements between start and end comments
             while current is not None:
-                if isinstance(current, Comment) and cls.END_COMMENT in current:
+                if isinstance(current, Comment) and end_comment in current:
                     elements_to_remove.append(current)
                     break
                 elements_to_remove.append(current)
@@ -294,6 +346,14 @@ class StreamlitPlugin:
             destination_soup.head.append(link)
             comment = Comment(cls.END_COMMENT)
             destination_soup.head.append(comment)
+
+    @classmethod
+    def _add_version_comment(cls, destination_soup: BeautifulSoup):
+        """
+        Add a version comment to the head of the destination soup.
+        """
+        version_comment = Comment(f"{cls.VERSION_COMMENT}{cls.PLUGIN_VERSION}{cls.VERSION_COMMENT}")
+        destination_soup.head.append(version_comment)
 
     @classmethod
     def _add_body_content(cls, source_soup, destination_soup):
