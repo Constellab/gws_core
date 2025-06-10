@@ -108,6 +108,8 @@ class File(FSNode):
         :return: formatted name
         :rtype: str
         """
+        if not name:
+            name = FileHelper.get_name(self.path)
 
         extension = FileHelper.get_extension(name)
         if extension != self.extension:

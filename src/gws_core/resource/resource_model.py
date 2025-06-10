@@ -354,7 +354,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             Logger.error(
                 f'Error while getting the name of the resource {type(resource)}. Err : {str(err)}')
             Logger.log_exception_stack_trace(err)
-            name = resource.get_human_name()
+            resource_model.name = resource.get_human_name()
 
         style_override = resource.style
         if style_override:
