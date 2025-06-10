@@ -121,7 +121,7 @@
                     },
                     {
                         "name": "streamlit",
-                        "version": "1.42.2"
+                        "version": "1.45.1"
                     },
                     {
                         "name": "streamlit-searchbox",
