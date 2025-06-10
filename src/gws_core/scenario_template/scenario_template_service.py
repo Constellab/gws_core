@@ -29,11 +29,11 @@ class ScenarioTemplateService():
         return scenario_template.save()
 
     @classmethod
-    def update(cls, id: str,
+    def update(cls, id_: str,
                protocol: ProtocolModel = None,
                name: str = None, description: RichTextDTO = None) -> ScenarioTemplate:
 
-        scenario_template = cls.get_by_id_and_check(id)
+        scenario_template = cls.get_by_id_and_check(id_)
 
         if protocol:
             scenario_template.set_template(protocol.to_protocol_config_dto())
@@ -45,18 +45,18 @@ class ScenarioTemplateService():
         return scenario_template.save()
 
     @classmethod
-    def update_name(cls, id: str, name: str) -> ScenarioTemplate:
-        scenario_template = cls.get_by_id_and_check(id)
+    def update_name(cls, id_: str, name: str) -> ScenarioTemplate:
+        scenario_template = cls.get_by_id_and_check(id_)
         scenario_template.name = name
         return scenario_template.save()
 
     @classmethod
-    def get_by_id_and_check(cls, id: str) -> ScenarioTemplate:
-        return ScenarioTemplate.get_by_id_and_check(id)
+    def get_by_id_and_check(cls, id_: str) -> ScenarioTemplate:
+        return ScenarioTemplate.get_by_id_and_check(id_)
 
     @classmethod
-    def delete(cls, id: str) -> None:
-        ScenarioTemplate.delete_by_id(id)
+    def delete(cls, id_: str) -> None:
+        ScenarioTemplate.delete_by_id(id_)
 
     ############################## SEARCH ##############################
 

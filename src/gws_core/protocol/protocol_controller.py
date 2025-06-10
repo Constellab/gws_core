@@ -1,11 +1,11 @@
 
 
 import threading
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
-from gws_core.config.config_dto import ConfigSimpleDTO
+
 from gws_core.config.param.param_types import (DynamicParamAllowedSpecsDict,
                                                ParamSpecDTO)
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -138,38 +138,38 @@ def get_community_agent_and_check_rights(agent_version_id: str,
     return ProtocolService.get_community_agent_and_check_rights(agent_version_id)
 
 
-@core_app.post("/protocol/{id}/create-community-agent", tags=["Protocol"],
+@core_app.post("/protocol/{id_}/create-community-agent", tags=["Protocol"],
                summary="Create a community agent in community")
-def create_community_agent(id: str,
+def create_community_agent(id_: str,
                            form_data: CommunityCreateAgentDTO,
                            _=Depends(AuthService.check_user_access_token)) -> Any:
     """
     Create a constellab community agent
     """
-    return ProtocolService.create_community_agent(id, form_data)
+    return ProtocolService.create_community_agent(id_, form_data)
 
 
-@core_app.post("/protocol/{id}/fork-community-agent/{agent_version_id}", tags=["Protocol"],
+@core_app.post("/protocol/{id_}/fork-community-agent/{agent_version_id}", tags=["Protocol"],
                summary="Fork into a new community agent")
-def fork_community_agent(id: str,
+def fork_community_agent(id_: str,
                          form_data: CommunityCreateAgentDTO,
                          agent_version_id: str,
                          _=Depends(AuthService.check_user_access_token)) -> Any:
     """
     Create a constellab community agent
     """
-    return ProtocolService.fork_community_agent(id, form_data, agent_version_id)
+    return ProtocolService.fork_community_agent(id_, form_data, agent_version_id)
 
 
-@core_app.post("/protocol/{id}/add-version-to-community-agent/{agent_id}", tags=["Protocol"],
+@core_app.post("/protocol/{id_}/add-version-to-community-agent/{agent_id}", tags=["Protocol"],
                summary="Create a community agent in community")
-def create_new_community_agent_version(id: str,
+def create_new_community_agent_version(id_: str,
                                        agent_id: str,
                                        _=Depends(AuthService.check_user_access_token)) -> Any:
     """
     Create a new constellab community agent version
     """
-    return ProtocolService.create_community_agent_version(id, agent_id)
+    return ProtocolService.create_community_agent_version(id_, agent_id)
 
 
 @core_app.post("/protocol/{id_}/add-process/{process_typing_name}/connected-to-output/{process_name}/{port_name}",
@@ -561,7 +561,7 @@ def create_template(id_: str,
 def download_template(id_: str,
                       _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
     template = ProtocolService.generate_scenario_template(id_)
-    return ResponseHelper.create_file_response_from_str(template.to_export_dto().json(), template.name + '.json')
+    return ResponseHelper.create_file_response_from_str(template.to_export_dto().to_json_str(), template.name + '.json')
 
 
 ########################## DYNAMIC PARAM #####################

@@ -20,19 +20,19 @@ from gws_core.user.auth_service import AuthService
 from .scenario_template_service import ScenarioTemplateService
 
 
-@core_app.get("/scenario-template/{id}", tags=["Scenario template"], summary="Get a scenario template")
-def get_by_id(id: str,
+@core_app.get("/scenario-template/{id_}", tags=["Scenario template"], summary="Get a scenario template")
+def get_by_id(id_: str,
               _=Depends(AuthService.check_user_access_token)) -> ScenarioTemplateDTO:
 
-    return ScenarioTemplateService.get_by_id_and_check(id=id).to_dto()
+    return ScenarioTemplateService.get_by_id_and_check(id_=id_).to_dto()
 
 
-@core_app.get("/scenario-template/{id}/graph", tags=["Scenario template"],
-              summary="Get the scenario template data by id")
-def get_scenario_template_graph(id: str,
+@core_app.get("/scenario-template/{id_}/graph", tags=["Scenario template"],
+              summary="Get the scenario template data by id_")
+def get_scenario_template_graph(id_: str,
                                 _=Depends(AuthService.check_user_access_token)) -> ProtocolGraphConfigDTO:
 
-    return ScenarioTemplateService.get_by_id_and_check(id=id).get_protocol_config_dto()
+    return ScenarioTemplateService.get_by_id_and_check(id_=id_).get_protocol_config_dto()
 
 
 @core_app.post("/scenario-template/import-from-file", tags=["Fs node"],
@@ -48,11 +48,11 @@ class UpdateScenarioTemplate(BaseModelDTO):
     description: Optional[RichTextDTO] = None
 
 
-@core_app.put("/scenario-template/{id}", tags=["Scenario template"], summary="Update scenario template")
-def update(id: str,
+@core_app.put("/scenario-template/{id_}", tags=["Scenario template"], summary="Update scenario template")
+def update(id_: str,
            update_scenario_template: UpdateScenarioTemplate,
            _=Depends(AuthService.check_user_access_token)) -> ScenarioTemplateDTO:
-    return ScenarioTemplateService.update(id=id, name=update_scenario_template.name,
+    return ScenarioTemplateService.update(id_=id_, name=update_scenario_template.name,
                                           description=update_scenario_template.description).to_dto()
 
 
@@ -60,18 +60,18 @@ class UpdateScenarioTemplateName(BaseModelDTO):
     name: str
 
 
-@core_app.put("/scenario-template/{id}", tags=["Scenario template"], summary="Update scenario template name")
-def update_name(id: str,
+@core_app.put("/scenario-template/{id_}", tags=["Scenario template"], summary="Update scenario template name")
+def update_name(id_: str,
                 update_scenario_template: UpdateScenarioTemplateName,
                 _=Depends(AuthService.check_user_access_token)) -> ScenarioTemplateDTO:
-    return ScenarioTemplateService.update_name(id=id, name=update_scenario_template.name).to_dto()
+    return ScenarioTemplateService.update_name(id_=id_, name=update_scenario_template.name).to_dto()
 
 
-@core_app.delete("/scenario-template/{id}", tags=["Scenario template"], summary="Delete a scenario template")
-def delete_by_id(id: str,
+@core_app.delete("/scenario-template/{id_}", tags=["Scenario template"], summary="Delete a scenario template")
+def delete_by_id(id_: str,
                  _=Depends(AuthService.check_user_access_token)) -> None:
 
-    ScenarioTemplateService.delete(id=id)
+    ScenarioTemplateService.delete(id_=id_)
 
 
 @core_app.post("/scenario-template/search", tags=["Scenario template"], summary="Advanced search for scenario template")
@@ -94,11 +94,11 @@ def search_by_name(name: str,
     return ScenarioTemplateService.search_by_name(name, page, number_of_items_per_page).to_dto()
 
 
-@core_app.get("/scenario-template/{id}/download", tags=["Scenario template"],
+@core_app.get("/scenario-template/{id_}/download", tags=["Scenario template"],
               summary="Download a scenario template json")
-def download_template(id: str,
+def download_template(id_: str,
                       _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
-    template = ScenarioTemplateService.get_by_id_and_check(id)
+    template = ScenarioTemplateService.get_by_id_and_check(id_)
     return ResponseHelper.create_file_response_from_str(
         template.to_export_dto().to_json_str(),
         template.name + '.json')
