@@ -23,9 +23,11 @@ class StreamlitAppsManager():
     @classmethod
     def create_or_get_app(cls, app: StreamlitApp) -> StreamlitAppUrl:
         cls._refresh_processes()
+        # check if the app is already running in one of the processes
         for streamlit_process in cls.running_processes.values():
             if streamlit_process.has_app(app.app_id):
-                streamlit_process.get_app(app.app_id)
+                app = streamlit_process.get_app(app.app_id)
+                return cls.get_app_full_url(app.app_id)
 
         cls._create_app(app)
         return cls.get_app_full_url(app.app_id)
