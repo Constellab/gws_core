@@ -102,7 +102,7 @@ class ParamSpec():
         """
         Validate the value of the param and return the modified value if needed.
         This method is called when the param is set in the config before saving it in the database.
-        The returned value must be serializable in json.l
+        The returned value must be serializable in json.
         """
         return value
 
