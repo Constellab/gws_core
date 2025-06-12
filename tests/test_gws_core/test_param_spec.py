@@ -4,6 +4,7 @@ from unittest import TestCase
 
 from gws_core import IntParam, ParamSet, StrParam
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.config.param.code_param.json_code_param import JsonCodeParam
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import ParamSpecTypeStr
 from gws_core.core.utils.utils import Utils
@@ -44,3 +45,19 @@ class TestParamSpec(TestCase):
         value = [{"str": "Hello", "int": "10"}]
         expected_value = [{"str": "Hello", "int": 10}]
         self.assertEqual(param.validate(value), expected_value)
+
+    def test_json_param(self):
+        param = JsonCodeParam()
+
+        result = param.build('{"key": "value"}')
+        self.assertEqual(result, {"key": "value"})
+
+        # test with comments
+        json_with_comments = """
+        {
+            // This is a comment
+            "key": "value // super"
+        }
+        """
+        result = param.build(json_with_comments)
+        self.assertEqual(result, {"key": "value // super"})
