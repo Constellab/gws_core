@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 import streamlit as st
 from typing_extensions import TypedDict
 
-APP_CONFIG_FILENAME = 'streamlit_config.json'
+APP_CONFIG_FILENAME = 'app_config.json'
 APP_MAIN_FILENAME = 'main.py'
 
 
@@ -40,13 +40,6 @@ class StreamlitMainAppRunner:
     app_dir: str = None
     dev_mode: bool = False
     dev_config_file: str = None
-
-    sources: List[Any]
-    params: Dict[str, Any]
-
-    def __init__(self):
-        self.sources = []
-        self.params = {}
 
     def init(self) -> None:
         """ Check the parameters (token) and loaf the config and app file"""

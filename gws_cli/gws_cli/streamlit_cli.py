@@ -3,12 +3,13 @@ import json
 import os
 
 import typer
+from typing_extensions import Annotated, Literal
+
 from gws_cli.generate_streamlit_app.generate_streamlit_app import \
     generate_streamlit_app
-from gws_core import (CondaShellProxy, LoggerMessageObserver, MambaShellProxy,
-                      PipShellProxy, ShellProxy, StreamlitApp,
-                      StreamlitAppsManager, Utils)
-from typing_extensions import Annotated, Literal
+from gws_core import (AppsManager, CondaShellProxy, LoggerMessageObserver,
+                      MambaShellProxy, PipShellProxy, ShellProxy, StreamlitApp,
+                      Utils)
 
 app = typer.Typer()
 
@@ -74,10 +75,10 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the js
     if (isinstance(shell_proxy, CondaShellProxy)):
         shell_proxy.install_env()
 
-    streamit_app = StreamlitApp("main", shell_proxy)
+    streamit_app = StreamlitApp("main", "main", shell_proxy)
     streamit_app.set_dev_mode(config_file_path)
 
-    url = StreamlitAppsManager.create_or_get_app(streamit_app).get_url()
+    url = AppsManager.create_or_get_app(streamit_app).get_url()
     print("----------------------------------------------------------------------------------------------------------------------------------------------------------")
     env_txt = "" if env_type == "NONE" else f" with env type '{env_type}'"
     print(

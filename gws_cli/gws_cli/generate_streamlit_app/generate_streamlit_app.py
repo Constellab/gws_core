@@ -8,7 +8,7 @@ from gws_cli.utils.cli_utils import CLIUtils
 from gws_core import FileHelper, StringHelper
 
 NAME_VAR = 'name'
-DASHBOARD_CLASS_VAR = 'dashboardClass'
+DASHBOARD_CLASS_VAR = 'appclass'
 GENERATE_CLASS_VAR = 'generateClass'
 FOLDER_APP_NAME_VAR = 'folderAppName'
 

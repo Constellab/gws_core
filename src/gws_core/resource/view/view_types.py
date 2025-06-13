@@ -32,7 +32,7 @@ class ViewType(Enum):
     MARKDOWN = "markdown-view"
     PLOTLY = "plotly-view"
     RICH_TEXT = "rich-text-view"
-    STREAMLIT = "streamlit-view"
+    APP = "app-view"
     AUDIO = "audio-view"
     IFRAME = "iframe-view"
 
@@ -85,7 +85,7 @@ class ViewType(Enum):
             style = TypingStyle.material_icon("analytics", background_color="#496989")
         elif self == ViewType.RICH_TEXT:
             style = TypingStyle.material_icon("text_snippet", background_color="#f6f193")
-        elif self == ViewType.STREAMLIT:
+        elif self == ViewType.APP:
             style = TypingStyle.material_icon("dashboard", background_color='#ff4b4b')
         elif self == ViewType.AUDIO:
             style = TypingStyle.material_icon("volume_up", background_color="#f6995c")
@@ -146,8 +146,8 @@ class ViewType(Enum):
             return "Plotly"
         elif self == ViewType.RICH_TEXT:
             return "Rich text"
-        elif self == ViewType.STREAMLIT:
-            return "Streamlit"
+        elif self == ViewType.APP:
+            return "App"
         elif self == ViewType.AUDIO:
             return "Audio"
         else:
@@ -157,4 +157,4 @@ class ViewType(Enum):
 # List of view type that cannot be used in a note
 exluded_views_in_note = [
     ViewType.VIEW, ViewType.FOLDER, ViewType.RESOURCES_LIST_VIEW, ViewType.EMPTY,
-    ViewType.RICH_TEXT, ViewType.STREAMLIT]
+    ViewType.RICH_TEXT, ViewType.APP]

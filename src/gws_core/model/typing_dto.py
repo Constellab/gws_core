@@ -13,7 +13,7 @@ class TypingStatus(Enum):
 
 
 # different object typed store in the typing table
-TypingObjectType = Literal["TASK", "RESOURCE", "PROTOCOL", "MODEL", "ACTION", "DASHBOARD"]
+TypingObjectType = Literal["TASK", "RESOURCE", "PROTOCOL", "MODEL", "ACTION", "APP"]
 
 
 # Minimum object to reference another type

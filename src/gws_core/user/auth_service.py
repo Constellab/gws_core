@@ -1,11 +1,10 @@
 
 
 from fastapi import Request
-from fastapi.param_functions import Depends
 from starlette.responses import JSONResponse, Response
 
+from gws_core.apps.apps_manager import AppsManager
 from gws_core.lab.system_service import SystemService
-from gws_core.streamlit.streamlit_apps_manager import StreamlitAppsManager
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 
@@ -162,7 +161,7 @@ class AuthService():
         user_access_token = request.headers.get("gws_user_access_token")
 
         if app_id and user_access_token:
-            user_id = StreamlitAppsManager.user_has_access_to_app(app_id, user_access_token)
+            user_id = AppsManager.user_has_access_to_app(app_id, user_access_token)
 
             if not user_id:
                 raise UnauthorizedException(

@@ -5,6 +5,7 @@ from peewee import DatabaseProxy, Field
 from playhouse.migrate import MySQLMigrator
 
 from gws_core.core.model.base_model import BaseModel
+from gws_core.resource.resource_model import ResourceModel
 
 
 class SqlMigrator:
@@ -96,3 +97,18 @@ class SqlMigrator:
 
         db.execute_sql(
             f"UPDATE gws_scenario_template SET data = REPLACE(data, '{old_typing_name}', '{new_typing_name}')")
+
+    @classmethod
+    def rename_resource_r_field(
+            cls, resource_model: ResourceModel, old_field_name: str, new_field_name: str) -> None:
+        kv_store = resource_model.get_kv_store()
+
+        if old_field_name in kv_store:
+            old_field = kv_store.get(old_field_name)
+
+            kv_store._lock = False
+            kv_store[new_field_name] = old_field
+            del kv_store[old_field_name]
+            kv_store._lock = True
+
+            resource_model.save(skip_hook=True)

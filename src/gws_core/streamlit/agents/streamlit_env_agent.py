@@ -59,7 +59,8 @@ class StreamlitEnvAgent(Task):
             raise Exception("The env code must contain the 'streamlit' package")
 
         # build the streamlit resource with the code and the resources
-        streamlit_resource = StreamlitResource(code)
+        streamlit_resource = StreamlitResource()
+        streamlit_resource.set_streamlit_code(code)
         streamlit_resource.set_env_shell_proxy(env_shell_proxy)
         streamlit_resource.set_params(params)
         streamlit_resource.add_multiple_resources(resources.to_list(), self.message_dispatcher)

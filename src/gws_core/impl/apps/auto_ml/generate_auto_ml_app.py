@@ -1,20 +1,19 @@
 
+from gws_core.apps.app_config import AppConfig, AppType, app_decorator
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.table.table import Table
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.note.task.lab_note_resource import LabNoteResource
-from gws_core.streamlit.streamlit_dashboard import (Dashboard, DashboardType,
-                                                    dashboard_decorator)
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@dashboard_decorator("GenerateAutoMLAppDashboard", dashboard_type=DashboardType.STREAMLIT,
-                     human_name="Generate auto machine learning app")
-class GenerateAutoMLAppDashboard(Dashboard):
+@app_decorator("GenerateAutoMLAppDashboard", app_type=AppType.STREAMLIT,
+               human_name="Generate auto machine learning app")
+class GenerateAutoMLAppDashboard(AppConfig):
 
     # retrieve the path of the app folder, relative to this file
     # the dashboard code folder starts with a underscore to avoid being loaded when the brick is loaded
@@ -53,7 +52,7 @@ class GenerateAutoMLApp(Task):
 
         streamlit_app = StreamlitResource()
 
-        streamlit_app.set_dashboard(GenerateAutoMLAppDashboard())
+        streamlit_app.set_app_config(GenerateAutoMLAppDashboard())
         streamlit_app.name = 'Machine Learning Copilot'
         streamlit_app.add_resource(inputs['getting_started_note'], create_new_resource=False)
         streamlit_app.set_requires_authentication(False)

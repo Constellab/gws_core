@@ -13,25 +13,29 @@ from gws_core.model.typing_register_decorator import register_gws_typing_class
 from gws_core.model.typing_style import TypingStyle
 
 
-class DashboardType(Enum):
+class AppType(Enum):
     STREAMLIT = "STREAMLIT"
+    REFLEX = "REFLEX"
 
 
-class Dashboard(BaseTyping):
-    """Extends tihs class to create a dashboard.
+class AppConfig(BaseTyping):
+    """Extends this class to create an app.
 
-    The sub class must implement the get_folder_path method to return the path of the folder containing the dashboard
+    This class defines what code to use to run the app and in which virtual environment if needed.
+
+    The sub class must implement the get_folder_path method to return the path of the folder containing the app
+
     """
 
     @abstractmethod
     def get_app_folder_path(self) -> str:
         """
-        :return: path of the folder containing the dashboard code
+        :return: path of the folder containing the app code
         :rtype: str
         """
 
     def get_shell_proxy(self) -> ShellProxy:
-        """Override this method to return a env shell proxy if your dashboard
+        """Override this method to return a env shell proxy if your app
         needs to run in a virtual environment.
 
         :return: _description_
@@ -55,18 +59,18 @@ class Dashboard(BaseTyping):
         )
 
 
-def dashboard_decorator(unique_name: str,
-                        dashboard_type: DashboardType,
-                        human_name: str = "",
-                        short_description: str = "") -> Callable:
-    """ Decorator to declare a dashboard folder.
+def app_decorator(unique_name: str,
+                  app_type: AppType,
+                  human_name: str = "",
+                  short_description: str = "") -> Callable:
+    """ Decorator to declare a app class configuration.
 
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the tasks
     :type unique_name: str
-    :param dashboard_type: type of the dashboard
-    :type dashboard_type: DashboardType
+    :param app_type: type of the app_type
+    :type app_type: AppType
     :param human_name: optional name that will be used in the interface when viewing the tasks.
                         If not defined, the unique_name will be used
     :type human_name: str, optional
@@ -74,41 +78,41 @@ def dashboard_decorator(unique_name: str,
     :type short_description: str, optional
 
     """
-    def decorator(task_class: Type[Dashboard]):
-        _decorate_dashboard(task_class,
-                            dashboard_type=dashboard_type,
-                            unique_name=unique_name,
-                            human_name=human_name,
-                            short_description=short_description)
+    def decorator(task_class: Type[AppConfig]):
+        _decorate_app(task_class,
+                      app_type=app_type,
+                      unique_name=unique_name,
+                      human_name=human_name,
+                      short_description=short_description)
 
         return task_class
     return decorator
 
 
-def _decorate_dashboard(
-        dashboard_class: Type[Dashboard],
-        dashboard_type: DashboardType,
+def _decorate_app(
+        app_class: Type[AppConfig],
+        app_type: AppType,
         unique_name: str,
         human_name: str = "",
         short_description: str = "",):
     """Method to decorate a task
     """
-    if not Utils.issubclass(dashboard_class, Dashboard):
+    if not Utils.issubclass(app_class, AppConfig):
         BrickService.log_brick_error(
-            dashboard_class,
-            f"The dashboard_decorator is used on the class: {dashboard_class.__name__} and this class is not a sub class of Dashboard")
+            app_class,
+            f"The app_decorator is used on the class: {app_class.__name__} and this class is not a sub class of App")
         return
 
-    if not isinstance(dashboard_type, DashboardType):
+    if not isinstance(app_type, AppType):
         BrickService.log_brick_error(
-            dashboard_class,
-            f"The dashboard_type: {dashboard_type} is not a instance of DashboardType")
+            app_class,
+            f"The app_type: {app_type} is not a instance of AppType")
         return
 
-    register_gws_typing_class(object_class=dashboard_class,
-                              object_type="DASHBOARD",
+    register_gws_typing_class(object_class=app_class,
+                              object_type="APP",
                               unique_name=unique_name,
-                              object_sub_type=dashboard_type.value,
+                              object_sub_type=app_type.value,
                               human_name=human_name,
                               short_description=short_description,
                               hide=True,
