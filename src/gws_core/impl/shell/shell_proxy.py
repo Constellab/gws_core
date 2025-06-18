@@ -1,8 +1,7 @@
-
-
 import os
 import select
 import subprocess
+from enum import Enum
 from typing import IO, Any, Callable, List, Optional, Union
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
@@ -31,7 +30,7 @@ class ShellIO():
         self.dispatch = dispatch
 
 
-class ShellProxyEnvVariableMode:
+class ShellProxyEnvVariableMode(Enum):
     """
     Enum for the shell proxy environmentvariable mode.
     """
@@ -228,7 +227,7 @@ class ShellProxy(BaseTyping):
                      shell_mode: bool = False, text: bool = True) -> Any:
         """
         Run a command in a shell and return the output.
-        There logs of the command are ignored.
+        The logs of the command are ignored.
 
         :param cmd: command to run
         :type cmd: Union[list, str]
