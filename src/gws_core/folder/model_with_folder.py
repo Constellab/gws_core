@@ -1,6 +1,5 @@
 
 
-from abc import abstractmethod
 from typing import List
 
 from peewee import ForeignKeyField
@@ -14,7 +13,6 @@ class ModelWithFolder(PeeweeModel):
     folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
 
     @classmethod
-    @abstractmethod
     def clear_folder(cls, folders: List[SpaceFolder]) -> None:
         """
         Clear folders from all the entities that have the folder

@@ -25,8 +25,6 @@ from ..io.ioface import IOface
 from ..io.port import InPort, OutPort
 from ..process.process_model import ProcessModel
 from ..process.process_types import ProcessStatus
-from ..process.protocol_sub_process_builder import (
-    ProtocolSubProcessBuilder, SubProcessBuilderReadFromDb)
 from .protocol_layout import ProtocolLayout
 
 
@@ -129,6 +127,12 @@ class ProtocolModel(ProcessModel):
 
         return super().delete_instance(*args, **kwargs)
 
+    @classmethod
+    def after_all_tables_init(cls) -> None:
+        """Create the foreign keys because it was deffered
+        """
+        cls.create_foreign_key_if_not_exist(ProtocolModel.parent_protocol_id)
+
     ############################### GRAPH #################################
 
     def _load_from_graph(self) -> None:
@@ -141,10 +145,7 @@ class ProtocolModel(ProcessModel):
             self._is_loaded = True
             return
 
-        sub_process_factory = SubProcessBuilderReadFromDb(graph)
-
-        # init processes and sub processes
-        self.init_processes_from_graph(sub_process_factory)
+        self._processes = self.get_processes_from_db()
 
         # init interfaces and outerfaces
         self._interfaces = IOface.load_from_dto_dict(graph.interfaces)
@@ -154,6 +155,8 @@ class ProtocolModel(ProcessModel):
     def refresh_graph_from_dump(self) -> None:
         """Refresh the graph json object inside the data from the dump method
         """
+        # TODO remove nodes from the graph once the load from DB is stable
+        # load was introduced in v 0.15.0
         self.data["graph"] = self.to_protocol_minimum_dto().to_json_dict()
 
     def get_graph(self) -> ProtocolMinimumDTO:
@@ -352,6 +355,18 @@ class ProtocolModel(ProcessModel):
 
         return self._processes
 
+    def get_processes_from_db(self) -> Dict[str, ProcessModel]:
+        from gws_core.task.task_model import TaskModel
+
+        protocols: List[ProcessModel] = list(ProtocolModel.get_by_parent_protocol_id(self.id))
+        tasks: List[ProcessModel] = list(TaskModel.get_by_parent_protocol_id(self.id))
+
+        process_dict: Dict[str, ProcessModel] = {}
+        for process in protocols + tasks:
+            process_dict[process.instance_name] = process
+
+        return process_dict
+
     def add_process_model(self, process_model: ProcessModel, instance_name: str = None) -> None:
         """
         Adds a process to the protocol.
@@ -368,18 +383,6 @@ class ProtocolModel(ProcessModel):
         # be sure to have loaded the protocol before adding a process
         self._load_from_graph()
 
-        self._add_process_model(
-            process_model=process_model, instance_name=instance_name)
-
-    def _add_process_model(self, process_model: ProcessModel, instance_name: str = None) -> None:
-        """
-        Adds a process to the protocol.
-
-        :param process: The process
-        :type process: Process
-        :param instance_name: Unique name of the process. If none, the name is generated
-        :type instance_name: str
-        """
         if not isinstance(process_model, ProcessModel):
             raise BadRequestException(
                 f"The process '{instance_name}' must be an instance of ProcessModel")
@@ -407,17 +410,6 @@ class ProtocolModel(ProcessModel):
         # set instance name in process and add process
         process_model.instance_name = instance_name
         self._processes[instance_name] = process_model
-
-    def init_processes_from_graph(self, sub_process_factory: ProtocolSubProcessBuilder) -> None:
-        # create nodes
-        process_models: Dict[str, ProcessModel] = sub_process_factory.instantiate_processes()
-        for key, process_model in process_models.items():
-
-            # If the process already exists
-            if key in self._processes:
-                raise Exception(f"Process with instance name '{key}' already exists")
-            else:
-                self._add_process_model(process_model, key)
 
     def get_process(self, name: str) -> ProcessModel:
         """

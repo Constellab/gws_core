@@ -73,7 +73,7 @@ class BaseModel(Base, PeeweeModel):
 
     @classmethod
     def foreign_key_exists(cls, column_name: str) -> bool:
-        foreign_keys: List[ForeignKeyMetadata] = cls._schema.database.get_foreign_keys(cls._table_name)
+        foreign_keys: List[ForeignKeyMetadata] = cls._schema.database.get_foreign_keys(cls.get_table_name())
         return len([x for x in foreign_keys if x.column == column_name]) > 0
 
     @classmethod

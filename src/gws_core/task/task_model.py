@@ -131,6 +131,12 @@ class TaskModel(ProcessModel):
         """
         return cls.select().where((cls.scenario.in_(scenario_ids)) & (cls.source_config_id.is_null(False)))
 
+    @classmethod
+    def after_all_tables_init(cls) -> None:
+        """Create the foreign keys because it was deffered
+        """
+        cls.create_foreign_key_if_not_exist(TaskModel.parent_protocol_id)
+
     ################################# RUN #############################
 
     def _run(self) -> None:

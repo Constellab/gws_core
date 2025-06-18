@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Optional, Type, final
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, final
 
-from peewee import BooleanField, CharField, ForeignKeyField
+from peewee import BooleanField, CharField, DeferredForeignKey, ForeignKeyField
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.exception.gws_exceptions import GWSException
@@ -52,7 +52,8 @@ class ProcessModel(ModelWithUser):
     :type Viewable: [type]
     """
 
-    parent_protocol_id = CharField(max_length=36, null=True, index=True)
+    parent_protocol_id: str = DeferredForeignKey('ProtocolModel', null=True, index=True, lazy_load=False)
+
     scenario: Scenario = ForeignKeyField(
         Scenario, null=True, index=True, backref="+")
     instance_name = CharField(null=True)
@@ -697,3 +698,15 @@ class ProcessModel(ModelWithUser):
         except Exception:
             Logger.error(
                 f"Error: cannot save the run stat of the process '{self.instance_name}'")
+
+    ######################################## CLASS METHODS ########################################
+    @classmethod
+    def get_by_parent_protocol_id(cls, parent_protocol_id: str) -> List['ProcessModel']:
+        """Get all the processes by parent protocol id
+
+        :param parent_protocol_id: The parent protocol id
+        :type parent_protocol_id: str
+        :return: The list of processes
+        :rtype: list[ProcessModel]
+        """
+        return cls.select().where(cls.parent_protocol_id == parent_protocol_id)
