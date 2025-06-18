@@ -1,15 +1,9 @@
 
 import importlib
 
-from gws_core.impl.apps.showcase._showcase_app.pages import (ai_chat_page,
-                                                             containers_page,
-                                                             dataframes_page,
-                                                             menu_button_page,
-                                                             processes_page,
-                                                             resources_page,
-                                                             rich_text_page,
-                                                             tree_menu_page,
-                                                             utils_page)
+from gws_core.impl.apps.streamlit_showcase._streamlit_showcase_app.pages import (
+    ai_chat_page, containers_page, dataframes_page, menu_button_page,
+    processes_page, resources_page, rich_text_page, tree_menu_page, utils_page)
 from gws_core.streamlit import StreamlitHelper, StreamlitRouter
 
 sources: list

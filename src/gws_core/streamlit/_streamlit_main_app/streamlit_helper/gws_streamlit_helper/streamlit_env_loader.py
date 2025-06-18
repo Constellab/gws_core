@@ -79,7 +79,7 @@ class StreamlitEnvLoader:
     def _load_env(self):
 
         if 'gws_core' not in sys.modules:
-            with st.spinner('Initializing dashboard...'):
+            with st.spinner('Initializing app...'):
                 core_lib_path = "/lab/user/bricks/gws_core/src"
                 if not os.path.exists(core_lib_path):
                     core_lib_path = "/lab/.sys/bricks/gws_core/src"
@@ -101,7 +101,7 @@ class StreamlitEnvLoader:
         current_time = 0
         time_limit = 60
         time_step = 5
-        with st.spinner('Initializing dashboard...'):
+        with st.spinner('Initializing app...'):
             while current_time < time_limit:
                 sleep(time_step)
                 try:

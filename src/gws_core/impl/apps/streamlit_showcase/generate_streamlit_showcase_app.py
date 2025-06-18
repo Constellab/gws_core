@@ -11,23 +11,23 @@ from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@app_decorator("ShowcaseApp", app_type=AppType.STREAMLIT,
-               human_name="Generate show case app")
-class ShowcaseApp(AppConfig):
+@app_decorator("StreamlitShowcaseApp", app_type=AppType.STREAMLIT,
+               human_name="Generate streamlit showcase app")
+class StreamlitShowcaseApp(AppConfig):
 
     # retrieve the path of the app folder, relative to this file
     # the dashboard code folder starts with a underscore to avoid being loaded when the brick is loaded
     def get_app_folder_path(self):
         return self.get_app_folder_from_relative_path(
             __file__,
-            "_showcase_app"
+            "_streamlit_showcase_app"
         )
 
 
-@task_decorator("GenerateShowcaseApp", human_name="Generate streamlit showcase app",
+@task_decorator("GenerateStreamlitShowcaseApp", human_name="Generate streamlit showcase app",
                 short_description="App that showcases Constellab components for streamlit",
                 style=StreamlitResource.copy_style())
-class GenerateShowcaseApp(Task):
+class GenerateStreamlitShowcaseApp(Task):
     """
     Task that generates the streamlit showcase app.
 
@@ -48,7 +48,7 @@ class GenerateShowcaseApp(Task):
 
         streamlit_app = StreamlitResource()
 
-        streamlit_app.set_app_config(ShowcaseApp())
+        streamlit_app.set_app_config(StreamlitShowcaseApp())
         streamlit_app.set_requires_authentication(False)
         streamlit_app.set_name("Streamlit showcase App")
 
