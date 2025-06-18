@@ -1,15 +1,21 @@
-from gws_core import (ConfigParams, ConfigSpecs, Dashboard, DashboardType,
-                      InputSpecs, OutputSpec, OutputSpecs, StreamlitResource,
-                      Task, TaskInputs, TaskOutputs, dashboard_decorator,
-                      task_decorator)
+
+from gws_core.apps.app_config import AppConfig, AppType, app_decorator
+from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam, IntParam, StrParam
 from gws_core.credentials.credentials_param import CredentialsParam
 from gws_core.credentials.credentials_type import CredentialsDataOther
+from gws_core.io.io_spec import OutputSpec
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.streamlit.streamlit_resource import StreamlitResource
+from gws_core.task.task import Task
+from gws_core.task.task_decorator import task_decorator
+from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@dashboard_decorator("DatahubDifyAppDashboard", dashboard_type=DashboardType.STREAMLIT,
-                     human_name="Generate show case app")
-class DatahubDifyAppDashboard(Dashboard):
+@app_decorator("DatahubDifyApp", app_type=AppType.STREAMLIT,
+               human_name="Generate show case app")
+class DatahubDifyAppDashboard(AppConfig):
 
     # retrieve the path of the app folder, relative to this file
     # the dashboard code folder starts with a underscore to avoid being loaded when the brick is loaded
@@ -69,7 +75,7 @@ class GenerateDatahubDifyApp(Task):
         streamlit_app.set_param('show_config_page', params['show_config_page'])
         streamlit_app.set_param('root_folder_limit', params['root_folder_limit'])
 
-        streamlit_app.set_dashboard(DatahubDifyAppDashboard())
+        streamlit_app.set_app_config(DatahubDifyAppDashboard())
         streamlit_app.name = "Datahub dify app"
 
         return {"streamlit_app": streamlit_app}

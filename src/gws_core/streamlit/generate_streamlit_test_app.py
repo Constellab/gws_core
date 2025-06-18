@@ -1,20 +1,19 @@
 
+from gws_core.apps.app_config import AppConfig, AppType, app_decorator
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.impl.file.folder import Folder
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
-from gws_core.streamlit.streamlit_dashboard import (Dashboard, DashboardType,
-                                                    dashboard_decorator)
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@dashboard_decorator("GenerateStreamlitTestApp", dashboard_type=DashboardType.STREAMLIT,
-                     human_name="Test dashboard for gws_core")
-class TestDashboard(Dashboard):
+@app_decorator("GenerateStreamlitTestApp", app_type=AppType.STREAMLIT,
+               human_name="Test dashboard for gws_core")
+class TestDashboard(AppConfig):
 
     # retrieve the path of the app folder, relative to this file
     # the dashboard code folder starts with a underscore to avoid being loaded when the brick is loaded
@@ -53,6 +52,6 @@ class GenerateStreamlitTestApp(Task):
         tmp_dir = self.create_tmp_dir()
         streamlit_app.add_resource(Folder(tmp_dir))
 
-        streamlit_app.set_dashboard(TestDashboard())
+        streamlit_app.set_app_config(TestDashboard())
 
         return {"streamlit_app": streamlit_app}

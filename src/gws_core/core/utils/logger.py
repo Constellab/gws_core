@@ -27,6 +27,7 @@ class LogContext(Enum):
     MAIN = "MAIN"
     SCENARIO = "SCENARIO"
     STREAMLIT = "STREAMLIT"
+    REFLEX = "REFLEX"
 
 
 class LogFileLine(BaseModelDTO):

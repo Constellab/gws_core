@@ -3,7 +3,7 @@
 import ast
 import os
 from copy import deepcopy
-from typing import Any, Dict, List
+from typing import Dict, List
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
@@ -14,8 +14,7 @@ from gws_core.core.db.sql_migrator import SqlMigrator
 from gws_core.core.model.db_field import BaseDTOField, DateTimeUTC
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.credentials.credentials import Credentials
-from gws_core.credentials.credentials_type import (CredentialsDataOther,
-                                                   CredentialsType)
+from gws_core.credentials.credentials_type import CredentialsType
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.agent.env_agent import EnvAgent
 from gws_core.impl.file.file_helper import FileHelper
@@ -52,6 +51,7 @@ from gws_core.scenario_template.scenario_template_factory import \
     ScenarioTemplateFactory
 from gws_core.share.share_link import ShareLink
 from gws_core.share.shared_scenario import SharedScenario
+from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_key_model import TagKeyModel
@@ -1295,80 +1295,69 @@ class Migration0100(BrickMigration):
                     credential.data = {'data': data_list}
                     credential.save(skip_hook=True)
 
-    @brick_migration('0.12.0', short_description='Add community agent version modified to task model')
-    class Migration0120(BrickMigration):
 
-        @classmethod
-        def migrate(cls, from_version: Version, to_version: Version) -> None:
+@brick_migration('0.12.0', short_description='Add community agent version modified to task model')
+class Migration0120(BrickMigration):
 
-            migrator: SqlMigrator = SqlMigrator(TaskModel.get_db())
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-            migrator.add_column_if_not_exists(TaskModel, TaskModel.community_agent_version_modified)
+        migrator: SqlMigrator = SqlMigrator(TaskModel.get_db())
 
-            migrator.migrate()
+        migrator.add_column_if_not_exists(TaskModel, TaskModel.community_agent_version_modified)
 
-    @brick_migration('0.12.2', short_description='Replace forbidden characters in tags')
-    class Migration0122(BrickMigration):
+        migrator.migrate()
 
-        @classmethod
-        def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-            tag_keys: List[TagKeyModel] = list(TagKeyModel.select())
+@brick_migration('0.12.2', short_description='Replace forbidden characters in tags')
+class Migration0122(BrickMigration):
 
-            for tag_key in tag_keys:
-                new_key = Tag.parse_tag(tag_key.key)
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-                try:
+        tag_keys: List[TagKeyModel] = list(TagKeyModel.select())
 
-                    if new_key != tag_key.key:
-                        tag_key.key = new_key
-                        tag_key.save(skip_hook=True)
-                except Exception as exception:
-                    Logger.error(
-                        f'Error while setting tag key for {tag_key.key} : {exception}')
+        for tag_key in tag_keys:
+            new_key = Tag.parse_tag(tag_key.key)
 
-            tag_values: List[TagValueModel] = list(TagValueModel.select())
+            try:
 
-            for tag_value in tag_values:
-                new_value = Tag.parse_tag(tag_value.tag_value)
+                if new_key != tag_key.key:
+                    tag_key.key = new_key
+                    tag_key.save(skip_hook=True)
+            except Exception as exception:
+                Logger.error(
+                    f'Error while setting tag key for {tag_key.key} : {exception}')
 
-                try:
-                    if new_value != tag_value.tag_value:
-                        tag_value.tag_value = new_value
-                        tag_value.save(skip_hook=True)
-                except Exception as exception:
-                    Logger.error(
-                        f'Error while setting tag value for {tag_value.tag_value} : {exception}')
+        tag_values: List[TagValueModel] = list(TagValueModel.select())
 
-    @brick_migration('0.13.0', short_description='Rename folder title to name')
-    class Migration0130(BrickMigration):
+        for tag_value in tag_values:
+            new_value = Tag.parse_tag(tag_value.tag_value)
 
-        @classmethod
-        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            try:
+                if new_value != tag_value.tag_value:
+                    tag_value.tag_value = new_value
+                    tag_value.save(skip_hook=True)
+            except Exception as exception:
+                Logger.error(
+                    f'Error while setting tag value for {tag_value.tag_value} : {exception}')
 
-            migrator = SqlMigrator(ResourceModel.get_db())
 
-            migrator.rename_column_if_exists(SpaceFolder, 'title', 'name')
-            migrator.migrate()
+@brick_migration('0.13.0', short_description='Rename folder title to name')
+class Migration0130(BrickMigration):
 
-    @brick_migration('0.14.0', short_description='Add link type to ShareLink')
-    class Migration0140(BrickMigration):
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        @classmethod
-        def migrate(cls, from_version: Version, to_version: Version) -> None:
+        migrator = SqlMigrator(ResourceModel.get_db())
 
-            migrator = SqlMigrator(ShareLink.get_db())
-            migrator.add_column_if_not_exists(ShareLink, ShareLink.link_type)
-            migrator.migrate()
+        migrator.rename_column_if_exists(SpaceFolder, 'title', 'name')
+        migrator.migrate()
 
-            if ShareLink.index_exists('sharelink_entity_id_entity_type'):
-                # delete unique key sharelink_entity_id_entity_type
-                ShareLink.execute_sql("ALTER TABLE [TABLE_NAME] DROP INDEX sharelink_entity_id_entity_type")
-
-            if not ShareLink.index_exists('sharelink_entity_id_entity_type_link_type'):
-                # Create unique key sharelink_entity_id_entity_type_link_type
-                ShareLink.execute_sql(
-                    "CREATE UNIQUE INDEX sharelink_entity_id_entity_type_link_type ON gws_share_link (entity_id, entity_type, link_type)")
+        if not ShareLink.index_exists('sharelink_entity_id_entity_type_link_type'):
+            # Create unique key sharelink_entity_id_entity_type_link_type
+            ShareLink.execute_sql(
+                "CREATE UNIQUE INDEX sharelink_entity_id_entity_type_link_type ON gws_share_link (entity_id, entity_type, link_type)")
 
     @brick_migration('0.15.0-beta.1', short_description='Migrate tag to add Community tag')
     class Migration0141(BrickMigration):
@@ -1401,3 +1390,8 @@ class Migration0100(BrickMigration):
             TagValueModel.get_db().execute_sql(
                 "ALTER TABLE gws_tag_value MODIFY COLUMN tag_value VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;")
             EntityTag.after_all_tables_init()
+
+            StreamlitResource.migrate_streamlit_resources()
+
+            ViewConfig.execute_sql(
+                "UPDATE [TABLE_NAME] SET view_type = 'app-view' where view_type = 'streamlit-view'")

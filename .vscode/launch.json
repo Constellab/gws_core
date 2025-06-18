@@ -76,6 +76,18 @@
             "console": "integratedTerminal",
         },
         {
+            "args": [
+                "reflex",
+                "run-dev",
+                "${input:configFilePath}"
+            ],
+            "name": "Reflex dev",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/gws_cli/gws_cli/main_cli.py",
+            "console": "integratedTerminal",
+        },
+        {
             "name": "Debug streamlit",
             "type": "debugpy",
             "request": "launch",

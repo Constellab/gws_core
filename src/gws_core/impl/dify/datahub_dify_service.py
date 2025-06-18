@@ -135,8 +135,7 @@ class DatahubDifyService:
         for resource_model in resource_models:
             # check if the resource is compatible with dify
             dify_resource = DatahubDifyResource(resource_model)
-            # TODO UNCOMMENT
-            # if dify_resource.is_compatible_with_dify() and not dify_resource.is_up_to_date_in_dify():
+
             if dify_resource.is_compatible_with_dify() and not dify_resource.is_up_to_date_in_dify():
                 datahub_resources.append(dify_resource)
 

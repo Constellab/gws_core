@@ -4,6 +4,19 @@
 
 # pylint: disable=useless-import-alias
 
+# Apps
+from .apps.app_config import AppConfig as AppConfig
+from .apps.app_config import AppType as AppType
+from .apps.app_dto import AppInstanceUrl as AppInstanceUrl
+from .apps.app_instance import AppInstance as AppInstance
+from .apps.app_process import AppProcess as AppProcess
+from .apps.app_resource import AppResource as AppResource
+from .apps.app_resource import AppView as AppView
+from .apps.apps_manager import AppsManager as AppsManager
+# Apps > Reflex
+from .apps.reflex.reflex_app import ReflexApp as ReflexApp
+from .apps.reflex.reflex_process import ReflexProcess as ReflexProcess
+from .apps.reflex.reflex_resource import ReflexResource as ReflexResource
 # Brick
 from .brick.brick_service import BrickService as BrickService
 # Community
@@ -520,12 +533,6 @@ from .space.space_dto import SpaceSendMailToUsersDTO as SpaceSendMailToUsersDTO
 from .space.space_service import SpaceService as SpaceService
 # Streamlit
 from .streamlit.streamlit_app import StreamlitApp as StreamlitApp
-from .streamlit.streamlit_apps_manager import \
-    StreamlitAppsManager as StreamlitAppsManager
-from .streamlit.streamlit_dashboard import Dashboard as Dashboard
-from .streamlit.streamlit_dashboard import DashboardType as DashboardType
-from .streamlit.streamlit_dashboard import \
-    dashboard_decorator as dashboard_decorator
 from .streamlit.streamlit_process import StreamlitProcess as StreamlitProcess
 from .streamlit.streamlit_resource import \
     StreamlitResource as StreamlitResource

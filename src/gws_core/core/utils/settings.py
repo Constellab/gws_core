@@ -109,26 +109,6 @@ class Settings():
         return cls.get_lab_prod_api_url() if cls.is_prod_mode() else cls.get_lab_dev_api_url()
 
     @classmethod
-    def get_dashboard_dev_url(cls) -> str:
-        """
-
-        :return: the url of the dev dashboard when using 'gws streamlit run-dev' command
-        :rtype: str
-        """
-        if cls.is_local_env():
-            return f"http://localhost:{cls.get_dashboard_dev_port()}"
-        return f"https://dashboard-dev.{cls.get_virtual_host()}"
-
-    @classmethod
-    def get_dashboard_dev_port(cls) -> str:
-        """
-
-        :return: the port used by the dev dashboard when using 'gws streamlit run-dev' command
-        :rtype: str
-        """
-        return "8501"
-
-    @classmethod
     def core_api_route_path(cls) -> str:
         return "core-api"
 
@@ -336,32 +316,39 @@ class Settings():
         else:
             return "/logs"
 
-    ##### STREAMLIT ####
+    ##### APPS ####
     @classmethod
-    def get_streamlit_main_app_port(cls) -> int:
-        """Returns the front version of the lab
-        """
-        return int(os.environ.get("STREAMLIT_APP_SERVER_PORT", 8501))
-
-    @classmethod
-    def get_streamlit_app_additional_ports(cls) -> List[int]:
+    def get_app_ports(cls) -> List[int]:
         """Returns available port for streamlit addtional app (running in virtual env)
         """
-        # convert the env variable to a list of int
-        return [int(port) for port in os.environ.get("STREAMLIT_APP_ADDITIONAL_PORTS", "8502,8503").split(",")]
+        if os.environ.get("APP_PORTS"):
+            # if the APP_PORTS is set, use it as the first port
+            return [int(port) for port in os.environ.get("APP_PORTS").split(",")]
+        # TODO remove once all lab manager are updated to v1.21.0
+        elif os.environ.get("STREAMLIT_APP_SERVER_PORT") and os.environ.get("STREAMLIT_APP_ADDITIONAL_PORTS"):
+            main_port = int(os.environ.get("STREAMLIT_APP_SERVER_PORT"))
+            other_ports = [int(port) for port in os.environ.get(
+                "STREAMLIT_APP_ADDITIONAL_PORTS").split(",")]
+            return [main_port] + other_ports
+        else:
+            # default ports
+            return [8501, 8502, 8503]
 
     @classmethod
-    def get_streamlit_app_additional_hosts(cls) -> List[str]:
+    def get_app_hosts(cls) -> List[str]:
         """Returns available port for streamlit addtional app (running in virtual env)
         """
-        # convert the env variable to a list of int
-        return [host for host in os.environ.get("STREAMLIT_APP_ADDITIONAL_HOSTS", "dashboard1,dashboard2").split(",")]
-
-    @classmethod
-    def get_streamlit_host_url(cls) -> str:
-        """Returns the front version of the lab
-        """
-        return os.environ.get("STREAMLIT_APP_SERVER_HOST")
+        if os.environ.get("APP_HOSTS"):
+            # if the APP_HOSTS is set, use it as the first host
+            return [host for host in os.environ.get("APP_HOSTS").split(",")]
+        # TODO remove once all lab manager are updated to v1.21.0
+        elif os.environ.get("STREAMLIT_APP_SERVER_HOST") and os.environ.get("STREAMLIT_APP_ADDITIONAL_HOSTS"):
+            main_host = os.environ.get("STREAMLIT_APP_SERVER_HOST")
+            other_hosts = [host for host in os.environ.get("STREAMLIT_APP_ADDITIONAL_HOSTS").split(",")]
+            return [main_host] + other_hosts
+        else:
+            # default hosts
+            return ["dashboard1", "dashboard2", "dashboard3"]
 
     def get_gws_core_db_name(self) -> str:
         return 'gws_core'

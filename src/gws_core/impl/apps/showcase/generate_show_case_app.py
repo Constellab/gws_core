@@ -1,19 +1,18 @@
 
+from gws_core.apps.app_config import AppConfig, AppType, app_decorator
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
-from gws_core.streamlit.streamlit_dashboard import (Dashboard, DashboardType,
-                                                    dashboard_decorator)
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@dashboard_decorator("ShowcaseApp", dashboard_type=DashboardType.STREAMLIT,
-                     human_name="Generate show case app")
-class ShowcaseApp(Dashboard):
+@app_decorator("ShowcaseApp", app_type=AppType.STREAMLIT,
+               human_name="Generate show case app")
+class ShowcaseApp(AppConfig):
 
     # retrieve the path of the app folder, relative to this file
     # the dashboard code folder starts with a underscore to avoid being loaded when the brick is loaded
@@ -48,7 +47,8 @@ class GenerateShowcaseApp(Task):
 
         streamlit_app = StreamlitResource()
 
-        streamlit_app.set_dashboard(ShowcaseApp())
+        streamlit_app.set_app_config(ShowcaseApp())
         streamlit_app.set_requires_authentication(False)
+        streamlit_app.set_name("Streamlit showcase App")
 
         return {"streamlit_app": streamlit_app}

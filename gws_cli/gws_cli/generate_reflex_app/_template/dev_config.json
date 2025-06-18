@@ -1,0 +1,9 @@
+{
+    "app_dir_path": "",
+    "source_ids": [],
+    "params": {
+        "param_name": "Value from dev_config.json"
+    },
+    "env_type": "NONE",
+    "env_file_path": ""
+}

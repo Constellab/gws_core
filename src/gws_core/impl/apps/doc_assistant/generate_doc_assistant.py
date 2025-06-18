@@ -1,18 +1,17 @@
+from gws_core.apps.app_config import AppConfig, AppType, app_decorator
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import TextParam
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
-from gws_core.streamlit.streamlit_dashboard import (Dashboard, DashboardType,
-                                                    dashboard_decorator)
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@dashboard_decorator("GenerateDocAssistant", dashboard_type=DashboardType.STREAMLIT)
-class GenerateDocAssistantDashboard(Dashboard):
+@app_decorator("GenerateDocAssistant", app_type=AppType.STREAMLIT)
+class GenerateDocAssistantDashboard(AppConfig):
 
     # retrieve the path of the app folder, relative to this file
     # the dashboard code folder starts with a underscore to avoid being loaded when the brick is loaded
@@ -59,7 +58,7 @@ class GenerateDocAssistant(Task):
 
         streamlit_app = StreamlitResource()
 
-        streamlit_app.set_dashboard(GenerateDocAssistantDashboard())
+        streamlit_app.set_app_config(GenerateDocAssistantDashboard())
         streamlit_app.name = "Documentation AI assistant"
         streamlit_app.set_requires_authentication(False)
 

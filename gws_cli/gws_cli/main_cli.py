@@ -3,14 +3,15 @@ import typer
 
 
 def main():
-    from gws_cli import (brick_cli, dev_env_cli, server_cli, streamlit_cli,
-                         task_cli)
+    from gws_cli import (brick_cli, dev_env_cli, reflex_cli, server_cli,
+                         streamlit_cli, task_cli)
 
     app = typer.Typer(pretty_exceptions_enable=False)
     app.add_typer(server_cli.app, name="server")
     app.add_typer(brick_cli.app, name="brick")
     app.add_typer(task_cli.app, name="task")
     app.add_typer(streamlit_cli.app, name="streamlit")
+    app.add_typer(reflex_cli.app, name="reflex")
     app.add_typer(dev_env_cli.app, name="dev-env")
 
     return app

@@ -1,5 +1,6 @@
 
 
+import os
 import select
 import subprocess
 from typing import IO, Any, Callable, List, Optional, Union
@@ -28,6 +29,14 @@ class ShellIO():
     def __init__(self, io: IO, dispatch: Callable) -> None:
         self.io = io
         self.dispatch = dispatch
+
+
+class ShellProxyEnvVariableMode:
+    """
+    Enum for the shell proxy environmentvariable mode.
+    """
+    MERGE = "merge"  # merge the provided environment variables with the current environment
+    REPLACE = "replace"  # replace the current environment with the provided environment variables
 
 
 @typing_registrator(unique_name="ShellProxy", object_type="MODEL", hide=True)
@@ -65,7 +74,9 @@ class ShellProxy(BaseTyping):
         else:
             self._message_dispatcher = MessageDispatcher()
 
-    def run(self, cmd: Union[list, str], env: dict = None,
+    def run(self, cmd: Union[list, str],
+            env: dict = None,
+            env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
             shell_mode: bool = False,
             dispatch_stdout: bool = False,
             dispatch_stderr: bool = True) -> int:
@@ -77,6 +88,8 @@ class ShellProxy(BaseTyping):
         :type cmd: Union[list, str]
         :param env: environment variables to pass to the shell, defaults to None
         :type env: dict, optional
+        :param env_mode: mode to use for the environment variables, defaults to ShellProxyEnvVariableMode.MERGE
+        :type env_mode: ShellProxyEnvVariableMode, optional
         :param shell_mode: if True, the command is run in a shell, defaults to False
         :type shell_mode: bool, optional
         :param dispatch_stdout: if True, the stdout of the command is dispatched to the message dispatcher.
@@ -88,7 +101,9 @@ class ShellProxy(BaseTyping):
                             because logs are stored in database, defaults to True
         :type dispatch_stderr: bool, optional
         """
-        self._check_before_run(cmd, env, shell_mode)
+        self._check_before_run(cmd, shell_mode)
+
+        env = self._prepare_env(env, env_mode)
 
         FileHelper.create_dir_if_not_exist(self.working_dir)
 
@@ -176,22 +191,29 @@ class ShellProxy(BaseTyping):
             if poll is not None and not has_read:
                 break
 
-    def run_in_new_thread(self, cmd: Union[list, str], env: dict = None,
-                          shell_mode: bool = False) -> SysProc:
+    def run_in_new_thread(self, cmd: Union[list, str],
+                          env: dict = None,
+                          env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
+                          shell_mode: bool = False,
+                          ) -> SysProc:
         """
         Run a command in a shell without blocking the thread.
-        There logs of the command are ignored.
+        The logs of the command are ignored.
 
         :param cmd: command to run
         :type cmd: Union[list, str]
         :param env: environment variables to pass to the shell, defaults to None
         :type env: dict, optional
+        :param env_mode: mode to use for the environment variables, defaults to ShellProxyEnvVariableMode.MERGE
+        :type env_mode: ShellProxyEnvVariableMode, optional
         :param shell_mode: if True, the command is run in a shell, defaults to False
         :type shell_mode: bool, optional
         :return: Thread running the command
         :rtype: threading.Thread
         """
-        self._check_before_run(cmd, env, shell_mode)
+        self._check_before_run(cmd, shell_mode)
+
+        env = self._prepare_env(env, env_mode)
 
         FileHelper.create_dir_if_not_exist(self.working_dir)
 
@@ -200,7 +222,9 @@ class ShellProxy(BaseTyping):
 
         return SysProc.popen(cmd, cwd=self.working_dir, env=env, shell=shell_mode)
 
-    def check_output(self, cmd: Union[list, str], env: dict = None,
+    def check_output(self, cmd: Union[list, str],
+                     env: dict = None,
+                     env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
                      shell_mode: bool = False, text: bool = True) -> Any:
         """
         Run a command in a shell and return the output.
@@ -212,13 +236,17 @@ class ShellProxy(BaseTyping):
         :type env: dict, optional
         :param shell_mode: if True, the command is run in a shell, defaults to False
         :type shell_mode: bool, optional
+        :param env_mode: mode to use for the environment variables, defaults to ShellProxyEnvVariableMode.MERGE
+        :type env_mode: ShellProxyEnvVariableMode, optional
         :param text: if True, the output is returned as a string, defaults to True
         :type text: bool, optional
         :raises Exception: _description_
         :return: output of the command
         :rtype: Any
         """
-        self._check_before_run(cmd, env, shell_mode)
+        self._check_before_run(cmd, shell_mode)
+
+        env = self._prepare_env(env, env_mode)
 
         try:
             output = subprocess.check_output(
@@ -233,14 +261,10 @@ class ShellProxy(BaseTyping):
             Logger.log_exception_stack_trace(err)
             raise Exception(f"The shell process has failed. Error {err}.")
 
-    def _check_before_run(self, cmd: Union[list, str], env: dict = None,
+    def _check_before_run(self, cmd: Union[list, str],
                           shell_mode: bool = False) -> None:
         """Check if the command can be run before running it.
         """
-        if env is not None and not isinstance(env, dict):
-            raise ValueError(
-                "'env' must return a dictionnary")
-
         if shell_mode:
             if isinstance(cmd, list):
                 raise ValueError(
@@ -249,6 +273,32 @@ class ShellProxy(BaseTyping):
             if not isinstance(cmd, list):
                 raise ValueError(
                     "The command must be a list and not a string if the shell mode is not activated")
+
+    def _prepare_env(self, env: dict, mode: ShellProxyEnvVariableMode) -> dict | None:
+        """Prepare the environment variables to be used in the shell command.
+        If the mode is MERGE, the provided environment variables are merged with the current environment.
+        If the mode is REPLACE, the provided environment variables replace the current environment.
+
+        :param env: environment variables to prepare
+        :type env: dict
+        :param mode: mode to use for preparing the environment variables
+        :type mode: ShellProxyEnvVariableMode
+        :return: prepared environment variables
+        :rtype: dict
+        """
+        if env is None:
+            return None
+
+        if env is not None and not isinstance(env, dict):
+            raise ValueError(
+                "'env' must return a dictionnary")
+
+        if mode == ShellProxyEnvVariableMode.REPLACE:
+            return env
+        else:
+            merged_env = os.environ.copy()
+            merged_env.update(env)
+            return merged_env
 
     def _self_dispatch_stdouts(self, messages: List[bytes]) -> None:
         if len(messages) > 0:
