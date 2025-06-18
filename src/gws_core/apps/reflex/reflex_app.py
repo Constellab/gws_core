@@ -1,4 +1,5 @@
 
+from gws_core.apps.app_dto import AppType
 from gws_core.apps.app_instance import AppInstance
 
 
@@ -35,3 +36,7 @@ class ReflexApp(AppInstance):
     def get_app_process_hash(self) -> str:
         # all are are using a different process
         return self.app_id
+
+    def get_app_type(self) -> AppType:
+        """Get the type of the app."""
+        return AppType.REFLEX

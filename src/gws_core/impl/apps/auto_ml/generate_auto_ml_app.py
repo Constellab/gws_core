@@ -1,5 +1,6 @@
 
-from gws_core.apps.app_config import AppConfig, AppType, app_decorator
+from gws_core.apps.app_config import AppConfig, app_decorator
+from gws_core.apps.app_dto import AppType
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.table.table import Table
 from gws_core.io.io_spec import InputSpec, OutputSpec

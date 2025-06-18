@@ -6,14 +6,17 @@ from abc import abstractmethod
 from typing import Dict, List, Optional
 
 from gws_core.apps.app_dto import (AppInstanceConfigDTO, AppInstanceDTO,
-                                   AppInstanceUrl)
+                                   AppInstanceUrl, AppType)
 from gws_core.core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
 from gws_core.impl.shell.shell_proxy import ShellProxy
+from gws_core.resource.resource import Resource
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
@@ -25,7 +28,7 @@ class AppInstance():
 
     # for normal app, the resources are the source ids
     # for env app, the resources are the file paths
-    resources: List[str] = None
+    resources: List[Resource] = None
 
     params: dict = None
 
@@ -69,13 +72,15 @@ class AppInstance():
         :rtype: str
         """
 
-    def set_input_resources(self, resources: List[str]) -> None:
-        """ Set the resources of the app
-        For normal app, the resources are the source ids
-        For env app, the resources are the file paths
+    @abstractmethod
+    def get_app_type(self) -> AppType:
+        """Get the type of the app."""
 
-        :param resources: _description_
-        :type resources: List[str]
+    def set_input_resources(self, resources: List[Resource]) -> None:
+        """ Set the resources of the app
+
+        : param resources: _description_
+        : type resources: List[str]
         """
         self.resources = resources
 
@@ -87,8 +92,8 @@ class AppInstance():
         If the app does not require authentication, the user access tokens are not used.
         In this case the system user is used to access the app.
 
-        :param requires_authentication: True if the app requires authentication
-        :type requires_authentication: bool
+        : param requires_authentication: True if the app requires authentication
+        : type requires_authentication: bool
         """
         self.requires_authentication = requires_authentication
 
@@ -178,20 +183,44 @@ class AppInstance():
             FileHelper.delete_dir(self._app_config_dir)
 
     def to_dto(self) -> AppInstanceDTO:
-        return AppInstanceDTO(
-            resource_id=self.app_id,
+        shell_proxy = self.get_shell_proxy()
+        app_instance_dto = AppInstanceDTO(
+            app_type=self.get_app_type(),
+            app_resource_id=self.app_id,
             name=self.name,
-            source_paths=self.resources,
-            app_config_path=self._app_config_dir,
+            app_config_path=self.get_config_file_path(),
+            env_type='',
+            source_ids=[resource.get_model_id() for resource in self.resources],
         )
+
+        if isinstance(shell_proxy, BaseEnvShell):
+            app_instance_dto.env_type = shell_proxy.get_env_type()
+            app_instance_dto.env_file_path = shell_proxy.env_file_path
+            try:
+                app_instance_dto.env_file_content = shell_proxy.read_env_file()
+            except Exception as e:
+                Logger.error(f"[AppInstance] Error reading env file: {e}")
+        else:
+            app_instance_dto.env_type = 'normal'
+
+        return app_instance_dto
 
     ##################### CONFIG FILE #####################
 
     def _generate_config(self, app_dir: str) -> None:
+        # add the resources as input to the app
+        str_resources: List[str] = []
+        if self.is_virtual_env_app():
+            # for virtual env app, the resources are the file paths
+            str_resources = [resource.path for resource in self.resources if isinstance(resource, FSNode)]
+        else:
+            # for normal app, the resources are the model ids
+            str_resources = [resource.get_model_id() for resource in self.resources]
+
         # write the streamlit config file
         config = AppInstanceConfigDTO(
             app_dir_path=app_dir,  # store the app path
-            source_ids=self.resources,
+            source_ids=str_resources,
             params=self.params,
             requires_authentication=self.requires_authentication,
             user_access_tokens={}

@@ -2,6 +2,7 @@
 
 import os
 
+from gws_core.apps.app_dto import AppType
 from gws_core.apps.app_instance import AppInstance
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file_helper import FileHelper
@@ -76,3 +77,7 @@ class StreamlitApp(AppInstance):
             return 'STREAMLIT_' + self._shell_proxy.env_hash
         # all non-virtual env streamlit apps share the same process hash
         return 'STREAMLIT_NORMAL'
+
+    def get_app_type(self) -> AppType:
+        """Get the type of the app."""
+        return AppType.REFLEX

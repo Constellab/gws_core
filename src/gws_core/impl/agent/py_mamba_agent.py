@@ -10,7 +10,7 @@ from ...task.task_decorator import task_decorator
 @task_decorator(
     "PyMambaAgent", human_name="Mamba env agent",
     short_description="Agent to run Python snippets in a mamba shell environment.",
-    style=TypingStyle.material_icon("agent"))
+    style=TypingStyle.community_image("agent"))
 class PyMambaAgent(PyCondaAgent):
     """
     Mamba-based Python agents allow to execute Python snippets on the fly in isolated conda environments.

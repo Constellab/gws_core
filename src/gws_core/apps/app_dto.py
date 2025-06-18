@@ -1,7 +1,13 @@
 
+from enum import Enum
 from typing import Dict, List, Literal, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
+
+
+class AppType(Enum):
+    STREAMLIT = "STREAMLIT"
+    REFLEX = "REFLEX"
 
 
 class AppInstanceUrl(BaseModelDTO):
@@ -24,10 +30,14 @@ class AppInstanceUrl(BaseModelDTO):
 
 
 class AppInstanceDTO(BaseModelDTO):
-    resource_id: str
+    app_type: AppType
+    app_resource_id: str
     name: str
     app_config_path: str
-    source_paths: List[str]
+    env_type: str
+    source_ids: List[str] = None
+    env_file_path: Optional[str] = None  # for env app
+    env_file_content: Optional[str] = None  # for env app
 
 
 class AppProcessStatusDTO(BaseModelDTO):

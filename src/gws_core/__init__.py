@@ -6,8 +6,9 @@
 
 # Apps
 from .apps.app_config import AppConfig as AppConfig
-from .apps.app_config import AppType as AppType
+from .apps.app_config import app_decorator as app_decorator
 from .apps.app_dto import AppInstanceUrl as AppInstanceUrl
+from .apps.app_dto import AppType as AppType
 from .apps.app_instance import AppInstance as AppInstance
 from .apps.app_process import AppProcess as AppProcess
 from .apps.app_resource import AppResource as AppResource

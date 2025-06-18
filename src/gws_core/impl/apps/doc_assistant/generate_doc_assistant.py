@@ -1,4 +1,5 @@
-from gws_core.apps.app_config import AppConfig, AppType, app_decorator
+from gws_core.apps.app_config import AppConfig, app_decorator
+from gws_core.apps.app_dto import AppType
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import TextParam

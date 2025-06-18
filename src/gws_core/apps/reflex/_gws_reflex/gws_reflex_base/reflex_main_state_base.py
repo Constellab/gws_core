@@ -127,8 +127,6 @@ class ReflexMainStateBase(rx.State):
             return None
 
         user_access_tokens = self.get_app_config().get('user_access_tokens')
-        print(f"User access tokens: {user_access_tokens}")
-        print(f"User access token: {user_access_token}")
         if user_access_tokens is None:
             return None
         return user_access_tokens.get(user_access_token)

@@ -70,7 +70,7 @@ if sources:
             status = streamlit_process.get_status_dto()
             self.assertEqual(status.status, 'RUNNING')
             self.assertEqual(len(status.running_apps), 1)
-            self.assertEqual(status.running_apps[0].resource_id, streamlit_resource.get_model_id())
+            self.assertEqual(status.running_apps[0].app_resource_id, streamlit_resource.get_model_id())
 
             self.assertEqual(streamlit_process.port, Settings.get_app_ports()[0])
 

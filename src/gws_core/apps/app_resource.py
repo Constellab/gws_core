@@ -311,12 +311,7 @@ class AppResource(ResourceList):
             shell_proxy, self.get_model_id(), self.get_name(), self._requires_authentification)
 
         # add the resources as input to the app
-        resources: List[str] = []
-        if self.is_virtual_env():
-            resources = [resource.path for resource in self.get_resources() if isinstance(resource, FSNode)]
-        else:
-            resources = [resource.get_model_id() for resource in self.get_resources()]
-        app.set_input_resources(resources)
+        app.set_input_resources(self.get_resources())
 
         # add the params
         app.set_params(self._params)

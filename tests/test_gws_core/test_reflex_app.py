@@ -56,7 +56,7 @@ class TestReflexApp(BaseTestCase):
             status = reflex_process.get_status_dto()
             self.assertEqual(status.status, 'RUNNING')
             self.assertEqual(len(status.running_apps), 1)
-            self.assertEqual(status.running_apps[0].resource_id, reflex_resource.get_model_id())
+            self.assertEqual(status.running_apps[0].app_resource_id, reflex_resource.get_model_id())
 
             self.assertEqual(reflex_process.front_port, Settings.get_app_ports()[0])
             self.assertEqual(reflex_process.back_port, Settings.get_app_ports()[1])

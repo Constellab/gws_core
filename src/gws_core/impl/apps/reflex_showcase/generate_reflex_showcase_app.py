@@ -1,10 +1,9 @@
 
-from gws_core.apps.app_config import AppConfig, AppType, app_decorator
+from gws_core.apps.app_config import AppConfig, app_decorator
+from gws_core.apps.app_dto import AppType
 from gws_core.apps.reflex.reflex_resource import ReflexResource
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
-from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource

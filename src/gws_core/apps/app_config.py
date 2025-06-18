@@ -2,20 +2,15 @@
 
 import os
 from abc import abstractmethod
-from enum import Enum
 from typing import Callable, Type
 
+from gws_core.apps.app_dto import AppType
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.model.base_typing import BaseTyping
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.model.typing_register_decorator import register_gws_typing_class
 from gws_core.model.typing_style import TypingStyle
-
-
-class AppType(Enum):
-    STREAMLIT = "STREAMLIT"
-    REFLEX = "REFLEX"
 
 
 class AppConfig(BaseTyping):
