@@ -79,7 +79,7 @@ class CondaShellProxy(BaseEnvShell):
         else:
             return self._build_str_conda_command(CondaShellProxy.conda_command, str_cmd)
 
-    def build_os_env(self) -> dict:
+    def get_default_env_variables(self) -> dict:
         """
         Creates the OS environment variables that are passed to the shell command
 

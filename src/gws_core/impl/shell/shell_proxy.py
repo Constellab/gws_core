@@ -293,19 +293,33 @@ class ShellProxy(BaseTyping):
         :return: prepared environment variables
         :rtype: dict
         """
+        default_env = self.get_default_env_variables()
         if env is None:
-            return None
+            env = {}
 
         if env is not None and not isinstance(env, dict):
             raise ValueError(
                 "'env' must return a dictionnary")
 
+        default_env.update(env)
+
         if mode == ShellProxyEnvVariableMode.REPLACE:
-            return env
+            return default_env
         else:
             merged_env = os.environ.copy()
-            merged_env.update(env)
+            merged_env.update(default_env)
             return merged_env
+
+    def get_default_env_variables(self) -> dict:
+        """
+        Get the default environment variables for the shell proxy.
+        To override in subclasses to provide custom additional default environment variables.
+
+        :return: The OS environment variables
+        :rtype: `dict`
+        """
+
+        return {}
 
     def _self_dispatch_stdouts(self, messages: List[bytes]) -> None:
         if len(messages) > 0:

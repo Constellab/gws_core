@@ -18,7 +18,7 @@ from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.virtual_env.venv_dto import VEnvCreationInfo
 
-from .shell_proxy import ShellProxy, ShellProxyDTO
+from .shell_proxy import ShellProxy, ShellProxyDTO, ShellProxyEnvVariableMode
 
 BaseEnvShellType = TypeVar('BaseEnvShellType', bound='BaseEnvShell')
 
@@ -83,7 +83,9 @@ class BaseEnvShell(ShellProxy):
         except Exception as err:
             raise Exception(f"Error while reading the env file. Error {err}") from err
 
-    def run(self, cmd: Union[list, str], env: dict = None,
+    def run(self, cmd: Union[list, str],
+            env: dict = None,
+            env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
             shell_mode: bool = False,
             dispatch_stdout: bool = False,
             dispatch_stderr: bool = True) -> int:
@@ -95,6 +97,8 @@ class BaseEnvShell(ShellProxy):
         :type cmd: Union[list, str]
         :param env: environment variables to pass to the shell, defaults to None
         :type env: dict, optional
+        :param env_mode: mode to use for the environment variables, defaults to ShellProxyEnvVariableMode.MERGE
+        :type env_mode: ShellProxyEnvVariableMode, optional
         :param shell_mode: if True, the command is run in a shell, defaults to False
         :type shell_mode: bool, optional
         :param dispatch_stdout: if True, the stdout of the command is dispatched to the message dispatcher.
@@ -108,17 +112,14 @@ class BaseEnvShell(ShellProxy):
         """
         formatted_cmd = self.format_command(cmd)
 
-        # compute env
-        if env is None:
-            env = {}
-        complete_env = {**self.build_os_env(), **env}
-
         # install env if not installed
         self.install_env()
 
-        return super().run(formatted_cmd, complete_env, shell_mode, dispatch_stdout, dispatch_stderr)
+        return super().run(formatted_cmd, env, env_mode, shell_mode, dispatch_stdout, dispatch_stderr)
 
-    def run_in_new_thread(self, cmd: Union[list, str], env: dict = None,
+    def run_in_new_thread(self, cmd: Union[list, str],
+                          env: dict = None,
+                          env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
                           shell_mode: bool = False) -> SysProc:
         """
         Run a command in a shell without blocking the thread.
@@ -128,6 +129,8 @@ class BaseEnvShell(ShellProxy):
         :type cmd: Union[list, str]
         :param env: environment variables to pass to the shell, defaults to None
         :type env: dict, optional
+        :param env_mode: mode to use for the environment variables, defaults to ShellProxyEnvVariableMode.MERGE
+        :type env_mode: ShellProxyEnvVariableMode, optional
         :param shell_mode: if True, the command is run in a shell, defaults to False
         :type shell_mode: bool, optional
         :return: Thread running the command
@@ -135,18 +138,15 @@ class BaseEnvShell(ShellProxy):
         """
         formatted_cmd = self.format_command(cmd)
 
-        # compute env
-        if env is None:
-            env = {}
-        complete_env = {**self.build_os_env(), **env}
-
         # install env if not installed
         self.install_env()
 
-        return super().run_in_new_thread(formatted_cmd, complete_env, shell_mode)
+        return super().run_in_new_thread(formatted_cmd, env, env_mode, shell_mode)
 
     @final
-    def check_output(self, cmd: Union[list, str], env: dict = None,
+    def check_output(self, cmd: Union[list, str],
+                     env: dict = None,
+                     env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
                      shell_mode: bool = False, text: bool = True) -> Any:
         """
         Run a command in a shell and return the output.
@@ -156,6 +156,8 @@ class BaseEnvShell(ShellProxy):
         :type cmd: Union[list, str]
         :param env: environment variables to pass to the shell, defaults to None
         :type env: dict, optional
+        :param env_mode: mode to use for the environment variables, defaults to ShellProxyEnvVariableMode.MERGE
+        :type env_mode: ShellProxyEnvVariableMode, optional
         :param shell_mode: if True, the command is run in a shell, defaults to False
         :type shell_mode: bool, optional
         :param text: if True, the output is returned as a string, defaults to True
@@ -166,15 +168,10 @@ class BaseEnvShell(ShellProxy):
         """
         formatted_cmd = self.format_command(cmd)
 
-        # compute env
-        if env is None:
-            env = {}
-        complete_env = {**self.build_os_env(), **env}
-
         # install env if not installed
         self.install_env()
 
-        return super().check_output(formatted_cmd, complete_env, shell_mode, text)
+        return super().check_output(formatted_cmd, env, env_mode, shell_mode, text)
 
     @final
     def install_env(self) -> bool:
@@ -288,16 +285,6 @@ class BaseEnvShell(ShellProxy):
                 self._message_dispatcher.notify_error_message(error_message)
                 raise Exception(
                     f"Cannot remove the virtual environment. {error_message}") from err
-
-    def build_os_env(self) -> dict:
-        """
-        Creates the OS environment variables that are passed to the shell command
-
-        :return: The OS environment variables
-        :rtype: `dict`
-        """
-
-        return {}
 
     @abstractmethod
     def format_command(self, user_cmd: Union[list, str]) -> Union[list, str]:

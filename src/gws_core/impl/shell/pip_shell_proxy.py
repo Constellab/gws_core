@@ -73,12 +73,12 @@ class PipShellProxy(BaseEnvShell):
         else:
             return f"pipenv run {user_cmd}"
 
-    def build_os_env(self) -> dict:
-        env = os.environ.copy()
-        pipfile_path = self.get_pip_file_path()
-        env["PIPENV_PIPFILE"] = pipfile_path
-        env["PIPENV_VENV_IN_PROJECT"] = "enabled"
-        return env
+    def get_default_env_variables(self) -> dict:
+
+        return {
+            "PIPENV_PIPFILE": self.get_pip_file_path(),
+            "PIPENV_VENV_IN_PROJECT": "enabled",
+        }
 
     def get_pip_file_path(self) -> str:
         return os.path.join(self.get_env_dir_path(), "Pipfile")
