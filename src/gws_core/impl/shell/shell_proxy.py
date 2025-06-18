@@ -29,6 +29,14 @@ class ShellIO():
         self.io = io
         self.dispatch = dispatch
 
+    def fileno(self) -> int:
+        """Return the file descriptor number of the IO object."""
+        return self.io.fileno()
+
+    def readline(self) -> bytes:
+        """Read a line from the IO object."""
+        return self.io.readline()
+
 
 class ShellProxyEnvVariableMode(Enum):
     """
@@ -165,7 +173,7 @@ class ShellProxy(BaseTyping):
     def _manage_run_output(self, proc: subprocess.Popen, loggers: List[ShellIO]) -> None:
         # use to read the stdout and stderr of the process
         # https://stackoverflow.com/questions/12270645/can-you-make-a-python-subprocess-output-stdout-and-stderr-as-usual-but-also-cap/12272262#12272262
-        reads = [logger.io.fileno() for logger in loggers]
+        reads = [logger.fileno() for logger in loggers]
 
         while True:
             # return the list of file descriptors that are ready to be read
@@ -177,8 +185,8 @@ class ShellProxy(BaseTyping):
 
                 # log stdout or stderr
                 for logger in loggers:
-                    if file_no == logger.io.fileno():
-                        read = logger.io.readline()
+                    if file_no == logger.fileno():
+                        read = logger.readline()
                         if read:
                             logger.dispatch(read)
                             has_read = True
