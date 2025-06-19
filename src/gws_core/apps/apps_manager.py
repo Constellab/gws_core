@@ -146,10 +146,10 @@ class AppsManager():
 
         app_ports: List[AppPort] = []
         for i, port in enumerate(ports):
-            if Settings.is_local_env():
-                host_url = f"http://localhost:{port}"
-            else:
+            if Settings.is_cloud_env():
                 host_url = f"https://{hosts[i]}.{virtual_host}"
+            else:
+                host_url = f"http://localhost:{port}"
 
             app_ports.append(AppPort(port=port, host_url=host_url))
         return app_ports

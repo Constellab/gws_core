@@ -237,14 +237,14 @@ class AuthService():
         return response
 
     @classmethod
-    def set_token_in_response(cls, token: str, expireInSeconds: int, response: Response) -> None:
+    def set_token_in_response(cls, token: str, expire_in_seconds: int, response: Response) -> None:
         # Add the token is the cookies
         response.set_cookie(
             "Authorization",
             value=token,
             httponly=True,
-            max_age=expireInSeconds,
-            expires=expireInSeconds,
-            secure=not Settings.is_local_env(),
+            max_age=expire_in_seconds,
+            expires=expire_in_seconds,
+            secure=True,  # work only with https and localhost
             samesite='strict'
         )

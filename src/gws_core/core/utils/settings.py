@@ -5,7 +5,7 @@ import re
 import tempfile
 from copy import deepcopy
 from json import JSONDecodeError, dump, load
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
@@ -142,7 +142,7 @@ class Settings():
         :return: [description]
         :rtype: [type]
         """
-        return os.environ.get("LAB_ENVIRONMENT", 'ON_CLOUD')
+        return cast(LabEnvironment, os.environ.get("LAB_ENVIRONMENT", 'ON_CLOUD'))
 
     @classmethod
     def get_community_api_url(cls) -> str:
@@ -157,6 +157,10 @@ class Settings():
     @classmethod
     def is_local_env(cls) -> bool:
         return cls.get_lab_environment() == 'LOCAL'
+
+    @classmethod
+    def is_cloud_env(cls) -> bool:
+        return cls.get_lab_environment() == 'ON_CLOUD'
 
     @classmethod
     def get_virtual_host(cls) -> str:
@@ -302,11 +306,11 @@ class Settings():
     @classmethod
     def make_temp_dir(cls) -> str:
         """ Make a unique temp dir """
-        dir = cls.get_root_temp_dir()
+        dir_ = cls.get_root_temp_dir()
 
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        return tempfile.mkdtemp(dir=dir)
+        if not os.path.exists(dir_):
+            os.makedirs(dir_)
+        return tempfile.mkdtemp(dir=dir_)
 
     @classmethod
     def build_log_dir(cls, is_test: bool) -> str:
