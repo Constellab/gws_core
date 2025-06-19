@@ -17,17 +17,6 @@ from gws_core.user.user_dto import SpaceDict
 from .date_helper import DateHelper
 from .string_helper import StringHelper
 
-# TODO RENAME FILE
-__SETTINGS_DIR__ = "/conf/settings"
-__SETTINGS_NAME__ = "settings.json"
-
-
-__DEFAULT_SETTINGS__ = {
-    "app_dir": os.path.dirname(os.path.abspath(__file__)),
-    "app_host": '0.0.0.0',
-    "app_port": 3000,
-}
-
 
 class Settings():
     """
@@ -43,6 +32,15 @@ class Settings():
 
     _setting_instance: 'Settings' = None
 
+    __SETTINGS_DIR__ = "/conf/settings"
+    __SETTINGS_NAME__ = "settings.json"
+
+    __DEFAULT_SETTINGS__ = {
+        "app_dir": os.path.dirname(os.path.abspath(__file__)),
+        "app_host": '0.0.0.0',
+        "app_port": 3000,
+    }
+
     def __init__(self, data: dict):
         self.data = data
 
@@ -50,7 +48,7 @@ class Settings():
     def init(cls) -> 'Settings':
 
         settings = Settings.get_instance()
-        settings._init_secrete_key()
+        settings.init_secrete_key()
 
         Settings._setting_instance = settings
 
@@ -61,14 +59,14 @@ class Settings():
 
     def save(self) -> bool:
         # create the parent directory
-        FileHelper.create_dir_if_not_exist(__SETTINGS_DIR__)
+        FileHelper.create_dir_if_not_exist(self.__SETTINGS_DIR__)
 
         with open(self._get_setting_file_path(), 'w', encoding='UTF-8') as f:
             dump(self.data, f, sort_keys=True)
 
         return True
 
-    def _init_secrete_key(self):
+    def init_secrete_key(self):
         # if a secrete key is set in the environment variable, use it
         secrete_key_env = os.environ.get("SECRET_KEY")
         if secrete_key_env:
@@ -82,7 +80,7 @@ class Settings():
 
     @classmethod
     def _get_setting_file_path(cls) -> str:
-        return os.path.join(__SETTINGS_DIR__, __SETTINGS_NAME__)
+        return os.path.join(cls.__SETTINGS_DIR__, cls.__SETTINGS_NAME__)
 
     @classmethod
     def _setting_file_exists(cls) -> bool:
@@ -215,9 +213,7 @@ class Settings():
         # specific space api key for local env
         if cls.is_local_env() and not os.environ.get("SPACE_API_KEY"):
             return '123456'
-
-        # TODO remove CENTRAL_API_KEY once all lab manager are updated to v1.9.0
-        return os.environ.get("SPACE_API_KEY") or os.environ.get("CENTRAL_API_KEY")
+        return os.environ.get("SPACE_API_KEY")
 
     @classmethod
     def get_space_api_url(cls) -> str:
@@ -231,8 +227,7 @@ class Settings():
         if cls.is_local_env() and not os.environ.get("SPACE_API_URL"):
             return 'http://host.docker.internal:3001'
 
-        # TODO remove CENTRAL_API_URL once all lab manager are updated to v1.9.0
-        return os.environ.get("SPACE_API_URL") or os.environ.get("CENTRAL_API_URL")
+        return os.environ.get("SPACE_API_URL")
 
     @classmethod
     def get_front_url(cls) -> str:
@@ -572,7 +567,7 @@ class Settings():
                         raise err
             # use default settings if no file exists
             else:
-                settings_json = __DEFAULT_SETTINGS__
+                settings_json = cls.__DEFAULT_SETTINGS__
 
             # set the setting instance
             cls._setting_instance = Settings(settings_json)
