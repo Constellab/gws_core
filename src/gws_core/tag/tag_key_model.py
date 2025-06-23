@@ -2,12 +2,15 @@
 
 from typing import Optional
 
-from peewee import BooleanField, CharField, IntegerField, ModelSelect
-
+from gws_core.community.community_dto import CommunityTagKeyDTO
 from gws_core.core.classes.enum_field import EnumField
+from gws_core.core.model.db_field import JSONField
+from gws_core.impl.rich_text.rich_text_field import RichTextField
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.tag.tag import TagValueType
 from gws_core.tag.tag_dto import TagKeyModelDTO, TagValueFormat
 from gws_core.tag.tag_helper import TagHelper
+from peewee import BooleanField, CharField, IntegerField, ModelSelect
 
 from ..core.model.model import Model
 
@@ -20,6 +23,16 @@ class TagKeyModel(Model):
         choices=TagValueFormat, null=False, default=TagValueFormat.STRING)
 
     is_propagable = BooleanField(default=False)
+
+    label = CharField(null=True)
+
+    description: RichTextDTO = RichTextField(null=True)
+
+    is_community_tag = BooleanField(default=False)
+
+    deprecated = BooleanField(default=False)
+
+    additional_infos_specs = JSONField(null=True)
 
     _table_name = "gws_tag"
 
@@ -34,6 +47,11 @@ class TagKeyModel(Model):
             key=self.key,
             value_format=self.value_format,
             is_propagable=self.is_propagable,
+            deprecated=self.deprecated,
+            label=self.label,
+            description=self.description,
+            is_community_tag=self.is_community_tag,
+            additional_infos_specs=self.additional_infos_specs
         )
 
     ############################################## CLASS METHODS ##############################################
@@ -83,6 +101,32 @@ class TagKeyModel(Model):
         if tag_model:
             return tag_model.order
         return -1
+
+    @classmethod
+    def from_community_tag_key(
+            cls, community_tag_key: CommunityTagKeyDTO, new_only: bool = False) -> Optional['TagKeyModel']:
+        """Create a tag key model from a community tag key
+        """
+        if not community_tag_key:
+            return None
+
+        if not new_only:
+            tag_key_model = cls.find_by_key(community_tag_key.key)
+            if tag_key_model:
+                return tag_key_model
+
+        tag = TagKeyModel()
+        tag.id = community_tag_key.id
+        tag.key = community_tag_key.key
+        tag.value_format = community_tag_key.value_format
+        tag.label = community_tag_key.label
+        tag.description = community_tag_key.description
+        tag.deprecated = community_tag_key.deprecated
+        tag.is_community_tag = True
+        tag.additional_infos_specs = community_tag_key.additional_infos_specs
+        tag.order = TagKeyModel.get_highest_order() + 1
+
+        return tag
 
     class Meta:
         table_name = "gws_tag"

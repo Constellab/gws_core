@@ -7,6 +7,7 @@ from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import (DynamicParamAllowedSpecsDict,
                                                ParamSpecDTO, ParamValue)
+from gws_core.core.model.model_dto import PageDTO
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.entity_navigator.entity_navigator_type import EntityType
@@ -996,7 +997,7 @@ class ProtocolService():
     @transaction()
     def get_community_available_agents(
             cls, spaces_filter: List[str],
-            title_filter: str, personal_only: bool, page: int, number_of_items_per_page: int) -> Any:
+            title_filter: str, personal_only: bool, page: int, number_of_items_per_page: int) -> PageDTO[CommunityAgentDTO]:
         return CommunityService.get_community_available_agents(
             spaces_filter, title_filter, personal_only, page, number_of_items_per_page)
 

@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import List, Optional, Union
 
 from fastapi.encoders import jsonable_encoder
-
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.tag.tag_dto import (TagDTO, TagOriginDTO, TagOriginType,
@@ -175,6 +174,8 @@ class Tag():
     value: TagValueType = None
     is_propagable: bool = False
 
+    is_community_tag: bool = None
+
     origins: TagOrigins = None
 
     # Do not modified, this is to know if the tag is loaded from the database in a resource
@@ -182,8 +183,8 @@ class Tag():
 
     SUPPORTED_TAG_REGEX = r"a-z0-9\-_\./"
 
-    def __init__(self, key: str, value: TagValueType, is_propagable: bool = False,
-                 origins: TagOrigins = None, auto_parse: bool = False) -> None:
+    def __init__(self, key: str, value: TagValueType, is_propagable: bool = False, origins: TagOrigins = None,
+                 auto_parse: bool = False, is_community_tag: bool = False) -> None:
         """Create a new tag
 
         :param key: key of the tag
@@ -202,6 +203,7 @@ class Tag():
         self.value = self._check_value(value, auto_parse)
         self.is_propagable = bool(is_propagable)
         self.origins = origins or TagOrigins()
+        self.is_community_tag = is_community_tag
 
     def get_str_value(self) -> str:
         return Tag.convert_value_to_str(self.value)

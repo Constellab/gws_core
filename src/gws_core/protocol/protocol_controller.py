@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 
 from gws_core.config.param.param_types import (DynamicParamAllowedSpecsDict,
                                                ParamSpecDTO)
-from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import \
@@ -115,7 +115,7 @@ def get_community_available_space(_=Depends(AuthService.check_user_access_token)
 def get_community_available_agents(page: int,
                                    number_of_items_per_page: int,
                                    body: CommunityGetAgentsBody,
-                                   _=Depends(AuthService.check_user_access_token)) -> Any:
+                                   _=Depends(AuthService.check_user_access_token)) -> PageDTO[CommunityAgentDTO]:
     """
     Add a constellab community agent to a protocol
     """
