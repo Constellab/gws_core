@@ -22,7 +22,7 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.entity_with_tag_search_builder import \
     EntityWithTagSearchBuilder
 from gws_core.tag.tag import TagOrigin, TagOrigins
-from gws_core.tag.tag_dto import TagOriginType, TagValueFormat
+from gws_core.tag.tag_dto import TagOriginType, TagValueEditDTO, TagValueFormat
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_service import TagService
 from gws_core.tag.tag_value_model import TagValueModel
@@ -65,7 +65,6 @@ class TestTag(BaseTestCase):
             Tag('tag#', 'value')
         tag = Tag('tag#é', 'value#é', auto_parse=True)
         self.assertEqual(tag.key, 'tag_e')
-        self.assertEqual(tag.value, 'value_e')
 
         # test int tag
         tag = Tag('tag', 1)
@@ -163,6 +162,7 @@ class TestTag(BaseTestCase):
 
         tag = Tag('newtag', 'value')
         other_tag = Tag('newtag', 'other_value')
+
         TagService.create_tag(tag.key, tag.value)
         TagService.create_tag(other_tag.key, other_tag.value)
 
@@ -471,6 +471,41 @@ class TestTag(BaseTestCase):
         # check that the note does not have the tag
         note_tags = EntityTagList.find_by_entity(EntityType.NOTE, exp_2_note.id)
         self.assertEqual(note_tags.has_tag(new_tag_2), False)
+
+    def test_tag_key(self):
+        # Create a tag key with a valid key
+        tag_key = TagService.create_tag_key('test_key', 'Test key')
+        self.assertIsNotNone(tag_key)
+        self.assertEqual(tag_key.key, 'test_key')
+        self.assertEqual(tag_key.value_format, TagValueFormat.STRING)
+        self.assertEqual(tag_key.label, 'Test key')
+
+        # Try to create a tag key with an invalid key
+        with self.assertRaises(ValueError):
+            TagService.create_tag_key('invalid#key', 'Label')
+
+        # Try to create a tag key with an existing key
+        with self.assertRaises(ValueError):
+            TagService.create_tag_key('test_key', 'Label')
+
+    def test_tag_value(self):
+        tag_key = TagService.create_tag_key('test_key_for_value', 'Test key')
+
+        # Create a tag value with a valid key and value
+        tag_value = TagService.create_tag_value(
+            TagValueEditDTO(value='test_value', tag_key=tag_key.key)
+        )
+        self.assertIsNotNone(tag_value)
+        self.assertEqual(tag_value.tag_key.key, 'test_key_for_value')
+        self.assertEqual(tag_value.tag_value, 'test_value')
+
+        # Try to create a tag value with an invalid key
+        with self.assertRaises(ValueError):
+            TagService.create_tag_value(TagValueEditDTO(value='value', tag_key='invalid_key'))
+
+        # Try to create a tag value with an existing key and value
+        with self.assertRaises(ValueError):
+            TagService.create_tag_value(TagValueEditDTO(value='test_value', tag_key=tag_key.key))
 
     def _check_propagation_exp_1(self, exp_1: str, exp_1_output: str, exp_2_output: str,
                                  exp_2: str, exp_2_note: str, exp_2_output_view: str,

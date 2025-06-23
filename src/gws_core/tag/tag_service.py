@@ -1,10 +1,11 @@
 
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from gws_core.community.community_dto import (CommunityTagKeyDTO,
                                               CommunityTagValueDTO)
 from gws_core.community.community_service import CommunityService
+from gws_core.config.param.param_types import ParamSpecSimpleDTO
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
 from gws_core.core.model.model import Model
@@ -44,10 +45,6 @@ from .tag_key_model import TagKeyModel
 
 
 class TagService():
-
-    @classmethod
-    def create_tag(cls, tag_key: str, tag_value: TagValueType) -> TagValueModel:
-        return TagValueModel.create_tag_value_if_not_exists(tag_key, tag_value)
 
     @classmethod
     def get_all_tags(cls) -> List[TagKeyModel]:
@@ -96,7 +93,12 @@ class TagService():
             cls, tag_key: str, old_value: TagValueType, new_value: TagValueType) -> TagValueModel:
         """Update a registerer tag value. It update the tag of all entities that use it"""
 
-        if not TagValueModel.tag_value_exists(tag_key, old_value):
+        tag_key_model: TagKeyModel = cls.get_by_key(tag_key)
+        if not tag_key_model:
+            raise BadRequestException(
+                f"The tag key '{tag_key}' does not exists. Please create it first.")
+
+        if not TagValueModel.tag_value_exists(tag_key_model, old_value):
             raise BadRequestException(
                 f"The tag with key '{tag_key}' and value '{old_value}' does not exists")
 
@@ -105,9 +107,49 @@ class TagService():
 
     @classmethod
     @transaction()
+    def delete_tag_key(cls, key: str) -> None:
+        """Delete a registerer tag key. It removes the tag of all entities that use it"""
+        tag_key_model: TagKeyModel = cls.get_by_key(key)
+
+        if not tag_key_model:
+            raise BadRequestException(
+                f"The tag key '{key}' does not exists")
+
+        tag_values: List[TagValueModel] = list(TagValueModel.select().where(
+            TagValueModel.tag_key == tag_key_model))
+
+        for tag_value in tag_values:
+            TagValueModel.delete_instance(tag_value)
+
+        # delete the tag key
+        TagKeyModel.delete_instance(tag_key_model)
+
+    @classmethod
+    @transaction()
+    def delete_tag_value(cls, tag_value_id: str) -> None:
+        """Delete a registerer tag value. It removes the tag of all entities that use it"""
+        tag_value: TagValueModel = cls.get_tag_value_by_id(tag_value_id)
+
+        if not tag_value:
+            raise BadRequestException(
+                f"The tag value with id '{tag_value_id}' does not exists")
+
+        if tag_value.is_community_tag_value:
+            raise BadRequestException(
+                f"The tag value with id '{tag_value_id}' is a community tag value and cannot be deleted.")
+
+        TagValueModel.delete_instance(tag_value)
+
+    @classmethod
+    @transaction()
     def delete_registered_tag(cls, tag_key: str, tag_value: TagValueType) -> None:
         """Update a registerer tag value. It removes the tag of all entities that use it"""
-        if not TagValueModel.tag_value_exists(tag_key, tag_value):
+        tag_key_model: TagKeyModel = cls.get_by_key(tag_key)
+        if not tag_key_model:
+            raise BadRequestException(
+                f"The tag key '{tag_key}' does not exists")
+
+        if not TagValueModel.tag_value_exists(tag_key_model, tag_value):
             raise BadRequestException(
                 f"The tag with key '{tag_key}' and value '{tag_value}' does not exists")
 
@@ -137,13 +179,56 @@ class TagService():
         return result
 
     @classmethod
-    def create_tag_value(cls, tag_key: str, edit_tag_value: TagValueEditDTO) -> TagValueModel:
-        """Create a new tag value"""
+    @transaction()
+    def create_tag(cls, tag_key: str, tag_value: TagValueType) -> TagValueModel:
+        """Create a new tag with the given key and value"""
         tag_key_model: TagKeyModel = cls.get_by_key(tag_key)
+        if not tag_key_model:
+            tag_key_model = cls.create_tag_key(tag_key, StringHelper.camel_case_to_sentence(tag_key))
+
+        if TagValueModel.tag_value_exists(tag_key_model, tag_value):
+            raise BadRequestException(
+                f"The tag value '{tag_value}' already exists for the key '{tag_key}'.")
+
+        tag_value_model: TagValueModel = cls.create_tag_value(
+            edit_tag_value=TagValueEditDTO(
+                id=None,
+                value=tag_value,
+                short_description=None,
+                additional_infos=None,
+                tag_key=tag_key_model.key
+            ),
+            tag_key_model=tag_key_model
+        )
+        return tag_value_model.save()
+
+    @classmethod
+    def create_tag_key(cls, key: str, label: str) -> TagKeyModel:
+        if cls.get_by_key(key):
+            raise ValueError(
+                f"The tag key '{key}' already exists. Please use a different key.")
+
+        key = Tag(key=key, value=None).key  # Normalize the key
+
+        # create the tag key model
+        tag_key_model = TagKeyModel.create_tag_key_model(key=key, label=label)
+        return tag_key_model.save()
+
+    @classmethod
+    def create_tag_value(
+            cls, edit_tag_value: TagValueEditDTO, tag_key_model: TagKeyModel = None) -> TagValueModel:
+        """Create a new tag value"""
+        if not tag_key_model:
+            tag_key_model: TagKeyModel = cls.get_by_key(edit_tag_value.tag_key)
 
         if not tag_key_model:
-            raise BadRequestException(
-                f"The tag key '{tag_key}' does not exists. Please create it first.")
+            raise ValueError(
+                f"The tag key '{edit_tag_value.tag_key}' does not exists. Please create it first.")
+
+        if TagValueModel.get_tag_value_model_by_key_and_value(
+                edit_tag_value.tag_key, edit_tag_value.value):
+            raise ValueError(
+                f"The tag value '{edit_tag_value.value}' already exists for the key '{edit_tag_value.tag_key}'.")
 
         # create the tag value model
         tag_value_model = TagValueModel.from_dto(
@@ -224,13 +309,19 @@ class TagService():
     def add_tag_dict_to_entity(cls, entity_type: EntityType, entity_id: str,
                                tag_dicts: List[NewTagDTO], propagate: bool) -> List[EntityTag]:
 
-        tags = [Tag(key=tag_dict.key, value=tag_dict.value, is_propagable=propagate,
-                    is_community_tag=tag_dict.is_community_tag) for tag_dict in tag_dicts]
+        tags = [
+            Tag(
+                key=tag_dict.key, value=tag_dict.value, is_propagable=propagate,
+                is_community_tag_key=tag_dict.is_community_tag_key,
+                is_community_tag_value=tag_dict.is_community_tag_value,
+                additional_info=tag_dict.additional_info, auto_parse=True)
+            for tag_dict in tag_dicts]
 
         for tag in tags:
-            if tag.is_community_tag:
+            if tag.is_community_tag_key:
                 # check if community tag is already registered
-                if not cls.get_by_key(tag.key):
+                current_tag_key: TagKeyModel = cls.get_by_key(tag.key)
+                if not current_tag_key:
                     # get Community Tag Key and create it if not exists
                     community_tag_key = CommunityService.get_community_tag_key(tag.key)
                     if not community_tag_key:
@@ -239,12 +330,9 @@ class TagService():
 
                     tag_key = TagKeyModel.from_community_tag_key(community_tag_key)
                     tag_key = tag_key.save()
-
-                    community_tag_values = CommunityService.get_all_community_tag_values(tag.key)
-                    for community_tag_value in community_tag_values:
-                        # create the tag value model for each community tag value
-                        tag_value_model = TagValueModel.from_community_tag_value(community_tag_value, tag_key)
-                        tag_value_model.save()
+                    cls.import_all_community_tag_key_values(tag_key)
+                elif tag.is_community_tag_value:
+                    cls.import_all_community_tag_key_values(current_tag_key)
 
         if propagate:
             return cls.add_tags_to_entity_and_propagate(entity_type, entity_id, tags)
@@ -303,7 +391,10 @@ class TagService():
         new_tags: List[Tag] = []
 
         for tag in tags:
-            new_tag = Tag(tag.key, tag.value)
+            new_tag = Tag(key=tag.key, value=tag.value,
+                          is_community_tag_key=tag.is_community_tag_key,
+                          is_community_tag_value=tag.is_community_tag_value,
+                          additional_info=tag.additional_info, auto_parse=True)
             if not entity_tags.has_tag(new_tag):
                 new_tags.append(new_tag)
 
@@ -403,6 +494,7 @@ class TagService():
 
 ################################### COMMUNITY TAG #################################
 
+
     @classmethod
     def get_community_tag_keys_imported(cls) -> List[TagKeyModel]:
         """Get the community tag keys imported"""
@@ -411,11 +503,16 @@ class TagService():
             TagKeyModel.order))
 
     @classmethod
-    def get_community_tag_value_imported(
+    def get_tag_value_by_id(
             cls, tag_value_id: str) -> TagValueModel:
         """Get the community tag value imported"""
-        return TagValueModel.select().where(
-            (TagValueModel.id == tag_value_id) & (TagValueModel.is_community_tag_value == True)).first()
+        return TagValueModel.select().where(TagValueModel.id == tag_value_id).first()
+
+    @classmethod
+    def get_tag_value_by_key_and_value(
+            cls, tag_key: str, tag_value: TagValueType) -> TagValueModel:
+        """Get the community tag value by key and value"""
+        return TagValueModel.get_tag_value_model_by_key_and_value(tag_key, tag_value)
 
     @classmethod
     def share_tag_to_community(
@@ -457,31 +554,56 @@ class TagService():
             cls, spaces_filter: List[str],
             title_filter: str, personal_only: bool, page: int, number_of_items_per_page: int) -> PageDTO[TagKeyModelDTO]:
         """Get the community available tags"""
-        community_tags_page: PageDTO[CommunityTagKeyDTO] = CommunityService.get_available_community_tags(
-            spaces_filter, '', title_filter, personal_only, page, number_of_items_per_page)
-
-        return PageDTO(
-            is_first_page=community_tags_page.is_first_page,
-            is_last_page=community_tags_page.is_last_page,
-            number_of_items_per_page=community_tags_page.number_of_items_per_page,
-            page=community_tags_page.page,
-            total_number_of_items=community_tags_page.total_number_of_items,
-            last_page=community_tags_page.last_page,
-            next_page=community_tags_page.next_page,
-            prev_page=community_tags_page.prev_page,
-            total_is_approximate=community_tags_page.total_is_approximate,
-            total_number_of_pages=community_tags_page.total_number_of_pages,
-            objects=[TagKeyModel.from_community_tag_key(tag).to_dto() for tag in community_tags_page.objects]
-        )
+        try:
+            community_tags_keys: PageDTO[CommunityTagKeyDTO] = CommunityService.get_available_community_tags(
+                spaces_filter, '', title_filter, personal_only, page, number_of_items_per_page)
+        except Exception as e:
+            Logger.error(f"Error while getting community available tags: {e}")
+            return PageDTO(
+                is_first_page=True, is_last_page=True,
+                number_of_items_per_page=number_of_items_per_page, page=page,
+                total_number_of_items=0, last_page=0,
+                next_page=0, prev_page=0,
+                total_is_approximate=False, total_number_of_pages=1,
+                objects=[]
+            )
+        return cls.community_tag_key_page_to_tag_key_model_page(community_tags_keys)
 
     @classmethod
     @transaction()
     def get_community_tag_values(
             cls, community_tag_key: str, page: int, number_of_items_per_page: int) -> PageDTO[TagValueModelDTO]:
         """Get the community tags"""
-        community_tags = CommunityService.get_community_tag_values(community_tag_key,
-                                                                   page=page,
-                                                                   number_of_items_per_page=number_of_items_per_page)
+        try:
+            community_tags = CommunityService.get_community_tag_values(
+                community_tag_key, page=page, number_of_items_per_page=number_of_items_per_page)
+        except Exception as e:
+            Logger.error(f"Error while getting community tag values: {e}")
+            return PageDTO(
+                is_first_page=True, is_last_page=True,
+                number_of_items_per_page=number_of_items_per_page, page=page,
+                total_number_of_items=0, last_page=0,
+                next_page=0, prev_page=0,
+                total_is_approximate=False, total_number_of_pages=1,
+                objects=[]
+            )
+        objects: List[TagValueModelDTO] = []
+        for tag_value in community_tags.objects:
+            if cls.get_tag_value_by_id(tag_value.id):
+                # If the tag value already exists in the system, we don't create a new one
+                continue
+            objects.append(TagValueModelDTO(
+                id=tag_value.id,
+                created_at=DateHelper.now_utc().isoformat(),
+                last_modified_at=DateHelper.now_utc().isoformat(),
+                value=tag_value.value,
+                key=tag_value.tag_key.key,
+                value_format=tag_value.tag_key.value_format,
+                is_community_tag_value=True,
+                deprecated=tag_value.deprecated,
+                short_description=tag_value.short_description,
+                additional_infos=tag_value.additional_infos
+            ))
 
         return PageDTO(
             is_first_page=community_tags.is_first_page, is_last_page=community_tags.is_last_page,
@@ -490,16 +612,7 @@ class TagService():
             next_page=community_tags.next_page, prev_page=community_tags.prev_page,
             total_is_approximate=community_tags.total_is_approximate,
             total_number_of_pages=community_tags.total_number_of_pages,
-            objects=[
-                TagValueModelDTO(
-                    id=tag_value.id,
-                    created_at=DateHelper.now_utc().isoformat(),
-                    last_modified_at=DateHelper.now_utc().isoformat(),
-                    value=tag_value.value,
-                    key=tag_value.tag_key.key,
-                    value_format=tag_value.tag_key.value_format
-                ) for tag_value in community_tags.objects
-            ]
+            objects=objects
         )
 
     @classmethod
@@ -538,14 +651,25 @@ class TagService():
     def search_community_tag_keys_by_key(
             cls, tag_key: str, number_of_items_per_page: int, page: int) -> PageDTO[TagKeyModelDTO]:
         """Get the community tags by key"""
-        community_tags_keys = CommunityService.get_available_community_tags(
-            key_filter=tag_key,
-            label_filter=None,
-            number_of_items_per_page=number_of_items_per_page,
-            page=page,
-            spaces_filter=[],
-            personal_only=False
-        )
+        try:
+            community_tags_keys = CommunityService.get_available_community_tags(
+                key_filter=tag_key,
+                label_filter=None,
+                number_of_items_per_page=number_of_items_per_page,
+                page=page,
+                spaces_filter=[],
+                personal_only=False
+            )
+        except Exception as e:
+            Logger.error(f"Error while searching community tag keys: {e}")
+            return PageDTO(
+                is_first_page=True, is_last_page=True,
+                number_of_items_per_page=number_of_items_per_page, page=page,
+                total_number_of_items=0, last_page=0,
+                next_page=0, prev_page=0,
+                total_is_approximate=False, total_number_of_pages=1,
+                objects=[]
+            )
 
         return cls.community_tag_key_page_to_tag_key_model_page(community_tags_keys)
 
@@ -553,6 +677,14 @@ class TagService():
     def community_tag_key_page_to_tag_key_model_page(
             cls, community_tag_key_page: PageDTO[CommunityTagKeyDTO]) -> PageDTO[TagKeyModelDTO]:
         """Convert a community tag key page to a tag key model page"""
+
+        objects: List[TagKeyModelDTO] = []
+        for tag in community_tag_key_page.objects:
+            tag_key_model: TagKeyModel = TagKeyModel.from_community_tag_key(tag)
+            if cls.get_by_key(tag_key_model.key):
+                # If the tag key already exists in the system, we don't create a new one
+                continue
+            objects.append(tag_key_model.to_dto())
 
         return PageDTO(
             is_first_page=community_tag_key_page.is_first_page,
@@ -565,7 +697,7 @@ class TagService():
             prev_page=community_tag_key_page.prev_page,
             total_is_approximate=community_tag_key_page.total_is_approximate,
             total_number_of_pages=community_tag_key_page.total_number_of_pages,
-            objects=[TagKeyModel.from_community_tag_key(tag).to_dto() for tag in community_tag_key_page.objects]
+            objects=objects
         )
 
     @classmethod
@@ -600,9 +732,9 @@ class TagService():
 
             current_values = CommunityService.get_all_community_tag_values(imported_community_tag_key.key)
             for current_value in current_values:
-                imported_value = cls.get_community_tag_value_imported(current_value.id)
+                saved_value = cls.get_tag_value_by_id(current_value.id)
 
-                if not imported_value:
+                if not saved_value:
                     not_sync_values.append(
                         TagValueNotSynchronizedFieldsDTO(
                             old_value=None, new_value=TagValueModel.from_community_tag_value(
@@ -611,17 +743,17 @@ class TagService():
                     continue
 
                 not_sync_fields: List[TagValueNotSynchronizedFields] = []
-                if imported_value.short_description != current_value.short_description:
+                if saved_value.short_description != current_value.short_description:
                     not_sync_fields.append(TagValueNotSynchronizedFields.SHORT_DESCRIPTION.value)
-                if imported_value.additional_infos != current_value.additional_infos:
+                if saved_value.additional_infos != current_value.additional_infos:
                     not_sync_fields.append(TagValueNotSynchronizedFields.ADDITIONAL_INFOS.value)
-                if imported_value.deprecated != current_value.deprecated:
+                if saved_value.deprecated != current_value.deprecated:
                     not_sync_fields.append(TagValueNotSynchronizedFields.DEPRECATED.value)
 
                 if len(not_sync_fields) > 0:
                     not_sync_values.append(
                         TagValueNotSynchronizedFieldsDTO(
-                            old_value=imported_value.to_dto(),
+                            old_value=saved_value.to_dto(),
                             new_value=TagValueModel.from_community_tag_value(
                                 current_value, tag_key=imported_community_tag_key).to_dto() if current_value else None,
                             not_synchronized_fields=not_sync_fields))
@@ -655,6 +787,7 @@ class TagService():
                         tag_key_model.description = tag_not_sync.new_key.description
                     elif not_sync_field == TagKeyNotSynchronizedFields.DEPRECATED:
                         tag_key_model.deprecated = tag_not_sync.new_key.deprecated
+                        cls.deprecate_tag_values(tag_key_model)
                     elif not_sync_field == TagKeyNotSynchronizedFields.ADDITIONAL_INFOS_SPECS:
                         tag_key_model.additional_infos_specs = tag_not_sync.new_key.additional_infos_specs
                 tag_key_model.save()
@@ -662,6 +795,7 @@ class TagService():
             for not_sync_value in tag_not_sync.not_synchronized_values:
                 if not_sync_value.new_value and not_sync_value.not_synchronized_fields and len(
                         not_sync_value.not_synchronized_fields) > 0:
+
                     if not_sync_value.not_synchronized_fields.count(TagValueNotSynchronizedFields.VALUE_CREATED) > 0:
                         # create the tag value
                         tag_value_model = TagValueModel.from_dto(not_sync_value.new_value, tag_key_model)
@@ -683,3 +817,142 @@ class TagService():
                             tag_value_model.deprecated = not_sync_value.new_value.deprecated
 
                         tag_value_model.save()
+
+    @classmethod
+    def deprecate_tag_values(cls, tag_key_model: TagKeyModel) -> None:
+        """Deprecate all tag values for a given tag key"""
+        not_deprecated_tag_values: List[TagValueModel] = list(TagValueModel.select().where(
+            (TagValueModel.tag_key == tag_key_model) & (TagValueModel.deprecated == False)))
+
+        for tag_value in not_deprecated_tag_values:
+            tag_value.deprecated = True
+            tag_value.save()
+
+    @classmethod
+    def update_tag_key_label(
+            cls, key: str, label: str) -> TagKeyModel:
+        """Update the label of a tag key"""
+        tag_key_model: TagKeyModel = cls.get_by_key(key)
+
+        if not tag_key_model:
+            raise BadRequestException(
+                f"The tag key '{key}' does not exists. Please create it first.")
+
+        tag_key_model.label = label
+        return tag_key_model.save()
+
+    @classmethod
+    def add_additional_info_spec_to_tag_key(
+            cls, key: str, spec_name: str, spec: ParamSpecSimpleDTO) -> Dict[
+            str, ParamSpecSimpleDTO]:
+        """Add an additional info spec to a tag key"""
+        tag_key_model: TagKeyModel = cls.get_by_key(key)
+
+        if not tag_key_model:
+            raise BadRequestException(
+                f"The tag key '{key}' does not exists. Please create it first.")
+
+        if not tag_key_model.additional_infos_specs:
+            tag_key_model.additional_infos_specs = {}
+
+        if spec_name in tag_key_model.additional_infos_specs:
+            raise BadRequestException(
+                f"The additional info spec '{spec_name}' already exists for the tag key '{key}'.")
+
+        tag_key_model.additional_infos_specs[spec_name] = spec.to_json_dict()
+
+        tag_key_model = tag_key_model.save()
+
+        return tag_key_model.additional_infos_specs
+
+    @classmethod
+    def tag_has_values(cls, tag_key_model: TagKeyModel) -> bool:
+        """Check if the tag key has values"""
+        return TagValueModel.select().where(TagValueModel.tag_key == tag_key_model).count() > 0
+
+    @classmethod
+    def update_additional_info_spec_to_tag_key(
+            cls, key: str, spec_name: str, spec: ParamSpecSimpleDTO) -> Dict[
+            str, ParamSpecSimpleDTO]:
+        """Update an additional info spec to a tag key"""
+        tag_key_model: TagKeyModel = cls.get_by_key(key)
+
+        if not tag_key_model:
+            raise BadRequestException(
+                f"The tag key '{key}' does not exists. Please create it first.")
+
+        if not tag_key_model.additional_infos_specs or spec_name not in tag_key_model.additional_infos_specs:
+            raise BadRequestException(
+                f"The additional info spec '{spec_name}' does not exists for the tag key '{key}'.")
+
+        if not spec.optional and cls.tag_has_values(tag_key_model=tag_key_model):
+            raise BadRequestException(
+                f"The additional info spec '{spec_name}' is not optional and the tag key '{key}' has values. "
+                f"Please remove the values before updating the spec or set the additional info spec to optional.")
+
+        tag_key_model.additional_infos_specs[spec_name] = spec.to_json_dict()
+
+        tag_key_model = tag_key_model.save()
+
+        return tag_key_model.additional_infos_specs
+
+    @classmethod
+    def rename_and_update_additional_info_spec_to_tag_key(
+            cls, key: str, old_spec_name: str, new_spec_name: str, spec: ParamSpecSimpleDTO) -> Dict[
+            str, ParamSpecSimpleDTO]:
+        """Rename and update an additional info spec to a tag key"""
+        tag_key_model: TagKeyModel = cls.get_by_key(key)
+
+        if not tag_key_model:
+            raise BadRequestException(
+                f"The tag key '{key}' does not exists. Please create it first.")
+
+        if not tag_key_model.additional_infos_specs or old_spec_name not in tag_key_model.additional_infos_specs:
+            raise BadRequestException(
+                f"The additional info spec '{old_spec_name}' does not exists for the tag key '{key}'.")
+
+        if new_spec_name in tag_key_model.additional_infos_specs:
+            raise BadRequestException(
+                f"The additional info spec '{new_spec_name}' already exists for the tag key '{key}'.")
+
+        # Remove the old spec and add the new one
+        del tag_key_model.additional_infos_specs[old_spec_name]
+        tag_key_model.additional_infos_specs[new_spec_name] = spec.to_json_dict()
+
+        tag_key_model = tag_key_model.save()
+
+        return tag_key_model.additional_infos_specs
+
+    @classmethod
+    def delete_additional_info_spec_to_tag_key(
+            cls, key: str, spec_name: str) -> Dict[str, ParamSpecSimpleDTO]:
+        """Delete an additional info spec to a tag key"""
+        tag_key_model: TagKeyModel = cls.get_by_key(key)
+
+        if not tag_key_model:
+            raise BadRequestException(
+                f"The tag key '{key}' does not exists. Please create it first.")
+
+        if not tag_key_model.additional_infos_specs or spec_name not in tag_key_model.additional_infos_specs:
+            raise BadRequestException(
+                f"The additional info spec '{spec_name}' does not exists for the tag key '{key}'.")
+
+        del tag_key_model.additional_infos_specs[spec_name]
+
+        tag_key_model = tag_key_model.save()
+
+        return tag_key_model.additional_infos_specs
+
+    @classmethod
+    @transaction()
+    def import_all_community_tag_key_values(cls, tag_key_model: TagKeyModel) -> None:
+        """Import all community tag key values for a given key"""
+
+        community_tag_values = CommunityService.get_all_community_tag_values(tag_key_model.key)
+        for community_tag_value in community_tag_values:
+            # create the tag value model for each community tag value
+            if cls.get_tag_value_by_id(community_tag_value.id):
+                # If the tag value already exists in the system, we don't create a new one
+                continue
+            tag_value_model = TagValueModel.from_community_tag_value(community_tag_value, tag_key_model)
+            tag_value_model.save()

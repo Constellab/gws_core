@@ -2,8 +2,6 @@
 
 from typing import List
 
-from peewee import BooleanField, CharField, Expression, ModelSelect
-
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.model.db_field import JSONField
@@ -13,6 +11,7 @@ from gws_core.tag.tag import Tag, TagOrigins, TagValueType
 from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, TagOriginDTO,
                                   TagOriginType, TagValueFormat)
 from gws_core.tag.tag_helper import TagHelper
+from peewee import BooleanField, CharField, Expression, ModelSelect
 
 
 class EntityTag(Model):
@@ -34,6 +33,10 @@ class EntityTag(Model):
     origins = JSONField(null=False)
 
     is_propagable = BooleanField(default=False)
+
+    tag_key_label = CharField(null=True)
+
+    is_community_tag = BooleanField(default=False)
 
     _table_name = 'gws_entity_tag'
 
@@ -60,6 +63,8 @@ class EntityTag(Model):
             key=self.tag_key,
             value=self.get_tag_value(),
             is_user_origin=self.origin_is_user(),
+            label=self.tag_key_label,
+            is_community_tag_key=self.is_community_tag
         )
 
     def to_full_dto(self) -> EntityTagFullDTO:
@@ -68,6 +73,8 @@ class EntityTag(Model):
             key=self.tag_key,
             value=self.get_tag_value(),
             is_user_origin=self.origin_is_user(),
+            label=self.tag_key_label,
+            is_community_tag_key=self.is_community_tag,
             is_propagable=self.is_propagable,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
@@ -105,14 +112,18 @@ class EntityTag(Model):
     def create_entity_tag(cls, key: str, value: TagValueType,
                           is_propagable: bool, origins: TagOrigins,
                           value_format: TagValueFormat, entity_id: str,
-                          entity_type: EntityType) -> 'EntityTag':
+                          entity_type: EntityType, label: str = None,
+                          is_community_tag: bool = False) -> 'EntityTag':
         if not origins or origins.is_empty():
             raise ValueError('The tag origin must be defined to save it')
 
         entity_tag: EntityTag = EntityTag(
             tag_key=key, value_format=value_format,
             entity_id=entity_id, entity_type=entity_type,
-            is_propagable=is_propagable)
+            is_propagable=is_propagable,
+            is_community_tag=is_community_tag,
+            tag_key_label=label
+        )
         entity_tag.set_value(value)
         entity_tag.set_origins(origins)
         return entity_tag.save()

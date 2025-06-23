@@ -72,38 +72,32 @@ class TagValueModel(Model):
     ######################################### CLASS METHODS #########################################
 
     @classmethod
-    def tag_value_exists(cls, tag_key: str, tag_value: TagValueType) -> bool:
+    def tag_value_exists(cls, tag_key: TagKeyModel, tag_value: TagValueType) -> bool:
         """Return true if the tag value exists
         """
         return cls.get_tag_value_model(tag_key, tag_value) is not None
 
     @classmethod
     @transaction()
-    def create_tag_value_if_not_exists(cls, tag_key: str, tag_value: TagValueType) -> 'TagValueModel':
+    def create_tag_value(
+            cls, tag_key_model: TagKeyModel, tag_value: TagValueType, additional_info: Dict[str, Any] = {},
+            is_community_tag_value: bool = False) -> 'TagValueModel':
         """Create a tag value model
         """
-
-        # check if the tag value already exists
-        tag_value_model = cls.get_tag_value_model(tag_key, tag_value)
-        if tag_value_model:
-            return tag_value_model
-
-        # cretae the key if it does not exist
-        tag_key_model = TagKeyModel.find_by_key(key=tag_key)
         if not tag_key_model:
-            value_format: TagValueFormat = TagValueFormat.STRING
-            if isinstance(tag_value, int):
-                value_format = TagValueFormat.INTEGER
-            elif isinstance(tag_value, float):
-                value_format = TagValueFormat.FLOAT
-            elif isinstance(tag_value, datetime):
-                value_format = TagValueFormat.DATETIME
-            elif isinstance(tag_value, bool):
-                value_format = TagValueFormat.BOOLEAN
+            raise ValueError("Tag key model must be provided")
 
-            tag_key_model = TagKeyModel.create_tag_key_if_not_exists(tag_key, value_format)
+        if tag_key_model.additional_infos_specs is None and len(additional_info.keys()) > 0:
+            raise ValueError("Tag key model does not have additional info specs defined")
+        if tag_key_model.additional_infos_specs:
+            for key, value in tag_key_model.additional_infos_specs.items():
+                if value.get('optional', True) is False and key not in additional_info:
+                    raise ValueError(f"Missing required additional info: {key}")
 
-        return cls.create(tag_key=tag_key_model, tag_value=TagHelper.convert_value_to_str(tag_value))
+        return cls.create(tag_key=tag_key_model,
+                          additional_infos=additional_info,
+                          is_community_tag_value=is_community_tag_value,
+                          tag_value=TagHelper.convert_value_to_str(tag_value))
 
     @classmethod
     @transaction()
@@ -135,8 +129,27 @@ class TagValueModel(Model):
     ######################################### SELECT #########################################
 
     @classmethod
-    def get_tag_value_model(cls, tag_key: str, tag_value: TagValueType) -> 'TagValueModel':
+    def get_tag_value_model(cls, tag_key: TagKeyModel, tag_value_id_or_value: TagValueType | str) -> 'TagValueModel':
         """Return the tag value model if it exists
+        """
+        res = None
+        if isinstance(tag_value_id_or_value, str):
+            res = cls.get_tag_value_model_by_id(tag_value_id_or_value)
+
+        if res is None:
+            res = cls.get_tag_value_model_by_key_and_value(tag_key, tag_value_id_or_value)
+
+        return res
+
+    @classmethod
+    def get_tag_value_model_by_id(cls, tag_value_id: str) -> 'TagValueModel':
+        """Return the tag value model by its ID
+        """
+        return cls.get_or_none(id=tag_value_id)
+
+    @classmethod
+    def get_tag_value_model_by_key_and_value(cls, tag_key: str, tag_value: TagValueType) -> 'TagValueModel':
+        """Return the tag value model by its key and value
         """
         return cls.get_or_none(tag_key=tag_key, tag_value=TagHelper.convert_value_to_str(tag_value))
 

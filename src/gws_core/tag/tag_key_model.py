@@ -1,10 +1,11 @@
 
 
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from gws_core.community.community_dto import CommunityTagKeyDTO
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.db_field import JSONField
+from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.rich_text.rich_text_field import RichTextField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.tag.tag import TagValueType
@@ -32,7 +33,7 @@ class TagKeyModel(Model):
 
     deprecated = BooleanField(default=False)
 
-    additional_infos_specs = JSONField(null=True)
+    additional_infos_specs: Dict = JSONField(null=True)
 
     _table_name = "gws_tag"
 
@@ -57,19 +58,18 @@ class TagKeyModel(Model):
     ############################################## CLASS METHODS ##############################################
 
     @classmethod
-    def create_tag_key_if_not_exists(cls, tag_key: str, value_format: TagValueFormat) -> 'TagKeyModel':
-        """Create a tag key model
-        """
-        tag_key_model = cls.find_by_key(tag_key)
-        if tag_key_model:
-            return tag_key_model
-
-        tag = TagKeyModel()
-        tag.key = tag_key
-        tag.value_format = value_format
-        tag.order = TagKeyModel.get_highest_order() + 1
-
-        return tag.save()
+    def create_tag_key_model(cls, key: str, label: str,
+                             value_format: TagValueFormat = TagValueFormat.STRING,
+                             is_propagable: bool = False,
+                             is_community_tag: bool = False) -> 'TagKeyModel':
+        return cls.create(
+            key=key,
+            value_format=value_format,
+            label=label,
+            is_propagable=is_propagable,
+            is_community_tag=is_community_tag,
+            order=cls.get_highest_order() + 1
+        )
 
     @classmethod
     def delete_tag(cls, key: str) -> None:

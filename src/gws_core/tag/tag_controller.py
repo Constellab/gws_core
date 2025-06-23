@@ -1,16 +1,17 @@
 
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from fastapi.param_functions import Depends
 from gws_core.community.community_dto import CommunityGetTagKeysBody
+from gws_core.config.param.param_types import ParamSpecSimpleDTO
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, NewTagDTO,
                                   SaveTagModelResonseDTO, ShareTagDTO,
-                                  TagKeyModelDTO, TagOriginDetailDTO,
-                                  TagPropagationImpactDTO,
+                                  TagKeyModelCreateDTO, TagKeyModelDTO,
+                                  TagOriginDetailDTO, TagPropagationImpactDTO,
                                   TagsNotSynchronizedDTO, TagValueEditDTO,
                                   TagValueModelDTO)
 
@@ -106,6 +107,15 @@ def synchronize_community_tags(
 
 #################################### TAG ####################################
 
+@core_app.post("/tag/key", tags=["Tag"], summary='Create tag key')
+def create_tag_key(tag_key_dto: TagKeyModelCreateDTO,
+                   _=Depends(AuthService.check_user_access_token)) -> TagKeyModelDTO:
+    """
+    Create a new tag key.
+    """
+    tag_key_model = TagService.create_tag_key(tag_key_dto.key, tag_key_dto.label)
+    return tag_key_model.to_dto()
+
 
 @core_app.post("/tag/search", tags=["Tag"], summary="Advanced search for tags")
 def advanced_search(search_dict: SearchParams,
@@ -167,6 +177,66 @@ def search_values(key: str,
     return TagService.search_values(key, value, page, number_of_items_per_page).to_dto()
 
 
+@core_app.post("/tag/{key}/additional-info-spec/{spec_name}", tags=["Tag"],
+               summary='Add additional info spec to tag key')
+def add_additional_info_spec_to_tag_key(key: str,
+                                        spec_name: str,
+                                        spec: ParamSpecSimpleDTO,
+                                        _=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecSimpleDTO]:
+    """
+    Add additional info spec to tag key.
+    """
+    return TagService.add_additional_info_spec_to_tag_key(key, spec_name, spec)
+
+
+@core_app.put("/tag/{key}/label", tags=["Tag"],
+              summary='Update label of tag key')
+def update_tag_key_label(key: str,
+                         body: TagKeyModelCreateDTO,
+                         _=Depends(AuthService.check_user_access_token)) -> TagKeyModelDTO:
+    """
+    Update label of tag key.
+    """
+    tag_key_model = TagService.update_tag_key_label(key, body.label)
+    return tag_key_model.to_dto()
+
+
+@core_app.put("/tag/{key}/additional-info-spec/{spec_name}", tags=["Tag"],
+              summary='Update additional info spec of tag key')
+def update_additional_info_spec_to_tag_key(key: str,
+                                           spec_name: str,
+                                           spec: ParamSpecSimpleDTO,
+                                           _=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecSimpleDTO]:
+    """
+    Update additional info spec of tag key.
+    """
+    return TagService.update_additional_info_spec_to_tag_key(key, spec_name, spec)
+
+
+@core_app.put("/tag/{key}/additional-info-spec/{old_spec_name}/{new_spec_name}", tags=["Tag"],
+              summary='Rename additional info spec of tag key')
+def rename_and_update_additional_info_spec_to_tag_key(key: str,
+                                                      old_spec_name: str,
+                                                      new_spec_name: str,
+                                                      spec: ParamSpecSimpleDTO,
+                                                      _=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecSimpleDTO]:
+    """
+    Rename additional info spec of tag key.
+    """
+    return TagService.rename_and_update_additional_info_spec_to_tag_key(key, old_spec_name, new_spec_name, spec)
+
+
+@core_app.delete("/tag/{key}/additional-info-spec/{spec_name}", tags=["Tag"],
+                 summary='Delete additional info spec of tag key')
+def delete_additional_info_spec_to_tag_key(key: str,
+                                           spec_name: str,
+                                           _=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecSimpleDTO]:
+    """
+    Delete additional info spec of tag key.
+    """
+    return TagService.delete_additional_info_spec_to_tag_key(key, spec_name)
+
+
 @core_app.post("/tag/{key}/create-value", tags=["Tag"], summary='Create tag value')
 def create_tag_value(key: str,
                      tag_value_dto: TagValueEditDTO,
@@ -174,27 +244,27 @@ def create_tag_value(key: str,
     """
     Create a new tag value for the given tag key.
     """
-    tag_value_model = TagService.create_tag_value(key, tag_value_dto)
+    tag_value_model = TagService.create_tag_value(tag_value_dto)
     return tag_value_model.to_dto()
 
 
+@core_app.post("/tag/{key}/get-value", tags=["Tag"], summary='Get tag value by key and value')
+def get_tag_value_by_key_and_value(key: str,
+                                   tag_value_dto: TagValueEditDTO,
+                                   _=Depends(AuthService.check_user_access_token)) -> TagValueModelDTO:
+    """
+    Get tag value by key and value.
+    """
+    tag_value_model = TagService.get_tag_value_by_key_and_value(key, tag_value_dto.value)
+    return tag_value_model.to_dto() if tag_value_model else None
+
+
 @core_app.put("/tag/{key}/update-value", tags=["Tag"], summary='Update tag value')
-def update_tag_key(key: str,
-                   tag_value_edit_dto: TagValueEditDTO,
-                   _=Depends(AuthService.check_user_access_token)) -> SaveTagModelResonseDTO:
+def update_tag_value(key: str,
+                     tag_value_edit_dto: TagValueEditDTO,
+                     _=Depends(AuthService.check_user_access_token)) -> SaveTagModelResonseDTO:
 
     tag_value_model = TagService.update_tag_value(key, tag_value_edit_dto)
-    return SaveTagModelResonseDTO(
-        key_model=tag_value_model.tag_key.to_dto(),
-        value_model=tag_value_model.to_dto()
-    )
-
-
-@core_app.post("/tag/{key}/{value}", tags=["Tag"], summary='Register a new tag')
-def create_tag(key: str,
-               value: str,
-               _=Depends(AuthService.check_user_access_token)) -> SaveTagModelResonseDTO:
-    tag_value_model = TagService.create_tag(key, value)
     return SaveTagModelResonseDTO(
         key_model=tag_value_model.tag_key.to_dto(),
         value_model=tag_value_model.to_dto()
@@ -220,6 +290,24 @@ def update_registered_tag_value(key: str,
     )
 
 
+@core_app.delete("/tag/value/{tag_value_id}", tags=["Tag"], summary='Delete tag value')
+def delete_tag_value(tag_value_id: str,
+                     _=Depends(AuthService.check_user_access_token)) -> None:
+    """
+    Delete tag value by key and value.
+    """
+    TagService.delete_tag_value(tag_value_id)
+
+
+@core_app.delete("/tag/{key}", tags=["Tag"], summary='Delete tag key')
+def delete_tag_key(key: str,
+                   _=Depends(AuthService.check_user_access_token)) -> None:
+    """
+    Delete tag key by key.
+    """
+    TagService.delete_tag_key(key)
+
+
 @core_app.delete("/tag/{key}/{value}", tags=["Tag"], summary='Delete registered tag')
 def delete_registered_tag(key: str,
                           value: str,
@@ -234,7 +322,7 @@ def get_tag_key_by_key(key: str,
     Get tag by key
     """
     tag_key = TagService.get_by_key(key)
-    return tag_key.to_dto()
+    return tag_key.to_dto() if tag_key else None
 
 ################################# ENTITY TAG #################################
 

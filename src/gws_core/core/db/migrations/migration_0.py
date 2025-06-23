@@ -1385,11 +1385,22 @@ class Migration0100(BrickMigration):
             migrator.add_column_if_not_exists(TagValueModel, TagValueModel.is_community_tag_value)
             migrator.add_column_if_not_exists(TagValueModel, TagValueModel.short_description)
             migrator.add_column_if_not_exists(TagValueModel, TagValueModel.additional_infos)
+            migrator.add_column_if_not_exists(EntityTag, EntityTag.tag_key_label)
+            migrator.add_column_if_not_exists(EntityTag, EntityTag.is_community_tag)
             migrator.migrate()
 
             # Migrate label based on the key
-            tag_keys: List[TagKeyModel] = list(TagKeyModel.select())
+            tag_keys: List[TagKeyModel] = list(TagKeyModel.select().where(
+                (TagKeyModel.label == None) | (TagKeyModel.label == '')))
             for tag_key in tag_keys:
-                if not tag_key.label and not tag_key.is_community_tag:
-                    tag_key.label = tag_key.key.replace('_', ' ').capitalize()
-                    tag_key.save(skip_hook=True)
+                tag_key.label = tag_key.key.replace('_', ' ').capitalize()
+                tag_key.save(skip_hook=True)
+
+            entity_tags: List[EntityTag] = list(EntityTag.select().where(
+                (EntityTag.tag_key_label == None) | (EntityTag.tag_key_label == '')))
+            for entity_tag in entity_tags:
+                tag_key: TagKeyModel = TagKeyModel.find_by_key(entity_tag.tag_key)
+                if tag_key:
+                    entity_tag.tag_key_label = tag_key.label
+                    entity_tag.is_community_tag = tag_key.is_community_tag
+                    entity_tag.save(skip_hook=True)

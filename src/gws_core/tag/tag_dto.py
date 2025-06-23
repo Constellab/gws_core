@@ -59,6 +59,8 @@ class EntityTagDTO(BaseModelDTO):
     key: str
     value: Any
     is_user_origin: bool
+    is_community_tag_key: Optional[bool] = None
+    label: Optional[str] = None
 
 
 class EntityTagFullDTO(EntityTagDTO):
@@ -70,7 +72,9 @@ class EntityTagFullDTO(EntityTagDTO):
 class NewTagDTO(BaseModelDTO):
     key: str
     value: str
-    is_community_tag: Optional[bool] = None
+    is_community_tag_key: Optional[bool] = None
+    is_community_tag_value: Optional[bool] = None
+    additional_info: Optional[Dict] = None
 
 
 class ShareTagDTO(BaseModelDTO):
@@ -87,6 +91,11 @@ class TagPropagationImpactDTO(BaseModelDTO):
     """
     tags: List[TagDTO]
     impacted_entities: List[EntityNavGroupDTO]
+
+
+class TagKeyModelCreateDTO(BaseModelDTO):
+    key: str
+    label: str
 
 
 class TagKeyModelDTO(ModelDTO):
@@ -119,10 +128,10 @@ class TagKeyNotSynchronizedFields(Enum):
     """Enum to define the fields that are not synchronized with the tag service.
     This is used to avoid sending these fields to the tag service when saving a tag.
     """
-    LABEL = "label"
-    DESCRIPTION = "description"
+    LABEL = "label_modified"
+    DESCRIPTION = "description_modified"
     DEPRECATED = "deprecated"
-    ADDITIONAL_INFOS_SPECS = "additional_infos_specs"
+    ADDITIONAL_INFOS_SPECS = "additional_info_specs_modified"
 
 
 class TagValueNotSynchronizedFields(Enum):
@@ -130,8 +139,8 @@ class TagValueNotSynchronizedFields(Enum):
     This is used to avoid sending these fields to the tag service when saving a tag.
     """
     VALUE_CREATED = "value_created"
-    SHORT_DESCRIPTION = "short_description"
-    ADDITIONAL_INFOS = "additional_infos"
+    SHORT_DESCRIPTION = "short_description_modified"
+    ADDITIONAL_INFOS = "additional_info_modified"
     DEPRECATED = "deprecated"
 
 
