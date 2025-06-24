@@ -1370,7 +1370,7 @@ class Migration0100(BrickMigration):
                 ShareLink.execute_sql(
                     "CREATE UNIQUE INDEX sharelink_entity_id_entity_type_link_type ON gws_share_link (entity_id, entity_type, link_type)")
 
-    @brick_migration('0.14.1', short_description='Migrate tag to add Community tag')
+    @brick_migration('0.15.0-beta.1', short_description='Migrate tag to add Community tag')
     class Migration0141(BrickMigration):
 
         @classmethod
