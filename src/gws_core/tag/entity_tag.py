@@ -11,6 +11,7 @@ from gws_core.tag.tag import Tag, TagOrigins, TagValueType
 from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, TagOriginDTO,
                                   TagOriginType, TagValueFormat)
 from gws_core.tag.tag_helper import TagHelper
+from gws_core.tag.tag_key_model import TagKeyModel
 from peewee import BooleanField, CharField, Expression, ModelSelect
 
 
@@ -19,7 +20,7 @@ class EntityTag(Model):
 
     tag_key = CharField(null=False)
 
-    tag_value = CharField(null=False)
+    tag_value = CharField(null=False, collation='utf8mb4_bin')
 
     value_format: TagValueFormat = EnumField(
         choices=TagValueFormat, null=False, default=TagValueFormat.STRING)
@@ -33,10 +34,6 @@ class EntityTag(Model):
     origins = JSONField(null=False)
 
     is_propagable = BooleanField(default=False)
-
-    tag_key_label = CharField(null=True)
-
-    is_community_tag = BooleanField(default=False)
 
     _table_name = 'gws_entity_tag'
 
@@ -58,23 +55,25 @@ class EntityTag(Model):
         self.origins = origins.to_json()
 
     def to_dto(self) -> EntityTagDTO:
+        tag_key_model = self.get_tag_key_model()
         return EntityTagDTO(
             id=self.id,
             key=self.tag_key,
             value=self.get_tag_value(),
             is_user_origin=self.origin_is_user(),
-            label=self.tag_key_label,
-            is_community_tag_key=self.is_community_tag
+            label=tag_key_model.label,
+            is_community_tag_key=tag_key_model.is_community_tag
         )
 
     def to_full_dto(self) -> EntityTagFullDTO:
+        tag_key_model = self.get_tag_key_model()
         return EntityTagFullDTO(
             id=self.id,
             key=self.tag_key,
             value=self.get_tag_value(),
             is_user_origin=self.origin_is_user(),
-            label=self.tag_key_label,
-            is_community_tag_key=self.is_community_tag,
+            label=tag_key_model.label,
+            is_community_tag_key=tag_key_model.is_community_tag,
             is_propagable=self.is_propagable,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
@@ -105,6 +104,14 @@ class EntityTag(Model):
         """Propagate the tag to the entity with the given origin
         """
         return self.to_simple_tag().propagate(origin_type, origin_id)
+
+    def get_tag_key_model(self) -> TagKeyModel:
+        """Get the label of the tag key
+        """
+        tag_key_model = TagKeyModel.find_by_key(self.tag_key)
+        if not tag_key_model:
+            raise ValueError(f'Tag key {self.tag_key} not found in tag keys')
+        return tag_key_model
 
     ###################################### EDITION ######################################
 

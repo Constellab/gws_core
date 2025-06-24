@@ -23,8 +23,6 @@ class TagKeyModel(Model):
     value_format: TagValueFormat = EnumField(
         choices=TagValueFormat, null=False, default=TagValueFormat.STRING)
 
-    is_propagable = BooleanField(default=False)
-
     label = CharField(null=True)
 
     description: RichTextDTO = RichTextField(null=True)
@@ -47,7 +45,6 @@ class TagKeyModel(Model):
             last_modified_at=self.last_modified_at,
             key=self.key,
             value_format=self.value_format,
-            is_propagable=self.is_propagable,
             deprecated=self.deprecated,
             label=self.label,
             description=self.description,
@@ -60,13 +57,11 @@ class TagKeyModel(Model):
     @classmethod
     def create_tag_key_model(cls, key: str, label: str,
                              value_format: TagValueFormat = TagValueFormat.STRING,
-                             is_propagable: bool = False,
                              is_community_tag: bool = False) -> 'TagKeyModel':
         return cls.create(
             key=key,
             value_format=value_format,
             label=label,
-            is_propagable=is_propagable,
             is_community_tag=is_community_tag,
             order=cls.get_highest_order() + 1
         )

@@ -174,8 +174,6 @@ class Tag():
     value: TagValueType = None
     is_propagable: bool = False
 
-    is_community_tag: bool = None
-
     is_community_tag_key: bool = None
     is_community_tag_value: bool = None
 

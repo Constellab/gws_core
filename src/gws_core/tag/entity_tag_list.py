@@ -103,7 +103,6 @@ class EntityTagList():
                 key=tag.key,
                 label=StringHelper.snake_case_to_sentence(tag.key),
                 value_format=tag.get_value_format(),
-                is_propagable=tag.is_propagable,
                 is_community_tag=tag.is_community_tag_key)
 
         if tag_value_model is None:

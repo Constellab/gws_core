@@ -2,13 +2,14 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.entity_navigator.entity_navigator_type import EntityNavGroupDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.user.user_dto import UserDTO
 
+ShareTagMode = Literal['PUBLIC', 'SPACE']
 
 # Origin of the tag (who created the tag)
 # If USER, the origin_id is the user id
@@ -18,6 +19,8 @@ from gws_core.user.user_dto import UserDTO
 # If EXP_PROPAGATED, the origin_id is scenario model id that propagated the tag
 # If RESOURCE_PROPAGATED, the origin_id is resource model id that propagated the tag
 # If VIEW_PROPAGATED, the origin_id is view config id that propagated the tag
+
+
 class TagOriginType(Enum):
     USER = 'USER'
     S3 = 'S3'
@@ -78,7 +81,7 @@ class NewTagDTO(BaseModelDTO):
 
 
 class ShareTagDTO(BaseModelDTO):
-    publish_mode: str
+    publish_mode: ShareTagMode
     space_selected: Optional[str] = None
 
 
@@ -101,7 +104,6 @@ class TagKeyModelCreateDTO(BaseModelDTO):
 class TagKeyModelDTO(ModelDTO):
     key: str
     value_format: TagValueFormat
-    is_propagable: bool
     label: Optional[str] = None
     description: Optional[RichTextDTO] = None
     deprecated: Optional[bool] = None

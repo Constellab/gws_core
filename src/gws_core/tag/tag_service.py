@@ -22,7 +22,7 @@ from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.entity_with_tag_search_builder import \
     EntityWithTagSearchBuilder
-from gws_core.tag.tag_dto import (NewTagDTO, TagKeyModelDTO,
+from gws_core.tag.tag_dto import (NewTagDTO, ShareTagMode, TagKeyModelDTO,
                                   TagKeyNotSynchronizedFields,
                                   TagNotSynchronizedDTO, TagOriginDetailDTO,
                                   TagOriginType, TagPropagationImpactDTO,
@@ -516,7 +516,7 @@ class TagService():
 
     @classmethod
     def share_tag_to_community(
-            cls, tag_key: str, publish_mode: str, space_selected: Optional[str] = None) -> TagKeyModel:
+            cls, tag_key: str, publish_mode: ShareTagMode, space_selected: Optional[str] = None) -> TagKeyModel:
         """Share a tag to the community"""
         tag_key_model: TagKeyModel = cls.get_by_key(tag_key)
 

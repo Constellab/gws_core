@@ -9,7 +9,7 @@ from gws_core.core.decorator.transaction import transaction
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model import Model
 from gws_core.tag.tag import TagValueType
-from gws_core.tag.tag_dto import TagValueFormat, TagValueModelDTO
+from gws_core.tag.tag_dto import TagValueModelDTO
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
 from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
@@ -24,7 +24,7 @@ class TagValueModel(Model):
                                            on_delete='CASCADE', on_update='CASCADE',
                                            field='key', column_name='tag_key')
 
-    tag_value = CharField(null=False)
+    tag_value = CharField(null=False, collation='utf8mb4_bin')
 
     is_community_tag_value = BooleanField(default=False)
 
@@ -92,7 +92,7 @@ class TagValueModel(Model):
         if tag_key_model.additional_infos_specs:
             for key, value in tag_key_model.additional_infos_specs.items():
                 if value.get('optional', True) is False and key not in additional_info:
-                    raise ValueError(f"Missing required additional info: {key}")
+                    raise ValueError(f"Missing required additional info: {key}, create the value from the tag page")
 
         return cls.create(tag_key=tag_key_model,
                           additional_infos=additional_info,

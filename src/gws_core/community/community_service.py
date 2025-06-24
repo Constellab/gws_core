@@ -5,6 +5,7 @@ from gws_core.core.exception.exceptions.base_http_exception import \
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.agent.helper.agent_factory import AgentFactory
+from gws_core.tag.tag_dto import ShareTagMode
 
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings
@@ -320,7 +321,7 @@ class CommunityService:
     @classmethod
     def share_tag_to_community(
             cls, tag_key: CommunityTagKeyDTO, tag_values: List[CommunityTagValueDTO],
-            publish_mode: str, space_selected: Optional[str] = None) -> CommunityTagKeyDTO:
+            publish_mode: ShareTagMode, space_selected: Optional[str] = None) -> CommunityTagKeyDTO:
         """
         Share a tag key and its values to the community
         """
