@@ -50,7 +50,7 @@ class ReflexProcess(AppProcess):
                f'--backend-port={self.back_port}',
                ]
 
-        if not Settings.is_cloud_env():
+        if Settings.is_cloud_env():
             cmd.append(f'--backend-host={self.back_host_url}')
 
         shell_proxy = app.get_and_check_shell_proxy()
