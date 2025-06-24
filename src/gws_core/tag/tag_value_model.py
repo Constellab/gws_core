@@ -1,7 +1,8 @@
 
 
-from datetime import datetime
 from typing import Any, Dict
+
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from gws_core.community.community_dto import CommunityTagValueDTO
 from gws_core.core.classes.expression_builder import ExpressionBuilder
@@ -12,7 +13,6 @@ from gws_core.tag.tag import TagValueType
 from gws_core.tag.tag_dto import TagValueModelDTO
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 
 class TagValueModel(Model):
@@ -24,6 +24,7 @@ class TagValueModel(Model):
                                            on_delete='CASCADE', on_update='CASCADE',
                                            field='key', column_name='tag_key')
 
+    # use utf8mb4_bin collation to ensure case-sensitive comparison
     tag_value = CharField(null=False, collation='utf8mb4_bin')
 
     is_community_tag_value = BooleanField(default=False)

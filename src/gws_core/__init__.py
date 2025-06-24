@@ -531,6 +531,7 @@ from .space.space_dto import \
     ShareResourceWithSpaceDTO as ShareResourceWithSpaceDTO
 from .space.space_dto import SpaceSendMailToMailsDTO as SpaceSendMailToMailsDTO
 from .space.space_dto import SpaceSendMailToUsersDTO as SpaceSendMailToUsersDTO
+from .space.space_front_service import SpaceFrontService as SpaceFrontService
 from .space.space_service import SpaceService as SpaceService
 # Streamlit
 from .streamlit.streamlit_app import StreamlitApp as StreamlitApp

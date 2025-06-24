@@ -230,6 +230,20 @@ class Settings():
         return os.environ.get("SPACE_API_URL")
 
     @classmethod
+    def get_space_front_url(cls) -> str:
+        """Return the space front url
+
+        :return: [description]
+        :rtype: [type]
+        """
+
+        # specific space front url for local env
+        if cls.is_local_env() and not os.environ.get("SPACE_FRONT_URL"):
+            return 'http://localhost:4200'
+
+        return os.environ.get("SPACE_FRONT_URL")
+
+    @classmethod
     def get_front_url(cls) -> str:
 
         if cls.is_local_env() and not os.environ.get("FRONT_URL"):

@@ -2,6 +2,8 @@
 
 from typing import List
 
+from peewee import BooleanField, CharField, Expression, ModelSelect
+
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.model.db_field import JSONField
@@ -12,7 +14,6 @@ from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, TagOriginDTO,
                                   TagOriginType, TagValueFormat)
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
-from peewee import BooleanField, CharField, Expression, ModelSelect
 
 
 class EntityTag(Model):
@@ -20,6 +21,7 @@ class EntityTag(Model):
 
     tag_key = CharField(null=False)
 
+    # use utf8mb4_bin collation to ensure case-sensitive comparison
     tag_value = CharField(null=False, collation='utf8mb4_bin')
 
     value_format: TagValueFormat = EnumField(
