@@ -15,8 +15,8 @@ from .user import User
 
 class CurrentUserContext(Enum):
     NORMAL = 'NORMAL'
-    # set to streamlit context when the code is executed in streamlit
-    STREAMLIT = 'STREAMLIT'
+    # set to app context when the code is executed in app
+    APP = 'APP'
 
 
 class CurrentUserService:
@@ -38,11 +38,11 @@ class CurrentUserService:
         user: User = cls.get_current_user()
 
         if user is None:
-            if cls._run_context == CurrentUserContext.STREAMLIT:
+            if cls._run_context == CurrentUserContext.APP:
                 raise UnauthorizedException(
-                    "User not authenticated in streamlit context. " +
+                    "User not authenticated in app context. " +
                     "If this action was trigger in a `on_click`, `on_change`, in a st.dialog or similar, " +
-                    "please use the `StreamlitAuthenticateUser` class to authenticate the user")
+                    "please use the `StreamlitAuthenticateUser` class in streamlit app to authenticate the user")
             else:
                 raise UnauthorizedException("User not authenticated")
 
@@ -120,12 +120,12 @@ class CurrentUserService:
         return FrontService.get_dark_theme() if user.has_dark_theme() else FrontService.get_light_theme()
 
     @classmethod
-    def set_streamlit_context(cls):
-        cls._run_context = CurrentUserContext.STREAMLIT
+    def set_app_context(cls):
+        cls._run_context = CurrentUserContext.APP
 
     @classmethod
-    def is_streamlit_context(cls) -> bool:
-        return cls._run_context == CurrentUserContext.STREAMLIT
+    def is_app_context(cls) -> bool:
+        return cls._run_context == CurrentUserContext.APP
 
 
 class AuthenticateUser:

@@ -69,7 +69,7 @@ class StreamlitEnvLoader:
         CurrentUserService.set_current_user(user)
 
         # Set the running context as streamlit
-        CurrentUserService.set_streamlit_context()
+        CurrentUserService.set_app_context()
 
     def __exit__(self, exc_type, exc_value, traceback):
         # remove the current user

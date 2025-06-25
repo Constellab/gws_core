@@ -29,7 +29,7 @@ class StreamlitAuthenticateUser:
             self.was_already_authenticated = True
 
         # Set streamlit context
-        CurrentUserService.set_streamlit_context()
+        CurrentUserService.set_app_context()
         return user
 
     def __exit__(self, exc_type, exc_value, traceback):

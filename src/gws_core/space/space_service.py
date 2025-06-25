@@ -21,6 +21,7 @@ from gws_core.space.space_dto import (LabStartDTO, SaveNoteToSpaceDTO,
                                       SpaceRootFolderUserRole,
                                       SpaceSendMailToMailsDTO,
                                       SpaceSendMailToUsersDTO,
+                                      SpaceSendNotificationDTO,
                                       SpaceSyncObjectDTO)
 from gws_core.space.space_service_base import SpaceServiceBase
 from gws_core.tag.tag import Tag
@@ -110,14 +111,15 @@ class SpaceService(SpaceServiceBase):
 
     #################################### SCENARIO ####################################
 
-    def save_scenario(self, folder_id: str, save_scenario_dto: SaveScenarioToSpaceDTO) -> None:
+    def save_scenario(self, folder_id: str, save_scenario_dto: SaveScenarioToSpaceDTO) -> SpaceHierarchyObjectDTO:
 
         space_api_url: str = self._get_space_api_url(
             f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/scenario")
 
         try:
-            ExternalApiService.put(space_api_url, save_scenario_dto, self._get_request_header(),
-                                   raise_exception_if_error=True)
+            response = ExternalApiService.put(space_api_url, save_scenario_dto, self._get_request_header(),
+                                              raise_exception_if_error=True)
+            return SpaceHierarchyObjectDTO.from_json(response.json())
         except BaseHTTPException as err:
             err.detail = f"Can't save the scenario in space. Error : {err.detail}"
             raise err
@@ -164,7 +166,7 @@ class SpaceService(SpaceServiceBase):
     #################################### NOTE ####################################
 
     def save_note(self, folder_id: str, note: SaveNoteToSpaceDTO,
-                  file_paths: List[str]) -> None:
+                  file_paths: List[str]) -> SpaceHierarchyObjectDTO:
 
         space_api_url: str = self._get_space_api_url(
             f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/note/v2")
@@ -176,12 +178,13 @@ class SpaceService(SpaceServiceBase):
 
         try:
             body = {"body": json.dumps(jsonable_encoder(note))}
-            ExternalApiService.put_form_data(
+            response = ExternalApiService.put_form_data(
                 space_api_url,
                 form_data=form_data,
                 data=body,
                 headers=self._get_request_header(),
                 raise_exception_if_error=True)
+            return SpaceHierarchyObjectDTO.from_json(response.json())
         except BaseHTTPException as err:
             err.detail = f"Can't save the note in space. Error : {err.detail}"
             raise err
@@ -258,7 +261,7 @@ class SpaceService(SpaceServiceBase):
 
     #################################### RESOURCE ####################################
 
-    def share_resource(self, folder_id: str, resource_dto: ShareResourceWithSpaceDTO) -> None:
+    def share_resource(self, folder_id: str, resource_dto: ShareResourceWithSpaceDTO) -> SpaceHierarchyObjectDTO:
         """Share a resource in a folder in space. Only the resource link is shared, not the resource itself.
         After this, the resource is available in the space folder if this lab is up and running.
 
@@ -275,8 +278,9 @@ class SpaceService(SpaceServiceBase):
             f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/resource")
 
         try:
-            ExternalApiService.put(space_api_url, resource_dto, self._get_request_header(),
-                                   raise_exception_if_error=True)
+            response = ExternalApiService.put(space_api_url, resource_dto, self._get_request_header(),
+                                              raise_exception_if_error=True)
+            return SpaceHierarchyObjectDTO.from_json(response.json())
         except BaseHTTPException as err:
             err.detail = f"Can't share the resource in space. Error : {err.detail}"
             raise err
@@ -409,6 +413,26 @@ class SpaceService(SpaceServiceBase):
                                    raise_exception_if_error=True)
         except BaseHTTPException as err:
             err.detail = f"Can't share root folder. Error : {err.detail}"
+            raise err
+
+    def share_root_folder_with_current_lab(self, root_folder_id: str) -> ExternalSpaceFolder:
+        """Share a root folder with the current lab
+
+        :param root_folder_id: id of the root folder
+        :type root_folder_id: str
+        :return: the shared root folder
+        :rtype: ExternalSpaceFolder
+        """
+
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{root_folder_id}/lab/current")
+
+        try:
+            response = ExternalApiService.put(space_api_url, None, self._get_request_header(),
+                                              raise_exception_if_error=True)
+            return ExternalSpaceFolder.from_json(response.json())
+        except BaseHTTPException as err:
+            err.detail = f"Can't share root folder with current lab. Error : {err.detail}"
             raise err
 
     def get_all_current_user_root_folders(self) -> List[SpaceHierarchyObjectDTO]:
@@ -575,4 +599,18 @@ class SpaceService(SpaceServiceBase):
         space_api_url: str = self._get_space_api_url(
             f"{self._EXTERNAL_LABS_ROUTE}/send-mail-to-mails")
         return ExternalApiService.post(space_api_url, send_mail_to_mails_dto, self._get_request_header(),
+                                       raise_exception_if_error=True)
+
+    def send_notification(self, send_notification_dto: SpaceSendNotificationDTO) -> Response:
+        """Send a notification to a list of users in a space
+
+        :param send_notification_dto: notification information
+        :type send_notification_dto: SpaceSendNotificationDTO
+        :return: http response
+        :rtype: Response
+        """
+
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/send-notification")
+        return ExternalApiService.post(space_api_url, send_notification_dto, self._get_request_header(),
                                        raise_exception_if_error=True)

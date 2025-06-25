@@ -47,6 +47,20 @@ class SpaceSendMailToMailsDTO(BaseModelDTO):
     subject: Optional[str]  # if provided, it override the template subject
 
 
+class SpaceSendNotificationDTO(BaseModelDTO):
+    """DTO to send a notification to users in a space
+    """
+    # List of user IDs to receive the notification
+    # The user must be in the space of the current lab
+    receiver_ids: List[str]
+    text: str  # Main text of the notification
+    # Link to the object related to the notification
+    # can be a space route (starting with /app) or an URL
+    link: Optional[str] = None
+    # IDs of associated objects related to the notification (like scenarios, notes, etc.)
+    associated_object_ids: Optional[List[str]] = None
+
+
 class SendScenarioFinishMailData(BaseModelDTO):
     """Scenario info when send finish mail
     """
